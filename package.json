@@ -86,6 +86,7 @@
     "@types/react-color": "^3.0.6",
     "@types/react-dom": "^17.0.9",
     "css-tree": "^2.0.4",
+    "dotenv": "^16.0.0",
     "esbuild-jest": "^0.5.0",
     "esbuild-node-externals": "^1.4.1",
     "esbuild-node-loader": "^0.8.0",
