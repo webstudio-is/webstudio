@@ -1,0 +1,12 @@
+node_modules
+lib
+.DS_Store
+.env
+yarn-error.log
+
+.cache
+.vercel
+.output
+
+public/build
+api/_build
