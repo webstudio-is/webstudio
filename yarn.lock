@@ -1667,13 +1667,7 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
-"@webstudio-is/sdk@/Users/isonen/work/webstudio/webstudio-sdk":
-  version "0.1.0"
-  dependencies:
-    "@stitches/react" "^1.2.7"
-    react-nano-state "^0.4.0"
-
-"@webstudio-is/sdk@file:../../../webstudio/webstudio-sdk":
+"@webstudio-is/sdk@file:../webstudio-sdk":
   version "0.1.0"
   dependencies:
     "@stitches/react" "^1.2.7"
@@ -2732,11 +2726,6 @@ domexception@^2.0.1:
   integrity sha512-yxJ2mFy/sibVQlu5qHjOkf9J3K6zgmCxgJ94u2EdvDOV09H+32LtRswEcUsmUWN72pVLOEnTSRaIVVzVQgS0dg==
   dependencies:
     webidl-conversions "^5.0.0"
-
-dotenv@^16.0.0:
-  version "16.0.0"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.0.tgz#c619001253be89ebb638d027b609c75c26e47411"
-  integrity sha512-qD9WU0MPM4SWLPJy/r2Be+2WgQj8plChsyrCNQzW/0WjvcJQiKQJ9mH3ZgB3fxbUUxgc/11ZJ0Fi5KiimWGz2Q==
 
 ee-first@1.1.1:
   version "1.1.1"
