@@ -1,9 +1,7 @@
 {
-  "private": true,
   "name": "@webstudio-is/designer",
   "version": "0.1.0",
-  "description": "",
-  "license": "MIT",
+  "description": "Webstudio Designer UI as a service",
   "scripts": {
     "build": "yarn build:prisma && remix build",
     "dev": "node -r dotenv/config node_modules/.bin/remix dev",
@@ -94,5 +92,6 @@
   "engines": {
     "node": ">=14"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "license": "MIT"
 }
