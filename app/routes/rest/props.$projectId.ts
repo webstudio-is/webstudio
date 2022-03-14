@@ -1,17 +1,17 @@
 import { type LoaderFunction } from "remix";
-import type { Tree } from "@webstudio-is/sdk";
+import { type InstanceProps } from "@webstudio-is/sdk";
 import * as db from "~/shared/db";
 
-export type ErrorData = {
+type ErrorData = {
   errors: string;
 };
 
 export const loader: LoaderFunction = async ({
   params,
-}): Promise<Tree | ErrorData> => {
+}): Promise<Array<InstanceProps> | ErrorData> => {
   try {
     const project = await db.project.loadById(params.projectId);
-    return await db.tree.loadByProject(project, "production");
+    return await db.props.loadByProject(project, "production");
   } catch (error) {
     if (error instanceof Error) {
       return {

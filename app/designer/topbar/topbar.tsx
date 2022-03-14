@@ -1,5 +1,5 @@
+import type { Project } from "@webstudio-is/sdk";
 import { Flex, type CSS } from "~/shared/design-system";
-import type { Project } from "~/shared/db";
 import type { Config } from "~/config";
 import { Preview } from "./preview";
 import { Share } from "./share";

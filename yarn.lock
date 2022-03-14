@@ -1667,10 +1667,20 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
+"@webstudio-is/sdk@/Users/isonen/work/webstudio/webstudio-sdk":
+  version "0.1.0"
+  dependencies:
+    "@prisma/client" "^3.10.0"
+    "@stitches/react" "^1.2.7"
+    prisma "^3.10.0"
+    react-nano-state "^0.4.0"
+
 "@webstudio-is/sdk@file:../webstudio-sdk":
   version "0.1.0"
   dependencies:
+    "@prisma/client" "^3.10.0"
     "@stitches/react" "^1.2.7"
+    prisma "^3.10.0"
     react-nano-state "^0.4.0"
 
 "@xobotyi/scrollbar-width@^1.9.5":

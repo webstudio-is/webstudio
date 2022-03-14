@@ -1,12 +1,11 @@
 import {
   PrismaClient,
   Prisma,
-  type InstanceProps,
-  type Project,
-} from "@prisma/client";
+  PrismaClientKnownRequestError,
+} from "@webstudio-is/sdk/lib/prisma.server";
 
 export const prisma = new PrismaClient();
-export { Project, Prisma, InstanceProps };
+export { Prisma, PrismaClientKnownRequestError };
 
 const main = async () => {
   await prisma.$connect();

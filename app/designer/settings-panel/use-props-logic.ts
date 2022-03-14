@@ -33,20 +33,25 @@ export const usePropsLogic = ({
       return;
     }
     const props =
-      selectedInstanceData.props.length === 0
+      selectedInstanceData.props === undefined ||
+      selectedInstanceData.props.props.length === 0
         ? initialUserProps
-        : selectedInstanceData.props;
+        : selectedInstanceData.props.props;
     setUserProps(props);
   }, [selectedInstanceData?.props]);
 
   const updateProps = useCallback(
     // @todo this may call the last callback after unmount
     // use useDebounce
-    debounce((updates) => {
-      if (selectedInstanceData === undefined) return;
+    debounce((updates: UserPropsUpdates["updates"]) => {
+      if (selectedInstanceData === undefined) {
+        return;
+      }
       publish<"updateProps", UserPropsUpdates>({
         type: "updateProps",
         payload: {
+          treeId: selectedInstanceData.props.treeId,
+          propsId: selectedInstanceData.props.id,
           instanceId: selectedInstanceData.id,
           updates,
         },
@@ -83,7 +88,8 @@ export const usePropsLogic = ({
     propsToPublishRef.current[id] = true;
     const updates = Object.keys(propsToPublishRef.current)
       .map((id) => nextUserProps.find((prop) => prop.id === id))
-      .filter(Boolean); // Can be empty if you quickly remove props which have pending changes
+      // Could be empty if you quickly remove props which have pending changes
+      .filter(Boolean) as Array<UserProp>;
     updateProps(updates);
   };
 

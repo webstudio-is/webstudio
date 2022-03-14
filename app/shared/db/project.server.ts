@@ -1,11 +1,16 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import { prisma, Prisma, type Project } from "./prisma.server";
+import type { Project } from "@webstudio-is/sdk";
+import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";
 
-export const loadOne = async (id: string): Promise<Project | null> => {
+export const loadById = async (projectId?: string): Promise<Project | null> => {
+  if (typeof projectId !== "string") {
+    throw new Error("Project ID required");
+  }
+
   return await prisma.project.findUnique({
-    where: { id },
+    where: { id: projectId },
   });
 };
 

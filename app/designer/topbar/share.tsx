@@ -8,7 +8,7 @@ import {
   TextField,
 } from "~/shared/design-system";
 import { Share1Icon } from "~/shared/icons";
-import type { Project } from "~/shared/db";
+import { type Project } from "@webstudio-is/sdk";
 import { useIsShareDialogOpen } from "../nano-values";
 
 type ShareProps = { path: string; project: Project };

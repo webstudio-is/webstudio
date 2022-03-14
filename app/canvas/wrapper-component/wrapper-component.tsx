@@ -72,8 +72,13 @@ export const WrapperComponentDev = ({
         data-id={id}
         children={renderWrapperComponentChildren(contentEditableProps.children)}
         ref={refCallback}
+        onClick={(event: MouseEvent) => {
+          if (component === "Link") {
+            event.preventDefault();
+          }
+        }}
         onMouseDown={(event: MouseEvent) => {
-          if (component === "Link" || component === "Input") {
+          if (component === "Input") {
             event.preventDefault();
           }
         }}

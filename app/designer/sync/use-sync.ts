@@ -4,9 +4,9 @@ import {
   type Instance,
   type DeleteProp,
   type UserPropsUpdates,
+  type Project,
 } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
-import type { Project } from "~/shared/db";
 import type {
   InstanceInsertionSpec,
   InstanceReparentingSpec,

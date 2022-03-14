@@ -72,7 +72,7 @@ export const Canvas = ({ data }: { data: Data }): JSX.Element => {
   const { instanceInsertionSpec, instanceReparentingSpec } =
     useDragDropHandlers({ rootInstance });
   useUpdateInstanceStyle({ rootInstance, setRootInstance });
-  usePublishSelectedInstance();
+  usePublishSelectedInstance({ treeId: data.tree.id });
   useInsertInstance({ rootInstance, setRootInstance, instanceInsertionSpec });
   useReparentInstance({
     rootInstance,

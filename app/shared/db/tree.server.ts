@@ -1,4 +1,9 @@
-import { type ChildrenUpdates, type Instance } from "@webstudio-is/sdk";
+import {
+  type ChildrenUpdates,
+  type Instance,
+  type Project,
+  type Tree,
+} from "@webstudio-is/sdk";
 import { prisma } from "./prisma.server";
 import {
   insertInstance,
@@ -12,11 +17,6 @@ import {
 } from "~/shared/tree-utils";
 import type { StyleUpdates } from "~/shared/component";
 import { deleteProps } from "./props.server";
-
-export type Tree = {
-  id: string;
-  root: Instance;
-};
 
 const rootConfig = {
   // @todo this should be part of a root primitive in primitives
@@ -58,13 +58,13 @@ export const create = async (root?: Instance): Promise<Tree> => {
   })) as Tree;
 };
 
-export const load = async (id: string): Promise<Tree> => {
+export const loadById = async (id: string): Promise<Tree> => {
   return (await prisma.tree.findUnique({
     where: { id },
   })) as Tree;
 };
 
-export const loadForDomain = async (domain: string): Promise<Tree> => {
+export const loadByDomain = async (domain: string): Promise<Tree> => {
   const project = await prisma.project.findUnique({
     where: { domain },
   });
@@ -74,7 +74,24 @@ export const loadForDomain = async (domain: string): Promise<Tree> => {
   if (project.prodTreeId === null) {
     throw new Error(`Site is not published`);
   }
-  return await load(project.prodTreeId);
+  return await loadById(project.prodTreeId);
+};
+
+export const loadByProject = async (
+  project: Project | null,
+  env: "production" | "development" = "development"
+) => {
+  if (project === null) {
+    throw new Error("Project required");
+  }
+
+  const treeId = env === "production" ? project.prodTreeId : project.devTreeId;
+
+  if (treeId === null) {
+    throw new Error("Site needs to be published, production tree ID is null.");
+  }
+
+  return await loadById(treeId);
 };
 
 export const insert = async (
@@ -82,7 +99,7 @@ export const insert = async (
   instanceInsertionSpec: InstanceInsertionSpec
 ) => {
   // @todo insert without loading the entire tree
-  const tree = await load(id);
+  const tree = await loadById(id);
   const { instance: root } = insertInstance(instanceInsertionSpec, tree.root, {
     populate: false,
   });
@@ -97,7 +114,7 @@ export const reparent = async (
   instanceReparentingSpec: InstanceReparentingSpec
 ) => {
   // @todo reparent without loading the entire tree
-  const tree = await load(id);
+  const tree = await loadById(id);
   const root = reparentInstance(tree.root, instanceReparentingSpec);
   await prisma.tree.update({
     data: { root },
@@ -107,7 +124,7 @@ export const reparent = async (
 
 export const updateStyles = async (id: string, styleUpdates: StyleUpdates) => {
   // @todo we need to update without fetching the tree
-  const tree = await load(id);
+  const tree = await loadById(id);
   const root = setInstanceStyle(
     tree.root,
     styleUpdates.id,
@@ -124,7 +141,7 @@ export const updateChildren = async (
   change: { instanceId: Instance["id"]; updates: ChildrenUpdates }
 ) => {
   // @todo we need to update without fetching the tree
-  const tree = await load(id);
+  const tree = await loadById(id);
   const root = setInstanceChildren(
     change.instanceId,
     change.updates,
@@ -141,7 +158,7 @@ export const deleteInstance = async (
   instanceId: Instance["id"]
 ) => {
   // @todo we need to delete without fetching the tree
-  const tree = await load(id);
+  const tree = await loadById(id);
   const root = deleteInstanceFromTree(tree.root, instanceId);
   if (root === null) return;
   await prisma.tree.update({
@@ -152,6 +169,6 @@ export const deleteInstance = async (
 };
 
 export const clone = async (id: string) => {
-  const tree = await load(id);
+  const tree = await loadById(id);
   return await create(tree.root);
 };

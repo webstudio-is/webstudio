@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { type Instance } from "@webstudio-is/sdk";
-import type { Tree } from "~/shared/db";
+import { type Instance, type Tree } from "@webstudio-is/sdk";
 import {
   type InstanceInsertionSpec,
   type InstanceReparentingSpec,

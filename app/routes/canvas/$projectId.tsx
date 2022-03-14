@@ -10,18 +10,13 @@ export type ErrorData = {
 export const loader: LoaderFunction = async ({
   params,
 }): Promise<Data | ErrorData> => {
-  if (params.id === undefined) throw new Error("Project id undefined");
-  const data = {} as Data;
   try {
-    const project = await db.project.loadOne(params.id);
-    if (project === null) {
-      return {
-        errors: `Project "${params.id}" doesn't exist`,
-      };
-    }
-    // @todo parallelize
-    data.tree = await db.tree.load(project.devTreeId);
-    data.props = await db.props.loadForTree(project.devTreeId);
+    const project = await db.project.loadById(params.projectId);
+    const [tree, props] = await Promise.all([
+      db.tree.loadByProject(project, "development"),
+      db.props.loadByProject(project, "development"),
+    ]);
+    return { tree, props };
   } catch (error) {
     if (error instanceof Error) {
       return {
@@ -29,7 +24,7 @@ export const loader: LoaderFunction = async ({
       };
     }
   }
-  return data;
+  return { errors: "Unexpected error" };
 };
 
 export default () => {

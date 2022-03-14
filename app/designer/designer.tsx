@@ -3,7 +3,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
-import type { Project } from "~/shared/db";
+import type { Project } from "@webstudio-is/sdk";
 import { Box, Grid, type CSS } from "~/shared/design-system";
 import { SidebarLeft } from "./sidebar-left";
 import { SidebarRight } from "./inspector";
