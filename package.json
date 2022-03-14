@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Webstudio Designer UI as a service",
   "scripts": {
-    "build": "yarn build:prisma && remix build",
+    "build": "remix build",
     "dev": "node -r dotenv/config node_modules/.bin/remix dev",
     "postinstall": "remix setup node",
     "typecheck": "tsc -b",
