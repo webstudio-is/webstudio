@@ -84,8 +84,7 @@ export const Canvas = ({ data }: { data: Data }): JSX.Element => {
   useActiveElementTracking({ rootInstance });
   useShortcuts({ rootInstance });
 
-  // @todo no need to run any of this hooks in preview mode, need to find a better way to switch to preview,
-  // probably in the parent component and maybe even fetch the fresh data
+  // @todo no need to run any of this hooks in preview mode, need to find a better way to switch to preview
   const isPreviewMode = useIsPreviewMode();
 
   const elements = useElementsTree(
@@ -94,12 +93,14 @@ export const Canvas = ({ data }: { data: Data }): JSX.Element => {
     setRootInstance
   );
 
+  const props = useMemo(() => Object.values(allUserProps), [allUserProps]);
+
   if (isPreviewMode) {
     return (
       <CanvasRoot
         data={{
           tree: { id: data.tree.id, root: rootInstance },
-          props: [...allUserProps.values()],
+          props,
         }}
       />
     );

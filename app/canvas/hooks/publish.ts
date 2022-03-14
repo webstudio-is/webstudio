@@ -22,7 +22,7 @@ export const usePublishSelectedInstance = ({
     // Unselects the instance by `undefined`
     let payload;
     if (instance !== undefined) {
-      let props = allUserProps.get(instance.id);
+      let props = allUserProps[instance.id];
       if (props === undefined) {
         props = {
           id: ObjectId().toString(),

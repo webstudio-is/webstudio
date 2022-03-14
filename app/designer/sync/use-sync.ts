@@ -66,7 +66,7 @@ export const useSync = ({
     enqueue(() =>
       fetch(`/rest/props/update`, {
         method: "post",
-        body: JSON.stringify({ ...update, treeId: project.devTreeId }),
+        body: JSON.stringify(update),
       })
     );
   });
