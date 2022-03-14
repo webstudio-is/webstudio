@@ -154,18 +154,18 @@ export const updateChildren = async (
 };
 
 export const deleteInstance = async (
-  id: string,
+  treeId: Tree["id"],
   instanceId: Instance["id"]
 ) => {
   // @todo we need to delete without fetching the tree
-  const tree = await loadById(id);
+  const tree = await loadById(treeId);
   const root = deleteInstanceFromTree(tree.root, instanceId);
   if (root === null) return;
   await prisma.tree.update({
     data: { root },
-    where: { id },
+    where: { id: treeId },
   });
-  await deleteProps(instanceId);
+  await deleteProps({ instanceId, treeId });
 };
 
 export const clone = async (id: string) => {

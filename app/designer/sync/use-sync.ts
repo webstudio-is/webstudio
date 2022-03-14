@@ -15,6 +15,10 @@ import type { StyleUpdates } from "~/shared/component";
 import { useSubscribe } from "~/designer/iframe";
 import { enqueue } from "./queue";
 
+// @todo this entire queueing logic needs to be gone, it's a workaround,
+// because prisma can't do atomic updates yet with embeded documents
+// and backend fetches and updates big objects, so if we send quickly,
+// we end up overwriting things
 export const useSync = ({
   config,
   project,
@@ -69,11 +73,11 @@ export const useSync = ({
 
   useSubscribe<"deleteProp", DeleteProp>(
     "deleteProp",
-    ({ instanceId, propId }) => {
+    ({ propsId, propId }) => {
       enqueue(() =>
-        fetch(`/rest/props/delete/${instanceId}`, {
+        fetch(`/rest/props/delete-prop`, {
           method: "post",
-          body: JSON.stringify({ propId }),
+          body: JSON.stringify({ propsId, propId }),
         })
       );
     }

@@ -55,49 +55,49 @@ export const update = async ({
     else props.splice(index, 1, update);
   }
 
-  console.log({ props, updates });
-
-  //console.log({
-  //  where: { id: propsId },
-  //  create: { instanceId, treeId, props },
-  //  update: {
-  //    props,
-  //  },
-  //});
   await prisma.instanceProps.upsert({
     where: { id: propsId },
-    create: { instanceId, treeId, props },
+    create: { id: propsId, instanceId, treeId, props },
     update: {
       props,
     },
   });
 };
 
-export const deleteOne = async (
-  id: InstanceProps["id"],
-  propId: UserProp["id"]
-) => {
+export const deleteProp = async ({
+  propsId,
+  propId,
+}: {
+  propsId: InstanceProps["id"];
+  propId: UserProp["id"];
+}) => {
   // @todo update in one command, remove queueing logic on the ui
   // as of prisma client v3.10.0 updating composite types like in this doc didn't work
   // https://www.prisma.io/docs/concepts/components/prisma-client/composite-types
-  const props = (await loadById(id))?.props ?? [];
+  const props = (await loadById(propsId))?.props ?? [];
   const index = props.findIndex((prop) => prop.id == propId);
   if (index === -1) return;
   props.splice(index, 1);
-
   await prisma.instanceProps.update({
-    where: { id },
+    where: { id: propsId },
     data: { props },
   });
 };
 
-export const deleteProps = async (id: InstanceProps["id"]) => {
+export const deleteProps = async ({
+  instanceId,
+  treeId,
+}: {
+  instanceId: InstanceProps["id"];
+  treeId: Tree["id"];
+}) => {
   try {
-    await prisma.instanceProps.delete({ where: { id } });
+    await prisma.instanceProps.deleteMany({ where: { instanceId, treeId } });
   } catch (error: unknown) {
     if (
       error instanceof PrismaClientKnownRequestError &&
       // Record to delete does not exist.
+      // @todo should this be treated?
       error.code === "P2025"
     ) {
       return;
