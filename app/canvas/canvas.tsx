@@ -67,7 +67,7 @@ const useIsPreviewMode = () => {
 
 export const Canvas = ({ data }: { data: Data }): JSX.Element => {
   globalStyles();
-  useAllUserProps(data.props);
+  const [allUserProps] = useAllUserProps(data.props);
   const [rootInstance, setRootInstance] = usePopulateRootInstance(data.tree);
   const { instanceInsertionSpec, instanceReparentingSpec } =
     useDragDropHandlers({ rootInstance });
@@ -99,7 +99,7 @@ export const Canvas = ({ data }: { data: Data }): JSX.Element => {
       <CanvasRoot
         data={{
           tree: { id: data.tree.id, root: rootInstance },
-          props: data.props,
+          props: [...allUserProps.values()],
         }}
       />
     );

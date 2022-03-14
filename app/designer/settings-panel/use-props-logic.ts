@@ -1,10 +1,10 @@
 import produce from "immer";
 import { useState, useCallback, useEffect, useRef } from "react";
 import debounce from "lodash.debounce";
-import type { Publish } from "~/designer/iframe";
-import type { DeleteProp, UserProp, UserPropsUpdates } from "@webstudio-is/sdk";
-import type { SelectedInstanceData } from "~/shared/component";
 import ObjectId from "bson-objectid";
+import type { DeleteProp, UserProp, UserPropsUpdates } from "@webstudio-is/sdk";
+import type { Publish } from "~/designer/iframe";
+import type { SelectedInstanceData } from "~/shared/component";
 
 const getInitialProp = () => ({
   id: ObjectId().toString(),
