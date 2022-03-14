@@ -598,11 +598,6 @@
   resolved "https://registry.yarnpkg.com/@prisma/engines-version/-/engines-version-3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86.tgz#82750856fa637dd89b8f095d2dcc6ac0631231c6"
   integrity sha512-cVYs5gyQH/qyut24hUvDznCfPrWiNMKNfPb9WmEoiU6ihlkscIbCfkmuKTtspVLWRdl0LqjYEC7vfnPv17HWhw==
 
-"@prisma/engines@3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86":
-  version "3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86"
-  resolved "https://registry.yarnpkg.com/@prisma/engines/-/engines-3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86.tgz#2964113729a78b8b21e186b5592affd1fde73c16"
-  integrity sha512-LjRssaWu9w2SrXitofnutRIyURI7l0veQYIALz7uY4shygM9nMcK3omXcObRm7TAcw3Z+9ytfK1B+ySOsOesxQ==
-
 "@radix-ui/colors@^0.1.8":
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/@radix-ui/colors/-/colors-0.1.8.tgz#b08c62536fc462a87632165fb28e9b18f9bd047e"
@@ -1667,20 +1662,14 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
-"@webstudio-is/sdk@/Users/isonen/work/webstudio/webstudio-sdk":
-  version "0.1.0"
+"@webstudio-is/sdk@^0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.1.3.tgz#a6466f426157c9649821a51994046c6c494e340a"
+  integrity sha512-9TFvqxHMtC5cNnlsFdVDl2Ys2xrK+v5KfM1cCqiJJM3UQK6GIC98Cos3Av/E740U+srXJAv8DAE9ZH2TziU0cA==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/react" "^1.2.7"
-    prisma "^3.10.0"
-    react-nano-state "^0.4.0"
-
-"@webstudio-is/sdk@file:../webstudio-sdk":
-  version "0.1.0"
-  dependencies:
-    "@prisma/client" "^3.10.0"
-    "@stitches/react" "^1.2.7"
-    prisma "^3.10.0"
+    immer "^9.0.12"
     react-nano-state "^0.4.0"
 
 "@xobotyi/scrollbar-width@^1.9.5":
@@ -6022,13 +6011,6 @@ pretty-ms@^7.0.1:
   integrity sha512-973driJZvxiGOQ5ONsFhOF/DtzPMOMtgC11kCpUrPGMTgqp2q/1gwzCquocrN33is0VZ5GFHXZYMM9l6h67v2Q==
   dependencies:
     parse-ms "^2.1.0"
-
-prisma@^3.10.0:
-  version "3.10.0"
-  resolved "https://registry.yarnpkg.com/prisma/-/prisma-3.10.0.tgz#872d87afbeb1cbcaa77c3d6a63c125e0d704b04d"
-  integrity sha512-dAld12vtwdz9Rz01nOjmnXe+vHana5PSog8t0XGgLemKsUVsaupYpr74AHaS3s78SaTS5s2HOghnJF+jn91ZrA==
-  dependencies:
-    "@prisma/engines" "3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86"
 
 promise-inflight@^1.0.1:
   version "1.0.1"

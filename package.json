@@ -41,7 +41,7 @@
     "@remix-run/vercel": "^1.1.3",
     "@stitches/react": "^1.2.6",
     "@stitches/stringify": "^1.2.6",
-    "@webstudio-is/sdk": "/Users/isonen/work/webstudio/webstudio-sdk",
+    "@webstudio-is/sdk": "^0.1.3",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",
