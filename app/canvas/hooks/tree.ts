@@ -63,8 +63,17 @@ export const useReparentInstance = ({
   rootInstance: Instance;
   setRootInstance: (instance: Instance) => void;
 }) => {
+  // Used to avoid reparenting in infinite loop when spec didn't change
+  const usedSpec = useRef<InstanceReparentingSpec>();
+
   useEffect(() => {
-    if (instanceReparentingSpec === undefined) return;
+    if (
+      instanceReparentingSpec === undefined ||
+      usedSpec.current === instanceReparentingSpec
+    ) {
+      return;
+    }
+    usedSpec.current = instanceReparentingSpec;
     const updatedRootInstance = reparentInstance(
       rootInstance,
       instanceReparentingSpec
