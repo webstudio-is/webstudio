@@ -482,14 +482,14 @@ export const useEditable = <Item extends Record<string, unknown>>(
     const onPaste = (event: HTMLElementEventMap["paste"]) => {
       //event.preventDefault();
       //trackState(true);
-      edit.insert(event.clipboardData!.getData("text/plain"));
+      //edit.insert(event.clipboardData!.getData("text/plain"));
       //trackState(true);
       //flushChanges();
     };
 
     //document.addEventListener("selectstart", onSelect);
     //window.addEventListener("keydown", onKeyDown);
-    element.addEventListener("paste", onPaste);
+    //element.addEventListener("paste", onPaste);
     //element.addEventListener("keyup", onKeyUp);
 
     return () => {
