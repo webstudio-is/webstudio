@@ -4,6 +4,7 @@ import { TouchBackend } from "react-dnd-touch-backend";
 import {
   type Instance,
   type ChildrenUpdates,
+  type OnChangeChildren,
   type Data,
   type Tree,
   useAllUserProps,
@@ -31,8 +32,8 @@ const useElementsTree = (
   Component: typeof WrapperComponentDev,
   setRootInstance: (instance: Instance) => void
 ) => {
-  const onChangeChildren = useCallback(
-    (change) => {
+  return useMemo(() => {
+    const onChangeChildren: OnChangeChildren = (change) => {
       const { instanceId, updates } = change;
       const updatedRoot = setInstanceChildren(
         instanceId,
@@ -47,19 +48,13 @@ const useElementsTree = (
         type: "syncInstanceChildrenChange",
         payload: change,
       });
-    },
-    [rootInstance, setRootInstance]
-  );
-
-  return useMemo(
-    () =>
-      createElementsTree({
-        instance: rootInstance,
-        Component,
-        onChangeChildren,
-      }),
-    [rootInstance, onChangeChildren, Component]
-  );
+    };
+    return createElementsTree({
+      instance: rootInstance,
+      Component,
+      onChangeChildren,
+    });
+  }, [rootInstance, Component]);
 };
 
 const useIsPreviewMode = () => {
