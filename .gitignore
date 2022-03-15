@@ -1,5 +1,5 @@
 node_modules
-lib
+/lib
 .DS_Store
 .env
 yarn-error.log
