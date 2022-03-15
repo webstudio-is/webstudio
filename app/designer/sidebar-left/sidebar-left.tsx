@@ -5,7 +5,6 @@ import {
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
-  Text,
 } from "~/shared/design-system";
 import { useSubscribe, type Publish } from "~/designer/iframe";
 import type { SelectedInstanceData } from "~/shared/component";

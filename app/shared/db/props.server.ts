@@ -117,7 +117,7 @@ export const publish = async ({
   const props = await prisma.instanceProps.findMany({
     where: { treeId: previousTreeId },
   });
-  const data = props.map(({ id, treeId, ...rest }) => ({
+  const data = props.map(({ id: _id, treeId: _treeId, ...rest }) => ({
     ...rest,
     treeId: nextTreeId,
   }));

@@ -134,6 +134,7 @@ export const SheetContent = React.forwardRef<
     </StyledCloseButton>
   </StyledContent>
 ));
+SheetContent.displayName = "SheetContent";
 
 export const SheetTrigger = DialogPrimitive.Trigger;
 export const SheetClose = DialogPrimitive.Close;

@@ -4,7 +4,6 @@ import {
   type Style,
   type StyleProperty,
   type StyleValue,
-  type Tree,
 } from "@webstudio-is/sdk";
 
 export type SelectedInstanceData = {

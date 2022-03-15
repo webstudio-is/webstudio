@@ -42,6 +42,7 @@ const findParents = (
       break;
     }
     const foundParents = findParents(child, instanceId);
+    // eslint-disable-next-line prefer-spread
     parents.push.apply(parents, foundParents);
   }
   return parents;

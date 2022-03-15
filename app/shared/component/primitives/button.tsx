@@ -1,10 +1,10 @@
-import { type Instance, type Style, components } from "@webstudio-is/sdk";
+import { type Style, components } from "@webstudio-is/sdk";
 export { ButtonIcon as Icon } from "~/shared/icons";
 
 // Webstudio specific default styles for the node type.
 export const defaultStyle: Style = {};
 
-export const canAcceptChild = (component: Instance["component"]): boolean => {
+export const canAcceptChild = (): boolean => {
   // @todo could accept an icon in the future
   return false;
 };

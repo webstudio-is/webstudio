@@ -23,3 +23,5 @@ export const ListNestedIcon = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+
+ListNestedIcon.displayName = "ListNestedIcon";

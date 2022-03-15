@@ -1,5 +1,4 @@
 import { styled } from "../stitches.config";
-import { violet, blackA, mauve } from "@radix-ui/colors";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 
 export const Root = styled(ToggleGroupPrimitive.Root, {

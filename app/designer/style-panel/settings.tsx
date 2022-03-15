@@ -53,11 +53,7 @@ const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
   );
 };
 
-export const VisualSettings = ({
-  selectedInstanceData,
-  currentStyle,
-  ...rest
-}: SectionProps) => {
+export const VisualSettings = ({ currentStyle, ...rest }: SectionProps) => {
   const all = [];
   let category: Category;
   for (category in categories) {

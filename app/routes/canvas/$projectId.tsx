@@ -27,7 +27,7 @@ export const loader: LoaderFunction = async ({
   return { errors: "Unexpected error" };
 };
 
-export default () => {
+const CanvasRoute = () => {
   const data = useLoaderData<Data | ErrorData>();
   // @todo how should we treat this kind of errors?
   if ("errors" in data) {
@@ -35,3 +35,5 @@ export default () => {
   }
   return <Canvas data={data} />;
 };
+
+export default CanvasRoute;

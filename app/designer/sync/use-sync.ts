@@ -19,13 +19,7 @@ import { enqueue } from "./queue";
 // because prisma can't do atomic updates yet with embeded documents
 // and backend fetches and updates big objects, so if we send quickly,
 // we end up overwriting things
-export const useSync = ({
-  config,
-  project,
-}: {
-  config: Config;
-  project: Project;
-}) => {
+export const useSync = ({ project }: { config: Config; project: Project }) => {
   useSubscribe<"syncInstanceInsertion", InstanceInsertionSpec>(
     "syncInstanceInsertion",
     (instanceInsertionSpec) => {

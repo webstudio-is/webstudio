@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // Copied from https://github.com/FormidableLabs/use-editable
 // @todo create an issue there and if they agree - contribute
 // @todo had too many bugs and had to resort to an uncontrolled mode over innerHTML. It totally defeats the idea behind this code
@@ -167,7 +168,7 @@ const serialize = () => {
   throw new Error("Not implemented");
 };
 
-export const useEditable = <Item extends unknown>(
+export const useEditable = <Item extends Record<string, unknown>>(
   elementRef: { current: HTMLElement | undefined | null },
   onChange: (content: Content<Item>, position: Position) => void,
   opts: Options<Item> = { serialize }
@@ -175,7 +176,7 @@ export const useEditable = <Item extends unknown>(
   const unblock = useState([])[1];
   const state: State<Item> = useState(() => {
     const state: State<Item> = {
-      observer: null as any,
+      observer: null as unknown as MutationObserver,
       disconnected: false,
       onChange,
       queue: [],
@@ -314,8 +315,9 @@ export const useEditable = <Item extends unknown>(
     if (prevWhiteSpace !== "pre") element.style.whiteSpace = "pre-wrap";
 
     if (opts!.indentation) {
-      element.style.tabSize = (element.style as any).MozTabSize =
-        "" + opts!.indentation;
+      element.style.tabSize = (
+        element.style as ElementCSSInlineStyle["style"] & { MozTabSize: string }
+      ).MozTabSize = "" + opts!.indentation;
     }
 
     const indentPattern = `${" ".repeat(opts!.indentation || 0)}`;

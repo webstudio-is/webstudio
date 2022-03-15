@@ -1,4 +1,4 @@
-import { Flex, Text, Card, Paragraph } from "~/shared/design-system";
+import { Flex, Text } from "~/shared/design-system";
 import type { SelectedInstanceData } from "~/shared/component";
 import { primitives } from "~/shared/component";
 

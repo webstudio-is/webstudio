@@ -23,3 +23,5 @@ export const BrushIcon = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+
+BrushIcon.displayName = "BrushIcon";

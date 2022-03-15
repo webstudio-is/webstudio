@@ -1,7 +1,7 @@
-import { type Instance, components } from "@webstudio-is/sdk";
+import { components } from "@webstudio-is/sdk";
 export { FontBoldIcon as Icon } from "~/shared/icons";
 
-export const canAcceptChild = (component: Instance["component"]): boolean => {
+export const canAcceptChild = (): boolean => {
   return false;
 };
 

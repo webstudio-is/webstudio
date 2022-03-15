@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useDragLayer, XYCoord } from "react-dnd";
+import { useDragLayer } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
 import type { InitialDragData } from "~/shared/component";
 
@@ -13,22 +13,6 @@ const layerStyles = {
   width: "100%",
   height: "100%",
 } as const;
-
-const getItemStyles = (
-  initialOffset: XYCoord | null,
-  currentOffset: XYCoord | null
-): { transform?: string; display?: "none" } => {
-  if (!initialOffset || !currentOffset) {
-    return {
-      display: "none",
-    };
-  }
-  let { x, y } = currentOffset;
-  const transform = `translate(${x}px, ${y}px)`;
-  return {
-    transform,
-  };
-};
 
 export type CustomDragLayerProps = {
   onDrag: (dragData: InitialDragData) => void;
@@ -63,12 +47,5 @@ export const CustomDragLayer = ({ onDrag }: CustomDragLayerProps) => {
 
   if (isDragging === false) return null;
 
-  return createPortal(
-    <div style={layerStyles}>
-      {
-        //<div style={getItemStyles(initialOffset, currentOffset)}></div>
-      }
-    </div>,
-    document.body
-  );
+  return createPortal(<div style={layerStyles} />, document.body);
 };

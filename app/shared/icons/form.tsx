@@ -23,3 +23,5 @@ export const FormIcon = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+
+FormIcon.displayName = "FormIcon";

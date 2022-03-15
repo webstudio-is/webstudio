@@ -31,3 +31,5 @@ export const Iframe = forwardRef<HTMLIFrameElement, IframeProps>(
     );
   }
 );
+
+Iframe.displayName = "Iframe";

@@ -66,7 +66,7 @@ export const useCss = ({ id, component, css }: UseCssProps): string => {
 
     if (dragData !== undefined) {
       const primitive = primitives[component];
-      if (dragData.id === id && primitive.canAcceptChild(dragData.component)) {
+      if (dragData.id === id && primitive.canAcceptChild()) {
         overrides = dragOverOutlineStyle;
       }
     }

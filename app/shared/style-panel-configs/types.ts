@@ -7,7 +7,7 @@ type BaseStyleConfig = {
 };
 
 export type UiType =
-  | "SpacingWidget"
+  | "Spacing"
   | "Select"
   | "ToggleGroup"
   | "TextFieldWithAutocomplete"

@@ -88,7 +88,7 @@ type UseToolbarProps<Item> = {
   onInsert: (insert: { type: Value; text: string }) => void;
 };
 
-export const useToolbar = <Item extends unknown>({
+export const useToolbar = <Item extends Record<string, unknown>>({
   editable,
   onInsert,
 }: UseToolbarProps<Item>) => {

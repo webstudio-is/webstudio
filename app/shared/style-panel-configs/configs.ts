@@ -26,7 +26,7 @@ const getUiType = (property: StyleProperty): UiType => {
   const spacing = categories.spacing
     .properties as unknown as Array<StyleProperty>;
   if (spacing.includes(property)) {
-    return "SpacingWidget";
+    return "Spacing";
   }
 
   return "TextFieldWithAutocomplete";

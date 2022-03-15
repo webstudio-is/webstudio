@@ -17,7 +17,9 @@ type Data = {
   project: Project;
 };
 
-export default () => {
+const DesignerRoute = () => {
   const { config, project } = useLoaderData<Data>();
   return <Designer config={config} project={project} />;
 };
+
+export default DesignerRoute;

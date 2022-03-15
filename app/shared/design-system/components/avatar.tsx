@@ -20,7 +20,7 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
   margin: "0",
   outline: "none",
   padding: "0",
-  fontWeight: "500" as any,
+  fontWeight: "500",
   color: "$hiContrast",
 
   "&::before": {
@@ -299,3 +299,5 @@ export const Avatar = React.forwardRef<
     );
   }
 );
+
+Avatar.displayName = "Avatar";

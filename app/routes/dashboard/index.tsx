@@ -25,12 +25,14 @@ export const action: ActionFunction = async ({ request }) => {
   return data;
 };
 
-export const loader: LoaderFunction = async (request) => {
+export const loader: LoaderFunction = async () => {
   const projects = await db.project.loadAll();
   return { config, projects };
 };
 
-export default () => {
+const DashboardRoute = () => {
   const { config, projects } = useLoaderData();
   return <Dashboard config={config} projects={projects} />;
 };
+
+export default DashboardRoute;

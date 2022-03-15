@@ -64,6 +64,7 @@ export const ContextMenuRadioItem = React.forwardRef<
     {children}
   </StyledContextMenuRadioItem>
 ));
+ContextMenuRadioItem.displayName = "ContextMenuRadioItem";
 
 const StyledContextMenuCheckboxItem = styled(
   ContextMenuPrimitive.CheckboxItem,
@@ -90,6 +91,8 @@ export const ContextMenuCheckboxItem = React.forwardRef<
     {children}
   </StyledContextMenuCheckboxItem>
 ));
+
+ContextMenuCheckboxItem.displayName = "ContextMenuCheckboxItem";
 
 export const ContextMenuLabel = styled(ContextMenuPrimitive.Label, labelCss);
 export const ContextMenuRadioGroup = styled(

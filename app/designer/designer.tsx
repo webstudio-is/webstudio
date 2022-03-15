@@ -38,8 +38,6 @@ const useSubscribeRootInstance = () => {
 
 type SidePanelProps = {
   children: JSX.Element;
-  width?: number;
-  minWidth?: number;
   isPreviewMode: boolean;
   css?: CSS;
   gridArea: "inspector" | "sidebar";
@@ -47,8 +45,6 @@ type SidePanelProps = {
 
 const SidePanel = ({
   children,
-  width,
-  minWidth,
   isPreviewMode,
   gridArea,
   css,

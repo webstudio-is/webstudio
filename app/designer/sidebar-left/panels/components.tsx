@@ -29,12 +29,11 @@ const Component = ({
   onClick,
 }: ComponentProps) => {
   const lastIsDragging = useRef<boolean | void>();
-  const [{ isDragging, handlerId }, dragRef] = useDrag(
+  const [{ isDragging }, dragRef] = useDrag(
     () => ({
       type: component,
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
-        handlerId: monitor.getHandlerId(),
       }),
     }),
     []
@@ -81,7 +80,6 @@ type ComponentsProps = {
 
 export const TabContent = ({
   onDragChange,
-  iframeRef,
   publish,
   onSetActiveTab,
 }: ComponentsProps) => {

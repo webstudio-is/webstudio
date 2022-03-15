@@ -1,13 +1,13 @@
 import { Links, LiveReload, Meta, Outlet, Scripts } from "remix";
 import type { MetaFunction } from "remix";
 import { CriticalCss } from "@webstudio-is/sdk";
-import { darkTheme, getCssText } from "~/shared/design-system";
+import { darkTheme } from "~/shared/design-system";
 
 export const meta: MetaFunction = () => {
   return { title: "Webstudio" };
 };
 
-export default () => {
+const RootDesignerRoute = () => {
   return (
     <html lang="en">
       <head>
@@ -25,3 +25,5 @@ export default () => {
     </html>
   );
 };
+
+export default RootDesignerRoute;

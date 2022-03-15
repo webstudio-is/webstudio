@@ -5,10 +5,12 @@ import { loader, type ErrorData } from "../canvas/$projectId";
 
 export { loader };
 
-export default function Preview() {
+const PreviewRoute = () => {
   const data = useLoaderData<Data | ErrorData>();
   if ("errors" in data) {
     return <p>{data.errors}</p>;
   }
   return <Root data={data} />;
-}
+};
+
+export default PreviewRoute;

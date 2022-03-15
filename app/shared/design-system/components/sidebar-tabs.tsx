@@ -63,6 +63,8 @@ export const SidebarTabsList = React.forwardRef<
   </>
 ));
 
+SidebarTabsList.displayName = "SidebarTabsList";
+
 export const SidebarTabsContent = styled(TabsPrimitive.Content, {
   flexGrow: 1,
   position: "absolute",

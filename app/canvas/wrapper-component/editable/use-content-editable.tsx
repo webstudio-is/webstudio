@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import useDebounce from "react-use/lib/useDebounce";
 import ObjectId from "bson-objectid";
@@ -7,7 +7,7 @@ import { type OnChangeChildren } from "~/shared/tree-utils";
 import { primitives } from "~/shared/component";
 import { useSelectedInstance } from "~/canvas/nano-values";
 import { useEditable, type Content } from "./use-editable";
-import { useToolbar, type Value as ToolbarValue } from "./use-toolbar";
+import { useToolbar } from "./use-toolbar";
 
 type ContentItem = {
   textContent: Node["textContent"];
@@ -17,7 +17,7 @@ type EditableContent = Content<ContentItem>;
 
 // Converting DOM to a data structure
 const serialize = (element: HTMLElement): EditableContent => {
-  const queue: Node[] = [element.firstChild!];
+  const queue: Node[] = element.firstChild ? [element.firstChild] : [];
   const items: Array<ContentItem> = [];
   let node: Node | undefined;
   while ((node = queue.pop())) {
@@ -155,7 +155,7 @@ export const useContentEditable = ({
   const toggleDisable = (nextIsDisabled: boolean) => {
     if (isContentEditable !== false && isDisabled !== nextIsDisabled) {
       if (nextIsDisabled === false) {
-        innerHtmlRef.current = { __html: ref.current!.innerHTML };
+        innerHtmlRef.current = { __html: ref.current?.innerHTML || "" };
       } else {
         innerHtmlRef.current = undefined;
       }

@@ -71,6 +71,7 @@ export const DialogContent = React.forwardRef<
     </StyledCloseButton>
   </StyledContent>
 ));
+DialogContent.displayName = "DialogContent";
 
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;

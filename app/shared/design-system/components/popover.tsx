@@ -48,6 +48,6 @@ export const PopoverContent = React.forwardRef<
     )}
   </StyledContent>
 ));
-
+PopoverContent.displayName = "PopoverContent";
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverClose = PopoverPrimitive.Close;

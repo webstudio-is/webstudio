@@ -12,7 +12,7 @@ type ParagraphVariants = { size?: ParagraphSizeVariants } & Omit<
   "size"
 >;
 type ParagraphProps = React.ComponentProps<typeof DEFAULT_TAG> &
-  ParagraphVariants & { css?: CSS; as?: any };
+  ParagraphVariants & { css?: CSS; as?: string };
 
 export const Paragraph = React.forwardRef<
   React.ElementRef<typeof DEFAULT_TAG>,
@@ -48,3 +48,5 @@ export const Paragraph = React.forwardRef<
     />
   );
 });
+
+Paragraph.displayName = "Paragraph";

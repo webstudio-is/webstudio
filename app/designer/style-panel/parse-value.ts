@@ -8,16 +8,13 @@ const isValid = (property: string, value: string): boolean => {
   // Only browsers with houdini api will provide validation for now
   // @todo add a polyfill maybe
   if (
-    // @ts-ignore TS types don't have this interface yet
     typeof CSSStyleValue === "undefined" ||
-    // @ts-ignore TS types don't have this interface yet
     typeof CSSStyleValue.parse === "undefined"
   ) {
     return true;
   }
 
   try {
-    // @ts-ignore TS types don't have this interface yet
     CSSStyleValue.parse(hyphenate(property), value);
   } catch (error) {
     return false;

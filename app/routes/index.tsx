@@ -31,7 +31,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   return redirect(config.dashboardPath);
 };
 
-export default () => {
+const Index = () => {
   const data = useLoaderData();
   if (data.errors) {
     return <p>{data.errors}</p>;
@@ -43,3 +43,5 @@ export default () => {
   }
   return null;
 };
+
+export default Index;

@@ -78,6 +78,8 @@ export const TabsList = React.forwardRef<
   </>
 ));
 
+TabsList.displayName = "TabsList";
+
 export const TabsContent = styled(TabsPrimitive.Content, {
   flexGrow: 1,
   "&:focus": {

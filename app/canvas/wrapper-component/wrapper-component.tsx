@@ -70,7 +70,6 @@ export const WrapperComponentDev = ({
         data-component={component}
         data-label={primitives[component].label}
         data-id={id}
-        children={renderWrapperComponentChildren(contentEditableProps.children)}
         ref={refCallback}
         onClick={(event: MouseEvent) => {
           if (component === "Link") {
@@ -86,7 +85,9 @@ export const WrapperComponentDev = ({
           // Prevent submitting the form when clicking a button type submit
           event.preventDefault();
         }}
-      />
+      >
+        {renderWrapperComponentChildren(contentEditableProps.children)}
+      </Component>
     </>
   );
 };

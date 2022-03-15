@@ -14,7 +14,7 @@ type Vector = {
 };
 
 type ScrollAreaProps = {
-  children: any;
+  children: JSX.Element;
 };
 
 export const ScrollArea = (props: ScrollAreaProps) => {
@@ -105,7 +105,7 @@ export const ScrollArea = (props: ScrollAreaProps) => {
     }
 
     /** Unwires the mouse listeners and pops the dragging class off the wrapper */
-    function onDragEnd(e: MouseEvent) {
+    function onDragEnd() {
       if (contentEl && thumbEl && wrapperEl) {
         // Add the dragging class to keep the thumb visible
         wrapperEl.classList.remove("is-dragging");
