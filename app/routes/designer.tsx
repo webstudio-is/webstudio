@@ -8,7 +8,7 @@ export const meta: MetaFunction = () => {
 };
 
 export default () => {
-  const root = (
+  return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
@@ -24,6 +24,4 @@ export default () => {
       </body>
     </html>
   );
-
-  return root;
 };
