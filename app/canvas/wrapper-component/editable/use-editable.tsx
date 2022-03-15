@@ -480,8 +480,8 @@ export const useEditable = <Item extends Record<string, unknown>>(
     };
 
     const onPaste = (event: HTMLElementEventMap["paste"]) => {
-      event.preventDefault();
-      trackState(true);
+      //event.preventDefault();
+      //trackState(true);
       edit.insert(event.clipboardData!.getData("text/plain"));
       //trackState(true);
       //flushChanges();
