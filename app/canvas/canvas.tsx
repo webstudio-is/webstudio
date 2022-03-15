@@ -1,11 +1,17 @@
 import { useCallback, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
-import { type ChildrenUpdates } from "@webstudio-is/sdk";
-import { type Instance, useAllUserProps } from "@webstudio-is/sdk";
+import {
+  type Instance,
+  type ChildrenUpdates,
+  type Data,
+  type Tree,
+  useAllUserProps,
+  WrapperComponent,
+  globalStyles,
+} from "@webstudio-is/sdk";
 import { publish, useSubscribe } from "./pubsub";
 import { createElementsTree, setInstanceChildren } from "~/shared/tree-utils";
-import { type Data, globalStyles, Root as CanvasRoot } from "@webstudio-is/sdk";
 import {
   useDragDropHandlers,
   useShortcuts,
@@ -65,14 +71,28 @@ const useIsPreviewMode = () => {
   return isPreviewMode;
 };
 
-export const Canvas = ({ data }: { data: Data }): JSX.Element => {
-  globalStyles();
-  const [allUserProps] = useAllUserProps(data.props);
-  const [rootInstance, setRootInstance] = usePopulateRootInstance(data.tree);
+const PreviewMode = ({ rootInstance }: { rootInstance: Instance }) => {
+  return createElementsTree({
+    instance: rootInstance,
+    Component: WrapperComponent,
+  });
+};
+
+type DesignModeProps = {
+  rootInstance: Instance;
+  treeId: Tree["id"];
+  setRootInstance: (instance: Instance) => void;
+};
+
+const DesignMode = ({
+  rootInstance,
+  treeId,
+  setRootInstance,
+}: DesignModeProps) => {
   const { instanceInsertionSpec, instanceReparentingSpec } =
     useDragDropHandlers({ rootInstance });
   useUpdateInstanceStyle({ rootInstance, setRootInstance });
-  usePublishSelectedInstance({ treeId: data.tree.id });
+  usePublishSelectedInstance({ treeId });
   useInsertInstance({ rootInstance, setRootInstance, instanceInsertionSpec });
   useReparentInstance({
     rootInstance,
@@ -84,32 +104,34 @@ export const Canvas = ({ data }: { data: Data }): JSX.Element => {
   useActiveElementTracking({ rootInstance });
   useShortcuts({ rootInstance });
 
-  // @todo no need to run any of this hooks in preview mode, need to find a better way to switch to preview
-  const isPreviewMode = useIsPreviewMode();
-
   const elements = useElementsTree(
     rootInstance,
     WrapperComponentDev,
     setRootInstance
   );
-
-  const props = useMemo(() => Object.values(allUserProps), [allUserProps]);
-
-  if (isPreviewMode) {
-    return (
-      <CanvasRoot
-        data={{
-          tree: { id: data.tree.id, root: rootInstance },
-          props,
-        }}
-      />
-    );
-  }
-
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       {elements}
     </DndProvider>
+  );
+};
+
+export const Canvas = ({ data }: { data: Data }): JSX.Element => {
+  globalStyles();
+  useAllUserProps(data.props);
+  const [rootInstance, setRootInstance] = usePopulateRootInstance(data.tree);
+  const isPreviewMode = useIsPreviewMode();
+
+  if (isPreviewMode) {
+    return <PreviewMode rootInstance={rootInstance} />;
+  }
+
+  return (
+    <DesignMode
+      rootInstance={rootInstance}
+      setRootInstance={setRootInstance}
+      treeId={data.tree.id}
+    />
   );
 };
