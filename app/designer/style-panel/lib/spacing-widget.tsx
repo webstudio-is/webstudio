@@ -99,16 +99,6 @@ const styles = {
   },
 };
 
-const cleanValueForCSS = (value: string) => {
-  const isNum = /^\d+$/.test(value);
-  const isOnlyText = /^[A-Za-z]+$/.test(value);
-
-  if (isNum) return `${value.toString()}px`;
-  if (isOnlyText) return "0px";
-
-  return value;
-};
-
 type SpacingWidgetProps = {
   setProperty: SetProperty;
   values: SpacingStyles;
@@ -125,7 +115,7 @@ export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
     value: string;
     property: StyleProperty;
   }) => {
-    setProperty(property)(cleanValueForCSS(value));
+    setProperty(property)(value);
   };
 
   return (
