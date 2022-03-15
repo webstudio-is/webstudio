@@ -29,7 +29,7 @@ const Content = ({ project }: PublishProps) => {
       return;
     }
     setUrl(`${location.protocol}//${domain}.${location.host}`);
-  }, [project.domain, fetcher.data?.domain]);
+  }, [domain]);
 
   return (
     <PopoverContent

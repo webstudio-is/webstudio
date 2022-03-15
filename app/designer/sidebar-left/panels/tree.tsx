@@ -70,7 +70,7 @@ const Tree = ({
       );
     }
     return children;
-  }, [instance, level, isOpen, selectedInstanceId]);
+  }, [instance, level, isOpen, selectedInstanceId, onSelect, showChildren]);
 
   const { Icon, label } = primitives[instance.component];
 

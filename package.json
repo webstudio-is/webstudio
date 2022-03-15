@@ -7,7 +7,7 @@
     "dev": "node -r dotenv/config node_modules/.bin/remix dev",
     "postinstall": "remix setup node",
     "typecheck": "tsc -b",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest"
   },
   "dependencies": {
@@ -92,6 +92,7 @@
     "esbuild-node-loader": "^0.8.0",
     "eslint": "^8.11.0",
     "eslint-plugin-react": "^7.29.4",
+    "eslint-plugin-react-hooks": "^4.3.0",
     "jest": "^27.5.1",
     "typescript": "^4.1.2"
   },

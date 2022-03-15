@@ -64,7 +64,7 @@ export const useActiveElementTracking = ({
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("click", handleClick);
     };
-  }, [rootInstance]);
+  }, [rootInstance, setSelectedElement, setSelectedInstance]);
 
   return selectedInstance;
 };

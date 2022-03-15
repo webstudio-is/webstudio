@@ -48,7 +48,7 @@ const useElementsTree = (
         payload: change,
       });
     },
-    [rootInstance]
+    [rootInstance, setRootInstance]
   );
 
   return useMemo(
@@ -58,7 +58,7 @@ const useElementsTree = (
         Component,
         onChangeChildren,
       }),
-    [rootInstance]
+    [rootInstance, onChangeChildren, Component]
   );
 };
 

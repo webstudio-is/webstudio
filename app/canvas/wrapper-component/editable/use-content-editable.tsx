@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import useDebounce from "react-use/lib/useDebounce";
 import ObjectId from "bson-objectid";
@@ -152,16 +152,19 @@ export const useContentEditable = ({
     [contentChanged]
   );
 
-  const toggleDisable = (nextIsDisabled: boolean) => {
-    if (isContentEditable !== false && isDisabled !== nextIsDisabled) {
-      if (nextIsDisabled === false) {
-        innerHtmlRef.current = { __html: ref.current?.innerHTML || "" };
-      } else {
-        innerHtmlRef.current = undefined;
+  const toggleDisable = useCallback(
+    (nextIsDisabled: boolean) => {
+      if (isContentEditable !== false && isDisabled !== nextIsDisabled) {
+        if (nextIsDisabled === false) {
+          innerHtmlRef.current = { __html: ref.current?.innerHTML || "" };
+        } else {
+          innerHtmlRef.current = undefined;
+        }
+        setIsDisabled(nextIsDisabled);
       }
-      setIsDisabled(nextIsDisabled);
-    }
-  };
+    },
+    [isContentEditable, isDisabled]
+  );
 
   const editable = useEditable<ContentItem>(ref, handleChangeContent, {
     disabled: isDisabled,
@@ -195,7 +198,7 @@ export const useContentEditable = ({
     if (selectedInstance?.id !== id) {
       toggleDisable(true);
     }
-  }, [selectedInstance]);
+  }, [selectedInstance, id, toggleDisable]);
 
   const toolbar = useToolbar({
     editable: isContentEditable && isDisabled === false ? editable : undefined,

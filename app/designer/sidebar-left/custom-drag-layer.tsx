@@ -43,7 +43,7 @@ export const CustomDragLayer = ({ onDrag }: CustomDragLayerProps) => {
       currentOffset,
       component: itemType,
     });
-  }, [clientOffset, initialOffset, itemType]);
+  }, [clientOffset, initialOffset, itemType, onDrag]);
 
   if (isDragging === false) return null;
 

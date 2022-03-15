@@ -47,11 +47,14 @@ export const WrapperComponentDev = ({
     isDisabled: isContentEditableDisabled === false,
   });
 
-  const refCallback = useCallback((element) => {
-    contentEditableRef.current = element;
-    // We can't drag if we are editing text.
-    dragRefCallback(element);
-  }, []);
+  const refCallback = useCallback(
+    (element) => {
+      contentEditableRef.current = element;
+      // We can't drag if we are editing text.
+      dragRefCallback(element);
+    },
+    [contentEditableRef, dragRefCallback]
+  );
 
   const userProps = useUserProps(id);
 

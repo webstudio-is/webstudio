@@ -42,7 +42,7 @@ const Component = ({
   useEffect(() => {
     if (lastIsDragging.current !== undefined) onDragChange(isDragging);
     lastIsDragging.current = isDragging;
-  }, [isDragging]);
+  }, [isDragging, onDragChange]);
 
   return (
     <Flex

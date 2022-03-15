@@ -46,7 +46,12 @@ export const useInsertInstance = ({
     if (insertedInstance !== undefined) {
       setSelectedInstance(insertedInstance);
     }
-  }, [instanceInsertionSpec, rootInstance]);
+  }, [
+    instanceInsertionSpec,
+    rootInstance,
+    setRootInstance,
+    setSelectedInstance,
+  ]);
 };
 
 export const useReparentInstance = ({
@@ -65,7 +70,7 @@ export const useReparentInstance = ({
       instanceReparentingSpec
     );
     setRootInstance(updatedRootInstance);
-  }, [instanceReparentingSpec, rootInstance]);
+  }, [instanceReparentingSpec, rootInstance, setRootInstance]);
 };
 
 export const useDeleteInstance = ({

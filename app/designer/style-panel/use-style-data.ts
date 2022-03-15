@@ -31,7 +31,7 @@ export const useStyleData = ({
       return;
     }
     return getInheritedStyle(rootInstance, selectedInstanceData.id);
-  }, [currentStyle]);
+  }, [currentStyle, selectedInstanceData, rootInstance]);
 
   useEffect(() => {
     setCurrentStyle({

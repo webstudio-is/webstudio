@@ -44,7 +44,7 @@ export const usePublishSelectedInstance = ({
       type: "selectInstance",
       payload,
     });
-  }, [instance, selectedElement]);
+  }, [instance, selectedElement, allUserProps, treeId]);
 };
 
 export const usePublishRootInstance = (instance: Instance) => {

@@ -62,7 +62,7 @@ export const useDraggable = ({ id, component, isDisabled }: UseDraggable) => {
         event.stopPropagation();
       }
     },
-    [isDisabled, id]
+    [isDisabled]
   );
 
   return { dragRefCallback, onMouseDownCapture: handleMouseDown };

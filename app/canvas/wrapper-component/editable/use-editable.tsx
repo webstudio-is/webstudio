@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-non-null-assertion, react-hooks/exhaustive-deps, react-hooks/rules-of-hooks */
 // Copied from https://github.com/FormidableLabs/use-editable
 // @todo create an issue there and if they agree - contribute
 // @todo had too many bugs and had to resort to an uncontrolled mode over innerHTML. It totally defeats the idea behind this code

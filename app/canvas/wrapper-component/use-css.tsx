@@ -72,5 +72,5 @@ export const useCss = ({ id, component, css }: UseCssProps): string => {
     }
 
     return createCss(css)({ css: overrides });
-  }, [dragData, selectedInstance, css]);
+  }, [dragData, selectedInstance, css, component, id]);
 };

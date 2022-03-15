@@ -38,11 +38,12 @@ export const usePropsLogic = ({
         ? initialUserProps
         : selectedInstanceData.props.props;
     setUserProps(props);
-  }, [selectedInstanceData?.props]);
+  }, [selectedInstanceData]);
 
+  // @todo this may call the last callback after unmount
+  // use useDebounce
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const updateProps = useCallback(
-    // @todo this may call the last callback after unmount
-    // use useDebounce
     debounce((updates: UserPropsUpdates["updates"]) => {
       if (selectedInstanceData === undefined) {
         return;
