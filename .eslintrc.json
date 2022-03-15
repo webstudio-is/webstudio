@@ -26,6 +26,7 @@
       "error",
       { "argsIgnorePattern": "^_" }
     ],
-    "react/react-in-jsx-scope": 0
+    "react/react-in-jsx-scope": 0,
+    "func-style": ["error", "expression", { "allowArrowFunctions": true }]
   }
 }

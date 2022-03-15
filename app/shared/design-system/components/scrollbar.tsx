@@ -44,7 +44,7 @@ export const ScrollArea = (props: ScrollAreaProps) => {
     let visibleToTotalRatio = 0;
 
     /** Keeps the thumb the right size and in the right position */
-    function updateThumb() {
+    const updateThumb = () => {
       if (contentEl && thumbEl && wrapperEl) {
         // Update our cached values:
         totalHeight = contentEl.scrollHeight;
@@ -67,10 +67,10 @@ export const ScrollArea = (props: ScrollAreaProps) => {
 
       // Keep the updates coming:
       frameUpdateRef.current = requestAnimationFrame(updateThumb);
-    }
+    };
 
     /** Caches a starting mouse position, wires up listeners for drag */
-    function onDragStart(e: MouseEvent) {
+    const onDragStart = (e: MouseEvent) => {
       if (contentEl && thumbEl && wrapperEl) {
         // Prevent default text selection
         e.preventDefault();
@@ -86,10 +86,10 @@ export const ScrollArea = (props: ScrollAreaProps) => {
         // Disable pointer events so element hovers aren't visible while dragging
         document.body.style.pointerEvents = "none";
       }
-    }
+    };
 
     /** Calculates the mouse move to scroll amount and applies it */
-    function onDragMove(e: MouseEvent) {
+    const onDragMove = (e: MouseEvent) => {
       if (contentEl && thumbEl && wrapperEl) {
         // How much did we move?
         const delta: Vector = {
@@ -102,10 +102,10 @@ export const ScrollArea = (props: ScrollAreaProps) => {
         // Update the scroll position of the content, amplifying the mouse movement by the amount of content hidden:
         contentEl.scrollTop -= Math.round(delta.dy / visibleToTotalRatio);
       }
-    }
+    };
 
     /** Unwires the mouse listeners and pops the dragging class off the wrapper */
-    function onDragEnd() {
+    const onDragEnd = () => {
       if (contentEl && thumbEl && wrapperEl) {
         // Add the dragging class to keep the thumb visible
         wrapperEl.classList.remove("is-dragging");
@@ -115,7 +115,7 @@ export const ScrollArea = (props: ScrollAreaProps) => {
         // Restore body pointer events style
         document.body.style.pointerEvents = originalBodyPointerEvents.current;
       }
-    }
+    };
 
     // Listen for mousedown on the thumb:
     thumbRef.current?.addEventListener("mousedown", onDragStart);
