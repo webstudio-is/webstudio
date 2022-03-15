@@ -3,6 +3,7 @@ import {
   useRef,
   MutableRefObject,
   type MouseEventHandler,
+  useCallback,
 } from "react";
 import { useDrag } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
@@ -86,6 +87,17 @@ export const TabContent = ({
   const components = (
     Object.keys(primitives) as Array<Instance["component"]>
   ).filter((component) => primitives[component].isInlineOnly === false);
+
+  const handleDragChange = useCallback(
+    (isDragging: boolean) => {
+      onDragChange(isDragging);
+      publish<"dragStartComponent" | "dragEndComponent">({
+        type: isDragging === true ? "dragStartComponent" : "dragEndComponent",
+      });
+    },
+    [onDragChange, publish]
+  );
+
   return (
     <Flex gap="1" wrap="wrap" css={{ padding: "$1" }}>
       {components.map((component: Instance["component"]) => (
@@ -101,13 +113,7 @@ export const TabContent = ({
               payload: { component },
             });
           }}
-          onDragChange={(isDragging: boolean) => {
-            onDragChange(isDragging);
-            publish<"dragStartComponent" | "dragEndComponent">({
-              type:
-                isDragging === true ? "dragStartComponent" : "dragEndComponent",
-            });
-          }}
+          onDragChange={handleDragChange}
         />
       ))}
       <CustomDragLayer

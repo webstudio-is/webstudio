@@ -1,4 +1,4 @@
-import { useState, MutableRefObject } from "react";
+import { useState, MutableRefObject, useCallback } from "react";
 import {
   Box,
   SidebarTabs,
@@ -45,6 +45,17 @@ export const SidebarLeft = ({
     setActiveTab("none");
   });
 
+  const handleDragChange = useCallback(
+    (isDragging: boolean) => {
+      // After dragging is done, container is going to become visible
+      // and we need to close it for good.
+      if (isDragging === false) setActiveTab("none");
+      setIsDragging(isDragging);
+      onDragChange(isDragging);
+    },
+    [onDragChange]
+  );
+
   return (
     <Box css={{ position: "relative" }}>
       <SidebarTabs activationMode="manual" value={activeTab}>
@@ -77,13 +88,7 @@ export const SidebarLeft = ({
             publish={publish}
             iframeRef={iframeRef}
             onSetActiveTab={setActiveTab}
-            onDragChange={(isDragging: boolean) => {
-              // After dragging is done, container is going to become visible
-              // and we need to close it for good.
-              if (isDragging === false) setActiveTab("none");
-              setIsDragging(isDragging);
-              onDragChange(isDragging);
-            }}
+            onDragChange={handleDragChange}
           />
         </SidebarTabsContent>
       </SidebarTabs>
