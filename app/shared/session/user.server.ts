@@ -18,6 +18,6 @@ export const ensureUserCookie = async (
     headers: {
       "Set-Cookie": await userIdParser.serialize(generatedUserId),
     },
-    userId,
+    userId: userId || generatedUserId,
   };
 };
