@@ -1,8 +1,7 @@
 import { useMemo } from "react";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance, css as createCss, type CSS } from "@webstudio-is/sdk";
 import { useDragData, useSelectedInstance } from "~/canvas/nano-values";
 import { primitives } from "~/shared/component";
-import { css as createCss, type CSS } from "~/shared/design-system";
 
 // @todo this doesn't work with the node at the top edge of the iframe, tag gets hidden.
 const componentTagStyle = {
