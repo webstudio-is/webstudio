@@ -35,7 +35,7 @@ export const Menu = ({ config }: MenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <IconButton>
+        <IconButton aria-label="Menu Button">
           <HamburgerMenuIcon />
         </IconButton>
       </DropdownMenuTrigger>
