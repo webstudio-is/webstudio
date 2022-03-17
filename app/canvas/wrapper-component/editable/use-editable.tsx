@@ -479,13 +479,13 @@ export const useEditable = <Item extends Record<string, unknown>>(
           : null;
     };
 
-    const onPaste = (event: HTMLElementEventMap["paste"]) => {
-      //event.preventDefault();
-      //trackState(true);
-      //edit.insert(event.clipboardData!.getData("text/plain"));
-      //trackState(true);
-      //flushChanges();
-    };
+    //const onPaste = (event: HTMLElementEventMap["paste"]) => {
+    //event.preventDefault();
+    //trackState(true);
+    //edit.insert(event.clipboardData!.getData("text/plain"));
+    //trackState(true);
+    //flushChanges();
+    //};
 
     //document.addEventListener("selectstart", onSelect);
     //window.addEventListener("keydown", onKeyDown);
@@ -495,7 +495,7 @@ export const useEditable = <Item extends Record<string, unknown>>(
     return () => {
       document.removeEventListener("selectstart", onSelect);
       window.removeEventListener("keydown", onKeyDown);
-      element.removeEventListener("paste", onPaste);
+      //element.removeEventListener("paste", onPaste);
       element.removeEventListener("keyup", onKeyUp);
       element.style.whiteSpace = prevWhiteSpace;
       element.contentEditable = prevContentEditable;

@@ -54,7 +54,7 @@ const useElementsTree = (
       Component,
       onChangeChildren,
     });
-  }, [rootInstance, Component]);
+  }, [rootInstance, Component, setRootInstance]);
 };
 
 const useIsPreviewMode = () => {
