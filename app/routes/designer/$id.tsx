@@ -9,6 +9,9 @@ export { links };
 export const loader: LoaderFunction = async ({ params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
   const project = await db.project.loadById(params.id);
+  if (project === null) {
+    return { errors: `Project "${params.id}" not found` };
+  }
   return { config, project };
 };
 
@@ -17,9 +20,16 @@ type Data = {
   project: Project;
 };
 
+type Error = {
+  errors: "string";
+};
+
 const DesignerRoute = () => {
-  const { config, project } = useLoaderData<Data>();
-  return <Designer config={config} project={project} />;
+  const data = useLoaderData<Data | Error>();
+  if ("errors" in data) {
+    return <p>{data.errors}</p>;
+  }
+  return <Designer {...data} />;
 };
 
 export default DesignerRoute;
