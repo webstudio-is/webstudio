@@ -12,8 +12,6 @@ Webstudio Designer is a NoCode Visual Tool inspired by Webflow. It is the place 
 6. Run `yarn`
 7. Run `yarn dev` - local URL will be logged
 
-To create a new site or open an existing one go to dashboard at `<url>/dashboard`.
-
 ## Deployment to Vercel
 
 1. [import your Git repository](https://vercel.com/new) into Vercel, and it will be deployed.
