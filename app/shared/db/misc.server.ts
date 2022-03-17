@@ -24,7 +24,7 @@ export const publish = async ({
   }
 
   const tree = await db.tree.clone(project.devTreeId);
-  await db.props.publish({
+  await db.props.clone({
     previousTreeId: project.devTreeId,
     nextTreeId: tree.id,
   });

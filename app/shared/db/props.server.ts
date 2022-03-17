@@ -107,7 +107,7 @@ export const deleteProps = async ({
   }
 };
 
-export const publish = async ({
+export const clone = async ({
   previousTreeId,
   nextTreeId,
 }: {
