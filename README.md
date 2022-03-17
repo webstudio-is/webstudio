@@ -4,13 +4,13 @@ Webstudio Designer is a NoCode Visual Tool inspired by Webflow. It is the place 
 
 ## Installation
 
-1. Install [Node.js](https://nodejs.org/)
-2. Install [Yarn](https://yarnpkg.com/)
+1. Install [Node.js](https://nodejs.dev/learn/how-to-install-nodejs)
+2. Install [Yarn](https://yarnpkg.com/) `npm i -g yarn`
 3. Install [MongoDB](https://www.mongodb.com/) or use [Atlas](https://www.mongodb.com/atlas/database) (recommended)
-4. Clone this repository
-5. Add a database URL to the env variables by creating an .env file in the root and adding there `DATABASE_URL="mongodb+srv://user:password@host"`
+4. Clone this repository `git clone git@github.com:webstudio-is/webstudio-designer.git`
+5. Connect to the [database](https://www.prisma.io/docs/getting-started/setup-prisma/start-from-scratch/mongodb/connect-your-database-typescript-mongodb): add a database URL to the env variables by creating an .env file in the root of the project and adding there `DATABASE_URL="mongodb+srv://user:password@host"`
 6. Run `yarn`
-7. Run `yarn dev` - local URL will be logged
+7. Run `yarn dev` - URL will be logged
 
 ## Deployment to Vercel
 
