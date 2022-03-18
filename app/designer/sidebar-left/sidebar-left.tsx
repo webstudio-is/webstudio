@@ -80,6 +80,7 @@ export const SidebarLeft = ({
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility: isDragging ? "hidden" : "visible",
+            overflow: "auto",
           }}
         >
           <TabContent
