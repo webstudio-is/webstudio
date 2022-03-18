@@ -1,46 +1,53 @@
 import { redirect, useLoaderData } from "remix";
 import { type LoaderFunction } from "remix";
-import type { Tree } from "@webstudio-is/sdk";
+import { Document, Root, type Data } from "@webstudio-is/sdk";
 import config from "~/config";
 import * as preview from "./preview/$projectId";
 import * as db from "~/shared/db";
 
 // @todo all this subdomain logic is very hacky
 
-type LoaderData = { tree: Tree | null; errors?: string };
+type Error = { errors: string };
 
 export const loader: LoaderFunction = async ({ request }) => {
   const host =
     request.headers.get("x-forwarded-host") ||
     request.headers.get("host") ||
     "";
-  const [subdomain, domain] = host.split(".");
+  const [userDomain, designerDomain] = host.split(".");
   // We render the site from a subdomain
-  if (subdomain !== "www" && domain !== undefined) {
-    const data = {} as LoaderData;
+  if (typeof userDomain === "string" && typeof designerDomain === "string") {
     try {
-      data.tree = await db.tree.loadByDomain(subdomain);
+      const tree = await db.tree.loadByDomain(userDomain);
+      const props = await db.props.loadByTreeId(tree.id);
+      return { tree, props };
     } catch (error) {
       if (error instanceof Error) {
-        data.errors = error.message;
+        return { errors: error.message };
       }
     }
-    return data;
   }
 
   return redirect(config.dashboardPath);
 };
 
 const Index = () => {
-  const data = useLoaderData();
-  if (data.errors) {
+  const data = useLoaderData<Data | Error>();
+  if ("errors" in data) {
     return <p>{data.errors}</p>;
   }
 
   // We render the site from a subdomain
-  if (data.tree) {
-    return preview.default();
+  if (data.tree && data.props) {
+    const Outlet = () => <Root data={data} />;
+
+    // @todo This is non-standard for Remix, is there a better way?
+    // We need to render essentially the preview route but from the index,
+    // so we have to know the layout and the outlet from here.
+    // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
+    return <Document Outlet={Outlet} />;
   }
+
   return null;
 };
 

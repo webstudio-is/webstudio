@@ -22,6 +22,10 @@ export const loadByProject = async (
     throw new Error("Site needs to be published, production tree ID is null.");
   }
 
+  return loadByTreeId(treeId);
+};
+
+export const loadByTreeId = async (treeId: Tree["id"]) => {
   return await prisma.instanceProps.findMany({
     where: { treeId },
   });
