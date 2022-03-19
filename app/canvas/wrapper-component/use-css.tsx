@@ -23,15 +23,19 @@ const componentTagStyle = {
 };
 
 const hoverOutlineStyle = {
-  outline: "1px solid $blue10",
-  outlineOffset: -1,
-  ...componentTagStyle,
+  "&:hover": {
+    outline: "1px solid $blue10",
+    outlineOffset: -1,
+    ...componentTagStyle,
+  },
 };
 
-const defaultOutlineStyle = {
-  outline: "1px dashed #555",
-  outlineOffset: -1,
-  "&:hover": hoverOutlineStyle,
+const emptyOutlineStyle = {
+  "&:empty": {
+    outline: "1px dashed #555",
+    outlineOffset: -1,
+  },
+  ...hoverOutlineStyle,
 };
 
 const selectedOutlineStyle = {
@@ -57,14 +61,17 @@ export const useCss = ({ id, component, css }: UseCssProps): string => {
   const [selectedInstance] = useSelectedInstance();
 
   return useMemo(() => {
-    let overrides: CSS = defaultOutlineStyle;
+    const primitive = primitives[component];
+    let overrides: CSS = hoverOutlineStyle;
+    if (primitive.canAcceptChild()) {
+      overrides = emptyOutlineStyle;
+    }
 
     if (selectedInstance?.id === id) {
       overrides = selectedOutlineStyle;
     }
 
     if (dragData !== undefined) {
-      const primitive = primitives[component];
       if (dragData.id === id && primitive.canAcceptChild()) {
         overrides = dragOverOutlineStyle;
       }
