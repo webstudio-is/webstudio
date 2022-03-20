@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createValueContainer, useValue } from "react-nano-state";
 import { Flex, Text, Collapsible } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 
@@ -9,13 +9,28 @@ type CollapsibleSectionProps = {
   rightSlot?: JSX.Element;
 };
 
+const stateContainer = createValueContainer<{ [label: string]: boolean }>({});
+
+// Preserves the open/close state even when component gets unmounted
+const useOpenState = (
+  label: string,
+  initialValue: boolean
+): [boolean, (value: boolean) => void] => {
+  const [state, setState] = useValue(stateContainer);
+  const isOpen = label in state ? state[label] : initialValue;
+  const setIsOpen = (isOpen: boolean) => {
+    setState({ ...state, [label]: isOpen });
+  };
+  return [isOpen, setIsOpen];
+};
+
 export const CollapsibleSection = ({
   label,
   children,
   isOpen: isOpenDefault = false,
   rightSlot,
 }: CollapsibleSectionProps) => {
-  const [isOpen, setIsOpen] = useState(isOpenDefault);
+  const [isOpen, setIsOpen] = useOpenState(label, isOpenDefault);
   return (
     <Collapsible.Root onOpenChange={setIsOpen} defaultOpen={isOpen}>
       <Collapsible.Trigger asChild>
