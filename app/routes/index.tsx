@@ -2,7 +2,6 @@ import { redirect, useLoaderData } from "remix";
 import { type LoaderFunction } from "remix";
 import { Document, Root, type Data } from "@webstudio-is/sdk";
 import config from "~/config";
-import * as preview from "./preview/$projectId";
 import * as db from "~/shared/db";
 
 // @todo all this subdomain logic is very hacky
