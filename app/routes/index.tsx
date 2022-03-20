@@ -1,8 +1,8 @@
-import { redirect, useLoaderData } from "remix";
-import { type LoaderFunction } from "remix";
-import { Document, Root, type Data } from "@webstudio-is/sdk";
+import { redirect, useLoaderData, type LoaderFunction } from "remix";
+import { Root, type Data } from "@webstudio-is/sdk";
 import config from "~/config";
 import * as db from "~/shared/db";
+import Document from "./canvas";
 
 // @todo all this subdomain logic is very hacky
 
