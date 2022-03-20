@@ -125,6 +125,7 @@ export const clone = async ({
     ...rest,
     treeId: nextTreeId,
   }));
+  if (data.length === 0) return;
   await prisma.instanceProps.createMany({
     data,
   });
