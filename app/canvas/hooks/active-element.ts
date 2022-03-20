@@ -1,11 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { findInstanceById } from "~/shared/tree-utils";
 import { type Instance } from "@webstudio-is/sdk";
 import { useSelectedInstance, useSelectedElement } from "../nano-values";
 import { publish, useSubscribe } from "../pubsub";
 
 const eventOptions = {
-  capture: true,
   passive: true,
 };
 
@@ -31,10 +30,10 @@ export const useActiveElementTracking = ({
     }
     // Instance was added and we want to auto focus it now.
     document.getElementById(selectedInstance.id)?.focus();
-  }, [selectedInstance]);
+  }, [selectedInstance, selectedElement]);
 
-  useEffect(() => {
-    const select = (element: Element | null) => {
+  const select = useCallback(
+    (element: Element | null) => {
       if (element === null) return;
       const id = element?.id;
       if (!id) return;
@@ -43,8 +42,11 @@ export const useActiveElementTracking = ({
       if (instance === undefined) return;
       setSelectedInstance(instance);
       setSelectedElement(element);
-    };
+    },
+    [rootInstance, selectedElement, setSelectedElement, setSelectedInstance]
+  );
 
+  useEffect(() => {
     const handleFocus = () => {
       select(document.activeElement);
     };
@@ -63,7 +65,7 @@ export const useActiveElementTracking = ({
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("click", handleClick);
     };
-  }, [rootInstance, setSelectedElement, setSelectedInstance]);
+  }, [select]);
 
   return selectedInstance;
 };
