@@ -121,11 +121,11 @@ export const clone = async ({
   const props = await prisma.instanceProps.findMany({
     where: { treeId: previousTreeId },
   });
+  if (props.length === 0) return;
   const data = props.map(({ id: _id, treeId: _treeId, ...rest }) => ({
     ...rest,
     treeId: nextTreeId,
   }));
-  if (data.length === 0) return;
   await prisma.instanceProps.createMany({
     data,
   });
