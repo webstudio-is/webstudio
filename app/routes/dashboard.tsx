@@ -1,2 +1,1 @@
-export * from "./designer";
-export { default } from "./designer";
+export { meta, default } from "./designer";
