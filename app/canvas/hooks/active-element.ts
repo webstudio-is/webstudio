@@ -14,9 +14,8 @@ export const useActiveElementTracking = ({
 }: {
   rootInstance: Instance;
 }) => {
-  const focusedInstanceId = useRef<Instance["id"]>();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-  const [, setSelectedElement] = useSelectedElement();
+  const [selectedElement, setSelectedElement] = useSelectedElement();
 
   useSubscribe("focusElement", (id: Instance["id"]) => {
     document.getElementById(id)?.focus();
@@ -26,7 +25,7 @@ export const useActiveElementTracking = ({
     // Alredy focused over DOM event.
     if (
       selectedInstance === undefined ||
-      focusedInstanceId.current === selectedInstance.id
+      selectedElement?.id === selectedInstance.id
     ) {
       return;
     }
@@ -39,7 +38,7 @@ export const useActiveElementTracking = ({
       if (element === null) return;
       const id = element?.id;
       if (!id) return;
-      focusedInstanceId.current = id;
+      if (selectedElement?.id === id) return;
       const instance = findInstanceById(rootInstance, element.id);
       if (instance === undefined) return;
       setSelectedInstance(instance);
