@@ -11,6 +11,7 @@ import {
 } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import { primitives, type SelectedInstanceData } from "~/shared/component";
+import { getInstancePath } from "~/shared/tree-utils";
 import { type Publish } from "~/designer/iframe";
 
 const openKeyframes = keyframes({
@@ -36,6 +37,7 @@ const CollapsibleContent = styled(Collapsible.Content, {
 type TreeProps = {
   instance: Instance;
   selectedInstanceId?: Instance["id"];
+  selectedInstancePath: Array<Instance["id"]>;
   level?: number;
   onSelect: (instance: Instance) => void;
 };
@@ -45,8 +47,11 @@ const Tree = ({
   selectedInstanceId,
   level = 0,
   onSelect,
+  selectedInstancePath,
 }: TreeProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(
+    selectedInstancePath.includes(instance.id)
+  );
 
   // Text nodes have only one child which is a string.
   const showChildren =
@@ -63,6 +68,7 @@ const Tree = ({
         <Tree
           instance={child}
           selectedInstanceId={selectedInstanceId}
+          selectedInstancePath={selectedInstancePath}
           level={level + 1}
           key={child.id}
           onSelect={onSelect}
@@ -70,7 +76,15 @@ const Tree = ({
       );
     }
     return children;
-  }, [instance, level, isOpen, selectedInstanceId, onSelect, showChildren]);
+  }, [
+    instance,
+    level,
+    isOpen,
+    selectedInstanceId,
+    selectedInstancePath,
+    onSelect,
+    showChildren,
+  ]);
 
   const { Icon, label } = primitives[instance.component];
 
@@ -118,12 +132,23 @@ export const TabContent = ({
   publish,
   selectedInstanceData,
 }: TabContentProps) => {
+  const selectedInstancePath = useMemo(
+    () =>
+      selectedInstanceData !== undefined && rootInstance !== undefined
+        ? getInstancePath(rootInstance, selectedInstanceData.id).map(
+            ({ id }) => id
+          )
+        : [],
+    [selectedInstanceData, rootInstance]
+  );
+
   if (rootInstance === undefined) return null;
 
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
       <Tree
         instance={rootInstance}
+        selectedInstancePath={selectedInstancePath}
         selectedInstanceId={selectedInstanceData?.id}
         onSelect={(instance) => {
           publish<"focusElement", Instance["id"]>({

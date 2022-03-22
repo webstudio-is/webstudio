@@ -7,3 +7,4 @@ export { createElementsTree, type OnChangeChildren } from "@webstudio-is/sdk";
 export * from "./set-instance-style";
 export * from "./set-instance-children";
 export * from "./reparent-instance";
+export * from "./get-instance-path";
