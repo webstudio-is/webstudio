@@ -21,7 +21,7 @@ export const links = () => {
   ];
 };
 
-const useSelectedComponentConfig = (): SelectedInstanceData | undefined => {
+const useSelectedInstanceData = (): SelectedInstanceData | undefined => {
   const [selectedInstanceData, setSelectedInstanceData] =
     useState<SelectedInstanceData>();
   useSubscribe<"selectInstance", SelectedInstanceData>(
@@ -113,7 +113,7 @@ type DesignerProps = {
 
 export const Designer = ({ config, project }: DesignerProps) => {
   const [isDragging, setIsDragging] = useState<boolean>();
-  const selectedInstanceData = useSelectedComponentConfig();
+  const selectedInstanceData = useSelectedInstanceData();
   const [publish, iframeRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   useSync({ config, project });

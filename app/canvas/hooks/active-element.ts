@@ -17,7 +17,9 @@ export const useActiveElementTracking = ({
   const [selectedElement, setSelectedElement] = useSelectedElement();
 
   useSubscribe("focusElement", (id: Instance["id"]) => {
-    document.getElementById(id)?.focus();
+    const element = document.getElementById(id);
+    element?.focus();
+    select(element);
   });
 
   useEffect(() => {
