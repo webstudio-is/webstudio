@@ -26,3 +26,11 @@ vercel
 ```
 
 It is generally recommended to use a Git repository, because future commits will then automatically be deployed by Vercel, through its [Git Integration](https://vercel.com/docs/concepts/git).
+
+## Community
+
+[Twitter](https://twitter.com/webstudiois) 
+
+[Discussions](https://github.com/webstudio-is/webstudio/discussions)
+
+[Discord](https://discord.gg/Tfdr3u8x)
