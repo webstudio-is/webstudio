@@ -18,13 +18,13 @@ const iframeStyle = css({
   },
 });
 
-type IframeProps = {
+type CanvasIframeProps = {
   pointerEvents: "all" | "none";
   src: string;
   title: string;
 };
 
-export const Iframe = forwardRef<HTMLIFrameElement, IframeProps>(
+export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   ({ pointerEvents = "all", ...rest }, ref) => {
     return (
       <iframe {...rest} ref={ref} className={iframeStyle({ pointerEvents })} />
@@ -32,4 +32,4 @@ export const Iframe = forwardRef<HTMLIFrameElement, IframeProps>(
   }
 );
 
-Iframe.displayName = "Iframe";
+CanvasIframe.displayName = "CanvasIframe";

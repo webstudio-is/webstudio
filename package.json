@@ -8,7 +8,8 @@
     "postinstall": "remix setup node",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
-    "test": "jest"
+    "test": "jest",
+    "checks": "yarn lint && yarn typecheck && yarn test"
   },
   "dependencies": {
     "@radix-ui/colors": "^0.1.8",

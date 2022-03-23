@@ -6,7 +6,7 @@ import { Share } from "./share";
 import { Publish } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
-import { type Publish as PublishOnCanvas } from "~/designer/iframe";
+import { type Publish as PublishOnCanvas } from "~/designer/canvas-iframe";
 
 type TopbarProps = {
   config: Config;

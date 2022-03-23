@@ -1,6 +1,6 @@
 import { type UserProp } from "@webstudio-is/sdk";
 import { CollapsibleSection } from "~/designer/inspector";
-import type { Publish } from "~/designer/iframe";
+import type { Publish } from "~/designer/canvas-iframe";
 import { TextField, Flex, Button } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
 import type { SelectedInstanceData } from "~/shared/component";

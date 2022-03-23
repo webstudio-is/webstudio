@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import debounce from "lodash.debounce";
 import ObjectId from "bson-objectid";
 import type { DeleteProp, UserProp, UserPropsUpdates } from "@webstudio-is/sdk";
-import type { Publish } from "~/designer/iframe";
+import type { Publish } from "~/designer/canvas-iframe";
 import type { SelectedInstanceData } from "~/shared/component";
 
 const getInitialProp = () => ({

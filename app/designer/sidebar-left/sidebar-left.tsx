@@ -6,7 +6,7 @@ import {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "~/shared/design-system";
-import { useSubscribe, type Publish } from "~/designer/iframe";
+import { useSubscribe, type Publish } from "~/designer/canvas-iframe";
 import type { SelectedInstanceData } from "~/shared/component";
 import { useRootInstance } from "../nano-values";
 import * as panels from "./panels";

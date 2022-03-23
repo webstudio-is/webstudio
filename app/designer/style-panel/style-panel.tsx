@@ -1,4 +1,4 @@
-import type { Publish } from "~/designer/iframe";
+import type { Publish } from "~/designer/canvas-iframe";
 import { Box } from "~/shared/design-system";
 import type { SelectedInstanceData } from "~/shared/component";
 import { useStyleData } from "./use-style-data";

@@ -12,7 +12,7 @@ import type {
   InstanceReparentingSpec,
 } from "~/shared/tree-utils";
 import type { StyleUpdates } from "~/shared/component";
-import { useSubscribe } from "~/designer/iframe";
+import { useSubscribe } from "~/designer/canvas-iframe";
 import { enqueue } from "./queue";
 
 // @todo this entire queueing logic needs to be gone, it's a workaround,

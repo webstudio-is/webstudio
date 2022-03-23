@@ -7,7 +7,7 @@ import type { Project } from "@webstudio-is/sdk";
 import { Box, Grid, type CSS } from "~/shared/design-system";
 import { SidebarLeft } from "./sidebar-left";
 import { SidebarRight } from "./inspector";
-import { Iframe, useSubscribe, usePublish } from "./iframe";
+import { CanvasIframe, useSubscribe, usePublish } from "./canvas-iframe";
 import { useIsPreviewMode, useRootInstance } from "./nano-values";
 import { Topbar } from "./topbar";
 import designerStyles from "./designer.css";
@@ -135,7 +135,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
           project={project}
           publish={publish}
         />
-        <Iframe
+        <CanvasIframe
           ref={iframeRef}
           src={`${config.canvasPath}/${project.id}`}
           pointerEvents={isDragging ? "none" : "all"}

@@ -9,7 +9,7 @@ import {
 } from "~/shared/design-system";
 import { StylePanel } from "~/designer/style-panel";
 import { SettingsPanel } from "~/designer/settings-panel";
-import type { Publish } from "~/designer/iframe";
+import type { Publish } from "~/designer/canvas-iframe";
 import type { SelectedInstanceData } from "~/shared/component";
 import { BrushIcon, GearIcon } from "~/shared/icons";
 

@@ -12,7 +12,7 @@ import {
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import { primitives, type SelectedInstanceData } from "~/shared/component";
 import { getInstancePath } from "~/shared/tree-utils";
-import { type Publish } from "~/designer/iframe";
+import { type Publish } from "~/designer/canvas-iframe";
 
 const openKeyframes = keyframes({
   from: { height: 0 },
