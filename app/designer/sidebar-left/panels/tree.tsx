@@ -11,8 +11,9 @@ import {
 } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import { primitives, type SelectedInstanceData } from "~/shared/component";
-import { getInstancePath } from "~/shared/tree-utils";
 import { type Publish } from "~/designer/canvas-iframe";
+import { useSelectedInstancePath } from "~/designer/instance/use-selected-instance-path";
+import { useRootInstance } from "~/designer/nano-values";
 
 const openKeyframes = keyframes({
   from: { height: 0 },
@@ -37,7 +38,7 @@ const CollapsibleContent = styled(Collapsible.Content, {
 type TreeProps = {
   instance: Instance;
   selectedInstanceId?: Instance["id"];
-  selectedInstancePath: Array<Instance["id"]>;
+  selectedInstancePath: Array<Instance>;
   level?: number;
   onSelect: (instance: Instance) => void;
 };
@@ -49,9 +50,7 @@ const Tree = ({
   onSelect,
   selectedInstancePath,
 }: TreeProps) => {
-  const [isOpen, setIsOpen] = useState(
-    selectedInstancePath.includes(instance.id)
-  );
+  const [isOpen, setIsOpen] = useState(selectedInstancePath.includes(instance));
 
   // Text nodes have only one child which is a string.
   const showChildren =
@@ -122,25 +121,16 @@ const Tree = ({
 };
 
 type TabContentProps = {
-  rootInstance?: Instance;
   publish: Publish;
   selectedInstanceData?: SelectedInstanceData;
 };
 
 export const TabContent = ({
-  rootInstance,
   publish,
   selectedInstanceData,
 }: TabContentProps) => {
-  const selectedInstancePath = useMemo(
-    () =>
-      selectedInstanceData !== undefined && rootInstance !== undefined
-        ? getInstancePath(rootInstance, selectedInstanceData.id).map(
-            ({ id }) => id
-          )
-        : [],
-    [selectedInstanceData, rootInstance]
-  );
+  const [rootInstance] = useRootInstance();
+  const selectedInstancePath = useSelectedInstancePath();
 
   if (rootInstance === undefined) return null;
 

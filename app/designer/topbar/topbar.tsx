@@ -18,6 +18,7 @@ type TopbarProps = {
 export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
   return (
     <Flex
+      as="header"
       align="center"
       justify="between"
       css={{

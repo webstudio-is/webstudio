@@ -1,10 +1,7 @@
 import { forwardRef } from "react";
-import { css } from "~/shared/design-system";
+import { CSS, css } from "~/shared/design-system";
 
 const iframeStyle = css({
-  gridArea: "canvas",
-  width: "100%",
-  height: "100%",
   border: "none",
   variants: {
     pointerEvents: {
@@ -22,12 +19,17 @@ type CanvasIframeProps = {
   pointerEvents: "all" | "none";
   src: string;
   title: string;
+  css: CSS;
 };
 
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
-  ({ pointerEvents = "all", ...rest }, ref) => {
+  ({ pointerEvents = "all", css, ...rest }, ref) => {
     return (
-      <iframe {...rest} ref={ref} className={iframeStyle({ pointerEvents })} />
+      <iframe
+        {...rest}
+        ref={ref}
+        className={iframeStyle({ pointerEvents, css })}
+      />
     );
   }
 );

@@ -7,8 +7,7 @@ import {
   SidebarTabsTrigger,
 } from "~/shared/design-system";
 import { useSubscribe, type Publish } from "~/designer/canvas-iframe";
-import type { SelectedInstanceData } from "~/shared/component";
-import { useRootInstance } from "../nano-values";
+import { useSelectedInstanceData } from "../nano-values";
 import * as panels from "./panels";
 import type { TabName } from "./types";
 
@@ -27,18 +26,16 @@ type SidebarLeftProps = {
   onDragChange: (isDragging: boolean) => void;
   iframeRef: MutableRefObject<HTMLIFrameElement | null>;
   publish: Publish;
-  selectedInstanceData?: SelectedInstanceData;
 };
 
 export const SidebarLeft = ({
   onDragChange,
   iframeRef,
   publish,
-  selectedInstanceData,
 }: SidebarLeftProps) => {
+  const [selectedInstanceData] = useSelectedInstanceData();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const [isDragging, setIsDragging] = useState(false);
-  const [rootInstance] = useRootInstance();
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
 
   useSubscribe<"clickCanvas">("clickCanvas", () => {
@@ -84,7 +81,6 @@ export const SidebarLeft = ({
           }}
         >
           <TabContent
-            rootInstance={rootInstance}
             selectedInstanceData={selectedInstanceData}
             publish={publish}
             iframeRef={iframeRef}

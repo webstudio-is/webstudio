@@ -98,6 +98,9 @@ export const Text = styled("div", {
       contrast: {
         color: "$hiContrast",
       },
+      loContrast: {
+        color: "$loContrast",
+      },
     },
     gradient: {
       true: {

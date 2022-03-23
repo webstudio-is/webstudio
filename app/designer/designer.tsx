@@ -1,18 +1,23 @@
 import { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import type { Project } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
-import type { Project } from "@webstudio-is/sdk";
-import { Box, Grid, type CSS } from "~/shared/design-system";
+import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
+import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./sidebar-left";
 import { SidebarRight } from "./inspector";
 import { CanvasIframe, useSubscribe, usePublish } from "./canvas-iframe";
-import { useIsPreviewMode, useRootInstance } from "./nano-values";
+import {
+  useIsPreviewMode,
+  useRootInstance,
+  useSelectedInstanceData,
+} from "./nano-values";
 import { Topbar } from "./topbar";
 import designerStyles from "./designer.css";
-import interStyles from "~/shared/font-faces/inter.css";
 import { useSync } from "./sync";
+import { Breadcrumbs } from "./breadcrumbs";
 
 export const links = () => {
   return [
@@ -21,19 +26,17 @@ export const links = () => {
   ];
 };
 
-const useSelectedInstanceData = (): SelectedInstanceData | undefined => {
-  const [selectedInstanceData, setSelectedInstanceData] =
-    useState<SelectedInstanceData>();
-  useSubscribe<"selectInstance", SelectedInstanceData>(
-    "selectInstance",
-    setSelectedInstanceData
-  );
-  return selectedInstanceData;
-};
-
 const useSubscribeRootInstance = () => {
   const [, setValue] = useRootInstance();
   useSubscribe<"loadRootInstance">("loadRootInstance", setValue);
+};
+
+const useSubscribeSelectedInstanceData = () => {
+  const [, setValue] = useSelectedInstanceData();
+  useSubscribe<"selectInstance", SelectedInstanceData>(
+    "selectInstance",
+    setValue
+  );
 };
 
 type SidePanelProps = {
@@ -52,6 +55,7 @@ const SidePanel = ({
   if (isPreviewMode === true) return null;
   return (
     <Box
+      as="aside"
       css={{
         gridArea,
         display: "flex",
@@ -69,6 +73,18 @@ const SidePanel = ({
   );
 };
 
+const Main = ({ children }: { children: Array<JSX.Element> }) => (
+  <Flex
+    as="main"
+    direction="column"
+    css={{
+      gridArea: "main",
+    }}
+  >
+    {children}
+  </Flex>
+);
+
 type ChromeWrapperProps = {
   children: Array<JSX.Element>;
   isPreviewMode: boolean;
@@ -81,7 +97,7 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
         gridTemplateRows: "auto 1fr",
         gridTemplateAreas: `
                 "header header"
-                "sidebar canvas"
+                "sidebar main"
               `,
       }
     : {
@@ -89,7 +105,7 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
         gridTemplateRows: "auto 1fr",
         gridTemplateAreas: `
                 "header header header"
-                "sidebar canvas inspector"
+                "sidebar main inspector"
               `,
       };
   return (
@@ -112,12 +128,13 @@ type DesignerProps = {
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
-  const [isDragging, setIsDragging] = useState<boolean>();
-  const selectedInstanceData = useSelectedInstanceData();
-  const [publish, iframeRef] = usePublish();
-  const [isPreviewMode] = useIsPreviewMode();
   useSync({ config, project });
   useSubscribeRootInstance();
+  useSubscribeSelectedInstanceData();
+  const [isDragging, setIsDragging] = useState<boolean>();
+  const [publish, iframeRef] = usePublish();
+  const [isPreviewMode] = useIsPreviewMode();
+
   return (
     <DndProvider backend={HTML5Backend}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
@@ -126,7 +143,6 @@ export const Designer = ({ config, project }: DesignerProps) => {
             iframeRef={iframeRef}
             onDragChange={setIsDragging}
             publish={publish}
-            selectedInstanceData={selectedInstanceData}
           />
         </SidePanel>
         <Topbar
@@ -135,21 +151,22 @@ export const Designer = ({ config, project }: DesignerProps) => {
           project={project}
           publish={publish}
         />
-        <CanvasIframe
-          ref={iframeRef}
-          src={`${config.canvasPath}/${project.id}`}
-          pointerEvents={isDragging ? "none" : "all"}
-          title={project.title}
-        />
+        <Main>
+          <CanvasIframe
+            ref={iframeRef}
+            src={`${config.canvasPath}/${project.id}`}
+            pointerEvents={isDragging ? "none" : "all"}
+            title={project.title}
+            css={{ height: "100%" }}
+          />
+          <Breadcrumbs publish={publish} />
+        </Main>
         <SidePanel
           gridArea="inspector"
           isPreviewMode={isPreviewMode}
           css={{ overflow: "hidden" }}
         >
-          <SidebarRight
-            publish={publish}
-            selectedInstanceData={selectedInstanceData}
-          />
+          <SidebarRight publish={publish} />
         </SidePanel>
       </ChromeWrapper>
     </DndProvider>

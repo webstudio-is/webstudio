@@ -10,12 +10,11 @@ import {
 import { StylePanel } from "~/designer/style-panel";
 import { SettingsPanel } from "~/designer/settings-panel";
 import type { Publish } from "~/designer/canvas-iframe";
-import type { SelectedInstanceData } from "~/shared/component";
 import { BrushIcon, GearIcon } from "~/shared/icons";
+import { useSelectedInstanceData } from "../nano-values";
 
 type SidebarRightProps = {
   publish: Publish;
-  selectedInstanceData?: SelectedInstanceData;
 };
 
 const contentStyle = {
@@ -23,10 +22,9 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const SidebarRight = ({
-  publish,
-  selectedInstanceData,
-}: SidebarRightProps) => {
+export const SidebarRight = ({ publish }: SidebarRightProps) => {
+  const [selectedInstanceData] = useSelectedInstanceData();
+
   if (selectedInstanceData === undefined) {
     return (
       <Box css={{ p: "$2" }}>
@@ -36,6 +34,7 @@ export const SidebarRight = ({
       </Box>
     );
   }
+
   return (
     <Tabs defaultValue="style" css={{ width: "100%", gap: "$2" }}>
       <TabsList>
