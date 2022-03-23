@@ -11,21 +11,23 @@ import {
   WrapperComponent,
   globalStyles,
 } from "@webstudio-is/sdk";
-import { publish, useSubscribe } from "./pubsub";
+import { publish, useSubscribe } from "./shared/pubsub";
 import { createElementsTree, setInstanceChildren } from "~/shared/tree-utils";
+import { useDragDropHandlers } from "./shared/use-drag-drop-handlers";
+import { useShortcuts } from "./shared/use-shortcuts";
 import {
-  useDragDropHandlers,
-  useShortcuts,
   usePopulateRootInstance,
-  useUpdateInstanceStyle,
-  usePublishSelectedInstance,
   useInsertInstance,
   useDeleteInstance,
-  usePublishRootInstance,
-  useActiveElementTracking,
   useReparentInstance,
-} from "./hooks";
-import { WrapperComponentDev } from "./wrapper-component";
+} from "./shared/tree";
+import { useUpdateInstanceStyle } from "./shared/style";
+import {
+  usePublishSelectedInstance,
+  usePublishRootInstance,
+} from "./shared/publish";
+import { useActiveElementTracking } from "./shared/active-element";
+import { WrapperComponentDev } from "./features/wrapper-component";
 
 const useElementsTree = (
   rootInstance: Instance,

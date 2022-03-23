@@ -6,18 +6,22 @@ import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
-import { SidebarLeft } from "./sidebar-left";
-import { SidebarRight } from "./inspector";
-import { CanvasIframe, useSubscribe, usePublish } from "./canvas-iframe";
+import { SidebarLeft } from "./features/sidebar-left";
+import { SidebarRight } from "./features/sidebar-right";
+import {
+  CanvasIframe,
+  useSubscribe,
+  usePublish,
+} from "./features/canvas-iframe";
 import {
   useIsPreviewMode,
   useRootInstance,
   useSelectedInstanceData,
-} from "./nano-values";
-import { Topbar } from "./topbar";
+} from "./shared/nano-values";
+import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { useSync } from "./sync";
-import { Breadcrumbs } from "./breadcrumbs";
+import { useSync } from "./features/sync";
+import { Breadcrumbs } from "./features/breadcrumbs";
 
 export const links = () => {
   return [
