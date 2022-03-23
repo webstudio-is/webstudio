@@ -57,6 +57,7 @@ export const WrapperComponentDev = ({
   );
 
   const userProps = useUserProps(id);
+  const readonly = component === "Input" ? { readOnly: true } : undefined;
 
   const { Component } = primitives[component];
   return (
@@ -67,6 +68,7 @@ export const WrapperComponentDev = ({
         {...rest}
         {...contentEditableProps}
         {...draggableProps}
+        {...readonly}
         className={className}
         id={id}
         tabIndex={0}
@@ -76,11 +78,6 @@ export const WrapperComponentDev = ({
         ref={refCallback}
         onClick={(event: MouseEvent) => {
           if (component === "Link") {
-            event.preventDefault();
-          }
-        }}
-        onMouseDown={(event: MouseEvent) => {
-          if (component === "Input") {
             event.preventDefault();
           }
         }}
