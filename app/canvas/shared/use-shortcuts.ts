@@ -17,6 +17,7 @@ export const useShortcuts = ({ rootInstance }: { rootInstance: Instance }) => {
         },
       });
     },
+    { enableOnTags: ["INPUT", "SELECT", "TEXTAREA"] },
     [instance]
   );
 
