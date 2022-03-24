@@ -1,12 +1,10 @@
 import produce from "immer";
 import { type Instance } from "@webstudio-is/sdk";
 import { populateInstance } from "./populate";
-import { createInstance } from "./create-instance";
 
 export type InstanceInsertionSpec = {
-  component: Instance["component"];
+  instance: Instance;
   parentId: Instance["id"];
-  id: Instance["id"];
   position: number | "end";
 };
 
@@ -44,13 +42,9 @@ export const insertInstance = (
   rootInstance: Instance,
   options: { populate?: boolean } = { populate: true }
 ) => {
-  const newInstance = createInstance({
-    component: spec.component,
-    id: spec.id,
-  });
   const populatedInstance = options.populate
-    ? populateInstance(newInstance)
-    : newInstance;
+    ? populateInstance(spec.instance)
+    : spec.instance;
 
   const updatedInstance = produce(rootInstance, (draftRootInstance) => {
     insertInstanceMutable(draftRootInstance, populatedInstance, spec);

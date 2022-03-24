@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useDragLayer } from "react-dnd";
+import { useDragLayer, type XYCoord } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
-import type { InitialDragData } from "~/shared/component";
 
 const layerStyles = {
   position: "absolute",
@@ -15,7 +14,10 @@ const layerStyles = {
 } as const;
 
 export type CustomDragLayerProps = {
-  onDrag: (dragData: InitialDragData) => void;
+  onDrag: (dragData: {
+    component: Instance["component"];
+    currentOffset: XYCoord;
+  }) => void;
 };
 
 export const CustomDragLayer = ({ onDrag }: CustomDragLayerProps) => {

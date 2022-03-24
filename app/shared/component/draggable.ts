@@ -1,12 +1,12 @@
 import type { XYCoord } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
 
-export type InitialDragData = {
+export type DragData = {
+  instance: Instance;
   currentOffset: XYCoord;
-  component: Instance["component"];
 };
 
-export type DragData = InitialDragData & {
-  id: Instance["id"];
+export type DropData = {
+  instance: Instance;
   position: number | "end";
 };

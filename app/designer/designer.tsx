@@ -7,7 +7,7 @@ import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
-import { SidebarRight } from "./features/sidebar-right";
+import { Inspector } from "./features/inspector";
 import {
   CanvasIframe,
   useSubscribe,
@@ -22,6 +22,7 @@ import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { useSync } from "./features/sync";
 import { Breadcrumbs } from "./features/breadcrumbs";
+import { TreePrevew } from "./features/tree-preview";
 
 export const links = () => {
   return [
@@ -44,7 +45,7 @@ const useSubscribeSelectedInstanceData = () => {
 };
 
 type SidePanelProps = {
-  children: JSX.Element;
+  children: JSX.Element | Array<JSX.Element>;
   isPreviewMode: boolean;
   css?: CSS;
   gridArea: "inspector" | "sidebar";
@@ -139,6 +140,13 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const [publish, iframeRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
 
+  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
+    setIsDragging(true);
+  });
+  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
+    setIsDragging(false);
+  });
+
   return (
     <DndProvider backend={HTML5Backend}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
@@ -170,7 +178,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
           isPreviewMode={isPreviewMode}
           css={{ overflow: "hidden" }}
         >
-          <SidebarRight publish={publish} />
+          {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
         </SidePanel>
       </ChromeWrapper>
     </DndProvider>

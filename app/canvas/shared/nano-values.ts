@@ -1,9 +1,9 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { type Instance } from "@webstudio-is/sdk";
-import { type DragData } from "~/shared/component";
+import { type DropData } from "~/shared/component";
 
-const dragDataContainer = createValueContainer<DragData | undefined>();
-export const useDragData = () => useValue(dragDataContainer);
+const dropDataContainer = createValueContainer<DropData | undefined>();
+export const useDropData = () => useValue(dropDataContainer);
 
 const selectedInstanceContainer = createValueContainer<Instance | undefined>();
 export const useSelectedInstance = () => useValue(selectedInstanceContainer);

@@ -12,22 +12,20 @@ import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 
 type WrapperComponentDevProps = {
-  id: Instance["id"];
-  component: Instance["component"];
+  instance: Instance;
   css: CSS;
   children: Array<JSX.Element | string>;
   onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponentDev = ({
-  id,
-  component,
+  instance,
   css,
   children,
   onChangeChildren,
   ...rest
 }: WrapperComponentDevProps) => {
-  const className = useCss({ id, css, component });
+  const className = useCss({ instance, css });
 
   const {
     ref: contentEditableRef,
@@ -35,15 +33,13 @@ export const WrapperComponentDev = ({
     toolbar: editableToolbar,
     ...contentEditableProps
   } = useContentEditable({
-    id,
-    component,
+    instance,
     children,
     onChangeChildren,
   });
 
   const { dragRefCallback, ...draggableProps } = useDraggable({
-    id,
-    component,
+    instance,
     isDisabled: isContentEditableDisabled === false,
   });
 
@@ -56,10 +52,11 @@ export const WrapperComponentDev = ({
     [contentEditableRef, dragRefCallback]
   );
 
-  const userProps = useUserProps(id);
-  const readonly = component === "Input" ? { readOnly: true } : undefined;
+  const userProps = useUserProps(instance.id);
+  const readonly =
+    instance.component === "Input" ? { readOnly: true } : undefined;
 
-  const { Component } = primitives[component];
+  const { Component } = primitives[instance.component];
   return (
     <>
       {editableToolbar}
@@ -70,14 +67,14 @@ export const WrapperComponentDev = ({
         {...draggableProps}
         {...readonly}
         className={className}
-        id={id}
+        id={instance.id}
         tabIndex={0}
-        data-component={component}
-        data-label={primitives[component].label}
-        data-id={id}
+        data-component={instance.component}
+        data-label={primitives[instance.component].label}
+        data-id={instance.id}
         ref={refCallback}
         onClick={(event: MouseEvent) => {
-          if (component === "Link") {
+          if (instance.component === "Link") {
             event.preventDefault();
           }
         }}

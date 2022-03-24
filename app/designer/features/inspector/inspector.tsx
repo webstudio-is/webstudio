@@ -13,7 +13,7 @@ import type { Publish } from "~/designer/features/canvas-iframe";
 import { BrushIcon, GearIcon } from "~/shared/icons";
 import { useSelectedInstanceData } from "~/designer/shared/nano-values";
 
-type SidebarRightProps = {
+type InspectorProps = {
   publish: Publish;
 };
 
@@ -22,7 +22,7 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const SidebarRight = ({ publish }: SidebarRightProps) => {
+export const Inspector = ({ publish }: InspectorProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
 
   if (selectedInstanceData === undefined) {

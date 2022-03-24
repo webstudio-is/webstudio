@@ -113,17 +113,15 @@ const createPlaceholder = (
 };
 
 export const useContentEditable = ({
-  id,
-  component,
+  instance,
   children,
   onChangeChildren,
 }: {
-  id: Instance["id"];
-  component: Instance["component"];
+  instance: Instance;
   children: Array<JSX.Element | string>;
   onChangeChildren?: OnChangeChildren;
 }) => {
-  const { isContentEditable } = primitives[component];
+  const { isContentEditable } = primitives[instance.component];
   const [isDisabled, setIsDisabled] = useState<boolean>(true);
   const ref = useRef<HTMLDivElement>();
   const [selectedInstance] = useSelectedInstance();
@@ -136,7 +134,7 @@ export const useContentEditable = ({
     const updates = toUpdates(items);
     if (onChangeChildren) {
       onChangeChildren({
-        instanceId: id,
+        instanceId: instance.id,
         updates,
       });
     }
@@ -177,12 +175,12 @@ export const useContentEditable = ({
     (event) => {
       // We only want to do this if the component is the one that was clicked
       // @todo this logic shouldn't be necessary
-      if (selectedInstance?.id !== id) return;
+      if (selectedInstance?.id !== instance.id) return;
       // Prevent inserting a newline when you want to start editing mode
       event.preventDefault();
       toggleDisable(false);
     },
-    [toggleDisable, id, selectedInstance]
+    [toggleDisable, instance.id, selectedInstance]
   );
 
   useHotkeys(
@@ -195,10 +193,10 @@ export const useContentEditable = ({
   );
 
   useEffect(() => {
-    if (selectedInstance?.id !== id) {
+    if (selectedInstance?.id !== instance.id) {
       toggleDisable(true);
     }
-  }, [selectedInstance, id, toggleDisable]);
+  }, [selectedInstance, instance.id, toggleDisable]);
 
   const toolbar = useToolbar({
     editable: isContentEditable && isDisabled === false ? editable : undefined,
@@ -220,7 +218,7 @@ export const useContentEditable = ({
     onBlur() {
       // We only want to do this if the component is the one that was clicked
       // @todo this logic shouldn't be necessary
-      if (selectedInstance?.id !== id) return;
+      if (selectedInstance?.id !== instance.id) return;
 
       // When toolbar is open we don't want to disable editable
       // even though we lost focus
@@ -230,13 +228,13 @@ export const useContentEditable = ({
     onDoubleClick() {
       // We only want to do this if the component is the one that was clicked
       // @todo this logic shouldn't be necessary
-      if (selectedInstance?.id !== id) return;
+      if (selectedInstance?.id !== instance.id) return;
       toggleDisable(false);
     },
     onInput: () => {
       // We only want to do this if the component is the one that was clicked
       // @todo this logic shouldn't be necessary
-      if (selectedInstance?.id !== id) return;
+      if (selectedInstance?.id !== instance.id) return;
       if (isDisabled) return;
 
       // Makes sure we call it right away the first time because user can disable editable before we updated

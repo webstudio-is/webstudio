@@ -1,21 +1,20 @@
 import { useCallback, useEffect } from "react";
 import { useDrag } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
-import { type InitialDragData } from "~/shared/component";
+import { type DragData } from "~/shared/component";
 import { publish } from "../../shared/pubsub";
 //import { usePointerOutline } from "~/canvas/hooks";
 
 type UseDraggable = {
-  id: Instance["id"];
-  component: Instance["component"];
+  instance: Instance;
   isDisabled: boolean;
 };
 
-export const useDraggable = ({ id, component, isDisabled }: UseDraggable) => {
+export const useDraggable = ({ instance, isDisabled }: UseDraggable) => {
   //const updatePointerOutline = usePointerOutline();
   const [{ isDragging, currentOffset }, dragRefCallback] = useDrag(
     () => ({
-      type: component,
+      type: instance.component,
       collect(monitor) {
         return {
           isDragging: monitor.isDragging(),
@@ -32,27 +31,24 @@ export const useDraggable = ({ id, component, isDisabled }: UseDraggable) => {
   useEffect(() => {
     // Started
     if (isDragging === true) {
-      publish<"dragStartComponent">({ type: "dragStartComponent" });
+      publish<"dragStartInstance">({ type: "dragStartInstance" });
     } else {
       // Ended
-      publish<"dragEndInstance", Instance["id"]>({
-        type: "dragEndInstance",
-        payload: id,
-      });
+      publish<"dragEndInstance", Instance["id"]>({ type: "dragEndInstance" });
     }
-  }, [isDragging, id]);
+  }, [isDragging, instance.id]);
 
   useEffect(() => {
     if (currentOffset === null || isDragging === false) return;
     // updatePointerOutline(currentOffset);
-    publish<"dragComponent", InitialDragData>({
-      type: "dragComponent",
+    publish<"dragInstance", DragData>({
+      type: "dragInstance",
       payload: {
-        component,
+        instance,
         currentOffset,
       },
     });
-  }, [component, currentOffset, isDragging]);
+  }, [instance, currentOffset, isDragging]);
 
   const handleMouseDown = useCallback(
     (event) => {

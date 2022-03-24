@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { type Instance, css as createCss, type CSS } from "@webstudio-is/sdk";
-import { useDragData, useSelectedInstance } from "~/canvas/shared/nano-values";
+import { useDropData, useSelectedInstance } from "~/canvas/shared/nano-values";
 import { primitives } from "~/shared/component";
 
 // @todo this doesn't work with the node at the top edge of the iframe, tag gets hidden.
@@ -51,32 +51,31 @@ const dragOverOutlineStyle = {
 };
 
 type UseCssProps = {
-  id: Instance["id"];
-  component: Instance["component"];
+  instance: Instance;
   css: CSS;
 };
 
-export const useCss = ({ id, component, css }: UseCssProps): string => {
-  const [dragData] = useDragData();
+export const useCss = ({ instance, css }: UseCssProps): string => {
+  const [dropData] = useDropData();
   const [selectedInstance] = useSelectedInstance();
 
   return useMemo(() => {
-    const primitive = primitives[component];
+    const primitive = primitives[instance.component];
     let overrides: CSS = hoverOutlineStyle;
     if (primitive.canAcceptChild()) {
       overrides = emptyOutlineStyle;
     }
 
-    if (selectedInstance?.id === id) {
+    if (selectedInstance?.id === instance.id) {
       overrides = selectedOutlineStyle;
     }
 
-    if (dragData !== undefined) {
-      if (dragData.id === id && primitive.canAcceptChild()) {
+    if (dropData !== undefined) {
+      if (dropData.instance.id === instance.id && primitive.canAcceptChild()) {
         overrides = dragOverOutlineStyle;
       }
     }
 
     return createCss(css)({ css: overrides });
-  }, [dragData, selectedInstance, css, component, id]);
+  }, [dropData, selectedInstance, css, instance]);
 };

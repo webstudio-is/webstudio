@@ -10,6 +10,7 @@ import {
 } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import { primitives } from "~/shared/component";
+import noop from "lodash.noop";
 
 const openKeyframes = keyframes({
   from: { height: 0 },
@@ -21,7 +22,7 @@ const closeKeyframes = keyframes({
   to: { height: 0 },
 });
 
-const CollapsibleContent = styled(Collapsible.Content, {
+const CollapsibleContentAnimated = styled(Collapsible.Content, {
   overflow: "hidden",
   '&[data-state="open"]': {
     animation: `${openKeyframes} 150ms ease-in-out`,
@@ -31,20 +32,26 @@ const CollapsibleContent = styled(Collapsible.Content, {
   },
 });
 
+const CollapsibleContentUnanimated = styled(Collapsible.Content, {
+  overflow: "hidden",
+});
+
 type TreeProps = {
   instance: Instance;
   selectedInstanceId?: Instance["id"];
   selectedInstancePath: Array<Instance>;
   level?: number;
-  onSelect: (instance: Instance) => void;
+  onSelect?: (instance: Instance) => void;
+  animate?: boolean;
 };
 
 export const Tree = ({
   instance,
   selectedInstanceId,
-  level = 0,
-  onSelect,
   selectedInstancePath,
+  level = 0,
+  onSelect = noop,
+  animate = true,
 }: TreeProps) => {
   const [isOpen, setIsOpen] = useState(selectedInstancePath.includes(instance));
 
@@ -67,6 +74,7 @@ export const Tree = ({
           level={level + 1}
           key={child.id}
           onSelect={onSelect}
+          animate={animate}
         />
       );
     }
@@ -79,9 +87,13 @@ export const Tree = ({
     selectedInstancePath,
     onSelect,
     showChildren,
+    animate,
   ]);
 
   const { Icon, label } = primitives[instance.component];
+  const CollapsibleContent = animate
+    ? CollapsibleContentAnimated
+    : CollapsibleContentUnanimated;
 
   return (
     <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>

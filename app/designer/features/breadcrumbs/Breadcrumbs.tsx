@@ -3,6 +3,7 @@ import { Button, Flex, Text } from "~/shared/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
 import { Instance } from "@webstudio-is/sdk";
 import { Publish } from "../canvas-iframe";
+import { useSelectedInstanceData } from "~/designer/shared/nano-values";
 
 type BreadcrumbProps = {
   component: Instance["component"];
@@ -30,7 +31,10 @@ type BreadcrumbsProps = {
   publish: Publish;
 };
 export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
-  const selectedInstancePath = useSelectedInstancePath();
+  const [selectedInstanceData] = useSelectedInstanceData();
+  const selectedInstancePath = useSelectedInstancePath(
+    selectedInstanceData?.id
+  );
   return (
     <Flex
       as="footer"

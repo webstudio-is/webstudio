@@ -1,16 +1,17 @@
 import { Instance } from "@webstudio-is/sdk";
 import { useMemo } from "react";
 import { getInstancePath } from "~/shared/tree-utils";
-import { useRootInstance, useSelectedInstanceData } from "../nano-values";
+import { useRootInstance } from "../nano-values";
 
-export const useSelectedInstancePath = (): Array<Instance> => {
+export const useSelectedInstancePath = (
+  selectedInstanceId?: Instance["id"]
+): Array<Instance> => {
   const [rootInstance] = useRootInstance();
-  const [selectedInstanceData] = useSelectedInstanceData();
   return useMemo(
     () =>
-      selectedInstanceData !== undefined && rootInstance !== undefined
-        ? getInstancePath(rootInstance, selectedInstanceData.id)
+      selectedInstanceId !== undefined && rootInstance !== undefined
+        ? getInstancePath(rootInstance, selectedInstanceId)
         : [],
-    [selectedInstanceData, rootInstance]
+    [selectedInstanceId, rootInstance]
   );
 };

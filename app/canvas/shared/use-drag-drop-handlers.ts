@@ -1,9 +1,9 @@
 import { useState } from "react";
-import ObjectId from "bson-objectid";
 import memoize from "lodash.memoize";
 import { type Instance } from "@webstudio-is/sdk";
-import { type InitialDragData, type DragData } from "~/shared/component";
+import { type DragData, type DropData } from "~/shared/component";
 import {
+  findInstanceById,
   type InstanceInsertionSpec,
   type InstanceReparentingSpec,
 } from "~/shared/tree-utils";
@@ -12,7 +12,7 @@ import {
   findInsertionIndex,
   getDragOverInfo,
 } from "~/shared/dom-utils";
-import { useDragData, useSelectedInstance } from "./nano-values";
+import { useDropData, useSelectedInstance } from "./nano-values";
 import { publish, useSubscribe } from "./pubsub";
 //import {usePointerOutline} from './use-pointer-outline'
 
@@ -36,22 +36,20 @@ export const useDragDropHandlers = ({
     useState<InstanceInsertionSpec>();
   const [instanceReparentingSpec, setInstanceReparentingSpec] =
     useState<InstanceReparentingSpec>();
-  const [dragData, setDragData] = useDragData();
+  const [dropData, setDropData] = useDropData();
+  const [dragData, setDragData] = useState<DragData>();
 
   const insert = ({
-    parentId,
-    component,
-    position,
+    instance,
+    dropData,
   }: {
-    parentId: Instance["id"];
-    component: Instance["component"];
-    position: DragData["position"];
+    instance: Instance;
+    dropData: DropData;
   }) => {
     const instanceInsertionSpec = {
-      parentId,
-      component,
-      position,
-      id: ObjectId().toString(),
+      instance,
+      parentId: dropData.instance.id,
+      position: dropData.position,
     } as const;
     setInstanceInsertionSpec(instanceInsertionSpec);
     publish<"syncInstanceInsertion", InstanceInsertionSpec>({
@@ -60,44 +58,43 @@ export const useDragDropHandlers = ({
     });
   };
 
-  const clearCaches = () => {
-    if (getBoundingClientRect.cache?.clear) getBoundingClientRect.cache.clear();
-    if (getComputedStyle.cache?.clear) getComputedStyle.cache.clear();
-  };
-
-  useSubscribe<"dragStartComponent">("dragStartComponent", () => {
+  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
     setSelectedInstance(undefined);
   });
 
-  useSubscribe<"dragEndComponent">("dragEndComponent", () => {
-    clearCaches();
-    if (dragData === undefined) return;
-    insert({
-      parentId: dragData.id,
-      component: dragData.component,
-      position: dragData.position,
-    });
+  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
+    // Cleanup
+    if (getBoundingClientRect.cache?.clear) getBoundingClientRect.cache.clear();
+    if (getComputedStyle.cache?.clear) getComputedStyle.cache.clear();
+    setDropData(undefined);
     setDragData(undefined);
-  });
-
-  useSubscribe<"dragEndInstance", Instance["id"]>("dragEndInstance", (id) => {
-    clearCaches();
 
     if (
+      dropData === undefined ||
       dragData === undefined ||
       // Can't reparent an instance inside itself
-      dragData.id === id
+      dropData.instance.id === dragData.instance.id
     ) {
       return;
     }
 
+    const isNew =
+      findInstanceById(rootInstance, dragData.instance.id) === undefined;
+
+    if (isNew) {
+      insert({
+        instance: dragData.instance,
+        dropData,
+      });
+      return;
+    }
     const instanceReparentingSpec = {
-      parentId: dragData.id,
-      position: dragData.position,
-      id,
+      parentId: dropData.instance.id,
+      position: dropData.position,
+      id: dragData.instance.id,
     };
+
     setInstanceReparentingSpec(instanceReparentingSpec);
-    setDragData(undefined);
     publish<"syncInstanceReparenting", InstanceReparentingSpec>({
       type: "syncInstanceReparenting",
       payload: instanceReparentingSpec,
@@ -105,50 +102,56 @@ export const useDragDropHandlers = ({
   });
 
   //const updatePointerOutline = usePointerOutline();
-  useSubscribe<"dragComponent", InitialDragData>(
-    "dragComponent",
-    ({ currentOffset, component }) => {
-      // updatePointerOutline(currentOffset)
-      const dragOver = getDragOverInfo(currentOffset, getBoundingClientRect);
+  useSubscribe<"dragInstance", DragData>("dragInstance", (dragData) => {
+    const { currentOffset } = dragData;
+    // updatePointerOutline(currentOffset)
+    const dragOver = getDragOverInfo(currentOffset, getBoundingClientRect);
 
-      if (dragOver.element === undefined) return;
+    if (dragOver.element === undefined) return;
 
-      const closestChild = findClosestChild(
-        dragOver.element,
-        currentOffset,
-        getBoundingClientRect,
-        getComputedStyle
-      );
+    const dropInstance = findInstanceById(rootInstance, dragOver.element.id);
 
-      let insertionIndex = 0;
+    if (dropInstance === undefined) return;
 
-      // When element has children.
-      if (dragOver.element !== undefined && closestChild !== undefined) {
-        insertionIndex = findInsertionIndex(dragOver, closestChild);
-      }
+    const closestChild = findClosestChild(
+      dragOver.element,
+      currentOffset,
+      getBoundingClientRect,
+      getComputedStyle
+    );
 
-      setDragData({
-        id: dragOver.element.id,
-        component,
-        currentOffset,
-        position: insertionIndex,
-      });
+    let insertionIndex = 0;
+
+    // When element has children.
+    if (dragOver.element !== undefined && closestChild !== undefined) {
+      insertionIndex = findInsertionIndex(dragOver, closestChild);
     }
-  );
 
-  useSubscribe<"insertComponent", { component: Instance["component"] }>(
-    "insertComponent",
-    ({ component }) => {
-      if (selectedInstance === undefined) {
-        setSelectedInstance(rootInstance);
-      }
-      insert({
-        component,
+    const dropData = {
+      instance: dropInstance,
+      position: insertionIndex,
+    };
+
+    setDragData(dragData);
+    setDropData(dropData);
+    publish<"dropPreview", { dropData: DropData; dragData: DragData }>({
+      type: "dropPreview",
+      payload: { dropData, dragData },
+    });
+  });
+
+  useSubscribe<"insertInstance", Instance>("insertInstance", (instance) => {
+    if (selectedInstance === undefined) {
+      setSelectedInstance(rootInstance);
+    }
+    insert({
+      instance,
+      dropData: {
         position: "end",
-        parentId: selectedInstance?.id ?? rootInstance.id,
-      });
-    }
-  );
+        instance: selectedInstance ?? rootInstance,
+      },
+    });
+  });
 
   return { instanceInsertionSpec, instanceReparentingSpec };
 };

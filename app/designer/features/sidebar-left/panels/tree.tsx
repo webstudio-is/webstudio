@@ -17,7 +17,9 @@ export const TabContent = ({
   selectedInstanceData,
 }: TabContentProps) => {
   const [rootInstance] = useRootInstance();
-  const selectedInstancePath = useSelectedInstancePath();
+  const selectedInstancePath = useSelectedInstancePath(
+    selectedInstanceData?.id
+  );
 
   if (rootInstance === undefined) return null;
 

@@ -9,8 +9,9 @@ import { useDrag } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
 import { Flex, Text } from "~/shared/design-system";
 import { Component1Icon } from "~/shared/icons";
-import { primitives, type InitialDragData } from "~/shared/component";
+import { primitives, type DragData } from "~/shared/component";
 import { type Publish } from "~/designer/features/canvas-iframe";
+import { createInstance } from "~/shared/tree-utils";
 import { CustomDragLayer } from "../custom-drag-layer";
 import type { TabName } from "../types";
 
@@ -91,8 +92,8 @@ export const TabContent = ({
   const handleDragChange = useCallback(
     (isDragging: boolean) => {
       onDragChange(isDragging);
-      publish<"dragStartComponent" | "dragEndComponent">({
-        type: isDragging === true ? "dragStartComponent" : "dragEndComponent",
+      publish<"dragStartInstance" | "dragEndInstance">({
+        type: isDragging === true ? "dragStartInstance" : "dragEndInstance",
       });
     },
     [onDragChange, publish]
@@ -108,20 +109,20 @@ export const TabContent = ({
           label={primitives[component].label}
           onClick={() => {
             onSetActiveTab("none");
-            publish<"insertComponent", { component: Instance["component"] }>({
-              type: "insertComponent",
-              payload: { component },
+            publish<"insertInstance", Instance>({
+              type: "insertInstance",
+              payload: createInstance({ component }),
             });
           }}
           onDragChange={handleDragChange}
         />
       ))}
       <CustomDragLayer
-        onDrag={(dragData: InitialDragData) => {
-          publish<"dragComponent", InitialDragData>({
-            type: "dragComponent",
+        onDrag={(dragData) => {
+          publish<"dragInstance", DragData>({
+            type: "dragInstance",
             payload: {
-              ...dragData,
+              instance: createInstance({ component: dragData.component }),
               currentOffset: dragData.currentOffset,
             },
           });
