@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { type Instance } from "@webstudio-is/sdk";
 import {
   Flex,
@@ -54,6 +54,10 @@ export const Tree = ({
   animate = true,
 }: TreeProps) => {
   const [isOpen, setIsOpen] = useState(selectedInstancePath.includes(instance));
+
+  useEffect(() => {
+    setIsOpen(selectedInstancePath.includes(instance));
+  }, [selectedInstancePath, instance]);
 
   // Text nodes have only one child which is a string.
   const showChildren =
