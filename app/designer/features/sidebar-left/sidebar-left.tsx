@@ -38,12 +38,14 @@ export const SidebarLeft = ({
   const [isDragging, setIsDragging] = useState(false);
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
 
-  const close = useCallback(() => setActiveTab("none"), []);
-  useSubscribe<"clickCanvas">("clickCanvas", close);
+  useSubscribe<"clickCanvas">("clickCanvas", () => {
+    setActiveTab("none");
+  });
   useSubscribe("dragStartInstance", () => {
-    // We can't close the sidebar if we are dragging from the sidebar
-    if (isDragging === true) return;
-    close();
+    setIsDragging(true);
+  });
+  useSubscribe("dragEndInstance", () => {
+    setIsDragging(false);
   });
 
   const handleDragChange = useCallback(
@@ -54,7 +56,7 @@ export const SidebarLeft = ({
       setIsDragging(isDragging);
       onDragChange(isDragging);
     },
-    [onDragChange, close]
+    [onDragChange]
   );
 
   return (
