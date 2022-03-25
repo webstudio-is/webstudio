@@ -38,19 +38,19 @@ export const SidebarLeft = ({
   const [isDragging, setIsDragging] = useState(false);
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
 
-  useSubscribe<"clickCanvas">("clickCanvas", () => {
-    setActiveTab("none");
-  });
+  const close = useCallback(() => setActiveTab("none"), []);
+  useSubscribe<"clickCanvas">("clickCanvas", close);
+  useSubscribe("dragStartInstance", close);
 
   const handleDragChange = useCallback(
     (isDragging: boolean) => {
       // After dragging is done, container is going to become visible
       // and we need to close it for good.
-      if (isDragging === false) setActiveTab("none");
+      if (isDragging === false) close();
       setIsDragging(isDragging);
       onDragChange(isDragging);
     },
-    [onDragChange]
+    [onDragChange, close]
   );
 
   return (
