@@ -28,7 +28,10 @@ const Content = ({ project }: PublishProps) => {
     if (typeof location !== "object" || !domain) {
       return;
     }
-    setUrl(`${location.protocol}//${domain}.${location.host}`);
+    const host = location.host.includes("webstudio.is")
+      ? "wstd.io"
+      : location.host;
+    setUrl(`${location.protocol}//${domain}.${host}`);
   }, [domain]);
 
   return (
