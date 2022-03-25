@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useDrag } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
 import { type DragData } from "~/shared/component";
@@ -11,6 +11,8 @@ type UseDraggable = {
 };
 
 export const useDraggable = ({ instance, isDisabled }: UseDraggable) => {
+  const isDraggingRef = useRef(false);
+
   //const updatePointerOutline = usePointerOutline();
   const [{ isDragging, currentOffset }, dragRefCallback] = useDrag(
     () => ({
@@ -33,9 +35,12 @@ export const useDraggable = ({ instance, isDisabled }: UseDraggable) => {
     if (isDragging === true) {
       publish<"dragStartInstance">({ type: "dragStartInstance" });
     } else {
+      // Initial state is false, don't fire event if there was no dragging
+      //if (isDraggingRef.current === false) return;
       // Ended
       publish<"dragEndInstance", Instance["id"]>({ type: "dragEndInstance" });
     }
+    isDraggingRef.current = isDragging;
   }, [isDragging, instance.id]);
 
   useEffect(() => {

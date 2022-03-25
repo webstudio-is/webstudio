@@ -2,6 +2,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { type Instance } from "@webstudio-is/sdk";
 import { useSelectedInstance } from "./nano-values";
 import { publish } from "./pubsub";
+import { redo, undo } from "./undo-redo";
 
 export const useShortcuts = ({ rootInstance }: { rootInstance: Instance }) => {
   const [instance, setSelectedInstance] = useSelectedInstance();
@@ -10,8 +11,8 @@ export const useShortcuts = ({ rootInstance }: { rootInstance: Instance }) => {
     () => {
       // @todo tell user they can't delete root
       if (instance === undefined || instance.id === rootInstance.id) return;
-      publish<"deleteSelectedInstance", { id: Instance["id"] }>({
-        type: "deleteSelectedInstance",
+      publish<"deleteInstace", { id: Instance["id"] }>({
+        type: "deleteInstace",
         payload: {
           id: instance.id,
         },
@@ -32,5 +33,19 @@ export const useShortcuts = ({ rootInstance }: { rootInstance: Instance }) => {
       });
     },
     [instance]
+  );
+
+  useHotkeys(
+    // Undo
+    "cmd+z, ctrl+z",
+    undo,
+    []
+  );
+
+  useHotkeys(
+    // Redo
+    "cmd+shift+z, ctrl+shift+z",
+    redo,
+    []
   );
 };

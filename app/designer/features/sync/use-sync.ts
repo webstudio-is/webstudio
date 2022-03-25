@@ -77,8 +77,8 @@ export const useSync = ({ project }: { config: Config; project: Project }) => {
     }
   );
 
-  useSubscribe<"deleteSelectedInstance", { id: Instance["id"] }>(
-    "deleteSelectedInstance",
+  useSubscribe<"deleteInstace", { id: Instance["id"] }>(
+    "deleteInstace",
     ({ id }) => {
       enqueue(() =>
         fetch(`/rest/delete-instance/${project.devTreeId}`, {

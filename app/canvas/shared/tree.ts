@@ -90,8 +90,8 @@ export const useDeleteInstance = ({
   setRootInstance: (instance: Instance) => void;
 }) => {
   const [, setSelectedInstance] = useSelectedInstance();
-  useSubscribe<"deleteSelectedInstance", { id: Instance["id"] }>(
-    "deleteSelectedInstance",
+  useSubscribe<"deleteInstace", { id: Instance["id"] }>(
+    "deleteInstace",
     ({ id }) => {
       const newRootInstance = deleteInstance(rootInstance, id);
       setRootInstance(newRootInstance);

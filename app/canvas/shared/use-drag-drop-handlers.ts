@@ -39,25 +39,6 @@ export const useDragDropHandlers = ({
   const [dropData, setDropData] = useDropData();
   const [dragData, setDragData] = useState<DragData>();
 
-  const insert = ({
-    instance,
-    dropData,
-  }: {
-    instance: Instance;
-    dropData: DropData;
-  }) => {
-    const instanceInsertionSpec = {
-      instance,
-      parentId: dropData.instance.id,
-      position: dropData.position,
-    } as const;
-    setInstanceInsertionSpec(instanceInsertionSpec);
-    publish<"syncInstanceInsertion", InstanceInsertionSpec>({
-      type: "syncInstanceInsertion",
-      payload: instanceInsertionSpec,
-    });
-  };
-
   useSubscribe<"dragStartInstance">("dragStartInstance", () => {
     setSelectedInstance(undefined);
   });
@@ -82,12 +63,13 @@ export const useDragDropHandlers = ({
       findInstanceById(rootInstance, dragData.instance.id) === undefined;
 
     if (isNew) {
-      insert({
-        instance: dragData.instance,
-        dropData,
+      publish<"insertInstance", Instance>({
+        type: "insertInstance",
+        payload: dragData.instance,
       });
       return;
     }
+
     const instanceReparentingSpec = {
       parentId: dropData.instance.id,
       position: dropData.position,
@@ -141,17 +123,29 @@ export const useDragDropHandlers = ({
   });
 
   useSubscribe<"insertInstance", Instance>("insertInstance", (instance) => {
-    if (selectedInstance === undefined) {
-      setSelectedInstance(rootInstance);
-    }
-    insert({
+    const instanceInsertionSpec = {
       instance,
-      dropData: {
-        position: "end",
-        instance: selectedInstance ?? rootInstance,
-      },
+      parentId: selectedInstance?.id ?? rootInstance.id,
+      position: dropData?.position || "end",
+    };
+    setInstanceInsertionSpec(instanceInsertionSpec);
+    publish<"syncInstanceInsertion", InstanceInsertionSpec>({
+      type: "syncInstanceInsertion",
+      payload: instanceInsertionSpec,
     });
   });
+
+  useSubscribe<"insertInstanceUndo", Instance>(
+    "insertInstanceUndo",
+    (instance) => {
+      publish<"deleteInstace", { id: Instance["id"] }>({
+        type: "deleteInstace",
+        payload: {
+          id: instance.id,
+        },
+      });
+    }
+  );
 
   return { instanceInsertionSpec, instanceReparentingSpec };
 };

@@ -1820,14 +1820,15 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
-"@webstudio-is/sdk@^0.1.18":
-  version "0.1.18"
-  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.1.18.tgz#86fa61b508c0293f0ed9baca6e6b89585f44e320"
-  integrity sha512-rEgIG4qZMKhyudqVhQGlc7LB1ibMQ6KA9Jr+pjMTAhv3o/Jgqk4YA4eXyui8ZFZvC5ibIakdzqsv+4O6QTXGSQ==
+"@webstudio-is/sdk@^0.1.19":
+  version "0.1.19"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.1.19.tgz#6075c3095d6f145ee45f3830cbb40044a2f464c5"
+  integrity sha512-OnhDlhP9EneFCg5p96saEeRKiGdgcq/ngEq78YrVCQF15AvuLpDrCZ5/P9KLEhvusEteNK0SmUYRKqZ2+IQ5NQ==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/react" "^1.2.7"
     immer "^9.0.12"
+    mitt "^3.0.0"
     prisma "^3.10.0"
     react-nano-state "^0.4.0"
 
@@ -6066,6 +6067,11 @@ minizlib@^2.1.1:
   dependencies:
     minipass "^3.0.0"
     yallist "^4.0.0"
+
+mitt@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.0.tgz#69ef9bd5c80ff6f57473e8d89326d01c414be0bd"
+  integrity sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==
 
 mixin-deep@^1.2.0:
   version "1.3.2"

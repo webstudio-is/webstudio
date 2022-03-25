@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import {
@@ -28,6 +28,7 @@ import {
 } from "./shared/publish";
 import { useActiveElementTracking } from "./shared/active-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
+import { initUndoRedo } from "./shared/undo-redo";
 
 const useElementsTree = (
   rootInstance: Instance,
@@ -68,6 +69,12 @@ const useIsPreviewMode = () => {
   return isPreviewMode;
 };
 
+const useUndoRedo = () => {
+  useEffect(() => {
+    initUndoRedo();
+  }, []);
+};
+
 const PreviewMode = ({ rootInstance }: { rootInstance: Instance }) => {
   return createElementsTree({
     instance: rootInstance,
@@ -100,6 +107,7 @@ const DesignMode = ({
   usePublishRootInstance(rootInstance);
   useActiveElementTracking({ rootInstance });
   useShortcuts({ rootInstance });
+  useUndoRedo();
 
   const elements = useElementsTree(
     rootInstance,
