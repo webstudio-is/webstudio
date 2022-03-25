@@ -18,6 +18,13 @@ import { useIsPublishDialogOpen } from "../../shared/nano-values";
 
 type PublishProps = { project: Project };
 
+const host =
+  typeof location === "object"
+    ? location.host.includes("webstudio.is")
+      ? "wstd.io"
+      : location.host
+    : "";
+
 const Content = ({ project }: PublishProps) => {
   const id = useId();
   const fetcher = useFetcher();
@@ -28,9 +35,6 @@ const Content = ({ project }: PublishProps) => {
     if (typeof location !== "object" || !domain) {
       return;
     }
-    const host = location.host.includes("webstudio.is")
-      ? "wstd.io"
-      : location.host;
     setUrl(`${location.protocol}//${domain}.${host}`);
   }, [domain]);
 
@@ -60,7 +64,7 @@ const Content = ({ project }: PublishProps) => {
                   textOverflow: "ellipsis",
                 }}
               >
-                {`${domain}.${location.host}`}{" "}
+                {`${domain}.${host}`}{" "}
               </Text>
               <ExternalLinkIcon />
             </Link>
