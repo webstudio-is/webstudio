@@ -13,9 +13,13 @@ export const loader: LoaderFunction = async ({ request }) => {
     request.headers.get("x-forwarded-host") ||
     request.headers.get("host") ||
     "";
-  const [userDomain, designerDomain] = host.split(".");
+
+  const [userDomain, wstdDomain] = host.split(".");
   // We render the site from a subdomain
-  if (typeof userDomain === "string" && typeof designerDomain === "string") {
+  if (
+    typeof userDomain === "string" &&
+    (wstdDomain === "wstd" || wstdDomain?.includes("localhost"))
+  ) {
     try {
       const tree = await db.tree.loadByDomain(userDomain);
       const props = await db.props.loadByTreeId(tree.id);
