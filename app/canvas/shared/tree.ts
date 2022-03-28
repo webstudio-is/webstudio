@@ -13,7 +13,7 @@ import {
   useSelectedInstance,
 } from "./nano-values";
 import { useSubscribe } from "./pubsub";
-import { transaction } from "~/lib/sync-engine";
+import { createTransaction } from "~/lib/sync-engine";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -96,7 +96,7 @@ export const useDeleteInstance = () => {
       // The way it is now it will actually still enable parallel deletion props editing and restoration.
       // Contra: we are piling them up.
       // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
-      transaction([rootInstanceContainer], (rootInstance) => {
+      createTransaction([rootInstanceContainer], (rootInstance) => {
         if (rootInstance !== undefined) {
           deleteInstanceMutable(rootInstance, id);
         }

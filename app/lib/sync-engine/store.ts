@@ -25,7 +25,9 @@ type UnwrapContainers<Containers extends Array<ValueContainer<unknown>>> = {
     : never;
 };
 
-export const transaction = <Containers extends ValueContainer<Any>[]>(
+export const createTransaction = <
+  Containers extends Array<ValueContainer<Any>>
+>(
   containers: [...Containers],
   recipe: (...values: UnwrapContainers<Containers>) => void
 ): UnwrapContainers<Containers> => {
@@ -35,7 +37,7 @@ export const transaction = <Containers extends ValueContainer<Any>[]>(
     drafts.push(createDraft(container.value));
   }
   recipe(...drafts);
-  const current = new Transaction();
+  const transaction = new Transaction();
   const values = [] as unknown as Values;
   drafts.forEach((draft, index) => {
     const namespace = registry.get(containers[index]);
@@ -47,7 +49,7 @@ export const transaction = <Containers extends ValueContainer<Any>[]>(
     const value = finishDraft(
       draft,
       (patches: Array<Patch>, revisePatches: Array<Patch>) => {
-        current.add({
+        transaction.add({
           namespace,
           patches,
           revisePatches,
@@ -57,7 +59,6 @@ export const transaction = <Containers extends ValueContainer<Any>[]>(
     );
     values.push(value);
   });
-  current.apply("patches");
-  add(current);
+  add(transaction);
   return values;
 };

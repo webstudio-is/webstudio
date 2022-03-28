@@ -20,9 +20,15 @@ export class Transaction {
   constructor() {
     this.id = ObjectId().toString();
   }
-  apply(type: "patches" | "revisePatches") {
+  applyPatches() {
     for (const change of this.specs) {
-      const value = applyPatches(change.container.value, change[type]);
+      const value = applyPatches(change.container.value, change.patches);
+      change.container.dispatch(value);
+    }
+  }
+  applyRevisePatches() {
+    for (const change of this.specs) {
+      const value = applyPatches(change.container.value, change.revisePatches);
       change.container.dispatch(value);
     }
   }
