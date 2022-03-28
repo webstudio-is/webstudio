@@ -1,11 +1,11 @@
 import { type Change } from "./transaction";
 
-export type SyncQueueEntry = {
+export type SyncItem = {
   transactionId: string;
   changes: Array<Change>;
 };
 
-const queue: Array<SyncQueueEntry> = [];
+const queue: Array<SyncItem> = [];
 
 const dequeue = (transactionId: string) => {
   const index = queue.findIndex(

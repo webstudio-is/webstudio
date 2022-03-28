@@ -14,7 +14,7 @@ import type {
 import type { StyleUpdates } from "~/shared/component";
 import { useSubscribe } from "~/designer/features/canvas-iframe";
 import { enqueue } from "./queue";
-import { type SyncQueueEntry } from "~/lib/sync-engine";
+import { type SyncItem } from "~/lib/sync-engine";
 
 // @todo this entire queueing logic needs to be gone, it's a workaround,
 // because prisma can't do atomic updates yet with embeded documents
@@ -90,7 +90,7 @@ export const useSync = ({ project }: { config: Config; project: Project }) => {
     );
   });
 
-  useSubscribe<"syncChanges", Array<SyncQueueEntry>>("syncChanges", (queue) => {
+  useSubscribe<"syncChanges", Array<SyncItem>>("syncChanges", (queue) => {
     enqueue(() =>
       fetch(`/rest/patch/${project.devTreeId}`, {
         method: "post",
