@@ -1,6 +1,6 @@
 export { useSubscribe } from "@webstudio-is/sdk";
 
-export const publish = <Type, Payload = undefined>(action: {
+export const publish = <Type extends string, Payload = undefined>(action: {
   type: Type;
   payload?: Payload;
 }) => {

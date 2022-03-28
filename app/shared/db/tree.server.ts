@@ -4,19 +4,18 @@ import {
   type Project,
   type Tree,
 } from "@webstudio-is/sdk";
+import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import {
   insertInstance,
   reparentInstance,
   setInstanceStyle,
   setInstanceChildren,
-  deleteInstance as deleteInstanceFromTree,
   createInstance,
   type InstanceInsertionSpec,
   type InstanceReparentingSpec,
 } from "~/shared/tree-utils";
 import type { StyleUpdates } from "~/shared/component";
-import { deleteProps } from "./props.server";
 
 const rootConfig = {
   // @todo this should be part of a root primitive in primitives
@@ -153,22 +152,16 @@ export const updateChildren = async (
   });
 };
 
-export const deleteInstance = async (
-  treeId: Tree["id"],
-  instanceId: Instance["id"]
-) => {
-  // @todo we need to delete without fetching the tree
+export const clone = async (id: string) => {
+  const tree = await loadById(id);
+  return await create(tree.root);
+};
+
+export const patchRoot = async (treeId: Tree["id"], patches: Array<Patch>) => {
   const tree = await loadById(treeId);
-  const root = deleteInstanceFromTree(tree.root, instanceId);
-  if (root === null) return;
+  const root = applyPatches(tree.root, patches);
   await prisma.tree.update({
     data: { root },
     where: { id: treeId },
   });
-  await deleteProps({ instanceId, treeId });
-};
-
-export const clone = async (id: string) => {
-  const tree = await loadById(id);
-  return await create(tree.root);
 };

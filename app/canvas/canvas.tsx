@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import {
@@ -28,14 +28,14 @@ import {
 } from "./shared/publish";
 import { useActiveElementTracking } from "./shared/active-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
-import { initUndoRedo } from "./shared/undo-redo";
+import { useRootInstance } from "./shared/nano-values";
+import { usePeriodicSync } from "./shared/use-periodic-sync";
 
-const useElementsTree = (
-  rootInstance: Instance,
-  Component: typeof WrapperComponentDev,
-  setRootInstance: (instance: Instance) => void
-) => {
+const useElementsTree = () => {
+  const [rootInstance, setRootInstance] = useRootInstance();
+
   return useMemo(() => {
+    if (rootInstance === undefined) return;
     const onChangeChildren: OnChangeChildren = (change) => {
       const { instanceId, updates } = change;
       const updatedRoot = setInstanceChildren(
@@ -54,10 +54,10 @@ const useElementsTree = (
     };
     return createElementsTree({
       instance: rootInstance,
-      Component,
+      Component: WrapperComponentDev,
       onChangeChildren,
     });
-  }, [rootInstance, Component, setRootInstance]);
+  }, [rootInstance, setRootInstance]);
 };
 
 const useIsPreviewMode = () => {
@@ -69,13 +69,9 @@ const useIsPreviewMode = () => {
   return isPreviewMode;
 };
 
-const useUndoRedo = () => {
-  useEffect(() => {
-    initUndoRedo();
-  }, []);
-};
-
-const PreviewMode = ({ rootInstance }: { rootInstance: Instance }) => {
+const PreviewMode = () => {
+  const [rootInstance] = useRootInstance();
+  if (rootInstance === undefined) return null;
   return createElementsTree({
     instance: rootInstance,
     Component: WrapperComponent,
@@ -83,37 +79,22 @@ const PreviewMode = ({ rootInstance }: { rootInstance: Instance }) => {
 };
 
 type DesignModeProps = {
-  rootInstance: Instance;
   treeId: Tree["id"];
-  setRootInstance: (instance: Instance) => void;
 };
 
-const DesignMode = ({
-  rootInstance,
-  treeId,
-  setRootInstance,
-}: DesignModeProps) => {
+const DesignMode = ({ treeId }: DesignModeProps) => {
   const { instanceInsertionSpec, instanceReparentingSpec } =
-    useDragDropHandlers({ rootInstance });
-  useUpdateInstanceStyle({ rootInstance, setRootInstance });
+    useDragDropHandlers();
+  useUpdateInstanceStyle();
   usePublishSelectedInstance({ treeId });
-  useInsertInstance({ rootInstance, setRootInstance, instanceInsertionSpec });
-  useReparentInstance({
-    rootInstance,
-    setRootInstance,
-    instanceReparentingSpec,
-  });
-  useDeleteInstance({ rootInstance, setRootInstance });
-  usePublishRootInstance(rootInstance);
-  useActiveElementTracking({ rootInstance });
-  useShortcuts({ rootInstance });
-  useUndoRedo();
-
-  const elements = useElementsTree(
-    rootInstance,
-    WrapperComponentDev,
-    setRootInstance
-  );
+  useInsertInstance({ instanceInsertionSpec });
+  useReparentInstance({ instanceReparentingSpec });
+  useDeleteInstance();
+  usePublishRootInstance();
+  useActiveElementTracking();
+  useShortcuts();
+  usePeriodicSync();
+  const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
@@ -122,21 +103,15 @@ const DesignMode = ({
   );
 };
 
-export const Canvas = ({ data }: { data: Data }): JSX.Element => {
+export const Canvas = ({ data }: { data: Data }): JSX.Element | null => {
   globalStyles();
   useAllUserProps(data.props);
-  const [rootInstance, setRootInstance] = usePopulateRootInstance(data.tree);
+  usePopulateRootInstance(data.tree);
   const isPreviewMode = useIsPreviewMode();
 
   if (isPreviewMode) {
-    return <PreviewMode rootInstance={rootInstance} />;
+    return <PreviewMode />;
   }
 
-  return (
-    <DesignMode
-      rootInstance={rootInstance}
-      setRootInstance={setRootInstance}
-      treeId={data.tree.id}
-    />
-  );
+  return <DesignMode treeId={data.tree.id} />;
 };

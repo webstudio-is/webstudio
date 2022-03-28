@@ -1,5 +1,5 @@
 import { type Instance } from "@webstudio-is/sdk";
-import { deleteInstance } from "./delete-instance";
+import { deleteInstanceMutable } from "./delete-instance";
 
 describe("Delete instance", () => {
   test("div 1 > div 2 > [div 3]", () => {
@@ -24,8 +24,8 @@ describe("Delete instance", () => {
       ],
     };
 
-    const updatedInstance = deleteInstance(instance, "3");
-    expect(updatedInstance).toMatchSnapshot();
+    deleteInstanceMutable(instance, "3");
+    expect(instance).toMatchSnapshot();
   });
 
   test("div 1 > div 2, [div 3]", () => {
@@ -49,7 +49,7 @@ describe("Delete instance", () => {
       ],
     };
 
-    const updatedInstance = deleteInstance(instance, "3");
-    expect(updatedInstance).toMatchSnapshot();
+    deleteInstanceMutable(instance, "3");
+    expect(instance).toMatchSnapshot();
   });
 });

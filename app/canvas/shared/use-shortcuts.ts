@@ -1,38 +1,44 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { type Instance } from "@webstudio-is/sdk";
-import { useSelectedInstance } from "./nano-values";
+import { useRootInstance, useSelectedInstance } from "./nano-values";
 import { publish } from "./pubsub";
-import { redo, undo } from "./undo-redo";
+import { redo, undo } from "~/lib/sync-engine";
 
-export const useShortcuts = ({ rootInstance }: { rootInstance: Instance }) => {
-  const [instance, setSelectedInstance] = useSelectedInstance();
+export const useShortcuts = () => {
+  const [rootInstance] = useRootInstance();
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   useHotkeys(
     "backspace, delete",
     () => {
       // @todo tell user they can't delete root
-      if (instance === undefined || instance.id === rootInstance.id) return;
-      publish<"deleteInstace", { id: Instance["id"] }>({
-        type: "deleteInstace",
+      if (
+        selectedInstance === undefined ||
+        selectedInstance.id === rootInstance?.id
+      ) {
+        return;
+      }
+      publish<"deleteInstance", { id: Instance["id"] }>({
+        type: "deleteInstance",
         payload: {
-          id: instance.id,
+          id: selectedInstance.id,
         },
       });
     },
     { enableOnTags: ["INPUT", "SELECT", "TEXTAREA"] },
-    [instance]
+    [selectedInstance]
   );
 
   useHotkeys(
     "esc",
     () => {
-      if (instance === undefined) return;
+      if (selectedInstance === undefined) return;
       setSelectedInstance(undefined);
       publish<"selectInstance", undefined>({
         type: "selectInstance",
         payload: undefined,
       });
     },
-    [instance]
+    [selectedInstance]
   );
 
   useHotkeys(

@@ -12,7 +12,11 @@ import {
   findInsertionIndex,
   getDragOverInfo,
 } from "~/shared/dom-utils";
-import { useDropData, useSelectedInstance } from "./nano-values";
+import {
+  useDropData,
+  useRootInstance,
+  useSelectedInstance,
+} from "./nano-values";
 import { publish, useSubscribe } from "./pubsub";
 //import {usePointerOutline} from './use-pointer-outline'
 
@@ -23,14 +27,11 @@ const getBoundingClientRect = memoize((element) =>
 
 const getComputedStyle = memoize((element) => window.getComputedStyle(element));
 
-export const useDragDropHandlers = ({
-  rootInstance,
-}: {
-  rootInstance: Instance;
-}): {
+export const useDragDropHandlers = (): {
   instanceInsertionSpec?: InstanceInsertionSpec;
   instanceReparentingSpec?: InstanceReparentingSpec;
 } => {
+  const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [instanceInsertionSpec, setInstanceInsertionSpec] =
     useState<InstanceInsertionSpec>();
@@ -51,6 +52,7 @@ export const useDragDropHandlers = ({
     setDragData(undefined);
 
     if (
+      rootInstance === undefined ||
       dropData === undefined ||
       dragData === undefined ||
       // Can't reparent an instance inside itself
@@ -89,7 +91,7 @@ export const useDragDropHandlers = ({
     // updatePointerOutline(currentOffset)
     const dragOver = getDragOverInfo(currentOffset, getBoundingClientRect);
 
-    if (dragOver.element === undefined) return;
+    if (rootInstance === undefined || dragOver.element === undefined) return;
 
     const dropInstance = findInstanceById(rootInstance, dragOver.element.id);
 
@@ -123,6 +125,7 @@ export const useDragDropHandlers = ({
   });
 
   useSubscribe<"insertInstance", Instance>("insertInstance", (instance) => {
+    if (rootInstance === undefined) return;
     const instanceInsertionSpec = {
       instance,
       parentId: selectedInstance?.id ?? rootInstance.id,
@@ -134,18 +137,6 @@ export const useDragDropHandlers = ({
       payload: instanceInsertionSpec,
     });
   });
-
-  useSubscribe<"insertInstanceUndo", Instance>(
-    "insertInstanceUndo",
-    (instance) => {
-      publish<"deleteInstace", { id: Instance["id"] }>({
-        type: "deleteInstace",
-        payload: {
-          id: instance.id,
-        },
-      });
-    }
-  );
 
   return { instanceInsertionSpec, instanceReparentingSpec };
 };

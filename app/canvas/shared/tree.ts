@@ -1,38 +1,40 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { type Instance, type Tree } from "@webstudio-is/sdk";
 import {
   type InstanceInsertionSpec,
   type InstanceReparentingSpec,
-  populateTree,
   insertInstance,
-  deleteInstance,
   reparentInstance,
+  deleteInstanceMutable,
 } from "~/shared/tree-utils";
-import { useSelectedInstance } from "./nano-values";
+import {
+  rootInstanceContainer,
+  useRootInstance,
+  useSelectedInstance,
+} from "./nano-values";
 import { useSubscribe } from "./pubsub";
+import { transaction } from "~/lib/sync-engine";
 
 export const usePopulateRootInstance = (tree: Tree) => {
-  // Caches initial population of the instance, won't be updated after.
-  const populatedRootInstance = useMemo(() => {
-    return populateTree(tree.root);
-  }, [tree]);
-  return useState<Instance>(populatedRootInstance);
+  const [, setRootInstance] = useRootInstance();
+  useEffect(() => {
+    setRootInstance(tree.root);
+  }, [tree, setRootInstance]);
 };
 
 export const useInsertInstance = ({
   instanceInsertionSpec,
-  rootInstance,
-  setRootInstance,
 }: {
   instanceInsertionSpec?: InstanceInsertionSpec;
-  rootInstance: Instance;
-  setRootInstance: (instance: Instance) => void;
 }) => {
+  const [rootInstance, setRootInstance] = useRootInstance();
   const [, setSelectedInstance] = useSelectedInstance();
   const previousInstanceInsertionSpecRef = useRef<InstanceInsertionSpec>();
 
   useEffect(() => {
-    if (instanceInsertionSpec === undefined) return;
+    if (instanceInsertionSpec === undefined || rootInstance === undefined) {
+      return;
+    }
     // Preventing an infinite insertion loop
     if (previousInstanceInsertionSpecRef.current === instanceInsertionSpec) {
       return;
@@ -56,18 +58,16 @@ export const useInsertInstance = ({
 
 export const useReparentInstance = ({
   instanceReparentingSpec,
-  rootInstance,
-  setRootInstance,
 }: {
   instanceReparentingSpec?: InstanceReparentingSpec;
-  rootInstance: Instance;
-  setRootInstance: (instance: Instance) => void;
 }) => {
+  const [rootInstance, setRootInstance] = useRootInstance();
   // Used to avoid reparenting in infinite loop when spec didn't change
   const usedSpec = useRef<InstanceReparentingSpec>();
 
   useEffect(() => {
     if (
+      rootInstance === undefined ||
       instanceReparentingSpec === undefined ||
       usedSpec.current === instanceReparentingSpec
     ) {
@@ -82,19 +82,25 @@ export const useReparentInstance = ({
   }, [instanceReparentingSpec, rootInstance, setRootInstance]);
 };
 
-export const useDeleteInstance = ({
-  rootInstance,
-  setRootInstance,
-}: {
-  rootInstance: Instance;
-  setRootInstance: (instance: Instance) => void;
-}) => {
+export const useDeleteInstance = () => {
   const [, setSelectedInstance] = useSelectedInstance();
-  useSubscribe<"deleteInstace", { id: Instance["id"] }>(
-    "deleteInstace",
+  useSubscribe<"deleteInstance", { id: Instance["id"] }>(
+    "deleteInstance",
     ({ id }) => {
-      const newRootInstance = deleteInstance(rootInstance, id);
-      setRootInstance(newRootInstance);
+      // @todo deleting instance should involve also deleting it's props
+      // If we don't delete them - they just live both on client and db
+      // Pros:
+      //   - if we undo the deletion we don't need to undo the props deletion
+      //   - in a multiplayer environment, some other user could have changed a prop while we have deleted the instance
+      // and then if we restore the instance, we would be restoring it with our props, potentially overwriting other users changes
+      // The way it is now it will actually still enable parallel deletion props editing and restoration.
+      // Contra: we are piling them up.
+      // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
+      transaction([rootInstanceContainer], (rootInstance) => {
+        if (rootInstance !== undefined) {
+          deleteInstanceMutable(rootInstance, id);
+        }
+      });
       setSelectedInstance(undefined);
     }
   );

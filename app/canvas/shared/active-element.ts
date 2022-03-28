@@ -1,18 +1,19 @@
 import { useCallback, useEffect } from "react";
 import { type Instance } from "@webstudio-is/sdk";
 import { findInstanceById } from "~/shared/tree-utils";
-import { useSelectedInstance, useSelectedElement } from "./nano-values";
+import {
+  useSelectedInstance,
+  useSelectedElement,
+  useRootInstance,
+} from "./nano-values";
 import { publish, useSubscribe } from "./pubsub";
 
 const eventOptions = {
   passive: true,
 };
 
-export const useActiveElementTracking = ({
-  rootInstance,
-}: {
-  rootInstance: Instance;
-}) => {
+export const useActiveElementTracking = () => {
+  const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [selectedElement, setSelectedElement] = useSelectedElement();
 
@@ -36,7 +37,7 @@ export const useActiveElementTracking = ({
 
   const select = useCallback(
     (element: Element | null) => {
-      if (element === null) return;
+      if (element === null || rootInstance === undefined) return;
       const id = element?.id;
       if (!id) return;
       if (selectedElement?.id === id) return;
