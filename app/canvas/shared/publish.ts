@@ -7,7 +7,11 @@ import {
   type Tree,
 } from "@webstudio-is/sdk";
 import { type SelectedInstanceData } from "~/shared/component";
-import { useSelectedInstance, useSelectedElement } from "./nano-values";
+import {
+  useSelectedInstance,
+  useSelectedElement,
+  useRootInstance,
+} from "./nano-values";
 import { publish } from "./pubsub";
 
 export const usePublishSelectedInstance = ({
@@ -47,11 +51,12 @@ export const usePublishSelectedInstance = ({
   }, [instance, selectedElement, allUserProps, treeId]);
 };
 
-export const usePublishRootInstance = (instance: Instance) => {
+export const usePublishRootInstance = () => {
+  const [rootInstance] = useRootInstance();
   useEffect(() => {
     publish<"loadRootInstance", Instance>({
       type: "loadRootInstance",
-      payload: instance,
+      payload: rootInstance,
     });
-  }, [instance]);
+  }, [rootInstance]);
 };

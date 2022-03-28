@@ -1,4 +1,3 @@
-import produce from "immer";
 import { type Instance } from "@webstudio-is/sdk";
 
 export const deleteInstanceMutable = (
@@ -18,9 +17,3 @@ export const deleteInstanceMutable = (
   }
   return false;
 };
-
-export const deleteInstance = produce(
-  (draftInstance: Instance, instanceId: Instance["id"]) => {
-    deleteInstanceMutable(draftInstance, instanceId);
-  }
-);
