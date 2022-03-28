@@ -17,8 +17,12 @@ export const register = <Value>(
   registry.set(container, namespace);
 };
 
-type UnwrapContainers<T extends ValueContainer<unknown>[]> = {
-  [K in keyof T]: T[K] extends ValueContainer<infer X> ? X : never;
+type UnwrapContainers<Containers extends Array<ValueContainer<unknown>>> = {
+  [Index in keyof Containers]: Containers[Index] extends ValueContainer<
+    infer Value
+  >
+    ? Value
+    : never;
 };
 
 export const transaction = <Containers extends ValueContainer<Any>[]>(
