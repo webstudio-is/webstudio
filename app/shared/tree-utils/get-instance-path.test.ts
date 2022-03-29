@@ -3,7 +3,7 @@ import { getInstancePath } from "./get-instance-path";
 
 const getIds = (array: Array<{ id: string }>) => array.map((item) => item.id);
 
-describe.only("Get instance path", () => {
+describe("Get instance path", () => {
   test("single possible path", () => {
     const instance: Instance = {
       component: "Box",

@@ -14,6 +14,8 @@ import {
 } from "./nano-values";
 import { useSubscribe } from "./pubsub";
 import { createTransaction } from "~/lib/sync-engine";
+import { findParentInstance } from "~/shared/tree-utils/find-parent-instance";
+import { findClosestSiblingInstance } from "~/shared/tree-utils/find-closest-sibling-instance";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -83,10 +85,21 @@ export const useReparentInstance = ({
 };
 
 export const useDeleteInstance = () => {
-  const [, setSelectedInstance] = useSelectedInstance();
+  const [rootInstance] = useRootInstance();
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   useSubscribe<"deleteInstance", { id: Instance["id"] }>(
     "deleteInstance",
     ({ id }) => {
+      if (rootInstance !== undefined && selectedInstance !== undefined) {
+        const parentInstance = findParentInstance(rootInstance, id);
+        if (parentInstance !== undefined) {
+          const siblingInstance = findClosestSiblingInstance(
+            parentInstance,
+            id
+          );
+          setSelectedInstance(siblingInstance || parentInstance);
+        }
+      }
       // @todo deleting instance should involve also deleting it's props
       // If we don't delete them - they just live both on client and db
       // Pros:
@@ -101,7 +114,6 @@ export const useDeleteInstance = () => {
           deleteInstanceMutable(rootInstance, id);
         }
       });
-      setSelectedInstance(undefined);
     }
   );
 };
