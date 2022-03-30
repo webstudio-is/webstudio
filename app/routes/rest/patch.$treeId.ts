@@ -15,9 +15,10 @@ export const action: ActionFunction = async ({ request, params }) => {
   for await (const transaction of transactions) {
     for await (const change of transaction.changes) {
       const { namespace, patches } = change;
-      if (namespace in updaters) {
-        await updaters[namespace as UpdaterKey](params.treeId, patches);
+      if (namespace in updaters === false) {
+        return { errors: `Unknown namespace "${namespace}"` };
       }
+      await updaters[namespace as UpdaterKey](params.treeId, patches);
     }
   }
   return { status: "ok" };

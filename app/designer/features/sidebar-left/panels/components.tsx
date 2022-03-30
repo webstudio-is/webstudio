@@ -109,9 +109,9 @@ export const TabContent = ({
           label={primitives[component].label}
           onClick={() => {
             onSetActiveTab("none");
-            publish<"insertInstance", Instance>({
+            publish<"insertInstance", { instance: Instance }>({
               type: "insertInstance",
-              payload: createInstance({ component }),
+              payload: { instance: createInstance({ component }) },
             });
           }}
           onDragChange={handleDragChange}

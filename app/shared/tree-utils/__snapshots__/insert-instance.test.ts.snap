@@ -2,201 +2,89 @@
 
 exports[`Insert instance after a nested div using "end": div 1 > div 2, [div 3] 1`] = `
 Object {
-  "insertedInstance": Object {
-    "children": Array [],
-    "component": "Box",
-    "id": "3",
-    "style": Object {
-      "boxSizing": Object {
-        "type": "keyword",
-        "value": "border-box",
-      },
-      "minHeight": Object {
-        "type": "unit",
-        "unit": "px",
-        "value": 100,
-      },
+  "children": Array [
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "id": "2",
+      "style": Object {},
     },
-  },
-  "instance": Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "component": "Box",
-        "id": "2",
-        "style": Object {},
-      },
-      Object {
-        "children": Array [],
-        "component": "Box",
-        "id": "3",
-        "style": Object {
-          "boxSizing": Object {
-            "type": "keyword",
-            "value": "border-box",
-          },
-          "minHeight": Object {
-            "type": "unit",
-            "unit": "px",
-            "value": 100,
-          },
-        },
-      },
-    ],
-    "component": "Box",
-    "id": "1",
-    "style": Object {},
-  },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "id": "3",
+      "style": Object {},
+    },
+  ],
+  "component": "Box",
+  "id": "1",
+  "style": Object {},
 }
 `;
 
 exports[`Insert instance after a nested div using index: div 1 > div 2, [div 3] 1`] = `
 Object {
-  "insertedInstance": Object {
-    "children": Array [],
-    "component": "Box",
-    "id": "3",
-    "style": Object {
-      "boxSizing": Object {
-        "type": "keyword",
-        "value": "border-box",
-      },
-      "minHeight": Object {
-        "type": "unit",
-        "unit": "px",
-        "value": 100,
-      },
+  "children": Array [
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "id": "2",
+      "style": Object {},
     },
-  },
-  "instance": Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "component": "Box",
-        "id": "2",
-        "style": Object {},
-      },
-      Object {
-        "children": Array [],
-        "component": "Box",
-        "id": "3",
-        "style": Object {
-          "boxSizing": Object {
-            "type": "keyword",
-            "value": "border-box",
-          },
-          "minHeight": Object {
-            "type": "unit",
-            "unit": "px",
-            "value": 100,
-          },
-        },
-      },
-    ],
-    "component": "Box",
-    "id": "1",
-    "style": Object {},
-  },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "id": "3",
+      "style": Object {},
+    },
+  ],
+  "component": "Box",
+  "id": "1",
+  "style": Object {},
 }
 `;
 
 exports[`Insert instance before a nested div using index: div 1 > [div 3], div 2 1`] = `
 Object {
-  "insertedInstance": Object {
-    "children": Array [],
-    "component": "Box",
-    "id": "3",
-    "style": Object {
-      "boxSizing": Object {
-        "type": "keyword",
-        "value": "border-box",
-      },
-      "minHeight": Object {
-        "type": "unit",
-        "unit": "px",
-        "value": 100,
-      },
+  "children": Array [
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "id": "3",
+      "style": Object {},
     },
-  },
-  "instance": Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "component": "Box",
-        "id": "3",
-        "style": Object {
-          "boxSizing": Object {
-            "type": "keyword",
-            "value": "border-box",
-          },
-          "minHeight": Object {
-            "type": "unit",
-            "unit": "px",
-            "value": 100,
-          },
-        },
-      },
-      Object {
-        "children": Array [],
-        "component": "Box",
-        "id": "2",
-        "style": Object {},
-      },
-    ],
-    "component": "Box",
-    "id": "1",
-    "style": Object {},
-  },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "id": "2",
+      "style": Object {},
+    },
+  ],
+  "component": "Box",
+  "id": "1",
+  "style": Object {},
 }
 `;
 
 exports[`Insert instance inside a nested div using "end": div 1 > div 2 > [div 3] 1`] = `
 Object {
-  "insertedInstance": Object {
-    "children": Array [],
-    "component": "Box",
-    "id": "3",
-    "style": Object {
-      "boxSizing": Object {
-        "type": "keyword",
-        "value": "border-box",
-      },
-      "minHeight": Object {
-        "type": "unit",
-        "unit": "px",
-        "value": 100,
-      },
+  "children": Array [
+    Object {
+      "children": Array [
+        Object {
+          "children": Array [],
+          "component": "Box",
+          "id": "3",
+          "style": Object {},
+        },
+      ],
+      "component": "Box",
+      "id": "2",
+      "style": Object {},
     },
-  },
-  "instance": Object {
-    "children": Array [
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
-            "component": "Box",
-            "id": "3",
-            "style": Object {
-              "boxSizing": Object {
-                "type": "keyword",
-                "value": "border-box",
-              },
-              "minHeight": Object {
-                "type": "unit",
-                "unit": "px",
-                "value": 100,
-              },
-            },
-          },
-        ],
-        "component": "Box",
-        "id": "2",
-        "style": Object {},
-      },
-    ],
-    "component": "Box",
-    "id": "1",
-    "style": Object {},
-  },
+  ],
+  "component": "Box",
+  "id": "1",
+  "style": Object {},
 }
 `;
