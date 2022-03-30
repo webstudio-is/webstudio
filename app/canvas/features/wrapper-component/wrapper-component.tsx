@@ -10,6 +10,7 @@ import { primitives } from "~/shared/component";
 import { useContentEditable } from "./editable";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
+import { useEnsureFocus } from "./use-ensure-focus";
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -43,13 +44,16 @@ export const WrapperComponentDev = ({
     isDisabled: isContentEditableDisabled === false,
   });
 
+  const focusRefCallback = useEnsureFocus();
+
   const refCallback = useCallback(
     (element) => {
       contentEditableRef.current = element;
       // We can't drag if we are editing text.
       dragRefCallback(element);
+      focusRefCallback(element);
     },
-    [contentEditableRef, dragRefCallback]
+    [contentEditableRef, dragRefCallback, focusRefCallback]
   );
 
   const userProps = useUserProps(instance.id);

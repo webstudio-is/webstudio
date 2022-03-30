@@ -23,18 +23,6 @@ export const useActiveElementTracking = () => {
     select(element);
   });
 
-  useEffect(() => {
-    // Alredy focused over DOM event.
-    if (
-      selectedInstance === undefined ||
-      selectedElement?.id === selectedInstance.id
-    ) {
-      return;
-    }
-    // Instance was added and we want to auto focus it now.
-    document.getElementById(selectedInstance.id)?.focus();
-  }, [selectedInstance, selectedElement]);
-
   const select = useCallback(
     (element: Element | null) => {
       if (element === null || rootInstance === undefined) return;
