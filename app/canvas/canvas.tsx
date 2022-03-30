@@ -83,11 +83,11 @@ type DesignModeProps = {
 };
 
 const DesignMode = ({ treeId }: DesignModeProps) => {
-  const { instanceReparentingSpec } = useDragDropHandlers();
+  useDragDropHandlers();
   useUpdateInstanceStyle();
   usePublishSelectedInstance({ treeId });
   useInsertInstance();
-  useReparentInstance({ instanceReparentingSpec });
+  useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
   useActiveElementTracking();

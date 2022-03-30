@@ -1,11 +1,7 @@
 import { useState } from "react";
 import memoize from "lodash.memoize";
-import { type Instance } from "@webstudio-is/sdk";
 import { type DragData, type DropData } from "~/shared/component";
-import {
-  findInstanceById,
-  type InstanceReparentingSpec,
-} from "~/shared/tree-utils";
+import { findInstanceById } from "~/shared/tree-utils";
 import {
   findClosestChild,
   findInsertionIndex,
@@ -26,13 +22,9 @@ const getBoundingClientRect = memoize((element) =>
 
 const getComputedStyle = memoize((element) => window.getComputedStyle(element));
 
-export const useDragDropHandlers = (): {
-  instanceReparentingSpec?: InstanceReparentingSpec;
-} => {
+export const useDragDropHandlers = () => {
   const [rootInstance] = useRootInstance();
   const [, setSelectedInstance] = useSelectedInstance();
-  const [instanceReparentingSpec, setInstanceReparentingSpec] =
-    useState<InstanceReparentingSpec>();
   const [dropData, setDropData] = useDropData();
   const [dragData, setDragData] = useState<DragData>();
 
@@ -60,27 +52,22 @@ export const useDragDropHandlers = (): {
     const isNew =
       findInstanceById(rootInstance, dragData.instance.id) === undefined;
 
+    const data = {
+      instance: dragData.instance,
+      dropData,
+    };
+
     if (isNew) {
-      publish<"insertInstance", { instance: Instance; dropData?: DropData }>({
+      publish<"insertInstance", typeof data>({
         type: "insertInstance",
-        payload: {
-          instance: dragData.instance,
-          dropData,
-        },
+        payload: data,
       });
       return;
     }
 
-    const instanceReparentingSpec = {
-      parentId: dropData.instance.id,
-      position: dropData.position,
-      id: dragData.instance.id,
-    };
-
-    setInstanceReparentingSpec(instanceReparentingSpec);
-    publish<"syncInstanceReparenting", InstanceReparentingSpec>({
-      type: "syncInstanceReparenting",
-      payload: instanceReparentingSpec,
+    publish<"reparentInstance", typeof data>({
+      type: "reparentInstance",
+      payload: data,
     });
   });
 
@@ -122,6 +109,4 @@ export const useDragDropHandlers = (): {
       payload: { dropData, dragData },
     });
   });
-
-  return { instanceReparentingSpec };
 };

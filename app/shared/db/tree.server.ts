@@ -7,11 +7,9 @@ import {
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import {
-  reparentInstance,
   setInstanceStyle,
   setInstanceChildren,
   createInstance,
-  type InstanceReparentingSpec,
 } from "~/shared/tree-utils";
 import type { StyleUpdates } from "~/shared/component";
 
@@ -89,19 +87,6 @@ export const loadByProject = async (
   }
 
   return await loadById(treeId);
-};
-
-export const reparent = async (
-  id: string,
-  instanceReparentingSpec: InstanceReparentingSpec
-) => {
-  // @todo reparent without loading the entire tree
-  const tree = await loadById(id);
-  const root = reparentInstance(tree.root, instanceReparentingSpec);
-  await prisma.tree.update({
-    data: { root },
-    where: { id },
-  });
 };
 
 export const updateStyles = async (id: string, styleUpdates: StyleUpdates) => {

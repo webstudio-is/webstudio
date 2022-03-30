@@ -1,8 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { type Instance, type Tree } from "@webstudio-is/sdk";
 import {
-  type InstanceReparentingSpec,
-  reparentInstance,
   deleteInstanceMutable,
   populateInstance,
   findParentInstance,
@@ -51,30 +49,20 @@ export const useInsertInstance = () => {
   );
 };
 
-export const useReparentInstance = ({
-  instanceReparentingSpec,
-}: {
-  instanceReparentingSpec?: InstanceReparentingSpec;
-}) => {
-  const [rootInstance, setRootInstance] = useRootInstance();
-  // Used to avoid reparenting in infinite loop when spec didn't change
-  const usedSpec = useRef<InstanceReparentingSpec>();
-
-  useEffect(() => {
-    if (
-      rootInstance === undefined ||
-      instanceReparentingSpec === undefined ||
-      usedSpec.current === instanceReparentingSpec
-    ) {
-      return;
+export const useReparentInstance = () => {
+  useSubscribe<"reparentInstance", { instance: Instance; dropData: DropData }>(
+    "reparentInstance",
+    ({ instance, dropData }) => {
+      createTransaction([rootInstanceContainer], (rootInstance) => {
+        if (rootInstance === undefined) return;
+        deleteInstanceMutable(rootInstance, instance.id);
+        insertInstanceMutable(rootInstance, instance, {
+          parentId: dropData.instance.id,
+          position: dropData.position,
+        });
+      });
     }
-    usedSpec.current = instanceReparentingSpec;
-    const updatedRootInstance = reparentInstance(
-      rootInstance,
-      instanceReparentingSpec
-    );
-    setRootInstance(updatedRootInstance);
-  }, [instanceReparentingSpec, rootInstance, setRootInstance]);
+  );
 };
 
 export const useDeleteInstance = () => {
