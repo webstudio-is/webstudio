@@ -9,7 +9,7 @@ import {
   findInstanceById,
   getInstancePath,
   insertInstanceMutable,
-  reparentInstance,
+  deleteInstanceMutable,
 } from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
@@ -26,31 +26,17 @@ export const TreePrevew = () => {
       const isNew =
         findInstanceById(rootInstance, dragData.instance.id) === undefined;
 
-      if (isNew) {
-        const updatedRootInstance = produce((rootInstanceDraft) => {
-          insertInstanceMutable(rootInstanceDraft, dragData.instance, {
-            parentId: dropData.instance.id,
-            position: dropData.position,
-          });
-        })(rootInstance);
-        setDraftRootInstance(updatedRootInstance);
-        return;
-      }
-
-      // Can't reparent an instance inside itself
-      if (dropData.instance.id === dragData.instance.id) {
-        return;
-      }
-
-      const instanceReparentingSpec = {
-        parentId: dropData.instance.id,
-        position: dropData.position,
-        id: dragData.instance.id,
-      };
-      const updatedRootInstance = reparentInstance(
-        rootInstance,
-        instanceReparentingSpec
-      );
+      const updatedRootInstance = produce((rootInstanceDraft) => {
+        // - Only delete if the instance existed before.
+        // - Can't reparent an instance inside itself.
+        if (isNew === false && dropData.instance.id !== dragData.instance.id) {
+          deleteInstanceMutable(rootInstanceDraft, dragData.instance.id);
+        }
+        insertInstanceMutable(rootInstanceDraft, dragData.instance, {
+          parentId: dropData.instance.id,
+          position: dropData.position,
+        });
+      })(rootInstance);
       setDraftRootInstance(updatedRootInstance);
     }
   );
