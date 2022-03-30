@@ -4,7 +4,6 @@ import { type Instance } from "@webstudio-is/sdk";
 import { type DragData, type DropData } from "~/shared/component";
 import {
   findInstanceById,
-  type InstanceInsertionSpec,
   type InstanceReparentingSpec,
 } from "~/shared/tree-utils";
 import {
@@ -28,13 +27,10 @@ const getBoundingClientRect = memoize((element) =>
 const getComputedStyle = memoize((element) => window.getComputedStyle(element));
 
 export const useDragDropHandlers = (): {
-  instanceInsertionSpec?: InstanceInsertionSpec;
   instanceReparentingSpec?: InstanceReparentingSpec;
 } => {
   const [rootInstance] = useRootInstance();
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-  const [instanceInsertionSpec, setInstanceInsertionSpec] =
-    useState<InstanceInsertionSpec>();
+  const [, setSelectedInstance] = useSelectedInstance();
   const [instanceReparentingSpec, setInstanceReparentingSpec] =
     useState<InstanceReparentingSpec>();
   const [dropData, setDropData] = useDropData();
@@ -65,9 +61,12 @@ export const useDragDropHandlers = (): {
       findInstanceById(rootInstance, dragData.instance.id) === undefined;
 
     if (isNew) {
-      publish<"insertInstance", Instance>({
+      publish<"insertInstance", { instance: Instance; dropData?: DropData }>({
         type: "insertInstance",
-        payload: dragData.instance,
+        payload: {
+          instance: dragData.instance,
+          dropData,
+        },
       });
       return;
     }
@@ -124,19 +123,5 @@ export const useDragDropHandlers = (): {
     });
   });
 
-  useSubscribe<"insertInstance", Instance>("insertInstance", (instance) => {
-    if (rootInstance === undefined) return;
-    const instanceInsertionSpec = {
-      instance,
-      parentId: selectedInstance?.id ?? rootInstance.id,
-      position: dropData?.position || "end",
-    };
-    setInstanceInsertionSpec(instanceInsertionSpec);
-    publish<"syncInstanceInsertion", InstanceInsertionSpec>({
-      type: "syncInstanceInsertion",
-      payload: instanceInsertionSpec,
-    });
-  });
-
-  return { instanceInsertionSpec, instanceReparentingSpec };
+  return { instanceReparentingSpec };
 };

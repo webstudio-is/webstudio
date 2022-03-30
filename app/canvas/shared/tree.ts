@@ -1,21 +1,22 @@
 import { useEffect, useRef } from "react";
 import { type Instance, type Tree } from "@webstudio-is/sdk";
 import {
-  type InstanceInsertionSpec,
   type InstanceReparentingSpec,
-  insertInstance,
   reparentInstance,
   deleteInstanceMutable,
+  populateInstance,
+  findParentInstance,
+  findClosestSiblingInstance,
+  insertInstanceMutable,
 } from "~/shared/tree-utils";
+import { createTransaction } from "~/lib/sync-engine";
+import { DropData } from "~/shared/component";
 import {
   rootInstanceContainer,
   useRootInstance,
   useSelectedInstance,
 } from "./nano-values";
 import { useSubscribe } from "./pubsub";
-import { createTransaction } from "~/lib/sync-engine";
-import { findParentInstance } from "~/shared/tree-utils/find-parent-instance";
-import { findClosestSiblingInstance } from "~/shared/tree-utils/find-closest-sibling-instance";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -24,38 +25,30 @@ export const usePopulateRootInstance = (tree: Tree) => {
   }, [tree, setRootInstance]);
 };
 
-export const useInsertInstance = ({
-  instanceInsertionSpec,
-}: {
-  instanceInsertionSpec?: InstanceInsertionSpec;
-}) => {
-  const [rootInstance, setRootInstance] = useRootInstance();
-  const [, setSelectedInstance] = useSelectedInstance();
-  const previousInstanceInsertionSpecRef = useRef<InstanceInsertionSpec>();
+export const useInsertInstance = () => {
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
-  useEffect(() => {
-    if (instanceInsertionSpec === undefined || rootInstance === undefined) {
-      return;
+  useSubscribe<"insertInstance", { instance: Instance; dropData?: DropData }>(
+    "insertInstance",
+    ({ instance, dropData }) => {
+      createTransaction([rootInstanceContainer], (rootInstance) => {
+        if (rootInstance === undefined) return;
+        const populatedInstance = populateInstance(instance);
+        const hasInserted = insertInstanceMutable(
+          rootInstance,
+          populatedInstance,
+          {
+            parentId:
+              dropData?.instance.id ?? selectedInstance?.id ?? rootInstance.id,
+            position: dropData?.position || "end",
+          }
+        );
+        if (hasInserted) {
+          setSelectedInstance(instance);
+        }
+      });
     }
-    // Preventing an infinite insertion loop
-    if (previousInstanceInsertionSpecRef.current === instanceInsertionSpec) {
-      return;
-    }
-    previousInstanceInsertionSpecRef.current = instanceInsertionSpec;
-    const { instance: updatedRoot, insertedInstance } = insertInstance(
-      instanceInsertionSpec,
-      rootInstance
-    );
-    setRootInstance(updatedRoot);
-    if (insertedInstance !== undefined) {
-      setSelectedInstance(insertedInstance);
-    }
-  }, [
-    instanceInsertionSpec,
-    rootInstance,
-    setRootInstance,
-    setSelectedInstance,
-  ]);
+  );
 };
 
 export const useReparentInstance = ({

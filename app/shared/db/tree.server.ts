@@ -7,12 +7,10 @@ import {
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import {
-  insertInstance,
   reparentInstance,
   setInstanceStyle,
   setInstanceChildren,
   createInstance,
-  type InstanceInsertionSpec,
   type InstanceReparentingSpec,
 } from "~/shared/tree-utils";
 import type { StyleUpdates } from "~/shared/component";
@@ -91,21 +89,6 @@ export const loadByProject = async (
   }
 
   return await loadById(treeId);
-};
-
-export const insert = async (
-  id: string,
-  instanceInsertionSpec: InstanceInsertionSpec
-) => {
-  // @todo insert without loading the entire tree
-  const tree = await loadById(id);
-  const { instance: root } = insertInstance(instanceInsertionSpec, tree.root, {
-    populate: false,
-  });
-  await prisma.tree.update({
-    data: { root },
-    where: { id },
-  });
 };
 
 export const reparent = async (

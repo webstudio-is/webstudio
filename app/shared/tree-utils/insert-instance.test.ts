@@ -1,5 +1,5 @@
 import { type Instance } from "@webstudio-is/sdk";
-import { insertInstance, type InstanceInsertionSpec } from "./insert-instance";
+import { insertInstanceMutable } from "./insert-instance";
 import { createInstance } from "./create-instance";
 
 const instance = createInstance({ id: "3", component: "Box" });
@@ -19,13 +19,13 @@ describe("Insert instance", () => {
         },
       ],
     };
-    const instanceInsertionSpec: InstanceInsertionSpec = {
-      instance,
+
+    const hasInserted = insertInstanceMutable(rootInstance, instance, {
       parentId: "2",
       position: "end",
-    };
-    const result = insertInstance(instanceInsertionSpec, rootInstance);
-    expect(result).toMatchSnapshot();
+    });
+    expect(hasInserted).toBeTruthy();
+    expect(rootInstance).toMatchSnapshot();
   });
 
   test("after a nested div using index: div 1 > div 2, [div 3]", () => {
@@ -42,13 +42,13 @@ describe("Insert instance", () => {
         },
       ],
     };
-    const instanceInsertionSpec: InstanceInsertionSpec = {
-      instance,
+
+    const hasInserted = insertInstanceMutable(rootInstance, instance, {
       parentId: "1",
       position: 1,
-    };
-    const result = insertInstance(instanceInsertionSpec, rootInstance);
-    expect(result).toMatchSnapshot();
+    });
+    expect(hasInserted).toBeTruthy();
+    expect(rootInstance).toMatchSnapshot();
   });
 
   test("before a nested div using index: div 1 > [div 3], div 2", () => {
@@ -65,13 +65,12 @@ describe("Insert instance", () => {
         },
       ],
     };
-    const instanceInsertionSpec: InstanceInsertionSpec = {
-      instance,
+    const hasInserted = insertInstanceMutable(rootInstance, instance, {
       parentId: "1",
       position: 0,
-    };
-    const result = insertInstance(instanceInsertionSpec, rootInstance);
-    expect(result).toMatchSnapshot();
+    });
+    expect(hasInserted).toBeTruthy();
+    expect(rootInstance).toMatchSnapshot();
   });
 
   test(`after a nested div using "end": div 1 > div 2, [div 3]`, () => {
@@ -88,12 +87,12 @@ describe("Insert instance", () => {
         },
       ],
     };
-    const instanceInsertionSpec: InstanceInsertionSpec = {
-      instance,
+
+    const hasInserted = insertInstanceMutable(rootInstance, instance, {
       parentId: "1",
       position: "end",
-    };
-    const result = insertInstance(instanceInsertionSpec, rootInstance);
-    expect(result).toMatchSnapshot();
+    });
+    expect(hasInserted).toBeTruthy();
+    expect(rootInstance).toMatchSnapshot();
   });
 });

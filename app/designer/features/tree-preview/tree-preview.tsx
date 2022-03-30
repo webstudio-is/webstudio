@@ -1,4 +1,5 @@
 import { Instance, useSubscribe } from "@webstudio-is/sdk";
+import produce from "immer";
 import { useState } from "react";
 import { useRootInstance } from "~/designer/shared/nano-values";
 import { Tree } from "~/designer/shared/tree";
@@ -7,7 +8,7 @@ import { Flex } from "~/shared/design-system";
 import {
   findInstanceById,
   getInstancePath,
-  insertInstance,
+  insertInstanceMutable,
   reparentInstance,
 } from "~/shared/tree-utils";
 
@@ -26,16 +27,13 @@ export const TreePrevew = () => {
         findInstanceById(rootInstance, dragData.instance.id) === undefined;
 
       if (isNew) {
-        const instanceInsertionSpec = {
-          instance: dragData.instance,
-          parentId: dropData.instance.id,
-          position: dropData.position,
-        };
-        const { instance } = insertInstance(
-          instanceInsertionSpec,
-          rootInstance
-        );
-        setDraftRootInstance(instance);
+        const updatedRootInstance = produce((rootInstanceDraft) => {
+          insertInstanceMutable(rootInstanceDraft, dragData.instance, {
+            parentId: dropData.instance.id,
+            position: dropData.position,
+          });
+        })(rootInstance);
+        setDraftRootInstance(updatedRootInstance);
         return;
       }
 
