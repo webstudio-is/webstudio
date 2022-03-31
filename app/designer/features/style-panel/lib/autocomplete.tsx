@@ -25,15 +25,15 @@ const findIndex = (items: Items, value: string, exact = false): number => {
   return items.indexOf(item);
 };
 
-type AutocompleteProps = {
+type AutocompleteProps = Omit<ComponentProps<typeof TextField>, "onChange"> & {
   items: Items;
-  onChangeValue: (value: string) => void;
+  onChange: (value: string) => void;
   value: string;
-} & ComponentProps<typeof TextField>;
+};
 
 export const Autocomplete = ({
   items,
-  onChangeValue,
+  onChange,
   value,
   ...rest
 }: AutocompleteProps) => {
@@ -65,7 +65,7 @@ export const Autocomplete = ({
   const select = (nextValue?: string) => {
     cancelDebounce();
     if (nextValue !== undefined && nextValue !== value) {
-      onChangeValue(nextValue);
+      onChange(nextValue);
     }
   };
 
@@ -145,7 +145,6 @@ export const Autocomplete = ({
             const value = event.target.value.trim();
             select(value);
             open();
-            onChangeValue(value);
           }}
           onKeyDown={(event) => {
             switch (event.key) {

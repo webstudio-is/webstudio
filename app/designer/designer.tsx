@@ -23,6 +23,7 @@ import designerStyles from "./designer.css";
 import { useSync } from "./features/sync";
 import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
+import { usePublishShortcuts } from "./shared/shortcuts/use-publish-shortcuts";
 
 export const links = () => {
   return [
@@ -139,6 +140,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const [isDragging, setIsDragging] = useState<boolean>();
   const [publish, iframeRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
+  usePublishShortcuts(publish);
 
   useSubscribe<"dragStartInstance">("dragStartInstance", () => {
     setIsDragging(true);

@@ -16,11 +16,16 @@ const stringifyRGBA = (color: RGBColor) => {
 };
 
 type ColorPickerProps = {
-  onChangeValue: (value: string) => void;
+  onChange: (value: string) => void;
+  onChangeComplete: (value: string) => void;
   value: string;
 };
 
-export const ColorPicker = ({ value, onChangeValue }: ColorPickerProps) => {
+export const ColorPicker = ({
+  value,
+  onChange,
+  onChangeComplete,
+}: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
 
   return (
@@ -39,7 +44,7 @@ export const ColorPicker = ({ value, onChangeValue }: ColorPickerProps) => {
             }}
           />
           <TextField
-            onChange={(e) => onChangeValue(e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
             onClick={() => setDisplayColorPicker((shown) => !shown)}
             variant="ghost"
             value={value}
@@ -50,9 +55,10 @@ export const ColorPicker = ({ value, onChangeValue }: ColorPickerProps) => {
       <PopoverContent>
         <SketchPicker
           color={value}
-          onChange={(color: ColorResult) =>
-            onChangeValue(stringifyRGBA(color.rgb))
-          }
+          onChange={(color: ColorResult) => onChange(stringifyRGBA(color.rgb))}
+          onChangeComplete={(color: ColorResult) => {
+            onChangeComplete(stringifyRGBA(color.rgb));
+          }}
           // @todo to remove both when we have preset colors
           presetColors={[]}
           styles={{

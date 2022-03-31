@@ -64,6 +64,7 @@ const ColorField = ({
     property: styleConfig.property,
   });
   if (value === undefined) return null;
+  const setValue = setProperty(styleConfig.property);
 
   return (
     <Grid columns={2} align="center" gapX="1">
@@ -73,7 +74,10 @@ const ColorField = ({
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <ColorPicker
           value={String(value.value)}
-          onChangeValue={setProperty(styleConfig.property)}
+          onChange={(value) => {
+            setValue(value, { isEphemeral: true });
+          }}
+          onChangeComplete={setValue}
         />
       </Flex>
     </Grid>
@@ -240,7 +244,7 @@ const TextFieldWithAutocomplete = ({
           }}
           state={value.type === "invalid" ? "invalid" : undefined}
           value={String(value.value)}
-          onChangeValue={setProperty(styleConfig.property)}
+          onChange={setProperty(styleConfig.property)}
         />
         <Unit value={value} />
       </Flex>
