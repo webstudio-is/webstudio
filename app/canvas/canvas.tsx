@@ -21,7 +21,7 @@ import {
   useDeleteInstance,
   useReparentInstance,
 } from "./shared/tree";
-import { useUpdateInstanceStyle } from "./shared/style";
+import { useUpdateStyle } from "./shared/style";
 import {
   usePublishSelectedInstance,
   usePublishRootInstance,
@@ -84,7 +84,7 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId }: DesignModeProps) => {
   useDragDropHandlers();
-  useUpdateInstanceStyle();
+  useUpdateStyle();
   usePublishSelectedInstance({ treeId });
   useInsertInstance();
   useReparentInstance();

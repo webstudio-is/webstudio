@@ -78,6 +78,7 @@ const usePreviewCss = ({ instance, css }: UseCssProps) => {
     }
   );
 
+  // We are building a map for unsetting the ephemeral values we previously set for the preview
   useEffect(() => {
     const reset = previewCss.map(({ property }) => ({
       property,

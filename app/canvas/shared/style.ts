@@ -4,7 +4,7 @@ import { setInstanceStyleMutable } from "~/shared/tree-utils";
 import { rootInstanceContainer, useSelectedInstance } from "./nano-values";
 import { useSubscribe } from "./pubsub";
 
-export const useUpdateInstanceStyle = () => {
+export const useUpdateStyle = () => {
   const [selectedInstance] = useSelectedInstance();
 
   useSubscribe<"updateStyle", StyleUpdates>(
