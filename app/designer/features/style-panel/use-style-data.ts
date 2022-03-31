@@ -11,7 +11,11 @@ type UseStyleData = {
   selectedInstanceData?: SelectedInstanceData;
 };
 
-export type SetProperty = (property: StyleProperty) => (value: string) => void;
+type StyleUpdateOptions = { isEphemeral: boolean };
+
+export type SetProperty = (
+  property: StyleProperty
+) => (value: string, options?: StyleUpdateOptions) => void;
 
 export const useStyleData = ({
   selectedInstanceData,
@@ -40,10 +44,16 @@ export const useStyleData = ({
     });
   }, [selectedInstanceData?.style, selectedInstanceData?.browserStyle]);
 
-  const publishUpdates = (updates: StyleUpdates["updates"]) => {
+  const publishUpdates = (
+    type: "update" | "preview",
+    updates: StyleUpdates["updates"]
+  ) => {
     if (updates.length === 0 || selectedInstanceData === undefined) return;
-    publish<"updateStyles", StyleUpdates>({
-      type: "updateStyles",
+    publish<string, StyleUpdates>({
+      type:
+        type === "update"
+          ? "updateStyle"
+          : `previewStyle:${selectedInstanceData.id}`,
       payload: {
         id: selectedInstanceData.id,
         updates,
@@ -52,11 +62,13 @@ export const useStyleData = ({
   };
 
   const setProperty: SetProperty = (property) => {
-    return (input) => {
+    return (input, options = { isEphemeral: false }) => {
       if (currentStyle === undefined) return;
       const value = parseValue(property, input, currentStyle);
       if (value.type !== "invalid") {
-        publishUpdates([{ property, value }]);
+        const updates = [{ property, value }];
+        const type = options.isEphemeral ? "preview" : "update";
+        publishUpdates(type, updates);
       }
       setCurrentStyle({ ...currentStyle, [property]: value });
     };

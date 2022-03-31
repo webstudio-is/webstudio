@@ -1,8 +1,14 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { type Instance } from "@webstudio-is/sdk";
 import { useRootInstance, useSelectedInstance } from "./nano-values";
-import { publish } from "./pubsub";
+import { publish, useSubscribe } from "./pubsub";
 import { redo, undo } from "~/lib/sync-engine";
+import { shortcuts } from "~/shared/shortcuts";
+
+const shortcutHandlerMap = {
+  undo,
+  redo,
+} as const;
 
 export const useShortcuts = () => {
   const [rootInstance] = useRootInstance();
@@ -43,15 +49,20 @@ export const useShortcuts = () => {
 
   useHotkeys(
     // Undo
-    "cmd+z, ctrl+z",
-    undo,
+    shortcuts.undo,
+    shortcutHandlerMap.undo,
     []
   );
 
   useHotkeys(
     // Redo
-    "cmd+shift+z, ctrl+shift+z",
-    redo,
+    shortcuts.redo,
+    shortcutHandlerMap.redo,
     []
   );
+
+  // Shortcuts from the parent window
+  useSubscribe<"shortcut", keyof typeof shortcuts>("shortcut", (shortcut) => {
+    shortcutHandlerMap[shortcut]();
+  });
 };

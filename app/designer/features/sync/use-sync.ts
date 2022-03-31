@@ -1,4 +1,3 @@
-import debounce from "lodash.debounce";
 import {
   type ChildrenUpdates,
   type Instance,
@@ -7,7 +6,6 @@ import {
   type Project,
 } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
-import type { StyleUpdates } from "~/shared/component";
 import { useSubscribe } from "~/designer/features/canvas-iframe";
 import { enqueue } from "./queue";
 import { type SyncItem } from "~/lib/sync-engine";
@@ -17,18 +15,6 @@ import { type SyncItem } from "~/lib/sync-engine";
 // and backend fetches and updates big objects, so if we send quickly,
 // we end up overwriting things
 export const useSync = ({ project }: { config: Config; project: Project }) => {
-  useSubscribe<"updateStyles", StyleUpdates>(
-    "updateStyles",
-    debounce((styleUpdates) => {
-      enqueue(() =>
-        fetch(`/rest/update-styles/${project.devTreeId}`, {
-          method: "post",
-          body: JSON.stringify(styleUpdates),
-        })
-      );
-    }, 1000)
-  );
-
   useSubscribe<"updateProps", UserPropsUpdates>("updateProps", (update) => {
     enqueue(() =>
       fetch(`/rest/props/update`, {

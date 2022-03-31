@@ -1,30 +1,17 @@
-import { type Style, type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/sdk";
 import { type StyleUpdates } from "~/shared/component";
+import { findInstanceById } from "./find-instance";
 
-// @todo rewrite using immer
-export const setInstanceStyle = (
-  instance: Instance,
+export const setInstanceStyleMutable = (
+  rootInstance: Instance,
   id: Instance["id"],
   updates: StyleUpdates["updates"]
-): Instance => {
-  if (instance.id === id) {
-    const style: Style = { ...instance.style };
-    for (const update of updates) {
-      style[update.property] = update.value;
-    }
-    return { ...instance, style };
-  }
+) => {
+  const instance = findInstanceById(rootInstance, id);
+  if (instance === undefined) return false;
 
-  for (const child of instance.children) {
-    if (typeof child === "string") continue;
-    const updatedChild = setInstanceStyle(child, id, updates);
-    if (updatedChild !== child) {
-      const children = [...instance.children];
-      const index = children.indexOf(child);
-      children[index] = updatedChild;
-      return { ...instance, children };
-    }
+  for (const update of updates) {
+    instance.style[update.property] = update.value;
   }
-
-  return instance;
+  return true;
 };

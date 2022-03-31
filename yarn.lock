@@ -1820,10 +1820,10 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
-"@webstudio-is/sdk@^0.1.19":
-  version "0.1.19"
-  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.1.19.tgz#6075c3095d6f145ee45f3830cbb40044a2f464c5"
-  integrity sha512-OnhDlhP9EneFCg5p96saEeRKiGdgcq/ngEq78YrVCQF15AvuLpDrCZ5/P9KLEhvusEteNK0SmUYRKqZ2+IQ5NQ==
+"@webstudio-is/sdk@^0.1.20":
+  version "0.1.20"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.1.20.tgz#134fcc2eb166a0c0b648fac4fb008c98666f88c6"
+  integrity sha512-WI379pIabj6WU05qaP9MeUFE+9uCQu8uoEAXkxQ9mjkFpQUNY8lIn3ncsvmxZvyoKCaFIZ2UBAs2Pb7Q6fwSHQ==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/react" "^1.2.7"

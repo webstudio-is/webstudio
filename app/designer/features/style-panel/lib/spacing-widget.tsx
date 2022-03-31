@@ -1,9 +1,5 @@
 import { Box } from "~/shared/design-system";
-import {
-  buildCss,
-  type StyleProperty,
-  type StyleValue,
-} from "@webstudio-is/sdk";
+import { toCss, type StyleProperty, type StyleValue } from "@webstudio-is/sdk";
 import { SetProperty } from "../use-style-data";
 
 type SpacingSingularStyle = { [property in SpacingProperty]?: StyleValue };
@@ -105,8 +101,8 @@ type SpacingWidgetProps = {
 };
 
 export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
-  const margins = buildCss(values.margins);
-  const paddings = buildCss(values.paddings);
+  const margins = toCss(values.margins);
+  const paddings = toCss(values.paddings);
 
   const updateSpacing = ({
     value,

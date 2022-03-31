@@ -1,24 +1,21 @@
+import { createTransaction } from "~/lib/sync-engine";
 import { type StyleUpdates } from "~/shared/component";
-import { setInstanceStyle } from "~/shared/tree-utils";
-import { useRootInstance, useSelectedInstance } from "./nano-values";
+import { setInstanceStyleMutable } from "~/shared/tree-utils";
+import { rootInstanceContainer, useSelectedInstance } from "./nano-values";
 import { useSubscribe } from "./pubsub";
 
 export const useUpdateInstanceStyle = () => {
-  const [rootInstance, setRootInstance] = useRootInstance();
   const [selectedInstance] = useSelectedInstance();
 
-  useSubscribe<"updateStyles", StyleUpdates>("updateStyles", (styleUpdates) => {
-    if (
-      rootInstance === undefined ||
-      styleUpdates.id !== selectedInstance?.id
-    ) {
-      return;
+  useSubscribe<"updateStyle", StyleUpdates>(
+    "updateStyle",
+    ({ id, updates }) => {
+      createTransaction([rootInstanceContainer], (rootInstance) => {
+        if (rootInstance === undefined || id !== selectedInstance?.id) {
+          return;
+        }
+        setInstanceStyleMutable(rootInstance, id, updates);
+      });
     }
-    const updatedRoot = setInstanceStyle(
-      rootInstance,
-      styleUpdates.id,
-      styleUpdates.updates
-    );
-    setRootInstance(updatedRoot);
-  });
+  );
 };

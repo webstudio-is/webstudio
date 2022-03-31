@@ -6,12 +6,7 @@ import {
 } from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
-import {
-  setInstanceStyle,
-  setInstanceChildren,
-  createInstance,
-} from "~/shared/tree-utils";
-import type { StyleUpdates } from "~/shared/component";
+import { setInstanceChildren, createInstance } from "~/shared/tree-utils";
 
 const rootConfig = {
   // @todo this should be part of a root primitive in primitives
@@ -87,20 +82,6 @@ export const loadByProject = async (
   }
 
   return await loadById(treeId);
-};
-
-export const updateStyles = async (id: string, styleUpdates: StyleUpdates) => {
-  // @todo we need to update without fetching the tree
-  const tree = await loadById(id);
-  const root = setInstanceStyle(
-    tree.root,
-    styleUpdates.id,
-    styleUpdates.updates
-  );
-  await prisma.tree.update({
-    data: { root },
-    where: { id },
-  });
 };
 
 export const updateChildren = async (

@@ -1,7 +1,13 @@
-import { useMemo } from "react";
-import { type Instance, css as createCss, type CSS } from "@webstudio-is/sdk";
+import { useEffect, useMemo, useState } from "react";
+import {
+  type Instance,
+  css as createCss,
+  type CSS,
+  useSubscribe,
+  toValue,
+} from "@webstudio-is/sdk";
 import { useDropData, useSelectedInstance } from "~/canvas/shared/nano-values";
-import { primitives } from "~/shared/component";
+import { primitives, type StyleUpdates } from "~/shared/component";
 
 // @todo this doesn't work with the node at the top edge of the iframe, tag gets hidden.
 const componentTagStyle = {
@@ -55,9 +61,40 @@ type UseCssProps = {
   css: CSS;
 };
 
+type UpdatesReset = Array<{
+  property: string;
+  value: undefined;
+}>;
+
+const usePreviewCss = ({ instance, css }: UseCssProps) => {
+  const [previewCss, setPreviewCss] = useState<
+    StyleUpdates["updates"] | UpdatesReset
+  >([]);
+
+  useSubscribe<string, StyleUpdates>(
+    `previewStyle:${instance.id}`,
+    ({ updates }) => {
+      setPreviewCss(updates);
+    }
+  );
+
+  useEffect(() => {
+    const reset = previewCss.map(({ property }) => ({
+      property,
+      value: undefined,
+    }));
+    setPreviewCss(reset);
+    // previewCss in deps leads to an infinite loop
+    // eslint-disable-next-line  react-hooks/exhaustive-deps
+  }, [css]);
+
+  return previewCss;
+};
+
 export const useCss = ({ instance, css }: UseCssProps): string => {
   const [dropData] = useDropData();
   const [selectedInstance] = useSelectedInstance();
+  const previewCss = usePreviewCss({ instance, css });
 
   return useMemo(() => {
     const primitive = primitives[instance.component];
@@ -76,6 +113,16 @@ export const useCss = ({ instance, css }: UseCssProps): string => {
       }
     }
 
+    for (const update of previewCss) {
+      // Delete ephemeral value
+      if (update.value === undefined) {
+        delete overrides[update.property];
+        continue;
+      }
+      // @todo workaround for Expression produces a union type that is too complex to represent.
+      overrides[update.property as string] = toValue(update.value);
+    }
+
     return createCss(css)({ css: overrides });
-  }, [dropData, selectedInstance, css, instance]);
+  }, [dropData, selectedInstance, css, previewCss, instance]);
 };
