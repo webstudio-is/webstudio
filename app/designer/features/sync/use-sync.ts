@@ -1,6 +1,4 @@
 import {
-  type ChildrenUpdates,
-  type Instance,
   type DeleteProp,
   type UserPropsUpdates,
   type Project,
@@ -35,18 +33,6 @@ export const useSync = ({ project }: { config: Config; project: Project }) => {
       );
     }
   );
-
-  useSubscribe<
-    "syncInstanceChildrenChange",
-    { instanceId: Instance["id"]; updates: ChildrenUpdates }
-  >("syncInstanceChildrenChange", ({ instanceId, updates }) => {
-    enqueue(() =>
-      fetch(`/rest/update-children/${project.devTreeId}`, {
-        method: "post",
-        body: JSON.stringify({ instanceId, updates }),
-      })
-    );
-  });
 
   useSubscribe<"syncChanges", Array<SyncItem>>("syncChanges", (queue) => {
     enqueue(() =>

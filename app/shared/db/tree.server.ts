@@ -1,12 +1,7 @@
-import {
-  type ChildrenUpdates,
-  type Instance,
-  type Project,
-  type Tree,
-} from "@webstudio-is/sdk";
+import { type Instance, type Project, type Tree } from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
-import { setInstanceChildren, createInstance } from "~/shared/tree-utils";
+import { createInstance } from "~/shared/tree-utils";
 
 const rootConfig = {
   // @todo this should be part of a root primitive in primitives
@@ -82,23 +77,6 @@ export const loadByProject = async (
   }
 
   return await loadById(treeId);
-};
-
-export const updateChildren = async (
-  id: string,
-  change: { instanceId: Instance["id"]; updates: ChildrenUpdates }
-) => {
-  // @todo we need to update without fetching the tree
-  const tree = await loadById(id);
-  const root = setInstanceChildren(
-    change.instanceId,
-    change.updates,
-    tree.root
-  );
-  await prisma.tree.update({
-    data: { root },
-    where: { id },
-  });
 };
 
 export const clone = async (id: string) => {
