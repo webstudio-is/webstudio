@@ -5,7 +5,9 @@ import {
   type Project,
   type InstanceProps,
   type Tree,
+  type AllUserProps,
 } from "@webstudio-is/sdk";
+import { applyPatches, type Patch } from "immer";
 import { prisma, PrismaClientKnownRequestError } from "./prisma.server";
 
 export const loadByProject = async (
@@ -129,4 +131,36 @@ export const clone = async ({
   await prisma.instanceProps.createMany({
     data,
   });
+};
+
+export const patch = async (
+  { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  patches: Array<Patch>
+) => {
+  const allProps = await loadByTreeId(treeId);
+
+  // We should get rid of this by applying patches on the client to the original
+  // model instead of the instanceId map.
+  // The map is handy for accessing props, but probably should be just cached interface, not the main data structure.
+  const allPropsMapByInstanceId = allProps.reduce((acc, prop) => {
+    acc[prop.instanceId] = prop;
+    return acc;
+  }, {} as AllUserProps);
+  const nextProps = applyPatches<AllUserProps>(
+    allPropsMapByInstanceId,
+    patches
+  );
+
+  await Promise.all(
+    Object.values(nextProps).map(
+      async ({ id, instanceId, treeId, props }) =>
+        await prisma.instanceProps.upsert({
+          where: { id: id },
+          create: { id: id, instanceId, treeId, props },
+          update: {
+            props,
+          },
+        })
+    )
+  );
 };

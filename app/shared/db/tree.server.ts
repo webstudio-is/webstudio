@@ -84,7 +84,10 @@ export const clone = async (id: string) => {
   return await create(tree.root);
 };
 
-export const patchRoot = async (treeId: Tree["id"], patches: Array<Patch>) => {
+export const patchRoot = async (
+  { treeId }: { treeId: Tree["id"] },
+  patches: Array<Patch>
+) => {
   const tree = await loadById(treeId);
   const root = applyPatches(tree.root, patches);
   await prisma.tree.update({
