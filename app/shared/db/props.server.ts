@@ -5,7 +5,9 @@ import {
   type Project,
   type InstanceProps,
   type Tree,
+  type AllUserProps,
 } from "@webstudio-is/sdk";
+import { applyPatches, type Patch } from "immer";
 import { prisma, PrismaClientKnownRequestError } from "./prisma.server";
 
 export const loadByProject = async (
@@ -68,26 +70,6 @@ export const update = async ({
   });
 };
 
-export const deleteProp = async ({
-  propsId,
-  propId,
-}: {
-  propsId: InstanceProps["id"];
-  propId: UserProp["id"];
-}) => {
-  // @todo update in one command, remove queueing logic on the ui
-  // as of prisma client v3.10.0 updating composite types like in this doc didn't work
-  // https://www.prisma.io/docs/concepts/components/prisma-client/composite-types
-  const props = (await loadById(propsId))?.props ?? [];
-  const index = props.findIndex((prop) => prop.id == propId);
-  if (index === -1) return;
-  props.splice(index, 1);
-  await prisma.instanceProps.update({
-    where: { id: propsId },
-    data: { props },
-  });
-};
-
 export const deleteProps = async ({
   instanceId,
   treeId,
@@ -129,4 +111,36 @@ export const clone = async ({
   await prisma.instanceProps.createMany({
     data,
   });
+};
+
+export const patch = async (
+  { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  patches: Array<Patch>
+) => {
+  const allProps = await loadByTreeId(treeId);
+
+  // We should get rid of this by applying patches on the client to the original
+  // model instead of the instanceId map.
+  // The map is handy for accessing props, but probably should be just cached interface, not the main data structure.
+  const allPropsMapByInstanceId = allProps.reduce((acc, prop) => {
+    acc[prop.instanceId] = prop;
+    return acc;
+  }, {} as AllUserProps);
+  const nextProps = applyPatches<AllUserProps>(
+    allPropsMapByInstanceId,
+    patches
+  );
+
+  await Promise.all(
+    Object.values(nextProps).map(
+      async ({ id, instanceId, treeId, props }) =>
+        await prisma.instanceProps.upsert({
+          where: { id: id },
+          create: { id: id, instanceId, treeId, props },
+          update: {
+            props,
+          },
+        })
+    )
+  );
 };

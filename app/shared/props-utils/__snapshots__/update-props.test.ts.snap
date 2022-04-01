@@ -1,0 +1,63 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Update props with added prop 1`] = `
+Object {
+  "instanceId": Object {
+    "id": "id",
+    "instanceId": "instanceId",
+    "props": Array [
+      Object {
+        "id": "propId",
+        "prop": "a",
+        "value": "1",
+      },
+    ],
+    "treeId": "treeId",
+  },
+}
+`;
+
+exports[`Update props with empty updates 1`] = `
+Object {
+  "instanceId": Object {
+    "id": "id",
+    "instanceId": "instanceId",
+    "props": Array [],
+    "treeId": "treeId",
+  },
+}
+`;
+
+exports[`Update props with renamed prop name 1`] = `
+Object {
+  "instanceId": Object {
+    "id": "id",
+    "instanceId": "instanceId",
+    "props": Array [
+      Object {
+        "id": "propId",
+        "prop": "b",
+        "value": "1",
+      },
+    ],
+    "treeId": "treeId",
+  },
+}
+`;
+
+exports[`Update props with updated prop value 1`] = `
+Object {
+  "instanceId": Object {
+    "id": "id",
+    "instanceId": "instanceId",
+    "props": Array [
+      Object {
+        "id": "propId",
+        "prop": "a",
+        "value": "2",
+      },
+    ],
+    "treeId": "treeId",
+  },
+}
+`;
