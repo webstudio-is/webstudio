@@ -2,13 +2,17 @@ import {
   type UserPropsUpdates,
   useSubscribe,
   allUserPropsContainer,
+  DeleteProp,
 } from "@webstudio-is/sdk";
 import { createTransaction, register } from "~/lib/sync-engine";
-import { updateAllUserPropsMutable } from "~/shared/props-utils";
+import {
+  updateAllUserPropsMutable,
+  deletePropMutable,
+} from "~/shared/props-utils";
 
 register("props", allUserPropsContainer);
 
-export const useUpdateProps = () => {
+export const useManageProps = () => {
   useSubscribe<"updateProps", UserPropsUpdates>(
     "updateProps",
     (userPropsUpdates) => {
@@ -17,4 +21,10 @@ export const useUpdateProps = () => {
       });
     }
   );
+
+  useSubscribe<"deleteProp", DeleteProp>("deleteProp", (deleteProp) => {
+    createTransaction([allUserPropsContainer], (allUserProps) => {
+      deletePropMutable(allUserProps, deleteProp);
+    });
+  });
 };

@@ -70,26 +70,6 @@ export const update = async ({
   });
 };
 
-export const deleteProp = async ({
-  propsId,
-  propId,
-}: {
-  propsId: InstanceProps["id"];
-  propId: UserProp["id"];
-}) => {
-  // @todo update in one command, remove queueing logic on the ui
-  // as of prisma client v3.10.0 updating composite types like in this doc didn't work
-  // https://www.prisma.io/docs/concepts/components/prisma-client/composite-types
-  const props = (await loadById(propsId))?.props ?? [];
-  const index = props.findIndex((prop) => prop.id == propId);
-  if (index === -1) return;
-  props.splice(index, 1);
-  await prisma.instanceProps.update({
-    where: { id: propsId },
-    data: { props },
-  });
-};
-
 export const deleteProps = async ({
   instanceId,
   treeId,

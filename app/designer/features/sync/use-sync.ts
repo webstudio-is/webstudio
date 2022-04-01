@@ -1,4 +1,4 @@
-import { type DeleteProp, type Project } from "@webstudio-is/sdk";
+import { type Project } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import { useSubscribe } from "~/designer/features/canvas-iframe";
 import { enqueue } from "./queue";
@@ -9,18 +9,6 @@ import { type SyncItem } from "~/lib/sync-engine";
 // and backend fetches and updates big objects, so if we send quickly,
 // we end up overwriting things
 export const useSync = ({ project }: { config: Config; project: Project }) => {
-  useSubscribe<"deleteProp", DeleteProp>(
-    "deleteProp",
-    ({ propsId, propId }) => {
-      enqueue(() =>
-        fetch(`/rest/props/delete-prop`, {
-          method: "post",
-          body: JSON.stringify({ propsId, propId }),
-        })
-      );
-    }
-  );
-
   useSubscribe<"syncChanges", Array<SyncItem>>(
     "syncChanges",
     (transactions) => {

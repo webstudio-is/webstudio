@@ -17,23 +17,6 @@ Object {
 }
 `;
 
-exports[`Update props with deleted props 1`] = `
-Object {
-  "instanceId": Object {
-    "id": "id",
-    "instanceId": "instanceId",
-    "props": Array [
-      Object {
-        "id": "propId",
-        "prop": "a",
-        "value": "1",
-      },
-    ],
-    "treeId": "treeId",
-  },
-}
-`;
-
 exports[`Update props with empty updates 1`] = `
 Object {
   "instanceId": Object {

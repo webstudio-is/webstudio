@@ -32,7 +32,7 @@ import { WrapperComponentDev } from "./features/wrapper-component";
 import { rootInstanceContainer, useRootInstance } from "./shared/nano-values";
 import { usePeriodicSync } from "./shared/use-periodic-sync";
 import { createTransaction } from "~/lib/sync-engine";
-import { useUpdateProps } from "./shared/props";
+import { useManageProps } from "./shared/props";
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
@@ -82,7 +82,7 @@ type DesignModeProps = {
 const DesignMode = ({ treeId }: DesignModeProps) => {
   useDragDropHandlers();
   useUpdateStyle();
-  useUpdateProps();
+  useManageProps();
   usePublishSelectedInstance({ treeId });
   useInsertInstance();
   useReparentInstance();

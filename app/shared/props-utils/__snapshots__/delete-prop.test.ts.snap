@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Delete prop found and deleted 1`] = `
+Object {
+  "instanceId": Object {
+    "id": "id",
+    "instanceId": "instanceId",
+    "props": Array [
+      Object {
+        "id": "propId1",
+        "prop": "a",
+        "value": "1",
+      },
+    ],
+    "treeId": "treeId",
+  },
+}
+`;
+
+exports[`Delete prop not found and not deleted 1`] = `
+Object {
+  "instanceId": Object {
+    "id": "id",
+    "instanceId": "instanceId",
+    "props": Array [
+      Object {
+        "id": "propId",
+        "prop": "b",
+        "value": "1",
+      },
+      Object {
+        "id": "propId1",
+        "prop": "a",
+        "value": "1",
+      },
+    ],
+    "treeId": "treeId",
+  },
+}
+`;

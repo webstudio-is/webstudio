@@ -69,7 +69,7 @@ export const usePropsLogic = ({
     publish<"deleteProp", DeleteProp>({
       type: "deleteProp",
       payload: {
-        propsId: selectedInstanceData.props.id,
+        instanceId: selectedInstanceData.id,
         propId: id,
       },
     });
