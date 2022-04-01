@@ -2,8 +2,6 @@ import { useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import {
-  type Instance,
-  type ChildrenUpdates,
   type OnChangeChildren,
   type Data,
   type Tree,
@@ -11,8 +9,11 @@ import {
   WrapperComponent,
   globalStyles,
 } from "@webstudio-is/sdk";
-import { publish, useSubscribe } from "./shared/pubsub";
-import { createElementsTree, setInstanceChildren } from "~/shared/tree-utils";
+import { useSubscribe } from "./shared/pubsub";
+import {
+  createElementsTree,
+  setInstanceChildrenMutable,
+} from "~/shared/tree-utils";
 import { useDragDropHandlers } from "./shared/use-drag-drop-handlers";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
@@ -21,43 +22,39 @@ import {
   useDeleteInstance,
   useReparentInstance,
 } from "./shared/tree";
-import { useUpdateInstanceStyle } from "./shared/style";
+import { useUpdateStyle } from "./shared/style";
 import {
   usePublishSelectedInstance,
   usePublishRootInstance,
 } from "./shared/publish";
 import { useActiveElementTracking } from "./shared/active-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
-import { useRootInstance } from "./shared/nano-values";
+import { rootInstanceContainer, useRootInstance } from "./shared/nano-values";
 import { usePeriodicSync } from "./shared/use-periodic-sync";
+import { createTransaction } from "~/lib/sync-engine";
+import { useManageProps } from "./shared/props";
 
 const useElementsTree = () => {
-  const [rootInstance, setRootInstance] = useRootInstance();
+  const [rootInstance] = useRootInstance();
 
   return useMemo(() => {
     if (rootInstance === undefined) return;
+
     const onChangeChildren: OnChangeChildren = (change) => {
-      const { instanceId, updates } = change;
-      const updatedRoot = setInstanceChildren(
-        instanceId,
-        updates,
-        rootInstance
-      );
-      setRootInstance(updatedRoot);
-      publish<
-        "syncInstanceChildrenChange",
-        { instanceId: Instance["id"]; updates: ChildrenUpdates }
-      >({
-        type: "syncInstanceChildrenChange",
-        payload: change,
+      createTransaction([rootInstanceContainer], (rootInstance) => {
+        if (rootInstance === undefined) return;
+
+        const { instanceId, updates } = change;
+        setInstanceChildrenMutable(instanceId, updates, rootInstance);
       });
     };
+
     return createElementsTree({
       instance: rootInstance,
       Component: WrapperComponentDev,
       onChangeChildren,
     });
-  }, [rootInstance, setRootInstance]);
+  }, [rootInstance]);
 };
 
 const useIsPreviewMode = () => {
@@ -84,7 +81,8 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId }: DesignModeProps) => {
   useDragDropHandlers();
-  useUpdateInstanceStyle();
+  useUpdateStyle();
+  useManageProps();
   usePublishSelectedInstance({ treeId });
   useInsertInstance();
   useReparentInstance();
