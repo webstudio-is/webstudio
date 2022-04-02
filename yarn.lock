@@ -2295,6 +2295,11 @@ bson-objectid@^2.0.2:
   resolved "https://registry.yarnpkg.com/bson-objectid/-/bson-objectid-2.0.2.tgz#e72c9c51841f5e842dcc17d3cc7b7064f7abacae"
   integrity sha512-61Yo6MBAftkyc+nU0smq+VX2SCeKgtC6+cRI+JkatdCy1tPdAzvR1ezEQFlio6St2tDhKZm/IUXc2bzg0QSnqQ==
 
+bson-objectid@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/bson-objectid/-/bson-objectid-2.0.3.tgz#d840185172846b2f10c42ce2bcdb4a50956a9db5"
+  integrity sha512-WYwVtY9yqk179EPMNuF3vcxufdrGLEo2XwqdRVbfLVe9X6jLt7WKZQgP+ObOcprakBGbHxzl76tgTaieqsH29g==
+
 buffer-from@^1.0.0:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.1.2.tgz#2b146a6fd72e80b4f55d255f35ed59a3a9a41bd5"
@@ -4258,6 +4263,14 @@ immer@^9.0.12:
   version "9.0.12"
   resolved "https://registry.yarnpkg.com/immer/-/immer-9.0.12.tgz#2d33ddf3ee1d247deab9d707ca472c8c942a0f20"
   integrity sha512-lk7UNmSbAukB5B6dh9fnh5D0bJTOFKxVg2cyJWTYrWRfhLrLMBquONcUs3aFq507hNoIZEDDh8lb8UtOizSMhA==
+
+immerhin@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/immerhin/-/immerhin-0.1.0.tgz#ea8fdd1318e70f6da9ca16b7f252f017ce01675e"
+  integrity sha512-hqa6nMuGarF3pUv/3y1mLhCU8XwRU6o70PAHw8X/AbcjnmIdm0uDSkXVVbAO/MEX0PjdPS9ULgA/DG5UnpfvNA==
+  dependencies:
+    bson-objectid "^2.0.3"
+    immer "^9.0.12"
 
 import-fresh@^3.0.0, import-fresh@^3.2.1:
   version "3.3.0"

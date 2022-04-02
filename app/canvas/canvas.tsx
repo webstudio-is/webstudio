@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
+import { createTransaction } from "immerhin";
 import {
   type OnChangeChildren,
   type Data,
@@ -31,7 +32,6 @@ import { useActiveElementTracking } from "./shared/active-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { rootInstanceContainer, useRootInstance } from "./shared/nano-values";
 import { usePeriodicSync } from "./shared/use-periodic-sync";
-import { createTransaction } from "~/lib/sync-engine";
 import { useManageProps } from "./shared/props";
 
 const useElementsTree = () => {

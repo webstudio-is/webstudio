@@ -4,7 +4,7 @@ import {
   allUserPropsContainer,
   DeleteProp,
 } from "@webstudio-is/sdk";
-import { createTransaction, register } from "~/lib/sync-engine";
+import { createTransaction, register } from "immerhin";
 import {
   updateAllUserPropsMutable,
   deletePropMutable,

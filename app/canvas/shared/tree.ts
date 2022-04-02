@@ -7,7 +7,7 @@ import {
   findClosestSiblingInstance,
   insertInstanceMutable,
 } from "~/shared/tree-utils";
-import { createTransaction } from "~/lib/sync-engine";
+import { createTransaction } from "immerhin";
 import { DropData } from "~/shared/component";
 import {
   rootInstanceContainer,
