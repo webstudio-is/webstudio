@@ -1,7 +1,7 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { type Instance } from "@webstudio-is/sdk";
 import { type DropData } from "~/shared/component";
-import { register } from "~/lib/sync-engine";
+import { register } from "immerhin";
 
 const dropDataContainer = createValueContainer<DropData | undefined>();
 export const useDropData = () => useValue(dropDataContainer);

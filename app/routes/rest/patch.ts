@@ -1,6 +1,6 @@
 import { type ActionFunction } from "remix";
 import * as db from "~/shared/db";
-import { type SyncItem } from "~/lib/sync-engine";
+import { type SyncItem } from "immerhin";
 import { type Project, type Tree } from "@webstudio-is/sdk";
 
 const updaters = {

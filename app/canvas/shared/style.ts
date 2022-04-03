@@ -1,4 +1,4 @@
-import { createTransaction } from "~/lib/sync-engine";
+import { createTransaction } from "immerhin";
 import { type StyleUpdates } from "~/shared/component";
 import { setInstanceStyleMutable } from "~/shared/tree-utils";
 import { rootInstanceContainer, useSelectedInstance } from "./nano-values";

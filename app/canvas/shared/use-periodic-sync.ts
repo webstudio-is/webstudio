@@ -1,5 +1,5 @@
 import useInterval from "react-use/lib/useInterval";
-import { sync, SyncItem } from "~/lib/sync-engine";
+import { sync, SyncItem } from "immerhin";
 import { publish } from "./pubsub";
 
 export const usePeriodicSync = () => {
