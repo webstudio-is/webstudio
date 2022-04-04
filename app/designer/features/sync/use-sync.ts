@@ -1,8 +1,8 @@
 import { type Project } from "@webstudio-is/sdk";
+import { type SyncItem } from "immerhin";
 import type { Config } from "~/config";
 import { useSubscribe } from "~/designer/features/canvas-iframe";
 import { enqueue } from "./queue";
-import { type SyncItem } from "immerhin";
 
 // @todo this entire queueing logic needs to be gone, it's a workaround,
 // because prisma can't do atomic updates yet with embeded documents

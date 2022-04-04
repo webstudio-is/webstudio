@@ -2,12 +2,12 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { type Instance } from "@webstudio-is/sdk";
 import { useRootInstance, useSelectedInstance } from "./nano-values";
 import { publish, useSubscribe } from "./pubsub";
-import { redo, undo } from "immerhin";
+import store from "immerhin";
 import { shortcuts } from "~/shared/shortcuts";
 
 const shortcutHandlerMap = {
-  undo,
-  redo,
+  undo: store.undo.bind(store),
+  redo: store.redo.bind(store),
 } as const;
 
 export const useShortcuts = () => {

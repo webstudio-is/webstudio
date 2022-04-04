@@ -7,7 +7,7 @@ import {
   findClosestSiblingInstance,
   insertInstanceMutable,
 } from "~/shared/tree-utils";
-import { createTransaction } from "immerhin";
+import store from "immerhin";
 import { DropData } from "~/shared/component";
 import {
   rootInstanceContainer,
@@ -29,7 +29,7 @@ export const useInsertInstance = () => {
   useSubscribe<"insertInstance", { instance: Instance; dropData?: DropData }>(
     "insertInstance",
     ({ instance, dropData }) => {
-      createTransaction([rootInstanceContainer], (rootInstance) => {
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
         if (rootInstance === undefined) return;
         const populatedInstance = populateInstance(instance);
         const hasInserted = insertInstanceMutable(
@@ -53,7 +53,7 @@ export const useReparentInstance = () => {
   useSubscribe<"reparentInstance", { instance: Instance; dropData: DropData }>(
     "reparentInstance",
     ({ instance, dropData }) => {
-      createTransaction([rootInstanceContainer], (rootInstance) => {
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
         if (rootInstance === undefined) return;
         deleteInstanceMutable(rootInstance, instance.id);
         insertInstanceMutable(rootInstance, instance, {
@@ -90,7 +90,7 @@ export const useDeleteInstance = () => {
       // The way it is now it will actually still enable parallel deletion props editing and restoration.
       // Contra: we are piling them up.
       // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
-      createTransaction([rootInstanceContainer], (rootInstance) => {
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
         if (rootInstance !== undefined) {
           deleteInstanceMutable(rootInstance, id);
         }

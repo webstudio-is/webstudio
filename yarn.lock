@@ -4264,10 +4264,10 @@ immer@^9.0.12:
   resolved "https://registry.yarnpkg.com/immer/-/immer-9.0.12.tgz#2d33ddf3ee1d247deab9d707ca472c8c942a0f20"
   integrity sha512-lk7UNmSbAukB5B6dh9fnh5D0bJTOFKxVg2cyJWTYrWRfhLrLMBquONcUs3aFq507hNoIZEDDh8lb8UtOizSMhA==
 
-immerhin@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/immerhin/-/immerhin-0.1.0.tgz#ea8fdd1318e70f6da9ca16b7f252f017ce01675e"
-  integrity sha512-hqa6nMuGarF3pUv/3y1mLhCU8XwRU6o70PAHw8X/AbcjnmIdm0uDSkXVVbAO/MEX0PjdPS9ULgA/DG5UnpfvNA==
+immerhin@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/immerhin/-/immerhin-0.1.2.tgz#a9e1f4ace00f7a20637bf18e718f0f34cd310514"
+  integrity sha512-4UfFIeq9sAgR5WR8xebUhrxBHn7yfNua2mflqxSYMkTwg/mjgr5HP22RdgNrWWZ2yZ8hGl2ipPKS8B+xQPA1Cw==
   dependencies:
     bson-objectid "^2.0.3"
     immer "^9.0.12"

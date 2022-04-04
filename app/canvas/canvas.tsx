@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
-import { createTransaction } from "immerhin";
+import store from "immerhin";
 import {
   type OnChangeChildren,
   type Data,
@@ -41,7 +41,7 @@ const useElementsTree = () => {
     if (rootInstance === undefined) return;
 
     const onChangeChildren: OnChangeChildren = (change) => {
-      createTransaction([rootInstanceContainer], (rootInstance) => {
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
         if (rootInstance === undefined) return;
 
         const { instanceId, updates } = change;
