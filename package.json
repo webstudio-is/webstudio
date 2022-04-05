@@ -48,7 +48,7 @@
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",
     "immer": "^9.0.12",
-    "immerhin": "^0.1.0",
+    "immerhin": "^0.1.2",
     "lodash.capitalize": "^4.2.1",
     "lodash.debounce": "^4.0.8",
     "lodash.memoize": "^4.1.2",

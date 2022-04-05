@@ -1,7 +1,6 @@
 import {
   type Instance,
   type UserPropsUpdates,
-  type UserProp,
   type Project,
   type InstanceProps,
   type Tree,

@@ -4,26 +4,26 @@ import {
   allUserPropsContainer,
   DeleteProp,
 } from "@webstudio-is/sdk";
-import { createTransaction, register } from "immerhin";
+import store from "immerhin";
 import {
   updateAllUserPropsMutable,
   deletePropMutable,
 } from "~/shared/props-utils";
 
-register("props", allUserPropsContainer);
+store.register("props", allUserPropsContainer);
 
 export const useManageProps = () => {
   useSubscribe<"updateProps", UserPropsUpdates>(
     "updateProps",
     (userPropsUpdates) => {
-      createTransaction([allUserPropsContainer], (allUserProps) => {
+      store.createTransaction([allUserPropsContainer], (allUserProps) => {
         updateAllUserPropsMutable(allUserProps, userPropsUpdates);
       });
     }
   );
 
   useSubscribe<"deleteProp", DeleteProp>("deleteProp", (deleteProp) => {
-    createTransaction([allUserPropsContainer], (allUserProps) => {
+    store.createTransaction([allUserPropsContainer], (allUserProps) => {
       deletePropMutable(allUserProps, deleteProp);
     });
   });

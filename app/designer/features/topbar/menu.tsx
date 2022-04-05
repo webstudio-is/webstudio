@@ -5,8 +5,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuArrow,
+  DropdownMenuSeparator,
   Flex,
   IconButton,
+  Text,
 } from "~/shared/design-system";
 import {
   HamburgerMenuIcon,
@@ -14,6 +16,9 @@ import {
   EyeOpenIcon,
   Share1Icon,
   RocketIcon,
+  UndoIcon,
+  RedoIcon,
+  TrashIcon,
 } from "~/shared/icons";
 import type { Config } from "~/config";
 import {
@@ -21,12 +26,37 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "../../shared/nano-values";
+import { type Publish } from "../canvas-iframe";
+
+const isMac =
+  typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
+const shortcutsMap: Record<string, string> = {
+  cmd: "⌘",
+  ctrl: "⌃",
+  shift: "⇧",
+  option: "⌥",
+  backspace: "⌫",
+};
+
+const Shortcut = ({ mac, win }: { mac: Array<string>; win: Array<string> }) => {
+  // @todo check what linux needs
+  const value = isMac ? mac : win;
+  const formattedValue = value.map(
+    (char) => shortcutsMap[char] ?? char.toUpperCase()
+  );
+  return (
+    <Text size="1" css={{ letterSpacing: 1.5 }}>
+      {formattedValue}
+    </Text>
+  );
+};
 
 type MenuProps = {
   config: Config;
+  publish: Publish;
 };
 
-export const Menu = ({ config }: MenuProps) => {
+export const Menu = ({ config, publish }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsPreviewMode] = useIsPreviewMode();
   const [, setIsShareOpen] = useIsShareDialogOpen();
@@ -49,6 +79,50 @@ export const Menu = ({ config }: MenuProps) => {
             <DashboardIcon /> Dashboard
           </Flex>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => {
+            publish<"shortcut", string>({
+              type: "shortcut",
+              payload: "undo",
+            });
+          }}
+        >
+          <Flex gap="3" align="center">
+            <UndoIcon /> Undo
+            <Shortcut mac={["cmd", "z"]} win={["ctrl", "z"]} />
+          </Flex>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            publish<"shortcut", string>({
+              type: "shortcut",
+              payload: "redo",
+            });
+          }}
+        >
+          <Flex gap="3" align="center">
+            <RedoIcon /> Redo
+            <Shortcut
+              mac={["shift", "cmd", "z"]}
+              win={["shift", "ctrl", "z"]}
+            />
+          </Flex>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            publish<"shortcut", string>({
+              type: "shortcut",
+              payload: "delete",
+            });
+          }}
+        >
+          <Flex gap="3" align="center">
+            <TrashIcon /> Delete
+            <Shortcut mac={["backspace"]} win={["backspace"]} />
+          </Flex>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {
             setIsPreviewMode(true);

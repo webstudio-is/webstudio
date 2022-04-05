@@ -1,4 +1,4 @@
-import { createTransaction } from "immerhin";
+import store from "immerhin";
 import { type StyleUpdates } from "~/shared/component";
 import { setInstanceStyleMutable } from "~/shared/tree-utils";
 import { rootInstanceContainer, useSelectedInstance } from "./nano-values";
@@ -10,7 +10,7 @@ export const useUpdateStyle = () => {
   useSubscribe<"updateStyle", StyleUpdates>(
     "updateStyle",
     ({ id, updates }) => {
-      createTransaction([rootInstanceContainer], (rootInstance) => {
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
         if (rootInstance === undefined || id !== selectedInstance?.id) {
           return;
         }

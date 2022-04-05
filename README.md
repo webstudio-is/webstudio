@@ -33,4 +33,4 @@ It is generally recommended to use a Git repository, because future commits will
 
 [Discussions](https://github.com/webstudio-is/webstudio/discussions)
 
-[Discord](https://discord.gg/Tfdr3u8x)
+[Discord](https://discord.gg/UNdyrDkq5r)

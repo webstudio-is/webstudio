@@ -1,7 +1,7 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { type Instance } from "@webstudio-is/sdk";
 import { type DropData } from "~/shared/component";
-import { register } from "immerhin";
+import store from "immerhin";
 
 const dropDataContainer = createValueContainer<DropData | undefined>();
 export const useDropData = () => useValue(dropDataContainer);
@@ -19,4 +19,4 @@ export const rootInstanceContainer = createValueContainer<
   Instance | undefined
 >();
 export const useRootInstance = () => useValue(rootInstanceContainer);
-register("root", rootInstanceContainer);
+store.register("root", rootInstanceContainer);
