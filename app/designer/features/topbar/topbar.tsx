@@ -28,7 +28,7 @@ export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
         ...css,
       }}
     >
-      <Menu config={config} />
+      <Menu config={config} publish={publish} />
       <Preview publish={publish} />
       <Flex gap="1" align="center">
         <SyncStatus />

@@ -53,6 +53,7 @@ export {
   DropdownMenuGroup,
   DropdownMenuTrigger,
   DropdownMenuArrow,
+  DropdownMenuSeparator,
 } from "./components/dropdown-menu";
 export { MenuContent, MenuItem, Menu, MenuAnchor } from "./components/menu";
 export { Paragraph } from "./components/paragraph";
