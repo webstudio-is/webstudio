@@ -18,6 +18,7 @@ import {
   RocketIcon,
   UndoIcon,
   RedoIcon,
+  TrashIcon,
 } from "~/shared/icons";
 import type { Config } from "~/config";
 import {
@@ -88,7 +89,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
           }}
         >
           <Flex gap="3" align="center">
-            <UndoIcon /> Undo{" "}
+            <UndoIcon /> Undo
             <Shortcut mac={["cmd", "z"]} win={["ctrl", "z"]} />
           </Flex>
         </DropdownMenuItem>
@@ -101,11 +102,24 @@ export const Menu = ({ config, publish }: MenuProps) => {
           }}
         >
           <Flex gap="3" align="center">
-            <RedoIcon /> Redo{" "}
+            <RedoIcon /> Redo
             <Shortcut
               mac={["shift", "cmd", "z"]}
               win={["shift", "ctrl", "z"]}
             />
+          </Flex>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => {
+            publish<"shortcut", string>({
+              type: "shortcut",
+              payload: "delete",
+            });
+          }}
+        >
+          <Flex gap="3" align="center">
+            <TrashIcon /> Delete
+            <Shortcut mac={["backspace"]} win={["backspace"]} />
           </Flex>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

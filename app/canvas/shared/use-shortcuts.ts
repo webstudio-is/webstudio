@@ -5,31 +5,35 @@ import { publish, useSubscribe } from "./pubsub";
 import store from "immerhin";
 import { shortcuts } from "~/shared/shortcuts";
 
-const shortcutHandlerMap = {
-  undo: store.undo.bind(store),
-  redo: store.redo.bind(store),
-} as const;
-
 export const useShortcuts = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+
+  const publishDeleteInstance = () => {
+    // @todo tell user they can't delete root
+    if (
+      selectedInstance === undefined ||
+      selectedInstance.id === rootInstance?.id
+    ) {
+      return;
+    }
+    publish<"deleteInstance", { id: Instance["id"] }>({
+      type: "deleteInstance",
+      payload: {
+        id: selectedInstance.id,
+      },
+    });
+  };
+
+  const shortcutHandlerMap = {
+    undo: store.undo.bind(store),
+    redo: store.redo.bind(store),
+    delete: publishDeleteInstance,
+  } as const;
+
   useHotkeys(
     "backspace, delete",
-    () => {
-      // @todo tell user they can't delete root
-      if (
-        selectedInstance === undefined ||
-        selectedInstance.id === rootInstance?.id
-      ) {
-        return;
-      }
-      publish<"deleteInstance", { id: Instance["id"] }>({
-        type: "deleteInstance",
-        payload: {
-          id: selectedInstance.id,
-        },
-      });
-    },
+    publishDeleteInstance,
     { enableOnTags: ["INPUT", "SELECT", "TEXTAREA"] },
     [selectedInstance]
   );
