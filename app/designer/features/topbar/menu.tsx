@@ -6,7 +6,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuArrow,
   DropdownMenuSeparator,
-  Flex,
   IconButton,
   Text,
 } from "~/shared/design-system";
@@ -22,7 +21,6 @@ import {
 } from "~/shared/icons";
 import type { Config } from "~/config";
 import {
-  useIsPreviewMode,
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "../../shared/nano-values";
@@ -45,10 +43,20 @@ const Shortcut = ({ mac, win }: { mac: Array<string>; win: Array<string> }) => {
     (char) => shortcutsMap[char] ?? char.toUpperCase()
   );
   return (
-    <Text size="1" css={{ letterSpacing: 1.5 }}>
+    <Text
+      size="1"
+      css={{ letterSpacing: 1.5, textAlign: "right", flexGrow: 1 }}
+    >
       {formattedValue}
     </Text>
   );
+};
+
+const menuItemCss = {
+  display: "flex",
+  gap: "$3",
+  justifyContent: "start",
+  flexGrow: 1,
 };
 
 type MenuProps = {
@@ -58,7 +66,6 @@ type MenuProps = {
 
 export const Menu = ({ config, publish }: MenuProps) => {
   const navigate = useNavigate();
-  const [, setIsPreviewMode] = useIsPreviewMode();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
 
@@ -71,16 +78,16 @@ export const Menu = ({ config, publish }: MenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem
+          css={menuItemCss}
           onSelect={() => {
             navigate(config.dashboardPath);
           }}
         >
-          <Flex gap="3" align="center">
-            <DashboardIcon /> Dashboard
-          </Flex>
+          <DashboardIcon /> Dashboard
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          css={menuItemCss}
           onSelect={() => {
             publish<"shortcut", string>({
               type: "shortcut",
@@ -88,12 +95,11 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Flex gap="3" align="center">
-            <UndoIcon /> Undo
-            <Shortcut mac={["cmd", "z"]} win={["ctrl", "z"]} />
-          </Flex>
+          <UndoIcon /> Undo
+          <Shortcut mac={["cmd", "z"]} win={["ctrl", "z"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
+          css={menuItemCss}
           onSelect={() => {
             publish<"shortcut", string>({
               type: "shortcut",
@@ -101,15 +107,11 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Flex gap="3" align="center">
-            <RedoIcon /> Redo
-            <Shortcut
-              mac={["shift", "cmd", "z"]}
-              win={["shift", "ctrl", "z"]}
-            />
-          </Flex>
+          <RedoIcon /> Redo
+          <Shortcut mac={["shift", "cmd", "z"]} win={["shift", "ctrl", "z"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
+          css={menuItemCss}
           onSelect={() => {
             publish<"shortcut", string>({
               type: "shortcut",
@@ -117,38 +119,36 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Flex gap="3" align="center">
-            <TrashIcon /> Delete
-            <Shortcut mac={["backspace"]} win={["backspace"]} />
-          </Flex>
+          <TrashIcon /> Delete
+          <Shortcut mac={["backspace"]} win={["backspace"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          css={menuItemCss}
           onSelect={() => {
-            setIsPreviewMode(true);
+            publish<"togglePreviewMode">({
+              type: "togglePreviewMode",
+            });
           }}
         >
-          <Flex gap="3" align="center">
-            <EyeOpenIcon /> Preview
-          </Flex>
+          <EyeOpenIcon /> Preview
+          <Shortcut mac={["cmd", "shift", "p"]} win={["ctrl", "shift", "p"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
+          css={menuItemCss}
           onSelect={() => {
             setIsShareOpen(true);
           }}
         >
-          <Flex gap="3" align="center">
-            <Share1Icon /> Share
-          </Flex>
+          <Share1Icon /> Share
         </DropdownMenuItem>
         <DropdownMenuItem
+          css={menuItemCss}
           onSelect={() => {
             setIsPublishOpen(true);
           }}
         >
-          <Flex gap="3" align="center">
-            <RocketIcon /> Publish
-          </Flex>
+          <RocketIcon /> Publish
         </DropdownMenuItem>
         <DropdownMenuArrow offset={10} />
       </DropdownMenuContent>

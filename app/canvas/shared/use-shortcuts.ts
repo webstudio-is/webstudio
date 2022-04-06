@@ -5,6 +5,10 @@ import { publish, useSubscribe } from "./pubsub";
 import store from "immerhin";
 import { shortcuts } from "~/shared/shortcuts";
 
+const togglePreviewMode = () => {
+  publish<"togglePreviewMode">({ type: "togglePreviewMode" });
+};
+
 export const useShortcuts = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
@@ -29,6 +33,7 @@ export const useShortcuts = () => {
     undo: store.undo.bind(store),
     redo: store.redo.bind(store),
     delete: publishDeleteInstance,
+    preview: togglePreviewMode,
   } as const;
 
   useHotkeys(
@@ -51,19 +56,11 @@ export const useShortcuts = () => {
     [selectedInstance]
   );
 
-  useHotkeys(
-    // Undo
-    shortcuts.undo,
-    shortcutHandlerMap.undo,
-    []
-  );
+  useHotkeys(shortcuts.undo, shortcutHandlerMap.undo, []);
 
-  useHotkeys(
-    // Redo
-    shortcuts.redo,
-    shortcutHandlerMap.redo,
-    []
-  );
+  useHotkeys(shortcuts.redo, shortcutHandlerMap.redo, []);
+
+  useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, []);
 
   // Shortcuts from the parent window
   useSubscribe<"shortcut", keyof typeof shortcuts>("shortcut", (shortcut) => {
