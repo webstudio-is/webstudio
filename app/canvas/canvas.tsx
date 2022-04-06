@@ -59,10 +59,7 @@ const useElementsTree = () => {
 
 const useIsPreviewMode = () => {
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
-  useSubscribe<"togglePreviewMode", boolean>(
-    "togglePreviewMode",
-    setIsPreviewMode
-  );
+  useSubscribe<"previewMode", boolean>("previewMode", setIsPreviewMode);
   return isPreviewMode;
 };
 
@@ -89,7 +86,6 @@ const DesignMode = ({ treeId }: DesignModeProps) => {
   useDeleteInstance();
   usePublishRootInstance();
   useActiveElementTracking();
-  useShortcuts();
   usePeriodicSync();
   const elements = useElementsTree();
   return (
@@ -104,6 +100,8 @@ export const Canvas = ({ data }: { data: Data }): JSX.Element | null => {
   globalStyles();
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
+  // e.g. toggling preview is still needed in both modes
+  useShortcuts();
   const isPreviewMode = useIsPreviewMode();
 
   if (isPreviewMode) {

@@ -1,6 +1,6 @@
 import { EyeOpenIcon } from "~/shared/icons";
 import { SimpleToggle } from "~/shared/design-system";
-import { type Publish } from "~/designer/features/canvas-iframe";
+import { useSubscribe, type Publish } from "~/designer/features/canvas-iframe";
 import { useIsPreviewMode } from "../../shared/nano-values";
 
 type PreviewProps = {
@@ -9,15 +9,22 @@ type PreviewProps = {
 
 export const Preview = ({ publish }: PreviewProps) => {
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
+
+  const setValue = (value: boolean) => {
+    setIsPreviewMode(value);
+    publish<"previewMode", boolean>({
+      type: "previewMode",
+      payload: value,
+    });
+  };
+
+  useSubscribe<"togglePreviewMode">("togglePreviewMode", () => {
+    setValue(!isPreviewMode);
+  });
+
   return (
     <SimpleToggle
-      onPressedChange={(value) => {
-        setIsPreviewMode(value);
-        publish<"togglePreviewMode", boolean>({
-          type: "togglePreviewMode",
-          payload: value,
-        });
-      }}
+      onPressedChange={setValue}
       pressed={isPreviewMode}
       aria-label="Toggle Preview"
     >
