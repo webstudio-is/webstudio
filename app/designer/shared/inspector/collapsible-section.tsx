@@ -5,6 +5,7 @@ import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 type CollapsibleSectionProps = {
   label: string;
   children: JSX.Element;
+  isOpenDefault?: boolean;
   isOpen?: boolean;
   rightSlot?: JSX.Element;
 };
@@ -27,12 +28,14 @@ const useOpenState = (
 export const CollapsibleSection = ({
   label,
   children,
-  isOpen: isOpenDefault = false,
+  isOpenDefault = false,
+  isOpen,
   rightSlot,
 }: CollapsibleSectionProps) => {
-  const [isOpen, setIsOpen] = useOpenState(label, isOpenDefault);
+  const [isOpenByUser, setIsOpenByUser] = useOpenState(label, isOpenDefault);
+  const isOpenFinal = isOpen === undefined ? isOpenByUser : isOpen;
   return (
-    <Collapsible.Root onOpenChange={setIsOpen} defaultOpen={isOpen}>
+    <Collapsible.Root open={isOpenFinal} onOpenChange={setIsOpenByUser}>
       <Collapsible.Trigger asChild>
         <Flex
           align="center"
@@ -45,7 +48,7 @@ export const CollapsibleSection = ({
             cursor: "default",
           }}
         >
-          {isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}
+          {isOpenFinal ? <TriangleDownIcon /> : <TriangleRightIcon />}
           <Text size="3" css={{ flexGrow: 1 }}>
             {label}
           </Text>
