@@ -1,7 +1,7 @@
 import { type UserProp } from "@webstudio-is/sdk";
-import { CollapsibleSection } from "~/designer/shared/inspector";
+import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import type { Publish } from "~/designer/features/canvas-iframe";
-import { TextField, Flex, Button } from "~/shared/design-system";
+import { TextField, Flex, Button, Box } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
 import type { SelectedInstanceData } from "~/shared/component";
 import { usePropsLogic } from "./use-props-logic";
@@ -63,6 +63,8 @@ export const SettingsPanel = ({
   const { userProps, addEmptyProp, handleChangeProp, handleDeleteProp } =
     usePropsLogic({ selectedInstanceData, publish });
 
+  if (selectedInstanceData === undefined) return null;
+
   const addButton = (
     <Button
       ghost
@@ -76,19 +78,28 @@ export const SettingsPanel = ({
   );
 
   return (
-    <CollapsibleSection label="Properties" rightSlot={addButton} isOpen>
-      <>
-        {userProps.map(({ id, prop, value }) => (
-          <Property
-            key={id}
-            id={id}
-            prop={prop}
-            value={value}
-            onChange={handleChangeProp}
-            onDelete={handleDeleteProp}
-          />
-        ))}
-      </>
-    </CollapsibleSection>
+    <>
+      <Box css={{ p: "$2" }}>
+        <ComponentInfo selectedInstanceData={selectedInstanceData} />
+      </Box>
+      <CollapsibleSection
+        label="Properties"
+        rightSlot={addButton}
+        isOpenDefault
+      >
+        <>
+          {userProps.map(({ id, prop, value }) => (
+            <Property
+              key={id}
+              id={id}
+              prop={prop}
+              value={value}
+              onChange={handleChangeProp}
+              onDelete={handleDeleteProp}
+            />
+          ))}
+        </>
+      </CollapsibleSection>
+    </>
   );
 };
