@@ -94,6 +94,7 @@ export const VisualSettings = ({
   search,
   ...rest
 }: VisualSettingsProps) => {
+  const isSearchMode = search.length !== 0;
   const all = [];
   let category: Category;
   for (category in categories) {
@@ -109,8 +110,9 @@ export const VisualSettings = ({
     for (const styleConfig of styleConfigs) {
       const isInCategory = categoryProperties.includes(styleConfig.property);
       // We don't want to filter out inapplicable styles if user wants to apply them anyway
-      const isApplicable =
-        search.length === 0 ? appliesTo(styleConfig, currentStyle) : true;
+      const isApplicable = isSearchMode
+        ? true
+        : appliesTo(styleConfig, currentStyle);
       const isRendered = didRender(category, styleConfig);
 
       if (isInCategory && isApplicable && isRendered === false) {
@@ -124,8 +126,9 @@ export const VisualSettings = ({
         // We are making a separate array of properties which come after the "moreFrom"
         // so we can make them collapsable
         if (
-          styleConfig.property === moreFrom ||
-          moreStyleConfigsByCategory.length !== 0
+          (styleConfig.property === moreFrom ||
+            moreStyleConfigsByCategory.length !== 0) &&
+          isSearchMode === false
         ) {
           moreStyleConfigsByCategory.push(element);
           continue;
@@ -139,7 +142,7 @@ export const VisualSettings = ({
 
     all.push(
       <CollapsibleSection
-        isOpen={search.length === 0 ? undefined : true}
+        isOpen={isSearchMode ? true : undefined}
         label={categories[category].label}
         key={category}
       >
