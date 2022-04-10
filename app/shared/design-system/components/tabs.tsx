@@ -86,4 +86,7 @@ export const TabsContent = styled(TabsPrimitive.Content, {
     outline: "none",
     boxShadow: "inset 0 0 0 1px $slate8, 0 0 0 1px $slate8",
   },
+  '&[data-state="inactive"]': {
+    display: "none",
+  },
 });
