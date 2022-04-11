@@ -1,5 +1,10 @@
 import { useEffect } from "react";
-import { type Instance, type Tree } from "@webstudio-is/sdk";
+import {
+  type InstanceProps,
+  type Instance,
+  type Tree,
+  allUserPropsContainer,
+} from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
   populateInstance,
@@ -26,10 +31,13 @@ export const usePopulateRootInstance = (tree: Tree) => {
 export const useInsertInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
-  useSubscribe<"insertInstance", { instance: Instance; dropData?: DropData }>(
+  useSubscribe<
     "insertInstance",
-    ({ instance, dropData }) => {
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
+    { instance: Instance; dropData?: DropData; props?: InstanceProps }
+  >("insertInstance", ({ instance, dropData, props }) => {
+    store.createTransaction(
+      [rootInstanceContainer, allUserPropsContainer],
+      (rootInstance, allUserProps) => {
         if (rootInstance === undefined) return;
         const populatedInstance = populateInstance(instance);
         const hasInserted = insertInstanceMutable(
@@ -44,9 +52,12 @@ export const useInsertInstance = () => {
         if (hasInserted) {
           setSelectedInstance(instance);
         }
-      });
-    }
-  );
+        if (props !== undefined) {
+          allUserProps[props.instanceId] = props;
+        }
+      }
+    );
+  });
 };
 
 export const useReparentInstance = () => {

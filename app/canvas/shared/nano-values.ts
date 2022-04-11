@@ -6,7 +6,9 @@ import store from "immerhin";
 const dropDataContainer = createValueContainer<DropData | undefined>();
 export const useDropData = () => useValue(dropDataContainer);
 
-const selectedInstanceContainer = createValueContainer<Instance | undefined>();
+export const selectedInstanceContainer = createValueContainer<
+  Instance | undefined
+>();
 export const useSelectedInstance = () => useValue(selectedInstanceContainer);
 
 const selectedElementContainer = createValueContainer<Element | undefined>();
