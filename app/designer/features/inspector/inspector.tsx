@@ -18,7 +18,8 @@ type InspectorProps = {
 };
 
 const contentStyle = {
-  height: "100%",
+  display: "flex",
+  flexDirection: "column",
   overflow: "auto",
 };
 

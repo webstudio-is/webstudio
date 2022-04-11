@@ -1,9 +1,10 @@
 import { useHotkeys } from "react-hotkeys-hook";
+import store from "immerhin";
 import { type Instance } from "@webstudio-is/sdk";
+import { shortcuts } from "~/shared/shortcuts";
 import { useRootInstance, useSelectedInstance } from "./nano-values";
 import { publish, useSubscribe } from "./pubsub";
-import store from "immerhin";
-import { shortcuts } from "~/shared/shortcuts";
+import { copy, paste } from "./copy-paste";
 
 const togglePreviewMode = () => {
   publish<"togglePreviewMode">({ type: "togglePreviewMode" });
@@ -34,13 +35,15 @@ export const useShortcuts = () => {
     redo: store.redo.bind(store),
     delete: publishDeleteInstance,
     preview: togglePreviewMode,
+    copy,
+    paste,
   } as const;
 
   useHotkeys(
     "backspace, delete",
-    publishDeleteInstance,
+    shortcutHandlerMap.delete,
     { enableOnTags: ["INPUT", "SELECT", "TEXTAREA"] },
-    [selectedInstance]
+    [shortcutHandlerMap.delete]
   );
 
   useHotkeys(
@@ -48,10 +51,7 @@ export const useShortcuts = () => {
     () => {
       if (selectedInstance === undefined) return;
       setSelectedInstance(undefined);
-      publish<"selectInstance", undefined>({
-        type: "selectInstance",
-        payload: undefined,
-      });
+      publish<"selectInstance">({ type: "selectInstance" });
     },
     [selectedInstance]
   );
@@ -61,6 +61,12 @@ export const useShortcuts = () => {
   useHotkeys(shortcuts.redo, shortcutHandlerMap.redo, []);
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, []);
+
+  useHotkeys(shortcuts.copy, shortcutHandlerMap.copy, [
+    shortcutHandlerMap.copy,
+  ]);
+
+  useHotkeys(shortcuts.paste, shortcutHandlerMap.paste, []);
 
   // Shortcuts from the parent window
   useSubscribe<"shortcut", keyof typeof shortcuts>("shortcut", (shortcut) => {
