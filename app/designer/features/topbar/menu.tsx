@@ -18,6 +18,8 @@ import {
   UndoIcon,
   RedoIcon,
   TrashIcon,
+  ClipboardCopyIcon,
+  CopyIcon,
 } from "~/shared/icons";
 import type { Config } from "~/config";
 import {
@@ -109,6 +111,31 @@ export const Menu = ({ config, publish }: MenuProps) => {
         >
           <RedoIcon /> Redo
           <Shortcut mac={["shift", "cmd", "z"]} win={["shift", "ctrl", "z"]} />
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish<"shortcut", string>({
+              type: "shortcut",
+              payload: "copy",
+            });
+          }}
+        >
+          <CopyIcon /> Copy
+          <Shortcut mac={["cmd", "c"]} win={["ctrl", "c"]} />
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish<"shortcut", string>({
+              type: "shortcut",
+              payload: "paste",
+            });
+          }}
+        >
+          <ClipboardCopyIcon /> Paste
+          <Shortcut mac={["cmd", "v"]} win={["ctrl", "v"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
