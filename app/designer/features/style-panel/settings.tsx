@@ -13,10 +13,14 @@ import { type SelectedInstanceData } from "~/shared/component";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (properties: Array<string>, search: string) => {
+  const searchParts = search.split(" ").map((part) => part.trim());
   const includes = (property: string) => {
     if (property.toLowerCase().includes(search)) return true;
     if (hyphenate(property).includes(search)) return true;
-    return false;
+    // Enables "ba co" to match "backgorund color"
+    return searchParts.every((searchPart) =>
+      property.toLowerCase().includes(searchPart)
+    );
   };
   return properties.filter((property) => {
     for (const styleConfig of styleConfigs) {
@@ -24,10 +28,7 @@ const filterProperties = (properties: Array<string>, search: string) => {
       if (includes(styleConfig.property)) return true;
       if (includes(styleConfig.label)) return true;
       for (const item of styleConfig.items) {
-        if (
-          item.name.includes(search) ||
-          item.label.toLowerCase().includes(search)
-        ) {
+        if (includes(item.name) || includes(item.label)) {
           return true;
         }
       }

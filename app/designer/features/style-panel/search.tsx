@@ -48,7 +48,7 @@ export const Search = ({ onSearch }: SearchProps) => {
         placeholder="Search property or value"
         onChange={(event) => {
           const { value } = event.target;
-          setSearch(value.toLowerCase().trim());
+          setSearch(value.toLowerCase());
         }}
       />
       <IconButton
