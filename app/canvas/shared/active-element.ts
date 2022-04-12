@@ -28,7 +28,9 @@ export const useActiveElementTracking = () => {
       if (element === null || rootInstance === undefined) return;
       const id = element?.id;
       if (!id) return;
-      if (selectedElement?.id === id) return;
+      if (selectedElement?.id === id && selectedInstance?.id === id) {
+        return;
+      }
       const instance = findInstanceById(rootInstance, element.id);
       if (instance === undefined) return;
       setSelectedInstance(instance);
