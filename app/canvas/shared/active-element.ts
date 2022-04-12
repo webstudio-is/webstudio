@@ -36,7 +36,13 @@ export const useActiveElementTracking = () => {
       setSelectedInstance(instance);
       setSelectedElement(element);
     },
-    [rootInstance, selectedElement, setSelectedElement, setSelectedInstance]
+    [
+      rootInstance,
+      selectedElement,
+      setSelectedElement,
+      selectedInstance,
+      setSelectedInstance,
+    ]
   );
 
   useEffect(() => {
