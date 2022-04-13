@@ -38,6 +38,7 @@ export const Autocomplete = ({
   ...rest
 }: AutocompleteProps) => {
   const [debouncedValue, setDebouncedValue] = useState<string>();
+  const [currentValue, setCurrentValue] = useState<string>(value);
   const [isOpen, setIsOpen] = useState<boolean>();
   const inputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>();
@@ -50,7 +51,17 @@ export const Autocomplete = ({
       // so that when we press ESC we can restore it.
       previousValueRef.current = value;
     }
+
+    setCurrentValue(value);
   }, [value, isOpen]);
+
+  // When Enter was pressed, we set current value to "pending"
+  // and then update it from props.value
+  useEffect(() => {
+    if (currentValue === "pending") {
+      setCurrentValue(value);
+    }
+  }, [value, currentValue]);
 
   const [, cancelDebounce] = useDebounce(
     () => {
@@ -131,7 +142,7 @@ export const Autocomplete = ({
       <MenuAnchor asChild>
         <TextField
           {...rest}
-          value={value}
+          value={currentValue}
           ref={inputRef}
           autoComplete="off"
           onClick={() => {
@@ -142,9 +153,7 @@ export const Autocomplete = ({
             if (isOpen === undefined) open();
           }}
           onChange={(event) => {
-            const value = event.target.value.trim();
-            select(value);
-            open();
+            setCurrentValue(event.target.value);
           }}
           onKeyDown={(event) => {
             switch (event.key) {
@@ -154,7 +163,8 @@ export const Autocomplete = ({
                 break;
               case "Enter": {
                 event.preventDefault();
-                select(items[currentIndex]?.label);
+                setCurrentValue("pending");
+                select(currentValue);
                 isOpen ? close() : open();
                 break;
               }
