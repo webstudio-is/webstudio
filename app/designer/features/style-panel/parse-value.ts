@@ -22,6 +22,33 @@ const isValid = (property: string, value: string): boolean => {
   return true;
 };
 
+// wtf?
+// eslint-disable-next-line no-useless-escape
+const mathRegex = /[\+\-\*\/]/;
+
+// - 2+2px
+// - 2*2
+const evaluate = (input: string, parsedUnit: [Unit] | null) => {
+  const parsed = parseFloat(input);
+  // If its not a number, it can't be a math expression.
+  if (isNaN(parsed)) return parsed;
+
+  // It's a math expression
+  if (mathRegex.test(input)) {
+    // Get rid of the unit
+    if (parsedUnit !== null) {
+      input = input.replace(parsedUnit[0], "");
+    }
+    try {
+      return eval(`(${input})`);
+    } catch (err) {
+      return parsed;
+    }
+  }
+
+  return parsed;
+};
+
 // Helper to let user input:
 // - 10
 // - 10p
@@ -43,7 +70,7 @@ export const parseValue = (
   }
 
   const parsedUnit = unitRegex.exec(input) as [Unit] | null;
-  const number = parseFloat(input);
+  const number = evaluate(input, parsedUnit);
 
   // If we get a unit but there is no number - we assume its an accidental
   // unit match and its a keyword value.
@@ -57,11 +84,6 @@ export const parseValue = (
     return invalidValue;
   }
 
-  // User is in the middle of typing a unit eg. 10p
-  if (parsedUnit === null && input.length > String(number).length) {
-    return invalidValue;
-  }
-
   const previousValue = style[property];
   // If user didn't enter a unit, use the previous known unit otherwise fallback to px.
   const defaultUnit: Unit =
@@ -69,7 +91,13 @@ export const parseValue = (
       ? previousValue.unit
       : "number";
   const [unit] = parsedUnit || [defaultUnit];
-  if (isValid(property, input) || isValid(property, input + unit)) {
+
+  if (
+    isValid(property, input) ||
+    isValid(property, input + unit) ||
+    isValid(property, number) ||
+    isValid(property, number + unit)
+  ) {
     return {
       type: "unit",
       unit,

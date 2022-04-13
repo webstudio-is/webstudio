@@ -1,6 +1,7 @@
 import { Box } from "~/shared/design-system";
 import { toCss, type StyleProperty, type StyleValue } from "@webstudio-is/sdk";
 import { SetProperty } from "../use-style-data";
+import { useEffect, useState } from "react";
 
 type SpacingSingularStyle = { [property in SpacingProperty]?: StyleValue };
 
@@ -95,6 +96,38 @@ const styles = {
   },
 };
 
+type TextFieldProps = {
+  property: string;
+  value: string | undefined;
+  onEnter: (value: string) => void;
+};
+
+const TextField = ({ property, value, onEnter }: TextFieldProps) => {
+  const [currentValue, setCurrentValue] = useState<string>(value ?? "");
+
+  useEffect(() => {
+    setCurrentValue(value ?? "");
+  }, [value]);
+
+  return (
+    <Box
+      as="input"
+      name={property}
+      aria-label={`${property} edit`}
+      value={currentValue}
+      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter") {
+          onEnter(currentValue);
+        }
+      }}
+      onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+        setCurrentValue(event.target.value);
+      }}
+      css={styles.input}
+    />
+  );
+};
+
 type SpacingWidgetProps = {
   setProperty: SetProperty;
   values: SpacingStyles;
@@ -125,18 +158,15 @@ export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
               gridArea: grid.margin[property],
             }}
           >
-            <Box
-              as="input"
-              name={property}
-              aria-label={`${property} edit`}
+            <TextField
+              property={property}
               value={margins[property]?.toString()}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              onEnter={(value: string) => {
                 updateSpacing({
-                  value: event.target.value,
+                  value,
                   property,
-                })
-              }
-              css={styles.input}
+                });
+              }}
             />
           </Box>
         ))}
@@ -150,18 +180,15 @@ export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
               gridArea: grid.padding[property],
             }}
           >
-            <Box
-              as="input"
-              name={property}
-              aria-label={`${property} edit`}
+            <TextField
+              property={property}
               value={paddings[property]?.toString()}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              onEnter={(value: string) => {
                 updateSpacing({
-                  value: event.target.value,
+                  value,
                   property,
-                })
-              }
-              css={styles.input}
+                });
+              }}
             />
           </Box>
         ))}
