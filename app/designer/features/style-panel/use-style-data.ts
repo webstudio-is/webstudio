@@ -3,7 +3,7 @@ import type { SelectedInstanceData, StyleUpdates } from "~/shared/component";
 import { type Style, type StyleProperty } from "@webstudio-is/sdk";
 import { type Publish } from "~/designer/features/canvas-iframe";
 import { useRootInstance } from "../../shared/nano-values";
-import { parseValue } from "./parse-value";
+import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle, type InheritedStyle } from "./get-inherited-style";
 
 type UseStyleData = {
@@ -64,13 +64,16 @@ export const useStyleData = ({
   const setProperty: SetProperty = (property) => {
     return (input, options = { isEphemeral: false }) => {
       if (currentStyle === undefined) return;
-      const value = parseValue(property, input, currentStyle);
-      if (value.type !== "invalid") {
-        const updates = [{ property, value }];
+      const currentValue = currentStyle[property];
+      const defaultUnit =
+        currentValue?.type === "unit" ? currentValue?.unit : undefined;
+      const nextValue = parseCssValue(property, input, defaultUnit);
+      if (nextValue.type !== "invalid") {
+        const updates = [{ property, value: nextValue }];
         const type = options.isEphemeral ? "preview" : "update";
         publishUpdates(type, updates);
       }
-      setCurrentStyle({ ...currentStyle, [property]: value });
+      setCurrentStyle({ ...currentStyle, [property]: nextValue });
     };
   };
 
