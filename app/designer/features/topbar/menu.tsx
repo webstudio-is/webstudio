@@ -26,7 +26,7 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "../../shared/nano-values";
-import { type Publish } from "../canvas-iframe";
+import { type Publish } from "../../shared/canvas-iframe";
 
 const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;

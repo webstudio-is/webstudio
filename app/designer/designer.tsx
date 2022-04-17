@@ -8,11 +8,7 @@ import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import {
-  CanvasIframe,
-  useSubscribe,
-  usePublish,
-} from "./features/canvas-iframe";
+import { CanvasIframe, useSubscribe, usePublish } from "./shared/canvas-iframe";
 import {
   useIsPreviewMode,
   useRootInstance,

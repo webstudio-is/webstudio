@@ -10,7 +10,7 @@ import { type Instance } from "@webstudio-is/sdk";
 import { Flex, Text } from "~/shared/design-system";
 import { Component1Icon } from "~/shared/icons";
 import { primitives, type DragData } from "~/shared/component";
-import { type Publish } from "~/designer/features/canvas-iframe";
+import { type Publish } from "~/designer/shared/canvas-iframe";
 import { createInstance } from "~/shared/tree-utils";
 import { CustomDragLayer } from "../custom-drag-layer";
 import type { TabName } from "../types";

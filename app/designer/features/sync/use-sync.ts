@@ -1,7 +1,7 @@
 import { type Project } from "@webstudio-is/sdk";
 import { type SyncItem } from "immerhin";
 import type { Config } from "~/config";
-import { useSubscribe } from "~/designer/features/canvas-iframe";
+import { useSubscribe } from "~/designer/shared/canvas-iframe";
 import { enqueue } from "./queue";
 
 // @todo this entire queueing logic needs to be gone, it's a workaround,

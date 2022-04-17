@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import type { SelectedInstanceData, StyleUpdates } from "~/shared/component";
 import { type Style, type StyleProperty } from "@webstudio-is/sdk";
-import { type Publish } from "~/designer/features/canvas-iframe";
+import { type Publish } from "~/designer/shared/canvas-iframe";
 import { useRootInstance } from "../../shared/nano-values";
 import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle, type InheritedStyle } from "./get-inherited-style";

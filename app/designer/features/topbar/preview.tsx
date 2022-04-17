@@ -1,6 +1,6 @@
 import { EyeOpenIcon } from "~/shared/icons";
 import { SimpleToggle } from "~/shared/design-system";
-import { useSubscribe, type Publish } from "~/designer/features/canvas-iframe";
+import { useSubscribe, type Publish } from "~/designer/shared/canvas-iframe";
 import { useIsPreviewMode } from "../../shared/nano-values";
 
 type PreviewProps = {

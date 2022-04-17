@@ -1,5 +1,5 @@
 import { useHotkeys } from "react-hotkeys-hook";
-import { type Publish } from "~/designer/features/canvas-iframe";
+import { type Publish } from "~/designer/shared/canvas-iframe";
 import { shortcuts } from "~/shared/shortcuts";
 
 const names = Object.keys(shortcuts) as Array<keyof typeof shortcuts>;

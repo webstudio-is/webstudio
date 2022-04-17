@@ -2,7 +2,7 @@ import { ChevronRightIcon } from "~/shared/icons";
 import { Button, Flex, Text } from "~/shared/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
 import { Instance } from "@webstudio-is/sdk";
-import { Publish } from "../canvas-iframe";
+import { Publish } from "../../shared/canvas-iframe";
 import { useSelectedInstanceData } from "~/designer/shared/nano-values";
 
 type BreadcrumbProps = {
