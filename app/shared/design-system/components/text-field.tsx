@@ -59,6 +59,14 @@ export const TextField = styled("input", {
       boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
     },
   },
+  '&[type="number"]': {
+    "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+      WebkitAppearance: "none",
+      MozAppearance: "textfield",
+      margin: 0,
+      display: "none",
+    },
+  },
 
   variants: {
     size: {
