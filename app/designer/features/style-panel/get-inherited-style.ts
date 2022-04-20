@@ -50,6 +50,7 @@ const findParents = (
 
 // - Walk down the tree and remember all parent instances until the found instance
 // - Walk back up and find a value for each inheritable property and where value is not "inherit"
+// @todo this also has to match the media query, otheriwse its wrong
 export const getInheritedStyle = (
   rootInstance: Instance,
   instanceId: Instance["id"]
@@ -57,16 +58,18 @@ export const getInheritedStyle = (
   const parents = findParents(rootInstance, instanceId).reverse();
   const inheritedStyle = {} as InheritedStyle;
   for (const parent of parents) {
-    for (const property in parent.style) {
-      const isInheritable = property in inheritableProperties;
-      const value = parent.style[property as StyleProperty];
-      const hasValue = value !== undefined && value.value !== "inherit";
-      const isFirst = property in inheritedStyle === false;
-      if (isInheritable && hasValue && isFirst) {
-        inheritedStyle[property as StyleProperty] = {
-          instance: parent,
-          value,
-        };
+    for (const cssRule of parent.cssRules) {
+      for (const property in cssRule.style) {
+        const isInheritable = property in inheritableProperties;
+        const value = cssRule.style[property as StyleProperty];
+        const hasValue = value !== undefined && value.value !== "inherit";
+        const isFirst = property in inheritedStyle === false;
+        if (isInheritable && hasValue && isFirst) {
+          inheritedStyle[property as StyleProperty] = {
+            instance: parent,
+            value,
+          };
+        }
       }
     }
   }

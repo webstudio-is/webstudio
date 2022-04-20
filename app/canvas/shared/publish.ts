@@ -5,12 +5,14 @@ import {
   useAllUserProps,
   type Instance,
   type Tree,
+  type Breakpoint,
 } from "@webstudio-is/sdk";
 import { type SelectedInstanceData } from "~/shared/component";
 import {
   useSelectedInstance,
   useSelectedElement,
   useRootInstance,
+  useBreakpoints,
 } from "./nano-values";
 import { publish } from "./pubsub";
 
@@ -38,7 +40,7 @@ export const usePublishSelectedInstance = ({
       payload = {
         id: instance.id,
         component: instance.component,
-        style: instance.style,
+        cssRules: instance.cssRules,
         browserStyle: getBrowserStyle(selectedElement),
         props,
       };
@@ -59,4 +61,14 @@ export const usePublishRootInstance = () => {
       payload: rootInstance,
     });
   }, [rootInstance]);
+};
+
+export const usePublishBreakpoints = () => {
+  const [breakpoints] = useBreakpoints();
+  useEffect(() => {
+    publish<"loadBreakpoints", Array<Breakpoint>>({
+      type: "loadBreakpoints",
+      payload: breakpoints,
+    });
+  }, [breakpoints]);
 };

@@ -1809,10 +1809,8 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
-"@webstudio-is/sdk@^0.1.22":
+"@webstudio-is/sdk@../webstudio-sdk":
   version "0.1.22"
-  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.1.22.tgz#5247a05a32363fc8a200997949f6aefc443fbffc"
-  integrity sha512-sKF4T7yTkm0VQleV1wFWJqlBPj4PtSoDzlGsRT2Y5eRSJRg03WyAu9GkBufJgFJh/6evL9dWPj3Ktjjm0KdkDQ==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/react" "^1.2.7"

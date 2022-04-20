@@ -1,5 +1,5 @@
 import { redirect, useLoaderData, type LoaderFunction } from "remix";
-import { Root, type Data } from "@webstudio-is/sdk";
+import { Root, initialBreakpoints, type Data } from "@webstudio-is/sdk";
 import config from "~/config";
 import * as db from "~/shared/db";
 import Document from "./canvas";
@@ -8,7 +8,9 @@ import Document from "./canvas";
 
 type Error = { errors: string };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader: LoaderFunction = async ({
+  request,
+}): Promise<Data | Error | Response> => {
   const host =
     request.headers.get("x-forwarded-host") ||
     request.headers.get("host") ||
@@ -23,7 +25,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     try {
       const tree = await db.tree.loadByDomain(userDomain);
       const props = await db.props.loadByTreeId(tree.id);
-      return { tree, props };
+      // @todo fetch breakpoints
+      const breakpoints = initialBreakpoints;
+      return { tree, props, breakpoints };
     } catch (error) {
       if (error instanceof Error) {
         return { errors: error.message };

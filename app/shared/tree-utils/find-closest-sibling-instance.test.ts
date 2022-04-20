@@ -6,26 +6,26 @@ describe("Find closest sibling instance", () => {
     const rootInstance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "3",
-          style: {},
+          cssRules: [],
           children: [],
         },
         "a",
         {
           component: "Box",
           id: "4",
-          style: {},
+          cssRules: [],
           children: [],
         },
         "b",
         {
           component: "Box",
           id: "5",
-          style: {},
+          cssRules: [],
           children: [],
         },
       ],

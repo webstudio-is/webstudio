@@ -20,7 +20,7 @@ describe("create instance", () => {
     const createdInstance = createInstance({
       component: "Box",
     });
-    expect(typeof createdInstance.style).toBe("object");
+    expect(Array.isArray(createdInstance.cssRules)).toBeTruthy();
   });
 
   test("instance with children ", () => {
@@ -30,17 +30,17 @@ describe("create instance", () => {
         {
           id: "1",
           component: "Box",
-          style: {},
+          cssRules: [],
           children: [],
         },
       ],
-      style: {},
+      cssRules: [],
     });
     expect(createdInstance.children).toEqual([
       {
         id: "1",
         component: "Box",
-        style: {},
+        cssRules: [],
         children: [],
       },
     ]);

@@ -1,8 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
 import type { SelectedInstanceData, StyleUpdates } from "~/shared/component";
-import { type Style, type StyleProperty } from "@webstudio-is/sdk";
+import {
+  type Breakpoint,
+  type Style,
+  type StyleProperty,
+} from "@webstudio-is/sdk";
 import { type Publish } from "~/designer/shared/canvas-iframe";
-import { useRootInstance } from "../../shared/nano-values";
+import {
+  useRootInstance,
+  useSelectedBreakpoint,
+} from "../../shared/nano-values";
 import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle, type InheritedStyle } from "./get-inherited-style";
 
@@ -17,15 +24,36 @@ export type SetProperty = (
   property: StyleProperty
 ) => (value: string, options?: StyleUpdateOptions) => void;
 
+const getCurrentStyle = (
+  {
+    cssRules,
+    browserStyle,
+  }: Pick<SelectedInstanceData, "cssRules" | "browserStyle"> = {
+    cssRules: [],
+    browserStyle: {},
+  },
+  breakpoint?: Breakpoint
+) => {
+  if (breakpoint === undefined) return browserStyle;
+  const cssRule = cssRules.find(
+    (cssRule) => cssRule.breakpoint === breakpoint.ref
+  );
+  if (cssRule === undefined) return browserStyle;
+  return {
+    ...browserStyle,
+    ...cssRule.style,
+  };
+};
+
 export const useStyleData = ({
   selectedInstanceData,
   publish,
 }: UseStyleData): [Style | void, InheritedStyle | void, SetProperty] => {
   const [rootInstance] = useRootInstance();
-  const [currentStyle, setCurrentStyle] = useState<Style | undefined>({
-    ...selectedInstanceData?.browserStyle,
-    ...selectedInstanceData?.style,
-  });
+  const [selectedBreakpoint] = useSelectedBreakpoint();
+  const [currentStyle, setCurrentStyle] = useState<Style | undefined>(
+    getCurrentStyle(selectedInstanceData, selectedBreakpoint)
+  );
   const inheritedStyle = useMemo(() => {
     if (
       currentStyle === undefined ||
@@ -38,11 +66,8 @@ export const useStyleData = ({
   }, [currentStyle, selectedInstanceData, rootInstance]);
 
   useEffect(() => {
-    setCurrentStyle({
-      ...selectedInstanceData?.browserStyle,
-      ...selectedInstanceData?.style,
-    });
-  }, [selectedInstanceData?.style, selectedInstanceData?.browserStyle]);
+    setCurrentStyle(getCurrentStyle(selectedInstanceData, selectedBreakpoint));
+  }, [selectedInstanceData, selectedBreakpoint]);
 
   const publishUpdates = (
     type: "update" | "preview",
@@ -57,6 +82,7 @@ export const useStyleData = ({
       payload: {
         id: selectedInstanceData.id,
         updates,
+        breakpoint: selectedBreakpoint,
       },
     });
   };

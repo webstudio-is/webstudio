@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import type { Project } from "@webstudio-is/sdk";
+import type { Breakpoint, Project } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
@@ -10,16 +10,18 @@ import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { CanvasIframe, useSubscribe, usePublish } from "./shared/canvas-iframe";
 import {
+  useBreakpoints,
   useIsPreviewMode,
   useRootInstance,
   useSelectedInstanceData,
+  useSyncStatus,
 } from "./shared/nano-values";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { useSync } from "./features/sync";
 import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
 import { usePublishShortcuts } from "./shared/shortcuts/use-publish-shortcuts";
+import { type SyncStatus } from "~/shared/sync";
 
 export const links = () => {
   return [
@@ -39,6 +41,30 @@ const useSubscribeSelectedInstanceData = () => {
     "selectInstance",
     setValue
   );
+};
+
+const useSubscribeSyncStatus = () => {
+  const [, setValue] = useSyncStatus();
+  useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
+};
+
+const useSubscribeBreakpoints = () => {
+  const [, setValue] = useBreakpoints();
+  useSubscribe<"loadBreakpoints", Array<Breakpoint>>(
+    "loadBreakpoints",
+    setValue
+  );
+};
+
+const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
+    setIsDragging(true);
+  });
+  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
+    setIsDragging(false);
+  });
+  return [isDragging, setIsDragging];
 };
 
 type SidePanelProps = {
@@ -130,20 +156,14 @@ type DesignerProps = {
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
-  useSync({ config, project });
+  useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
-  const [isDragging, setIsDragging] = useState<boolean>();
+  useSubscribeBreakpoints();
   const [publish, iframeRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
+  const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
-
-  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
-    setIsDragging(true);
-  });
-  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
-    setIsDragging(false);
-  });
 
   return (
     <DndProvider backend={HTML5Backend}>

@@ -9,12 +9,12 @@ export const useUpdateStyle = () => {
 
   useSubscribe<"updateStyle", StyleUpdates>(
     "updateStyle",
-    ({ id, updates }) => {
+    ({ id, updates, breakpoint }) => {
       store.createTransaction([rootInstanceContainer], (rootInstance) => {
         if (rootInstance === undefined || id !== selectedInstance?.id) {
           return;
         }
-        setInstanceStyleMutable(rootInstance, id, updates);
+        setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
       });
     }
   );

@@ -1,5 +1,9 @@
 import { Box } from "~/shared/design-system";
-import { toCss, type StyleProperty, type StyleValue } from "@webstudio-is/sdk";
+import {
+  toValue,
+  type StyleProperty,
+  type StyleValue,
+} from "@webstudio-is/sdk";
 import { SetProperty } from "../use-style-data";
 import { useEffect, useState } from "react";
 
@@ -128,6 +132,17 @@ const TextField = ({ property, value, onEnter }: TextFieldProps) => {
   );
 };
 
+const toCss = (style: SpacingSingularStyle) => {
+  const css: Record<string, string> = {};
+  let property: SpacingProperty;
+  for (property in style) {
+    const value = style[property];
+    if (value === undefined) continue;
+    css[property] = toValue(value);
+  }
+  return css;
+};
+
 type SpacingWidgetProps = {
   setProperty: SetProperty;
   values: SpacingStyles;
@@ -160,7 +175,7 @@ export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
           >
             <TextField
               property={property}
-              value={margins[property]?.toString()}
+              value={margins[property]}
               onEnter={(value: string) => {
                 updateSpacing({
                   value,
@@ -182,7 +197,7 @@ export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
           >
             <TextField
               property={property}
-              value={paddings[property]?.toString()}
+              value={paddings[property]}
               onEnter={(value: string) => {
                 updateSpacing({
                   value,

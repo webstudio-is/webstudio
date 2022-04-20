@@ -14,17 +14,17 @@ describe("Clone instance", () => {
     const instance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "2",
-          style: {},
+          cssRules: [],
           children: [
             {
               component: "Box",
               id: "3",
-              style: {},
+              cssRules: [],
               children: [],
             },
           ],

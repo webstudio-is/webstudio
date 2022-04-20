@@ -1,7 +1,6 @@
-import { useValue } from "react-nano-state";
 import { Flex, keyframes, AccessibleIcon } from "~/shared/design-system";
 import { CheckIcon, DotsHorizontalIcon } from "~/shared/icons";
-import { statusContainer } from "../sync";
+import { useSyncStatus } from "../../shared/nano-values";
 
 const iconSize = 15;
 
@@ -25,7 +24,7 @@ const AnimatedDotsIcon = () => {
 };
 
 export const SyncStatus = () => {
-  const [status] = useValue(statusContainer);
+  const [status] = useSyncStatus();
   return (
     <Flex
       align="center"

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { type Breakpoint } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,21 +12,13 @@ import {
   Flex,
 } from "~/shared/design-system";
 import { type Publish } from "../../shared/canvas-iframe";
-
-type DefaultBreakpoint = {
-  label: string;
-  isDefault: true;
-};
-
-type CustomBreakpoint = {
-  label: string;
-  maxWidth: number;
-};
-
-type Breakpoint = CustomBreakpoint | DefaultBreakpoint;
+import {
+  useBreakpoints,
+  useSelectedBreakpoint,
+} from "../../shared/nano-values";
 
 type EditableBreakpointProps = {
-  breakpoint: CustomBreakpoint;
+  breakpoint: Breakpoint;
   onChange: (breakpoint: Breakpoint) => void;
 };
 
@@ -33,6 +26,7 @@ const EditableBreakpoint = ({
   breakpoint,
   onChange,
 }: EditableBreakpointProps) => {
+  const isDefault = breakpoint.maxWidth === -1;
   return (
     <form
       onKeyDown={(event) => {
@@ -41,7 +35,8 @@ const EditableBreakpoint = ({
       onChange={(event) => {
         event.stopPropagation();
         const data = new FormData(event.currentTarget);
-        const nextBreakpoint: CustomBreakpoint = {
+        const nextBreakpoint: Breakpoint = {
+          ref: breakpoint.ref,
           label: String(data.get("label")),
           maxWidth: Number(data.get("maxWidth")),
         };
@@ -53,13 +48,16 @@ const EditableBreakpoint = ({
         defaultValue={breakpoint.label}
         css={{ width: 120 }}
         name="label"
+        readOnly={isDefault}
       />
       <TextField
         variant="ghost"
-        defaultValue={breakpoint.maxWidth}
+        defaultValue={isDefault ? "∞" : breakpoint.maxWidth}
         css={{ width: 60 }}
-        type="number"
+        type={isDefault ? "text" : "number"}
         name="maxWidth"
+        min={0}
+        readOnly={isDefault}
       />
     </form>
   );
@@ -72,41 +70,30 @@ const menuItemCss = {
   flexGrow: 1,
 };
 
-const defaultBreakpoints: Array<Breakpoint> = [
-  { label: "Default", isDefault: true },
-  { label: "Desktop L", maxWidth: 1920 },
-  { label: "Desktop M", maxWidth: 1440 },
-  { label: "Desktop S", maxWidth: 1280 },
-  { label: "Tablet L", maxWidth: 1024 },
-  { label: "Tablet M", maxWidth: 768 },
-  { label: "Tablet S", maxWidth: 601 },
-  { label: "Phone", maxWidth: 414 },
-];
-
 type BreakpointsProps = {
   publish: Publish;
 };
 
 export const Breakpoints = ({ publish }: BreakpointsProps) => {
-  const [breakpoints] = useState(defaultBreakpoints);
+  const [breakpoints] = useBreakpoints();
+  const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   const [isEditing, setIsEditing] = useState(false);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button ghost aria-label="Breakpoints">
-          Desktop
+          {selectedBreakpoint?.label ?? breakpoints[0].label}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {breakpoints.map((breakpoint, index) => {
           if (isEditing) {
-            if ("isDefault" in breakpoint) return null;
             return (
               <Flex gap="1" css={{ px: "$2" }} key={index}>
                 <EditableBreakpoint
-                  breakpoint={breakpoint as CustomBreakpoint}
-                  onChange={(breakpoint) => {
-                    console.log(breakpoint);
+                  breakpoint={breakpoint}
+                  onChange={(_breakpoint) => {
+                    // @todo
                   }}
                 />
               </Flex>
@@ -118,10 +105,11 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
               key={index}
               css={menuItemCss}
               onSelect={() => {
-                publish<"shortcut", string>({
-                  type: "shortcut",
-                  payload: "x",
+                publish({
+                  type: "selectBreakpoint",
+                  payload: breakpoint,
                 });
+                setSelectedBreakpoint(breakpoint);
               }}
             >
               {breakpoint.label}
