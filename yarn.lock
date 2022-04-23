@@ -1349,6 +1349,11 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
+"@stitches/core@^1.2.7":
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/@stitches/core/-/core-1.2.7.tgz#9d421b0635ee2acd65a8f0c078d5f5be8fc81766"
+  integrity sha512-2bSto+jqPjeODcdNvwuXduhUH5b1bROmGNSBj/EVOGk8a8dIdCnoZyXYSxdKlKA9SnedBg94qNO0QQAMvTAz3w==
+
 "@stitches/react@^1.2.7":
   version "1.2.7"
   resolved "https://registry.yarnpkg.com/@stitches/react/-/react-1.2.7.tgz#aea2403fac726db66d1740d29557e3910b1a1dc7"
@@ -1813,7 +1818,7 @@
   version "0.1.22"
   dependencies:
     "@prisma/client" "^3.10.0"
-    "@stitches/react" "^1.2.7"
+    "@stitches/core" "^1.2.7"
     immer "^9.0.12"
     mitt "^3.0.0"
     prisma "^3.10.0"
