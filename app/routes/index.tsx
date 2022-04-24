@@ -1,5 +1,5 @@
 import { redirect, useLoaderData, type LoaderFunction } from "remix";
-import { Root, initialBreakpoints, type Data } from "@webstudio-is/sdk";
+import { Root, type Data } from "@webstudio-is/sdk";
 import config from "~/config";
 import * as db from "~/shared/db";
 import Document from "./canvas";
@@ -23,10 +23,18 @@ export const loader: LoaderFunction = async ({
     (wstdDomain === "wstd" || wstdDomain?.includes("localhost"))
   ) {
     try {
-      const tree = await db.tree.loadByDomain(userDomain);
-      const props = await db.props.loadByTreeId(tree.id);
-      // @todo fetch breakpoints
-      const breakpoints = initialBreakpoints;
+      const project = await db.project.loadByDomain(userDomain);
+      if (project === null) {
+        throw new Error(`Unknown domain "${userDomain}"`);
+      }
+      if (project.prodTreeId === null) {
+        throw new Error(`Site is not published`);
+      }
+      const [tree, props, breakpoints] = await Promise.all([
+        db.tree.loadByProject(project, "production"),
+        db.props.loadByTreeId(project.prodTreeId),
+        db.breakpoints.load(project.id),
+      ]);
       return { tree, props, breakpoints };
     } catch (error) {
       if (error instanceof Error) {

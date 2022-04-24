@@ -49,19 +49,6 @@ export const loadById = async (id: string): Promise<Tree> => {
   })) as Tree;
 };
 
-export const loadByDomain = async (domain: string): Promise<Tree> => {
-  const project = await prisma.project.findUnique({
-    where: { domain },
-  });
-  if (project === null) {
-    throw new Error(`Unknown domain "${domain}"`);
-  }
-  if (project.prodTreeId === null) {
-    throw new Error(`Site is not published`);
-  }
-  return await loadById(project.prodTreeId);
-};
-
 export const loadByProject = async (
   project: Project | null,
   env: "production" | "development" = "development"
