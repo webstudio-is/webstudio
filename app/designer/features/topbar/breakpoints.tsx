@@ -23,6 +23,7 @@ import {
 type EditableBreakpointProps = {
   breakpoint: Breakpoint;
   onChange: (breakpoint: Breakpoint) => void;
+  onFocus: () => void;
 };
 
 const EditableBreakpoint = ({
@@ -39,7 +40,8 @@ const EditableBreakpoint = ({
         event.stopPropagation();
         const data = new FormData(event.currentTarget);
         const nextBreakpoint: Breakpoint = {
-          ref: breakpoint.ref,
+          ...breakpoint,
+          // @todo if label changed, we want to generate a ref name
           label: String(data.get("label")),
           minWidth: Number(data.get("minWidth")),
         };
@@ -47,11 +49,11 @@ const EditableBreakpoint = ({
       }}
       onFocus={onFocus}
     >
-      <Flex gap="1" css={{ px: "$3" }}>
+      <Flex gap="1" css={{ px: "$4" }}>
         <TextField
           variant="ghost"
           defaultValue={breakpoint.label}
-          css={{ width: 120, flexGrow: 1 }}
+          css={{ width: 100, flexGrow: 1 }}
           name="label"
         />
         <TextField
@@ -60,6 +62,7 @@ const EditableBreakpoint = ({
           type="number"
           name="minWidth"
           min={0}
+          css={{ textAlign: "right" }}
         />
       </Flex>
     </form>
@@ -99,9 +102,11 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
       <DropdownMenuTrigger asChild>
         <Button css={{ gap: "$1" }} ghost aria-label="Breakpoints">
           <Text size="1">{selectedBreakpoint.label}</Text>
-          <Text size="1" variant="gray">
-            {selectedBreakpoint.minWidth}
-          </Text>
+          {selectedBreakpoint.minWidth > 0 && (
+            <Text size="1" variant="gray">
+              {selectedBreakpoint.minWidth}
+            </Text>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent css={{ width: 200 }}>
