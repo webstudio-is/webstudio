@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useDebounce from "react-use/lib/useDebounce";
 import { type Breakpoint } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
@@ -27,10 +28,22 @@ type EditableBreakpointProps = {
 };
 
 const EditableBreakpoint = ({
-  breakpoint,
+  breakpoint: initialBreakpoint,
   onChange,
   onFocus,
 }: EditableBreakpointProps) => {
+  const [breakpoint, setBreakpoint] = useState(initialBreakpoint);
+
+  useDebounce(
+    () => {
+      if (breakpoint !== initialBreakpoint) {
+        onChange(breakpoint);
+      }
+    },
+    1000,
+    [breakpoint]
+  );
+
   return (
     <form
       onKeyDown={(event) => {
@@ -45,7 +58,7 @@ const EditableBreakpoint = ({
           label: String(data.get("label")),
           minWidth: Number(data.get("minWidth")),
         };
-        onChange(nextBreakpoint);
+        setBreakpoint(nextBreakpoint);
       }}
       onFocus={onFocus}
     >
