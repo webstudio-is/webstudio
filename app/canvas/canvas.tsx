@@ -25,13 +25,10 @@ import {
   useInsertInstance,
   useDeleteInstance,
   useReparentInstance,
-} from "./shared/tree";
-import { useUpdateStyle } from "./shared/style";
-import {
   usePublishSelectedInstance,
   usePublishRootInstance,
-  usePublishBreakpoints,
-} from "./shared/publish";
+} from "./shared/instance";
+import { useUpdateStyle } from "./shared/style";
 import { useActiveElementTracking } from "./shared/active-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import {
@@ -41,6 +38,10 @@ import {
 } from "./shared/nano-values";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
+import {
+  useBreakpointChange,
+  usePublishBreakpoints,
+} from "./shared/breakpoints";
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
@@ -107,6 +108,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   usePublishRootInstance();
   useActiveElementTracking();
   useSync({ project });
+  useBreakpointChange();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case

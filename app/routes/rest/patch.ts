@@ -6,6 +6,7 @@ import { type Project, type Tree } from "@webstudio-is/sdk";
 const updaters = {
   root: db.tree.patchRoot,
   props: db.props.patch,
+  breakpoints: db.breakpoints.patch,
 };
 
 type UpdaterKey = keyof typeof updaters;

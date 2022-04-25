@@ -69,7 +69,7 @@ const EditableBreakpoint = ({
   );
 };
 
-const Hint = ({ breakpoint }: any) => {
+const Hint = ({ breakpoint }: { breakpoint: Breakpoint }) => {
   return (
     <Box css={{ px: "$3" }}>
       <Paragraph css={{ fontSize: "$1" }}>CSS Preview:</Paragraph>
@@ -120,8 +120,9 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
                 onFocus={() => {
                   setBreakpointHint(breakpoint);
                 }}
-                onChange={(_breakpoint) => {
-                  // @todo
+                onChange={(breakpoint) => {
+                  setBreakpointHint(breakpoint);
+                  publish({ type: "breakpointChange", payload: breakpoint });
                 }}
               />
             );
