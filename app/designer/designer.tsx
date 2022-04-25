@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import type { Breakpoint, Project } from "@webstudio-is/sdk";
@@ -13,6 +13,7 @@ import {
   useBreakpoints,
   useIsPreviewMode,
   useRootInstance,
+  useSelectedBreakpoint,
   useSelectedInstanceData,
   useSyncStatus,
 } from "./shared/nano-values";
@@ -49,11 +50,17 @@ const useSubscribeSyncStatus = () => {
 };
 
 const useSubscribeBreakpoints = () => {
-  const [, setValue] = useBreakpoints();
+  const [breakpoints, setValue] = useBreakpoints();
+  const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   useSubscribe<"loadBreakpoints", Array<Breakpoint>>(
     "loadBreakpoints",
     setValue
   );
+  useEffect(() => {
+    if (selectedBreakpoint === undefined) {
+      setSelectedBreakpoint(breakpoints[breakpoints.length - 1]);
+    }
+  }, [breakpoints, selectedBreakpoint, setSelectedBreakpoint]);
 };
 
 const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {

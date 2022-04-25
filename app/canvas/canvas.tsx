@@ -37,8 +37,7 @@ import {
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
 import {
-  useBreakpointChange,
-  usePublishBreakpoints,
+  useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
 
@@ -94,14 +93,13 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstance({ treeId });
-  usePublishBreakpoints();
+  useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
   useActiveElementTracking();
   useSync({ project });
-  useBreakpointChange();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case

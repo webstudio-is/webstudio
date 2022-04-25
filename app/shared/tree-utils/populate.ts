@@ -1,4 +1,4 @@
-import { type Instance, defaultBreakpoint } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/sdk";
 import { primitives } from "~/shared/component";
 
 /**
@@ -11,7 +11,7 @@ export const populateInstance = (instance: Instance): Instance => {
   const primitive = primitives[instance.component];
   if (primitive !== undefined && "defaultStyle" in primitive) {
     const cssRule = {
-      breakpoint: defaultBreakpoint.ref,
+      breakpoint: "",
       style: primitive.defaultStyle,
     };
     populatedInstance.cssRules.push(cssRule);

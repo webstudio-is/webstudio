@@ -1,9 +1,5 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import {
-  type Breakpoint,
-  type Instance,
-  defaultBreakpoint,
-} from "@webstudio-is/sdk";
+import { type Breakpoint, type Instance } from "@webstudio-is/sdk";
 import { SelectedInstanceData } from "~/shared/component";
 import { type SyncStatus } from "~/shared/sync";
 
@@ -26,14 +22,13 @@ const isPublishDialogOpenContainer = createValueContainer<boolean>(false);
 export const useIsPublishDialogOpen = () =>
   useValue(isPublishDialogOpenContainer);
 
-export const selectedBreakpointContainer =
-  createValueContainer<Breakpoint>(defaultBreakpoint);
+export const selectedBreakpointContainer = createValueContainer<
+  Breakpoint | undefined
+>();
 export const useSelectedBreakpoint = () =>
   useValue(selectedBreakpointContainer);
 
-export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([
-  defaultBreakpoint,
-]);
+export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);
 
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");

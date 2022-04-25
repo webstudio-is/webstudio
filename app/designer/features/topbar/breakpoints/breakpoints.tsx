@@ -1,6 +1,5 @@
 import { useState } from "react";
-import useDebounce from "react-use/lib/useDebounce";
-import { type Breakpoint } from "@webstudio-is/sdk";
+import { type Project, type Breakpoint, sort } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,118 +8,26 @@ import {
   DropdownMenuArrow,
   DropdownMenuSeparator,
   Button,
-  TextField,
-  Flex,
   Text,
   Paragraph,
   Box,
+  Flex,
 } from "~/shared/design-system";
-import { type Publish } from "../../shared/canvas-iframe";
+import { type Publish } from "../../../shared/canvas-iframe";
 import {
   useBreakpoints,
   useSelectedBreakpoint,
-} from "../../shared/nano-values";
+} from "../../../shared/nano-values";
+import { BreakpointsEditor } from "./breakpoints-editor";
 
-type BreakpointEditorItemProps = {
-  breakpoint: Breakpoint;
-  onChange: (breakpoint: Breakpoint) => void;
-  onFocus: () => void;
-};
-
-const BreakpointEditorItem = ({
-  breakpoint: initialBreakpoint,
-  onChange,
-  onFocus,
-}: BreakpointEditorItemProps) => {
-  const [breakpoint, setBreakpoint] = useState(initialBreakpoint);
-
-  useDebounce(
-    () => {
-      if (breakpoint !== initialBreakpoint) {
-        onChange(breakpoint);
-      }
-    },
-    1000,
-    [breakpoint]
-  );
-
-  return (
-    <form
-      onKeyDown={(event) => {
-        event.stopPropagation();
-      }}
-      onChange={(event) => {
-        event.stopPropagation();
-        const data = new FormData(event.currentTarget);
-        const nextBreakpoint: Breakpoint = {
-          ...breakpoint,
-          // @todo if label changed, we want to generate a ref name
-          label: String(data.get("label")),
-          minWidth: Number(data.get("minWidth")),
-        };
-        setBreakpoint(nextBreakpoint);
-      }}
-      onFocus={onFocus}
-    >
-      <Flex gap="1" css={{ px: "$4" }}>
-        <TextField
-          variant="ghost"
-          defaultValue={breakpoint.label}
-          css={{ width: 100, flexGrow: 1 }}
-          name="label"
-        />
-        <TextField
-          variant="ghost"
-          defaultValue={breakpoint.minWidth}
-          type="number"
-          name="minWidth"
-          min={0}
-          css={{ textAlign: "right" }}
-        />
-      </Flex>
-    </form>
-  );
-};
-
-type BreakpointsEditorProps = {
-  breakpoints: Array<Breakpoint>;
-  onSelect: (breakpoint: Breakpoint) => void;
-  onChange: (breakpoint: Breakpoint) => void;
-};
-
-const BreakpointsEditor = ({
-  breakpoints,
-  onSelect,
-  onChange,
-}: BreakpointsEditorProps) => {
-  return (
-    <>
-      {breakpoints.map((breakpoint, index) => {
-        if (breakpoint.ref === "default") return null;
-        return (
-          <BreakpointEditorItem
-            key={index}
-            breakpoint={breakpoint}
-            onFocus={() => {
-              onSelect(breakpoint);
-            }}
-            onChange={(breakpoint) => {
-              onSelect(breakpoint);
-              onChange(breakpoint);
-            }}
-          />
-        );
-      })}
-    </>
-  );
-};
-
-const Hint = ({ breakpoint }: { breakpoint: Breakpoint }) => {
+const Hint = ({ breakpoint }: { breakpoint?: Breakpoint }) => {
   return (
     <Box css={{ px: "$3" }}>
       <Paragraph css={{ fontSize: "$1" }}>CSS Preview:</Paragraph>
       <Paragraph css={{ fontSize: "$1" }} variant="gray">
-        {`@media (min-width: ${breakpoint.minWidth}px)`}
+        {breakpoint === undefined
+          ? "No breakpoint selected"
+          : `@media (min-width: ${breakpoint.minWidth}px)`}
       </Paragraph>
     </Box>
   );
@@ -140,17 +47,21 @@ const menuItemCss = {
   gap: "$3",
   justifyContent: "start",
   flexGrow: 1,
+  minWidth: 150,
 };
 
 type BreakpointsProps = {
   publish: Publish;
+  project: Project;
 };
 
-export const Breakpoints = ({ publish }: BreakpointsProps) => {
-  const [breakpoints] = useBreakpoints();
+export const Breakpoints = ({ publish, project }: BreakpointsProps) => {
+  const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   const [isEditing, setIsEditing] = useState(false);
   const [breakpointHint, setBreakpointHint] = useState(selectedBreakpoint);
+
+  if (selectedBreakpoint === undefined) return null;
 
   return (
     <DropdownMenu>
@@ -164,14 +75,13 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent css={{ width: 200 }}>
+      <DropdownMenuContent>
         {isEditing ? (
           <BreakpointsEditor
             breakpoints={breakpoints}
             onSelect={setBreakpointHint}
-            onChange={(breakpoint) => {
-              publish({ type: "breakpointChange", payload: breakpoint });
-            }}
+            publish={publish}
+            project={project}
           />
         ) : (
           breakpoints.map((breakpoint, index) => {
@@ -206,6 +116,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
           onSelect={(event) => {
             event.preventDefault();
             setIsEditing(!isEditing);
+            setBreakpoints(sort(breakpoints));
           }}
         >
           {isEditing ? "Done" : "Edit"}

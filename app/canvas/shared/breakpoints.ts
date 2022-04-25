@@ -18,7 +18,7 @@ export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   }, [breakpoints, setCurrentBreakpoints]);
 };
 
-export const usePublishBreakpoints = () => {
+const usePublishBreakpoints = () => {
   const [breakpoints] = useBreakpoints();
   useEffect(() => {
     publish<"loadBreakpoints", Array<Breakpoint>>({
@@ -28,7 +28,7 @@ export const usePublishBreakpoints = () => {
   }, [breakpoints]);
 };
 
-export const useBreakpointChange = () => {
+const useBreakpointChange = () => {
   useSubscribe<"breakpointChange", Breakpoint>(
     "breakpointChange",
     (breakpoint) => {
@@ -39,8 +39,16 @@ export const useBreakpointChange = () => {
         if (foundBreakpoint) {
           foundBreakpoint.label = breakpoint.label;
           foundBreakpoint.minWidth = breakpoint.minWidth;
+          return;
         }
+        // Its a new breakpoint
+        breakpoints.push(breakpoint);
       });
     }
   );
+};
+
+export const useHandleBreakpoints = () => {
+  usePublishBreakpoints();
+  useBreakpointChange();
 };

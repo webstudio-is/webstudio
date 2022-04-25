@@ -11,10 +11,10 @@ export const setInstanceStyleMutable = (
   const instance = findInstanceById(rootInstance, id);
   if (instance === undefined) return false;
   let cssRule = instance.cssRules.find(
-    (cssRule) => cssRule.breakpoint === breakpoint.ref
+    (cssRule) => cssRule.breakpoint === breakpoint.id
   );
   if (cssRule === undefined) {
-    cssRule = { style: {}, breakpoint: breakpoint.ref };
+    cssRule = { style: {}, breakpoint: breakpoint.id };
     instance.cssRules.push(cssRule);
   }
 

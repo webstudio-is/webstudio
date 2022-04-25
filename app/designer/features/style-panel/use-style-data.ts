@@ -36,7 +36,7 @@ const getCurrentStyle = (
 ) => {
   if (breakpoint === undefined) return browserStyle;
   const cssRule = cssRules.find(
-    (cssRule) => cssRule.breakpoint === breakpoint.ref
+    (cssRule) => cssRule.breakpoint === breakpoint.id
   );
   if (cssRule === undefined) return browserStyle;
   return {
@@ -73,7 +73,13 @@ export const useStyleData = ({
     type: "update" | "preview",
     updates: StyleUpdates["updates"]
   ) => {
-    if (updates.length === 0 || selectedInstanceData === undefined) return;
+    if (
+      updates.length === 0 ||
+      selectedInstanceData === undefined ||
+      selectedBreakpoint == undefined
+    ) {
+      return;
+    }
     publish<string, StyleUpdates>({
       type:
         type === "update"
