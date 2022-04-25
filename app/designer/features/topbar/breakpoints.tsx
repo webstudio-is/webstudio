@@ -21,17 +21,17 @@ import {
   useSelectedBreakpoint,
 } from "../../shared/nano-values";
 
-type EditableBreakpointProps = {
+type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
   onChange: (breakpoint: Breakpoint) => void;
   onFocus: () => void;
 };
 
-const EditableBreakpoint = ({
+const BreakpointEditorItem = ({
   breakpoint: initialBreakpoint,
   onChange,
   onFocus,
-}: EditableBreakpointProps) => {
+}: BreakpointEditorItemProps) => {
   const [breakpoint, setBreakpoint] = useState(initialBreakpoint);
 
   useDebounce(
@@ -82,6 +82,39 @@ const EditableBreakpoint = ({
   );
 };
 
+type BreakpointsEditorProps = {
+  breakpoints: Array<Breakpoint>;
+  onSelect: (breakpoint: Breakpoint) => void;
+  onChange: (breakpoint: Breakpoint) => void;
+};
+
+const BreakpointsEditor = ({
+  breakpoints,
+  onSelect,
+  onChange,
+}: BreakpointsEditorProps) => {
+  return (
+    <>
+      {breakpoints.map((breakpoint, index) => {
+        if (breakpoint.ref === "default") return null;
+        return (
+          <BreakpointEditorItem
+            key={index}
+            breakpoint={breakpoint}
+            onFocus={() => {
+              onSelect(breakpoint);
+            }}
+            onChange={(breakpoint) => {
+              onSelect(breakpoint);
+              onChange(breakpoint);
+            }}
+          />
+        );
+      })}
+    </>
+  );
+};
+
 const Hint = ({ breakpoint }: { breakpoint: Breakpoint }) => {
   return (
     <Box css={{ px: "$3" }}>
@@ -92,6 +125,15 @@ const Hint = ({ breakpoint }: { breakpoint: Breakpoint }) => {
     </Box>
   );
 };
+
+const BreakpointSelectorItem = ({ breakpoint }: { breakpoint: Breakpoint }) => (
+  <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
+    <Text size="1">{breakpoint.label}</Text>
+    <Text size="1" variant="gray">
+      {breakpoint.minWidth}
+    </Text>
+  </Flex>
+);
 
 const menuItemCss = {
   display: "flex",
@@ -123,56 +165,39 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent css={{ width: 200 }}>
-        {breakpoints.map((breakpoint, index) => {
-          if (isEditing) {
-            if (breakpoint.ref === "default") return null;
+        {isEditing ? (
+          <BreakpointsEditor
+            breakpoints={breakpoints}
+            onSelect={setBreakpointHint}
+            onChange={(breakpoint) => {
+              publish({ type: "breakpointChange", payload: breakpoint });
+            }}
+          />
+        ) : (
+          breakpoints.map((breakpoint, index) => {
             return (
-              <EditableBreakpoint
+              <DropdownMenuItem
                 key={index}
-                breakpoint={breakpoint}
-                onFocus={() => {
+                css={menuItemCss}
+                onMouseOver={() => {
                   setBreakpointHint(breakpoint);
                 }}
-                onChange={(breakpoint) => {
-                  setBreakpointHint(breakpoint);
-                  publish({ type: "breakpointChange", payload: breakpoint });
+                onMouseOut={() => {
+                  setBreakpointHint(selectedBreakpoint);
                 }}
-              />
-            );
-          }
-
-          return (
-            <DropdownMenuItem
-              key={index}
-              css={menuItemCss}
-              onMouseOver={() => {
-                setBreakpointHint(breakpoint);
-              }}
-              onMouseOut={() => {
-                setBreakpointHint(selectedBreakpoint);
-              }}
-              onSelect={() => {
-                publish({
-                  type: "selectBreakpoint",
-                  payload: breakpoint,
-                });
-                setSelectedBreakpoint(breakpoint);
-              }}
-            >
-              <Flex
-                align="center"
-                justify="between"
-                gap="3"
-                css={{ flexGrow: 1 }}
+                onSelect={() => {
+                  publish({
+                    type: "selectBreakpoint",
+                    payload: breakpoint,
+                  });
+                  setSelectedBreakpoint(breakpoint);
+                }}
               >
-                <Text size="1">{breakpoint.label}</Text>
-                <Text size="1" variant="gray">
-                  {breakpoint.minWidth}
-                </Text>
-              </Flex>
-            </DropdownMenuItem>
-          );
-        })}
+                <BreakpointSelectorItem breakpoint={breakpoint} />
+              </DropdownMenuItem>
+            );
+          })
+        )}
         <DropdownMenuSeparator />
         <Hint breakpoint={breakpointHint} />
         <DropdownMenuSeparator />
