@@ -6,11 +6,9 @@ import {
   type OnChangeChildren,
   type Data,
   type Tree,
-  type Breakpoint,
   useAllUserProps,
   WrapperComponent,
   globalStyles,
-  setBreakpoints,
   Project,
 } from "@webstudio-is/sdk";
 import { useSubscribe } from "./shared/pubsub";
@@ -41,6 +39,7 @@ import { useManageProps } from "./shared/props";
 import {
   useBreakpointChange,
   usePublishBreakpoints,
+  useInitializeBreakpoints,
 } from "./shared/breakpoints";
 
 const useElementsTree = () => {
@@ -72,12 +71,6 @@ const useSubscribePreviewMode = () => {
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   useSubscribe<"previewMode", boolean>("previewMode", setIsPreviewMode);
   return isPreviewMode;
-};
-
-const useUpdateBreakpoints = (breakpoints: Array<Breakpoint>) => {
-  const [, setCurrentBreakpoints] = useBreakpoints();
-  setBreakpoints(breakpoints);
-  setCurrentBreakpoints(breakpoints);
 };
 
 const PreviewMode = () => {
@@ -123,7 +116,7 @@ type CanvasProps = {
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
-  useUpdateBreakpoints(data.breakpoints);
+  useInitializeBreakpoints(data.breakpoints);
   globalStyles();
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);

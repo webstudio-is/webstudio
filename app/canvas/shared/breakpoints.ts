@@ -1,10 +1,22 @@
 import { useEffect } from "react";
 import store from "immerhin";
-import { type Breakpoint, useSubscribe } from "@webstudio-is/sdk";
+import {
+  type Breakpoint,
+  useSubscribe,
+  setBreakpoints,
+} from "@webstudio-is/sdk";
 import { useBreakpoints, breakpointsContainer } from "./nano-values";
 import { publish } from "./pubsub";
 
 store.register("breakpoints", breakpointsContainer);
+
+export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
+  const [, setCurrentBreakpoints] = useBreakpoints();
+  useEffect(() => {
+    setBreakpoints(breakpoints);
+    setCurrentBreakpoints(breakpoints);
+  }, [breakpoints, setCurrentBreakpoints]);
+};
 
 export const usePublishBreakpoints = () => {
   const [breakpoints] = useBreakpoints();
