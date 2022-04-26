@@ -1,14 +1,14 @@
 import { type Breakpoint } from "@webstudio-is/sdk";
 import { Paragraph, Flex, Text } from "~/shared/design-system";
 
-type HintProps = {
+type PreviewProps = {
   breakpoint?: Breakpoint;
 };
 
-export const Hint = ({ breakpoint }: HintProps) => {
+export const Preview = ({ breakpoint }: PreviewProps) => {
   return (
-    <Flex css={{ px: "$5" }} gap="1" direction="column">
-      <Text size="1">CSS Preview:</Text>
+    <Flex css={{ px: "$5", py: "$1" }} gap="1" direction="column">
+      <Text size="1">CSS Preview</Text>
       <Paragraph css={{ fontSize: "$1" }} variant="gray">
         {breakpoint === undefined
           ? "No breakpoint selected"

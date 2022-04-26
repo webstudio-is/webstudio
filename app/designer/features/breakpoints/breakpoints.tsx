@@ -16,9 +16,11 @@ import {
   useSelectedBreakpoint,
 } from "../../shared/nano-values";
 import { BreakpointsEditor } from "./breakpoints-editor";
-import { Hint } from "./hint";
-import { Scale } from "./scale";
+import { Preview } from "./preview";
+import { ScaleSetting } from "./scale-setting";
 import { TriggerButton } from "./trigger-button";
+import { WidthSetting } from "./width-setting";
+import { useUpdateCanvasWidth } from "./use-update-canvas-width";
 
 const BreakpointSelectorItem = ({ breakpoint }: { breakpoint: Breakpoint }) => (
   <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
@@ -45,7 +47,9 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
   const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   const [isEditing, setIsEditing] = useState(false);
-  const [breakpointHint, setBreakpointHint] = useState(selectedBreakpoint);
+  const [breakpointPreview, setBreakpointPreview] =
+    useState(selectedBreakpoint);
+  useUpdateCanvasWidth();
 
   if (selectedBreakpoint === undefined) return null;
 
@@ -63,11 +67,11 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
               <DropdownMenuItem
                 key={breakpoint.id}
                 css={menuItemCss}
-                onMouseOver={() => {
-                  setBreakpointHint(breakpoint);
+                onMouseEnter={() => {
+                  setBreakpointPreview(breakpoint);
                 }}
-                onMouseOut={() => {
-                  setBreakpointHint(selectedBreakpoint);
+                onMouseLeave={() => {
+                  setBreakpointPreview(selectedBreakpoint);
                 }}
                 onSelect={() => {
                   publish({
@@ -85,9 +89,12 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         {isEditing === false && (
           <>
             <DropdownMenuSeparator />
-            <Scale />
+            <Flex direction="column" gap="2">
+              <ScaleSetting />
+              <WidthSetting />
+            </Flex>
             <DropdownMenuSeparator />
-            <Hint breakpoint={breakpointHint} />
+            <Preview breakpoint={breakpointPreview} />
           </>
         )}
         <DropdownMenuSeparator />

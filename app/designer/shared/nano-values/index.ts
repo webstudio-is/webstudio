@@ -34,5 +34,8 @@ export const useBreakpoints = () => useValue(breakpointsContainer);
 const scaleContainer = createValueContainer<number>(100);
 export const useScale = () => useValue(scaleContainer);
 
+const canvasWidthContainer = createValueContainer<number | void>();
+export const useCanvasWidth = () => useValue(canvasWidthContainer);
+
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);

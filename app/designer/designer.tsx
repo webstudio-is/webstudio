@@ -17,6 +17,7 @@ import {
   useSelectedBreakpoint,
   useSelectedInstanceData,
   useSyncStatus,
+  useCanvasWidth,
 } from "./shared/nano-values";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
@@ -24,7 +25,6 @@ import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
 import { usePublishShortcuts } from "./shared/shortcuts/use-publish-shortcuts";
 import { type SyncStatus } from "~/shared/sync";
-import { useIframeWidth } from "./features/breakpoints/use-iframe-width";
 
 export const links = () => {
   return [
@@ -130,7 +130,7 @@ const Workspace = ({ children }: { children: JSX.Element }) => {
     <Box
       css={{
         flexGrow: 1,
-        background: "$gray6",
+        background: "$gray8",
         overflow: "hidden",
       }}
     >
@@ -205,7 +205,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const [isPreviewMode] = useIsPreviewMode();
   const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
-  const iframeWidth = useIframeWidth();
+  const [canvasWidth] = useCanvasWidth();
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -230,7 +230,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
               src={`${config.canvasPath}/${project.id}`}
               pointerEvents={isDragging ? "none" : "all"}
               title={project.title}
-              css={{ height: "100%", width: iframeWidth }}
+              css={{ height: "100%", width: canvasWidth || "100%" }}
             />
           </Workspace>
           <Breadcrumbs publish={publish} />
