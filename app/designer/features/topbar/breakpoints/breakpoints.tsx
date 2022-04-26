@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type Project, type Breakpoint, sort } from "@webstudio-is/sdk";
+import { type Breakpoint, sort } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,10 +52,9 @@ const menuItemCss = {
 
 type BreakpointsProps = {
   publish: Publish;
-  project: Project;
 };
 
-export const Breakpoints = ({ publish, project }: BreakpointsProps) => {
+export const Breakpoints = ({ publish }: BreakpointsProps) => {
   const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   const [isEditing, setIsEditing] = useState(false);
@@ -81,13 +80,12 @@ export const Breakpoints = ({ publish, project }: BreakpointsProps) => {
             breakpoints={breakpoints}
             onSelect={setBreakpointHint}
             publish={publish}
-            project={project}
           />
         ) : (
-          breakpoints.map((breakpoint, index) => {
+          sort(breakpoints).map((breakpoint) => {
             return (
               <DropdownMenuItem
-                key={index}
+                key={breakpoint.id}
                 css={menuItemCss}
                 onMouseOver={() => {
                   setBreakpointHint(breakpoint);
@@ -116,7 +114,7 @@ export const Breakpoints = ({ publish, project }: BreakpointsProps) => {
           onSelect={(event) => {
             event.preventDefault();
             setIsEditing(!isEditing);
-            setBreakpoints(sort(breakpoints));
+            setBreakpoints(breakpoints);
           }}
         >
           {isEditing ? "Done" : "Edit"}

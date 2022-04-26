@@ -48,7 +48,22 @@ const useBreakpointChange = () => {
   );
 };
 
+const useBreakpointDelete = () => {
+  useSubscribe<"breakpointDelete", Breakpoint>(
+    "breakpointDelete",
+    (breakpoint) => {
+      store.createTransaction([breakpointsContainer], (breakpoints) => {
+        const index = breakpoints.findIndex(({ id }) => id == breakpoint.id);
+        if (index !== -1) {
+          breakpoints.splice(index, 1);
+        }
+      });
+    }
+  );
+};
+
 export const useHandleBreakpoints = () => {
   usePublishBreakpoints();
   useBreakpointChange();
+  useBreakpointDelete();
 };

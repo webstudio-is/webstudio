@@ -1,30 +1,24 @@
-import {
-  initialBreakpoints,
-  sort,
-  type Project,
-  type Tree,
-} from "@webstudio-is/sdk";
+import { initialBreakpoints, type Project, type Tree } from "@webstudio-is/sdk";
+import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 
-export const create = async (projectId: Project["id"]) => {
-  const data = initialBreakpoints.map((breakpoint) => ({
-    ...breakpoint,
-    projectId,
-  }));
-  // https://github.com/prisma/prisma/issues/8131
-  // @todo run this in parallel
-  const breakpoints = await prisma.$transaction(
-    data.map((breakpoint) => prisma.breakpoint.create({ data: breakpoint }))
-  );
-  return breakpoints;
-};
-
 export const load = async (projectId: Project["id"]) => {
-  const breakpoints = await prisma.breakpoint.findMany({
+  return await prisma.breakpoints.findUnique({
     where: { projectId },
   });
-  return sort(breakpoints);
+};
+
+export const create = async (projectId: Project["id"]) => {
+  const data = {
+    projectId,
+    values: initialBreakpoints.map((breakpoint) => ({
+      ...breakpoint,
+      id: ObjectId().toString(),
+    })),
+  };
+  await prisma.breakpoints.create({ data });
+  return data;
 };
 
 export const patch = async (
@@ -32,16 +26,10 @@ export const patch = async (
   patches: Array<Patch>
 ) => {
   const breakpoints = await load(projectId);
-  const nextBreakpoints = applyPatches(breakpoints, patches);
-
-  await Promise.all(
-    Object.values(nextBreakpoints).map(async (breakpoint) => {
-      const { id, ...rest } = breakpoint;
-      await prisma.breakpoint.upsert({
-        where: { id },
-        create: breakpoint,
-        update: rest,
-      });
-    })
-  );
+  if (breakpoints === null) return;
+  const nextBreakpoints = applyPatches(breakpoints.values, patches);
+  await prisma.breakpoints.update({
+    where: { projectId: projectId },
+    data: { values: nextBreakpoints },
+  });
 };

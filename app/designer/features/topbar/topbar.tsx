@@ -30,7 +30,7 @@ export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
       }}
     >
       <Menu config={config} publish={publish} />
-      <Breakpoints publish={publish} project={project} />
+      <Breakpoints publish={publish} />
       <Flex gap="1" align="center">
         <SyncStatus />
         <Preview publish={publish} />

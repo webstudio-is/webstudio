@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import type { Breakpoint, Project } from "@webstudio-is/sdk";
+import { Breakpoint, Project, sort } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
@@ -50,15 +50,15 @@ const useSubscribeSyncStatus = () => {
 };
 
 const useSubscribeBreakpoints = () => {
-  const [breakpoints, setValue] = useBreakpoints();
+  const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   useSubscribe<"loadBreakpoints", Array<Breakpoint>>(
     "loadBreakpoints",
-    setValue
+    setBreakpoints
   );
   useEffect(() => {
-    if (selectedBreakpoint === undefined) {
-      setSelectedBreakpoint(breakpoints[breakpoints.length - 1]);
+    if (selectedBreakpoint === undefined && breakpoints.length !== 0) {
+      setSelectedBreakpoint(sort(breakpoints)[breakpoints.length - 1]);
     }
   }, [breakpoints, selectedBreakpoint, setSelectedBreakpoint]);
 };

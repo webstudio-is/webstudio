@@ -1,13 +1,6 @@
-import {
-  type Instance,
-  type UserPropsUpdates,
-  type Project,
-  type InstanceProps,
-  type Tree,
-  type AllUserProps,
-} from "@webstudio-is/sdk";
+import { type Project, type Tree, type AllUserProps } from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma, PrismaClientKnownRequestError } from "./prisma.server";
+import { prisma } from "./prisma.server";
 
 export const loadByProject = async (
   project: Project | null,
@@ -30,66 +23,6 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
   return await prisma.instanceProps.findMany({
     where: { treeId },
   });
-};
-
-const loadById = async (id: InstanceProps["id"]) => {
-  return await prisma.instanceProps.findUnique({
-    where: { id },
-  });
-};
-
-export const update = async ({
-  propsId,
-  instanceId,
-  treeId,
-  updates,
-}: {
-  propsId: InstanceProps["id"];
-  instanceId: Instance["id"];
-  treeId: Tree["id"];
-  updates: UserPropsUpdates["updates"];
-}) => {
-  // @todo update in one command, remove queueing logic on the ui
-  // as of prisma client v3.10.0 updating composite types like in this doc didn't work
-  // https://www.prisma.io/docs/concepts/components/prisma-client/composite-types
-  const props = (await loadById(propsId))?.props ?? [];
-
-  for (const update of updates) {
-    const index = props.findIndex((prop) => update.id == prop.id);
-    if (index === -1) props.push(update);
-    else props.splice(index, 1, update);
-  }
-
-  await prisma.instanceProps.upsert({
-    where: { id: propsId },
-    create: { id: propsId, instanceId, treeId, props },
-    update: {
-      props,
-    },
-  });
-};
-
-export const deleteProps = async ({
-  instanceId,
-  treeId,
-}: {
-  instanceId: InstanceProps["id"];
-  treeId: Tree["id"];
-}) => {
-  try {
-    await prisma.instanceProps.deleteMany({ where: { instanceId, treeId } });
-  } catch (error: unknown) {
-    if (
-      error instanceof PrismaClientKnownRequestError &&
-      // Record to delete does not exist.
-      // @todo should this be treated?
-      error.code === "P2025"
-    ) {
-      return;
-    }
-
-    throw error;
-  }
 };
 
 export const clone = async ({
@@ -131,15 +64,14 @@ export const patch = async (
   );
 
   await Promise.all(
-    Object.values(nextProps).map(
-      async ({ id, instanceId, treeId, props }) =>
-        await prisma.instanceProps.upsert({
-          where: { id: id },
-          create: { id: id, instanceId, treeId, props },
-          update: {
-            props,
-          },
-        })
+    Object.values(nextProps).map(({ id, instanceId, treeId, props }) =>
+      prisma.instanceProps.upsert({
+        where: { id: id },
+        create: { id: id, instanceId, treeId, props },
+        update: {
+          props,
+        },
+      })
     )
   );
 };

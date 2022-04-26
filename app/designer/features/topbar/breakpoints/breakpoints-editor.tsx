@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useDebounce from "react-use/lib/useDebounce";
-import { type Project, type Breakpoint } from "@webstudio-is/sdk";
+import { type Breakpoint, sort } from "@webstudio-is/sdk";
 import { Button, TextField, Flex, Text } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
 import { type Publish } from "~/designer/shared/canvas-iframe";
@@ -27,7 +27,7 @@ const BreakpointEditorItem = ({
         onChange(breakpoint);
       }
     },
-    1000,
+    500,
     [breakpoint]
   );
 
@@ -38,7 +38,11 @@ const BreakpointEditorItem = ({
       }}
       onChange={(event) => {
         event.stopPropagation();
-        const data = new FormData(event.currentTarget);
+        const form = event.currentTarget;
+        if (form.reportValidity() === false) {
+          return;
+        }
+        const data = new FormData(form);
         const nextBreakpoint: Breakpoint = {
           ...breakpoint,
           // @todo if label changed, we want to generate a ref name
@@ -51,22 +55,26 @@ const BreakpointEditorItem = ({
     >
       <Flex gap="1" css={{ paddingLeft: "$4", paddingRight: "$3" }}>
         <TextField
+          css={{ width: 100, flexGrow: 1 }}
+          type="text"
           variant="ghost"
           defaultValue={breakpoint.label}
           placeholder="Breakpoint name"
-          css={{ width: 100, flexGrow: 1 }}
           name="label"
           minLength={2}
+          required
         />
         <TextField
+          css={{ textAlign: "right", width: 50 }}
           variant="ghost"
           defaultValue={breakpoint.minWidth}
           type="number"
           name="minWidth"
           min={0}
-          css={{ textAlign: "right", width: 50 }}
+          required
         />
         <Button
+          type="button"
           ghost
           onClick={() => {
             onDelete(breakpoint);
@@ -80,7 +88,6 @@ const BreakpointEditorItem = ({
 };
 
 type BreakpointsEditorProps = {
-  project: Project;
   breakpoints: Array<Breakpoint>;
   onSelect: (breakpoint: Breakpoint) => void;
   publish: Publish;
@@ -88,11 +95,15 @@ type BreakpointsEditorProps = {
 
 export const BreakpointsEditor = ({
   breakpoints: initialBreakpoints,
-  project,
   onSelect,
   publish,
 }: BreakpointsEditorProps) => {
-  const [breakpoints, setBreakpoints] = useState(initialBreakpoints);
+  const [breakpoints, setBreakpoints] = useState(sort(initialBreakpoints));
+
+  useEffect(() => {
+    setBreakpoints(initialBreakpoints);
+  }, [initialBreakpoints]);
+
   return (
     <Flex gap="2" direction="column">
       <Flex
@@ -109,7 +120,6 @@ export const BreakpointsEditor = ({
               ...breakpoints,
               {
                 id: ObjectId().toString(),
-                projectId: project.id,
                 label: "",
                 minWidth: 0,
               },
@@ -119,10 +129,10 @@ export const BreakpointsEditor = ({
           <PlusIcon />
         </Button>
       </Flex>
-      {breakpoints.map((breakpoint, index) => {
+      {breakpoints.map((breakpoint) => {
         return (
           <BreakpointEditorItem
-            key={index}
+            key={breakpoint.id}
             breakpoint={breakpoint}
             onFocus={() => {
               onSelect(breakpoint);
@@ -132,7 +142,10 @@ export const BreakpointsEditor = ({
               publish({ type: "breakpointChange", payload: breakpoint });
             }}
             onDelete={(breakpoint) => {
-              onSelect(breakpoints[0]);
+              const nextBreakpoints = [...breakpoints];
+              const index = breakpoints.indexOf(breakpoint);
+              nextBreakpoints.splice(index, 1);
+              setBreakpoints(nextBreakpoints);
               publish({ type: "breakpointDelete", payload: breakpoint });
             }}
           />

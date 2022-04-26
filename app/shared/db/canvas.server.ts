@@ -17,11 +17,9 @@ const loadData = async (projectId: Project["id"]) => {
   const [tree, props, breakpoints] = await Promise.all([
     db.tree.loadByProject(project, "development"),
     db.props.loadByProject(project, "development"),
-    existingBreakpoints.length > 1
-      ? existingBreakpoints
-      : db.breakpoints.create(projectId),
+    existingBreakpoints || db.breakpoints.create(projectId),
   ]);
-  return { tree, props, project, breakpoints };
+  return { tree, props, project, breakpoints: breakpoints?.values || [] };
 };
 
 export const loadCanvasData = async ({

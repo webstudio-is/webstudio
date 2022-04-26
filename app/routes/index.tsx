@@ -35,7 +35,7 @@ export const loader: LoaderFunction = async ({
         db.props.loadByTreeId(project.prodTreeId),
         db.breakpoints.load(project.id),
       ]);
-      return { tree, props, breakpoints };
+      return { tree, props, breakpoints: breakpoints?.values ?? [] };
     } catch (error) {
       if (error instanceof Error) {
         return { errors: error.message };
