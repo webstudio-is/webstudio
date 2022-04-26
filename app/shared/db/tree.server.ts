@@ -7,6 +7,10 @@ const rootConfig = {
   // @todo this should be part of a root primitive in primitives
   component: "Box",
   style: {
+    backgroundColor: {
+      type: "keyword",
+      value: "white",
+    },
     fontFamily: {
       type: "keyword",
       value: "Arial",

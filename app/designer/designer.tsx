@@ -13,6 +13,7 @@ import {
   useBreakpoints,
   useIsPreviewMode,
   useRootInstance,
+  useScale,
   useSelectedBreakpoint,
   useSelectedInstanceData,
   useSyncStatus,
@@ -23,6 +24,7 @@ import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
 import { usePublishShortcuts } from "./shared/shortcuts/use-publish-shortcuts";
 import { type SyncStatus } from "~/shared/sync";
+import { useIframeWidth } from "./features/breakpoints/use-iframe-width";
 
 export const links = () => {
   return [
@@ -114,11 +116,43 @@ const Main = ({ children }: { children: Array<JSX.Element> }) => (
     direction="column"
     css={{
       gridArea: "main",
+      overflow: "hidden",
     }}
   >
     {children}
   </Flex>
 );
+
+const Workspace = ({ children }: { children: JSX.Element }) => {
+  const [scale] = useScale();
+
+  return (
+    <Box
+      css={{
+        flexGrow: 1,
+        background: "$gray6",
+        overflow: "hidden",
+      }}
+    >
+      <Flex
+        direction="column"
+        align="center"
+        css={{
+          overscrollBehavior: "contain",
+          transformStyle: "preserve-3d",
+          transition: "transform 50ms",
+          height: "100%",
+          width: "100%",
+        }}
+        style={{
+          transform: `scale(${scale / 100})`,
+        }}
+      >
+        {children}
+      </Flex>
+    </Box>
+  );
+};
 
 type ChromeWrapperProps = {
   children: Array<JSX.Element>;
@@ -171,6 +205,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const [isPreviewMode] = useIsPreviewMode();
   const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
+  const iframeWidth = useIframeWidth();
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -189,13 +224,15 @@ export const Designer = ({ config, project }: DesignerProps) => {
           publish={publish}
         />
         <Main>
-          <CanvasIframe
-            ref={iframeRef}
-            src={`${config.canvasPath}/${project.id}`}
-            pointerEvents={isDragging ? "none" : "all"}
-            title={project.title}
-            css={{ height: "100%" }}
-          />
+          <Workspace>
+            <CanvasIframe
+              ref={iframeRef}
+              src={`${config.canvasPath}/${project.id}`}
+              pointerEvents={isDragging ? "none" : "all"}
+              title={project.title}
+              css={{ height: "100%", width: iframeWidth }}
+            />
+          </Workspace>
           <Breadcrumbs publish={publish} />
         </Main>
         <SidePanel

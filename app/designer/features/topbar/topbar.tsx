@@ -6,7 +6,7 @@ import { Share } from "./share";
 import { Publish } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
-import { Breakpoints } from "./breakpoints";
+import { Breakpoints } from "../breakpoints";
 import { type Publish as PublishOnCanvas } from "../../shared/canvas-iframe";
 
 type TopbarProps = {

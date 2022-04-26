@@ -10,12 +10,10 @@ type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
   onChange: (breakpoint: Breakpoint) => void;
   onDelete: (breakpoint: Breakpoint) => void;
-  onFocus: () => void;
 };
 
 const BreakpointEditorItem = ({
   breakpoint: initialBreakpoint,
-  onFocus,
   onChange,
   onDelete,
 }: BreakpointEditorItemProps) => {
@@ -45,13 +43,11 @@ const BreakpointEditorItem = ({
         const data = new FormData(form);
         const nextBreakpoint: Breakpoint = {
           ...breakpoint,
-          // @todo if label changed, we want to generate a ref name
           label: String(data.get("label")),
           minWidth: Number(data.get("minWidth")),
         };
         setBreakpoint(nextBreakpoint);
       }}
-      onFocus={onFocus}
     >
       <Flex gap="1" css={{ paddingLeft: "$4", paddingRight: "$3" }}>
         <TextField
@@ -89,13 +85,11 @@ const BreakpointEditorItem = ({
 
 type BreakpointsEditorProps = {
   breakpoints: Array<Breakpoint>;
-  onSelect: (breakpoint: Breakpoint) => void;
   publish: Publish;
 };
 
 export const BreakpointsEditor = ({
   breakpoints: initialBreakpoints,
-  onSelect,
   publish,
 }: BreakpointsEditorProps) => {
   const [breakpoints, setBreakpoints] = useState(sort(initialBreakpoints));
@@ -134,11 +128,7 @@ export const BreakpointsEditor = ({
           <BreakpointEditorItem
             key={breakpoint.id}
             breakpoint={breakpoint}
-            onFocus={() => {
-              onSelect(breakpoint);
-            }}
             onChange={(breakpoint) => {
-              onSelect(breakpoint);
               publish({ type: "breakpointChange", payload: breakpoint });
             }}
             onDelete={(breakpoint) => {

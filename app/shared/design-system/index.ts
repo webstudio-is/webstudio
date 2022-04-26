@@ -60,3 +60,4 @@ export { Paragraph } from "./components/paragraph";
 export { Link } from "./components/link";
 export { Switch } from "./components/switch";
 export { Panel } from "./components/panel";
+export * from "./components/slider";

@@ -22,7 +22,7 @@ const isPublishDialogOpenContainer = createValueContainer<boolean>(false);
 export const useIsPublishDialogOpen = () =>
   useValue(isPublishDialogOpenContainer);
 
-export const selectedBreakpointContainer = createValueContainer<
+const selectedBreakpointContainer = createValueContainer<
   Breakpoint | undefined
 >();
 export const useSelectedBreakpoint = () =>
@@ -30,6 +30,9 @@ export const useSelectedBreakpoint = () =>
 
 export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);
+
+const scaleContainer = createValueContainer<number>(100);
+export const useScale = () => useValue(scaleContainer);
 
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
