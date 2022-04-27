@@ -131,14 +131,14 @@ const Workspace = ({ children }: { children: JSX.Element }) => {
       css={{
         flexGrow: 1,
         background: "$gray8",
-        overflow: "hidden",
+        overflow: "auto",
+        scrollbarGutter: "stable",
       }}
     >
       <Flex
         direction="column"
         align="center"
         css={{
-          overscrollBehavior: "contain",
           transformStyle: "preserve-3d",
           transition: "transform 50ms",
           height: "100%",
