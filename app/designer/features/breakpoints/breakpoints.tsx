@@ -15,6 +15,7 @@ import { type Publish } from "../../shared/canvas-iframe";
 import {
   useBreakpoints,
   useSelectedBreakpoint,
+  useCanvasWidth,
 } from "../../shared/nano-values";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
@@ -23,15 +24,20 @@ import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { useUpdateCanvasWidth } from "./use-update-canvas-width";
 
-const BreakpointSelectorItem = ({ breakpoint }: { breakpoint: Breakpoint }) => (
-  <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
-    <Text size="1">{breakpoint.label}</Text>
-    <Text size="1" variant="gray">
-      {breakpoint.minWidth}
-    </Text>
-  </Flex>
-);
-
+const BreakpointSelectorItem = ({ breakpoint }: { breakpoint: Breakpoint }) => {
+  const [width = 0] = useCanvasWidth();
+  return (
+    <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
+      <Text size="1">{breakpoint.label}</Text>
+      <Text
+        size="1"
+        variant={width >= breakpoint.minWidth ? "contrast" : "gray"}
+      >
+        {breakpoint.minWidth}
+      </Text>
+    </Flex>
+  );
+};
 const menuItemCss = {
   display: "flex",
   gap: "$3",
@@ -108,7 +114,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
             setBreakpoints(breakpoints);
           }}
         >
-          {isEditing ? "Done" : "Edit"}
+          {isEditing ? "Done" : "Edit Breakpoints"}
         </DropdownMenuItem>
         <DropdownMenuArrow offset={10} />
       </DropdownMenuContent>
