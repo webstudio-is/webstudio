@@ -8,6 +8,7 @@ export const ScaleSetting = () => {
       <Text size="1">Scale</Text>
       <Flex gap="3" align="center">
         <Slider
+          min={10}
           defaultValue={[value]}
           onValueChange={([value]) => {
             setValue(value);

@@ -11,7 +11,7 @@ export const useUpdateCanvasWidth = () => {
 
   useEffect(() => {
     if (selectedBreakpoint === undefined || selectedBreakpoint.minWidth === 0) {
-      return setCanvasWidth();
+      return;
     }
 
     return setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));

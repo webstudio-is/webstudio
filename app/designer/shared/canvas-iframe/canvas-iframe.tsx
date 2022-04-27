@@ -17,10 +17,8 @@ const iframeStyle = css({
 
 type CanvasIframeProps = {
   pointerEvents: "all" | "none";
-  src: string;
-  title: string;
   css: CSS;
-};
+} & JSX.IntrinsicElements["iframe"];
 
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   ({ pointerEvents = "all", css, ...rest }, ref) => {

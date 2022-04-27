@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { Breakpoint, Project, sort } from "@webstudio-is/sdk";
+import { type Project } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
@@ -10,11 +10,9 @@ import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { CanvasIframe, useSubscribe, usePublish } from "./shared/canvas-iframe";
 import {
-  useBreakpoints,
   useIsPreviewMode,
   useRootInstance,
   useScale,
-  useSelectedBreakpoint,
   useSelectedInstanceData,
   useSyncStatus,
   useCanvasWidth,
@@ -23,6 +21,11 @@ import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
+import {
+  minWidth,
+  useInitialCanvasWidth,
+  useSubscribeBreakpoints,
+} from "./features/breakpoints";
 import { usePublishShortcuts } from "./shared/shortcuts/use-publish-shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 
@@ -49,20 +52,6 @@ const useSubscribeSelectedInstanceData = () => {
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
   useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
-};
-
-const useSubscribeBreakpoints = () => {
-  const [breakpoints, setBreakpoints] = useBreakpoints();
-  const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
-  useSubscribe<"loadBreakpoints", Array<Breakpoint>>(
-    "loadBreakpoints",
-    setBreakpoints
-  );
-  useEffect(() => {
-    if (selectedBreakpoint === undefined && breakpoints.length !== 0) {
-      setSelectedBreakpoint(sort(breakpoints)[breakpoints.length - 1]);
-    }
-  }, [breakpoints, selectedBreakpoint, setSelectedBreakpoint]);
 };
 
 const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {
@@ -201,21 +190,26 @@ export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
   useSubscribeBreakpoints();
-  const [publish, iframeRef] = usePublish();
+  const [publish, iframeRef1] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
   const [canvasWidth] = useCanvasWidth();
+  const iframeRef2Callback = useInitialCanvasWidth();
+
+  const iframeRefCallback = useCallback(
+    (ref) => {
+      iframeRef1.current = ref;
+      iframeRef2Callback(ref);
+    },
+    [iframeRef1, iframeRef2Callback]
+  );
 
   return (
     <DndProvider backend={HTML5Backend}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft
-            iframeRef={iframeRef}
-            onDragChange={setIsDragging}
-            publish={publish}
-          />
+          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
         </SidePanel>
         <Topbar
           css={{ gridArea: "header" }}
@@ -226,11 +220,15 @@ export const Designer = ({ config, project }: DesignerProps) => {
         <Main>
           <Workspace>
             <CanvasIframe
-              ref={iframeRef}
+              ref={iframeRefCallback}
               src={`${config.canvasPath}/${project.id}`}
               pointerEvents={isDragging ? "none" : "all"}
               title={project.title}
-              css={{ height: "100%", width: canvasWidth || "100%" }}
+              css={{
+                height: "100%",
+                minWidth,
+              }}
+              style={{ width: canvasWidth || "100%" }}
             />
           </Workspace>
           <Breadcrumbs publish={publish} />

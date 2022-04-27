@@ -1,28 +1,32 @@
 import { forwardRef, type ComponentProps, type ElementRef } from "react";
-import { type Breakpoint } from "@webstudio-is/sdk";
-import { useScale } from "~/designer/shared/nano-values";
+import {
+  useCanvasWidth,
+  useScale,
+  useSelectedBreakpoint,
+} from "~/designer/shared/nano-values";
 import { Button, Text } from "~/shared/design-system";
 
-const buildStatus = (breakpoint: Breakpoint, scale: number) => {
+const buildStatus = (scale: number, canvasWidth?: number) => {
   const status = [];
-  if (breakpoint.minWidth > 0) status.push(`${breakpoint.minWidth}px`);
-  if (scale < 100) {
-    if (status.length !== 0) status.push("/");
-    status.push(`${scale}%`);
+  if (canvasWidth !== undefined && canvasWidth > 0) {
+    status.push(`${canvasWidth}px`);
   }
+  if (status.length !== 0) status.push("/");
+  status.push(`${scale}%`);
   return status.join(" ");
 };
 
-type TriggerButtonProps = {
-  breakpoint: Breakpoint;
-} & ComponentProps<typeof Button>;
+type TriggerButtonProps = ComponentProps<typeof Button>;
 
 export const TriggerButton = forwardRef<
   ElementRef<typeof Button>,
   TriggerButtonProps
->(({ breakpoint, ...props }, ref) => {
+>((props, ref) => {
   const [scale] = useScale();
-  const status = buildStatus(breakpoint, scale);
+  const [breakpoint] = useSelectedBreakpoint();
+  const [canvasWidth] = useCanvasWidth();
+  if (breakpoint === undefined) return null;
+  const status = buildStatus(scale, canvasWidth);
   return (
     <Button
       {...props}

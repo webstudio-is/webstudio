@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuArrow,
   DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
   Text,
   Flex,
 } from "~/shared/design-system";
@@ -56,7 +57,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <TriggerButton breakpoint={selectedBreakpoint} />
+        <TriggerButton />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {isEditing ? (
@@ -64,7 +65,8 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         ) : (
           sort(breakpoints).map((breakpoint) => {
             return (
-              <DropdownMenuItem
+              <DropdownMenuCheckboxItem
+                checked={breakpoint === selectedBreakpoint}
                 key={breakpoint.id}
                 css={menuItemCss}
                 onMouseEnter={() => {
@@ -82,7 +84,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
                 }}
               >
                 <BreakpointSelectorItem breakpoint={breakpoint} />
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             );
           })
         )}

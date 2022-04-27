@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  MutableRefObject,
-  type MouseEventHandler,
-  useCallback,
-} from "react";
+import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
 import { useDrag } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
 import { Flex, Text } from "~/shared/design-system";
@@ -76,7 +70,6 @@ const Component = ({
 type ComponentsProps = {
   onDragChange: ComponentProps["onDragChange"];
   onSetActiveTab: (tabName: TabName) => void;
-  iframeRef: MutableRefObject<HTMLIFrameElement | null>;
   publish: Publish;
 };
 
