@@ -97,10 +97,8 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         {isEditing === false && (
           <>
             <DropdownMenuSeparator />
-            <Flex direction="column" gap="2">
-              <ScaleSetting />
-              <WidthSetting />
-            </Flex>
+            <ScaleSetting />
+            <WidthSetting />
             <DropdownMenuSeparator />
             <Preview breakpoint={breakpointPreview} />
           </>
@@ -114,7 +112,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
             setBreakpoints(breakpoints);
           }}
         >
-          {isEditing ? "Done" : "Edit Breakpoints"}
+          {isEditing ? "Done" : "Edit breakpoints"}
         </DropdownMenuItem>
         <DropdownMenuArrow offset={10} />
       </DropdownMenuContent>
