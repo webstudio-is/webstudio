@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import useDebounce from "react-use/lib/useDebounce";
-import { type Breakpoint, sort } from "@webstudio-is/sdk";
+import { type Breakpoint } from "@webstudio-is/sdk";
 import { Button, TextField, Flex, Text } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
 import { type Publish } from "~/designer/shared/canvas-iframe";
 import ObjectId from "bson-objectid";
+import { sort } from "./sort";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type Breakpoint, sort } from "@webstudio-is/sdk";
+import { useSubscribe, type Breakpoint } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,13 +23,25 @@ import { Preview } from "./preview";
 import { ScaleSetting } from "./scale-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
-import { useUpdateCanvasWidth } from "./use-update-canvas-width";
+import { sort } from "./sort";
+import {
+  useSubscribeScaleFromShortcut,
+  useSubscribeSelectBreakpointFromShortcut,
+} from "./use-subscribe-shortcuts";
 
-const BreakpointSelectorItem = ({ breakpoint }: { breakpoint: Breakpoint }) => {
+type BreakpointSelectorItemProps = {
+  breakpoint: Breakpoint;
+};
+
+const BreakpointSelectorItem = ({
+  breakpoint,
+}: BreakpointSelectorItemProps) => {
   const [canvasWidth = 0] = useCanvasWidth();
   return (
     <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
-      <Text size="1">{breakpoint.label}</Text>
+      <Text size="1" css={{ flexGrow: 1 }}>
+        {breakpoint.label}
+      </Text>
       <Text
         size="1"
         variant={willRender(breakpoint, canvasWidth) ? "contrast" : "gray"}
@@ -52,17 +64,23 @@ type BreakpointsProps = {
 };
 
 export const Breakpoints = ({ publish }: BreakpointsProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
-  const [isEditing, setIsEditing] = useState(false);
   const [breakpointPreview, setBreakpointPreview] =
     useState(selectedBreakpoint);
-  useUpdateCanvasWidth();
+  useSubscribeSelectBreakpointFromShortcut();
+  useSubscribeScaleFromShortcut();
+
+  useSubscribe("openBreakpointsMenu", () => {
+    setIsOpen(true);
+  });
 
   if (selectedBreakpoint === undefined) return null;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <TriggerButton />
       </DropdownMenuTrigger>
@@ -83,10 +101,6 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
                   setBreakpointPreview(selectedBreakpoint);
                 }}
                 onSelect={() => {
-                  publish({
-                    type: "selectBreakpoint",
-                    payload: breakpoint,
-                  });
                   setSelectedBreakpoint(breakpoint);
                 }}
               >

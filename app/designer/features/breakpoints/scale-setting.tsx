@@ -1,6 +1,8 @@
 import { useScale } from "~/designer/shared/nano-values";
 import { Slider, Text, Flex } from "~/shared/design-system";
 
+export const minScale = 10;
+
 export const ScaleSetting = () => {
   const [value, setValue] = useScale();
   return (
@@ -8,8 +10,8 @@ export const ScaleSetting = () => {
       <Text size="1">Scale</Text>
       <Flex gap="3" align="center">
         <Slider
-          min={10}
-          defaultValue={[value]}
+          min={minScale}
+          value={[value]}
           onValueChange={([value]) => {
             setValue(value);
           }}

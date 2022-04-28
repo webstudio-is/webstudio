@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { Breakpoint, sort } from "@webstudio-is/sdk";
-import { useSubscribe } from "../../shared/canvas-iframe";
+import { Breakpoint } from "@webstudio-is/sdk";
+import { useSubscribe } from "~/designer/shared/canvas-iframe";
 import {
   useBreakpoints,
   useSelectedBreakpoint,
-} from "../../shared/nano-values";
+} from "~/designer/shared/nano-values";
+import { sort } from "./sort";
 
 export const useSubscribeBreakpoints = () => {
   const [breakpoints, setBreakpoints] = useBreakpoints();
@@ -15,7 +16,7 @@ export const useSubscribeBreakpoints = () => {
   );
   useEffect(() => {
     if (selectedBreakpoint === undefined && breakpoints.length !== 0) {
-      setSelectedBreakpoint(sort(breakpoints)[breakpoints.length - 1]);
+      setSelectedBreakpoint(sort(breakpoints)[0]);
     }
   }, [breakpoints, selectedBreakpoint, setSelectedBreakpoint]);
 };

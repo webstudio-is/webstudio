@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   useSelectedBreakpoint,
   useCanvasWidth,
@@ -7,13 +7,30 @@ import { minWidth } from "./width-setting";
 
 export const useUpdateCanvasWidth = () => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
-  const [, setCanvasWidth] = useCanvasWidth();
+  const [canvasWidth, setCanvasWidth] = useCanvasWidth();
+  const initialCanvasWidthRef = useRef<number>();
 
   useEffect(() => {
-    if (selectedBreakpoint === undefined || selectedBreakpoint.minWidth === 0) {
+    if (selectedBreakpoint === undefined) {
       return;
     }
 
-    return setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
+    if (selectedBreakpoint.minWidth === 0) {
+      setCanvasWidth(initialCanvasWidthRef.current);
+      return;
+    }
+
+    setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
   }, [selectedBreakpoint, setCanvasWidth]);
+
+  return useCallback(
+    (iframe: HTMLIFrameElement | null) => {
+      if (iframe === null || canvasWidth !== undefined) return;
+      initialCanvasWidthRef.current = Math.round(
+        iframe.getBoundingClientRect().width
+      );
+      setCanvasWidth(initialCanvasWidthRef.current);
+    },
+    [canvasWidth, setCanvasWidth]
+  );
 };

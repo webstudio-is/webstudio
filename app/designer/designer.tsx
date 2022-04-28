@@ -23,10 +23,10 @@ import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
 import {
   minWidth,
-  useInitialCanvasWidth,
+  useUpdateCanvasWidth,
   useSubscribeBreakpoints,
 } from "./features/breakpoints";
-import { usePublishShortcuts } from "./shared/shortcuts/use-publish-shortcuts";
+import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 
 export const links = () => {
@@ -129,7 +129,7 @@ const Workspace = ({ children }: { children: JSX.Element }) => {
         align="center"
         css={{
           transformStyle: "preserve-3d",
-          transition: "transform 50ms",
+          transition: "transform 200ms ease-out",
           height: "100%",
           width: "100%",
         }}
@@ -195,7 +195,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
   const [canvasWidth] = useCanvasWidth();
-  const iframeRef2Callback = useInitialCanvasWidth();
+  const iframeRef2Callback = useUpdateCanvasWidth();
 
   const iframeRefCallback = useCallback(
     (ref) => {
