@@ -15,7 +15,7 @@ export const TabletIcon = React.forwardRef<SVGSVGElement, IconProps>(
       >
         <path
           fill={color}
-          d="M18,0H6C4.34,0,3,1.34,3,3v18c0,1.66,1.34,3,3,3h12c1.66,0,3-1.34,3-3V3C21,1.34,19.66,0,18,0z M14,22h-4v-1h4V22z M19.25,19H4.75V3h14.5V19z"
+          d="M20 0H6C4.34 0 4 0.84 4 2.5V20.5C4 22.16 5.34 23.5 7 23.5H19C20.66 23.5 22 22.16 22 20.5V2.5C22 0.84 21.66 0 20 0ZM15 22.5H13H11V22H13H15V22.5ZM21 21H13H5V10.5V1H13H21V21Z"
         />
       </svg>
     );
