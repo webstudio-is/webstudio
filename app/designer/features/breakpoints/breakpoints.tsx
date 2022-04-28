@@ -77,6 +77,10 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
     setIsOpen(true);
   });
 
+  useSubscribe("clickCanvas", () => {
+    setIsOpen(false);
+  });
+
   if (selectedBreakpoint === undefined) return null;
 
   return (
