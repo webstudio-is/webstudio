@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import useDebounce from "react-use/lib/useDebounce";
 import { type Breakpoint } from "@webstudio-is/sdk";
 import { Button, TextField, Flex, Text } from "~/shared/design-system";
@@ -6,6 +6,10 @@ import { PlusIcon, TrashIcon } from "~/shared/icons";
 import { type Publish } from "~/designer/shared/canvas-iframe";
 import ObjectId from "bson-objectid";
 import { sort } from "./sort";
+import {
+  useBreakpoints,
+  useSelectedBreakpoint,
+} from "~/designer/shared/nano-values";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -89,15 +93,9 @@ type BreakpointsEditorProps = {
   publish: Publish;
 };
 
-export const BreakpointsEditor = ({
-  breakpoints: initialBreakpoints,
-  publish,
-}: BreakpointsEditorProps) => {
-  const [breakpoints, setBreakpoints] = useState(sort(initialBreakpoints));
-
-  useEffect(() => {
-    setBreakpoints(initialBreakpoints);
-  }, [initialBreakpoints]);
+export const BreakpointsEditor = ({ publish }: BreakpointsEditorProps) => {
+  const [breakpoints, setBreakpoints] = useBreakpoints();
+  const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
 
   return (
     <Flex gap="2" direction="column">
@@ -137,6 +135,9 @@ export const BreakpointsEditor = ({
               const index = breakpoints.indexOf(breakpoint);
               nextBreakpoints.splice(index, 1);
               setBreakpoints(nextBreakpoints);
+              if (breakpoint === selectedBreakpoint) {
+                setSelectedBreakpoint(sort(nextBreakpoints)[0]);
+              }
               publish({ type: "breakpointDelete", payload: breakpoint });
             }}
           />
