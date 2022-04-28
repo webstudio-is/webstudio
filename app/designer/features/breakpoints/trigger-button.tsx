@@ -13,6 +13,7 @@ import {
   TabletIcon,
   DevicesIcon,
 } from "~/shared/icons";
+import { willRender } from "./will-render";
 
 type TriggerButtonProps = ComponentProps<typeof Button>;
 
@@ -41,7 +42,7 @@ export const TriggerButton = forwardRef<
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth = 0] = useCanvasWidth();
   if (breakpoint === undefined) return null;
-  const variant = canvasWidth >= breakpoint.minWidth ? "contrast" : "gray";
+  const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "gray";
   return (
     <Button
       {...props}

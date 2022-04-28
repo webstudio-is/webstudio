@@ -23,15 +23,16 @@ import { ScaleSetting } from "./scale-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { useUpdateCanvasWidth } from "./use-update-canvas-width";
+import { willRender } from "./will-render";
 
 const BreakpointSelectorItem = ({ breakpoint }: { breakpoint: Breakpoint }) => {
-  const [width = 0] = useCanvasWidth();
+  const [canvasWidth = 0] = useCanvasWidth();
   return (
     <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
       <Text size="1">{breakpoint.label}</Text>
       <Text
         size="1"
-        variant={width >= breakpoint.minWidth ? "contrast" : "gray"}
+        variant={willRender(breakpoint, canvasWidth) ? "contrast" : "gray"}
       >
         {breakpoint.minWidth}
       </Text>
