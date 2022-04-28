@@ -17,13 +17,13 @@ import {
   useSelectedBreakpoint,
   useCanvasWidth,
 } from "../../shared/nano-values";
+import { willRender } from "~/designer/shared/breakpoints";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
 import { ScaleSetting } from "./scale-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { useUpdateCanvasWidth } from "./use-update-canvas-width";
-import { willRender } from "./will-render";
 
 const BreakpointSelectorItem = ({ breakpoint }: { breakpoint: Breakpoint }) => {
   const [canvasWidth = 0] = useCanvasWidth();
@@ -98,8 +98,10 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         {isEditing === false && (
           <>
             <DropdownMenuSeparator />
-            <ScaleSetting />
-            <WidthSetting />
+            <form>
+              <ScaleSetting />
+              <WidthSetting />
+            </form>
             <DropdownMenuSeparator />
             <Preview breakpoint={breakpointPreview} />
           </>

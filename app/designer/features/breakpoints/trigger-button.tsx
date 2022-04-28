@@ -5,6 +5,7 @@ import {
   useScale,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-values";
+import { willRender } from "~/designer/shared/breakpoints";
 import { Button, Text } from "~/shared/design-system";
 import {
   DesktopIcon,
@@ -13,7 +14,6 @@ import {
   TabletIcon,
   DevicesIcon,
 } from "~/shared/icons";
-import { willRender } from "./will-render";
 
 type TriggerButtonProps = ComponentProps<typeof Button>;
 
