@@ -5,8 +5,13 @@ import {
   useSubscribe,
   setBreakpoints,
 } from "@webstudio-is/sdk";
-import { useBreakpoints, breakpointsContainer } from "./nano-values";
+import {
+  useBreakpoints,
+  breakpointsContainer,
+  rootInstanceContainer,
+} from "./nano-values";
 import { publish } from "./pubsub";
+import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 
 store.register("breakpoints", breakpointsContainer);
 
@@ -52,12 +57,19 @@ const useBreakpointDelete = () => {
   useSubscribe<"breakpointDelete", Breakpoint>(
     "breakpointDelete",
     (breakpoint) => {
-      store.createTransaction([breakpointsContainer], (breakpoints) => {
-        const index = breakpoints.findIndex(({ id }) => id == breakpoint.id);
-        if (index !== -1) {
-          breakpoints.splice(index, 1);
+      store.createTransaction(
+        [breakpointsContainer, rootInstanceContainer],
+        (breakpoints, rootInstance) => {
+          if (rootInstance === undefined) return;
+
+          const index = breakpoints.findIndex(({ id }) => id == breakpoint.id);
+          if (index !== -1) {
+            breakpoints.splice(index, 1);
+          }
+
+          deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
         }
-      });
+      );
     }
   );
 };
