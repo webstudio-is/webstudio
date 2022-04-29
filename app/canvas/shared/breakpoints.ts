@@ -44,10 +44,12 @@ const useBreakpointChange = () => {
         if (foundBreakpoint) {
           foundBreakpoint.label = breakpoint.label;
           foundBreakpoint.minWidth = breakpoint.minWidth;
-          return;
+        } else {
+          // Its a new breakpoint
+          breakpoints.push(breakpoint);
         }
-        // Its a new breakpoint
-        breakpoints.push(breakpoint);
+
+        setBreakpoints(breakpoints);
       });
     }
   );
