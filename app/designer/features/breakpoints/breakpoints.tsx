@@ -28,6 +28,7 @@ import {
   useSubscribeScaleFromShortcut,
   useSubscribeSelectBreakpointFromShortcut,
 } from "./use-subscribe-shortcuts";
+import { ConfirmationDialog } from "./confirmation-dialog";
 
 type BreakpointSelectorItemProps = {
   breakpoint: Breakpoint;
@@ -64,8 +65,12 @@ type BreakpointsProps = {
 };
 
 export const Breakpoints = ({ publish }: BreakpointsProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [view, setView] = useState<
+    "selector" | "editor" | "confirmation" | undefined
+  >();
+  const [breakpointToDelete, setBreakpointToDelete] = useState<
+    Breakpoint | undefined
+  >();
   const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   const [breakpointPreview, setBreakpointPreview] =
@@ -74,47 +79,99 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
   useSubscribeScaleFromShortcut();
 
   useSubscribe("openBreakpointsMenu", () => {
-    setIsOpen(true);
+    setView("selector");
   });
 
   useSubscribe("clickCanvas", () => {
-    setIsOpen(false);
+    setView(undefined);
   });
 
   if (selectedBreakpoint === undefined) return null;
 
+  const handleDelete = () => {
+    if (breakpointToDelete === undefined) return;
+    const nextBreakpoints = [...breakpoints];
+    const index = breakpoints.indexOf(breakpointToDelete);
+    nextBreakpoints.splice(index, 1);
+    setBreakpoints(nextBreakpoints);
+    if (breakpointToDelete === selectedBreakpoint) {
+      setSelectedBreakpoint(sort(nextBreakpoints)[0]);
+    }
+    publish({
+      type: "breakpointDelete",
+      payload: breakpointToDelete,
+    });
+    setBreakpointToDelete(undefined);
+    setView("editor");
+  };
+
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    // @todo this should be a popover instead
+    // there is a bunch of accessibility issues here
+    <DropdownMenu
+      open={view !== undefined}
+      onOpenChange={(isOpen) => {
+        setView(isOpen ? "selector" : undefined);
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <TriggerButton />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {isEditing ? (
-          <BreakpointsEditor breakpoints={breakpoints} publish={publish} />
-        ) : (
-          sort(breakpoints).map((breakpoint) => {
-            return (
-              <DropdownMenuCheckboxItem
-                checked={breakpoint === selectedBreakpoint}
-                key={breakpoint.id}
-                css={menuItemCss}
-                onMouseEnter={() => {
-                  setBreakpointPreview(breakpoint);
-                }}
-                onMouseLeave={() => {
-                  setBreakpointPreview(selectedBreakpoint);
-                }}
-                onSelect={() => {
-                  setSelectedBreakpoint(breakpoint);
-                }}
-              >
-                <BreakpointSelectorItem breakpoint={breakpoint} />
-              </DropdownMenuCheckboxItem>
-            );
-          })
+        {view === "confirmation" && (
+          <ConfirmationDialog
+            breakpoint={selectedBreakpoint}
+            onAbort={() => {
+              setBreakpointToDelete(undefined);
+              setView("editor");
+            }}
+            onConfirm={handleDelete}
+          />
         )}
-        {isEditing === false && (
+        {view === "editor" && (
           <>
+            <BreakpointsEditor
+              breakpoints={breakpoints}
+              publish={publish}
+              onDelete={(breakpoint) => {
+                setBreakpointToDelete(breakpoint);
+                setView("confirmation");
+              }}
+            />
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              css={{ justifyContent: "center" }}
+              onSelect={(event) => {
+                event.preventDefault();
+                setView("selector");
+              }}
+            >
+              {"Done"}
+            </DropdownMenuItem>
+          </>
+        )}
+        {view === "selector" && (
+          <>
+            {sort(breakpoints).map((breakpoint) => {
+              return (
+                <DropdownMenuCheckboxItem
+                  checked={breakpoint === selectedBreakpoint}
+                  key={breakpoint.id}
+                  css={menuItemCss}
+                  onMouseEnter={() => {
+                    setBreakpointPreview(breakpoint);
+                  }}
+                  onMouseLeave={() => {
+                    setBreakpointPreview(selectedBreakpoint);
+                  }}
+                  onSelect={() => {
+                    setSelectedBreakpoint(breakpoint);
+                  }}
+                >
+                  <BreakpointSelectorItem breakpoint={breakpoint} />
+                </DropdownMenuCheckboxItem>
+              );
+            })}
             <DropdownMenuSeparator />
             <form>
               <ScaleSetting />
@@ -122,19 +179,18 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
             </form>
             <DropdownMenuSeparator />
             <Preview breakpoint={breakpointPreview} />
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              css={{ justifyContent: "center" }}
+              onSelect={(event) => {
+                event.preventDefault();
+                setView("editor");
+              }}
+            >
+              {"Edit breakpoints"}
+            </DropdownMenuItem>
           </>
         )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          css={{ justifyContent: "center" }}
-          onSelect={(event) => {
-            event.preventDefault();
-            setIsEditing(!isEditing);
-            setBreakpoints(breakpoints);
-          }}
-        >
-          {isEditing ? "Done" : "Edit breakpoints"}
-        </DropdownMenuItem>
         <DropdownMenuArrow offset={10} />
       </DropdownMenuContent>
     </DropdownMenu>

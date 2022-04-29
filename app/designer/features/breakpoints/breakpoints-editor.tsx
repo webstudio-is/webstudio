@@ -5,11 +5,7 @@ import { Button, TextField, Flex, Text } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
 import { type Publish } from "~/designer/shared/canvas-iframe";
 import ObjectId from "bson-objectid";
-import { sort } from "./sort";
-import {
-  useBreakpoints,
-  useSelectedBreakpoint,
-} from "~/designer/shared/nano-values";
+import { useBreakpoints } from "~/designer/shared/nano-values";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -91,19 +87,21 @@ const BreakpointEditorItem = ({
 type BreakpointsEditorProps = {
   breakpoints: Array<Breakpoint>;
   publish: Publish;
+  onDelete: (breakpoint: Breakpoint) => void;
 };
 
-export const BreakpointsEditor = ({ publish }: BreakpointsEditorProps) => {
+export const BreakpointsEditor = ({
+  publish,
+  onDelete,
+}: BreakpointsEditorProps) => {
   const [breakpoints, setBreakpoints] = useBreakpoints();
-  const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
-
   return (
     <Flex gap="2" direction="column">
       <Flex
         align="center"
         gap="1"
         justify="between"
-        css={{ paddingLeft: "$5", paddingRight: "$3" }}
+        css={{ paddingLeft: "$5", paddingRight: "$3", py: "$1" }}
       >
         <Text>Breakpoints</Text>
         <Button
@@ -130,16 +128,7 @@ export const BreakpointsEditor = ({ publish }: BreakpointsEditorProps) => {
             onChange={(breakpoint) => {
               publish({ type: "breakpointChange", payload: breakpoint });
             }}
-            onDelete={(breakpoint) => {
-              const nextBreakpoints = [...breakpoints];
-              const index = breakpoints.indexOf(breakpoint);
-              nextBreakpoints.splice(index, 1);
-              setBreakpoints(nextBreakpoints);
-              if (breakpoint === selectedBreakpoint) {
-                setSelectedBreakpoint(sort(nextBreakpoints)[0]);
-              }
-              publish({ type: "breakpointDelete", payload: breakpoint });
-            }}
+            onDelete={onDelete}
           />
         );
       })}
