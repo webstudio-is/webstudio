@@ -1350,9 +1350,9 @@
     "@sinonjs/commons" "^1.7.0"
 
 "@stitches/core@^1.2.7":
-  version "1.2.7"
-  resolved "https://registry.yarnpkg.com/@stitches/core/-/core-1.2.7.tgz#9d421b0635ee2acd65a8f0c078d5f5be8fc81766"
-  integrity sha512-2bSto+jqPjeODcdNvwuXduhUH5b1bROmGNSBj/EVOGk8a8dIdCnoZyXYSxdKlKA9SnedBg94qNO0QQAMvTAz3w==
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/@stitches/core/-/core-1.2.8.tgz#dce3b8fdc764fbc6dbea30c83b73bfb52cf96173"
+  integrity sha512-Gfkvwk9o9kE9r9XNBmJRfV8zONvXThnm1tcuojL04Uy5uRyqg93DC83lDebl0rocZCfKSjUv+fWYtMQmEDJldg==
 
 "@stitches/react@^1.2.7":
   version "1.2.7"
@@ -1814,8 +1814,10 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
-"@webstudio-is/sdk@../webstudio-sdk":
-  version "0.1.22"
+"@webstudio-is/sdk@^0.2.0":
+  version "0.2.0-pre.0"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.2.0-pre.0.tgz#806dc1509964107de333ce8ece352226610300b9"
+  integrity sha512-G0c7NtEsW9jTKX2CJRX8T53b+k0lp/s1mjoatSdYyFhvOisbPIFSrx7DxuCCf7HOEadcCjKixwdmMi9SixbdiQ==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/core" "^1.2.7"
