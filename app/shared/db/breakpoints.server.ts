@@ -1,4 +1,9 @@
-import { initialBreakpoints, type Project, type Tree } from "@webstudio-is/sdk";
+import {
+  initialBreakpoints,
+  type Project,
+  type Tree,
+  type Breakpoint,
+} from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
@@ -9,13 +14,19 @@ export const load = async (projectId: Project["id"]) => {
   });
 };
 
-export const create = async (projectId: Project["id"]) => {
+export const getBreakpointsWithId = () =>
+  initialBreakpoints.map((breakpoint) => ({
+    ...breakpoint,
+    id: ObjectId().toString(),
+  }));
+
+export const create = async (
+  projectId: Project["id"],
+  breakpoints: Array<Breakpoint>
+) => {
   const data = {
     projectId,
-    values: initialBreakpoints.map((breakpoint) => ({
-      ...breakpoint,
-      id: ObjectId().toString(),
-    })),
+    values: breakpoints,
   };
   await prisma.breakpoints.create({ data });
   return data;

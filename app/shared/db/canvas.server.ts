@@ -8,16 +8,15 @@ export type ErrorData = {
 };
 
 const loadData = async (projectId: Project["id"]) => {
-  const [existingBreakpoints, project] = await Promise.all([
+  const [breakpoints, project] = await Promise.all([
     db.breakpoints.load(projectId),
     db.project.loadById(projectId),
   ]);
   if (project === null) throw new Error(`Project "${projectId}" not found`);
 
-  const [tree, props, breakpoints] = await Promise.all([
+  const [tree, props] = await Promise.all([
     db.tree.loadByProject(project, "development"),
     db.props.loadByProject(project, "development"),
-    existingBreakpoints || db.breakpoints.create(projectId),
   ]);
   return { tree, props, project, breakpoints: breakpoints?.values || [] };
 };
