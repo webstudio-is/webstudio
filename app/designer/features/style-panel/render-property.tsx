@@ -115,83 +115,6 @@ const Spacing = ({
   return <SpacingWidget setProperty={setProperty} values={styles} />;
 };
 
-const ToggleGroup = ({
-  currentStyle,
-  inheritedStyle,
-  setProperty,
-  styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "ToggleGroup") return null;
-  // @todo show which instance we inherited the value from
-  const value = getFinalValue({
-    currentStyle,
-    inheritedStyle,
-    property: styleConfig.property,
-  });
-  if (value === undefined) return null;
-
-  return (
-    <ToggleGroupPrimitive.Root
-      type="single"
-      value={value.value as string}
-      onValueChange={setProperty(styleConfig.property)}
-    >
-      {styleConfig.items.map(
-        ({ name, label }: { name: string; label: string }) => (
-          <ToggleGroupPrimitive.Item
-            css={{ fontSize: "$1", px: "$1" }}
-            value={name}
-            key={name}
-          >
-            {label}
-          </ToggleGroupPrimitive.Item>
-        )
-      )}
-    </ToggleGroupPrimitive.Root>
-  );
-};
-
-const Select = ({
-  currentStyle,
-  inheritedStyle,
-  setProperty,
-  styleConfig,
-}: RendererProps) => {
-  const id = useId();
-  if (styleConfig.ui !== "Select") return null;
-
-  // @todo show which instance we inherited the value from
-  const value = getFinalValue({
-    currentStyle,
-    inheritedStyle,
-    property: styleConfig.property,
-  });
-
-  if (value === undefined) return null;
-
-  return (
-    <Grid columns={2} align="center">
-      <Label htmlFor={id} css={{ gridColumn: "1", fontSize: "$1" }}>
-        {styleConfig.label}
-      </Label>
-      <SelectPrimitive
-        id={id}
-        css={{ gridColumn: "2/4" }}
-        value={value.value}
-        onChange={(event) => {
-          setProperty(styleConfig.property)(event.target.value);
-        }}
-      >
-        {styleConfig.items.map(({ name }: { name: string }) => (
-          <option value={name} key={name}>
-            {name}
-          </option>
-        ))}
-      </SelectPrimitive>
-    </Grid>
-  );
-};
-
 const Unit = ({ value }: { value: StyleValue }) => {
   if (value.type !== "unit" || value.unit === "number") return null;
   return (
@@ -231,7 +154,7 @@ const TextFieldWithAutocomplete = ({
   return (
     <Grid columns={2} align="center" gapX="1">
       <Label css={{ gridColumn: "1" }} size="1">
-        {styleConfig.label}
+        {styleConfig.label}1
       </Label>
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Autocomplete
@@ -257,8 +180,6 @@ const renderers: {
 } = {
   ColorField,
   Spacing,
-  ToggleGroup,
-  Select,
   TextFieldWithAutocomplete,
 };
 
