@@ -12,7 +12,6 @@ import {
   LaptopIcon,
   MobileIcon,
   TabletIcon,
-  DevicesIcon,
 } from "~/shared/icons";
 
 type TriggerButtonProps = ComponentProps<typeof Button>;
@@ -28,10 +27,7 @@ const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "gray") => {
   if (breakpoint.minWidth >= 768) {
     return <TabletIcon color={color} />;
   }
-  if (breakpoint.minWidth >= 360) {
-    return <MobileIcon color={color} />;
-  }
-  return <DevicesIcon color={color} />;
+  return <MobileIcon color={color} />;
 };
 
 export const TriggerButton = forwardRef<
@@ -43,6 +39,7 @@ export const TriggerButton = forwardRef<
   const [canvasWidth = 0] = useCanvasWidth();
   if (breakpoint === undefined) return null;
   const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "gray";
+
   return (
     <Button
       {...props}

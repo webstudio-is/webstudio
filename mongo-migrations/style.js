@@ -7,6 +7,8 @@ const transform = (instance) => {
   if (instance.style) {
     instance.cssRules = [
       {
+        // @todo this needs a real breakpoint
+        // also need to insert breakpoitns
         breakpoint: "default",
         style: instance.style,
       },
