@@ -6,15 +6,10 @@ type BaseStyleConfig = {
   appliesTo: AppliesTo;
 };
 
-export type UiType =
-  | "Spacing"
-  | "Select"
-  | "ToggleGroup"
-  | "TextFieldWithAutocomplete"
-  | "ColorField";
+export type Control = "Spacing" | "TextFieldWithAutocomplete" | "ColorField";
 
 type StyleConfigWithItems = BaseStyleConfig & {
-  ui: UiType;
+  control: Control;
   items: Array<{ label: string; name: string }>;
 };
 

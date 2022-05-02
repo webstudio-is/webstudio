@@ -1,12 +1,4 @@
-import { useId } from "@radix-ui/react-id";
-import {
-  Flex,
-  Grid,
-  ToggleGroup as ToggleGroupPrimitive,
-  Label,
-  Select as SelectPrimitive,
-  Text,
-} from "~/shared/design-system";
+import { Flex, Grid, Label, Text } from "~/shared/design-system";
 import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
   Style,
@@ -43,7 +35,7 @@ const getFinalValue = ({
   return currentValue;
 };
 
-type RendererProps = {
+type ControlProps = {
   setProperty: SetProperty;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
@@ -55,8 +47,8 @@ const ColorField = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "ColorField") return null;
+}: ControlProps) => {
+  if (styleConfig.control !== "ColorField") return null;
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
@@ -89,8 +81,8 @@ const Spacing = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "Spacing") return null;
+}: ControlProps) => {
+  if (styleConfig.control !== "Spacing") return null;
 
   const styles = categories.spacing.properties.reduce(
     (acc: SpacingStyles, property: SpacingProperty): SpacingStyles => {
@@ -139,8 +131,8 @@ const TextFieldWithAutocomplete = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "TextFieldWithAutocomplete") return null;
+}: ControlProps) => {
+  if (styleConfig.control !== "TextFieldWithAutocomplete") return null;
 
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
@@ -154,7 +146,7 @@ const TextFieldWithAutocomplete = ({
   return (
     <Grid columns={2} align="center" gapX="1">
       <Label css={{ gridColumn: "1" }} size="1">
-        {styleConfig.label}1
+        {styleConfig.label}
       </Label>
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Autocomplete
@@ -175,8 +167,8 @@ const TextFieldWithAutocomplete = ({
   );
 };
 
-const renderers: {
-  [key: string]: (props: RendererProps) => JSX.Element | null;
+const controls: {
+  [key: string]: (props: ControlProps) => JSX.Element | null;
 } = {
   ColorField,
   Spacing,
@@ -198,10 +190,10 @@ export const renderProperty = ({
   styleConfig,
   category,
 }: RenderPropertyProps) => {
-  const Renderer = renderers[styleConfig.ui];
+  const Control = controls[styleConfig.control];
 
   return (
-    <Renderer
+    <Control
       key={category + "-" + styleConfig.property}
       currentStyle={currentStyle}
       inheritedStyle={inheritedStyle}
