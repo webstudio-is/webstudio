@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSubscribe, type Breakpoint } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
@@ -77,6 +77,10 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
     useState(selectedBreakpoint);
   useSubscribeSelectBreakpointFromShortcut();
   useSubscribeScaleFromShortcut();
+
+  useEffect(() => {
+    setBreakpointPreview(selectedBreakpoint);
+  }, [selectedBreakpoint]);
 
   useSubscribe("openBreakpointsMenu", () => {
     setView("selector");
