@@ -1,16 +1,16 @@
-import { useScale } from "~/designer/shared/nano-values";
+import { useZoom } from "~/designer/shared/nano-values";
 import { Slider, Text, Flex } from "~/shared/design-system";
 
-export const minScale = 10;
+export const minZoom = 10;
 
-export const ScaleSetting = () => {
-  const [value, setValue] = useScale();
+export const ZoomSetting = () => {
+  const [value, setValue] = useZoom();
   return (
     <Flex css={{ px: "$5", py: "$1" }} gap="1" direction="column">
-      <Text size="1">Scale</Text>
+      <Text size="1">Zoom</Text>
       <Flex gap="3" align="center">
         <Slider
-          min={minScale}
+          min={minZoom}
           value={[value]}
           onValueChange={([value]) => {
             setValue(value);

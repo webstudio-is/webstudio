@@ -20,12 +20,12 @@ import {
 import { willRender } from "~/designer/shared/breakpoints";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
-import { ScaleSetting } from "./scale-setting";
+import { ZoomSetting } from "./zoom-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import { sort } from "./sort";
 import {
-  useSubscribeScaleFromShortcut,
+  useSubscribeZoomFromShortcut,
   useSubscribeSelectBreakpointFromShortcut,
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
@@ -76,7 +76,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
   const [breakpointPreview, setBreakpointPreview] =
     useState(selectedBreakpoint);
   useSubscribeSelectBreakpointFromShortcut();
-  useSubscribeScaleFromShortcut();
+  useSubscribeZoomFromShortcut();
 
   useEffect(() => {
     setBreakpointPreview(selectedBreakpoint);
@@ -178,7 +178,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
             })}
             <DropdownMenuSeparator />
             <form>
-              <ScaleSetting />
+              <ZoomSetting />
               <WidthSetting />
             </form>
             <DropdownMenuSeparator />

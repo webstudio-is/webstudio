@@ -2,7 +2,7 @@ import { forwardRef, type ComponentProps, type ElementRef } from "react";
 import { type Breakpoint } from "@webstudio-is/sdk";
 import {
   useCanvasWidth,
-  useScale,
+  useZoom,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-values";
 import { willRender } from "~/designer/shared/breakpoints";
@@ -34,7 +34,7 @@ export const TriggerButton = forwardRef<
   ElementRef<typeof Button>,
   TriggerButtonProps
 >((props, ref) => {
-  const [scale] = useScale();
+  const [zoom] = useZoom();
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth = 0] = useCanvasWidth();
   if (breakpoint === undefined) return null;
@@ -50,7 +50,7 @@ export const TriggerButton = forwardRef<
     >
       {renderIcon(breakpoint, variant)}
       <Text size="1" variant={variant}>
-        {`${breakpoint.label} ${canvasWidth}px / ${scale}%`}
+        {`${breakpoint.label} ${canvasWidth}px / ${zoom}%`}
       </Text>
     </Button>
   );

@@ -10,7 +10,7 @@ export const WidthSetting = () => {
 
   return (
     <Flex css={{ px: "$5", py: "$1" }} gap="1" direction="column">
-      <Text size="1">Width</Text>
+      <Text size="1">Canvas width</Text>
       <Flex gap="3" align="center">
         <Slider
           min={minWidth}

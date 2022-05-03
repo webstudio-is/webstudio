@@ -22,11 +22,11 @@ const publishSelectBreakpoint = ({ key }: HandlerEvent) => {
   });
 };
 
-const publishScale = (event: HandlerEvent) => {
+const publishZoom = (event: HandlerEvent) => {
   if (event.preventDefault !== undefined) event.preventDefault();
   publish({
-    type: "scale",
-    payload: event.key === "-" ? "scaleOut" : "scaleIn",
+    type: "zoom",
+    payload: event.key === "-" ? "zoomOut" : "zoomIn",
   });
 };
 
@@ -63,7 +63,7 @@ export const useShortcuts = () => {
     paste,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
-    scale: publishScale,
+    zoom: publishZoom,
   } as const;
 
   useHotkeys(
@@ -97,7 +97,7 @@ export const useShortcuts = () => {
   useHotkeys(shortcuts.paste, shortcutHandlerMap.paste, options, []);
 
   useHotkeys(shortcuts.breakpoint, shortcutHandlerMap.breakpoint, options, []);
-  useHotkeys(shortcuts.scale, shortcutHandlerMap.scale, options, []);
+  useHotkeys(shortcuts.zoom, shortcutHandlerMap.zoom, options, []);
   useHotkeys(
     shortcuts.breakpointsMenu,
     shortcutHandlerMap.breakpointsMenu,

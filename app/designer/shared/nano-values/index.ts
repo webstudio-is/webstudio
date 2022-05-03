@@ -31,8 +31,8 @@ export const useSelectedBreakpoint = () =>
 export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);
 
-const scaleContainer = createValueContainer<number>(100);
-export const useScale = () => useValue(scaleContainer);
+const zoomContainer = createValueContainer<number>(100);
+export const useZoom = () => useValue(zoomContainer);
 
 const canvasWidthContainer = createValueContainer<number | undefined>();
 export const useCanvasWidth = () => useValue(canvasWidthContainer);

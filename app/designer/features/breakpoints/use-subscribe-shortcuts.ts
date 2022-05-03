@@ -1,11 +1,11 @@
 import { useSubscribe } from "~/designer/shared/canvas-iframe";
 import {
   useBreakpoints,
-  useScale,
+  useZoom,
   useSelectedBreakpoint,
 } from "../../shared/nano-values";
 import { sort } from "./sort";
-import { minScale } from "./scale-setting";
+import { minZoom } from "./zoom-setting";
 
 export const useSubscribeSelectBreakpointFromShortcut = () => {
   const [breakpoints] = useBreakpoints();
@@ -19,16 +19,16 @@ export const useSubscribeSelectBreakpointFromShortcut = () => {
   );
 };
 
-const scaleStep = 20;
+const zoomStep = 20;
 
-export const useSubscribeScaleFromShortcut = () => {
-  const [scale, setScale] = useScale();
-  useSubscribe<"scale", "scaleIn" | "scaleOut">("scale", (direction) => {
-    if (direction === "scaleIn") {
-      setScale(Math.min(scale + scaleStep, 100));
+export const useSubscribeZoomFromShortcut = () => {
+  const [zoom, setZoom] = useZoom();
+  useSubscribe<"zoom", "zoomIn" | "zoomOut">("zoom", (direction) => {
+    if (direction === "zoomIn") {
+      setZoom(Math.min(zoom + zoomStep, 100));
       return;
     }
 
-    setScale(Math.max(scale - scaleStep, minScale));
+    setZoom(Math.max(zoom - zoomStep, minZoom));
   });
 };

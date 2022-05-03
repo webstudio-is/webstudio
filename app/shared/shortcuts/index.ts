@@ -8,7 +8,7 @@ export const shortcuts = {
   breakpoint: Array.from(new Array(9))
     .map((_, index) => `cmd+${index + 1}, ctrl+${index + 1}`)
     .join(", "),
-  scale: "cmd+=, ctrl+=, cmd+-, ctrl+-",
+  zoom: "cmd+=, ctrl+=, cmd+-, ctrl+-",
 } as const;
 
 export const options = { splitKey: "+", keydown: true };

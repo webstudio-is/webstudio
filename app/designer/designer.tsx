@@ -12,7 +12,7 @@ import { CanvasIframe, useSubscribe, usePublish } from "./shared/canvas-iframe";
 import {
   useIsPreviewMode,
   useRootInstance,
-  useScale,
+  useZoom,
   useSelectedInstanceData,
   useSyncStatus,
   useCanvasWidth,
@@ -113,7 +113,7 @@ const Main = ({ children }: { children: Array<JSX.Element> }) => (
 );
 
 const Workspace = ({ children }: { children: JSX.Element }) => {
-  const [scale] = useScale();
+  const [zoom] = useZoom();
 
   return (
     <Box
@@ -134,7 +134,7 @@ const Workspace = ({ children }: { children: JSX.Element }) => {
           width: "100%",
         }}
         style={{
-          transform: `scale(${scale / 100})`,
+          transform: `scale(${zoom / 100})`,
         }}
       >
         {children}
