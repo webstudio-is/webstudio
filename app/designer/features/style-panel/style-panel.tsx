@@ -21,7 +21,7 @@ export const StylePanel = ({
   selectedInstanceData,
   publish,
 }: StylePanelProps) => {
-  const [currentStyle, inheritedStyle, setProperty] = useStyleData({
+  const { currentStyle, inheritedStyle, setProperty } = useStyleData({
     selectedInstanceData,
     publish,
   });

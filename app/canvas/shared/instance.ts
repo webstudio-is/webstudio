@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import ObjectId from "bson-objectid";
 import {
   type InstanceProps,
@@ -122,6 +122,11 @@ export const usePublishSelectedInstance = ({
   const [instance] = useSelectedInstance();
   const [selectedElement] = useSelectedElement();
   const [allUserProps] = useAllUserProps();
+  const browserStyle = useMemo(
+    () => getBrowserStyle(selectedElement),
+    [selectedElement]
+  );
+
   useEffect(() => {
     // Unselects the instance by `undefined`
     let payload;
@@ -139,7 +144,7 @@ export const usePublishSelectedInstance = ({
         id: instance.id,
         component: instance.component,
         cssRules: instance.cssRules,
-        browserStyle: getBrowserStyle(selectedElement),
+        browserStyle,
         props,
       };
     }
@@ -148,7 +153,7 @@ export const usePublishSelectedInstance = ({
       type: "selectInstance",
       payload,
     });
-  }, [instance, selectedElement, allUserProps, treeId]);
+  }, [instance, allUserProps, treeId, browserStyle]);
 };
 
 export const usePublishRootInstance = () => {

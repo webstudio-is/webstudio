@@ -1,11 +1,13 @@
-import { Box } from "~/shared/design-system";
+import { useEffect, useState } from "react";
 import {
   toValue,
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/sdk";
+import { Box } from "~/shared/design-system";
 import { SetProperty } from "../use-style-data";
-import { useEffect, useState } from "react";
+import { useIsFromCurrentBreakpoint } from "./utils/use-is-from-current-breakpoint";
+import { propertyNameColorForSelectedBreakpoint } from "./constants";
 
 type SpacingSingularStyle = { [property in SpacingProperty]?: StyleValue };
 
@@ -65,6 +67,9 @@ const styles = {
     textAlign: "center",
     outline: "none",
   },
+  inputFromCurrentBreakpoint: {
+    color: propertyNameColorForSelectedBreakpoint,
+  },
   emptySpace: {
     gridArea: "2 / 2 / 3 / 2",
     background: "$loContrast",
@@ -101,13 +106,14 @@ const styles = {
 };
 
 type TextFieldProps = {
-  property: string;
+  property: StyleProperty;
   value: string | undefined;
   onEnter: (value: string) => void;
 };
 
 const TextField = ({ property, value, onEnter }: TextFieldProps) => {
   const [currentValue, setCurrentValue] = useState<string>(value ?? "");
+  const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   useEffect(() => {
     setCurrentValue(value ?? "");
@@ -127,7 +133,11 @@ const TextField = ({ property, value, onEnter }: TextFieldProps) => {
       onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
         setCurrentValue(event.target.value);
       }}
-      css={styles.input}
+      css={
+        isFromCurrentBreakpoint
+          ? { ...styles.input, ...styles.inputFromCurrentBreakpoint }
+          : styles.input
+      }
     />
   );
 };

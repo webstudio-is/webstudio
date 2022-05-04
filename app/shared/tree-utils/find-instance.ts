@@ -3,7 +3,7 @@ import { type Instance } from "@webstudio-is/sdk";
 export const findInstanceById = (
   instance: Instance,
   id: Instance["id"]
-): Instance | void => {
+): Instance | undefined => {
   if (instance.id === id) {
     return instance;
   }
