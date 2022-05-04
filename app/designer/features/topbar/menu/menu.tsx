@@ -20,6 +20,9 @@ import {
   TrashIcon,
   ClipboardCopyIcon,
   CopyIcon,
+  ZoomInIcon,
+  ZoomOutIcon,
+  DevicesIcon,
 } from "~/shared/icons";
 import type { Config } from "~/config";
 import { ShortcutHint } from "./shortcut-hint";
@@ -133,6 +136,43 @@ export const Menu = ({ config, publish }: MenuProps) => {
           <TrashIcon />
           <Text css={textCss}>Delete</Text>
           <ShortcutHint value={["backspace"]} />
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish({ type: "openBreakpointsMenu" });
+          }}
+        >
+          <DevicesIcon />
+          <Text css={textCss}>Breakpoints</Text>
+          <ShortcutHint value={["cmd", "b"]} />
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish({
+              type: "zoom",
+              payload: "zoomIn",
+            });
+          }}
+        >
+          <ZoomInIcon />
+          <Text css={textCss}>Zoom in</Text>
+          <ShortcutHint value={["cmd", "="]} />
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish({
+              type: "zoom",
+              payload: "zoomOut",
+            });
+          }}
+        >
+          <ZoomOutIcon />
+          <Text css={textCss}>Zoom out</Text>
+          <ShortcutHint value={["cmd", "-"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
