@@ -37,7 +37,7 @@ type BreakpointSelectorItemProps = {
 const BreakpointSelectorItem = ({
   breakpoint,
 }: BreakpointSelectorItemProps) => {
-  const [canvasWidth = 0] = useCanvasWidth();
+  const [canvasWidth] = useCanvasWidth();
   return (
     <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
       <Text size="1" css={{ flexGrow: 1 }}>
