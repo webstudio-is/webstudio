@@ -23,7 +23,9 @@ const useNextBreakpoint = () => {
 
   return useMemo(() => {
     if (selectedBreakpoint === undefined) return;
-    const index = sortedBreakpoints.indexOf(selectedBreakpoint);
+    const index = sortedBreakpoints.findIndex(
+      (breakpoint) => breakpoint.id === selectedBreakpoint.id
+    );
     if (index === -1) return undefined;
     return sortedBreakpoints[index + 1];
   }, [sortedBreakpoints, selectedBreakpoint]);
@@ -55,7 +57,7 @@ export const WidthSetting = () => {
         <Slider
           min={min}
           max={max}
-          defaultValue={[value]}
+          value={[value]}
           onValueChange={([value]) => {
             setValue(value);
           }}

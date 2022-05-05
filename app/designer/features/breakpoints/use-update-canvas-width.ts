@@ -2,12 +2,21 @@ import { useCallback, useEffect } from "react";
 import {
   useSelectedBreakpoint,
   useCanvasWidth,
+  useIsPreviewMode,
 } from "~/designer/shared/nano-values";
 import { minWidth } from "./width-setting";
 
 export const useUpdateCanvasWidth = () => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
+  const [isPreviewMode] = useIsPreviewMode();
+
+  // Ensure the size is within currently selected breakpoint when returning to design mode out of preview mode,
+  // because preview mode enables resizing without constraining to the selected breakpoint.
+  useEffect(() => {
+    if (isPreviewMode === true || selectedBreakpoint === undefined) return;
+    setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
+  }, [isPreviewMode, selectedBreakpoint, setCanvasWidth]);
 
   useEffect(() => {
     if (selectedBreakpoint === undefined) {
