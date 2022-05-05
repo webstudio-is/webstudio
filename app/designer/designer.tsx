@@ -228,7 +228,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
                 height: "100%",
                 minWidth,
               }}
-              style={{ width: canvasWidth || "100%" }}
+              style={{ width: canvasWidth }}
             />
           </Workspace>
           <Breadcrumbs publish={publish} />

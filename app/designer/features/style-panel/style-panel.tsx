@@ -33,8 +33,7 @@ export const StylePanel = ({
     currentStyle === undefined ||
     inheritedStyle === undefined ||
     selectedInstanceData === undefined ||
-    breakpoint === undefined ||
-    canvasWidth === undefined
+    breakpoint === undefined
   ) {
     return null;
   }

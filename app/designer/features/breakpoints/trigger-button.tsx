@@ -36,7 +36,7 @@ export const TriggerButton = forwardRef<
 >((props, ref) => {
   const [zoom] = useZoom();
   const [breakpoint] = useSelectedBreakpoint();
-  const [canvasWidth = 0] = useCanvasWidth();
+  const [canvasWidth] = useCanvasWidth();
   if (breakpoint === undefined) return null;
   const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "gray";
 

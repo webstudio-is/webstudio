@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import {
   useSelectedBreakpoint,
   useCanvasWidth,
@@ -8,7 +8,6 @@ import { minWidth } from "./width-setting";
 export const useUpdateCanvasWidth = () => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
-  const initialCanvasWidthRef = useRef<number>();
 
   useEffect(() => {
     if (selectedBreakpoint === undefined) {
@@ -16,21 +15,27 @@ export const useUpdateCanvasWidth = () => {
     }
 
     if (selectedBreakpoint.minWidth === 0) {
-      setCanvasWidth(initialCanvasWidthRef.current);
+      setCanvasWidth(minWidth);
       return;
     }
 
     setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
   }, [selectedBreakpoint, setCanvasWidth]);
 
+  // Set the initial canvas width based on the selected breakpoint upper bound, which starts where the next breakpoint begins.
   return useCallback(
     (iframe: HTMLIFrameElement | null) => {
-      if (iframe === null || canvasWidth !== undefined) return;
-      initialCanvasWidthRef.current = Math.round(
-        iframe.getBoundingClientRect().width
-      );
-      setCanvasWidth(initialCanvasWidthRef.current);
+      // Once canvasWidth is set, it means we have already set the initial width.
+      if (
+        iframe === null ||
+        selectedBreakpoint === undefined ||
+        canvasWidth !== 0
+      ) {
+        return;
+      }
+
+      setCanvasWidth(minWidth);
     },
-    [canvasWidth, setCanvasWidth]
+    [canvasWidth, selectedBreakpoint, setCanvasWidth]
   );
 };
