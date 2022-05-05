@@ -27,7 +27,7 @@ const migrateTree = () => {
     printjson(tree._id.toString());
   };
 
-  const cursor = db.Tree.find();
+  const cursor = db.Tree.find({ "root.style": { $exists: true } });
 
   while (cursor.hasNext()) {
     migrate(cursor.next());
