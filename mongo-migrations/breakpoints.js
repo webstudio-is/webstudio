@@ -40,7 +40,7 @@ const migrateBreakpoints = () => {
     values: [
       {
         label: "Mobile",
-        minWidth: { $numberLong: "0" },
+        minWidth: 0,
         id: ObjectId("626fc63909a681e2a912b5a4"),
       },
       {
