@@ -8,7 +8,11 @@ import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 
-export const load = async (projectId: Project["id"]) => {
+export const load = async (projectId?: Project["id"]) => {
+  if (typeof projectId !== "string") {
+    throw new Error("Project ID required");
+  }
+
   return await prisma.breakpoints.findUnique({
     where: { projectId },
   });
