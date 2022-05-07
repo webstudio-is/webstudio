@@ -45,18 +45,11 @@ export {
   PopoverClose,
 } from "./components/popover";
 export { Heading } from "./components/heading";
-export {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuGroup,
-  DropdownMenuTrigger,
-  DropdownMenuArrow,
-  DropdownMenuSeparator,
-} from "./components/dropdown-menu";
+export * from "./components/dropdown-menu";
 export { MenuContent, MenuItem, Menu, MenuAnchor } from "./components/menu";
 export { Paragraph } from "./components/paragraph";
 export { Link } from "./components/link";
 export { Switch } from "./components/switch";
 export { Panel } from "./components/panel";
+export * from "./components/slider";
+export * from "./components/control-group";

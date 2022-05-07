@@ -1,4 +1,5 @@
-import { statusContainer } from "./status";
+import { type SyncStatus } from "~/shared/sync";
+import { publish } from "../pubsub";
 
 // @todo because of limitation with nested models and saving tree as a Json type
 // we load that entire Json to manipulate and if a second request happens before the first one has written
@@ -21,10 +22,16 @@ const dequeue = () => {
   const job = queue.shift();
   if (job) {
     isInProgress = true;
-    statusContainer.dispatch(isInProgress ? "syncing" : "idle");
+    publish<"syncStatus", SyncStatus>({
+      type: "syncStatus",
+      payload: "syncing",
+    });
     job().finally(() => {
       isInProgress = false;
-      statusContainer.dispatch(isInProgress ? "syncing" : "idle");
+      publish<"syncStatus", SyncStatus>({
+        type: "syncStatus",
+        payload: "idle",
+      });
       dequeue();
     });
   }

@@ -8,17 +8,17 @@ describe("Get instance path", () => {
     const instance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "2",
-          style: {},
+          cssRules: [],
           children: [
             {
               component: "Box",
               id: "3",
-              style: {},
+              cssRules: [],
               children: [],
             },
           ],
@@ -33,17 +33,17 @@ describe("Get instance path", () => {
     const instance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "2a",
-          style: {},
+          cssRules: [],
           children: [
             {
               component: "Box",
               id: "3a",
-              style: {},
+              cssRules: [],
               children: [],
             },
           ],
@@ -51,12 +51,12 @@ describe("Get instance path", () => {
         {
           component: "Box",
           id: "2b",
-          style: {},
+          cssRules: [],
           children: [
             {
               component: "Box",
               id: "3b",
-              style: {},
+              cssRules: [],
               children: [],
             },
           ],

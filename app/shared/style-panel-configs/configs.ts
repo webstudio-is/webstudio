@@ -7,8 +7,7 @@ import {
   type Category,
   type StyleProperty,
 } from "@webstudio-is/sdk";
-import type { StyleConfig } from "./types";
-import { UiType } from ".";
+import type { StyleConfig, Control } from "./types";
 
 const humanizeString = (string: string): string => {
   return snakeCase(string).split("_").map(capitalize).join(" ");
@@ -16,7 +15,7 @@ const humanizeString = (string: string): string => {
 
 type Property = keyof typeof keywordValues;
 
-const getUiType = (property: StyleProperty): UiType => {
+const getControl = (property: StyleProperty): Control => {
   if (property.toLocaleLowerCase().includes("color")) {
     return "ColorField";
   }
@@ -51,7 +50,7 @@ const createStyleConfigs = () => {
         label,
         property,
         appliesTo: properties[property].appliesTo,
-        ui: getUiType(property),
+        control: getControl(property),
         items: keywords.map((keyword: string) => ({
           label: keyword,
           name: keyword,

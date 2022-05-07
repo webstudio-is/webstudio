@@ -20,45 +20,28 @@ import {
   TrashIcon,
   ClipboardCopyIcon,
   CopyIcon,
+  ZoomInIcon,
+  ZoomOutIcon,
+  DevicesIcon,
 } from "~/shared/icons";
 import type { Config } from "~/config";
+import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
-} from "../../shared/nano-values";
-import { type Publish } from "../../shared/canvas-iframe";
-
-const isMac =
-  typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
-const shortcutsMap: Record<string, string> = {
-  cmd: "⌘",
-  ctrl: "⌃",
-  shift: "⇧",
-  option: "⌥",
-  backspace: "⌫",
-};
-
-const Shortcut = ({ mac, win }: { mac: Array<string>; win: Array<string> }) => {
-  // @todo check what linux needs
-  const value = isMac ? mac : win;
-  const formattedValue = value.map(
-    (char) => shortcutsMap[char] ?? char.toUpperCase()
-  );
-  return (
-    <Text
-      size="1"
-      css={{ letterSpacing: 1.5, textAlign: "right", flexGrow: 1 }}
-    >
-      {formattedValue}
-    </Text>
-  );
-};
+} from "~/designer/shared/nano-values";
+import { type Publish } from "~/designer/shared/canvas-iframe";
 
 const menuItemCss = {
   display: "flex",
   gap: "$3",
   justifyContent: "start",
   flexGrow: 1,
+};
+
+const textCss = {
+  flexGrow: 1,
+  fontSize: "$1",
 };
 
 type MenuProps = {
@@ -97,8 +80,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <UndoIcon /> Undo
-          <Shortcut mac={["cmd", "z"]} win={["ctrl", "z"]} />
+          <UndoIcon />
+          <Text css={textCss}>Undo</Text>
+          <ShortcutHint value={["cmd", "z"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
@@ -109,8 +93,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <RedoIcon /> Redo
-          <Shortcut mac={["shift", "cmd", "z"]} win={["shift", "ctrl", "z"]} />
+          <RedoIcon />
+          <Text css={textCss}>Redo</Text>
+          <ShortcutHint value={["shift", "cmd", "z"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -122,8 +107,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <CopyIcon /> Copy
-          <Shortcut mac={["cmd", "c"]} win={["ctrl", "c"]} />
+          <CopyIcon />
+          <Text css={textCss}>Copy</Text>
+          <ShortcutHint value={["cmd", "c"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
@@ -134,8 +120,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <ClipboardCopyIcon /> Paste
-          <Shortcut mac={["cmd", "v"]} win={["ctrl", "v"]} />
+          <ClipboardCopyIcon />
+          <Text css={textCss}>Paste</Text>
+          <ShortcutHint value={["cmd", "v"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
@@ -146,8 +133,46 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <TrashIcon /> Delete
-          <Shortcut mac={["backspace"]} win={["backspace"]} />
+          <TrashIcon />
+          <Text css={textCss}>Delete</Text>
+          <ShortcutHint value={["backspace"]} />
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish({ type: "openBreakpointsMenu" });
+          }}
+        >
+          <DevicesIcon />
+          <Text css={textCss}>Breakpoints</Text>
+          <ShortcutHint value={["cmd", "b"]} />
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish({
+              type: "zoom",
+              payload: "zoomIn",
+            });
+          }}
+        >
+          <ZoomInIcon />
+          <Text css={textCss}>Zoom in</Text>
+          <ShortcutHint value={["cmd", "="]} />
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          css={menuItemCss}
+          onSelect={() => {
+            publish({
+              type: "zoom",
+              payload: "zoomOut",
+            });
+          }}
+        >
+          <ZoomOutIcon />
+          <Text css={textCss}>Zoom out</Text>
+          <ShortcutHint value={["cmd", "-"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -158,8 +183,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <EyeOpenIcon /> Preview
-          <Shortcut mac={["cmd", "shift", "p"]} win={["ctrl", "shift", "p"]} />
+          <EyeOpenIcon />
+          <Text css={textCss}>Preview</Text>
+          <ShortcutHint value={["cmd", "shift", "p"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
@@ -167,7 +193,8 @@ export const Menu = ({ config, publish }: MenuProps) => {
             setIsShareOpen(true);
           }}
         >
-          <Share1Icon /> Share
+          <Share1Icon />
+          <Text css={textCss}>Share</Text>
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
@@ -175,7 +202,8 @@ export const Menu = ({ config, publish }: MenuProps) => {
             setIsPublishOpen(true);
           }}
         >
-          <RocketIcon /> Publish
+          <RocketIcon />
+          <Text css={textCss}>Publish</Text>
         </DropdownMenuItem>
         <DropdownMenuArrow offset={10} />
       </DropdownMenuContent>

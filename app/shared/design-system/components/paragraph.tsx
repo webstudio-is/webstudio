@@ -23,7 +23,7 @@ export const Paragraph = React.forwardRef<
 
   // This is the mapping of Paragraph Variants to Text variants
   const textSize: Record<ParagraphSizeVariants, TextSizeVariants["size"]> = {
-    1: { "@initial": "3", "@bp2": "4" },
+    1: { "@initial": "2", "@bp2": "4" },
     2: { "@initial": "5", "@bp2": "6" },
   };
 

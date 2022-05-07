@@ -1,6 +1,11 @@
 import { useState } from "react";
 import hyphenate from "hyphenate-style-name";
-import { categories, type Category, type Style } from "@webstudio-is/sdk";
+import {
+  categories,
+  type CssRule,
+  type Category,
+  type Style,
+} from "@webstudio-is/sdk";
 import { Box, Flex, Collapsible, Button } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import { styleConfigs, type StyleConfig } from "~/shared/style-panel-configs";
@@ -85,6 +90,7 @@ const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
 type VisualSettingsProps = {
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
+  cssRule?: CssRule;
   setProperty: SetProperty;
   selectedInstanceData: SelectedInstanceData;
   search: string;

@@ -1,45 +1,68 @@
-import { type Instance, type Project, type Tree } from "@webstudio-is/sdk";
+import {
+  type Instance,
+  type Project,
+  type Tree,
+  type Breakpoint,
+} from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { createInstance } from "~/shared/tree-utils";
 
-const rootConfig = {
+export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
+  const defaultBreakpoint = breakpoints.find(
+    (breakpoint) => breakpoint.minWidth === 0
+  );
+  if (defaultBreakpoint === undefined) {
+    throw new Error("A breakpoint with minWidth 0 is required");
+  }
   // @todo this should be part of a root primitive in primitives
-  component: "Box",
-  style: {
-    fontFamily: {
-      type: "keyword",
-      value: "Arial",
-    },
-    fontSize: {
-      type: "unit",
-      unit: "px",
-      value: 14,
-    },
-    lineHeight: {
-      type: "unit",
-      unit: "px",
-      value: 20,
-    },
-    color: {
-      type: "keyword",
-      value: "#232323",
-    },
-    minHeight: {
-      type: "unit",
-      unit: "vh",
-      value: 100,
-    },
-    flexDirection: {
-      type: "keyword",
-      value: "column",
-    },
-  },
-} as const;
+  const rootConfig: Pick<Instance, "component" | "cssRules"> = {
+    component: "Box",
+    cssRules: [
+      {
+        breakpoint: defaultBreakpoint.id,
+        style: {
+          backgroundColor: {
+            type: "keyword",
+            value: "white",
+          },
+          fontFamily: {
+            type: "keyword",
+            value: "Arial",
+          },
+          fontSize: {
+            type: "unit",
+            unit: "px",
+            value: 14,
+          },
+          lineHeight: {
+            type: "unit",
+            unit: "px",
+            value: 20,
+          },
+          color: {
+            type: "keyword",
+            value: "#232323",
+          },
+          minHeight: {
+            type: "unit",
+            unit: "vh",
+            value: 100,
+          },
+          flexDirection: {
+            type: "keyword",
+            value: "column",
+          },
+        },
+      },
+    ],
+  };
+  return createInstance(rootConfig);
+};
 
-export const create = async (root?: Instance): Promise<Tree> => {
+export const create = async (root: Instance): Promise<Tree> => {
   return (await prisma.tree.create({
-    data: { root: root ?? createInstance(rootConfig) },
+    data: { root },
   })) as Tree;
 };
 
@@ -47,19 +70,6 @@ export const loadById = async (id: string): Promise<Tree> => {
   return (await prisma.tree.findUnique({
     where: { id },
   })) as Tree;
-};
-
-export const loadByDomain = async (domain: string): Promise<Tree> => {
-  const project = await prisma.project.findUnique({
-    where: { domain },
-  });
-  if (project === null) {
-    throw new Error(`Unknown domain "${domain}"`);
-  }
-  if (project.prodTreeId === null) {
-    throw new Error(`Site is not published`);
-  }
-  return await loadById(project.prodTreeId);
 };
 
 export const loadByProject = async (

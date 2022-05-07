@@ -1,5 +1,5 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Breakpoint, type Instance } from "@webstudio-is/sdk";
 import { type DropData } from "~/shared/component";
 import store from "immerhin";
 
@@ -22,3 +22,6 @@ export const rootInstanceContainer = createValueContainer<
 >();
 export const useRootInstance = () => useValue(rootInstanceContainer);
 store.register("root", rootInstanceContainer);
+
+export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([]);
+export const useBreakpoints = () => useValue(breakpointsContainer);

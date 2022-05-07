@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import ObjectId from "bson-objectid";
 import {
   type InstanceProps,
   type Instance,
   type Tree,
   allUserPropsContainer,
+  getBrowserStyle,
+  useAllUserProps,
 } from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
@@ -13,13 +16,14 @@ import {
   insertInstanceMutable,
 } from "~/shared/tree-utils";
 import store from "immerhin";
-import { DropData } from "~/shared/component";
+import { DropData, type SelectedInstanceData } from "~/shared/component";
 import {
   rootInstanceContainer,
   useRootInstance,
   useSelectedInstance,
+  useSelectedElement,
 } from "./nano-values";
-import { useSubscribe } from "./pubsub";
+import { useSubscribe, publish } from "./pubsub";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -108,4 +112,56 @@ export const useDeleteInstance = () => {
       });
     }
   );
+};
+
+export const usePublishSelectedInstance = ({
+  treeId,
+}: {
+  treeId: Tree["id"];
+}) => {
+  const [instance] = useSelectedInstance();
+  const [selectedElement] = useSelectedElement();
+  const [allUserProps] = useAllUserProps();
+  const browserStyle = useMemo(
+    () => getBrowserStyle(selectedElement),
+    [selectedElement]
+  );
+
+  useEffect(() => {
+    // Unselects the instance by `undefined`
+    let payload;
+    if (instance !== undefined) {
+      let props = allUserProps[instance.id];
+      if (props === undefined) {
+        props = {
+          id: ObjectId().toString(),
+          instanceId: instance.id,
+          treeId,
+          props: [],
+        };
+      }
+      payload = {
+        id: instance.id,
+        component: instance.component,
+        cssRules: instance.cssRules,
+        browserStyle,
+        props,
+      };
+    }
+
+    publish<"selectInstance", SelectedInstanceData>({
+      type: "selectInstance",
+      payload,
+    });
+  }, [instance, allUserProps, treeId, browserStyle]);
+};
+
+export const usePublishRootInstance = () => {
+  const [rootInstance] = useRootInstance();
+  useEffect(() => {
+    publish<"loadRootInstance", Instance>({
+      type: "loadRootInstance",
+      payload: rootInstance,
+    });
+  }, [rootInstance]);
 };

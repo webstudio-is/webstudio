@@ -1,10 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import type { SelectedInstanceData, StyleUpdates } from "~/shared/component";
-import { type Style, type StyleProperty } from "@webstudio-is/sdk";
+import { type StyleProperty } from "@webstudio-is/sdk";
 import { type Publish } from "~/designer/shared/canvas-iframe";
-import { useRootInstance } from "../../shared/nano-values";
+import {
+  useRootInstance,
+  useSelectedBreakpoint,
+} from "../../shared/nano-values";
 import { parseCssValue } from "./parse-css-value";
-import { getInheritedStyle, type InheritedStyle } from "./get-inherited-style";
+import { getInheritedStyle } from "./get-inherited-style";
+import { getCssRuleForBreakpoint } from "./lib/utils/get-css-rule-for-breakpoint";
 
 type UseStyleData = {
   publish: Publish;
@@ -20,12 +24,32 @@ export type SetProperty = (
 export const useStyleData = ({
   selectedInstanceData,
   publish,
-}: UseStyleData): [Style | void, InheritedStyle | void, SetProperty] => {
+}: UseStyleData) => {
   const [rootInstance] = useRootInstance();
-  const [currentStyle, setCurrentStyle] = useState<Style | undefined>({
-    ...selectedInstanceData?.browserStyle,
-    ...selectedInstanceData?.style,
-  });
+  const [selectedBreakpoint] = useSelectedBreakpoint();
+  const cssRule = useMemo(
+    () =>
+      getCssRuleForBreakpoint(
+        selectedInstanceData?.cssRules,
+        selectedBreakpoint
+      ),
+    [selectedInstanceData?.cssRules, selectedBreakpoint]
+  );
+
+  const getCurrentStyle = useCallback(
+    () => ({
+      ...selectedInstanceData?.browserStyle,
+      ...cssRule?.style,
+    }),
+    [selectedInstanceData, cssRule]
+  );
+
+  const [currentStyle, setCurrentStyle] = useState(getCurrentStyle());
+
+  useEffect(() => {
+    setCurrentStyle(getCurrentStyle());
+  }, [getCurrentStyle]);
+
   const inheritedStyle = useMemo(() => {
     if (
       currentStyle === undefined ||
@@ -37,18 +61,17 @@ export const useStyleData = ({
     return getInheritedStyle(rootInstance, selectedInstanceData.id);
   }, [currentStyle, selectedInstanceData, rootInstance]);
 
-  useEffect(() => {
-    setCurrentStyle({
-      ...selectedInstanceData?.browserStyle,
-      ...selectedInstanceData?.style,
-    });
-  }, [selectedInstanceData?.style, selectedInstanceData?.browserStyle]);
-
   const publishUpdates = (
     type: "update" | "preview",
     updates: StyleUpdates["updates"]
   ) => {
-    if (updates.length === 0 || selectedInstanceData === undefined) return;
+    if (
+      updates.length === 0 ||
+      selectedInstanceData === undefined ||
+      selectedBreakpoint == undefined
+    ) {
+      return;
+    }
     publish<string, StyleUpdates>({
       type:
         type === "update"
@@ -57,6 +80,7 @@ export const useStyleData = ({
       payload: {
         id: selectedInstanceData.id,
         updates,
+        breakpoint: selectedBreakpoint,
       },
     });
   };
@@ -77,5 +101,5 @@ export const useStyleData = ({
     };
   };
 
-  return [currentStyle, inheritedStyle, setProperty];
+  return { currentStyle, inheritedStyle, setProperty };
 };
