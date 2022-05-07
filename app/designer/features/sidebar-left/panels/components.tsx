@@ -1,16 +1,10 @@
-import {
-  useEffect,
-  useRef,
-  MutableRefObject,
-  type MouseEventHandler,
-  useCallback,
-} from "react";
+import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
 import { useDrag } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
 import { Flex, Text } from "~/shared/design-system";
 import { Component1Icon } from "~/shared/icons";
 import { primitives, type DragData } from "~/shared/component";
-import { type Publish } from "~/designer/features/canvas-iframe";
+import { type Publish } from "~/designer/shared/canvas-iframe";
 import { createInstance } from "~/shared/tree-utils";
 import { CustomDragLayer } from "../custom-drag-layer";
 import type { TabName } from "../types";
@@ -76,7 +70,6 @@ const Component = ({
 type ComponentsProps = {
   onDragChange: ComponentProps["onDragChange"];
   onSetActiveTab: (tabName: TabName) => void;
-  iframeRef: MutableRefObject<HTMLIFrameElement | null>;
   publish: Publish;
 };
 

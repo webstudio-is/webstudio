@@ -9,12 +9,12 @@ describe("Insert instance", () => {
     const rootInstance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "2",
-          style: {},
+          cssRules: [],
           children: [],
         },
       ],
@@ -32,12 +32,12 @@ describe("Insert instance", () => {
     const rootInstance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "2",
-          style: {},
+          cssRules: [],
           children: [],
         },
       ],
@@ -55,12 +55,12 @@ describe("Insert instance", () => {
     const rootInstance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "2",
-          style: {},
+          cssRules: [],
           children: [],
         },
       ],
@@ -77,12 +77,12 @@ describe("Insert instance", () => {
     const rootInstance: Instance = {
       component: "Box",
       id: "1",
-      style: {},
+      cssRules: [],
       children: [
         {
           component: "Box",
           id: "2",
-          style: {},
+          cssRules: [],
           children: [],
         },
       ],

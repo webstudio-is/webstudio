@@ -6,7 +6,8 @@ import { Share } from "./share";
 import { Publish } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
-import { type Publish as PublishOnCanvas } from "~/designer/features/canvas-iframe";
+import { Breakpoints } from "../breakpoints";
+import { type Publish as PublishOnCanvas } from "../../shared/canvas-iframe";
 
 type TopbarProps = {
   config: Config;
@@ -29,9 +30,10 @@ export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
       }}
     >
       <Menu config={config} publish={publish} />
-      <Preview publish={publish} />
+      <Breakpoints publish={publish} />
       <Flex gap="1" align="center">
         <SyncStatus />
+        <Preview publish={publish} />
         <Share path={config.previewPath} project={project} />
         <Publish project={project} />
       </Flex>

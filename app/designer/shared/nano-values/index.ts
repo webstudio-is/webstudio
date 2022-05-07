@@ -1,6 +1,7 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Breakpoint, type Instance } from "@webstudio-is/sdk";
 import { SelectedInstanceData } from "~/shared/component";
+import { type SyncStatus } from "~/shared/sync";
 
 const rootInstanceContainer = createValueContainer<Instance | undefined>();
 export const useRootInstance = () => useValue(rootInstanceContainer);
@@ -20,3 +21,24 @@ export const useIsShareDialogOpen = () => useValue(isShareDialogOpenContainer);
 const isPublishDialogOpenContainer = createValueContainer<boolean>(false);
 export const useIsPublishDialogOpen = () =>
   useValue(isPublishDialogOpenContainer);
+
+const selectedBreakpointContainer = createValueContainer<
+  Breakpoint | undefined
+>();
+export const useSelectedBreakpoint = () =>
+  useValue(selectedBreakpointContainer);
+
+export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([]);
+export const useBreakpoints = () => useValue(breakpointsContainer);
+
+const zoomContainer = createValueContainer<number>(100);
+export const useZoom = () => useValue(zoomContainer);
+
+const canvasWidthContainer = createValueContainer<number>(0);
+export const useCanvasWidth = () => useValue(canvasWidthContainer);
+
+const canvasRectContainer = createValueContainer<DOMRect | undefined>();
+export const useCanvasRect = () => useValue(canvasRectContainer);
+
+const syncStatusContainer = createValueContainer<SyncStatus>("idle");
+export const useSyncStatus = () => useValue(syncStatusContainer);

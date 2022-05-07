@@ -1,6 +1,6 @@
 import hyphenate from "hyphenate-style-name";
 import { units } from "@webstudio-is/sdk";
-import type { Style, StyleProperty, StyleValue, Unit } from "@webstudio-is/sdk";
+import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/sdk";
 
 const unitRegex = new RegExp(`${units.join("|")}`);
 
@@ -55,10 +55,10 @@ const evaluate = (input: string, parsedUnit: [Unit] | null) => {
 // - 10px > px as unit
 // - empty string
 // - a keyword
-export const parseValue = (
+export const parseCssValue = (
   property: StyleProperty,
   input: string,
-  style: Style
+  defaultUnit?: Unit
 ): StyleValue => {
   const invalidValue = {
     type: "invalid",
@@ -84,20 +84,11 @@ export const parseValue = (
     return invalidValue;
   }
 
-  const previousValue = style[property];
   // If user didn't enter a unit, use the previous known unit otherwise fallback to px.
-  const defaultUnit: Unit =
-    previousValue !== undefined && "unit" in previousValue
-      ? previousValue.unit
-      : "number";
-  const [unit] = parsedUnit || [defaultUnit];
+  const fallbackUnit: Unit = defaultUnit ?? "number";
+  const [unit] = parsedUnit || [fallbackUnit];
 
-  if (
-    isValid(property, input) ||
-    isValid(property, input + unit) ||
-    isValid(property, number) ||
-    isValid(property, number + unit)
-  ) {
+  if (isValid(property, number) || isValid(property, number + unit)) {
     return {
       type: "unit",
       unit,

@@ -1,6 +1,7 @@
 body {
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: contain;
   font-family: var(--fonts-sans);
   font-size: var(--fontSizes-1);
 }

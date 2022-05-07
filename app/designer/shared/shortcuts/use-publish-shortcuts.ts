@@ -1,6 +1,6 @@
 import { useHotkeys } from "react-hotkeys-hook";
-import { type Publish } from "~/designer/features/canvas-iframe";
-import { shortcuts } from "~/shared/shortcuts";
+import { type Publish } from "~/designer/shared/canvas-iframe";
+import { shortcuts, options } from "~/shared/shortcuts";
 
 const names = Object.keys(shortcuts) as Array<keyof typeof shortcuts>;
 
@@ -13,12 +13,14 @@ export const usePublishShortcuts = (publish: Publish) => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useHotkeys(
       shortcuts[name],
-      () => {
-        publish<"shortcut", string>({
+      (event) => {
+        event.preventDefault();
+        publish<"shortcut", { name: string; key: string }>({
           type: "shortcut",
-          payload: name,
+          payload: { name, key: event.key },
         });
       },
+      options,
       []
     );
   });

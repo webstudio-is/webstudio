@@ -53,8 +53,9 @@ export const create = async ({
   }
 
   const domain = generateDomain(title);
-  const tree = await db.tree.create();
-  return await prisma.project.create({
+  const breakpoints = db.breakpoints.getBreakpointsWithId();
+  const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
+  const project = await prisma.project.create({
     data: {
       userId,
       title,
@@ -62,6 +63,8 @@ export const create = async ({
       devTreeId: tree.id,
     },
   });
+  await db.breakpoints.create(project.id, breakpoints);
+  return project;
 };
 
 export const clone = async (clonableDomain: string): Promise<Project> => {

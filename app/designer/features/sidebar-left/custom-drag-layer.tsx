@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useDragLayer, type XYCoord } from "react-dnd";
 import { type Instance } from "@webstudio-is/sdk";
+import { useCanvasRect, useZoom } from "~/designer/shared/nano-values";
 
 const layerStyles = {
   position: "absolute",
@@ -32,22 +33,30 @@ export const CustomDragLayer = ({ onDrag }: CustomDragLayerProps) => {
     isDragging: monitor.isDragging(),
     clientOffset: monitor.getClientOffset(),
   }));
+  const [canvasRect] = useCanvasRect();
+  const [zoom] = useZoom();
 
   useEffect(() => {
-    if (clientOffset === null || initialOffset === null || component === null) {
+    if (
+      clientOffset === null ||
+      initialOffset === null ||
+      component === null ||
+      canvasRect === undefined
+    ) {
       return;
     }
 
+    const scale = zoom / 100;
     const currentOffset = {
-      x: clientOffset.x - initialOffset.x,
-      y: clientOffset.y - initialOffset.y,
+      x: (clientOffset.x - canvasRect.x) / scale,
+      y: (clientOffset.y - canvasRect.y) / scale,
     };
 
     onDrag({
       currentOffset,
       component,
     });
-  }, [clientOffset, initialOffset, component, onDrag]);
+  }, [clientOffset, initialOffset, component, onDrag, zoom, canvasRect]);
 
   if (isDragging === false) return null;
 

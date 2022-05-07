@@ -34,7 +34,6 @@ const SliderThumb = styled(SliderPrimitive.Thumb, {
   width: 15,
   height: 15,
   outline: "none",
-  opacity: "0",
   backgroundColor: "white",
   boxShadow: "0 0 1px rgba(0,0,0,.3), 0 1px 4px rgba(0,0,0,.15)",
   borderRadius: "$round",
@@ -79,9 +78,6 @@ export const StyledSlider = styled(SliderPrimitive.Root, {
     "&:hover": {
       [`& ${SliderTrack}`]: {
         backgroundColor: "$slate8",
-      },
-      [`& ${SliderThumb}`]: {
-        opacity: "1",
       },
     },
   },

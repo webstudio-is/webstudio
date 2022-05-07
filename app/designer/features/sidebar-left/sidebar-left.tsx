@@ -1,4 +1,4 @@
-import { useState, MutableRefObject, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Box,
   SidebarTabs,
@@ -6,7 +6,7 @@ import {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "~/shared/design-system";
-import { useSubscribe, type Publish } from "~/designer/features/canvas-iframe";
+import { useSubscribe, type Publish } from "../../shared/canvas-iframe";
 import { useSelectedInstanceData } from "../../shared/nano-values";
 import * as panels from "./panels";
 import type { TabName } from "./types";
@@ -24,15 +24,10 @@ const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
   onDragChange: (isDragging: boolean) => void;
-  iframeRef: MutableRefObject<HTMLIFrameElement | null>;
   publish: Publish;
 };
 
-export const SidebarLeft = ({
-  onDragChange,
-  iframeRef,
-  publish,
-}: SidebarLeftProps) => {
+export const SidebarLeft = ({ onDragChange, publish }: SidebarLeftProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const [isDragging, setIsDragging] = useState(false);
@@ -60,7 +55,7 @@ export const SidebarLeft = ({
   );
 
   return (
-    <Box css={{ position: "relative" }}>
+    <Box css={{ position: "relative", zIndex: 1 }}>
       <SidebarTabs activationMode="manual" value={activeTab}>
         <SidebarTabsList>
           {(Object.keys(panels) as Array<TabName>).map((tabName: TabName) => (
@@ -89,7 +84,6 @@ export const SidebarLeft = ({
           <TabContent
             selectedInstanceData={selectedInstanceData}
             publish={publish}
-            iframeRef={iframeRef}
             onSetActiveTab={setActiveTab}
             onDragChange={handleDragChange}
           />

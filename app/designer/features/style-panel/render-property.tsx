@@ -1,19 +1,11 @@
-import { useId } from "@radix-ui/react-id";
-import {
-  Flex,
-  Grid,
-  ToggleGroup as ToggleGroupPrimitive,
-  Label,
-  Select as SelectPrimitive,
-  Text,
-} from "~/shared/design-system";
+import { Flex, Grid, Label, Text } from "~/shared/design-system";
 import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
-  Style,
-  StyleProperty,
-  StyleValue,
-  Category,
   categories,
+  type Style,
+  type StyleProperty,
+  type Category,
+  type StyleValue,
 } from "@webstudio-is/sdk";
 import type { SetProperty } from "./use-style-data";
 import type { InheritedStyle } from "./get-inherited-style";
@@ -24,6 +16,8 @@ import {
   type SpacingProperty,
   type SpacingStyles,
 } from "./lib/spacing-widget";
+import { useIsFromCurrentBreakpoint } from "./lib/utils/use-is-from-current-breakpoint";
+import { propertyNameColorForSelectedBreakpoint } from "./lib/constants";
 
 const getFinalValue = ({
   currentStyle,
@@ -43,7 +37,46 @@ const getFinalValue = ({
   return currentValue;
 };
 
-type RendererProps = {
+type PropertyProps = {
+  property: StyleProperty;
+  label: string;
+};
+
+const PropertyName = ({ property, label }: PropertyProps) => {
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+
+  return (
+    <Label
+      css={{
+        gridColumn: "1",
+        color: isCurrentBreakpoint
+          ? propertyNameColorForSelectedBreakpoint
+          : "$hiContrast",
+      }}
+      variant="contrast"
+      size="1"
+      htmlFor={property}
+    >
+      {label}
+    </Label>
+  );
+};
+
+const Unit = ({ value }: { value: StyleValue }) => {
+  if (value.type !== "unit" || value.unit === "number") return null;
+  return (
+    <Text
+      css={{
+        fontSize: "$1",
+        cursor: "default",
+      }}
+    >
+      {value.unit}
+    </Text>
+  );
+};
+
+type ControlProps = {
   setProperty: SetProperty;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
@@ -55,8 +88,8 @@ const ColorField = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "ColorField") return null;
+}: ControlProps) => {
+  if (styleConfig.control !== "ColorField") return null;
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
@@ -68,11 +101,10 @@ const ColorField = ({
 
   return (
     <Grid columns={2} align="center" gapX="1">
-      <Label css={{ gridColumn: "1" }} size="1">
-        {styleConfig.label}
-      </Label>
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <ColorPicker
+          id={styleConfig.property}
           value={String(value.value)}
           onChange={(value) => {
             setValue(value, { isEphemeral: true });
@@ -89,8 +121,8 @@ const Spacing = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "Spacing") return null;
+}: ControlProps) => {
+  if (styleConfig.control !== "Spacing") return null;
 
   const styles = categories.spacing.properties.reduce(
     (acc: SpacingStyles, property: SpacingProperty): SpacingStyles => {
@@ -115,97 +147,8 @@ const Spacing = ({
   return <SpacingWidget setProperty={setProperty} values={styles} />;
 };
 
-const ToggleGroup = ({
-  currentStyle,
-  inheritedStyle,
-  setProperty,
-  styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "ToggleGroup") return null;
-  // @todo show which instance we inherited the value from
-  const value = getFinalValue({
-    currentStyle,
-    inheritedStyle,
-    property: styleConfig.property,
-  });
-  if (value === undefined) return null;
-
-  return (
-    <ToggleGroupPrimitive.Root
-      type="single"
-      value={value.value as string}
-      onValueChange={setProperty(styleConfig.property)}
-    >
-      {styleConfig.items.map(
-        ({ name, label }: { name: string; label: string }) => (
-          <ToggleGroupPrimitive.Item
-            css={{ fontSize: "$1", px: "$1" }}
-            value={name}
-            key={name}
-          >
-            {label}
-          </ToggleGroupPrimitive.Item>
-        )
-      )}
-    </ToggleGroupPrimitive.Root>
-  );
-};
-
-const Select = ({
-  currentStyle,
-  inheritedStyle,
-  setProperty,
-  styleConfig,
-}: RendererProps) => {
-  const id = useId();
-  if (styleConfig.ui !== "Select") return null;
-
-  // @todo show which instance we inherited the value from
-  const value = getFinalValue({
-    currentStyle,
-    inheritedStyle,
-    property: styleConfig.property,
-  });
-
-  if (value === undefined) return null;
-
-  return (
-    <Grid columns={2} align="center">
-      <Label htmlFor={id} css={{ gridColumn: "1", fontSize: "$1" }}>
-        {styleConfig.label}
-      </Label>
-      <SelectPrimitive
-        id={id}
-        css={{ gridColumn: "2/4" }}
-        value={value.value}
-        onChange={(event) => {
-          setProperty(styleConfig.property)(event.target.value);
-        }}
-      >
-        {styleConfig.items.map(({ name }: { name: string }) => (
-          <option value={name} key={name}>
-            {name}
-          </option>
-        ))}
-      </SelectPrimitive>
-    </Grid>
-  );
-};
-
-const Unit = ({ value }: { value: StyleValue }) => {
-  if (value.type !== "unit" || value.unit === "number") return null;
-  return (
-    <Text
-      css={{
-        fontSize: "$1",
-        cursor: "default",
-      }}
-    >
-      {value.unit}
-    </Text>
-  );
-};
-
+// @todo
+// This is a cursor image for drag&drop value changing on the input by dragging horizontally
 //const svgCursor =
 //  '<svg width="15" height="15" viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg"><path d="M8.00012 1.5C8.00012 1.22386 7.77626 1 7.50012 1C7.22398 1 7.00012 1.22386 7.00012 1.5V13.5C7.00012 13.7761 7.22398 14 7.50012 14C7.77626 14 8.00012 13.7761 8.00012 13.5V1.5ZM3.31812 5.818C3.49386 5.64227 3.49386 5.35734 3.31812 5.18161C3.14239 5.00587 2.85746 5.00587 2.68173 5.18161L0.681729 7.18161C0.505993 7.35734 0.505993 7.64227 0.681729 7.818L2.68173 9.818C2.85746 9.99374 3.14239 9.99374 3.31812 9.818C3.49386 9.64227 3.49386 9.35734 3.31812 9.18161L2.08632 7.9498H5.50017C5.7487 7.9498 5.95017 7.74833 5.95017 7.4998C5.95017 7.25128 5.7487 7.0498 5.50017 7.0498H2.08632L3.31812 5.818ZM12.3181 5.18161C12.1424 5.00587 11.8575 5.00587 11.6817 5.18161C11.506 5.35734 11.506 5.64227 11.6817 5.818L12.9135 7.0498H9.50017C9.25164 7.0498 9.05017 7.25128 9.05017 7.4998C9.05017 7.74833 9.25164 7.9498 9.50017 7.9498H12.9135L11.6817 9.18161C11.506 9.35734 11.506 9.64227 11.6817 9.818C11.8575 9.99374 12.1424 9.99374 12.3181 9.818L14.3181 7.818C14.4939 7.64227 14.4939 7.35734 14.3181 7.18161L12.3181 5.18161Z" fill="#fff"></path></svg>';
 
@@ -216,8 +159,8 @@ const TextFieldWithAutocomplete = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-}: RendererProps) => {
-  if (styleConfig.ui !== "TextFieldWithAutocomplete") return null;
+}: ControlProps) => {
+  if (styleConfig.control !== "TextFieldWithAutocomplete") return null;
 
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
@@ -230,11 +173,10 @@ const TextFieldWithAutocomplete = ({
 
   return (
     <Grid columns={2} align="center" gapX="1">
-      <Label css={{ gridColumn: "1" }} size="1">
-        {styleConfig.label}
-      </Label>
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Autocomplete
+          id={styleConfig.property}
           items={styleConfig.items}
           variant="ghost"
           css={{
@@ -252,13 +194,11 @@ const TextFieldWithAutocomplete = ({
   );
 };
 
-const renderers: {
-  [key: string]: (props: RendererProps) => JSX.Element | null;
+const controls: {
+  [key: string]: (props: ControlProps) => JSX.Element | null;
 } = {
   ColorField,
   Spacing,
-  ToggleGroup,
-  Select,
   TextFieldWithAutocomplete,
 };
 
@@ -277,10 +217,10 @@ export const renderProperty = ({
   styleConfig,
   category,
 }: RenderPropertyProps) => {
-  const Renderer = renderers[styleConfig.ui];
+  const Control = controls[styleConfig.control];
 
   return (
-    <Renderer
+    <Control
       key={category + "-" + styleConfig.property}
       currentStyle={currentStyle}
       inheritedStyle={inheritedStyle}

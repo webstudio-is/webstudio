@@ -19,12 +19,14 @@ type ColorPickerProps = {
   onChange: (value: string) => void;
   onChangeComplete: (value: string) => void;
   value: string;
+  id: string;
 };
 
 export const ColorPicker = ({
   value,
   onChange,
   onChangeComplete,
+  id,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   // Color picker will use 0 as alpha value, which will force user to set alpha every time they have to change from transparent
@@ -50,6 +52,7 @@ export const ColorPicker = ({
             onClick={() => setDisplayColorPicker((shown) => !shown)}
             variant="ghost"
             value={value}
+            id={id}
           />
         </Flex>
       </PopoverTrigger>

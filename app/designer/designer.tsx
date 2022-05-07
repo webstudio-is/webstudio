@@ -1,29 +1,32 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import type { Project } from "@webstudio-is/sdk";
+import { type Project } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import {
-  CanvasIframe,
-  useSubscribe,
-  usePublish,
-} from "./features/canvas-iframe";
+import { CanvasIframe, useSubscribe, usePublish } from "./shared/canvas-iframe";
 import {
   useIsPreviewMode,
   useRootInstance,
   useSelectedInstanceData,
+  useSyncStatus,
+  useCanvasWidth,
 } from "./shared/nano-values";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { useSync } from "./features/sync";
 import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
-import { usePublishShortcuts } from "./shared/shortcuts/use-publish-shortcuts";
+import {
+  useUpdateCanvasWidth,
+  useSubscribeBreakpoints,
+} from "./features/breakpoints";
+import { useReadCanvasRect, Workspace } from "./features/workspace";
+import { usePublishShortcuts } from "./shared/shortcuts";
+import { type SyncStatus } from "~/shared/sync";
 
 export const links = () => {
   return [
@@ -43,6 +46,22 @@ const useSubscribeSelectedInstanceData = () => {
     "selectInstance",
     setValue
   );
+};
+
+const useSubscribeSyncStatus = () => {
+  const [, setValue] = useSyncStatus();
+  useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
+};
+
+const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
+    setIsDragging(true);
+  });
+  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
+    setIsDragging(false);
+  });
+  return [isDragging, setIsDragging];
 };
 
 type SidePanelProps = {
@@ -85,6 +104,7 @@ const Main = ({ children }: { children: Array<JSX.Element> }) => (
     direction="column"
     css={{
       gridArea: "main",
+      overflow: "hidden",
     }}
   >
     {children}
@@ -134,30 +154,32 @@ type DesignerProps = {
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
-  useSync({ config, project });
+  useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
-  const [isDragging, setIsDragging] = useState<boolean>();
-  const [publish, iframeRef] = usePublish();
+  useSubscribeBreakpoints();
+  const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
+  const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
+  const [canvasWidth] = useCanvasWidth();
+  const onRefReadCanvasWidth = useUpdateCanvasWidth();
+  const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
-  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
-    setIsDragging(true);
-  });
-  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
-    setIsDragging(false);
-  });
+  const iframeRefCallback = useCallback(
+    (ref) => {
+      publishRef.current = ref;
+      onRefReadCanvasWidth(ref);
+      onRefReadCanvas(ref);
+    },
+    [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
+  );
 
   return (
     <DndProvider backend={HTML5Backend}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft
-            iframeRef={iframeRef}
-            onDragChange={setIsDragging}
-            publish={publish}
-          />
+          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
         </SidePanel>
         <Topbar
           css={{ gridArea: "header" }}
@@ -166,13 +188,18 @@ export const Designer = ({ config, project }: DesignerProps) => {
           publish={publish}
         />
         <Main>
-          <CanvasIframe
-            ref={iframeRef}
-            src={`${config.canvasPath}/${project.id}`}
-            pointerEvents={isDragging ? "none" : "all"}
-            title={project.title}
-            css={{ height: "100%" }}
-          />
+          <Workspace onTransitionEnd={onTransitionEnd}>
+            <CanvasIframe
+              ref={iframeRefCallback}
+              src={`${config.canvasPath}/${project.id}`}
+              pointerEvents={isDragging ? "none" : "all"}
+              title={project.title}
+              css={{
+                height: "100%",
+              }}
+              style={{ width: canvasWidth }}
+            />
+          </Workspace>
           <Breadcrumbs publish={publish} />
         </Main>
         <SidePanel

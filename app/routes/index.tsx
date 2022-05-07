@@ -8,7 +8,9 @@ import Document from "./canvas";
 
 type Error = { errors: string };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader: LoaderFunction = async ({
+  request,
+}): Promise<Data | Error | Response> => {
   const host =
     request.headers.get("x-forwarded-host") ||
     request.headers.get("host") ||
@@ -21,9 +23,19 @@ export const loader: LoaderFunction = async ({ request }) => {
     (wstdDomain === "wstd" || wstdDomain?.includes("localhost"))
   ) {
     try {
-      const tree = await db.tree.loadByDomain(userDomain);
-      const props = await db.props.loadByTreeId(tree.id);
-      return { tree, props };
+      const project = await db.project.loadByDomain(userDomain);
+      if (project === null) {
+        throw new Error(`Unknown domain "${userDomain}"`);
+      }
+      if (project.prodTreeId === null) {
+        throw new Error(`Site is not published`);
+      }
+      const [tree, props, breakpoints] = await Promise.all([
+        db.tree.loadByProject(project, "production"),
+        db.props.loadByTreeId(project.prodTreeId),
+        db.breakpoints.load(project.id),
+      ]);
+      return { tree, props, breakpoints: breakpoints?.values ?? [] };
     } catch (error) {
       if (error instanceof Error) {
         return { errors: error.message };

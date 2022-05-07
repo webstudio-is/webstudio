@@ -6,13 +6,13 @@ Object {
     Object {
       "children": Array [],
       "component": "Box",
+      "cssRules": Array [],
       "id": "2",
-      "style": Object {},
     },
   ],
   "component": "Box",
+  "cssRules": Array [],
   "id": "1",
-  "style": Object {},
 }
 `;
 
@@ -22,12 +22,12 @@ Object {
     Object {
       "children": Array [],
       "component": "Box",
+      "cssRules": Array [],
       "id": "2",
-      "style": Object {},
     },
   ],
   "component": "Box",
+  "cssRules": Array [],
   "id": "1",
-  "style": Object {},
 }
 `;
