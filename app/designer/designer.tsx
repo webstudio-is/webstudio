@@ -12,7 +12,6 @@ import { CanvasIframe, useSubscribe, usePublish } from "./shared/canvas-iframe";
 import {
   useIsPreviewMode,
   useRootInstance,
-  useZoom,
   useSelectedInstanceData,
   useSyncStatus,
   useCanvasWidth,
@@ -26,6 +25,7 @@ import {
   useUpdateCanvasWidth,
   useSubscribeBreakpoints,
 } from "./features/breakpoints";
+import { useReadCanvasRect, Workspace } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 
@@ -112,37 +112,6 @@ const Main = ({ children }: { children: Array<JSX.Element> }) => (
   </Flex>
 );
 
-const Workspace = ({ children }: { children: JSX.Element }) => {
-  const [zoom] = useZoom();
-
-  return (
-    <Box
-      css={{
-        flexGrow: 1,
-        background: "$gray8",
-        overflow: "auto",
-        scrollbarGutter: "stable",
-      }}
-    >
-      <Flex
-        direction="column"
-        align="center"
-        css={{
-          transformStyle: "preserve-3d",
-          transition: "transform 200ms ease-out",
-          height: "100%",
-          width: "100%",
-        }}
-        style={{
-          transform: `scale(${zoom / 100})`,
-        }}
-      >
-        {children}
-      </Flex>
-    </Box>
-  );
-};
-
 type ChromeWrapperProps = {
   children: Array<JSX.Element>;
   isPreviewMode: boolean;
@@ -190,19 +159,21 @@ export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
   useSubscribeBreakpoints();
-  const [publish, iframeRef1] = usePublish();
+  const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
   const [canvasWidth] = useCanvasWidth();
-  const iframeRef2Callback = useUpdateCanvasWidth();
+  const onRefReadCanvasWidth = useUpdateCanvasWidth();
+  const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
   const iframeRefCallback = useCallback(
     (ref) => {
-      iframeRef1.current = ref;
-      iframeRef2Callback(ref);
+      publishRef.current = ref;
+      onRefReadCanvasWidth(ref);
+      onRefReadCanvas(ref);
     },
-    [iframeRef1, iframeRef2Callback]
+    [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
 
   return (
@@ -218,7 +189,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
           publish={publish}
         />
         <Main>
-          <Workspace>
+          <Workspace onTransitionEnd={onTransitionEnd}>
             <CanvasIframe
               ref={iframeRefCallback}
               src={`${config.canvasPath}/${project.id}`}

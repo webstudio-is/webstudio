@@ -37,5 +37,8 @@ export const useZoom = () => useValue(zoomContainer);
 const canvasWidthContainer = createValueContainer<number>(0);
 export const useCanvasWidth = () => useValue(canvasWidthContainer);
 
+const canvasRectContainer = createValueContainer<DOMRect | undefined>();
+export const useCanvasRect = () => useValue(canvasRectContainer);
+
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
