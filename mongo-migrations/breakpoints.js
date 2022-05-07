@@ -2,7 +2,7 @@
 // because we don't have an automated setup for migrations yet.
 
 // This converts instance.style to instance.cssRules
-const migrateTree = () => {
+let migrateTree = () => {
   const transform = (instance) => {
     if (instance.style) {
       print(`migrating ${instance.id}`);
@@ -24,7 +24,7 @@ const migrateTree = () => {
   const migrate = (tree) => {
     transform(tree.root);
     db.Tree.updateOne({ _id: tree._id }, { $set: { root: tree.root } });
-    printjson(tree._id.toString());
+    printjson(`updating tree ${tree._id}`);
   };
 
   const cursor = db.Tree.find({ "root.style": { $exists: true } });
@@ -34,7 +34,7 @@ const migrateTree = () => {
   }
 };
 
-const migrateBreakpoints = () => {
+let migrateBreakpoints = () => {
   const createBreakpoints = (projectId) => ({
     _id: projectId,
     values: [
@@ -62,8 +62,12 @@ const migrateBreakpoints = () => {
   });
 
   const migrate = (project) => {
-    print(`inserting for ${project._id}`);
-    db.Breakpoints.insertOne(createBreakpoints(project._id));
+    print(`inserting breakpoints for ${project._id}`);
+    try {
+      db.Breakpoints.insertOne(createBreakpoints(project._id));
+    } catch (err) {
+      print(err);
+    }
   };
 
   const cursor = db.Project.find();
