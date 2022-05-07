@@ -21,7 +21,6 @@ import designerStyles from "./designer.css";
 import { Breadcrumbs } from "./features/breadcrumbs";
 import { TreePrevew } from "./features/tree-preview";
 import {
-  minWidth,
   useUpdateCanvasWidth,
   useSubscribeBreakpoints,
 } from "./features/breakpoints";
@@ -197,7 +196,6 @@ export const Designer = ({ config, project }: DesignerProps) => {
               title={project.title}
               css={{
                 height: "100%",
-                minWidth,
               }}
               style={{ width: canvasWidth }}
             />

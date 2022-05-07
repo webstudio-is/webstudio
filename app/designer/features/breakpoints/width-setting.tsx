@@ -8,9 +8,12 @@ import {
 import { Slider, Text, Flex } from "~/shared/design-system";
 import { sort } from "./sort";
 
-// Doesn't make sense to allow resizing the canvas lower/higher than this.
+// Currently most populare mobile resolution
 export const minWidth = 360;
 export const maxWidth = 3000;
+
+// Doesn't make sense to allow resizing the canvas lower/higher than this.
+const minResizeWidth = 200;
 
 /**
  * Return the next breakpoint from the currently selected one, sorted by the `sort()`
@@ -41,8 +44,8 @@ export const WidthSetting = () => {
 
   // We want to enable unconstrained resizing in a preview mode
   const min = isPreviewMode
-    ? minWidth
-    : Math.max(minWidth, selectedBreakpoint.minWidth);
+    ? minResizeWidth
+    : Math.max(minResizeWidth, selectedBreakpoint.minWidth);
   const max = isPreviewMode
     ? maxWidth
     : Math.min(
