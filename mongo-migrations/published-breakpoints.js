@@ -6,6 +6,7 @@ let migrateBreakpoints = () => {
     print(`updating breakpoints for ${project._id}`);
     try {
       const breakpoint = db.Breakpoints.findOne({ _id: project._id });
+      if (breakpoint === null) return;
       breakpoint._id = project.devTreeId;
       db.Breakpoints.insertOne(breakpoint);
       db.Breakpoints.remove({ _id: project._id }, true);
