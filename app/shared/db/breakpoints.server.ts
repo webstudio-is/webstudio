@@ -36,6 +36,20 @@ export const create = async (
   return data;
 };
 
+export const clone = async ({
+  previousTreeId,
+  nextTreeId,
+}: {
+  previousTreeId: Tree["id"];
+  nextTreeId: Tree["id"];
+}) => {
+  const breakpoints = await load(previousTreeId);
+  if (breakpoints === null) {
+    throw new Error(`Didn't find breakpoints with tree id "${previousTreeId}"`);
+  }
+  await create(nextTreeId, breakpoints.values);
+};
+
 export const patch = async (
   { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
   patches: Array<Patch>
