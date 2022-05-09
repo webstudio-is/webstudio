@@ -9,21 +9,7 @@ import {
   IconButton,
   Text,
 } from "~/shared/design-system";
-import {
-  HamburgerMenuIcon,
-  DashboardIcon,
-  EyeOpenIcon,
-  Share1Icon,
-  RocketIcon,
-  UndoIcon,
-  RedoIcon,
-  TrashIcon,
-  ClipboardCopyIcon,
-  CopyIcon,
-  ZoomInIcon,
-  ZoomOutIcon,
-  DevicesIcon,
-} from "~/shared/icons";
+import { HamburgerMenuIcon } from "~/shared/icons";
 import type { Config } from "~/config";
 import { ShortcutHint } from "./shortcut-hint";
 import {
@@ -37,6 +23,7 @@ const menuItemCss = {
   gap: "$3",
   justifyContent: "start",
   flexGrow: 1,
+  minWidth: 140,
 };
 
 const textCss = {
@@ -68,7 +55,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             navigate(config.dashboardPath);
           }}
         >
-          <DashboardIcon /> Dashboard
+          <Text css={textCss}>Dashboard</Text>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -80,7 +67,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <UndoIcon />
           <Text css={textCss}>Undo</Text>
           <ShortcutHint value={["cmd", "z"]} />
         </DropdownMenuItem>
@@ -93,7 +79,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <RedoIcon />
           <Text css={textCss}>Redo</Text>
           <ShortcutHint value={["shift", "cmd", "z"]} />
         </DropdownMenuItem>
@@ -107,7 +92,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <CopyIcon />
           <Text css={textCss}>Copy</Text>
           <ShortcutHint value={["cmd", "c"]} />
         </DropdownMenuItem>
@@ -120,7 +104,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <ClipboardCopyIcon />
           <Text css={textCss}>Paste</Text>
           <ShortcutHint value={["cmd", "v"]} />
         </DropdownMenuItem>
@@ -133,7 +116,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <TrashIcon />
           <Text css={textCss}>Delete</Text>
           <ShortcutHint value={["backspace"]} />
         </DropdownMenuItem>
@@ -144,7 +126,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             publish({ type: "openBreakpointsMenu" });
           }}
         >
-          <DevicesIcon />
           <Text css={textCss}>Breakpoints</Text>
           <ShortcutHint value={["cmd", "b"]} />
         </DropdownMenuItem>
@@ -157,9 +138,8 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <ZoomInIcon />
           <Text css={textCss}>Zoom in</Text>
-          <ShortcutHint value={["cmd", "="]} />
+          <ShortcutHint value={["cmd", "+"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
@@ -170,7 +150,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <ZoomOutIcon />
           <Text css={textCss}>Zoom out</Text>
           <ShortcutHint value={["cmd", "-"]} />
         </DropdownMenuItem>
@@ -183,7 +162,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <EyeOpenIcon />
           <Text css={textCss}>Preview</Text>
           <ShortcutHint value={["cmd", "shift", "p"]} />
         </DropdownMenuItem>
@@ -193,7 +171,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             setIsShareOpen(true);
           }}
         >
-          <Share1Icon />
           <Text css={textCss}>Share</Text>
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -202,7 +179,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
             setIsPublishOpen(true);
           }}
         >
-          <RocketIcon />
           <Text css={textCss}>Publish</Text>
         </DropdownMenuItem>
         <DropdownMenuArrow offset={10} />
