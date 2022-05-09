@@ -8,13 +8,13 @@ import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 
-export const load = async (projectId?: Project["id"]) => {
-  if (typeof projectId !== "string") {
-    throw new Error("Project ID required");
+export const load = async (treeId?: Tree["id"]) => {
+  if (typeof treeId !== "string") {
+    throw new Error("Tree ID required");
   }
 
   return await prisma.breakpoints.findUnique({
-    where: { projectId },
+    where: { treeId },
   });
 };
 
@@ -25,11 +25,11 @@ export const getBreakpointsWithId = () =>
   }));
 
 export const create = async (
-  projectId: Project["id"],
+  treeId: Project["id"],
   breakpoints: Array<Breakpoint>
 ) => {
   const data = {
-    projectId,
+    treeId,
     values: breakpoints,
   };
   await prisma.breakpoints.create({ data });
@@ -37,14 +37,14 @@ export const create = async (
 };
 
 export const patch = async (
-  { projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
   patches: Array<Patch>
 ) => {
-  const breakpoints = await load(projectId);
+  const breakpoints = await load(treeId);
   if (breakpoints === null) return;
   const nextBreakpoints = applyPatches(breakpoints.values, patches);
   await prisma.breakpoints.update({
-    where: { projectId: projectId },
+    where: { treeId },
     data: { values: nextBreakpoints },
   });
 };

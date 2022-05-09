@@ -8,7 +8,7 @@ export type ErrorData = {
 
 export const loader: LoaderFunction = async ({
   params,
-}): Promise<Tree | ErrorData> => {
+}): Promise<Tree | null | ErrorData> => {
   try {
     const project = await db.project.loadById(params.projectId);
     return await db.tree.loadByProject(project, "production");

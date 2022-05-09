@@ -66,9 +66,9 @@ export const create = async (root: Instance): Promise<Tree> => {
   })) as Tree;
 };
 
-export const loadById = async (id: string): Promise<Tree> => {
+export const loadById = async (treeId: string): Promise<Tree | null> => {
   return (await prisma.tree.findUnique({
-    where: { id },
+    where: { id: treeId },
   })) as Tree;
 };
 
@@ -89,8 +89,11 @@ export const loadByProject = async (
   return await loadById(treeId);
 };
 
-export const clone = async (id: string) => {
-  const tree = await loadById(id);
+export const clone = async (treeId: string) => {
+  const tree = await loadById(treeId);
+  if (tree === null) {
+    throw new Error(`Tree ${treeId} not found`);
+  }
   return await create(tree.root);
 };
 
@@ -99,6 +102,9 @@ export const patchRoot = async (
   patches: Array<Patch>
 ) => {
   const tree = await loadById(treeId);
+  if (tree === null) {
+    throw new Error(`Tree ${treeId} not found`);
+  }
   const root = applyPatches(tree.root, patches);
   await prisma.tree.update({
     data: { root },
