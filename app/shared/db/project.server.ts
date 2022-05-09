@@ -63,7 +63,7 @@ export const create = async ({
       devTreeId: tree.id,
     },
   });
-  await db.breakpoints.create(project.id, breakpoints);
+  await db.breakpoints.create(tree.id, breakpoints);
   return project;
 };
 

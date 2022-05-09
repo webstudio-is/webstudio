@@ -33,9 +33,16 @@ export const loader: LoaderFunction = async ({
       const [tree, props, breakpoints] = await Promise.all([
         db.tree.loadByProject(project, "production"),
         db.props.loadByTreeId(project.prodTreeId),
-        db.breakpoints.load(project.id),
+        // @todo copy breakpoints using prod tree id and then switch
+        db.breakpoints.load(project.devTreeId),
       ]);
-      return { tree, props, breakpoints: breakpoints?.values ?? [] };
+      if (tree === null) {
+        throw new Error(`Tree ${project.prodTreeId} not found`);
+      }
+      if (breakpoints === null) {
+        throw new Error(`Breakpoints for tree ${project.prodTreeId} not found`);
+      }
+      return { tree, props, breakpoints: breakpoints.values };
     } catch (error) {
       if (error instanceof Error) {
         return { errors: error.message };

@@ -114,6 +114,9 @@ type CanvasProps = {
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
+  if (data.tree === null) {
+    throw new Error("Tree is null");
+  }
   useInitializeBreakpoints(data.breakpoints);
   globalStyles();
   useAllUserProps(data.props);

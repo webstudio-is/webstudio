@@ -8,17 +8,27 @@ export type ErrorData = {
 };
 
 const loadData = async (projectId: Project["id"]) => {
-  const [breakpoints, project] = await Promise.all([
-    db.breakpoints.load(projectId),
-    db.project.loadById(projectId),
-  ]);
+  const project = await db.project.loadById(projectId);
+
   if (project === null) throw new Error(`Project "${projectId}" not found`);
 
-  const [tree, props] = await Promise.all([
+  const [tree, props, breakpoints] = await Promise.all([
     db.tree.loadByProject(project, "development"),
     db.props.loadByProject(project, "development"),
+    db.breakpoints.load(project.devTreeId),
   ]);
-  return { tree, props, project, breakpoints: breakpoints?.values || [] };
+
+  if (tree === null) {
+    throw new Error(
+      `Tree ${project.devTreeId} not found for project ${projectId}`
+    );
+  }
+
+  if (breakpoints === null) {
+    throw new Error(`Breakpoints not found for project ${projectId}`);
+  }
+
+  return { tree, props, project, breakpoints: breakpoints.values };
 };
 
 export const loadCanvasData = async ({
