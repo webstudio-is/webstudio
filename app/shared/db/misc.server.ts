@@ -28,7 +28,10 @@ export const publish = async ({
     previousTreeId: project.devTreeId,
     nextTreeId: tree.id,
   });
-
+  await db.breakpoints.clone({
+    previousTreeId: project.devTreeId,
+    nextTreeId: tree.id,
+  });
   const { prodTreeIdHistory } = project;
   if (project.prodTreeId) {
     prodTreeIdHistory.push(project.prodTreeId);
