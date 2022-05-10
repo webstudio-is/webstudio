@@ -125,8 +125,15 @@ export const BreakpointsEditor = ({
           <BreakpointEditorItem
             key={breakpoint.id}
             breakpoint={breakpoint}
-            onChange={(breakpoint) => {
-              publish({ type: "breakpointChange", payload: breakpoint });
+            onChange={(updatedBreakpoint) => {
+              publish({ type: "breakpointChange", payload: updatedBreakpoint });
+              const nextBreakpoints = breakpoints.map((breakpoint) => {
+                if (breakpoint.id === updatedBreakpoint.id) {
+                  return updatedBreakpoint;
+                }
+                return breakpoint;
+              });
+              setBreakpoints(nextBreakpoints);
             }}
             onDelete={onDelete}
           />
