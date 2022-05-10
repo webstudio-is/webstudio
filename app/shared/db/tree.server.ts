@@ -7,11 +7,11 @@ import {
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { createInstance } from "~/shared/tree-utils";
+import { sort } from "~/shared/breakpoints";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
-  const defaultBreakpoint = breakpoints.find(
-    (breakpoint) => breakpoint.minWidth === 0
-  );
+  // Take the smallest breakpoint as default
+  const defaultBreakpoint = sort(breakpoints)[0];
   if (defaultBreakpoint === undefined) {
     throw new Error("A breakpoint with minWidth 0 is required");
   }
