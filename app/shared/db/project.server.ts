@@ -92,6 +92,10 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
       previousTreeId: clonableProject.prodTreeId,
       nextTreeId: tree.id,
     }),
+    db.breakpoints.clone({
+      previousTreeId: clonableProject.prodTreeId,
+      nextTreeId: tree.id,
+    }),
   ]);
   return project;
 };
