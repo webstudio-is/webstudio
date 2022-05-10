@@ -11,6 +11,7 @@ import {
   Text,
   Flex,
 } from "~/shared/design-system";
+import { sort } from "~/shared/breakpoints";
 import { type Publish } from "../../shared/canvas-iframe";
 import {
   useBreakpoints,
@@ -23,7 +24,6 @@ import { Preview } from "./preview";
 import { ZoomSetting } from "./zoom-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
-import { sort } from "./sort";
 import {
   useSubscribeZoomFromShortcut,
   useSubscribeSelectBreakpointFromShortcut,
