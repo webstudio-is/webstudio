@@ -8,7 +8,7 @@ let migrateTree = () => {
       print(`migrating ${instance.id}`);
       instance.cssRules = [
         {
-          breakpoint: ObjectId("626fc63909a681e2a912b5a4"),
+          breakpoint: "626fc63909a681e2a912b5a4",
           style: instance.style,
         },
       ];
