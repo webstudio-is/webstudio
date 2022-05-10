@@ -35,8 +35,8 @@ let migrateTree = () => {
 };
 
 let migrateBreakpoints = () => {
-  const createBreakpoints = (projectId) => ({
-    _id: projectId,
+  const createBreakpoints = (treeId) => ({
+    _id: treeId,
     values: [
       {
         label: "Mobile",
@@ -64,7 +64,14 @@ let migrateBreakpoints = () => {
   const migrate = (project) => {
     print(`inserting breakpoints for ${project._id}`);
     try {
-      db.Breakpoints.insertOne(createBreakpoints(project._id));
+      db.Breakpoints.insertOne(createBreakpoints(project.devTreeId));
+    } catch (err) {
+      print(err);
+    }
+    try {
+      if (project.prodTreeId) {
+        db.Breakpoints.insertOne(createBreakpoints(project.prodTreeId));
+      }
     } catch (err) {
       print(err);
     }
