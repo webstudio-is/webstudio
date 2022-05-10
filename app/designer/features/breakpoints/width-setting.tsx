@@ -6,7 +6,7 @@ import {
   useBreakpoints,
 } from "~/designer/shared/nano-values";
 import { Slider, Text, Flex } from "~/shared/design-system";
-import { sort } from "./sort";
+import { sort } from "~/shared/breakpoints";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 50;

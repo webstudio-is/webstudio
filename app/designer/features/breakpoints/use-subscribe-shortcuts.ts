@@ -1,10 +1,10 @@
 import { useSubscribe } from "~/designer/shared/canvas-iframe";
+import { sort } from "~/shared/breakpoints";
 import {
   useBreakpoints,
   useZoom,
   useSelectedBreakpoint,
 } from "../../shared/nano-values";
-import { sort } from "./sort";
 import { minZoom } from "./zoom-setting";
 
 export const useSubscribeSelectBreakpointFromShortcut = () => {

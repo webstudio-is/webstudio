@@ -5,7 +5,7 @@ import {
   useBreakpoints,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-values";
-import { sort } from "./sort";
+import { sort } from "~/shared/breakpoints";
 
 export const useSubscribeBreakpoints = () => {
   const [breakpoints, setBreakpoints] = useBreakpoints();
