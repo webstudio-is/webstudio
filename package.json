@@ -42,7 +42,7 @@
     "@remix-run/serve": "^1.2.3",
     "@remix-run/vercel": "^1.2.3",
     "@stitches/react": "^1.2.7",
-    "@webstudio-is/sdk": "^0.2.1",
+    "@webstudio-is/sdk": "^0.2.2",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",
