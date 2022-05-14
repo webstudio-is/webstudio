@@ -1,11 +1,11 @@
 import store from "immerhin";
 import { type StyleUpdates } from "~/shared/component";
-import { findInstanceById, setInstanceStyleMutable } from "~/shared/tree-utils";
+import { setInstanceStyleMutable } from "~/shared/tree-utils";
 import { rootInstanceContainer, useSelectedInstance } from "./nano-values";
 import { useSubscribe } from "./pubsub";
 
 export const useUpdateStyle = () => {
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+  const [selectedInstance] = useSelectedInstance();
   useSubscribe<"updateStyle", StyleUpdates>(
     "updateStyle",
     ({ id, updates, breakpoint }) => {
@@ -19,13 +19,6 @@ export const useUpdateStyle = () => {
         }
         setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
       });
-
-      if (rootInstanceContainer.value === undefined) return;
-      const instance = findInstanceById(rootInstanceContainer.value, id);
-      if (instance === undefined) return;
-      // We need to set new version of the selected instance after a style update,
-      // so that anything that depends on instance.cssRules gets updated too.
-      setSelectedInstance(instance);
     }
   );
 };
