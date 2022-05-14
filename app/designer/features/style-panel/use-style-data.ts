@@ -47,7 +47,8 @@ export const useStyleData = ({
   const [currentStyle, setCurrentStyle] = useState(getCurrentStyle());
 
   useEffect(() => {
-    setCurrentStyle(getCurrentStyle());
+    const currentStyle = getCurrentStyle();
+    setCurrentStyle(currentStyle);
   }, [getCurrentStyle]);
 
   const inheritedStyle = useMemo(() => {
