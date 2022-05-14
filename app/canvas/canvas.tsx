@@ -25,6 +25,7 @@ import {
   useReparentInstance,
   usePublishSelectedInstance,
   usePublishRootInstance,
+  useUpdateSelectedInstance,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
 import { useActiveElementTracking } from "./shared/active-element";
@@ -100,6 +101,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   usePublishRootInstance();
   useActiveElementTracking();
   useSync({ project });
+  useUpdateSelectedInstance();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
