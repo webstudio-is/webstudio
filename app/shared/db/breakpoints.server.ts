@@ -41,11 +41,37 @@ export const create = async (
     where: { treeId },
     data: {
       values: {
-        create: breakpoints[0],
+        create: {
+          label: breakpoints[0].label,
+          minWidth: breakpoints[0].minWidth,
+        },
       },
     },
   });
-  console.log(breakpoints);
+  await prisma.breakpoints.update({
+    where: { treeId },
+    data: {
+      values: {
+        create: {
+          label: breakpoints[1].label,
+          minWidth: breakpoints[1].minWidth,
+        },
+      },
+    },
+  });
+  await prisma.breakpoints.update({
+    where: { treeId },
+    data: {
+      values: {
+        create: {
+          label: breakpoints[2].label,
+          minWidth: breakpoints[2].minWidth,
+        },
+      },
+    },
+  });
+
+  // why u no work
   // const all = breakpoints.map(
   //   async (breakpoint: Breakpoint) =>
   //     await prisma.breakpoints.update({

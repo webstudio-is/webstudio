@@ -70,10 +70,10 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
   const data = (await prisma.tree.findUnique({
     where: { id: treeId },
   })) as unknown as Tree;
-  console.log(data);
+
   return {
     ...data,
-    root: JSON.parse(data.root),
+    root: JSON.parse(data.root as unknown as string),
   };
 };
 
