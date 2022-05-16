@@ -67,9 +67,14 @@ export const create = async (root: Instance): Promise<Tree> => {
 };
 
 export const loadById = async (treeId: string): Promise<Tree | null> => {
-  return (await prisma.tree.findUnique({
+  const data = (await prisma.tree.findUnique({
     where: { id: treeId },
   })) as unknown as Tree;
+  console.log(data);
+  return {
+    ...data,
+    root: JSON.parse(data.root),
+  };
 };
 
 export const loadByProject = async (

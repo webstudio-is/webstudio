@@ -11,7 +11,11 @@
     "test": "jest",
     "checks": "yarn lint && yarn typecheck && yarn test",
     "migrate": "npx prisma migrate dev --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
+    "generate": "npx prisma generate --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
     "prepare": "relative-deps"
+  },
+  "prisma": {
+    "seed": "ts-node ./node_modules/@webstudio-is/sdk/prisma/seeds/breakpoints.ts"
   },
   "dependencies": {
     "@radix-ui/colors": "^0.1.8",

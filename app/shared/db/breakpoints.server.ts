@@ -36,19 +36,29 @@ export const create = async (
       treeId,
     },
   });
-  const all = breakpoints.map(
-    async (breakpoint: Breakpoint) =>
-      await prisma.breakpoints.update({
-        where: { treeId },
-        data: {
-          values: {
-            create: breakpoint,
-          },
-        },
-      })
-  );
 
-  await Promise.all(all);
+  await prisma.breakpoints.update({
+    where: { treeId },
+    data: {
+      values: {
+        create: breakpoints[0],
+      },
+    },
+  });
+  console.log(breakpoints);
+  // const all = breakpoints.map(
+  //   async (breakpoint: Breakpoint) =>
+  //     await prisma.breakpoints.update({
+  //       where: { treeId },
+  //       data: {
+  //         values: {
+  //           create: breakpoint,
+  //         },
+  //       },
+  //     })
+  // );
+
+  // await Promise.all(all);
   return {
     treeId,
     breakpoints,
