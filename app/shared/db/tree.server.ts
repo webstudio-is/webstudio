@@ -62,14 +62,14 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
 
 export const create = async (root: Instance): Promise<Tree> => {
   return (await prisma.tree.create({
-    data: { root },
-  })) as Tree;
+    data: { root: JSON.stringify(root) },
+  })) as unknown as Tree;
 };
 
 export const loadById = async (treeId: string): Promise<Tree | null> => {
   return (await prisma.tree.findUnique({
     where: { id: treeId },
-  })) as Tree;
+  })) as unknown as Tree;
 };
 
 export const loadByProject = async (
@@ -107,7 +107,7 @@ export const patchRoot = async (
   }
   const root = applyPatches(tree.root, patches);
   await prisma.tree.update({
-    data: { root },
+    data: { root: JSON.stringify(root) },
     where: { id: treeId },
   });
 };

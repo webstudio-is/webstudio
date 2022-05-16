@@ -15,6 +15,9 @@ export const load = async (treeId?: Tree["id"]) => {
 
   return await prisma.breakpoints.findUnique({
     where: { treeId },
+    include: {
+      values: true,
+    },
   });
 };
 
@@ -28,12 +31,28 @@ export const create = async (
   treeId: Project["id"],
   breakpoints: Array<Breakpoint>
 ) => {
-  const data = {
+  await prisma.breakpoints.create({
+    data: {
+      treeId,
+    },
+  });
+  const all = breakpoints.map(
+    async (breakpoint: Breakpoint) =>
+      await prisma.breakpoints.update({
+        where: { treeId },
+        data: {
+          values: {
+            create: breakpoint,
+          },
+        },
+      })
+  );
+
+  await Promise.all(all);
+  return {
     treeId,
-    values: breakpoints,
+    breakpoints,
   };
-  await prisma.breakpoints.create({ data });
-  return data;
 };
 
 export const clone = async ({
@@ -57,8 +76,19 @@ export const patch = async (
   const breakpoints = await load(treeId);
   if (breakpoints === null) return;
   const nextBreakpoints = applyPatches(breakpoints.values, patches);
-  await prisma.breakpoints.update({
-    where: { treeId },
-    data: { values: nextBreakpoints },
-  });
+  const updateAll = nextBreakpoints.map(
+    async (nextBreakpoint) =>
+      await prisma.breakpoints.update({
+        where: { treeId },
+        data: {
+          values: {
+            create: {
+              ...nextBreakpoint,
+            },
+          },
+        },
+      })
+  );
+
+  await Promise.all(updateAll);
 };
