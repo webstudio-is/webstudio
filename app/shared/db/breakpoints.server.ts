@@ -37,54 +37,19 @@ export const create = async (
     },
   });
 
-  await prisma.breakpoints.update({
-    where: { treeId },
-    data: {
-      values: {
-        create: {
-          label: breakpoints[0].label,
-          minWidth: breakpoints[0].minWidth,
+  const all = breakpoints.map(async (breakpoint: Breakpoint) => {
+    new Promise((resolve) => setTimeout(resolve, 500));
+    return await prisma.breakpoints.update({
+      where: { treeId },
+      data: {
+        values: {
+          create: breakpoint,
         },
       },
-    },
-  });
-  await prisma.breakpoints.update({
-    where: { treeId },
-    data: {
-      values: {
-        create: {
-          label: breakpoints[1].label,
-          minWidth: breakpoints[1].minWidth,
-        },
-      },
-    },
-  });
-  await prisma.breakpoints.update({
-    where: { treeId },
-    data: {
-      values: {
-        create: {
-          label: breakpoints[2].label,
-          minWidth: breakpoints[2].minWidth,
-        },
-      },
-    },
+    });
   });
 
-  // why u no work
-  // const all = breakpoints.map(
-  //   async (breakpoint: Breakpoint) =>
-  //     await prisma.breakpoints.update({
-  //       where: { treeId },
-  //       data: {
-  //         values: {
-  //           create: breakpoint,
-  //         },
-  //       },
-  //     })
-  // );
-
-  // await Promise.all(all);
+  await Promise.all(all);
   return {
     treeId,
     breakpoints,
