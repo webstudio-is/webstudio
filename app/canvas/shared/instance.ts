@@ -14,6 +14,7 @@ import {
   findParentInstance,
   findClosestSiblingInstance,
   insertInstanceMutable,
+  findInstanceById,
 } from "~/shared/tree-utils";
 import store from "immerhin";
 import { DropData, type SelectedInstanceData } from "~/shared/component";
@@ -154,6 +155,26 @@ export const usePublishSelectedInstance = ({
       payload,
     });
   }, [instance, allUserProps, treeId, browserStyle]);
+};
+
+/**
+ *  We need to set the selected instance after a any root instance update,
+ *  because anything that we change on the selected instance is actually done on the root, so
+ *  when we run "undo", root is going to be undone but not the selected instance, unless we update it here.
+ */
+export const useUpdateSelectedInstance = () => {
+  const [rootInstance] = useRootInstance();
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+
+  useEffect(() => {
+    if (rootInstance === undefined || selectedInstance === undefined) return;
+    const nextSelectedInstance = findInstanceById(
+      rootInstance,
+      selectedInstance.id
+    );
+    if (nextSelectedInstance === undefined) return;
+    setSelectedInstance(nextSelectedInstance);
+  }, [rootInstance, selectedInstance, setSelectedInstance]);
 };
 
 export const usePublishRootInstance = () => {
