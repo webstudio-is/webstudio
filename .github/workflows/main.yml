@@ -1,0 +1,25 @@
+name: Main workflow
+on: [push]
+jobs:
+  e2e:
+    env:
+      DATABASE_URL: mongo://
+      NODE_ENV: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node: ["14.x", "16.x"]
+        os: [ubuntu-latest]
+
+      # - name: Install deps and build (with cache)
+      #   uses: bahmutov/npm-install@v1
+      - run: yarn install
+
+      - name: Next.js cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-${{ runner.node }}-${{ hashFiles('**/yarn.lock') }}-nextjs
+
+      - run: yarn checks
+      - run: yarn build
