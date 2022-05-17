@@ -1,7 +1,7 @@
 name: Main workflow
 on: [push]
 jobs:
-  e2e:
+  checks:
     env:
       DATABASE_URL: mongo://
       NODE_ENV: test
@@ -24,5 +24,5 @@ jobs:
           path: ${{ github.workspace }}/.next/cache
           key: ${{ runner.os }}-${{ runner.node }}-${{ hashFiles('**/yarn.lock') }}-nextjs
 
-      - run: yarn lint
+      - run: yarn checks
       - run: yarn build
