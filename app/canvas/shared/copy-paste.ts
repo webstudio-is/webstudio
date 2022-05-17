@@ -2,11 +2,11 @@ import {
   type InstanceProps,
   type Instance,
   allUserPropsContainer,
+  publish,
 } from "@webstudio-is/sdk";
 import { selectedInstanceContainer } from "./nano-values";
 import { cloneInstance } from "~/shared/tree-utils";
 import { cloneProps } from "~/shared/props-utils";
-import { publish } from "./pubsub";
 
 let currentInstance: Instance | undefined;
 let currentProps: InstanceProps | undefined;

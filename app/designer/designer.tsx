@@ -1,14 +1,14 @@
 import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { type Project } from "@webstudio-is/sdk";
+import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { CanvasIframe, useSubscribe, usePublish } from "./shared/canvas-iframe";
+import { CanvasIframe } from "./shared/canvas-iframe";
 import {
   useIsPreviewMode,
   useRootInstance,

@@ -7,6 +7,8 @@ import {
   allUserPropsContainer,
   getBrowserStyle,
   useAllUserProps,
+  useSubscribe,
+  publish,
 } from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
@@ -24,7 +26,6 @@ import {
   useSelectedInstance,
   useSelectedElement,
 } from "./nano-values";
-import { useSubscribe, publish } from "./pubsub";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();

@@ -1,9 +1,8 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { useRootInstance, useSelectedInstance } from "./nano-values";
-import { publish, useSubscribe } from "./pubsub";
 import { copy, paste } from "./copy-paste";
 
 type HandlerEvent = {

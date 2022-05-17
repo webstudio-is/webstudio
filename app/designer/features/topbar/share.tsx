@@ -11,9 +11,9 @@ import { Share1Icon } from "~/shared/icons";
 import { type Project } from "@webstudio-is/sdk";
 import { useIsShareDialogOpen } from "../../shared/nano-values";
 
-type ShareProps = { path: string; project: Project };
+type ShareButtonProps = { path: string; project: Project };
 
-const Content = ({ path, project }: ShareProps) => {
+const Content = ({ path, project }: ShareButtonProps) => {
   if (typeof location === "undefined") {
     return null;
   }
@@ -52,7 +52,7 @@ const Content = ({ path, project }: ShareProps) => {
   );
 };
 
-export const Share = ({ path, project }: ShareProps) => {
+export const ShareButton = ({ path, project }: ShareButtonProps) => {
   const [isOpen, setIsOpen] = useIsShareDialogOpen();
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
