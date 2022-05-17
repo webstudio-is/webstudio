@@ -40,9 +40,14 @@ export const clone = async ({
     ...rest,
     treeId: nextTreeId,
   }));
-  await prisma.instanceProps.createMany({
-    data,
+  const all = data.map(async (prop) => {
+    new Promise((resolve) => setTimeout(resolve, 500));
+    return await prisma.instanceProps.create({
+      data: prop,
+    });
   });
+
+  await Promise.all(all);
 };
 
 export const patch = async (
