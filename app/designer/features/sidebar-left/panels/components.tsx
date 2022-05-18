@@ -1,16 +1,15 @@
 import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
 import { useDrag } from "react-dnd";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance, type Publish } from "@webstudio-is/sdk";
 import { Flex, Text } from "~/shared/design-system";
-import { Component1Icon } from "~/shared/icons";
+import { PlusIcon } from "~/shared/icons";
 import { primitives, type DragData } from "~/shared/component";
-import { type Publish } from "~/designer/shared/canvas-iframe";
 import { createInstance } from "~/shared/tree-utils";
 import { CustomDragLayer } from "../custom-drag-layer";
 import type { TabName } from "../types";
 
 type ComponentProps = {
-  Icon: typeof Component1Icon;
+  Icon: typeof PlusIcon;
   component: Instance["component"];
   onDragChange: (isDragging: boolean) => void;
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -125,4 +124,4 @@ export const TabContent = ({
   );
 };
 
-export const icon = <Component1Icon />;
+export const icon = <PlusIcon />;

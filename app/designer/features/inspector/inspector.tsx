@@ -1,3 +1,4 @@
+import type { Publish } from "@webstudio-is/sdk";
 import {
   Tabs,
   TabsList,
@@ -9,7 +10,6 @@ import {
 } from "~/shared/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { SettingsPanel } from "~/designer/features/settings-panel";
-import type { Publish } from "~/designer/shared/canvas-iframe";
 import { BrushIcon, GearIcon } from "~/shared/icons";
 import { useSelectedInstanceData } from "~/designer/shared/nano-values";
 

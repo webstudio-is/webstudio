@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSubscribe, type Breakpoint } from "@webstudio-is/sdk";
+import { useSubscribe, type Breakpoint, type Publish } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,6 @@ import {
   Flex,
 } from "~/shared/design-system";
 import { sort } from "~/shared/breakpoints";
-import { type Publish } from "../../shared/canvas-iframe";
 import {
   useBreakpoints,
   useSelectedBreakpoint,

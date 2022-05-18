@@ -1,8 +1,7 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance, type Publish } from "@webstudio-is/sdk";
 import { ListNestedIcon } from "~/shared/icons";
 import { Flex } from "~/shared/design-system";
 import { type SelectedInstanceData } from "~/shared/component";
-import { type Publish } from "~/designer/shared/canvas-iframe";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 import { useRootInstance } from "~/designer/shared/nano-values";
 import { Tree } from "~/designer/shared/tree";

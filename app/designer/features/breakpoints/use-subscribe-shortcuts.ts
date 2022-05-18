@@ -1,4 +1,4 @@
-import { useSubscribe } from "~/designer/shared/canvas-iframe";
+import { useSubscribe } from "@webstudio-is/sdk";
 import { sort } from "~/shared/breakpoints";
 import {
   useBreakpoints,
