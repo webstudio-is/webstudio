@@ -37,17 +37,18 @@ export const create = async (
     },
   });
 
-  const all = breakpoints.map(async (breakpoint: Breakpoint) => {
-    new Promise((resolve) => setTimeout(resolve, 500));
-    return await prisma.breakpoints.update({
-      where: { treeId },
-      data: {
-        values: {
-          create: breakpoint,
+  const all = await prisma.$transaction(
+    breakpoints.map((breakpoint: Breakpoint) =>
+      prisma.breakpoints.update({
+        where: { treeId },
+        data: {
+          values: {
+            create: breakpoint,
+          },
         },
-      },
-    });
-  });
+      })
+    )
+  );
 
   await Promise.all(all);
   return {

@@ -40,13 +40,13 @@ export const clone = async ({
     ...rest,
     treeId: nextTreeId,
   }));
-  const all = data.map(async (prop) => {
-    new Promise((resolve) => setTimeout(resolve, 500));
-    return await prisma.instanceProps.create({
-      data: prop,
-    });
-  });
-
+  const all = await prisma.$transaction(
+    data.map((prop) =>
+      prisma.instanceProps.create({
+        data: prop,
+      })
+    )
+  );
   await Promise.all(all);
 };
 
