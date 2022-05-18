@@ -19,6 +19,11 @@
     "sourceType": "module"
   },
   "plugins": ["react", "@typescript-eslint"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "rules": {
     // It's too dumb to understand properly what's defined in ts
     "react/prop-types": 0,
