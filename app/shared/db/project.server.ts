@@ -53,7 +53,7 @@ export const create = async ({
   }
 
   const domain = generateDomain(title);
-  const breakpoints = db.breakpoints.getBreakpointsWithId();
+  const breakpoints = db.breakpoints;
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
   const project = await prisma.project.create({
     data: {

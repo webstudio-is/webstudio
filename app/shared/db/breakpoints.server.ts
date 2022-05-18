@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
+import { omit } from "lodash";
 import { prisma } from "./prisma.server";
 
 export const load = async (treeId?: Tree["id"]) => {
@@ -43,7 +44,7 @@ export const create = async (
         where: { treeId },
         data: {
           values: {
-            create: breakpoint,
+            create: omit(breakpoint, ["breakpointsTreeId", "id"]),
           },
         },
       })
@@ -78,15 +79,14 @@ export const patch = async (
   const breakpoints = await load(treeId);
   if (breakpoints === null) return;
   const nextBreakpoints = applyPatches(breakpoints.values, patches);
+  console.log(nextBreakpoints);
   const updateAll = nextBreakpoints.map(
     async (nextBreakpoint) =>
       await prisma.breakpoints.update({
         where: { treeId },
         data: {
           values: {
-            create: {
-              ...nextBreakpoint,
-            },
+            create: omit(nextBreakpoint, "breakpointsTreeId"),
           },
         },
       })
