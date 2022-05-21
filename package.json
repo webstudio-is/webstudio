@@ -5,6 +5,7 @@
   "scripts": {
     "build": "remix build",
     "dev": "node -r dotenv/config node_modules/.bin/remix dev",
+    "start": "remix-serve build",
     "prepare": "remix setup node && yarn migrate && yarn generate",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",

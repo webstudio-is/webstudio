@@ -1,3 +1,5 @@
+# fly.toml file generated for webstudio-dev on 2022-05-21T21:31:32+02:00
+
 app = "webstudio-dev"
 
 kill_signal = "SIGINT"
@@ -11,8 +13,8 @@ processes = []
   entrypoint = "sh"
 
 [mounts]
-  source = "data"
   destination = "/data"
+  source = "data"
 
 [[services]]
   internal_port = 8080
@@ -26,9 +28,9 @@ processes = []
     type = "connections"
 
   [[services.ports]]
+    force_https = true
     handlers = ["http"]
     port = 80
-    force_https = true
 
   [[services.ports]]
     handlers = ["tls", "http"]
