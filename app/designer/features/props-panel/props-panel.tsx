@@ -23,17 +23,17 @@ import { usePropsLogic } from "./use-props-logic";
 type ControlProps = {
   defaultValue?: UserProp["value"];
   value: UserProp["value"];
-  onChangeValue: any; // (value: string) => void;
+  onValueChange: (value:  UserProp["value"]) => void;
 };
 
-const TextControl = ({ value, defaultValue, onChangeValue }: ControlProps) => (
+const TextControl = ({ value, defaultValue, onValueChange }: ControlProps) => (
   <TextField
     variant="ghost"
     placeholder="Value"
     name="value"
     value={value || defaultValue}
     onChange={(event) => {
-      onChangeValue(event.target.value);
+      onValueChange(event.target.value);
     }}
   />
 );
@@ -42,16 +42,16 @@ const RadioControl = ({
   value,
   options,
   defaultValue,
-  onChangeValue,
+  onValueChange,
 }: ControlProps & { options: Array<string> }) => (
   <RadioGroup
     css={{ flexDirection: "column" }}
     name="value"
     value={value || defaultValue}
-    onChangeValue={onChangeValue}
+    onValueChange={onValueChange}
   >
     {options.map((value) => (
-      <Flex align="center" gap="1">
+      <Flex align="center" gap="1" key={value}>
         <Radio value={value} />
         <Label>{value}</Label>
       </Flex>
@@ -64,6 +64,7 @@ const controls = {
   radio: RadioControl,
 };
 
+
 const renderControl = ({
   component,
   prop,
@@ -73,7 +74,8 @@ const renderControl = ({
   prop: UserProp["prop"];
 }) => {
   const meta = componentsMeta[component];
-  const argType = meta?.argTypes[prop];
+
+  const argType = meta?.argTypes?.[prop as keyof typeof meta.argTypes];
   console.log(prop, meta, argType);
 
   switch (argType?.control) {
@@ -130,7 +132,7 @@ const Property = ({
         prop,
         component,
         value,
-        onChangeValue(value: string) {
+        onValueChange(value: string) {
           onChange(id, "value", value);
         },
       })}
