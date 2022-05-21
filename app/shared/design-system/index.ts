@@ -53,3 +53,4 @@ export { Switch } from "./components/switch";
 export { Panel } from "./components/panel";
 export * from "./components/slider";
 export * from "./components/control-group";
+export * from "./components/radio";
