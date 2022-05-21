@@ -4,6 +4,14 @@ import type { Project, User } from "@webstudio-is/sdk";
 import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";
 
+const parseProject = (project: Project | null) =>
+  project
+    ? {
+        ...project,
+        prodTreeIdHistory: JSON.parse(project.prodTreeIdHistory),
+      }
+    : null;
+
 export const loadById = async (
   projectId?: Project["id"]
 ): Promise<Project | null> => {
@@ -11,19 +19,25 @@ export const loadById = async (
     throw new Error("Project ID required");
   }
 
-  return await prisma.project.findUnique({
+  const project = await prisma.project.findUnique({
     where: { id: projectId },
   });
+
+  return parseProject(project);
 };
 
 export const loadByDomain = async (domain: string): Promise<Project | null> => {
-  return await prisma.project.findUnique({ where: { domain } });
+  const project = await prisma.project.findUnique({ where: { domain } });
+
+  return parseProject(project);
 };
 
 export const loadManyByUserId = async (
   userId: User["id"]
 ): Promise<Array<Project>> => {
-  return await prisma.project.findMany({ where: { userId } });
+  const projects = await prisma.project.findMany({ where: { userId } });
+
+  return projects.map(parseProject);
 };
 
 const slugifyOptions = { lower: true, strict: true };
@@ -108,7 +122,7 @@ export const update = async ({
   domain?: string;
   prodTreeId?: string;
   devTreeId?: string;
-  prodTreeIdHistory?: Array<string>;
+  prodTreeIdHistory: Array<string>;
 }): Promise<Project> => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
@@ -119,7 +133,10 @@ export const update = async ({
 
   try {
     const project = await prisma.project.update({
-      data,
+      data: {
+        ...data,
+        prodTreeIdHistory: JSON.stringify(data.prodTreeIdHistory),
+      },
       where: { id },
     });
     return project;

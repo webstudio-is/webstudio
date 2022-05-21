@@ -28,7 +28,12 @@ const loadData = async (projectId: Project["id"]) => {
     throw new Error(`Breakpoints not found for project ${projectId}`);
   }
 
-  return { tree, props, project, breakpoints: breakpoints.values };
+  return {
+    tree,
+    props,
+    project,
+    breakpoints: breakpoints.values,
+  };
 };
 
 export const loadCanvasData = async ({

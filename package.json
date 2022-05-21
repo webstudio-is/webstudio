@@ -9,9 +9,13 @@
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
-    "checks": "yarn lint && yarn typecheck && yarn test"
+    "checks": "yarn lint && yarn typecheck && yarn test",
+    "migrate": "npx prisma migrate dev --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
+    "generate": "npx prisma generate --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
+    "prepare": "relative-deps"
   },
   "dependencies": {
+    "@prisma/client": "^3.14.0",
     "@radix-ui/colors": "^0.1.8",
     "@radix-ui/react-accessible-icon": "^0.1.4",
     "@radix-ui/react-accordion": "^0.1.6",
@@ -95,11 +99,17 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.3.0",
     "jest": "^27.5.1",
+    "prisma": "^3.14.0",
+    "relative-deps": "^1.0.7",
+    "ts-node": "^10.7.0",
     "typescript": "^4.1.2"
   },
   "engines": {
     "node": ">=14"
   },
   "sideEffects": false,
-  "license": "MIT"
+  "license": "MIT",
+  "relativeDependencies": {
+    "@webstudio-is/sdk": "../webstudio-sdk/"
+  }
 }

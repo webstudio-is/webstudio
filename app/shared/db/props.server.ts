@@ -20,9 +20,11 @@ export const loadByProject = async (
 };
 
 export const loadByTreeId = async (treeId: Tree["id"]) => {
-  return await prisma.instanceProps.findMany({
+  const trees = await prisma.instanceProps.findMany({
     where: { treeId },
   });
+
+  return trees.map((tree) => ({ ...tree, props: JSON.parse(tree.props) }));
 };
 
 export const clone = async ({
@@ -40,9 +42,14 @@ export const clone = async ({
     ...rest,
     treeId: nextTreeId,
   }));
-  await prisma.instanceProps.createMany({
-    data,
-  });
+
+  await prisma.$transaction(
+    data.map((prop) =>
+      prisma.instanceProps.create({
+        data: prop,
+      })
+    )
+  );
 };
 
 export const patch = async (
@@ -67,9 +74,9 @@ export const patch = async (
     Object.values(nextProps).map(({ id, instanceId, treeId, props }) =>
       prisma.instanceProps.upsert({
         where: { id: id },
-        create: { id: id, instanceId, treeId, props },
+        create: { id: id, instanceId, treeId, props: JSON.stringify(props) },
         update: {
-          props,
+          props: JSON.stringify(props),
         },
       })
     )
