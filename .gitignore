@@ -11,3 +11,4 @@ yarn-error.log
 public/build
 api/_build
 /data
+*.db

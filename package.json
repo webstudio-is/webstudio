@@ -9,7 +9,8 @@
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
-    "checks": "yarn lint && yarn typecheck && yarn test"
+    "checks": "yarn lint && yarn typecheck && yarn test",
+    "watch:sdk": "relative-deps"
   },
   "dependencies": {
     "@radix-ui/colors": "^0.1.8",
@@ -95,11 +96,15 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.3.0",
     "jest": "^27.5.1",
+    "relative-deps": "^1.0.7",
     "typescript": "^4.1.2"
   },
   "engines": {
     "node": ">=14"
   },
   "sideEffects": false,
-  "license": "MIT"
+  "license": "MIT",
+  "relativeDependencies": {
+    "@webstudio-is/sdk": "../webstudio-sdk/"
+  }
 }
