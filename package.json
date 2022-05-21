@@ -5,13 +5,13 @@
   "scripts": {
     "build": "remix build",
     "dev": "node -r dotenv/config node_modules/.bin/remix dev",
-    "postinstall": "remix setup node",
+    "postinstall": "remix setup node && yarn migrate && yarn generate",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
     "checks": "yarn lint && yarn typecheck && yarn test",
-    "migrate": "npx prisma migrate dev --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
-    "generate": "npx prisma generate --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
+    "migrate": "yarn prisma migrate dev --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
+    "generate": "yarn prisma generate --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
     "prepare": "relative-deps"
   },
   "dependencies": {
@@ -46,7 +46,7 @@
     "@remix-run/serve": "^1.2.3",
     "@remix-run/vercel": "^1.2.3",
     "@stitches/react": "^1.2.7",
-    "@webstudio-is/sdk": "^0.2.3-sqlite",
+    "@webstudio-is/sdk": "0.2.3-sqlite",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",

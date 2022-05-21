@@ -1889,10 +1889,10 @@
   dependencies:
     web-streams-polyfill "^3.1.1"
 
-"@webstudio-is/sdk@^0.2.3":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.2.3.tgz#6c07032b34a3b76e526e754eb9b6033743bfa28d"
-  integrity sha512-dOmjaszBuRj0GMaBauM141/dS9Fc/hqZRhe6E+aN0CiofMN3qDiKUBAeDye0kM8+0LdduALGuzmLaQqnaEp9Ng==
+"@webstudio-is/sdk@0.2.3-sqlite":
+  version "0.2.3-sqlite"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.2.3-sqlite.tgz#e66b4c7fef8573195403cf2c0929ede2c4b5d278"
+  integrity sha512-m03oUnZL4RbOVmqYE4tFKuQ3madMuKOL5kueSBp4nXhCizpPStB6688RpzkpMyN17OW+r2GIFSw/697q0kTTLA==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/core" "^1.2.7"
