@@ -12,3 +12,4 @@ public/build
 api/_build
 /data
 *.db
+*.db-journal

@@ -13,7 +13,7 @@ FROM base as deps
 WORKDIR /myapp
 
 ADD package.json yarn.lock ./
-RUN yarn
+RUN yarn --production=false
 
 # Setup production node_modules
 FROM base as production-deps
@@ -22,7 +22,6 @@ WORKDIR /myapp
 
 COPY --from=deps /myapp/node_modules /myapp/node_modules
 ADD package.json yarn.lock ./
-RUN npm prune --production
 
 # Build the app
 FROM base as build
@@ -30,6 +29,8 @@ FROM base as build
 WORKDIR /myapp
 
 COPY --from=deps /myapp/node_modules /myapp/node_modules
+
+COPY --from=deps /myapp/node_modules/@webstudio-is/sdk/prisma /myapp/prisma
 
 ADD . .
 RUN yarn build
