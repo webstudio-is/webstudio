@@ -12,7 +12,7 @@
     "checks": "yarn lint && yarn typecheck && yarn test",
     "migrate": "yarn prisma migrate dev --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
     "generate": "yarn prisma generate --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
-    "prepare": "relative-deps"
+    "watch:sdk": "yarn relative-deps watch"
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
