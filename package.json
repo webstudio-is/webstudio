@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
     "checks": "yarn lint && yarn typecheck && yarn test",
-    "watch:sdk": "relative-deps"
+    "watch:sdk": "relative-deps watch"
   },
   "dependencies": {
     "@radix-ui/colors": "^0.1.8",
