@@ -9,6 +9,7 @@ import {
   Radio,
   RadioGroup,
   Select,
+  Switch,
 } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
 import type { SelectedInstanceData } from "~/shared/component";
@@ -74,6 +75,23 @@ const SelectControl = ({
   </Select>
 );
 
+const BooleanControl = ({
+  value,
+  defaultValue,
+  onValueChange,
+}: Omit<ControlProps, 'defaultValue'> & {defaultValue?: boolean}) => (
+  <Switch
+    name="value"
+    defaultChecked={defaultValue}
+    // @todo needs boolean support on data type level
+    checked={value === 'true'}
+    onCheckedChange={(checked) => {
+      onValueChange(String(checked))
+    }}
+  />
+);  
+
+
 const renderControl = ({
   component,
   prop,
@@ -109,6 +127,14 @@ const renderControl = ({
         />
       );
     }
+    case "boolean": {
+      return (
+        <BooleanControl
+          {...props}
+          defaultValue={argType.defaultValue}
+        />
+      );
+    }    
   }
 
   return <TextControl {...props} />;
