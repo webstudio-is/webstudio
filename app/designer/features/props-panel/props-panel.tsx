@@ -21,8 +21,11 @@ type ControlProps = {
   onValueChange: (value: UserProp["value"]) => void;
 };
 
-const TextControl = ({ value, defaultValue, onValueChange }: ControlProps) => (
+type TextFieldProps =  React.ComponentProps<typeof TextField> 
+
+const TextControl = ({ value, defaultValue, type, onValueChange }: ControlProps & {type?: TextFieldProps['type']}) => (
   <TextField
+    type={type}
     variant="ghost"
     placeholder="Value"
     name="value"
@@ -103,11 +106,13 @@ const renderControl = ({
   const meta = componentsMeta[component];
 
   const argType = meta?.argTypes?.[prop as keyof typeof meta.argTypes];
-  console.log(prop, meta, argType);
 
   switch (argType?.control) {
     case "text": {
       return <TextControl {...props} defaultValue={argType.defaultValue} />;
+    }
+    case "number": {
+      return <TextControl {...props} defaultValue={argType.defaultValue} type="number" />;
     }
     case "radio": {
       return (
