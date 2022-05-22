@@ -12,7 +12,6 @@ const SelectWrapper = styled("div", {
   fontVariantNumeric: "tabular-nums",
   fontWeight: 400,
   height: "$5",
-  flexShrink: 0,
 
   "&:hover": {
     backgroundColor: "$slateA3",

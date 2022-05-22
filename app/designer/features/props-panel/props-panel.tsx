@@ -1,10 +1,4 @@
-import {
-  type UserProp,
-  type Publish,
-  components,
-  componentsMeta,
-  type Instance,
-} from "@webstudio-is/sdk";
+import { type UserProp, type Publish, componentsMeta, type Instance } from "@webstudio-is/sdk";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import {
   TextField,
@@ -14,16 +8,16 @@ import {
   Box,
   Radio,
   RadioGroup,
+  Select,
 } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
 import type { SelectedInstanceData } from "~/shared/component";
 import { usePropsLogic } from "./use-props-logic";
-//console.log(componentsMeta, components);
 
 type ControlProps = {
   defaultValue?: UserProp["value"];
   value: UserProp["value"];
-  onValueChange: (value:  UserProp["value"]) => void;
+  onValueChange: (value: UserProp["value"]) => void;
 };
 
 const TextControl = ({ value, defaultValue, onValueChange }: ControlProps) => (
@@ -59,11 +53,26 @@ const RadioControl = ({
   </RadioGroup>
 );
 
-const controls = {
-  text: TextControl,
-  radio: RadioControl,
-};
-
+const SelectControl = ({
+  value,
+  options,
+  defaultValue,
+  onValueChange,
+}: ControlProps & { options: Array<string> }) => (
+  <Select
+    name="value"
+    value={value || defaultValue}
+    onChange={(event) => {
+      onValueChange(event.target.value);
+    }}
+  >
+    {options.map((optionValue) => (
+      <option value={optionValue} key={optionValue}>
+        {optionValue}
+      </option>
+    ))}
+  </Select>
+);
 
 const renderControl = ({
   component,
@@ -85,6 +94,15 @@ const renderControl = ({
     case "radio": {
       return (
         <RadioControl
+          {...props}
+          defaultValue={argType.defaultValue}
+          options={argType.options}
+        />
+      );
+    }
+    case "select": {
+      return (
+        <SelectControl
           {...props}
           defaultValue={argType.defaultValue}
           options={argType.options}
