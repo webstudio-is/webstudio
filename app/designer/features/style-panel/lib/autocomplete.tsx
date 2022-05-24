@@ -148,10 +148,6 @@ export const Autocomplete = ({
           onClick={() => {
             open();
           }}
-          onFocus={() => {
-            inputRef.current?.select();
-            if (isOpen === undefined) open();
-          }}
           onChange={(event) => {
             setCurrentValue(event.target.value);
           }}
