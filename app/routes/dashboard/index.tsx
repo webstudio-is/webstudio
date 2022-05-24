@@ -1,10 +1,10 @@
+import { useLoaderData } from "@remix-run/react";
 import {
-  useLoaderData,
   redirect,
   type LoaderFunction,
   type ActionFunction,
   json,
-} from "remix";
+} from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
 import * as db from "~/shared/db";
 import config from "~/config";

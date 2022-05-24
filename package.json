@@ -6,7 +6,6 @@
     "build": "remix build",
     "dev": "node -r dotenv/config node_modules/.bin/remix dev",
     "start": "remix-serve build",
-    "prepare": "remix setup node",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
@@ -43,8 +42,9 @@
     "@radix-ui/react-toggle-group": "^0.1.5",
     "@radix-ui/react-tooltip": "^0.1.7",
     "@radix-ui/react-use-layout-effect": "^0.1.0",
-    "@remix-run/react": "^1.2.3",
-    "@remix-run/vercel": "^1.2.3",
+    "@remix-run/node": "^1.5.1",
+    "@remix-run/react": "^1.5.1",
+    "@remix-run/serve": "^1.5.1",
     "@stitches/react": "^1.2.7",
     "@webstudio-is/sdk": "0.2.3-sqlite",
     "bson-objectid": "^2.0.2",
@@ -69,7 +69,6 @@
     "react-nano-state": "^0.4.0",
     "react-router-dom": "^6.2.2",
     "react-use": "^17.3.2",
-    "remix": "^1.2.3",
     "slugify": "^1.6.5"
   },
   "devDependencies": {

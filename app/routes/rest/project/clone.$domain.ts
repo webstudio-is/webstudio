@@ -1,4 +1,4 @@
-import { type LoaderFunction, redirect } from "remix";
+import { type LoaderFunction, redirect } from "@remix-run/node";
 import type { Project, User } from "@webstudio-is/sdk";
 import * as db from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
