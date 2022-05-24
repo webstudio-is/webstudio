@@ -54,5 +54,5 @@ COPY --from=build /myapp/build /myapp/build
 COPY --from=build /myapp/public /myapp/public
 ADD . .
 
-RUN yarn prisma migrate deploy
+RUN yarn prisma migrate deploy --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma
 CMD ["npm", "start"]
