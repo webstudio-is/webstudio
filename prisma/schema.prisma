@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                String  @id @default(uuid())
+  userId            String
+  title             String
+  domain            String  @unique
+  prodTreeId        String? // exists when published
+  devTreeId         String
+  prodTreeIdHistory String  @default("[]")
+}
+
+model User {
+  id String @id @default(uuid())
+}
+
+model Tree {
+  id   String @id @default(uuid())
+  root String
+}
+
+model InstanceProps {
+  id         String @id @default(uuid())
+  instanceId String
+  treeId     String
+  props      String @default("[]")
+}
+
+model Breakpoints {
+  treeId String @id @default(uuid())
+  values String @default("[]")
+}

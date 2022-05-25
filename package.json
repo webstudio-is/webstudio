@@ -9,9 +9,10 @@
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
+    "prepare": "cp ./node_modules/@webstudio-is/sdk/prisma/schema.prisma prisma/ && yarn migrate && yarn generate",
     "checks": "yarn lint && yarn typecheck && yarn test",
-    "migrate": "yarn prisma migrate dev --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
-    "generate": "yarn prisma generate --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma",
+    "migrate": "yarn prisma migrate dev",
+    "generate": "yarn prisma generate",
     "watch:sdk": "yarn relative-deps watch"
   },
   "dependencies": {
