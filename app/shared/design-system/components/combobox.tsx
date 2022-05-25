@@ -1,13 +1,8 @@
-import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { type ComponentProps, useState, useEffect } from "react";
-import {
-  TextField,
-  MenuAnchor,
-  Menu,
-  MenuContent,
-  MenuItem,
-  IconButton,
-} from "~/shared/design-system";
+import { ChevronDownIcon } from "~/shared/icons";
+import { TextField } from "./text-field";
+import { IconButton } from "./icon-button";
+import { MenuAnchor, Menu, MenuContent, MenuItem } from "./menu";
 
 type Item = { label: string };
 
