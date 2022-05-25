@@ -6,5 +6,5 @@
 #!/bin/sh
 
 set -ex
-yarn prisma migrate deploy
+yarn prisma migrate deploy --schema ./node_modules/@webstudio-is/sdk/prisma/schema.prisma
 yarn start
