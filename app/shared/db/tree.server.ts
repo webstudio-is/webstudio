@@ -8,7 +8,7 @@ import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { createInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
-import { Tree as DbTrree } from "@prisma/client";
+import { Tree as DbTree } from "@prisma/client";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -61,7 +61,7 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   return createInstance(rootConfig);
 };
 
-export const create = async (root: Instance): Promise<DbTrree> => {
+export const create = async (root: Instance): Promise<DbTree> => {
   const newRoot = JSON.stringify(root);
   return await prisma.tree.create({
     data: { root: newRoot },

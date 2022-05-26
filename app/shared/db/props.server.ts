@@ -20,11 +20,14 @@ export const loadByProject = async (
 };
 
 export const loadByTreeId = async (treeId: Tree["id"]) => {
-  const trees = await prisma.instanceProps.findMany({
+  const instancePropsEntries = await prisma.instanceProps.findMany({
     where: { treeId },
   });
 
-  return trees.map((tree) => ({ ...tree, props: JSON.parse(tree.props) }));
+  return instancePropsEntries.map((tree) => ({
+    ...tree,
+    props: JSON.parse(tree.props),
+  }));
 };
 
 export const clone = async ({

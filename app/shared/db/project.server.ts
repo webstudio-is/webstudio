@@ -4,6 +4,10 @@ import type { Project, User } from "@webstudio-is/sdk";
 import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";
 
+type ParsedProject = Omit<Project, "prodTreeIdHistory"> & {
+  prodTreeIdHistory: string[];
+};
+
 const parseProject = (project: Project | null) =>
   project
     ? {
@@ -14,7 +18,7 @@ const parseProject = (project: Project | null) =>
 
 export const loadById = async (
   projectId?: Project["id"]
-): Promise<Project | null> => {
+): Promise<ParsedProject | null> => {
   if (typeof projectId !== "string") {
     throw new Error("Project ID required");
   }
@@ -34,7 +38,7 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
 
 export const loadManyByUserId = async (
   userId: User["id"]
-): Promise<Array<Project>> => {
+): Promise<Array<ParsedProject | null>> => {
   const projects = await prisma.project.findMany({ where: { userId } });
 
   return projects.map(parseProject);

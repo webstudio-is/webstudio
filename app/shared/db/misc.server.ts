@@ -32,7 +32,7 @@ export const publish = async ({
     previousTreeId: project.devTreeId,
     nextTreeId: tree.id,
   });
-  const prodTreeIdHistory = project.prodTreeIdHistory as unknown as string[];
+  const prodTreeIdHistory = project.prodTreeIdHistory;
   if (project.prodTreeId) {
     prodTreeIdHistory.push(project.prodTreeId);
   }
