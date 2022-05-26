@@ -97,7 +97,9 @@ export const useStyleData = ({
         const type = options.isEphemeral ? "preview" : "update";
         publishUpdates(type, updates);
       }
-      setCurrentStyle({ ...currentStyle, [property]: nextValue });
+      if (options.isEphemeral === false) {
+        setCurrentStyle({ ...currentStyle, [property]: nextValue });
+      }
     };
   };
 

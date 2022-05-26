@@ -23,7 +23,7 @@ export const load = async (treeId?: Tree["id"]) => {
 
   return {
     ...breakpoint,
-    values: JSON.parse(breakpoint?.values),
+    values: JSON.parse(breakpoint.values),
   };
 };
 
