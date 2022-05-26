@@ -1,13 +1,13 @@
+import { useSubscribe, type Publish } from "@webstudio-is/sdk";
 import { EyeOpenIcon } from "~/shared/icons";
 import { SimpleToggle } from "~/shared/design-system";
-import { useSubscribe, type Publish } from "~/designer/shared/canvas-iframe";
 import { useIsPreviewMode } from "../../shared/nano-values";
 
-type PreviewProps = {
+type PreviewButtonProps = {
   publish: Publish;
 };
 
-export const Preview = ({ publish }: PreviewProps) => {
+export const PreviewButton = ({ publish }: PreviewButtonProps) => {
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
 
   const setValue = (value: boolean) => {

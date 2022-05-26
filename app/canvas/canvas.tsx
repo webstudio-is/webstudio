@@ -10,8 +10,8 @@ import {
   WrapperComponent,
   globalStyles,
   Project,
+  useSubscribe,
 } from "@webstudio-is/sdk";
-import { useSubscribe } from "./shared/pubsub";
 import {
   createElementsTree,
   setInstanceChildrenMutable,

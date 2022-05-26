@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { SelectedInstanceData, StyleUpdates } from "~/shared/component";
-import { type StyleProperty } from "@webstudio-is/sdk";
-import { type Publish } from "~/designer/shared/canvas-iframe";
+import { type StyleProperty, type Publish } from "@webstudio-is/sdk";
 import {
   useRootInstance,
   useSelectedBreakpoint,
@@ -98,7 +97,9 @@ export const useStyleData = ({
         const type = options.isEphemeral ? "preview" : "update";
         publishUpdates(type, updates);
       }
-      setCurrentStyle({ ...currentStyle, [property]: nextValue });
+      if (options.isEphemeral === false) {
+        setCurrentStyle({ ...currentStyle, [property]: nextValue });
+      }
     };
   };
 

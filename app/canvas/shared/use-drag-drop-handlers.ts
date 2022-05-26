@@ -1,5 +1,6 @@
 import { useState } from "react";
 import memoize from "lodash.memoize";
+import { publish, useSubscribe } from "@webstudio-is/sdk";
 import { type DragData, type DropData } from "~/shared/component";
 import { findInstanceById } from "~/shared/tree-utils";
 import {
@@ -12,7 +13,6 @@ import {
   useRootInstance,
   useSelectedInstance,
 } from "./nano-values";
-import { publish, useSubscribe } from "./pubsub";
 //import {usePointerOutline} from './use-pointer-outline'
 
 // Avoid recalculating rects for each node during dragging.

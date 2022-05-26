@@ -1,19 +1,18 @@
-import type { Project } from "@webstudio-is/sdk";
+import type { Project, Publish } from "@webstudio-is/sdk";
 import { Flex, type CSS } from "~/shared/design-system";
 import type { Config } from "~/config";
-import { Preview } from "./preview";
-import { Share } from "./share";
-import { Publish } from "./publish";
+import { PreviewButton } from "./preview";
+import { ShareButton } from "./share";
+import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
-import { type Publish as PublishOnCanvas } from "../../shared/canvas-iframe";
 
 type TopbarProps = {
   config: Config;
   css: CSS;
   project: Project;
-  publish: PublishOnCanvas;
+  publish: Publish;
 };
 
 export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
@@ -33,9 +32,9 @@ export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
       <Breakpoints publish={publish} />
       <Flex gap="1" align="center">
         <SyncStatus />
-        <Preview publish={publish} />
-        <Share path={config.previewPath} project={project} />
-        <Publish project={project} />
+        <PreviewButton publish={publish} />
+        <ShareButton path={config.previewPath} project={project} />
+        <PublishButton project={project} />
       </Flex>
     </Flex>
   );

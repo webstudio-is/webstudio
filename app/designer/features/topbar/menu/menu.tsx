@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { type Publish } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,6 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-values";
-import { type Publish } from "~/designer/shared/canvas-iframe";
 
 const menuItemCss = {
   display: "flex",

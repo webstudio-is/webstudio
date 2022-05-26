@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useSubscribe, type Publish } from "@webstudio-is/sdk";
 import {
   Box,
   SidebarTabs,
@@ -6,7 +7,6 @@ import {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "~/shared/design-system";
-import { useSubscribe, type Publish } from "../../shared/canvas-iframe";
 import { useSelectedInstanceData } from "../../shared/nano-values";
 import * as panels from "./panels";
 import type { TabName } from "./types";

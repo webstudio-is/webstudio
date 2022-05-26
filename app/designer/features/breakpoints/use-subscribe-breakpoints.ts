@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { Breakpoint } from "@webstudio-is/sdk";
-import { useSubscribe } from "~/designer/shared/canvas-iframe";
+import { Breakpoint, useSubscribe } from "@webstudio-is/sdk";
 import {
   useBreakpoints,
   useSelectedBreakpoint,

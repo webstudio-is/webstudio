@@ -4,13 +4,13 @@ import {
   type Breakpoint,
   useSubscribe,
   setBreakpoints,
+  publish,
 } from "@webstudio-is/sdk";
 import {
   useBreakpoints,
   breakpointsContainer,
   rootInstanceContainer,
 } from "./nano-values";
-import { publish } from "./pubsub";
 import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 
 store.register("breakpoints", breakpointsContainer);

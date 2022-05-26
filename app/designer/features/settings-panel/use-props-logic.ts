@@ -2,8 +2,12 @@ import produce from "immer";
 import { useState, useCallback, useEffect, useRef } from "react";
 import debounce from "lodash.debounce";
 import ObjectId from "bson-objectid";
-import type { DeleteProp, UserProp, UserPropsUpdates } from "@webstudio-is/sdk";
-import type { Publish } from "~/designer/shared/canvas-iframe";
+import type {
+  DeleteProp,
+  UserProp,
+  UserPropsUpdates,
+  Publish,
+} from "@webstudio-is/sdk";
 import type { SelectedInstanceData } from "~/shared/component";
 
 const getInitialProp = () => ({

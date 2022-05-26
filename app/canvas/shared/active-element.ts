@@ -1,12 +1,11 @@
 import { useCallback, useEffect } from "react";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
 import { findInstanceById } from "~/shared/tree-utils";
 import {
   useSelectedInstance,
   useSelectedElement,
   useRootInstance,
 } from "./nano-values";
-import { publish, useSubscribe } from "./pubsub";
 
 const eventOptions = {
   passive: true,

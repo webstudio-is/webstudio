@@ -16,7 +16,7 @@ import {
 } from "~/shared/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-values";
 
-type PublishProps = { project: Project };
+type PublishButtonProps = { project: Project };
 
 const host =
   typeof location === "object"
@@ -25,7 +25,7 @@ const host =
       : location.host
     : "";
 
-const Content = ({ project }: PublishProps) => {
+const Content = ({ project }: PublishButtonProps) => {
   const id = useId();
   const fetcher = useFetcher();
   const [url, setUrl] = useState<string>();
@@ -90,7 +90,7 @@ const Content = ({ project }: PublishProps) => {
   );
 };
 
-export const Publish = ({ project }: PublishProps) => {
+export const PublishButton = ({ project }: PublishButtonProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
