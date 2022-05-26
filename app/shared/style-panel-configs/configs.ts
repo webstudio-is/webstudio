@@ -17,7 +17,7 @@ type Property = keyof typeof keywordValues;
 
 const getControl = (property: StyleProperty): Control => {
   if (property.toLocaleLowerCase().includes("color")) {
-    return "ColorField";
+    return "Color";
   }
   // Spacing properties is more narrow than StyleProperty,
   // so we have to widen it to be able to run .includes.
@@ -28,7 +28,7 @@ const getControl = (property: StyleProperty): Control => {
     return "Spacing";
   }
 
-  return "TextFieldWithAutocomplete";
+  return "Combobox";
 };
 
 const createStyleConfigs = () => {

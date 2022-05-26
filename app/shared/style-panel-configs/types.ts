@@ -6,7 +6,7 @@ type BaseStyleConfig = {
   appliesTo: AppliesTo;
 };
 
-export type Control = "Spacing" | "TextFieldWithAutocomplete" | "ColorField";
+export type Control = "Spacing" | "Combobox" | "Color";
 
 type StyleConfigWithItems = BaseStyleConfig & {
   control: Control;
