@@ -1,6 +1,6 @@
 # fly.toml file generated for webstudio-dev on 2022-05-21T21:31:32+02:00
 
-app = "webstudio-dev"
+app = "webstudio"
 
 kill_signal = "SIGINT"
 kill_timeout = 5

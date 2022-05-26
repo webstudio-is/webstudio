@@ -11,9 +11,9 @@
     "test": "jest",
     "setup": "cp ./node_modules/@webstudio-is/sdk/prisma/schema.prisma prisma/ && yarn migrate && yarn generate",
     "checks": "yarn lint && yarn typecheck && yarn test",
-    "migrate": "yarn prisma migrate dev",
-    "generate": "yarn prisma generate",
-    "watch:sdk": "yarn relative-deps watch"
+    "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
+    "watch:sdk": "relative-deps watch"
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
