@@ -1,4 +1,10 @@
-import { type UserProp, type Publish, componentsMeta, type Instance } from "@webstudio-is/sdk";
+import { type ComponentProps } from "react";
+import {
+  type UserProp,
+  type Publish,
+  componentsMeta,
+  type Instance,
+} from "@webstudio-is/sdk";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import {
   TextField,
@@ -15,37 +21,49 @@ import { PlusIcon, TrashIcon } from "~/shared/icons";
 import type { SelectedInstanceData } from "~/shared/component";
 import { usePropsLogic } from "./use-props-logic";
 
-type ControlProps = {
-  defaultValue?: UserProp["value"];
-  value: UserProp["value"];
+type BaseControlProps = {
+  value?: UserProp["value"];
   onValueChange: (value: UserProp["value"]) => void;
 };
 
-type TextFieldProps =  React.ComponentProps<typeof TextField> 
+type TextControlProps = BaseControlProps & {
+  type?: ComponentProps<typeof TextField>["type"];
+  defaultValue?: UserProp["value"];
+};
 
-const TextControl = ({ value, defaultValue, type, onValueChange }: ControlProps & {type?: TextFieldProps['type']}) => (
+const TextControl = ({
+  value,
+  defaultValue,
+  type,
+  onValueChange,
+}: TextControlProps) => (
   <TextField
     type={type}
     variant="ghost"
     placeholder="Value"
     name="value"
-    value={value || defaultValue}
+    value={String(value || defaultValue || "")}
     onChange={(event) => {
       onValueChange(event.target.value);
     }}
   />
 );
 
+type RadioControlProps = BaseControlProps & {
+  options: Array<string>;
+  defaultValue: UserProp["value"];
+};
+
 const RadioControl = ({
   value,
   options,
   defaultValue,
   onValueChange,
-}: ControlProps & { options: Array<string> }) => (
+}: RadioControlProps) => (
   <RadioGroup
     css={{ flexDirection: "column" }}
     name="value"
-    value={value || defaultValue}
+    value={String(value || defaultValue || "")}
     onValueChange={onValueChange}
   >
     {options.map((value) => (
@@ -57,15 +75,20 @@ const RadioControl = ({
   </RadioGroup>
 );
 
+type SelectControlProps = BaseControlProps & {
+  options: Array<string>;
+  defaultValue: UserProp["value"];
+};
+
 const SelectControl = ({
   value,
   options,
   defaultValue,
   onValueChange,
-}: ControlProps & { options: Array<string> }) => (
+}: SelectControlProps) => (
   <Select
     name="value"
-    value={value || defaultValue}
+    value={String(value || defaultValue || "")}
     onChange={(event) => {
       onValueChange(event.target.value);
     }}
@@ -78,28 +101,28 @@ const SelectControl = ({
   </Select>
 );
 
+type BooleanControlProps = BaseControlProps & {
+  defaultValue: boolean;
+};
+
 const BooleanControl = ({
   value,
   defaultValue,
   onValueChange,
-}: Omit<ControlProps, 'defaultValue'> & {defaultValue?: boolean}) => (
+}: BooleanControlProps) => (
   <Switch
     name="value"
     defaultChecked={defaultValue}
-    // @todo needs boolean support on data type level
-    checked={value === 'true'}
-    onCheckedChange={(checked) => {
-      onValueChange(String(checked))
-    }}
+    checked={value === true}
+    onCheckedChange={onValueChange}
   />
-);  
-
+);
 
 const renderControl = ({
   component,
   prop,
   ...props
-}: ControlProps & {
+}: BaseControlProps & {
   component: Instance["component"];
   prop: UserProp["prop"];
 }) => {
@@ -112,7 +135,13 @@ const renderControl = ({
       return <TextControl {...props} defaultValue={argType.defaultValue} />;
     }
     case "number": {
-      return <TextControl {...props} defaultValue={argType.defaultValue} type="number" />;
+      return (
+        <TextControl
+          {...props}
+          defaultValue={argType.defaultValue}
+          type="number"
+        />
+      );
     }
     case "radio": {
       return (
@@ -133,13 +162,8 @@ const renderControl = ({
       );
     }
     case "boolean": {
-      return (
-        <BooleanControl
-          {...props}
-          defaultValue={argType.defaultValue}
-        />
-      );
-    }    
+      return <BooleanControl {...props} defaultValue={argType.defaultValue} />;
+    }
   }
 
   return <TextControl {...props} />;
@@ -181,7 +205,7 @@ const Property = ({
         prop,
         component,
         value,
-        onValueChange(value: string) {
+        onValueChange(value: UserProp["prop"] | UserProp["value"]) {
           onChange(id, "value", value);
         },
       })}
