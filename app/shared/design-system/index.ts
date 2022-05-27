@@ -54,3 +54,4 @@ export * from "./components/switch";
 export * from "./components/slider";
 export * from "./components/control-group";
 export * from "./components/radio";
+export * from "./components/combobox";

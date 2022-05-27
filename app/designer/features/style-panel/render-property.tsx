@@ -1,4 +1,4 @@
-import { Flex, Grid, Label, Text } from "~/shared/design-system";
+import { Flex, Grid, Label, Text, Combobox } from "~/shared/design-system";
 import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
   categories,
@@ -9,7 +9,6 @@ import {
 } from "@webstudio-is/sdk";
 import type { SetProperty } from "./use-style-data";
 import type { InheritedStyle } from "./get-inherited-style";
-import { Autocomplete } from "./lib/autocomplete";
 import { ColorPicker } from "./lib/color-picker";
 import {
   SpacingWidget,
@@ -83,13 +82,13 @@ type ControlProps = {
   styleConfig: StyleConfig;
 };
 
-const ColorField = ({
+const ColorControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  if (styleConfig.control !== "ColorField") return null;
+  if (styleConfig.control !== "Color") return null;
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
@@ -116,7 +115,7 @@ const ColorField = ({
   );
 };
 
-const Spacing = ({
+const SpacingControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -154,13 +153,13 @@ const Spacing = ({
 
 //const cursorUrl = `data:image/svg+xml;base64,${btoa(svgCursor)}`;
 
-const TextFieldWithAutocomplete = ({
+const ComboboxControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  if (styleConfig.control !== "TextFieldWithAutocomplete") return null;
+  if (styleConfig.control !== "Combobox") return null;
 
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
@@ -171,22 +170,32 @@ const TextFieldWithAutocomplete = ({
 
   if (value === undefined) return null;
 
+  const setValue = setProperty(styleConfig.property);
+
   return (
     <Grid columns={2} align="center" gapX="1">
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
-        <Autocomplete
+        <Combobox
           id={styleConfig.property}
           items={styleConfig.items}
           variant="ghost"
           css={{
             // @todo drag&drop cursor to adjust numeric value
+            // const cursorUrl = data:image/svg+xml;base64,${btoa(svgCursor)}
             //cursor: `url(${cursorUrl}), text`,
             textAlign: "right",
           }}
           state={value.type === "invalid" ? "invalid" : undefined}
           value={String(value.value)}
-          onChange={setProperty(styleConfig.property)}
+          onValueSelect={setValue}
+          onValueEnter={setValue}
+          onItemEnter={(value) => {
+            setValue(value, { isEphemeral: true });
+          }}
+          onItemLeave={() => {
+            setValue(String(value.value), { isEphemeral: true });
+          }}
         />
         <Unit value={value} />
       </Flex>
@@ -197,9 +206,9 @@ const TextFieldWithAutocomplete = ({
 const controls: {
   [key: string]: (props: ControlProps) => JSX.Element | null;
 } = {
-  ColorField,
-  Spacing,
-  TextFieldWithAutocomplete,
+  Color: ColorControl,
+  Spacing: SpacingControl,
+  Combobox: ComboboxControl,
 };
 
 type RenderPropertyProps = {
