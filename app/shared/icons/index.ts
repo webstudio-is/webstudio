@@ -6,3 +6,4 @@ export * from "./undo";
 export * from "./redo";
 export * from "./devices";
 export * from "./tablet";
+export * from "./types";
