@@ -23,26 +23,19 @@ export type CustomDragLayerProps = {
 };
 
 export const CustomDragLayer = ({ onDrag }: CustomDragLayerProps) => {
-  const {
-    itemType: component,
-    isDragging,
-    initialOffset,
-    clientOffset,
-    sourceClientOffset,
-  } = useDragLayer((monitor) => ({
-    itemType: monitor.getItemType() as Instance["component"],
-    initialOffset: monitor.getInitialSourceClientOffset(),
-    isDragging: monitor.isDragging(),
-    clientOffset: monitor.getClientOffset(),
-    sourceClientOffset: monitor.getSourceClientOffset(),
-  }));
+  const { component, isDragging, clientOffset, sourceClientOffset } =
+    useDragLayer((monitor) => ({
+      component: monitor.getItemType() as Instance["component"],
+      isDragging: monitor.isDragging(),
+      clientOffset: monitor.getClientOffset(),
+      sourceClientOffset: monitor.getSourceClientOffset(),
+    }));
   const [canvasRect] = useCanvasRect();
   const [zoom] = useZoom();
 
   useEffect(() => {
     if (
       clientOffset === null ||
-      initialOffset === null ||
       component === null ||
       canvasRect === undefined
     ) {
@@ -59,7 +52,7 @@ export const CustomDragLayer = ({ onDrag }: CustomDragLayerProps) => {
       currentOffset,
       component,
     });
-  }, [clientOffset, initialOffset, component, onDrag, zoom, canvasRect]);
+  }, [clientOffset, component, onDrag, zoom, canvasRect]);
 
   if (isDragging === false || sourceClientOffset === null) return null;
 
