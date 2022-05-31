@@ -130,7 +130,7 @@ const renderControl = ({
 
   const argType = meta?.argTypes?.[prop as keyof typeof meta.argTypes];
 
-  switch (argType?.control) {
+  switch (argType?.control.type) {
     case "text": {
       return <TextControl {...props} defaultValue={argType.defaultValue} />;
     }
@@ -246,7 +246,6 @@ export const PropsPanel = ({
       <PlusIcon />
     </Button>
   );
-
   return (
     <>
       <Box css={{ p: "$2" }}>
