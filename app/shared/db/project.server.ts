@@ -4,7 +4,7 @@ import type { Project, User } from "@webstudio-is/sdk";
 import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";
 
-type ParsedProject = Omit<Project, "prodTreeIdHistory"> & {
+export type ParsedProject = Omit<Project, "prodTreeIdHistory"> & {
   prodTreeIdHistory: string[];
 };
 
@@ -30,7 +30,9 @@ export const loadById = async (
   return parseProject(project);
 };
 
-export const loadByDomain = async (domain: string): Promise<Project | null> => {
+export const loadByDomain = async (
+  domain: string
+): Promise<ParsedProject | null> => {
   const project = await prisma.project.findUnique({ where: { domain } });
 
   return parseProject(project);
@@ -65,7 +67,7 @@ export const create = async ({
 }: {
   userId: string;
   title: string;
-}): Promise<Project> => {
+}): Promise<ParsedProject | null> => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
@@ -82,10 +84,12 @@ export const create = async ({
     },
   });
   await db.breakpoints.create(tree.id, breakpoints);
-  return project;
+  return parseProject(project);
 };
 
-export const clone = async (clonableDomain: string): Promise<Project> => {
+export const clone = async (
+  clonableDomain: string
+): Promise<ParsedProject | null> => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
@@ -105,6 +109,7 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
         domain,
         devTreeId: tree.id,
       },
+      select: {},
     }),
     db.props.clone({
       previousTreeId: clonableProject.prodTreeId,
@@ -115,7 +120,7 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
       nextTreeId: tree.id,
     }),
   ]);
-  return project;
+  return parseProject(project as Project);
 };
 
 export const update = async ({

@@ -9,7 +9,6 @@ import {
   useAllUserProps,
   WrapperComponent,
   globalStyles,
-  Project,
   useSubscribe,
 } from "@webstudio-is/sdk";
 import {
@@ -41,6 +40,7 @@ import {
   useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
+import { ParsedProject } from "~/shared/db/project.server";
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
@@ -86,7 +86,7 @@ const PreviewMode = () => {
 
 type DesignModeProps = {
   treeId: Tree["id"];
-  project: Project;
+  project: ParsedProject;
 };
 
 const DesignMode = ({ treeId, project }: DesignModeProps) => {
@@ -112,7 +112,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
 };
 
 type CanvasProps = {
-  data: Data & { project: Project };
+  data: Data & { project: ParsedProject };
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {

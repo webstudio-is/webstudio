@@ -1,9 +1,10 @@
 import { type Project, type Tree, type AllUserProps } from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
+import { ParsedProject } from "./project.server";
 
 export const loadByProject = async (
-  project: Project | null,
+  project: ParsedProject | null,
   env: "production" | "development" = "development"
 ) => {
   if (project === null) {

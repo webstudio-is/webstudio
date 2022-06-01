@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ request }) => {
   const { userId, headers } = await ensureUserCookie(request);
   try {
     const project = await db.project.create({ title, userId });
-    return redirect(`${config.designerPath}/${project.id}`, { headers });
+    return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error) {
     if (error instanceof Error) {
       return { errors: error.message };

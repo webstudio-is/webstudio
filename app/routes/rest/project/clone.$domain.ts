@@ -1,8 +1,9 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
-import type { Project, User } from "@webstudio-is/sdk";
+import type { User } from "@webstudio-is/sdk";
 import * as db from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
 import config from "~/config";
+import { ParsedProject } from "~/shared/db/project.server";
 
 const ensureProject = async ({
   userId,
@@ -10,7 +11,7 @@ const ensureProject = async ({
 }: {
   userId: User["id"];
   domain: string;
-}): Promise<Project> => {
+}): Promise<ParsedProject | null> => {
   const projects = await db.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
   return await db.project.clone(domain);
@@ -29,7 +30,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const { headers, userId } = await ensureUserCookie(request);
   try {
     const project = await ensureProject({ userId, domain: params.domain });
-    return redirect(`${config.designerPath}/${project.id}`, { headers });
+    return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error: unknown) {
     if (error instanceof Error) {
       return { errors: error.message };

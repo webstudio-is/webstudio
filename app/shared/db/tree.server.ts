@@ -1,14 +1,10 @@
-import {
-  type Instance,
-  type Project,
-  type Breakpoint,
-  type Tree,
-} from "@webstudio-is/sdk";
+import { type Instance, type Breakpoint, type Tree } from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { createInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
+import { ParsedProject } from "./project.server";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -82,7 +78,7 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
 };
 
 export const loadByProject = async (
-  project: Project | null,
+  project: ParsedProject | null,
   env: "production" | "development" = "development"
 ) => {
   if (project === null) {
