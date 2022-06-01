@@ -13,7 +13,7 @@
     "checks": "yarn lint && yarn typecheck && yarn test",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
-    "watch:sdk": "relative-deps watch"
+    "watch:sdk": "relative-deps && relative-deps watch"
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
