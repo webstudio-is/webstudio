@@ -47,7 +47,7 @@
     "@remix-run/react": "^1.5.1",
     "@remix-run/serve": "^1.5.1",
     "@stitches/react": "^1.2.7",
-    "@webstudio-is/sdk": "0.2.3-sqlite",
+    "@webstudio-is/sdk": "0.2.3-postgres",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",
