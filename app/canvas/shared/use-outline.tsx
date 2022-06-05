@@ -54,6 +54,22 @@ const useStyle = (element?: HTMLElement) => {
   );
 };
 
+/**
+ * Detects if there is no space on top and for the label and tells to show it inside.
+ */
+const useLabelPosition = () => {
+  const [position, setPosition] = useState<"outside" | "inside">("outside");
+
+  const ref = useCallback((element: HTMLElement | null) => {
+    if (element === null) return;
+    const rect = element.getBoundingClientRect();
+    const nextPosition = rect.height > rect.top ? "inside" : "outside";
+    setPosition(nextPosition);
+  }, []);
+
+  return { ref, position };
+};
+
 const Outline = styled(
   "div",
   {
@@ -82,7 +98,6 @@ const Label = styled(
     position: "absolute",
     display: "flex",
     padding: "0 $1",
-    marginTop: "-$4",
     height: "$4",
     color: "$hiContrast",
     alignItems: "center",
@@ -103,6 +118,12 @@ const Label = styled(
           color: "$blue9",
         },
       },
+      position: {
+        outside: {
+          marginTop: "-$4",
+        },
+        inside: {},
+      },
     },
   }
 );
@@ -110,6 +131,8 @@ const Label = styled(
 export const useOutline = (currentInstance: Instance) => {
   const { element, type } = useElement(currentInstance) ?? {};
   const style = useStyle(element);
+  const { ref: labelRefCallback, position } = useLabelPosition();
+
   const component = element?.dataset?.component;
 
   if (component === undefined || style === undefined) {
@@ -121,7 +144,7 @@ export const useOutline = (currentInstance: Instance) => {
 
   return createPortal(
     <Outline state={type} style={style} className={darkTheme}>
-      <Label state={type}>
+      <Label state={type} position={position} ref={labelRefCallback}>
         <Icon width="1em" height="1em" />
         {primitive.label}
       </Label>
