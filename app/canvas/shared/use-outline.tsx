@@ -5,7 +5,7 @@ import { getBoundingClientRect } from "~/shared/dom-utils";
 import { primitives } from "~/shared/component";
 import { useHoveredElement, useSelectedElement } from "./nano-values";
 import { styled, darkTheme } from "~/shared/design-system";
-import { useOnRender } from "./use-on-render";
+import { useOnAnyUpdate } from "./use-on-any-update";
 import { useWindowResize } from "~/shared/dom-hooks";
 
 const useElement = (
@@ -36,7 +36,7 @@ const useStyle = (element?: HTMLElement) => {
     forceRender(!rerenderFlag);
   }, [element, rerenderFlag]);
 
-  useOnRender(handleUpdate);
+  useOnAnyUpdate(handleUpdate);
   useWindowResize(handleUpdate);
 
   return useMemo(
