@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { type Instance } from "@webstudio-is/sdk";
 import { getBoundingClientRect } from "~/shared/dom-utils";
 import { primitives } from "~/shared/component";
 import { useHoveredElement, useSelectedElement } from "./nano-values";
 import { styled, darkTheme } from "~/shared/design-system";
-import { type Instance } from "@webstudio-is/sdk";
+import { useOnRender } from "./use-on-render";
 
 const useElement = (currentInstance: Instance) => {
   const [selectedElement] = useSelectedElement();
@@ -17,16 +18,30 @@ const useElement = (currentInstance: Instance) => {
 };
 
 const useStyle = (element?: HTMLElement) => {
+  const [rerenderFlag, forceRender] = useState(false);
+
+  // We need to recalculate the client rect the the element if any
+  // style on the page changes because we have no idea how any layout changes
+  // can impact the position or size of the outline.
+  const handleUpdate = useCallback(() => {
+    getBoundingClientRect.cache.delete(element);
+    forceRender(!rerenderFlag);
+  }, [element, rerenderFlag]);
+
+  useOnRender(handleUpdate);
+
   return useMemo(() => {
-    if (element === undefined) return undefined;
+    if (element === undefined) return;
+
     const rect = getBoundingClientRect(element);
+
     return {
       top: rect.top,
       left: rect.left,
       width: rect.width,
       height: rect.height,
     };
-  }, [element]);
+  }, [element, rerenderFlag]);
 };
 
 const Outline = styled("div", {
