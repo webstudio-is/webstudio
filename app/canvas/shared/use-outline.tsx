@@ -61,37 +61,45 @@ const Outline = styled(
     pointerEvents: "none",
     outline: "2px solid $blue9",
     outlineOffset: -2,
-    // This can be rewriten using normal node once needed
-    "&::before": {
-      display: "flex",
-      content: "attr(data-label)",
-      padding: "0 $1",
-      marginTop: "-$4",
-      height: "$4",
-      position: "absolute",
-      color: "$hiContrast",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "$2",
-      fontFamily: "$sans",
-      lineHeight: 1,
-      minWidth: "$6",
-    },
   },
   {
     variants: {
       state: {
         selected: {
           zIndex: "$4",
-          "&::before": {
-            backgroundColor: "$blue9",
-          },
         },
         hovered: {
           zIndex: "$3",
-          "&::before": {
-            color: "$blue9",
-          },
+        },
+      },
+    },
+  }
+);
+
+const Label = styled(
+  "div",
+  {
+    position: "absolute",
+    display: "flex",
+    padding: "0 $1",
+    marginTop: "-$4",
+    height: "$4",
+    color: "$hiContrast",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "$2",
+    fontFamily: "$sans",
+    lineHeight: 1,
+    minWidth: "$6",
+  },
+  {
+    variants: {
+      state: {
+        selected: {
+          backgroundColor: "$blue9",
+        },
+        hovered: {
+          color: "$blue9",
         },
       },
     },
@@ -110,12 +118,9 @@ export const useOutline = (currentInstance: Instance) => {
   const primitive = primitives[component as Instance["component"]];
 
   return createPortal(
-    <Outline
-      state={type}
-      data-label={primitive.label}
-      style={style}
-      className={darkTheme}
-    />,
+    <Outline state={type} style={style} className={darkTheme}>
+      <Label state={type}>{primitive.label}</Label>
+    </Outline>,
     document.body
   );
 };
