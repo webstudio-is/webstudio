@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { type Instance } from "@webstudio-is/sdk";
 import { getBoundingClientRect } from "~/shared/dom-utils";
@@ -30,11 +30,19 @@ const useStyle = (element?: HTMLElement) => {
   // style on the page changes because we have no idea how any layout changes
   // can impact the position or size of the outline.
   const handleUpdate = useCallback(() => {
+    if (element === undefined) return;
     getBoundingClientRect.cache.delete(element);
     forceRender(!rerenderFlag);
   }, [element, rerenderFlag]);
 
   useOnRender(handleUpdate);
+
+  useEffect(() => {
+    window.addEventListener("resize", handleUpdate);
+    return () => {
+      window.removeEventListener("resize", handleUpdate);
+    };
+  }, [handleUpdate]);
 
   return useMemo(
     () => {
