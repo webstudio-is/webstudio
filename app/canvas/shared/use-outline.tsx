@@ -87,6 +87,7 @@ const Label = styled(
     color: "$hiContrast",
     alignItems: "center",
     justifyContent: "center",
+    gap: "$1",
     fontSize: "$2",
     fontFamily: "$sans",
     lineHeight: 1,
@@ -116,10 +117,14 @@ export const useOutline = (currentInstance: Instance) => {
   }
 
   const primitive = primitives[component as Instance["component"]];
+  const { Icon } = primitive;
 
   return createPortal(
     <Outline state={type} style={style} className={darkTheme}>
-      <Label state={type}>{primitive.label}</Label>
+      <Label state={type}>
+        <Icon width="1em" height="1em" />
+        {primitive.label}
+      </Label>
     </Outline>,
     document.body
   );
