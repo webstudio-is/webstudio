@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { type Instance } from "@webstudio-is/sdk";
 import { getBoundingClientRect } from "~/shared/dom-utils";
@@ -6,6 +6,7 @@ import { primitives } from "~/shared/component";
 import { useHoveredElement, useSelectedElement } from "./nano-values";
 import { styled, darkTheme } from "~/shared/design-system";
 import { useOnRender } from "./use-on-render";
+import { useWindowResize } from "~/shared/dom-hooks";
 
 const useElement = (
   currentInstance: Instance
@@ -36,13 +37,7 @@ const useStyle = (element?: HTMLElement) => {
   }, [element, rerenderFlag]);
 
   useOnRender(handleUpdate);
-
-  useEffect(() => {
-    window.addEventListener("resize", handleUpdate);
-    return () => {
-      window.removeEventListener("resize", handleUpdate);
-    };
-  }, [handleUpdate]);
+  useWindowResize(handleUpdate);
 
   return useMemo(
     () => {
