@@ -11,7 +11,9 @@ export const selectedInstanceContainer = createValueContainer<
 >();
 export const useSelectedInstance = () => useValue(selectedInstanceContainer);
 
-const selectedElementContainer = createValueContainer<Element | undefined>();
+const selectedElementContainer = createValueContainer<
+  HTMLElement | undefined
+>();
 export const useSelectedElement = () => useValue(selectedElementContainer);
 
 const isPreviewModeContainer = createValueContainer<boolean>(false);
@@ -25,3 +27,6 @@ store.register("root", rootInstanceContainer);
 
 export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);
+
+const hoveredElementContainer = createValueContainer<HTMLElement | undefined>();
+export const useHoveredElement = () => useValue(hoveredElementContainer);

@@ -1,11 +1,12 @@
 import { useState } from "react";
-import memoize from "lodash.memoize";
 import { publish, useSubscribe } from "@webstudio-is/sdk";
 import { type DragData, type DropData } from "~/shared/component";
 import { findInstanceById } from "~/shared/tree-utils";
 import {
   findClosestChild,
   findInsertionIndex,
+  getBoundingClientRect,
+  getComputedStyle,
   getDragOverInfo,
 } from "~/shared/dom-utils";
 import {
@@ -14,13 +15,6 @@ import {
   useSelectedInstance,
 } from "./nano-values";
 //import {usePointerOutline} from './use-pointer-outline'
-
-// Avoid recalculating rects for each node during dragging.
-const getBoundingClientRect = memoize((element) =>
-  element.getBoundingClientRect()
-);
-
-const getComputedStyle = memoize((element) => window.getComputedStyle(element));
 
 export const useDragDropHandlers = () => {
   const [rootInstance] = useRootInstance();

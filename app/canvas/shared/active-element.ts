@@ -23,8 +23,14 @@ export const useActiveElementTracking = () => {
   });
 
   const select = useCallback(
-    (element: Element | null) => {
-      if (element === null || rootInstance === undefined) return;
+    (element: EventTarget | HTMLElement | null) => {
+      if (
+        element === null ||
+        !(element instanceof HTMLElement) ||
+        rootInstance === undefined
+      ) {
+        return;
+      }
       const id = element?.id;
       if (!id) return;
       if (selectedElement?.id === id && selectedInstance?.id === id) {
@@ -55,7 +61,7 @@ export const useActiveElementTracking = () => {
       // Notify in general that document was clicked
       // e.g. to hide the side panel
       publish<"clickCanvas">({ type: "clickCanvas" });
-      if (event.target instanceof Element) select(event.target);
+      select(event.target);
     };
     window.addEventListener("click", handleClick, eventOptions);
 

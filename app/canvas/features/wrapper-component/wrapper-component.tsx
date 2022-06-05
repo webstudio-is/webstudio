@@ -11,6 +11,8 @@ import { useContentEditable } from "./editable";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
+import { useSetHoveredInstance } from "./use-set-hovered-instance";
+import { useOutline } from "~/canvas/shared/use-outline";
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -27,6 +29,8 @@ export const WrapperComponentDev = ({
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
+  const mouseEnterExitHandlers = useSetHoveredInstance();
+  const outline = useOutline(instance);
 
   const {
     ref: contentEditableRef,
@@ -64,17 +68,18 @@ export const WrapperComponentDev = ({
   return (
     <>
       {editableToolbar}
+      {outline}
       <Component
         {...userProps}
         {...rest}
         {...contentEditableProps}
         {...draggableProps}
         {...readonly}
+        {...mouseEnterExitHandlers}
         className={className}
         id={instance.id}
         tabIndex={0}
         data-component={instance.component}
-        data-label={primitives[instance.component].label}
         data-id={instance.id}
         ref={refCallback}
         onClick={(event: MouseEvent) => {
