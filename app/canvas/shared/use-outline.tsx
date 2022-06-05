@@ -2,19 +2,15 @@ import { useMemo } from "react";
 import { createPortal } from "react-dom";
 import { getBoundingClientRect } from "~/shared/dom-utils";
 import { primitives } from "~/shared/component";
-import {
-  useHoveredElement,
-  useSelectedElement,
-  useSelectedInstance,
-} from "./nano-values";
+import { useHoveredElement, useSelectedElement } from "./nano-values";
 import { styled, darkTheme } from "~/shared/design-system";
 import { type Instance } from "@webstudio-is/sdk";
 
 const Outline = styled("div", {
   position: "absolute",
   pointerEvents: "none",
-  outline: "1px solid $blue9",
-  outlineOffset: -1,
+  outline: "2px solid $blue9",
+  outlineOffset: -2,
   // This can be rewriten using normal node once needed
   "&::before": {
     display: "flex",
@@ -35,12 +31,14 @@ const Outline = styled("div", {
 });
 
 export const useOutline = (currentInstance: Instance) => {
-  const [selectedInstance] = useSelectedInstance();
   const [selectedElement] = useSelectedElement();
   const [hoveredElement] = useHoveredElement();
 
-  const element =
-    currentInstance === selectedInstance ? selectedElement : hoveredElement;
+  const element = useMemo(() => {
+    if (selectedElement?.id === currentInstance.id) return selectedElement;
+    if (hoveredElement?.id === currentInstance.id) return hoveredElement;
+  }, [currentInstance, hoveredElement, selectedElement]);
+
   const component = element?.dataset?.component;
 
   const style = useMemo(() => {
