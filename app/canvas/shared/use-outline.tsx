@@ -6,6 +6,29 @@ import { useHoveredElement, useSelectedElement } from "./nano-values";
 import { styled, darkTheme } from "~/shared/design-system";
 import { type Instance } from "@webstudio-is/sdk";
 
+const useElement = (currentInstance: Instance) => {
+  const [selectedElement] = useSelectedElement();
+  const [hoveredElement] = useHoveredElement();
+
+  return useMemo(() => {
+    if (selectedElement?.id === currentInstance.id) return selectedElement;
+    if (hoveredElement?.id === currentInstance.id) return hoveredElement;
+  }, [currentInstance, hoveredElement, selectedElement]);
+};
+
+const useStyle = (element?: HTMLElement) => {
+  return useMemo(() => {
+    if (element === undefined) return undefined;
+    const rect = getBoundingClientRect(element);
+    return {
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+    };
+  }, [element]);
+};
+
 const Outline = styled("div", {
   position: "absolute",
   pointerEvents: "none",
@@ -31,26 +54,9 @@ const Outline = styled("div", {
 });
 
 export const useOutline = (currentInstance: Instance) => {
-  const [selectedElement] = useSelectedElement();
-  const [hoveredElement] = useHoveredElement();
-
-  const element = useMemo(() => {
-    if (selectedElement?.id === currentInstance.id) return selectedElement;
-    if (hoveredElement?.id === currentInstance.id) return hoveredElement;
-  }, [currentInstance, hoveredElement, selectedElement]);
-
+  const element = useElement(currentInstance);
+  const style = useStyle(element);
   const component = element?.dataset?.component;
-
-  const style = useMemo(() => {
-    if (element === undefined) return undefined;
-    const rect = getBoundingClientRect(element);
-    return {
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-    };
-  }, [element]);
 
   if (component === undefined || style === undefined) {
     return null;
