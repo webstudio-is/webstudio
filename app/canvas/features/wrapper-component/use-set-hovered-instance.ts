@@ -1,5 +1,5 @@
 import { useMemo, type MouseEvent } from "react";
-import { useHoveredElement } from "~/canvas/shared/nano-values";
+import { useHoveredElement } from "~/canvas/shared/nano-states";
 
 export const useSetHoveredInstance = () => {
   const [, setHoveredElement] = useHoveredElement();

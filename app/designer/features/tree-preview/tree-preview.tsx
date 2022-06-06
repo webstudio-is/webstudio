@@ -1,10 +1,10 @@
 import { Instance, useSubscribe } from "@webstudio-is/sdk";
 import produce from "immer";
 import { useState } from "react";
-import { useRootInstance } from "~/designer/shared/nano-values";
 import { Tree } from "~/designer/shared/tree";
 import { type DragData, type DropData } from "~/shared/component";
 import { Flex } from "~/shared/design-system";
+import { useRootInstance } from "~/shared/nano-states";
 import {
   findInstanceById,
   getInstancePath,

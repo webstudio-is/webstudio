@@ -3,7 +3,7 @@ import { type StyleProperty } from "@webstudio-is/sdk";
 import {
   useSelectedBreakpoint,
   useSelectedInstanceData,
-} from "~/designer/shared/nano-values";
+} from "~/designer/shared/nano-states";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 
 /**

@@ -4,7 +4,7 @@ import {
   allUserPropsContainer,
   publish,
 } from "@webstudio-is/sdk";
-import { selectedInstanceContainer } from "./nano-values";
+import { selectedInstanceContainer } from "./nano-states";
 import { cloneInstance } from "~/shared/tree-utils";
 import { cloneProps } from "~/shared/props-utils";
 

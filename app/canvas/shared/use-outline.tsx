@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { type Instance } from "@webstudio-is/sdk";
 import { getBoundingClientRect } from "~/shared/dom-utils";
 import { primitives } from "~/shared/component";
-import { useHoveredElement, useSelectedElement } from "./nano-values";
+import { useHoveredElement, useSelectedElement } from "./nano-states";
 import { styled, darkTheme } from "~/shared/design-system";
 import { useOnAnyUpdate } from "./use-on-any-update";
 import { useWindowResize } from "~/shared/dom-hooks";

@@ -3,8 +3,8 @@ import { ListNestedIcon } from "~/shared/icons";
 import { Flex } from "~/shared/design-system";
 import { type SelectedInstanceData } from "~/shared/component";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
-import { useRootInstance } from "~/designer/shared/nano-values";
 import { Tree } from "~/designer/shared/tree";
+import { useRootInstance } from "~/shared/nano-states";
 
 type TabContentProps = {
   publish: Publish;

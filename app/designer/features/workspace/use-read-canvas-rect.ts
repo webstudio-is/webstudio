@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useCanvasRect } from "~/designer/shared/nano-values";
+import { useCanvasRect } from "~/designer/shared/nano-states";
 
 /**
  * Reads the canvas iframe dom rect and puts it into nano state

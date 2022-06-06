@@ -10,8 +10,6 @@ import {
   deletePropMutable,
 } from "~/shared/props-utils";
 
-store.register("props", allUserPropsContainer);
-
 export const useManageProps = () => {
   useSubscribe<"updateProps", UserPropsUpdates>(
     "updateProps",
