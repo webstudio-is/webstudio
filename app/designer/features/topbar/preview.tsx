@@ -1,7 +1,7 @@
 import { useSubscribe, type Publish } from "@webstudio-is/sdk";
 import { EyeOpenIcon } from "~/shared/icons";
 import { SimpleToggle } from "~/shared/design-system";
-import { useIsPreviewMode } from "../../shared/nano-values";
+import { useIsPreviewMode } from "~/shared/nano-states";
 
 type PreviewButtonProps = {
   publish: Publish;

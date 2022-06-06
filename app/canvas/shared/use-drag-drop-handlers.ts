@@ -8,11 +8,8 @@ import {
   findInsertionIndex,
   getDragOverInfo,
 } from "~/shared/dom-utils";
-import {
-  useDropData,
-  useRootInstance,
-  useSelectedInstance,
-} from "./nano-values";
+import { useDropData, useSelectedInstance } from "./nano-states";
+import { useRootInstance } from "~/shared/nano-states";
 //import {usePointerOutline} from './use-pointer-outline'
 
 // Avoid recalculating rects for each node during dragging.

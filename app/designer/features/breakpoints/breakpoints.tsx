@@ -13,10 +13,9 @@ import {
 } from "~/shared/design-system";
 import { sort } from "~/shared/breakpoints";
 import {
-  useBreakpoints,
   useSelectedBreakpoint,
   useCanvasWidth,
-} from "../../shared/nano-values";
+} from "../../shared/nano-states";
 import { willRender } from "~/designer/shared/breakpoints";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
@@ -28,6 +27,7 @@ import {
   useSubscribeSelectBreakpointFromShortcut,
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
+import { useBreakpoints } from "~/shared/nano-states";
 
 type BreakpointSelectorItemProps = {
   breakpoint: Breakpoint;

@@ -4,7 +4,7 @@ import {
   useCanvasWidth,
   useZoom,
   useSelectedBreakpoint,
-} from "~/designer/shared/nano-values";
+} from "~/designer/shared/nano-states";
 import { willRender } from "~/designer/shared/breakpoints";
 import { Button, Text } from "~/shared/design-system";
 import {

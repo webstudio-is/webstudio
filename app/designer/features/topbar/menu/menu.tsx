@@ -16,7 +16,7 @@ import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
-} from "~/designer/shared/nano-values";
+} from "~/designer/shared/nano-states";
 
 const menuItemCss = {
   display: "flex",

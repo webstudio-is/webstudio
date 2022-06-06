@@ -14,7 +14,7 @@ import {
   Label,
   Link,
 } from "~/shared/design-system";
-import { useIsPublishDialogOpen } from "../../shared/nano-values";
+import { useIsPublishDialogOpen } from "../../shared/nano-states";
 
 type PublishButtonProps = { project: Project };
 
