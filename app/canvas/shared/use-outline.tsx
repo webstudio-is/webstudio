@@ -123,9 +123,11 @@ const Label = styled(
       },
       position: {
         outside: {
-          marginTop: "-$4",
+          top: "-$4",
         },
-        inside: {},
+        inside: {
+          top: 0,
+        },
       },
     },
   }
@@ -134,7 +136,7 @@ const Label = styled(
 export const useOutline = (currentInstance: Instance) => {
   const { element, type } = useElement(currentInstance) ?? {};
   const style = useStyle(element);
-  const { ref: labelRefCallback, position } = useLabelPosition();
+  const { ref: labelRef, position } = useLabelPosition();
 
   const component = element?.dataset?.component;
 
@@ -147,7 +149,7 @@ export const useOutline = (currentInstance: Instance) => {
 
   return createPortal(
     <Outline state={type} style={style} className={darkTheme}>
-      <Label state={type} position={position} ref={labelRefCallback}>
+      <Label state={type} position={position} ref={labelRef}>
         <Icon width="1em" height="1em" />
         {primitive.label}
       </Label>
