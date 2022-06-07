@@ -105,7 +105,6 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
         domain,
         devTreeId: tree.id,
       },
-      select: {},
     }),
     db.props.clone({
       previousTreeId: clonableProject.prodTreeId,
