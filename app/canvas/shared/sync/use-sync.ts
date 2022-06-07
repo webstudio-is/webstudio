@@ -1,9 +1,9 @@
 import useInterval from "react-use/lib/useInterval";
 import { sync } from "immerhin";
 import { enqueue } from "./queue";
-import { ParsedProject } from "~/shared/db/project.server";
+import { Project } from "~/shared/db/project.server";
 
-export const useSync = ({ project }: { project: ParsedProject }) => {
+export const useSync = ({ project }: { project: Project }) => {
   useInterval(() => {
     const entries = sync();
     if (entries.length === 0) return;

@@ -4,7 +4,7 @@ import { prisma } from "./prisma.server";
 import { createInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
-import { ParsedProject } from "./project.server";
+import { Project } from "./project.server";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -78,7 +78,7 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
 };
 
 export const loadByProject = async (
-  project: ParsedProject | null,
+  project: Project | null,
   env: "production" | "development" = "development"
 ) => {
   if (project === null) {

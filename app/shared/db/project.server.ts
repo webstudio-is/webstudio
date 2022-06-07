@@ -1,14 +1,14 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import type { Project, User } from "@webstudio-is/sdk";
+import type { Project as BaseProject, User } from "@webstudio-is/sdk";
 import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";
 
-export type ParsedProject = Omit<Project, "prodTreeIdHistory"> & {
+export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: string[];
 };
 
-const parseProject = (project: Project | null) =>
+const parseProject = (project: BaseProject | null) =>
   project
     ? {
         ...project,
@@ -18,7 +18,7 @@ const parseProject = (project: Project | null) =>
 
 export const loadById = async (
   projectId?: Project["id"]
-): Promise<ParsedProject | null> => {
+): Promise<Project | null> => {
   if (typeof projectId !== "string") {
     throw new Error("Project ID required");
   }
@@ -30,9 +30,7 @@ export const loadById = async (
   return parseProject(project);
 };
 
-export const loadByDomain = async (
-  domain: string
-): Promise<ParsedProject | null> => {
+export const loadByDomain = async (domain: string): Promise<Project | null> => {
   const project = await prisma.project.findUnique({ where: { domain } });
 
   return parseProject(project);
@@ -40,7 +38,7 @@ export const loadByDomain = async (
 
 export const loadManyByUserId = async (
   userId: User["id"]
-): Promise<Array<ParsedProject | null>> => {
+): Promise<Array<Project | null>> => {
   const projects = await prisma.project.findMany({ where: { userId } });
 
   return projects.map(parseProject);
@@ -67,7 +65,7 @@ export const create = async ({
 }: {
   userId: string;
   title: string;
-}): Promise<ParsedProject | null> => {
+}): Promise<Project | null> => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
@@ -89,7 +87,7 @@ export const create = async ({
 
 export const clone = async (
   clonableDomain: string
-): Promise<ParsedProject | null> => {
+): Promise<Project | null> => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
@@ -120,7 +118,7 @@ export const clone = async (
       nextTreeId: tree.id,
     }),
   ]);
-  return parseProject(project as Project);
+  return parseProject(project as BaseProject);
 };
 
 export const update = async ({
@@ -132,7 +130,7 @@ export const update = async ({
   prodTreeId?: string;
   devTreeId?: string;
   prodTreeIdHistory: Array<string>;
-}): Promise<Project> => {
+}): Promise<BaseProject> => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
     if (data.domain.length < MIN_DOMAIN_LENGTH) {

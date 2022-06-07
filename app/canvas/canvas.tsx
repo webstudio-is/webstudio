@@ -35,7 +35,7 @@ import {
   useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
-import { ParsedProject } from "~/shared/db/project.server";
+import { Project } from "~/shared/db/project.server";
 import {
   rootInstanceContainer,
   useBreakpoints,
@@ -89,7 +89,7 @@ const PreviewMode = () => {
 
 type DesignModeProps = {
   treeId: Tree["id"];
-  project: ParsedProject;
+  project: Project;
 };
 
 const DesignMode = ({ treeId, project }: DesignModeProps) => {
@@ -115,7 +115,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
 };
 
 type CanvasProps = {
-  data: Data & { project: ParsedProject };
+  data: Data & { project: Project };
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {

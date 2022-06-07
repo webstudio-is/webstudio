@@ -1,8 +1,8 @@
-import { type Data, type Project } from "@webstudio-is/sdk";
+import { type Data } from "@webstudio-is/sdk";
 import * as db from ".";
-import { ParsedProject } from "./project.server";
+import { Project } from "./project.server";
 
-export type CanvasData = Data & { project: ParsedProject };
+export type CanvasData = Data & { project: Project };
 
 export type ErrorData = {
   errors: string;

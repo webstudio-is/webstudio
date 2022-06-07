@@ -3,7 +3,7 @@ import type { User } from "@webstudio-is/sdk";
 import * as db from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
 import config from "~/config";
-import { ParsedProject } from "~/shared/db/project.server";
+import { Project } from "~/shared/db/project.server";
 
 const ensureProject = async ({
   userId,
@@ -11,7 +11,7 @@ const ensureProject = async ({
 }: {
   userId: User["id"];
   domain: string;
-}): Promise<ParsedProject | null> => {
+}): Promise<Project | null> => {
   const projects = await db.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
   return await db.project.clone(domain);
