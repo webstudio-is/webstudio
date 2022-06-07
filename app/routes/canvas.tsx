@@ -6,7 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { type MetaFunction } from "remix";
+import { type MetaFunction } from "@remix-run/node";
 import { CriticalCss } from "@webstudio-is/sdk";
 
 export const meta: MetaFunction = () => {

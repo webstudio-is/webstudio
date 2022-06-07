@@ -1,5 +1,5 @@
 import { Box, Flex } from "~/shared/design-system";
-import { useZoom } from "~/designer/shared/nano-values";
+import { useZoom } from "~/designer/shared/nano-states";
 
 type WorkspaceProps = {
   children: JSX.Element;

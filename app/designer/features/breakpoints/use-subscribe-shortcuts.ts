@@ -1,10 +1,7 @@
 import { useSubscribe } from "@webstudio-is/sdk";
 import { sort } from "~/shared/breakpoints";
-import {
-  useBreakpoints,
-  useZoom,
-  useSelectedBreakpoint,
-} from "../../shared/nano-values";
+import { useBreakpoints } from "~/shared/nano-states";
+import { useZoom, useSelectedBreakpoint } from "../../shared/nano-states";
 import { minZoom } from "./zoom-setting";
 
 export const useSubscribeSelectBreakpointFromShortcut = () => {
