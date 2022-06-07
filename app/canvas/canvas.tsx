@@ -9,7 +9,6 @@ import {
   useAllUserProps,
   WrapperComponent,
   globalStyles,
-  Project,
   useSubscribe,
 } from "@webstudio-is/sdk";
 import {
@@ -36,6 +35,7 @@ import {
   useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
+import type { Project } from "~/shared/db/project.server";
 import {
   rootInstanceContainer,
   useBreakpoints,

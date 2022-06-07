@@ -1,4 +1,4 @@
-import { type ActionFunction } from "remix";
+import { type ActionFunction } from "@remix-run/node";
 import * as db from "~/shared/db";
 
 export const action: ActionFunction = async ({ request }) => {

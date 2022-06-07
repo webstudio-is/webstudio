@@ -8,7 +8,10 @@ yarn-error.log
 .vercel
 .output
 
+
+build
 public/build
 api/_build
 /data
 *.db
+*.db-journal
