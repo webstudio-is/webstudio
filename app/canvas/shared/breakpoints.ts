@@ -6,14 +6,12 @@ import {
   setBreakpoints,
   publish,
 } from "@webstudio-is/sdk";
+import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
-  useBreakpoints,
   breakpointsContainer,
   rootInstanceContainer,
-} from "./nano-values";
-import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
-
-store.register("breakpoints", breakpointsContainer);
+  useBreakpoints,
+} from "~/shared/nano-states";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();

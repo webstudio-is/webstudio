@@ -1,5 +1,5 @@
 import ObjectId from "bson-objectid";
-import { createCookie } from "remix";
+import { createCookie } from "@remix-run/node";
 
 const userIdParser = createCookie("user-id", {
   maxAge: 604_800, // one week

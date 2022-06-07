@@ -2,8 +2,8 @@ import { useCallback, useEffect } from "react";
 import {
   useSelectedBreakpoint,
   useCanvasWidth,
-  useIsPreviewMode,
-} from "~/designer/shared/nano-values";
+} from "~/designer/shared/nano-states";
+import { useIsPreviewMode } from "~/shared/nano-states";
 import { minWidth } from "./width-setting";
 
 export const useUpdateCanvasWidth = () => {

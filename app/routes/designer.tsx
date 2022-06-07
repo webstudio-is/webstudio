@@ -1,5 +1,5 @@
-import { Links, LiveReload, Meta, Outlet, Scripts } from "remix";
-import type { MetaFunction } from "remix";
+import { Links, LiveReload, Meta, Outlet, Scripts } from "@remix-run/react";
+import type { MetaFunction } from "@remix-run/node";
 import { CriticalCss } from "@webstudio-is/sdk";
 import { darkTheme } from "~/shared/design-system";
 

@@ -13,9 +13,18 @@ export const load = async (treeId?: Tree["id"]) => {
     throw new Error("Tree ID required");
   }
 
-  return await prisma.breakpoints.findUnique({
+  const breakpoint = await prisma.breakpoints.findUnique({
     where: { treeId },
   });
+
+  if (breakpoint === null) {
+    throw new Error("Breakpoint not found");
+  }
+
+  return {
+    ...breakpoint,
+    values: JSON.parse(breakpoint.values),
+  };
 };
 
 export const getBreakpointsWithId = () =>
@@ -30,10 +39,13 @@ export const create = async (
 ) => {
   const data = {
     treeId,
-    values: breakpoints,
+    values: JSON.stringify(breakpoints),
   };
   await prisma.breakpoints.create({ data });
-  return data;
+  return {
+    ...data,
+    breakpoints,
+  };
 };
 
 export const clone = async ({

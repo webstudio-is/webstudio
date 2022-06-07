@@ -10,7 +10,7 @@ import { useState } from "react";
 import {
   useCanvasWidth,
   useSelectedBreakpoint,
-} from "~/designer/shared/nano-values";
+} from "~/designer/shared/nano-states";
 
 type StylePanelProps = {
   publish: Publish;

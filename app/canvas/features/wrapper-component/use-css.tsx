@@ -6,7 +6,7 @@ import {
   useSubscribe,
   toValue,
 } from "@webstudio-is/sdk";
-import { useDropData, useSelectedInstance } from "~/canvas/shared/nano-values";
+import { useDropData, useSelectedInstance } from "~/canvas/shared/nano-states";
 import { primitives, type StyleUpdates } from "~/shared/component";
 
 // @todo this doesn't work with the node at the top edge of the iframe, tag gets hidden.
