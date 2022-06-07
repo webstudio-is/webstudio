@@ -3,7 +3,7 @@ import type { User } from "@webstudio-is/sdk";
 import * as db from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
 import config from "~/config";
-import { Project } from "~/shared/db/project.server";
+import type { Project } from "~/shared/db/project.server";
 
 const ensureProject = async ({
   userId,

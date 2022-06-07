@@ -35,7 +35,7 @@ import {
   useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
-import { Project } from "~/shared/db/project.server";
+import type { Project } from "~/shared/db/project.server";
 import {
   rootInstanceContainer,
   useBreakpoints,
