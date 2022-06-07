@@ -161,7 +161,6 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const [isPreviewMode] = useIsPreviewMode();
   const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
-  const [canvasWidth] = useCanvasWidth();
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
@@ -195,8 +194,8 @@ export const Designer = ({ config, project }: DesignerProps) => {
               title={project.title}
               css={{
                 height: "100%",
+                width: "100%",
               }}
-              style={{ width: canvasWidth }}
             />
           </Workspace>
           <Breadcrumbs publish={publish} />

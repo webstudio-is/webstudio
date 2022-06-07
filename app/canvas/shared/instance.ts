@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import ObjectId from "bson-objectid";
 import {
   type InstanceProps,
@@ -22,6 +22,9 @@ import store from "immerhin";
 import { DropData, type SelectedInstanceData } from "~/shared/component";
 import { useSelectedInstance, useSelectedElement } from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
+import { getBoundingClientRect } from "~/shared/dom-utils";
+import { useAfterRender } from "./use-after-render";
+import { useWindowResize } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -182,4 +185,20 @@ export const usePublishRootInstance = () => {
       payload: rootInstance,
     });
   }, [rootInstance]);
+};
+
+export const usePublishSlectedInstanceRect = () => {
+  const [selectedElement] = useSelectedElement();
+
+  const publishRect = useCallback(() => {
+    if (selectedElement === undefined) return;
+    publish<"selectedInstanceRect", DOMRect>({
+      type: "selectedInstanceRect",
+      payload: selectedElement.getBoundingClientRect(),
+    });
+  }, [selectedElement]);
+
+  useAfterRender(publishRect);
+  useWindowResize(publishRect);
+  useEffect(publishRect, [publishRect]);
 };

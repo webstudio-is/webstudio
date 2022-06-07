@@ -1,5 +1,6 @@
 import { Box, Flex } from "~/shared/design-system";
-import { useZoom } from "~/designer/shared/nano-states";
+import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
+import { CanvasTools } from "./canvas-tools";
 
 type WorkspaceProps = {
   children: JSX.Element;
@@ -8,6 +9,7 @@ type WorkspaceProps = {
 
 export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
   const [zoom] = useZoom();
+  const [canvasWidth] = useCanvasWidth();
 
   return (
     <Box
@@ -32,7 +34,10 @@ export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
         }}
         onTransitionEnd={onTransitionEnd}
       >
-        {children}
+        <div style={{ width: canvasWidth, height: "100%" }}>
+          {children}
+          <CanvasTools />
+        </div>
       </Flex>
     </Box>
   );

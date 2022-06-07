@@ -5,7 +5,7 @@ import { getBoundingClientRect } from "~/shared/dom-utils";
 import { primitives } from "~/shared/component";
 import { useHoveredElement, useSelectedElement } from "./nano-states";
 import { styled, darkTheme } from "~/shared/design-system";
-import { useOnAnyUpdate } from "./use-on-any-update";
+import { useAfterRender } from "./use-after-render";
 import { useWindowResize } from "~/shared/dom-hooks";
 
 const useElement = (
@@ -36,7 +36,7 @@ const useStyle = (element?: HTMLElement) => {
     forceRender(!rerenderFlag);
   }, [element, rerenderFlag]);
 
-  useOnAnyUpdate(handleUpdate);
+  useAfterRender(handleUpdate);
   useWindowResize(handleUpdate);
 
   return useMemo(
@@ -146,7 +146,7 @@ export const useOutline = (currentInstance: Instance) => {
 
   const primitive = primitives[component as Instance["component"]];
   const { Icon } = primitive;
-
+  return null;
   return createPortal(
     <Outline state={type} style={style} className={darkTheme}>
       <Label state={type} position={position} ref={labelRef}>
