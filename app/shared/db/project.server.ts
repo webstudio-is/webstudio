@@ -38,10 +38,10 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
 
 export const loadManyByUserId = async (
   userId: User["id"]
-): Promise<Array<Project | null>> => {
+): Promise<Array<Project>> => {
   const projects = await prisma.project.findMany({ where: { userId } });
 
-  return projects.map(parseProject);
+  return projects.map(parseProject) as Project[];
 };
 
 const slugifyOptions = { lower: true, strict: true };
@@ -85,9 +85,7 @@ export const create = async ({
   return parseProject(project);
 };
 
-export const clone = async (
-  clonableDomain: string
-): Promise<Project | null> => {
+export const clone = async (clonableDomain: string): Promise<Project> => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
@@ -118,7 +116,7 @@ export const clone = async (
       nextTreeId: tree.id,
     }),
   ]);
-  return parseProject(project as BaseProject);
+  return parseProject(project as BaseProject) as Project;
 };
 
 export const update = async ({

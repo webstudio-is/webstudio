@@ -11,9 +11,10 @@ const ensureProject = async ({
 }: {
   userId: User["id"];
   domain: string;
-}): Promise<Project | null> => {
+}): Promise<Project> => {
   const projects = await db.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
+
   return await db.project.clone(domain);
 };
 
