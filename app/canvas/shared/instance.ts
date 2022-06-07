@@ -20,12 +20,8 @@ import {
 } from "~/shared/tree-utils";
 import store from "immerhin";
 import { DropData, type SelectedInstanceData } from "~/shared/component";
-import {
-  rootInstanceContainer,
-  useRootInstance,
-  useSelectedInstance,
-  useSelectedElement,
-} from "./nano-values";
+import { useSelectedInstance, useSelectedElement } from "./nano-states";
+import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();

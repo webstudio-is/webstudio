@@ -18,7 +18,7 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["react", "@typescript-eslint"],
+  "plugins": ["react", "@typescript-eslint", "filenames"],
   "settings": {
     "react": {
       "version": "detect"
@@ -32,6 +32,7 @@
       { "argsIgnorePattern": "^_" }
     ],
     "react/react-in-jsx-scope": 0,
-    "func-style": ["error", "expression", { "allowArrowFunctions": true }]
+    "func-style": ["error", "expression", { "allowArrowFunctions": true }],
+    "filenames/match-regex": [2, "^[a-z-.]|($\\w+\\.)+$", true]
   }
 }

@@ -11,7 +11,7 @@ import {
 import { StylePanel } from "~/designer/features/style-panel";
 import { SettingsPanel } from "~/designer/features/settings-panel";
 import { BrushIcon, GearIcon } from "~/shared/icons";
-import { useSelectedInstanceData } from "~/designer/shared/nano-values";
+import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type InspectorProps = {
   publish: Publish;

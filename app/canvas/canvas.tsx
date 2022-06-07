@@ -29,11 +29,6 @@ import {
 import { useUpdateStyle } from "./shared/style";
 import { useActiveElementTracking } from "./shared/active-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
-import {
-  rootInstanceContainer,
-  useRootInstance,
-  useBreakpoints,
-} from "./shared/nano-values";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
 import {
@@ -41,6 +36,14 @@ import {
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
 import { ParsedProject } from "~/shared/db/project.server";
+import {
+  rootInstanceContainer,
+  useBreakpoints,
+  useRootInstance,
+} from "~/shared/nano-states";
+import { registerContainers } from "./shared/immerhin";
+
+registerContainers();
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
