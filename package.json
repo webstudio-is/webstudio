@@ -70,6 +70,8 @@
     "react-nano-state": "^0.4.0",
     "react-router-dom": "^6.2.2",
     "react-use": "^17.3.2",
+    "remix-auth": "^3.2.2",
+    "remix-auth-github": "^1.1.1",
     "slugify": "^1.6.5"
   },
   "devDependencies": {

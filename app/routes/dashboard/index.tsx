@@ -9,6 +9,7 @@ import { Dashboard, links } from "~/dashboard";
 import * as db from "~/shared/db";
 import config from "~/config";
 import { ensureUserCookie } from "~/shared/session";
+import { authenticator } from "~/services/auth.server";
 
 export { links };
 
@@ -29,6 +30,11 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
+  const user = await authenticator.isAuthenticated(request);
+  console.log(user);
+  if (!user) {
+    return redirect("/login");
+  }
   const { userId, headers } = await ensureUserCookie(request);
   const projects = await db.project.loadManyByUserId(userId);
   return json({ config, projects }, headers);
