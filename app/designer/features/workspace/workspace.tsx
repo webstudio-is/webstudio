@@ -10,7 +10,6 @@ type WorkspaceProps = {
 export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
   const [zoom] = useZoom();
   const [canvasWidth] = useCanvasWidth();
-
   return (
     <Box
       css={{

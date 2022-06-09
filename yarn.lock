@@ -1875,10 +1875,10 @@
   resolved "https://registry.yarnpkg.com/@web3-storage/multipart-parser/-/multipart-parser-1.0.0.tgz#6b69dc2a32a5b207ba43e556c25cc136a56659c4"
   integrity sha512-BEO6al7BYqcnfX15W2cnGR+Q566ACXAT9UQykORCWW80lmkpWsnEob6zJS1ZVBKsSJC8+7vJkHwlp+lXG1UCdw==
 
-"@webstudio-is/sdk@0.2.3-postgres":
-  version "0.2.3-postgres"
-  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.2.3-postgres.tgz#f0c820b58e2fb722787a42546d8dd3e82adfd7f4"
-  integrity sha512-mTV2+m6nmy3m3mzaz/MSlStVL9E93al4BDoaSpOePssr8xXJXB4Jw/hUHEbrfKB7h2NqU3e9pDQ/aLkoH0n13g==
+"@webstudio-is/sdk@0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.3.1.tgz#6026d384284ff17093bd338531017609fc3f530c"
+  integrity sha512-6hnFRoXjWQqxA1wRdyJ9S+BHdlbpSZZi6USNvRrwrXebmzm/axonJyEwOJVQbj9H5DAcYRlpe9jFJOKWsuNhmw==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/core" "^1.2.7"

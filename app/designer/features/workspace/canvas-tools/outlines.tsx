@@ -64,23 +64,37 @@ const Label = styled(
   }
 );
 
-export const SelectedInstanceOutline = () => {
-  const [rect] = useSelectedInstanceRect();
+type SelectedInstanceOutlineProps = {
+  toolsRect: Omit<DOMRect, "toJSON">;
+};
+
+export const SelectedInstanceOutline = ({
+  toolsRect,
+}: SelectedInstanceOutlineProps) => {
+  const [instanceRect] = useSelectedInstanceRect();
   const [canvasRect] = useCanvasRect();
-
-  let style;
-  if (canvasRect !== undefined && rect !== undefined) {
-    const top = rect.top + canvasRect.top;
-    const left = rect.left + canvasRect.left;
-
-    style = {
-      transform: `translate3d(${left}px, ${top}px, 0)`,
-      width: rect.width,
-      height: rect.height,
-    };
+  const [zoom] = useZoom();
+  console.log("canvasRect", canvasRect);
+  if (
+    canvasRect === undefined ||
+    instanceRect === undefined ||
+    toolsRect === undefined
+  ) {
+    return null;
   }
 
-  console.log("instanceRect", rect);
-  console.log("canvasRect", canvasRect);
+  let style;
+  console.log("zoom", zoom);
+  const top =
+    (canvasRect.top - toolsRect.top + instanceRect.top) * (zoom / 100);
+  const left = canvasRect.left - toolsRect.left + instanceRect.left;
+
+  style = {
+    top,
+    left,
+    width: instanceRect.width,
+    height: instanceRect.height,
+  };
+
   return <Outline state="selected" style={style} />;
 };

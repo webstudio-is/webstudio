@@ -9,11 +9,7 @@ import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { CanvasIframe } from "./shared/canvas-iframe";
-import {
-  useSelectedInstanceData,
-  useSyncStatus,
-  useCanvasWidth,
-} from "./shared/nano-states";
+import { useSelectedInstanceData, useSyncStatus } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Breadcrumbs } from "./features/breadcrumbs";

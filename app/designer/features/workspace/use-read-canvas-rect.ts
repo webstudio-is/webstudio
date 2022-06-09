@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useZoom } from "~/designer/shared/nano-states";
 import { useCanvasRect, useCanvasWidth } from "~/designer/shared/nano-states";
+import { useWindowResize } from "~/shared/dom-hooks";
 
 /**
  * Reads the canvas iframe dom rect and puts it into nano state
@@ -13,6 +14,10 @@ export const useReadCanvasRect = () => {
   const [, setCanvasRect] = useCanvasRect();
   const [canvasWidth] = useCanvasWidth();
   const [zoom] = useZoom();
+  const [recalcFlag, forceRecalc] = useState(false);
+  useWindowResize(() => {
+    forceRecalc(!recalcFlag);
+  });
 
   const readRect = useCallback(
     () => {
@@ -24,7 +29,7 @@ export const useReadCanvasRect = () => {
     },
     // canvasWidth will change the canvas width, so we need to React it to it and update the rect, even though we don't necessary usenthe value
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [iframeElement, setCanvasRect, canvasWidth, zoom]
+    [iframeElement, setCanvasRect, canvasWidth, zoom, recalcFlag]
   );
 
   useEffect(readRect, [readRect]);
