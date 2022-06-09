@@ -1,4 +1,4 @@
-import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
+import { useMemo } from "react";
 import { styled } from "~/shared/design-system";
 import { useSelectedInstanceRect } from "~/shared/nano-states";
 
@@ -64,37 +64,20 @@ const Label = styled(
   }
 );
 
-type SelectedInstanceOutlineProps = {
-  toolsRect: Omit<DOMRect, "toJSON">;
-};
+export const SelectedInstanceOutline = () => {
+  const [rect] = useSelectedInstanceRect();
 
-export const SelectedInstanceOutline = ({
-  toolsRect,
-}: SelectedInstanceOutlineProps) => {
-  const [instanceRect] = useSelectedInstanceRect();
-  const [canvasRect] = useCanvasRect();
-  const [zoom] = useZoom();
-  console.log("canvasRect", canvasRect);
-  if (
-    canvasRect === undefined ||
-    instanceRect === undefined ||
-    toolsRect === undefined
-  ) {
-    return null;
-  }
+  const style = useMemo(() => {
+    if (rect === undefined) return;
+    return {
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+    };
+  }, [rect]);
 
-  let style;
-  console.log("zoom", zoom);
-  const top =
-    (canvasRect.top - toolsRect.top + instanceRect.top) * (zoom / 100);
-  const left = canvasRect.left - toolsRect.left + instanceRect.left;
-
-  style = {
-    top,
-    left,
-    width: instanceRect.width,
-    height: instanceRect.height,
-  };
+  if (style === undefined) return null;
 
   return <Outline state="selected" style={style} />;
 };

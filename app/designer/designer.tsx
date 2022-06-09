@@ -8,7 +8,6 @@ import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { CanvasIframe } from "./shared/canvas-iframe";
 import { useSelectedInstanceData, useSyncStatus } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
@@ -18,7 +17,11 @@ import {
   useUpdateCanvasWidth,
   useSubscribeBreakpoints,
 } from "./features/breakpoints";
-import { useReadCanvasRect, Workspace } from "./features/workspace";
+import {
+  useReadCanvasRect,
+  Workspace,
+  CanvasIframe,
+} from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
