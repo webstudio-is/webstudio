@@ -1,6 +1,7 @@
 import { renderToString } from "react-dom/server";
-import { RemixServer, type EntryContext } from "remix";
+import { RemixServer } from "@remix-run/react";
 import { insertCriticalCss } from "./critical-css";
+import type { EntryContext } from "@remix-run/node";
 
 export default function handleRequest(
   request: Request,

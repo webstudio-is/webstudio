@@ -1,7 +1,7 @@
 import useInterval from "react-use/lib/useInterval";
 import { sync } from "immerhin";
 import { enqueue } from "./queue";
-import { Project } from "@webstudio-is/sdk";
+import type { Project } from "~/shared/db/project.server";
 
 export const useSync = ({ project }: { project: Project }) => {
   useInterval(() => {

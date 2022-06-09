@@ -1,4 +1,4 @@
-import { type LoaderFunction } from "remix";
+import type { LoaderFunction } from "@remix-run/node";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import * as db from "~/shared/db";
 
