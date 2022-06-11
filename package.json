@@ -47,7 +47,7 @@
     "@remix-run/react": "^1.5.1",
     "@remix-run/serve": "^1.5.1",
     "@stitches/react": "^1.2.7",
-    "@webstudio-is/sdk": "0.3.1",
+    "@webstudio-is/sdk": "0.3.2",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",
@@ -77,6 +77,7 @@
   "devDependencies": {
     "@remix-run/dev": "^1.2.3",
     "@remix-run/vercel": "^1.5.1",
+    "@storybook/react": "^6.5.8",
     "@types/css-tree": "^1.0.7",
     "@types/hoist-non-react-statics": "^3.3.1",
     "@types/hyphenate-style-name": "^1.0.0",

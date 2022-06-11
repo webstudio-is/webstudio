@@ -33,7 +33,7 @@ const Property = ({ id, prop, value, onChange, onDelete }: PropertyProps) => {
         variant="ghost"
         placeholder="Value"
         name="value"
-        value={value}
+        value={String(value)}
         onChange={(event) => {
           onChange(id, "value", event.target.value);
         }}

@@ -82,11 +82,13 @@ export const usePropsLogic = ({
   const handleChangeProp = (
     id: UserProp["id"],
     field: keyof UserProp,
-    value: string
+    value: UserProp["prop"] | UserProp["value"]
   ) => {
     const index = userProps.findIndex((item) => item.id === id);
     const nextUserProps = produce((draft: Array<UserProp>) => {
-      draft[index][field] = value;
+      if (field === "prop" && typeof value === "string") {
+        draft[index].prop = value;
+      } else draft[index].value = value;
     })(userProps);
     setUserProps(nextUserProps);
 
