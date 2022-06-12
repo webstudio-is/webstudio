@@ -1,6 +1,43 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { styled } from "~/shared/design-system";
 import { useSelectedInstanceRect } from "~/shared/nano-states";
+import { useSelectedInstanceData } from "~/designer/shared/nano-states";
+import { primitives } from "~/shared/component";
+
+const useStyle = () => {
+  const [rect] = useSelectedInstanceRect();
+  return useMemo(() => {
+    if (rect === undefined) return;
+    return {
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+    };
+  }, [rect]);
+};
+
+type LabelPosition = "top" | "inside" | "bottom";
+
+/**
+ * Detects if there is no space on top and for the label and tells to show it inside.
+ */
+const useLabelPosition = () => {
+  const [position, setPosition] = useState<LabelPosition>("top");
+  const [instanceRect] = useSelectedInstanceRect();
+
+  const ref = useCallback((element: HTMLElement | null) => {
+    if (element === null || instanceRect === undefined) return;
+    const labelRect = element.getBoundingClientRect();
+    let nextPosition: LabelPosition = "top";
+    if (labelRect.height > instanceRect.top) {
+      nextPosition = instanceRect.height < 250 ? "bottom" : "inside";
+    }
+    setPosition(nextPosition);
+  }, []);
+
+  return { ref, position };
+};
 
 const Outline = styled(
   "div",
@@ -53,11 +90,14 @@ const Label = styled(
         },
       },
       position: {
-        outside: {
+        top: {
           top: "-$4",
         },
         inside: {
           top: 0,
+        },
+        bottom: {
+          bottom: 0,
         },
       },
     },
@@ -65,19 +105,21 @@ const Label = styled(
 );
 
 export const SelectedInstanceOutline = () => {
-  const [rect] = useSelectedInstanceRect();
+  const style = useStyle();
+  const [selectedInstanceData] = useSelectedInstanceData();
+  const { ref: labelRef, position } = useLabelPosition();
 
-  const style = useMemo(() => {
-    if (rect === undefined) return;
-    return {
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-    };
-  }, [rect]);
+  if (style === undefined || selectedInstanceData === undefined) return null;
 
-  if (style === undefined) return null;
-
-  return <Outline state="selected" style={style} />;
+  const primitive = primitives[selectedInstanceData.component];
+  const { Icon } = primitive;
+  console.log({ position });
+  return (
+    <Outline state="selected" style={style}>
+      <Label state="selected" position={position} ref={labelRef}>
+        <Icon width="1em" height="1em" />
+        {primitive.label}
+      </Label>
+    </Outline>
+  );
 };
