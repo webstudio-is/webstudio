@@ -7,7 +7,7 @@ import {
   toValue,
 } from "@webstudio-is/sdk";
 import { useDropData, useSelectedInstance } from "~/canvas/shared/nano-states";
-import { primitives, type StyleUpdates } from "~/shared/component";
+import { primitives, type StyleUpdates } from "~/shared/canvas-components";
 
 // @todo this doesn't work with the node at the top edge of the iframe, tag gets hidden.
 const componentTagStyle = {

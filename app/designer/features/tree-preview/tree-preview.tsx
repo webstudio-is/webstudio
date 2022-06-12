@@ -2,7 +2,7 @@ import { Instance, useSubscribe } from "@webstudio-is/sdk";
 import produce from "immer";
 import { useState } from "react";
 import { Tree } from "~/designer/shared/tree";
-import { type DragData, type DropData } from "~/shared/component";
+import { type DragData, type DropData } from "~/shared/canvas-components";
 import { Flex } from "~/shared/design-system";
 import { useRootInstance } from "~/shared/nano-states";
 import {
