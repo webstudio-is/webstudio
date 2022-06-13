@@ -3,12 +3,12 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
-import type { SelectedInstanceData } from "~/shared/component";
+import type { HoveredInstanceData, SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { useSelectedInstanceData, useSyncStatus } from "./shared/nano-states";
+import { useHoveredInstanceData, useSelectedInstanceData, useSyncStatus } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Breadcrumbs } from "./features/breadcrumbs";
@@ -42,6 +42,14 @@ const useSubscribeSelectedInstanceData = () => {
   const [, setValue] = useSelectedInstanceData();
   useSubscribe<"selectInstance", SelectedInstanceData>(
     "selectInstance",
+    setValue
+  );
+};
+
+const useSubscribeHoveredInstanceData = () => {
+  const [, setValue] = useHoveredInstanceData();
+  useSubscribe<"hoverInstance", HoveredInstanceData>(
+    "hoverInstance",
     setValue
   );
 };
@@ -155,6 +163,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
+  useSubscribeHoveredInstanceData()
   useSubscribeBreakpoints();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();

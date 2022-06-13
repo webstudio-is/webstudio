@@ -10,6 +10,12 @@ export const selectedInstanceContainer = createValueContainer<
 >();
 export const useSelectedInstance = () => useValue(selectedInstanceContainer);
 
+export const hoveredInstanceContainer = createValueContainer<
+  Instance | undefined
+>();
+export const useHoveredInstance = () => useValue(hoveredInstanceContainer);
+
+
 const selectedElementContainer = createValueContainer<
   HTMLElement | undefined
 >();

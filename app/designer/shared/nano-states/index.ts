@@ -1,6 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { type Breakpoint } from "@webstudio-is/sdk";
-import { SelectedInstanceData } from "~/shared/component";
+import { type SelectedInstanceData, type HoveredInstanceData } from "~/shared/component";
 import { type SyncStatus } from "~/shared/sync";
 
 const selectedInstanceDataContainer = createValueContainer<
@@ -8,6 +8,12 @@ const selectedInstanceDataContainer = createValueContainer<
 >();
 export const useSelectedInstanceData = () =>
   useValue(selectedInstanceDataContainer);
+
+const hoveredInstanceDataContainer = createValueContainer<
+  HoveredInstanceData | undefined
+>();
+export const useHoveredInstanceData = () =>
+  useValue(hoveredInstanceDataContainer);
 
 const isShareDialogOpenContainer = createValueContainer<boolean>(false);
 export const useIsShareDialogOpen = () => useValue(isShareDialogOpenContainer);

@@ -22,10 +22,12 @@ import {
   useInsertInstance,
   useDeleteInstance,
   useReparentInstance,
-  usePublishSelectedInstance,
+  usePublishSelectedInstanceData,
   usePublishRootInstance,
   useUpdateSelectedInstance,
-  usePublishSlectedInstanceRect,
+  usePublishSelectedInstanceDataRect,
+  usePublishHoveredInstanceRect,
+  usePublishHoveredInstanceData,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
 import { useActiveElementTracking } from "./shared/active-element";
@@ -97,7 +99,8 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDragDropHandlers();
   useUpdateStyle();
   useManageProps();
-  usePublishSelectedInstance({ treeId });
+  usePublishSelectedInstanceData(treeId);
+  usePublishHoveredInstanceData()
   useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
@@ -106,7 +109,8 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useActiveElementTracking();
   useSync({ project });
   useUpdateSelectedInstance();
-  usePublishSlectedInstanceRect();
+  usePublishSelectedInstanceDataRect();
+  usePublishHoveredInstanceRect()
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case

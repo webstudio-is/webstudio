@@ -1,15 +1,6 @@
-import { useSubscribe } from "@webstudio-is/sdk";
 import { Box } from "~/shared/design-system";
-import { useSelectedInstanceRect } from "~/shared/nano-states";
-import { SelectedInstanceOutline } from "./outlines";
-
-const useLink = () => {
-  const [, setRect] = useSelectedInstanceRect();
-  useSubscribe<"selectedInstanceRect", DOMRect>(
-    "selectedInstanceRect",
-    setRect
-  );
-};
+import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
+import { useSubscribeInstanceRect } from "./use-subscribe-instance-rect";
 
 const toolsStyle = {
   position: "absolute",
@@ -22,10 +13,11 @@ const toolsStyle = {
 };
 
 export const CanvasTools = () => {
-  useLink();
+  useSubscribeInstanceRect();
   return (
     <Box css={toolsStyle}>
       <SelectedInstanceOutline />
+      <HoveredInstanceOutline />
     </Box>
   );
 };

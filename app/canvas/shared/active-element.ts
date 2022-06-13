@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
 import { findInstanceById } from "~/shared/tree-utils";
-import { useSelectedInstance, useSelectedElement } from "./nano-states";
+import { useSelectedInstance, useSelectedElement, useHoveredElement, useHoveredInstance } from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
 
 const eventOptions = {
@@ -12,6 +12,8 @@ export const useActiveElementTracking = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [selectedElement, setSelectedElement] = useSelectedElement();
+  const [, setHoveredElement] = useHoveredElement();
+  const [, setHoveredInstance] = useHoveredInstance();
 
   useSubscribe("focusElement", (id: Instance["id"]) => {
     const element = document.getElementById(id);
@@ -67,6 +69,32 @@ export const useActiveElementTracking = () => {
       window.removeEventListener("click", handleClick);
     };
   }, [select]);
+
+  useEffect(() => {
+    const handleMouseOver = (event: MouseEvent) => {
+      if (rootInstance === undefined) return
+      const element = event.target
+      if (element instanceof HTMLElement) {
+        setHoveredElement(element);
+        const instance = findInstanceById(rootInstance, element.id);
+        setHoveredInstance(instance)
+      }
+    }
+
+    const handleMouseOut = () => {
+      if (rootInstance === undefined) return
+      setHoveredElement(undefined);
+      setHoveredInstance(undefined)
+    }
+
+    window.addEventListener('mouseover', handleMouseOver, eventOptions)
+    window.addEventListener('mouseout', handleMouseOut, eventOptions)
+
+    return () => {
+      window.removeEventListener("mouseover", handleMouseOver);
+      window.removeEventListener("mouseout", handleMouseOut);
+    }
+  }, [rootInstance, setHoveredElement, setHoveredInstance])
 
   return selectedInstance;
 };

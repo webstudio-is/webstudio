@@ -1,22 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { styled } from "~/shared/design-system";
-import { useSelectedInstanceRect } from "~/shared/nano-states";
-import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { primitives } from "~/shared/component";
 import { type Instance } from "@webstudio-is/sdk";
-
-const useSelectedInstanceOutlineStyle = () => {
-  const [rect] = useSelectedInstanceRect();
-  return useMemo(() => {
-    if (rect === undefined) return;
-    return {
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-    };
-  }, [rect]);
-};
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -45,30 +30,6 @@ const useLabelPosition = (instanceRect: DOMRect): [LabelRefCallback, LabelPositi
 
   return [ref, position];
 };
-
-const Outline = styled(
-  "div",
-  {
-    position: "absolute",
-    pointerEvents: "none",
-    outline: "2px solid $blue9",
-    outlineOffset: -2,
-    top: 0,
-    left: 0,
-  },
-  {
-    variants: {
-      state: {
-        selected: {
-          zIndex: "$4",
-        },
-        hovered: {
-          zIndex: "$3",
-        },
-      },
-    },
-  }
-);
 
 const LabelContainer = styled(
   "div",
@@ -111,7 +72,11 @@ const LabelContainer = styled(
   }
 );
 
-const Label = ({component, instanceRect}: {component: Instance['component'], instanceRect: DOMRect}) => {
+type LabelProps =  {
+  component: Instance['component'], instanceRect: DOMRect
+}
+
+export const Label = ({component, instanceRect}: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
   const primitive = primitives[component];
   const { Icon } = primitive;
@@ -120,21 +85,5 @@ const Label = ({component, instanceRect}: {component: Instance['component'], ins
       <Icon width="1em" height="1em" />
       {primitive.label}
     </LabelContainer>
-  );
-};
-
-export const SelectedInstanceOutline = () => {
-  const style = useSelectedInstanceOutlineStyle();
-  const [selectedInstanceData] = useSelectedInstanceData();
-  const [instanceRect] = useSelectedInstanceRect();
-
-  if (style === undefined || selectedInstanceData === undefined || instanceRect === undefined) {
-    return null;
-  }
-
-  return (
-    <Outline state="selected" style={style}>
-      <Label component={selectedInstanceData.component} instanceRect={instanceRect}/>
-    </Outline>
   );
 };

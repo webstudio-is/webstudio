@@ -19,8 +19,8 @@ import {
   findInstanceById,
 } from "~/shared/tree-utils";
 import store from "immerhin";
-import { DropData, type SelectedInstanceData } from "~/shared/component";
-import { useSelectedInstance, useSelectedElement } from "./nano-states";
+import { DropData, HoveredInstanceData, type SelectedInstanceData } from "~/shared/component";
+import { useSelectedInstance, useSelectedElement, useHoveredElement, useHoveredInstance } from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
 import { useAfterRender } from "./use-after-render";
 import { useWindowResize } from "~/shared/dom-hooks";
@@ -114,11 +114,7 @@ export const useDeleteInstance = () => {
   );
 };
 
-export const usePublishSelectedInstance = ({
-  treeId,
-}: {
-  treeId: Tree["id"];
-}) => {
+export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
   const [instance] = useSelectedInstance();
   const [selectedElement] = useSelectedElement();
   const [allUserProps] = useAllUserProps();
@@ -156,6 +152,21 @@ export const usePublishSelectedInstance = ({
   }, [instance, allUserProps, treeId, browserStyle]);
 };
 
+export const usePublishHoveredInstanceData = () => {
+  const [instance] = useHoveredInstance()
+
+  useEffect(() => {
+    if (instance === undefined) return
+    publish<"hoverInstance", HoveredInstanceData>({
+      type: "hoverInstance",
+      payload: {
+        id: instance.id,
+        component: instance.component
+      },
+    });
+  }, [instance])
+}
+
 /**
  *  We need to set the selected instance after a any root instance update,
  *  because anything that we change on the selected instance is actually done on the root, so
@@ -188,18 +199,30 @@ export const usePublishRootInstance = () => {
   }, [rootInstance]);
 };
 
-export const usePublishSlectedInstanceRect = () => {
-  const [selectedElement] = useSelectedElement();
+export const usePublishSelectedInstanceDataRect = () => {
+  const [element] = useSelectedElement();
 
   const publishRect = useCallback(() => {
-    if (selectedElement === undefined) return;
+    if (element === undefined) return;
     publish<"selectedInstanceRect", DOMRect>({
       type: "selectedInstanceRect",
-      payload: selectedElement.getBoundingClientRect(),
+      payload: element.getBoundingClientRect(),
     });
-  }, [selectedElement]);
+  }, [element]);
 
   useAfterRender(publishRect);
   useWindowResize(publishRect);
+  useEffect(publishRect, [publishRect]);
+};
+
+export const usePublishHoveredInstanceRect = () => {
+  const [element] = useHoveredElement();
+  const publishRect = useCallback(() => {
+    if (element === undefined) return;
+    publish<"hoveredInstanceRect", DOMRect>({
+      type: "hoveredInstanceRect",
+      payload: element.getBoundingClientRect(),
+    });
+  }, [element]);
   useEffect(publishRect, [publishRect]);
 };

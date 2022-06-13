@@ -11,7 +11,6 @@ import { useContentEditable } from "./editable";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
-import { useSetHoveredInstance } from "./use-set-hovered-instance";
 import { useOutline } from "~/canvas/shared/use-outline";
 
 type WrapperComponentDevProps = {
@@ -29,7 +28,6 @@ export const WrapperComponentDev = ({
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
-  const mouseEnterExitHandlers = useSetHoveredInstance();
   const outline = useOutline(instance);
 
   const {
@@ -75,7 +73,6 @@ export const WrapperComponentDev = ({
         {...contentEditableProps}
         {...draggableProps}
         {...readonly}
-        {...mouseEnterExitHandlers}
         className={className}
         id={instance.id}
         tabIndex={0}
