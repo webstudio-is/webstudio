@@ -18,7 +18,7 @@ type UpdatesReset = Array<{
   value: undefined;
 }>;
 
-const usePreviewCss = ({ instance, css }: UseCssProps) => {
+const usePreviewCss = (instance: Instance) => {
   const [previewCss, setPreviewCss] = useState<
     StyleUpdates["updates"] | UpdatesReset
   >([]);
@@ -37,18 +37,23 @@ const usePreviewCss = ({ instance, css }: UseCssProps) => {
       value: undefined,
     }));
     setPreviewCss(reset);
-    // previewCss in deps leads to an infinite loop
-    // eslint-disable-next-line  react-hooks/exhaustive-deps
-  }, [css]);
+  }, [previewCss]);
 
   return previewCss;
 };
 
+const emptyStyle = {
+  "&:empty": {
+    outline: "1px dashed #555",
+    outlineOffset: -1,
+  },
+}
+
 export const useCss = ({ instance, css }: UseCssProps): string => {
-  const previewCss = usePreviewCss({ instance, css });
+  const previewCss = usePreviewCss(instance);
 
   return useMemo(() => {
-    const overrides: CSS = {};
+    const overrides: CSS = {...emptyStyle};
     for (const update of previewCss) {
       if (update.value === undefined) continue;
       overrides[update.property as string] = toValue(update.value);
