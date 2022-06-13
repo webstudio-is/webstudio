@@ -5,13 +5,20 @@ import { findInstanceById } from "~/shared/tree-utils";
 import {
   findClosestChild,
   findInsertionIndex,
-  getBoundingClientRect,
-  getComputedStyle,
   getDragOverInfo,
 } from "~/shared/dom-utils";
 import { useDropData, useSelectedInstance } from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
+import memoize from "lodash.memoize";
 //import {usePointerOutline} from './use-pointer-outline'
+
+const getBoundingClientRect = memoize((element: Element | HTMLElement) =>
+  element.getBoundingClientRect()
+);
+
+const getComputedStyle = memoize((element: Element | HTMLElement) =>
+  window.getComputedStyle(element)
+);
 
 export const useDragDropHandlers = () => {
   const [rootInstance] = useRootInstance();
