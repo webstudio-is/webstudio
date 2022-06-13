@@ -3,7 +3,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
-import type { HoveredInstanceData, SelectedInstanceData } from "~/shared/component";
+import type { HoveredInstanceData, SelectedInstanceData } from "~/shared/canvas-components";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";

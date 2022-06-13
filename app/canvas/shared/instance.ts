@@ -19,7 +19,7 @@ import {
   findInstanceById,
 } from "~/shared/tree-utils";
 import store from "immerhin";
-import { DropData, HoveredInstanceData, type SelectedInstanceData } from "~/shared/component";
+import { DropData, HoveredInstanceData, type SelectedInstanceData } from "~/shared/canvas-components";
 import { useSelectedInstance, useSelectedElement, useHoveredElement, useHoveredInstance } from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
 import { useAfterRender } from "./use-after-render";

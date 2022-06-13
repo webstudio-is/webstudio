@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { publish, useSubscribe } from "@webstudio-is/sdk";
-import { type DragData, type DropData } from "~/shared/component";
+import { type DragData, type DropData } from "~/shared/canvas-components";
 import { findInstanceById } from "~/shared/tree-utils";
 import {
   findClosestChild,

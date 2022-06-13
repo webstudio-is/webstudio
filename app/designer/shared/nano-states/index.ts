@@ -1,6 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { type Breakpoint } from "@webstudio-is/sdk";
-import { type SelectedInstanceData, type HoveredInstanceData } from "~/shared/component";
+import { type SelectedInstanceData, type HoveredInstanceData } from "~/shared/canvas-components";
 import { type SyncStatus } from "~/shared/sync";
 
 const selectedInstanceDataContainer = createValueContainer<

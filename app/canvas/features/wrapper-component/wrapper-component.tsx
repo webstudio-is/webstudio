@@ -6,7 +6,7 @@ import {
   useUserProps,
   renderWrapperComponentChildren,
 } from "@webstudio-is/sdk";
-import { primitives } from "~/shared/component";
+import { primitives } from "~/shared/canvas-components";
 import { useContentEditable } from "./editable";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
