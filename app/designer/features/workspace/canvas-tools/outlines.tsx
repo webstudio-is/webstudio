@@ -3,8 +3,9 @@ import { styled } from "~/shared/design-system";
 import { useSelectedInstanceRect } from "~/shared/nano-states";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { primitives } from "~/shared/component";
+import { type Instance } from "@webstudio-is/sdk";
 
-const useStyle = () => {
+const useSelectedInstanceOutlineStyle = () => {
   const [rect] = useSelectedInstanceRect();
   return useMemo(() => {
     if (rect === undefined) return;
@@ -26,9 +27,8 @@ type LabelRefCallback = (element: HTMLElement | null) => void;
  * - else if instance height is more than 250px - bottom
  * - else inside-top - last resort because it covers a bit of the instance content
  */
-const useLabelPosition = (): [LabelRefCallback, LabelPosition] => {
+const useLabelPosition = (instanceRect: DOMRect): [LabelRefCallback, LabelPosition] => {
   const [position, setPosition] = useState<LabelPosition>("top");
-  const [instanceRect] = useSelectedInstanceRect();
 
   const ref = useCallback(
     (element) => {
@@ -70,7 +70,7 @@ const Outline = styled(
   }
 );
 
-const Label = styled(
+const LabelContainer = styled(
   "div",
   {
     position: "absolute",
@@ -111,24 +111,30 @@ const Label = styled(
   }
 );
 
-export const SelectedInstanceOutline = () => {
-  const style = useStyle();
-  const [selectedInstanceData] = useSelectedInstanceData();
-  const [labelRef, position] = useLabelPosition();
+const Label = ({component, instanceRect}: {component: Instance['component'], instanceRect: DOMRect}) => {
+  const [labelRef, position] = useLabelPosition(instanceRect);
+  const primitive = primitives[component];
+  const { Icon } = primitive;
+  return (
+    <LabelContainer state="selected" position={position} ref={labelRef}>
+      <Icon width="1em" height="1em" />
+      {primitive.label}
+    </LabelContainer>
+  );
+};
 
-  if (style === undefined || selectedInstanceData === undefined) {
+export const SelectedInstanceOutline = () => {
+  const style = useSelectedInstanceOutlineStyle();
+  const [selectedInstanceData] = useSelectedInstanceData();
+  const [instanceRect] = useSelectedInstanceRect();
+
+  if (style === undefined || selectedInstanceData === undefined || instanceRect === undefined) {
     return null;
   }
 
-  const primitive = primitives[selectedInstanceData.component];
-  const { Icon } = primitive;
-
   return (
     <Outline state="selected" style={style}>
-      <Label state="selected" position={position} ref={labelRef}>
-        <Icon width="1em" height="1em" />
-        {primitive.label}
-      </Label>
+      <Label component={selectedInstanceData.component} instanceRect={instanceRect}/>
     </Outline>
   );
 };
