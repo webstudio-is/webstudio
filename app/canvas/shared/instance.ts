@@ -156,13 +156,13 @@ export const usePublishHoveredInstanceData = () => {
   const [instance] = useHoveredInstance()
 
   useEffect(() => {
-    if (instance === undefined) return
-    publish<"hoverInstance", HoveredInstanceData>({
+    const payload = instance ? {
+      id: instance.id,
+      component: instance.component
+    } : undefined
+    publish<"hoverInstance", HoveredInstanceData | undefined>({
       type: "hoverInstance",
-      payload: {
-        id: instance.id,
-        component: instance.component
-      },
+      payload,
     });
   }, [instance])
 }

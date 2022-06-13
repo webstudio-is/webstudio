@@ -30,8 +30,12 @@ export const HoveredInstanceOutline = () => {
   }
 
   return (
-    <Outline state="selected" style={style}>
-      <Label component={instanceData.component} instanceRect={instanceRect} />
+    <Outline state="hovered" style={style}>
+      <Label
+        component={instanceData.component}
+        instanceRect={instanceRect}
+        state="hovered"
+      />
     </Outline>
   );
 };

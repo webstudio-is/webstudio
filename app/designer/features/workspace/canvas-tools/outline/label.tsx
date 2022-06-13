@@ -45,7 +45,7 @@ const LabelContainer = styled(
     fontSize: "$2",
     fontFamily: "$sans",
     lineHeight: 1,
-    minWidth: "$6",
+    minWidth: "$6"
   },
   {
     variants: {
@@ -73,15 +73,17 @@ const LabelContainer = styled(
 );
 
 type LabelProps =  {
-  component: Instance['component'], instanceRect: DOMRect
+  component: Instance['component'], 
+  instanceRect: DOMRect,
+  state: 'hovered' | 'selected'
 }
 
-export const Label = ({component, instanceRect}: LabelProps) => {
+export const Label = ({component, instanceRect, state}: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
   const primitive = primitives[component];
   const { Icon } = primitive;
   return (
-    <LabelContainer state="selected" position={position} ref={labelRef}>
+    <LabelContainer state={state} position={position} ref={labelRef}>
       <Icon width="1em" height="1em" />
       {primitive.label}
     </LabelContainer>
