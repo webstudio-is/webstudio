@@ -11,7 +11,6 @@ import { useContentEditable } from "./editable";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
-import { useOutline } from "~/canvas/shared/use-outline";
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -28,7 +27,6 @@ export const WrapperComponentDev = ({
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
-  const outline = useOutline(instance);
 
   const {
     ref: contentEditableRef,
@@ -66,7 +64,6 @@ export const WrapperComponentDev = ({
   return (
     <>
       {editableToolbar}
-      {outline}
       <Component
         {...userProps}
         {...rest}
