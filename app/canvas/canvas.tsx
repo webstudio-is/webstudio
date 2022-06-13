@@ -100,7 +100,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
-  usePublishHoveredInstanceData()
+  usePublishHoveredInstanceData();
   useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
@@ -110,7 +110,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useSync({ project });
   useUpdateSelectedInstance();
   usePublishSelectedInstanceDataRect();
-  usePublishHoveredInstanceRect()
+  usePublishHoveredInstanceRect();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case

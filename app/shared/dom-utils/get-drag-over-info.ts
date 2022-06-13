@@ -1,5 +1,10 @@
 import type { Coordinate, DragOverInfo } from "./types";
 
+const elementFromPoint = (coordinate: Coordinate): HTMLElement | undefined => {
+  const element = document.elementFromPoint(coordinate.x, coordinate.y);
+  if (element instanceof HTMLElement) return element;
+};
+
 /**
  * Get element we are hovering over from coordinate.
  * When nearing to an edge of an element - return the parent.
@@ -8,7 +13,7 @@ export const getDragOverInfo = (
   offset: Coordinate,
   getBoundingClientRect: (element: Element) => DOMRect
 ): DragOverInfo => {
-  let element = document.elementFromPoint(offset.x, offset.y) || undefined;
+  let element = elementFromPoint(offset);
   let edge: DragOverInfo["edge"] = "none";
 
   if (element === undefined) return { element, edge };

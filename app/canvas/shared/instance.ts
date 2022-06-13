@@ -19,8 +19,17 @@ import {
   findInstanceById,
 } from "~/shared/tree-utils";
 import store from "immerhin";
-import { DropData, HoveredInstanceData, type SelectedInstanceData } from "~/shared/canvas-components";
-import { useSelectedInstance, useSelectedElement, useHoveredElement, useHoveredInstance } from "./nano-states";
+import {
+  DropData,
+  HoveredInstanceData,
+  type SelectedInstanceData,
+} from "~/shared/canvas-components";
+import {
+  useSelectedInstance,
+  useSelectedElement,
+  useHoveredElement,
+  useHoveredInstance,
+} from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
 import { useAfterRender } from "./use-after-render";
 import { useWindowResize } from "~/shared/dom-hooks";
@@ -153,19 +162,21 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
 };
 
 export const usePublishHoveredInstanceData = () => {
-  const [instance] = useHoveredInstance()
+  const [instance] = useHoveredInstance();
 
   useEffect(() => {
-    const payload = instance ? {
-      id: instance.id,
-      component: instance.component
-    } : undefined
+    const payload = instance
+      ? {
+          id: instance.id,
+          component: instance.component,
+        }
+      : undefined;
     publish<"hoverInstance", HoveredInstanceData | undefined>({
       type: "hoverInstance",
       payload,
     });
-  }, [instance])
-}
+  }, [instance]);
+};
 
 /**
  *  We need to set the selected instance after a any root instance update,
