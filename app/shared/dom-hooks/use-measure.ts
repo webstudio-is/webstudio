@@ -21,7 +21,7 @@ export const useMeasure = <
 
   const observer = useMemo(() => {
     if (element === null || typeof window === "undefined") return;
-    return new window.ResizeObserver((entries) => {
+    return new window.ResizeObserver(() => {
       if (element === null) return;
       requestAnimationFrame(() => {
         setRect(element.getBoundingClientRect());
@@ -35,7 +35,7 @@ export const useMeasure = <
     return () => {
       observer.disconnect();
     };
-  }, [element]);
+  }, [element, observer]);
 
   return [ref, rect];
 };

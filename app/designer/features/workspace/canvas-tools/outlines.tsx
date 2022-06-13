@@ -18,25 +18,32 @@ const useStyle = () => {
 };
 
 type LabelPosition = "top" | "inside" | "bottom";
+type LabelRefCallback = (element: HTMLElement | null) => void;
 
 /**
  * Detects if there is no space on top and for the label and tells to show it inside.
+ * - if there is enough space for the label on top of the instance - top
+ * - else if instance height is more than 250px - bottom
+ * - else inside-top - last resort because it covers a bit of the instance content
  */
-const useLabelPosition = () => {
+const useLabelPosition = (): [LabelRefCallback, LabelPosition] => {
   const [position, setPosition] = useState<LabelPosition>("top");
   const [instanceRect] = useSelectedInstanceRect();
 
-  const ref = useCallback((element: HTMLElement | null) => {
-    if (element === null || instanceRect === undefined) return;
-    const labelRect = element.getBoundingClientRect();
-    let nextPosition: LabelPosition = "top";
-    if (labelRect.height > instanceRect.top) {
-      nextPosition = instanceRect.height < 250 ? "bottom" : "inside";
-    }
-    setPosition(nextPosition);
-  }, []);
+  const ref = useCallback(
+    (element) => {
+      if (element === null || instanceRect === undefined) return;
+      const labelRect = element.getBoundingClientRect();
+      let nextPosition: LabelPosition = "top";
+      if (labelRect.height > instanceRect.top) {
+        nextPosition = instanceRect.height < 250 ? "bottom" : "inside";
+      }
+      setPosition(nextPosition);
+    },
+    [instanceRect]
+  );
 
-  return { ref, position };
+  return [ref, position];
 };
 
 const Outline = styled(
@@ -97,7 +104,7 @@ const Label = styled(
           top: 0,
         },
         bottom: {
-          bottom: 0,
+          bottom: "-$4",
         },
       },
     },
@@ -107,13 +114,15 @@ const Label = styled(
 export const SelectedInstanceOutline = () => {
   const style = useStyle();
   const [selectedInstanceData] = useSelectedInstanceData();
-  const { ref: labelRef, position } = useLabelPosition();
+  const [labelRef, position] = useLabelPosition();
 
-  if (style === undefined || selectedInstanceData === undefined) return null;
+  if (style === undefined || selectedInstanceData === undefined) {
+    return null;
+  }
 
   const primitive = primitives[selectedInstanceData.component];
   const { Icon } = primitive;
-  console.log({ position });
+
   return (
     <Outline state="selected" style={style}>
       <Label state="selected" position={position} ref={labelRef}>

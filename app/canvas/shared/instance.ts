@@ -22,7 +22,6 @@ import store from "immerhin";
 import { DropData, type SelectedInstanceData } from "~/shared/component";
 import { useSelectedInstance, useSelectedElement } from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
-import { getBoundingClientRect } from "~/shared/dom-utils";
 import { useAfterRender } from "./use-after-render";
 import { useWindowResize } from "~/shared/dom-hooks";
 
@@ -167,7 +166,9 @@ export const useUpdateSelectedInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
   useEffect(() => {
-    if (rootInstance === undefined || selectedInstance === undefined) return;
+    if (rootInstance === undefined || selectedInstance === undefined) {
+      return;
+    }
     const nextSelectedInstance = findInstanceById(
       rootInstance,
       selectedInstance.id
