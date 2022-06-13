@@ -1,13 +1,15 @@
 export class AutoInput extends EventTarget {
 	connectedCallback() {
+		this.pointerCapture = false;
+		this.eventNames = ['keydown', 'pointerup', 'pointerdown', 'pointerover', 'pointerout'];
 		if (!this.activeInput) this.activeInput = null;
 		if (!this.canvasContext) Object.getPrototypeOf(this).canvasContext = document?.createElement('canvas')?.getContext('2d');
-		for (let name of ['keydown', 'mouseup', 'mousedown', 'mousemove']) globalThis.addEventListener(name, this, false);
+		for (let name of this.eventNames) globalThis.addEventListener(name, this, false);
 		return () => this.disconnectedCallback();
 	}
 	disconnectedCallback() {
 		document.documentElement.style.cursor = '';
-		for (let name of ['keydown', 'mouseup', 'mousedown', 'mousemove']) globalThis.removeEventListener(name, this, false);
+		for (let name of this.eventNames) globalThis.removeEventListener(name, this, false);
 	}
 	measureText(value) {
 		return this.canvasContext.measureText(value).width;
@@ -54,24 +56,37 @@ export class AutoInput extends EventTarget {
 		return measureMetrics;
 	}
 	handleEvent(event) {
-		let input = this.activeInput;
-		if (event.target?.nodeName === 'INPUT' && event.target?.type === 'text') input = event.target;
+		let eventTarget = event.target;
+		let input = eventTarget?.nodeName === 'INPUT' && eventTarget?.type === 'text' ? eventTarget : this.activeInput;
 		if (input?.readOnly !== false) return;
 		switch (event.type) {
-			case 'mousedown': {
+			case 'pointerdown': {
 				if (!(document.documentElement.style.cursor = input.style.cursor)) break;
 				this.activeInput = input;
 				input.offsetX = event.offsetX;
 				break;
 			}
-			case 'mouseup': {
+			case 'pointerup': {
 				if (document.documentElement.style.cursor) document.documentElement.style.cursor = '';
 				this.activeInput = null;
 				input.offsetX = null;
 				input.measureMetrics = null;
 				break;
 			}
-			case 'mousemove': {
+			case 'pointerover': {
+				if (this.pointerCapture) break;
+				this.pointerCapture = true;
+				globalThis.addEventListener('pointermove', this, false);
+				break;
+			}
+			case 'pointerout': {
+				if (!this.pointerCapture) break;
+				this.pointerCapture = false;
+				globalThis.removeEventListener('pointermove', this, false);
+				break;
+			}
+			case 'pointerleave':
+			case 'pointermove': {
 				let {valueNumber, valueCursor, valueOffset, valueTokens, cacheOffset} = this.measureMove(input, event);
 				input.style.cursor = valueCursor;
 				if (valueOffset) {
@@ -79,7 +94,7 @@ export class AutoInput extends EventTarget {
 						event.preventDefault();
 						valueTokens[valueOffset] = valueNumber + event.movementX;
 						this.updateValue(input, valueTokens.join(''));
-						if (event.target) input.blur();
+						if (eventTarget) input.blur();
 					}
 				}
 				break;
