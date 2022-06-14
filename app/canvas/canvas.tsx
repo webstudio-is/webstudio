@@ -28,8 +28,9 @@ import {
   usePublishSelectedInstanceDataRect,
   usePublishHoveredInstanceRect,
   usePublishHoveredInstanceData,
-  useTrackSelectedInstance,
-  useTrackHoveredInstance,
+  useSetSelectedInstance,
+  useSetHoveredInstance,
+  useUnselectInstance,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
@@ -110,13 +111,14 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDeleteInstance();
   usePublishRootInstance();
   useTrackSelectedElement();
-  useTrackSelectedInstance();
+  useSetSelectedInstance();
   useTrackHoveredElement();
-  useTrackHoveredInstance();
+  useSetHoveredInstance();
   useSync({ project });
   useUpdateSelectedInstance();
   usePublishSelectedInstanceDataRect();
   usePublishHoveredInstanceRect();
+  useUnselectInstance();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case

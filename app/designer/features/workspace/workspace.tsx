@@ -1,6 +1,7 @@
 import { Box, Flex } from "~/shared/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
+import { type Publish } from "@webstudio-is/sdk";
 
 const workspaceStyle = {
   flexGrow: 1,
@@ -24,13 +25,23 @@ const canvasContainerStyle = {
 type WorkspaceProps = {
   children: JSX.Element;
   onTransitionEnd: () => void;
+  publish: Publish;
 };
 
-export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
+export const Workspace = ({
+  children,
+  onTransitionEnd,
+  publish,
+}: WorkspaceProps) => {
   const [zoom] = useZoom();
   const [canvasWidth] = useCanvasWidth();
+
+  const handleWorkspaceClick = () => {
+    publish({ type: "unselectInstance" });
+  };
+
   return (
-    <Box css={workspaceStyle}>
+    <Box css={workspaceStyle} onClick={handleWorkspaceClick}>
       <Flex
         direction="column"
         align="center"

@@ -238,28 +238,37 @@ export const usePublishHoveredInstanceRect = () => {
   useEffect(publishRect, [publishRect]);
 };
 
-export const useTrackHoveredInstance = () => {
+export const useSetHoveredInstance = () => {
   const [rootInstance] = useRootInstance();
   const [hoveredElement] = useHoveredElement();
   const [, setHoveredInstance] = useHoveredInstance();
 
   useEffect(() => {
-    if (rootInstance === undefined || hoveredElement === undefined) return;
-    const instance = findInstanceById(rootInstance, hoveredElement.id);
-    if (instance === undefined) return;
+    let instance;
+    if (rootInstance !== undefined && hoveredElement?.id) {
+      instance = findInstanceById(rootInstance, hoveredElement.id);
+    }
     setHoveredInstance(instance);
   }, [rootInstance, hoveredElement, setHoveredInstance]);
 };
 
-export const useTrackSelectedInstance = () => {
+export const useSetSelectedInstance = () => {
   const [rootInstance] = useRootInstance();
   const [selectedElement] = useSelectedElement();
   const [, setSelectedInstance] = useSelectedInstance();
 
   useEffect(() => {
-    if (selectedElement === undefined || rootInstance === undefined) return;
-    const instance = findInstanceById(rootInstance, selectedElement.id);
-    if (instance === undefined) return;
+    let instance;
+    if (rootInstance !== undefined && selectedElement?.id) {
+      instance = findInstanceById(rootInstance, selectedElement.id);
+    }
     setSelectedInstance(instance);
   }, [selectedElement, rootInstance]);
+};
+
+export const useUnselectInstance = () => {
+  const [, setSelectedElement] = useSelectedElement();
+  useSubscribe("unselectInstance", () => {
+    setSelectedElement(undefined);
+  });
 };
