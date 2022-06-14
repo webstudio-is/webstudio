@@ -46,12 +46,15 @@ const usePreviewCss = ({ instance, css }: UseCssProps) => {
   return previewCss;
 };
 
-const emptyStyle = {
+const defaultStyle = {
   "&:empty": {
     outline: "1px dashed #555",
     outlineOffset: -1,
     paddingTop: "$8",
     paddingRight: "$8",
+  },
+  "&[contenteditable]": {
+    outline: 0,
   },
 };
 
@@ -59,7 +62,7 @@ export const useCss = ({ instance, css }: UseCssProps): string => {
   const previewCss = usePreviewCss({ instance, css });
 
   return useMemo(() => {
-    const overrides: CSS = { ...emptyStyle };
+    const overrides: CSS = { ...defaultStyle };
     for (const update of previewCss) {
       if (update.value === undefined) continue;
       overrides[update.property as string] = toValue(update.value);
