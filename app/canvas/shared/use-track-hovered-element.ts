@@ -16,14 +16,19 @@ const eventOptions = {
 export const useTrackHoveredElement = () => {
   const [rootInstance] = useRootInstance();
   const [, setHoveredElement] = useHoveredElement();
+  const [selectedElement] = useSelectedElement();
 
   useEffect(() => {
     const handleMouseOver = (event: MouseEvent) => {
-      if (rootInstance === undefined) return;
       const element = event.target;
-      if (element instanceof HTMLElement) {
-        setHoveredElement(element);
+      if (
+        rootInstance === undefined ||
+        selectedElement === element ||
+        !(element instanceof HTMLElement)
+      ) {
+        return;
       }
+      setHoveredElement(element);
     };
 
     const handleMouseOut = () => {
