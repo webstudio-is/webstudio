@@ -50,6 +50,8 @@ const emptyStyle = {
   "&:empty": {
     outline: "1px dashed #555",
     outlineOffset: -1,
+    paddingTop: "$8",
+    paddingRight: "$8",
   },
 };
 
