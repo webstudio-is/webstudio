@@ -28,12 +28,11 @@ import {
   usePublishSelectedInstanceDataRect,
   usePublishHoveredInstanceRect,
   usePublishHoveredInstanceData,
+  useTrackSelectedInstance,
+  useTrackHoveredInstance,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
-import {
-  useTrackSelectedElement,
-  useTrackSelectedInstance,
-} from "./shared/use-track-selected";
+import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
@@ -48,10 +47,7 @@ import {
   useRootInstance,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
-import {
-  useTrackHoveredElement,
-  useTrackHoveredInstance,
-} from "./shared/use-track-hovered";
+import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 
 registerContainers();
 

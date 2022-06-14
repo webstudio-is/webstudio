@@ -237,3 +237,29 @@ export const usePublishHoveredInstanceRect = () => {
   }, [element]);
   useEffect(publishRect, [publishRect]);
 };
+
+export const useTrackHoveredInstance = () => {
+  const [rootInstance] = useRootInstance();
+  const [hoveredElement] = useHoveredElement();
+  const [, setHoveredInstance] = useHoveredInstance();
+
+  useEffect(() => {
+    if (rootInstance === undefined || hoveredElement === undefined) return;
+    const instance = findInstanceById(rootInstance, hoveredElement.id);
+    if (instance === undefined) return;
+    setHoveredInstance(instance);
+  }, [rootInstance, hoveredElement, setHoveredInstance]);
+};
+
+export const useTrackSelectedInstance = () => {
+  const [rootInstance] = useRootInstance();
+  const [selectedElement] = useSelectedElement();
+  const [, setSelectedInstance] = useSelectedInstance();
+
+  useEffect(() => {
+    if (selectedElement === undefined || rootInstance === undefined) return;
+    const instance = findInstanceById(rootInstance, selectedElement.id);
+    if (instance === undefined) return;
+    setSelectedInstance(instance);
+  }, [selectedElement, rootInstance]);
+};

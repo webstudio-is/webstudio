@@ -52,16 +52,3 @@ export const useTrackSelectedElement = () => {
     };
   }, [select]);
 };
-
-export const useTrackSelectedInstance = () => {
-  const [rootInstance] = useRootInstance();
-  const [selectedElement] = useSelectedElement();
-  const [, setSelectedInstance] = useSelectedInstance();
-
-  useEffect(() => {
-    if (selectedElement === undefined || rootInstance === undefined) return;
-    const instance = findInstanceById(rootInstance, selectedElement.id);
-    if (instance === undefined) return;
-    setSelectedInstance(instance);
-  }, [selectedElement, rootInstance]);
-};
