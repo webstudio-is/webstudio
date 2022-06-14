@@ -30,7 +30,10 @@ import {
   usePublishHoveredInstanceData,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
-import { useActiveElementTracking } from "./shared/active-element";
+import {
+  useTrackSelectedElement,
+  useTrackSelectedInstance,
+} from "./shared/use-track-selected";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
@@ -45,6 +48,10 @@ import {
   useRootInstance,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
+import {
+  useTrackHoveredElement,
+  useTrackHoveredInstance,
+} from "./shared/use-track-hovered";
 
 registerContainers();
 
@@ -106,7 +113,10 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
-  useActiveElementTracking();
+  useTrackSelectedElement();
+  useTrackSelectedInstance();
+  useTrackHoveredElement();
+  useTrackHoveredInstance();
   useSync({ project });
   useUpdateSelectedInstance();
   usePublishSelectedInstanceDataRect();
