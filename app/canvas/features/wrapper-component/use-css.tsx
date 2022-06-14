@@ -56,7 +56,7 @@ const defaultStyle = {
     paddingTop: "$8",
     paddingRight: "$8",
   },
-  "&[contenteditable]": {
+  "&[contenteditable], &:focus": {
     outline: 0,
   },
 };
