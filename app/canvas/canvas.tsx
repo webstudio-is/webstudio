@@ -28,7 +28,6 @@ import {
   usePublishSelectedInstanceDataRect,
   usePublishHoveredInstanceRect,
   usePublishHoveredInstanceData,
-  useSetSelectedInstance,
   useSetHoveredInstance,
   useUnselectInstance,
 } from "./shared/instance";
@@ -111,7 +110,6 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDeleteInstance();
   usePublishRootInstance();
   useTrackSelectedElement();
-  useSetSelectedInstance();
   useTrackHoveredElement();
   useSetHoveredInstance();
   useSync({ project });

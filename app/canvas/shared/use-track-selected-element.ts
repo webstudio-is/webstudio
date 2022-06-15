@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from "react";
 import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
-import { useSelectedElement } from "./nano-states";
+import { useSelectedElement, useSelectedInstance } from "./nano-states";
+import { useRootInstance } from "~/shared/nano-states";
+import { findInstanceById } from "~/shared/tree-utils";
 
 const eventOptions = {
   passive: true,
@@ -8,49 +10,54 @@ const eventOptions = {
 
 export const useTrackSelectedElement = () => {
   const [selectedElement, setSelectedElement] = useSelectedElement();
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+  const [rootInstance] = useRootInstance();
 
-  const select = useCallback(
-    (element: EventTarget | HTMLElement | null) => {
-      if (element instanceof HTMLElement) {
-        setSelectedElement(element);
-      }
+  const selectInstance = useCallback(
+    (id) => {
+      if (rootInstance === undefined) return;
+      const instance = findInstanceById(rootInstance, id);
+      setSelectedInstance(instance);
     },
-    [setSelectedElement]
+    [setSelectedInstance, rootInstance]
   );
 
   const focusAndSelect = useCallback(
     (id: Instance["id"]) => {
       const element = document.getElementById(id);
-      element?.focus();
-      select(element);
+      if (element === null) return;
+      element.focus();
+      setSelectedElement(element);
     },
-    [select]
+    [setSelectedElement]
   );
 
-  // It is possible due to rerender to get an html element reference that was already removed from the DOM.
-  // We need to reselect it when this happens.
+  useSubscribe("selectInstance", focusAndSelect);
+
+  // Focus and select the element when selected instance changes
   useEffect(() => {
     if (
-      selectedElement !== undefined &&
-      document.body.contains(selectedElement) === false
+      selectedInstance !== undefined &&
+      (selectedElement === undefined ||
+        selectedInstance?.id !== selectedElement.id)
     ) {
-      focusAndSelect(selectedElement.id);
+      focusAndSelect(selectedInstance.id);
     }
-  }, [selectedElement, focusAndSelect]);
-
-  useSubscribe("selectElement", focusAndSelect);
+  }, [selectedInstance, selectedElement, focusAndSelect]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       // Notify in general that document was clicked
       // e.g. to hide the side panel
       publish<"clickCanvas">({ type: "clickCanvas" });
-      select(event.target);
+      if (event.target instanceof HTMLElement) {
+        selectInstance(event.target.id);
+      }
     };
     window.addEventListener("click", handleClick, eventOptions);
 
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [select]);
+  }, [selectInstance]);
 };

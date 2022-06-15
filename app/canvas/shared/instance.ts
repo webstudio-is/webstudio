@@ -152,7 +152,6 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
         props,
       };
     }
-
     publish<"selectInstance", SelectedInstanceData>({
       type: "selectInstance",
       payload,
@@ -175,28 +174,6 @@ export const usePublishHoveredInstanceData = () => {
       payload,
     });
   }, [instance]);
-};
-
-/**
- *  We need to set the selected instance after a any root instance update,
- *  because anything that we change on the selected instance is actually done on the root, so
- *  when we run "undo", root is going to be undone but not the selected instance, unless we update it here.
- */
-export const useUpdateSelectedInstance = () => {
-  const [rootInstance] = useRootInstance();
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-
-  useEffect(() => {
-    if (rootInstance === undefined || selectedInstance === undefined) {
-      return;
-    }
-    const nextSelectedInstance = findInstanceById(
-      rootInstance,
-      selectedInstance.id
-    );
-    if (nextSelectedInstance === undefined) return;
-    setSelectedInstance(nextSelectedInstance);
-  }, [rootInstance, selectedInstance, setSelectedInstance]);
 };
 
 export const usePublishRootInstance = () => {
@@ -256,23 +233,29 @@ export const useSetHoveredInstance = () => {
   }, [rootInstance, hoveredElement, setHoveredInstance]);
 };
 
-export const useSetSelectedInstance = () => {
+/**
+ *  We need to set the selected instance after a any root instance update,
+ *  because anything that we change on the selected instance is actually done on the root, so
+ *  when we run "undo", root is going to be undone but not the selected instance, unless we update it here.
+ */
+export const useUpdateSelectedInstance = () => {
   const [rootInstance] = useRootInstance();
-  const [selectedElement] = useSelectedElement();
-  const [, setSelectedInstance] = useSelectedInstance();
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
+  // When selected instance or root instance changes - we want to make sure the instance with that id still exists in the root.
   useEffect(() => {
     let instance;
-    if (rootInstance !== undefined && selectedElement?.id) {
-      instance = findInstanceById(rootInstance, selectedElement.id);
+    if (rootInstance !== undefined && selectedInstance?.id) {
+      instance = findInstanceById(rootInstance, selectedInstance.id);
     }
-    setSelectedInstance(instance);
-  }, [selectedElement, rootInstance, setSelectedInstance]);
+    // When it's a new inserted instance, it will be undefined, so we can't set it to undefined and remove it.
+    if (instance !== undefined) setSelectedInstance(instance);
+  }, [rootInstance, selectedInstance, setSelectedInstance]);
 };
 
 export const useUnselectInstance = () => {
-  const [, setSelectedElement] = useSelectedElement();
+  const [, setSelectedInstance] = useSelectedInstance();
   useSubscribe("unselectInstance", () => {
-    setSelectedElement(undefined);
+    setSelectedInstance(undefined);
   });
 };

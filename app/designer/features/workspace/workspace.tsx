@@ -37,7 +37,7 @@ export const Workspace = ({
   const [canvasWidth] = useCanvasWidth();
 
   const handleWorkspaceClick = () => {
-    publish({ type: "unselectInstance" });
+    publish<"unselectInstance">({ type: "unselectInstance" });
   };
 
   return (
