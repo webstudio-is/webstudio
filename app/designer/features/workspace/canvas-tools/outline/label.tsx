@@ -12,7 +12,9 @@ type LabelRefCallback = (element: HTMLElement | null) => void;
  * - else if instance height is more than 250px - bottom
  * - else inside-top - last resort because it covers a bit of the instance content
  */
-const useLabelPosition = (instanceRect: DOMRect): [LabelRefCallback, LabelPosition] => {
+const useLabelPosition = (
+  instanceRect: DOMRect
+): [LabelRefCallback, LabelPosition] => {
   const [position, setPosition] = useState<LabelPosition>("top");
 
   const ref = useCallback(
@@ -45,7 +47,8 @@ const LabelContainer = styled(
     fontSize: "$2",
     fontFamily: "$sans",
     lineHeight: 1,
-    minWidth: "$6"
+    minWidth: "$6",
+    whiteSpace: "nowrap",
   },
   {
     variants: {
@@ -72,13 +75,13 @@ const LabelContainer = styled(
   }
 );
 
-type LabelProps =  {
-  component: Instance['component'], 
-  instanceRect: DOMRect,
-  state: 'hovered' | 'selected'
-}
+type LabelProps = {
+  component: Instance["component"];
+  instanceRect: DOMRect;
+  state: "hovered" | "selected";
+};
 
-export const Label = ({component, instanceRect, state}: LabelProps) => {
+export const Label = ({ component, instanceRect, state }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
   const primitive = primitives[component];
   const { Icon } = primitive;
