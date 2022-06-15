@@ -263,7 +263,7 @@ export const useSetSelectedInstance = () => {
       instance = findInstanceById(rootInstance, selectedElement.id);
     }
     setSelectedInstance(instance);
-  }, [selectedElement, rootInstance]);
+  }, [selectedElement, rootInstance, setSelectedInstance]);
 };
 
 export const useUnselectInstance = () => {

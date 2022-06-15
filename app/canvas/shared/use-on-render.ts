@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { useSubscribe } from "@webstudio-is/sdk";
 import { useSelectedInstance } from "./nano-states";
 

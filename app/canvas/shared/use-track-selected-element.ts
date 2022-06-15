@@ -1,8 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
-import { useSelectedElement, useSelectedInstance } from "./nano-states";
-import { findInstanceById } from "~/shared/tree-utils";
-import { useRootInstance } from "~/shared/nano-states";
+import { useSelectedElement } from "./nano-states";
 
 const eventOptions = {
   passive: true,
@@ -11,11 +9,23 @@ const eventOptions = {
 export const useTrackSelectedElement = () => {
   const [selectedElement, setSelectedElement] = useSelectedElement();
 
-  const focusAndSelect = (id: Instance["id"]) => {
-    const element = document.getElementById(id);
-    element?.focus();
-    select(element);
-  };
+  const select = useCallback(
+    (element: EventTarget | HTMLElement | null) => {
+      if (element instanceof HTMLElement) {
+        setSelectedElement(element);
+      }
+    },
+    [setSelectedElement]
+  );
+
+  const focusAndSelect = useCallback(
+    (id: Instance["id"]) => {
+      const element = document.getElementById(id);
+      element?.focus();
+      select(element);
+    },
+    [select]
+  );
 
   // It is possible due to rerender to get an html element reference that was already removed from the DOM.
   // We need to reselect it when this happens.
@@ -26,18 +36,9 @@ export const useTrackSelectedElement = () => {
     ) {
       focusAndSelect(selectedElement.id);
     }
-  }, [selectedElement]);
+  }, [selectedElement, focusAndSelect]);
 
   useSubscribe("selectElement", focusAndSelect);
-
-  const select = useCallback(
-    (element: EventTarget | HTMLElement | null) => {
-      if (element instanceof HTMLElement) {
-        setSelectedElement(element);
-      }
-    },
-    [setSelectedElement]
-  );
 
   useEffect(() => {
     const handleFocus = () => {

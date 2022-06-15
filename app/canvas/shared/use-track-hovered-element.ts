@@ -1,13 +1,6 @@
-import { useCallback, useEffect } from "react";
-import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
-import {
-  useSelectedInstance,
-  useSelectedElement,
-  useHoveredElement,
-  useHoveredInstance,
-} from "./nano-states";
+import { useEffect } from "react";
+import { useSelectedElement, useHoveredElement } from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
-import { findInstanceById } from "~/shared/tree-utils";
 
 const eventOptions = {
   passive: true,
@@ -23,6 +16,7 @@ export const useTrackHoveredElement = () => {
       const element = event.target;
       if (
         rootInstance === undefined ||
+        // Don't show hover for selected element
         selectedElement === element ||
         !(element instanceof HTMLElement)
       ) {
@@ -43,5 +37,5 @@ export const useTrackHoveredElement = () => {
       window.removeEventListener("mouseover", handleMouseOver);
       window.removeEventListener("mouseout", handleMouseOut);
     };
-  }, [rootInstance, setHoveredElement]);
+  }, [rootInstance, selectedElement, setHoveredElement]);
 };
