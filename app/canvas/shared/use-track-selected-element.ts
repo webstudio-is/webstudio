@@ -41,12 +41,6 @@ export const useTrackSelectedElement = () => {
   useSubscribe("selectElement", focusAndSelect);
 
   useEffect(() => {
-    const handleFocus = () => {
-      select(document.activeElement);
-    };
-
-    window.addEventListener("focus", handleFocus, eventOptions);
-
     const handleClick = (event: MouseEvent) => {
       // Notify in general that document was clicked
       // e.g. to hide the side panel
@@ -56,7 +50,6 @@ export const useTrackSelectedElement = () => {
     window.addEventListener("click", handleClick, eventOptions);
 
     return () => {
-      window.removeEventListener("focus", handleFocus);
       window.removeEventListener("click", handleClick);
     };
   }, [select]);
