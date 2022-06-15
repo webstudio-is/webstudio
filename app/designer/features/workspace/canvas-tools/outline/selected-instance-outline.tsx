@@ -31,11 +31,7 @@ export const SelectedInstanceOutline = () => {
 
   return (
     <Outline style={style}>
-      <Label
-        component={instanceData.component}
-        instanceRect={instanceRect}
-        state="selected"
-      />
+      <Label component={instanceData.component} instanceRect={instanceRect} />
     </Outline>
   );
 };

@@ -49,17 +49,10 @@ const LabelContainer = styled(
     lineHeight: 1,
     minWidth: "$6",
     whiteSpace: "nowrap",
+    backgroundColor: "$blue9",
   },
   {
     variants: {
-      state: {
-        selected: {
-          backgroundColor: "$blue9",
-        },
-        hovered: {
-          color: "$blue9",
-        },
-      },
       position: {
         top: {
           top: "-$4",
@@ -78,15 +71,14 @@ const LabelContainer = styled(
 type LabelProps = {
   component: Instance["component"];
   instanceRect: DOMRect;
-  state: "hovered" | "selected";
 };
 
-export const Label = ({ component, instanceRect, state }: LabelProps) => {
+export const Label = ({ component, instanceRect }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
   const primitive = primitives[component];
   const { Icon } = primitive;
   return (
-    <LabelContainer state={state} position={position} ref={labelRef}>
+    <LabelContainer position={position} ref={labelRef}>
       <Icon width="1em" height="1em" />
       {primitive.label}
     </LabelContainer>
