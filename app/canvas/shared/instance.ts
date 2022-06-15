@@ -31,8 +31,7 @@ import {
   useHoveredInstance,
 } from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
-import { useOnRender } from "./use-on-render";
-import { useWindowResize } from "~/shared/dom-hooks";
+import { useMeasure } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -210,20 +209,25 @@ export const usePublishRootInstance = () => {
   }, [rootInstance]);
 };
 
+const publishRect = (rect: DOMRect) => {
+  publish<"selectedInstanceRect", DOMRect>({
+    type: "selectedInstanceRect",
+    payload: rect,
+  });
+};
+
 export const usePublishSelectedInstanceDataRect = () => {
   const [element] = useSelectedElement();
-  const publishRect = useCallback(() => {
-    requestAnimationFrame(() => {
-      if (element === undefined) return;
-      publish<"selectedInstanceRect", DOMRect>({
-        type: "selectedInstanceRect",
-        payload: element.getBoundingClientRect(),
-      });
-    });
-  }, [element]);
-  useOnRender(publishRect);
-  useWindowResize(publishRect);
-  useEffect(publishRect, [publishRect]);
+  const [refCallback, rect] = useMeasure();
+
+  useEffect(() => {
+    // Disconnect observer when there is no element.
+    refCallback(element ?? null);
+  }, [element, refCallback]);
+
+  useEffect(() => {
+    if (rect !== undefined) publishRect(rect);
+  }, [rect]);
 };
 
 export const usePublishHoveredInstanceRect = () => {

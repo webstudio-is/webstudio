@@ -5,16 +5,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-export type UseMeasureRef<MeasuredElement extends Element = Element> = (
-  element: MeasuredElement
+export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
+  element: MeasuredElement | null
 ) => void;
-export type UseMeasureResult<MeasuredElement extends Element = Element> = [
-  UseMeasureRef<MeasuredElement>,
-  DOMRect | undefined
-];
+export type UseMeasureResult<
+  MeasuredElement extends HTMLElement = HTMLElement
+> = [UseMeasureRef<MeasuredElement>, DOMRect | undefined];
 
 export const useMeasure = <
-  MeasuredElement extends Element = Element
+  MeasuredElement extends HTMLElement = HTMLElement
 >(): UseMeasureResult<MeasuredElement> => {
   const [element, ref] = useState<MeasuredElement | null>(null);
   const [rect, setRect] = useState<DOMRect>();
@@ -30,10 +29,12 @@ export const useMeasure = <
   }, [element]);
 
   useEffect(() => {
-    if (element === null || observer === undefined) return;
-    observer.observe(element);
+    if (observer) {
+      if (element === null) observer.disconnect();
+      else observer.observe(element);
+    }
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
     };
   }, [element, observer]);
 

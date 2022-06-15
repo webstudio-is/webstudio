@@ -14,12 +14,7 @@ export const useTrackHoveredElement = () => {
   useEffect(() => {
     const handleMouseOver = (event: MouseEvent) => {
       const element = event.target;
-      if (
-        rootInstance === undefined ||
-        // Don't show hover for selected element
-        selectedElement === element ||
-        !(element instanceof HTMLElement)
-      ) {
+      if (rootInstance === undefined || !(element instanceof HTMLElement)) {
         return;
       }
       setHoveredElement(element);
