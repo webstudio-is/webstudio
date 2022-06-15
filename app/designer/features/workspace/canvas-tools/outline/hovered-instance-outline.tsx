@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { useHoveredInstanceRect } from "~/shared/nano-states";
-import { useHoveredInstanceData } from "~/designer/shared/nano-states";
+import {
+  useHoveredInstanceData,
+  useSelectedInstanceData,
+} from "~/designer/shared/nano-states";
 import { Outline } from "./outline";
 import { Label } from "./label";
 
@@ -17,6 +20,7 @@ const useStyle = (rect?: DOMRect) => {
 };
 
 export const HoveredInstanceOutline = () => {
+  const [selectedInstanceData] = useSelectedInstanceData();
   const [instanceRect] = useHoveredInstanceRect();
   const style = useStyle(instanceRect);
   const [instanceData] = useHoveredInstanceData();
@@ -24,7 +28,8 @@ export const HoveredInstanceOutline = () => {
   if (
     style === undefined ||
     instanceData === undefined ||
-    instanceRect === undefined
+    instanceRect === undefined ||
+    selectedInstanceData?.id === instanceData.id
   ) {
     return null;
   }
