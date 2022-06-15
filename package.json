@@ -72,6 +72,7 @@
     "react-use": "^17.3.2",
     "remix-auth": "^3.2.2",
     "remix-auth-github": "^1.1.1",
+    "remix-auth-google": "^1.1.0",
     "slugify": "^1.6.5"
   },
   "devDependencies": {

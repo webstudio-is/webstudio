@@ -12144,7 +12144,14 @@ remix-auth-github@^1.1.1:
     remix-auth "^3.0.0"
     remix-auth-oauth2 "^1.0.0"
 
-remix-auth-oauth2@^1.0.0:
+remix-auth-google@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/remix-auth-google/-/remix-auth-google-1.1.0.tgz#4ffdc41b180a7a622d9008e7a25b6e409dbf5f20"
+  integrity sha512-yzZ8JEiSoY/cvo5eJQBIzqpnaWOjQkYCgBklCP1QwT01sdR2F066uhV+jR9Wcx0bPCntdMG4PrytVBJzWTg+BA==
+  dependencies:
+    remix-auth-oauth2 "^1.1.0"
+
+remix-auth-oauth2@^1.0.0, remix-auth-oauth2@^1.1.0:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/remix-auth-oauth2/-/remix-auth-oauth2-1.2.2.tgz#bebe0ac586744ed94885bd47f6bcb710d377fede"
   integrity sha512-bbQw/SFAbilSE1zrZFaJN/NM7WUkC63CKJFVz2e/Y21qqMZo5eVQXooSV6d23mABfodeVk6wthngdLAjxak6fQ==

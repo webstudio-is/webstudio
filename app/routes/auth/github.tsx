@@ -1,8 +1,10 @@
-import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
+import { ActionFunction } from "@remix-run/node";
+import config from "~/config";
 import { authenticator } from "~/services/auth.server";
 
-export const loader: LoaderFunction = () => redirect("/login");
-
 export const action: ActionFunction = ({ request }) => {
-  return authenticator.authenticate("github", request);
+  return authenticator.authenticate("github", request, {
+    successRedirect: config.dashboardPath,
+    failureRedirect: config.loginPath,
+  });
 };
