@@ -31,7 +31,7 @@ import {
   useHoveredInstance,
 } from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
-import { useAfterRender } from "./use-after-render";
+import { useOnRender } from "./use-on-render";
 import { useWindowResize } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
@@ -212,16 +212,16 @@ export const usePublishRootInstance = () => {
 
 export const usePublishSelectedInstanceDataRect = () => {
   const [element] = useSelectedElement();
-
   const publishRect = useCallback(() => {
-    if (element === undefined) return;
-    publish<"selectedInstanceRect", DOMRect>({
-      type: "selectedInstanceRect",
-      payload: element.getBoundingClientRect(),
+    requestAnimationFrame(() => {
+      if (element === undefined) return;
+      publish<"selectedInstanceRect", DOMRect>({
+        type: "selectedInstanceRect",
+        payload: element.getBoundingClientRect(),
+      });
     });
   }, [element]);
-
-  useAfterRender(publishRect);
+  useOnRender(publishRect);
   useWindowResize(publishRect);
   useEffect(publishRect, [publishRect]);
 };

@@ -48,8 +48,8 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
             key={instance.id}
             component={instance.component}
             onClick={() => {
-              publish<"focusElement", Instance["id"]>({
-                type: "focusElement",
+              publish<"selectElement", Instance["id"]>({
+                type: "selectElement",
                 payload: instance.id,
               });
             }}

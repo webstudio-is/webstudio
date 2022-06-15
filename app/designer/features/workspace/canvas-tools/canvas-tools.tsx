@@ -1,4 +1,5 @@
 import { Box } from "~/shared/design-system";
+import { useIsPreviewMode } from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { useSubscribeInstanceRect } from "./use-subscribe-instance-rect";
 
@@ -14,6 +15,8 @@ const toolsStyle = {
 
 export const CanvasTools = () => {
   useSubscribeInstanceRect();
+  const [isPreviewMode] = useIsPreviewMode();
+  if (isPreviewMode) return null;
   return (
     <Box css={toolsStyle}>
       <SelectedInstanceOutline />

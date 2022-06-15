@@ -11,24 +11,32 @@ const eventOptions = {
 export const useTrackSelectedElement = () => {
   const [selectedElement, setSelectedElement] = useSelectedElement();
 
-  useSubscribe("focusElement", (id: Instance["id"]) => {
+  const focusAndSelect = (id: Instance["id"]) => {
     const element = document.getElementById(id);
     element?.focus();
     select(element);
-  });
+  };
+
+  // It is possible due to rerender to get an html element reference that was already removed from the DOM.
+  // We need to reselect it when this happens.
+  useEffect(() => {
+    if (
+      selectedElement !== undefined &&
+      document.body.contains(selectedElement) === false
+    ) {
+      focusAndSelect(selectedElement.id);
+    }
+  }, [selectedElement]);
+
+  useSubscribe("selectElement", focusAndSelect);
 
   const select = useCallback(
     (element: EventTarget | HTMLElement | null) => {
-      if (!(element instanceof HTMLElement)) {
-        return;
+      if (element instanceof HTMLElement) {
+        setSelectedElement(element);
       }
-      const id = element?.id;
-      if (id && selectedElement?.id === id) {
-        return;
-      }
-      setSelectedElement(element);
     },
-    [selectedElement, setSelectedElement]
+    [setSelectedElement]
   );
 
   useEffect(() => {

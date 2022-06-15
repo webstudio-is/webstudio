@@ -29,8 +29,8 @@ export const TabContent = ({
         selectedInstancePath={selectedInstancePath}
         selectedInstanceId={selectedInstanceData?.id}
         onSelect={(instance) => {
-          publish<"focusElement", Instance["id"]>({
-            type: "focusElement",
+          publish<"selectElement", Instance["id"]>({
+            type: "selectElement",
             payload: instance.id,
           });
         }}
