@@ -2,7 +2,7 @@ import { type UserProp, type Publish } from "@webstudio-is/sdk";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import { TextField, Flex, Button, Box } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
-import type { SelectedInstanceData } from "~/shared/component";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
 import { usePropsLogic } from "./use-props-logic";
 
 type PropertyProps = {

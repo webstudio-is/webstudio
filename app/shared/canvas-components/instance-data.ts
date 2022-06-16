@@ -16,6 +16,11 @@ export type SelectedInstanceData = {
   props: InstanceProps;
 };
 
+export type HoveredInstanceData = {
+  id: Instance["id"];
+  component: Instance["component"];  
+}
+
 type StyleUpdate = {
   property: StyleProperty;
   value: StyleValue;

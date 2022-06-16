@@ -1,5 +1,5 @@
 import { Breakpoint, type Instance } from "@webstudio-is/sdk";
-import { type StyleUpdates } from "~/shared/component";
+import { type StyleUpdates } from "~/shared/canvas-components";
 import { findInstanceById } from "./find-instance";
 
 export const setInstanceStyleMutable = (

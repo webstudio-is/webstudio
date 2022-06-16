@@ -3,11 +3,6 @@ export { SquareIcon as Icon } from "~/shared/icons";
 
 // Webstudio specific default styles for the node type.
 export const defaultStyle: Style = {
-  minHeight: {
-    type: "unit",
-    unit: "px",
-    value: 100,
-  },
   boxSizing: {
     type: "keyword",
     value: "border-box",

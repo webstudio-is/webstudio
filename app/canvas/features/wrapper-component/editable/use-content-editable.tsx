@@ -4,7 +4,7 @@ import useDebounce from "react-use/lib/useDebounce";
 import ObjectId from "bson-objectid";
 import { type ChildrenUpdates, type Instance } from "@webstudio-is/sdk";
 import { type OnChangeChildren } from "~/shared/tree-utils";
-import { primitives } from "~/shared/component";
+import { primitives } from "~/shared/canvas-components";
 import { useSelectedInstance } from "~/canvas/shared/nano-states";
 import { useEditable, type Content } from "./use-editable";
 import { useToolbar } from "./use-toolbar";
