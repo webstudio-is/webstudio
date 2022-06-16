@@ -75,7 +75,16 @@ export const create = async ({
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
   const project = await prisma.project.create({
     data: {
-      userId,
+      User: {
+        connectOrCreate: {
+          create: {
+            id: userId as string,
+          },
+          where: {
+            id: userId as string,
+          },
+        },
+      },
       title,
       domain,
       devTreeId: tree.id,
@@ -96,11 +105,20 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
 
   const tree = await db.tree.clone(clonableProject.prodTreeId);
   const domain = generateDomain(clonableProject.title);
-
+  console.log(clonableProject.userId);
   const [project] = await Promise.all([
     prisma.project.create({
       data: {
-        userId: clonableProject.userId,
+        User: {
+          connectOrCreate: {
+            create: {
+              id: clonableProject.userId as string,
+            },
+            where: {
+              id: clonableProject.userId as string,
+            },
+          },
+        },
         title: clonableProject.title,
         domain,
         devTreeId: tree.id,

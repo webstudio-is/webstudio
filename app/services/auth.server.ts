@@ -20,8 +20,8 @@ const github = new GitHubStrategy(
     clientSecret: process.env.GH_CLIENT_SECRET as string,
     callbackURL: `${url}/github/callback`,
   },
-  async ({ profile }) => {
-    const user = createOrLoginWithGithub(profile);
+  async ({ profile, context }) => {
+    const user = createOrLoginWithGithub(profile, context?.userId);
 
     return user;
   }

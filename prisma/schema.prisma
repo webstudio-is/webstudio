@@ -22,13 +22,13 @@ model User {
 
 model Project {
   id                String  @id @default(uuid())
-  userId            String
+  userId            String?
   title             String
   domain            String  @unique
   prodTreeId        String? // exists when published
   devTreeId         String
   prodTreeIdHistory String  @default("[]")
-  User              User    @relation(fields: [userId], references: [id])
+  User              User?   @relation(fields: [userId], references: [id])
 }
 
 model Tree {
