@@ -31,7 +31,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await authenticator.isAuthenticated(request);
-  console.log(user)
   if (!user) {
     return redirect(config.loginPath);
   }
