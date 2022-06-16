@@ -2,13 +2,7 @@ import { type Style, components } from "@webstudio-is/sdk";
 export { HeadingIcon as Icon } from "~/shared/icons";
 
 // Webstudio specific default styles for the node type.
-export const defaultStyle: Style = {
-  minHeight: {
-    type: "unit",
-    unit: "em",
-    value: 1,
-  },
-};
+export const defaultStyle: Style = {};
 
 export const children = ["Heading you can edit"];
 

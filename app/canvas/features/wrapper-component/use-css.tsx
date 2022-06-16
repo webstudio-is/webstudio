@@ -6,55 +6,7 @@ import {
   useSubscribe,
   toValue,
 } from "@webstudio-is/sdk";
-import { useDropData, useSelectedInstance } from "~/canvas/shared/nano-states";
-import { primitives, type StyleUpdates } from "~/shared/canvas-components";
-
-// @todo this doesn't work with the node at the top edge of the iframe, tag gets hidden.
-const componentTagStyle = {
-  "&::before": {
-    display: "flex",
-    content: "attr(data-label)",
-    padding: "0 $1",
-    marginTop: "-$4",
-    height: "$4",
-    position: "absolute",
-    backgroundColor: "$blue10",
-    color: "$loContrast",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "$1",
-    lineHeight: 1,
-    minWidth: "$6",
-  },
-};
-
-const hoverOutlineStyle = {
-  "&:hover": {
-    outline: "1px solid $blue10",
-    outlineOffset: -1,
-    ...componentTagStyle,
-  },
-};
-
-const emptyOutlineStyle = {
-  "&:empty": {
-    outline: "1px dashed #555",
-    outlineOffset: -1,
-  },
-  ...hoverOutlineStyle,
-};
-
-const selectedOutlineStyle = {
-  outline: "2px solid $blue10",
-  outlineOffset: -2,
-  ...componentTagStyle,
-};
-
-const dragOverOutlineStyle = {
-  outline: "2px solid $blue10",
-  outlineOffset: -2,
-  ...componentTagStyle,
-};
+import { type StyleUpdates } from "~/shared/canvas-components";
 
 type UseCssProps = {
   instance: Instance;
@@ -85,45 +37,40 @@ const usePreviewCss = ({ instance, css }: UseCssProps) => {
       value: undefined,
     }));
     setPreviewCss(reset);
-    // previewCss in deps leads to an infinite loop
+    // previewCss in deps leads to an infinite loop, css is like a cache key in this case,
+    // as soon as `css` changes we can reset the preview
+    // @todo need a more correct approach than this
     // eslint-disable-next-line  react-hooks/exhaustive-deps
   }, [css]);
 
   return previewCss;
 };
 
+const voidElements =
+  "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
+
+const defaultStyle = {
+  [`&:not(${voidElements}):empty`]: {
+    outline: "1px dashed #555",
+    outlineOffset: -1,
+    paddingTop: "$8",
+    paddingRight: "$8",
+  },
+  "&[contenteditable], &:focus": {
+    outline: 0,
+  },
+};
+
 export const useCss = ({ instance, css }: UseCssProps): string => {
-  const [dropData] = useDropData();
-  const [selectedInstance] = useSelectedInstance();
   const previewCss = usePreviewCss({ instance, css });
 
   return useMemo(() => {
-    const primitive = primitives[instance.component];
-    let overrides: CSS = hoverOutlineStyle;
-    if (primitive.canAcceptChild()) {
-      overrides = emptyOutlineStyle;
-    }
-
-    if (selectedInstance?.id === instance.id) {
-      overrides = selectedOutlineStyle;
-    }
-
-    if (dropData !== undefined) {
-      if (dropData.instance.id === instance.id && primitive.canAcceptChild()) {
-        overrides = dragOverOutlineStyle;
-      }
-    }
-
+    const overrides: CSS = { ...defaultStyle };
     for (const update of previewCss) {
-      // Delete ephemeral value
-      if (update.value === undefined) {
-        delete overrides[update.property];
-        continue;
-      }
-      // @todo workaround for Expression produces a union type that is too complex to represent.
+      if (update.value === undefined) continue;
       overrides[update.property as string] = toValue(update.value);
     }
 
     return createCss(css)({ css: overrides });
-  }, [dropData, selectedInstance, css, previewCss, instance]);
+  }, [css, previewCss]);
 };

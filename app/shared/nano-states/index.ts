@@ -11,3 +11,15 @@ export const useBreakpoints = () => useValue(breakpointsContainer);
 
 const isPreviewModeContainer = createValueContainer<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
+
+const selectedInstanceRectContainer = createValueContainer<
+  DOMRect | undefined
+>();
+export const useSelectedInstanceRect = () =>
+  useValue(selectedInstanceRectContainer);
+
+const hoveredInstanceRectContainer = createValueContainer<
+  DOMRect | undefined
+>();
+export const useHoveredInstanceRect = () =>
+  useValue(hoveredInstanceRectContainer);

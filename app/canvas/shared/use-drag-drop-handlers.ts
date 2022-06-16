@@ -1,5 +1,4 @@
 import { useState } from "react";
-import memoize from "lodash.memoize";
 import { publish, useSubscribe } from "@webstudio-is/sdk";
 import { type DragData, type DropData } from "~/shared/canvas-components";
 import { findInstanceById } from "~/shared/tree-utils";
@@ -8,20 +7,29 @@ import {
   findInsertionIndex,
   getDragOverInfo,
 } from "~/shared/dom-utils";
-import { useDropData, useSelectedInstance } from "./nano-states";
+import {
+  useDropData,
+  useHoveredElement,
+  useHoveredInstance,
+  useSelectedInstance,
+} from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
+import memoize from "lodash.memoize";
 //import {usePointerOutline} from './use-pointer-outline'
 
-// Avoid recalculating rects for each node during dragging.
-const getBoundingClientRect = memoize((element) =>
+const getBoundingClientRect = memoize((element: Element | HTMLElement) =>
   element.getBoundingClientRect()
 );
 
-const getComputedStyle = memoize((element) => window.getComputedStyle(element));
+const getComputedStyle = memoize((element: Element | HTMLElement) =>
+  window.getComputedStyle(element)
+);
 
 export const useDragDropHandlers = () => {
   const [rootInstance] = useRootInstance();
   const [, setSelectedInstance] = useSelectedInstance();
+  const [, setHoveredInstance] = useHoveredInstance();
+  const [, setHoveredElement] = useHoveredElement();
   const [dropData, setDropData] = useDropData();
   const [dragData, setDragData] = useState<DragData>();
 
@@ -87,20 +95,22 @@ export const useDragDropHandlers = () => {
       getComputedStyle
     );
 
-    let insertionIndex = 0;
+    let position = 0;
 
     // When element has children.
     if (dragOver.element !== undefined && closestChild !== undefined) {
-      insertionIndex = findInsertionIndex(dragOver, closestChild);
+      position = findInsertionIndex(dragOver, closestChild);
     }
 
     const dropData = {
       instance: dropInstance,
-      position: insertionIndex,
+      position,
     };
 
     setDragData(dragData);
     setDropData(dropData);
+    setHoveredInstance(dropInstance);
+    setHoveredElement(dragOver.element);
     publish<"dropPreview", { dropData: DropData; dragData: DragData }>({
       type: "dropPreview",
       payload: { dropData, dragData },

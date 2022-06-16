@@ -74,7 +74,6 @@ export const WrapperComponentDev = ({
         id={instance.id}
         tabIndex={0}
         data-component={instance.component}
-        data-label={primitives[instance.component].label}
         data-id={instance.id}
         ref={refCallback}
         onClick={(event: MouseEvent) => {

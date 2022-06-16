@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import ObjectId from "bson-objectid";
 import {
   type InstanceProps,
@@ -19,9 +19,19 @@ import {
   findInstanceById,
 } from "~/shared/tree-utils";
 import store from "immerhin";
-import { DropData, type SelectedInstanceData } from "~/shared/canvas-components";
-import { useSelectedInstance, useSelectedElement } from "./nano-states";
+import {
+  DropData,
+  HoveredInstanceData,
+  type SelectedInstanceData,
+} from "~/shared/canvas-components";
+import {
+  useSelectedInstance,
+  useSelectedElement,
+  useHoveredElement,
+  useHoveredInstance,
+} from "./nano-states";
 import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
+import { useMeasure } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -112,11 +122,7 @@ export const useDeleteInstance = () => {
   );
 };
 
-export const usePublishSelectedInstance = ({
-  treeId,
-}: {
-  treeId: Tree["id"];
-}) => {
+export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
   const [instance] = useSelectedInstance();
   const [selectedElement] = useSelectedElement();
   const [allUserProps] = useAllUserProps();
@@ -146,12 +152,85 @@ export const usePublishSelectedInstance = ({
         props,
       };
     }
-
     publish<"selectInstance", SelectedInstanceData>({
       type: "selectInstance",
       payload,
     });
   }, [instance, allUserProps, treeId, browserStyle]);
+};
+
+export const usePublishHoveredInstanceData = () => {
+  const [instance] = useHoveredInstance();
+
+  useEffect(() => {
+    const payload = instance
+      ? {
+          id: instance.id,
+          component: instance.component,
+        }
+      : undefined;
+    publish<"hoverInstance", HoveredInstanceData | undefined>({
+      type: "hoverInstance",
+      payload,
+    });
+  }, [instance]);
+};
+
+export const usePublishRootInstance = () => {
+  const [rootInstance] = useRootInstance();
+  useEffect(() => {
+    publish<"loadRootInstance", Instance>({
+      type: "loadRootInstance",
+      payload: rootInstance,
+    });
+  }, [rootInstance]);
+};
+
+const publishRect = (rect: DOMRect) => {
+  publish<"selectedInstanceRect", DOMRect>({
+    type: "selectedInstanceRect",
+    payload: rect,
+  });
+};
+
+export const usePublishSelectedInstanceDataRect = () => {
+  const [element] = useSelectedElement();
+  const [refCallback, rect] = useMeasure();
+
+  useEffect(() => {
+    // Disconnect observer when there is no element.
+    refCallback(element ?? null);
+  }, [element, refCallback]);
+
+  useEffect(() => {
+    if (rect !== undefined) publishRect(rect);
+  }, [rect]);
+};
+
+export const usePublishHoveredInstanceRect = () => {
+  const [element] = useHoveredElement();
+  const publishRect = useCallback(() => {
+    if (element === undefined) return;
+    publish<"hoveredInstanceRect", DOMRect>({
+      type: "hoveredInstanceRect",
+      payload: element.getBoundingClientRect(),
+    });
+  }, [element]);
+  useEffect(publishRect, [publishRect]);
+};
+
+export const useSetHoveredInstance = () => {
+  const [rootInstance] = useRootInstance();
+  const [hoveredElement] = useHoveredElement();
+  const [, setHoveredInstance] = useHoveredInstance();
+
+  useEffect(() => {
+    let instance;
+    if (rootInstance !== undefined && hoveredElement?.id) {
+      instance = findInstanceById(rootInstance, hoveredElement.id);
+    }
+    setHoveredInstance(instance);
+  }, [rootInstance, hoveredElement, setHoveredInstance]);
 };
 
 /**
@@ -163,23 +242,20 @@ export const useUpdateSelectedInstance = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
+  // When selected instance or root instance changes - we want to make sure the instance with that id still exists in the root.
   useEffect(() => {
-    if (rootInstance === undefined || selectedInstance === undefined) return;
-    const nextSelectedInstance = findInstanceById(
-      rootInstance,
-      selectedInstance.id
-    );
-    if (nextSelectedInstance === undefined) return;
-    setSelectedInstance(nextSelectedInstance);
+    let instance;
+    if (rootInstance !== undefined && selectedInstance?.id) {
+      instance = findInstanceById(rootInstance, selectedInstance.id);
+    }
+    // When it's a new inserted instance, it will be undefined, so we can't set it to undefined and remove it.
+    if (instance !== undefined) setSelectedInstance(instance);
   }, [rootInstance, selectedInstance, setSelectedInstance]);
 };
 
-export const usePublishRootInstance = () => {
-  const [rootInstance] = useRootInstance();
-  useEffect(() => {
-    publish<"loadRootInstance", Instance>({
-      type: "loadRootInstance",
-      payload: rootInstance,
-    });
-  }, [rootInstance]);
+export const useUnselectInstance = () => {
+  const [, setSelectedInstance] = useSelectedInstance();
+  useSubscribe("unselectInstance", () => {
+    setSelectedInstance(undefined);
+  });
 };
