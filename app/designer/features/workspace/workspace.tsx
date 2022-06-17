@@ -51,7 +51,7 @@ export const Workspace = ({
       >
         <Box css={canvasContainerStyle} style={{ width: canvasWidth }}>
           {children}
-          <CanvasTools />
+          <CanvasTools publish={publish} />
         </Box>
       </Flex>
     </Box>
