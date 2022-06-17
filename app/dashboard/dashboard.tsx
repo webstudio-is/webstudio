@@ -49,7 +49,7 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
   const handleOpen = () => {
     navigate(`${config.designerPath}/${selectedProject}`);
   };
-  console.log(user);
+
   return (
     <>
       <Flex

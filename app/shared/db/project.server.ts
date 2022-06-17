@@ -105,7 +105,6 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
 
   const tree = await db.tree.clone(clonableProject.prodTreeId);
   const domain = generateDomain(clonableProject.title);
-  console.log(clonableProject.userId);
   const [project] = await Promise.all([
     prisma.project.create({
       data: {

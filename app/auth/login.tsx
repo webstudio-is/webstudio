@@ -45,9 +45,9 @@ export const Login = () => {
               </Button>
             </Form>
             <Form action="/auth/google" method="post">
-              <Button type="submit">
+              <Button type="submit" disabled>
                 <Flex gap="1">
-                  <GoogleIcon width="16" color="white" />
+                  <GoogleIcon width="16" />
                   Login with Google
                 </Flex>
               </Button>
