@@ -13,12 +13,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  Box,
   IconButton,
+  styled,
 } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import dashboardStyles from "./dashboard.css";
 import { User } from "@prisma/client";
+import { UserIcon } from "~/shared/icons/user";
 
 export const links = () => {
   return [
@@ -32,6 +33,11 @@ export const links = () => {
     },
   ];
 };
+
+export const Avatar = styled("img", {
+  width: "$5",
+  borderRadius: "50%",
+});
 
 type DashboardProps = {
   projects?: Array<{ id: string; title: string }>;
@@ -66,19 +72,14 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <IconButton aria-label="Menu Button">
-                <Box
-                  as="img"
-                  src={user?.image}
-                  alt={user?.username}
-                  css={{
-                    width: "$5",
-                    borderRadius: "50%",
-                  }}
-                />
+                {user?.image ? (
+                  <Avatar src={user?.image} alt="Open menu" />
+                ) : (
+                  <UserIcon color="white" />
+                )}
               </IconButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {/* <DropdownMenuSeparator /> */}
               <DropdownMenuItem onSelect={() => navigate("/logout")}>
                 <Text>Logout</Text>
               </DropdownMenuItem>
