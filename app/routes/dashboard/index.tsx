@@ -34,14 +34,14 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (!user) {
     return redirect(config.loginPath);
   }
-  const { userId, headers } = await ensureUserCookie(request);
-  const projects = await db.project.loadManyByUserId(userId);
-  return json({ config, projects }, headers);
+  const { headers } = await ensureUserCookie(request);
+  const projects = await db.project.loadManyByUserId(user.id);
+  return json({ config, projects, user }, headers);
 };
 
 const DashboardRoute = () => {
-  const { config, projects } = useLoaderData();
-  return <Dashboard config={config} projects={projects} />;
+  const { config, projects, user } = useLoaderData();
+  return <Dashboard config={config} user={user} projects={projects} />;
 };
 
 export default DashboardRoute;
