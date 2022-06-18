@@ -4,10 +4,10 @@ import { authenticator } from "~/services/auth.server";
 import { ensureUserCookie } from "~/shared/session";
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const userId = await ensureUserCookie(request);
+  const { userId } = await ensureUserCookie(request);
   return authenticator.authenticate("github", request, {
     context: {
-      ...userId,
+      userId,
     },
     successRedirect: config.dashboardPath,
     failureRedirect: config.loginPath,

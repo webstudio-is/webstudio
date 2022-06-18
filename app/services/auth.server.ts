@@ -2,6 +2,7 @@ import { User } from "@prisma/client";
 import { Authenticator } from "remix-auth";
 import { GitHubStrategy } from "remix-auth-github";
 import { GoogleStrategy } from "remix-auth-google";
+import config from "~/config";
 import { sessionStorage } from "~/services/session.server";
 import {
   createOrLoginWithGithub,
@@ -11,17 +12,17 @@ import {
 const url = `${
   process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000"
+    : `http://localhost:${process.env.PORT || 3000}`
 }/auth`;
 
 const github = new GitHubStrategy(
   {
     clientID: process.env.GH_CLIENT_ID as string,
     clientSecret: process.env.GH_CLIENT_SECRET as string,
-    callbackURL: `${url}/github/callback`,
+    callbackURL: `${url}${config.githubCallback}`,
   },
   async ({ profile, context }) => {
-    const user = createOrLoginWithGithub(profile, context?.userId);
+    const user = await createOrLoginWithGithub(profile, context?.userId);
 
     return user;
   }
@@ -31,10 +32,10 @@ const google = new GoogleStrategy(
   {
     clientID: "YOUR_CLIENT_ID",
     clientSecret: "YOUR_CLIENT_SECRET",
-    callbackURL: `${url}/google/callback`,
+    callbackURL: `${url}${config.googleCallback}`,
   },
-  async ({ profile }) => {
-    const user = createOrLoginWithGoogle(profile);
+  async ({ profile, context }) => {
+    const user = await createOrLoginWithGoogle(profile, context?.userId);
 
     return user;
   }
