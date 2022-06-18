@@ -48,9 +48,10 @@ const usePreviewCss = ({ instance, css }: UseCssProps) => {
 
 const voidElements =
   "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
+const rootElement = "body > div";
 
 const defaultStyle = {
-  [`&:not(${voidElements}):empty`]: {
+  [`&:not(${voidElements}):not(${rootElement}):empty`]: {
     outline: "1px dashed #555",
     outlineOffset: -1,
     paddingTop: "$8",
