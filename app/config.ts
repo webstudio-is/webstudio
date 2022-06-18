@@ -6,7 +6,7 @@ const config = {
   loginPath: "/login",
   logoutPath: "/logout",
   googleCallbackPath: "/google/callback",
-  githubCallback: "/github/callback",
+  githubCallbackPath: "/github/callback",
 };
 export default config;
 export type Config = typeof config;
