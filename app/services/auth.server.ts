@@ -13,13 +13,13 @@ const url = `${
   process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : `http://localhost:${process.env.PORT || 3000}`
-}/auth`;
+}${config.authPath}`;
 
 const github = new GitHubStrategy(
   {
     clientID: process.env.GH_CLIENT_ID as string,
     clientSecret: process.env.GH_CLIENT_SECRET as string,
-    callbackURL: `${url}${config.githubCallback}`,
+    callbackURL: `${url}${config.githubCallbackPath}`,
   },
   async ({ profile, context }) => {
     const user = await createOrLoginWithGithub(profile, context?.userId);
@@ -32,7 +32,7 @@ const google = new GoogleStrategy(
   {
     clientID: "YOUR_CLIENT_ID",
     clientSecret: "YOUR_CLIENT_SECRET",
-    callbackURL: `${url}${config.googleCallback}`,
+    callbackURL: `${url}${config.googleCallbackPath}`,
   },
   async ({ profile, context }) => {
     const user = await createOrLoginWithGoogle(profile, context?.userId);
