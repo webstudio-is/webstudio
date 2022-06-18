@@ -45,9 +45,11 @@ import {
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
+  useSubscribeScrollState,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
+import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 
 registerContainers();
 
@@ -98,6 +100,8 @@ type DesignModeProps = {
   project: Project;
 };
 
+const dndOptions = { enableMouseEvents: true };
+
 const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDragDropHandlers();
   useUpdateStyle();
@@ -117,10 +121,12 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   usePublishSelectedInstanceDataRect();
   usePublishHoveredInstanceRect();
   useUnselectInstance();
+  usePublishScrollState();
+  useSubscribeScrollState();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
-    <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
+    <DndProvider backend={TouchBackend} options={dndOptions}>
       {elements}
     </DndProvider>
   );
