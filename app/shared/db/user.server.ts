@@ -63,3 +63,15 @@ export const createOrLoginWithGoogle = async (
   const newUser = await genericCreateAccount(userData, userId);
   return newUser;
 };
+
+export const createOrLoginWithDev = async (userId: string): Promise<User> => {
+  const userData = {
+    email: "hello@webstudio.is/",
+    username: "admin",
+    image: "",
+    provider: "dev",
+  };
+
+  const newUser = await genericCreateAccount(userData, userId);
+  return newUser;
+};

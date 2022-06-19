@@ -12141,6 +12141,13 @@ remark-squeeze-paragraphs@4.0.0:
   dependencies:
     mdast-squeeze-paragraphs "^4.0.0"
 
+remix-auth-form@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/remix-auth-form/-/remix-auth-form-1.1.2.tgz#6127f0d064498e366c2d09f4c08a633f92eda1af"
+  integrity sha512-sQXvmQH6aBoCAy12PcG0r6Sfg+JlMbVEeR3SlWK9R8SXp8TAGks20TO5ofL7dgw38o228eSvwSa3y0z0PDCEDw==
+  dependencies:
+    remix-auth "^3.1.0"
+
 remix-auth-github@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/remix-auth-github/-/remix-auth-github-1.1.1.tgz#8b5a58bd28678becaf85d2187b74b5b7ad805aa4"
@@ -12166,7 +12173,7 @@ remix-auth-oauth2@^1.0.0, remix-auth-oauth2@^1.1.0:
     remix-auth "^3.2.2"
     uuid "^8.3.2"
 
-remix-auth@^3.0.0, remix-auth@^3.2.2:
+remix-auth@^3.0.0, remix-auth@^3.1.0, remix-auth@^3.2.2:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/remix-auth/-/remix-auth-3.2.2.tgz#8941a6b57cd523872b7aacf200976d77c055a9f7"
   integrity sha512-VtzkfxeXbnXilupRTZkP40aik4vFSdwwRT96mbq0UBDMqHVRfQ7h9Y51HFrTufHJZEfAdkCopedMVvm0vQYKag==

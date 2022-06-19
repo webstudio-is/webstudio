@@ -1,9 +1,10 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form } from "@remix-run/react";
-import { Button, Card, Flex, Heading } from "~/shared/design-system";
+import { useState } from "react";
+import { Button, Card, Flex, Heading, TextField } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
-import { GoogleIcon, GithubIcon } from "~/shared/icons";
+import { GoogleIcon, GithubIcon, CommitIcon } from "~/shared/icons";
 import loginStyles from "./login.css";
 
 export const links: LinksFunction = () => {
@@ -24,6 +25,8 @@ export const meta: MetaFunction = () => {
 };
 
 export const Login = () => {
+  const [devLoginClicked, setDevLoginClicked] = useState(false);
+
   return (
     <Flex
       css={{ height: "100vh" }}
@@ -52,6 +55,33 @@ export const Login = () => {
                 </Flex>
               </Button>
             </Form>
+            {process.env.NODE_ENV === "development" && (
+              <>
+                {devLoginClicked ? (
+                  <Form action="/auth/dev" method="post">
+                    <TextField
+                      css={{ width: "100%", flexGrow: 1 }}
+                      name="secret"
+                      type="text"
+                      variant="ghost"
+                      minLength={2}
+                      required
+                      autoFocus
+                    />
+                  </Form>
+                ) : (
+                  <Button
+                    onClick={() => setDevLoginClicked(true)}
+                    css={{ width: "100%" }}
+                  >
+                    <Flex gap="1" align="center">
+                      <CommitIcon></CommitIcon>
+                      Dev Login
+                    </Flex>
+                  </Button>
+                )}
+              </>
+            )}
           </Flex>
         </Flex>
       </Card>

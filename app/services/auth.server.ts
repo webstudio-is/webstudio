@@ -1,10 +1,12 @@
 import { User } from "@prisma/client";
 import { Authenticator } from "remix-auth";
+import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy } from "remix-auth-github";
 import { GoogleStrategy } from "remix-auth-google";
 import config from "~/config";
 import { sessionStorage } from "~/services/session.server";
 import {
+  createOrLoginWithDev,
   createOrLoginWithGithub,
   createOrLoginWithGoogle,
 } from "~/shared/db/user.server";
@@ -47,4 +49,21 @@ export const authenticator = new Authenticator<User>(sessionStorage);
 if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   authenticator.use(github, "github");
   authenticator.use(google, "google");
+}
+
+if (process.env.NODE_ENV === "development") {
+  authenticator.use(
+    new FormStrategy(async ({ form }) => {
+      const secret = form.get("secret");
+      console.log(secret === process.env.AUTH_SECRET);
+      if (secret === process.env.AUTH_SECRET) {
+        const user = await createOrLoginWithDev(secret);
+        console.log(user);
+        return user;
+      }
+
+      throw new Error("Wrong code");
+    }),
+    "dev"
+  );
 }

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Form, useActionData, useTransition } from "@remix-run/react";
 import { useNavigate } from "react-router-dom";
+import * as Avatar from "@radix-ui/react-avatar";
+
 import {
   Flex,
   Card,
@@ -34,8 +36,16 @@ export const links = () => {
   ];
 };
 
-export const Avatar = styled("img", {
+const StyledFallback = styled(Avatar.Fallback, {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "white",
+  fontSize: 15,
+  lineHeight: 1,
+  fontWeight: 500,
   width: "$5",
+  height: "$5",
   borderRadius: "50%",
 });
 
@@ -73,11 +83,13 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
             <DropdownMenuTrigger asChild>
               <Button variant="raw" aria-label="Menu Button">
                 <Flex gap="1" align="center">
-                  {user?.image ? (
-                    <Avatar src={user?.image} alt="Open menu" />
-                  ) : (
-                    <UserIcon color="white" />
-                  )}
+                  <Avatar.Root>
+                    {user?.image && <Avatar.Image src={user?.image} />}
+                    <StyledFallback delayMs={500}>
+                      {(user?.username || "X").charAt(0).toLocaleUpperCase()}
+                    </StyledFallback>
+                  </Avatar.Root>
+
                   <ChevronDownIcon width={15} height={15} color="white" />
                 </Flex>
               </Button>
