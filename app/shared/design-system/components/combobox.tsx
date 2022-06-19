@@ -1,10 +1,6 @@
-import { type ComponentProps, useState, useEffect } from "react";
-import { ChevronDownIcon } from "~/shared/icons";
+import { type ComponentProps, useState } from "react";
 import { TextField } from "./text-field";
-import { IconButton } from "./icon-button";
-import { MenuAnchor, Menu, MenuContent, MenuItem } from "./menu";
-
-type Item = { label: string };
+import { Menu, MenuAnchor } from "./menu";
 
 type ComboboxProps = ComponentProps<typeof TextField> & {
   items: Array<Item>;
@@ -28,7 +24,7 @@ export const Combobox = ({
   const [isOpen, setIsOpen] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
 
-  // this has a selection preservation and or double entry bug
+  // @todo: this has a selection preservation and or double entry bug
   // useEffect(() => {
   //   setCurrentValue(value);
   // }, [value]);
@@ -45,57 +41,8 @@ export const Combobox = ({
           onChange={(event) => {
             setCurrentValue(event.target.value);
           }}
-          onKeyDown={(event) => {
-            switch (event.key) {
-              case "ArrowDown":
-              case "ArrowUp": {
-                // setIsOpen(true);
-                break;
-              }
-              case "Enter": {
-                // onValueEnter(event.currentTarget.value);
-                break;
-              }
-            }
-          }}
         />
       </MenuAnchor>
-      {/*<IconButton
-        variant="ghost"
-        size="1"
-        // @todo avoid hardcoding margin
-        css={{ marginLeft: -32 }}
-        onClick={() => {
-          setIsOpen(true);
-        }}
-      >
-        <ChevronDownIcon />
-      </IconButton>
-      <MenuContent loop portalled asChild>
-        <div>
-          {items.map(({ label }, index) => {
-            return (
-              <MenuItem
-                key={index}
-                onMouseEnter={() => {
-                  onItemEnter(label);
-                }}
-                onMouseLeave={() => {
-                  onItemLeave(label);
-                }}
-                onFocus={() => {
-                  onItemEnter(label);
-                }}
-                onSelect={() => {
-                  onValueSelect(label);
-                }}
-              >
-                {label}
-              </MenuItem>
-            );
-          })}
-        </div>
-      </MenuContent>*/}
     </Menu>
   );
 };

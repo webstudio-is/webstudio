@@ -1,5 +1,5 @@
 export class AutoInput extends EventTarget {
-	// PRIVATE
+	// @private
 	#selectTarget = null;
 	#activeTarget = null;
 	#activeEvents = ['keydown', 'focusin', 'focusout', 'pointerover', 'pointerout', 'pointerup', 'pointerdown'];
@@ -11,6 +11,7 @@ export class AutoInput extends EventTarget {
 	#canvasContext = globalThis.document?.createElement('canvas').getContext('2d');
 	#typeOfValue(value) {
 		if (/^([-+]?\d*\.?\d+)$/.test(value)) return 'number';
+		// @todo: use mdn data
 		if (/^(%|cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax|vb|vi|svw|svh|lvw|lvh|dvw|dvh|lh|rlh)$/.test(value)) return 'unit';
 		if (/^(\w+)$/.test(value)) return 'keyword';
 		if (/^(\w+\()/.test(value)) return 'function';
@@ -22,6 +23,7 @@ export class AutoInput extends EventTarget {
 		const eventOffset = event.offsetX;
 		let charsOffset = 0;
 		let pixelPadding = 0
+		// algo assumes left aligned, when right aligned need to update anchor offset
 		switch (textAlign) {
 			case 'left': {
 				pixelPadding += parseFloat(paddingLeft);
@@ -34,6 +36,7 @@ export class AutoInput extends EventTarget {
 		}
 		let pixelOffset = pixelPadding;
 		let valueOffset = -1;
+		// matches any number, decimal or otherwise and breakpoint tokens
 		const valueTokens = value.split(/([*/,()\s]?)([-+]?\d*\.?\d+)|([*/,()\s]+)/).filter(value => value).map(value => {
 			return {tokenType: this.#typeOfValue(value), tokenValue: value}
 		});
@@ -49,18 +52,24 @@ export class AutoInput extends EventTarget {
 		}
 		return {valueOffset, valueTokens, charsOffset, pixelOffset, pixelPadding};
 	}
-	// PUBLIC
+	// @public
 	handleEvent(event) {
 		const eventTarget = event.target;
 		const currentTarget = this.#activeTarget || eventTarget;
 		if (currentTarget?.nodeName !== 'INPUT' || currentTarget?.type !== 'text' || currentTarget?.readOnly !== false) return;
 		switch (event.type) {
 			case 'pointerover': case 'focusin': {
-				if (this.#pointerCapture === false) this.#pointerCapture = !this.#passiveEvents.forEach(eventName => this.#ownerDocument.addEventListener(eventName, this, false));
+				if (this.#pointerCapture === false) {
+					this.#pointerCapture = true;
+					this.#passiveEvents.forEach(eventName => this.#ownerDocument.addEventListener(eventName, this, false));
+				}
 				break;
 			}
 			case 'pointerout': case 'focusout': {
-				if (this.#pointerCapture === true) this.#pointerCapture = !!this.#passiveEvents.forEach(eventName => this.#ownerDocument.removeEventListener(eventName, this, false));
+				if (this.#pointerCapture === true) {
+					this.#pointerCapture = false;
+					this.#passiveEvents.forEach(eventName => this.#ownerDocument.removeEventListener(eventName, this, false));
+				}
 				break;
 			}
 			case 'pointerdown': {
@@ -73,12 +82,13 @@ export class AutoInput extends EventTarget {
 						break;
 					}
 					case this.#pointerCursor: {
+						// @todo: decouple
 						// dismiss if already active
 						if (this.#selectTarget) return this.#selectTarget.blur();
-						event.preventDefault?.();
+						event.preventDefault();
 						// cache selection state
-						let {selectionStart, selectionEnd} = currentTarget;
-						let {activeElement} = this.#ownerDocument;
+						const {selectionStart, selectionEnd} = currentTarget;
+						const {activeElement} = this.#ownerDocument;
 						// get cached measure metrics
 						const measureMetrics = currentTarget.props;
 						const {valueOffset, valueTokens, pixelOffset} = measureMetrics;
@@ -86,7 +96,7 @@ export class AutoInput extends EventTarget {
 						const {tokenValue} = activeToken;
 						// create select dropdown
 						const selectTarget = this.#selectTarget = this.#ownerDocument.documentElement.appendChild(this.#ownerDocument.createElement('select'));
-						// TODO: inline for now
+						// @todo: inline for now
 						const unitList = '%,px,em,rem,ch,cm,mm,in,pt,vw,vh,vmin,vmax,svw,svh,lvw,lvh,dvw,dvh'.split(',');
 						selectTarget.innerHTML = unitList.map(value => `<option ${tokenValue === value ? 'selected' : ''}>${value}</option>`).join('');
 						selectTarget.size = unitList.length;
@@ -140,7 +150,7 @@ export class AutoInput extends EventTarget {
 					switch (activeToken.tokenType) {
 						case 'number': {
 							if (this.#activeTarget) {
-								event.preventDefault?.();
+								event.preventDefault();
 								const {movementY} = event;
 								let tokenValue = parseFloat(activeToken.tokenValue) - movementY;
 								if (tokenValue % 1 !== 0 || movementY % 1 !== 0) tokenValue = tokenValue.toPrecision(Math.abs(tokenValue).toString().indexOf('.') + 2);
@@ -181,10 +191,10 @@ export class AutoInput extends EventTarget {
 						let movementY = event.code == 'ArrowUp' ? -1 : 1;
 						if (event.shiftKey) movementY *= 10;
 						if (event.altKey) movementY *= 0.1;
-						this.handleEvent({type: 'pointermove', offsetX, movementY, target: this.#activeTarget = currentTarget, preventDefault: event.preventDefault.bind(event)});
+						this.handleEvent({type: 'pointermove', offsetX, movementY, target: this.#activeTarget = currentTarget, preventDefault: event.preventDefault.bind(event) });
 						// if the previous pointermove operation changed the cursor the next pointerdown will have an effect otherwise noop.
-						this.handleEvent({type: 'pointerdown', offsetX, movementY, target: currentTarget});
-						this.handleEvent({type: 'pointerup', offsetX, movementY, target: currentTarget});
+						this.handleEvent({type: 'pointerdown', offsetX, movementY, target: currentTarget, preventDefault: () => null });
+						this.handleEvent({type: 'pointerup', offsetX, movementY, target: currentTarget, preventDefault: () => null });
 						break;
 					}
 				}

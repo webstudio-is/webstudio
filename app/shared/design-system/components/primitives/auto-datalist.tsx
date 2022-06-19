@@ -1,5 +1,5 @@
 export class AutoDatalist extends EventTarget {
-	// TODO: Dropdown
+	// @todo: Dropdown
 	// given a datalist
 	// 	<datalist id=#id>
 	// 		<option></option>

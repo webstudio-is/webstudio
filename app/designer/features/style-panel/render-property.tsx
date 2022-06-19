@@ -1,4 +1,4 @@
-import { Flex, Grid, Label, Text, Combobox } from "~/shared/design-system";
+import { Flex, Grid, Label, Combobox } from "~/shared/design-system";
 import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
   categories,
@@ -58,20 +58,6 @@ const PropertyName = ({ property, label }: PropertyProps) => {
     >
       {label}
     </Label>
-  );
-};
-
-const Unit = ({ value }: { value: StyleValue }) => {
-  if (value.type !== "unit" || value.unit === "number") return null;
-  return (
-    <Text
-      css={{
-        fontSize: "$1",
-        cursor: "default",
-      }}
-    >
-      {value.unit}
-    </Text>
   );
 };
 
@@ -197,7 +183,6 @@ const ComboboxControl = ({
             setValue(String(value.value), { isEphemeral: true });
           }}
         />
-        {/*<Unit value={value} />*/}
       </Flex>
     </Grid>
   );
