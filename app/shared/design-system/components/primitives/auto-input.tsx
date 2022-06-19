@@ -161,4 +161,4 @@ export class AutoInput extends EventTarget {
 	}
 }
 
-export const useAutoInputEffect = (callback) => callback(() => new AutoInput().connectedCallback(), []);
+export const useAutoInputEffect = (useLayoutEffect) => useLayoutEffect(() => new AutoInput().connectedCallback(), []);
