@@ -1,144 +1,164 @@
 export class AutoInput extends EventTarget {
-	connectedCallback() {
-		this.pointerCapture = false;
-		this.eventNames = ['keydown', 'pointerup', 'pointerdown', 'pointerover', 'pointerout'];
-		if (!this.activeInput) this.activeInput = null;
-		if (!this.canvasContext) Object.getPrototypeOf(this).canvasContext = document?.createElement('canvas')?.getContext('2d');
-		for (let name of this.eventNames) globalThis.addEventListener(name, this, false);
-		return () => this.disconnectedCallback();
+	// PRIVATE
+	#selectTarget = null;
+	#activeTarget = null;
+	#activeEvents = ['keydown', 'focusin', 'focusout', 'pointerover', 'pointerout', 'pointerup', 'pointerdown'];
+	#passiveEvents = ['pointermove'];
+	#resizeCursor = 'ns-resize';
+	#pointerCursor = 'pointer';
+	#pointerCapture = false;
+	#ownerDocument = globalThis.document;
+	#canvasContext = globalThis.document?.createElement('canvas').getContext('2d');
+	#typeOfValue(value) {
+		if (/^([-+]?\d*\.?\d+)$/.test(value)) return 'number';
+		if (/^(%|cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax|vb|vi|svw|svh|lvw|lvh|dvw|dvh|lh|rlh)$/.test(value)) return 'unit';
+		if (/^(\w+)$/.test(value)) return 'keyword';
+		if (/^(\w+\()/.test(value)) return 'function';
+		return '';
 	}
-	disconnectedCallback() {
-		document.documentElement.style.cursor = '';
-		for (let name of this.eventNames) globalThis.removeEventListener(name, this, false);
-	}
-	measureText(value) {
-		return this.canvasContext.measureText(value).width;
-	}
-	computeFont(input) {
-		let {fontSize, fontFamily, fontWeight} = getComputedStyle(input);
-		this.canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
-	}
-	updateValue(input, value) {
-		let {selectionStart, selectionEnd, selectionDirection} = input;
-		input.value = value;
-		input.setSelectionRange(selectionStart, selectionEnd, selectionDirection);
-	}
-	measureMove(input, event) {
-		let measureMetrics = this.activeInput?.measureMetrics;
-		this.computeFont(input);
-		let cacheOffset = input.offsetX;
-		let eventOffset = cacheOffset == null ? event.offsetX : cacheOffset;
-		let charsLength = 0;
-		let pixelLength = 0;
-		let valueNumber = 0;
-		let valueCursor = '';
-		let valueTokens = input.value.split(/([+-]?\d*\.?\d+)/g).filter(value => value);
+	#measureEvent(value, event, target) {
+		const {fontSize, fontFamily, fontWeight} = getComputedStyle(target);
+		this.#canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
+		const eventOffset = event.offsetX;
+		let charsOffset = 0;
+		let pixelOffset = 0;
 		let valueOffset = -1;
-		for (let [tokenIndex, tokenValue] of valueTokens.entries()) {
-			charsLength += tokenValue.length;
-			let asLength = pixelLength + this.measureText(tokenValue);
-			let asNumber = parseFloat(tokenValue.charAt(0) == '.' ? `0.${tokenValue}` : tokenValue);
-			let isNumber = !isNaN(asNumber);
-			if (measureMetrics?.valueOffset == tokenIndex || (isNumber && eventOffset >= pixelLength && eventOffset <= asLength)) {
+		const valueTokens = value.split(/([*/,()\s]?)([-+]?\d*\.?\d+)|([*/,()\s]+)/).filter(value => value).map(value => {
+			return {tokenType: this.#typeOfValue(value), tokenValue: value}
+		});
+		for (const [tokenIndex, tokenObject] of valueTokens.entries()) {
+			const {tokenValue} = tokenObject;
+			const tokenOffset = this.#canvasContext.measureText(tokenValue).width;
+			if ((eventOffset >= pixelOffset && eventOffset <= pixelOffset + tokenOffset)) {
 				valueOffset = tokenIndex;
-				valueNumber = asNumber;
-				valueCursor = 'ew-resize';
 				break;
 			}
-			pixelLength = asLength;
+			charsOffset += tokenValue.length;
+			pixelOffset += tokenOffset;
 		}
-		/*
-			TODO: should show pointer cursor when mouseover unit, after mousedown in this state should open selectable options as possible units
-				<input type=text unit="em,px,...">
-		 */
-		measureMetrics = {valueNumber, valueCursor, valueOffset, valueTokens, cacheOffset, charsLength, pixelLength};
-		input.measureMetrics = measureMetrics;
-		return measureMetrics;
+		return {valueOffset, valueTokens, charsOffset, pixelOffset};
 	}
+	// PUBLIC
 	handleEvent(event) {
-		let eventTarget = event.target;
-		let input = eventTarget?.nodeName === 'INPUT' && eventTarget?.type === 'text' ? eventTarget : this.activeInput;
-		if (input?.readOnly !== false) return;
+		const eventTarget = event.target;
+		const currentTarget = eventTarget?.nodeName === 'INPUT' && eventTarget?.type === 'text' ? eventTarget : this.#activeTarget;
+		if (currentTarget?.readOnly !== false) return;
 		switch (event.type) {
+			case 'pointerover': case 'focusin': {
+				if (this.#pointerCapture === false) this.#pointerCapture = !this.#passiveEvents.forEach(eventName => globalThis.addEventListener(eventName, this, false));
+				break;
+			}
+			case 'pointerout': case 'focusout': {
+				if (this.#pointerCapture === true) this.#pointerCapture = !!this.#passiveEvents.forEach(eventName => globalThis.removeEventListener(eventName, this, false));
+				break;
+			}
 			case 'pointerdown': {
-				if (!(document.documentElement.style.cursor = input.style.cursor)) break;
-				this.activeInput = input;
-				input.offsetX = event.offsetX;
-				break;
-			}
-			case 'pointerup': {
-				if (document.documentElement.style.cursor) document.documentElement.style.cursor = '';
-				this.activeInput = null;
-				input.offsetX = null;
-				input.measureMetrics = null;
-				break;
-			}
-			case 'pointerover': {
-				if (this.pointerCapture) break;
-				this.pointerCapture = true;
-				globalThis.addEventListener('pointermove', this, false);
-				break;
-			}
-			case 'pointerout': {
-				if (!this.pointerCapture) break;
-				this.pointerCapture = false;
-				globalThis.removeEventListener('pointermove', this, false);
-				break;
-			}
-			case 'pointerleave':
-			case 'pointermove': {
-				let {valueNumber, valueCursor, valueOffset, valueTokens, cacheOffset} = this.measureMove(input, event);
-				input.style.cursor = valueCursor;
-				if (valueOffset) {
-					if (cacheOffset && this.activeInput && ~valueOffset) {
+				this.#activeTarget = currentTarget;
+				currentTarget.state = currentTarget.props;
+				const currentTargetCursor = currentTarget.style.cursor;
+				switch (currentTargetCursor) {
+					case this.#resizeCursor: {
+						this.#ownerDocument.documentElement.style.cursor = currentTargetCursor;
+						break;
+					}
+					case this.#pointerCursor: {
 						event.preventDefault();
-						valueTokens[valueOffset] = valueNumber + event.movementX;
-						this.updateValue(input, valueTokens.join(''));
-						if (eventTarget) input.blur();
+						const selectTarget = this.#ownerDocument.documentElement.appendChild(this.#ownerDocument.createElement('select'));
+						this.#selectTarget = selectTarget;
+						const measureMetrics = currentTarget.props;
+						const {valueOffset, valueTokens, pixelOffset} = measureMetrics;
+						const activeToken = valueTokens[valueOffset];
+						const {tokenValue} = activeToken;
+						const unitList = currentTarget.getAttribute('unitlist')?.split(',').map(value => `<option ${tokenValue === value ? 'selected' : ''}>${value}</option>`);
+						const topOffset = currentTarget.offsetTop + currentTarget.clientHeight;
+						const leftOffset = currentTarget.offsetLeft + pixelOffset + 4;
+						selectTarget.style.cssText = `position:fixed;top:${topOffset}px;left:${leftOffset}px;min-width:60px;`;
+						selectTarget.innerHTML = unitList.join('');
+						selectTarget.size = unitList.length;
+						selectTarget.focus();
+						selectTarget.onblur = (event) => this.#selectTarget = selectTarget.remove();
+						selectTarget.oninput = (event) => {
+							activeToken.tokenValue = selectTarget.options[selectTarget.selectedIndex]?.textContent || activeToken.tokenValue;
+							const {selectionStart, selectionEnd, selectionDirection} = currentTarget;
+							currentTarget.value = valueTokens.map(({tokenValue}) => tokenValue).join('');
+							currentTarget.setSelectionRange(selectionStart, selectionEnd, selectionDirection);
+							selectTarget.blur();
+						}
+						break;
 					}
 				}
 				break;
 			}
-			case 'keydown':
-				switch (event.key) {
-					case 'ArrowUp':
-					case 'ArrowDown':
-						let {selectionStart, selectionEnd} = input;
-						if (selectionStart > selectionEnd) selectionStart = selectionEnd;
-						let inputValue = input.value;
-						let offsetX = this.measureText(inputValue.substring(0, selectionStart));
-						// altKey for decimal steps(event.altKey ? 0.10): but we need to factor into IEEE 754 floating point precision causing leading digits i.e
-						// 4.399999999999996 when moving from 4.2 to 4.3
-						let movementX = (event.shiftKey ? 10 : 1) * (event.key == 'ArrowUp' ? 1 : -1);
-						input.style.cursor = 'ew-resize';
-						this.handleEvent({type: 'mousedown', offsetX, target: input});
-						this.handleEvent({type: 'mousemove', movementX, preventDefault: () => {
-							event.preventDefault();
-							while (/[+-.\d]/.test(inputValue[selectionStart - 1])) selectionStart--;
-							let selectionEnd = selectionStart;
-							while (/[.\d]/.test(inputValue[++selectionEnd]));
-							input.setSelectionRange(selectionStart, selectionEnd);
-						}});
-						this.handleEvent({type: 'mouseup'});
-						break;
+			case 'pointerup': {
+				this.#ownerDocument.documentElement.style.cursor = '';
+				this.#activeTarget = null;
+				currentTarget.state = null;
+				break;
+			}
+			case 'pointermove': {
+				const measureMetrics = currentTarget.state || this.#measureEvent(currentTarget.value, event, currentTarget);
+				currentTarget.props = measureMetrics;
+				const {valueOffset, valueTokens} = measureMetrics;
+				if (~valueOffset) {
+					const activeToken = valueTokens[valueOffset];
+					const {tokenValue, tokenType} = activeToken;
+					switch (tokenType) {
+						case 'number': {
+							if (this.#activeTarget) {
+								event.preventDefault();
+								activeToken.tokenValue = parseFloat(tokenValue) - event.movementY;
+								let {selectionStart, selectionEnd} = currentTarget;
+								if (selectionStart > selectionEnd) [selectionStart, selectionEnd] = [selectionEnd, selectionStart];
+								currentTarget.value = valueTokens.map(({tokenValue}) => tokenValue).join('');
+								while (/[+-.\d]/.test(currentTarget.value[selectionStart - 1])) selectionStart--;
+								selectionEnd = selectionStart;
+								while (/[.\d]/.test(currentTarget.value[++selectionEnd]));
+								currentTarget.setSelectionRange(selectionStart, selectionEnd);
+							}
+							currentTarget.style.cursor = this.#resizeCursor;
+							break;
+						}
+						case 'unit': {
+							currentTarget.style.cursor = this.#pointerCursor;
+							break;
+						}
+						default: {
+							currentTarget.style.cursor = '';
+						}
+					}
 				}
 				break;
+			}
+			case 'keydown': {
+				switch (event.key) {
+					case 'ArrowUp': case 'ArrowDown': {
+						let {selectionStart, selectionEnd} = currentTarget;
+						if (selectionStart > selectionEnd) [selectionStart, selectionEnd] = [selectionEnd, selectionStart];
+						const currentTargetValue = currentTarget.value;
+						const currentSelectionValue = currentTargetValue.substring(currentTarget.selectionStart, currentTarget.selectionEnd);
+						let offsetX = this.#canvasContext.measureText(currentTargetValue.substring(0, currentTarget.selectionStart)).width;
+						if (!isNaN(parseFloat(currentSelectionValue))) offsetX += 0.5;
+						// altKey for decimal steps(event.altKey ? 0.10): but need to factor IEEE 754 floats causing leading digits i.e 4.39999996
+						const movementY = (event.shiftKey ? 10 : 1) * (event.key == 'ArrowUp' ? -1 : 1);
+						this.handleEvent({type: 'pointerup'});
+						this.handleEvent({type: 'pointerdown', offsetX, movementY, target: currentTarget});
+						this.handleEvent({type: 'pointermove', offsetX, movementY, target: currentTarget, preventDefault: () => event.preventDefault()});
+						this.handleEvent({type: 'pointerup'});
+						break;
+					}
+				}
+				break;
+			}
 		}
 	}
-	handleList() {
-		/*
-			TODO: Dropdown
-			given a datalist
-				<datalist id=#id>
-					<option></option>
-				<datalist>
-			if an input has a datalist id
-				<input datalist=#id>
-			we activate an autocomplete dropdown on interaction
-		*/
+	connectedCallback() {
+		this.#activeEvents.forEach(eventName => globalThis.addEventListener(eventName, this, false));
+		return this.disconnectedCallback.bind(this);
+	}
+	disconnectedCallback() {
+		this.handleEvent({type: 'focusout'});
+		this.#activeEvents.forEach(eventName => globalThis.removeEventListener(eventName, this, false));
 	}
 }
 
-export function useAutoInputEffect() {
-	React.useLayoutEffect(() => new AutoInput().connectedCallback(), []);
-}
+export const useAutoInputEffect = (callback) => callback(() => new AutoInput().connectedCallback(), []);
