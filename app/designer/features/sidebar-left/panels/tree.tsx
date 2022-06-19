@@ -29,8 +29,8 @@ export const TabContent = ({
         selectedInstancePath={selectedInstancePath}
         selectedInstanceId={selectedInstanceData?.id}
         onSelect={(instance) => {
-          publish<"selectInstance", Instance["id"]>({
-            type: "selectInstance",
+          publish<"selectInstanceById", Instance["id"]>({
+            type: "selectInstanceById",
             payload: instance.id,
           });
         }}
