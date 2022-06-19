@@ -76,8 +76,8 @@ export class AutoInput extends EventTarget {
 						selectTarget.innerHTML = unitList.join('');
 						selectTarget.size = unitList.length;
 						selectTarget.focus();
-						selectTarget.onblur = (event) => this.#selectTarget = selectTarget.remove();
-						selectTarget.oninput = (event) => {
+						selectTarget.onblur = () => this.#selectTarget = selectTarget.remove();
+						selectTarget.oninput = () => {
 							activeToken.tokenValue = selectTarget.options[selectTarget.selectedIndex]?.textContent || activeToken.tokenValue;
 							const {selectionStart, selectionEnd, selectionDirection} = currentTarget;
 							currentTarget.value = valueTokens.map(({tokenValue}) => tokenValue).join('');

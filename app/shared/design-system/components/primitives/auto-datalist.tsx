@@ -7,9 +7,9 @@ export class AutoDatalist extends EventTarget {
 	// if an input has a datalist id
 	// 	<input datalist=#id>
 	// we activate an autocomplete dropdown on interaction
-	handlEvent(){}
-	connectedCallback(){}
-	disconnectedCallback(){}
+	// handlEvent(){}
+	// connectedCallback(){}
+	// disconnectedCallback(){}
 }
 
 export const useAutoDatalistEffect = (useLayoutEffect) => useLayoutEffect(() => new AutoDatalist().connectedCallback(), []);
