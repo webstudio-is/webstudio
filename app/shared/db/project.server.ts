@@ -78,10 +78,10 @@ export const create = async ({
       User: {
         connectOrCreate: {
           create: {
-            id: userId as string,
+            id: userId,
           },
           where: {
-            id: userId as string,
+            id: userId,
           },
         },
       },
@@ -111,10 +111,10 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
         User: {
           connectOrCreate: {
             create: {
-              id: clonableProject.userId as string,
+              id: clonableProject.userId,
             },
             where: {
-              id: clonableProject.userId as string,
+              id: clonableProject.userId,
             },
           },
         },

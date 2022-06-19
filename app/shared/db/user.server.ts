@@ -20,9 +20,7 @@ const genericCreateAccount = async (
       where: {
         id: userId,
       },
-      data: {
-        ...userData,
-      },
+      data: userData,
     });
 
     return connectedUser;

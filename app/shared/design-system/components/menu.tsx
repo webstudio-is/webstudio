@@ -19,6 +19,7 @@ export const baseItemCss = css({
   whiteSpace: "nowrap",
   height: "$5",
   px: "$5",
+  cursor: "pointer",
 });
 
 export const itemCss = css(baseItemCss, {

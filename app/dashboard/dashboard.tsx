@@ -13,13 +13,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  IconButton,
   styled,
 } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import dashboardStyles from "./dashboard.css";
 import { User } from "@prisma/client";
 import { UserIcon } from "~/shared/icons/user";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 
 export const links = () => {
   return [
@@ -71,13 +71,16 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
         <Flex gap="1" align="center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <IconButton aria-label="Menu Button">
-                {user?.image ? (
-                  <Avatar src={user?.image} alt="Open menu" />
-                ) : (
-                  <UserIcon color="white" />
-                )}
-              </IconButton>
+              <Button variant="raw" aria-label="Menu Button">
+                <Flex gap="1" align="center">
+                  {user?.image ? (
+                    <Avatar src={user?.image} alt="Open menu" />
+                  ) : (
+                    <UserIcon color="white" />
+                  )}
+                  <ChevronDownIcon width={15} height={15} color="white" />
+                </Flex>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onSelect={() => navigate("/logout")}>
