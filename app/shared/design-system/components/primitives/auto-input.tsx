@@ -17,11 +17,23 @@ export class AutoInput extends EventTarget {
 		return '';
 	}
 	#measureEvent(value, event, target) {
-		const {fontSize, fontFamily, fontWeight} = getComputedStyle(target);
+		const {fontSize, fontFamily, fontWeight, textAlign, paddingLeft, paddingRight} = getComputedStyle(target);
 		this.#canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
 		const eventOffset = event.offsetX;
 		let charsOffset = 0;
 		let pixelOffset = 0;
+
+		switch (textAlign) {
+			case 'left': {
+				pixelOffset += parseFloat(paddingLeft);
+				break;
+			}
+			case 'right': {
+				pixelOffset += target.clientWidth - this.#canvasContext.measureText(value).width - parseFloat(paddingRight);
+				break;
+			}
+		}
+
 		let valueOffset = -1;
 		const valueTokens = value.split(/([*/,()\s]?)([-+]?\d*\.?\d+)|([*/,()\s]+)/).filter(value => value).map(value => {
 			return {tokenType: this.#typeOfValue(value), tokenValue: value}
@@ -45,11 +57,11 @@ export class AutoInput extends EventTarget {
 		if (currentTarget?.readOnly !== false) return;
 		switch (event.type) {
 			case 'pointerover': case 'focusin': {
-				if (this.#pointerCapture === false) this.#pointerCapture = !this.#passiveEvents.forEach(eventName => globalThis.addEventListener(eventName, this, false));
+				if (this.#pointerCapture === false) this.#pointerCapture = !this.#passiveEvents.forEach(eventName => this.#ownerDocument.addEventListener(eventName, this, false));
 				break;
 			}
 			case 'pointerout': case 'focusout': {
-				if (this.#pointerCapture === true) this.#pointerCapture = !!this.#passiveEvents.forEach(eventName => globalThis.removeEventListener(eventName, this, false));
+				if (this.#pointerCapture === true) this.#pointerCapture = !!this.#passiveEvents.forEach(eventName => this.#ownerDocument.removeEventListener(eventName, this, false));
 				break;
 			}
 			case 'pointerdown': {
@@ -62,6 +74,7 @@ export class AutoInput extends EventTarget {
 						break;
 					}
 					case this.#pointerCursor: {
+						if (this.#selectTarget) return this.#selectTarget.blur();
 						event.preventDefault();
 						const selectTarget = this.#ownerDocument.documentElement.appendChild(this.#ownerDocument.createElement('select'));
 						this.#selectTarget = selectTarget;
@@ -69,11 +82,12 @@ export class AutoInput extends EventTarget {
 						const {valueOffset, valueTokens, pixelOffset} = measureMetrics;
 						const activeToken = valueTokens[valueOffset];
 						const {tokenValue} = activeToken;
-						const unitList = currentTarget.getAttribute('unitlist')?.split(',').map(value => `<option ${tokenValue === value ? 'selected' : ''}>${value}</option>`);
+						// inlined for now
+						const unitList = '%,px,em,rem,ch,cm,mm,in,pt,vw,vh,vmin,vmax,svw,svh,lvw,lvh,dvw,dvh'.split(',');
 						const topOffset = currentTarget.offsetTop + currentTarget.clientHeight;
 						const leftOffset = currentTarget.offsetLeft + pixelOffset + 4;
-						selectTarget.style.cssText = `position:fixed;top:${topOffset}px;left:${leftOffset}px;min-width:60px;`;
-						selectTarget.innerHTML = unitList.join('');
+						selectTarget.style.cssText = `position:absolute;top:${topOffset}px;left:${leftOffset}px;min-width:60px;`;
+						selectTarget.innerHTML = unitList.map(value => `<option ${tokenValue === value ? 'selected' : ''}>${value}</option>`).join('');
 						selectTarget.size = unitList.length;
 						selectTarget.focus();
 						selectTarget.onblur = () => this.#selectTarget = selectTarget.remove();
@@ -152,12 +166,12 @@ export class AutoInput extends EventTarget {
 		}
 	}
 	connectedCallback() {
-		this.#activeEvents.forEach(eventName => globalThis.addEventListener(eventName, this, false));
+		this.#activeEvents.forEach(eventName => this.#ownerDocument.addEventListener(eventName, this, false));
 		return this.disconnectedCallback.bind(this);
 	}
 	disconnectedCallback() {
 		this.handleEvent({type: 'focusout'});
-		this.#activeEvents.forEach(eventName => globalThis.removeEventListener(eventName, this, false));
+		this.#activeEvents.forEach(eventName => this.#ownerDocument.removeEventListener(eventName, this, false));
 	}
 }
 
