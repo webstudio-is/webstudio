@@ -8,7 +8,7 @@ export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: string[];
 };
 
-const parseProject = (project: BaseProject | null) =>
+const parseProject = (project: BaseProject | null): Project | null =>
   project
     ? {
         ...project,
@@ -132,7 +132,12 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
       nextTreeId: tree.id,
     }),
   ]);
-  return parseProject(project as BaseProject) as Project;
+
+  const parsedProject = parseProject(project);
+  if (parsedProject === null) {
+    throw new Error(`Not found project "${clonableDomain}"`);
+  }
+  return parsedProject;
 };
 
 export const update = async ({
