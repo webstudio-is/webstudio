@@ -10,10 +10,11 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
     "setup": "cp ./node_modules/@webstudio-is/sdk/prisma/schema.prisma prisma/ && yarn migrate && yarn generate",
-    "checks": "yarn lint && yarn typecheck && yarn test",
+    "checks": "yarn lint && yarn typecheck && yarn prettier --check && yarn test",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
-    "watch:sdk": "relative-deps && relative-deps watch"
+    "watch:sdk": "relative-deps && relative-deps watch",
+    "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\""
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
@@ -59,6 +60,7 @@
     "lodash.merge": "^4.6.2",
     "lodash.noop": "^3.0.1",
     "lodash.snakecase": "^4.1.1",
+    "mitt": "^3.0.0",
     "nanoid": "^3.2.0",
     "react": "^17.0.2",
     "react-color": "^2.19.3",
@@ -102,6 +104,7 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.3.0",
     "jest": "^27.5.1",
+    "prettier": "^2.6.2",
     "prisma": "^3.14.0",
     "relative-deps": "^1.0.7",
     "typescript": "^4.1.2"

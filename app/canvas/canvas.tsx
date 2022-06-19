@@ -22,12 +22,17 @@ import {
   useInsertInstance,
   useDeleteInstance,
   useReparentInstance,
-  usePublishSelectedInstance,
+  usePublishSelectedInstanceData,
   usePublishRootInstance,
   useUpdateSelectedInstance,
+  usePublishSelectedInstanceDataRect,
+  usePublishHoveredInstanceRect,
+  usePublishHoveredInstanceData,
+  useSetHoveredInstance,
+  useUnselectInstance,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
-import { useActiveElementTracking } from "./shared/active-element";
+import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
@@ -42,6 +47,7 @@ import {
   useRootInstance,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
+import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 
 registerContainers();
 
@@ -96,15 +102,21 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDragDropHandlers();
   useUpdateStyle();
   useManageProps();
-  usePublishSelectedInstance({ treeId });
+  usePublishSelectedInstanceData(treeId);
+  usePublishHoveredInstanceData();
   useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
-  useActiveElementTracking();
+  useTrackSelectedElement();
+  useTrackHoveredElement();
+  useSetHoveredInstance();
   useSync({ project });
   useUpdateSelectedInstance();
+  usePublishSelectedInstanceDataRect();
+  usePublishHoveredInstanceRect();
+  useUnselectInstance();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case

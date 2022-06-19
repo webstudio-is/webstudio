@@ -14,7 +14,7 @@ import { renderProperty } from "./render-property";
 import { dependencies } from "./dependencies";
 import { type InheritedStyle } from "./get-inherited-style";
 import { type SetProperty } from "./use-style-data";
-import { type SelectedInstanceData } from "~/shared/component";
+import { type SelectedInstanceData } from "~/shared/canvas-components";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (properties: Array<string>, search: string) => {

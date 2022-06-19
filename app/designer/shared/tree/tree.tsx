@@ -9,7 +9,7 @@ import {
   styled,
 } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
-import { primitives } from "~/shared/component";
+import { primitives } from "~/shared/canvas-components";
 import noop from "lodash.noop";
 
 const openKeyframes = keyframes({
