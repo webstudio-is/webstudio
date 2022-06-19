@@ -1,10 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useLayoutEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
 import type { SelectedInstanceData } from "~/shared/component";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
+import { useAutoInputEffect } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -153,6 +154,8 @@ type DesignerProps = {
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
+  useAutoInputEffect(useLayoutEffect);
+  useAutoDatalistEffect(useLayoutEffect);
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();

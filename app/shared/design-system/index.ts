@@ -54,3 +54,5 @@ export { Panel } from "./components/panel";
 export * from "./components/slider";
 export * from "./components/control-group";
 export * from "./components/combobox";
+export * from "./components/primitives/auto-input";
+export * from "./components/primitives/auto-datalist";
