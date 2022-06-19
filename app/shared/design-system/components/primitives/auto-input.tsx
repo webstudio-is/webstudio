@@ -21,19 +21,18 @@ export class AutoInput extends EventTarget {
 		this.#canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
 		const eventOffset = event.offsetX;
 		let charsOffset = 0;
-		let pixelOffset = 0;
-
+		let pixelPadding = 0
 		switch (textAlign) {
 			case 'left': {
-				pixelOffset += parseFloat(paddingLeft);
+				pixelPadding += parseFloat(paddingLeft);
 				break;
 			}
 			case 'right': {
-				pixelOffset += target.clientWidth - this.#canvasContext.measureText(value).width - parseFloat(paddingRight);
+				pixelPadding += target.clientWidth - this.#canvasContext.measureText(value).width - parseFloat(paddingRight);
 				break;
 			}
 		}
-
+		let pixelOffset = pixelPadding;
 		let valueOffset = -1;
 		const valueTokens = value.split(/([*/,()\s]?)([-+]?\d*\.?\d+)|([*/,()\s]+)/).filter(value => value).map(value => {
 			return {tokenType: this.#typeOfValue(value), tokenValue: value}
@@ -48,7 +47,7 @@ export class AutoInput extends EventTarget {
 			charsOffset += tokenValue.length;
 			pixelOffset += tokenOffset;
 		}
-		return {valueOffset, valueTokens, charsOffset, pixelOffset};
+		return {valueOffset, valueTokens, charsOffset, pixelOffset, pixelPadding};
 	}
 	// PUBLIC
 	handleEvent(event) {
@@ -74,29 +73,53 @@ export class AutoInput extends EventTarget {
 						break;
 					}
 					case this.#pointerCursor: {
+						// dismiss if already active
 						if (this.#selectTarget) return this.#selectTarget.blur();
-						event.preventDefault();
-						const selectTarget = this.#ownerDocument.documentElement.appendChild(this.#ownerDocument.createElement('select'));
-						this.#selectTarget = selectTarget;
+						event.preventDefault?.();
+						// cache selection state
+						let {selectionStart, selectionEnd} = currentTarget;
+						let {activeElement} = this.#ownerDocument;
+						// get cached measure metrics
 						const measureMetrics = currentTarget.props;
 						const {valueOffset, valueTokens, pixelOffset} = measureMetrics;
 						const activeToken = valueTokens[valueOffset];
 						const {tokenValue} = activeToken;
+						// create select dropdown
+						const selectTarget = this.#selectTarget = this.#ownerDocument.documentElement.appendChild(this.#ownerDocument.createElement('select'));
+						// TODO: inline for now
 						const unitList = '%,px,em,rem,ch,cm,mm,in,pt,vw,vh,vmin,vmax,svw,svh,lvw,lvh,dvw,dvh'.split(',');
 						selectTarget.innerHTML = unitList.map(value => `<option ${tokenValue === value ? 'selected' : ''}>${value}</option>`).join('');
 						selectTarget.size = unitList.length;
+						// position the dropdown
 						const topOffset = currentTarget.offsetTop + currentTarget.clientHeight;
 						const leftOffset = currentTarget.offsetLeft + pixelOffset - (selectTarget.clientWidth / 2);
 						selectTarget.style.cssText = `position:absolute;top:${topOffset}px;left:${leftOffset}px;min-width:60px;`;
+						// attach inline events to select dropdown
 						selectTarget.focus();
-						selectTarget.onblur = () => this.#selectTarget = selectTarget.remove();
+						selectTarget.onmouseup = () => selectTarget.dataset.selected = true;
+						selectTarget.onkeydown = (event) => {
+							switch (event.code.toUpperCase()) {
+								case 'ENTER': case 'SPACE': case 'ESCAPE': {
+									selectTarget.blur();
+								}
+							}
+						};
+						selectTarget.onblur = () => {
+							this.#selectTarget = selectTarget.remove();
+							// restore focus and selection state
+							if (activeElement === currentTarget) {
+								currentTarget.focus();
+								currentTarget.setSelectionRange(selectionStart, selectionEnd);
+							}
+						};
+						// oninput update
 						selectTarget.oninput = () => {
 							activeToken.tokenValue = selectTarget.options[selectTarget.selectedIndex]?.textContent || activeToken.tokenValue;
 							const {selectionStart, selectionEnd, selectionDirection} = currentTarget;
 							currentTarget.value = valueTokens.map(({tokenValue}) => tokenValue).join('');
 							currentTarget.setSelectionRange(selectionStart, selectionEnd, selectionDirection);
-							selectTarget.blur();
-						}
+							if (selectTarget.dataset.selected) selectTarget.blur();
+						};
 						break;
 					}
 				}
@@ -114,12 +137,14 @@ export class AutoInput extends EventTarget {
 				const {valueOffset, valueTokens} = measureMetrics;
 				if (~valueOffset) {
 					const activeToken = valueTokens[valueOffset];
-					const {tokenValue, tokenType} = activeToken;
-					switch (tokenType) {
+					switch (activeToken.tokenType) {
 						case 'number': {
 							if (this.#activeTarget) {
-								event.preventDefault();
-								activeToken.tokenValue = parseFloat(tokenValue) - event.movementY;
+								event.preventDefault?.();
+								const {movementY} = event;
+								let tokenValue = parseFloat(activeToken.tokenValue) - movementY;
+								if (tokenValue % 1 !== 0 || movementY % 1 !== 0) tokenValue = tokenValue.toPrecision(Math.abs(tokenValue).toString().indexOf('.') + 2);
+								activeToken.tokenValue = tokenValue;
 								let {selectionStart, selectionEnd} = currentTarget;
 								if (selectionStart > selectionEnd) [selectionStart, selectionEnd] = [selectionEnd, selectionStart];
 								currentTarget.value = valueTokens.map(({tokenValue}) => tokenValue).join('');
@@ -143,20 +168,23 @@ export class AutoInput extends EventTarget {
 				break;
 			}
 			case 'keydown': {
-				switch (event.key) {
+				switch (event.code) {
 					case 'ArrowUp': case 'ArrowDown': {
 						let {selectionStart, selectionEnd} = currentTarget;
 						if (selectionStart > selectionEnd) [selectionStart, selectionEnd] = [selectionEnd, selectionStart];
+						const {pixelPadding} = currentTarget.props;
 						const currentTargetValue = currentTarget.value;
 						const currentSelectionValue = currentTargetValue.substring(currentTarget.selectionStart, currentTarget.selectionEnd);
 						let offsetX = this.#canvasContext.measureText(currentTargetValue.substring(0, currentTarget.selectionStart)).width;
-						if (!isNaN(parseFloat(currentSelectionValue))) offsetX += 0.5;
-						// altKey for decimal steps(event.altKey ? 0.10): but need to factor IEEE 754 floats causing leading digits i.e 4.39999996
-						const movementY = (event.shiftKey ? 10 : 1) * (event.key == 'ArrowUp' ? -1 : 1);
-						this.handleEvent({type: 'pointerup'});
+						if (pixelPadding) offsetX += pixelPadding;
+						if (!isNaN(parseFloat(currentSelectionValue))) offsetX += 0.25;
+						let movementY = event.code == 'ArrowUp' ? -1 : 1;
+						if (event.shiftKey) movementY *= 10;
+						if (event.altKey) movementY *= 0.1;
+						this.handleEvent({type: 'pointermove', offsetX, movementY, target: this.#activeTarget = currentTarget, preventDefault: event.preventDefault.bind(event)});
+						// if the previous pointermove operation changed the cursor the next pointerdown will have an effect otherwise noop.
 						this.handleEvent({type: 'pointerdown', offsetX, movementY, target: currentTarget});
-						this.handleEvent({type: 'pointermove', offsetX, movementY, target: currentTarget, preventDefault: () => event.preventDefault()});
-						this.handleEvent({type: 'pointerup'});
+						this.handleEvent({type: 'pointerup', offsetX, movementY, target: currentTarget});
 						break;
 					}
 				}

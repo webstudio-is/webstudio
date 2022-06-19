@@ -28,9 +28,10 @@ export const Combobox = ({
   const [isOpen, setIsOpen] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
 
-  useEffect(() => {
-    setCurrentValue(value);
-  }, [value]);
+  // this has a selection preservation and or double entry bug
+  // useEffect(() => {
+  //   setCurrentValue(value);
+  // }, [value]);
 
   return (
     <Menu open={isOpen} modal={true} onOpenChange={setIsOpen}>
