@@ -66,6 +66,9 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
   const actionData = useActionData();
   const navigate = useNavigate();
   const transition = useTransition();
+  const userNameFallback = (user.username || user.email || "X")
+    .charAt(0)
+    .toLocaleUpperCase();
 
   const handleOpen = () => {
     navigate(`${config.designerPath}/${selectedProject}`);
@@ -91,7 +94,7 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
                   <Avatar.Root>
                     {user?.image && <StyledAvatar src={user?.image} />}
                     <StyledFallback delayMs={500}>
-                      {(user?.username || "X").charAt(0).toLocaleUpperCase()}
+                      {userNameFallback}
                     </StyledFallback>
                   </Avatar.Root>
 

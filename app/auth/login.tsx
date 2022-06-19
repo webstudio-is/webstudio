@@ -25,7 +25,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const Login = () => {
-  const [devLoginClicked, setDevLoginClicked] = useState(false);
+  const [isDevLogin, setIsDevLogin] = useState(false);
 
   return (
     <Flex
@@ -57,7 +57,7 @@ export const Login = () => {
             </Form>
             {process.env.NODE_ENV === "development" && (
               <>
-                {devLoginClicked ? (
+                {isDevLogin ? (
                   <Form action="/auth/dev" method="post">
                     <TextField
                       css={{ width: "100%", flexGrow: 1 }}
@@ -71,7 +71,7 @@ export const Login = () => {
                   </Form>
                 ) : (
                   <Button
-                    onClick={() => setDevLoginClicked(true)}
+                    onClick={() => setIsDevLogin(true)}
                     css={{ width: "100%" }}
                   >
                     <Flex gap="1" align="center">
