@@ -92,7 +92,7 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
               <Button variant="raw" aria-label="Menu Button">
                 <Flex gap="1" align="center">
                   <Avatar.Root>
-                    {user?.image && <StyledAvatar src={user?.image} />}
+                    {user.image && <StyledAvatar src={user.image} />}
                     <StyledFallback delayMs={500}>
                       {userNameFallback}
                     </StyledFallback>
