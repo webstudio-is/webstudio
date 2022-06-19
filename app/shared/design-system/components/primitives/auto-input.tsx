@@ -53,8 +53,8 @@ export class AutoInput extends EventTarget {
 	// PUBLIC
 	handleEvent(event) {
 		const eventTarget = event.target;
-		const currentTarget = eventTarget?.nodeName === 'INPUT' && eventTarget?.type === 'text' ? eventTarget : this.#activeTarget;
-		if (currentTarget?.readOnly !== false) return;
+		const currentTarget = this.#activeTarget || eventTarget;
+		if (currentTarget?.nodeName !== 'INPUT' || currentTarget?.type !== 'text' || currentTarget?.readOnly !== false) return;
 		switch (event.type) {
 			case 'pointerover': case 'focusin': {
 				if (this.#pointerCapture === false) this.#pointerCapture = !this.#passiveEvents.forEach(eventName => this.#ownerDocument.addEventListener(eventName, this, false));
@@ -82,7 +82,6 @@ export class AutoInput extends EventTarget {
 						const {valueOffset, valueTokens, pixelOffset} = measureMetrics;
 						const activeToken = valueTokens[valueOffset];
 						const {tokenValue} = activeToken;
-						// inlined for now
 						const unitList = '%,px,em,rem,ch,cm,mm,in,pt,vw,vh,vmin,vmax,svw,svh,lvw,lvh,dvw,dvh'.split(',');
 						const topOffset = currentTarget.offsetTop + currentTarget.clientHeight;
 						const leftOffset = currentTarget.offsetLeft + pixelOffset + 4;
