@@ -1,4 +1,4 @@
-import { useCallback, useState, useLayoutEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
@@ -154,8 +154,8 @@ type DesignerProps = {
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
-  useAutoInputEffect(useLayoutEffect);
-  useAutoDatalistEffect(useLayoutEffect);
+  useAutoInputEffect(useEffect);
+  useAutoDatalistEffect(useEffect);
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
