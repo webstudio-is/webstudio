@@ -12,10 +12,12 @@ const genericCreateAccount = async (
   },
   userId: string
 ): Promise<User> => {
-  const existingUser = await prisma.user.findUnique({
-    where: { id: userId },
+  const existingUserWithId = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
   });
-  if (existingUser) {
+  if (existingUserWithId) {
     const connectedUser = await prisma.user.update({
       where: {
         id: userId,
@@ -24,6 +26,16 @@ const genericCreateAccount = async (
     });
 
     return connectedUser;
+  }
+
+  const existingUserWithEmail = await prisma.user.findUnique({
+    where: {
+      email: userData.email,
+    },
+  });
+
+  if (existingUserWithEmail) {
+    return existingUserWithEmail;
   }
 
   const newUser = await prisma.user.create({

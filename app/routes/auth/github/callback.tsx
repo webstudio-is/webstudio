@@ -5,7 +5,7 @@ import { ensureUserCookie } from "~/shared/session";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { userId } = await ensureUserCookie(request);
-  return await authenticator.authenticate("github", request, {
+  return authenticator.authenticate("github", request, {
     context: {
       userId,
     },

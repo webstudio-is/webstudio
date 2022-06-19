@@ -1,4 +1,5 @@
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
+import config from "~/config";
 import { authenticator } from "~/services/auth.server";
 import { ensureUserCookie } from "~/shared/session";
 
@@ -10,5 +11,7 @@ export const action: ActionFunction = async ({ request }) => {
     context: {
       userId,
     },
+    successRedirect: config.dashboardPath,
+    failureRedirect: config.loginPath,
   });
 };

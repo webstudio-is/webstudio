@@ -48,6 +48,12 @@ const StyledFallback = styled(Avatar.Fallback, {
   borderRadius: "50%",
 });
 
+const StyledAvatar = styled(Avatar.Image, {
+  width: "$5",
+  height: "$5",
+  borderRadius: "50%",
+});
+
 type DashboardProps = {
   projects?: Array<{ id: string; title: string }>;
   user: User;
@@ -83,7 +89,7 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
               <Button variant="raw" aria-label="Menu Button">
                 <Flex gap="1" align="center">
                   <Avatar.Root>
-                    {user?.image && <Avatar.Image src={user?.image} />}
+                    {user?.image && <StyledAvatar src={user?.image} />}
                     <StyledFallback delayMs={500}>
                       {(user?.username || "X").charAt(0).toLocaleUpperCase()}
                     </StyledFallback>

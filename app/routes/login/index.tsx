@@ -39,6 +39,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect(config.dashboardPath);
   }
 
+  console.log(authenticator.sessionErrorKey);
+
   return {};
 };
 

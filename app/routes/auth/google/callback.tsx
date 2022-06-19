@@ -5,7 +5,7 @@ import { ensureUserCookie } from "~/shared/session";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { userId } = await ensureUserCookie(request);
-  return await authenticator.authenticate("google", request, {
+  return authenticator.authenticate("google", request, {
     successRedirect: config.dashboardPath,
     failureRedirect: config.loginPath,
     context: {
