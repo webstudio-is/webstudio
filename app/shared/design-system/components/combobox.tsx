@@ -48,18 +48,18 @@ export const Combobox = ({
             switch (event.key) {
               case "ArrowDown":
               case "ArrowUp": {
-                setIsOpen(true);
+                // setIsOpen(true);
                 break;
               }
               case "Enter": {
-                onValueEnter(event.currentTarget.value);
+                // onValueEnter(event.currentTarget.value);
                 break;
               }
             }
           }}
         />
       </MenuAnchor>
-      <IconButton
+      {/*<IconButton
         variant="ghost"
         size="1"
         // @todo avoid hardcoding margin
@@ -94,7 +94,7 @@ export const Combobox = ({
             );
           })}
         </div>
-      </MenuContent>
+      </MenuContent>*/}
     </Menu>
   );
 };

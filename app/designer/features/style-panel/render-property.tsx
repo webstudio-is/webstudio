@@ -197,7 +197,7 @@ const ComboboxControl = ({
             setValue(String(value.value), { isEphemeral: true });
           }}
         />
-        <Unit value={value} />
+        {/*<Unit value={value} />*/}
       </Flex>
     </Grid>
   );

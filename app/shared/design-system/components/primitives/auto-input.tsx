@@ -83,11 +83,11 @@ export class AutoInput extends EventTarget {
 						const activeToken = valueTokens[valueOffset];
 						const {tokenValue} = activeToken;
 						const unitList = '%,px,em,rem,ch,cm,mm,in,pt,vw,vh,vmin,vmax,svw,svh,lvw,lvh,dvw,dvh'.split(',');
-						const topOffset = currentTarget.offsetTop + currentTarget.clientHeight;
-						const leftOffset = currentTarget.offsetLeft + pixelOffset + 4;
-						selectTarget.style.cssText = `position:absolute;top:${topOffset}px;left:${leftOffset}px;min-width:60px;`;
 						selectTarget.innerHTML = unitList.map(value => `<option ${tokenValue === value ? 'selected' : ''}>${value}</option>`).join('');
 						selectTarget.size = unitList.length;
+						const topOffset = currentTarget.offsetTop + currentTarget.clientHeight;
+						const leftOffset = currentTarget.offsetLeft + pixelOffset - (selectTarget.clientWidth / 2);
+						selectTarget.style.cssText = `position:absolute;top:${topOffset}px;left:${leftOffset}px;min-width:60px;`;
 						selectTarget.focus();
 						selectTarget.onblur = () => this.#selectTarget = selectTarget.remove();
 						selectTarget.oninput = () => {
