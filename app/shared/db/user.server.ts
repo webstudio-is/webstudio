@@ -12,10 +12,10 @@ const genericCreateAccount = async (
   },
   userId: string
 ): Promise<User> => {
-  const userExists = await prisma.user.findUnique({
+  const existingUser = await prisma.user.findUnique({
     where: { id: userId },
   });
-  if (userExists) {
+  if (existingUser) {
     const connectedUser = await prisma.user.update({
       where: {
         id: userId,

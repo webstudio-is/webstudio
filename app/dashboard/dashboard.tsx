@@ -20,7 +20,6 @@ import {
 import interStyles from "~/shared/font-faces/inter.css";
 import dashboardStyles from "./dashboard.css";
 import { User } from "@prisma/client";
-import { UserIcon } from "~/shared/icons/user";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 
 export const links = () => {
@@ -51,7 +50,7 @@ const StyledFallback = styled(Avatar.Fallback, {
 
 type DashboardProps = {
   projects?: Array<{ id: string; title: string }>;
-  user?: User;
+  user: User;
   config: { designerPath: "string" };
 };
 
