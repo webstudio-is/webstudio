@@ -18,7 +18,8 @@ export class AutoInput extends EventTarget {
 		return '';
 	}
 	#measureEvent(value, event, target) {
-		const {fontSize, fontFamily, fontWeight, textAlign, paddingLeft, paddingRight} = getComputedStyle(target);
+		const {fontSize, fontFamily, fontWeight, textAlign, letterSpacing, paddingLeft, paddingRight} = getComputedStyle(target);
+		if (letterSpacing !== 'normal') this.#canvasContext.letterSpacing = letterSpacing;
 		this.#canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
 		const eventOffset = event.offsetX;
 		let charsOffset = 0;
@@ -144,6 +145,7 @@ export class AutoInput extends EventTarget {
 			case 'pointermove': {
 				const measureMetrics = currentTarget.state || this.#measureEvent(currentTarget.value, event, currentTarget);
 				currentTarget.props = measureMetrics;
+				currentTarget.style.cursor = '';
 				const {valueOffset, valueTokens} = measureMetrics;
 				if (~valueOffset) {
 					const activeToken = valueTokens[valueOffset];
