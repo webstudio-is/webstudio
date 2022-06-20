@@ -18,7 +18,7 @@ import {
   Switch,
 } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
-import type { SelectedInstanceData } from "~/shared/component";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
 import { usePropsLogic } from "./use-props-logic";
 
 type BaseControlProps = {

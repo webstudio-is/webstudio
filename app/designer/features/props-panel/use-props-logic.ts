@@ -8,7 +8,7 @@ import type {
   UserPropsUpdates,
   Publish,
 } from "@webstudio-is/sdk";
-import type { SelectedInstanceData } from "~/shared/component";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 const getInitialProp = () => ({
   id: ObjectId().toString(),

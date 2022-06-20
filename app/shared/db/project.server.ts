@@ -1,8 +1,20 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import type { Project, User } from "@webstudio-is/sdk";
+import type { Project as BaseProject, User } from "@webstudio-is/sdk";
 import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";
+
+export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
+  prodTreeIdHistory: string[];
+};
+
+const parseProject = (project: BaseProject | null) =>
+  project
+    ? {
+        ...project,
+        prodTreeIdHistory: JSON.parse(project.prodTreeIdHistory),
+      }
+    : null;
 
 export const loadById = async (
   projectId?: Project["id"]
@@ -11,19 +23,25 @@ export const loadById = async (
     throw new Error("Project ID required");
   }
 
-  return await prisma.project.findUnique({
+  const project = await prisma.project.findUnique({
     where: { id: projectId },
   });
+
+  return parseProject(project);
 };
 
 export const loadByDomain = async (domain: string): Promise<Project | null> => {
-  return await prisma.project.findUnique({ where: { domain } });
+  const project = await prisma.project.findUnique({ where: { domain } });
+
+  return parseProject(project);
 };
 
 export const loadManyByUserId = async (
   userId: User["id"]
 ): Promise<Array<Project>> => {
-  return await prisma.project.findMany({ where: { userId } });
+  const projects = await prisma.project.findMany({ where: { userId } });
+
+  return projects.map(parseProject) as Project[];
 };
 
 const slugifyOptions = { lower: true, strict: true };
@@ -47,7 +65,7 @@ export const create = async ({
 }: {
   userId: string;
   title: string;
-}): Promise<Project> => {
+}): Promise<Project | null> => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
@@ -64,7 +82,7 @@ export const create = async ({
     },
   });
   await db.breakpoints.create(tree.id, breakpoints);
-  return project;
+  return parseProject(project);
 };
 
 export const clone = async (clonableDomain: string): Promise<Project> => {
@@ -97,7 +115,7 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
       nextTreeId: tree.id,
     }),
   ]);
-  return project;
+  return parseProject(project as BaseProject) as Project;
 };
 
 export const update = async ({
@@ -108,8 +126,8 @@ export const update = async ({
   domain?: string;
   prodTreeId?: string;
   devTreeId?: string;
-  prodTreeIdHistory?: Array<string>;
-}): Promise<Project> => {
+  prodTreeIdHistory: Array<string>;
+}): Promise<BaseProject> => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
     if (data.domain.length < MIN_DOMAIN_LENGTH) {
@@ -119,7 +137,10 @@ export const update = async ({
 
   try {
     const project = await prisma.project.update({
-      data,
+      data: {
+        ...data,
+        prodTreeIdHistory: JSON.stringify(data.prodTreeIdHistory),
+      },
       where: { id },
     });
     return project;

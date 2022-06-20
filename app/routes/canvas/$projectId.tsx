@@ -1,4 +1,5 @@
-import { useLoaderData, type LoaderFunction } from "remix";
+import { useLoaderData } from "@remix-run/react";
+import type { LoaderFunction } from "@remix-run/node";
 import { Canvas } from "~/canvas";
 import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
 

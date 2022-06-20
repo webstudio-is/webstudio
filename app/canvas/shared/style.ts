@@ -1,8 +1,9 @@
 import store from "immerhin";
 import { useSubscribe } from "@webstudio-is/sdk";
-import { type StyleUpdates } from "~/shared/component";
+import { type StyleUpdates } from "~/shared/canvas-components";
 import { setInstanceStyleMutable } from "~/shared/tree-utils";
-import { rootInstanceContainer, useSelectedInstance } from "./nano-values";
+import { useSelectedInstance } from "./nano-states";
+import { rootInstanceContainer } from "~/shared/nano-states";
 
 export const useUpdateStyle = () => {
   const [selectedInstance] = useSelectedInstance();

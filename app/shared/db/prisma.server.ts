@@ -11,10 +11,6 @@ const main = async () => {
   await prisma.$connect();
 };
 
-main()
-  .catch((error) => {
-    throw error;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch((error) => {
+  throw error;
+});

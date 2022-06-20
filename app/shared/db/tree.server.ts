@@ -1,13 +1,10 @@
-import {
-  type Instance,
-  type Project,
-  type Tree,
-  type Breakpoint,
-} from "@webstudio-is/sdk";
+import { type Instance, type Breakpoint, type Tree } from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { createInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
+import { Tree as DbTree } from "@prisma/client";
+import { Project } from "./project.server";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -37,8 +34,8 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
           },
           lineHeight: {
             type: "unit",
-            unit: "px",
-            value: 20,
+            unit: "number",
+            value: 1.5,
           },
           color: {
             type: "keyword",
@@ -60,16 +57,24 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   return createInstance(rootConfig);
 };
 
-export const create = async (root: Instance): Promise<Tree> => {
-  return (await prisma.tree.create({
-    data: { root },
-  })) as Tree;
+export const create = async (root: Instance): Promise<DbTree> => {
+  const newRoot = JSON.stringify(root);
+  return await prisma.tree.create({
+    data: { root: newRoot },
+  });
 };
 
 export const loadById = async (treeId: string): Promise<Tree | null> => {
-  return (await prisma.tree.findUnique({
+  const tree = await prisma.tree.findUnique({
     where: { id: treeId },
-  })) as Tree;
+  });
+
+  if (tree === null) return null;
+
+  return {
+    ...tree,
+    root: JSON.parse(tree.root),
+  };
 };
 
 export const loadByProject = async (
@@ -107,7 +112,7 @@ export const patchRoot = async (
   }
   const root = applyPatches(tree.root, patches);
   await prisma.tree.update({
-    data: { root },
+    data: { root: JSON.stringify(root) },
     where: { id: treeId },
   });
 };

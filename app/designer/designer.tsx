@@ -3,19 +3,19 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
 import type { Config } from "~/config";
-import type { SelectedInstanceData } from "~/shared/component";
+import type {
+  HoveredInstanceData,
+  SelectedInstanceData,
+} from "~/shared/canvas-components";
 import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { CanvasIframe } from "./shared/canvas-iframe";
 import {
-  useIsPreviewMode,
-  useRootInstance,
+  useHoveredInstanceData,
   useSelectedInstanceData,
   useSyncStatus,
-  useCanvasWidth,
-} from "./shared/nano-values";
+} from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Breadcrumbs } from "./features/breadcrumbs";
@@ -24,9 +24,14 @@ import {
   useUpdateCanvasWidth,
   useSubscribeBreakpoints,
 } from "./features/breakpoints";
-import { useReadCanvasRect, Workspace } from "./features/workspace";
+import {
+  useReadCanvasRect,
+  Workspace,
+  CanvasIframe,
+} from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
+import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
 
 export const links = () => {
   return [
@@ -46,6 +51,11 @@ const useSubscribeSelectedInstanceData = () => {
     "selectInstance",
     setValue
   );
+};
+
+const useSubscribeHoveredInstanceData = () => {
+  const [, setValue] = useHoveredInstanceData();
+  useSubscribe<"hoverInstance", HoveredInstanceData>("hoverInstance", setValue);
 };
 
 const useSubscribeSyncStatus = () => {
@@ -157,12 +167,12 @@ export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
+  useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
-  const [canvasWidth] = useCanvasWidth();
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
@@ -188,7 +198,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
           publish={publish}
         />
         <Main>
-          <Workspace onTransitionEnd={onTransitionEnd}>
+          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
             <CanvasIframe
               ref={iframeRefCallback}
               src={`${config.canvasPath}/${project.id}`}
@@ -196,8 +206,8 @@ export const Designer = ({ config, project }: DesignerProps) => {
               title={project.title}
               css={{
                 height: "100%",
+                width: "100%",
               }}
-              style={{ width: canvasWidth }}
             />
           </Workspace>
           <Breadcrumbs publish={publish} />

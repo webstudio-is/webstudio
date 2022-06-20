@@ -1,30 +1,23 @@
 import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
 import { useDrag } from "react-dnd";
+import { getEmptyImage } from "react-dnd-html5-backend";
 import { type Instance, type Publish } from "@webstudio-is/sdk";
-import { Flex, Text } from "~/shared/design-system";
+import { Flex } from "~/shared/design-system";
 import { PlusIcon } from "~/shared/icons";
-import { primitives, type DragData } from "~/shared/component";
+import { primitives, type DragData } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";
-import { CustomDragLayer } from "../custom-drag-layer";
-import type { TabName } from "../types";
+import type { TabName } from "../../types";
+import { CustomDragLayer } from "./custom-drag-layer";
+import { ComponentThumb } from "./component-thumb";
 
-type ComponentProps = {
-  Icon: typeof PlusIcon;
+type UseDraggableProps = {
   component: Instance["component"];
   onDragChange: (isDragging: boolean) => void;
-  onClick: MouseEventHandler<HTMLDivElement>;
-  label: string;
 };
 
-const Component = ({
-  Icon,
-  component,
-  label,
-  onDragChange,
-  onClick,
-}: ComponentProps) => {
+const useDraggable = ({ component, onDragChange }: UseDraggableProps) => {
   const lastIsDragging = useRef<boolean | void>();
-  const [{ isDragging }, dragRef] = useDrag(
+  const [{ isDragging }, dragRef, preview] = useDrag(
     () => ({
       type: component,
       collect: (monitor) => ({
@@ -39,35 +32,30 @@ const Component = ({
     lastIsDragging.current = isDragging;
   }, [isDragging, onDragChange]);
 
+  useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+  }, [preview]);
+
+  return dragRef;
+};
+
+type DraggableThumbProps = {
+  onClick: MouseEventHandler<HTMLDivElement>;
+} & UseDraggableProps;
+
+const DraggableThumb = ({
+  component,
+  onDragChange,
+  onClick,
+}: DraggableThumbProps) => {
+  const dragRef = useDraggable({ component, onDragChange });
   return (
-    <Flex
-      direction="column"
-      align="center"
-      justify="center"
-      gap="3"
-      css={{
-        px: 5,
-        width: 75,
-        height: 75,
-        border: "1px solid $slate6",
-        userSelect: "none",
-        color: "$hiContrast",
-        cursor: "grab",
-        "&:hover": {
-          background: "$slate3",
-        },
-      }}
-      ref={dragRef}
-      onClick={onClick}
-    >
-      <Icon width={30} height={30} />
-      <Text size="1">{label}</Text>
-    </Flex>
+    <ComponentThumb component={component} ref={dragRef} onClick={onClick} />
   );
 };
 
-type ComponentsProps = {
-  onDragChange: ComponentProps["onDragChange"];
+type TabContentProps = {
+  onDragChange: UseDraggableProps["onDragChange"];
   onSetActiveTab: (tabName: TabName) => void;
   publish: Publish;
 };
@@ -76,7 +64,7 @@ export const TabContent = ({
   onDragChange,
   publish,
   onSetActiveTab,
-}: ComponentsProps) => {
+}: TabContentProps) => {
   const components = (
     Object.keys(primitives) as Array<Instance["component"]>
   ).filter((component) => primitives[component].isInlineOnly === false);
@@ -94,11 +82,9 @@ export const TabContent = ({
   return (
     <Flex gap="1" wrap="wrap" css={{ padding: "$1" }}>
       {components.map((component: Instance["component"]) => (
-        <Component
+        <DraggableThumb
           key={component}
-          Icon={primitives[component].Icon}
           component={component}
-          label={primitives[component].label}
           onClick={() => {
             onSetActiveTab("none");
             publish<"insertInstance", { instance: Instance }>({

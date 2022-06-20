@@ -2,7 +2,7 @@ import { ChevronRightIcon } from "~/shared/icons";
 import { Button, Flex, Text } from "~/shared/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
 import { type Publish, type Instance } from "@webstudio-is/sdk";
-import { useSelectedInstanceData } from "~/designer/shared/nano-values";
+import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type BreadcrumbProps = {
   component: Instance["component"];
@@ -48,8 +48,8 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
             key={instance.id}
             component={instance.component}
             onClick={() => {
-              publish<"focusElement", Instance["id"]>({
-                type: "focusElement",
+              publish<"selectInstanceById", Instance["id"]>({
+                type: "selectInstanceById",
                 payload: instance.id,
               });
             }}

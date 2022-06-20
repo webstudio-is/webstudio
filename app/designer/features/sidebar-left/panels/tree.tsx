@@ -1,10 +1,10 @@
 import { type Instance, type Publish } from "@webstudio-is/sdk";
 import { ListNestedIcon } from "~/shared/icons";
 import { Flex } from "~/shared/design-system";
-import { type SelectedInstanceData } from "~/shared/component";
+import { type SelectedInstanceData } from "~/shared/canvas-components";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
-import { useRootInstance } from "~/designer/shared/nano-values";
 import { Tree } from "~/designer/shared/tree";
+import { useRootInstance } from "~/shared/nano-states";
 
 type TabContentProps = {
   publish: Publish;
@@ -29,8 +29,8 @@ export const TabContent = ({
         selectedInstancePath={selectedInstancePath}
         selectedInstanceId={selectedInstanceData?.id}
         onSelect={(instance) => {
-          publish<"focusElement", Instance["id"]>({
-            type: "focusElement",
+          publish<"selectInstanceById", Instance["id"]>({
+            type: "selectInstanceById",
             payload: instance.id,
           });
         }}

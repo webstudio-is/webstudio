@@ -1,1 +1,1 @@
-export { Outlet as default } from "remix";
+export { Outlet as default } from "@remix-run/react";

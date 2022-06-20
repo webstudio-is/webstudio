@@ -1,5 +1,6 @@
-import { type Data, type Project } from "@webstudio-is/sdk";
+import { type Data } from "@webstudio-is/sdk";
 import * as db from ".";
+import { Project } from "./project.server";
 
 export type CanvasData = Data & { project: Project };
 
@@ -28,7 +29,12 @@ const loadData = async (projectId: Project["id"]) => {
     throw new Error(`Breakpoints not found for project ${projectId}`);
   }
 
-  return { tree, props, project, breakpoints: breakpoints.values };
+  return {
+    tree,
+    props,
+    project,
+    breakpoints: breakpoints.values,
+  };
 };
 
 export const loadCanvasData = async ({

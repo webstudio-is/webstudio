@@ -2,8 +2,9 @@ import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
-import { useRootInstance, useSelectedInstance } from "./nano-values";
+import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
+import { useRootInstance } from "~/shared/nano-states";
 
 type HandlerEvent = {
   key: string;

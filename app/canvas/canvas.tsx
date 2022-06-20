@@ -9,7 +9,6 @@ import {
   useAllUserProps,
   WrapperComponent,
   globalStyles,
-  Project,
   useSubscribe,
 } from "@webstudio-is/sdk";
 import {
@@ -23,24 +22,34 @@ import {
   useInsertInstance,
   useDeleteInstance,
   useReparentInstance,
-  usePublishSelectedInstance,
+  usePublishSelectedInstanceData,
   usePublishRootInstance,
   useUpdateSelectedInstance,
+  usePublishSelectedInstanceDataRect,
+  usePublishHoveredInstanceRect,
+  usePublishHoveredInstanceData,
+  useSetHoveredInstance,
+  useUnselectInstance,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
-import { useActiveElementTracking } from "./shared/active-element";
+import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
-import {
-  rootInstanceContainer,
-  useRootInstance,
-  useBreakpoints,
-} from "./shared/nano-values";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
 import {
   useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
+import type { Project } from "~/shared/db/project.server";
+import {
+  rootInstanceContainer,
+  useBreakpoints,
+  useRootInstance,
+} from "~/shared/nano-states";
+import { registerContainers } from "./shared/immerhin";
+import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
+
+registerContainers();
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
@@ -93,15 +102,21 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDragDropHandlers();
   useUpdateStyle();
   useManageProps();
-  usePublishSelectedInstance({ treeId });
+  usePublishSelectedInstanceData(treeId);
+  usePublishHoveredInstanceData();
   useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
-  useActiveElementTracking();
+  useTrackSelectedElement();
+  useTrackHoveredElement();
+  useSetHoveredInstance();
   useSync({ project });
   useUpdateSelectedInstance();
+  usePublishSelectedInstanceDataRect();
+  usePublishHoveredInstanceRect();
+  useUnselectInstance();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
