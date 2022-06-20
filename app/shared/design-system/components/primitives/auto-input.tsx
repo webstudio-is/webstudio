@@ -14,7 +14,6 @@ export class AutoInput extends EventTarget {
 		// @todo: use mdn data
 		if (/^(%|cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax|vb|vi|svw|svh|lvw|lvh|dvw|dvh|lh|rlh)$/.test(value)) return 'unit';
 		if (/^(\w+)$/.test(value)) return 'keyword';
-		if (/^(\w+\()/.test(value)) return 'function';
 		return '';
 	}
 	#measureEvent(value, event, target) {
@@ -42,11 +41,19 @@ export class AutoInput extends EventTarget {
 			return {tokenType: this.#typeOfValue(value), tokenValue: value}
 		});
 		for (const [tokenIndex, tokenObject] of valueTokens.entries()) {
-			const {tokenValue} = tokenObject;
+			const {tokenType, tokenValue} = tokenObject;
 			const tokenOffset = this.#canvasContext.measureText(tokenValue).width;
-			if ((eventOffset >= pixelOffset && eventOffset <= pixelOffset + tokenOffset)) {
-				valueOffset = tokenIndex;
-				break;
+			switch (tokenType) {
+				case 'unit': case 'number': {
+					const deltaStart = eventOffset - pixelOffset;
+					const deltaEnd = eventOffset - (pixelOffset + tokenOffset);
+					const rangeStart = -4;
+					const rangeEnd = 1;
+					if (deltaStart >= rangeStart && deltaEnd <= 1) {
+						valueOffset = tokenIndex;
+						break;
+					}
+				}
 			}
 			charsOffset += tokenValue.length;
 			pixelOffset += tokenOffset;
@@ -182,14 +189,10 @@ export class AutoInput extends EventTarget {
 			case 'keydown': {
 				switch (event.code) {
 					case 'ArrowUp': case 'ArrowDown': {
-						let {selectionStart, selectionEnd} = currentTarget;
-						if (selectionStart > selectionEnd) [selectionStart, selectionEnd] = [selectionEnd, selectionStart];
 						const {pixelPadding} = currentTarget.props;
 						const currentTargetValue = currentTarget.value;
-						const currentSelectionValue = currentTargetValue.substring(currentTarget.selectionStart, currentTarget.selectionEnd);
 						let offsetX = this.#canvasContext.measureText(currentTargetValue.substring(0, currentTarget.selectionStart)).width;
 						if (pixelPadding) offsetX += pixelPadding;
-						if (!isNaN(parseFloat(currentSelectionValue))) offsetX += 0.25;
 						let movementY = event.code == 'ArrowUp' ? -1 : 1;
 						if (event.shiftKey) movementY *= 10;
 						if (event.altKey) movementY *= 0.1;
