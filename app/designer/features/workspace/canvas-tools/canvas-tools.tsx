@@ -1,6 +1,10 @@
 import { type Publish } from "@webstudio-is/sdk";
 import { Box } from "~/shared/design-system";
-import { useIsPreviewMode } from "~/shared/nano-states";
+import {
+  useIsPreviewMode,
+  useIsScrolling,
+  useSubscribeScrollState,
+} from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { TextToolbar } from "./text-toolbar";
 import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";
@@ -23,8 +27,10 @@ type CanvasToolsProps = {
 export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   useSubscribeInstanceRect();
   useSubscribeSelectionRect();
+  useSubscribeScrollState();
   const [isPreviewMode] = useIsPreviewMode();
-  if (isPreviewMode) return null;
+  const [isScrolling] = useIsScrolling();
+  if (isPreviewMode || isScrolling) return null;
   return (
     <Box css={toolsStyle}>
       <SelectedInstanceOutline />

@@ -12,7 +12,6 @@ export const useTrackSelectedElement = () => {
   const [selectedElement, setSelectedElement] = useSelectedElement();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [rootInstance] = useRootInstance();
-
   const selectInstance = useCallback(
     (id) => {
       if (rootInstance === undefined) return;
@@ -22,17 +21,10 @@ export const useTrackSelectedElement = () => {
     [setSelectedInstance, rootInstance]
   );
 
-  const focusAndSelect = useCallback(
-    (id: Instance["id"]) => {
-      const element = document.getElementById(id);
-      if (element === null) return;
-      element.focus();
-      setSelectedElement(element);
-    },
-    [setSelectedElement]
+  useSubscribe<"selectInstanceById", Instance["id"]>(
+    "selectInstanceById",
+    selectInstance
   );
-
-  useSubscribe("selectInstance", focusAndSelect);
 
   // Focus and select the element when selected instance changes
   useEffect(() => {
@@ -41,9 +33,12 @@ export const useTrackSelectedElement = () => {
       (selectedElement === undefined ||
         selectedInstance?.id !== selectedElement.id)
     ) {
-      focusAndSelect(selectedInstance.id);
+      const element = document.getElementById(selectedInstance.id);
+      if (element === null) return;
+      element.focus();
+      setSelectedElement(element);
     }
-  }, [selectedInstance, selectedElement, focusAndSelect]);
+  }, [selectedInstance, selectedElement, setSelectedElement]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {

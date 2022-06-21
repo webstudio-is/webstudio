@@ -10,10 +10,11 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
     "setup": "cp ./node_modules/@webstudio-is/sdk/prisma/schema.prisma prisma/ && yarn migrate && yarn generate",
-    "checks": "yarn lint && yarn typecheck && yarn test",
+    "checks": "yarn lint && yarn typecheck && yarn prettier --check && yarn test",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
-    "watch:sdk": "relative-deps && relative-deps watch"
+    "watch:sdk": "relative-deps && relative-deps watch",
+    "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\""
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
