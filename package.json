@@ -15,8 +15,8 @@
     "generate": "prisma generate",
     "watch:sdk": "relative-deps && relative-deps watch",
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
-    "storybook:run": "NODE_OPTIONS=--openssl-legacy-provider start-storybook -p 6006",
-    "storybook:build": "NODE_OPTIONS=--openssl-legacy-provider build-storybook"
+    "storybook:run": "start-storybook -p 6006",
+    "storybook:build": "build-storybook"
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
@@ -122,7 +122,7 @@
     "typescript": "^4.1.2"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=14 || <=16"
   },
   "sideEffects": false,
   "license": "MIT",
