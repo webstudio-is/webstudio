@@ -15,8 +15,9 @@
     "generate": "prisma generate",
     "watch:sdk": "relative-deps && relative-deps watch",
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
-    "storybook:run": "NODE_OPTIONS=--openssl-legacy-provider start-storybook -p 6006",
-    "storybook:build": "NODE_OPTIONS=--openssl-legacy-provider build-storybook"
+    "storybook:run": "start-storybook -p 6006",
+    "storybook:build": "build-storybook",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@prisma/client": "^3.14.0",
@@ -115,7 +116,9 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.3.0",
     "eslint-plugin-storybook": "^0.5.12",
+    "husky": ">=6",
     "jest": "^27.5.1",
+    "lint-staged": "^13.0.2",
     "prettier": "^2.6.2",
     "prisma": "^3.14.0",
     "relative-deps": "^1.0.7",
@@ -128,5 +131,8 @@
   "license": "MIT",
   "relativeDependencies": {
     "@webstudio-is/sdk": "../webstudio-sdk/"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,json,css,md}": "prettier --write"
   }
 }
