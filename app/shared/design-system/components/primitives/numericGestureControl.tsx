@@ -10,10 +10,9 @@
 */
 export const numericGestureControl = (targetNode, {
 	initialValue = 0,
-	direction = 'horizontal' || 'vertical',
-	onValueChange = ({value = 0, preventDefault = () => null}) => null,
+	direction = 'horizontal',
+	onValueChange,
 }) => {
-	const {ownerDocument} = targetNode;
 	const eventNames = [ 'pointerup', 'pointerdown', 'pointermove' ];
 	const state = { type: '', value: initialValue, cursor: direction === 'horizontal' ? 'ew-resize' : 'ns-resize' };
 	const handleEvent = ({ type, target, movementY, movementX, pointerId, pressure }) => {
