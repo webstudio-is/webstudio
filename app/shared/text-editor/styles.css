@@ -153,7 +153,7 @@ pre::-webkit-scrollbar-thumb {
   text-decoration: underline;
 }
 
-.emoji {
+.instance {
   color: transparent;
   background-size: 16px 16px;
   background-position: center;
@@ -162,22 +162,23 @@ pre::-webkit-scrollbar-thumb {
   margin: 0 -1px;
 }
 
-.emoji-inner {
+.instance-inner {
   padding: 0 0.15em;
 }
 
-.emoji-inner::selection {
+.instance-inner::selection {
   color: transparent;
   background-color: rgba(150, 150, 150, 0.4);
 }
 
-.emoji-inner::moz-selection {
+.instance-inner::moz-selection {
   color: transparent;
   background-color: rgba(150, 150, 150, 0.4);
 }
 
-.emoji.happysmile {
+.instance.happysmile {
+  background: green;
   /*
-  background-image: url(./images/emoji/1F642.png);
+  background-image: url(./images/instance/1F642.png);
   */
 }

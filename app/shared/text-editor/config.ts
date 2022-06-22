@@ -1,4 +1,4 @@
-import { EmojiNode } from "./nodes/emoji-node";
+import { InstanceNode } from "./nodes/instance";
 import { darkTheme } from "./themes/dark";
 
 export const config = {
@@ -6,5 +6,5 @@ export const config = {
   onError(error) {
     throw error;
   },
-  nodes: [EmojiNode],
+  nodes: [InstanceNode],
 };
