@@ -133,6 +133,6 @@
     "@webstudio-is/sdk": "../webstudio-sdk/"
   },
   "lint-staged": {
-    "*.{ts,tsx,json,css,md}": "prettier --write"
+    "*.{ts,tsx,js,json,css,md}": "prettier --write"
   }
 }
