@@ -11,21 +11,6 @@ export const NoProps: ComponentStoryObj<typeof PropsPanel> = {
   args: {
     selectedInstanceData: {
       id: "1",
-      component: "Heading",
-      cssRules: [],
-      browserStyle: {},
-      props: {
-        id: "1",
-        props: [],
-      },
-    },
-  },
-};
-
-export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
-  args: {
-    selectedInstanceData: {
-      id: "2",
       component: "Button",
       cssRules: [],
       browserStyle: {},
@@ -38,10 +23,35 @@ export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
             value: true,
           },
         ],
+        instanceId: "2",
+        treeId: "1",
       },
     },
   },
 };
+
+export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
+  args: {
+    selectedInstanceData: {
+      id: "1",
+      component: "Button",
+      cssRules: [],
+      browserStyle: {},
+      props: {
+        id: "1",
+        props: [],
+        instanceId: "2",
+        treeId: "1",
+      },
+    },
+  },
+};
+
+const meta = componentsMeta["Button"];
+const argTypes = meta?.argTypes as Record<
+  string,
+  { control: { defaultValue?: unknown } }
+>; // TODO: Add type to argTypes
 
 export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
   args: {
@@ -52,15 +62,15 @@ export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
       browserStyle: {},
       props: {
         id: "2",
-        props: Object.entries(componentsMeta["Heading"].argTypes).map(
-          ([prop, value]) => {
-            return {
-              id: `${prop}`,
-              prop,
-              value: value.control.defaultValue,
-            } as UserProp;
-          }
-        ),
+        instanceId: "2",
+        treeId: "1",
+        props: Object.entries(argTypes).map(([prop, value]) => {
+          return {
+            id: `${prop}`,
+            prop,
+            value: value.control.defaultValue,
+          } as UserProp;
+        }),
       },
     },
   },
