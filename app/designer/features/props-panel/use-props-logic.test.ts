@@ -1,4 +1,5 @@
 import { renderHook, act } from "@testing-library/react-hooks";
+import { SelectedInstanceData } from "~/shared/canvas-components";
 import { usePropsLogic } from "./use-props-logic";
 
 const selectedInstanceData = {
@@ -15,8 +16,10 @@ const selectedInstanceData = {
         value: true,
       },
     ],
+    instanceId: "2",
+    treeId: "1",
   },
-};
+} as SelectedInstanceData;
 
 describe("usePropsLogic", () => {
   test("should return initial props for a given instance", () => {
