@@ -223,7 +223,7 @@ const Property = ({
 
 type PropsPanelProps = {
   publish: Publish;
-  selectedInstanceData?: SelectedInstanceData;
+  selectedInstanceData: SelectedInstanceData;
 };
 
 export const PropsPanel = ({
@@ -232,8 +232,6 @@ export const PropsPanel = ({
 }: PropsPanelProps) => {
   const { userProps, addEmptyProp, handleChangeProp, handleDeleteProp } =
     usePropsLogic({ selectedInstanceData, publish });
-
-  if (selectedInstanceData === undefined) return null;
 
   const addButton = (
     <Button

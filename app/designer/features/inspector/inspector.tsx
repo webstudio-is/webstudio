@@ -55,6 +55,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
       <TabsContent value="props" css={contentStyle}>
         <PropsPanel
           publish={publish}
+          key={selectedInstanceData.id /* Re-render when instance changes */}
           selectedInstanceData={selectedInstanceData}
         />
       </TabsContent>

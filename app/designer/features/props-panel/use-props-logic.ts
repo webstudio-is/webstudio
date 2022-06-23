@@ -1,13 +1,13 @@
-import produce from "immer";
-import { useState, useCallback, useEffect, useRef } from "react";
-import debounce from "lodash.debounce";
-import ObjectId from "bson-objectid";
 import type {
   DeleteProp,
+  Publish,
   UserProp,
   UserPropsUpdates,
-  Publish,
 } from "@webstudio-is/sdk";
+import ObjectId from "bson-objectid";
+import produce from "immer";
+import debounce from "lodash.debounce";
+import { useRef, useState } from "react";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 const getInitialProp = () => ({
@@ -20,56 +20,40 @@ const initialUserProps = [getInitialProp()];
 
 type UsePropsLogic = {
   publish: Publish;
-  selectedInstanceData?: SelectedInstanceData;
+  selectedInstanceData: SelectedInstanceData;
 };
 
 export const usePropsLogic = ({
   selectedInstanceData,
   publish,
 }: UsePropsLogic) => {
-  const [userProps, setUserProps] = useState<Array<UserProp>>(initialUserProps);
+  const props =
+    selectedInstanceData.props === undefined ||
+    selectedInstanceData.props.props.length === 0
+      ? initialUserProps
+      : selectedInstanceData.props.props;
+  const [userProps, setUserProps] = useState<Array<UserProp>>(props);
   const propsToPublishRef = useRef<{
     [id: UserProp["id"]]: true;
   }>({});
 
-  useEffect(() => {
-    if (selectedInstanceData === undefined) {
-      return;
-    }
-    const props =
-      selectedInstanceData.props === undefined ||
-      selectedInstanceData.props.props.length === 0
-        ? initialUserProps
-        : selectedInstanceData.props.props;
-    setUserProps(props);
-  }, [selectedInstanceData]);
-
   // @todo this may call the last callback after unmount
-  // use useDebounce
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const updateProps = useCallback(
-    debounce((updates: UserPropsUpdates["updates"]) => {
-      if (selectedInstanceData === undefined) {
-        return;
-      }
-      publish<"updateProps", UserPropsUpdates>({
-        type: "updateProps",
-        payload: {
-          treeId: selectedInstanceData.props.treeId,
-          propsId: selectedInstanceData.props.id,
-          instanceId: selectedInstanceData.id,
-          updates,
-        },
-      });
-      for (const update of updates) {
-        delete propsToPublishRef.current[update.id];
-      }
-    }, 1000),
-    [selectedInstanceData?.id]
-  );
+  const updateProps = debounce((updates: UserPropsUpdates["updates"]) => {
+    publish<"updateProps", UserPropsUpdates>({
+      type: "updateProps",
+      payload: {
+        treeId: selectedInstanceData.props.treeId,
+        propsId: selectedInstanceData.props.id,
+        instanceId: selectedInstanceData.id,
+        updates,
+      },
+    });
+    for (const update of updates) {
+      delete propsToPublishRef.current[update.id];
+    }
+  }, 1000);
 
   const deleteProp = (id: UserProp["id"]) => {
-    if (selectedInstanceData === undefined) return;
     publish<"deleteProp", DeleteProp>({
       type: "deleteProp",
       payload: {
