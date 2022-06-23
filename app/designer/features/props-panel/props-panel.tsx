@@ -1,173 +1,15 @@
-import { type ComponentProps } from "react";
 import {
-  type UserProp,
-  type Publish,
   componentsMeta,
   type Instance,
+  type Publish,
+  type UserProp,
 } from "@webstudio-is/sdk";
+import { Control } from "~/designer/features/props-panel/control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import {
-  TextField,
-  Flex,
-  Label,
-  Button,
-  Box,
-  Radio,
-  RadioGroup,
-  Select,
-  Switch,
-} from "~/shared/design-system";
-import { PlusIcon, TrashIcon } from "~/shared/icons";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
+import { Box, Button, Grid, TextField } from "~/shared/design-system";
+import { PlusIcon, TrashIcon } from "~/shared/icons";
 import { usePropsLogic } from "./use-props-logic";
-
-type BaseControlProps = {
-  value?: UserProp["value"];
-  onValueChange: (value: UserProp["value"]) => void;
-};
-
-type TextControlProps = BaseControlProps & {
-  type?: ComponentProps<typeof TextField>["type"];
-  defaultValue?: UserProp["value"];
-};
-
-const TextControl = ({
-  value,
-  defaultValue,
-  type,
-  onValueChange,
-}: TextControlProps) => (
-  <TextField
-    type={type}
-    variant="ghost"
-    placeholder="Value"
-    name="value"
-    value={String(value || defaultValue || "")}
-    onChange={(event) => {
-      onValueChange(event.target.value);
-    }}
-  />
-);
-
-type RadioControlProps = BaseControlProps & {
-  options: Array<string>;
-  defaultValue: UserProp["value"];
-};
-
-const RadioControl = ({
-  value,
-  options,
-  defaultValue,
-  onValueChange,
-}: RadioControlProps) => (
-  <RadioGroup
-    css={{ flexDirection: "column" }}
-    name="value"
-    value={String(value || defaultValue || "")}
-    onValueChange={onValueChange}
-  >
-    {options.map((value) => (
-      <Flex align="center" gap="1" key={value}>
-        <Radio value={value} />
-        <Label>{value}</Label>
-      </Flex>
-    ))}
-  </RadioGroup>
-);
-
-type SelectControlProps = BaseControlProps & {
-  options: Array<string>;
-  defaultValue: UserProp["value"];
-};
-
-const SelectControl = ({
-  value,
-  options,
-  defaultValue,
-  onValueChange,
-}: SelectControlProps) => (
-  <Select
-    name="value"
-    value={String(value || defaultValue || "")}
-    onChange={(event) => {
-      onValueChange(event.target.value);
-    }}
-  >
-    {options.map((optionValue) => (
-      <option value={optionValue} key={optionValue}>
-        {optionValue}
-      </option>
-    ))}
-  </Select>
-);
-
-type BooleanControlProps = BaseControlProps & {
-  defaultValue: boolean;
-};
-
-const BooleanControl = ({
-  value,
-  defaultValue,
-  onValueChange,
-}: BooleanControlProps) => (
-  <Switch
-    name="value"
-    defaultChecked={defaultValue}
-    checked={value === true}
-    onCheckedChange={onValueChange}
-  />
-);
-
-const renderControl = ({
-  component,
-  prop,
-  ...props
-}: BaseControlProps & {
-  component: Instance["component"];
-  prop: UserProp["prop"];
-}) => {
-  const meta = componentsMeta[component];
-
-  const argType = meta?.argTypes?.[prop as keyof typeof meta.argTypes];
-
-  switch (argType?.control.type) {
-    case "text": {
-      return <TextControl {...props} defaultValue={argType.defaultValue} />;
-    }
-    case "number": {
-      return (
-        <TextControl
-          {...props}
-          defaultValue={argType.defaultValue}
-          type="number"
-        />
-      );
-    }
-    case "radio": {
-      return (
-        <RadioControl
-          {...props}
-          defaultValue={argType.defaultValue}
-          options={argType.options}
-        />
-      );
-    }
-    case "select": {
-      return (
-        <SelectControl
-          {...props}
-          defaultValue={argType.defaultValue}
-          options={argType.options}
-        />
-      );
-    }
-    case "boolean": {
-      return <BooleanControl {...props} defaultValue={argType.defaultValue} />;
-    }
-  }
-
-  return <TextControl {...props} />;
-};
 
 type PropertyProps = {
   id: UserProp["id"];
@@ -190,8 +32,15 @@ const Property = ({
   onChange,
   onDelete,
 }: PropertyProps) => {
+  const meta = componentsMeta[component];
+  const argType = meta?.argTypes?.[prop as keyof typeof meta.argTypes];
+  const type = argType?.control.type;
+  const defaultValue = argType?.control.defaultValue;
+  const options = argType?.options;
+  // TODO: We need to sync defaultValue with value if value is not set and publish this change
+  // const realValue = value || defaultValue;
   return (
-    <Flex gap="1">
+    <Grid gap="1" css={{ gridTemplateColumns: "auto auto 1fr auto" }}>
       <TextField
         variant="ghost"
         placeholder="Property"
@@ -201,14 +50,14 @@ const Property = ({
           onChange(id, "prop", event.target.value);
         }}
       />
-      {renderControl({
-        prop,
-        component,
-        value,
-        onValueChange(value: UserProp["prop"] | UserProp["value"]) {
-          onChange(id, "value", value);
-        },
-      })}
+      :
+      <Control
+        type={type}
+        defaultValue={defaultValue}
+        options={options}
+        value={value}
+        onChange={(value) => onChange(id, "value", value)}
+      />
       <Button
         ghost
         onClick={() => {
@@ -217,7 +66,7 @@ const Property = ({
       >
         <TrashIcon />
       </Button>
-    </Flex>
+    </Grid>
   );
 };
 
