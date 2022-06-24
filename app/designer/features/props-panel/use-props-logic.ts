@@ -34,6 +34,8 @@ const getRequiredProps = (
     }));
 };
 
+// TODO: This returns same props for all instances.
+// See the failing test in use-props-logic.test.ts
 const getPropsWithDefaultValue = (
   selectedInstanceData: SelectedInstanceData
 ): UserProp[] => {

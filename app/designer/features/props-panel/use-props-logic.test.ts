@@ -37,6 +37,29 @@ describe("usePropsLogic", () => {
     });
   });
 
+  test.only("should return different default props for different instances", () => {
+    const { result: res1 } = renderHook(() =>
+      usePropsLogic({
+        selectedInstanceData: getSelectedInstanceData("Heading", []),
+        publish: jest.fn(),
+      })
+    );
+    const { result: res2 } = renderHook(() =>
+      usePropsLogic({
+        selectedInstanceData: getSelectedInstanceData("Button", []),
+        publish: jest.fn(),
+      })
+    );
+    expect(res1.current.userProps[0]).not.toMatchObject({
+      prop: "type",
+      value: "button",
+    });
+    expect(res2.current.userProps[0]).toMatchObject({
+      prop: "type",
+      value: "button",
+    });
+  });
+
   test("should return props with defaultValue set", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
