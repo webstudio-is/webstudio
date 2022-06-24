@@ -78,7 +78,7 @@ export const createOrLoginWithGoogle = async (
 
 export const createOrLoginWithDev = async (userId: string): Promise<User> => {
   const userData = {
-    email: "hello@webstudio.is/",
+    email: "hello@webstudio.is",
     username: "admin",
     image: "",
     provider: "dev",
