@@ -4,7 +4,7 @@
   "description": "Webstudio Designer UI as a service",
   "scripts": {
     "build": "remix build",
-    "dev": "yarn setup && node -r dotenv/config node_modules/.bin/remix dev",
+    "dev": "node -r dotenv/config node_modules/.bin/remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",

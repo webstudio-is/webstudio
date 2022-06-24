@@ -25,6 +25,20 @@ const genericCreateAccount = async (
       data: userData,
     });
 
+    if (connectedUser.teamId) {
+      return connectedUser;
+    }
+
+    await prisma.team.create({
+      data: {
+        users: {
+          connect: {
+            id: connectedUser.id,
+          },
+        },
+      },
+    });
+
     return connectedUser;
   }
 
@@ -35,17 +49,41 @@ const genericCreateAccount = async (
   });
 
   if (existingUserWithEmail) {
+    if (existingUserWithEmail.teamId) {
+      return existingUserWithEmail;
+    }
+    await prisma.team.create({
+      data: {
+        users: {
+          connect: {
+            id: existingUserWithEmail.id,
+          },
+        },
+      },
+    });
+
     return existingUserWithEmail;
   }
 
-  const newUser = await prisma.user.create({
+  const newTeam = await prisma.team.create({
     data: {
-      id: userId,
-      ...userData,
+      users: {
+        create: {
+          id: userId,
+          ...userData,
+        },
+      },
+    },
+    include: {
+      users: {
+        where: {
+          id: userId,
+        },
+      },
     },
   });
 
-  return newUser;
+  return newTeam.users[0];
 };
 
 export const createOrLoginWithGithub = async (

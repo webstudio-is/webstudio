@@ -39,7 +39,13 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
 export const loadManyByUserId = async (
   userId: User["id"]
 ): Promise<Array<Project>> => {
-  const projects = await prisma.project.findMany({ where: { userId } });
+  const projects = await prisma.project.findMany({
+    where: {
+      User: {
+        id: userId,
+      },
+    },
+  });
 
   return projects.map(parseProject) as Project[];
 };
@@ -75,26 +81,21 @@ export const create = async ({
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
   const project = await prisma.project.create({
     data: {
-      User: {
-        connectOrCreate: {
-          create: {
-            id: userId,
-          },
-          where: {
-            id: userId,
-          },
-        },
-      },
+      userId,
       title,
       domain,
       devTreeId: tree.id,
     },
   });
+
   await db.breakpoints.create(tree.id, breakpoints);
   return parseProject(project);
 };
 
-export const clone = async (clonableDomain: string): Promise<Project> => {
+export const clone = async (
+  clonableDomain: string,
+  userId: string
+): Promise<Project> => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
@@ -108,16 +109,7 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
   const [project] = await Promise.all([
     prisma.project.create({
       data: {
-        User: {
-          connectOrCreate: {
-            create: {
-              id: clonableProject.userId,
-            },
-            where: {
-              id: clonableProject.userId,
-            },
-          },
-        },
+        userId: userId,
         title: clonableProject.title,
         domain,
         devTreeId: tree.id,
