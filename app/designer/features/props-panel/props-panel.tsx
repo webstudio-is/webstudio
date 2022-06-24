@@ -31,8 +31,6 @@ const Property = ({
   const type = argType?.control.type;
   const defaultValue = argType?.control.defaultValue;
   const options = argType?.options;
-  // TODO: We need to sync defaultValue with value if value is not set and publish this change
-  // const realValue = value || defaultValue;
   return (
     <Grid gap="1" css={{ gridTemplateColumns: "auto 1fr auto" }}>
       <TextField
