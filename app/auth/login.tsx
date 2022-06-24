@@ -1,5 +1,5 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
-import { Form } from "@remix-run/react";
+import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { Button, Card, Flex, Heading, TextField } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
@@ -26,6 +26,7 @@ export const meta: MetaFunction = () => {
 
 export const Login = () => {
   const [isDevLogin, setIsDevLogin] = useState(false);
+  const loaderData = useLoaderData();
 
   return (
     <Flex
@@ -55,7 +56,7 @@ export const Login = () => {
                 </Flex>
               </Button>
             </Form>
-            {process.env.DEV_LOGIN && (
+            {loaderData.devLogin && (
               <>
                 {isDevLogin ? (
                   <Form action="/auth/dev" method="post">

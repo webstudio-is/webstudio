@@ -13,7 +13,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect(config.dashboardPath);
   }
 
-  return {};
+  return { devLogin: process.env.DEV_LOGIN === "true" };
 };
 
 const LoginRoute = () => {
