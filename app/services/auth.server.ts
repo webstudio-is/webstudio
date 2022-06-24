@@ -57,7 +57,6 @@ if (process.env.DEV_LOGIN === "true") {
       const secret = form.get("secret");
 
       if (secret === process.env.AUTH_SECRET) {
-        console.log(secret, process.env.AUTH_SECRET);
         try {
           const user = await createOrLoginWithDev(secret);
           return user;
