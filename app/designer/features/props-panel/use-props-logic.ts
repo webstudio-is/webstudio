@@ -7,7 +7,8 @@ import type {
 import { componentsMeta } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
-import debounce from "lodash.debounce";
+import uniqBy from "lodash/uniqBy";
+import debounce from "lodash/debounce";
 import { useRef, useState } from "react";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 
@@ -33,6 +34,25 @@ const getRequiredProps = (
     }));
 };
 
+const getPropsWithDefaultValue = (
+  selectedInstanceData: SelectedInstanceData
+): UserProp[] => {
+  const { component } = selectedInstanceData;
+  const meta = componentsMeta[component];
+  const argTypes = meta?.argTypes || {};
+  return Object.entries(argTypes)
+    .filter(([_, value]) => value.defaultValue != null)
+    .map(([prop, propObj]) => {
+      const { defaultValue } = propObj;
+      const value = "value" in defaultValue ? defaultValue.value : defaultValue;
+      return {
+        id: ObjectId().toString(),
+        prop,
+        value,
+      };
+    });
+};
+
 type UsePropsLogic = {
   publish: Publish;
   selectedInstanceData: SelectedInstanceData;
@@ -48,10 +68,16 @@ export const usePropsLogic = ({
       ? []
       : selectedInstanceData.props.props;
 
-  const [userProps, setUserProps] = useState<Array<UserProp>>([
-    ...getRequiredProps(selectedInstanceData),
-    ...props,
-  ]);
+  const initialState = uniqBy(
+    [
+      ...props,
+      ...getPropsWithDefaultValue(selectedInstanceData),
+      ...getRequiredProps(selectedInstanceData),
+    ],
+    "prop"
+  );
+
+  const [userProps, setUserProps] = useState<Array<UserProp>>(initialState);
   const propsToPublishRef = useRef<{
     [id: UserProp["id"]]: true;
   }>({});

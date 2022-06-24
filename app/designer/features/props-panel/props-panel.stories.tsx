@@ -47,6 +47,23 @@ export const RequiredProps: ComponentStoryObj<typeof PropsPanel> = {
   },
 };
 
+export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
+  args: {
+    selectedInstanceData: {
+      id: "1",
+      component: "Button",
+      cssRules: [],
+      browserStyle: {},
+      props: {
+        id: "1",
+        props: [],
+        instanceId: "2",
+        treeId: "1",
+      },
+    },
+  },
+};
+
 const meta = componentsMeta["Button"];
 const argTypes = meta?.argTypes as Record<
   string,

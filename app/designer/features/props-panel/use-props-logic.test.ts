@@ -22,7 +22,7 @@ const getSelectedInstanceData = (
 };
 
 describe("usePropsLogic", () => {
-  test("should return initial props for a given instance", () => {
+  test("should return required props", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Link", []),
@@ -32,8 +32,42 @@ describe("usePropsLogic", () => {
     expect(result.current.userProps.length).toEqual(1);
     expect(result.current.userProps[0]).toMatchObject({
       prop: "href",
-      required: true,
       value: "",
+      required: true,
+    });
+  });
+
+  test("should return props with defaultValue set", () => {
+    const { result } = renderHook(() =>
+      usePropsLogic({
+        selectedInstanceData: getSelectedInstanceData("Button", []),
+        publish: jest.fn(),
+      })
+    );
+    expect(result.current.userProps.length).toEqual(1);
+    expect(result.current.userProps[0]).toMatchObject({
+      prop: "type",
+      value: "button",
+    });
+  });
+
+  test("should dedupe by prop name and user props take precedence ", () => {
+    const { result } = renderHook(() =>
+      usePropsLogic({
+        selectedInstanceData: getSelectedInstanceData("Button", [
+          {
+            id: "default",
+            prop: "type",
+            value: "submit",
+          },
+        ]),
+        publish: jest.fn(),
+      })
+    );
+    expect(result.current.userProps.length).toEqual(1);
+    expect(result.current.userProps[0]).toMatchObject({
+      prop: "type",
+      value: "submit",
     });
   });
 
@@ -58,7 +92,7 @@ describe("usePropsLogic", () => {
   test("should remove a prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", [
+        selectedInstanceData: getSelectedInstanceData("Box", [
           {
             id: "disabled",
             prop: "disabled",
@@ -80,7 +114,7 @@ describe("usePropsLogic", () => {
   test("should update a prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", [
+        selectedInstanceData: getSelectedInstanceData("Box", [
           {
             id: "disabled",
             prop: "disabled",
@@ -113,7 +147,7 @@ describe("usePropsLogic", () => {
   test("should not remove a required prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", [
+        selectedInstanceData: getSelectedInstanceData("Box", [
           {
             id: "disabled",
             prop: "disabled",
@@ -147,7 +181,7 @@ describe("usePropsLogic", () => {
   test("should not update a required prop name", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", [
+        selectedInstanceData: getSelectedInstanceData("Box", [
           {
             id: "test",
             prop: "test",
@@ -162,10 +196,6 @@ describe("usePropsLogic", () => {
     act(() => {
       result.current.handleChangeProp("test", "prop", "test-example");
     });
-
-    // act(() => {
-    //   result.current.handleChangeProp("test", "value", false);
-    // });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
       Array [
@@ -182,7 +212,7 @@ describe("usePropsLogic", () => {
   test("should update a required prop value", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", [
+        selectedInstanceData: getSelectedInstanceData("Box", [
           {
             id: "test",
             prop: "test",
