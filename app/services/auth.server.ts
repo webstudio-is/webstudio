@@ -55,6 +55,7 @@ if (process.env.DEV_LOGIN === "true") {
   authenticator.use(
     new FormStrategy(async ({ form }) => {
       const secret = form.get("secret");
+      console.log(secret, process.env.AUTH_SECRET);
       if (secret === process.env.AUTH_SECRET) {
         const user = await createOrLoginWithDev(secret);
         return user;
