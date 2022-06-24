@@ -63,10 +63,10 @@ export const Login = () => {
                       css={{ width: "100%", flexGrow: 1 }}
                       name="secret"
                       type="text"
-                      variant="ghost"
                       minLength={2}
                       required
                       autoFocus
+                      placeholder="Place your AUTH_SECRET"
                     />
                   </Form>
                 ) : (
