@@ -28,7 +28,7 @@ const genericCreateAccount = async (
     return connectedUser;
   }
 
-  const existingUserWithEmail = await prisma.user.findFirst({
+  const existingUserWithEmail = await prisma.user.findUnique({
     where: {
       email: userData.email,
     },
