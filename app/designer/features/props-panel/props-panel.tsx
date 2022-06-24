@@ -9,18 +9,11 @@ import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 import { Box, Button, Grid, TextField } from "~/shared/design-system";
 import { PlusIcon, TrashIcon } from "~/shared/icons";
-import { usePropsLogic } from "./use-props-logic";
+import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
-type PropertyProps = {
-  id: UserProp["id"];
-  prop: UserProp["prop"];
-  value: UserProp["value"];
+type PropertyProps = UserProp & {
   component: Instance["component"];
-  onChange: (
-    id: UserProp["id"],
-    field: keyof UserProp,
-    value: UserProp["prop"] | UserProp["value"]
-  ) => void;
+  onChange: handleChangePropType;
   onDelete: (id: UserProp["id"]) => void;
 };
 
@@ -28,6 +21,7 @@ const Property = ({
   id,
   prop,
   value,
+  required,
   component,
   onChange,
   onDelete,
@@ -40,8 +34,9 @@ const Property = ({
   // TODO: We need to sync defaultValue with value if value is not set and publish this change
   // const realValue = value || defaultValue;
   return (
-    <Grid gap="1" css={{ gridTemplateColumns: "auto auto 1fr auto" }}>
+    <Grid gap="1" css={{ gridTemplateColumns: "auto 1fr auto" }}>
       <TextField
+        readOnly={required}
         variant="ghost"
         placeholder="Property"
         name="prop"
@@ -50,9 +45,9 @@ const Property = ({
           onChange(id, "prop", event.target.value);
         }}
       />
-      :
       <Control
         type={type}
+        required={required}
         defaultValue={defaultValue}
         options={options}
         value={value}
@@ -60,6 +55,7 @@ const Property = ({
       />
       <Button
         ghost
+        disabled={required}
         onClick={() => {
           onDelete(id);
         }}
@@ -104,12 +100,13 @@ export const PropsPanel = ({
         isOpenDefault
       >
         <>
-          {userProps.map(({ id, prop, value }) => (
+          {userProps.map(({ id, prop, value, required }) => (
             <Property
               key={id}
               id={id}
               prop={prop}
               value={value}
+              required={required}
               component={selectedInstanceData.component}
               onChange={handleChangeProp}
               onDelete={handleDeleteProp}

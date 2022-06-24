@@ -15,6 +15,7 @@ type BaseControlProps = {
   value?: UserProp["value"];
   defaultValue?: UserProp["value"];
   onChange: (value: UserProp["value"]) => void;
+  required?: boolean;
 };
 type TextControlProps = BaseControlProps & {
   type?: ComponentProps<typeof TextField>["type"];

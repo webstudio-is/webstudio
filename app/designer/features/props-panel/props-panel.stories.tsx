@@ -30,11 +30,11 @@ export const NoProps: ComponentStoryObj<typeof PropsPanel> = {
   },
 };
 
-export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
+export const RequiredProps: ComponentStoryObj<typeof PropsPanel> = {
   args: {
     selectedInstanceData: {
       id: "1",
-      component: "Button",
+      component: "Link",
       cssRules: [],
       browserStyle: {},
       props: {

@@ -4,19 +4,34 @@ import type {
   UserProp,
   UserPropsUpdates,
 } from "@webstudio-is/sdk";
+import { componentsMeta } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
 import debounce from "lodash.debounce";
 import { useRef, useState } from "react";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 
-const getInitialProp = () => ({
-  id: ObjectId().toString(),
-  prop: "",
-  value: "",
-});
+export type handleChangePropType = (
+  id: UserProp["id"],
+  field: "prop" | "value",
+  value: UserProp["prop"] | UserProp["value"]
+) => void;
 
-const initialUserProps = [getInitialProp()];
+const getRequiredProps = (
+  selectedInstanceData: SelectedInstanceData
+): UserProp[] => {
+  const { component } = selectedInstanceData;
+  const meta = componentsMeta[component];
+  const argTypes = meta?.argTypes || {};
+  return Object.entries(argTypes)
+    .filter(([_, value]) => value.required)
+    .map(([prop, _]) => ({
+      id: ObjectId().toString(),
+      prop,
+      value: "",
+      required: true,
+    }));
+};
 
 type UsePropsLogic = {
   publish: Publish;
@@ -30,9 +45,13 @@ export const usePropsLogic = ({
   const props =
     selectedInstanceData.props === undefined ||
     selectedInstanceData.props.props.length === 0
-      ? initialUserProps
+      ? []
       : selectedInstanceData.props.props;
-  const [userProps, setUserProps] = useState<Array<UserProp>>(props);
+
+  const [userProps, setUserProps] = useState<Array<UserProp>>([
+    ...getRequiredProps(selectedInstanceData),
+    ...props,
+  ]);
   const propsToPublishRef = useRef<{
     [id: UserProp["id"]]: true;
   }>({});
@@ -63,16 +82,21 @@ export const usePropsLogic = ({
     });
   };
 
-  const handleChangeProp = (
-    id: UserProp["id"],
-    field: keyof UserProp,
-    value: UserProp["prop"] | UserProp["value"]
-  ) => {
+  const handleChangeProp: handleChangePropType = (id, field, value) => {
     const index = userProps.findIndex((item) => item.id === id);
     const nextUserProps = produce((draft: Array<UserProp>) => {
-      if (field === "prop" && typeof value === "string") {
-        draft[index].prop = value;
-      } else draft[index].value = value;
+      const isPropRequired = draft[index].required;
+      switch (field) {
+        case "prop":
+          if (!isPropRequired) {
+            // TODO: Use discriminant type to make this more clear or separate into 2 functions
+            draft[index].prop = value as UserProp["prop"];
+          }
+          break;
+        case "value":
+          draft[index].value = value;
+          break;
+      }
     })(userProps);
     setUserProps(nextUserProps);
 
@@ -86,14 +110,26 @@ export const usePropsLogic = ({
 
   const handleDeleteProp = (id: UserProp["id"]) => {
     const nextUserProps = [...userProps];
-    const index = nextUserProps.findIndex((item) => item.id === id);
+    const prop = userProps.find((prop) => prop.id === id);
+
+    // Required prop should never be deleted
+    if (prop === undefined || prop.required) return;
+
+    const index = nextUserProps.indexOf(prop);
     nextUserProps.splice(index, 1);
     setUserProps(nextUserProps);
     deleteProp(id);
   };
 
   const addEmptyProp = () => {
-    setUserProps([...userProps, getInitialProp()]);
+    setUserProps([
+      ...userProps,
+      {
+        id: ObjectId().toString(),
+        prop: "",
+        value: "",
+      },
+    ]);
   };
 
   return {
