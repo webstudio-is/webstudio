@@ -55,7 +55,7 @@ export const Login = () => {
                 </Flex>
               </Button>
             </Form>
-            {process.env.NODE_ENV === "development" && (
+            {process.env.DEV_LOGIN && (
               <>
                 {isDevLogin ? (
                   <Form action="/auth/dev" method="post">

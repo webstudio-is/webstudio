@@ -51,7 +51,7 @@ if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   authenticator.use(google, "google");
 }
 
-if (process.env.NODE_ENV === "development") {
+if (process.env.DEV_LOGIN) {
   authenticator.use(
     new FormStrategy(async ({ form }) => {
       const secret = form.get("secret");
