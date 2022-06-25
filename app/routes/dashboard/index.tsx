@@ -18,8 +18,12 @@ export const action: ActionFunction = async ({ request }) => {
   const title = formData.get("project");
   if (typeof title !== "string") return { errors: "Title required" };
   const { userId, headers } = await ensureUserCookie(request);
+  const authenticatedUser = await authenticator.isAuthenticated(request);
   try {
-    const project = await db.project.create({ title, userId });
+    const project = await db.project.create({
+      title,
+      userId: authenticatedUser?.id || userId,
+    });
     return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error) {
     if (error instanceof Error) {
