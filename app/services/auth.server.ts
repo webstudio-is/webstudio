@@ -48,8 +48,8 @@ const google = new GoogleStrategy(
 export const authenticator = new Authenticator<User>(sessionStorage);
 if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   authenticator.use(github, "github");
-  authenticator.use(google, "google");
 }
+authenticator.use(google, "google");
 
 if (process.env.DEV_LOGIN === "true") {
   authenticator.use(
@@ -60,8 +60,8 @@ if (process.env.DEV_LOGIN === "true") {
         try {
           const user = await createOrLoginWithDev(secret);
           return user;
-        } catch (e) {
-          console.log(e);
+        } catch (error: any) {
+          throw new Error(error);
         }
       }
 

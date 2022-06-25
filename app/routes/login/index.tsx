@@ -4,6 +4,7 @@ import { authenticator } from "~/services/auth.server";
 import config from "~/config";
 
 import { Login, links } from "~/auth/";
+import { useLoginErrors } from "~/shared/session/useLoginErrors";
 
 export { links };
 
@@ -17,6 +18,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 const LoginRoute = () => {
+  useLoginErrors();
   return <Login />;
 };
 
