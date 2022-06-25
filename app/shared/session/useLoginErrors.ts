@@ -1,18 +1,17 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 
-export const LOGIN_ERROR_CODES = {
+export const AUTH_PROVIDERS = {
   LOGIN_DEV: "login_dev",
   LOGIN_GITHUB: "login_github",
   LOGIN_GOOGLE: "login_google",
 };
 
 export const LOGIN_ERROR_MESSAGES = {
-  [LOGIN_ERROR_CODES.LOGIN_DEV]:
-    "There has been an issue logging you in with dev",
-  [LOGIN_ERROR_CODES.LOGIN_GITHUB]:
+  [AUTH_PROVIDERS.LOGIN_DEV]: "There has been an issue logging you in with dev",
+  [AUTH_PROVIDERS.LOGIN_GITHUB]:
     "There has been an issue logging you in with Github",
-  [LOGIN_ERROR_CODES.LOGIN_GOOGLE]:
+  [AUTH_PROVIDERS.LOGIN_GOOGLE]:
     "There has been an issue logging you in with Google",
 };
 
@@ -21,7 +20,7 @@ export const useLoginErrors = () => {
   const error = searchParams.get("error");
   const message = searchParams.get("message");
   useEffect(() => {
-    if (error !== null && !!message) {
+    if (error !== null && Boolean(message)) {
       console.log(message);
       alert(message);
 
@@ -30,14 +29,14 @@ export const useLoginErrors = () => {
     }
 
     switch (error) {
-      case LOGIN_ERROR_CODES.LOGIN_DEV:
-        alert(LOGIN_ERROR_MESSAGES[LOGIN_ERROR_CODES.LOGIN_DEV]);
+      case AUTH_PROVIDERS.LOGIN_DEV:
+        alert(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_DEV]);
         break;
-      case LOGIN_ERROR_CODES.LOGIN_GITHUB:
-        alert(LOGIN_ERROR_MESSAGES[LOGIN_ERROR_CODES.LOGIN_GITHUB]);
+      case AUTH_PROVIDERS.LOGIN_GITHUB:
+        alert(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_GITHUB]);
         break;
-      case LOGIN_ERROR_CODES.LOGIN_GOOGLE:
-        alert(LOGIN_ERROR_MESSAGES[LOGIN_ERROR_CODES.LOGIN_GOOGLE]);
+      case AUTH_PROVIDERS.LOGIN_GOOGLE:
+        alert(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_GOOGLE]);
         break;
 
       default:
