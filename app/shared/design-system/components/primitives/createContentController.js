@@ -1,3 +1,16 @@
+/*
+	@example
+
+		const {update, disconnectedCallback} = createContentController(document.querySelector('input'), {
+			contents: [
+				{ name: 'unit', match: (value) => value === 'px' },
+				{ name: 'number', match: (value) => isNaN(parseFloat(value)) === false },
+				{ name: 'unknown', match: (value) => true },
+			],
+			onMouseMove: ({name, value, position}) => { },
+			onCaretMove: ({name, value, position}) => { },
+		});
+*/
 const canvasContext = globalThis.document
   ?.createElement("canvas")
   .getContext("2d");
