@@ -20,14 +20,16 @@ export const action: ActionFunction = async ({ request }) => {
       successRedirect: config.dashboardPath,
       throwOnError: true,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // all redirects are basically errors and in that case we don't want to catch it
     if (error instanceof Response) return error;
-    console.log(error);
-    return redirect(
-      `${config.loginPath}?error=${LOGIN_ERROR_CODES.LOGIN_GOOGLE}&message=${
-        error?.message || ""
-      }`
-    );
+    if (error instanceof Error) {
+      console.log(error);
+      return redirect(
+        `${config.loginPath}?error=${LOGIN_ERROR_CODES.LOGIN_GOOGLE}&message=${
+          error?.message || ""
+        }`
+      );
+    }
   }
 };

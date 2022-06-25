@@ -60,8 +60,10 @@ if (process.env.DEV_LOGIN === "true") {
         try {
           const user = await createOrLoginWithDev(secret);
           return user;
-        } catch (error: any) {
-          throw new Error(error);
+        } catch (error) {
+          if (error instanceof Error) {
+            throw new Error(error?.message);
+          }
         }
       }
 
