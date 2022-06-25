@@ -2,7 +2,7 @@ import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import config from "~/config";
 import { authenticator } from "~/services/auth.server";
 import { ensureUserCookie } from "~/shared/session";
-import { LOGIN_ERROR_CODES } from "~/shared/session/useLoginErrors";
+import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrors";
 
 export default function Google() {
   return null;
@@ -26,7 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (error instanceof Error) {
       console.log(error);
       return redirect(
-        `${config.loginPath}?error=${LOGIN_ERROR_CODES.LOGIN_GOOGLE}&message=${
+        `${config.loginPath}?error=${AUTH_PROVIDERS.LOGIN_GOOGLE}&message=${
           error?.message || ""
         }`
       );
