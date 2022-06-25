@@ -10,6 +10,7 @@ import {
   createOrLoginWithGithub,
   createOrLoginWithGoogle,
 } from "~/shared/db/user.server";
+import { sentryException } from "~/shared/sentry";
 
 const url = `${
   process.env.VERCEL_URL
@@ -60,8 +61,15 @@ if (process.env.DEV_LOGIN === "true") {
         try {
           const user = await createOrLoginWithDev(secret);
           return user;
-        } catch (e) {
-          console.log(e);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            sentryException({
+              message: error.message,
+              extra: {
+                loginMethod: "dev",
+              },
+            });
+          }
         }
       }
 
