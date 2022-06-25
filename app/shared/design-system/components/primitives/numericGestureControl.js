@@ -1,13 +1,18 @@
-/*
-	@example
-		numericGestureControl(document.querySelector('input'), {
-			onValueChange: (event) => {
-				event.preventDefault();
-				event.target.value = event.value;
-				event.target.select();
-			}
-		})
-*/
+/**
+ * @description
+ * - detects pointer movements in the specified direction
+ * - avails an appropriate cursor
+ * - dispatches {onValueChange} method while pointermove and pointerdown are active
+ * - dispatched {onValueChange} recieves a new value: old value + accumulation of the pointer move axis
+ * @example
+ * numericGestureControl(document.querySelector('input'), {
+ *   onValueChange: (event) => {
+ *     event.preventDefault();
+ *     event.target.value = event.value;
+ *     event.target.select();
+ *   }
+ * });
+ */
 export const numericGestureControl = (
   targetNode,
   { initialValue = 0, direction = "horizontal", onValueChange = ({}) => null }
