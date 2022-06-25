@@ -15,7 +15,7 @@ const ensureProject = async ({
   const projects = await db.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
 
-  return await db.project.clone(domain);
+  return await db.project.clone(domain, userId);
 };
 
 /**
