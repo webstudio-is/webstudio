@@ -67,7 +67,7 @@ export const Login = () => {
                       minLength={2}
                       required
                       autoFocus
-                      placeholder="Place your AUTH_SECRET"
+                      placeholder="Place your auth secret here"
                     />
                   </Form>
                 ) : (
