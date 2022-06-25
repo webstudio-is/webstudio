@@ -4,7 +4,7 @@
   "description": "Webstudio Designer UI as a service",
   "scripts": {
     "build": "remix build",
-    "dev": "node -r dotenv/config node_modules/.bin/remix dev",
+    "dev": "yarn setup && node -r dotenv/config node_modules/.bin/remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
@@ -47,7 +47,7 @@
     "@remix-run/react": "^1.5.1",
     "@remix-run/serve": "^1.5.1",
     "@stitches/react": "^1.2.7",
-    "@webstudio-is/sdk": "0.3.2-login",
+    "@webstudio-is/sdk": "0.3.2-login-teams",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",
