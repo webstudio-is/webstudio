@@ -46,14 +46,13 @@ describe("usePropsLogic", () => {
     );
     const { result: res2 } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", []),
+        selectedInstanceData: getSelectedInstanceData("Button", [
+          { id: "1", prop: "type", value: "button" },
+        ]),
         publish: jest.fn(),
       })
     );
-    expect(res1.current.userProps[0]).not.toMatchObject({
-      prop: "type",
-      value: "button",
-    });
+    expect(res1.current.userProps[0]).toBeUndefined();
     expect(res2.current.userProps[0]).toMatchObject({
       prop: "type",
       value: "button",
