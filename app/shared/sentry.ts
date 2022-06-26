@@ -8,6 +8,8 @@ export const initSentry = () =>
     dsn: "https://e4b439185ee94fca9599b768a75d211e@o1298958.ingest.sentry.io/6530661",
     integrations: [new BrowserTracing()],
     tracesSampleRate: 1.0,
+    environment:
+      process.env.NODE_ENV === "development" ? "development" : "production",
   });
 
 type SentryHelperProps = {
