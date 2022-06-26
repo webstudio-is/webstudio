@@ -31,15 +31,8 @@ export const numericGestureControl = (
       direction === "horizontal" ? "0 1px" : "1px 0"
     } 1.1px rgba(0,0,0,.4))`,
   };
-  const handleEvent = ({
-    type,
-    target,
-    offsetX,
-    offsetY,
-    movementY,
-    movementX,
-    pressure,
-  }) => {
+  const handleEvent = (event) => {
+    const { type, pressure, offsetX, offsetY, movementY, movementX } = event;
     const offset = direction === "horizontal" ? offsetX : offsetY;
     const movement = direction === "horizontal" ? movementX : -movementY;
     switch (type) {
@@ -48,7 +41,7 @@ export const numericGestureControl = (
         break;
       }
       case "pointerdown": {
-        const handlePointerLockEvent = (event) => {
+        const handlePointerLockEvent = () => {
           const { pointerLockElement } = ownerDocument;
           switch (ownerDocument.pointerLockElement) {
             case targetNode: {
@@ -86,7 +79,7 @@ export const numericGestureControl = (
           state.offset += movement * state.velocity;
           state.cursor.style[state.position] = `${state.offset}px`;
           onValueChange({
-            target,
+            target: targetNode,
             value: state.value,
             preventDefault: () => event.preventDefault(),
           });
