@@ -15,8 +15,9 @@
     "generate": "prisma generate",
     "watch:sdk": "relative-deps && relative-deps watch",
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
-    "storybook:run": "NODE_OPTIONS=--openssl-legacy-provider start-storybook -p 6006",
-    "storybook:build": "NODE_OPTIONS=--openssl-legacy-provider build-storybook"
+    "storybook:run": "start-storybook -p 6006",
+    "storybook:build": "build-storybook",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",
@@ -51,7 +52,7 @@
     "@remix-run/react": "^1.5.1",
     "@remix-run/serve": "^1.5.1",
     "@stitches/react": "^1.2.7",
-    "@webstudio-is/sdk": "0.3.2",
+    "@webstudio-is/sdk": "0.4.0",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "hyphenate-style-name": "^1.0.4",
@@ -76,6 +77,10 @@
     "react-nano-state": "^0.4.0",
     "react-router-dom": "^6.2.2",
     "react-use": "^17.3.2",
+    "remix-auth": "^3.2.2",
+    "remix-auth-form": "^1.1.2",
+    "remix-auth-github": "^1.1.1",
+    "remix-auth-google": "^1.1.0",
     "slugify": "^1.6.5"
   },
   "devDependencies": {
@@ -117,18 +122,23 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.3.0",
     "eslint-plugin-storybook": "^0.5.12",
+    "husky": ">=6",
     "jest": "^27.5.1",
+    "lint-staged": "^13.0.2",
     "prettier": "^2.6.2",
     "prisma": "^3.14.0",
     "relative-deps": "^1.0.7",
     "typescript": "^4.1.2"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=14 <=16"
   },
   "sideEffects": false,
   "license": "MIT",
   "relativeDependencies": {
     "@webstudio-is/sdk": "../webstudio-sdk/"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,json,css,md}": "prettier --write"
   }
 }
