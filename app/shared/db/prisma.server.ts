@@ -7,6 +7,9 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
+// this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
+// explanation here
+// https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
 export const prisma = global.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") global.prisma = prisma;
