@@ -11,7 +11,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { useSubscribe } from "@webstudio-is/sdk";
 import { primitives } from "../../canvas-components";
 
-const INSERT_INSTANCE_COMMAND: LexicalCommand<void> = createCommand();
+const INSERT_INSTANCE_COMMAND: LexicalCommand<Payload> = createCommand();
 
 type Payload = {
   component: keyof typeof primitives;
