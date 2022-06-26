@@ -31,7 +31,7 @@ export const numericGestureControl = (
     pointerId,
     pressure,
   }) => {
-    const movement = direction === "horizontal" ? movementX : movementY;
+    const movement = direction === "horizontal" ? movementX : -movementY;
     switch (type) {
       case "pointerup": {
         targetNode.releasePointerCapture(pointerId);
