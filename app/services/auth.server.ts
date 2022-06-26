@@ -57,14 +57,8 @@ if (process.env.DEV_LOGIN === "true") {
       const secret = form.get("secret");
 
       if (secret === process.env.AUTH_SECRET) {
-        try {
-          const user = await createOrLoginWithDev(secret);
-          return user;
-        } catch (error) {
-          if (error instanceof Error) {
-            throw new Error(error?.message);
-          }
-        }
+        const user = await createOrLoginWithDev(secret);
+        return user;
       }
 
       throw new Error("The dev login code is incorrect");
