@@ -59,11 +59,11 @@
    - Resizing canvas width in preview mode doesn't limit resize slider to each breakpoint
 
 1. Auth
-   - Make sure user is redirected from the dashboard to the login page if not logged in
-   - Make sure if logged in user is redirected from login to the dashboard
-   - Ensure login is not required when viewing a built site
-   - Ensure login is not required when viewing a forked site
-   - Test dev login with correct auth secret and make sure user is authenticated
-   - Test dev login with incorrect auth secret to make sure an error is returned
-   - Test github login and make sure all is working
-   - Test google login and make sure all is working
+   - Try to access the dashboard when not logged in to make sure you will be redirected to the login page
+   - Open the login page when logged in to make sure you are redirected to the dashboard
+   - Ensure you can view a built site in an incognito tab
+   - Ensure you can view a forked site in an incognito tab
+   - Click on dev login, add the AUTH_SECRET value in the `.env` value and make sure user is authenticated and redirected to the dashboard
+   - Click on dev login and write a wrong value to make sure you get an error message and stay in the login page.
+   - Click on login with GitHub and make sure that you are redirected to the dashboard
+   - Click on login with Google and make sure that you are redirected to the dashboard
