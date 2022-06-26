@@ -67,7 +67,7 @@ if (process.env.DEV_LOGIN === "true") {
         }
       }
 
-      throw new Error("Wrong code");
+      throw new Error("The dev login code is incorrect");
     }),
     "dev"
   );
