@@ -1,12 +1,10 @@
 import {useRef, useEffect} from 'react';
 import {numericGestureControl} from './numericGestureControl.js';
 
-export default { title: 'numericGestureControl' };
-
 const useNumericGestureControl = ({ref, value, direction}) => {
   useEffect(() => {
     const {disconnectedCallback} = numericGestureControl(ref.current, {
-      initialValue: value,
+      initialValue: ref.current.value = value,
       direction: direction,
       onValueChange: (event) => {
         event.preventDefault();
@@ -24,5 +22,18 @@ const Input = ({value, direction}) => {
   return <input defaultValue={value} ref={ref} />;
 }
 
-export const Horizontal = () => <Input direction="horizontal" value={0} />;
-export const Vertical = () => <Input direction="vertical" value={0} />;
+export const NumericInput = Object.assign(Input.bind({}), {args: { value: 0, direction: 'horizontal' }});
+
+export default {
+  title: 'numericGestureControl',
+  component: Input,
+  argTypes: {
+    value: {
+      control: { type: 'number' },
+    },
+    direction: {
+      options: ['horizontal', 'vertical'],
+      control: { type: 'radio' },
+    },
+  },
+};
