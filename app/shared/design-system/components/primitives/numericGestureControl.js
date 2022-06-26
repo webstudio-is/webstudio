@@ -20,9 +20,15 @@ export const numericGestureControl = (
   const eventNames = ["pointerup", "pointerdown", "pointermove"];
   const state = {
     value: initialValue,
-    offset: 0,
-    direction: direction === "horizontal" ? "ew-resize" : "ns-resize",
     cursor: cursorNode.cloneNode(true),
+    offset: 0,
+    velocity: direction === "horizontal" ? 1 : -1,
+    position: direction === "horizontal" ? "left" : "top",
+    rotation: direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)",
+    direction: direction === "horizontal" ? "ew-resize" : "ns-resize",
+    dropShadow: `drop-shadow(${
+      direction === "horizontal" ? "0 1px" : "1px 0"
+    } 1.1px rgba(0,0,0,.4))`,
   };
   const handleEvent = ({
     type,
@@ -31,18 +37,14 @@ export const numericGestureControl = (
     offsetY,
     movementY,
     movementX,
-    pointerId,
     pressure,
-    x,
-    y,
   }) => {
     const offset = direction === "horizontal" ? offsetX : offsetY;
     const movement = direction === "horizontal" ? movementX : -movementY;
-    const position = direction === "horizontal" ? "left" : "top";
     switch (type) {
       case "pointerup": {
         state.offset = 0;
-        targetNode.ownerDocument.exitPointerLock(pointerId);
+        targetNode.ownerDocument.exitPointerLock();
         state.cursor.remove();
         break;
       }
@@ -51,20 +53,19 @@ export const numericGestureControl = (
         state.cursor.style.position = "absolute";
         state.cursor.style.top = `${offsetY}px`;
         state.cursor.style.left = `${offsetX}px`;
+        state.cursor.style.transform = state.rotation;
+        state.cursor.style.setProperty("--drop-shadow", state.dropShadow);
         targetNode.requestPointerLock();
         targetNode.ownerDocument.documentElement.append(state.cursor);
         break;
       }
       case "pointermove": {
         if (pressure) {
-          if (state.offset < 0) {
-            state.offset = globalThis.innerWidth + 1;
-          } else if (state.offset > globalThis.innerWidth) {
-            state.offset = 1;
-          }
+          if (state.offset < 0) state.offset = globalThis.innerWidth + 1;
+          else if (state.offset > globalThis.innerWidth) state.offset = 1;
           state.value += movement;
-          state.offset += movement;
-          state.cursor.style[position] = `${state.offset}px`;
+          state.offset += movement * state.velocity;
+          state.cursor.style[state.position] = `${state.offset}px`;
           onValueChange({
             target,
             value: state.value,
@@ -90,10 +91,10 @@ export const numericGestureControl = (
 };
 
 const cursorNode = new Range().createContextualFragment(`
-  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15">
+  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15" style="filter:var(--drop-shadow);">
     <g transform="translate(2 3)">
-      <path fill-rule="evenodd" d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z"></path>
-      <path fill-rule="evenodd" d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z"></path>
+      <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd" stroke="#FFF" stroke-width="2"></path>
+      <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
     </g>
   </svg>
 `).firstElementChild;
