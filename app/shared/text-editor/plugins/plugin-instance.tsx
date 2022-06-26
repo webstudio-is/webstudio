@@ -1,7 +1,6 @@
-import { $createInstanceNode, InstanceNode } from "../nodes/instance";
+import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import { useEffect } from "react";
 import {
-  TextNode,
   createCommand,
   $isRangeSelection,
   $getSelection,
@@ -10,8 +9,14 @@ import {
 } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useSubscribe } from "@webstudio-is/sdk";
+import { primitives } from "../../canvas-components";
 
-export const INSERT_INSTANCE_COMMAND: LexicalCommand<void> = createCommand();
+const INSERT_INSTANCE_COMMAND: LexicalCommand<void> = createCommand();
+
+type Payload = {
+  component: keyof typeof primitives;
+  props: Record<string, unknown>;
+};
 
 export const InstancePlugin = () => {
   const [editor] = useLexicalComposerContext();
@@ -20,14 +25,16 @@ export const InstancePlugin = () => {
       throw new Error("InstancePlugin: InstanceNode not registered on editor");
     }
 
-    return editor.registerCommand(
+    return editor.registerCommand<Payload>(
       INSERT_INSTANCE_COMMAND,
-      (type) => {
+      (payload) => {
         const selection = $getSelection();
-        if ($isRangeSelection(selection)) {
+        const text = selection?.getTextContent();
+        if ($isRangeSelection(selection) && text) {
+          const { Component } = primitives[payload.component];
           const instanceNode = $createInstanceNode({
-            type,
-            text: selection.getTextContent(),
+            component: <Component {...payload.props}>{text}</Component>,
+            text,
           });
           selection.insertNodes([instanceNode]);
         }
@@ -38,9 +45,12 @@ export const InstancePlugin = () => {
     );
   }, [editor]);
 
-  useSubscribe("insertInlineInstance", (type) => {
-    editor.dispatchCommand(INSERT_INSTANCE_COMMAND, type);
-  });
+  useSubscribe<"insertInlineInstance", Payload>(
+    "insertInlineInstance",
+    (payload) => {
+      editor.dispatchCommand<Payload>(INSERT_INSTANCE_COMMAND, payload);
+    }
+  );
 
   return null;
 };

@@ -1,1 +1,1 @@
-export * from "./text-editor";
+export * from "./example-text-editor";

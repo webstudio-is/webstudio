@@ -1,34 +1,5 @@
 body {
-  margin: 0;
   background: #eee;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, ".SFNSText-Regular",
-    sans-serif;
-  font-weight: 500;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.App {
-  font-family: sans-serif;
-  text-align: center;
-}
-
-.other h2 {
-  font-size: 18px;
-  color: #444;
-  margin-bottom: 7px;
-}
-
-.other a {
-  color: #777;
-  text-decoration: underline;
-  font-size: 14px;
-}
-
-.other ul {
-  padding: 0;
-  margin: 0;
-  list-style-type: none;
 }
 
 h1 {
@@ -44,9 +15,13 @@ h1 {
   text-align: right;
 }
 
+.editor-menu {
+  margin: 10px;
+  display: flex;
+  gap: 10px;
+}
 .editor-container {
   background: #fff;
-  margin: 20px auto 20px auto;
   border-radius: 2px;
   max-width: 600px;
   color: #000;
@@ -104,15 +79,6 @@ h1 {
   line-height: 14px;
 }
 
-pre::-webkit-scrollbar {
-  background: transparent;
-  width: 10px;
-}
-
-pre::-webkit-scrollbar-thumb {
-  background: #999;
-}
-
 .debug-timetravel-panel {
   overflow: hidden;
   padding: 0 0 10px 0;
@@ -151,34 +117,4 @@ pre::-webkit-scrollbar-thumb {
 
 .debug-timetravel-button:hover {
   text-decoration: underline;
-}
-
-.instance {
-  color: transparent;
-  background-size: 16px 16px;
-  background-position: center;
-  background-repeat: no-repeat;
-  vertical-align: middle;
-  margin: 0 -1px;
-}
-
-.instance-inner {
-  padding: 0 0.15em;
-}
-
-.instance-inner::selection {
-  color: transparent;
-  background-color: rgba(150, 150, 150, 0.4);
-}
-
-.instance-inner::moz-selection {
-  color: transparent;
-  background-color: rgba(150, 150, 150, 0.4);
-}
-
-.instance.happysmile {
-  background: green;
-  /*
-  background-image: url(./images/instance/1F642.png);
-  */
 }

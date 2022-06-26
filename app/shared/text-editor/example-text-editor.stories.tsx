@@ -1,28 +1,16 @@
 import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
-import { TextEditor as TextEditorPrimitive } from "./text-editor";
+import { ExampleTextEditor } from "./example-text-editor";
 import "./styles.css";
 import { $getRoot, $getSelection, type EditorState } from "lexical";
-import { publish } from "@webstudio-is/sdk";
 
 export default {
   title: "Text Editor",
-  component: TextEditorPrimitive,
-} as ComponentMeta<typeof TextEditorPrimitive>;
+  component: ExampleTextEditor,
+} as ComponentMeta<typeof ExampleTextEditor>;
 
-const Template: ComponentStory<typeof TextEditorPrimitive> = (args) => {
-  return (
-    <>
-      <button
-        onClick={() => {
-          publish({ type: "insertInlineInstance", payload: "bold" });
-        }}
-      >
-        Bold
-      </button>
-      <TextEditorPrimitive {...args} />
-    </>
-  );
+const Template: ComponentStory<typeof ExampleTextEditor> = (args) => {
+  return <ExampleTextEditor {...args} />;
 };
 
 export const TextEditor = Template.bind({});
