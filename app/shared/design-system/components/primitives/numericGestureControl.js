@@ -17,6 +17,7 @@ export const numericGestureControl = (
   targetNode,
   { initialValue = 0, direction = "horizontal", onValueChange = ({}) => null }
 ) => {
+  const { ownerDocument } = targetNode;
   const eventNames = ["pointerup", "pointerdown", "pointermove"];
   const state = {
     value: initialValue,
@@ -43,20 +44,38 @@ export const numericGestureControl = (
     const movement = direction === "horizontal" ? movementX : -movementY;
     switch (type) {
       case "pointerup": {
-        state.offset = 0;
-        targetNode.ownerDocument.exitPointerLock();
-        state.cursor.remove();
+        ownerDocument.exitPointerLock();
         break;
       }
       case "pointerdown": {
-        state.offset = offset;
-        state.cursor.style.position = "absolute";
-        state.cursor.style.top = `${offsetY}px`;
-        state.cursor.style.left = `${offsetX}px`;
-        state.cursor.style.transform = state.rotation;
-        state.cursor.style.setProperty("--drop-shadow", state.dropShadow);
+        const handlePointerLockEvent = (event) => {
+          const { pointerLockElement } = ownerDocument;
+          switch (ownerDocument.pointerLockElement) {
+            case targetNode: {
+              state.offset = offset;
+              state.cursor.style.position = "absolute";
+              state.cursor.style.top = `${offsetY}px`;
+              state.cursor.style.left = `${offsetX}px`;
+              state.cursor.style.transform = state.rotation;
+              state.cursor.style.setProperty("--drop-shadow", state.dropShadow);
+              ownerDocument.documentElement.append(state.cursor);
+              break;
+            }
+            case null: {
+              ownerDocument.removeEventListener(
+                "pointerlockchange",
+                handlePointerLockEvent
+              );
+              state.cursor.remove();
+              break;
+            }
+          }
+        };
+        ownerDocument.addEventListener(
+          "pointerlockchange",
+          handlePointerLockEvent
+        );
         targetNode.requestPointerLock();
-        targetNode.ownerDocument.documentElement.append(state.cursor);
         break;
       }
       case "pointermove": {
