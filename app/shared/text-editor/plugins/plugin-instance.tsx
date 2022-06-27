@@ -1,19 +1,20 @@
-import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import { useEffect } from "react";
+import { useSubscribe, type Instance } from "@webstudio-is/sdk";
+import { primitives } from "../../canvas-components";
+import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import {
   createCommand,
   $isRangeSelection,
   $getSelection,
   COMMAND_PRIORITY_EDITOR,
+  useLexicalComposerContext,
   type LexicalCommand,
-} from "lexical";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useSubscribe } from "@webstudio-is/sdk";
-import { primitives } from "../../canvas-components";
+} from "../lexical";
 
 const INSERT_INSTANCE_COMMAND: LexicalCommand<Payload> = createCommand();
 
 type Payload = {
+  id: Instance["id"];
   component: keyof typeof primitives;
   props: Record<string, unknown>;
 };
@@ -35,6 +36,7 @@ export const InstancePlugin = () => {
           const instanceNode = $createInstanceNode({
             component: <Component {...payload.props}>{text}</Component>,
             text,
+            id: payload.id,
           });
           selection.insertNodes([instanceNode]);
         }
@@ -51,6 +53,5 @@ export const InstancePlugin = () => {
       editor.dispatchCommand<Payload>(INSERT_INSTANCE_COMMAND, payload);
     }
   );
-
   return null;
 };

@@ -1,13 +1,15 @@
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { publish } from "@webstudio-is/sdk";
+import {
+  type EditorState,
+  LexicalComposer,
+  RichTextPlugin,
+  ContentEditable,
+  HistoryPlugin,
+  OnChangePlugin,
+} from "./lexical";
 import { InstancePlugin } from "./plugins/plugin-instance";
 import { TreeViewPlugin } from "./plugins/tree-view-plugin";
 import { config } from "./config";
-import { publish } from "@webstudio-is/sdk";
-import { type EditorState } from "lexical";
 
 type ExampleTextEditorProps = {
   onChange: (state: EditorState) => void;
@@ -50,6 +52,8 @@ const Menu = () => (
             props: { href: "https://google.com", target: "_blank" },
           },
         });
+        const url = prompt("Enter url");
+        console.log(url);
       }}
     >
       Link

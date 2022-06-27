@@ -1,12 +1,16 @@
-import { type EditorConfig, TextNode } from "lexical";
+import { type EditorConfig, TextNode } from "../lexical";
 import { render } from "react-dom";
+import type { Instance } from "@webstudio-is/sdk";
 
 type Options = {
+  id: Instance["id"];
   component: JSX.Element;
   text: string;
 };
 
 export class InstanceNode extends TextNode {
+  options: Options;
+
   static getType(): "instance" {
     return "instance";
   }
@@ -17,13 +21,13 @@ export class InstanceNode extends TextNode {
 
   constructor(options: Options) {
     // This makes sure caret is at the end of the selection after inserting this node instance
-    super(options.text);
+    super(options.text, options.id);
     this.options = options;
   }
 
   createDOM(config: EditorConfig) {
     const container = super.createDOM(config);
-    render(this.options.component, container);
+    render(this.options.component, this.container);
     return container;
   }
 
@@ -50,6 +54,6 @@ export class InstanceNode extends TextNode {
   }
 }
 
-export function $createInstanceNode(options: Options) {
+export const $createInstanceNode = (options: Options) => {
   return new InstanceNode(options);
-}
+};
