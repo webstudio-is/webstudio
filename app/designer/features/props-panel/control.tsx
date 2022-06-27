@@ -6,15 +6,16 @@ import {
   Radio,
   RadioGroup,
   Select,
+  Slider,
   Switch,
   TextField,
 } from "~/shared/design-system";
 import { Checkbox } from "~/shared/design-system/components/checkbox";
 
-type BaseControlProps = {
-  value?: UserProp["value"];
-  defaultValue?: UserProp["value"];
-  onChange: (value: UserProp["value"]) => void;
+type BaseControlProps<T = UserProp["value"]> = {
+  value?: T;
+  defaultValue?: T;
+  onChange: (value: T) => void;
   required?: boolean;
 };
 type TextControlProps = BaseControlProps & {
@@ -121,10 +122,30 @@ const BooleanControl = ({
   />
 );
 
+const RangeControl = ({
+  value,
+  defaultValue,
+  onChange,
+  min,
+  max,
+  step,
+}: RangeControlProps) => (
+  <Slider
+    value={value}
+    defaultValue={defaultValue}
+    onValueChange={(values) => {
+      onChange(values[0]);
+    }}
+    min={min}
+    max={max}
+    step={step}
+  />
+);
+
 const NotImplemented = () => <div />;
 
 type PrimitiveControlProps = BaseControlProps & {
-  type: "array" | "boolean" | "date" | "number" | "range" | "object" | "text";
+  type: "array" | "boolean" | "date" | "number" | "object" | "text";
 };
 
 type ColorControlProps = BaseControlProps & {
@@ -135,6 +156,13 @@ type ColorControlProps = BaseControlProps & {
 type FileControlProps = BaseControlProps & {
   type: "file";
   accept: string;
+};
+
+type RangeControlProps = BaseControlProps<number> & {
+  type: "range";
+  min: number;
+  max: number;
+  step: number;
 };
 
 type OptionsControlProps = BaseControlProps & {
@@ -152,7 +180,8 @@ export type ControlProps =
   | PrimitiveControlProps
   | OptionsControlProps
   | FileControlProps
-  | ColorControlProps;
+  | ColorControlProps
+  | RangeControlProps;
 
 // eslint-disable-next-line func-style
 export function Control(props: ControlProps) {
@@ -170,7 +199,7 @@ export function Control(props: ControlProps) {
     case "number":
       return <TextControl {...props} type="number" />;
     case "range":
-      return <NotImplemented />;
+      return <RangeControl {...props} />;
     case "object":
       return <TextControl {...props} />;
     case "radio":

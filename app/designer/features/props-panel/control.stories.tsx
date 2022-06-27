@@ -17,3 +17,12 @@ export const Options: ComponentStoryObj<typeof Control> = {
     options: ["option1", "option2"],
   },
 };
+
+export const Range: ComponentStoryObj<typeof Control> = {
+  args: {
+    type: "range",
+    min: 0,
+    max: 100,
+    step: 1,
+  },
+};
