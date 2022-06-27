@@ -69,7 +69,7 @@ describe("usePropsLogic", () => {
     expect(result.current.userProps.length).toEqual(1);
     expect(result.current.userProps[0]).toMatchObject({
       prop: "type",
-      value: "button",
+      value: "submit",
     });
   });
 
