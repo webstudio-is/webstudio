@@ -123,16 +123,20 @@ const BooleanControl = ({
 
 const NotImplemented = () => <div />;
 
-type SimpleControlProps = BaseControlProps & {
+type PrimitiveControlProps = BaseControlProps & {
   type:
-    | "boolean"
     | "array"
+    | "boolean"
     | "color"
     | "date"
     | "number"
     | "range"
     | "object"
     | "text";
+};
+type FileControlProps = BaseControlProps & {
+  type: "file";
+  accept: string;
 };
 type OptionsControlProps = BaseControlProps & {
   type:
@@ -145,19 +149,24 @@ type OptionsControlProps = BaseControlProps & {
   options: Array<string>;
 };
 
-export type ControlProps = SimpleControlProps | OptionsControlProps;
+export type ControlProps =
+  | PrimitiveControlProps
+  | OptionsControlProps
+  | FileControlProps;
 
 // eslint-disable-next-line func-style
 export function Control(props: ControlProps) {
   switch (props.type) {
-    case "boolean":
-      return <BooleanControl {...props} />;
     case "array":
       return <TextControl {...props} />;
+    case "boolean":
+      return <BooleanControl {...props} />;
     case "color":
       return <TextControl {...props} type="color" />;
     case "date":
       return <TextControl {...props} type="date" />;
+    case "file":
+      return <TextControl {...props} type="file" />;
     case "number":
       return <TextControl {...props} type="number" />;
     case "range":
