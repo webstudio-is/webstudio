@@ -8,7 +8,7 @@
  * - using keyboard up/down keys navigates the list while focused
  * - when navigating the list with arrow keys repeats from the start/end as per the last navigation point
  * @example
- * document.querySelector('button').addEventListener('pointerup', (event) => {
+ * document.querySelector('button').addEventListener('click', (event) => {
  * 	 createDropdown(event, {
  * 	   items: [
  * 		   {value: 'px', selected: true},
@@ -56,9 +56,16 @@ class Dropdown extends HTMLElement {
     const dialogNode = this.querySelector("dialog");
     const searchNode = this.querySelector("input");
     const selectNode = this.querySelector("select");
-    const eventNames = ["close", "keydown", "pointerdown", "pointerout"];
-    eventNames.forEach((eventName) => this.addEventListener(eventName, this));
-    Object.assign(this, { dialogNode, searchNode, selectNode, once: false });
+    Object.assign(this, {
+      dialogNode,
+      searchNode,
+      selectNode,
+      once: false,
+      tabIndex: 0,
+    });
+    ["close", "keydown", "pointerdown", "focusout"].forEach((eventName) =>
+      this.addEventListener(eventName, this)
+    );
   }
   handleEvent(event) {
     const { dialogNode, searchNode, selectNode } = this;
@@ -69,6 +76,7 @@ class Dropdown extends HTMLElement {
         break;
       }
       case "keydown": {
+        if (event.code === "Escape") return dialogNode.close();
         // avoid text input sourced keyboard events
         if (event.target === searchNode) break;
         if (["ArrowUp", "ArrowDown"].includes(event.code)) {
@@ -96,24 +104,9 @@ class Dropdown extends HTMLElement {
         if (event.target.nodeName === "OPTION") event.target.selected = true;
         break;
       }
-      case "pointerout": {
-        // when leaving the dropdown viewport, "once" event listener that removes itself
-        // when activate outside of the dropdown.
-        if (
-          this.once ||
-          event.target !== dialogNode ||
-          this.contains(event.relatedTarget)
-        )
-          break;
-        globalThis.addEventListener(
-          "pointerdown",
-          (this.handlePointerDown = (event) => {
-            // come from a focus change from outside of the browser window
-            // if coming back to the same dropdown, don't close.
-            if (!this.contains(event.target)) dialogNode.close();
-          }),
-          { once: (this.once = true) }
-        );
+      case "focusout": {
+        if (this.contains(event.relatedTarget)) break;
+        dialogNode.close();
         break;
       }
     }
