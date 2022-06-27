@@ -124,20 +124,19 @@ const BooleanControl = ({
 const NotImplemented = () => <div />;
 
 type PrimitiveControlProps = BaseControlProps & {
-  type:
-    | "array"
-    | "boolean"
-    | "color"
-    | "date"
-    | "number"
-    | "range"
-    | "object"
-    | "text";
+  type: "array" | "boolean" | "date" | "number" | "range" | "object" | "text";
 };
+
+type ColorControlProps = BaseControlProps & {
+  type: "color";
+  presetColors?: Array<string>;
+};
+
 type FileControlProps = BaseControlProps & {
   type: "file";
   accept: string;
 };
+
 type OptionsControlProps = BaseControlProps & {
   type:
     | "radio"
@@ -152,7 +151,8 @@ type OptionsControlProps = BaseControlProps & {
 export type ControlProps =
   | PrimitiveControlProps
   | OptionsControlProps
-  | FileControlProps;
+  | FileControlProps
+  | ColorControlProps;
 
 // eslint-disable-next-line func-style
 export function Control(props: ControlProps) {
