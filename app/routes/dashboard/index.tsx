@@ -10,7 +10,6 @@ import * as db from "~/shared/db";
 import config from "~/config";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
-
 export { links };
 
 export const action: ActionFunction = async ({ request }) => {
