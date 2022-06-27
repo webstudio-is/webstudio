@@ -68,7 +68,7 @@ const meta = componentsMeta["Button"];
 const argTypes = meta?.argTypes as Record<
   string,
   { control: { defaultValue?: unknown } }
->; // TODO: Add type to argTypes
+>; // @todo: Add type to argTypes
 
 export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
   args: {
@@ -83,7 +83,7 @@ export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
         treeId: "1",
         props: Object.entries(argTypes).map(([prop, value]) => {
           return {
-            id: `${prop}`,
+            id: prop,
             prop,
             value: value.control.defaultValue,
           } as UserProp;
