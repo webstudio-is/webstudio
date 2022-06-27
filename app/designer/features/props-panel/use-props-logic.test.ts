@@ -37,7 +37,7 @@ describe("usePropsLogic", () => {
     });
   });
 
-  test.only("should return different default props for different instances", () => {
+  test("should return different default props for different instances", () => {
     const { result: res1 } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Heading", []),
