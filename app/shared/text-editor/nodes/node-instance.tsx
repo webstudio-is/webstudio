@@ -27,7 +27,7 @@ export class InstanceNode extends TextNode {
 
   createDOM(config: EditorConfig) {
     const container = super.createDOM(config);
-    render(this.options.component, this.container);
+    render(this.options.component, container);
     return container;
   }
 
