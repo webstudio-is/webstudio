@@ -197,7 +197,7 @@ const StyledAvatarImage = styled(AvatarPrimitive.Image, {
 
 const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
   textTransform: "uppercase",
-
+  borderRadius: "50%",
   variants: {
     size: {
       "1": {

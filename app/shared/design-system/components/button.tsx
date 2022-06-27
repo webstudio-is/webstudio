@@ -160,6 +160,13 @@ export const Button = styled("button", {
             "inset 0 0 0 1px hsla(0,100%,100%,.35), 0 0 0 1px hsla(0,100%,100%,.35)",
         },
       },
+      raw: {
+        background: "transparent",
+        color: "inherit",
+        padding: 0,
+        borderRadius: 0,
+        height: "auto",
+      },
       transparentBlack: {
         backgroundColor: "hsla(0,0%,0%,.2)",
         color: "black",

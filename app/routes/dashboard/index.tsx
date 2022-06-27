@@ -9,6 +9,7 @@ import { Dashboard, links } from "~/dashboard";
 import * as db from "~/shared/db";
 import config from "~/config";
 import { ensureUserCookie } from "~/shared/session";
+import { authenticator } from "~/services/auth.server";
 
 export { links };
 
@@ -17,8 +18,12 @@ export const action: ActionFunction = async ({ request }) => {
   const title = formData.get("project");
   if (typeof title !== "string") return { errors: "Title required" };
   const { userId, headers } = await ensureUserCookie(request);
+  const authenticatedUser = await authenticator.isAuthenticated(request);
   try {
-    const project = await db.project.create({ title, userId });
+    const project = await db.project.create({
+      title,
+      userId: authenticatedUser?.id || userId,
+    });
     return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error) {
     if (error instanceof Error) {
@@ -29,14 +34,18 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { userId, headers } = await ensureUserCookie(request);
-  const projects = await db.project.loadManyByUserId(userId);
-  return json({ config, projects }, headers);
+  const user = await authenticator.isAuthenticated(request);
+  if (!user) {
+    return redirect(config.loginPath);
+  }
+  const { headers } = await ensureUserCookie(request);
+  const projects = await db.project.loadManyByUserId(user.id);
+  return json({ config, projects, user }, headers);
 };
 
 const DashboardRoute = () => {
-  const { config, projects } = useLoaderData();
-  return <Dashboard config={config} projects={projects} />;
+  const { config, projects, user } = useLoaderData();
+  return <Dashboard config={config} user={user} projects={projects} />;
 };
 
 export default DashboardRoute;
