@@ -1,5 +1,6 @@
 import { renderHook, act } from "@testing-library/react-hooks";
 import { components, UserProp } from "@webstudio-is/sdk";
+import { nanoid } from "nanoid";
 import { SelectedInstanceData } from "~/shared/canvas-components";
 import { usePropsLogic } from "./use-props-logic";
 
@@ -8,15 +9,15 @@ const getSelectedInstanceData = (
   props: UserProp[]
 ): SelectedInstanceData => {
   return {
-    id: "2",
+    id: nanoid(8),
     component: componentName,
     cssRules: [],
     browserStyle: {},
     props: {
-      id: "1",
+      id: nanoid(8),
       props,
-      instanceId: "2",
-      treeId: "1",
+      instanceId: nanoid(8),
+      treeId: nanoid(8),
     },
   };
 };
@@ -46,16 +47,14 @@ describe("usePropsLogic", () => {
     );
     const { result: res2 } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", [
-          { id: "1", prop: "type", value: "button" },
-        ]),
+        selectedInstanceData: getSelectedInstanceData("Button", []),
         publish: jest.fn(),
       })
     );
     expect(res1.current.userProps[0]).toBeUndefined();
     expect(res2.current.userProps[0]).toMatchObject({
       prop: "type",
-      value: "button",
+      value: "submit",
     });
   });
 
