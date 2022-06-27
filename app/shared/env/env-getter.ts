@@ -12,7 +12,7 @@ export default new Proxy(
       if (typeof window === "undefined") {
         return process.env;
       }
-      const env = (window[namespace as any] ?? {}) as unknown as Env;
+      const env = (window[namespace as never] ?? {}) as unknown as Env;
       return prop in env ? env[prop as keyof Env] : undefined;
     },
   }
