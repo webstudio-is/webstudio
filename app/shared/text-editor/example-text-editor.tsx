@@ -1,4 +1,4 @@
-import { publish } from "@webstudio-is/sdk";
+import { publish, useAllUserProps } from "@webstudio-is/sdk";
 import {
   type EditorState,
   LexicalComposer,
@@ -10,57 +10,77 @@ import {
 import { InstancePlugin } from "./plugins/plugin-instance";
 import { TreeViewPlugin } from "./plugins/tree-view-plugin";
 import { config } from "./config";
+import { createInstance } from "../tree-utils";
 
 type ExampleTextEditorProps = {
   onChange: (state: EditorState) => void;
 };
 
-const Menu = () => (
-  <div className="editor-menu">
-    <button
-      onClick={() => {
-        publish({
-          type: "insertInlineInstance",
-          payload: {
-            component: "Bold",
-            props: {},
-          },
-        });
-      }}
-    >
-      Bold
-    </button>
-    <button
-      onClick={() => {
-        publish({
-          type: "insertInlineInstance",
-          payload: {
-            component: "Italic",
-            props: {},
-          },
-        });
-      }}
-    >
-      Italic
-    </button>
-    <button
-      onClick={() => {
-        publish({
-          type: "insertInlineInstance",
-          payload: {
-            component: "Link",
-            props: { href: "https://google.com", target: "_blank" },
-          },
-        });
-        const url = prompt("Enter url");
-        console.log(url);
-      }}
-    >
-      Link
-    </button>
-  </div>
-);
-
+const Menu = () => {
+  const [, setAllUserProps] = useAllUserProps();
+  return (
+    <div className="editor-menu">
+      <button
+        onClick={() => {
+          const instance = createInstance({ component: "Bold" });
+          publish({
+            type: "insertInlineInstance",
+            payload: {
+              instance,
+              props: {},
+            },
+          });
+        }}
+      >
+        Bold
+      </button>
+      <button
+        onClick={() => {
+          const instance = createInstance({ component: "Italic" });
+          publish({
+            type: "insertInlineInstance",
+            payload: {
+              instance,
+              props: {},
+            },
+          });
+        }}
+      >
+        Italic
+      </button>
+      <button
+        onClick={() => {
+          const instance = createInstance({ component: "Link" });
+          publish({
+            type: "insertInlineInstance",
+            payload: {
+              instance,
+              props: { href: "", target: "_blank" },
+            },
+          });
+          const url = prompt("Enter url");
+          if (url === null) return;
+          setAllUserProps({
+            [instance.id]: {
+              id: "1",
+              instanceId: instance.id,
+              treeId: "3",
+              props: [
+                {
+                  id: "4",
+                  prop: "href",
+                  value: url,
+                },
+              ],
+            },
+          });
+        }}
+      >
+        Link
+      </button>
+    </div>
+  );
+};
 export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
   return (
     <>

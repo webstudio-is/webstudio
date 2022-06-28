@@ -1,9 +1,7 @@
 import { type EditorConfig, TextNode } from "../lexical";
 import { render } from "react-dom";
-import type { Instance } from "@webstudio-is/sdk";
 
 type Options = {
-  id: Instance["id"];
   component: JSX.Element;
   text: string;
 };
@@ -21,7 +19,7 @@ export class InstanceNode extends TextNode {
 
   constructor(options: Options) {
     // This makes sure caret is at the end of the selection after inserting this node instance
-    super(options.text, options.id);
+    super(options.text);
     this.options = options;
   }
 
