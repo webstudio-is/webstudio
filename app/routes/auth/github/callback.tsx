@@ -2,7 +2,7 @@ import { LoaderFunction, redirect } from "@remix-run/node";
 import config from "~/config";
 import { authenticator } from "~/services/auth.server";
 import { ensureUserCookie } from "~/shared/session";
-import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrors";
+import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrorMessage";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { userId } = await ensureUserCookie(request);

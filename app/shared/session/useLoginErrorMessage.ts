@@ -16,13 +16,14 @@ export const LOGIN_ERROR_MESSAGES = {
     "There has been an issue logging you in with Google",
 };
 
-export const useLoginErrors = (): string => {
+export const useLoginErrorMessage = (): string => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [messageToReturn, setMessageToReturn] = useState("");
-  const error = searchParams.get("error");
-  const message = searchParams.get("message");
 
   useEffect(() => {
+    const error = searchParams.get("error");
+    const message = searchParams.get("message");
+
     const hasMessageToShow =
       error !== null && Boolean(message) && typeof message === "string";
     if (hasMessageToShow) {
@@ -51,7 +52,7 @@ export const useLoginErrors = (): string => {
     }
 
     setSearchParams({});
-  }, [error, message, messageToReturn, searchParams, setSearchParams]);
+  }, [messageToReturn, searchParams, setSearchParams]);
 
   return messageToReturn;
 };

@@ -3,7 +3,7 @@ import config from "~/config";
 import { authenticator } from "~/services/auth.server";
 import { sentryException } from "~/shared/sentry";
 import { ensureUserCookie } from "~/shared/session";
-import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrors";
+import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrorMessage";
 
 export default function Google() {
   return null;
