@@ -10,6 +10,7 @@ import {
   createOrLoginWithGithub,
   createOrLoginWithGoogle,
 } from "~/shared/db/user.server";
+import { sentryException } from "~/shared/sentry";
 
 const url = `${
   process.env.VERCEL_URL
@@ -57,8 +58,19 @@ if (process.env.DEV_LOGIN === "true") {
       const secret = form.get("secret");
 
       if (secret === process.env.AUTH_SECRET) {
-        const user = await createOrLoginWithDev(secret);
-        return user;
+        try {
+          const user = await createOrLoginWithDev(secret);
+          return user;
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            sentryException({
+              message: error.message,
+              extra: {
+                loginMethod: "dev",
+              },
+            });
+          }
+        }
       }
 
       throw new Error("The dev login code is incorrect");

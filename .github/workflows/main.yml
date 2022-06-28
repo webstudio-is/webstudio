@@ -18,7 +18,7 @@ jobs:
       #   uses: bahmutov/npm-install@v1
       - run: yarn install
 
-      - name: Next.js cache
+      - name: Remix cache
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/.next/cache
