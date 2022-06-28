@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { sentryException } from "../sentry";
 
 export const AUTH_PROVIDERS = {
   LOGIN_DEV: "login_dev",
@@ -21,7 +22,9 @@ export const useLoginErrors = () => {
   const message = searchParams.get("message");
   useEffect(() => {
     if (error !== null && Boolean(message)) {
-      console.log(message);
+      sentryException({
+        message,
+      });
       alert(message);
 
       setSearchParams({});
