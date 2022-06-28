@@ -93,7 +93,7 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
           />
           <OnChangePlugin onChange={onChange} />
           <HistoryPlugin />
-          <InstancePlugin children={["Something"]} />
+          <InstancePlugin>{["Something"]}</InstancePlugin>
           <TreeViewPlugin />
         </div>
       </LexicalComposer>

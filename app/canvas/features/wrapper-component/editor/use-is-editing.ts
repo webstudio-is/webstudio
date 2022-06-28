@@ -1,9 +1,16 @@
 import { type Instance } from "@webstudio-is/sdk";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import { useSelectedInstance } from "~/canvas/shared/nano-states";
 
 type EditableProps = {
-  onDoubleClick: () => void;
+  onDoubleClick: (event: MouseEvent) => void;
+  onKeyDown: (event: KeyboardEvent) => void;
 };
 
 export const useIsEditing = (instance: Instance): [boolean, EditableProps] => {
@@ -30,11 +37,11 @@ export const useIsEditing = (instance: Instance): [boolean, EditableProps] => {
           setIsEditing(false);
         }
       },
-      onDoubleClick() {
+      onDoubleClick(event: MouseEvent) {
         // We only want to do this if the component is the one that was clicked
         // @todo this logic shouldn't be necessary
         if (selectedInstance?.id !== instance.id) return;
-
+        event.preventDefault();
         setIsEditing(true);
       },
     }),

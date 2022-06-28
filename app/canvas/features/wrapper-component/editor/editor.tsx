@@ -3,6 +3,7 @@ import {
   RichTextPlugin,
   HistoryPlugin,
   InstancePlugin,
+  ToolbarPlugin,
 } from "~/shared/text-editor";
 
 type EditorProps = {
@@ -16,6 +17,7 @@ export const Editor = ({ children, editable }: EditorProps) => {
       <RichTextPlugin contentEditable={editable} placeholder="" />
       <HistoryPlugin />
       <InstancePlugin>{children}</InstancePlugin>
+      <ToolbarPlugin />
     </>
   );
 };
