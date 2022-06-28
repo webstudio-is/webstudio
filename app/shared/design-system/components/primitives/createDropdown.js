@@ -19,9 +19,8 @@
  *   });
  * })
  * @todo calculate if clientX + clientWidth is greater than viewport clientWidth and adjust as needed
- * @todo stories file
  * @todo api to recieve the resolved value
- * @todo make the text field an optional feature, some dropdowns won't need it.
+ * @todo convert to react component
  */
 class Dropdown extends HTMLElement {
   connectedCallback() {
@@ -35,14 +34,16 @@ class Dropdown extends HTMLElement {
   }
   constructor() {
     super();
-    this.innerHTML = `
+    const field = (this.innerHTML = `
 		<dialog>
+			${
+        this.hasAttribute("value")
+          ? `<fieldset><input autofocus placeholder="enter a value" value="${this.getAttribute(
+              "value"
+            )}"></fieldset>`
+          : ""
+      }
 			<form method="dialog">
-				<fieldset>
-					<input autofocus placeholder="enter a value" value="${
-            this.querySelector("option[selected]")?.value || ""
-          }">
-				</fieldset>
 				<fieldset style="display:flex;flex-direction:column;">
 					<select  size="${Math.min(10, this.children.length)}">
 						${[...this.querySelectorAll("option")]
@@ -52,7 +53,7 @@ class Dropdown extends HTMLElement {
 				</fieldset>
 			</form>
 		</dialog>
-		`;
+		`);
     const dialogNode = this.querySelector("dialog");
     const searchNode = this.querySelector("input");
     const selectNode = this.querySelector("select");
@@ -118,11 +119,13 @@ customElements.get("drop-down") || customElements.define("drop-down", Dropdown);
 
 export const createDropdown = (
   { clientX, clientY },
-  { items = [], className = "", style = {} }
+  { value, items = [], className = "", style = {} }
 ) => {
   // create
   const targetNode = new Range().createContextualFragment(`
-		<drop-down class="${className}" style="position:absolute;left:${clientX}px;top:${clientY}px;">
+		<drop-down ${
+      value == null ? `` : `value="${value}"`
+    } class="${className}" style="position:absolute;left:${clientX}px;top:${clientY}px;">
 			${items
         .map(
           ({ value, selected }) =>
