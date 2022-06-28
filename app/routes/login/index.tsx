@@ -2,6 +2,7 @@ import { LoaderFunction, redirect } from "@remix-run/node";
 
 import { authenticator } from "~/services/auth.server";
 import config from "~/config";
+import env from "~/env.server";
 
 import { Login, links } from "~/auth/";
 
@@ -13,7 +14,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect(config.dashboardPath);
   }
 
-  return { devLogin: process.env.DEV_LOGIN === "true" };
+  return { devLogin: process.env.DEV_LOGIN === "true", env };
 };
 
 const LoginRoute = () => {
