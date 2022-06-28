@@ -7,7 +7,6 @@ import {
   renderWrapperComponentChildren,
 } from "@webstudio-is/sdk";
 import { primitives } from "~/shared/canvas-components";
-import { useContentEditable } from "./editable";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
@@ -23,37 +22,25 @@ export const WrapperComponentDev = ({
   instance,
   css,
   children,
-  onChangeChildren,
+  onChangeChildren: _onChangeChildren,
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
 
-  const {
-    ref: contentEditableRef,
-    isDisabled: isContentEditableDisabled,
-    toolbar: editableToolbar,
-    ...contentEditableProps
-  } = useContentEditable({
-    instance,
-    children,
-    onChangeChildren,
-  });
-
   const { dragRefCallback, ...draggableProps } = useDraggable({
     instance,
-    isDisabled: isContentEditableDisabled === false,
+    // We can't drag if we are editing text.
+    isDisabled: false,
   });
 
   const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
     (element) => {
-      contentEditableRef.current = element;
-      // We can't drag if we are editing text.
       dragRefCallback(element);
       focusRefCallback(element);
     },
-    [contentEditableRef, dragRefCallback, focusRefCallback]
+    [dragRefCallback, focusRefCallback]
   );
 
   const userProps = useUserProps(instance.id);
@@ -63,11 +50,9 @@ export const WrapperComponentDev = ({
   const { Component } = primitives[instance.component];
   return (
     <>
-      {editableToolbar}
       <Component
         {...userProps}
         {...rest}
-        {...contentEditableProps}
         {...draggableProps}
         {...readonly}
         className={className}
@@ -86,7 +71,7 @@ export const WrapperComponentDev = ({
           event.preventDefault();
         }}
       >
-        {renderWrapperComponentChildren(contentEditableProps.children)}
+        {renderWrapperComponentChildren(children)}
       </Component>
     </>
   );

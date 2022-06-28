@@ -41,7 +41,6 @@ const getPlacement = ({
 type Value = "b" | "i" | "a";
 
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
-  console.log(event);
   event.preventDefault();
 };
 
@@ -86,7 +85,6 @@ type TextToolbarProps = {
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
   const [selectionRect] = useSelectionRect();
   const [element, setElement] = useState<HTMLElement | null>(null);
-  console.log({ selectionRect });
   const placement = useMemo(() => {
     if (selectionRect === undefined || element === null) return;
     const toolbarRect = element.getBoundingClientRect();
