@@ -19,8 +19,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 const LoginRoute = () => {
-  useLoginErrors();
-  return <Login />;
+  const errorMessage = useLoginErrors();
+  return <Login errorMessage={errorMessage} />;
 };
 
 export default LoginRoute;

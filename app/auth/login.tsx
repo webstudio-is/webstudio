@@ -1,7 +1,14 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { Button, Card, Flex, Heading, TextField } from "~/shared/design-system";
+import {
+  Button,
+  Card,
+  Flex,
+  Heading,
+  Text,
+  TextField,
+} from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
 import { GoogleIcon, GithubIcon, CommitIcon } from "~/shared/icons";
@@ -24,7 +31,7 @@ export const meta: MetaFunction = () => {
   return { title: "Webstudio Login" };
 };
 
-export const Login = () => {
+export const Login = ({ errorMessage }: { errorMessage: string | null }) => {
   const [isDevLogin, setIsDevLogin] = useState(false);
   const loaderData = useLoaderData();
 
@@ -35,10 +42,14 @@ export const Login = () => {
       align="center"
       justify="center"
     >
-      <Card css={{ width: "$10", padding: "$5", zoom: 1.4 }} variant="active">
+      <Card css={{ width: 200, padding: "$5", zoom: 1.4 }} variant="active">
         <Flex direction="column" gap="2" align="center">
           <Heading>Login</Heading>
-
+          {errorMessage && (
+            <Text css={{ textAlign: "center" }} variant="red">
+              {errorMessage}
+            </Text>
+          )}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
               <Button type="submit">

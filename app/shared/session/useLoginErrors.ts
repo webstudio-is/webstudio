@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { sentryException } from "../sentry";
 
@@ -18,14 +18,15 @@ export const LOGIN_ERROR_MESSAGES = {
 
 export const useLoginErrors = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [messageToReturn, setMessageToReturn] = useState("");
   const error = searchParams.get("error");
   const message = searchParams.get("message");
   useEffect(() => {
-    if (error !== null && Boolean(message)) {
+    if (error !== null && Boolean(message) && typeof message === "string") {
       sentryException({
-        message,
+        message: message as string,
       });
-      alert(message);
+      setMessageToReturn(message);
 
       setSearchParams({});
       return;
@@ -33,13 +34,13 @@ export const useLoginErrors = () => {
 
     switch (error) {
       case AUTH_PROVIDERS.LOGIN_DEV:
-        alert(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_DEV]);
+        setMessageToReturn(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_DEV]);
         break;
       case AUTH_PROVIDERS.LOGIN_GITHUB:
-        alert(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_GITHUB]);
+        setMessageToReturn(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_GITHUB]);
         break;
       case AUTH_PROVIDERS.LOGIN_GOOGLE:
-        alert(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_GOOGLE]);
+        setMessageToReturn(LOGIN_ERROR_MESSAGES[AUTH_PROVIDERS.LOGIN_GOOGLE]);
         break;
 
       default:
@@ -47,5 +48,7 @@ export const useLoginErrors = () => {
     }
 
     setSearchParams({});
-  }, [error, message, searchParams, setSearchParams]);
+  }, [error, message, messageToReturn, searchParams, setSearchParams]);
+
+  return messageToReturn;
 };
