@@ -26,7 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
       sentryException({
         message: error.message,
         extra: {
-          loginMethod: "github",
+          loginMethod: AUTH_PROVIDERS.LOGIN_GITHUB,
         },
       });
       return redirect(

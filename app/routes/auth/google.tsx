@@ -28,7 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
       sentryException({
         message: error.message,
         extra: {
-          loginMethod: "google",
+          loginMethod: AUTH_PROVIDERS.LOGIN_GOOGLE,
         },
       });
       return redirect(

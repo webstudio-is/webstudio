@@ -31,7 +31,7 @@ export const meta: MetaFunction = () => {
   return { title: "Webstudio Login" };
 };
 
-export const Login = ({ errorMessage }: { errorMessage: string | null }) => {
+export const Login = ({ errorMessage }: { errorMessage: string }) => {
   const [isDevLogin, setIsDevLogin] = useState(false);
   const loaderData = useLoaderData();
 
@@ -45,11 +45,11 @@ export const Login = ({ errorMessage }: { errorMessage: string | null }) => {
       <Card css={{ width: 200, padding: "$5", zoom: 1.4 }} variant="active">
         <Flex direction="column" gap="2" align="center">
           <Heading>Login</Heading>
-          {errorMessage && (
+          {errorMessage.length ? (
             <Text css={{ textAlign: "center" }} variant="red">
               {errorMessage}
             </Text>
-          )}
+          ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
               <Button type="submit">

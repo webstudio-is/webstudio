@@ -11,6 +11,7 @@ import {
   createOrLoginWithGoogle,
 } from "~/shared/db/user.server";
 import { sentryException } from "~/shared/sentry";
+import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrors";
 
 const url = `${
   process.env.VERCEL_URL
@@ -66,7 +67,7 @@ if (process.env.DEV_LOGIN === "true") {
             sentryException({
               message: error.message,
               extra: {
-                loginMethod: "dev",
+                loginMethod: AUTH_PROVIDERS.LOGIN_DEV,
               },
             });
           }
