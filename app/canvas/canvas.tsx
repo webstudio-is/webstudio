@@ -50,6 +50,7 @@ import {
 import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
+import { LexicalComposer, config } from "~/shared/text-editor";
 
 registerContainers();
 
@@ -127,7 +128,9 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
     <DndProvider backend={TouchBackend} options={dndOptions}>
-      {elements}
+      {elements && (
+        <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
+      )}
     </DndProvider>
   );
 };

@@ -10,6 +10,9 @@ import { primitives } from "~/shared/canvas-components";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
+import { Editor } from "./editor/editor";
+import { useIsEditing } from "./editor/use-is-editing";
+import { useContentEditable } from "~/shared/text-editor";
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -26,53 +29,62 @@ export const WrapperComponentDev = ({
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
+  const [isEditing, isEditingProps] = useIsEditing(instance);
+  const [editableRefCallback, editableProps] = useContentEditable(isEditing);
 
   const { dragRefCallback, ...draggableProps } = useDraggable({
     instance,
     // We can't drag if we are editing text.
-    isDisabled: false,
+    isDisabled: isEditing === true,
   });
 
   const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
     (element) => {
+      if (isEditing) editableRefCallback(element);
       dragRefCallback(element);
       focusRefCallback(element);
     },
-    [dragRefCallback, focusRefCallback]
+    [dragRefCallback, focusRefCallback, editableRefCallback, isEditing]
   );
 
   const userProps = useUserProps(instance.id);
-  const readonly =
+  const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
 
   const { Component } = primitives[instance.component];
-  return (
-    <>
-      <Component
-        {...userProps}
-        {...rest}
-        {...draggableProps}
-        {...readonly}
-        className={className}
-        id={instance.id}
-        tabIndex={0}
-        data-component={instance.component}
-        data-id={instance.id}
-        ref={refCallback}
-        onClick={(event: MouseEvent) => {
-          if (instance.component === "Link") {
-            event.preventDefault();
-          }
-        }}
-        onSubmit={(event: FormEvent) => {
-          // Prevent submitting the form when clicking a button type submit
+  const element = (
+    <Component
+      {...userProps}
+      {...rest}
+      {...draggableProps}
+      {...readonlyProps}
+      {...isEditingProps}
+      {...editableProps}
+      className={className}
+      id={instance.id}
+      tabIndex={0}
+      data-component={instance.component}
+      data-id={instance.id}
+      ref={refCallback}
+      onClick={(event: MouseEvent) => {
+        if (instance.component === "Link") {
           event.preventDefault();
-        }}
-      >
-        {renderWrapperComponentChildren(children)}
-      </Component>
-    </>
+        }
+      }}
+      onSubmit={(event: FormEvent) => {
+        // Prevent submitting the form when clicking a button type submit
+        event.preventDefault();
+      }}
+    >
+      {isEditing ? undefined : renderWrapperComponentChildren(children)}
+    </Component>
   );
+
+  if (isEditing) {
+    return <Editor>{element}</Editor>;
+  }
+
+  return element;
 };

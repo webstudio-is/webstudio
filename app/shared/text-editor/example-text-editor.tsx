@@ -89,7 +89,9 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
         <div className="editor-container">
           <RichTextPlugin
             contentEditable={<ContentEditable className="editor-input" />}
-            placeholder={<Placeholder />}
+            placeholder={
+              <div className="editor-placeholder">Enter some plain text...</div>
+            }
           />
           <OnChangePlugin onChange={onChange} />
           <HistoryPlugin />
@@ -99,8 +101,4 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
       </LexicalComposer>
     </>
   );
-};
-
-const Placeholder = () => {
-  return <div className="editor-placeholder">Enter some plain text...</div>;
 };
