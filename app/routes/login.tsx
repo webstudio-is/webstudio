@@ -1,5 +1,10 @@
-import { MetaFunction } from "@remix-run/node";
+import { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Designer } from "~/shared/documents/designer";
+import env from "~/env.server";
+
+export const loader: LoaderFunction = () => ({
+  env,
+});
 
 export const meta: MetaFunction = () => {
   return { title: "Webstudio Login" };

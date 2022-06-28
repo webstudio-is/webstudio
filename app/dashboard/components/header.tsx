@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 
 export const DashboardHeader = ({ user }: { user: User }) => {
   const navigate = useNavigate();
-  const userNameFallback = (user.username || user.email || "X")
+  const userNameFallback = (user?.username || user?.email || "X")
     .charAt(0)
     .toLocaleUpperCase();
 

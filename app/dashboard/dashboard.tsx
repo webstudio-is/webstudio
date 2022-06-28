@@ -28,7 +28,6 @@ type DashboardProps = {
 
 export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
   const actionData = useActionData();
-
   return (
     <>
       <DashboardHeader user={user} />
