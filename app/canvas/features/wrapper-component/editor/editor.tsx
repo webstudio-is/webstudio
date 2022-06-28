@@ -1,3 +1,4 @@
+import { type Instance } from "@webstudio-is/sdk";
 import {
   RichTextPlugin,
   HistoryPlugin,
@@ -5,15 +6,16 @@ import {
 } from "~/shared/text-editor";
 
 type EditorProps = {
-  children: JSX.Element;
+  editable: JSX.Element;
+  children: Array<Instance | string>;
 };
 
-export const Editor = ({ children }: EditorProps) => {
+export const Editor = ({ children, editable }: EditorProps) => {
   return (
     <>
-      <RichTextPlugin contentEditable={children} placeholder="" />
+      <RichTextPlugin contentEditable={editable} placeholder="" />
       <HistoryPlugin />
-      <InstancePlugin />
+      <InstancePlugin>{children}</InstancePlugin>
     </>
   );
 };

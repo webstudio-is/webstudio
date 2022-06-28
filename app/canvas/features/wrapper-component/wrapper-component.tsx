@@ -82,12 +82,12 @@ export const WrapperComponentDev = ({
         event.preventDefault();
       }}
     >
-      {isEditing ? undefined : renderWrapperComponentChildren(children)}
+      {isEditing ? null : renderWrapperComponentChildren(children)}
     </Component>
   );
 
   if (isEditing) {
-    return <Editor>{element}</Editor>;
+    return <Editor editable={element}>{instance.children}</Editor>;
   }
 
   return element;

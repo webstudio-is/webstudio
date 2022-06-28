@@ -11,12 +11,45 @@ import {
   createCommand,
   $isRangeSelection,
   $getSelection,
+  $createTextNode,
+  $createParagraphNode,
+  $getRoot,
   COMMAND_PRIORITY_EDITOR,
   useLexicalComposerContext,
   type LexicalCommand,
 } from "../lexical";
 import { useCss } from "~/canvas/features/wrapper-component/use-css";
 import { useBreakpoints } from "~/shared/nano-states";
+
+const populateRoot = (children: Instance["children"]) => {
+  const nodes = children.map((child) => {
+    if (typeof child === "string") {
+      const paragraph = $createParagraphNode();
+      paragraph.append($createTextNode(child));
+      return paragraph;
+    }
+    // @todo
+    const props = {};
+    // Inline components should always have a single child string
+    const text = typeof child.children[0] === "string" ? child.children[0] : "";
+
+    return $createInstanceNode({
+      component: (
+        <InlineWrapperComponent {...props} instance={child}>
+          {text}
+        </InlineWrapperComponent>
+      ),
+      text,
+    });
+  });
+
+  const root = $getRoot();
+  root.clear();
+  for (const node of nodes) {
+    root.append(node);
+  }
+  root.selectStart();
+};
 
 const INSERT_INSTANCE_COMMAND: LexicalCommand<CreateInstancePayload> =
   createCommand();
@@ -26,7 +59,11 @@ type CreateInstancePayload = {
   props: Record<string, unknown>;
 };
 
-export const InstancePlugin = () => {
+type InstancePluginProps = {
+  children: Instance["children"];
+};
+
+export const InstancePlugin = ({ children }: InstancePluginProps) => {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     if (editor.hasNodes([InstanceNode]) === false) {
@@ -56,6 +93,12 @@ export const InstancePlugin = () => {
     );
   }, [editor]);
 
+  useEffect(() => {
+    editor.update(() => {
+      populateRoot(children);
+    });
+  }, [editor, children]);
+
   useSubscribe<"insertInlineInstance", CreateInstancePayload>(
     "insertInlineInstance",
     (payload) => {
@@ -65,6 +108,7 @@ export const InstancePlugin = () => {
       );
     }
   );
+
   return null;
 };
 
