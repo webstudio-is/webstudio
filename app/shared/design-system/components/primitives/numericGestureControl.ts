@@ -13,15 +13,34 @@
  *   }
  * });
  */
+
+export type Direction = "horizontal" | "vertical";
+
+export type Value = number;
+
+type Options = {
+  initialValue: Value;
+  direction: Direction;
+  onValueChange: (event: {
+    target: HTMLInputElement;
+    value: Value;
+    preventDefault: () => void;
+  }) => void;
+};
+
 export const numericGestureControl = (
-  targetNode,
-  { initialValue = 0, direction = "horizontal", onValueChange = ({}) => null }
+  targetNode: HTMLInputElement,
+  {
+    initialValue = 0,
+    direction = "horizontal",
+    onValueChange = () => null,
+  }: Options
 ) => {
   const { ownerDocument } = targetNode;
-  const eventNames = ["pointerup", "pointerdown", "pointermove"];
+  const eventNames = ["pointerup", "pointerdown", "pointermove"] as const;
   const state = {
     value: initialValue,
-    cursor: cursorNode.cloneNode(true),
+    cursor: cursorNode.cloneNode(true) as HTMLElement,
     offset: 0,
     velocity: direction === "horizontal" ? 1 : -1,
     position: direction === "horizontal" ? "left" : "top",
@@ -31,7 +50,7 @@ export const numericGestureControl = (
       direction === "horizontal" ? "0 1px" : "1px 0"
     } 1.1px rgba(0,0,0,.4))`,
   };
-  const handleEvent = (event) => {
+  const handleEvent = (event: PointerEvent) => {
     const { type, pressure, offsetX, offsetY, movementY, movementX } = event;
     const offset = direction === "horizontal" ? offsetX : offsetY;
     const movement = direction === "horizontal" ? movementX : -movementY;
@@ -77,7 +96,9 @@ export const numericGestureControl = (
           else if (state.offset > globalThis.innerWidth) state.offset = 1;
           state.value += movement;
           state.offset += movement * state.velocity;
-          state.cursor.style[state.position] = `${state.offset}px`;
+          state.cursor.style[
+            state.position as "top" | "left"
+          ] = `${state.offset}px`;
           onValueChange({
             target: targetNode,
             value: state.value,
@@ -109,4 +130,4 @@ const cursorNode = new Range().createContextualFragment(`
       <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
     </g>
   </svg>
-`).firstElementChild;
+`).firstElementChild as HTMLElement;
