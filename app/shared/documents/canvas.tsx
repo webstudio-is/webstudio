@@ -7,6 +7,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import { CriticalCss } from "@webstudio-is/sdk";
+import { Env } from "~/shared/env";
 
 /**
  * We are using Outlet prop from index layout when user renders site from a subdomain.
@@ -30,6 +31,7 @@ export const Canvas = ({
       <body>
         <Outlet />
         <ScrollRestoration />
+        <Env />
         <Scripts />
         {process.env.NODE_ENV === "development" && <LiveReload />}
       </body>

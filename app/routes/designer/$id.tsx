@@ -4,7 +4,7 @@ import type { Project } from "@webstudio-is/sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
-
+import env from "~/env.server";
 export { links };
 
 export const loader: LoaderFunction = async ({ params }) => {
@@ -13,7 +13,7 @@ export const loader: LoaderFunction = async ({ params }) => {
   if (project === null) {
     return { errors: `Project "${params.id}" not found` };
   }
-  return { config, project };
+  return { config, project, env };
 };
 
 type Data = {

@@ -4,14 +4,18 @@ import { Root, type Data } from "@webstudio-is/sdk";
 import config from "~/config";
 import * as db from "~/shared/db";
 import Document from "./canvas";
+import env, { Env } from "~/env.server";
 
 // @todo all this subdomain logic is very hacky
 
 type Error = { errors: string };
+type LoaderReturnProps = Promise<
+  (Data & { env: Env }) | (Error & { env: Env }) | Response
+>;
 
 export const loader: LoaderFunction = async ({
   request,
-}): Promise<Data | Error | Response> => {
+}): LoaderReturnProps => {
   const host =
     request.headers.get("x-forwarded-host") ||
     request.headers.get("host") ||
@@ -42,10 +46,10 @@ export const loader: LoaderFunction = async ({
       if (breakpoints === null) {
         throw new Error(`Breakpoints for tree ${project.prodTreeId} not found`);
       }
-      return { tree, props, breakpoints: breakpoints.values };
+      return { tree, props, breakpoints: breakpoints.values, env };
     } catch (error) {
       if (error instanceof Error) {
-        return { errors: error.message };
+        return { errors: error.message, env };
       }
     }
   }
