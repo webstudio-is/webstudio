@@ -52,4 +52,60 @@ describe("toUpdates", () => {
     const updates = toUpdates(state.root);
     expect(updates).toStrictEqual(["a\nb"]);
   });
+
+  test("text and instance", () => {
+    const state = {
+      root: {
+        children: [
+          {
+            children: [
+              {
+                detail: 0,
+                format: 0,
+                mode: "normal",
+                style: "",
+                text: "a ",
+                type: "text",
+                version: 1,
+              },
+              {
+                detail: 0,
+                format: 0,
+                mode: "normal",
+                style: "",
+                text: "b",
+                type: "instance",
+                version: 1,
+                instance: {
+                  component: "Bold",
+                  id: "62bcc02160a439686c7eabde",
+                  cssRules: [],
+                  children: [],
+                },
+              },
+            ],
+            direction: "ltr",
+            format: "",
+            indent: 0,
+            type: "paragraph",
+            version: 1,
+          },
+        ],
+        direction: "ltr",
+        format: "",
+        indent: 0,
+        type: "root",
+        version: 1,
+      },
+    } as const;
+
+    const updates = toUpdates(state.root);
+    expect(updates).toStrictEqual([
+      "a ",
+      {
+        id: "62bcc02160a439686c7eabde",
+        text: "b",
+      },
+    ]);
+  });
 });

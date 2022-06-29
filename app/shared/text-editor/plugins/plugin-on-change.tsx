@@ -14,8 +14,6 @@ export const OnChangePlugin = ({
     state.read(() => {
       const updates = toUpdates(state.toJSON().root);
       onChange(updates);
-      console.log(state.toJSON());
-      console.log(updates);
     });
   };
 

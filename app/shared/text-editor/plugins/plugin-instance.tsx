@@ -1,13 +1,5 @@
-import { useEffect, useMemo } from "react";
-import {
-  useSubscribe,
-  useUserProps,
-  type Instance,
-  toCss,
-} from "@webstudio-is/sdk";
-import { useCss } from "~/canvas/features/wrapper-component/use-css";
-import { useBreakpoints } from "~/shared/nano-states";
-import { primitives } from "../../canvas-components";
+import { useEffect } from "react";
+import { useSubscribe, type Instance } from "@webstudio-is/sdk";
 import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import {
   createCommand,
@@ -21,7 +13,7 @@ import {
 import { toLexicalNodes } from "../utils/to-lexical-nodes";
 
 const populateRoot = (children: Instance["children"]) => {
-  const nodes = toLexicalNodes(children, InlineWrapperComponent);
+  const nodes = toLexicalNodes(children);
   const root = $getRoot();
   root.clear();
   for (const node of nodes) {
@@ -50,12 +42,9 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
         const text = selection?.getTextContent();
         if ($isRangeSelection(selection) && text) {
           const instanceNode = $createInstanceNode({
-            component: (
-              <InlineWrapperComponent instance={instance}>
-                {text}
-              </InlineWrapperComponent>
-            ),
+            instance,
             text,
+            isNew: true,
           });
           selection.insertNodes([instanceNode]);
           // Dirty hack. When clicking on toolbar outside of the iframe, we are loosing focus.
@@ -86,31 +75,4 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
   );
 
   return null;
-};
-
-const InlineWrapperComponent = ({
-  instance,
-  ...rest
-}: {
-  instance: Instance;
-  children: string;
-}) => {
-  const [breakpoints] = useBreakpoints();
-  const css = useMemo(
-    () => toCss(instance.cssRules, breakpoints),
-    [instance, breakpoints]
-  );
-  const className = useCss({ instance, css });
-  const userProps = useUserProps(instance.id);
-  const { Component } = primitives[instance.component];
-
-  return (
-    <Component
-      {...rest}
-      {...userProps}
-      key={instance.id}
-      id={instance.id}
-      className={className}
-    />
-  );
 };

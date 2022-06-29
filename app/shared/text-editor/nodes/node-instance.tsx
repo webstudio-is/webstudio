@@ -1,10 +1,22 @@
-import { type EditorConfig, TextNode } from "../lexical";
+import { useUserProps, type Instance, toCss } from "@webstudio-is/sdk";
 import { render } from "react-dom";
+import { useMemo } from "react";
+import { useCss } from "~/canvas/features/wrapper-component/use-css";
+import { useBreakpoints } from "~/shared/nano-states";
+import { primitives } from "../../canvas-components";
+import {
+  type EditorConfig,
+  type SerializedTextNode,
+  TextNode,
+} from "../lexical";
 
 type Options = {
-  component: JSX.Element;
+  instance: Instance;
   text: string;
+  isNew: boolean;
 };
+
+export type SerializedInstanceNode = SerializedTextNode & Options;
 
 export class InstanceNode extends TextNode {
   options: Options;
@@ -23,9 +35,23 @@ export class InstanceNode extends TextNode {
     this.options = options;
   }
 
+  exportJSON(): SerializedInstanceNode {
+    const json = super.exportJSON();
+    return {
+      ...json,
+      ...this.options,
+      type: InstanceNode.getType(),
+    };
+  }
+
   createDOM(config: EditorConfig) {
     const container = super.createDOM(config);
-    render(this.options.component, container);
+    const element = (
+      <InlineWrapperComponent instance={this.options.instance}>
+        {this.options.text}
+      </InlineWrapperComponent>
+    );
+    render(element, container);
     return container;
   }
 
@@ -54,4 +80,34 @@ export class InstanceNode extends TextNode {
 
 export const $createInstanceNode = (options: Options) => {
   return new InstanceNode(options);
+};
+
+// @todo
+// - reuse majority of this logic across WrapperComponentDev and WrapperComponent
+// - merge className with props
+const InlineWrapperComponent = ({
+  instance,
+  ...rest
+}: {
+  instance: Instance;
+  children: string;
+}) => {
+  const [breakpoints] = useBreakpoints();
+  const css = useMemo(
+    () => toCss(instance.cssRules, breakpoints),
+    [instance, breakpoints]
+  );
+  const className = useCss({ instance, css });
+  const userProps = useUserProps(instance.id);
+  const { Component } = primitives[instance.component];
+
+  return (
+    <Component
+      {...rest}
+      {...userProps}
+      key={instance.id}
+      id={instance.id}
+      className={className}
+    />
+  );
 };

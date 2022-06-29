@@ -2,13 +2,7 @@ import { type Instance } from "@webstudio-is/sdk";
 import { $createInstanceNode } from "../nodes/node-instance";
 import { $createTextNode, $createParagraphNode } from "../lexical";
 
-export const toLexicalNodes = (
-  children: Instance["children"],
-  InlineWrapperComponent: (props: {
-    instance: Instance;
-    children: string;
-  }) => JSX.Element
-) => {
+export const toLexicalNodes = (children: Instance["children"]) => {
   return children.map((child) => {
     if (typeof child === "string") {
       const paragraph = $createParagraphNode();
@@ -20,10 +14,9 @@ export const toLexicalNodes = (
     const text = typeof child.children[0] === "string" ? child.children[0] : "";
 
     return $createInstanceNode({
-      component: (
-        <InlineWrapperComponent instance={child}>{text}</InlineWrapperComponent>
-      ),
+      instance: child,
       text,
+      isNew: false,
     });
   });
 };
