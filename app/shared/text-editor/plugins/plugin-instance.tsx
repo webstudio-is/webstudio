@@ -5,44 +5,23 @@ import {
   type Instance,
   toCss,
 } from "@webstudio-is/sdk";
+import { useCss } from "~/canvas/features/wrapper-component/use-css";
+import { useBreakpoints } from "~/shared/nano-states";
 import { primitives } from "../../canvas-components";
 import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import {
   createCommand,
   $isRangeSelection,
   $getSelection,
-  $createTextNode,
-  $createParagraphNode,
   $getRoot,
   COMMAND_PRIORITY_EDITOR,
   useLexicalComposerContext,
   type LexicalCommand,
 } from "../lexical";
-import { useCss } from "~/canvas/features/wrapper-component/use-css";
-import { useBreakpoints } from "~/shared/nano-states";
+import { toLexicalNodes } from "../utils/to-lexical-nodes";
 
 const populateRoot = (children: Instance["children"]) => {
-  const nodes = children.map((child) => {
-    if (typeof child === "string") {
-      const paragraph = $createParagraphNode();
-      paragraph.append($createTextNode(child));
-      return paragraph;
-    }
-    // @todo
-    const props = {};
-    // Inline components should always have a single child string
-    const text = typeof child.children[0] === "string" ? child.children[0] : "";
-
-    return $createInstanceNode({
-      component: (
-        <InlineWrapperComponent {...props} instance={child}>
-          {text}
-        </InlineWrapperComponent>
-      ),
-      text,
-    });
-  });
-
+  const nodes = toLexicalNodes(children, InlineWrapperComponent);
   const root = $getRoot();
   root.clear();
   for (const node of nodes) {

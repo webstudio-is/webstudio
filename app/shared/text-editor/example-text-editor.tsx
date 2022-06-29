@@ -1,19 +1,22 @@
-import { publish, useAllUserProps } from "@webstudio-is/sdk";
 import {
-  type EditorState,
+  type ChildrenUpdates,
+  publish,
+  useAllUserProps,
+} from "@webstudio-is/sdk";
+import {
   LexicalComposer,
   RichTextPlugin,
   ContentEditable,
   HistoryPlugin,
-  OnChangePlugin,
 } from "./lexical";
+import { OnChangePlugin } from "./plugins/plugin-on-change";
 import { InstancePlugin } from "./plugins/plugin-instance";
 import { TreeViewPlugin } from "./plugins/tree-view-plugin";
 import { config } from "./config";
 import { createInstance } from "../tree-utils";
 
 type ExampleTextEditorProps = {
-  onChange: (state: EditorState) => void;
+  onChange: (state: ChildrenUpdates) => void;
 };
 
 const Menu = () => {

@@ -3,7 +3,13 @@ export type {
   EditorState,
   LexicalCommand,
   LexicalEditor,
+  LexicalNode,
   RangeSelection,
+  SerializedEditorState,
+  SerializedLexicalNode,
+  SerializedElementNode,
+  SerializedTextNode,
+  SerializedRootNode,
 } from "lexical";
 export {
   ElementNode,

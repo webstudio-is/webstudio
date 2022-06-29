@@ -13,6 +13,7 @@ import { useEnsureFocus } from "./use-ensure-focus";
 import { Editor } from "./editor/editor";
 import { useIsEditing } from "./editor/use-is-editing";
 import { useContentEditable } from "~/shared/text-editor";
+import noop from "lodash.noop";
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -25,13 +26,12 @@ export const WrapperComponentDev = ({
   instance,
   css,
   children,
-  onChangeChildren: _onChangeChildren,
+  onChangeChildren = noop,
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
   const [isEditing, isEditingProps] = useIsEditing(instance);
   const [editableRefCallback, editableProps] = useContentEditable(isEditing);
-
   const { dragRefCallback, ...draggableProps } = useDraggable({
     instance,
     // We can't drag if we are editing text.
@@ -87,7 +87,16 @@ export const WrapperComponentDev = ({
   );
 
   if (isEditing) {
-    return <Editor editable={element}>{instance.children}</Editor>;
+    return (
+      <Editor
+        editable={element}
+        onChange={(updates) => {
+          onChangeChildren({ instanceId: instance.id, updates });
+        }}
+      >
+        {instance.children}
+      </Editor>
+    );
   }
 
   return element;
