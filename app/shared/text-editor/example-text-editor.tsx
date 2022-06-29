@@ -25,10 +25,7 @@ const Menu = () => {
           const instance = createInstance({ component: "Bold" });
           publish({
             type: "insertInlineInstance",
-            payload: {
-              instance,
-              props: {},
-            },
+            payload: instance,
           });
         }}
       >
@@ -39,10 +36,7 @@ const Menu = () => {
           const instance = createInstance({ component: "Italic" });
           publish({
             type: "insertInlineInstance",
-            payload: {
-              instance,
-              props: {},
-            },
+            payload: instance,
           });
         }}
       >
@@ -53,10 +47,7 @@ const Menu = () => {
           const instance = createInstance({ component: "Link" });
           publish({
             type: "insertInlineInstance",
-            payload: {
-              instance,
-              props: { href: "", target: "_blank" },
-            },
+            payload: instance,
           });
           const url = prompt("Enter url");
           if (url === null) return;

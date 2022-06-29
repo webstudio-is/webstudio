@@ -3,6 +3,7 @@ import { useMemo, useState, type MouseEventHandler } from "react";
 import { useSelectionRect } from "~/designer/shared/nano-states";
 import { ToggleGroup, type CSS } from "~/shared/design-system";
 import { FontBoldIcon, FontItalicIcon, Link2Icon } from "~/shared/icons";
+import { createInstance } from "~/shared/tree-utils";
 
 const getPlacement = ({
   toolbarRect,
@@ -37,11 +38,11 @@ const getPlacement = ({
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
-// @todo dedupe with use-toolbar.tsx
-type Value = "b" | "i" | "a";
+type Value = "Bold" | "Italic" | "Link";
 
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.preventDefault();
+  event.stopPropagation();
 };
 
 type ToolbarProps = {
@@ -65,13 +66,13 @@ const Toolbar = ({ css, onValueChange, rootRef }: ToolbarProps) => {
         ...css,
       }}
     >
-      <ToggleGroup.Item value="b">
-        <FontBoldIcon style={{ pointerEvents: "auto" }} />
+      <ToggleGroup.Item value="Bold">
+        <FontBoldIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="i">
+      <ToggleGroup.Item value="Italic">
         <FontItalicIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="a">
+      <ToggleGroup.Item value="Link">
         <Link2Icon />
       </ToggleGroup.Item>
     </ToggleGroup.Root>
@@ -97,8 +98,9 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
     <Toolbar
       rootRef={setElement}
       css={placement}
-      onValueChange={(type) => {
-        publish({ type: "insertInlineInstance", payload: type });
+      onValueChange={(component) => {
+        const instance = createInstance({ component });
+        publish({ type: "insertInlineInstance", payload: instance });
       }}
     />
   );

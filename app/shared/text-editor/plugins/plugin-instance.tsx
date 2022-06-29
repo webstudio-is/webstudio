@@ -51,13 +51,7 @@ const populateRoot = (children: Instance["children"]) => {
   root.selectStart();
 };
 
-const INSERT_INSTANCE_COMMAND: LexicalCommand<CreateInstancePayload> =
-  createCommand();
-
-type CreateInstancePayload = {
-  instance: Instance;
-  props: Record<string, unknown>;
-};
+const INSERT_INSTANCE_COMMAND: LexicalCommand<Instance> = createCommand();
 
 type InstancePluginProps = {
   children: Instance["children"];
@@ -70,23 +64,29 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
       throw new Error("InstancePlugin: InstanceNode not registered on editor");
     }
 
-    return editor.registerCommand<CreateInstancePayload>(
+    return editor.registerCommand<Instance>(
       INSERT_INSTANCE_COMMAND,
-      ({ instance, props }) => {
+      (instance) => {
         const selection = $getSelection();
         const text = selection?.getTextContent();
         if ($isRangeSelection(selection) && text) {
           const instanceNode = $createInstanceNode({
             component: (
-              <InlineWrapperComponent {...props} instance={instance}>
+              <InlineWrapperComponent instance={instance}>
                 {text}
               </InlineWrapperComponent>
             ),
             text,
           });
           selection.insertNodes([instanceNode]);
+          // Dirty hack. When clicking on toolbar outside of the iframe, we are loosing focus.
+          // For some reason we can only refocus after a delay
+          requestAnimationFrame(() => {
+            editor.update(() => {
+              instanceNode.select();
+            });
+          });
         }
-
         return true;
       },
       COMMAND_PRIORITY_EDITOR
@@ -99,13 +99,10 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
     });
   }, [editor, children]);
 
-  useSubscribe<"insertInlineInstance", CreateInstancePayload>(
+  useSubscribe<"insertInlineInstance", Instance>(
     "insertInlineInstance",
     (payload) => {
-      editor.dispatchCommand<CreateInstancePayload>(
-        INSERT_INSTANCE_COMMAND,
-        payload
-      );
+      editor.dispatchCommand<Instance>(INSERT_INSTANCE_COMMAND, payload);
     }
   );
 
