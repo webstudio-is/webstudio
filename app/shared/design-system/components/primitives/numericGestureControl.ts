@@ -61,7 +61,6 @@ export const numericGestureControl = (
       }
       case "pointerdown": {
         const handlePointerLockEvent = () => {
-          const { pointerLockElement } = ownerDocument;
           switch (ownerDocument.pointerLockElement) {
             case targetNode: {
               state.offset = offset;

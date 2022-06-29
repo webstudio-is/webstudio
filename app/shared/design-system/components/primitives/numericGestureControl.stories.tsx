@@ -27,7 +27,7 @@ const useNumericGestureControl = ({
       },
     });
     return () => disconnectedCallback();
-  }, [direction, value]);
+  }, [direction, value, ref]);
 };
 
 const Input = ({
