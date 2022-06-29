@@ -21,11 +21,7 @@ export default {
   component: ExampleTextEditor,
 } as ComponentMeta<typeof ExampleTextEditor>;
 
-const Template: ComponentStory<typeof ExampleTextEditor> = (args) => {
-  return <ExampleTextEditor {...args} />;
-};
-
-export const TextEditor = Template.bind({});
+export const TextEditor = (args) => <ExampleTextEditor {...args} />
 TextEditor.args = {
   onChange,
 };
