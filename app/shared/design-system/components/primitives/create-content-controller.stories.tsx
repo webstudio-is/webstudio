@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, RefObject } from "react";
-import { createContentController } from "./createContentController";
+import { createContentController } from "./create-content-controller";
 
 const useContentController = ({
   ref,
