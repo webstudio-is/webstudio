@@ -87,7 +87,17 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
           />
           <OnChangePlugin onChange={onChange} />
           <HistoryPlugin />
-          <InstancePlugin>{["Something"]}</InstancePlugin>
+          <InstancePlugin>
+            {[
+              "Pragraph you can edit ",
+              {
+                component: "Bold",
+                id: "62bd56ad8f5562223cb85cc2",
+                cssRules: [],
+                children: ["bold"],
+              },
+            ]}
+          </InstancePlugin>
           <TreeViewPlugin />
         </div>
       </LexicalComposer>
