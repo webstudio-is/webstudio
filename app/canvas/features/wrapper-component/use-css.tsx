@@ -55,6 +55,9 @@ const defaultStyle = {
     // When double clicking into an element to edit text, it should not select the word.
     userSelect: "none",
   },
+  "& p": {
+    margin: 0,
+  },
   [`&:not(${voidElements}):not(${rootElement}):empty`]: {
     outline: "1px dashed #555",
     outlineOffset: -1,
