@@ -8,6 +8,7 @@ import {
   Select,
   Slider,
   Switch,
+  Text,
   TextField,
 } from "~/shared/design-system";
 import { Checkbox } from "~/shared/design-system/components/checkbox";
@@ -130,16 +131,22 @@ const RangeControl = ({
   max,
   step,
 }: RangeControlProps) => (
-  <Slider
-    value={value}
-    defaultValue={defaultValue}
-    onValueChange={(values) => {
-      onChange(values[0]);
-    }}
-    min={min}
-    max={max}
-    step={step}
-  />
+  <Flex direction="column" gap={1}>
+    <Slider
+      value={value}
+      defaultValue={defaultValue}
+      onValueChange={(values) => {
+        onChange(values[0]);
+      }}
+      min={min}
+      max={max}
+      step={step}
+    />
+    <Flex direction="row" justify="between">
+      <Text size={1}>{min}</Text>
+      <Text size={1}>{max}</Text>
+    </Flex>
+  </Flex>
 );
 
 const NotImplemented = () => <div />;
