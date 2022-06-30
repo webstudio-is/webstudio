@@ -72,7 +72,6 @@ export const createContentController = (
     write: (node: HTMLInputElement, value: string) => void;
     contents: {
       name: string;
-      value: string;
       match: (value: string) => boolean;
     }[];
     onMouseMove: (value: {

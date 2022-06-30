@@ -13,6 +13,7 @@ const useContentController = ({
   callback: (value: { name: string; value: string }) => void;
 }) => {
   useEffect(() => {
+    if (ref.current == null) return;
     const { disconnectedCallback } = createContentController(ref.current, {
       contents: [
         {
@@ -23,7 +24,7 @@ const useContentController = ({
           name: "number",
           match: (value: string) => isNaN(parseFloat(value)) === false,
         },
-        { name: "unknown", match: (value: string) => value },
+        { name: "unknown", match: (value: string) => Boolean(value) },
       ],
       read,
       write,
