@@ -1,16 +1,27 @@
 import { type Instance } from "@webstudio-is/sdk";
 import { $createInstanceNode } from "../nodes/node-instance";
-import { $createTextNode, $createParagraphNode } from "../lexical";
+import {
+  $createTextNode,
+  $createParagraphNode,
+  type ParagraphNode,
+} from "../lexical";
 
 export const toLexicalNodes = (children: Instance["children"]) => {
-  const nodes = [];
+  const nodes: Array<ParagraphNode> = [];
+
+  let p = $createParagraphNode();
+  nodes.push(p);
 
   for (const child of children) {
+    if (child === "\n") {
+      p = $createParagraphNode();
+      nodes.push(p);
+      continue;
+    }
+
     if (typeof child === "string") {
-      const paragraph = $createParagraphNode();
       const textNode = $createTextNode(child);
-      paragraph.append(textNode);
-      nodes.push(paragraph);
+      p.append(textNode);
       continue;
     }
 

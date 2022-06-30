@@ -1,4 +1,4 @@
-import { useCallback, MouseEvent, FormEvent, useRef, useMemo } from "react";
+import { useCallback, MouseEvent, FormEvent, useMemo } from "react";
 import type { OnChangeChildren } from "~/shared/tree-utils";
 import {
   type Instance,
@@ -96,6 +96,7 @@ export const WrapperComponentDev = ({
         {instance.children}
       </Editor>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);
 
   if (editor) {

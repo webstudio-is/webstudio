@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import store from "immerhin";
@@ -58,17 +58,17 @@ const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
   const [breakpoints] = useBreakpoints();
 
+  const onChangeChildren: OnChangeChildren = useCallback((change) => {
+    store.createTransaction([rootInstanceContainer], (rootInstance) => {
+      if (rootInstance === undefined) return;
+
+      const { instanceId, updates } = change;
+      setInstanceChildrenMutable(instanceId, updates, rootInstance);
+    });
+  }, []);
+
   return useMemo(() => {
     if (rootInstance === undefined) return;
-
-    const onChangeChildren: OnChangeChildren = (change) => {
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) return;
-
-        const { instanceId, updates } = change;
-        setInstanceChildrenMutable(instanceId, updates, rootInstance);
-      });
-    };
 
     return createElementsTree({
       instance: rootInstance,
@@ -76,7 +76,7 @@ const useElementsTree = () => {
       Component: WrapperComponentDev,
       onChangeChildren,
     });
-  }, [rootInstance, breakpoints]);
+  }, [rootInstance, breakpoints, onChangeChildren]);
 };
 
 const useSubscribePreviewMode = () => {

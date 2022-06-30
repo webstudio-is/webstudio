@@ -10,6 +10,7 @@ export type {
   SerializedElementNode,
   SerializedTextNode,
   SerializedRootNode,
+  ParagraphNode,
 } from "lexical";
 export {
   ElementNode,

@@ -1,6 +1,9 @@
 import { type Publish } from "@webstudio-is/sdk";
 import { useMemo, useState, type MouseEventHandler } from "react";
-import { useSelectionRect } from "~/designer/shared/nano-states";
+import {
+  useSelectedInstanceData,
+  useSelectionRect,
+} from "~/designer/shared/nano-states";
 import { ToggleGroup, type CSS } from "~/shared/design-system";
 import { FontBoldIcon, FontItalicIcon, Link2Icon } from "~/shared/icons";
 import { createInstance } from "~/shared/tree-utils";
@@ -85,6 +88,7 @@ type TextToolbarProps = {
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
   const [selectionRect] = useSelectionRect();
+  const [selectedIntsanceData] = useSelectedInstanceData();
   const [element, setElement] = useState<HTMLElement | null>(null);
   const placement = useMemo(() => {
     if (selectionRect === undefined || element === null) return;
@@ -92,7 +96,9 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
     return getPlacement({ toolbarRect, selectionRect });
   }, [selectionRect, element]);
 
-  if (selectionRect === undefined) return null;
+  if (selectionRect === undefined || selectedIntsanceData === undefined) {
+    return null;
+  }
 
   return (
     <Toolbar

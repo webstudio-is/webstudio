@@ -50,7 +50,7 @@ describe("toUpdates", () => {
       },
     } as const;
     const updates = toUpdates(state.root);
-    expect(updates).toStrictEqual(["a\nb"]);
+    expect(updates).toStrictEqual(["a", "\n", "b"]);
   });
 
   test("text and instance", () => {
@@ -83,6 +83,15 @@ describe("toUpdates", () => {
                   children: [],
                 },
               },
+              {
+                detail: 0,
+                format: 0,
+                mode: "normal",
+                style: "",
+                text: "c",
+                type: "text",
+                version: 1,
+              },
             ],
             direction: "ltr",
             format: "",
@@ -106,6 +115,7 @@ describe("toUpdates", () => {
         id: "62bcc02160a439686c7eabde",
         text: "b",
       },
+      "c",
     ]);
   });
 });
