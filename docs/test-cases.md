@@ -57,3 +57,13 @@
    - Click on the canvas closes breakpoints selector
    - Styles added on each breakpoint are only applied to each breakpoint, verify that by resizing the canvas in preview mode
    - Resizing canvas width in preview mode doesn't limit resize slider to each breakpoint
+
+1. Auth
+   - Try to access the dashboard when not logged in to make sure you will be redirected to the login page
+   - Open the login page when logged in to make sure you are redirected to the dashboard
+   - Ensure you can view a built site in an incognito tab
+   - Ensure you can view a forked site in an incognito tab
+   - Click on dev login, add the AUTH_SECRET value in the `.env` value and make sure user is authenticated and redirected to the dashboard
+   - Click on dev login and write a wrong value to make sure you get an error message and stay in the login page.
+   - Click on login with GitHub and make sure that you are redirected to the dashboard
+   - Click on login with Google and make sure that you are redirected to the dashboard

@@ -5,6 +5,7 @@ import config from "~/config";
 import env from "~/env.server";
 
 import { Login, links } from "~/auth/";
+import { useLoginErrorMessage } from "~/shared/session/useLoginErrorMessage";
 
 export { links };
 
@@ -18,7 +19,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 const LoginRoute = () => {
-  return <Login />;
+  const errorMessage = useLoginErrorMessage();
+  return <Login errorMessage={errorMessage} />;
 };
 
 export default LoginRoute;
