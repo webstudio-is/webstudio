@@ -54,9 +54,7 @@ export const useLoginErrorMessage = (): string => {
     }
 
     setSearchParams({});
-    // we only care for the URL at page load
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, setSearchParams]);
 
   return messageToReturn;
 };
