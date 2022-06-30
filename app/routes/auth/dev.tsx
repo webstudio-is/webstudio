@@ -1,7 +1,7 @@
 import { ActionFunction, redirect } from "@remix-run/node";
 import config from "~/config";
 import { authenticator } from "~/services/auth.server";
-import { AUTH_PROVIDERS } from "~/shared/session/use-login-error-message";
+import { AUTH_PROVIDERS } from "~/shared/session";
 
 export default function Dev() {
   return null;
