@@ -14,15 +14,16 @@
  *   ],
  *   onMouseMove: ({name, value, position}) => { },
  *   onCaretMove: ({name, value, position}) => { },
- *   read: (value) => target.value,
- *   write: (value) => target.value = value,
+ *   read: (target) => target.value,
+ *   write: (target, value) => target.value = value,
  * });
  */
 const canvasContext = globalThis.document
-  ?.createElement("canvas")
-  .getContext("2d");
-const measureTextWidth = (value) => canvasContext.measureText(value).width;
-const measureTextPadding = (node, value) => {
+  .createElement("canvas")
+  .getContext("2d") as CanvasRenderingContext2D & { letterSpacing: string };
+const measureTextWidth = (value: string): number =>
+  canvasContext.measureText(value).width;
+const measureTextPadding = (node: HTMLElement, value: string) => {
   const {
     fontSize,
     fontFamily,
@@ -34,13 +35,14 @@ const measureTextPadding = (node, value) => {
   } = getComputedStyle(node);
   if (letterSpacing !== "normal") canvasContext.letterSpacing = letterSpacing;
   canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
-  return textAlign === "left"
+  return ["left", "start"].includes(textAlign)
     ? parseFloat(paddingLeft)
     : node.clientWidth -
         canvasContext.measureText(value).width -
         parseFloat(paddingRight);
 };
-const measureTextMetrics = (value, index, offset) => {
+const measureTextMetrics = (value: string, index: number, offset: number) => {
+  let length = 0;
   const DECIMAL_OR_WHITESPACE_OR_NON_WORD = /([-+]?\d*\.?\d+)|([\s\W])/;
   return value
     .split(DECIMAL_OR_WHITESPACE_OR_NON_WORD)
@@ -56,23 +58,50 @@ const measureTextMetrics = (value, index, offset) => {
     });
 };
 export const createContentController = (
-  targetNode,
+  targetNode: HTMLInputElement,
   {
-    read = (node) => node.value,
-    write = (value) => {},
+    read = (node: HTMLInputElement) => node.value,
+    write = (node: HTMLInputElement, value: string) => (node.value = value),
     contents = [],
-    onMouseMove = () => {},
-    onCaretMove = () => {},
+    onMouseMove = (value: { name: string; value: string; position: string }) =>
+      value,
+    onCaretMove = (value: { name: string; value: string; position: string }) =>
+      value,
+  }: {
+    read: (node: HTMLInputElement) => string;
+    write: (node: HTMLInputElement, value: string) => void;
+    contents: {
+      name: string;
+      value: string;
+      match: (value: string) => boolean;
+    }[];
+    onMouseMove: (value: {
+      name: string;
+      value: string;
+      position: string;
+    }) => void;
+    onCaretMove: (value: {
+      name: string;
+      value: string;
+      position: string;
+    }) => void;
   }
-) => {
-  const eventNames = ["keyup", "pointermove"];
-  const handleEvent = ({ type, offsetX }) => {
+): {
+  update: (value: string) => void;
+  disconnectedCallback: () => void;
+} => {
+  const eventNames = ["keyup", "pointermove"] as const;
+  const handleEvent = (event: KeyboardEvent | PointerEvent): void => {
+    let { offsetX } = event as PointerEvent;
+    const { type } = event;
     const targetValue = read(targetNode);
     const targetPadding = measureTextPadding(targetNode, targetValue);
     if (type === eventNames[0])
       offsetX =
         targetPadding +
-        measureTextWidth(targetValue.slice(0, targetNode.selectionStart));
+        measureTextWidth(
+          targetValue.slice(0, targetNode.selectionStart || undefined)
+        );
     const targetMetrics = measureTextMetrics(
       targetValue,
       offsetX,
@@ -95,18 +124,19 @@ export const createContentController = (
       }
     }
   };
+
   eventNames.forEach((eventName) =>
-    targetNode.addEventListener(eventName, handleEvent)
+    targetNode.addEventListener(eventName, handleEvent, false)
   );
   return {
     update: (value) => {
-      let { selectionStart, selectionEnd } = targetNode;
-      write(value);
-      targetNode.setSelectionRange?.(selectionStart, selectionEnd);
+      const { selectionStart, selectionEnd } = targetNode;
+      write(targetNode, value);
+      targetNode.setSelectionRange(selectionStart, selectionEnd);
     },
     disconnectedCallback: () => {
-      eventName.forEach((eventName) =>
-        targetNode.addEventListener(eventName, handleEvent)
+      eventNames.forEach((eventName) =>
+        targetNode.removeEventListener(eventName, handleEvent, false)
       );
     },
   };

@@ -11,7 +11,7 @@ const onChange = (editorState: EditorState) => {
     // Read the contents of the EditorState here.
     const root = $getRoot();
     const selection = $getSelection();
-
+    // eslint-disable-next-line
     console.log(root, selection);
   });
 };
