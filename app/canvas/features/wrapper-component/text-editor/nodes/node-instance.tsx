@@ -3,7 +3,7 @@ import { render } from "react-dom";
 import { useMemo } from "react";
 import { useCss } from "~/canvas/features/wrapper-component/use-css";
 import { useBreakpoints } from "~/shared/nano-states";
-import { primitives } from "../../canvas-components";
+import { primitives } from "../../../../../shared/canvas-components";
 import {
   type EditorConfig,
   type SerializedTextNode,

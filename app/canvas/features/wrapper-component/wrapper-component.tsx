@@ -10,9 +10,9 @@ import { primitives } from "~/shared/canvas-components";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
-import { Editor } from "./editor/editor";
-import { useIsEditing } from "./editor/use-is-editing";
-import { useContentEditable } from "~/shared/text-editor";
+import { Editor } from "./text-editor/editor";
+import { useIsEditing } from "./text-editor/use-is-editing";
+import { useContentEditable } from "~/canvas/features/wrapper-component/text-editor";
 import noop from "lodash.noop";
 
 type WrapperComponentDevProps = {

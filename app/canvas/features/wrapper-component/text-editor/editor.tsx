@@ -5,7 +5,7 @@ import {
   InstancePlugin,
   ToolbarConnectorPlugin,
   OnChangePlugin,
-} from "~/shared/text-editor";
+} from "~/canvas/features/wrapper-component/text-editor";
 
 type EditorProps = {
   editable: JSX.Element;

@@ -50,7 +50,10 @@ import {
 import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
-import { LexicalComposer, config } from "~/shared/text-editor";
+import {
+  LexicalComposer,
+  config,
+} from "~/canvas/features/wrapper-component/text-editor";
 
 registerContainers();
 
