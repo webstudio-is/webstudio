@@ -1,4 +1,4 @@
-import { useCallback, MouseEvent, FormEvent } from "react";
+import { useCallback, MouseEvent, FormEvent, useRef, useMemo } from "react";
 import type { OnChangeChildren } from "~/shared/tree-utils";
 import {
   type Instance,
@@ -54,42 +54,41 @@ export const WrapperComponentDev = ({
     instance.component === "Input" ? { readOnly: true } : undefined;
 
   const { Component } = primitives[instance.component];
-  const element = (
-    <Component
-      {...userProps}
-      {...rest}
-      {...draggableProps}
-      {...readonlyProps}
-      {...isEditingProps}
-      {...editableProps}
-      className={className}
-      id={instance.id}
-      tabIndex={0}
-      data-component={instance.component}
-      data-id={instance.id}
-      ref={refCallback}
-      onClick={(event: MouseEvent) => {
-        // Prevent click handler for element selection
-        if (isEditing) {
-          event.stopPropagation();
-        }
-        if (instance.component === "Link") {
-          event.preventDefault();
-        }
-      }}
-      onSubmit={(event: FormEvent) => {
-        // Prevent submitting the form when clicking a button type submit
-        event.preventDefault();
-      }}
-    >
-      {isEditing ? null : renderWrapperComponentChildren(children)}
-    </Component>
-  );
 
-  if (isEditing) {
+  const props = {
+    ...userProps,
+    ...rest,
+    ...draggableProps,
+    ...readonlyProps,
+    ...isEditingProps,
+    ...editableProps,
+    className: className,
+    id: instance.id,
+    tabIndex: 0,
+    "data-component": instance.component,
+    "data-id": instance.id,
+    ref: refCallback,
+    onClick: (event: MouseEvent) => {
+      // Prevent click handler for element selection
+      if (isEditing) {
+        event.stopPropagation();
+      }
+      if (instance.component === "Link") {
+        event.preventDefault();
+      }
+    },
+    onSubmit: (event: FormEvent) => {
+      // Prevent submitting the form when clicking a button type submit
+      event.preventDefault();
+    },
+  };
+
+  // Prevent rerender because in editing mode Editor controls the node.
+  const editor = useMemo(() => {
+    if (isEditing === false) return;
     return (
       <Editor
-        editable={element}
+        editable={<Component {...props} />}
         onChange={(updates) => {
           onChangeChildren({ instanceId: instance.id, updates });
         }}
@@ -97,7 +96,13 @@ export const WrapperComponentDev = ({
         {instance.children}
       </Editor>
     );
+  }, [isEditing]);
+
+  if (editor) {
+    return editor;
   }
 
-  return element;
+  return (
+    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+  );
 };

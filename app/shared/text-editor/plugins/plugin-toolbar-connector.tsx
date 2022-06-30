@@ -9,7 +9,7 @@ import {
   useLexicalComposerContext,
 } from "../lexical";
 
-export const ToolbarPlugin = () => {
+export const ToolbarConnectorPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const lastSelectionRef = useRef<unknown>();
 

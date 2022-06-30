@@ -3,7 +3,7 @@ import {
   RichTextPlugin,
   HistoryPlugin,
   InstancePlugin,
-  ToolbarPlugin,
+  ToolbarConnectorPlugin,
   OnChangePlugin,
 } from "~/shared/text-editor";
 
@@ -20,7 +20,7 @@ export const Editor = ({ children, editable, onChange }: EditorProps) => {
       <OnChangePlugin onChange={onChange} />
       <HistoryPlugin />
       <InstancePlugin>{children}</InstancePlugin>
-      <ToolbarPlugin />
+      <ToolbarConnectorPlugin />
     </>
   );
 };
