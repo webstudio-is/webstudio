@@ -3,10 +3,12 @@ import type { OnChangeChildren } from "~/shared/tree-utils";
 import {
   type Instance,
   type CSS,
+  toCss,
   useUserProps,
   renderWrapperComponentChildren,
 } from "@webstudio-is/sdk";
 import { primitives } from "~/shared/canvas-components";
+import { useBreakpoints } from "~/shared/nano-states";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
@@ -60,7 +62,9 @@ export const WrapperComponentDev = ({
     ...readonlyProps,
     ...isEditingProps,
     ...editableProps,
+    // @todo merge className with props
     className: className,
+    // @todo stop using id to free it up to the user
     id: instance.id,
     tabIndex: 0,
     "data-component": instance.component,
@@ -102,5 +106,34 @@ export const WrapperComponentDev = ({
 
   return (
     <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+  );
+};
+
+export const InlineWrapperComponentDev = ({
+  instance,
+  ...rest
+}: {
+  instance: Instance;
+  children: string;
+}) => {
+  const [breakpoints] = useBreakpoints();
+  const css = useMemo(
+    () => toCss(instance.cssRules, breakpoints),
+    [instance, breakpoints]
+  );
+  const className = useCss({ instance, css });
+  const userProps = useUserProps(instance.id);
+  const { Component } = primitives[instance.component];
+
+  return (
+    <Component
+      {...rest}
+      {...userProps}
+      key={instance.id}
+      // @todo stop using id to free it up to the user
+      id={instance.id}
+      // @todo merge className with props
+      className={className}
+    />
   );
 };

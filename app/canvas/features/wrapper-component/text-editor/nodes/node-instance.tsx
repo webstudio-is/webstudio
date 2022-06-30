@@ -1,14 +1,11 @@
-import { useUserProps, type Instance, toCss } from "@webstudio-is/sdk";
 import { render } from "react-dom";
-import { useMemo } from "react";
-import { useCss } from "~/canvas/features/wrapper-component/use-css";
-import { useBreakpoints } from "~/shared/nano-states";
-import { primitives } from "../../../../../shared/canvas-components";
+import { type Instance } from "@webstudio-is/sdk";
 import {
   type EditorConfig,
   type SerializedTextNode,
   TextNode,
 } from "../lexical";
+import { InlineWrapperComponentDev } from "../../wrapper-component";
 
 type Options = {
   instance: Instance;
@@ -47,9 +44,9 @@ export class InstanceNode extends TextNode {
   createDOM(config: EditorConfig) {
     const container = super.createDOM(config);
     const element = (
-      <InlineWrapperComponent instance={this.options.instance}>
+      <InlineWrapperComponentDev instance={this.options.instance}>
         {this.options.text}
-      </InlineWrapperComponent>
+      </InlineWrapperComponentDev>
     );
     render(element, container);
     return container;
@@ -80,34 +77,4 @@ export class InstanceNode extends TextNode {
 
 export const $createInstanceNode = (options: Options) => {
   return new InstanceNode(options);
-};
-
-// @todo
-// - reuse majority of this logic across WrapperComponentDev and WrapperComponent
-// - merge className with props
-const InlineWrapperComponent = ({
-  instance,
-  ...rest
-}: {
-  instance: Instance;
-  children: string;
-}) => {
-  const [breakpoints] = useBreakpoints();
-  const css = useMemo(
-    () => toCss(instance.cssRules, breakpoints),
-    [instance, breakpoints]
-  );
-  const className = useCss({ instance, css });
-  const userProps = useUserProps(instance.id);
-  const { Component } = primitives[instance.component];
-
-  return (
-    <Component
-      {...rest}
-      {...userProps}
-      key={instance.id}
-      id={instance.id}
-      className={className}
-    />
-  );
 };
