@@ -4,8 +4,8 @@ import { authenticator } from "~/services/auth.server";
 import config from "~/config";
 import env from "~/env.server";
 
-import { Login, links } from "~/auth/";
-import { useLoginErrorMessage } from "~/shared/session/useLoginErrorMessage";
+import { Login, links } from "~/auth";
+import { useLoginErrorMessage } from "~/shared/session";
 
 export { links };
 

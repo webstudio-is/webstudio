@@ -11,7 +11,7 @@ import {
   createOrLoginWithGoogle,
 } from "~/shared/db/user.server";
 import { sentryException } from "~/shared/sentry";
-import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrorMessage";
+import { AUTH_PROVIDERS } from "~/shared/session";
 
 const url = `${
   process.env.VERCEL_URL
