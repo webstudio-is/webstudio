@@ -1,7 +1,6 @@
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 import { ExampleTextEditor } from "./example-text-editor";
-import "./styles.css";
 
 export default {
   title: "Text Editor",

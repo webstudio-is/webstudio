@@ -1,26 +1,30 @@
 import { type ChildrenUpdates, type Instance } from "@webstudio-is/sdk";
-import {
-  RichTextPlugin,
-  HistoryPlugin,
-  InstancePlugin,
-  ToolbarConnectorPlugin,
-  OnChangePlugin,
-} from "~/canvas/features/wrapper-component/text-editor";
+import { RichTextPlugin, HistoryPlugin } from "./lexical";
+import { InstancePlugin } from "./plugins/plugin-instance";
+import { ToolbarConnectorPlugin } from "./plugins/plugin-toolbar-connector";
+import { OnChangePlugin } from "./plugins/plugin-on-change";
 
 type EditorProps = {
+  children?: JSX.Element;
   editable: JSX.Element;
-  children: Array<Instance | string>;
-  onChange: (udpates: ChildrenUpdates) => void;
+  instance: Instance;
+  onChange: (updates: ChildrenUpdates) => void;
 };
 
-export const Editor = ({ children, editable, onChange }: EditorProps) => {
+export const Editor = ({
+  instance,
+  editable,
+  children,
+  onChange,
+}: EditorProps) => {
   return (
     <>
       <RichTextPlugin contentEditable={editable} placeholder="" />
       <OnChangePlugin onChange={onChange} />
       <HistoryPlugin />
-      <InstancePlugin>{children}</InstancePlugin>
+      <InstancePlugin>{instance.children}</InstancePlugin>
       <ToolbarConnectorPlugin />
+      {children}
     </>
   );
 };

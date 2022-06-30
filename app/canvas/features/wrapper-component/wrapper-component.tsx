@@ -10,9 +10,7 @@ import { primitives } from "~/shared/canvas-components";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
-import { Editor } from "./text-editor/editor";
-import { useIsEditing } from "./text-editor/use-is-editing";
-import { useContentEditable } from "~/canvas/features/wrapper-component/text-editor";
+import { Editor, useContentEditable, useIsEditing } from "./text-editor";
 import noop from "lodash.noop";
 
 type WrapperComponentDevProps = {
@@ -88,13 +86,12 @@ export const WrapperComponentDev = ({
     if (isEditing === false) return;
     return (
       <Editor
+        instance={instance}
         editable={<Component {...props} />}
         onChange={(updates) => {
           onChangeChildren({ instanceId: instance.id, updates });
         }}
-      >
-        {instance.children}
-      </Editor>
+      />
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing]);

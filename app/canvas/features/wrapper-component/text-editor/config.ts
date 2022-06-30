@@ -1,7 +1,7 @@
 import { InstanceNode } from "./nodes/node-instance";
 
 export const config = {
-  namespace: "example",
+  namespace: "ComponentTextEditor",
   onError(error: Error) {
     throw error;
   },
