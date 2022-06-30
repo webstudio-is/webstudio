@@ -25,6 +25,7 @@
     }
   },
   "rules": {
+    "no-console": 2,
     // It's too dumb to understand properly what's defined in ts
     "react/prop-types": 0,
     "@typescript-eslint/no-unused-vars": [

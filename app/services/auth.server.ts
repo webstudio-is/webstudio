@@ -10,6 +10,8 @@ import {
   createOrLoginWithGithub,
   createOrLoginWithGoogle,
 } from "~/shared/db/user.server";
+import { sentryException } from "~/shared/sentry";
+import { AUTH_PROVIDERS } from "~/shared/session/useLoginErrorMessage";
 
 const url = `${
   process.env.VERCEL_URL
@@ -48,8 +50,8 @@ const google = new GoogleStrategy(
 export const authenticator = new Authenticator<User>(sessionStorage);
 if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   authenticator.use(github, "github");
-  authenticator.use(google, "google");
 }
+authenticator.use(google, "google");
 
 if (process.env.DEV_LOGIN === "true") {
   authenticator.use(
@@ -60,12 +62,19 @@ if (process.env.DEV_LOGIN === "true") {
         try {
           const user = await createOrLoginWithDev(secret);
           return user;
-        } catch (e) {
-          console.log(e);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            sentryException({
+              message: error.message,
+              extra: {
+                loginMethod: AUTH_PROVIDERS.LOGIN_DEV,
+              },
+            });
+          }
         }
       }
 
-      throw new Error("Wrong code");
+      throw new Error("The dev login code is incorrect");
     }),
     "dev"
   );
