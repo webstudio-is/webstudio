@@ -144,7 +144,7 @@ export type SelectProps<T = SelectOption> = Omit<
   value?: T;
   onChange?: (option: T) => void;
   placeholder?: string;
-  getLabel?: (option: T) => string;
+  getLabel?: (option: T) => string | undefined;
 };
 
 const SelectBase = (

@@ -37,18 +37,14 @@ export const SelectProjectCard = ({
         <Heading>Select a project</Heading>
         <Select
           name="project"
-          onChange={(event) => {
-            setSelectedProject(event.target.value);
-          }}
+          options={projects.map((project) => project.id)}
+          onChange={setSelectedProject}
           value={selectedProject}
-        >
-          <option value="">Create new project</option>
-          {projects.map(({ id, title }) => (
-            <option value={id} key={id}>
-              {title}
-            </option>
-          ))}
-        </Select>
+          placeholder="Create new project"
+          getLabel={(option) =>
+            projects.find((project) => project.id === option)?.title
+          }
+        />
         {selectedProject === "" ? (
           <Form method="post">
             <Flex gap="1">
