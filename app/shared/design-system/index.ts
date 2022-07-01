@@ -19,7 +19,7 @@ export * as Portal from "@radix-ui/react-portal";
 export { Container } from "./components/container";
 export { Label } from "./components/label";
 export * as ToggleGroup from "./components/toggle-group";
-export { Select } from "./components/select";
+export * from "./components/select";
 export { TextField } from "./components/text-field";
 export { Flex } from "./components/flex";
 export { Grid } from "./components/grid";

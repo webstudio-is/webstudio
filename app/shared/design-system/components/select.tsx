@@ -1,25 +1,33 @@
-import React, { Ref } from "react";
-import { CSS, styled } from "../stitches.config";
-import { CaretSortIcon } from "~/shared/icons";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import noop from "lodash.noop";
+import React, { ReactNode, Ref } from "react";
+import {
+  CaretSortIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from "~/shared/icons";
+import { styled } from "../stitches.config";
 
-const SelectWrapper = styled("div", {
-  backgroundColor: "$loContrast",
-  borderRadius: "$1",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
-  color: "$hiContrast",
-  fontFamily: "$untitled",
+const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
+  all: "unset",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "0 $1 0 $2",
   fontSize: "$1",
   fontVariantNumeric: "tabular-nums",
-  fontWeight: 400,
   height: "$5",
+  gap: "$2",
   flexShrink: 0,
-
+  borderRadius: "$1",
+  backgroundColor: "$loContrast",
+  color: "$hiContrast",
+  boxShadow: "inset 0 0 0 1px $colors$slate7",
   "&:hover": {
     backgroundColor: "$slateA3",
   },
-
-  "&:focus-within": {
-    zIndex: 1,
+  "&:focus": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
   },
@@ -31,63 +39,161 @@ const SelectWrapper = styled("div", {
         boxShadow: "none",
       },
     },
+    fullWidth: {
+      true: {
+        width: "100%",
+      },
+    },
   },
 });
 
-const StyledSelect = styled("select", {
-  appearance: "none",
-  backgroundColor: "transparent",
-  border: "none",
-  borderRadius: "inherit",
-  color: "inherit",
-  font: "inherit",
-  outline: "none",
-  width: "100%",
-  height: "100%",
-  pl: "$1",
-  pr: "$3",
+const StyledIcon = styled(SelectPrimitive.Icon, {
+  display: "inline-flex",
+  alignItems: "center",
 });
 
-const StyledCaretSortIcon = styled(CaretSortIcon, {
+const StyledContent = styled(SelectPrimitive.Content, {
+  overflow: "hidden",
+  backgroundColor: "white",
+  borderRadius: 6,
+  boxShadow:
+    "0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2)",
+});
+
+const StyledViewport = styled(SelectPrimitive.Viewport, {
+  py: "$1",
+});
+
+const StyledItem = styled(SelectPrimitive.Item, {
+  all: "unset",
+  fontSize: "$1",
+  lineHeight: 1,
+  color: "$hiContrast",
+  borderRadius: "$1",
+  display: "flex",
+  alignItems: "center",
+  height: "$5",
+  padding: "0 35px 0 25px",
+  position: "relative",
+  userSelect: "none",
+
+  "&[data-disabled]": {
+    color: "$loContrast",
+    pointerEvents: "none",
+  },
+
+  "&:focus": {
+    backgroundColor: "$slateA3",
+    color: "$hiContrast",
+  },
+});
+
+const StyledItemIndicator = styled(SelectPrimitive.ItemIndicator, {
   position: "absolute",
-  pointerEvents: "none",
-  display: "inline",
-
-  // Use margins instead of top/left to avoid setting "position: relative" on parent,
-  // which would make stacking context tricky with Select used in a control group.
-  marginTop: 5,
-  marginLeft: -16,
+  left: 0,
+  width: 25,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
-export type Option = { value: string; label: string };
+const scrollButtonStyles = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: 25,
+  backgroundColor: "white",
+  color: "$hiContrast",
+  cursor: "default",
+};
 
-export type SelectProps<T = Option> = React.ComponentProps<
-  typeof StyledSelect
+const SelectScrollUpButton = styled(
+  SelectPrimitive.ScrollUpButton,
+  scrollButtonStyles
+);
+
+const SelectScrollDownButton = styled(
+  SelectPrimitive.ScrollDownButton,
+  scrollButtonStyles
+);
+
+const SelectItemBase = ({ children, ...props }: SelectItemProps) => {
+  return (
+    <StyledItem {...props}>
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <StyledItemIndicator>
+        <CheckIcon />
+      </StyledItemIndicator>
+    </StyledItem>
+  );
+};
+
+type SelectItemProps = SelectPrimitive.SelectItemProps & {
+  children: ReactNode;
+};
+const SelectItem = React.forwardRef(SelectItemBase);
+
+export type SelectOption = string;
+
+export type SelectProps<T = SelectOption> = Omit<
+  React.ComponentProps<typeof StyledTrigger>,
+  "onChange" | "value" | "defaultValue"
 > & {
   options: T[];
+  defaultValue?: T;
   value?: T;
-  onChange?: (value: T) => void;
-  css?: CSS;
+  onChange?: (option: T) => void;
+  placeholder?: string;
+  getLabel?: (option: T) => string;
 };
 
 const SelectBase = (
-  { css, options, ...props }: SelectProps,
-  forwardedRef: Ref<HTMLSelectElement>
+  {
+    options,
+    value,
+    defaultValue,
+    placeholder = "Select an option",
+    onChange = noop,
+    getLabel = (option) => option,
+    name,
+    ...props
+  }: SelectProps,
+  forwardedRef: Ref<HTMLButtonElement>
 ) => {
   return (
-    <SelectWrapper css={css}>
-      <StyledSelect ref={forwardedRef} {...props}>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </StyledSelect>
-      <StyledCaretSortIcon />
-    </SelectWrapper>
+    <SelectPrimitive.Root
+      name={name}
+      value={value}
+      defaultValue={defaultValue}
+      onValueChange={onChange}
+    >
+      <StyledTrigger ref={forwardedRef} {...props}>
+        <SelectPrimitive.Value>
+          {value ? getLabel(value) : placeholder}
+        </SelectPrimitive.Value>
+        <StyledIcon>
+          <CaretSortIcon />
+        </StyledIcon>
+      </StyledTrigger>
+
+      <StyledContent>
+        <SelectScrollUpButton>
+          <ChevronUpIcon />
+        </SelectScrollUpButton>
+        <StyledViewport>
+          {options.map((option) => (
+            <SelectItem key={option} value={option} textValue={option}>
+              {getLabel(option)}
+            </SelectItem>
+          ))}
+        </StyledViewport>
+        <SelectScrollDownButton>
+          <ChevronDownIcon />
+        </SelectScrollDownButton>
+      </StyledContent>
+    </SelectPrimitive.Root>
   );
 };
 
 export const Select = React.forwardRef(SelectBase);
 Select.displayName = "Select";
-Select.toString = () => `.${SelectWrapper.className}`;
