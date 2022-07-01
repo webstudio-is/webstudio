@@ -129,6 +129,7 @@ export const InlineWrapperComponentDev = ({
     <Component
       {...rest}
       {...userProps}
+      data-outline-disabled
       key={instance.id}
       // @todo stop using id to free it up to the user
       id={instance.id}
