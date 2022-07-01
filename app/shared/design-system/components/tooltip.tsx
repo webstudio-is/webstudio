@@ -45,7 +45,13 @@ export const Tooltip = ({
     >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 
-      <Content side="top" align="center" {...props} multiline={multiline}>
+      <Content
+        side="top"
+        align="center"
+        sideOffset={5}
+        {...props}
+        multiline={multiline}
+      >
         <Text
           size="1"
           as="p"
