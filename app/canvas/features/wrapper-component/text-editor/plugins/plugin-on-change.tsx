@@ -1,4 +1,6 @@
 import { type ChildrenUpdates } from "@webstudio-is/sdk";
+import { useState } from "react";
+import { useDebounce } from "react-use";
 import {
   OnChangePlugin as LexicalOnChangePlugin,
   type EditorState,
@@ -10,12 +12,19 @@ export const OnChangePlugin = ({
 }: {
   onChange: (updates: ChildrenUpdates) => void;
 }) => {
-  const handleChange = (state: EditorState) => {
-    state.read(() => {
-      const updates = toUpdates(state.toJSON().root);
-      onChange(updates);
-    });
-  };
+  const [editorState, setEditorState] = useState<EditorState>();
 
-  return <LexicalOnChangePlugin onChange={handleChange} />;
+  useDebounce(
+    () => {
+      if (editorState === undefined) return;
+      editorState.read(() => {
+        const updates = toUpdates(editorState.toJSON().root);
+        onChange(updates);
+      });
+    },
+    500,
+    [editorState]
+  );
+
+  return <LexicalOnChangePlugin onChange={setEditorState} />;
 };
