@@ -20,9 +20,9 @@ const Menu = () => {
   return (
     <Box
       css={{
-        margin: 10,
+        margin: "$2",
         display: "flex",
-        gap: 10,
+        gap: "$2",
       }}
     >
       <Button
@@ -91,8 +91,8 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
             lineHeight: 1.5,
             fontWeight: 400,
             textAlign: "left",
-            borderTopLeftRadius: 10,
-            borderTopRightRadius: 10,
+            borderTopLeftRadius: "$3",
+            borderTopRightRadius: "$3",
             overflow: "hidden",
             "& p": {
               margin: 0,
