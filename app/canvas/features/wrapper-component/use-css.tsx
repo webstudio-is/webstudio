@@ -55,10 +55,6 @@ const defaultStyle = {
     // When double clicking into an element to edit text, it should not select the word.
     userSelect: "none",
   },
-  // Text Editor wraps each line into a p, so we need to make sure there is no jump between regular rendering and editing
-  "& p": {
-    margin: 0,
-  },
   [`&:not(${voidElements}):not(${rootElement}):empty`]: {
     outline: "1px dashed #555",
     outlineOffset: -1,
@@ -70,6 +66,10 @@ const defaultStyle = {
   },
   "&[contenteditable]": {
     boxShadow: "0 0 0px 4px rgb(36 150 255 / 20%)",
+  },
+  // Text Editor wraps each line into a p, so we need to make sure there is no jump between regular rendering and editing
+  "&[contenteditable] p": {
+    margin: 0,
   },
 };
 
