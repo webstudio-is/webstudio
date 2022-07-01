@@ -2625,7 +2625,7 @@
     source-map-support "^0.5.21"
     stream-slice "^0.1.2"
 
-"@remix-run/node@1.6.3", "@remix-run/node@^1.6.3":
+"@remix-run/node@1.6.3", "@remix-run/node@^1.5.1":
   version "1.6.3"
   resolved "https://registry.yarnpkg.com/@remix-run/node/-/node-1.6.3.tgz#b427ece4ff7c73d4a1cf274189fb55ffd24ee888"
   integrity sha512-Lo25O0ioyDddLKNNtbyO+dmlMYwhele6qc0MePYls5AS5VEW+VX4A1GfNC5Y7M+psNt/mE3iNzc6/QgutqTCiQ==
@@ -2648,7 +2648,7 @@
     history "^5.3.0"
     react-router-dom "^6.2.2"
 
-"@remix-run/serve@^1.1.1":
+"@remix-run/serve@^1.5.1":
   version "1.6.3"
   resolved "https://registry.yarnpkg.com/@remix-run/serve/-/serve-1.6.3.tgz#ab243e5dac3f79ecdd104988014a7d7fc8ba8a91"
   integrity sha512-U2N3Vk3lODptLK/z00iJc+06pq43PXC9hrwSlpXf73ho0VRqCsEL+/ZBd/spq1BjbL8m1uL2zLD2/APyU5/OCA==
