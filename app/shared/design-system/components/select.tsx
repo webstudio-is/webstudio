@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Ref } from "react";
 import { CSS, styled } from "../stitches.config";
 import { CaretSortIcon } from "~/shared/icons";
 
@@ -61,17 +61,19 @@ const StyledCaretSortIcon = styled(CaretSortIcon, {
 
 export type Option = { value: string; label: string };
 
-export type SelectProps<T> = React.ComponentProps<typeof StyledSelect> & {
+export type SelectProps<T = Option> = React.ComponentProps<
+  typeof StyledSelect
+> & {
   options: T[];
   value?: T;
   onChange?: (value: T) => void;
   css?: CSS;
 };
 
-export const Select = React.forwardRef(function SelectBase<T extends Option>(
-  { css, options, ...props }: SelectProps<T>,
-  forwardedRef: FocusableRef<HTMLElement>
-) {
+const SelectBase = (
+  { css, options, ...props }: SelectProps,
+  forwardedRef: Ref<HTMLSelectElement>
+) => {
   return (
     <SelectWrapper css={css}>
       <StyledSelect ref={forwardedRef} {...props}>
@@ -84,7 +86,8 @@ export const Select = React.forwardRef(function SelectBase<T extends Option>(
       <StyledCaretSortIcon />
     </SelectWrapper>
   );
-});
+};
 
+export const Select = React.forwardRef(SelectBase);
 Select.displayName = "Select";
 Select.toString = () => `.${SelectWrapper.className}`;
