@@ -12,7 +12,9 @@ type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: "$transparentPanel",
+  backgroundColor: "$loContrast",
+  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  color: "$hiContrast",
   borderRadius: "$1",
   padding: "$1 $2",
 
@@ -43,18 +45,12 @@ export const Tooltip = ({
     >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 
-      <Content
-        side="top"
-        align="center"
-        sideOffset={5}
-        {...props}
-        multiline={multiline}
-      >
+      <Content side="top" align="center" {...props} multiline={multiline}>
         <Text
           size="1"
           as="p"
           css={{
-            color: "$loContrast",
+            color: "currentColor",
             lineHeight: multiline ? "20px" : undefined,
           }}
         >
@@ -66,7 +62,7 @@ export const Tooltip = ({
             width={11}
             height={5}
             style={{
-              fill: "currentColor",
+              fill: "$loContrast",
             }}
           />
         </Box>

@@ -1,7 +1,15 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import { useState } from "react";
-import { Button, Card, Flex, Heading, TextField } from "~/shared/design-system";
+import React, { useState } from "react";
+import env from "~/shared/env";
+import {
+  Button,
+  Card,
+  Flex,
+  Heading,
+  TextField,
+  Tooltip,
+} from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
 import { GoogleIcon, GithubIcon, CommitIcon } from "~/shared/icons";
@@ -23,6 +31,25 @@ export const links: LinksFunction = () => {
 export const meta: MetaFunction = () => {
   return { title: "Webstudio Login" };
 };
+const isPreviewDeployment = env?.VERCEL_ENV !== "preview";
+
+const WrapperDisabledTooltip = ({
+  children,
+  isPreview,
+}: {
+  children: React.ReactElement;
+  isPreview: boolean;
+}) =>
+  isPreview ? (
+    <Tooltip
+      content="Github login does not work in preview deployments"
+      delayDuration={0}
+    >
+      <span tabIndex={0}>{children}</span>
+    </Tooltip>
+  ) : (
+    children
+  );
 
 export const Login = () => {
   const [isDevLogin, setIsDevLogin] = useState(false);
@@ -41,12 +68,14 @@ export const Login = () => {
 
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
-              <Button type="submit">
-                <Flex gap="1">
-                  <GithubIcon width="16" />
-                  Login with GitHub
-                </Flex>
-              </Button>
+              <WrapperDisabledTooltip isPreview={isPreviewDeployment}>
+                <Button type="submit" disabled={isPreviewDeployment}>
+                  <Flex gap="1">
+                    <GithubIcon width="16" />
+                    Login with GitHub
+                  </Flex>
+                </Button>
+              </WrapperDisabledTooltip>
             </Form>
             <Form action="/auth/google" method="post">
               <Button type="submit" disabled>

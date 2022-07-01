@@ -12,6 +12,7 @@ const onChange = (editorState: EditorState) => {
     const root = $getRoot();
     const selection = $getSelection();
 
+    // eslint-disable-next-line no-console
     console.log(root, selection);
   });
 };
