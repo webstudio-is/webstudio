@@ -62,8 +62,8 @@ const defaultStyle = {
   [`&:not(${voidElements}):not(${rootElement}):empty`]: {
     outline: "1px dashed #555",
     outlineOffset: -1,
-    paddingTop: "$8",
-    paddingRight: "$8",
+    paddingTop: 50,
+    paddingRight: 50,
   },
   "&[contenteditable], &:focus": {
     outline: 0,
