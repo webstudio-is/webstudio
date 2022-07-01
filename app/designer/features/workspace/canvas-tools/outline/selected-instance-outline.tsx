@@ -11,7 +11,9 @@ export const SelectedInstanceOutline = () => {
   const [instanceData] = useSelectedInstanceData();
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
-  const isEditingCurrentInstance = textEditingInstanceId === instanceData?.id;
+  const isEditingCurrentInstance =
+    textEditingInstanceId !== undefined &&
+    textEditingInstanceId === instanceData?.id;
 
   if (
     instanceData === undefined ||
