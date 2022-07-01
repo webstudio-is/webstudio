@@ -1,6 +1,7 @@
 import { publish, type Instance } from "@webstudio-is/sdk";
 import {
   useCallback,
+  useEffect,
   useMemo,
   type KeyboardEvent,
   type MouseEvent,
@@ -30,6 +31,15 @@ export const useIsEditing = (instance: Instance): [boolean, EditableProps] => {
     },
     [setEditingInstanceId]
   );
+
+  useEffect(() => {
+    if (
+      selectedInstance === undefined ||
+      selectedInstance.id !== editingInstanceId
+    ) {
+      updateEditingInstanceId();
+    }
+  }, [selectedInstance, editingInstanceId, updateEditingInstanceId]);
 
   const props = useMemo(
     () => ({
