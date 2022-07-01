@@ -36,8 +36,6 @@ const getPlacement = ({
     align === "top"
       ? Math.max(selectionRect.y - selectionRect.height, 0)
       : Math.max(selectionRect.y + selectionRect.height);
-  // @todo this has to come from canvas
-  top += window.pageYOffset;
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
