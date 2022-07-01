@@ -27,10 +27,9 @@ const Menu = () => {
     >
       <Button
         onClick={() => {
-          const instance = createInstance({ component: "Bold" });
           publish({
             type: "insertInlineInstance",
-            payload: instance,
+            payload: createInstance({ component: "Bold" }),
           });
         }}
       >
@@ -38,10 +37,9 @@ const Menu = () => {
       </Button>
       <Button
         onClick={() => {
-          const instance = createInstance({ component: "Italic" });
           publish({
             type: "insertInlineInstance",
-            payload: instance,
+            payload: createInstance({ component: "Italic" }),
           });
         }}
       >
