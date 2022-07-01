@@ -59,16 +59,32 @@ const StyledCaretSortIcon = styled(CaretSortIcon, {
   marginLeft: -16,
 });
 
-type SelectProps = React.ComponentProps<typeof StyledSelect> & { css?: CSS };
+export type Option = { value: string; label: string };
 
-export const Select = React.forwardRef<
-  React.ElementRef<typeof StyledSelect>,
-  SelectProps
->(({ css, ...props }, forwardedRef) => (
-  <SelectWrapper css={css}>
-    <StyledSelect ref={forwardedRef} {...props} />
-    <StyledCaretSortIcon />
-  </SelectWrapper>
-));
+export type SelectProps<T> = React.ComponentProps<typeof StyledSelect> & {
+  options: T[];
+  value?: T;
+  onChange?: (value: T) => void;
+  css?: CSS;
+};
+
+export const Select = React.forwardRef(function SelectBase<T extends Option>(
+  { css, options, ...props }: SelectProps<T>,
+  forwardedRef: FocusableRef<HTMLElement>
+) {
+  return (
+    <SelectWrapper css={css}>
+      <StyledSelect ref={forwardedRef} {...props}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </StyledSelect>
+      <StyledCaretSortIcon />
+    </SelectWrapper>
+  );
+});
+
 Select.displayName = "Select";
 Select.toString = () => `.${SelectWrapper.className}`;
