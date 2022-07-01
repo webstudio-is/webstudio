@@ -7,8 +7,9 @@ import {
   Card,
   Flex,
   Heading,
-  TextField,
   Tooltip,
+  Text,
+  TextField,
 } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
@@ -51,7 +52,7 @@ const WrapperDisabledTooltip = ({
     children
   );
 
-export const Login = () => {
+export const Login = ({ errorMessage }: { errorMessage: string }) => {
   const [isDevLogin, setIsDevLogin] = useState(false);
   const loaderData = useLoaderData();
 
@@ -62,10 +63,14 @@ export const Login = () => {
       align="center"
       justify="center"
     >
-      <Card css={{ width: "$10", padding: "$5", zoom: 1.4 }} variant="active">
+      <Card css={{ width: 200, padding: "$5", zoom: 1.4 }} variant="active">
         <Flex direction="column" gap="2" align="center">
           <Heading>Login</Heading>
-
+          {errorMessage.length ? (
+            <Text css={{ textAlign: "center" }} variant="red">
+              {errorMessage}
+            </Text>
+          ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
               <WrapperDisabledTooltip isPreview={isPreviewDeployment}>
@@ -96,7 +101,7 @@ export const Login = () => {
                       minLength={2}
                       required
                       autoFocus
-                      placeholder="Place your AUTH_SECRET"
+                      placeholder="Place your auth secret here"
                     />
                   </Form>
                 ) : (

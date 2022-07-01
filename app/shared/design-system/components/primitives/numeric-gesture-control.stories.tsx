@@ -3,7 +3,7 @@ import {
   numericGestureControl,
   type Value,
   type Direction,
-} from "./numericGestureControl";
+} from "./numeric-gesture-control";
 
 const useNumericGestureControl = ({
   ref,

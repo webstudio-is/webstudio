@@ -3,7 +3,6 @@ on: [push]
 jobs:
   checks:
     env:
-      DATABASE_URL: mongo://
       NODE_ENV: test
     runs-on: ${{ matrix.os }}
     strategy:
@@ -13,16 +12,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-
-      # - name: Install deps and build (with cache)
-      #   uses: bahmutov/npm-install@v1
       - run: yarn install
-
-      - name: Next.js cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-${{ runner.node }}-${{ hashFiles('**/yarn.lock') }}-nextjs
 
       - run: yarn checks
       - run: yarn build
