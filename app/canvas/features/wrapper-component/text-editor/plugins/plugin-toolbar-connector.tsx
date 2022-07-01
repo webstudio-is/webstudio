@@ -13,6 +13,14 @@ export const ToolbarConnectorPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const lastSelectionRef = useRef<unknown>();
 
+  const clearSelectionRect = () => {
+    if (lastSelectionRef.current) {
+      // Undefined Rect will hide toolbar
+      publish<"selectionRect">({ type: "selectionRect", payload: undefined });
+      lastSelectionRef.current = undefined;
+    }
+  };
+
   const publishSelectionRect = useCallback(() => {
     const selection = $getSelection();
     const text = selection?.getTextContent();
@@ -23,16 +31,15 @@ export const ToolbarConnectorPlugin = () => {
     if (isTextSelected) {
       const domRange = nativeSelection.getRangeAt(0);
       const rect = domRange.getBoundingClientRect();
-      publish({ type: "selectionRect", payload: rect });
+      publish<"selectionRect", DOMRect>({
+        type: "selectionRect",
+        payload: rect,
+      });
       lastSelectionRef.current = selection;
-      return;
+      return true;
     }
 
-    if (lastSelectionRef.current) {
-      // Undefined Rect will hide toolbar
-      publish({ type: "selectionRect", payload: undefined });
-      lastSelectionRef.current = undefined;
-    }
+    clearSelectionRect();
 
     return true;
   }, []);
@@ -40,13 +47,12 @@ export const ToolbarConnectorPlugin = () => {
   useEffect(() => {
     editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
-      () => {
-        publishSelectionRect();
-        return true;
-      },
+      publishSelectionRect,
       COMMAND_PRIORITY_LOW
     );
   }, [editor, publishSelectionRect]);
+
+  useEffect(() => clearSelectionRect, []);
 
   return null;
 };
