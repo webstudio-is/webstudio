@@ -68,6 +68,9 @@ const defaultStyle = {
   "&[contenteditable], &:focus": {
     outline: 0,
   },
+  "&[contenteditable]": {
+    boxShadow: "0 0 0px 4px rgb(36 150 255 / 20%)",
+  },
 };
 
 export const useCss = ({ instance, css }: UseCssProps): string => {
