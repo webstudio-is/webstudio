@@ -1,12 +1,12 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { publish, type Instance } from "@webstudio-is/sdk";
 import {
-  useEffect,
+  useCallback,
   useMemo,
-  useState,
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
 import { useSelectedInstance } from "~/canvas/shared/nano-states";
+import { useTextEditingInstanceId } from "~/shared/nano-states";
 
 type EditableProps = {
   onDoubleClick: (event: MouseEvent) => void;
@@ -15,26 +15,34 @@ type EditableProps = {
 
 export const useIsEditing = (instance: Instance): [boolean, EditableProps] => {
   const [selectedInstance] = useSelectedInstance();
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
+  const isEditing =
+    editingInstanceId === instance.id &&
+    editingInstanceId === selectedInstance?.id;
 
-  useEffect(() => {
-    if (selectedInstance?.id !== instance.id) {
-      setIsEditing(false);
-    }
-  }, [selectedInstance, instance, setIsEditing]);
+  const updateEditingInstanceId = useCallback(
+    (instanceId?: Instance["id"]) => {
+      setEditingInstanceId(instanceId);
+      publish<"textEditingInstanceId", Instance["id"] | undefined>({
+        type: "textEditingInstanceId",
+        payload: instanceId,
+      });
+    },
+    [setEditingInstanceId]
+  );
 
   const props = useMemo(
     () => ({
       onKeyDown(event: KeyboardEvent) {
         if (selectedInstance?.id !== instance.id) return;
         if (event.key === "Enter" && isEditing === false) {
-          setIsEditing(true);
+          updateEditingInstanceId(instance.id);
           // Prevent inserting a newline when you want to start editing mode
           event.preventDefault();
           return;
         }
         if (event.key === "Escape") {
-          setIsEditing(false);
+          updateEditingInstanceId();
         }
       },
       onDoubleClick(event: MouseEvent) {
@@ -42,10 +50,10 @@ export const useIsEditing = (instance: Instance): [boolean, EditableProps] => {
         // @todo this logic shouldn't be necessary
         if (selectedInstance?.id !== instance.id) return;
         event.preventDefault();
-        setIsEditing(true);
+        updateEditingInstanceId(instance.id);
       },
     }),
-    [setIsEditing, selectedInstance, instance, isEditing]
+    [updateEditingInstanceId, selectedInstance, instance, isEditing]
   );
   return [isEditing, props];
 };

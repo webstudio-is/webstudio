@@ -1,4 +1,7 @@
-import { useSelectedInstanceRect } from "~/shared/nano-states";
+import {
+  useSelectedInstanceRect,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { Outline } from "./outline";
 import { Label } from "./label";
@@ -6,8 +9,15 @@ import { Label } from "./label";
 export const SelectedInstanceOutline = () => {
   const [instanceRect] = useSelectedInstanceRect();
   const [instanceData] = useSelectedInstanceData();
+  const [textEditingInstanceId] = useTextEditingInstanceId();
 
-  if (instanceData === undefined || instanceRect === undefined) {
+  const isEditingCurrentInstance = textEditingInstanceId === instanceData?.id;
+
+  if (
+    instanceData === undefined ||
+    instanceRect === undefined ||
+    isEditingCurrentInstance
+  ) {
     return null;
   }
 
