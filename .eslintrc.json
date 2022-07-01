@@ -18,13 +18,14 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "plugins": ["react", "@typescript-eslint", "filenames"],
+  "plugins": ["react", "@typescript-eslint", "unicorn"],
   "settings": {
     "react": {
       "version": "detect"
     }
   },
   "rules": {
+    "no-console": 2,
     // It's too dumb to understand properly what's defined in ts
     "react/prop-types": 0,
     "@typescript-eslint/no-unused-vars": [
@@ -33,6 +34,13 @@
     ],
     "react/react-in-jsx-scope": 0,
     "func-style": ["error", "expression", { "allowArrowFunctions": true }],
-    "filenames/match-regex": [2, "^[a-z-.]|($\\w+\\.)+$", true]
+    "unicorn/filename-case": [
+      "error",
+      {
+        "case": "kebabCase",
+        // Remix routes need to contain $variable in the file name
+        "ignore": ["\\$"]
+      }
+    ]
   }
 }
