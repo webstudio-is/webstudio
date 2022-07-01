@@ -1,4 +1,4 @@
-import { type Publish } from "@webstudio-is/sdk";
+import { type Instance, type Publish } from "@webstudio-is/sdk";
 import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,
@@ -32,10 +32,11 @@ const getPlacement = ({
   const marginBottom = align === "bottom" ? "-$5" : 0;
   const marginTop = align === "bottom" ? 0 : "-$5";
   const transform = "translateX(-50%)";
-  let top =
+  const top =
     align === "top"
       ? Math.max(selectionRect.y - selectionRect.height, 0)
       : Math.max(selectionRect.y + selectionRect.height);
+
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
@@ -104,7 +105,10 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
       css={placement}
       onValueChange={(component) => {
         const instance = createInstance({ component });
-        publish({ type: "insertInlineInstance", payload: instance });
+        publish<"insertInlineInstance", Instance>({
+          type: "insertInlineInstance",
+          payload: instance,
+        });
       }}
     />
   );
