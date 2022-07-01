@@ -1,7 +1,7 @@
 import { useLexicalComposerContext, TreeView } from "../lexical";
 import "./tree-view-plugin.css";
 
-// Only used for storybook
+// Only used in the storybook
 export const TreeViewPlugin = () => {
   const [editor] = useLexicalComposerContext();
   return (
