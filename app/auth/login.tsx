@@ -1,19 +1,12 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import React, { useState } from "react";
-import env from "~/shared/env";
-import {
-  Button,
-  Card,
-  Flex,
-  Heading,
-  Tooltip,
-  Text,
-  TextField,
-} from "~/shared/design-system";
+import { useState } from "react";
+
+import { Card, Flex, Heading, Text, TextField } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
-import { GoogleIcon, GithubIcon, CommitIcon } from "~/shared/icons";
+import { GithubIcon, CommitIcon } from "~/shared/icons";
+import { LoginButton } from "./components/login-button";
 import loginStyles from "./login.css";
 
 export const links: LinksFunction = () => {
@@ -32,25 +25,6 @@ export const links: LinksFunction = () => {
 export const meta: MetaFunction = () => {
   return { title: "Webstudio Login" };
 };
-const isPreviewEnvironment = env.VERCEL_ENV === "preview";
-
-const DisabledButtonTooltip = ({
-  children,
-  isPreview,
-}: {
-  children: React.ReactElement;
-  isPreview: boolean;
-}) =>
-  isPreview ? (
-    <Tooltip
-      content="Github login does not work in preview deployments"
-      delayDuration={0}
-    >
-      <span tabIndex={0}>{children}</span>
-    </Tooltip>
-  ) : (
-    children
-  );
 
 export const Login = ({ errorMessage }: { errorMessage: string }) => {
   const [isDevLogin, setIsDevLogin] = useState(false);
@@ -73,23 +47,21 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
-              <DisabledButtonTooltip isPreview={isPreviewEnvironment}>
-                <Button type="submit" disabled={isPreviewEnvironment}>
-                  <Flex gap="1">
-                    <GithubIcon width="16" />
-                    Login with GitHub
-                  </Flex>
-                </Button>
-              </DisabledButtonTooltip>
+              <LoginButton>
+                <Flex gap="1">
+                  <GithubIcon width="16" />
+                  Login with GitHub
+                </Flex>
+              </LoginButton>
             </Form>
-            <Form action="/auth/google" method="post">
-              <Button type="submit" disabled>
+            {/* <Form action="/auth/google" method="post">
+              <LoginButton>
                 <Flex gap="1">
                   <GoogleIcon width="16" />
                   Login with Google
                 </Flex>
-              </Button>
-            </Form>
+              </LoginButton>
+            </Form> */}
             {loaderData.devLogin && (
               <>
                 {isDevLogin ? (
@@ -105,15 +77,12 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                     />
                   </Form>
                 ) : (
-                  <Button
-                    onClick={() => setIsDevLogin(true)}
-                    css={{ width: "100%" }}
-                  >
+                  <LoginButton isDevLogin onClick={() => setIsDevLogin(true)}>
                     <Flex gap="1" align="center">
                       <CommitIcon></CommitIcon>
                       Dev Login
                     </Flex>
-                  </Button>
+                  </LoginButton>
                 )}
               </>
             )}
