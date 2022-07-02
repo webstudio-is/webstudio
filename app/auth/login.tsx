@@ -52,7 +52,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
-              <Button type="submit">
+              <Button type="submit" disabled={!loaderData.githubEnabled}>
                 <Flex gap="1">
                   <GithubIcon width="16" />
                   Login with GitHub
@@ -60,7 +60,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
               </Button>
             </Form>
             <Form action="/auth/google" method="post">
-              <Button type="submit" disabled>
+              <Button type="submit" disabled={!loaderData.googleEnabled}>
                 <Flex gap="1">
                   <GoogleIcon width="16" />
                   Login with Google
