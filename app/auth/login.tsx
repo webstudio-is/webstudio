@@ -32,9 +32,9 @@ export const links: LinksFunction = () => {
 export const meta: MetaFunction = () => {
   return { title: "Webstudio Login" };
 };
-const isPreviewDeployment = env.VERCEL_ENV === "preview";
+const isPreviewEnvironment = env.VERCEL_ENV === "preview";
 
-const WrapperDisabledTooltip = ({
+const DisabledButtonTooltip = ({
   children,
   isPreview,
 }: {
@@ -73,14 +73,14 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
-              <WrapperDisabledTooltip isPreview={isPreviewDeployment}>
-                <Button type="submit" disabled={isPreviewDeployment}>
+              <DisabledButtonTooltip isPreview={isPreviewEnvironment}>
+                <Button type="submit" disabled={isPreviewEnvironment}>
                   <Flex gap="1">
                     <GithubIcon width="16" />
                     Login with GitHub
                   </Flex>
                 </Button>
-              </WrapperDisabledTooltip>
+              </DisabledButtonTooltip>
             </Form>
             <Form action="/auth/google" method="post">
               <Button type="submit" disabled>
