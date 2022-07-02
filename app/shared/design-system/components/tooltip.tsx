@@ -9,6 +9,7 @@ type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
     children: React.ReactElement;
     content: React.ReactNode;
     multiline?: boolean;
+    delayDuration?: number;
   };
 
 const Content = styled(TooltipPrimitive.Content, {
@@ -35,6 +36,7 @@ export const Tooltip = ({
   defaultOpen,
   onOpenChange,
   multiline,
+  delayDuration,
   ...props
 }: TooltipProps) => {
   return (
@@ -42,6 +44,7 @@ export const Tooltip = ({
       open={open}
       defaultOpen={defaultOpen}
       onOpenChange={onOpenChange}
+      delayDuration={delayDuration}
     >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 
