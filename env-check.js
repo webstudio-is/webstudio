@@ -5,21 +5,23 @@
  */
 
 // Remix does not read .env files when building for production
-if (process.env.NODE_ENV !== "production") {
-  const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET"];
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const dotenv = require("dotenv");
+dotenv.config();
 
-  const errors = [];
+const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET"];
 
-  REQUIRED_ENVS.map((env) => {
-    if (!process.env[env])
-      errors.push(`👉 The ${env} environment variable is required`);
-  });
+const errors = [];
 
-  if (errors.length) {
-    // eslint-disable-next-line no-console
-    console.error("❌ Invalid environment variables:");
-    // eslint-disable-next-line no-console
-    console.error(errors.join("\n"));
-    process.exit(1);
-  }
+REQUIRED_ENVS.map((env) => {
+  if (!process.env[env])
+    errors.push(`👉 The ${env} environment variable is required`);
+});
+
+if (errors.length) {
+  // eslint-disable-next-line no-console
+  console.error("❌ Invalid environment variables:");
+  // eslint-disable-next-line no-console
+  console.error(errors.join("\n"));
+  process.exit(1);
 }
