@@ -3,8 +3,8 @@
  * This file is included in `/remix.config.js` which ensures the app isn't built with invalid env vars.
  * It has to be a `.js`-file to be imported there.
  */
-/* eslint-disable @typescript-eslint/no-var-requires */
 
+// Remix does not read .env files when building for production
 if (process.env.NODE_ENV !== "production") {
   const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET"];
 
