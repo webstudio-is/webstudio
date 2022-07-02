@@ -32,7 +32,7 @@ export const links: LinksFunction = () => {
 export const meta: MetaFunction = () => {
   return { title: "Webstudio Login" };
 };
-const isPreviewDeployment = env?.VERCEL_ENV !== "preview";
+const isPreviewDeployment = env.VERCEL_ENV === "preview";
 
 const WrapperDisabledTooltip = ({
   children,
