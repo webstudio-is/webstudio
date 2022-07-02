@@ -12,7 +12,11 @@ import { useBreakpoints } from "~/shared/nano-states";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
-import { Editor, useContentEditable, useIsEditing } from "./text-editor";
+import {
+  EditorMemoized,
+  useContentEditable,
+  useIsEditing,
+} from "./text-editor";
 import noop from "lodash.noop";
 
 type WrapperComponentDevProps = {
@@ -85,11 +89,9 @@ export const WrapperComponentDev = ({
     },
   };
 
-  // Prevent rerender because in editing mode Editor controls the node.
-  const editor = useMemo(() => {
-    if (isEditing === false) return;
+  if (isEditing) {
     return (
-      <Editor
+      <EditorMemoized
         instance={instance}
         editable={<Component {...props} />}
         onChange={(updates) => {
@@ -97,11 +99,6 @@ export const WrapperComponentDev = ({
         }}
       />
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
-
-  if (editor) {
-    return editor;
   }
 
   return (

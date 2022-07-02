@@ -3,6 +3,7 @@ import { RichTextPlugin, HistoryPlugin } from "./lexical";
 import { InstancePlugin } from "./plugins/plugin-instance";
 import { ToolbarConnectorPlugin } from "./plugins/plugin-toolbar-connector";
 import { OnChangePlugin } from "./plugins/plugin-on-change";
+import { memo } from "react";
 
 type EditorProps = {
   children?: JSX.Element;
@@ -28,3 +29,6 @@ export const Editor = ({
     </>
   );
 };
+
+// Prevent rerender because in editing mode Editor controls the node.
+export const EditorMemoized = memo(Editor, () => true);
