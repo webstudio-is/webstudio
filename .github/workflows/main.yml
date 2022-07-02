@@ -4,6 +4,8 @@ jobs:
   checks:
     env:
       NODE_ENV: test
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
