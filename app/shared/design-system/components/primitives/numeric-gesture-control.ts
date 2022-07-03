@@ -30,7 +30,7 @@ type Options = {
 
 type State = {
   value: number;
-  cursor: SVGElement | null;
+  cursor: SVGElement | undefined;
   offset: number;
   velocity: number;
   direction: string;
@@ -47,7 +47,7 @@ export const numericGestureControl = (
   const eventNames = ["pointerup", "pointerdown", "pointermove"] as const;
   const state: State = {
     value: initialValue,
-    cursor: null,
+    cursor: undefined,
     offset: 0,
     velocity: direction === "horizontal" ? 1 : -1,
     direction: direction,
@@ -118,12 +118,19 @@ const requestPointerLock = (
   event: PointerEvent,
   targetNode: HTMLElement
 ) => {
-  targetNode.setPointerCapture(event.pointerId);
-
-  if (shouldUsePointerLock()) {
+  // The pointer lock api nukes the cursor on requestng a pointer lock,
+  // creating and managing the visual que of the cursor is thus left to the author
+  // we create and append an svg that serves as the visual que of where the cursor currently is
+  // taking into account horizontal/vertical orientation of the cursor itself, and update its position on move.
+  // we only use pointerLock api on chromium based browsers, because they feature an unobtrusive ux when activating it
+  // other browsers show a warning banner, making the use of it in this scenario subpar: in which case we fallback to using non-pointerLock means:
+  // albeit without an infinite cursor ux.
+  if (shouldUsePointerLock) {
     targetNode.requestPointerLock();
     const cursorNode = new Range().createContextualFragment(`
-      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15" style="filter:var(--drop-shadow);">
+      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15" style="filter:drop-shadow(${
+        state.direction === "horizontal" ? "0 1px" : "1px 0"
+      } 1.1px rgba(0,0,0,.4))">
        <g transform="translate(2 3)">
          <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd" stroke="#FFF" stroke-width="2"></path>
           <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
@@ -134,19 +141,19 @@ const requestPointerLock = (
     cursorNode.style.top = `${event.offsetY}px`;
     cursorNode.style.transform =
       state.direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)";
-    cursorNode.style.setProperty(
-      "--drop-shadow",
-      `drop-shadow(${
-        state.direction === "horizontal" ? "0 1px" : "1px 0"
-      } 1.1px rgba(0,0,0,.4))`
-    );
     state.cursor = cursorNode;
-    targetNode.ownerDocument.documentElement.append(state.cursor as Node);
+    if (state.cursor) {
+      targetNode.ownerDocument.documentElement.append(state.cursor);
+    }
     targetNode.onpointermove = () => {
-      (state.cursor as SVGElement).style[
-        state.direction === "horizontal" ? "left" : "top"
-      ] = `${state.offset}px`;
+      if (state.cursor) {
+        state.cursor.style[
+          state.direction === "horizontal" ? "left" : "top"
+        ] = `${state.offset}px`;
+      }
     };
+  } else {
+    targetNode.setPointerCapture(event.pointerId);
   }
 };
 
@@ -155,15 +162,16 @@ const exitPointerLock = (
   event: PointerEvent,
   targetNode: HTMLElement
 ) => {
-  targetNode.releasePointerCapture(event.pointerId);
-
-  if (shouldUsePointerLock()) {
-    (state.cursor as SVGElement).remove();
+  if (shouldUsePointerLock) {
+    if (state.cursor) {
+      state.cursor.remove();
+      state.cursor = undefined;
+    }
     targetNode.onpointermove = null;
     targetNode.ownerDocument.exitPointerLock();
+  } else {
+    targetNode.releasePointerCapture(event.pointerId);
   }
 };
 
-const shouldUsePointerLock = () => {
-  return "chrome" in globalThis;
-};
+const shouldUsePointerLock = "chrome" in globalThis;
