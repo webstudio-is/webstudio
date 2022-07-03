@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
@@ -15,7 +15,9 @@ const eventOptions = {
 export const useTrackSelectedElement = () => {
   const [selectedElement, setSelectedElement] = useSelectedElement();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-  const [, setEditingInstanceId] = useTextEditingInstanceId();
+  const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
+  const editingInstanceIdRef = useRef(editingInstanceId);
+  editingInstanceIdRef.current = editingInstanceId;
   const [rootInstance] = useRootInstance();
   const selectInstance = useCallback(
     (id) => {
@@ -44,6 +46,15 @@ export const useTrackSelectedElement = () => {
       setSelectedElement(element);
     }
   }, [selectedInstance, selectedElement, setSelectedElement]);
+
+  useEffect(() => {
+    if (
+      editingInstanceIdRef.current !== undefined &&
+      selectedInstance?.id !== editingInstanceIdRef.current
+    ) {
+      setEditingInstanceId(undefined);
+    }
+  }, [selectedInstance, setEditingInstanceId]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
