@@ -70,10 +70,6 @@ export const WrapperComponentDev = ({
     "data-id": instance.id,
     ref: refCallback,
     onClick: (event: MouseEvent) => {
-      // Prevent click handler for element selection
-      if (isEditing) {
-        event.stopPropagation();
-      }
       if (instance.component === "Link") {
         event.preventDefault();
       }

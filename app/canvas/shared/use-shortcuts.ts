@@ -9,6 +9,8 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 
+const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
+
 type HandlerEvent = {
   key: string;
   preventDefault?: () => void;
@@ -73,7 +75,7 @@ export const useShortcuts = () => {
   useHotkeys(
     "backspace, delete",
     shortcutHandlerMap.delete,
-    { ...options, enableOnTags: ["INPUT", "SELECT", "TEXTAREA"] },
+    { ...options, enableOnTags: [...inputTags] },
     [shortcutHandlerMap.delete]
   );
 
@@ -89,7 +91,7 @@ export const useShortcuts = () => {
       setSelectedInstance(undefined);
       publish<"selectInstance">({ type: "selectInstance" });
     },
-    options,
+    { ...options, enableOnContentEditable: true, enableOnTags: [...inputTags] },
     [selectedInstance, editingInstanceId]
   );
 
