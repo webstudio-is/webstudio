@@ -15,8 +15,7 @@ export const HoveredInstanceOutline = () => {
   const [hoveredInstanceData] = useHoveredInstanceData();
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
-  const isEditingCurrentInstance =
-    textEditingInstanceId === hoveredInstanceData?.id;
+  const isEditingText = textEditingInstanceId !== undefined;
   const isHoveringSelectedInstance =
     selectedInstanceData?.id === hoveredInstanceData?.id;
 
@@ -24,7 +23,7 @@ export const HoveredInstanceOutline = () => {
     hoveredInstanceData === undefined ||
     instanceRect === undefined ||
     isHoveringSelectedInstance ||
-    isEditingCurrentInstance
+    isEditingText
   ) {
     return null;
   }
