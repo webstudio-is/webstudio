@@ -42,3 +42,6 @@ export const useCanvasRect = () => useValue(canvasRectContainer);
 
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
+
+const selectionRectContainer = createValueContainer<DOMRect | undefined>();
+export const useSelectionRect = () => useValue(selectionRectContainer);

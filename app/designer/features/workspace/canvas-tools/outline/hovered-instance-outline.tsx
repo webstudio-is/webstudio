@@ -1,4 +1,7 @@
-import { useHoveredInstanceRect } from "~/shared/nano-states";
+import {
+  useHoveredInstanceRect,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import {
   useHoveredInstanceData,
   useSelectedInstanceData,
@@ -9,19 +12,28 @@ import { Label } from "./label";
 export const HoveredInstanceOutline = () => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const [instanceRect] = useHoveredInstanceRect();
-  const [instanceData] = useHoveredInstanceData();
+  const [hoveredInstanceData] = useHoveredInstanceData();
+  const [textEditingInstanceId] = useTextEditingInstanceId();
+
+  const isEditingText = textEditingInstanceId !== undefined;
+  const isHoveringSelectedInstance =
+    selectedInstanceData?.id === hoveredInstanceData?.id;
 
   if (
-    instanceData === undefined ||
+    hoveredInstanceData === undefined ||
     instanceRect === undefined ||
-    selectedInstanceData?.id === instanceData.id
+    isHoveringSelectedInstance ||
+    isEditingText
   ) {
     return null;
   }
 
   return (
     <Outline rect={instanceRect}>
-      <Label component={instanceData.component} instanceRect={instanceRect} />
+      <Label
+        component={hoveredInstanceData.component}
+        instanceRect={instanceRect}
+      />
     </Outline>
   );
 };

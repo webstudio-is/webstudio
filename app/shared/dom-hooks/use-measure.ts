@@ -16,7 +16,7 @@ export type UseMeasureResult<
 export const useMeasure = <
   MeasuredElement extends HTMLElement = HTMLElement
 >(): UseMeasureResult<MeasuredElement> => {
-  const [element, ref] = useState<MeasuredElement | null>(null);
+  const [element, setElement] = useState<MeasuredElement | null>(null);
   const [rect, setRect] = useState<DOMRect>();
 
   const handleChange = useCallback(() => {
@@ -43,5 +43,7 @@ export const useMeasure = <
     };
   }, [element, observer]);
 
-  return [ref, rect];
+  useEffect(handleChange, [handleChange]);
+
+  return [setElement, rect];
 };

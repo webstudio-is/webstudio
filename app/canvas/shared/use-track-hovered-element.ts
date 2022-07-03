@@ -14,7 +14,11 @@ export const useTrackHoveredElement = () => {
   useEffect(() => {
     const handleMouseOver = (event: MouseEvent) => {
       const element = event.target;
-      if (rootInstance === undefined || !(element instanceof HTMLElement)) {
+      if (
+        rootInstance === undefined ||
+        !(element instanceof HTMLElement) ||
+        element.dataset.outlineDisabled
+      ) {
         return;
       }
       setHoveredElement(element);
