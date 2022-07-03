@@ -30,7 +30,7 @@ type Options = {
 
 type State = {
   value: number;
-  cursor: SVGElement | undefined;
+  cursor?: SVGElement;
   offset: number;
   velocity: number;
   direction: string;
