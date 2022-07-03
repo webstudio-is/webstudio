@@ -30,6 +30,7 @@ import {
   usePublishHoveredInstanceData,
   useSetHoveredInstance,
   useUnselectInstance,
+  usePublishTextEditingInstanceId,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
@@ -127,6 +128,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();
+  usePublishTextEditingInstanceId();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case

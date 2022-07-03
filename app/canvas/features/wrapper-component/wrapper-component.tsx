@@ -8,15 +8,11 @@ import {
   renderWrapperComponentChildren,
 } from "@webstudio-is/sdk";
 import { primitives } from "~/shared/canvas-components";
-import { useBreakpoints } from "~/shared/nano-states";
+import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
-import {
-  EditorMemoized,
-  useContentEditable,
-  useIsEditing,
-} from "./text-editor";
+import { EditorMemoized, useContentEditable } from "./text-editor";
 import noop from "lodash.noop";
 
 type WrapperComponentDevProps = {
@@ -34,14 +30,14 @@ export const WrapperComponentDev = ({
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
-  const [isEditing, isEditingProps] = useIsEditing(instance);
+  const [editingInstanceId] = useTextEditingInstanceId();
+  const isEditing = editingInstanceId === instance.id;
   const [editableRefCallback, editableProps] = useContentEditable(isEditing);
   const { dragRefCallback, ...draggableProps } = useDraggable({
     instance,
     // We can't drag if we are editing text.
     isDisabled: isEditing === true,
   });
-
   const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
@@ -64,7 +60,6 @@ export const WrapperComponentDev = ({
     ...rest,
     ...draggableProps,
     ...readonlyProps,
-    ...isEditingProps,
     ...editableProps,
     // @todo merge className with props
     className: className,
@@ -106,6 +101,7 @@ export const WrapperComponentDev = ({
   );
 };
 
+// Only used for instances inside text editor.
 export const InlineWrapperComponentDev = ({
   instance,
   ...rest
