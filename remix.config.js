@@ -1,3 +1,5 @@
+require("./env-check");
+
 /**
  * @type {import('@remix-run/dev').AppConfig}
  */
