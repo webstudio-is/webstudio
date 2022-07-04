@@ -80,8 +80,8 @@ const RadioControl = ({
   >
     {options.map((value) => (
       <Flex align="center" gap="1" key={value}>
-        <Radio value={value} />
-        <Label>{value}</Label>
+        <Radio value={value} id={value} />
+        <Label htmlFor={value}>{value}</Label>
       </Flex>
     ))}
   </RadioGroup>
