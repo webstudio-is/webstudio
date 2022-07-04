@@ -31,24 +31,24 @@ export const SelectProjectCard = ({
   const handleOpen = () => {
     navigate(`${config.designerPath}/${selectedProject}`);
   };
+
+  const options = ["", ...projects.map((project) => project.id)];
+
   return (
-    <Card css={{ width: "$10", padding: "$5", zoom: 1.4 }} variant="active">
+    <Card>
       <Flex direction="column" gap="2">
         <Heading>Select a project</Heading>
         <Select
           name="project"
-          onChange={(event) => {
-            setSelectedProject(event.target.value);
-          }}
+          options={options}
+          onChange={setSelectedProject}
           value={selectedProject}
-        >
-          <option value="">Create new project</option>
-          {projects.map(({ id, title }) => (
-            <option value={id} key={id}>
-              {title}
-            </option>
-          ))}
-        </Select>
+          placeholder="Create new project"
+          getLabel={(option) =>
+            projects.find((project) => project.id === option)?.title ||
+            "Create new project"
+          }
+        />
         {selectedProject === "" ? (
           <Form method="post">
             <Flex gap="1">
