@@ -86,9 +86,11 @@ const RadioControl = ({
     ))}
   </RadioGroup>
 );
+
 type SelectControlProps = BaseControlProps & {
   options: Array<string>;
 };
+
 const SelectControl = ({
   value,
   options,
@@ -98,16 +100,9 @@ const SelectControl = ({
   <Select
     name="value"
     value={String(value || defaultValue || "")}
-    onChange={(event) => {
-      onChange(event.target.value);
-    }}
-  >
-    {options.map((optionValue) => (
-      <option value={optionValue} key={optionValue}>
-        {optionValue}
-      </option>
-    ))}
-  </Select>
+    options={options}
+    onChange={onChange}
+  />
 );
 
 const BooleanControl = ({

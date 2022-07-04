@@ -193,8 +193,6 @@ export const {
       ...blackA,
 
       // Semantic colors
-      background: "white",
-      text: "black",
       hiContrast: "$slate12",
       loContrast: "$slate1",
       muted: "$slate6",
@@ -496,8 +494,6 @@ export const darkTheme = createTheme("dark-theme", {
     ...goldDarkA,
 
     // Semantic colors
-    background: "$slate1",
-    text: "$slate12",
     muted: "$slate8",
     primary: "$blue9",
     hiContrast: "$slate12",
