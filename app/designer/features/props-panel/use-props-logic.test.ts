@@ -34,7 +34,6 @@ describe("usePropsLogic", () => {
     expect(result.current.userProps[0]).toMatchObject({
       prop: "href",
       value: "",
-      required: true,
     });
   });
 
