@@ -21,8 +21,8 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   gap: "$2",
   flexShrink: 0,
   borderRadius: "$1",
-  backgroundColor: "$loContrast",
-  color: "$hiContrast",
+  backgroundColor: "$background",
+  color: "$text",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   "&:hover": {
     backgroundColor: "$slateA3",
@@ -54,8 +54,8 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
 
 const StyledContent = styled(SelectPrimitive.Content, {
   overflow: "hidden",
-  backgroundColor: "white",
-  borderRadius: 6,
+  backgroundColor: "$muted",
+  borderRadius: "$1",
   boxShadow:
     "0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2)",
 });
@@ -68,23 +68,22 @@ const StyledItem = styled(SelectPrimitive.Item, {
   all: "unset",
   fontSize: "$1",
   lineHeight: 1,
-  color: "$hiContrast",
-  borderRadius: "$1",
+  color: "$text",
   display: "flex",
   alignItems: "center",
   height: "$5",
-  padding: "0 35px 0 25px",
+  padding: "0 $6 0 $5",
   position: "relative",
   userSelect: "none",
 
   "&[data-disabled]": {
-    color: "$loContrast",
+    color: "$muted",
     pointerEvents: "none",
   },
 
   "&:focus": {
-    backgroundColor: "$slateA3",
-    color: "$hiContrast",
+    backgroundColor: "$primary",
+    color: "$text",
   },
 });
 
@@ -102,8 +101,7 @@ const scrollButtonStyles = {
   alignItems: "center",
   justifyContent: "center",
   height: 25,
-  backgroundColor: "white",
-  color: "$hiContrast",
+  color: "$text",
   cursor: "default",
 };
 

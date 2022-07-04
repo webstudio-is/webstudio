@@ -193,9 +193,12 @@ export const {
       ...blackA,
 
       // Semantic colors
+      background: "white",
+      text: "black",
       hiContrast: "$slate12",
-      // loContrast: '$slate1',
-      loContrast: "white",
+      loContrast: "$slate1",
+      muted: "$slate6",
+      primary: "$blue12",
       canvas: "hsl(0 0% 93%)",
       panel: "white",
       transparentPanel: "hsl(0 0% 0% / 97%)",
@@ -493,6 +496,8 @@ export const darkTheme = createTheme("dark-theme", {
     // Semantic colors
     background: "$slate1",
     text: "$slate12",
+    muted: "$slate8",
+    primary: "$blue9",
     hiContrast: "$slate12",
     loContrast: "$slate1",
     canvas: "hsl(0 0% 15%)",
