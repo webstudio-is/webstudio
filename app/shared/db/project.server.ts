@@ -8,7 +8,7 @@ export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: string[];
 };
 
-const parseProject = (project: BaseProject | null) =>
+const parseProject = (project: BaseProject | null): Project | null =>
   project
     ? {
         ...project,
@@ -39,7 +39,13 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
 export const loadManyByUserId = async (
   userId: User["id"]
 ): Promise<Array<Project>> => {
-  const projects = await prisma.project.findMany({ where: { userId } });
+  const projects = await prisma.project.findMany({
+    where: {
+      User: {
+        id: userId,
+      },
+    },
+  });
 
   return projects.map(parseProject) as Project[];
 };
@@ -81,11 +87,15 @@ export const create = async ({
       devTreeId: tree.id,
     },
   });
+
   await db.breakpoints.create(tree.id, breakpoints);
   return parseProject(project);
 };
 
-export const clone = async (clonableDomain: string): Promise<Project> => {
+export const clone = async (
+  clonableDomain: string,
+  userId: string
+): Promise<Project> => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
@@ -96,11 +106,10 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
 
   const tree = await db.tree.clone(clonableProject.prodTreeId);
   const domain = generateDomain(clonableProject.title);
-
   const [project] = await Promise.all([
     prisma.project.create({
       data: {
-        userId: clonableProject.userId,
+        userId: userId,
         title: clonableProject.title,
         domain,
         devTreeId: tree.id,
@@ -115,7 +124,12 @@ export const clone = async (clonableDomain: string): Promise<Project> => {
       nextTreeId: tree.id,
     }),
   ]);
-  return parseProject(project as BaseProject) as Project;
+
+  const parsedProject = parseProject(project);
+  if (parsedProject === null) {
+    throw new Error(`Not found project "${clonableDomain}"`);
+  }
+  return parsedProject;
 };
 
 export const update = async ({
