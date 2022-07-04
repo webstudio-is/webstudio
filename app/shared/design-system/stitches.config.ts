@@ -491,6 +491,8 @@ export const darkTheme = createTheme("dark-theme", {
     ...goldDarkA,
 
     // Semantic colors
+    background: "$slate1",
+    text: "$slate12",
     hiContrast: "$slate12",
     loContrast: "$slate1",
     canvas: "hsl(0 0% 15%)",
