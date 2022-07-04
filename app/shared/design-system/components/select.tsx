@@ -115,9 +115,12 @@ const SelectScrollDownButton = styled(
   scrollButtonStyles
 );
 
-const SelectItemBase = ({ children, ...props }: SelectItemProps) => {
+const SelectItemBase = (
+  { children, ...props }: SelectItemProps,
+  forwardedRef: Ref<HTMLDivElement>
+) => {
   return (
-    <StyledItem {...props}>
+    <StyledItem {...props} ref={forwardedRef}>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
       <StyledItemIndicator>
         <CheckIcon />
