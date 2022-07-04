@@ -1,9 +1,7 @@
 import { InstanceNode } from "./nodes/node-instance";
-import { darkTheme } from "./themes/dark";
 
 export const config = {
-  namespace: "example",
-  theme: darkTheme,
+  namespace: "ComponentTextEditor",
   onError(error: Error) {
     throw error;
   },

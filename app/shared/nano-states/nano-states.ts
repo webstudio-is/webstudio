@@ -26,3 +26,10 @@ export const useHoveredInstanceRect = () =>
 
 const isScrollingContainer = createValueContainer<boolean>(false);
 export const useIsScrolling = () => useValue(isScrollingContainer);
+
+// We are editing the text of that instance in text editor.
+const textEditingInstanceIdContainer = createValueContainer<
+  Instance["id"] | undefined
+>();
+export const useTextEditingInstanceId = () =>
+  useValue(textEditingInstanceIdContainer);
