@@ -47,7 +47,9 @@ export const WithComplexItems: ComponentStory<typeof Select> = () => {
   const options = Object.keys(items);
   const [value, setValue] = React.useState(options[0]);
   const getLabel = (option: SelectOption) =>
-    value ? `${items[option]?.icon} ${option}` : "No fruit selected";
+    value && option in items
+      ? `${items[option as keyof typeof items]?.icon} ${option}`
+      : "No fruit selected";
   return (
     <Select
       name="fruit"
