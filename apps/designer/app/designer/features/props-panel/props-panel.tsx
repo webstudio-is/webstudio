@@ -82,12 +82,6 @@ const Property = ({
             </IconButton>
           </Flex>
         )}
-        popperProps={{
-          align: "start",
-          sideOffset: 5,
-        }}
-        // @todo should we use the side panel (width - x) or something?
-        listCss={{ width: 230 }}
       />
       {isInvalidProp ? (
         <Tooltip content={`Invalid property name: ${prop}`}>

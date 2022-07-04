@@ -3,12 +3,12 @@ import { CheckIcon } from "@radix-ui/react-icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox } from "downshift";
 import { matchSorter } from "match-sorter";
-import { styled, type CSS } from "../stitches.config";
+import { styled } from "../stitches.config";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
 import { IconButton } from "./icon-button";
 import { TextField } from "./text-field";
-import { Box } from "./box";
+import { Box, Grid } from "..";
 
 type BaseItem = { label: string; disabled?: boolean };
 
@@ -26,9 +26,6 @@ type ComboboxProps<Item> = {
     inputProps: ComponentProps<typeof TextField>;
     toggleProps: ComponentProps<typeof IconButton>;
   }) => JSX.Element;
-  // @todo should we spread those props flat?
-  popperProps?: ComponentProps<typeof PopperContent>;
-  listCss: CSS;
 };
 
 const Listbox = styled("ul", panelStyles, {
@@ -37,14 +34,17 @@ const Listbox = styled("ul", panelStyles, {
   overflow: "auto",
   // @todo need some non-hardcoded value
   maxHeight: 400,
+  minWidth: 230,
 });
-const ListboxItem = styled("li", itemCss);
+const ListboxItem = styled("li", itemCss, {
+  padding: 0,
+  margin: 0,
+});
 
 export const Combobox = <Item extends BaseItem>({
   items,
   value,
   name,
-  popperProps,
   listCss,
   onItemSelect,
   onItemHighlight,
@@ -99,7 +99,7 @@ export const Combobox = <Item extends BaseItem>({
           {disclosure({ inputProps, toggleProps })}
         </PopperAnchor>
         {isOpen && (
-          <PopperContent {...popperProps}>
+          <PopperContent align="start" sideOffset={5}>
             <Listbox {...menuProps} css={listCss}>
               {filteredItems.map((item, index) => {
                 const itemProps = getItemProps({
@@ -113,9 +113,17 @@ export const Combobox = <Item extends BaseItem>({
                 });
 
                 return (
+                  // eslint-disable-next-line react/jsx-key
                   <ListboxItem {...itemProps}>
-                    {selectedItem === item && <CheckIcon />}
-                    {getTextValue<Item>(item)}
+                    <Grid
+                      align="center"
+                      css={{ gridTemplateColumns: "20px 1fr" }}
+                    >
+                      {selectedItem === item && <CheckIcon />}
+                      <Box css={{ gridColumn: 2 }}>
+                        {getTextValue<Item>(item)}
+                      </Box>
+                    </Grid>
                   </ListboxItem>
                 );
               })}
