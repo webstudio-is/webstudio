@@ -32,7 +32,7 @@ export const SelectProjectCard = ({
     navigate(`${config.designerPath}/${selectedProject}`);
   };
   return (
-    <Card css={{ width: "$10", padding: "$5", zoom: 1.4 }} variant="active">
+    <Card>
       <Flex direction="column" gap="2">
         <Heading>Select a project</Heading>
         <Select
