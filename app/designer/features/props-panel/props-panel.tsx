@@ -49,7 +49,7 @@ const Property = ({
         defaultValue={defaultValue}
         options={options}
         value={value}
-        onChange={(value) => onChange(id, "value", value)}
+        onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
       />
       <Button
         ghost

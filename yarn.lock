@@ -4700,10 +4700,10 @@
     "@webassemblyjs/wast-parser" "1.9.0"
     "@xtuc/long" "4.2.2"
 
-"@webstudio-is/sdk@0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.4.0.tgz#dd8f17e2663f6373fcde5c11999f1b3566c40a75"
-  integrity sha512-Im6vc5v6SIpd8663Y0BWIJLoIm9zxGj4WVo3cDaC5tNJbPuBRMMm5eLIYaFmNApfGimftQqNDasELOViQsEMag==
+"@webstudio-is/sdk@0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.4.1.tgz#fe33f2ab77aedf023b3362c21c5597ab7f2bf573"
+  integrity sha512-Uhf+qBv9sfWMpftyxZ41NW1c9NYmLkLSUeRlYhl0DouQKPahdxM9LFFMXeEHzoBufuKvxAZzIrniNHIb4YP7OQ==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/core" "^1.2.7"
