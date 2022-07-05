@@ -15,16 +15,17 @@ export const LoginButton = ({
   onClick?: () => void;
   enabled: boolean;
 }) => {
-  const showTooltip =
-    (isPreviewEnvironment || enabled === false) && isDevLogin === false;
+  const isSocialLoginInPreviewEnvironment =
+    isPreviewEnvironment && isDevLogin === false;
+  const showTooltip = isSocialLoginInPreviewEnvironment || enabled === false;
   if (showTooltip) {
-    const content = isPreviewEnvironment
+    const content = isSocialLoginInPreviewEnvironment
       ? "Social login does not work in preview deployments"
       : "This login is not configured";
 
     return (
       <Tooltip content={content} delayDuration={0}>
-        <span tabIndex={0}>
+        <span tabIndex={0} style={{ width: "100%" }}>
           <Button
             {...props}
             css={{ width: "100%" }}
