@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import store from "immerhin";
+import * as db from "~/shared/db";
 import {
   type OnChangeChildren,
   type Data,
@@ -41,7 +42,6 @@ import {
   useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
-import type { Project } from "~/shared/db/project.server";
 import {
   rootInstanceContainer,
   useBreakpoints,
@@ -102,7 +102,7 @@ const PreviewMode = () => {
 
 type DesignModeProps = {
   treeId: Tree["id"];
-  project: Project;
+  project: db.project.Project;
 };
 
 const dndOptions = { enableMouseEvents: true };
@@ -141,7 +141,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
 };
 
 type CanvasProps = {
-  data: Data & { project: Project };
+  data: Data & { project: db.project.Project };
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {

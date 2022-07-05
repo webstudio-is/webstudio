@@ -3,22 +3,15 @@ import type { User } from "@webstudio-is/sdk";
 import * as db from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
 import config from "~/config";
-import type { Project } from "~/shared/db/project.server";
 import { authenticator } from "~/services/auth.server";
-import { createDemoUser } from "~/shared/db/user.server";
 
 const ensureProject = async ({
   userId,
   domain,
-  isDemoUser,
 }: {
   userId: User["id"];
   domain: string;
-  isDemoUser: boolean;
-}): Promise<Project> => {
-  if (isDemoUser) {
-    await createDemoUser(userId);
-  }
+}): Promise<db.project.Project> => {
   const projects = await db.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
 
@@ -38,10 +31,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const user = await authenticator.isAuthenticated(request);
   const { headers, userId: generatedUserId } = await ensureUserCookie(request);
   try {
-    const project = await ensureProject({
+    const userId = await db.user.ensureUser({
       userId: user ? user.id : generatedUserId,
+    });
+    const project = await ensureProject({
+      userId,
       domain: params.domain,
-      isDemoUser: user?.id === undefined,
     });
     return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error: unknown) {

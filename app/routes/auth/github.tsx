@@ -2,7 +2,7 @@ import { ActionFunction, redirect } from "@remix-run/node";
 import config from "~/config";
 import { authenticator } from "~/services/auth.server";
 import { sentryException } from "~/shared/sentry";
-import { ensureUserCookie, AUTH_PROVIDERS } from "~/shared/session";
+import { AUTH_PROVIDERS } from "~/shared/session";
 
 export default function GH() {
   return null;
@@ -10,11 +10,7 @@ export default function GH() {
 
 export const action: ActionFunction = async ({ request }) => {
   try {
-    const { userId } = await ensureUserCookie(request);
     return await authenticator.authenticate("github", request, {
-      context: {
-        userId,
-      },
       successRedirect: config.dashboardPath,
       throwOnError: true,
     });

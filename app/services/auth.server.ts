@@ -4,12 +4,8 @@ import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy } from "remix-auth-github";
 import { GoogleStrategy } from "remix-auth-google";
 import config from "~/config";
+import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
-import {
-  createOrLoginWithDev,
-  createOrLoginWithGithub,
-  createOrLoginWithGoogle,
-} from "~/shared/db/user.server";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 
@@ -25,8 +21,8 @@ const github = new GitHubStrategy(
     clientSecret: process.env.GH_CLIENT_SECRET as string,
     callbackURL: `${url}${config.githubCallbackPath}`,
   },
-  async ({ profile, context }) => {
-    const user = await createOrLoginWithGithub(profile, context?.userId);
+  async ({ profile }) => {
+    const user = await db.user.createOrLoginWithGithub(profile);
 
     return user;
   }
@@ -38,8 +34,8 @@ const google = new GoogleStrategy(
     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     callbackURL: `${url}${config.googleCallbackPath}`,
   },
-  async ({ profile, context }) => {
-    const user = await createOrLoginWithGoogle(profile, context?.userId);
+  async ({ profile }) => {
+    const user = await db.user.createOrLoginWithGoogle(profile);
 
     return user;
   }
@@ -61,7 +57,7 @@ if (process.env.DEV_LOGIN === "true") {
 
       if (secret === process.env.AUTH_SECRET) {
         try {
-          const user = await createOrLoginWithDev(secret);
+          const user = await db.user.createOrLoginWithDev();
           return user;
         } catch (error: unknown) {
           if (error instanceof Error) {
