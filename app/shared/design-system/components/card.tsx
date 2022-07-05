@@ -7,12 +7,9 @@ export const Card = styled("div", {
   font: "inherit",
   lineHeight: "1",
   outline: "none",
-  width: "$10",
-  padding: "$5",
   textAlign: "inherit",
   verticalAlign: "middle",
   WebkitTapHighlightColor: "rgba(0, 0, 0, 0)",
-
   backgroundColor: "$panel",
   display: "block",
   textDecoration: "none",
@@ -35,6 +32,16 @@ export const Card = styled("div", {
   },
 
   variants: {
+    size: {
+      1: {
+        width: "$10",
+        padding: "$5",
+      },
+      2: {
+        width: "$12",
+        padding: "$7",
+      },
+    },
     variant: {
       interactive: {
         "@hover": {
@@ -96,5 +103,8 @@ export const Card = styled("div", {
         },
       },
     },
+  },
+  defaultVariants: {
+    size: "1",
   },
 });
