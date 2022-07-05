@@ -83,17 +83,22 @@ export const StyledSlider = styled(SliderPrimitive.Root, {
   },
 });
 
-type SliderPrimitiveProps = React.ComponentProps<typeof SliderPrimitive.Root>;
+type SliderPrimitiveProps = Omit<
+  React.ComponentProps<typeof SliderPrimitive.Root>,
+  "value" | "defaultValue"
+> & {
+  value?: number | number[];
+  defaultValue?: number | number[];
+};
 type SliderProps = SliderPrimitiveProps & { css?: CSS };
 
 export const Slider = React.forwardRef<
   React.ElementRef<typeof StyledSlider>,
   SliderProps
->((props, forwardedRef) => {
-  const hasRange = Array.isArray(props.defaultValue || props.value);
-  const thumbsArray = hasRange
-    ? props.defaultValue || props.value
-    : [props.defaultValue || props.value];
+>(({ value, defaultValue, ...props }, forwardedRef) => {
+  const realValue = value || defaultValue || 0;
+  const hasRange = Array.isArray(realValue);
+  const thumbsArray = hasRange ? realValue : [realValue];
 
   return (
     <StyledSlider {...props} ref={forwardedRef}>
