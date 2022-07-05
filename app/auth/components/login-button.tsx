@@ -25,7 +25,7 @@ export const LoginButton = ({
 
     return (
       <Tooltip content={content} delayDuration={0}>
-        <span tabIndex={0} style={{ width: "100%" }}>
+        <span tabIndex={0} style={{ width: "100%", display: "block" }}>
           <Button
             {...props}
             css={{ width: "100%" }}
