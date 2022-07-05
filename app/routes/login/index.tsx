@@ -14,13 +14,15 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (user) {
     return redirect(config.dashboardPath);
   }
-
   return {
     isDevLogin: process.env.DEV_LOGIN === "true",
     env,
-    isGithubEnabled: process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET,
-    isGoogleEnabled:
-      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+    isGithubEnabled: Boolean(
+      process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET
+    ),
+    isGoogleEnabled: Boolean(
+      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ),
   };
 };
 

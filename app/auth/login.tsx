@@ -1,17 +1,12 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import {
-  Button,
-  Card,
-  Flex,
-  Heading,
-  Text,
-  TextField,
-} from "~/shared/design-system";
+
+import { Card, Flex, Heading, Text, TextField } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
-import { GoogleIcon, GithubIcon, CommitIcon } from "~/shared/icons";
+import { GithubIcon, CommitIcon, GoogleIcon } from "~/shared/icons";
+import { LoginButton } from "./components/login-button";
 import loginStyles from "./login.css";
 
 export const links: LinksFunction = () => {
@@ -32,7 +27,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const Login = ({ errorMessage }: { errorMessage: string }) => {
-  const [isDevLogin, setIsDevLogin] = useState(false);
+  const [isDevLoginOpen, openDevLogin] = useState(false);
   const data = useLoaderData();
 
   return (
@@ -52,32 +47,24 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
-              <Button
-                size={3}
-                type="submit"
-                disabled={data.isGithubEnabled === false}
-              >
+              <LoginButton enabled={data.isGithubEnabled}>
                 <Flex gap="1">
                   <GithubIcon width="20" />
                   Login with GitHub
                 </Flex>
-              </Button>
+              </LoginButton>
             </Form>
             <Form action="/auth/google" method="post">
-              <Button
-                size={3}
-                type="submit"
-                disabled={data.isGoogleEnabled === false}
-              >
+              <LoginButton enabled={data.isGoogleEnabled}>
                 <Flex gap="1">
                   <GoogleIcon width="20" />
                   Login with Google
                 </Flex>
-              </Button>
+              </LoginButton>
             </Form>
             {data.isDevLogin && (
               <>
-                {isDevLogin ? (
+                {isDevLoginOpen ? (
                   <Form action="/auth/dev" method="post">
                     <TextField
                       size={2}
@@ -91,16 +78,16 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                     />
                   </Form>
                 ) : (
-                  <Button
-                    onClick={() => setIsDevLogin(true)}
-                    size={3}
-                    css={{ width: "100%" }}
+                  <LoginButton
+                    enabled={data.isDevLogin}
+                    isDevLogin
+                    onClick={() => openDevLogin(true)}
                   >
                     <Flex gap="1" align="center">
                       <CommitIcon width="20" />
                       Dev Login
                     </Flex>
-                  </Button>
+                  </LoginButton>
                 )}
               </>
             )}
