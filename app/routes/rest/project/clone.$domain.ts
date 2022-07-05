@@ -4,14 +4,21 @@ import * as db from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
 import config from "~/config";
 import type { Project } from "~/shared/db/project.server";
+import { authenticator } from "~/services/auth.server";
+import { createDemoUser } from "~/shared/db/user.server";
 
 const ensureProject = async ({
   userId,
   domain,
+  demoUserId,
 }: {
   userId: User["id"];
   domain: string;
+  demoUserId: boolean;
 }): Promise<Project> => {
+  if (demoUserId) {
+    await createDemoUser(userId);
+  }
   const projects = await db.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
 
@@ -28,9 +35,14 @@ const ensureProject = async ({
  */
 export const loader: LoaderFunction = async ({ request, params }) => {
   if (params.domain === undefined) return { errors: "Domain required" };
-  const { headers, userId } = await ensureUserCookie(request);
+  const user = await authenticator.isAuthenticated(request);
+  const { headers, userId: generatedUserId } = await ensureUserCookie(request);
   try {
-    const project = await ensureProject({ userId, domain: params.domain });
+    const project = await ensureProject({
+      userId: user ? user.id : generatedUserId,
+      domain: params.domain,
+      demoUserId: user?.id === undefined,
+    });
     return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error: unknown) {
     if (error instanceof Error) {

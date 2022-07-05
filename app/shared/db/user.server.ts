@@ -3,6 +3,18 @@ import { GitHubProfile } from "remix-auth-github";
 import { GoogleProfile } from "remix-auth-google";
 import { prisma } from "./prisma.server";
 
+export const createDemoUser = async (userId: string) => {
+  await prisma.team.create({
+    data: {
+      users: {
+        create: {
+          id: userId,
+        },
+      },
+    },
+  });
+};
+
 const genericCreateAccount = async (
   userData: {
     email: string;
