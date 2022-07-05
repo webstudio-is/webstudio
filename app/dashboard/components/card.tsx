@@ -35,10 +35,13 @@ export const SelectProjectCard = ({
   const options = ["", ...projects.map((project) => project.id)];
 
   return (
-    <Card>
-      <Flex direction="column" gap="2">
-        <Heading>Select a project</Heading>
+    <Card size={2}>
+      <Flex direction="column" gap="4">
+        <Heading size="2" css={{ textAlign: "center" }}>
+          Select a project
+        </Heading>
         <Select
+          size={2}
           name="project"
           options={options}
           onChange={setSelectedProject}
@@ -53,6 +56,7 @@ export const SelectProjectCard = ({
           <Form method="post">
             <Flex gap="1">
               <TextField
+                size={2}
                 state={errors ? "invalid" : undefined}
                 name="project"
                 defaultValue={newProject}
@@ -64,6 +68,7 @@ export const SelectProjectCard = ({
                 }}
               />
               <Button
+                size={2}
                 disabled={
                   newProject.length === 0 || transition.state === "submitting"
                 }
@@ -79,7 +84,9 @@ export const SelectProjectCard = ({
             ) : null}
           </Form>
         ) : (
-          <Button onClick={handleOpen}>Open</Button>
+          <Button onClick={handleOpen} size={2}>
+            Open
+          </Button>
         )}
       </Flex>
     </Card>

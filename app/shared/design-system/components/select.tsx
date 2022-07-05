@@ -14,10 +14,7 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "0 $1 0 $2",
-  fontSize: "$1",
   fontVariantNumeric: "tabular-nums",
-  height: "$5",
   gap: "$2",
   flexShrink: 0,
   borderRadius: "$1",
@@ -33,6 +30,10 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   },
 
   variants: {
+    size: {
+      1: { padding: "0 $1 0 $2", fontSize: "$1", height: "$5" },
+      2: { padding: "0 $2 0 $3", height: "$6", fontSize: "$3" },
+    },
     ghost: {
       true: {
         backgroundColor: "transparent",
@@ -44,6 +45,9 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
         width: "100%",
       },
     },
+  },
+  defaultVariants: {
+    size: 1,
   },
 });
 
