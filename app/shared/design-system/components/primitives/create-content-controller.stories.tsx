@@ -61,12 +61,8 @@ const ExampleContentController = () => {
   );
 };
 
-export const DetectInput = Object.assign(ExampleContentController.bind({}), {
-  args: {},
-});
+export const DetectInput = Object.assign(ExampleContentController.bind({}));
 
 export default {
-  title: "createContentController",
   component: ExampleContentController,
-  argTypes: {},
 };
