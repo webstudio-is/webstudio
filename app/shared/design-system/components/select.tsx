@@ -18,8 +18,8 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   gap: "$2",
   flexShrink: 0,
   borderRadius: "$1",
-  backgroundColor: "$background",
-  color: "$text",
+  backgroundColor: "$loContrast",
+  color: "$hiContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   "&:hover": {
     backgroundColor: "$slateA3",
@@ -72,7 +72,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
   all: "unset",
   fontSize: "$1",
   lineHeight: 1,
-  color: "$text",
+  color: "$hiContrast",
   display: "flex",
   alignItems: "center",
   height: "$5",
@@ -87,7 +87,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
 
   "&:focus": {
     backgroundColor: "$primary",
-    color: "$text",
+    color: "$hiContrast",
   },
 });
 
