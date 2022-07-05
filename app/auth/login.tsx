@@ -42,7 +42,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
       align="center"
       justify="center"
     >
-      <Card css={{ width: 200, padding: "$5", zoom: 1.4 }} variant="active">
+      <Card>
         <Flex direction="column" gap="2" align="center">
           <Heading>Login</Heading>
           {errorMessage.length ? (

@@ -1,8 +1,12 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
-import { useRootInstance } from "~/shared/nano-states";
+import {
+  useRootInstance,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import { findInstanceById } from "~/shared/tree-utils";
+import { primitives } from "~/shared/canvas-components";
 
 const eventOptions = {
   passive: true,
@@ -11,6 +15,9 @@ const eventOptions = {
 export const useTrackSelectedElement = () => {
   const [selectedElement, setSelectedElement] = useSelectedElement();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+  const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
+  const editingInstanceIdRef = useRef(editingInstanceId);
+  editingInstanceIdRef.current = editingInstanceId;
   const [rootInstance] = useRootInstance();
   const selectInstance = useCallback(
     (id) => {
@@ -41,18 +48,64 @@ export const useTrackSelectedElement = () => {
   }, [selectedInstance, selectedElement, setSelectedElement]);
 
   useEffect(() => {
+    if (
+      editingInstanceIdRef.current !== undefined &&
+      selectedInstance?.id !== editingInstanceIdRef.current
+    ) {
+      setEditingInstanceId(undefined);
+    }
+  }, [selectedInstance, setEditingInstanceId]);
+
+  useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       // Notify in general that document was clicked
       // e.g. to hide the side panel
       publish<"clickCanvas">({ type: "clickCanvas" });
-      if (event.target instanceof HTMLElement) {
-        selectInstance(event.target.id);
+      let element = event.target as HTMLElement;
+
+      // If we click on an element that is not a component, we search for a parent component.
+      if (element.dataset.component === undefined) {
+        const instanceElement =
+          element.closest<HTMLElement>("[data-component]");
+        if (instanceElement === null) {
+          return;
+        }
+        element = instanceElement;
       }
+
+      const { id, dataset } = element;
+
+      // Enable clicking inside of content editable without trying to select the element as an instance.
+      if (editingInstanceIdRef.current === id) {
+        return;
+      }
+
+      // It's the second click in a double click.
+      if (event.detail === 2) {
+        const component = dataset.component as Instance["component"];
+        if (component === undefined || component in primitives === false) {
+          return;
+        }
+        const { isInlineOnly } = primitives[component];
+        // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
+        // Inline instances are not directly, only through parent instance.
+        if (isInlineOnly) {
+          const parentId = element.parentElement?.id;
+          if (parentId) {
+            selectInstance(parentId);
+            setEditingInstanceId(parentId);
+          }
+        } else setEditingInstanceId(id);
+        return;
+      }
+
+      selectInstance(id);
     };
+
     window.addEventListener("click", handleClick, eventOptions);
 
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [selectInstance]);
+  }, [selectInstance, setEditingInstanceId]);
 };

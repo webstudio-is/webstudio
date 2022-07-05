@@ -1,12 +1,31 @@
-export type { EditorConfig, EditorState, LexicalCommand } from "lexical";
+export type {
+  EditorConfig,
+  EditorState,
+  LexicalCommand,
+  LexicalEditor,
+  LexicalNode,
+  RangeSelection,
+  SerializedEditorState,
+  SerializedLexicalNode,
+  SerializedElementNode,
+  SerializedTextNode,
+  SerializedRootNode,
+  ParagraphNode,
+} from "lexical";
 export {
+  ElementNode,
   TextNode,
+  RootNode,
   createCommand,
   $isRangeSelection,
   $getSelection,
   $getRoot,
-  COMMAND_PRIORITY_EDITOR,
   $getNodeByKey,
+  $createTextNode,
+  $createParagraphNode,
+  COMMAND_PRIORITY_EDITOR,
+  SELECTION_CHANGE_COMMAND,
+  COMMAND_PRIORITY_LOW,
 } from "lexical";
 export { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 export { LexicalComposer } from "@lexical/react/LexicalComposer";
