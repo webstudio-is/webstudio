@@ -4,7 +4,12 @@ import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
-import { useRootInstance } from "~/shared/nano-states";
+import {
+  useRootInstance,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
+
+const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
 
 type HandlerEvent = {
   key: string;
@@ -37,6 +42,7 @@ const publishOpenBreakpointsMenu = () => {
 export const useShortcuts = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+  const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
 
   const publishDeleteInstance = () => {
     // @todo tell user they can't delete root
@@ -69,7 +75,7 @@ export const useShortcuts = () => {
   useHotkeys(
     "backspace, delete",
     shortcutHandlerMap.delete,
-    { ...options, enableOnTags: ["INPUT", "SELECT", "TEXTAREA"] },
+    { ...options, enableOnTags: [...inputTags] },
     [shortcutHandlerMap.delete]
   );
 
@@ -77,11 +83,28 @@ export const useShortcuts = () => {
     "esc",
     () => {
       if (selectedInstance === undefined) return;
+      // Since we are in text editing mode, we want to first exit that mode without unselecting the instance.
+      if (editingInstanceId) {
+        setEditingInstanceId(undefined);
+        return;
+      }
       setSelectedInstance(undefined);
       publish<"selectInstance">({ type: "selectInstance" });
     },
+    { ...options, enableOnContentEditable: true, enableOnTags: [...inputTags] },
+    [selectedInstance, editingInstanceId]
+  );
+
+  useHotkeys(
+    "enter",
+    (event) => {
+      if (selectedInstance === undefined) return;
+      // Prevents inserting a newline when entering text-editing mode
+      event.preventDefault();
+      setEditingInstanceId(selectedInstance.id);
+    },
     options,
-    [selectedInstance]
+    [selectedInstance, setEditingInstanceId]
   );
 
   useHotkeys(shortcuts.undo, shortcutHandlerMap.undo, options, []);

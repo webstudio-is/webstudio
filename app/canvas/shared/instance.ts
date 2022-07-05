@@ -30,7 +30,11 @@ import {
   useHoveredElement,
   useHoveredInstance,
 } from "./nano-states";
-import { rootInstanceContainer, useRootInstance } from "~/shared/nano-states";
+import {
+  rootInstanceContainer,
+  useRootInstance,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import { useMeasure } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
@@ -258,4 +262,14 @@ export const useUnselectInstance = () => {
   useSubscribe("unselectInstance", () => {
     setSelectedInstance(undefined);
   });
+};
+
+export const usePublishTextEditingInstanceId = () => {
+  const [editingInstanceId] = useTextEditingInstanceId();
+  useEffect(() => {
+    publish<"textEditingInstanceId", Instance["id"] | undefined>({
+      type: "textEditingInstanceId",
+      payload: editingInstanceId,
+    });
+  }, [editingInstanceId]);
 };
