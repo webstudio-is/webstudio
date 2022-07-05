@@ -28,6 +28,14 @@ type Options = {
   }) => void;
 };
 
+type State = {
+  value: number;
+  cursor?: SVGElement;
+  offset: number;
+  velocity: number;
+  direction: string;
+};
+
 export const numericGestureControl = (
   targetNode: HTMLInputElement,
   {
@@ -36,68 +44,50 @@ export const numericGestureControl = (
     onValueChange = () => null,
   }: Options
 ) => {
-  const { ownerDocument } = targetNode;
   const eventNames = ["pointerup", "pointerdown", "pointermove"] as const;
-  const state = {
+  const state: State = {
     value: initialValue,
-    cursor: cursorNode.cloneNode(true) as HTMLElement,
+    cursor: undefined,
     offset: 0,
     velocity: direction === "horizontal" ? 1 : -1,
-    position: direction === "horizontal" ? "left" : "top",
-    rotation: direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)",
-    direction: direction === "horizontal" ? "ew-resize" : "ns-resize",
-    dropShadow: `drop-shadow(${
-      direction === "horizontal" ? "0 1px" : "1px 0"
-    } 1.1px rgba(0,0,0,.4))`,
+    direction: direction,
+  };
+  const handleCursor = (
+    targetNode: HTMLElement | HTMLInputElement,
+    shouldSetCursor: boolean
+  ) => {
+    if (shouldSetCursor) {
+      targetNode.style.setProperty(
+        "cursor",
+        direction === "horizontal" ? "ew-resize" : "ns-resize"
+      );
+    } else {
+      targetNode.style.removeProperty("cursor");
+    }
   };
   const handleEvent = (event: PointerEvent) => {
-    const { type, pressure, offsetX, offsetY, movementY, movementX } = event;
+    const { type, offsetX, offsetY, movementY, movementX } = event;
     const offset = direction === "horizontal" ? offsetX : offsetY;
     const movement = direction === "horizontal" ? movementX : -movementY;
     switch (type) {
       case "pointerup": {
-        ownerDocument.exitPointerLock();
+        state.offset = 0;
+        handleCursor(targetNode.ownerDocument.documentElement, false);
+        exitPointerLock(state, event, targetNode);
         break;
       }
       case "pointerdown": {
-        const handlePointerLockEvent = () => {
-          switch (ownerDocument.pointerLockElement) {
-            case targetNode: {
-              state.offset = offset;
-              state.cursor.style.position = "absolute";
-              state.cursor.style.top = `${offsetY}px`;
-              state.cursor.style.left = `${offsetX}px`;
-              state.cursor.style.transform = state.rotation;
-              state.cursor.style.setProperty("--drop-shadow", state.dropShadow);
-              ownerDocument.documentElement.append(state.cursor);
-              break;
-            }
-            case null: {
-              ownerDocument.removeEventListener(
-                "pointerlockchange",
-                handlePointerLockEvent
-              );
-              state.cursor.remove();
-              break;
-            }
-          }
-        };
-        ownerDocument.addEventListener(
-          "pointerlockchange",
-          handlePointerLockEvent
-        );
-        targetNode.requestPointerLock();
+        state.offset = offset;
+        handleCursor(targetNode.ownerDocument.documentElement, true);
+        requestPointerLock(state, event, targetNode);
         break;
       }
       case "pointermove": {
-        if (pressure) {
+        if (state.offset) {
           if (state.offset < 0) state.offset = globalThis.innerWidth + 1;
           else if (state.offset > globalThis.innerWidth) state.offset = 1;
           state.value += movement;
           state.offset += movement * state.velocity;
-          state.cursor.style[
-            state.position as "top" | "left"
-          ] = `${state.offset}px`;
           onValueChange({
             target: targetNode,
             value: state.value,
@@ -108,13 +98,14 @@ export const numericGestureControl = (
       }
     }
   };
-  targetNode.style.setProperty("cursor", state.direction);
+
+  handleCursor(targetNode, true);
   eventNames.forEach((eventName) =>
     targetNode.addEventListener(eventName, handleEvent)
   );
   return {
     disconnectedCallback: () => {
-      targetNode.style.removeProperty("cursor");
+      handleCursor(targetNode, false);
       eventNames.forEach((eventName) =>
         targetNode.removeEventListener(eventName, handleEvent)
       );
@@ -122,11 +113,65 @@ export const numericGestureControl = (
   };
 };
 
-const cursorNode = new Range().createContextualFragment(`
-  <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15" style="filter:var(--drop-shadow);">
-    <g transform="translate(2 3)">
-      <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd" stroke="#FFF" stroke-width="2"></path>
-      <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
-    </g>
-  </svg>
-`).firstElementChild as HTMLElement;
+const requestPointerLock = (
+  state: State,
+  event: PointerEvent,
+  targetNode: HTMLElement
+) => {
+  // The pointer lock api nukes the cursor on requestng a pointer lock,
+  // creating and managing the visual que of the cursor is thus left to the author
+  // we create and append an svg that serves as the visual que of where the cursor currently is
+  // taking into account horizontal/vertical orientation of the cursor itself, and update its position on move.
+  // we only use pointerLock api on chromium based browsers, because they feature an unobtrusive ux when activating it
+  // other browsers show a warning banner, making the use of it in this scenario subpar: in which case we fallback to using non-pointerLock means:
+  // albeit without an infinite cursor ux.
+  if (shouldUsePointerLock) {
+    targetNode.requestPointerLock();
+    const cursorNode = new Range().createContextualFragment(`
+      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15" style="filter:drop-shadow(${
+        state.direction === "horizontal" ? "0 1px" : "1px 0"
+      } 1.1px rgba(0,0,0,.4))">
+       <g transform="translate(2 3)">
+         <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd" stroke="#FFF" stroke-width="2"></path>
+          <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
+        </g>
+      </svg>`).firstElementChild as SVGElement;
+    cursorNode.style.position = "absolute";
+    cursorNode.style.left = `${event.offsetX}px`;
+    cursorNode.style.top = `${event.offsetY}px`;
+    cursorNode.style.transform =
+      state.direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)";
+    state.cursor = cursorNode;
+    if (state.cursor) {
+      targetNode.ownerDocument.documentElement.append(state.cursor);
+    }
+    targetNode.onpointermove = () => {
+      if (state.cursor) {
+        state.cursor.style[
+          state.direction === "horizontal" ? "left" : "top"
+        ] = `${state.offset}px`;
+      }
+    };
+  } else {
+    targetNode.setPointerCapture(event.pointerId);
+  }
+};
+
+const exitPointerLock = (
+  state: State,
+  event: PointerEvent,
+  targetNode: HTMLElement
+) => {
+  if (shouldUsePointerLock) {
+    if (state.cursor) {
+      state.cursor.remove();
+      state.cursor = undefined;
+    }
+    targetNode.onpointermove = null;
+    targetNode.ownerDocument.exitPointerLock();
+  } else {
+    targetNode.releasePointerCapture(event.pointerId);
+  }
+};
+
+const shouldUsePointerLock = "chrome" in globalThis;

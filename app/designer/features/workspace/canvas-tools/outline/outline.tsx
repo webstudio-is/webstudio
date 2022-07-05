@@ -4,8 +4,8 @@ import { styled } from "~/shared/design-system";
 const OutlineContainer = styled("div", {
   position: "absolute",
   pointerEvents: "none",
-  outline: "2px solid $blue9",
-  outlineOffset: -2,
+  outline: "1px solid $blue9",
+  outlineOffset: -1,
   top: 0,
   left: 0,
 });

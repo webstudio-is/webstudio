@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Card, Flex, Heading, Text, TextField } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
-import { GithubIcon, CommitIcon } from "~/shared/icons";
+import { GithubIcon, CommitIcon, GoogleIcon } from "~/shared/icons";
 import { LoginButton } from "./components/login-button";
 import loginStyles from "./login.css";
 
@@ -27,8 +27,8 @@ export const meta: MetaFunction = () => {
 };
 
 export const Login = ({ errorMessage }: { errorMessage: string }) => {
-  const [isDevLogin, setIsDevLogin] = useState(false);
-  const loaderData = useLoaderData();
+  const [isDevLoginOpen, openDevLogin] = useState(false);
+  const data = useLoaderData();
 
   return (
     <Flex
@@ -37,9 +37,9 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
       align="center"
       justify="center"
     >
-      <Card css={{ width: 200, padding: "$5" }} variant="active">
+      <Card size={2} variant="active">
         <Flex direction="column" gap="2" align="center">
-          <Heading>Login</Heading>
+          <Heading size="2">Login</Heading>
           {errorMessage.length ? (
             <Text css={{ textAlign: "center" }} variant="red">
               {errorMessage}
@@ -47,26 +47,27 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
-              <LoginButton>
+              <LoginButton enabled={data.isGithubEnabled}>
                 <Flex gap="1">
-                  <GithubIcon width="16" />
+                  <GithubIcon width="20" />
                   Login with GitHub
                 </Flex>
               </LoginButton>
             </Form>
-            {/* <Form action="/auth/google" method="post">
-              <LoginButton>
+            <Form action="/auth/google" method="post">
+              <LoginButton enabled={data.isGoogleEnabled}>
                 <Flex gap="1">
-                  <GoogleIcon width="16" />
+                  <GoogleIcon width="20" />
                   Login with Google
                 </Flex>
               </LoginButton>
-            </Form> */}
-            {loaderData.devLogin && (
+            </Form>
+            {data.isDevLogin && (
               <>
-                {isDevLogin ? (
+                {isDevLoginOpen ? (
                   <Form action="/auth/dev" method="post">
                     <TextField
+                      size={2}
                       css={{ width: "100%", flexGrow: 1 }}
                       name="secret"
                       type="text"
@@ -77,9 +78,13 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                     />
                   </Form>
                 ) : (
-                  <LoginButton isDevLogin onClick={() => setIsDevLogin(true)}>
+                  <LoginButton
+                    enabled={data.isDevLogin}
+                    isDevLogin
+                    onClick={() => openDevLogin(true)}
+                  >
                     <Flex gap="1" align="center">
-                      <CommitIcon></CommitIcon>
+                      <CommitIcon width="20" />
                       Dev Login
                     </Flex>
                   </LoginButton>

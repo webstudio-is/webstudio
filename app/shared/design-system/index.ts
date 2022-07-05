@@ -19,7 +19,7 @@ export * as Portal from "@radix-ui/react-portal";
 export { Container } from "./components/container";
 export { Label } from "./components/label";
 export * as ToggleGroup from "./components/toggle-group";
-export { Select } from "./components/select";
+export * from "./components/select";
 export { TextField } from "./components/text-field";
 export { Flex } from "./components/flex";
 export { Grid } from "./components/grid";
@@ -45,12 +45,13 @@ export {
   PopoverClose,
 } from "./components/popover";
 export { Heading } from "./components/heading";
-export * from "./components/dropdown-menu";
 export { MenuContent, MenuItem, Menu, MenuAnchor } from "./components/menu";
 export { Paragraph } from "./components/paragraph";
 export { Link } from "./components/link";
-export { Switch } from "./components/switch";
 export { Panel } from "./components/panel";
+export * from "./components/dropdown-menu";
+export * from "./components/switch";
 export * from "./components/slider";
 export * from "./components/control-group";
+export * from "./components/radio";
 export * from "./components/combobox";

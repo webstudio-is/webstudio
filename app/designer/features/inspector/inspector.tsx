@@ -9,7 +9,7 @@ import {
   Box,
 } from "~/shared/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
-import { SettingsPanel } from "~/designer/features/settings-panel";
+import { PropsPanel } from "~/designer/features/props-panel";
 import { BrushIcon, GearIcon } from "~/shared/icons";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
@@ -53,8 +53,9 @@ export const Inspector = ({ publish }: InspectorProps) => {
         />
       </TabsContent>
       <TabsContent value="props" css={contentStyle}>
-        <SettingsPanel
+        <PropsPanel
           publish={publish}
+          key={selectedInstanceData.id /* Re-render when instance changes */}
           selectedInstanceData={selectedInstanceData}
         />
       </TabsContent>
