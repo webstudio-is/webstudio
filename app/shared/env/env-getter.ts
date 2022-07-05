@@ -8,9 +8,8 @@ export default new Proxy(
   {},
   {
     get(_target, prop) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof window === "undefined") {
-        return process.env;
+        return prop in process.env ? process.env[prop as keyof Env] : undefined;
       }
       const env = (window[namespace as never] ?? {}) as unknown as Env;
       return prop in env ? env[prop as keyof Env] : undefined;

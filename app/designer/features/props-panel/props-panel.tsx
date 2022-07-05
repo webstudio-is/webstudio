@@ -1,26 +1,40 @@
-import { type UserProp, type Publish } from "@webstudio-is/sdk";
+import {
+  componentsMeta,
+  type Instance,
+  type Publish,
+  type UserProp,
+} from "@webstudio-is/sdk";
+import { Control } from "~/designer/features/props-panel/control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import { TextField, Flex, Button, Box } from "~/shared/design-system";
-import { PlusIcon, TrashIcon } from "~/shared/icons";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { usePropsLogic } from "./use-props-logic";
+import { Box, Button, Grid, TextField } from "~/shared/design-system";
+import { PlusIcon, TrashIcon } from "~/shared/icons";
+import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
-type PropertyProps = {
-  id: UserProp["id"];
-  prop: UserProp["prop"];
-  value: UserProp["value"];
-  onChange: (
-    id: UserProp["id"],
-    field: keyof UserProp,
-    value: UserProp["prop"] | UserProp["value"]
-  ) => void;
+type PropertyProps = UserProp & {
+  component: Instance["component"];
+  onChange: handleChangePropType;
   onDelete: (id: UserProp["id"]) => void;
 };
 
-const Property = ({ id, prop, value, onChange, onDelete }: PropertyProps) => {
+const Property = ({
+  id,
+  prop,
+  value,
+  required,
+  component,
+  onChange,
+  onDelete,
+}: PropertyProps) => {
+  const meta = componentsMeta[component];
+  const argType = meta?.argTypes?.[prop as keyof typeof meta.argTypes];
+  const type = argType?.control.type;
+  const defaultValue = argType?.control.defaultValue;
+  const options = argType?.options;
   return (
-    <Flex gap="1">
+    <Grid gap="1" css={{ gridTemplateColumns: "auto 1fr auto" }}>
       <TextField
+        readOnly={required}
         variant="ghost"
         placeholder="Property"
         name="prop"
@@ -29,40 +43,38 @@ const Property = ({ id, prop, value, onChange, onDelete }: PropertyProps) => {
           onChange(id, "prop", event.target.value);
         }}
       />
-      <TextField
-        variant="ghost"
-        placeholder="Value"
-        name="value"
-        value={String(value)}
-        onChange={(event) => {
-          onChange(id, "value", event.target.value);
-        }}
+      <Control
+        type={type}
+        required={required}
+        defaultValue={defaultValue}
+        options={options}
+        value={value}
+        onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
       />
       <Button
         ghost
+        disabled={required}
         onClick={() => {
           onDelete(id);
         }}
       >
         <TrashIcon />
       </Button>
-    </Flex>
+    </Grid>
   );
 };
 
-type StylePanelProps = {
+type PropsPanelProps = {
   publish: Publish;
-  selectedInstanceData?: SelectedInstanceData;
+  selectedInstanceData: SelectedInstanceData;
 };
 
-export const SettingsPanel = ({
+export const PropsPanel = ({
   selectedInstanceData,
   publish,
-}: StylePanelProps) => {
+}: PropsPanelProps) => {
   const { userProps, addEmptyProp, handleChangeProp, handleDeleteProp } =
     usePropsLogic({ selectedInstanceData, publish });
-
-  if (selectedInstanceData === undefined) return null;
 
   const addButton = (
     <Button
@@ -75,7 +87,6 @@ export const SettingsPanel = ({
       <PlusIcon />
     </Button>
   );
-
   return (
     <>
       <Box css={{ p: "$2" }}>
@@ -87,12 +98,14 @@ export const SettingsPanel = ({
         isOpenDefault
       >
         <>
-          {userProps.map(({ id, prop, value }) => (
+          {userProps.map(({ id, prop, value, required }) => (
             <Property
               key={id}
               id={id}
               prop={prop}
               value={value}
+              required={required}
+              component={selectedInstanceData.component}
               onChange={handleChangeProp}
               onDelete={handleDeleteProp}
             />

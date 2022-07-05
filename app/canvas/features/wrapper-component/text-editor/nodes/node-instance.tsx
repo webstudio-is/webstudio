@@ -1,10 +1,19 @@
-import { type EditorConfig, TextNode } from "../lexical";
 import { render } from "react-dom";
+import { type Instance } from "@webstudio-is/sdk";
+import {
+  type EditorConfig,
+  type SerializedTextNode,
+  TextNode,
+} from "../lexical";
+import { InlineWrapperComponentDev } from "../../wrapper-component";
 
 type Options = {
-  component: JSX.Element;
+  instance: Instance;
   text: string;
+  isNew: boolean;
 };
+
+export type SerializedInstanceNode = SerializedTextNode & Options;
 
 export class InstanceNode extends TextNode {
   options: Options;
@@ -23,9 +32,23 @@ export class InstanceNode extends TextNode {
     this.options = options;
   }
 
+  exportJSON(): SerializedInstanceNode {
+    const json = super.exportJSON();
+    return {
+      ...json,
+      ...this.options,
+      type: InstanceNode.getType(),
+    };
+  }
+
   createDOM(config: EditorConfig) {
     const container = super.createDOM(config);
-    render(this.options.component, container);
+    const element = (
+      <InlineWrapperComponentDev instance={this.options.instance}>
+        {this.options.text}
+      </InlineWrapperComponentDev>
+    );
+    render(element, container);
     return container;
   }
 

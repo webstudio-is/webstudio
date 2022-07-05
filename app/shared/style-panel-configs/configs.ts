@@ -1,5 +1,3 @@
-import snakeCase from "lodash.snakecase";
-import capitalize from "lodash.capitalize";
 import {
   properties,
   categories,
@@ -8,10 +6,7 @@ import {
   type StyleProperty,
 } from "@webstudio-is/sdk";
 import type { StyleConfig, Control } from "./types";
-
-const humanizeString = (string: string): string => {
-  return snakeCase(string).split("_").map(capitalize).join(" ");
-};
+import { humanizeString } from "../string-utils";
 
 type Property = keyof typeof keywordValues;
 

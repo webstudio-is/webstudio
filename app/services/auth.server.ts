@@ -34,8 +34,8 @@ const github = new GitHubStrategy(
 
 const google = new GoogleStrategy(
   {
-    clientID: "YOUR_CLIENT_ID",
-    clientSecret: "YOUR_CLIENT_SECRET",
+    clientID: process.env.GOOGLE_CLIENT_ID as string,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     callbackURL: `${url}${config.googleCallbackPath}`,
   },
   async ({ profile, context }) => {
@@ -51,8 +51,9 @@ export const authenticator = new Authenticator<User>(sessionStorage);
 if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   authenticator.use(github, "github");
 }
-authenticator.use(google, "google");
-
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  authenticator.use(google, "google");
+}
 if (process.env.DEV_LOGIN === "true") {
   authenticator.use(
     new FormStrategy(async ({ form }) => {

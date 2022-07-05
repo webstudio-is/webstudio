@@ -14,8 +14,16 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (user) {
     return redirect(config.dashboardPath);
   }
-
-  return { devLogin: process.env.DEV_LOGIN === "true", env };
+  return {
+    isDevLogin: process.env.DEV_LOGIN === "true",
+    env,
+    isGithubEnabled: Boolean(
+      process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET
+    ),
+    isGoogleEnabled: Boolean(
+      process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ),
+  };
 };
 
 const LoginRoute = () => {
