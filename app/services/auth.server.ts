@@ -14,8 +14,8 @@ import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 
 const url = `${
-  process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
+  process.env.DEPLOYMENT_ENVIRONMENT === "production"
+    ? process.env.DEPLOYMENT_URL
     : `http://localhost:${process.env.PORT || 3000}`
 }${config.authPath}`;
 
