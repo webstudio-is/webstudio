@@ -37,8 +37,8 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
       align="center"
       justify="center"
     >
-      <Card size={2} variant="active">
-        <Flex direction="column" gap="2" align="center">
+      <Card size={2}>
+        <Flex direction="column" gap="4" align="center">
           <Heading size="2">Login</Heading>
           {errorMessage.length ? (
             <Text css={{ textAlign: "center" }} variant="red">
