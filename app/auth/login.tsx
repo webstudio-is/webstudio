@@ -52,7 +52,10 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">
-              <Button type="submit" disabled={!loaderData.githubEnabled}>
+              <Button
+                type="submit"
+                disabled={loaderData.isGithubEnabled === false}
+              >
                 <Flex gap="1">
                   <GithubIcon width="16" />
                   Login with GitHub
@@ -60,14 +63,17 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
               </Button>
             </Form>
             <Form action="/auth/google" method="post">
-              <Button type="submit" disabled={!loaderData.googleEnabled}>
+              <Button
+                type="submit"
+                disabled={loaderData.isGoogleEnabled === false}
+              >
                 <Flex gap="1">
                   <GoogleIcon width="16" />
                   Login with Google
                 </Flex>
               </Button>
             </Form>
-            {loaderData.devLogin && (
+            {loaderData.isDevLogin && (
               <>
                 {isDevLogin ? (
                   <Form action="/auth/dev" method="post">

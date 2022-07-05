@@ -16,10 +16,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 
   return {
-    devLogin: process.env.DEV_LOGIN === "true",
+    isDevLogin: process.env.DEV_LOGIN === "true",
     env,
-    githubEnabled: process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET,
-    googleEnabled:
+    isGithubEnabled: process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET,
+    isGoogleEnabled:
       process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
   };
 };
