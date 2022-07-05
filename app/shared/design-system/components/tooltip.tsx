@@ -60,7 +60,7 @@ export const Tooltip = ({
           as="p"
           css={{
             color: "currentColor",
-            lineHeight: multiline ? "20px" : undefined,
+            lineHeight: multiline ? "$5" : undefined,
           }}
         >
           {content}

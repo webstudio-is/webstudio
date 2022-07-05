@@ -15,7 +15,8 @@ export const LoginButton = ({
   onClick?: () => void;
   enabled: boolean;
 }) => {
-  const showTooltip = isPreviewEnvironment && isDevLogin === false && enabled;
+  const showTooltip =
+    (isPreviewEnvironment || enabled === false) && isDevLogin === false;
   if (showTooltip) {
     const content = isPreviewEnvironment
       ? "Social login does not work in preview deployments"
