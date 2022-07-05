@@ -2,7 +2,7 @@ import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import config from "~/config";
 import { authenticator } from "~/services/auth.server";
 import { sentryException } from "~/shared/sentry";
-import { ensureUserCookie, AUTH_PROVIDERS } from "~/shared/session";
+import { AUTH_PROVIDERS } from "~/shared/session";
 
 export default function Google() {
   return null;
@@ -12,11 +12,7 @@ export const loader: LoaderFunction = () => redirect("/login");
 
 export const action: ActionFunction = async ({ request }) => {
   try {
-    const { userId } = await ensureUserCookie(request);
     return await authenticator.authenticate("google", request, {
-      context: {
-        userId,
-      },
       successRedirect: config.dashboardPath,
       throwOnError: true,
     });
