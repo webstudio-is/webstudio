@@ -9,10 +9,13 @@ type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
     children: React.ReactElement;
     content: React.ReactNode;
     multiline?: boolean;
+    delayDuration?: number;
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: "$transparentPanel",
+  backgroundColor: "$loContrast",
+  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  color: "$hiContrast",
   borderRadius: "$1",
   padding: "$1 $2",
 
@@ -33,6 +36,7 @@ export const Tooltip = ({
   defaultOpen,
   onOpenChange,
   multiline,
+  delayDuration,
   ...props
 }: TooltipProps) => {
   return (
@@ -40,6 +44,7 @@ export const Tooltip = ({
       open={open}
       defaultOpen={defaultOpen}
       onOpenChange={onOpenChange}
+      delayDuration={delayDuration}
     >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 
@@ -54,8 +59,8 @@ export const Tooltip = ({
           size="1"
           as="p"
           css={{
-            color: "$loContrast",
-            lineHeight: multiline ? "20px" : undefined,
+            color: "currentColor",
+            lineHeight: multiline ? "$5" : undefined,
           }}
         >
           {content}
@@ -66,7 +71,7 @@ export const Tooltip = ({
             width={11}
             height={5}
             style={{
-              fill: "currentColor",
+              fill: "$loContrast",
             }}
           />
         </Box>

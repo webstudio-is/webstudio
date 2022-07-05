@@ -23,6 +23,7 @@ const StyledSwitch = styled(SwitchPrimitive.Root, {
   all: "unset",
   boxSizing: "border-box",
   userSelect: "none",
+  flexShrink: 0,
   "&::before": {
     boxSizing: "border-box",
   },

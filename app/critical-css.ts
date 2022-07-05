@@ -10,6 +10,7 @@ const getCssTextFunctions = {
   [config.canvasPath]: getCanvasCssText,
   [config.designerPath]: getDesignerCssText,
   [config.dashboardPath]: getDesignerCssText,
+  [config.loginPath]: getDesignerCssText,
 };
 
 const getCssTextFunction = (url: string) => {

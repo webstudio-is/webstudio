@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import store from "immerhin";
@@ -22,12 +22,18 @@ import {
   useInsertInstance,
   useDeleteInstance,
   useReparentInstance,
-  usePublishSelectedInstance,
+  usePublishSelectedInstanceData,
   usePublishRootInstance,
   useUpdateSelectedInstance,
+  usePublishSelectedInstanceDataRect,
+  usePublishHoveredInstanceRect,
+  usePublishHoveredInstanceData,
+  useSetHoveredInstance,
+  useUnselectInstance,
+  usePublishTextEditingInstanceId,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
-import { useActiveElementTracking } from "./shared/active-element";
+import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
@@ -40,8 +46,15 @@ import {
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
+  useSubscribeScrollState,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
+import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
+import { usePublishScrollState } from "./shared/use-publish-scroll-state";
+import {
+  LexicalComposer,
+  config,
+} from "~/canvas/features/wrapper-component/text-editor";
 
 registerContainers();
 
@@ -49,17 +62,17 @@ const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
   const [breakpoints] = useBreakpoints();
 
+  const onChangeChildren: OnChangeChildren = useCallback((change) => {
+    store.createTransaction([rootInstanceContainer], (rootInstance) => {
+      if (rootInstance === undefined) return;
+
+      const { instanceId, updates } = change;
+      setInstanceChildrenMutable(instanceId, updates, rootInstance);
+    });
+  }, []);
+
   return useMemo(() => {
     if (rootInstance === undefined) return;
-
-    const onChangeChildren: OnChangeChildren = (change) => {
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) return;
-
-        const { instanceId, updates } = change;
-        setInstanceChildrenMutable(instanceId, updates, rootInstance);
-      });
-    };
 
     return createElementsTree({
       instance: rootInstance,
@@ -67,7 +80,7 @@ const useElementsTree = () => {
       Component: WrapperComponentDev,
       onChangeChildren,
     });
-  }, [rootInstance, breakpoints]);
+  }, [rootInstance, breakpoints, onChangeChildren]);
 };
 
 const useSubscribePreviewMode = () => {
@@ -92,24 +105,37 @@ type DesignModeProps = {
   project: Project;
 };
 
+const dndOptions = { enableMouseEvents: true };
+
 const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDragDropHandlers();
   useUpdateStyle();
   useManageProps();
-  usePublishSelectedInstance({ treeId });
+  usePublishSelectedInstanceData(treeId);
+  usePublishHoveredInstanceData();
   useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
-  useActiveElementTracking();
+  useTrackSelectedElement();
+  useTrackHoveredElement();
+  useSetHoveredInstance();
   useSync({ project });
   useUpdateSelectedInstance();
+  usePublishSelectedInstanceDataRect();
+  usePublishHoveredInstanceRect();
+  useUnselectInstance();
+  usePublishScrollState();
+  useSubscribeScrollState();
+  usePublishTextEditingInstanceId();
   const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
-    <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
-      {elements}
+    <DndProvider backend={TouchBackend} options={dndOptions}>
+      {elements && (
+        <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
+      )}
     </DndProvider>
   );
 };

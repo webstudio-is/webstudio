@@ -4,7 +4,7 @@ import { getEmptyImage } from "react-dnd-html5-backend";
 import { type Instance, type Publish } from "@webstudio-is/sdk";
 import { Flex } from "~/shared/design-system";
 import { PlusIcon } from "~/shared/icons";
-import { primitives, type DragData } from "~/shared/component";
+import { primitives, type DragData } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
 import { CustomDragLayer } from "./custom-drag-layer";

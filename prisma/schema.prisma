@@ -10,18 +10,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Team {
+  id    String @id @default(uuid())
+  users User[]
+
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String?   @unique
+  provider  String?
+  image     String?
+  username  String?
+  createdAt DateTime  @default(now())
+  Team      Team?     @relation(fields: [teamId], references: [id])
+  teamId    String?
+  projects  Project[]
+}
+
 model Project {
   id                String  @id @default(uuid())
-  userId            String
   title             String
   domain            String  @unique
   prodTreeId        String? // exists when published
   devTreeId         String
   prodTreeIdHistory String  @default("[]")
-}
-
-model User {
-  id String @id @default(uuid())
+  User              User?   @relation(fields: [userId], references: [id])
+  userId            String?
 }
 
 model Tree {

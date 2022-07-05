@@ -34,8 +34,8 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
           },
           lineHeight: {
             type: "unit",
-            unit: "px",
-            value: 20,
+            unit: "number",
+            value: 1.5,
           },
           color: {
             type: "keyword",
