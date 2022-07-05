@@ -86,7 +86,12 @@ export const useTrackSelectedElement = () => {
         if (component === undefined || component in primitives === false) {
           return;
         }
-        const { isInlineOnly } = primitives[component];
+        const { isInlineOnly, isContentEditable } = primitives[component];
+
+        if (isContentEditable === false) {
+          return;
+        }
+
         // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
         // Inline instances are not directly, only through parent instance.
         if (isInlineOnly) {

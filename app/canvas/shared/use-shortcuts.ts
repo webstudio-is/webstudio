@@ -8,6 +8,7 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
+import { primitives } from "~/shared/canvas-components";
 
 const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
 
@@ -99,6 +100,8 @@ export const useShortcuts = () => {
     "enter",
     (event) => {
       if (selectedInstance === undefined) return;
+      const { isContentEditable } = primitives[selectedInstance.component];
+      if (isContentEditable === false) return;
       // Prevents inserting a newline when entering text-editing mode
       event.preventDefault();
       setEditingInstanceId(selectedInstance.id);
