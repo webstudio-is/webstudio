@@ -10,13 +10,13 @@ import { createDemoUser } from "~/shared/db/user.server";
 const ensureProject = async ({
   userId,
   domain,
-  demoUserId,
+  isDemoUser,
 }: {
   userId: User["id"];
   domain: string;
-  demoUserId: boolean;
+  isDemoUser: boolean;
 }): Promise<Project> => {
-  if (demoUserId) {
+  if (isDemoUser) {
     await createDemoUser(userId);
   }
   const projects = await db.project.loadManyByUserId(userId);
@@ -41,7 +41,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const project = await ensureProject({
       userId: user ? user.id : generatedUserId,
       domain: params.domain,
-      demoUserId: user?.id === undefined,
+      isDemoUser: user?.id === undefined,
     });
     return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error: unknown) {
