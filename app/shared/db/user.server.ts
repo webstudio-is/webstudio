@@ -42,7 +42,6 @@ const genericCreateAccount = async (userData: {
       email: userData.email,
     },
   });
-  console.log(existingUserWithEmail);
 
   if (existingUserWithEmail) {
     if (existingUserWithEmail.teamId) {
