@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@sentry/remix";
 import { OutletProps } from "react-router-dom";
 
 const RootWithErrorBoundary = (props: OutletProps) => (
+  // @ts-expect-error 'ErrorBoundary' cannot be used as a JSX component.
   <ErrorBoundary>
     <Outlet {...props} />
   </ErrorBoundary>
