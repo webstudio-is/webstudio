@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDrag } from "react-dnd";
 import { type Instance, publish } from "@webstudio-is/sdk";
-import { type DragData } from "apps/designer/app/shared/canvas-components";
+import { type DragData } from "~/shared/canvas-components";
 //import { usePointerOutline } from "~/canvas/hooks";
 
 type UseDraggable = {

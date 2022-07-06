@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
 import { useId } from "@radix-ui/react-id";
-import { RocketIcon, ExternalLinkIcon } from "apps/designer/app/shared/icons";
+import { RocketIcon, ExternalLinkIcon } from "~/shared/icons";
 import { type Project } from "@webstudio-is/sdk";
 import {
   Button,
@@ -13,7 +13,7 @@ import {
   Text,
   Label,
   Link,
-} from "apps/designer/app/shared/design-system";
+} from "~/shared/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 
 type PublishButtonProps = { project: Project };

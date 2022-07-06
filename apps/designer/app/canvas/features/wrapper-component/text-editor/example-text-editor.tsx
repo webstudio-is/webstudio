@@ -4,8 +4,8 @@ import {
   useAllUserProps,
   type Instance,
 } from "@webstudio-is/sdk";
-import { createInstance } from "apps/designer/app/shared/tree-utils";
-import { Box, Button } from "apps/designer/app/shared/design-system";
+import { createInstance } from "~/shared/tree-utils";
+import { Box, Button } from "~/shared/design-system";
 import { LexicalComposer, ContentEditable } from "./lexical";
 import { TreeViewPlugin } from "./plugins/tree-view-plugin";
 import { config } from "./config";

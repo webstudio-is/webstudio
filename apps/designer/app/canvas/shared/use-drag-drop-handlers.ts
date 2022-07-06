@@ -1,22 +1,19 @@
 import { useState } from "react";
 import { publish, useSubscribe } from "@webstudio-is/sdk";
-import {
-  type DragData,
-  type DropData,
-} from "apps/designer/app/shared/canvas-components";
-import { findInstanceById } from "apps/designer/app/shared/tree-utils";
+import { type DragData, type DropData } from "~/shared/canvas-components";
+import { findInstanceById } from "~/shared/tree-utils";
 import {
   findClosestChild,
   findInsertionIndex,
   getDragOverInfo,
-} from "apps/designer/app/shared/dom-utils";
+} from "~/shared/dom-utils";
 import {
   useDropData,
   useHoveredElement,
   useHoveredInstance,
   useSelectedInstance,
 } from "./nano-states";
-import { useRootInstance } from "apps/designer/app/shared/nano-states";
+import { useRootInstance } from "~/shared/nano-states";
 import memoize from "lodash.memoize";
 //import {usePointerOutline} from './use-pointer-outline'
 

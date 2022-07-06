@@ -1,10 +1,10 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import type { Project } from "@webstudio-is/sdk";
-import { Designer, links } from "apps/designer/app/designer";
-import * as db from "apps/designer/app/shared/db";
-import config from "apps/designer/app/config";
-import env from "apps/designer/app/env.server";
+import { Designer, links } from "~/designer";
+import * as db from "~/shared/db";
+import config from "~/config";
+import env from "~/env.server";
 export { links };
 
 export const loader: LoaderFunction = async ({ params }) => {

@@ -1,5 +1,5 @@
 import { namespace } from "./namespace";
-import type { Env } from "apps/designer/app/env.server";
+import type { Env } from "~/env.server";
 
 // @todo remove once remix has a built-in way
 // https://github.com/remix-run/remix/discussions/2769

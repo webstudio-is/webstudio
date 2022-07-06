@@ -1,5 +1,5 @@
 import { type ActionFunction } from "@remix-run/node";
-import * as db from "apps/designer/app/shared/db";
+import * as db from "~/shared/db";
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();

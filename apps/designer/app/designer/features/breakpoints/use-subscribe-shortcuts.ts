@@ -1,6 +1,6 @@
 import { useSubscribe } from "@webstudio-is/sdk";
-import { sort } from "apps/designer/app/shared/breakpoints";
-import { useBreakpoints } from "apps/designer/app/shared/nano-states";
+import { sort } from "~/shared/breakpoints";
+import { useBreakpoints } from "~/shared/nano-states";
 import { useZoom, useSelectedBreakpoint } from "../../shared/nano-states";
 import { minZoom } from "./zoom-setting";
 

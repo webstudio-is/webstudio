@@ -5,8 +5,8 @@ import {
   publish,
 } from "@webstudio-is/sdk";
 import { selectedInstanceContainer } from "./nano-states";
-import { cloneInstance } from "apps/designer/app/shared/tree-utils";
-import { cloneProps } from "apps/designer/app/shared/props-utils";
+import { cloneInstance } from "~/shared/tree-utils";
+import { cloneProps } from "~/shared/props-utils";
 
 let currentInstance: Instance | undefined;
 let currentProps: InstanceProps | undefined;

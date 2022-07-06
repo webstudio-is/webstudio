@@ -1,6 +1,6 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { type Publish } from "@webstudio-is/sdk";
-import { shortcuts, options } from "apps/designer/app/shared/shortcuts";
+import { shortcuts, options } from "~/shared/shortcuts";
 
 const names = Object.keys(shortcuts) as Array<keyof typeof shortcuts>;
 

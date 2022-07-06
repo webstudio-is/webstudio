@@ -9,14 +9,14 @@ import {
   DropdownMenuSeparator,
   IconButton,
   Text,
-} from "apps/designer/app/shared/design-system";
-import { HamburgerMenuIcon } from "apps/designer/app/shared/icons";
-import type { Config } from "apps/designer/app/config";
+} from "~/shared/design-system";
+import { HamburgerMenuIcon } from "~/shared/icons";
+import type { Config } from "~/config";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
-} from "apps/designer/app/designer/shared/nano-states";
+} from "~/designer/shared/nano-states";
 
 const menuItemCss = {
   display: "flex",

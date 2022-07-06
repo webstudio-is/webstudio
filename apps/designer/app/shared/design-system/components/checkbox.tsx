@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, CSS, VariantProps } from "../stitches.config";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { CheckIcon } from "apps/designer/app/shared/icons";
+import { CheckIcon } from "~/shared/icons";
 
 const StyledCheckbox = styled(CheckboxPrimitive.Root, {
   all: "unset",

@@ -5,11 +5,11 @@ import {
   type ActionFunction,
   json,
 } from "@remix-run/node";
-import { Dashboard, links } from "apps/designer/app/dashboard";
-import * as db from "apps/designer/app/shared/db";
-import config from "apps/designer/app/config";
-import { ensureUserCookie } from "apps/designer/app/shared/session";
-import { authenticator } from "apps/designer/app/services/auth.server";
+import { Dashboard, links } from "~/dashboard";
+import * as db from "~/shared/db";
+import config from "~/config";
+import { ensureUserCookie } from "~/shared/session";
+import { authenticator } from "~/services/auth.server";
 export { links };
 
 export const action: ActionFunction = async ({ request }) => {

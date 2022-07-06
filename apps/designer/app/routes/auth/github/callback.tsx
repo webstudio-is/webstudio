@@ -1,13 +1,9 @@
 import { LoaderFunction, redirect } from "@remix-run/node";
-import config from "apps/designer/app/config";
-import { authenticator } from "apps/designer/app/services/auth.server";
-import {
-  ensureUserCookie,
-  AUTH_PROVIDERS,
-} from "apps/designer/app/shared/session";
+import config from "~/config";
+import { authenticator } from "~/services/auth.server";
+import { AUTH_PROVIDERS } from "~/shared/session";
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const { userId } = await ensureUserCookie(request);
   const url = new URL(request.url);
   const error = url.searchParams.get("error");
   const error_description = url.searchParams.get("error_description");
@@ -19,9 +15,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     );
   }
   return authenticator.authenticate("github", request, {
-    context: {
-      userId,
-    },
     successRedirect: config.dashboardPath,
     failureRedirect: config.loginPath,
   });

@@ -2,13 +2,13 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import type {
   SelectedInstanceData,
   StyleUpdates,
-} from "apps/designer/app/shared/canvas-components";
+} from "~/shared/canvas-components";
 import { type StyleProperty, type Publish } from "@webstudio-is/sdk";
 import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle } from "./get-inherited-style";
 import { getCssRuleForBreakpoint } from "./lib/utils/get-css-rule-for-breakpoint";
-import { useRootInstance } from "apps/designer/app/shared/nano-states";
+import { useRootInstance } from "~/shared/nano-states";
 
 type UseStyleData = {
   publish: Publish;

@@ -1,7 +1,7 @@
 import { type Instance } from "@webstudio-is/sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { primitives } from "apps/designer/app/shared/canvas-components";
-import { Flex, Text, styled } from "apps/designer/app/shared/design-system";
+import { primitives } from "~/shared/canvas-components";
+import { Flex, Text, styled } from "~/shared/design-system";
 
 const Thumb = styled(Flex, {
   px: 5,

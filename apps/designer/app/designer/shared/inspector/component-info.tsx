@@ -1,6 +1,6 @@
-import { Flex, Text } from "apps/designer/app/shared/design-system";
-import type { SelectedInstanceData } from "apps/designer/app/shared/canvas-components";
-import { primitives } from "apps/designer/app/shared/canvas-components";
+import { Flex, Text } from "~/shared/design-system";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
+import { primitives } from "~/shared/canvas-components";
 
 export const ComponentInfo = ({
   selectedInstanceData,

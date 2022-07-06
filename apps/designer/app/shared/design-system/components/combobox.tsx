@@ -1,5 +1,5 @@
 import { type ComponentProps, useState, useEffect } from "react";
-import { ChevronDownIcon } from "apps/designer/app/shared/icons";
+import { ChevronDownIcon } from "~/shared/icons";
 import { TextField } from "./text-field";
 import { IconButton } from "./icon-button";
 import { MenuAnchor, Menu, MenuContent, MenuItem } from "./menu";

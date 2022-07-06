@@ -2,13 +2,10 @@ import { useMemo } from "react";
 import {
   useCanvasWidth,
   useSelectedBreakpoint,
-} from "apps/designer/app/designer/shared/nano-states";
-import { Slider, Text, Flex } from "apps/designer/app/shared/design-system";
-import { sort } from "apps/designer/app/shared/breakpoints";
-import {
-  useBreakpoints,
-  useIsPreviewMode,
-} from "apps/designer/app/shared/nano-states";
+} from "~/designer/shared/nano-states";
+import { Slider, Text, Flex } from "~/shared/design-system";
+import { sort } from "~/shared/breakpoints";
+import { useBreakpoints, useIsPreviewMode } from "~/shared/nano-states";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 50;

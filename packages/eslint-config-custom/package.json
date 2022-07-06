@@ -4,9 +4,13 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "eslint-config-next": "^12.0.8",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-react": "7.28.0"
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
+    "eslint": "^8.11.0",
+    "eslint-plugin-react": "^7.29.4",
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "eslint-plugin-storybook": "^0.5.12",
+    "eslint-plugin-unicorn": "^43.0.0"
   },
   "publishConfig": {
     "access": "public"

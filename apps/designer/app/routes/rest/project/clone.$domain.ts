@@ -1,9 +1,9 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
 import type { User } from "@webstudio-is/sdk";
-import * as db from "apps/designer/app/shared/db";
-import { ensureUserCookie } from "apps/designer/app/shared/session";
-import config from "apps/designer/app/config";
-import type { Project } from "apps/designer/app/shared/db/project.server";
+import * as db from "~/shared/db";
+import { ensureUserCookie } from "~/shared/session";
+import config from "~/config";
+import { authenticator } from "~/services/auth.server";
 
 const ensureProject = async ({
   userId,
@@ -11,7 +11,7 @@ const ensureProject = async ({
 }: {
   userId: User["id"];
   domain: string;
-}): Promise<Project> => {
+}): Promise<db.project.Project> => {
   const projects = await db.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
 
@@ -28,9 +28,16 @@ const ensureProject = async ({
  */
 export const loader: LoaderFunction = async ({ request, params }) => {
   if (params.domain === undefined) return { errors: "Domain required" };
-  const { headers, userId } = await ensureUserCookie(request);
+  const user = await authenticator.isAuthenticated(request);
+  const { headers, userId: generatedUserId } = await ensureUserCookie(request);
   try {
-    const project = await ensureProject({ userId, domain: params.domain });
+    const userId = await db.user.ensureUser({
+      userId: user ? user.id : generatedUserId,
+    });
+    const project = await ensureProject({
+      userId,
+      domain: params.domain,
+    });
     return redirect(`${config.designerPath}/${project?.id}`, { headers });
   } catch (error: unknown) {
     if (error instanceof Error) {

@@ -1,10 +1,10 @@
 import { type Publish } from "@webstudio-is/sdk";
-import { Box } from "apps/designer/app/shared/design-system";
+import { Box } from "~/shared/design-system";
 import {
   useIsPreviewMode,
   useIsScrolling,
   useSubscribeScrollState,
-} from "apps/designer/app/shared/nano-states";
+} from "~/shared/nano-states";
 import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
 import { TextToolbar } from "./text-toolbar";
 import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";

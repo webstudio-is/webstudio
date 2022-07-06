@@ -1,8 +1,8 @@
 import { type Instance, type Breakpoint, type Tree } from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
-import { createInstance } from "apps/designer/app/shared/tree-utils";
-import { sort } from "apps/designer/app/shared/breakpoints";
+import { createInstance } from "~/shared/tree-utils";
+import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
 import { Project } from "./project.server";
 

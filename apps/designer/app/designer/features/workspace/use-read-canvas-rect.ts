@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { useZoom } from "apps/designer/app/designer/shared/nano-states";
-import {
-  useCanvasRect,
-  useCanvasWidth,
-} from "apps/designer/app/designer/shared/nano-states";
-import { useWindowResize } from "apps/designer/app/shared/dom-hooks";
+import { useZoom } from "~/designer/shared/nano-states";
+import { useCanvasRect, useCanvasWidth } from "~/designer/shared/nano-states";
+import { useWindowResize } from "~/shared/dom-hooks";
 
 /**
  * Reads the canvas iframe dom rect and puts it into nano state

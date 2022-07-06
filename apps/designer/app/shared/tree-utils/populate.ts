@@ -1,5 +1,5 @@
 import { type Instance } from "@webstudio-is/sdk";
-import { primitives } from "apps/designer/app/shared/canvas-components";
+import { primitives } from "~/shared/canvas-components";
 
 /**
  * Populate instance with:

@@ -1,7 +1,7 @@
 import { Links, LiveReload, Meta, Outlet, Scripts } from "@remix-run/react";
 import { CriticalCss } from "@webstudio-is/sdk";
-import { darkTheme } from "apps/designer/app/shared/design-system";
-import { Env } from "apps/designer/app/shared/env";
+import { darkTheme } from "~/shared/design-system";
+import { Env } from "~/shared/env";
 
 export const Designer = () => {
   return (

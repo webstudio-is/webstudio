@@ -10,7 +10,7 @@ import produce from "immer";
 import uniqBy from "lodash/uniqBy";
 import debounce from "lodash/debounce";
 import { useRef, useState } from "react";
-import type { SelectedInstanceData } from "apps/designer/app/shared/canvas-components";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 export type handleChangePropType = (
   id: UserProp["id"],

@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { CSS, css } from "apps/designer/app/shared/design-system";
+import { CSS, css } from "~/shared/design-system";
 
 const iframeStyle = css({
   border: "none",

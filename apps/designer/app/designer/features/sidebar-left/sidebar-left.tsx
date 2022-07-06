@@ -6,7 +6,7 @@ import {
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
-} from "apps/designer/app/shared/design-system";
+} from "~/shared/design-system";
 import { useSelectedInstanceData } from "../../shared/nano-states";
 import * as panels from "./panels";
 import type { TabName } from "./types";

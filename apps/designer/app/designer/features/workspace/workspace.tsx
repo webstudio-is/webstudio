@@ -1,8 +1,5 @@
-import { Box, Flex } from "apps/designer/app/shared/design-system";
-import {
-  useCanvasWidth,
-  useZoom,
-} from "apps/designer/app/designer/shared/nano-states";
+import { Box, Flex } from "~/shared/design-system";
+import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { type Publish } from "@webstudio-is/sdk";
 

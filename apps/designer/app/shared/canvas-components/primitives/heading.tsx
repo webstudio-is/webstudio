@@ -1,5 +1,5 @@
 import { type Style, components } from "@webstudio-is/sdk";
-export { HeadingIcon as Icon } from "apps/designer/app/shared/icons";
+export { HeadingIcon as Icon } from "~/shared/icons";
 
 // Webstudio specific default styles for the node type.
 export const defaultStyle: Style = {};

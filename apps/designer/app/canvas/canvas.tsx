@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import store from "immerhin";
+import * as db from "~/shared/db";
 import {
   type OnChangeChildren,
   type Data,
@@ -14,7 +15,7 @@ import {
 import {
   createElementsTree,
   setInstanceChildrenMutable,
-} from "apps/designer/app/shared/tree-utils";
+} from "~/shared/tree-utils";
 import { useDragDropHandlers } from "./shared/use-drag-drop-handlers";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
@@ -41,20 +42,19 @@ import {
   useHandleBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
-import type { Project } from "apps/designer/app/shared/db/project.server";
 import {
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
   useSubscribeScrollState,
-} from "apps/designer/app/shared/nano-states";
+} from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import {
   LexicalComposer,
   config,
-} from "apps/designer/app/canvas/features/wrapper-component/text-editor";
+} from "~/canvas/features/wrapper-component/text-editor";
 
 registerContainers();
 
@@ -102,7 +102,7 @@ const PreviewMode = () => {
 
 type DesignModeProps = {
   treeId: Tree["id"];
-  project: Project;
+  project: db.project.Project;
 };
 
 const dndOptions = { enableMouseEvents: true };
@@ -141,7 +141,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
 };
 
 type CanvasProps = {
-  data: Data & { project: Project };
+  data: Data & { project: db.project.Project };
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {

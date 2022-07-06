@@ -6,26 +6,15 @@ import {
   type Category,
   type Style,
 } from "@webstudio-is/sdk";
-import {
-  Box,
-  Flex,
-  Collapsible,
-  Button,
-} from "apps/designer/app/shared/design-system";
-import {
-  TriangleRightIcon,
-  TriangleDownIcon,
-} from "apps/designer/app/shared/icons";
-import {
-  styleConfigs,
-  type StyleConfig,
-} from "apps/designer/app/shared/style-panel-configs";
-import { CollapsibleSection } from "apps/designer/app/designer/shared/inspector";
+import { Box, Flex, Collapsible, Button } from "~/shared/design-system";
+import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
+import { styleConfigs, type StyleConfig } from "~/shared/style-panel-configs";
+import { CollapsibleSection } from "~/designer/shared/inspector";
 import { renderProperty } from "./render-property";
 import { dependencies } from "./dependencies";
 import { type InheritedStyle } from "./get-inherited-style";
 import { type SetProperty } from "./use-style-data";
-import { type SelectedInstanceData } from "apps/designer/app/shared/canvas-components";
+import { type SelectedInstanceData } from "~/shared/canvas-components";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (properties: Array<string>, search: string) => {

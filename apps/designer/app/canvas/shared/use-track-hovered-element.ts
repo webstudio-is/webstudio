@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSelectedElement, useHoveredElement } from "./nano-states";
-import { useRootInstance } from "apps/designer/app/shared/nano-states";
+import { useRootInstance } from "~/shared/nano-states";
 
 const eventOptions = {
   passive: true,

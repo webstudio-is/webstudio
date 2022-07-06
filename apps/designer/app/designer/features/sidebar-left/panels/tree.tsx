@@ -1,10 +1,10 @@
 import { type Instance, type Publish } from "@webstudio-is/sdk";
-import { ListNestedIcon } from "apps/designer/app/shared/icons";
-import { Flex } from "apps/designer/app/shared/design-system";
-import { type SelectedInstanceData } from "apps/designer/app/shared/canvas-components";
-import { useSelectedInstancePath } from "apps/designer/app/designer/shared/instance/use-selected-instance-path";
-import { Tree } from "apps/designer/app/designer/shared/tree";
-import { useRootInstance } from "apps/designer/app/shared/nano-states";
+import { ListNestedIcon } from "~/shared/icons";
+import { Flex } from "~/shared/design-system";
+import { type SelectedInstanceData } from "~/shared/canvas-components";
+import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
+import { Tree } from "~/designer/shared/tree";
+import { useRootInstance } from "~/shared/nano-states";
 
 type TabContentProps = {
   publish: Publish;

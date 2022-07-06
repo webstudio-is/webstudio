@@ -7,7 +7,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import { CriticalCss } from "@webstudio-is/sdk";
-import { Env } from "apps/designer/app/shared/env";
+import { Env } from "~/shared/env";
 
 /**
  * We are using Outlet prop from index layout when user renders site from a subdomain.

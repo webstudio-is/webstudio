@@ -17,13 +17,13 @@ import {
   findClosestSiblingInstance,
   insertInstanceMutable,
   findInstanceById,
-} from "apps/designer/app/shared/tree-utils";
+} from "~/shared/tree-utils";
 import store from "immerhin";
 import {
   DropData,
   HoveredInstanceData,
   type SelectedInstanceData,
-} from "apps/designer/app/shared/canvas-components";
+} from "~/shared/canvas-components";
 import {
   useSelectedInstance,
   useSelectedElement,
@@ -34,8 +34,8 @@ import {
   rootInstanceContainer,
   useRootInstance,
   useTextEditingInstanceId,
-} from "apps/designer/app/shared/nano-states";
-import { useMeasure } from "apps/designer/app/shared/dom-hooks";
+} from "~/shared/nano-states";
+import { useMeasure } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();

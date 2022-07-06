@@ -3,45 +3,40 @@ import { GitHubProfile } from "remix-auth-github";
 import { GoogleProfile } from "remix-auth-google";
 import { prisma } from "./prisma.server";
 
-const genericCreateAccount = async (
-  userData: {
-    email: string;
-    username: string;
-    image: string;
-    provider: string;
-  },
-  userId: string
-): Promise<User> => {
-  const existingUserWithId = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-  if (existingUserWithId) {
-    const connectedUser = await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: userData,
-    });
-
-    if (connectedUser.teamId) {
-      return connectedUser;
-    }
-
-    await prisma.team.create({
-      data: {
-        users: {
-          connect: {
-            id: connectedUser.id,
-          },
+export const createDemoUser = async (userId: string) => {
+  await prisma.team.create({
+    data: {
+      users: {
+        create: {
+          id: userId,
         },
       },
-    });
+    },
+  });
+};
 
-    return connectedUser;
+export const ensureUser = async ({ userId }: { userId: string }) => {
+  // Always check if the account userId exists because account could have been deleted
+  // or we could be in a demo mode with a generated user
+  const isUserCreated = Boolean(
+    await prisma.user.findUnique({
+      where: { id: userId },
+    })
+  );
+  if (isUserCreated) {
+    return userId;
   }
+  await createDemoUser(userId);
 
+  return userId;
+};
+
+const genericCreateAccount = async (userData: {
+  email: string;
+  username: string;
+  image: string;
+  provider: string;
+}): Promise<User> => {
   const existingUserWithEmail = await prisma.user.findUnique({
     where: {
       email: userData.email,
@@ -68,18 +63,11 @@ const genericCreateAccount = async (
   const newTeam = await prisma.team.create({
     data: {
       users: {
-        create: {
-          id: userId,
-          ...userData,
-        },
+        create: userData,
       },
     },
     include: {
-      users: {
-        where: {
-          id: userId,
-        },
-      },
+      users: true,
     },
   });
 
@@ -87,8 +75,7 @@ const genericCreateAccount = async (
 };
 
 export const createOrLoginWithGithub = async (
-  profile: GitHubProfile,
-  userId: string
+  profile: GitHubProfile
 ): Promise<User> => {
   const userData = {
     email: profile._json.email,
@@ -96,13 +83,12 @@ export const createOrLoginWithGithub = async (
     image: profile._json.avatar_url,
     provider: profile.provider,
   };
-  const newUser = await genericCreateAccount(userData, userId);
+  const newUser = await genericCreateAccount(userData);
   return newUser;
 };
 
 export const createOrLoginWithGoogle = async (
-  profile: GoogleProfile,
-  userId: string
+  profile: GoogleProfile
 ): Promise<User> => {
   const userData = {
     email: profile._json.email,
@@ -110,11 +96,11 @@ export const createOrLoginWithGoogle = async (
     image: profile._json.picture,
     provider: profile.provider,
   };
-  const newUser = await genericCreateAccount(userData, userId);
+  const newUser = await genericCreateAccount(userData);
   return newUser;
 };
 
-export const createOrLoginWithDev = async (userId: string): Promise<User> => {
+export const createOrLoginWithDev = async (): Promise<User> => {
   const userData = {
     email: "hello@webstudio.is",
     username: "admin",
@@ -122,6 +108,6 @@ export const createOrLoginWithDev = async (userId: string): Promise<User> => {
     provider: "dev",
   };
 
-  const newUser = await genericCreateAccount(userData, userId);
+  const newUser = await genericCreateAccount(userData);
   return newUser;
 };

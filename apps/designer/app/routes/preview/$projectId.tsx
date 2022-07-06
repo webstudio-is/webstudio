@@ -1,12 +1,8 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import { Root } from "@webstudio-is/sdk";
-import {
-  loadPreviewData,
-  type PreviewData,
-  type ErrorData,
-} from "apps/designer/app/shared/db";
-import env, { Env } from "apps/designer/app/env.server";
+import { loadPreviewData, type PreviewData, type ErrorData } from "~/shared/db";
+import env, { Env } from "~/env.server";
 
 type LoaderReturnType = Promise<
   (PreviewData & { env: Env }) | (ErrorData & { env: Env })

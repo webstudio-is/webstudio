@@ -1,5 +1,5 @@
 import { publish } from "@webstudio-is/sdk";
-import { useScrollState } from "apps/designer/app/shared/dom-hooks";
+import { useScrollState } from "~/shared/dom-hooks";
 
 export const usePublishScrollState = () => {
   useScrollState({

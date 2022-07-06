@@ -1,6 +1,6 @@
 import ObjectId from "bson-objectid";
 import { type CssRule, type Instance } from "@webstudio-is/sdk";
-import { primitives } from "apps/designer/app/shared/canvas-components";
+import { primitives } from "~/shared/canvas-components";
 
 export const createInstance = ({
   component,

@@ -1,6 +1,6 @@
 import React from "react";
 import * as MenuPrimitive from "@radix-ui/react-menu";
-import { CheckIcon } from "apps/designer/app/shared/icons";
+import { CheckIcon } from "~/shared/icons";
 import { styled, css, CSS } from "../stitches.config";
 import { Box } from "./box";
 import { Flex } from "./flex";

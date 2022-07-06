@@ -3,14 +3,10 @@ import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,
   useSelectionRect,
-} from "apps/designer/app/designer/shared/nano-states";
-import { ToggleGroup, type CSS } from "apps/designer/app/shared/design-system";
-import {
-  FontBoldIcon,
-  FontItalicIcon,
-  Link2Icon,
-} from "apps/designer/app/shared/icons";
-import { createInstance } from "apps/designer/app/shared/tree-utils";
+} from "~/designer/shared/nano-states";
+import { ToggleGroup, type CSS } from "~/shared/design-system";
+import { FontBoldIcon, FontItalicIcon, Link2Icon } from "~/shared/icons";
+import { createInstance } from "~/shared/tree-utils";
 
 const getPlacement = ({
   toolbarRect,

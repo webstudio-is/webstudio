@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/remix";
 import { Extras, Integration } from "@sentry/types";
-import env from "apps/designer/app/shared/env";
+import env from "~/shared/env";
 
 export const initSentry = ({
   integrations = [],

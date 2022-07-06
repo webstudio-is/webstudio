@@ -10,7 +10,7 @@ import {
   Button,
   Heading,
   Text,
-} from "apps/designer/app/shared/design-system";
+} from "~/shared/design-system";
 
 type SelectProjectProjectCardProps = {
   projects: Array<{ id: string; title: string }>;

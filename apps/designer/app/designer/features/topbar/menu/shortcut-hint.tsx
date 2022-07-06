@@ -1,4 +1,4 @@
-import { Text } from "apps/designer/app/shared/design-system";
+import { Text } from "~/shared/design-system";
 
 const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;

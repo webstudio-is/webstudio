@@ -1,15 +1,10 @@
 import { useState } from "react";
 import useDebounce from "react-use/lib/useDebounce";
 import { type Breakpoint, type Publish } from "@webstudio-is/sdk";
-import {
-  Button,
-  TextField,
-  Flex,
-  Text,
-} from "apps/designer/app/shared/design-system";
-import { PlusIcon, TrashIcon } from "apps/designer/app/shared/icons";
+import { Button, TextField, Flex, Text } from "~/shared/design-system";
+import { PlusIcon, TrashIcon } from "~/shared/icons";
 import ObjectId from "bson-objectid";
-import { useBreakpoints } from "apps/designer/app/shared/nano-states";
+import { useBreakpoints } from "~/shared/nano-states";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;

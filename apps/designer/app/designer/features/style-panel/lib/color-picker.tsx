@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   TextField,
-} from "apps/designer/app/shared/design-system";
+} from "~/shared/design-system";
 
 const stringifyRGBA = (color: RGBColor) => {
   const { r, g, b, a = 1 } = color;

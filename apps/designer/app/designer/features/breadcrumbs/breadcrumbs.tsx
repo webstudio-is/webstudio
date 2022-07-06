@@ -1,8 +1,8 @@
-import { ChevronRightIcon } from "apps/designer/app/shared/icons";
-import { Button, Flex, Text } from "apps/designer/app/shared/design-system";
+import { ChevronRightIcon } from "~/shared/icons";
+import { Button, Flex, Text } from "~/shared/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
 import { type Publish, type Instance } from "@webstudio-is/sdk";
-import { useSelectedInstanceData } from "apps/designer/app/designer/shared/nano-states";
+import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type BreadcrumbProps = {
   component: Instance["component"];

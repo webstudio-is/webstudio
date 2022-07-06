@@ -8,7 +8,7 @@ import store from "immerhin";
 import {
   updateAllUserPropsMutable,
   deletePropMutable,
-} from "apps/designer/app/shared/props-utils";
+} from "~/shared/props-utils";
 
 export const useManageProps = () => {
   useSubscribe<"updateProps", UserPropsUpdates>(

@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckIcon } from "apps/designer/app/shared/icons";
+import { CheckIcon } from "~/shared/icons";
 import { styled, CSS } from "../stitches.config";
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu";
 import { menuCss, separatorCss, itemCss, labelCss } from "./menu";

@@ -6,7 +6,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-} from "apps/designer/app/shared/icons";
+} from "~/shared/icons";
 import { styled } from "../stitches.config";
 
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {

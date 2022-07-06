@@ -4,9 +4,9 @@ import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
   useRootInstance,
   useTextEditingInstanceId,
-} from "apps/designer/app/shared/nano-states";
-import { findInstanceById } from "apps/designer/app/shared/tree-utils";
-import { primitives } from "apps/designer/app/shared/canvas-components";
+} from "~/shared/nano-states";
+import { findInstanceById } from "~/shared/tree-utils";
+import { primitives } from "~/shared/canvas-components";
 
 const eventOptions = {
   passive: true,

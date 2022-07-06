@@ -7,12 +7,9 @@ import {
   Button,
   keyframes,
   styled,
-} from "apps/designer/app/shared/design-system";
-import {
-  TriangleRightIcon,
-  TriangleDownIcon,
-} from "apps/designer/app/shared/icons";
-import { primitives } from "apps/designer/app/shared/canvas-components";
+} from "~/shared/design-system";
+import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
+import { primitives } from "~/shared/canvas-components";
 import noop from "lodash.noop";
 
 const openKeyframes = keyframes({

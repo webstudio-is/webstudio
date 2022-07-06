@@ -1,12 +1,8 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
-import { Canvas } from "apps/designer/app/canvas";
-import {
-  loadCanvasData,
-  type ErrorData,
-  type CanvasData,
-} from "apps/designer/app/shared/db";
-import env, { Env } from "apps/designer/app/env.server";
+import { Canvas } from "~/canvas";
+import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
+import env, { Env } from "~/env.server";
 
 type LoaderReturnTypes = Promise<
   (CanvasData & { env: Env }) | (ErrorData & { env: Env })

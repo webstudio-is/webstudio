@@ -1,6 +1,6 @@
 import { useActionData } from "@remix-run/react";
 
-import { Flex } from "apps/designer/app/shared/design-system";
+import { Flex } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import dashboardStyles from "./dashboard.css";
 import { User } from "@prisma/client";

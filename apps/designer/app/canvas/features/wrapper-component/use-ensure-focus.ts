@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useSelectedInstance } from "apps/designer/app/canvas/shared/nano-states";
+import { useSelectedInstance } from "~/canvas/shared/nano-states";
 
 /**
  * When instance is created or selected via setInstance, we need to focus it.

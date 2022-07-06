@@ -2,13 +2,10 @@ import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
 import { useDrag } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { type Instance, type Publish } from "@webstudio-is/sdk";
-import { Flex } from "apps/designer/app/shared/design-system";
-import { PlusIcon } from "apps/designer/app/shared/icons";
-import {
-  primitives,
-  type DragData,
-} from "apps/designer/app/shared/canvas-components";
-import { createInstance } from "apps/designer/app/shared/tree-utils";
+import { Flex } from "~/shared/design-system";
+import { PlusIcon } from "~/shared/icons";
+import { primitives, type DragData } from "~/shared/canvas-components";
+import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
 import { CustomDragLayer } from "./custom-drag-layer";
 import { ComponentThumb } from "./component-thumb";

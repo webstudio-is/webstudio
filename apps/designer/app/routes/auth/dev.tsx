@@ -1,7 +1,7 @@
 import { ActionFunction, redirect } from "@remix-run/node";
-import config from "apps/designer/app/config";
-import { authenticator } from "apps/designer/app/services/auth.server";
-import { AUTH_PROVIDERS } from "apps/designer/app/shared/session";
+import config from "~/config";
+import { authenticator } from "~/services/auth.server";
+import { AUTH_PROVIDERS } from "~/shared/session";
 
 export default function Dev() {
   return null;

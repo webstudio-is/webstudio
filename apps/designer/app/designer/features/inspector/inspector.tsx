@@ -7,11 +7,11 @@ import {
   Card,
   Paragraph,
   Box,
-} from "apps/designer/app/shared/design-system";
-import { StylePanel } from "apps/designer/app/designer/features/style-panel";
-import { PropsPanel } from "apps/designer/app/designer/features/props-panel";
-import { BrushIcon, GearIcon } from "apps/designer/app/shared/icons";
-import { useSelectedInstanceData } from "apps/designer/app/designer/shared/nano-states";
+} from "~/shared/design-system";
+import { StylePanel } from "~/designer/features/style-panel";
+import { PropsPanel } from "~/designer/features/props-panel";
+import { BrushIcon, GearIcon } from "~/shared/icons";
+import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type InspectorProps = {
   publish: Publish;

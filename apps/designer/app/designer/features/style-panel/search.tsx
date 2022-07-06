@@ -1,10 +1,6 @@
 import { useState } from "react";
-import {
-  css,
-  IconButton,
-  TextField,
-} from "apps/designer/app/shared/design-system";
-import { Cross1Icon } from "apps/designer/app/shared/icons";
+import { css, IconButton, TextField } from "~/shared/design-system";
+import { Cross1Icon } from "~/shared/icons";
 
 const formStyle = css({
   position: "relative",

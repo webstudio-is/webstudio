@@ -1,6 +1,6 @@
 import React from "react";
-import { Button, Tooltip } from "apps/designer/app/shared/design-system";
-import env from "apps/designer/app/shared/env";
+import { Button, Tooltip } from "~/shared/design-system";
+import env from "~/shared/env";
 
 const isPreviewEnvironment = env.VERCEL_ENV === "preview";
 

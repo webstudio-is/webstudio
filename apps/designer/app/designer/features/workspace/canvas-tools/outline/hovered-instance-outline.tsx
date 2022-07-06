@@ -1,11 +1,11 @@
 import {
   useHoveredInstanceRect,
   useTextEditingInstanceId,
-} from "apps/designer/app/shared/nano-states";
+} from "~/shared/nano-states";
 import {
   useHoveredInstanceData,
   useSelectedInstanceData,
-} from "apps/designer/app/designer/shared/nano-states";
+} from "~/designer/shared/nano-states";
 import { Outline } from "./outline";
 import { Label } from "./label";
 

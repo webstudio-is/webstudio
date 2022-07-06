@@ -1,7 +1,7 @@
 import { Instance } from "@webstudio-is/sdk";
 import { useMemo } from "react";
-import { useRootInstance } from "apps/designer/app/shared/nano-states";
-import { getInstancePath } from "apps/designer/app/shared/tree-utils";
+import { useRootInstance } from "~/shared/nano-states";
+import { getInstancePath } from "~/shared/tree-utils";
 
 export const useSelectedInstancePath = (
   selectedInstanceId?: Instance["id"]

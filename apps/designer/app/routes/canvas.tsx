@@ -1,6 +1,6 @@
 import { LoaderFunction, type MetaFunction } from "@remix-run/node";
-import { Canvas } from "apps/designer/app/shared/documents/canvas";
-import env from "apps/designer/app/env.server";
+import { Canvas } from "~/shared/documents/canvas";
+import env from "~/env.server";
 
 export const loader: LoaderFunction = () => ({
   env,

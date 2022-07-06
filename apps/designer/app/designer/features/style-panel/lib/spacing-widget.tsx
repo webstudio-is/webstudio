@@ -4,7 +4,7 @@ import {
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/sdk";
-import { Box } from "apps/designer/app/shared/design-system";
+import { Box } from "~/shared/design-system";
 import { SetProperty } from "../use-style-data";
 import { useIsFromCurrentBreakpoint } from "./utils/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./constants";

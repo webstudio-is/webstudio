@@ -2,17 +2,12 @@ import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
-import type { Config } from "apps/designer/app/config";
+import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
   SelectedInstanceData,
-} from "apps/designer/app/shared/canvas-components";
-import {
-  Box,
-  Flex,
-  Grid,
-  type CSS,
-} from "apps/designer/app/shared/design-system";
+} from "~/shared/canvas-components";
+import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -35,11 +30,8 @@ import {
   CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import { type SyncStatus } from "apps/designer/app/shared/sync";
-import {
-  useIsPreviewMode,
-  useRootInstance,
-} from "apps/designer/app/shared/nano-states";
+import { type SyncStatus } from "~/shared/sync";
+import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
 
 export const links = () => {
   return [

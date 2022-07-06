@@ -1,14 +1,14 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
 import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
-import { shortcuts, options } from "apps/designer/app/shared/shortcuts";
+import { shortcuts, options } from "~/shared/shortcuts";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
 import {
   useRootInstance,
   useTextEditingInstanceId,
-} from "apps/designer/app/shared/nano-states";
-import { primitives } from "apps/designer/app/shared/canvas-components";
+} from "~/shared/nano-states";
+import { primitives } from "~/shared/canvas-components";
 
 const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
 

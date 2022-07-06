@@ -1,5 +1,5 @@
 import { useCallback, MouseEvent, FormEvent, useMemo } from "react";
-import type { OnChangeChildren } from "apps/designer/app/shared/tree-utils";
+import type { OnChangeChildren } from "~/shared/tree-utils";
 import {
   type Instance,
   type CSS,
@@ -7,17 +7,14 @@ import {
   useUserProps,
   renderWrapperComponentChildren,
 } from "@webstudio-is/sdk";
-import { primitives } from "apps/designer/app/shared/canvas-components";
-import {
-  useBreakpoints,
-  useTextEditingInstanceId,
-} from "apps/designer/app/shared/nano-states";
+import { primitives } from "~/shared/canvas-components";
+import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
 import { EditorMemoized, useContentEditable } from "./text-editor";
 import noop from "lodash.noop";
-import { useSelectedElement } from "apps/designer/app/canvas/shared/nano-states";
+import { useSelectedElement } from "~/canvas/shared/nano-states";
 
 type WrapperComponentDevProps = {
   instance: Instance;

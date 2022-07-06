@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
-import { styled } from "apps/designer/app/shared/design-system";
-import { primitives } from "apps/designer/app/shared/canvas-components";
+import { styled } from "~/shared/design-system";
+import { primitives } from "~/shared/canvas-components";
 import { type Instance } from "@webstudio-is/sdk";
 
 type LabelPosition = "top" | "inside" | "bottom";

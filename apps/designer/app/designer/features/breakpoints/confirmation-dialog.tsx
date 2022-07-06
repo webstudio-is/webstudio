@@ -1,5 +1,5 @@
 import { type Breakpoint } from "@webstudio-is/sdk";
-import { Button, Flex, Text } from "apps/designer/app/shared/design-system";
+import { Button, Flex, Text } from "~/shared/design-system";
 
 type ConfirmationDialogProps = {
   onAbort: () => void;

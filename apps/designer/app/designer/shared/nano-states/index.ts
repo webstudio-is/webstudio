@@ -3,8 +3,8 @@ import { type Breakpoint } from "@webstudio-is/sdk";
 import {
   type SelectedInstanceData,
   type HoveredInstanceData,
-} from "apps/designer/app/shared/canvas-components";
-import { type SyncStatus } from "apps/designer/app/shared/sync";
+} from "~/shared/canvas-components";
+import { type SyncStatus } from "~/shared/sync";
 
 const selectedInstanceDataContainer = createValueContainer<
   SelectedInstanceData | undefined

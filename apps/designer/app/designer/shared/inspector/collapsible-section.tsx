@@ -1,13 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import {
-  Flex,
-  Text,
-  Collapsible,
-} from "apps/designer/app/shared/design-system";
-import {
-  TriangleRightIcon,
-  TriangleDownIcon,
-} from "apps/designer/app/shared/icons";
+import { Flex, Text, Collapsible } from "~/shared/design-system";
+import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 
 type CollapsibleSectionProps = {
   label: string;

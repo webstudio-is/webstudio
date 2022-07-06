@@ -6,7 +6,7 @@ import {
   useSubscribe,
   toValue,
 } from "@webstudio-is/sdk";
-import { type StyleUpdates } from "apps/designer/app/shared/canvas-components";
+import { type StyleUpdates } from "~/shared/canvas-components";
 
 type UseCssProps = {
   instance: Instance;

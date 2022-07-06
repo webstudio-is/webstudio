@@ -1,6 +1,6 @@
 import type { Project, Publish } from "@webstudio-is/sdk";
-import { Flex, type CSS } from "apps/designer/app/shared/design-system";
-import type { Config } from "apps/designer/app/config";
+import { Flex, type CSS } from "~/shared/design-system";
+import type { Config } from "~/config";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";

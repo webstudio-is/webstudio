@@ -6,8 +6,8 @@ import {
   PopoverContent,
   PopoverTrigger,
   TextField,
-} from "apps/designer/app/shared/design-system";
-import { Share1Icon } from "apps/designer/app/shared/icons";
+} from "~/shared/design-system";
+import { Share1Icon } from "~/shared/icons";
 import { type Project } from "@webstudio-is/sdk";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 

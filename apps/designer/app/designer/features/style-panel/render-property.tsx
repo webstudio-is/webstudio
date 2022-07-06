@@ -1,11 +1,5 @@
-import {
-  Flex,
-  Grid,
-  Label,
-  Text,
-  Combobox,
-} from "apps/designer/app/shared/design-system";
-import type { StyleConfig } from "apps/designer/app/shared/style-panel-configs";
+import { Flex, Grid, Label, Text, Combobox } from "~/shared/design-system";
+import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
   categories,
   type Style,

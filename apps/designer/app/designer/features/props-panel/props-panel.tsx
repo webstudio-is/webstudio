@@ -4,19 +4,11 @@ import {
   type Publish,
   type UserProp,
 } from "@webstudio-is/sdk";
-import { Control } from "apps/designer/app/designer/features/props-panel/control";
-import {
-  CollapsibleSection,
-  ComponentInfo,
-} from "apps/designer/app/designer/shared/inspector";
-import type { SelectedInstanceData } from "apps/designer/app/shared/canvas-components";
-import {
-  Box,
-  Button,
-  Grid,
-  TextField,
-} from "apps/designer/app/shared/design-system";
-import { PlusIcon, TrashIcon } from "apps/designer/app/shared/icons";
+import { Control } from "~/designer/features/props-panel/control";
+import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
+import { Box, Button, Grid, TextField } from "~/shared/design-system";
+import { PlusIcon, TrashIcon } from "~/shared/icons";
 import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
 type PropertyProps = UserProp & {

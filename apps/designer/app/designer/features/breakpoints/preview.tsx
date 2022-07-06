@@ -1,5 +1,5 @@
 import { type Breakpoint } from "@webstudio-is/sdk";
-import { Paragraph, Flex, Text } from "apps/designer/app/shared/design-system";
+import { Paragraph, Flex, Text } from "~/shared/design-system";
 
 type PreviewProps = {
   breakpoint?: Breakpoint;

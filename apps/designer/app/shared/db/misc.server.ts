@@ -1,4 +1,4 @@
-import * as db from ".";
+import * as db from "./";
 
 /**
  * Conceptually publishing is cloning all data that affects user site

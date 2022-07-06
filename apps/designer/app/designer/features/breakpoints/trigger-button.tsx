@@ -4,15 +4,15 @@ import {
   useCanvasWidth,
   useZoom,
   useSelectedBreakpoint,
-} from "apps/designer/app/designer/shared/nano-states";
-import { willRender } from "apps/designer/app/designer/shared/breakpoints";
-import { Button, Text } from "apps/designer/app/shared/design-system";
+} from "~/designer/shared/nano-states";
+import { willRender } from "~/designer/shared/breakpoints";
+import { Button, Text } from "~/shared/design-system";
 import {
   DesktopIcon,
   LaptopIcon,
   MobileIcon,
   TabletIcon,
-} from "apps/designer/app/shared/icons";
+} from "~/shared/icons";
 
 type TriggerButtonProps = ComponentProps<typeof Button>;
 

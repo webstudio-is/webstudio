@@ -1,6 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { type Instance } from "@webstudio-is/sdk";
-import { type DropData } from "apps/designer/app/shared/canvas-components";
+import { type DropData } from "~/shared/canvas-components";
 
 const dropDataContainer = createValueContainer<DropData | undefined>();
 export const useDropData = () => useValue(dropDataContainer);

@@ -1,11 +1,11 @@
 import { LoaderFunction, redirect } from "@remix-run/node";
 
-import { authenticator } from "apps/designer/app/services/auth.server";
-import config from "apps/designer/app/config";
-import env from "apps/designer/app/env.server";
+import { authenticator } from "~/services/auth.server";
+import config from "~/config";
+import env from "~/env.server";
 
-import { Login, links } from "apps/designer/app/auth";
-import { useLoginErrorMessage } from "apps/designer/app/shared/session";
+import { Login, links } from "~/auth";
+import { useLoginErrorMessage } from "~/shared/session";
 
 export { links };
 

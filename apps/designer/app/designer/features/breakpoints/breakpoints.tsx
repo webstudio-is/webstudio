@@ -10,13 +10,13 @@ import {
   DropdownMenuCheckboxItem,
   Text,
   Flex,
-} from "apps/designer/app/shared/design-system";
-import { sort } from "apps/designer/app/shared/breakpoints";
+} from "~/shared/design-system";
+import { sort } from "~/shared/breakpoints";
 import {
   useSelectedBreakpoint,
   useCanvasWidth,
 } from "../../shared/nano-states";
-import { willRender } from "apps/designer/app/designer/shared/breakpoints";
+import { willRender } from "~/designer/shared/breakpoints";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
 import { ZoomSetting } from "./zoom-setting";
@@ -27,7 +27,7 @@ import {
   useSubscribeSelectBreakpointFromShortcut,
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
-import { useBreakpoints } from "apps/designer/app/shared/nano-states";
+import { useBreakpoints } from "~/shared/nano-states";
 
 type BreakpointSelectorItemProps = {
   breakpoint: Breakpoint;
