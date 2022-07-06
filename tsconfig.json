@@ -11,12 +11,11 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["apps/designer/app/*"]
     },
-    // Temporarily introduced because lexical lib has a prob with types https://github.com/facebook/lexical/issues/2528
     "skipLibCheck": true,
-
-    // Remix takes care of building everything in `remix build`.
-    "noEmit": true
+    "noEmit": true,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true
   }
 }

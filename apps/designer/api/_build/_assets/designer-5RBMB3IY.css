@@ -1,0 +1,6 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--fonts-sans);
+  line-height: var(--font-Sizes-1);
+}

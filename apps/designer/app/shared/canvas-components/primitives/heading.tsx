@@ -1,0 +1,20 @@
+import { type Style, components } from "@webstudio-is/sdk";
+export { HeadingIcon as Icon } from "apps/designer/app/shared/icons";
+
+// Webstudio specific default styles for the node type.
+export const defaultStyle: Style = {};
+
+export const children = ["Heading you can edit"];
+
+export const canAcceptChild = (): boolean => {
+  return false;
+};
+
+export const isContentEditable = true;
+
+// Can only be created from content editable fields
+export const isInlineOnly = false;
+
+export const label = "Heading";
+
+export const Component = components.Heading;
