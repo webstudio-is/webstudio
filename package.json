@@ -8,11 +8,10 @@
   ],
   "scripts": {
     "build": "turbo run build",
+    "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
-    "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prepare": "husky install",
-    "checks": "turbo run checks"
+    "prepare": "husky install"
   },
   "devDependencies": {
     "eslint-config-custom": "*",
