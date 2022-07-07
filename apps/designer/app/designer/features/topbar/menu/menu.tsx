@@ -1,22 +1,26 @@
 import { useNavigate } from "react-router-dom";
-import { type Publish } from "@webstudio-is/sdk";
+import { publish, type Publish } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuTriggerItem,
+  DropdownMenuCheckboxItem,
   DropdownMenuArrow,
   DropdownMenuSeparator,
   IconButton,
   Text,
 } from "~/shared/design-system";
-import { HamburgerMenuIcon } from "~/shared/icons";
+import { HamburgerMenuIcon, ChevronRightIcon } from "~/shared/icons";
 import type { Config } from "~/config";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
+import { feature } from "~/shared/feature-flags";
+import { getSetting } from "~/designer/shared/client-settings";
 
 const menuItemCss = {
   display: "flex",
@@ -29,6 +33,52 @@ const menuItemCss = {
 const textCss = {
   flexGrow: 1,
   fontSize: "$1",
+};
+
+const ThemeMenuItem = () => {
+  if (feature("theme") === false) return null;
+
+  const currentTheme = getSetting("theme");
+
+  const publishThemeChange = (value: string) => {
+    publish({
+      type: "setClientSetting",
+      payload: {
+        name: "theme",
+        value,
+      },
+    });
+  };
+
+  const labels = {
+    light: "Light",
+    dark: "Dark",
+    system: "System theme",
+  } as const;
+  const themes = Object.keys(labels) as Array<keyof typeof labels>;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTriggerItem>
+        <Text css={textCss}>Theme</Text>
+        <ChevronRightIcon />
+      </DropdownMenuTriggerItem>
+      <DropdownMenuContent>
+        {themes.map((theme) => (
+          <DropdownMenuCheckboxItem
+            key={theme}
+            checked={currentTheme === theme}
+            css={menuItemCss}
+            onSelect={() => {
+              publishThemeChange(theme);
+            }}
+          >
+            <Text css={textCss}>{labels[theme]}</Text>
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 };
 
 type MenuProps = {
@@ -154,6 +204,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
           <ShortcutHint value={["cmd", "-"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <ThemeMenuItem />
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {

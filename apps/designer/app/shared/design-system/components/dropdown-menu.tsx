@@ -12,6 +12,12 @@ export const DropdownMenuArrow = styled(DropdownMenuPrimitive.Arrow, {
   fill: "$panel",
 });
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+
+export const DropdownMenuTriggerItem = styled(
+  DropdownMenuPrimitive.TriggerItem,
+  itemCss
+);
+
 export const DropdownMenuContent = styled(
   DropdownMenuPrimitive.Content,
   menuCss,

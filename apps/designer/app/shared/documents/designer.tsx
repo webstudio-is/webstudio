@@ -1,7 +1,7 @@
 import { Links, LiveReload, Meta, Outlet, Scripts } from "@remix-run/react";
 import { CriticalCss } from "@webstudio-is/sdk";
-import { darkTheme } from "~/shared/design-system";
 import { Env } from "~/shared/env";
+import { Theme } from "../design-system";
 
 export const Designer = () => {
   return (
@@ -10,10 +10,11 @@ export const Designer = () => {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
+        <Theme />
         <Links />
         <CriticalCss />
       </head>
-      <body className={darkTheme}>
+      <body>
         <Outlet />
         <Env />
         <Scripts />

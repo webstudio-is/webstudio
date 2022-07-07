@@ -11,6 +11,7 @@ export {
   theme,
   type CSS,
 } from "./stitches.config";
+export * from "./components/theme";
 
 export * as Collapsible from "@radix-ui/react-collapsible";
 export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
