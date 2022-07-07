@@ -4,7 +4,7 @@
   "extends": "./base.json",
   "compilerOptions": {
     "noEmit": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "target": "ES2019",
     "lib": ["DOM", "DOM.Iterable", "ES2019"]
   },
