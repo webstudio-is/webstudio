@@ -20,6 +20,7 @@
     "storybook:build": "build-storybook"
   },
   "dependencies": {
+    "@remix-run/vercel": "^1.5.1",
     "@lexical/react": "^0.3.5",
     "@prisma/client": "^3.14.0",
     "@radix-ui/colors": "^0.1.8",
@@ -89,7 +90,6 @@
   "devDependencies": {
     "@babel/core": "^7.18.5",
     "@remix-run/dev": "^1.2.3",
-    "@remix-run/vercel": "^1.5.1",
     "@storybook/addon-actions": "^6.5.9",
     "@storybook/addon-essentials": "^6.5.9",
     "@storybook/addon-interactions": "^6.5.9",
