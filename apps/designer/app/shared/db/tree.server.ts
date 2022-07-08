@@ -19,6 +19,11 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
       {
         breakpoint: defaultBreakpoint.id,
         style: {
+          // Fixes a weird margin above the root when first node has margin.
+          overflow: {
+            type: "keyword",
+            value: "auto",
+          },
           backgroundColor: {
             type: "keyword",
             value: "white",
