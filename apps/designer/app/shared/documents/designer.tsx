@@ -1,7 +1,7 @@
 import { Links, LiveReload, Meta, Outlet, Scripts } from "@remix-run/react";
 import { CriticalCss } from "@webstudio-is/sdk";
 import { Env } from "~/shared/env";
-import { Theme } from "../design-system";
+import { Theme } from "~/shared/theme";
 
 export const Designer = () => {
   return (

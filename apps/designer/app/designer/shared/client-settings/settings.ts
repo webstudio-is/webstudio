@@ -12,7 +12,9 @@ const read = (): Settings => {
     const settings = localStorage.getItem(namespace);
     if (settings === null) return {};
     return JSON.parse(settings);
-  } catch (error) {}
+  } catch (error) {
+    // We don't need to handle this one.
+  }
   return {};
 };
 
