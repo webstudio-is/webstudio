@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { publish, type Publish } from "@webstudio-is/sdk";
+import { type Publish } from "@webstudio-is/sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import { getBrowserTheme } from "~/shared/theme";
+import { getThemeOption, setThemeOption } from "~/shared/theme";
 
 const menuItemCss = {
   display: "flex",
@@ -37,26 +37,14 @@ const textCss = {
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("theme") === false) return null;
-
-  const currentTheme = getBrowserTheme();
-
-  const publishThemeChange = (value: string) => {
-    publish({
-      type: "setClientSetting",
-      payload: {
-        name: "theme",
-        value,
-      },
-    });
-  };
-
+  const currentOption = getThemeOption();
   const labels = {
     light: "Light",
     dark: "Dark",
     system: "System theme",
   } as const;
 
-  const themes = Object.keys(labels) as Array<keyof typeof labels>;
+  const options = Object.keys(labels) as Array<keyof typeof labels>;
 
   return (
     <DropdownMenu>
@@ -65,16 +53,16 @@ const ThemeMenuItem = () => {
         <ChevronRightIcon />
       </DropdownMenuTriggerItem>
       <DropdownMenuContent>
-        {themes.map((theme) => (
+        {options.map((option) => (
           <DropdownMenuCheckboxItem
-            key={theme}
-            checked={currentTheme === theme}
+            key={option}
+            checked={currentOption === option}
             css={menuItemCss}
             onSelect={() => {
-              publishThemeChange(theme);
+              setThemeOption(option);
             }}
           >
-            <Text css={textCss}>{labels[theme]}</Text>
+            <Text css={textCss}>{labels[option]}</Text>
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>

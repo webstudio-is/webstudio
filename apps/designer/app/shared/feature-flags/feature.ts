@@ -28,5 +28,5 @@ export const isFeatureEnabled = (name: Name): boolean => {
   const defaultValue = flags[name];
   const envValue = parse(env.FEATURE).includes(name);
   const localValue = readLocal().includes(name);
-  return localValue ?? envValue ?? defaultValue;
+  return localValue || envValue || defaultValue;
 };

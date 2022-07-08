@@ -60,7 +60,6 @@
     "hyphenate-style-name": "^1.0.4",
     "immer": "^9.0.12",
     "immerhin": "^0.1.2",
-    "js-cookie": "^3.0.1",
     "lexical": "^0.3.5",
     "lodash.capitalize": "^4.2.1",
     "lodash.debounce": "^4.0.8",

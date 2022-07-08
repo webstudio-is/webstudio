@@ -1,48 +1,75 @@
-import { createCookie } from "@remix-run/node";
-import browserCookies from "js-cookie";
-import { darkTheme } from "~/shared/design-system/stitches.config";
+import { useLoaderData } from "@remix-run/react";
+import { darkTheme } from "~/shared/design-system";
+import { type ThemeName, type ThemeOption } from "./shared";
 
-type ColorScheme = "dark" | "light";
+// User selected theme option.
+let option: ThemeOption = "dark";
+// Current systeme theme.
+let system: ThemeName;
 
-const placeholder = "__theme_placeholder__";
+const subscribeSystemTheme = () => {
+  if (typeof matchMedia === "undefined") return;
+  const query = matchMedia("(prefers-color-scheme: light)");
+  const getTheme = (query: MediaQueryList | MediaQueryListEvent) =>
+    query.matches ? "light" : "dark";
 
-const cookieNamespace = "theme";
+  system = getTheme(query);
+
+  query.addEventListener("change", (queryEvent) => {
+    system = getTheme(queryEvent);
+    setDomProps();
+  });
+};
+
+subscribeSystemTheme();
+
+export const getThemeOption = (): ThemeOption => {
+  return option;
+};
 
 // @todo todo switch to light by default once ready
-const defaultTheme = "dark";
+export const defaultTheme = "dark";
 
-export const getBrowserTheme = () => {
-  return browserCookies.get(cookieNamespace) || defaultTheme;
+const selectTheme = ({
+  system = defaultTheme,
+  option,
+}: {
+  system: ThemeName;
+  option?: ThemeOption;
+}): ThemeName => {
+  if (option === "system") {
+    return system;
+  }
+  return option || defaultTheme;
 };
 
-const getCookieTheme = async (headers: Headers): Promise<ColorScheme> => {
-  const cookieTheme = await createCookie(cookieNamespace).parse(
-    headers.get("Cookie")
-  );
-  if (cookieTheme === "system") {
-    const system = headers.get("Sec-CH-Prefers-Color-Scheme");
-    if (system === "light" || system === "dark") {
-      return system;
-    }
+const getThemeProps = () => {
+  const theme = selectTheme({ option, system });
+  if (theme === "dark") {
+    // We need to call it so that vars get injected!!!
+    darkTheme.toString();
   }
-  return cookieTheme || defaultTheme;
-};
-
-export const getThemePlaceholder = () => {
-  if (typeof document === "undefined") {
-    return {
-      className: placeholder,
-      style: { colorScheme: placeholder },
-    };
-  }
-  const theme = getBrowserTheme();
   return {
-    className: theme === "dark" ? darkTheme.toString() : "light",
+    className: theme,
     style: { colorScheme: theme },
   };
 };
 
-export const insertTheme = async (markup: string, headers: Headers) => {
-  const theme = await getCookieTheme(headers);
-  return markup.replace(new RegExp(placeholder, "gi"), theme);
+const setDomProps = () => {
+  const props = getThemeProps();
+  document.documentElement.className = props.className;
+  document.documentElement.style.colorScheme = props.style.colorScheme;
+};
+
+export const setThemeOption = (nextOption: ThemeOption) => {
+  option = nextOption;
+  setDomProps();
+  fetch(`/rest/theme/${option}`);
+};
+
+export const useThemeProps = () => {
+  const data = useLoaderData();
+  if (data.theme.option) option = data.theme.option;
+  if (data.theme.system) system = data.theme.system;
+  return getThemeProps();
 };

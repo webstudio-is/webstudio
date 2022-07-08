@@ -1,13 +1,18 @@
 import { useLoaderData } from "@remix-run/react";
-import type { LoaderFunction } from "@remix-run/node";
+import { LoaderFunction, redirect } from "@remix-run/node";
 import type { Project } from "@webstudio-is/sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
+import { authenticator } from "~/services/auth.server";
 export { links };
 
-export const loader: LoaderFunction = async ({ params }) => {
+export const loader: LoaderFunction = async ({ request, params }) => {
+  const user = await authenticator.isAuthenticated(request);
+  if (!user) {
+    return redirect(config.loginPath);
+  }
   if (params.id === undefined) throw new Error("Project id undefined");
   const project = await db.project.loadById(params.id);
   if (project === null) {
