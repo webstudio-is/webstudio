@@ -10,7 +10,7 @@ initSentry({
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
 });
 
-export default async function handleRequest(
+export default function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
