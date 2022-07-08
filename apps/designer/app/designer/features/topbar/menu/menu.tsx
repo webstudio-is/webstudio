@@ -20,7 +20,7 @@ import {
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import { getSetting } from "~/designer/shared/client-settings";
+import { getBrowserTheme } from "~/shared/theme";
 
 const menuItemCss = {
   display: "flex",
@@ -38,7 +38,7 @@ const textCss = {
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("theme") === false) return null;
 
-  const currentTheme = getSetting("theme");
+  const currentTheme = getBrowserTheme();
 
   const publishThemeChange = (value: string) => {
     publish({

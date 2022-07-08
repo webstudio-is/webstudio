@@ -1,4 +1,8 @@
-import { redirect, type LoaderFunction } from "@remix-run/node";
+import {
+  type HeadersFunction,
+  redirect,
+  type LoaderFunction,
+} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Root, type Data } from "@webstudio-is/sdk";
 import config from "~/config";
@@ -12,6 +16,10 @@ type Error = { errors: string };
 type LoaderReturnProps = Promise<
   (Data & { env: Env }) | (Error & { env: Env }) | Response
 >;
+
+export const headers: HeadersFunction = () => ({
+  "Accept-CH": "Sec-CH-Prefers-Color-Scheme",
+});
 
 export const loader: LoaderFunction = async ({
   request,

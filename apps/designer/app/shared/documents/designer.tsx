@@ -1,16 +1,15 @@
 import { Links, LiveReload, Meta, Outlet, Scripts } from "@remix-run/react";
 import { CriticalCss } from "@webstudio-is/sdk";
 import { Env } from "~/shared/env";
-import { Theme } from "~/shared/theme";
+import { getThemePlaceholder } from "~/shared/theme";
 
 export const Designer = () => {
   return (
-    <html lang="en">
+    <html lang="en" {...getThemePlaceholder()}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
-        <Theme />
         <Links />
         <CriticalCss />
       </head>
