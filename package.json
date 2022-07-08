@@ -2,10 +2,15 @@
   "name": "turbo",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/designer/**"
+    ]
+  },
   "scripts": {
     "build": "turbo run build",
     "build:designer": "turbo run build --scope=designer --include-dependencies --no-deps",
