@@ -19,7 +19,7 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
-import { feature } from "~/shared/feature-flags";
+import { isFeatureEnabled } from "~/shared/feature-flags";
 import { getSetting } from "~/designer/shared/client-settings";
 
 const menuItemCss = {
@@ -36,7 +36,7 @@ const textCss = {
 };
 
 const ThemeMenuItem = () => {
-  if (feature("theme") === false) return null;
+  if (isFeatureEnabled("theme") === false) return null;
 
   const currentTheme = getSetting("theme");
 
@@ -55,6 +55,7 @@ const ThemeMenuItem = () => {
     dark: "Dark",
     system: "System theme",
   } as const;
+
   const themes = Object.keys(labels) as Array<keyof typeof labels>;
 
   return (

@@ -39,7 +39,7 @@ export const setSetting = (name: Name, value: Value) => {
   if (isValidValue) write({ ...settings, [name]: value });
 };
 
-export const useSubscribeClientSetting = (name: Name) => {
+export const useSubscribeClientSetting = () => {
   useSubscribe<"setClientSetting", { name: Name; value: Value }>(
     "setClientSetting",
     (payload) => {
