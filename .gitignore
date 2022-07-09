@@ -1,17 +1,41 @@
-node_modules
-/lib
-.DS_Store
-.env
-yarn-error.log
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# remix
+build
+_build
 .cache
 .vercel
 .output
 
+# misc
+.DS_Store
+*.pem
 
-build
-public/build
-api/_build
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# turbo
+.turbo
+
+# data
 /data
 *.db
 *.db-journal
