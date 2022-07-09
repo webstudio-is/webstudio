@@ -16,7 +16,7 @@
     "watch:remix": "remix dev",
     "watch:sdk": "relative-deps && relative-deps watch",
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
-    "storybook:run": "start-storybook -p 6006",
+    "storybook:run": "start-storybook -p 6006 --quiet",
     "storybook:build": "build-storybook"
   },
   "dependencies": {
