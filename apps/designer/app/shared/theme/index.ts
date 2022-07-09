@@ -1,2 +1,3 @@
 export * from "./theme";
-export type { ThemeSetting } from "./shared";
+export * from "./theme.server";
+export type { ThemeSetting } from "./types";

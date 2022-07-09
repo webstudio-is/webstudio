@@ -1,12 +1,12 @@
 import { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Designer } from "~/shared/documents/designer";
 import env from "~/env.server";
-import { getServerTheme } from "~/shared/theme/theme.server";
+import { getThemeData } from "~/shared/theme";
 
 export const loader: LoaderFunction = async ({ request }) => {
   return {
     env,
-    theme: await getServerTheme(request),
+    theme: await getThemeData(request),
   };
 };
 

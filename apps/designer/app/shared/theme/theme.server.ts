@@ -1,14 +1,16 @@
 import { createCookie } from "@remix-run/node";
-import { cookieNamespace, type ColorScheme, type ThemeSetting } from "./shared";
+import type { ColorScheme, ThemeSetting } from "./types";
+
+const cookieNamespace = "theme";
 
 export const themeCookieParser = createCookie(cookieNamespace);
 
-export const getServerTheme = async (
+export const getThemeData = async (
   request: Request
-): Promise<{ system?: ColorScheme; option?: ThemeSetting }> => {
+): Promise<{ system?: ColorScheme; setting?: ThemeSetting }> => {
   const system = (request.headers.get("Sec-CH-Prefers-Color-Scheme") ??
     undefined) as ColorScheme | undefined;
-  const option: ThemeSetting =
+  const setting: ThemeSetting =
     (await themeCookieParser.parse(request.headers.get("Cookie"))) ?? undefined;
-  return { system, option };
+  return { system, setting };
 };

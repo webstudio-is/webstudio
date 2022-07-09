@@ -1,5 +1,5 @@
 import { json, type LoaderFunction } from "@remix-run/node";
-import { themeCookieParser } from "~/shared/theme/index.server";
+import { themeCookieParser } from "~/shared/theme";
 
 export const loader: LoaderFunction = async ({ params }) => {
   const { setting } = params;
