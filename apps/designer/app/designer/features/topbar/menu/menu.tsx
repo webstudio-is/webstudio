@@ -20,7 +20,11 @@ import {
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import { getThemeSetting, setThemeSetting } from "~/shared/theme";
+import {
+  getThemeSetting,
+  setThemeSetting,
+  type ThemeSetting,
+} from "~/shared/theme";
 
 const menuItemCss = {
   display: "flex",
@@ -37,14 +41,14 @@ const textCss = {
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("theme") === false) return null;
-  const currentOption = getThemeSetting();
-  const labels = {
+  const currentSetting = getThemeSetting();
+  const labels: Record<ThemeSetting, string> = {
     light: "Light",
     dark: "Dark",
     system: "System theme",
-  } as const;
+  };
 
-  const options = Object.keys(labels) as Array<keyof typeof labels>;
+  const settings = Object.keys(labels) as Array<ThemeSetting>;
 
   return (
     <DropdownMenu>
@@ -53,16 +57,16 @@ const ThemeMenuItem = () => {
         <ChevronRightIcon />
       </DropdownMenuTriggerItem>
       <DropdownMenuContent>
-        {options.map((option) => (
+        {settings.map((setting) => (
           <DropdownMenuCheckboxItem
-            key={option}
-            checked={currentOption === option}
+            key={setting}
+            checked={currentSetting === setting}
             css={menuItemCss}
             onSelect={() => {
-              setThemeSetting(option);
+              setThemeSetting(setting);
             }}
           >
-            <Text css={textCss}>{labels[option]}</Text>
+            <Text css={textCss}>{labels[setting]}</Text>
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
