@@ -59,6 +59,7 @@
     "@webstudio-is/sdk": "0.4.1",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
+    "debug": "^4.3.4",
     "hyphenate-style-name": "^1.0.4",
     "immer": "^9.0.12",
     "immerhin": "^0.1.2",
