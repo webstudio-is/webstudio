@@ -1,30 +1,30 @@
 import { useLoaderData } from "@remix-run/react";
 import { darkTheme } from "~/shared/design-system";
-import { type ThemeName, type ThemeOption } from "./shared";
+import { type ColorScheme, type ThemeSetting } from "./shared";
 
-// User selected theme option.
-let option: ThemeOption = "dark";
+// User selected theme setting.
+let setting: ThemeSetting = "dark";
 // Current systeme theme.
-let system: ThemeName;
+let system: ColorScheme;
 
 const subscribeSystemTheme = () => {
   if (typeof matchMedia === "undefined") return;
   const query = matchMedia("(prefers-color-scheme: light)");
-  const getTheme = (query: MediaQueryList | MediaQueryListEvent) =>
+  const getColorScheme = (query: MediaQueryList | MediaQueryListEvent) =>
     query.matches ? "light" : "dark";
 
-  system = getTheme(query);
+  system = getColorScheme(query);
 
   query.addEventListener("change", (queryEvent) => {
-    system = getTheme(queryEvent);
+    system = getColorScheme(queryEvent);
     setDomProps();
   });
 };
 
 subscribeSystemTheme();
 
-export const getThemeOption = (): ThemeOption => {
-  return option;
+export const getThemeSetting = (): ThemeSetting => {
+  return setting;
 };
 
 // @todo todo switch to light by default once ready
@@ -32,19 +32,19 @@ export const defaultTheme = "dark";
 
 const selectTheme = ({
   system = defaultTheme,
-  option,
+  setting,
 }: {
-  system: ThemeName;
-  option?: ThemeOption;
-}): ThemeName => {
-  if (option === "system") {
+  system: ColorScheme;
+  setting?: ThemeSetting;
+}): ColorScheme => {
+  if (setting === "system") {
     return system;
   }
-  return option || defaultTheme;
+  return setting || defaultTheme;
 };
 
 const getThemeProps = () => {
-  const theme = selectTheme({ option, system });
+  const theme = selectTheme({ setting, system });
   if (theme === "dark") {
     // We need to call it so that vars get injected!!!
     darkTheme.toString();
@@ -61,15 +61,15 @@ const setDomProps = () => {
   document.documentElement.style.colorScheme = props.style.colorScheme;
 };
 
-export const setThemeOption = (nextOption: ThemeOption) => {
-  option = nextOption;
+export const setThemeSetting = (nextsetting: ThemeSetting) => {
+  setting = nextsetting;
   setDomProps();
-  fetch(`/rest/theme/${option}`);
+  fetch(`/rest/theme/${setting}`);
 };
 
 export const useThemeProps = () => {
   const data = useLoaderData();
-  if (data.theme.option) option = data.theme.option;
+  if (data.theme.setting) setting = data.theme.setting;
   if (data.theme.system) system = data.theme.system;
   return getThemeProps();
 };

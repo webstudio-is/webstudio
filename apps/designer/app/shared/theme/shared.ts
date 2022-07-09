@@ -1,5 +1,5 @@
-export type ThemeName = "dark" | "light";
+export type ColorScheme = "dark" | "light";
 
-export type ThemeOption = ThemeName | "system";
+export type ThemeSetting = ColorScheme | "system";
 
 export const cookieNamespace = "theme";

@@ -20,7 +20,7 @@ import {
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import { getThemeOption, setThemeOption } from "~/shared/theme";
+import { getThemeSetting, setThemeSetting } from "~/shared/theme";
 
 const menuItemCss = {
   display: "flex",
@@ -37,7 +37,7 @@ const textCss = {
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("theme") === false) return null;
-  const currentOption = getThemeOption();
+  const currentOption = getThemeSetting();
   const labels = {
     light: "Light",
     dark: "Dark",
@@ -59,7 +59,7 @@ const ThemeMenuItem = () => {
             checked={currentOption === option}
             css={menuItemCss}
             onSelect={() => {
-              setThemeOption(option);
+              setThemeSetting(option);
             }}
           >
             <Text css={textCss}>{labels[option]}</Text>
