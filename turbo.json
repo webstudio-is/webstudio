@@ -9,6 +9,9 @@
     },
     "dev": {
       "cache": false
+    },
+    "storybook:run": {
+      "cache": false
     }
   }
 }
