@@ -55,19 +55,21 @@ export const StylePanel = ({
 
   return (
     <>
-      <Box css={{ p: "$2" }}>
+      {/* <Box css={{ py: "$3", px: "$3" }}>
         <ComponentInfo selectedInstanceData={selectedInstanceData} />
+      </Box> */}
+      <Box css={{ overflow: "auto" }}>
+        <Box css={{ py: "$3", px: "$3" }}>
+          <Search onSearch={setSearch} />
+        </Box>
+        <VisualSettings
+          search={search}
+          selectedInstanceData={selectedInstanceData}
+          currentStyle={currentStyle}
+          inheritedStyle={inheritedStyle}
+          setProperty={setProperty}
+        />
       </Box>
-      <Box css={{ p: "$2" }}>
-        <Search onSearch={setSearch} />
-      </Box>
-      <VisualSettings
-        search={search}
-        selectedInstanceData={selectedInstanceData}
-        currentStyle={currentStyle}
-        inheritedStyle={inheritedStyle}
-        setProperty={setProperty}
-      />
     </>
   );
 };

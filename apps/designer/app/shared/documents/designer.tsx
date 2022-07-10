@@ -13,7 +13,7 @@ export const Designer = () => {
         <Links />
         <CriticalCss />
       </head>
-      <body className={darkTheme}>
+      <body>
         <Outlet />
         <Env />
         <Scripts />

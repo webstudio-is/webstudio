@@ -497,7 +497,7 @@ export const darkTheme = createTheme("dark-theme", {
     muted: "$slate8",
     primary: "$blue9",
     hiContrast: "$slate12",
-    loContrast: "$slate1",
+    loContrast: "hsl(0 0% 17%)",
     canvas: "hsl(0 0% 15%)",
     panel: "$slate3",
     transparentPanel: "hsl(0 100% 100% / 97%)",

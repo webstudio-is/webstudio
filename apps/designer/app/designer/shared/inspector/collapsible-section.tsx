@@ -1,6 +1,11 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import { Flex, Text, Collapsible } from "~/shared/design-system";
-import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
+import { Box, Flex, Text, Collapsible } from "~/shared/design-system";
+import {
+  TriangleRightIcon,
+  TriangleDownIcon,
+  PlusIcon,
+  MinusIcon,
+} from "~/shared/icons";
 
 type CollapsibleSectionProps = {
   label: string;
@@ -36,34 +41,46 @@ export const CollapsibleSection = ({
   const isOpenFinal = isOpen === undefined ? isOpenByUser : isOpen;
   return (
     <Collapsible.Root open={isOpenFinal} onOpenChange={setIsOpenByUser}>
-      <Collapsible.Trigger asChild>
-        <Flex
-          align="center"
-          gap="1"
-          justify="between"
-          css={{
-            py: "$3",
-            px: "$1",
-            color: "$hiContrast",
-            cursor: "default",
-          }}
-        >
-          {isOpenFinal ? <TriangleDownIcon /> : <TriangleRightIcon />}
-          <Text size="3" css={{ flexGrow: 1 }}>
-            {label}
-          </Text>
-          {rightSlot}
-        </Flex>
-      </Collapsible.Trigger>
-      <Collapsible.Content asChild>
-        <Flex
-          gap="3"
-          direction="column"
-          css={{ p: "$2", borderBottom: "1px solid $slate6" }}
-        >
-          {children}
-        </Flex>
-      </Collapsible.Content>
+      <Box
+        css={{
+          boxShadow: "0px 1px 0 $colors$slate6",
+        }}
+      >
+        <Collapsible.Trigger asChild>
+          <Flex
+            align="center"
+            gap="1"
+            justify="between"
+            css={{
+              py: "$3",
+              px: "$3",
+              color: "$hiContrast",
+              cursor: "default",
+            }}
+          >
+            <Text size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
+              {label}
+            </Text>
+            {/* @todo: props panel shows double plus icon when rightSlot is set */}
+            {isOpenFinal ? <MinusIcon /> : <PlusIcon />}
+            {rightSlot}
+          </Flex>
+        </Collapsible.Trigger>
+        <Collapsible.Content asChild>
+          <Flex
+            gap="3"
+            direction="column"
+            css={{
+              p: "$3",
+              "&:empty": {
+                display: "none",
+              },
+            }}
+          >
+            {children}
+          </Flex>
+        </Collapsible.Content>
+      </Box>
     </Collapsible.Root>
   );
 };

@@ -17,7 +17,8 @@ const sidebarTabsContentStyle = {
   width: 250,
   height: "100%",
   bc: "$loContrast",
-  outline: "1px solid $slate6",
+  // @todo: focus state should be same as hover/active state
+  outline: "none",
 };
 
 const none = { TabContent: () => null };

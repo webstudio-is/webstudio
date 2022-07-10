@@ -9,6 +9,8 @@ import {
   DropdownMenuSeparator,
   IconButton,
   Text,
+  Box,
+  type CSS,
 } from "~/shared/design-system";
 import { HamburgerMenuIcon } from "~/shared/icons";
 import type { Config } from "~/config";
@@ -34,9 +36,10 @@ const textCss = {
 type MenuProps = {
   config: Config;
   publish: Publish;
+  css?: CSS;
 };
 
-export const Menu = ({ config, publish }: MenuProps) => {
+export const Menu = ({ config, publish, css }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
@@ -44,9 +47,22 @@ export const Menu = ({ config, publish }: MenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <IconButton aria-label="Menu Button">
-          <HamburgerMenuIcon />
-        </IconButton>
+        <Box
+          css={{
+            width: "$sizes$7",
+            height: "100%",
+            borderRadius: "0",
+            outline: "none",
+            "& > button": {
+              width: "inherit",
+              height: "inherit",
+            },
+          }}
+        >
+          <IconButton aria-label="Menu Button">
+            <HamburgerMenuIcon />
+          </IconButton>
+        </Box>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem

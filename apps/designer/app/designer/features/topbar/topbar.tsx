@@ -1,5 +1,5 @@
 import type { Project, Publish } from "@webstudio-is/sdk";
-import { Flex, type CSS } from "~/shared/design-system";
+import { darkTheme, Flex, type CSS } from "~/shared/design-system";
 import type { Config } from "~/config";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
@@ -18,19 +18,37 @@ type TopbarProps = {
 export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
   return (
     <Flex
+      className={darkTheme}
       as="header"
       align="center"
       justify="between"
       css={{
-        p: "$1",
         bc: "$loContrast",
-        borderBottom: "1px solid $slate8",
+        height: "$sizes$7",
+        "& :focus": {
+          boxShadow: "none",
+        },
+        "& > *": {
+          height: "100%",
+        },
+        "& button": {
+          borderRadius: "0",
+        },
         ...css,
       }}
     >
       <Menu config={config} publish={publish} />
       <Breakpoints publish={publish} />
-      <Flex gap="1" align="center">
+      <Flex
+        align="center"
+        css={{
+          "& > *": {
+            height: "inherit",
+            width: "auto",
+            padding: "0 $2",
+          },
+        }}
+      >
         <SyncStatus />
         <PreviewButton publish={publish} />
         <ShareButton path={config.previewPath} project={project} />

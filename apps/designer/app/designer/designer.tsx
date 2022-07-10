@@ -7,7 +7,7 @@ import type {
   HoveredInstanceData,
   SelectedInstanceData,
 } from "~/shared/canvas-components";
-import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
+import { darkTheme, Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -108,7 +108,7 @@ const SidePanel = ({
   );
 };
 
-const Main = ({ children }: { children: Array<JSX.Element> }) => (
+const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
   <Flex
     as="main"
     direction="column"
@@ -130,27 +130,48 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
   const gridLayout = isPreviewMode
     ? {
         gridTemplateColumns: "auto 1fr",
-        gridTemplateRows: "auto 1fr",
+        gridTemplateRows: "auto 1fr auto",
         gridTemplateAreas: `
                 "header header"
                 "sidebar main"
+                "footer footer"
               `,
       }
     : {
         gridTemplateColumns: "auto 1fr 240px",
-        gridTemplateRows: "auto 1fr",
+        gridTemplateRows: "auto 1fr auto",
         gridTemplateAreas: `
                 "header header header"
                 "sidebar main inspector"
+                "footer footer footer"
               `,
       };
   return (
     <Grid
+      // className={darkTheme}
       css={{
         height: "100vh",
         overflow: "hidden",
         display: "grid",
         ...gridLayout,
+        "--outline": "$colors$slate6",
+        "&.dark-theme": {
+          "--outline": "rgba(255, 255, 255, 8%)",
+        },
+        "&.dark-theme header": {
+          boxShadow: "inset 0 -1px 0 0 var(--outline)",
+        },
+        "&.dark-theme footer": {
+          boxShadow: "inset 0 1px 0 0 var(--outline)",
+        },
+        "& aside": {
+          "&:first-of-type": {
+            boxShadow: "inset -1px 0 0 0 var(--outline)",
+          },
+          "&:last-of-type": {
+            boxShadow: "inset 1px 0 0 0 var(--outline)",
+          },
+        },
       }}
     >
       {children}
@@ -188,9 +209,6 @@ export const Designer = ({ config, project }: DesignerProps) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
-        </SidePanel>
         <Topbar
           css={{ gridArea: "header" }}
           config={config}
@@ -210,8 +228,10 @@ export const Designer = ({ config, project }: DesignerProps) => {
               }}
             />
           </Workspace>
-          <Breadcrumbs publish={publish} />
         </Main>
+        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
+        </SidePanel>
         <SidePanel
           gridArea="inspector"
           isPreviewMode={isPreviewMode}
@@ -219,6 +239,9 @@ export const Designer = ({ config, project }: DesignerProps) => {
         >
           {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
         </SidePanel>
+        <Box css={{ gridArea: "footer" }}>
+          <Breadcrumbs publish={publish} />
+        </Box>
       </ChromeWrapper>
     </DndProvider>
   );

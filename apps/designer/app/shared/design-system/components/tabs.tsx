@@ -1,6 +1,7 @@
 import React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { Text } from "./text";
 
 export const Tabs = styled(TabsPrimitive.Root, {
   display: "flex",
@@ -11,7 +12,7 @@ export const Tabs = styled(TabsPrimitive.Root, {
 
 export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   flexShrink: 0,
-  size: "$6",
+  height: "$7",
   display: "inline-flex",
   lineHeight: 1,
   fontFamily: "inherit",
@@ -21,14 +22,17 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   outline: "none",
   alignItems: "center",
   justifyContent: "center",
-  color: "$slate11",
   border: "none",
-  borderBottom: "1px solid transparent",
-  borderTopLeftRadius: "$2",
-  borderTopRightRadius: "$2",
   zIndex: "10",
   backgroundColor: "transparent",
-
+  ["&:first-child"]: {
+    paddingLeft: "$3",
+  },
+  [`& > ${Text}`]: {
+    color: "$slate9",
+    fontSize: "$1",
+    fontWeight: "600",
+  },
   "@hover": {
     "&:hover": {
       color: "$hiContrast",
@@ -36,26 +40,20 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   },
 
   '&[data-state="active"]': {
-    color: "$hiContrast",
-    borderColor: "$slate6",
+    [`& > ${Text}`]: {
+      color: "$hiContrast",
+    },
   },
 
   '&[data-orientation="vertical"]': {
     justifyContent: "flex-start",
-    borderTopRightRadius: 0,
-    borderBottomLeftRadius: "$2",
-    borderBottomColor: "transparent",
-
-    '&[data-state="active"]': {
-      borderBottomColor: "$slate6",
-      borderRightColor: "transparent",
-    },
   },
 });
 
 const StyledTabsList = styled(TabsPrimitive.List, {
   flexShrink: 0,
   display: "flex",
+  borderBottom: "1px solid $colors$slate6",
   "&:focus": {
     outline: "none",
     boxShadow: "inset 0 0 0 1px $slate8, 0 0 0 1px $slate8",

@@ -7,6 +7,7 @@ export const Text = styled("div", {
   fontWeight: 400,
   fontVariantNumeric: "tabular-nums",
   display: "block",
+  userSelect: "none",
 
   variants: {
     size: {

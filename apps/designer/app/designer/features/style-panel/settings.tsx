@@ -160,5 +160,5 @@ export const VisualSettings = ({
       </CollapsibleSection>
     );
   }
-  return <Box css={{ overflow: "auto" }}>{all}</Box>;
+  return <>{all}</>;
 };
