@@ -13,7 +13,7 @@ module.exports = {
   // sym-linked and can't be hoisted. You could also manually name packages
   // e.g. ["@webstudio-is/ui", ...]
   serverDependenciesToBundle: [/@webstudio-is\/.*/],
-  // appDirectory: "app",
+  appDirectory: "apps/designer",
   // assetsBuildDirectory: "public/build",
   // serverBuildPath: "api/index.js",
   // publicPath: "/build/",
