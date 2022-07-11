@@ -10,6 +10,7 @@ import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
+import { ComponentInfo } from "~/designer/shared/inspector";
 
 type StylePanelProps = {
   publish: Publish;
@@ -54,11 +55,13 @@ export const StylePanel = ({
 
   return (
     <>
-      {/* <Box css={{ py: "$3", px: "$3" }}>
-        <ComponentInfo selectedInstanceData={selectedInstanceData} />
-      </Box> */}
+      {
+        <Box css={{ p: "$3" }}>
+          <ComponentInfo selectedInstanceData={selectedInstanceData} />
+        </Box>
+      }
       <Box css={{ overflow: "auto" }}>
-        <Box css={{ py: "$3", px: "$3", paddingTop: "$4" }}>
+        <Box css={{ p: "$3" }}>
           <Search onSearch={setSearch} />
         </Box>
         <VisualSettings
