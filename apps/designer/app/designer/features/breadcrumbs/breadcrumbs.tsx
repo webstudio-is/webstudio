@@ -53,7 +53,7 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
         height: "$5",
         background: "$loContrast",
         padding: "$2",
-        [`${darkTheme.selector}:root &`]: {
+        "[data-theme=dark] &": {
           boxShadow: "inset 0 1px 0 0 $colors$gray7",
         },
       }}
