@@ -8,7 +8,6 @@ import {
   DropdownMenuArrow,
   DropdownMenuSeparator,
   IconButton,
-  Text,
   Box,
 } from "~/shared/design-system";
 import { HamburgerMenuIcon } from "~/shared/icons";
