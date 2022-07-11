@@ -10,7 +10,6 @@ import {
   IconButton,
   Text,
   Box,
-  type CSS,
 } from "~/shared/design-system";
 import { HamburgerMenuIcon } from "~/shared/icons";
 import type { Config } from "~/config";
@@ -36,10 +35,9 @@ const textCss = {
 type MenuProps = {
   config: Config;
   publish: Publish;
-  css?: CSS;
 };
 
-export const Menu = ({ config, publish, css }: MenuProps) => {
+export const Menu = ({ config, publish }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
@@ -53,6 +51,7 @@ export const Menu = ({ config, publish, css }: MenuProps) => {
             height: "100%",
             borderRadius: "0",
             outline: "none",
+            // @todo: would set directly on the element
             "& > button": {
               width: "inherit",
               height: "inherit",

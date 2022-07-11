@@ -29,8 +29,8 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
     paddingLeft: "$3",
   },
   [`& > ${Text}`]: {
-    color: "$slate9",
-    fontSize: "$1",
+    color: "$gray9",
+    fontSize: "11px",
     fontWeight: "600",
   },
   "@hover": {
@@ -53,14 +53,14 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
 const StyledTabsList = styled(TabsPrimitive.List, {
   flexShrink: 0,
   display: "flex",
-  borderBottom: "1px solid $colors$slate6",
+  borderBottom: "1px solid $colors$gray6",
   "&:focus": {
     outline: "none",
-    boxShadow: "inset 0 0 0 1px $slate8, 0 0 0 1px $slate8",
+    boxShadow: "inset 0 0 0 1px $gray8, 0 0 0 1px $gray8",
   },
   '&[data-orientation="vertical"]': {
     flexDirection: "column",
-    boxShadow: "inset -1px 0 0 $slate6",
+    boxShadow: "inset -1px 0 0 $gray6",
   },
 });
 
@@ -82,7 +82,7 @@ export const TabsContent = styled(TabsPrimitive.Content, {
   flexGrow: 1,
   "&:focus": {
     outline: "none",
-    boxShadow: "inset 0 0 0 1px $slate8, 0 0 0 1px $slate8",
+    boxShadow: "inset 0 0 0 1px $gray8, 0 0 0 1px $gray8",
   },
   '&[data-state="inactive"]': {
     display: "none",

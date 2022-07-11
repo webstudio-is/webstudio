@@ -3,7 +3,6 @@ import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph } from "~/shared/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 import { useStyleData } from "./use-style-data";
-import { ComponentInfo } from "../../shared/inspector";
 import { VisualSettings } from "./settings";
 import { Search } from "./search";
 import { useState } from "react";
@@ -59,7 +58,7 @@ export const StylePanel = ({
         <ComponentInfo selectedInstanceData={selectedInstanceData} />
       </Box> */}
       <Box css={{ overflow: "auto" }}>
-        <Box css={{ py: "$3", px: "$3" }}>
+        <Box css={{ py: "$3", px: "$3", paddingTop: "$4" }}>
           <Search onSearch={setSearch} />
         </Box>
         <VisualSettings

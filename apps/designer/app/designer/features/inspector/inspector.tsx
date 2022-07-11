@@ -11,7 +11,6 @@ import {
 } from "~/shared/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
-import { BrushIcon, GearIcon } from "~/shared/icons";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type InspectorProps = {
@@ -30,7 +29,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
   if (selectedInstanceData === undefined) {
     return (
       <Box css={{ p: "$2" }}>
-        {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate */}
+        {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
         <Card css={{ p: "$3", mt: "$3" }}>
           <Paragraph>Select an instance on the canvas</Paragraph>
         </Card>
@@ -39,6 +38,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
   }
 
   return (
+    // @todo: Nit: I wonder if this width was supposed to be defined by the parent container layout
     <Tabs defaultValue="style" css={{ width: "100%" }}>
       <TabsList>
         <TabsTrigger value="style">

@@ -6,7 +6,7 @@ import {
   type Category,
   type Style,
 } from "@webstudio-is/sdk";
-import { Box, Flex, Collapsible, Button } from "~/shared/design-system";
+import { Flex, Collapsible, Button } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import { styleConfigs, type StyleConfig } from "~/shared/style-panel-configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";

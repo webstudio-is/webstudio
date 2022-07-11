@@ -25,6 +25,7 @@ export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
       css={{
         bc: "$loContrast",
         height: "$sizes$7",
+        // @todo: uhh, setting this on any focused child element? lets see what's the use case and why its necessary to override vs. not having it in the first place
         "& :focus": {
           boxShadow: "none",
         },

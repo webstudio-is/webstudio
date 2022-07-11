@@ -17,7 +17,7 @@ const sidebarTabsContentStyle = {
   width: 250,
   height: "100%",
   bc: "$loContrast",
-  // @todo: focus state should be same as hover/active state
+  // @todo: focus state should be same as hover/active state: hover and focus yes, probably same, active? not so sure.
   outline: "none",
 };
 

@@ -1,11 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { Box, Flex, Text, Collapsible } from "~/shared/design-system";
-import {
-  TriangleRightIcon,
-  TriangleDownIcon,
-  PlusIcon,
-  MinusIcon,
-} from "~/shared/icons";
+import { PlusIcon, MinusIcon } from "~/shared/icons";
 
 type CollapsibleSectionProps = {
   label: string;
@@ -43,7 +38,7 @@ export const CollapsibleSection = ({
     <Collapsible.Root open={isOpenFinal} onOpenChange={setIsOpenByUser}>
       <Box
         css={{
-          boxShadow: "0px 1px 0 $colors$slate6",
+          boxShadow: "0px 1px 0 $colors$gray6",
         }}
       >
         <Collapsible.Trigger asChild>

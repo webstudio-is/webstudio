@@ -7,7 +7,12 @@ import type {
   HoveredInstanceData,
   SelectedInstanceData,
 } from "~/shared/canvas-components";
-import { darkTheme, Box, Flex, Grid, type CSS } from "~/shared/design-system";
+import {
+  /* darkTheme, */ Box,
+  Flex,
+  Grid,
+  type CSS,
+} from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -154,22 +159,18 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
         overflow: "hidden",
         display: "grid",
         ...gridLayout,
-        "--outline": "$colors$slate6",
-        "&.dark-theme": {
-          "--outline": "rgba(255, 255, 255, 8%)",
-        },
         "&.dark-theme header": {
-          boxShadow: "inset 0 -1px 0 0 var(--outline)",
+          boxShadow: "inset 0 -1px 0 0 $colors$gray7",
         },
         "&.dark-theme footer": {
-          boxShadow: "inset 0 1px 0 0 var(--outline)",
+          boxShadow: "inset 0 1px 0 0 $colors$gray7",
         },
         "& aside": {
           "&:first-of-type": {
-            boxShadow: "inset -1px 0 0 0 var(--outline)",
+            boxShadow: "inset -1px 0 0 0 $colors$gray7",
           },
           "&:last-of-type": {
-            boxShadow: "inset 1px 0 0 0 var(--outline)",
+            boxShadow: "inset 1px 0 0 0 $colors$gray7",
           },
         },
       }}

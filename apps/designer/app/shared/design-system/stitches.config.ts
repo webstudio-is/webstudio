@@ -497,6 +497,7 @@ export const darkTheme = createTheme("dark-theme", {
     muted: "$slate8",
     primary: "$blue9",
     hiContrast: "$slate12",
+    // radix colors in this range are either too dark/too light, nothing gray/black in the 16-17% luminosity range
     loContrast: "hsl(0 0% 17%)",
     canvas: "hsl(0 0% 15%)",
     panel: "$slate3",

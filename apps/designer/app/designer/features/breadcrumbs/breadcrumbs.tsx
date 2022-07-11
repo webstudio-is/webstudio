@@ -14,10 +14,12 @@ const Breadcrumb = ({ component, onClick }: BreadcrumbProps) => {
     <Flex
       align="center"
       css={{
+        // @todo: this could be on the button itself, right?
         "& button": {
           color: "$hiContrast",
           px: "0",
         },
+        // @todo: and this on the svg, e.g. styled(Chevron...)(style)
         "& path": {
           fill: "$hiContrast",
         },
