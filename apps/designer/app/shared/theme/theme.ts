@@ -47,8 +47,8 @@ const renderThemeProps = () => {
   const theme = getColorScheme();
   const root = document.documentElement;
   theme === "dark"
-    ? (root.className = darkTheme.className)
-    : root.removeAttribute("class");
+    ? root.classList.add(darkTheme.className)
+    : root.classList.remove(darkTheme.className);
   root.style.colorScheme = theme;
   root.dataset.theme = theme;
 };
