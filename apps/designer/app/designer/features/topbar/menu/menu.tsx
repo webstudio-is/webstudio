@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   IconButton,
   Text,
+  Box,
 } from "~/shared/design-system";
 import { HamburgerMenuIcon } from "~/shared/icons";
 import type { Config } from "~/config";
@@ -44,9 +45,23 @@ export const Menu = ({ config, publish }: MenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <IconButton aria-label="Menu Button">
-          <HamburgerMenuIcon />
-        </IconButton>
+        <Box
+          css={{
+            width: "$sizes$7",
+            height: "100%",
+            borderRadius: "0",
+            outline: "none",
+            // @todo: would set directly on the element
+            "& > button": {
+              width: "inherit",
+              height: "inherit",
+            },
+          }}
+        >
+          <IconButton aria-label="Menu Button">
+            <HamburgerMenuIcon />
+          </IconButton>
+        </Box>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem

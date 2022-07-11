@@ -40,7 +40,7 @@ export const Button = styled("button", {
       "1": {
         borderRadius: "$1",
         height: "$5",
-        px: "$2",
+        px: "$3",
         fontSize: "$1",
         lineHeight: "$sizes$5",
       },
