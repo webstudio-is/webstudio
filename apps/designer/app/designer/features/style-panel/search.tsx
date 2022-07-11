@@ -44,7 +44,15 @@ export const Search = ({ onSearch }: SearchProps) => {
     >
       <TextField
         value={search}
-        css={{ paddingRight: "$5" }}
+        css={{
+          padding: "$2",
+          boxShadow: "0 0 0 1px $colors$slate7",
+          bc: "$colors$slate3",
+          "&:focus": {
+            bc: "$colors$slate1",
+            boxShadow: "0 0 0 2px $colors$blue10",
+          },
+        }}
         placeholder="Search property or value"
         onChange={(event) => {
           const { value } = event.target;
@@ -56,6 +64,11 @@ export const Search = ({ onSearch }: SearchProps) => {
         type="reset"
         aria-label="Reset search"
         className={resetStyle()}
+        css={{
+          // @todo: feels wrong to use transform for this, would setting width/height on the icon directly be a better approach?
+          transform: "scale(.75)",
+          "&:disabled path": { fill: "none" },
+        }}
       >
         <Cross1Icon />
       </IconButton>

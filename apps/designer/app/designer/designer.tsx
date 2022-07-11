@@ -102,6 +102,12 @@ const SidePanel = ({
         bc: "$loContrast",
         height: "100%",
         ...css,
+        "&:first-of-type": {
+          boxShadow: "inset -1px 0 0 0 $colors$gray7",
+        },
+        "&:last-of-type": {
+          boxShadow: "inset 1px 0 0 0 $colors$gray7",
+        },
       }}
     >
       {children}
@@ -109,7 +115,7 @@ const SidePanel = ({
   );
 };
 
-const Main = ({ children }: { children: Array<JSX.Element> }) => (
+const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
   <Flex
     as="main"
     direction="column"
@@ -131,18 +137,20 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
   const gridLayout = isPreviewMode
     ? {
         gridTemplateColumns: "auto 1fr",
-        gridTemplateRows: "auto 1fr",
+        gridTemplateRows: "auto 1fr auto",
         gridTemplateAreas: `
                 "header header"
                 "sidebar main"
+                "footer footer"
               `,
       }
     : {
         gridTemplateColumns: "auto 1fr 240px",
-        gridTemplateRows: "auto 1fr",
+        gridTemplateRows: "auto 1fr auto",
         gridTemplateAreas: `
                 "header header header"
                 "sidebar main inspector"
+                "footer footer footer"
               `,
       };
   return (
@@ -190,9 +198,6 @@ export const Designer = ({ config, project }: DesignerProps) => {
   return (
     <DndProvider backend={HTML5Backend}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
-        </SidePanel>
         <Topbar
           css={{ gridArea: "header" }}
           config={config}
@@ -212,8 +217,10 @@ export const Designer = ({ config, project }: DesignerProps) => {
               }}
             />
           </Workspace>
-          <Breadcrumbs publish={publish} />
         </Main>
+        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
+        </SidePanel>
         <SidePanel
           gridArea="inspector"
           isPreviewMode={isPreviewMode}
@@ -221,6 +228,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         >
           {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
         </SidePanel>
+        <Breadcrumbs publish={publish} />
       </ChromeWrapper>
     </DndProvider>
   );

@@ -30,11 +30,12 @@ export const SyncStatus = () => {
       align="center"
       justify="center"
       css={{
-        mx: "$1",
-        width: iconSize,
-        height: iconSize,
-        backgroundColor: "$green9",
-        borderRadius: "100%",
+        "& > svg": {
+          width: iconSize,
+          height: iconSize,
+          background: "$green9",
+          borderRadius: "$radii$round",
+        },
       }}
     >
       <AccessibleIcon label={`Sync status: ${status}`}>

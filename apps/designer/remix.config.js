@@ -15,6 +15,6 @@ module.exports = {
   serverDependenciesToBundle: [/@webstudio-is\/.*/],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
-  // serverBuildPath: "api/index.js",
+  serverBuildPath: "api/index.js",
   // publicPath: "/build/",
 };

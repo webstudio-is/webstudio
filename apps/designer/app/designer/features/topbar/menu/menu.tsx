@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   IconButton,
   Text,
+  Box,
 } from "~/shared/design-system";
 import { HamburgerMenuIcon, ChevronRightIcon } from "~/shared/icons";
 import type { Config } from "~/config";
@@ -34,11 +35,6 @@ const menuItemCss = {
   minWidth: 140,
 };
 
-const textCss = {
-  flexGrow: 1,
-  fontSize: "$1",
-};
-
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("theme") === false) return null;
   const currentSetting = getThemeSetting();
@@ -53,7 +49,7 @@ const ThemeMenuItem = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTriggerItem>
-        <Text css={textCss}>Theme</Text>
+        Theme
         <ChevronRightIcon />
       </DropdownMenuTriggerItem>
       <DropdownMenuContent>
@@ -66,7 +62,7 @@ const ThemeMenuItem = () => {
               setThemeSetting(setting);
             }}
           >
-            <Text css={textCss}>{labels[setting]}</Text>
+            {labels[setting]}
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
@@ -87,9 +83,23 @@ export const Menu = ({ config, publish }: MenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <IconButton aria-label="Menu Button">
-          <HamburgerMenuIcon />
-        </IconButton>
+        <Box
+          css={{
+            width: "$sizes$7",
+            height: "100%",
+            borderRadius: "0",
+            outline: "none",
+            // @todo: would set directly on the element
+            "& > button": {
+              width: "inherit",
+              height: "inherit",
+            },
+          }}
+        >
+          <IconButton aria-label="Menu Button">
+            <HamburgerMenuIcon />
+          </IconButton>
+        </Box>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem
@@ -98,7 +108,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             navigate(config.dashboardPath);
           }}
         >
-          <Text css={textCss}>Dashboard</Text>
+          Dashboard
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -110,7 +120,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Undo</Text>
+          Undo
           <ShortcutHint value={["cmd", "z"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -122,7 +132,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Redo</Text>
+          Redo
           <ShortcutHint value={["shift", "cmd", "z"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -135,7 +145,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Copy</Text>
+          Copy
           <ShortcutHint value={["cmd", "c"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -147,7 +157,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Paste</Text>
+          Paste
           <ShortcutHint value={["cmd", "v"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -159,7 +169,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Delete</Text>
+          Delete
           <ShortcutHint value={["backspace"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -169,7 +179,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             publish({ type: "openBreakpointsMenu" });
           }}
         >
-          <Text css={textCss}>Breakpoints</Text>
+          Breakpoints
           <ShortcutHint value={["cmd", "b"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -181,7 +191,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Zoom in</Text>
+          Zoom in
           <ShortcutHint value={["cmd", "+"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -193,7 +203,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Zoom out</Text>
+          Zoom out
           <ShortcutHint value={["cmd", "-"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -206,7 +216,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             });
           }}
         >
-          <Text css={textCss}>Preview</Text>
+          Preview
           <ShortcutHint value={["cmd", "shift", "p"]} />
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -215,7 +225,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             setIsShareOpen(true);
           }}
         >
-          <Text css={textCss}>Share</Text>
+          Share
         </DropdownMenuItem>
         <DropdownMenuItem
           css={menuItemCss}
@@ -223,7 +233,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
             setIsPublishOpen(true);
           }}
         >
-          <Text css={textCss}>Publish</Text>
+          Publish
         </DropdownMenuItem>
         <DropdownMenuArrow offset={10} />
       </DropdownMenuContent>
