@@ -1,5 +1,6 @@
 import type { Publish } from "@webstudio-is/sdk";
 import {
+  Text,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -10,7 +11,6 @@ import {
 } from "~/shared/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
-import { BrushIcon, GearIcon } from "~/shared/icons";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type InspectorProps = {
@@ -29,6 +29,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
   if (selectedInstanceData === undefined) {
     return (
       <Box css={{ p: "$2" }}>
+        {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
         <Card css={{ p: "$3", mt: "$3" }}>
           <Paragraph>Select an instance on the canvas</Paragraph>
         </Card>
@@ -37,13 +38,18 @@ export const Inspector = ({ publish }: InspectorProps) => {
   }
 
   return (
-    <Tabs defaultValue="style" css={{ width: "100%", gap: "$2" }}>
+    // @todo: Nit: I wonder if this width was supposed to be defined by the parent container layout
+    <Tabs defaultValue="style" css={{ width: "100%" }}>
       <TabsList>
         <TabsTrigger value="style">
-          <BrushIcon />
+          <Text>Style</Text>
         </TabsTrigger>
+        {/* @note: events would be part of props */}
         <TabsTrigger value="props">
-          <GearIcon />
+          <Text>Props</Text>
+        </TabsTrigger>
+        <TabsTrigger value="inspect">
+          <Text>Inspect</Text>
         </TabsTrigger>
       </TabsList>
       <TabsContent value="style" css={contentStyle}>

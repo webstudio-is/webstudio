@@ -5,8 +5,9 @@ import { type Publish } from "@webstudio-is/sdk";
 
 const workspaceStyle = {
   flexGrow: 1,
-  background: "$gray8",
-  overflow: "auto",
+  background: "$gray3",
+  // scroll behaviour should be derived from the iframe
+  overflow: "hidden",
   scrollbarGutter: "stable",
 };
 
