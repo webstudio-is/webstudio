@@ -31,7 +31,6 @@ const defaultTheme = "dark";
 
 /**
  * Logic we use to decide depending on user setting which color scheme to use.
- * @returns
  */
 const getColorScheme = (): ColorScheme => {
   if (setting === "system") {
