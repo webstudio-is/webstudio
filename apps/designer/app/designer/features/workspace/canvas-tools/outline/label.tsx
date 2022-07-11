@@ -40,7 +40,7 @@ const LabelContainer = styled(
     display: "flex",
     padding: "0 $1",
     height: "$4",
-    color: "$loContrast",
+    color: "white",
     alignItems: "center",
     justifyContent: "center",
     gap: "$1",
