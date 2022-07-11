@@ -3,6 +3,8 @@
 const env = {
   SENTRY_DSN: process.env.SENTRY_DSN,
   VERCEL_ENV: process.env.VERCEL_ENV,
+  DEBUG: process.env.DEBUG,
+  FEATURE: process.env.FEATURE,
 } as const;
 
 export default env;
