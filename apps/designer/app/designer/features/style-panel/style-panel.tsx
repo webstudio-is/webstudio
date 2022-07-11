@@ -3,7 +3,6 @@ import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph } from "~/shared/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 import { useStyleData } from "./use-style-data";
-import { ComponentInfo } from "../../shared/inspector";
 import { VisualSettings } from "./settings";
 import { Search } from "./search";
 import { useState } from "react";
@@ -11,6 +10,7 @@ import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
+import { ComponentInfo } from "~/designer/shared/inspector";
 
 type StylePanelProps = {
   publish: Publish;
@@ -55,19 +55,23 @@ export const StylePanel = ({
 
   return (
     <>
-      <Box css={{ p: "$2" }}>
-        <ComponentInfo selectedInstanceData={selectedInstanceData} />
+      {
+        <Box css={{ p: "$3" }}>
+          <ComponentInfo selectedInstanceData={selectedInstanceData} />
+        </Box>
+      }
+      <Box css={{ overflow: "auto" }}>
+        <Box css={{ p: "$3" }}>
+          <Search onSearch={setSearch} />
+        </Box>
+        <VisualSettings
+          search={search}
+          selectedInstanceData={selectedInstanceData}
+          currentStyle={currentStyle}
+          inheritedStyle={inheritedStyle}
+          setProperty={setProperty}
+        />
       </Box>
-      <Box css={{ p: "$2" }}>
-        <Search onSearch={setSearch} />
-      </Box>
-      <VisualSettings
-        search={search}
-        selectedInstanceData={selectedInstanceData}
-        currentStyle={currentStyle}
-        inheritedStyle={inheritedStyle}
-        setProperty={setProperty}
-      />
     </>
   );
 };

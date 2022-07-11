@@ -9,9 +9,13 @@ export const ComponentInfo = ({
 }) => {
   return (
     <Flex justify="between" align="center">
-      <Text>{`Selected: ${
-        primitives[selectedInstanceData.component].label
-      }`}</Text>
+      <Text
+        css={{
+          fontSize: "$2",
+          color: "$colors$slate11",
+          fontWeight: "500",
+        }}
+      >{`Selected: ${primitives[selectedInstanceData.component].label}`}</Text>
     </Flex>
   );
 };

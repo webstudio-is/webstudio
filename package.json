@@ -2,25 +2,26 @@
   "name": "turbo",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ]
+  },
   "scripts": {
     "build": "turbo run build",
-    "build:designer": "turbo run build --scope=designer --include-dependencies --no-deps",
     "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "storybook": "turbo run storybook:run"
   },
   "devDependencies": {
     "eslint-config-custom": "*",
     "husky": ">=6",
     "lint-staged": "^13.0.2",
     "prettier": "latest",
-    "turbo": "latest",
-    "yarn-run-all": "^3.1.1"
+    "turbo": "latest"
   },
   "engines": {
     "npm": ">=7.0.0",

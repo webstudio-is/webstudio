@@ -12,7 +12,7 @@ export const SidebarTabs = styled(TabsPrimitive.Root, {
 export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
   flexShrink: 0,
   display: "flex",
-  size: "$6",
+  size: "$7",
   m: 0,
   userSelect: "none",
   outline: "none",
