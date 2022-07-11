@@ -50,7 +50,6 @@ const LabelContainer = styled(
     minWidth: "$6",
     whiteSpace: "nowrap",
     backgroundColor: "$blue9",
-    pointerEvents: "auto",
   },
   {
     variants: {
