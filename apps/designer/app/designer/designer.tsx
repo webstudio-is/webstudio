@@ -159,6 +159,7 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
         overflow: "hidden",
         display: "grid",
         ...gridLayout,
+        // @todo refactor: works for now since i'm manually setting it above on grid container
         "&.dark-theme header": {
           boxShadow: "inset 0 -1px 0 0 $colors$gray7",
         },
