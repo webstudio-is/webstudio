@@ -4,7 +4,7 @@
   "description": "Webstudio Designer UI as a service",
   "scripts": {
     "build": "remix build",
-    "dev": "npm-run-all --parallel storybook:run watch:remix",
+    "dev": "remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
@@ -13,7 +13,6 @@
     "checks": "yarn lint && yarn typecheck && yarn prettier --check && yarn test",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
-    "watch:remix": "remix dev",
     "watch:sdk": "relative-deps && relative-deps watch",
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
     "storybook:run": "start-storybook -p 6006",
