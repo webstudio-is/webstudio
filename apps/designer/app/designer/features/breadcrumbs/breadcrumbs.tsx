@@ -49,9 +49,13 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
       as="footer"
       align="center"
       css={{
+        gridArea: "footer",
         height: "$5",
         background: "$loContrast",
         padding: "$2",
+        [`${darkTheme.selector}:root &`]: {
+          boxShadow: "inset 0 1px 0 0 $colors$gray7",
+        },
       }}
     >
       {selectedInstancePath.length === 0 ? (

@@ -7,12 +7,7 @@ import type {
   HoveredInstanceData,
   SelectedInstanceData,
 } from "~/shared/canvas-components";
-import {
-  /* darkTheme, */ Box,
-  Flex,
-  Grid,
-  type CSS,
-} from "~/shared/design-system";
+import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -106,6 +101,12 @@ const SidePanel = ({
         bc: "$loContrast",
         height: "100%",
         ...css,
+        "&:first-of-type": {
+          boxShadow: "inset -1px 0 0 0 $colors$gray7",
+        },
+        "&:last-of-type": {
+          boxShadow: "inset 1px 0 0 0 $colors$gray7",
+        },
       }}
     >
       {children}
@@ -153,27 +154,11 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
       };
   return (
     <Grid
-      // className={darkTheme}
       css={{
         height: "100vh",
         overflow: "hidden",
         display: "grid",
         ...gridLayout,
-        // @todo refactor: works for now since i'm manually setting it above on grid container
-        "&.dark-theme header": {
-          boxShadow: "inset 0 -1px 0 0 $colors$gray7",
-        },
-        "&.dark-theme footer": {
-          boxShadow: "inset 0 1px 0 0 $colors$gray7",
-        },
-        "& aside": {
-          "&:first-of-type": {
-            boxShadow: "inset -1px 0 0 0 $colors$gray7",
-          },
-          "&:last-of-type": {
-            boxShadow: "inset 1px 0 0 0 $colors$gray7",
-          },
-        },
       }}
     >
       {children}
@@ -241,9 +226,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         >
           {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
         </SidePanel>
-        <Box css={{ gridArea: "footer" }}>
-          <Breadcrumbs publish={publish} />
-        </Box>
+        <Breadcrumbs publish={publish} />
       </ChromeWrapper>
     </DndProvider>
   );
