@@ -10,7 +10,6 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "build:designer": "turbo run build --scope=designer --include-dependencies --no-deps",
     "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
