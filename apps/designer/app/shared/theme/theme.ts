@@ -13,13 +13,13 @@ let system: ColorScheme;
 const subscribeSystemTheme = () => {
   if (typeof matchMedia === "undefined") return;
   const query = matchMedia("(prefers-color-scheme: light)");
-  const getColorScheme = (query: MediaQueryList | MediaQueryListEvent) =>
+  const queryColorScheme = (query: MediaQueryList | MediaQueryListEvent) =>
     query.matches ? "light" : "dark";
 
-  system = getColorScheme(query);
+  system = queryColorScheme(query);
 
   query.addEventListener("change", (queryEvent) => {
-    system = getColorScheme(queryEvent);
+    system = queryColorScheme(queryEvent);
     renderThemeProps();
   });
 };
