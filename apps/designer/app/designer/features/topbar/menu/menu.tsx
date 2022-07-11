@@ -10,7 +10,6 @@ import {
   DropdownMenuArrow,
   DropdownMenuSeparator,
   IconButton,
-  Text,
   Box,
 } from "~/shared/design-system";
 import { HamburgerMenuIcon, ChevronRightIcon } from "~/shared/icons";
