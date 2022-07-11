@@ -40,34 +40,17 @@ const getColorScheme = (): ColorScheme => {
   return setting || defaultTheme;
 };
 
-const getThemeProps = () => {
-  const theme = getColorScheme();
-  return {
-    className: theme,
-    style: { colorScheme: theme },
-  };
-};
-
-/**
- * We need to call it so that vars get injected.
- * Not loving this implicit behavior.
- * Light scheme is also rendered by default, so we only need to do it for the dark.
- */
-const renderDarkThemeVars = () => {
-  const theme = getColorScheme();
-  if (theme === "dark") {
-    darkTheme.toString();
-  }
-};
-
 /**
  * When switching theme we need to apply the class/style manually.
  */
 const renderThemeProps = () => {
-  const { className, style } = getThemeProps();
-  renderDarkThemeVars();
-  document.documentElement.className = className;
-  document.documentElement.style.colorScheme = style.colorScheme;
+  const theme = getColorScheme();
+  const root = document.documentElement;
+  theme === "dark"
+    ? (root.className = darkTheme.className)
+    : root.removeAttribute("class");
+  root.style.colorScheme = theme;
+  root.dataset.theme = theme;
 };
 
 /**
@@ -86,8 +69,12 @@ export const useThemeProps = () => {
   const data = useLoaderData();
   if (data.theme.setting) setting = data.theme.setting;
   if (data.theme.system) system = data.theme.system;
-  renderDarkThemeVars();
-  return getThemeProps();
+  const theme = getColorScheme();
+  return {
+    className: theme === "dark" ? darkTheme.className : undefined,
+    style: { colorScheme: theme },
+    "data-theme": theme,
+  };
 };
 
 /**
