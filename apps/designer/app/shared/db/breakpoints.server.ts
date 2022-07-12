@@ -9,7 +9,12 @@ import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 
-export const load = async (treeId?: Tree["id"]) => {
+export const load = async (
+  treeId?: Tree["id"]
+): Promise<{
+  treeId: string;
+  values: Breakpoint[];
+}> => {
   if (typeof treeId !== "string") {
     throw new Error("Tree ID required");
   }
@@ -74,6 +79,6 @@ export const patch = async (
   const nextBreakpoints = applyPatches(breakpoints.values, patches);
   await prisma.breakpoints.update({
     where: { treeId },
-    data: { values: nextBreakpoints },
+    data: { values: JSON.stringify(nextBreakpoints) },
   });
 };
