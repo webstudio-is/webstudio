@@ -3,6 +3,7 @@ import {
   type Project,
   type Tree,
   type Breakpoint,
+  schema,
 } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
@@ -20,10 +21,11 @@ export const load = async (treeId?: Tree["id"]) => {
   if (breakpoint === null) {
     throw new Error("Breakpoint not found");
   }
-
+  const values = JSON.parse(breakpoint.values);
+  schema.Breakpoints.parse(values);
   return {
     ...breakpoint,
-    values: JSON.parse(breakpoint.values),
+    values,
   };
 };
 
@@ -35,16 +37,18 @@ export const getBreakpointsWithId = () =>
 
 export const create = async (
   treeId: Project["id"],
-  breakpoints: Array<Breakpoint>
+  values: Array<Breakpoint>
 ) => {
+  schema.Breakpoints.parse(values);
+
   const data = {
     treeId,
-    values: JSON.stringify(breakpoints),
+    values: JSON.stringify(values),
   };
   await prisma.breakpoints.create({ data });
   return {
     ...data,
-    breakpoints,
+    breakpoints: values,
   };
 };
 
@@ -68,9 +72,12 @@ export const patch = async (
 ) => {
   const breakpoints = await load(treeId);
   if (breakpoints === null) return;
-  const nextBreakpoints = applyPatches(breakpoints.values, patches);
+  const nextValues = applyPatches(breakpoints.values, patches);
+
+  schema.Breakpoints.parse(nextValues);
+
   await prisma.breakpoints.update({
     where: { treeId },
-    data: { values: nextBreakpoints },
+    data: { values: JSON.stringify(nextValues) },
   });
 };

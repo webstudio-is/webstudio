@@ -3,12 +3,11 @@ import type { LoaderFunction } from "@remix-run/node";
 import { Canvas } from "~/canvas";
 import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
 import env, { Env } from "~/env.server";
+import { ErrorMessage } from "~/shared/error";
 
-type LoaderReturnTypes = Promise<
-  (CanvasData & { env: Env }) | (ErrorData & { env: Env })
->;
+type Data = (CanvasData | ErrorData) & { env: Env };
 
-export const loader: LoaderFunction = async ({ params }): LoaderReturnTypes => {
+export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
   if (params.projectId === undefined) {
     return { errors: "Missing projectId", env };
   }
@@ -30,10 +29,9 @@ export const loader: LoaderFunction = async ({ params }): LoaderReturnTypes => {
 };
 
 const CanvasRoute = () => {
-  const data = useLoaderData<CanvasData | ErrorData>();
-  // @todo how should we treat this kind of errors?
+  const data = useLoaderData<Data>();
   if ("errors" in data) {
-    return <p>{data.errors}</p>;
+    return <ErrorMessage message={data.errors} />;
   }
   return <Canvas data={data} />;
 };
