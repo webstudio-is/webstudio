@@ -2,19 +2,14 @@ import {
   initialBreakpoints,
   type Project,
   type Tree,
+  type Breakpoint,
   BaseBreakpoint,
-  Breakpoint,
 } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 
-export const load = async (
-  treeId?: Tree["id"]
-): Promise<{
-  treeId: string;
-  values: Breakpoint[];
-}> => {
+export const load = async (treeId?: Tree["id"]) => {
   if (typeof treeId !== "string") {
     throw new Error("Tree ID required");
   }
@@ -79,6 +74,6 @@ export const patch = async (
   const nextBreakpoints = applyPatches(breakpoints.values, patches);
   await prisma.breakpoints.update({
     where: { treeId },
-    data: { values: JSON.stringify(nextBreakpoints) },
+    data: { values: nextBreakpoints },
   });
 };
