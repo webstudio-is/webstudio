@@ -3,9 +3,11 @@ import {
   type Project,
   type Tree,
   type Breakpoint,
+  BaseBreakpoint,
 } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
+import { Breakpoints } from "~/designer/features/breakpoints";
 import { prisma } from "./prisma.server";
 
 export const load = async (treeId?: Tree["id"]) => {
@@ -23,14 +25,16 @@ export const load = async (treeId?: Tree["id"]) => {
 
   return {
     ...breakpoint,
-    values: JSON.parse(breakpoint.values),
+    values: getBreakpointsWithId(JSON.parse(breakpoint.values)),
   };
 };
 
-export const getBreakpointsWithId = () =>
-  initialBreakpoints.map((breakpoint) => ({
+export const getBreakpointsWithId = (
+  breakpoints: (BaseBreakpoint | Breakpoint)[] = initialBreakpoints
+) =>
+  breakpoints.map((breakpoint) => ({
     ...breakpoint,
-    id: ObjectId().toString(),
+    id: "id" in breakpoint ? breakpoint.id : ObjectId().toString(),
   }));
 
 export const create = async (
