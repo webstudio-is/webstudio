@@ -3,7 +3,8 @@ import {
   type Project,
   type Tree,
   type Breakpoint,
-  schema,
+  BreakpointSchema,
+  BreakpointsSchema,
 } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
@@ -21,8 +22,8 @@ export const load = async (treeId?: Tree["id"]) => {
   if (breakpoint === null) {
     throw new Error("Breakpoint not found");
   }
-  const values = JSON.parse(breakpoint.values);
-  schema.Breakpoints.parse(values);
+  const values: Array<Breakpoint> = JSON.parse(breakpoint.values);
+  BreakpointsSchema.parse(values);
   return {
     ...breakpoint,
     values,
@@ -39,7 +40,7 @@ export const create = async (
   treeId: Project["id"],
   values: Array<Breakpoint>
 ) => {
-  schema.Breakpoints.parse(values);
+  BreakpointsSchema.parse(values);
 
   const data = {
     treeId,
@@ -74,7 +75,7 @@ export const patch = async (
   if (breakpoints === null) return;
   const nextValues = applyPatches(breakpoints.values, patches);
 
-  schema.Breakpoints.parse(nextValues);
+  BreakpointsSchema.parse(nextValues);
 
   await prisma.breakpoints.update({
     where: { treeId },

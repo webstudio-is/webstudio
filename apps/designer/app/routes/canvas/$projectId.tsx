@@ -20,7 +20,7 @@ export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
   } catch (error) {
     if (error instanceof Error) {
       return {
-        errors: error.message,
+        errors: `Loading canvas data error: \n ${error.message}`,
         env,
       };
     }
