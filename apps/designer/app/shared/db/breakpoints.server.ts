@@ -7,7 +7,6 @@ import {
 } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
-import { Breakpoints } from "~/designer/features/breakpoints";
 import { prisma } from "./prisma.server";
 
 export const load = async (treeId?: Tree["id"]) => {
