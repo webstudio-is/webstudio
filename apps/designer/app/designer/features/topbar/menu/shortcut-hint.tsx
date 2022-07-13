@@ -32,7 +32,7 @@ const format = (value: ShortcutDefinition) => {
 
 export const ShortcutHint = ({ value }: { value: ShortcutDefinition }) => {
   return (
-    <Text size="1" css={{ letterSpacing: 1.5 }}>
+    <Text size="1" css={{ letterSpacing: 1.5, color: "inherit" }}>
       {format(value)}
     </Text>
   );
