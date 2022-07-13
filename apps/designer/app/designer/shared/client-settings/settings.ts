@@ -19,12 +19,13 @@ const read = (): Settings => {
   if (settingsString == null) return {};
 
   try {
+    // @todo add zod schema
     return JSON.parse(settingsString);
   } catch (error) {
     if (error instanceof Error) {
       sentryException({
         message: "Bad user settings in local storage",
-        extra: {
+        extras: {
           error: error.message,
         },
       });

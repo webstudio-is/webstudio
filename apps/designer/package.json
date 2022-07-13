@@ -55,7 +55,7 @@
     "@sentry/remix": "^7.5.0",
     "@stitches/react": "^1.2.7",
     "@vercel/node": "^2.4.1",
-    "@webstudio-is/sdk": "0.4.1",
+    "@webstudio-is/sdk": "0.5.0",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "debug": "^4.3.4",
@@ -135,6 +135,6 @@
   "sideEffects": false,
   "license": "MIT",
   "relativeDependencies": {
-    "@webstudio-is/sdk": "../webstudio-sdk/"
+    "@webstudio-is/sdk": "../../../webstudio-sdk/"
   }
 }
