@@ -1,0 +1,17 @@
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**", "api/**", "public/build/**"]
+    },
+    "checks": {
+      "outputs": []
+    },
+    "dev": {
+      "cache": false
+    },
+    "storybook:run": {
+      "cache": false
+    }
+  }
+}
