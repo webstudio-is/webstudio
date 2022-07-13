@@ -3,7 +3,6 @@ import {
   type Project,
   type Tree,
   type Breakpoint,
-  BreakpointSchema,
   BreakpointsSchema,
 } from "@webstudio-is/sdk";
 import ObjectId from "bson-objectid";
