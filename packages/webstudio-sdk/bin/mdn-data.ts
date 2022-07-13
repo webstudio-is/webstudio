@@ -1,4 +1,4 @@
-#!/usr/bin/env node --experimental-loader esbuild-node-loader
+#!/usr/bin/env -S node --experimental-loader esbuild-node-loader
 
 import { definitionSyntax, type DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";

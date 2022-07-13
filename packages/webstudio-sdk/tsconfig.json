@@ -1,22 +1,16 @@
 {
   "extends": "../../node_modules/tsconfig/base.json",
   "include": ["./src/**/*.ts", "./src/**/*.tsx"],
-  "exclude": ["node_modules"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2019"],
-    "isolatedModules": true,
     "module": "commonjs",
-    "esModuleInterop": true,
     "jsx": "react-jsx",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
     "target": "ES2019",
     "strict": true,
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     },
-    "declaration": true,
     "outDir": "./lib"
   }
 }

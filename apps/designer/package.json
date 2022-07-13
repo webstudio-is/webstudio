@@ -133,8 +133,5 @@
     "typescript": "4.6.4"
   },
   "sideEffects": false,
-  "license": "MIT",
-  "relativeDependencies": {
-    "@webstudio-is/sdk": "../../../webstudio-sdk/"
-  }
+  "license": "MIT"
 }

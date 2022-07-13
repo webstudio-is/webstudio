@@ -6,18 +6,18 @@
   "repository": "git@github.com:webstudio-is/webstudio-sdk.git",
   "homepage": "https://webstudio.is",
   "scripts": {
-    "build": "yarn build:mdn-data && yarn build:args && yarn build:prisma && yarn build:lib",
-    "build:mdn-data": "node --experimental-loader esbuild-node-loader ./bin/mdn-data.ts ./src/css",
-    "build:args": "node --experimental-loader esbuild-node-loader ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
+    "build": "yarn build:mdn-data && yarn build:args",
+    "build:mdn-data": "./bin/mdn-data.ts ./src/css",
+    "build:args": "./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
     "build:prisma": "prisma format && prisma generate",
     "typecheck": "tsc --noEmit",
     "build:lib": "rm -fr lib && tsc",
     "postinstall": "prisma generate",
     "test": "jest",
     "checks": "yarn typecheck && yarn test",
-    "prepublishOnly": "yarn typecheck && yarn build",
-    "storybook:run": "NODE_OPTIONS=--openssl-legacy-provider start-storybook -p 6006",
-    "storybook:build": "NODE_OPTIONS=--openssl-legacy-provider build-storybook"
+    "prepublishOnly": "yarn checks && yarn build:lib",
+    "storybook:run": "start-storybook -p 6006",
+    "storybook:build": "build-storybook"
   },
   "devDependencies": {
     "@babel/core": "^7.17.12",
@@ -65,8 +65,8 @@
     "react-nano-state": "^0.4.0",
     "zod": "^3.17.3"
   },
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "files": [
     "README.md",
     "!*.test.*",

@@ -1,4 +1,4 @@
-#!/usr/bin/env node --experimental-loader esbuild-node-loader
+#!/usr/bin/env -S node --experimental-loader esbuild-node-loader
 
 import path from "path";
 import docgen from "react-docgen-typescript";
