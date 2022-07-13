@@ -7,8 +7,8 @@
   "homepage": "https://webstudio.is",
   "scripts": {
     "build": "yarn build:mdn-data && yarn build:args && yarn build:prisma && yarn build:lib",
-    "build:mdn-data": "./bin/mdn-data.ts ./src/css",
-    "build:args": "./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
+    "build:mdn-data": "node --experimental-loader esbuild-node-loader ./bin/mdn-data.ts ./src/css",
+    "build:args": "node --experimental-loader esbuild-node-loader ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
     "build:prisma": "prisma format && prisma generate",
     "typecheck": "tsc --noEmit",
     "build:lib": "rm -fr lib && tsc",

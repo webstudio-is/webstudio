@@ -1,5 +1,7 @@
 {
+  "extends": "../../node_modules/tsconfig/base.json",
   "include": ["./src/**/*.ts", "./src/**/*.tsx"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2019"],
     "isolatedModules": true,
