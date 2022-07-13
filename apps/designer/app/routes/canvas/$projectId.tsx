@@ -4,6 +4,7 @@ import { Canvas } from "~/canvas";
 import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
 import env, { Env } from "~/env.server";
 import { ErrorMessage } from "~/shared/error";
+import { sentryException } from "~/shared/sentry";
 
 type Data = (CanvasData | ErrorData) & { env: Env };
 
@@ -19,12 +20,15 @@ export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
     };
   } catch (error) {
     if (error instanceof Error) {
+      const message = `Bad canvas data: \n ${error.message}`;
+      sentryException({ message });
       return {
-        errors: `Loading canvas data error: \n ${error.message}`,
+        errors: message,
         env,
       };
     }
   }
+
   return { errors: "Unexpected error", env };
 };
 
