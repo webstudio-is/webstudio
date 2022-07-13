@@ -23,6 +23,7 @@ export default function handleRequest(
   markup = insertCriticalCss(markup, request.url);
 
   responseHeaders.set("Content-Type", "text/html");
+  responseHeaders.set("Accept-CH", "Sec-CH-Prefers-Color-Scheme");
 
   return new Response("<!DOCTYPE html>" + markup, {
     status: responseStatusCode,
