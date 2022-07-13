@@ -28,7 +28,7 @@ import {
 const menuItemCss = {
   display: "flex",
   gap: "$3",
-  justifyContent: "start",
+  justifyContent: "space-between",
   flexGrow: 1,
   minWidth: 140,
 };
