@@ -1,5 +1,6 @@
-import * as values from "./values";
 import { useSubscribe } from "@webstudio-is/sdk";
+import { sentryException } from "~/shared/sentry";
+import * as values from "./values";
 
 type Name = keyof typeof values;
 type Value = typeof values[Name]["values"][number];
@@ -8,12 +9,26 @@ type Settings = Partial<Record<Name, Value>>;
 const namespace = "__webstudio_user_settings__";
 
 const read = (): Settings => {
+  let settingsString;
   try {
-    const settings = localStorage.getItem(namespace);
-    if (settings === null) return {};
-    return JSON.parse(settings);
-  } catch (error) {
+    settingsString = localStorage.getItem(namespace);
+  } catch (_error) {
     // We don't need to handle this one.
+  }
+
+  if (settingsString == null) return {};
+
+  try {
+    return JSON.parse(settingsString);
+  } catch (error) {
+    if (error instanceof Error) {
+      sentryException({
+        message: "Bad user settings in local storage",
+        extra: {
+          error: error.message,
+        },
+      });
+    }
   }
   return {};
 };
