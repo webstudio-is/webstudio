@@ -32,6 +32,7 @@ import {
 import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
+import { useSubscribeClientSetting } from "./shared/client-settings";
 
 export const links = () => {
   return [
@@ -177,6 +178,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
+  useSubscribeClientSetting();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   const [isDragging, setIsDragging] = useIsDragging();

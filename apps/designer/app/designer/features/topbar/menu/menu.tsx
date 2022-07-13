@@ -5,18 +5,26 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuTriggerItem,
+  DropdownMenuCheckboxItem,
   DropdownMenuArrow,
   DropdownMenuSeparator,
   IconButton,
   Box,
 } from "~/shared/design-system";
-import { HamburgerMenuIcon } from "~/shared/icons";
+import { HamburgerMenuIcon, ChevronRightIcon } from "~/shared/icons";
 import type { Config } from "~/config";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
+import { isFeatureEnabled } from "~/shared/feature-flags";
+import {
+  getThemeSetting,
+  setThemeSetting,
+  type ThemeSetting,
+} from "~/shared/theme";
 
 const menuItemCss = {
   display: "flex",
@@ -24,6 +32,41 @@ const menuItemCss = {
   justifyContent: "start",
   flexGrow: 1,
   minWidth: 140,
+};
+
+const ThemeMenuItem = () => {
+  if (isFeatureEnabled("theme") === false) return null;
+  const currentSetting = getThemeSetting();
+  const labels: Record<ThemeSetting, string> = {
+    light: "Light",
+    dark: "Dark",
+    system: "System theme",
+  };
+
+  const settings = Object.keys(labels) as Array<ThemeSetting>;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTriggerItem>
+        Theme
+        <ChevronRightIcon />
+      </DropdownMenuTriggerItem>
+      <DropdownMenuContent>
+        {settings.map((setting) => (
+          <DropdownMenuCheckboxItem
+            key={setting}
+            checked={currentSetting === setting}
+            css={menuItemCss}
+            onSelect={() => {
+              setThemeSetting(setting);
+            }}
+          >
+            {labels[setting]}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 };
 
 type MenuProps = {
@@ -163,6 +206,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
           <ShortcutHint value={["cmd", "-"]} />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <ThemeMenuItem />
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {
