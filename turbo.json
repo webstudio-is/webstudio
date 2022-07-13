@@ -8,6 +8,7 @@
       "outputs": []
     },
     "dev": {
+      "dependsOn": ["@webstudio-is/sdk#build"],
       "cache": false
     },
     "storybook:run": {
