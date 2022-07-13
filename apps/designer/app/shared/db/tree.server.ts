@@ -119,6 +119,7 @@ export const patchRoot = async (
     throw new Error(`Tree ${treeId} not found`);
   }
   const root = applyPatches(tree.root, patches);
+  InstanceSchema.parse(root);
   await prisma.tree.update({
     data: { root: JSON.stringify(root) },
     where: { id: treeId },
