@@ -3,18 +3,16 @@ import { primitives } from "~/shared/canvas-components";
 
 /**
  * Populate instance with:
- * - defaultStyles
- * @todo rewrite using immer
+ * - defaultStyle
+ * - breakpoint
  */
-export const populateInstance = (instance: Instance): Instance => {
-  const populatedInstance = { ...instance };
+export const populateInstanceMutable = (instance: Instance) => {
   const primitive = primitives[instance.component];
   if (primitive !== undefined && "defaultStyle" in primitive) {
     const cssRule = {
       breakpoint: "",
       style: primitive.defaultStyle,
     };
-    populatedInstance.cssRules.push(cssRule);
+    instance.cssRules.push(cssRule);
   }
-  return populatedInstance;
 };

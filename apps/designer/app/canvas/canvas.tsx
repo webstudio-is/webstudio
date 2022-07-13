@@ -20,9 +20,9 @@ import { useDragDropHandlers } from "./shared/use-drag-drop-handlers";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   usePopulateRootInstance,
-  useInsertInstance,
-  useDeleteInstance,
-  useReparentInstance,
+  useSubscribeInsertInstsance,
+  useSubscribeDeleteInstance,
+  useSubscribeReparentInstance,
   usePublishSelectedInstanceData,
   usePublishRootInstance,
   useUpdateSelectedInstance,
@@ -30,7 +30,7 @@ import {
   usePublishHoveredInstanceRect,
   usePublishHoveredInstanceData,
   useSetHoveredInstance,
-  useUnselectInstance,
+  useSubscribeUnselectInstance,
   usePublishTextEditingInstanceId,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
@@ -114,9 +114,9 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   usePublishSelectedInstanceData(treeId);
   usePublishHoveredInstanceData();
   useHandleBreakpoints();
-  useInsertInstance();
-  useReparentInstance();
-  useDeleteInstance();
+  useSubscribeInsertInstsance();
+  useSubscribeReparentInstance();
+  useSubscribeDeleteInstance();
   usePublishRootInstance();
   useTrackSelectedElement();
   useTrackHoveredElement();
@@ -125,7 +125,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useUpdateSelectedInstance();
   usePublishSelectedInstanceDataRect();
   usePublishHoveredInstanceRect();
-  useUnselectInstance();
+  useSubscribeUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();

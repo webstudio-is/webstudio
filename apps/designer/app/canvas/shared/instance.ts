@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   deleteInstanceMutable,
-  populateInstance,
+  populateInstanceMutable,
   findParentInstance,
   findClosestSiblingInstance,
   insertInstanceMutable,
@@ -22,6 +22,7 @@ import store from "immerhin";
 import {
   DropData,
   HoveredInstanceData,
+  primitives,
   type SelectedInstanceData,
 } from "~/shared/canvas-components";
 import {
@@ -44,7 +45,13 @@ export const usePopulateRootInstance = (tree: Tree) => {
   }, [tree, setRootInstance]);
 };
 
-export const useInsertInstance = () => {
+const canInsert = (targetInstance: Instance): boolean => {
+  const { canAcceptChild } = primitives[targetInstance.component];
+  // @todo show a toast notification to the user telling them "why", when they can't insert into this node
+  return canAcceptChild();
+};
+
+export const useSubscribeInsertInstsance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
   useSubscribe<
@@ -54,17 +61,23 @@ export const useInsertInstance = () => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
-        if (rootInstance === undefined) return;
-        const populatedInstance = populateInstance(instance);
-        const hasInserted = insertInstanceMutable(
-          rootInstance,
-          populatedInstance,
-          {
-            parentId:
-              dropData?.instance.id ?? selectedInstance?.id ?? rootInstance.id,
-            position: dropData?.position || "end",
-          }
-        );
+        const targetInstance =
+          dropData?.instance ?? selectedInstance ?? rootInstance;
+        if (
+          rootInstance === undefined ||
+          targetInstance === undefined ||
+          canInsert(targetInstance) === false
+        )
+          return;
+
+        if (canInsert(targetInstance) === false) return;
+
+        populateInstanceMutable(instance);
+        const hasInserted = insertInstanceMutable(rootInstance, instance, {
+          parentId: targetInstance.id,
+          // We can insert by clicking without dragging, so there is no position defined by the drop area.
+          position: dropData?.position || "end",
+        });
         if (hasInserted) {
           setSelectedInstance(instance);
         }
@@ -76,12 +89,17 @@ export const useInsertInstance = () => {
   });
 };
 
-export const useReparentInstance = () => {
+export const useSubscribeReparentInstance = () => {
   useSubscribe<"reparentInstance", { instance: Instance; dropData: DropData }>(
     "reparentInstance",
     ({ instance, dropData }) => {
       store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) return;
+        if (
+          rootInstance === undefined ||
+          canInsert(dropData.instance) === false
+        ) {
+          return;
+        }
         deleteInstanceMutable(rootInstance, instance.id);
         insertInstanceMutable(rootInstance, instance, {
           parentId: dropData.instance.id,
@@ -92,7 +110,7 @@ export const useReparentInstance = () => {
   );
 };
 
-export const useDeleteInstance = () => {
+export const useSubscribeDeleteInstance = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   useSubscribe<"deleteInstance", { id: Instance["id"] }>(
@@ -257,7 +275,7 @@ export const useUpdateSelectedInstance = () => {
   }, [rootInstance, selectedInstance, setSelectedInstance]);
 };
 
-export const useUnselectInstance = () => {
+export const useSubscribeUnselectInstance = () => {
   const [, setSelectedInstance] = useSelectedInstance();
   useSubscribe("unselectInstance", () => {
     setSelectedInstance(undefined);
