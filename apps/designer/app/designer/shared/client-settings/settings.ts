@@ -25,7 +25,7 @@ const read = (): Settings => {
     if (error instanceof Error) {
       sentryException({
         message: "Bad user settings in local storage",
-        extra: {
+        extras: {
           error: error.message,
         },
       });

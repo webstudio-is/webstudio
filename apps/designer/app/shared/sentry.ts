@@ -16,18 +16,18 @@ export const initSentry = ({
 
 type SentryHelperProps = {
   message: string;
-  extra?: Extras;
+  extras?: Extras;
   skipLogging?: boolean;
 };
 
 export const sentryMessage = ({
   message,
-  extra,
+  extras,
   skipLogging = false,
 }: SentryHelperProps) => {
   if (env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
-      if (extra) scope.setExtras(extra);
+      if (extras) scope.setExtras(extras);
       Sentry.captureMessage(message);
     });
   }
@@ -40,12 +40,12 @@ export const sentryMessage = ({
 
 export const sentryException = ({
   message,
-  extra,
+  extras,
   skipLogging = false,
 }: SentryHelperProps) => {
   if (env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
-      if (extra) scope.setExtras(extra);
+      if (extras) scope.setExtras(extras);
       Sentry.captureException(message);
     });
   }

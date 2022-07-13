@@ -63,7 +63,7 @@ if (process.env.DEV_LOGIN === "true") {
           if (error instanceof Error) {
             sentryException({
               message: error.message,
-              extra: {
+              extras: {
                 loginMethod: AUTH_PROVIDERS.LOGIN_DEV,
               },
             });
