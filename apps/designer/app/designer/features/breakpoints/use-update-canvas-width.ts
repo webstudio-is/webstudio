@@ -1,3 +1,4 @@
+import { useSubscribe } from "@webstudio-is/sdk";
 import { useCallback, useEffect } from "react";
 import {
   useSelectedBreakpoint,
@@ -30,6 +31,8 @@ export const useUpdateCanvasWidth = () => {
 
     setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
   }, [selectedBreakpoint, setCanvasWidth]);
+
+  useSubscribe("canvasWidth", setCanvasWidth);
 
   // Set the initial canvas width based on the selected breakpoint upper bound, which starts where the next breakpoint begins.
   return useCallback(

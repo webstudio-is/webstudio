@@ -135,6 +135,6 @@
   "sideEffects": false,
   "license": "MIT",
   "relativeDependencies": {
-    "@webstudio-is/sdk": "../webstudio-sdk/"
+    "@webstudio-is/sdk": "../../../webstudio-sdk/"
   }
 }

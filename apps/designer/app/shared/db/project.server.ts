@@ -1,20 +1,25 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import type { Project as BaseProject, User } from "@webstudio-is/sdk";
+import { z } from "zod";
 import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";
 
+const TreeHistorySchema = z.array(z.string());
+
 export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
-  prodTreeIdHistory: string[];
+  prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
 };
 
-const parseProject = (project: BaseProject | null): Project | null =>
-  project
-    ? {
-        ...project,
-        prodTreeIdHistory: JSON.parse(project.prodTreeIdHistory),
-      }
-    : null;
+const parseProject = (project: BaseProject | null): Project | null => {
+  if (project === null) return null;
+  const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
+  TreeHistorySchema.parse(prodTreeIdHistory);
+  return {
+    ...project,
+    prodTreeIdHistory,
+  };
+};
 
 export const loadById = async (
   projectId?: Project["id"]
@@ -148,6 +153,8 @@ export const update = async ({
       throw new Error(`Minimum ${MIN_DOMAIN_LENGTH} characters required`);
     }
   }
+
+  TreeHistorySchema.parse(data.prodTreeIdHistory);
 
   try {
     const project = await prisma.project.update({

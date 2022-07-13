@@ -1,4 +1,8 @@
-import { type Tree, type AllUserProps } from "@webstudio-is/sdk";
+import {
+  type Tree,
+  type AllUserProps,
+  UserPropsSchema,
+} from "@webstudio-is/sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { Project } from "./project.server";
@@ -25,10 +29,14 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
     where: { treeId },
   });
 
-  return instancePropsEntries.map((tree) => ({
-    ...tree,
-    props: JSON.parse(tree.props),
-  }));
+  return instancePropsEntries.map((instanceProps) => {
+    const props = JSON.parse(instanceProps.props);
+    UserPropsSchema.parse(props);
+    return {
+      ...instanceProps,
+      props,
+    };
+  });
 };
 
 export const clone = async ({
@@ -75,14 +83,16 @@ export const patch = async (
   );
 
   await Promise.all(
-    Object.values(nextProps).map(({ id, instanceId, treeId, props }) =>
-      prisma.instanceProps.upsert({
+    Object.values(nextProps).map(({ id, instanceId, treeId, props }) => {
+      UserPropsSchema.parse(props);
+      const propsString = JSON.stringify(props);
+      return prisma.instanceProps.upsert({
         where: { id: id },
-        create: { id: id, instanceId, treeId, props: JSON.stringify(props) },
+        create: { id: id, instanceId, treeId, props: propsString },
         update: {
-          props: JSON.stringify(props),
+          props: propsString,
         },
-      })
-    )
+      });
+    })
   );
 };
