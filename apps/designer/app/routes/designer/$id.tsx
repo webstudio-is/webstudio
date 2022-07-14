@@ -1,5 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
-import type { LoaderFunction } from "@remix-run/node";
+import { LoaderFunction } from "@remix-run/node";
 import type { Project } from "@webstudio-is/sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";

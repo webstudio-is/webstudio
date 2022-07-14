@@ -4594,10 +4594,10 @@
     "@webassemblyjs/wast-parser" "1.9.0"
     "@xtuc/long" "4.2.2"
 
-"@webstudio-is/sdk@0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.4.1.tgz#fe33f2ab77aedf023b3362c21c5597ab7f2bf573"
-  integrity sha512-Uhf+qBv9sfWMpftyxZ41NW1c9NYmLkLSUeRlYhl0DouQKPahdxM9LFFMXeEHzoBufuKvxAZzIrniNHIb4YP7OQ==
+"@webstudio-is/sdk@0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@webstudio-is/sdk/-/sdk-0.5.0.tgz#578f9fae440839605f17b49c016252b4642f1eed"
+  integrity sha512-WTKAHVqiWfcthYeHV/PhlghNsTVlycFDAP+LrCmXugeS07zO9foIX2Dqj7qNcX5R4pewTXc1IBKa+CsvOOQcew==
   dependencies:
     "@prisma/client" "^3.10.0"
     "@stitches/core" "^1.2.7"
@@ -4605,6 +4605,7 @@
     mitt "^3.0.0"
     prisma "^3.10.0"
     react-nano-state "^0.4.0"
+    zod "^3.17.3"
 
 "@xobotyi/scrollbar-width@^1.9.5":
   version "1.9.5"
@@ -16444,6 +16445,11 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
+
+zod@^3.17.3:
+  version "3.17.3"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.17.3.tgz#86abbc670ff0063a4588d85a4dcc917d6e4af2ba"
+  integrity sha512-4oKP5zvG6GGbMlqBkI5FESOAweldEhSOZ6LI6cG+JzUT7ofj1ZOC0PJudpQOpT1iqOFpYYtX5Pw0+o403y4bcg==
 
 zwitch@^1.0.0:
   version "1.0.5"

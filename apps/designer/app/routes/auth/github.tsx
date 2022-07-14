@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (error instanceof Error) {
       sentryException({
         message: error.message,
-        extra: {
+        extras: {
           loginMethod: AUTH_PROVIDERS.LOGIN_GITHUB,
         },
       });
