@@ -1,9 +1,8 @@
 {
-  "name": "@webstudio-is/sdk",
+  "name": "@webstudio-is/react-sdk",
   "version": "0.5.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
-  "repository": "git@github.com:webstudio-is/webstudio-sdk.git",
   "homepage": "https://webstudio.is",
   "scripts": {
     "build": "yarn build:mdn-data && yarn build:args",

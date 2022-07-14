@@ -1,4 +1,4 @@
-import { UserProp } from "@webstudio-is/sdk";
+import { UserProp } from "@webstudio-is/react-sdk";
 import React, { ComponentProps } from "react";
 import {
   Flex,

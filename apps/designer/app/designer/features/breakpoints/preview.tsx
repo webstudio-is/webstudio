@@ -1,4 +1,4 @@
-import { type Breakpoint } from "@webstudio-is/sdk";
+import { type Breakpoint } from "@webstudio-is/react-sdk";
 import { Paragraph, Flex, Text } from "~/shared/design-system";
 
 type PreviewProps = {

@@ -3,7 +3,7 @@ import {
   type Breakpoint,
   type Tree,
   InstanceSchema,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { createInstance } from "~/shared/tree-utils";

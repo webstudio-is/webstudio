@@ -1,4 +1,4 @@
-import { type ChildrenUpdates, type Instance } from "@webstudio-is/sdk";
+import { type ChildrenUpdates, type Instance } from "@webstudio-is/react-sdk";
 import { RichTextPlugin, HistoryPlugin } from "./lexical";
 import { InstancePlugin } from "./plugins/plugin-instance";
 import { ToolbarConnectorPlugin } from "./plugins/plugin-toolbar-connector";

@@ -1,4 +1,4 @@
-import { type Instance, type Publish } from "@webstudio-is/sdk";
+import { type Instance, type Publish } from "@webstudio-is/react-sdk";
 import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,

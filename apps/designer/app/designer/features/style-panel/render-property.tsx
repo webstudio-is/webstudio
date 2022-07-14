@@ -6,7 +6,7 @@ import {
   type StyleProperty,
   type Category,
   type StyleValue,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import type { SetProperty } from "./use-style-data";
 import type { InheritedStyle } from "./get-inherited-style";
 import { ColorPicker } from "./lib/color-picker";

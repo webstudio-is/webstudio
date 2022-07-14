@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { getInstancePath } from "./get-instance-path";
 
 const getIds = (array: Array<{ id: string }>) => array.map((item) => item.id);

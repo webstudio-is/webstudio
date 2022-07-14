@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
+import {
+  type Project,
+  useSubscribe,
+  usePublish,
+} from "@webstudio-is/react-sdk";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,

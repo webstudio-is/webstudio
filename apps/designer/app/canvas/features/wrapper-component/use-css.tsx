@@ -5,7 +5,7 @@ import {
   type CSS,
   useSubscribe,
   toValue,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { type StyleUpdates } from "~/shared/canvas-components";
 
 type UseCssProps = {

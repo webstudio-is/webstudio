@@ -1,4 +1,4 @@
-import { Breakpoint, type Instance } from "@webstudio-is/sdk";
+import { Breakpoint, type Instance } from "@webstudio-is/react-sdk";
 import { type StyleUpdates } from "~/shared/canvas-components";
 import { findInstanceById } from "./find-instance";
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import {
   Flex,
   Text,

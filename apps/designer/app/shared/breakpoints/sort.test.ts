@@ -1,4 +1,7 @@
-import { initialBreakpoints, type BaseBreakpoint } from "@webstudio-is/sdk";
+import {
+  initialBreakpoints,
+  type BaseBreakpoint,
+} from "@webstudio-is/react-sdk";
 import { sort } from "./sort";
 
 describe("Breakpoints sorting for visual rendering", () => {

@@ -1,6 +1,6 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
+import { type Instance, publish, useSubscribe } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";

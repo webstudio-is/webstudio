@@ -1,6 +1,6 @@
 import { redirect, type LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Root, type Data } from "@webstudio-is/sdk";
+import { Root, type Data } from "@webstudio-is/react-sdk";
 import config from "~/config";
 import * as db from "~/shared/db";
 import Document from "./canvas";

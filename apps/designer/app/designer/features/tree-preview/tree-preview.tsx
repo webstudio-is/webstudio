@@ -1,4 +1,4 @@
-import { Instance, useSubscribe } from "@webstudio-is/sdk";
+import { Instance, useSubscribe } from "@webstudio-is/react-sdk";
 import produce from "immer";
 import { useState } from "react";
 import { Tree } from "~/designer/shared/tree";

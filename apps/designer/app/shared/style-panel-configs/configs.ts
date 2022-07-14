@@ -4,7 +4,7 @@ import {
   keywordValues,
   type Category,
   type StyleProperty,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import type { StyleConfig, Control } from "./types";
 import { humanizeString } from "../string-utils";
 

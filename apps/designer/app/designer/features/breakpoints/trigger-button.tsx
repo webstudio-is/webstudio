@@ -1,5 +1,5 @@
 import { forwardRef, type ComponentProps, type ElementRef } from "react";
-import { type Breakpoint } from "@webstudio-is/sdk";
+import { type Breakpoint } from "@webstudio-is/react-sdk";
 import {
   useCanvasWidth,
   useZoom,

@@ -1,7 +1,7 @@
 import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
 import { useDrag } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
-import { type Instance, type Publish } from "@webstudio-is/sdk";
+import { type Instance, type Publish } from "@webstudio-is/react-sdk";
 import { Flex } from "~/shared/design-system";
 import { PlusIcon } from "~/shared/icons";
 import { primitives, type DragData } from "~/shared/canvas-components";

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { type Publish } from "@webstudio-is/sdk";
+import { type Publish } from "@webstudio-is/react-sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,
