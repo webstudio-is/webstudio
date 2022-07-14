@@ -3,7 +3,7 @@ import { darkTheme } from "~/shared/design-system";
 import type { ColorScheme, ThemeSetting } from "./types";
 
 // User selected theme setting.
-let setting: ThemeSetting = "dark";
+let setting: ThemeSetting = "system";
 // Current systeme theme.
 let system: ColorScheme;
 
@@ -26,17 +26,16 @@ const subscribeSystemTheme = () => {
 
 subscribeSystemTheme();
 
-// @todo todo switch to light by default once ready
-const defaultTheme = "dark";
+const fallbackTheme = "light";
 
 /**
  * Logic we use to decide depending on user setting which color scheme to use.
  */
 const getColorScheme = (): ColorScheme => {
   if (setting === "system") {
-    return system || defaultTheme;
+    return system || fallbackTheme;
   }
-  return setting || defaultTheme;
+  return setting || fallbackTheme;
 };
 
 /**

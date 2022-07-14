@@ -16,11 +16,7 @@ import {
   Flex,
 } from "~/shared/design-system";
 import { sort } from "~/shared/breakpoints";
-import {
-  useSelectedBreakpoint,
-  useCanvasWidth,
-} from "../../shared/nano-states";
-import { willRender } from "~/designer/shared/breakpoints";
+import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
 import { ZoomSetting } from "./zoom-setting";
@@ -40,15 +36,16 @@ type BreakpointSelectorItemProps = {
 const BreakpointSelectorItem = ({
   breakpoint,
 }: BreakpointSelectorItemProps) => {
-  const [canvasWidth] = useCanvasWidth();
   return (
     <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
-      <Text size="1" css={{ flexGrow: 1 }}>
+      <Text size="1" css={{ flexGrow: 1, color: "inherit" }}>
         {breakpoint.label}
       </Text>
       <Text
         size="1"
-        variant={willRender(breakpoint, canvasWidth) ? "contrast" : "gray"}
+        css={{
+          color: "inherit",
+        }}
       >
         {breakpoint.minWidth}
       </Text>

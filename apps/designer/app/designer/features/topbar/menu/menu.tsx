@@ -19,7 +19,6 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import {
   getThemeSetting,
   setThemeSetting,
@@ -29,13 +28,12 @@ import {
 const menuItemCss = {
   display: "flex",
   gap: "$3",
-  justifyContent: "start",
+  justifyContent: "space-between",
   flexGrow: 1,
   minWidth: 140,
 };
 
 const ThemeMenuItem = () => {
-  if (isFeatureEnabled("theme") === false) return null;
   const currentSetting = getThemeSetting();
   const labels: Record<ThemeSetting, string> = {
     light: "Light",
