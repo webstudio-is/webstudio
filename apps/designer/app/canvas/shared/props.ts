@@ -3,7 +3,7 @@ import {
   useSubscribe,
   allUserPropsContainer,
   DeleteProp,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import store from "immerhin";
 import {
   updateAllUserPropsMutable,

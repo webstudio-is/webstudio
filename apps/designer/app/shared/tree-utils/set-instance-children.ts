@@ -1,5 +1,5 @@
-import { type ChildrenUpdates } from "@webstudio-is/sdk";
-import { type Instance } from "@webstudio-is/sdk";
+import { type ChildrenUpdates } from "@webstudio-is/react-sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { createInstance } from "./create-instance";
 import { findInstanceById } from "./find-instance";
 

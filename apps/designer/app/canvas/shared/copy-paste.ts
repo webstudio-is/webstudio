@@ -3,7 +3,7 @@ import {
   type Instance,
   allUserPropsContainer,
   publish,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { selectedInstanceContainer } from "./nano-states";
 import { cloneInstance } from "~/shared/tree-utils";
 import { cloneProps } from "~/shared/props-utils";

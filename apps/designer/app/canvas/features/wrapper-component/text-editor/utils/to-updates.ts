@@ -1,4 +1,4 @@
-import { type ChildrenUpdates } from "@webstudio-is/sdk";
+import { type ChildrenUpdates } from "@webstudio-is/react-sdk";
 import {
   type SerializedTextNode,
   type SerializedElementNode,

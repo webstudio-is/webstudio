@@ -1,4 +1,4 @@
-import { type AllUserProps, type DeleteProp } from "@webstudio-is/sdk";
+import { type AllUserProps, type DeleteProp } from "@webstudio-is/react-sdk";
 
 export const deletePropMutable = (
   allProps: AllUserProps,

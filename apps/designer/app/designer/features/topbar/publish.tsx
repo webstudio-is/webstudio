@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
 import { useId } from "@radix-ui/react-id";
 import { RocketIcon, ExternalLinkIcon } from "~/shared/icons";
-import { type Project } from "@webstudio-is/sdk";
+import { type Project } from "@webstudio-is/react-sdk";
 import {
   Button,
   Flex,

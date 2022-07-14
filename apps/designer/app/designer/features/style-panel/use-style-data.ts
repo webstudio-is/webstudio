@@ -3,7 +3,7 @@ import type {
   SelectedInstanceData,
   StyleUpdates,
 } from "~/shared/canvas-components";
-import { type StyleProperty, type Publish } from "@webstudio-is/sdk";
+import { type StyleProperty, type Publish } from "@webstudio-is/react-sdk";
 import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle } from "./get-inherited-style";

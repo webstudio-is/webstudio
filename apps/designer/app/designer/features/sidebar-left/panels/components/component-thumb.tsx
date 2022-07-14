@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { primitives } from "~/shared/canvas-components";
 import { Flex, Text, styled } from "~/shared/design-system";

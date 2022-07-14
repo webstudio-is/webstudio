@@ -1,6 +1,6 @@
 import ObjectId from "bson-objectid";
 import produce from "immer";
-import { type InstanceProps, type Instance } from "@webstudio-is/sdk";
+import { type InstanceProps, type Instance } from "@webstudio-is/react-sdk";
 
 export const cloneProps = (
   instanceProps: InstanceProps,

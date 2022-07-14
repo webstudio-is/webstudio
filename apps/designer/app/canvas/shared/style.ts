@@ -1,5 +1,5 @@
 import store from "immerhin";
-import { useSubscribe } from "@webstudio-is/sdk";
+import { useSubscribe } from "@webstudio-is/react-sdk";
 import { type StyleUpdates } from "~/shared/canvas-components";
 import { setInstanceStyleMutable } from "~/shared/tree-utils";
 import { useSelectedInstance } from "./nano-states";

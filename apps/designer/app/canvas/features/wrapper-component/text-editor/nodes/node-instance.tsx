@@ -1,5 +1,5 @@
 import { render } from "react-dom";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import {
   type EditorConfig,
   type SerializedTextNode,

@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { useSubscribe, type Breakpoint, type Publish } from "@webstudio-is/sdk";
+import {
+  useSubscribe,
+  type Breakpoint,
+  type Publish,
+} from "@webstudio-is/react-sdk";
 import {
   DropdownMenu,
   DropdownMenuContent,

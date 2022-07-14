@@ -1,4 +1,4 @@
-import type { StyleProperty, AppliesTo } from "@webstudio-is/sdk";
+import type { StyleProperty, AppliesTo } from "@webstudio-is/react-sdk";
 
 type BaseStyleConfig = {
   label: string;

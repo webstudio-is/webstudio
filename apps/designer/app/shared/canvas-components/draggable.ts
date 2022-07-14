@@ -1,5 +1,5 @@
 import type { XYCoord } from "react-dnd";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 
 export type DragData = {
   instance: Instance;

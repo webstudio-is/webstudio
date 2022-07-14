@@ -1,6 +1,6 @@
 import ObjectId from "bson-objectid";
 import produce from "immer";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 
 const updateIds = (instance: Instance) => {
   instance.id = ObjectId().toString();

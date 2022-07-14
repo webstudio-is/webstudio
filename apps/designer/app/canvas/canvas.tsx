@@ -11,7 +11,7 @@ import {
   WrapperComponent,
   globalStyles,
   useSubscribe,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import {
   createElementsTree,
   setInstanceChildrenMutable,

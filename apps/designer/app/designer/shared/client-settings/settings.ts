@@ -1,4 +1,4 @@
-import { useSubscribe } from "@webstudio-is/sdk";
+import { useSubscribe } from "@webstudio-is/react-sdk";
 import { sentryException } from "~/shared/sentry";
 import * as values from "./values";
 

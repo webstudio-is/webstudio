@@ -1,4 +1,4 @@
-import { allUserPropsContainer } from "@webstudio-is/sdk";
+import { allUserPropsContainer } from "@webstudio-is/react-sdk";
 import store from "immerhin";
 import {
   rootInstanceContainer,

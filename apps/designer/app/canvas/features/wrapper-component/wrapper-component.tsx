@@ -6,7 +6,7 @@ import {
   toCss,
   useUserProps,
   renderWrapperComponentChildren,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { primitives } from "~/shared/canvas-components";
 import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";

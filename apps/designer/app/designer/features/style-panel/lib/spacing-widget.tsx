@@ -3,7 +3,7 @@ import {
   toValue,
   type StyleProperty,
   type StyleValue,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { Box } from "~/shared/design-system";
 import { SetProperty } from "../use-style-data";
 import { useIsFromCurrentBreakpoint } from "./utils/use-is-from-current-breakpoint";

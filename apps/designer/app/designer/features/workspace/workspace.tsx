@@ -1,7 +1,7 @@
 import { Box, Flex } from "~/shared/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { type Publish } from "@webstudio-is/sdk";
+import { type Publish } from "@webstudio-is/react-sdk";
 
 const workspaceStyle = {
   flexGrow: 1,
