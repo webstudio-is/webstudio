@@ -64,7 +64,7 @@ export const Tree = ({
     instance.children.length > 1 || typeof instance.children[0] === "object";
 
   const children = useMemo(() => {
-    if (isOpen === false || showChildren === false) {
+    if ((isOpen === false && animate === false) || showChildren === false) {
       return null;
     }
     const children = [];
