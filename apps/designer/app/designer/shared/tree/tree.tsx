@@ -127,7 +127,7 @@ export const Tree = ({
           <Text>{label}</Text>
         </Button>
       </Flex>
-      <CollapsibleContent>{children}</CollapsibleContent>
+      {children != null && <CollapsibleContent>{children}</CollapsibleContent>}
     </Collapsible.Root>
   );
 };
