@@ -11,7 +11,7 @@ export const ZoomSetting = () => {
       <Flex gap="3" align="center">
         <Slider
           min={minZoom}
-          value={[value]}
+          value={value}
           onValueChange={([value]) => {
             setValue(value);
           }}
