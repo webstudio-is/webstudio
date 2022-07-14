@@ -1,6 +1,6 @@
 import { createInstance } from "./create-instance";
 
-describe("create instance", () => {
+describe("Create instance", () => {
   test("instance without id should be auto generated", () => {
     const createdInstance = createInstance({
       component: "Box",

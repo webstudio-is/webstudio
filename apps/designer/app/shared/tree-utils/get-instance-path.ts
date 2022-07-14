@@ -3,7 +3,7 @@ import { Instance } from "@webstudio-is/sdk";
 export const getInstancePath = (
   instance: Instance,
   instanceId: Instance["id"]
-) => {
+): Array<Instance> => {
   const path = [];
 
   const find = (instance: Instance) => {
