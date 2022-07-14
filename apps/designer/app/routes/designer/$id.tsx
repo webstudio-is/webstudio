@@ -1,5 +1,10 @@
 import { useLoaderData } from "@remix-run/react";
-import { LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  LoaderFunction,
+  unstable_createFileUploadHandler,
+  unstable_parseMultipartFormData,
+} from "@remix-run/node";
 import type { Project } from "@webstudio-is/sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
@@ -10,11 +15,14 @@ export { links };
 export const loader: LoaderFunction = async ({ params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
   const project = await db.project.loadById(params.id);
+  const assets = await db.assets.loadByProject(params.id);
   if (project === null) {
     return { errors: `Project "${params.id}" not found` };
   }
-  return { config, project, env };
+  return { config, assets, project, env };
 };
+
+const directory = "./public/uploads";
 
 type Data = {
   config: typeof config;
@@ -23,6 +31,28 @@ type Data = {
 
 type Error = {
   errors: "string";
+};
+
+export const action: ActionFunction = async ({ request, params }) => {
+  if (params.id === undefined) throw new Error("Project id undefined");
+  const formData = await unstable_parseMultipartFormData(
+    request,
+    unstable_createFileUploadHandler({
+      maxPartSize: 5_000_000,
+      directory,
+      file: ({ filename }) => filename,
+    })
+  );
+  const imageInfo = formData.get("image");
+  if (imageInfo) {
+    const data = {
+      type: imageInfo.type,
+      name: imageInfo.name,
+      path: `/uploads/${imageInfo.name}`,
+    };
+    db.assets.create(params.id, data);
+  }
+  return "lol";
 };
 
 const DesignerRoute = () => {

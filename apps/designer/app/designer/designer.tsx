@@ -33,6 +33,7 @@ import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
+import { Asset } from "@prisma/client";
 
 export const links = () => {
   return [
@@ -170,9 +171,10 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
 type DesignerProps = {
   config: Config;
   project: Project;
+  assets: Array<Asset>;
 };
 
-export const Designer = ({ config, project }: DesignerProps) => {
+export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -219,7 +221,11 @@ export const Designer = ({ config, project }: DesignerProps) => {
           </Workspace>
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
+          <SidebarLeft
+            assets={assets}
+            onDragChange={setIsDragging}
+            publish={publish}
+          />
         </SidePanel>
         <SidePanel
           gridArea="inspector"

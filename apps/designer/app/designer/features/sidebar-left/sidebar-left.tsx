@@ -10,6 +10,7 @@ import {
 import { useSelectedInstanceData } from "../../shared/nano-states";
 import * as panels from "./panels";
 import type { TabName } from "./types";
+import { Asset } from "@prisma/client";
 
 const sidebarTabsContentStyle = {
   position: "absolute",
@@ -26,9 +27,14 @@ const none = { TabContent: () => null };
 type SidebarLeftProps = {
   onDragChange: (isDragging: boolean) => void;
   publish: Publish;
+  assets: Array<Asset>;
 };
 
-export const SidebarLeft = ({ onDragChange, publish }: SidebarLeftProps) => {
+export const SidebarLeft = ({
+  onDragChange,
+  publish,
+  assets,
+}: SidebarLeftProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const [isDragging, setIsDragging] = useState(false);
@@ -83,6 +89,7 @@ export const SidebarLeft = ({ onDragChange, publish }: SidebarLeftProps) => {
           }}
         >
           <TabContent
+            assets={assets}
             selectedInstanceData={selectedInstanceData}
             publish={publish}
             onSetActiveTab={setActiveTab}
