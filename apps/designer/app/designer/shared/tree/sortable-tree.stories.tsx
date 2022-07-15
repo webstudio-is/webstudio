@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { ComponentStory, ComponentMeta } from "@storybook/react";
 import { type Instance } from "@webstudio-is/react-sdk";
-import { Tree } from "./tree";
+import { Tree } from "./sortable-tree";
 import { getInstancePath } from "~/shared/tree-utils";
 
 export default {
