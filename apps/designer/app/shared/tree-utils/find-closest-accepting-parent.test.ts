@@ -1,7 +1,7 @@
 import { type Instance } from "@webstudio-is/sdk";
 import { findClosestAcceptingParent } from "./find-closest-accepting-parent";
 
-describe("Create insertion spec", () => {
+describe("Find closest accepting parent", () => {
   test("instance first level can accept child", () => {
     const rootInstance: Instance = {
       component: "Box",
