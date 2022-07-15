@@ -3,6 +3,7 @@ import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import {
   type Project,
+  type Asset,
   useSubscribe,
   usePublish,
 } from "@webstudio-is/react-sdk";
@@ -37,7 +38,6 @@ import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
-import { Asset } from "@prisma/client";
 
 export const links = () => {
   return [
