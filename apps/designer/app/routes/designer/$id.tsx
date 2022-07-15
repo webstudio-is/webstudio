@@ -10,7 +10,7 @@ import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
-
+import { z } from "zod";
 export { links };
 
 export const loader: LoaderFunction = async ({ params }) => {
@@ -35,10 +35,11 @@ type Error = {
   errors: "string";
 };
 
-type ImageUpload = {
-  type: string;
-  name: string;
-};
+const ImageUpload = z.object({
+  name: z.string(),
+  type: z.string(),
+});
+type ImageUpload = z.infer<typeof ImageUpload>;
 
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
@@ -50,12 +51,15 @@ export const action: ActionFunction = async ({ request, params }) => {
       file: ({ filename }) => filename,
     })
   );
-  const imageInfo = formData.get("image") as ImageUpload;
+  const imageInfo = formData.get("image");
+  ImageUpload.parse(imageInfo);
+
   if (imageInfo) {
+    const info = imageInfo as ImageUpload;
     const data = {
-      type: imageInfo.type,
-      name: imageInfo.name,
-      path: `/uploads/${imageInfo.name}`,
+      type: info.type,
+      name: info.name,
+      path: `/uploads/${info.name}`,
     };
     db.assets.create(params.id, data);
   }
