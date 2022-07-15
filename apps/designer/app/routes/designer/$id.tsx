@@ -59,7 +59,9 @@ export const action: ActionFunction = async ({ request, params }) => {
     };
     db.assets.create(params.id, data);
   }
-  return "lol";
+  return {
+    ok: true,
+  };
 };
 
 const DesignerRoute = () => {

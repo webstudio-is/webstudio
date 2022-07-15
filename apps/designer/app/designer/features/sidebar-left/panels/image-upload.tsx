@@ -42,7 +42,7 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
           </Button>
         </Form>
       </Flex>
-      <Grid columns={2} gap={2} css={{ "grid-template-rows": "masonry" }}>
+      <Grid columns={2} gap={2}>
         {assets.map((asset) => (
           <Image
             key={asset.id}

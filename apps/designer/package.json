@@ -70,7 +70,6 @@
     "lodash.noop": "^3.0.1",
     "lodash.snakecase": "^4.1.1",
     "mitt": "^3.0.0",
-    "multer": "^1.4.5-lts.1",
     "nanoid": "^3.2.0",
     "react": "^17.0.2",
     "react-color": "^2.19.3",
