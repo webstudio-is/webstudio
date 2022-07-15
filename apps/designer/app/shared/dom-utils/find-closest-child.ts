@@ -1,4 +1,4 @@
-import type { Coordinate, ClosestChildInfo } from "./types";
+import type { Coordinate, ClosestChildMeta } from "./types";
 
 const calculateDistance = (coordinate: Coordinate, rect: DOMRect): number => {
   const distanceX = Math.max(
@@ -30,13 +30,15 @@ const isPositionedElement = (
  * Find the closest element relative to coordinates inside a parent element.
  */
 export const findClosestChild = (
-  parentElement: Element,
   coordinate: Coordinate,
   getBoundingClientRect: (element: Element) => DOMRect,
-  getComputedStyle: (element: Element) => CSSStyleDeclaration
-): ClosestChildInfo | void => {
+  getComputedStyle: (element: Element) => CSSStyleDeclaration,
+  parentElement?: Element
+): ClosestChildMeta | undefined => {
   // Collect bounding client rects for all children.
-  if (parentElement.children.length === 0) return;
+  if (parentElement === undefined || parentElement.children.length === 0) {
+    return;
+  }
 
   // Find the closest child by coordinate
   const distances = [];

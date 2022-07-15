@@ -2,6 +2,11 @@ import { createValueContainer, useValue } from "react-nano-state";
 import { type Instance } from "@webstudio-is/sdk";
 import { type DropData } from "~/shared/canvas-components";
 
+export const dragStateContainer = createValueContainer<
+  "dragging" | undefined
+>();
+export const useDragState = () => useValue(dragStateContainer);
+
 const dropDataContainer = createValueContainer<DropData | undefined>();
 export const useDropData = () => useValue(dropDataContainer);
 

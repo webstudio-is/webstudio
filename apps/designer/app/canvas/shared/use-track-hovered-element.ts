@@ -1,5 +1,9 @@
 import { useEffect } from "react";
-import { useSelectedElement, useHoveredElement } from "./nano-states";
+import {
+  useSelectedElement,
+  useHoveredElement,
+  useDragState,
+} from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
 
 const eventOptions = {
@@ -10,6 +14,7 @@ export const useTrackHoveredElement = () => {
   const [rootInstance] = useRootInstance();
   const [, setHoveredElement] = useHoveredElement();
   const [selectedElement] = useSelectedElement();
+  const [dragState] = useDragState();
 
   useEffect(() => {
     const handleMouseOver = (event: MouseEvent) => {
@@ -17,7 +22,8 @@ export const useTrackHoveredElement = () => {
       if (
         rootInstance === undefined ||
         !(element instanceof HTMLElement) ||
-        element.dataset.outlineDisabled
+        element.dataset.outlineDisabled ||
+        dragState === "dragging"
       ) {
         return;
       }
@@ -25,7 +31,7 @@ export const useTrackHoveredElement = () => {
     };
 
     const handleMouseOut = () => {
-      if (rootInstance === undefined) return;
+      if (rootInstance === undefined || dragState === "dragging") return;
       setHoveredElement(undefined);
     };
 
@@ -36,5 +42,5 @@ export const useTrackHoveredElement = () => {
       window.removeEventListener("mouseover", handleMouseOver);
       window.removeEventListener("mouseout", handleMouseOut);
     };
-  }, [rootInstance, selectedElement, setHoveredElement]);
+  }, [rootInstance, selectedElement, setHoveredElement, dragState]);
 };

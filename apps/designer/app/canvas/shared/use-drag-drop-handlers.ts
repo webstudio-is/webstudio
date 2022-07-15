@@ -5,9 +5,10 @@ import { findInstanceById } from "~/shared/tree-utils";
 import {
   findClosestChild,
   findInsertionIndex,
-  getDragOverInfo,
+  getDragOverMeta,
 } from "~/shared/dom-utils";
 import {
+  useDragState,
   useDropData,
   useHoveredElement,
   useHoveredInstance,
@@ -32,15 +33,18 @@ export const useDragDropHandlers = () => {
   const [, setHoveredElement] = useHoveredElement();
   const [dropData, setDropData] = useDropData();
   const [dragData, setDragData] = useState<DragData>();
+  const [, setDragState] = useDragState();
 
   useSubscribe<"dragStartInstance">("dragStartInstance", () => {
     setSelectedInstance(undefined);
+    setDragState("dragging");
   });
 
   useSubscribe<"dragEndInstance">("dragEndInstance", () => {
     // Cleanup
     if (getBoundingClientRect.cache?.clear) getBoundingClientRect.cache.clear();
     if (getComputedStyle.cache?.clear) getComputedStyle.cache.clear();
+    setDragState(undefined);
     setDropData(undefined);
     setDragData(undefined);
 
@@ -78,39 +82,46 @@ export const useDragDropHandlers = () => {
 
   //const updatePointerOutline = usePointerOutline();
   useSubscribe<"dragInstance", DragData>("dragInstance", (dragData) => {
+    if (rootInstance === undefined) {
+      return;
+    }
+
     const { currentOffset } = dragData;
     // updatePointerOutline(currentOffset)
-    const dragOver = getDragOverInfo(currentOffset, getBoundingClientRect);
 
-    if (rootInstance === undefined || dragOver.element === undefined) return;
+    const dragOverMeta = getDragOverMeta({
+      offset: currentOffset,
+      getBoundingClientRect,
+      rootInstance,
+    });
 
-    const dropInstance = findInstanceById(rootInstance, dragOver.element.id);
+    if (dragOverMeta === undefined) {
+      return;
+    }
 
-    if (dropInstance === undefined) return;
-
-    const closestChild = findClosestChild(
-      dragOver.element,
+    const closestChildMeta = findClosestChild(
       currentOffset,
       getBoundingClientRect,
-      getComputedStyle
+      getComputedStyle,
+      dragOverMeta.element
     );
 
     let position = 0;
 
-    // When element has children.
-    if (dragOver.element !== undefined && closestChild !== undefined) {
-      position = findInsertionIndex(dragOver, closestChild);
+    // When element has children, we need to decide at what position we drop.
+    if (dragOverMeta.element !== undefined && closestChildMeta !== undefined) {
+      position = findInsertionIndex(dragOverMeta, closestChildMeta);
     }
 
-    const dropData = {
-      instance: dropInstance,
+    const dropData: DropData = {
+      instance: dragOverMeta.instance,
       position,
     };
 
     setDragData(dragData);
     setDropData(dropData);
-    setHoveredInstance(dropInstance);
-    setHoveredElement(dragOver.element);
+    setHoveredInstance(dragOverMeta.instance);
+    setHoveredElement(dragOverMeta.element);
     publish<"dropPreview", { dropData: DropData; dragData: DragData }>({
       type: "dropPreview",
       payload: { dropData, dragData },

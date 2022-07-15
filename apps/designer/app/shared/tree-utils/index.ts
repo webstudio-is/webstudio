@@ -11,3 +11,4 @@ export * from "./find-closest-sibling-instance";
 export * from "./find-parent-instance";
 export * from "./clone-instance";
 export * from "./create-insertion-spec";
+export * from "./find-closest-accepting-parent";
