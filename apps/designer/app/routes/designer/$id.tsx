@@ -1,4 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
+import path from "path";
 import {
   ActionFunction,
   LoaderFunction,
@@ -11,7 +12,6 @@ import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
 import { z } from "zod";
-import ObjectID from "bson-objectid";
 export { links };
 
 export const loader: LoaderFunction = async ({ params }) => {
@@ -23,8 +23,6 @@ export const loader: LoaderFunction = async ({ params }) => {
   }
   return { config, assets, project, env };
 };
-
-const directory = "./public/uploads";
 
 type Data = {
   config: typeof config;
@@ -43,9 +41,12 @@ const ImageUpload = z.object({
 type ImageUpload = z.infer<typeof ImageUpload>;
 
 export const action: ActionFunction = async ({ request, params }) => {
+  const uploads = path.join(__dirname, "../public");
+  const folderInPublic = process.env.FILE_UPLOAD_PATH || "uploads";
+  const directory = path.join(uploads, folderInPublic);
+
   if (params.id === undefined) throw new Error("Project id undefined");
   try {
-    const randomId = ObjectID.toString();
     const formData = await unstable_parseMultipartFormData(
       request,
       unstable_createFileUploadHandler({
@@ -56,12 +57,11 @@ export const action: ActionFunction = async ({ request, params }) => {
     );
 
     const imageInfo = ImageUpload.parse(formData.get("image"));
-
     const info = imageInfo as ImageUpload;
     const data = {
       type: info.type,
       name: info.name,
-      path: `/uploads/${info.name}`,
+      path: `/${path.join(folderInPublic, info.name)}`,
     };
     db.assets.create(params.id, data);
 
