@@ -37,7 +37,7 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
             type="submit"
             style={{ display: "none" }}
           />
-          <Button onClick={() => inputRef?.current && inputRef.current.click()}>
+          <Button onClick={() => inputRef?.current?.click()}>
             Upload Image
           </Button>
         </Form>
