@@ -1,5 +1,9 @@
 import { useState, useCallback } from "react";
-import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
+import {
+  useSubscribe,
+  type Publish,
+  type Asset,
+} from "@webstudio-is/react-sdk";
 import {
   Box,
   SidebarTabs,
@@ -10,7 +14,6 @@ import {
 import { useSelectedInstanceData } from "../../shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
-import { Asset } from "@prisma/client";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 
 const sidebarTabsContentStyle = {
@@ -62,7 +65,7 @@ export const SidebarLeft = ({
     [onDragChange]
   );
 
-  const panelsToMap = (
+  const enabledPanels = (
     isFeatureEnabled("assets")
       ? Object.keys(panels)
       : Object.keys(panels).filter((panel) => panel !== "imageUpload")
@@ -72,7 +75,7 @@ export const SidebarLeft = ({
     <Box css={{ position: "relative", zIndex: 1 }}>
       <SidebarTabs activationMode="manual" value={activeTab}>
         <SidebarTabsList>
-          {panelsToMap.map((tabName: TabName) => (
+          {enabledPanels.map((tabName: TabName) => (
             <SidebarTabsTrigger
               aria-label={tabName}
               key={tabName}

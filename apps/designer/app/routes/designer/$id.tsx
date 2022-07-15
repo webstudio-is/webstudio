@@ -5,12 +5,12 @@ import {
   unstable_createFileUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
-import type { Project } from "@webstudio-is/react-sdk";
+import type { Project, Asset } from "@webstudio-is/react-sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
-import { type Asset } from "@webstudio-is/react-sdk";
+
 export { links };
 
 export const loader: LoaderFunction = async ({ params }) => {
