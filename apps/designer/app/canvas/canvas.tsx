@@ -105,7 +105,11 @@ type DesignModeProps = {
   project: db.project.Project;
 };
 
-const dndOptions = { enableMouseEvents: true };
+const dndOptions = {
+  enableMouseEvents: true,
+  // Prevents accidental dragging when trying to select an instance
+  delay: 10,
+};
 
 const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useDragDropHandlers();
