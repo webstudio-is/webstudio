@@ -57,11 +57,11 @@ export const action: ActionFunction = async ({ request, params }) => {
     );
 
     const imageInfo = ImageUpload.parse(formData.get("image"));
-    const info = imageInfo as ImageUpload;
+
     const data = {
-      type: info.type,
-      name: info.name,
-      path: `/${path.join(folderInPublic, info.name)}`,
+      type: imageInfo.type,
+      name: imageInfo.name,
+      path: `/${path.join(folderInPublic, imageInfo.name)}`,
     };
     db.assets.create(params.id, data);
 
