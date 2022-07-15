@@ -1,14 +1,20 @@
 import { ImageIcon } from "~/shared/icons";
 import { Button, Flex, Grid, Heading } from "~/shared/design-system";
-import { useRef } from "react";
+import React, { useRef } from "react";
 import { Form } from "@remix-run/react";
 import { Asset } from "@prisma/client";
 import { Image } from "~/shared/design-system/components/image";
 
 export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
-  const inputRef = useRef<HTMLInputElement>();
-  const formRef = useRef<HTMLFormElement>();
-  console.log(assets);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const onChange = () => {
+    if (submitButtonRef.current) {
+      submitButtonRef.current.click();
+    }
+  };
+
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
       <Flex
@@ -17,13 +23,18 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
         }}
       >
         <Heading>Assets</Heading>
-        <Form ref={formRef} method="post" encType="multipart/form-data">
+        <Form method="post" encType="multipart/form-data">
           <input
             accept="image/*"
             type="file"
             name="image"
             ref={inputRef}
-            onChange={() => formRef.current && formRef.current.submit()}
+            onChange={onChange}
+            style={{ display: "none" }}
+          />
+          <button
+            ref={submitButtonRef}
+            type="submit"
             style={{ display: "none" }}
           />
           <Button onClick={() => inputRef?.current && inputRef.current.click()}>

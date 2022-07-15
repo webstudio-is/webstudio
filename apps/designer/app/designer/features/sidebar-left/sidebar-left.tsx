@@ -8,9 +8,10 @@ import {
   SidebarTabsTrigger,
 } from "~/shared/design-system";
 import { useSelectedInstanceData } from "../../shared/nano-states";
-import * as panels from "./panels";
+import { panels } from "./panels";
 import type { TabName } from "./types";
 import { Asset } from "@prisma/client";
+import { isFeatureEnabled } from "~/shared/feature-flags";
 
 const sidebarTabsContentStyle = {
   position: "absolute",
@@ -61,11 +62,17 @@ export const SidebarLeft = ({
     [onDragChange]
   );
 
+  const panelsToMap = (
+    isFeatureEnabled("assets")
+      ? Object.keys(panels)
+      : Object.keys(panels).filter((panel) => panel !== "imageUpload")
+  ) as Array<TabName>;
+
   return (
     <Box css={{ position: "relative", zIndex: 1 }}>
       <SidebarTabs activationMode="manual" value={activeTab}>
         <SidebarTabsList>
-          {(Object.keys(panels) as Array<TabName>).map((tabName: TabName) => (
+          {panelsToMap.map((tabName: TabName) => (
             <SidebarTabsTrigger
               aria-label={tabName}
               key={tabName}

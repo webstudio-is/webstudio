@@ -10,6 +10,7 @@ import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
+import { Asset } from "@prisma/client";
 export { links };
 
 export const loader: LoaderFunction = async ({ params }) => {
@@ -27,10 +28,16 @@ const directory = "./public/uploads";
 type Data = {
   config: typeof config;
   project: Project;
+  assets: Asset[];
 };
 
 type Error = {
   errors: "string";
+};
+
+type ImageUpload = {
+  type: string;
+  name: string;
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -38,12 +45,12 @@ export const action: ActionFunction = async ({ request, params }) => {
   const formData = await unstable_parseMultipartFormData(
     request,
     unstable_createFileUploadHandler({
-      maxPartSize: 5_000_000,
+      maxPartSize: 10_000_000,
       directory,
       file: ({ filename }) => filename,
     })
   );
-  const imageInfo = formData.get("image");
+  const imageInfo = formData.get("image") as ImageUpload;
   if (imageInfo) {
     const data = {
       type: imageInfo.type,
