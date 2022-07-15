@@ -1,4 +1,4 @@
-import { type Style, components } from "@webstudio-is/sdk";
+import { type Style, components } from "@webstudio-is/react-sdk";
 export { ButtonIcon as Icon } from "~/shared/icons";
 
 // Webstudio specific default styles for the node type.

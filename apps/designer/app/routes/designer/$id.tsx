@@ -5,7 +5,7 @@ import {
   unstable_createFileUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
-import type { Project } from "@webstudio-is/sdk";
+import type { Project } from "@webstudio-is/react-sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";

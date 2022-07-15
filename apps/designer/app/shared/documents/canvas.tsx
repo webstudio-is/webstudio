@@ -6,7 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { CriticalCss } from "@webstudio-is/sdk";
+import { CriticalCss } from "@webstudio-is/react-sdk";
 import { Env } from "~/shared/env";
 
 /**

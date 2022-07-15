@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { findClosestSiblingInstance } from "./find-closest-sibling-instance";
 
 describe("Find closest sibling instance", () => {

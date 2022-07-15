@@ -1,4 +1,4 @@
-import { type AllUserProps } from "@webstudio-is/sdk";
+import { type AllUserProps } from "@webstudio-is/react-sdk";
 import { deletePropMutable } from "./delete-prop";
 
 describe("Delete prop", () => {

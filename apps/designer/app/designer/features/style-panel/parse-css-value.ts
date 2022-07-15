@@ -1,6 +1,6 @@
 import hyphenate from "hyphenate-style-name";
-import { units } from "@webstudio-is/sdk";
-import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/sdk";
+import { units } from "@webstudio-is/react-sdk";
+import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/react-sdk";
 
 const unitRegex = new RegExp(`${units.join("|")}`);
 

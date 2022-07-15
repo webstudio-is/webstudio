@@ -1,4 +1,4 @@
-import { Instance } from "@webstudio-is/sdk";
+import { Instance } from "@webstudio-is/react-sdk";
 
 export const getInstancePath = (
   instance: Instance,

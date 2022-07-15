@@ -3,7 +3,7 @@ import {
   publish,
   useAllUserProps,
   type Instance,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { createInstance } from "~/shared/tree-utils";
 import { Box, Button } from "~/shared/design-system";
 import { LexicalComposer, ContentEditable } from "./lexical";

@@ -1,5 +1,5 @@
 import ObjectId from "bson-objectid";
-import { type CssRule, type Instance } from "@webstudio-is/sdk";
+import { type CssRule, type Instance } from "@webstudio-is/react-sdk";
 import { primitives } from "~/shared/canvas-components";
 
 export const createInstance = ({

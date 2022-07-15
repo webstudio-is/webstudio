@@ -1,4 +1,4 @@
-import { type Instance, useSubscribe } from "@webstudio-is/sdk";
+import { type Instance, useSubscribe } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 
 export const useSubscribeTextEditingInstanceId = () => {

@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id    String @id @default(uuid())
+  users User[]
+
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String?   @unique
+  provider  String?
+  image     String?
+  username  String?
+  createdAt DateTime  @default(now())
+  Team      Team?     @relation(fields: [teamId], references: [id])
+  teamId    String?
+  projects  Project[]
+}
+
+model Project {
+  id                String  @id @default(uuid())
+  title             String
+  domain            String  @unique
+  prodTreeId        String? // exists when published
+  devTreeId         String
+  prodTreeIdHistory String  @default("[]")
+  User              User?   @relation(fields: [userId], references: [id])
+  userId            String?
+}
+
+model Tree {
+  id   String @id @default(uuid())
+  root String
+}
+
+model InstanceProps {
+  id         String @id @default(uuid())
+  instanceId String
+  treeId     String
+  props      String @default("[]")
+}
+
+model Breakpoints {
+  treeId String @id @default(uuid())
+  values String @default("[]")
+}

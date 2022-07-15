@@ -6,7 +6,7 @@ import {
   type StyleProperty,
   type StyleValue,
   type Breakpoint,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 
 export type SelectedInstanceData = {
   id: Instance["id"];

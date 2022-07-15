@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { insertInstanceMutable } from "./insert-instance";
 import { createInstance } from "./create-instance";
 

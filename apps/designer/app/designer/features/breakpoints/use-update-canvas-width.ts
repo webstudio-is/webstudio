@@ -1,4 +1,4 @@
-import { useSubscribe } from "@webstudio-is/sdk";
+import { useSubscribe } from "@webstudio-is/react-sdk";
 import { useCallback, useEffect } from "react";
 import {
   useSelectedBreakpoint,

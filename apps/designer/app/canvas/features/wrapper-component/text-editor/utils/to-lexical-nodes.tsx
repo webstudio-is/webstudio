@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { $createInstanceNode } from "../nodes/node-instance";
 import {
   $createTextNode,

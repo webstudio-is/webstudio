@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { cloneInstance } from "./clone-instance";
 
 const getIds = (instance: Instance, ids: Array<Instance["id"]> = []) => {

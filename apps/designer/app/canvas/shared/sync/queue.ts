@@ -1,5 +1,5 @@
 import { type SyncStatus } from "~/shared/sync";
-import { publish } from "@webstudio-is/sdk";
+import { publish } from "@webstudio-is/react-sdk";
 
 // @todo because of limitation with nested models and saving tree as a Json type
 // we load that entire Json to manipulate and if a second request happens before the first one has written

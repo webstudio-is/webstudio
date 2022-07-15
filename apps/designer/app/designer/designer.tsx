@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
+import { TouchBackend } from "react-dnd-touch-backend";
+import {
+  type Project,
+  useSubscribe,
+  usePublish,
+} from "@webstudio-is/react-sdk";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
@@ -168,6 +172,8 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
   );
 };
 
+const dndOptions = { enableMouseEvents: true };
+
 type DesignerProps = {
   config: Config;
   project: Project;
@@ -198,7 +204,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   );
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={TouchBackend} options={dndOptions}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <Topbar
           css={{ gridArea: "header" }}

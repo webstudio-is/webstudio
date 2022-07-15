@@ -4,7 +4,7 @@ import {
   type Tree,
   type Breakpoint,
   BreakpointsSchema,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";

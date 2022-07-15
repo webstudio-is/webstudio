@@ -1,4 +1,4 @@
-import { type Data } from "@webstudio-is/sdk";
+import { type Data } from "@webstudio-is/react-sdk";
 import * as db from ".";
 import { Project } from "./project.server";
 

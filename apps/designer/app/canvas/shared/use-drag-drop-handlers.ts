@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { publish, useSubscribe } from "@webstudio-is/sdk";
+import { publish, useSubscribe } from "@webstudio-is/react-sdk";
 import { type DragData, type DropData } from "~/shared/canvas-components";
 import { findInstanceById } from "~/shared/tree-utils";
 import {

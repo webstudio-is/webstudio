@@ -1,4 +1,4 @@
-import { type Instance, type Publish } from "@webstudio-is/sdk";
+import { type Instance, type Publish } from "@webstudio-is/react-sdk";
 import { ListNestedIcon } from "~/shared/icons";
 import { Flex } from "~/shared/design-system";
 import { type SelectedInstanceData } from "~/shared/canvas-components";

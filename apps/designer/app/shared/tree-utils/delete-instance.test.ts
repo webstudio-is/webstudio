@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { deleteInstanceMutable } from "./delete-instance";
 
 describe("Delete instance", () => {

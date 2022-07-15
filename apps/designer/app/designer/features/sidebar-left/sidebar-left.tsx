@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useSubscribe, type Publish } from "@webstudio-is/sdk";
+import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
 import {
   Box,
   SidebarTabs,

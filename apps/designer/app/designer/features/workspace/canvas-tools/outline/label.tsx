@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { styled } from "~/shared/design-system";
 import { primitives } from "~/shared/canvas-components";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
