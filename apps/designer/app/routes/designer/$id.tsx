@@ -51,10 +51,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       file: ({ filename }) => filename,
     })
   );
-  const imageInfo = formData.get("image");
-  ImageUpload.parse(imageInfo);
-
-  if (imageInfo) {
+  const imageInfo = ImageUpload.parse(formData.get("image"));
     const info = imageInfo as ImageUpload;
     const data = {
       type: info.type,
