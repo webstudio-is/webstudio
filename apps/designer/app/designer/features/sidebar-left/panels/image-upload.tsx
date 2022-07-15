@@ -1,6 +1,6 @@
 import { ImageIcon } from "~/shared/icons";
 import { Button, Flex, Grid, Heading } from "~/shared/design-system";
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { Form } from "@remix-run/react";
 import { Asset } from "@prisma/client";
 import { Image } from "~/shared/design-system/components/image";
