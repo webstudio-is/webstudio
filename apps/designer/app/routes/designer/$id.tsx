@@ -51,18 +51,17 @@ export const action: ActionFunction = async ({ request, params }) => {
       unstable_createFileUploadHandler({
         maxPartSize: 10_000_000,
         directory,
-        file: ({ filename }) => `${randomId}_${filename}`,
+        file: ({ filename }) => filename,
       })
     );
 
     const imageInfo = ImageUpload.parse(formData.get("image"));
 
     const info = imageInfo as ImageUpload;
-    const fileName = `${randomId}_${info.name}`;
     const data = {
       type: info.type,
-      name: fileName,
-      path: `/uploads/${fileName}`,
+      name: info.name,
+      path: `/uploads/${info.name}`,
     };
     db.assets.create(params.id, data);
 
