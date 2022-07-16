@@ -56,7 +56,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const allInfo = imagesInfo.map(async (image) => {
       const data = {
         name: image.name,
-        path: `${path.join("/", folderInPublic, image.name)}`,
+        path: path.join("/", folderInPublic, image.name),
       };
       const absolutePath = path.join(directory, image.name);
       const projectId = params.id as string;
