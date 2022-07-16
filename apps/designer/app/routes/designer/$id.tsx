@@ -37,12 +37,10 @@ type Error = {
 
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
-
   const uploads = path.join(__dirname, "../public");
   const folderInPublic =
     process.env.FILE_UPLOAD_PATH || config.defaultUploadPath;
   const directory = path.join(uploads, folderInPublic);
-
   try {
     const formData = await unstable_parseMultipartFormData(
       request,
@@ -54,14 +52,15 @@ export const action: ActionFunction = async ({ request, params }) => {
     );
 
     const imagesInfo = ImagesUpload.parse(formData.getAll("image"));
+
     imagesInfo.forEach((image) => {
       const data = {
-        type: image.type,
         name: image.name,
         path: `${path.join("/", folderInPublic, image.name)}`,
       };
+      const absolutePath = path.join(directory, image.name);
       const projectId = params.id as string;
-      db.assets.create(projectId, data);
+      db.assets.create(projectId, data, absolutePath);
     });
 
     return {
