@@ -1,4 +1,4 @@
-import { type Project } from "@webstudio-is/react-sdk";
+import { Asset, type Project } from "@webstudio-is/react-sdk";
 import { prisma } from "./prisma.server";
 
 export const loadByProject = async (projectId?: Project["id"]) => {
@@ -13,10 +13,7 @@ export const loadByProject = async (projectId?: Project["id"]) => {
   return assets;
 };
 
-export const create = async (
-  projectId: Project["id"],
-  values: { type: string; name: string; path: string }
-) => {
+export const create = async (projectId: Project["id"], values: Asset) => {
   const newAsset = await prisma.asset.create({
     data: {
       ...values,

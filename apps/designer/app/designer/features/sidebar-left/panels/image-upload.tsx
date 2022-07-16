@@ -28,6 +28,7 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
             accept="image/*"
             type="file"
             name="image"
+            multiple
             ref={inputRef}
             onChange={onChange}
             style={{ display: "none" }}
