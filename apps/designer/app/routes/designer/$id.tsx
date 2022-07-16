@@ -53,15 +53,19 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     const imagesInfo = ImagesUpload.parse(formData.getAll("image"));
 
-    imagesInfo.forEach((image) => {
+    const allInfo = imagesInfo.map(async (image) => {
       const data = {
         name: image.name,
         path: `${path.join("/", folderInPublic, image.name)}`,
       };
       const absolutePath = path.join(directory, image.name);
       const projectId = params.id as string;
-      db.assets.create(projectId, data, absolutePath);
+      const newAsset = await db.assets.create(projectId, data, absolutePath);
+
+      return newAsset;
     });
+
+    await Promise.all(allInfo);
 
     return {
       ok: true,

@@ -1,7 +1,7 @@
 import { type Project } from "@webstudio-is/react-sdk";
 import { prisma } from "./prisma.server";
 import sharp from "sharp";
-import fs from "fs";
+import fsPromises from "fs/promises";
 import { fetch } from "@remix-run/node";
 
 export const loadByProject = async (projectId?: Project["id"]) => {
@@ -27,7 +27,7 @@ export const create = async (
 
   // if there is no absolute path then it means it's a remote image and we can use fetch
   if (absolutePath) {
-    size = fs.statSync(absolutePath).size;
+    size = await (await fsPromises.stat(absolutePath)).size;
   } else {
     const arrayBuffer = await fetch(values.path).then((rsp) =>
       rsp.arrayBuffer()
