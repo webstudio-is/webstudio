@@ -53,14 +53,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     const imagesInfo = ImagesUpload.parse(formData.getAll("image"));
 
-    const allInfo = imagesInfo.map(async (image) => {
+    const allInfo = imagesInfo.map(async (image, i) => {
       const data = {
         name: image.name,
         path: path.join("/", folderInPublic, image.name),
+        size: image.size,
       };
-      const absolutePath = path.join(directory, image.name);
+      const arrayBuffer = await image.arrayBuffer();
       const projectId = params.id as string;
-      const newAsset = await db.assets.create(projectId, data, absolutePath);
+      const newAsset = await db.assets.create(projectId, data, arrayBuffer);
 
       return newAsset;
     });
@@ -71,6 +72,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       ok: true,
     };
   } catch (error) {
+    console.log(error);
     if (error instanceof Error) {
       return {
         errors: error.message,
