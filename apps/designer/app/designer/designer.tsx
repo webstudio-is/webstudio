@@ -3,6 +3,7 @@ import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import {
   type Project,
+  type Asset,
   useSubscribe,
   usePublish,
 } from "@webstudio-is/react-sdk";
@@ -176,9 +177,10 @@ const dndOptions = { enableMouseEvents: true };
 type DesignerProps = {
   config: Config;
   project: Project;
+  assets: Array<Asset>;
 };
 
-export const Designer = ({ config, project }: DesignerProps) => {
+export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -225,7 +227,11 @@ export const Designer = ({ config, project }: DesignerProps) => {
           </Workspace>
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
+          <SidebarLeft
+            assets={assets}
+            onDragChange={setIsDragging}
+            publish={publish}
+          />
         </SidePanel>
         <SidePanel
           gridArea="inspector"

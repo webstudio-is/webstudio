@@ -1,5 +1,9 @@
 import { useState, useCallback } from "react";
-import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
+import {
+  useSubscribe,
+  type Publish,
+  type Asset,
+} from "@webstudio-is/react-sdk";
 import {
   Box,
   SidebarTabs,
@@ -8,8 +12,9 @@ import {
   SidebarTabsTrigger,
 } from "~/shared/design-system";
 import { useSelectedInstanceData } from "../../shared/nano-states";
-import * as panels from "./panels";
+import { panels } from "./panels";
 import type { TabName } from "./types";
+import { isFeatureEnabled } from "~/shared/feature-flags";
 
 const sidebarTabsContentStyle = {
   position: "absolute",
@@ -26,9 +31,14 @@ const none = { TabContent: () => null };
 type SidebarLeftProps = {
   onDragChange: (isDragging: boolean) => void;
   publish: Publish;
+  assets: Array<Asset>;
 };
 
-export const SidebarLeft = ({ onDragChange, publish }: SidebarLeftProps) => {
+export const SidebarLeft = ({
+  onDragChange,
+  publish,
+  assets,
+}: SidebarLeftProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const [isDragging, setIsDragging] = useState(false);
@@ -55,11 +65,17 @@ export const SidebarLeft = ({ onDragChange, publish }: SidebarLeftProps) => {
     [onDragChange]
   );
 
+  const enabledPanels = (
+    isFeatureEnabled("assets")
+      ? Object.keys(panels)
+      : Object.keys(panels).filter((panel) => panel !== "imageUpload")
+  ) as Array<TabName>;
+
   return (
     <Box css={{ position: "relative", zIndex: 1 }}>
       <SidebarTabs activationMode="manual" value={activeTab}>
         <SidebarTabsList>
-          {(Object.keys(panels) as Array<TabName>).map((tabName: TabName) => (
+          {enabledPanels.map((tabName: TabName) => (
             <SidebarTabsTrigger
               aria-label={tabName}
               key={tabName}
@@ -83,6 +99,7 @@ export const SidebarLeft = ({ onDragChange, publish }: SidebarLeftProps) => {
           }}
         >
           <TabContent
+            assets={assets}
             selectedInstanceData={selectedInstanceData}
             publish={publish}
             onSetActiveTab={setActiveTab}

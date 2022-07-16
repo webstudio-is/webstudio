@@ -13,7 +13,17 @@ datasource db {
 model Team {
   id    String @id @default(uuid())
   users User[]
+}
 
+model Asset {
+  id        String   @id @default(uuid())
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId String
+  type      String
+  name      String
+  path      String
+  alt       String?
+  createdAt DateTime @default(now())
 }
 
 model User {
@@ -37,6 +47,7 @@ model Project {
   prodTreeIdHistory String  @default("[]")
   User              User?   @relation(fields: [userId], references: [id])
   userId            String?
+  Asset             Asset[]
 }
 
 model Tree {
