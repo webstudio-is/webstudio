@@ -2,6 +2,7 @@ import { type Project } from "@webstudio-is/react-sdk";
 import { prisma } from "./prisma.server";
 import sharp from "sharp";
 import fs from "fs";
+import { fetch } from "@remix-run/node";
 
 export const loadByProject = async (projectId?: Project["id"]) => {
   if (typeof projectId !== "string") {
@@ -23,8 +24,15 @@ export const create = async (
   let size = 0;
   const image = await sharp(absolutePath);
   const metadata = await image.metadata();
+
+  // if there is no absolute path then it means it's a remote image and we can use fetch
   if (absolutePath) {
     size = fs.statSync(absolutePath).size;
+  } else {
+    const arrayBuffer = await fetch(values.path).then((rsp) =>
+      rsp.arrayBuffer()
+    );
+    size = arrayBuffer.byteLength;
   }
 
   const newAsset = await prisma.asset.create({
