@@ -19,10 +19,10 @@ model Asset {
   id        String   @id @default(uuid())
   project   Project  @relation(fields: [projectId], references: [id])
   projectId String
-  format    String
+  format    String?
   size      Int
-  width     Int
-  height    Int
+  width     Int?
+  height    Int?
   name      String
   path      String
   alt       String?

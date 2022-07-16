@@ -32,8 +32,8 @@ export const create = async (
       ...values,
       size,
       format: metadata.format,
-      width: Math.round(metadata.width),
-      height: Math.round(metadata.height),
+      ...(metadata.width ? { width: Math.round(metadata.width) } : {}),
+      ...(metadata.height ? { height: Math.round(metadata.height) } : {}),
       projectId,
     },
   });
