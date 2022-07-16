@@ -16,14 +16,15 @@ export const loadByProject = async (projectId?: Project["id"]) => {
 
 export const create = async (
   projectId: Project["id"],
-  values: { name: string; path: string; size: number },
-  arrayBuffer: Uint8Array
+  values: { name: string; path: string; size: number; arrayBuffer: Uint8Array }
 ) => {
-  const image = sharp(arrayBuffer);
+  const image = sharp(values.arrayBuffer);
   const metadata = await image.metadata();
   const newAsset = await prisma.asset.create({
     data: {
-      ...values,
+      name: values.name,
+      path: values.path,
+      size: values.size,
       format: metadata.format,
       ...(metadata.width ? { width: Math.round(metadata.width) } : {}),
       ...(metadata.height ? { height: Math.round(metadata.height) } : {}),
