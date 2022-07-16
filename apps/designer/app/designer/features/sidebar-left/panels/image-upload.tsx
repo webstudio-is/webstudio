@@ -17,11 +17,7 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
 
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-      <Flex
-        css={{
-          justifyContent: "space-between",
-        }}
-      >
+      <Flex justify="between">
         <Heading>Assets</Heading>
         <Form method="post" encType="multipart/form-data">
           <input

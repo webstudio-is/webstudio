@@ -60,7 +60,8 @@ export const action: ActionFunction = async ({ request, params }) => {
         name: image.name,
         path: `${path.join("/", folderInPublic, image.name)}`,
       };
-      db.assets.create(params.id, data);
+      const projectId = params.id as string;
+      db.assets.create(projectId, data);
     });
 
     return {
