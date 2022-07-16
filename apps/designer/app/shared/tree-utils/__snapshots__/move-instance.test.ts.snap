@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Insert instance Change index 1`] = `
+Object {
+  "children": Array [
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "2",
+    },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "1",
+    },
+  ],
+  "component": "Box",
+  "cssRules": Array [],
+  "id": "root",
+}
+`;
+
+exports[`Insert instance Change index nested 1`] = `
+Object {
+  "children": Array [
+    Object {
+      "children": Array [
+        Object {
+          "children": Array [],
+          "component": "Box",
+          "cssRules": Array [],
+          "id": "4",
+        },
+        Object {
+          "children": Array [],
+          "component": "Box",
+          "cssRules": Array [],
+          "id": "3",
+        },
+      ],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "1",
+    },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "2",
+    },
+  ],
+  "component": "Box",
+  "cssRules": Array [],
+  "id": "root",
+}
+`;
+
+exports[`Insert instance Change parent 1`] = `
+Object {
+  "children": Array [
+    Object {
+      "children": Array [
+        Object {
+          "children": Array [],
+          "component": "Box",
+          "cssRules": Array [],
+          "id": "4",
+        },
+      ],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "1",
+    },
+    Object {
+      "children": Array [
+        Object {
+          "children": Array [],
+          "component": "Box",
+          "cssRules": Array [],
+          "id": "3",
+        },
+      ],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "2",
+    },
+  ],
+  "component": "Box",
+  "cssRules": Array [],
+  "id": "root",
+}
+`;
+
+exports[`Insert instance No changes 1`] = `
+Object {
+  "children": Array [
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "1",
+    },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "2",
+    },
+  ],
+  "component": "Box",
+  "cssRules": Array [],
+  "id": "root",
+}
+`;
