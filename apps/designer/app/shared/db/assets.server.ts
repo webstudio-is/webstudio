@@ -16,9 +16,10 @@ export const loadByProject = async (projectId?: Project["id"]) => {
 
 export const create = async (
   projectId: Project["id"],
-  values: { name: string; path: string; size: number; arrayBuffer: Uint8Array }
+  values: { name: string; path: string; size: number; arrayBuffer: ArrayBuffer }
 ) => {
-  const image = sharp(values.arrayBuffer);
+  // there is an issue in the @types/sharp, it also accepts array buffers
+  const image = sharp(values.arrayBuffer as Uint8Array);
   const metadata = await image.metadata();
   const newAsset = await prisma.asset.create({
     data: {
