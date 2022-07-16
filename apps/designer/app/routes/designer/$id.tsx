@@ -53,7 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     const imagesInfo = ImagesUpload.parse(formData.getAll("image"));
 
-    const allInfo = imagesInfo.map(async (image, i) => {
+    const allInfo = imagesInfo.map(async (image) => {
       const data = {
         name: image.name,
         path: path.join("/", folderInPublic, image.name),
