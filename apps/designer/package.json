@@ -19,8 +19,6 @@
     "storybook:build": "build-storybook"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.131.0",
-    "@aws-sdk/lib-storage": "^3.131.0",
     "@lexical/react": "^0.3.5",
     "@prisma/client": "^3.14.0",
     "@radix-ui/colors": "^0.1.8",
@@ -128,6 +126,7 @@
     "esbuild-node-externals": "^1.4.1",
     "esbuild-node-loader": "^0.8.0",
     "eslint-config-custom": "*",
+    "@webstudio-is/asset-uploader": "*",
     "jest": "^27.5.1",
     "prettier": "^2.6.2",
     "prisma": "^3.14.0",

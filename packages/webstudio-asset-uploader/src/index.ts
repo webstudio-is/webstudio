@@ -1,20 +1,21 @@
-import { sentryException } from "../sentry";
-import { s3UploadHandler } from "~/shared/uploads/s3-upload-handler";
-import { uploadToS3 } from "~/shared/uploads/upload-to-s3";
-import { uploadToDisk } from "~/shared/uploads/upload-to-disk";
 import { DEFAULT_UPLPOAD_PATH } from "./constants";
 import path from "path";
 import {
   unstable_createFileUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
+import { s3UploadHandler } from "./targets/s3/handler";
+import { uploadToS3 } from "./targets/s3/uploader";
+import { uploadToDisk } from "./targets/disk/upload";
 
 export const uploadAsset = async ({
   request,
   projectId,
+  db,
 }: {
   request: Request;
   projectId: string;
+  db: unknown;
 }) => {
   const IS_S3_UPLOAD =
     process.env.S3_ENDPOINT &&
@@ -38,12 +39,14 @@ export const uploadAsset = async ({
       await uploadToS3({
         projectId,
         formData,
+        db,
       });
     } else {
       await uploadToDisk({
         projectId,
         formData,
         folderInPublic,
+        db,
       });
     }
 
@@ -52,12 +55,7 @@ export const uploadAsset = async ({
     };
   } catch (error) {
     if (error instanceof Error) {
-      sentryException({
-        message: error.message,
-      });
-      return {
-        errors: error.message,
-      };
+      throw new Error(error.message);
     }
   }
 };

@@ -1,12 +1,11 @@
 import { useLoaderData } from "@remix-run/react";
-
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Project, Asset } from "@webstudio-is/react-sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
-import { uploadAsset } from "~/shared/uploads";
+import { uploadAsset } from "@webstudio-is/asset-uploader";
 
 export { links };
 
@@ -36,6 +35,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     await uploadAsset({
       request,
       projectId: params.id,
+      db,
     });
   }
 };

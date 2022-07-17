@@ -2,13 +2,13 @@ import { UploadHandler } from "@remix-run/node";
 import { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import ObjectID from "bson-objectid";
-import { sentryException } from "../sentry";
-import { ImagesUploadedSuccess } from "~/designer/features/sidebar-left/types";
+
 import sharp from "sharp";
+import { ImagesUploadedSuccess } from "~/types";
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
-} from "./array-buffer-helpers";
+} from "~/helpers/array-buffer-helpers";
 
 export const s3UploadHandler: UploadHandler = async ({
   data,
@@ -57,9 +57,7 @@ export const s3UploadHandler: UploadHandler = async ({
     });
   } catch (error) {
     if (error instanceof Error) {
-      sentryException({
-        message: error.message,
-      });
+      throw new Error(error.message);
     }
   }
 };
