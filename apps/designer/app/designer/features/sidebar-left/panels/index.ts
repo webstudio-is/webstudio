@@ -1,5 +1,5 @@
 import * as components from "./components";
 import * as tree from "./tree";
-import * as imageUpload from "./image-upload";
+import * as assetManager from "./asset-manager";
 
-export const panels = { components, tree, imageUpload } as const;
+export const panels = { components, tree, assetManager } as const;

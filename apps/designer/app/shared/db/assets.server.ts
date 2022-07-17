@@ -9,9 +9,16 @@ export const loadByProject = async (projectId?: Project["id"]) => {
 
   const assets = await prisma.asset.findMany({
     where: { projectId },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   return assets;
+};
+
+const forceFloat = (number: number) => {
+  return parseFloat(Number(number).toFixed(1));
 };
 
 const createAssetInDb = async (
@@ -31,8 +38,8 @@ const createAssetInDb = async (
       path,
       size,
       format: metadata.format,
-      ...(metadata.width ? { width: Math.round(metadata.width) } : {}),
-      ...(metadata.height ? { height: Math.round(metadata.height) } : {}),
+      ...(metadata.width ? { width: forceFloat(metadata.width) } : {}),
+      ...(metadata.height ? { height: forceFloat(metadata.height) } : {}),
       projectId,
     },
   });

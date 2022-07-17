@@ -11,7 +11,6 @@ import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
-import { ImagesUpload } from "~/designer/features/sidebar-left/types";
 import { s3UploadHandler } from "~/shared/uploads/s3-upload-handler";
 import { sentryException } from "~/shared/sentry";
 import { uploadToS3 } from "~/shared/uploads/upload-to-s3";

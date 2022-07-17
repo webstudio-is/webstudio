@@ -21,8 +21,8 @@ model Asset {
   projectId String
   format    String?
   size      Int
-  width     Int?
-  height    Int?
+  width     Float?
+  height    Float?
   name      String
   path      String
   alt       String?
