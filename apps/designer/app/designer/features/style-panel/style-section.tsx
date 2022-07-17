@@ -1,5 +1,24 @@
-import { Flex, Grid, Label, Text, Combobox } from "~/shared/design-system";
-import type { StyleConfig } from "~/shared/style-panel-configs";
+import { useState } from "react";
+import {
+  Box,
+  Flex,
+  Grid,
+  Label,
+  Text,
+  Button,
+  Collapsible,
+  Combobox,
+  Comboicon,
+  Select,
+  TextField,
+  IconButton,
+} from "~/shared/design-system";
+import {
+  TriangleRightIcon,
+  TriangleDownIcon,
+  LockClosedIcon,
+} from "~/shared/icons";
+import type { StyleConfig } from "./lib/configs";
 import {
   categories,
   type Style,
@@ -7,15 +26,15 @@ import {
   type Category,
   type StyleValue,
 } from "@webstudio-is/react-sdk";
-import type { SetProperty } from "./use-style-data";
-import type { InheritedStyle } from "./get-inherited-style";
+import type { SetProperty } from "./lib/use-style-data";
+import type { InheritedStyle } from "./lib/get-inherited-style";
 import { ColorPicker } from "./lib/color-picker";
 import {
   SpacingWidget,
   type SpacingProperty,
   type SpacingStyles,
 } from "./lib/spacing-widget";
-import { useIsFromCurrentBreakpoint } from "./lib/utils/use-is-from-current-breakpoint";
+import { useIsFromCurrentBreakpoint } from "./lib/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./lib/constants";
 
 const getFinalValue = ({
@@ -174,6 +193,7 @@ const ComboboxControl = ({
 
   return (
     <Grid columns={2} align="center" gapX="1">
+      {/* @todo needs icon variant */}
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Combobox
@@ -203,12 +223,88 @@ const ComboboxControl = ({
   );
 };
 
-const controls: {
-  [key: string]: (props: ControlProps) => JSX.Element | null;
-} = {
-  Color: ColorControl,
-  Spacing: SpacingControl,
-  Combobox: ComboboxControl,
+const SelectControl = ({
+  currentStyle,
+  inheritedStyle,
+  setProperty,
+  styleConfig,
+}: ControlProps) => {
+  // @todo show which instance we inherited the value from
+  const value = getFinalValue({
+    currentStyle,
+    inheritedStyle,
+    property: styleConfig.property,
+  });
+
+  if (value === undefined) return null;
+
+  const setValue = setProperty(styleConfig.property);
+
+  return (
+    <>
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <Select
+        options={styleConfig.items.map(({ label }) => label)}
+        value={String(value.value)}
+        onChange={setValue}
+      />
+    </>
+  );
+};
+
+const ComboiconControl = ({
+  currentStyle,
+  inheritedStyle,
+  setProperty,
+  styleConfig,
+}: ControlProps) => {
+  // @todo show which instance we inherited the value from
+  const value = getFinalValue({
+    currentStyle,
+    inheritedStyle,
+    property: styleConfig.property,
+  });
+
+  if (value === undefined) return null;
+
+  const setValue = setProperty(styleConfig.property);
+
+  return (
+    <Comboicon
+      id={styleConfig.property}
+      items={styleConfig.items}
+      value={String(value.value)}
+      onChange={(value: any) => {
+        console.log(value, styleConfig.property);
+        setValue(value);
+      }}
+    />
+  );
+};
+
+const GridControl = ({ currentStyle }: any) => {
+  return <></>;
+};
+
+const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  if (styleConfigs.length === 0) return null;
+  return (
+    <Collapsible.Root asChild onOpenChange={setIsOpen}>
+      <Flex direction="column" gap="3">
+        <Collapsible.Trigger asChild>
+          <Button css={{ width: "100%", gap: "$1" }}>
+            {isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}Show more
+          </Button>
+        </Collapsible.Trigger>
+        <Collapsible.Content asChild>
+          <Flex direction="column" gap="3">
+            {styleConfigs}
+          </Flex>
+        </Collapsible.Content>
+      </Flex>
+    </Collapsible.Root>
+  );
 };
 
 type RenderPropertyProps = {
@@ -227,14 +323,97 @@ export const renderProperty = ({
   category,
 }: RenderPropertyProps) => {
   const Control = controls[styleConfig.control];
+  const { property } = styleConfig;
+  const key = category + "-" + property;
+  return (
+    <Box
+      key={key}
+      data-category={category}
+      data-property={property}
+      css={{ gridArea: property }}
+    >
+      <Control
+        currentStyle={currentStyle}
+        inheritedStyle={inheritedStyle}
+        setProperty={setProperty}
+        styleConfig={styleConfig}
+      />
+    </Box>
+  );
+};
+
+// Categories should render themselves because most Categories will not be dump un-ordered lists with
+// the new designs, refactor ColorControl, SpacingControl if needed.
+export const renderCategory = ({
+  category,
+  styleConfigsByCategory,
+  moreStyleConfigsByCategory,
+}: {
+  category: Category;
+  styleConfigsByCategory: JSX.Element[];
+  moreStyleConfigsByCategory: JSX.Element[];
+}) => {
+  switch (category) {
+    case "layout": {
+      styleConfigsByCategory = [
+        <Box
+          key="grid"
+          css={{
+            gridArea: "grid",
+            border: "1px solid black",
+            background: "#CCC",
+          }}
+        >
+          ...
+          <br />
+          ...
+          <br />
+          ...
+        </Box>,
+        <Box key="lock" css={{ gridArea: "lock" }}>
+          <IconButton>
+            <LockClosedIcon />
+          </IconButton>
+          ,
+        </Box>,
+        ...styleConfigsByCategory,
+      ];
+      return (
+        <>
+          <Grid
+            css={{
+              gridTemplateColumns: "repeat(12, 1fr);",
+              gridTemplateRows: "auto auto auto auto",
+              gridTemplateAreas: `
+              "display display display display display display display display display display display display"
+              "grid grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap . ."
+              "grid grid grid grid grid grid alignItems alignItems justifyContent justifyContent justifyItems justifyItems"
+              "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
+            `,
+            }}
+          >
+            {styleConfigsByCategory}
+          </Grid>
+          <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+        </>
+      );
+    }
+  }
 
   return (
-    <Control
-      key={category + "-" + styleConfig.property}
-      currentStyle={currentStyle}
-      inheritedStyle={inheritedStyle}
-      setProperty={setProperty}
-      styleConfig={styleConfig}
-    />
+    <>
+      {styleConfigsByCategory}
+      <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+    </>
   );
+};
+
+const controls: {
+  [key: string]: (props: ControlProps) => JSX.Element | null;
+} = {
+  Color: ColorControl,
+  Spacing: SpacingControl,
+  Combobox: ComboboxControl,
+  Comboicon: ComboiconControl,
+  Select: SelectControl,
 };

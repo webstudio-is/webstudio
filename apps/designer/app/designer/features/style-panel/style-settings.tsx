@@ -1,4 +1,3 @@
-import { useState } from "react";
 import hyphenate from "hyphenate-style-name";
 import {
   categories,
@@ -6,14 +5,13 @@ import {
   type Category,
   type Style,
 } from "@webstudio-is/react-sdk";
-import { Flex, Collapsible, Button } from "~/shared/design-system";
-import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
-import { styleConfigs, type StyleConfig } from "~/shared/style-panel-configs";
+
+import { type StyleConfig, styleConfigs } from "./lib/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
-import { renderProperty } from "./render-property";
-import { dependencies } from "./dependencies";
-import { type InheritedStyle } from "./get-inherited-style";
-import { type SetProperty } from "./use-style-data";
+import { renderProperty, renderCategory } from "./style-section";
+import { dependencies } from "./lib/dependencies";
+import { type InheritedStyle } from "./lib/get-inherited-style";
+import { type SetProperty } from "./lib/use-style-data";
 import { type SelectedInstanceData } from "~/shared/canvas-components";
 
 // Finds a property/value by using any available form: property, label, value
@@ -66,28 +64,7 @@ const didRender = (category: Category, { property }: StyleConfig): boolean => {
   return false;
 };
 
-const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  if (styleConfigs.length === 0) return null;
-  return (
-    <Collapsible.Root asChild onOpenChange={setIsOpen}>
-      <Flex direction="column" gap="3">
-        <Collapsible.Trigger asChild>
-          <Button css={{ width: "100%", gap: "$1" }}>
-            {isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}Show more
-          </Button>
-        </Collapsible.Trigger>
-        <Collapsible.Content asChild>
-          <Flex direction="column" gap="3">
-            {styleConfigs}
-          </Flex>
-        </Collapsible.Content>
-      </Flex>
-    </Collapsible.Root>
-  );
-};
-
-type VisualSettingsProps = {
+type StyleSettingsProps = {
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   cssRule?: CssRule;
@@ -96,11 +73,11 @@ type VisualSettingsProps = {
   search: string;
 };
 
-export const VisualSettings = ({
+export const StyleSettings = ({
   currentStyle,
   search,
   ...rest
-}: VisualSettingsProps) => {
+}: StyleSettingsProps) => {
   const isSearchMode = search.length !== 0;
   const all = [];
   let category: Category;
@@ -154,8 +131,11 @@ export const VisualSettings = ({
         key={category}
       >
         <>
-          {styleConfigsByCategory}
-          <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+          {renderCategory({
+            category,
+            styleConfigsByCategory,
+            moreStyleConfigsByCategory,
+          })}
         </>
       </CollapsibleSection>
     );

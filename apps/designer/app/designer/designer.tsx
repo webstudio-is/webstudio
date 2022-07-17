@@ -23,7 +23,7 @@ import {
 } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { Breadcrumbs } from "./features/breadcrumbs";
+import { Breadcrumbs } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
 import {
   useUpdateCanvasWidth,

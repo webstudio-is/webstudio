@@ -9,8 +9,8 @@ import {
   Paragraph,
   Box,
 } from "~/shared/design-system";
-import { StylePanel } from "~/designer/features/style-panel";
-import { PropsPanel } from "~/designer/features/props-panel";
+import { StylePanel } from "~/designer/features/sidebar-right/style-panel";
+import { PropsPanel } from "~/designer/features/sidebar-right/props-panel";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type InspectorProps = {

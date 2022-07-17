@@ -4,9 +4,24 @@ import {
   keywordValues,
   type Category,
   type StyleProperty,
+  type AppliesTo,
 } from "@webstudio-is/react-sdk";
-import type { StyleConfig, Control } from "./types";
-import { humanizeString } from "../string-utils";
+import { humanizeString } from "../../../../shared/string-utils";
+
+type BaseStyleConfig = {
+  label: string;
+  property: StyleProperty;
+  appliesTo: AppliesTo;
+};
+
+export type Control = "Spacing" | "Combobox" | "Color" | "Comboicon" | "Select";
+
+type StyleConfigWithItems = BaseStyleConfig & {
+  control: Control;
+  items: Array<{ label: string; name: string }>;
+};
+
+export type StyleConfig = StyleConfigWithItems;
 
 type Property = keyof typeof keywordValues;
 
@@ -21,6 +36,20 @@ const getControl = (property: StyleProperty): Control => {
     .properties as unknown as Array<StyleProperty>;
   if (spacing.includes(property)) {
     return "Spacing";
+  }
+
+  switch (property) {
+    case "display": {
+      return "Select";
+    }
+    case "flexDirection":
+    case "flexWrap":
+    case "alignItems":
+    case "justifyItems":
+    case "justifyContent":
+    case "alignContent": {
+      return "Comboicon";
+    }
   }
 
   return "Combobox";

@@ -4,10 +4,10 @@ import type {
   StyleUpdates,
 } from "~/shared/canvas-components";
 import { type StyleProperty, type Publish } from "@webstudio-is/react-sdk";
-import { useSelectedBreakpoint } from "../../shared/nano-states";
+import { useSelectedBreakpoint } from "../../../shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle } from "./get-inherited-style";
-import { getCssRuleForBreakpoint } from "./lib/utils/get-css-rule-for-breakpoint";
+import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 import { useRootInstance } from "~/shared/nano-states";
 
 type UseStyleData = {

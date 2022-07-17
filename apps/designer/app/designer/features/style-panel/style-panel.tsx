@@ -2,8 +2,8 @@ import type { Publish } from "@webstudio-is/react-sdk";
 import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph } from "~/shared/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { useStyleData } from "./use-style-data";
-import { VisualSettings } from "./settings";
+import { useStyleData } from "./lib/use-style-data";
+import { StyleSettings } from "./style-settings";
 import { Search } from "./search";
 import { useState } from "react";
 import {
@@ -61,10 +61,10 @@ export const StylePanel = ({
         </Box>
       }
       <Box css={{ overflow: "auto" }}>
-        <Box css={{ p: "$3" }}>
+        <Box css={{ p: "$3", paddingTop: "$2" }}>
           <Search onSearch={setSearch} />
         </Box>
-        <VisualSettings
+        <StyleSettings
           search={search}
           selectedInstanceData={selectedInstanceData}
           currentStyle={currentStyle}
