@@ -1,12 +1,10 @@
 import { panels } from "./panels";
 import { z } from "zod";
+import { NodeOnDiskFile } from "@remix-run/node";
 
 export type TabName = keyof typeof panels | "none";
 
-const SingleImageInUpload = z.object({
-  name: z.string(),
-  type: z.string(),
-});
+const SingleImageInUpload = z.instanceof(NodeOnDiskFile);
 
 export const ImagesUpload = z.array(SingleImageInUpload);
 
