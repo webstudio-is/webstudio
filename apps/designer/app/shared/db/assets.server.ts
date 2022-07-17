@@ -1,5 +1,5 @@
 import { type Project } from "@webstudio-is/react-sdk";
-import { prisma } from "./prisma.server";
+import { prisma, Prisma } from "./prisma.server";
 import sharp from "sharp";
 
 export const loadByProject = async (projectId?: Project["id"]) => {
@@ -17,10 +17,6 @@ export const loadByProject = async (projectId?: Project["id"]) => {
   return assets;
 };
 
-const forceFloat = (number: number) => {
-  return parseFloat(number.toFixed(1));
-};
-
 export const create = async (
   projectId: Project["id"],
   values: { name: string; path: string; size: number; metadata: sharp.Metadata }
@@ -33,8 +29,10 @@ export const create = async (
       path,
       size,
       format: metadata.format,
-      ...(metadata.width ? { width: forceFloat(metadata.width) } : {}),
-      ...(metadata.height ? { height: forceFloat(metadata.height) } : {}),
+      ...(metadata.width ? { width: new Prisma.Decimal(metadata.width) } : {}),
+      ...(metadata.height
+        ? { height: new Prisma.Decimal(metadata.height) }
+        : {}),
       projectId,
     },
   });
