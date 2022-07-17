@@ -18,7 +18,7 @@ export const loadByProject = async (projectId?: Project["id"]) => {
 };
 
 const forceFloat = (number: number) => {
-  return parseFloat(Number(number).toFixed(1));
+  return parseFloat(number.toFixed(1));
 };
 
 export const create = async (
