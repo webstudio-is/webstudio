@@ -19,6 +19,8 @@
     "storybook:build": "build-storybook"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.131.0",
+    "@aws-sdk/lib-storage": "^3.131.0",
     "@lexical/react": "^0.3.5",
     "@prisma/client": "^3.14.0",
     "@radix-ui/colors": "^0.1.8",

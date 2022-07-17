@@ -12,6 +12,10 @@ import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
 import { ImagesUpload } from "~/designer/features/sidebar-left/types";
+import { s3UploadHandler } from "~/shared/uploads/s3-upload-handler";
+import { sentryException } from "~/shared/sentry";
+import { uploadToS3 } from "~/shared/uploads/upload-to-s3";
+import { uploadToDisk } from "~/shared/uploads/upload-to-disk";
 
 export { links };
 
@@ -37,6 +41,10 @@ type Error = {
 
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
+  const IS_S3_UPLOAD =
+    process.env.S3_ENDPOINT &&
+    process.env.S3_SECRET_ACCESS_KEY &&
+    process.env.S3_ACCESS_KEY_ID;
   const uploads = path.join(__dirname, "../public");
   const folderInPublic =
     process.env.FILE_UPLOAD_PATH || config.defaultUploadPath;
@@ -44,37 +52,36 @@ export const action: ActionFunction = async ({ request, params }) => {
   try {
     const formData = await unstable_parseMultipartFormData(
       request,
-      unstable_createFileUploadHandler({
-        maxPartSize: 10_000_000,
-        directory,
-        file: ({ filename }) => filename,
-      })
+      IS_S3_UPLOAD
+        ? (file) => s3UploadHandler(file)
+        : unstable_createFileUploadHandler({
+            maxPartSize: 10_000_000,
+            directory,
+            file: ({ filename }) => filename,
+          })
     );
-
-    const imagesInfo = ImagesUpload.parse(formData.getAll("image"));
-
-    const allInfo = imagesInfo.map(async (image) => {
-      const arrayBuffer = await image.arrayBuffer();
-      const data = {
-        name: image.name,
-        path: path.join("/", folderInPublic, image.name),
-        size: image.size,
-        arrayBuffer,
-      };
-
-      const projectId = params.id as string;
-      const newAsset = await db.assets.create(projectId, data);
-
-      return newAsset;
-    });
-
-    await Promise.all(allInfo);
+    const projectId = params.id as string;
+    if (IS_S3_UPLOAD) {
+      await uploadToS3({
+        projectId,
+        formData,
+      });
+    } else {
+      await uploadToDisk({
+        projectId,
+        formData,
+        folderInPublic,
+      });
+    }
 
     return {
       ok: true,
     };
   } catch (error) {
     if (error instanceof Error) {
+      sentryException({
+        message: error.message,
+      });
       return {
         errors: error.message,
       };

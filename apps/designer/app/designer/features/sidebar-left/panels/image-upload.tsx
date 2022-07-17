@@ -16,7 +16,12 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
         <Form
           method="post"
           encType="multipart/form-data"
-          onChange={(event) => submit(event.currentTarget)}
+          onChange={(event) => {
+            if (inputRef.current?.files) {
+              submit(event.currentTarget);
+              event.currentTarget.reset();
+            }
+          }}
         >
           <input
             accept="image/*"
@@ -26,7 +31,7 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
             ref={inputRef}
             style={{ display: "none" }}
           />
-          <Button onClick={() => inputRef?.current?.click()}>
+          <Button type="button" onClick={() => inputRef?.current?.click()}>
             Upload Image
           </Button>
         </Form>
