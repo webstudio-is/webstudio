@@ -1,5 +1,5 @@
 import { ComponentStory, ComponentMeta } from "@storybook/react";
-import { Canvas, Item } from "./main";
+import { Canvas, Item } from "./dnd";
 
 export default {
   component: Canvas,
