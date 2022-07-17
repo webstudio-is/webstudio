@@ -21,14 +21,9 @@ const forceFloat = (number: number) => {
   return parseFloat(Number(number).toFixed(1));
 };
 
-const createAssetInDb = async (
+export const create = async (
   projectId: Project["id"],
-  values: {
-    name: string;
-    path: string;
-    size: number;
-    metadata: sharp.Metadata;
-  }
+  values: { name: string; path: string; size: number; metadata: sharp.Metadata }
 ) => {
   const size = values.size || values.metadata.size || 0;
   const { metadata, name, path } = values;
@@ -42,34 +37,6 @@ const createAssetInDb = async (
       ...(metadata.height ? { height: forceFloat(metadata.height) } : {}),
       projectId,
     },
-  });
-  return newAsset;
-};
-
-export const create = async (
-  projectId: Project["id"],
-  values: { name: string; path: string; size: number; arrayBuffer: ArrayBuffer }
-) => {
-  // there is an issue in the @types/sharp, it also accepts array buffers
-  const image = sharp(values.arrayBuffer as Uint8Array);
-
-  const metadata = await image.metadata();
-  const newAsset = await createAssetInDb(projectId, {
-    name: values.name,
-    path: values.path,
-    size: values.size,
-    metadata,
-  });
-
-  return newAsset;
-};
-
-export const createFromS3 = async (
-  projectId: Project["id"],
-  values: { name: string; path: string; size: number; metadata: sharp.Metadata }
-) => {
-  const newAsset = await createAssetInDb(projectId, {
-    ...values,
   });
 
   return newAsset;
