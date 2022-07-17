@@ -68,7 +68,7 @@ export const SidebarLeft = ({
   const enabledPanels = (
     isFeatureEnabled("assets")
       ? Object.keys(panels)
-      : Object.keys(panels).filter((panel) => panel !== "imageUpload")
+      : Object.keys(panels).filter((panel) => panel !== "assetManager")
   ) as Array<TabName>;
 
   return (
