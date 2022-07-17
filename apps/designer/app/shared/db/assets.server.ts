@@ -1,5 +1,5 @@
 import { type Project } from "@webstudio-is/react-sdk";
-import { prisma } from "./prisma.server";
+import { prisma, Prisma } from "./prisma.server";
 import sharp from "sharp";
 
 export const loadByProject = async (projectId?: Project["id"]) => {
@@ -30,8 +30,10 @@ export const create = async (
       path: values.path,
       size: values.size,
       format: metadata.format,
-      ...(metadata.width ? { width: metadata.width } : {}),
-      ...(metadata.height ? { height: metadata.height } : {}),
+      ...(metadata.width ? { width: new Prisma.Decimal(metadata.width) } : {}),
+      ...(metadata.height
+        ? { height: new Prisma.Decimal(metadata.height) }
+        : {}),
       projectId,
     },
   });
