@@ -5,7 +5,7 @@ import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
-import { uploadAsset } from "@webstudio-is/asset-uploader";
+import { uploadAsset } from "asset-uploader";
 
 export { links };
 

@@ -1,5 +1,5 @@
 {
-  "name": "@webstudio-is/asset-uploader",
+  "name": "asset-uploader",
   "version": "0.0.1",
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",

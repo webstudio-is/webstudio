@@ -126,7 +126,7 @@
     "esbuild-node-externals": "^1.4.1",
     "esbuild-node-loader": "^0.8.0",
     "eslint-config-custom": "*",
-    "@webstudio-is/asset-uploader": "*",
+    "asset-uploader": "*",
     "jest": "^27.5.1",
     "prettier": "^2.6.2",
     "prisma": "^3.14.0",
