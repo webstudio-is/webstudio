@@ -1,4 +1,4 @@
-import { ImagesUpload } from "~/designer/features/sidebar-left/types";
+import type { ImagesUpload } from "~/designer/features/sidebar-left/types";
 import * as db from "~/shared/db";
 import path from "path";
 
