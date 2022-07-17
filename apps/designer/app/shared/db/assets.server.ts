@@ -17,10 +17,6 @@ export const loadByProject = async (projectId?: Project["id"]) => {
   return assets;
 };
 
-const forceFloat = (number: number) => {
-  return parseFloat(Number(number).toFixed(1));
-};
-
 export const create = async (
   projectId: Project["id"],
   values: { name: string; path: string; size: number; arrayBuffer: ArrayBuffer }
@@ -34,8 +30,8 @@ export const create = async (
       path: values.path,
       size: values.size,
       format: metadata.format,
-      ...(metadata.width ? { width: forceFloat(metadata.width) } : {}),
-      ...(metadata.height ? { height: forceFloat(metadata.height) } : {}),
+      ...(metadata.width ? { width: metadata.width } : {}),
+      ...(metadata.height ? { height: metadata.height } : {}),
       projectId,
     },
   });
