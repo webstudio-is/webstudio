@@ -3,7 +3,7 @@ import { useMove } from "./use-move";
 
 type IsDropTarget = (element: HTMLElement) => boolean;
 
-const findDropTarget = ({
+const findClosestDropTarget = ({
   root,
   target,
   isDropTarget,
@@ -36,7 +36,6 @@ type State =
       status: "dragging";
       pageX: number;
       pageY: number;
-      target: HTMLElement;
     }
   | {
       status: "canceled";
@@ -45,10 +44,8 @@ type State =
 export const useDrag = ({
   onStart,
   startDistanceThreashold = 3,
-  isDropTarget,
-  onDropTargetChange,
+  onMove,
 }: any = {}) => {
-  const rootRef = useRef<HTMLElement | null>(null);
   const state = useRef<State>({
     status: "idle",
   });
@@ -83,38 +80,85 @@ export const useDrag = ({
         return;
       }
 
-      if (rootRef.current === null) {
-        return;
-      }
-
-      const nextTarget = findDropTarget({
-        root: rootRef.current,
-        target: event.target,
-        isDropTarget,
-      });
-
-      const hasTargetChanged =
-        state.current.status !== "dragging" ||
-        nextTarget !== state.current.target;
-
       state.current = {
         status: "dragging",
         pageX: event.pageX,
         pageY: event.pageY,
-        target: nextTarget,
       };
 
-      if (hasTargetChanged) {
-        onDropTargetChange(nextTarget);
-      }
+      onMove({ x: event.pageX, y: event.pageY });
     },
     onMoveEnd() {
       state.current.status = "idle";
     },
   });
 
+  return props.moveProps;
+};
+
+type Coordinate = { x: number; y: number };
+type Area = "top" | "right" | "bottom" | "left" | "center";
+
+const elementFromPoint = (coordinate: Coordinate): HTMLElement | undefined => {
+  const element = document.elementFromPoint(coordinate.x, coordinate.y);
+  if (element instanceof HTMLElement) return element;
+};
+
+export const useDropTargetRect = ({
+  isDropTarget,
+  onDropTargetChange,
+  edgeThreshold = 3,
+}: any) => {
+  const rootRef = useRef<HTMLElement | null>(null);
+  const targetRef = useRef<HTMLElement>();
+  const targetRectRef = useRef<DOMRect>();
+  const areaRef = useRef<Area>("center");
+
   return {
-    ...props.moveProps,
+    handleMove(pointerCoordinate: Coordinate) {
+      const target = elementFromPoint(pointerCoordinate);
+      if (target === undefined || rootRef.current === null) {
+        return;
+      }
+
+      const nextTarget = findClosestDropTarget({
+        root: rootRef.current,
+        target,
+        isDropTarget,
+      });
+
+      const hasTargetChanged = nextTarget !== targetRef.current;
+
+      let nextArea: Area = "center";
+
+      if (hasTargetChanged) {
+        targetRectRef.current = nextTarget.getBoundingClientRect();
+      }
+
+      // We are at the edge and this means user wants to insert after that element into its parent
+      if (targetRectRef.current !== undefined) {
+        if (pointerCoordinate.y - targetRectRef.current.top <= edgeThreshold)
+          nextArea = "top";
+        if (targetRectRef.current.bottom - pointerCoordinate.y <= edgeThreshold)
+          nextArea = "bottom";
+        if (pointerCoordinate.x - targetRectRef.current.left <= edgeThreshold)
+          nextArea = "left";
+        if (targetRectRef.current.right - pointerCoordinate.x <= edgeThreshold)
+          nextArea = "right";
+      }
+
+      const hasAreaChanged = nextArea !== areaRef.current;
+
+      if (hasTargetChanged || hasAreaChanged) {
+        targetRef.current = nextTarget;
+        areaRef.current = nextArea;
+        onDropTargetChange({
+          rect: targetRectRef.current,
+          area: nextArea,
+        });
+      }
+    },
+
     ref(rootElement: HTMLElement | null) {
       rootRef.current = rootElement;
     },
