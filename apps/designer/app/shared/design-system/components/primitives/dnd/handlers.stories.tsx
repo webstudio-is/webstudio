@@ -3,17 +3,26 @@ import { ComponentStory, ComponentMeta } from "@storybook/react";
 import { useState } from "react";
 import { DropTarget } from "react-dnd";
 import { Box } from "../../box";
-import { useDrag, useDropTargetRect } from "./handlers";
+import { useDrag, useDropTargetRect, Area } from "./handlers";
+
+type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
 export const Playground = () => {
-  const [dropTargetRect, setDropTargetRect] = useState<DOMRect>();
+  const [dropTargetRect, setDropTargetRect] = useState<Rect>();
+  const [placementIndicatorRect, setPlacementIndicatorRect] = useState<Rect>();
 
   const { ref, handleMove } = useDropTargetRect({
     isDropTarget(element: HTMLElement) {
       return element.dataset.draggable === "true";
     },
-    onDropTargetChange({ rect, area }: DOMRect) {
+    onDropTargetChange({ rect, area }: { rect: Rect; area: Area }) {
       setDropTargetRect(rect);
+      setPlacementIndicatorRect({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: 2,
+      });
       console.log("area", area);
     },
   });
@@ -35,6 +44,7 @@ export const Playground = () => {
         Not Draggable
       </Item>
       <Outline rect={dropTargetRect} />
+      <PlacementIndicator rect={placementIndicatorRect} />
     </div>
   );
 };
@@ -50,7 +60,7 @@ const Item = ({ background, draggable = true, children }: any) => (
   </Box>
 );
 
-const Outline = ({ rect }: { rect?: DOMRect }) => {
+const Outline = ({ rect }: { rect?: Rect }) => {
   if (rect === undefined) return null;
   const style = {
     top: rect.top,
@@ -69,4 +79,17 @@ const Outline = ({ rect }: { rect?: DOMRect }) => {
       }}
     />
   );
+};
+
+const PlacementIndicator = ({ rect }: { rect?: Rect }) => {
+  if (rect === undefined) return null;
+  const style = {
+    top: rect.top,
+    left: rect.left,
+    width: rect.width,
+    height: rect.height,
+    position: "absolute",
+    background: "green",
+  } as const;
+  return <Box style={style} />;
 };

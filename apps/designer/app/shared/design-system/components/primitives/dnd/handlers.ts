@@ -96,8 +96,8 @@ export const useDrag = ({
   return props.moveProps;
 };
 
-type Coordinate = { x: number; y: number };
-type Area = "top" | "right" | "bottom" | "left" | "center";
+export type Coordinate = { x: number; y: number };
+export type Area = "top" | "right" | "bottom" | "left" | "center";
 
 const elementFromPoint = (coordinate: Coordinate): HTMLElement | undefined => {
   const element = document.elementFromPoint(coordinate.x, coordinate.y);
