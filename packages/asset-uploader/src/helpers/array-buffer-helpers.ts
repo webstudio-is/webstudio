@@ -11,7 +11,7 @@ export const mergeUint8Arrays = (a: Uint8Array, b: Uint8Array) => {
 export const getFilenameAndExtension = (filename: string) => {
   return [
     filename.substring(0, filename.lastIndexOf(".")),
-    path.extname(filename),
+    path.extname(filename).split(".")[1],
   ];
 };
 
