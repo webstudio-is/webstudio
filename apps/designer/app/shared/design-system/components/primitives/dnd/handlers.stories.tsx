@@ -1,9 +1,7 @@
-import { getEnvelopeEndpointWithUrlEncodedAuth } from "@sentry/core";
 import { ComponentStory, ComponentMeta } from "@storybook/react";
 import { useState } from "react";
-import { DropTarget } from "react-dnd";
 import { Box } from "../../box";
-import { useDrag, useDropTargetRect, Area } from "./handlers";
+import { useDrag, useDropTarget, Area } from "./handlers";
 
 type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
@@ -11,7 +9,7 @@ export const Playground = () => {
   const [dropTargetRect, setDropTargetRect] = useState<Rect>();
   const [placementIndicatorRect, setPlacementIndicatorRect] = useState<Rect>();
 
-  const { ref, handleMove } = useDropTargetRect({
+  const { rootRef, handleMove } = useDropTarget({
     isDropTarget(element: HTMLElement) {
       return element.dataset.draggable === "true";
     },
@@ -37,7 +35,7 @@ export const Playground = () => {
   });
 
   return (
-    <div {...dragProps} ref={ref}>
+    <div {...dragProps} ref={rootRef}>
       <Item background="$cyanA9" />
       <Item background="$slateA9" />
       <Item background="$blueA9" draggable={false}>

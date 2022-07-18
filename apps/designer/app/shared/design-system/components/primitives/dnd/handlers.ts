@@ -104,7 +104,22 @@ const elementFromPoint = (coordinate: Coordinate): HTMLElement | undefined => {
   if (element instanceof HTMLElement) return element;
 };
 
-export const useDropTargetRect = ({
+const getArea = (
+  pointerCoordinate: Coordinate,
+  edgeThreshold: number,
+  targetRect?: DOMRect
+) => {
+  let area: Area = "center";
+  if (targetRect === undefined) return area;
+  // We are at the edge and this means user wants to insert after that element into its parent
+  if (pointerCoordinate.y - targetRect.top <= edgeThreshold) area = "top";
+  if (targetRect.bottom - pointerCoordinate.y <= edgeThreshold) area = "bottom";
+  if (pointerCoordinate.x - targetRect.left <= edgeThreshold) area = "left";
+  if (targetRect.right - pointerCoordinate.x <= edgeThreshold) area = "right";
+  return area;
+};
+
+export const useDropTarget = ({
   isDropTarget,
   onDropTargetChange,
   edgeThreshold = 3,
@@ -128,30 +143,22 @@ export const useDropTargetRect = ({
       });
 
       const hasTargetChanged = nextTarget !== targetRef.current;
-
-      let nextArea: Area = "center";
+      targetRef.current = nextTarget;
 
       if (hasTargetChanged) {
         targetRectRef.current = nextTarget.getBoundingClientRect();
       }
 
-      // We are at the edge and this means user wants to insert after that element into its parent
-      if (targetRectRef.current !== undefined) {
-        if (pointerCoordinate.y - targetRectRef.current.top <= edgeThreshold)
-          nextArea = "top";
-        if (targetRectRef.current.bottom - pointerCoordinate.y <= edgeThreshold)
-          nextArea = "bottom";
-        if (pointerCoordinate.x - targetRectRef.current.left <= edgeThreshold)
-          nextArea = "left";
-        if (targetRectRef.current.right - pointerCoordinate.x <= edgeThreshold)
-          nextArea = "right";
-      }
+      const nextArea = getArea(
+        pointerCoordinate,
+        edgeThreshold,
+        targetRectRef.current
+      );
 
       const hasAreaChanged = nextArea !== areaRef.current;
+      areaRef.current = nextArea;
 
       if (hasTargetChanged || hasAreaChanged) {
-        targetRef.current = nextTarget;
-        areaRef.current = nextArea;
         onDropTargetChange({
           rect: targetRectRef.current,
           area: nextArea,
@@ -159,7 +166,7 @@ export const useDropTargetRect = ({
       }
     },
 
-    ref(rootElement: HTMLElement | null) {
+    rootRef(rootElement: HTMLElement | null) {
       rootRef.current = rootElement;
     },
   };
