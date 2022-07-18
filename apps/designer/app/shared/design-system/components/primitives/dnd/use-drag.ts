@@ -19,14 +19,17 @@ type State =
       status: "canceled";
     };
 
+const initialState = {
+  status: "idle",
+} as const;
+
 export const useDrag = ({
-  onStart,
   startDistanceThreashold = 3,
+  onStart,
   onMove,
+  onEnd,
 }: any = {}) => {
-  const state = useRef<State>({
-    status: "idle",
-  });
+  const state = useRef<State>(initialState);
 
   const cancel = () => {
     state.current = { status: "canceled" };
@@ -72,7 +75,8 @@ export const useDrag = ({
       onMove({ x: pageX, y: pageY });
     },
     onMoveEnd() {
-      state.current.status = "idle";
+      state.current = initialState;
+      onEnd();
     },
   });
 

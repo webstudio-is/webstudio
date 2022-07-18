@@ -33,6 +33,10 @@ export const Playground = () => {
       }
     },
     onMove: handleMove,
+    onEnd() {
+      setDropTargetRect(undefined);
+      setPlacementIndicatorRect(undefined);
+    },
   });
 
   return (
