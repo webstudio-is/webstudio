@@ -15,7 +15,7 @@ export const Playground = () => {
     holdRef.current?.style.removeProperty("background");
   };
 
-  const { rootRef, handleMove } = useDropTarget({
+  const { rootRef, handleMove, handleEnd } = useDropTarget({
     isDropTarget(element: HTMLElement) {
       return element.dataset.draggable === "true";
     },
@@ -44,6 +44,7 @@ export const Playground = () => {
     },
     onMove: handleMove,
     onEnd() {
+      handleEnd();
       setDropTargetRect(undefined);
       setPlacementIndicatorRect(undefined);
       handleHoldEnd();

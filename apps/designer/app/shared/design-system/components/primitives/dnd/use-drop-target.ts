@@ -64,6 +64,11 @@ export const useDropTarget = ({
       }
     },
 
+    handleEnd() {
+      // Clear onHold timeout if we ended interaction before it fired
+      clearTimeout(holdTimeoutRef.current);
+    },
+
     rootRef(rootElement: HTMLElement | null) {
       rootRef.current = rootElement;
     },
