@@ -68,7 +68,7 @@ export function useMove(props: /*MoveEvents*/ any): MoveResult {
           metaKey: originalEvent.metaKey,
           ctrlKey: originalEvent.ctrlKey,
           altKey: originalEvent.altKey,
-          element: originalEvent.target,
+          target: originalEvent.target,
           pageX: originalEvent.pageX,
           pageY: originalEvent.pageY,
         });
@@ -82,7 +82,7 @@ export function useMove(props: /*MoveEvents*/ any): MoveResult {
         metaKey: originalEvent.metaKey,
         ctrlKey: originalEvent.ctrlKey,
         altKey: originalEvent.altKey,
-        element: originalEvent.target,
+        target: originalEvent.target,
         pageX: originalEvent.pageX,
         pageY: originalEvent.pageY,
       });
