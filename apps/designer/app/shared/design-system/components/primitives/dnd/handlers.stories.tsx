@@ -1,7 +1,8 @@
 import { ComponentStory, ComponentMeta } from "@storybook/react";
 import { useState } from "react";
 import { Box } from "../../box";
-import { useDrag, useDropTarget, Area } from "./handlers";
+import { useDropTarget, type Area } from "./use-drop-target";
+import { useDrag } from "./use-drag";
 
 type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
