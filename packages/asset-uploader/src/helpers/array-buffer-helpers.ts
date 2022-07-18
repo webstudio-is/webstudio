@@ -1,3 +1,5 @@
+import path from "path";
+
 export const mergeUint8Arrays = (a: Uint8Array, b: Uint8Array) => {
   const c = new Uint8Array(a.length + b.length);
   c.set(a);
@@ -9,7 +11,7 @@ export const mergeUint8Arrays = (a: Uint8Array, b: Uint8Array) => {
 export const getFilenameAndExtension = (filename: string) => {
   return [
     filename.substring(0, filename.lastIndexOf(".")),
-    filename.split(".").pop(),
+    path.extname(filename),
   ];
 };
 

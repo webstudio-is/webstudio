@@ -4,7 +4,6 @@
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
-  "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "rm -fr lib && tsc",
