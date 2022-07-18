@@ -48,6 +48,12 @@ export const Playground = () => {
       setPlacementIndicatorRect(undefined);
       handleHoldEnd();
     },
+    onShift({ direction, target }: any) {
+      target.textContent = `shifted ${direction}`;
+      setTimeout(() => {
+        target.textContent = "";
+      }, 1000);
+    },
   });
 
   return (

@@ -17,7 +17,7 @@ export const useDropTarget = ({
   const areaRef = useRef<Area>("center");
   const holdTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const checkHold = (target: HTMLElement) => {
+  const detectHold = (target: HTMLElement) => {
     clearTimeout(holdTimeoutRef.current);
     holdTimeoutRef.current = setTimeout(() => {
       if (target === targetRef.current) {
@@ -44,7 +44,7 @@ export const useDropTarget = ({
 
       if (hasTargetChanged) {
         targetRectRef.current = nextTarget.getBoundingClientRect();
-        checkHold(nextTarget);
+        detectHold(nextTarget);
       }
 
       const nextArea = getArea(
