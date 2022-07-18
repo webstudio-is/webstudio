@@ -124,4 +124,11 @@ export const JustifyContentSpaceAround = React.forwardRef<
   );
 });
 
-export const JustifyContentNormal = JustifyContentStart;
+export const justifyContent = {
+  normal: JustifyContentStart,
+  start: JustifyContentStart,
+  end: JustifyContentEnd,
+  center: JustifyContentCenter,
+  spaceBetween: JustifyContentSpaceBetween,
+  spaceAround: JustifyContentSpaceAround,
+};

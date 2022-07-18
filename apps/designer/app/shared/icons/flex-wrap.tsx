@@ -54,4 +54,8 @@ export const FlexWrapNowrap = React.forwardRef<SVGSVGElement, IconProps>(
   }
 );
 
-export const FlexWrapNormal = FlexWrapNowrap;
+export const flexWrap = {
+  normal: FlexWrapNowrap,
+  nowrap: FlexWrapNowrap,
+  wrap: FlexWrapWrap,
+};

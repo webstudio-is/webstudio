@@ -153,3 +153,12 @@ export const AlignItemsStretch = React.forwardRef<SVGSVGElement, IconProps>(
 );
 
 export const AlignItemsNormal = AlignItemsStart;
+
+export const alignItems = {
+  normal: AlignItemsStart,
+  start: AlignItemsStart,
+  end: AlignItemsEnd,
+  center: AlignItemsCenter,
+  baseline: AlignItemsBaseline,
+  stretch: AlignItemsStretch,
+};

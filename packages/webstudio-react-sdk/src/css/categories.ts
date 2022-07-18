@@ -8,10 +8,10 @@ const layout = [
   // Flex or grid
   "alignItems",
   "justifyContent",
+  "alignContent",
   // Grid
   "placeContent",
   "justifyItems",
-  "alignContent",
   "rowGap",
   "columnGap",
   "gridAutoFlow",

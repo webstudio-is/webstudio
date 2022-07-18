@@ -47,4 +47,8 @@ export const FlexDirectionColumn = React.forwardRef<SVGSVGElement, IconProps>(
   }
 );
 
-export const flexDirectionNormal = FlexDirectionRow;
+export const flexDirection = {
+  normal: FlexDirectionRow,
+  row: FlexDirectionRow,
+  column: FlexDirectionColumn,
+};

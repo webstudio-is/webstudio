@@ -132,6 +132,7 @@ export const StyleSettings = ({
       >
         <>
           {renderCategory({
+            currentStyle,
             category,
             styleConfigsByCategory,
             moreStyleConfigsByCategory,

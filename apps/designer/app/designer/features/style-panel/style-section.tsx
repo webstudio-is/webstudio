@@ -36,7 +36,6 @@ import {
 } from "./lib/spacing-widget";
 import { useIsFromCurrentBreakpoint } from "./lib/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./lib/constants";
-import camelcase from "lodash.camelcase";
 
 const getFinalValue = ({
   currentStyle,
@@ -269,10 +268,9 @@ const ComboiconControl = ({
 
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
-  const currentIconName = camelcase(
-    `A${styleConfig.label} ${currentValue}`
-  ).slice(1);
-  const Icon = (icons as any)[currentIconName] || icons["AlignItemsCenter"];
+  const Icon = (icons as any)[styleConfig.property]?.[currentValue];
+
+  if (Icon === undefined) return null;
 
   return (
     <IconButton>
@@ -289,7 +287,20 @@ const ComboiconControl = ({
   // );
 };
 
-const GridControl = ({ currentStyle }: any) => {
+const GridControl = ({ css, currentStyle }: any) => {
+  return (
+    <Box
+      css={{
+        border: "2px solid $colors$blue9",
+        background: "#FFF",
+        borderRadius: "4px",
+        textAlign: "center",
+        width: "72px",
+        height: "72px",
+        ...css,
+      }}
+    ></Box>
+  );
   return <></>;
 };
 
@@ -349,61 +360,62 @@ export const renderProperty = ({
   );
 };
 
-// Categories should render themselves because most Categories will not be dump un-ordered lists with
-// the new designs, refactor ColorControl, SpacingControl if needed.
-export const renderCategory = ({
-  category,
-  styleConfigsByCategory,
-  moreStyleConfigsByCategory,
-}: {
+type RenderCategoryProps = {
+  currentStyle: Style;
   category: Category;
   styleConfigsByCategory: JSX.Element[];
   moreStyleConfigsByCategory: JSX.Element[];
-}) => {
+};
+// Categories should render themselves because most Categories will not be dump un-ordered lists with
+// the new designs, refactor ColorControl, SpacingControl if needed.
+export const renderCategory = ({
+  currentStyle,
+  category,
+  styleConfigsByCategory,
+  moreStyleConfigsByCategory,
+}: RenderCategoryProps) => {
   switch (category) {
     case "layout": {
-      styleConfigsByCategory = [
-        <Box
-          key="grid"
-          css={{
-            gridArea: "grid",
-            border: "1px solid black",
-            background: "#CCC",
-          }}
-        >
-          ...
-          <br />
-          ...
-          <br />
-          ...
-        </Box>,
-        <Box key="lock" css={{ gridArea: "lock" }}>
-          <IconButton>
-            <LockClosedIcon />
-          </IconButton>
-          ,
-        </Box>,
-        ...styleConfigsByCategory,
-      ];
-      return (
-        <>
-          <Grid
-            css={{
-              gridTemplateColumns: "repeat(12, 1fr);",
-              gridTemplateRows: "auto auto auto auto",
-              gridTemplateAreas: `
-              "display display display display display display display display display display display display"
-              "grid grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap . ."
-              "grid grid grid grid grid grid alignItems alignItems justifyContent justifyContent . ."
-              "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
-            `,
-            }}
-          >
-            {styleConfigsByCategory}
-          </Grid>
-          <ShowMore styleConfigs={moreStyleConfigsByCategory} />
-        </>
-      );
+      const display = currentStyle.display?.value;
+      console.log(display);
+      switch (currentStyle.display?.value) {
+        case "flex": {
+          styleConfigsByCategory = [
+            <GridControl
+              key="grid"
+              css={{ gridArea: "grid" }}
+              currentStyle={currentStyle}
+            />,
+            <Box key="lock" css={{ gridArea: "lock" }}>
+              <IconButton>
+                <LockClosedIcon />
+              </IconButton>
+              ,
+            </Box>,
+            ...styleConfigsByCategory,
+          ];
+          return (
+            <>
+              <Grid
+                css={{
+                  alignItems: "center",
+                  gridTemplateColumns: "repeat(12, 1fr);",
+                  gridTemplateRows: "auto auto auto auto",
+                  gridTemplateAreas: `
+                  "display display display display display display display display display display display display"
+                  "grid grid grid grid flexDirection flexDirection flexWrap flexWrap . . . ."
+                  "grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent . ."
+                  "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
+                `,
+                }}
+              >
+                {styleConfigsByCategory}
+              </Grid>
+              <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+            </>
+          );
+        }
+      }
     }
   }
 

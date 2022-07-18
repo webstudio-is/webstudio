@@ -69,7 +69,6 @@
     "lodash.merge": "^4.6.2",
     "lodash.noop": "^3.0.1",
     "lodash.snakecase": "^4.1.1",
-    "lodash.camelcase": "^4.3.0",
     "mitt": "^3.0.0",
     "nanoid": "^3.2.0",
     "react": "^17.0.2",
