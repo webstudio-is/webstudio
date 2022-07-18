@@ -1,5 +1,5 @@
 import { ComponentStory, ComponentMeta } from "@storybook/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box } from "../../box";
 import { useDropTarget, type Area } from "./use-drop-target";
 import { useDrag } from "./use-drag";
@@ -9,6 +9,11 @@ type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 export const Playground = () => {
   const [dropTargetRect, setDropTargetRect] = useState<Rect>();
   const [placementIndicatorRect, setPlacementIndicatorRect] = useState<Rect>();
+  const holdRef = useRef<HTMLElement>();
+
+  const handleHoldEnd = () => {
+    holdRef.current?.style.removeProperty("background");
+  };
 
   const { rootRef, handleMove } = useDropTarget({
     isDropTarget(element: HTMLElement) {
@@ -24,6 +29,11 @@ export const Playground = () => {
       });
       console.log("area", area);
     },
+    onHold({ target }: { target: HTMLElement }) {
+      handleHoldEnd();
+      holdRef.current = target;
+      target.style.background = "red";
+    },
   });
 
   const dragProps = useDrag({
@@ -36,6 +46,7 @@ export const Playground = () => {
     onEnd() {
       setDropTargetRect(undefined);
       setPlacementIndicatorRect(undefined);
+      handleHoldEnd();
     },
   });
 
@@ -91,8 +102,8 @@ const PlacementIndicator = ({ rect }: { rect?: Rect }) => {
     left: rect.left,
     width: rect.width,
     height: rect.height,
-    position: "absolute",
-    background: "green",
-  } as const;
-  return <Box style={style} />;
+  };
+  return (
+    <Box style={style} css={{ position: "absolute", background: "green" }} />
+  );
 };

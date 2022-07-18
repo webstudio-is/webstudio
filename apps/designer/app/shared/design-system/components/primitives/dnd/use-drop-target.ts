@@ -2,15 +2,29 @@ import { useRef } from "react";
 
 export type Area = "top" | "right" | "bottom" | "left" | "center";
 
+type UseDropTarget = any;
+
 export const useDropTarget = ({
   isDropTarget,
+  edgeDistanceThreshold = 3,
+  holdTimeThreshold = 500,
   onDropTargetChange,
-  edgeThreshold = 3,
-}: any) => {
+  onHold,
+}: UseDropTarget) => {
   const rootRef = useRef<HTMLElement | null>(null);
   const targetRef = useRef<HTMLElement>();
   const targetRectRef = useRef<DOMRect>();
   const areaRef = useRef<Area>("center");
+  const holdTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const checkHold = (target: HTMLElement) => {
+    clearTimeout(holdTimeoutRef.current);
+    holdTimeoutRef.current = setTimeout(() => {
+      if (target === targetRef.current) {
+        onHold({ target });
+      }
+    }, holdTimeThreshold);
+  };
 
   return {
     handleMove(pointerCoordinate: Coordinate) {
@@ -30,11 +44,12 @@ export const useDropTarget = ({
 
       if (hasTargetChanged) {
         targetRectRef.current = nextTarget.getBoundingClientRect();
+        checkHold(nextTarget);
       }
 
       const nextArea = getArea(
         pointerCoordinate,
-        edgeThreshold,
+        edgeDistanceThreshold,
         targetRectRef.current
       );
 
@@ -64,16 +79,20 @@ const elementFromPoint = (coordinate: Coordinate): HTMLElement | undefined => {
 
 const getArea = (
   pointerCoordinate: Coordinate,
-  edgeThreshold: number,
+  edgeDistanceThreshold: number,
   targetRect?: DOMRect
 ) => {
   let area: Area = "center";
   if (targetRect === undefined) return area;
   // We are at the edge and this means user wants to insert after that element into its parent
-  if (pointerCoordinate.y - targetRect.top <= edgeThreshold) area = "top";
-  if (targetRect.bottom - pointerCoordinate.y <= edgeThreshold) area = "bottom";
-  if (pointerCoordinate.x - targetRect.left <= edgeThreshold) area = "left";
-  if (targetRect.right - pointerCoordinate.x <= edgeThreshold) area = "right";
+  if (pointerCoordinate.y - targetRect.top <= edgeDistanceThreshold)
+    area = "top";
+  if (targetRect.bottom - pointerCoordinate.y <= edgeDistanceThreshold)
+    area = "bottom";
+  if (pointerCoordinate.x - targetRect.left <= edgeDistanceThreshold)
+    area = "left";
+  if (targetRect.right - pointerCoordinate.x <= edgeDistanceThreshold)
+    area = "right";
   return area;
 };
 
