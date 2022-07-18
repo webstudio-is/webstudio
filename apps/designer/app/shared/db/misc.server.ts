@@ -1,4 +1,4 @@
-import { uploadAsset } from "asset-uploader";
+import { uploadAsset } from "@webstudio-is/asset-uploader";
 import * as db from "./";
 
 export const uploadAssets = uploadAsset;

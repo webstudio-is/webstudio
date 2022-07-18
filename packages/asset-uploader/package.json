@@ -1,15 +1,13 @@
 {
-  "name": "asset-uploader",
+  "name": "@webstudio-is/asset-uploader",
   "version": "0.0.1",
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "rm -fr lib && tsc",
     "test": "jest",
-    "checks": "yarn typecheck && yarn test",
-    "prepublishOnly": "yarn checks && yarn build"
+    "checks": "yarn typecheck && yarn test"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.131.0",
