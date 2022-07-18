@@ -10,6 +10,10 @@
  * governing permissions and limitations under the License.
  */
 
+/**
+ * We had to copy this file from react-aria because we need pageX and pageY.
+ */
+
 import type { MoveEvents, PointerType } from "@react-types/shared";
 import React, { HTMLAttributes, useMemo, useRef } from "react";
 import { useGlobalListeners } from "@react-aria/utils";

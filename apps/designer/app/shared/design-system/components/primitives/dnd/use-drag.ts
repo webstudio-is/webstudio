@@ -1,5 +1,5 @@
-import { useRef } from "react";
 import { useMove } from "./use-move";
+import { useRef } from "react";
 
 type State =
   | {
@@ -33,16 +33,23 @@ export const useDrag = ({
   };
 
   const props = useMove({
-    onMoveStart(event: any) {
+    onMoveStart({
+      pageX,
+      pageY,
+      target,
+    }: {
+      pageX: number;
+      pageY: number;
+      target: HTMLElement;
+    }) {
       state.current = {
         status: "pending",
-        pageX: event.pageX,
-        pageY: event.pageY,
+        pageX,
+        pageY,
       };
-
-      onStart({ ...event, cancel });
+      onStart({ target, cancel });
     },
-    onMove(event: any) {
+    onMove({ pageX, pageY }: { pageX: number; pageY: number }) {
       if (state.current.status === "canceled") {
         return;
       }
@@ -50,19 +57,19 @@ export const useDrag = ({
       // We want to start dragging only when the user has moved more than startDistanceThreashold.
       if (
         state.current.status === "pending" &&
-        Math.abs(event.pageX - state.current.pageX) < startDistanceThreashold &&
-        Math.abs(event.pageY - state.current.pageY) < startDistanceThreashold
+        Math.abs(pageX - state.current.pageX) < startDistanceThreashold &&
+        Math.abs(pageY - state.current.pageY) < startDistanceThreashold
       ) {
         return;
       }
 
       state.current = {
         status: "dragging",
-        pageX: event.pageX,
-        pageY: event.pageY,
+        pageX,
+        pageY,
       };
 
-      onMove({ x: event.pageX, y: event.pageY });
+      onMove({ x: pageX, y: pageY });
     },
     onMoveEnd() {
       state.current.status = "idle";

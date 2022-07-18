@@ -77,8 +77,6 @@ const getArea = (
   return area;
 };
 
-type IsDropTarget = (element: HTMLElement) => boolean;
-
 const findClosestDropTarget = ({
   root,
   target,
@@ -86,7 +84,7 @@ const findClosestDropTarget = ({
 }: {
   root: HTMLElement;
   target: HTMLElement;
-  isDropTarget: IsDropTarget;
+  isDropTarget: (target: HTMLElement) => boolean;
 }): HTMLElement => {
   let currentTarget: HTMLElement | null = target;
   while (currentTarget !== null && currentTarget !== root) {
