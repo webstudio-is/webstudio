@@ -10,7 +10,6 @@ import {
   Combobox,
   Comboicon,
   Select,
-  TextField,
   IconButton,
 } from "~/shared/design-system";
 import {
@@ -18,6 +17,7 @@ import {
   TriangleDownIcon,
   LockClosedIcon,
 } from "~/shared/icons";
+import * as icons from "~/shared/icons";
 import type { StyleConfig } from "./lib/configs";
 import {
   categories,
@@ -36,6 +36,7 @@ import {
 } from "./lib/spacing-widget";
 import { useIsFromCurrentBreakpoint } from "./lib/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./lib/constants";
+import camelcase from "lodash.camelcase";
 
 const getFinalValue = ({
   currentStyle,
@@ -258,7 +259,6 @@ const ComboiconControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
     inheritedStyle,
@@ -268,18 +268,25 @@ const ComboiconControl = ({
   if (value === undefined) return null;
 
   const setValue = setProperty(styleConfig.property);
+  const currentValue = value.value as string;
+  const currentIconName = camelcase(
+    `A${styleConfig.label} ${currentValue}`
+  ).slice(1);
+  const Icon = (icons as any)[currentIconName] || icons["AlignItemsCenter"];
 
   return (
-    <Comboicon
-      id={styleConfig.property}
-      items={styleConfig.items}
-      value={String(value.value)}
-      onChange={(value: any) => {
-        console.log(value, styleConfig.property);
-        setValue(value);
-      }}
-    />
+    <IconButton>
+      <Icon />
+    </IconButton>
   );
+  // return (
+  //   <Comboicon
+  //     id={styleConfig.property}
+  //     items={styleConfig.items}
+  //     value={String(value.value)}
+  //     onChange={setValue}
+  //   />
+  // );
 };
 
 const GridControl = ({ currentStyle }: any) => {
@@ -387,7 +394,7 @@ export const renderCategory = ({
               gridTemplateAreas: `
               "display display display display display display display display display display display display"
               "grid grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap . ."
-              "grid grid grid grid grid grid alignItems alignItems justifyContent justifyContent justifyItems justifyItems"
+              "grid grid grid grid grid grid alignItems alignItems justifyContent justifyContent . ."
               "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
             `,
             }}
