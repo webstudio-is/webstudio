@@ -48,6 +48,8 @@
     "@radix-ui/react-toggle-group": "^0.1.5",
     "@radix-ui/react-tooltip": "^0.1.7",
     "@radix-ui/react-use-layout-effect": "^0.1.0",
+    "@react-aria/interactions": "^3.9.1",
+    "@react-aria/utils": "^3.13.1",
     "@remix-run/node": "^1.6.4",
     "@remix-run/react": "^1.6.4",
     "@remix-run/serve": "^1.6.4",
@@ -92,6 +94,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.18.5",
+    "@react-types/shared": "^3.13.1",
     "@remix-run/dev": "^1.6.4",
     "@storybook/addon-actions": "^6.5.9",
     "@storybook/addon-essentials": "^6.5.9",
