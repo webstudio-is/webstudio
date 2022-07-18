@@ -1,6 +1,6 @@
 import path from "path";
 import sharp from "sharp";
-import { ImagesUpload } from "~/types";
+import { ImagesUpload } from "../../types";
 
 export const uploadToDisk = async ({
   formData,

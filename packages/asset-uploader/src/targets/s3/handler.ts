@@ -4,11 +4,11 @@ import { Upload } from "@aws-sdk/lib-storage";
 import ObjectID from "bson-objectid";
 
 import sharp from "sharp";
-import { ImagesUploadedSuccess } from "~/types";
+import { ImagesUploadedSuccess } from "../../types";
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
-} from "~/helpers/array-buffer-helpers";
+} from "../../helpers/array-buffer-helpers";
 
 export const s3UploadHandler: UploadHandler = async ({
   data,

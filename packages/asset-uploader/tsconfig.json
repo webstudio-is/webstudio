@@ -7,9 +7,6 @@
     "target": "ES2019",
     "strict": true,
     "baseUrl": ".",
-    "paths": {
-      "~/*": ["./src/*"]
-    },
     "outDir": "./lib"
   }
 }
