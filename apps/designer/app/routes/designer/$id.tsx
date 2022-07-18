@@ -5,7 +5,7 @@ import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
-import { uploadAsset } from "asset-uploader";
+import { uploadAssets } from "~/shared/db/misc.server";
 
 export { links };
 
@@ -32,11 +32,16 @@ type Error = {
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
   if (request.method === "POST") {
-    await uploadAsset({
+    await uploadAssets({
       request,
       projectId: params.id,
       db,
+      dirname: __dirname,
     });
+
+    return {
+      ok: true,
+    };
   }
 };
 

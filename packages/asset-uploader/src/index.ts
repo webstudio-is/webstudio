@@ -12,16 +12,18 @@ export const uploadAsset = async ({
   request,
   projectId,
   db,
+  dirname,
 }: {
   request: Request;
   projectId: string;
   db: unknown;
+  dirname: string;
 }) => {
   const IS_S3_UPLOAD =
     process.env.S3_ENDPOINT &&
     process.env.S3_SECRET_ACCESS_KEY &&
     process.env.S3_ACCESS_KEY_ID;
-  const uploads = path.join(__dirname, "../public");
+  const uploads = path.join(dirname, "../public");
   const folderInPublic = process.env.FILE_UPLOAD_PATH || DEFAULT_UPLPOAD_PATH;
   const directory = path.join(uploads, folderInPublic);
   try {

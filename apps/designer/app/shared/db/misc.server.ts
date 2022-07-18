@@ -1,4 +1,7 @@
+import { uploadAsset } from "asset-uploader";
 import * as db from "./";
+
+export const uploadAssets = uploadAsset;
 
 /**
  * Conceptually publishing is cloning all data that affects user site
