@@ -27,9 +27,6 @@ const Property = ({
   onDelete,
 }: PropertyProps) => {
   const meta = componentsMeta[component];
-  if (!meta) {
-    return "Unknown component";
-  }
   const argType = meta.argTypes?.[prop as keyof typeof meta.argTypes];
   const isInvalidProp =
     prop.length > 0 &&
