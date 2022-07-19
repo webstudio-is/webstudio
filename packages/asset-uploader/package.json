@@ -1,0 +1,28 @@
+{
+  "name": "@webstudio-is/asset-uploader",
+  "version": "0.0.1",
+  "description": "Webstudio Asset Uploader",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "checks": "yarn typecheck && yarn test"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.131.0",
+    "@aws-sdk/lib-storage": "^3.131.0",
+    "@types/node": "^17.0.21",
+    "jest-config": "*",
+    "typescript": "^4.6.2",
+    "zod": "^3.17.3"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "README.md",
+    "!*.test.*"
+  ],
+  "license": "MIT",
+  "private": false
+}
