@@ -33,15 +33,14 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
   if (request.method === "POST") {
     try {
-      const a = await uploadAssets({
+      const assets = await uploadAssets({
         request,
         projectId: params.id,
         db,
         dirname: __dirname,
       });
-      console.log(a);
       return {
-        ok: true,
+        assets,
       };
     } catch (error) {
       if (error instanceof Error) {
