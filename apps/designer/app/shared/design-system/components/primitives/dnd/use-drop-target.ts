@@ -60,6 +60,7 @@ export const useDropTarget = ({
         onDropTargetChange({
           rect: targetRectRef.current,
           area: nextArea,
+          target: nextTarget,
         });
       }
     },

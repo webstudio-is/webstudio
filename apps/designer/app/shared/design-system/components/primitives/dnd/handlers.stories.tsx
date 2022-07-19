@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box } from "../../box";
 import { useDropTarget, type Area } from "./use-drop-target";
 import { useDrag } from "./use-drag";
-
-type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
+import { getPlacement, PlacementIndicator, type Rect } from "./placement";
 
 export const Playground = () => {
   const [dropTargetRect, setDropTargetRect] = useState<Rect>();
@@ -20,14 +19,18 @@ export const Playground = () => {
     isDropTarget(element: HTMLElement) {
       return element.dataset.draggable === "true";
     },
-    onDropTargetChange({ rect, area }: { rect: Rect; area: Area }) {
+    onDropTargetChange({
+      rect,
+      area,
+      target,
+    }: {
+      rect: Rect;
+      area: Area;
+      target: HTMLElement;
+    }) {
       setDropTargetRect(rect);
-      setPlacementIndicatorRect({
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: 2,
-      });
+      const placementRect = getPlacement({ target });
+      setPlacementIndicatorRect(placementRect);
       console.log("area", area);
     },
     onHold({ target }: { target: HTMLElement }) {
@@ -61,7 +64,7 @@ export const Playground = () => {
   });
 
   return (
-    <div {...dragProps} ref={rootRef}>
+    <Box {...dragProps} ref={rootRef} css={{ display: "flex" }}>
       <Item background="$cyanA9" />
       <Item background="$slateA9" />
       <Item background="$blueA9" draggable={false}>
@@ -69,7 +72,7 @@ export const Playground = () => {
       </Item>
       <Outline rect={dropTargetRect} />
       <PlacementIndicator rect={placementIndicatorRect} />
-    </div>
+    </Box>
   );
 };
 
@@ -77,7 +80,7 @@ export default {} as ComponentMeta<typeof Playground>;
 
 const Item = ({ background, draggable = true, children }: any) => (
   <Box
-    css={{ width: 100, height: 100, background, margin: 10 }}
+    css={{ height: 100, width: 100, background, margin: 10 }}
     data-draggable={draggable}
   >
     {children}
@@ -102,18 +105,5 @@ const Outline = ({ rect }: { rect?: Rect }) => {
         outlineOffset: -1,
       }}
     />
-  );
-};
-
-const PlacementIndicator = ({ rect }: { rect?: Rect }) => {
-  if (rect === undefined) return null;
-  const style = {
-    top: rect.top,
-    left: rect.left,
-    width: rect.width,
-    height: rect.height,
-  };
-  return (
-    <Box style={style} css={{ position: "absolute", background: "green" }} />
   );
 };
