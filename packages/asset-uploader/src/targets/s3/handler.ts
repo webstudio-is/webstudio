@@ -33,31 +33,25 @@ export const s3UploadHandler: UploadHandler = async ({
     },
   };
 
-  try {
-    const client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT ?? "",
-      region: process.env.S3_REGION ?? "",
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
-      },
-    });
+  const client = new S3Client({
+    endpoint: process.env.S3_ENDPOINT ?? "",
+    region: process.env.S3_REGION ?? "",
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+    },
+  });
 
-    const upload = new Upload({ client, params });
+  const upload = new Upload({ client, params });
 
-    const newFile = ImagesUploadedSuccess.parse(await upload.done());
-    const image = sharp(uint8Array);
-    const metadata = await image.metadata();
+  const newFile = ImagesUploadedSuccess.parse(await upload.done());
+  const image = sharp(uint8Array);
+  const metadata = await image.metadata();
 
-    // these upload handlers only allow strings to be returned
-    return JSON.stringify({
-      metadata,
-      name: key,
-      path: newFile.Location,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-  }
+  // these upload handlers only allow strings to be returned
+  return JSON.stringify({
+    metadata,
+    name: key,
+    path: newFile.Location,
+  });
 };

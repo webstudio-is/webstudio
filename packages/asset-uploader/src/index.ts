@@ -26,38 +26,28 @@ export const uploadAsset = async ({
   const uploads = path.join(dirname, "../public");
   const folderInPublic = process.env.FILE_UPLOAD_PATH || DEFAULT_UPLPOAD_PATH;
   const directory = path.join(uploads, folderInPublic);
-  try {
-    const formData = await unstable_parseMultipartFormData(
-      request,
-      isS3Upload
-        ? (file) => s3UploadHandler(file)
-        : unstable_createFileUploadHandler({
-            maxPartSize: 10_000_000,
-            directory,
-            file: ({ filename }) => filename,
-          })
-    );
-    if (isS3Upload) {
-      await uploadToS3({
-        projectId,
-        formData,
-        db,
-      });
-    } else {
-      await uploadToDisk({
-        projectId,
-        formData,
-        folderInPublic,
-        db,
-      });
-    }
-
-    return {
-      ok: true,
-    };
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
+  const formData = await unstable_parseMultipartFormData(
+    request,
+    isS3Upload
+      ? (file) => s3UploadHandler(file)
+      : unstable_createFileUploadHandler({
+          maxPartSize: 10_000_000,
+          directory,
+          file: ({ filename }) => filename,
+        })
+  );
+  if (isS3Upload) {
+    return await uploadToS3({
+      projectId,
+      formData,
+      db,
+    });
+  } else {
+    return await uploadToDisk({
+      projectId,
+      formData,
+      folderInPublic,
+      db,
+    });
   }
 };

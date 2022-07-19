@@ -32,16 +32,22 @@ type Error = {
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
   if (request.method === "POST") {
-    await uploadAssets({
-      request,
-      projectId: params.id,
-      db,
-      dirname: __dirname,
-    });
-
-    return {
-      ok: true,
-    };
+    try {
+      const a = await uploadAssets({
+        request,
+        projectId: params.id,
+        db,
+        dirname: __dirname,
+      });
+      console.log(a);
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    }
   }
 };
 
