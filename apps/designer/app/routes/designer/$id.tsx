@@ -44,7 +44,9 @@ export const action: ActionFunction = async ({ request, params }) => {
       };
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(error.message);
+        return {
+          error: error.message,
+        };
       }
     }
   }
