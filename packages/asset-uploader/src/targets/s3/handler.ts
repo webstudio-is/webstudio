@@ -4,7 +4,7 @@ import { Upload } from "@aws-sdk/lib-storage";
 import ObjectID from "bson-objectid";
 
 import sharp from "sharp";
-import { ImagesUploadedSuccess } from "../../types";
+import { ImagesUploadedSuccess, s3EnvVariables } from "../../types";
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
@@ -15,6 +15,7 @@ export const s3UploadHandler: UploadHandler = async ({
   filename: baseFileName,
   contentType,
 }) => {
+  s3EnvVariables.parse(process.env);
   if (!data) return;
   const filename = baseFileName ?? ObjectID().toString();
 
@@ -23,7 +24,7 @@ export const s3UploadHandler: UploadHandler = async ({
   const key = `${name}_${Date.now()}.${extension}`;
 
   const params: PutObjectCommandInput = {
-    Bucket: process.env.S3_BUCKET ?? "",
+    Bucket: process.env.S3_BUCKET,
     ACL: process.env.S3_ACL ?? "public-read",
     Key: key,
     Body: uint8Array,
@@ -34,11 +35,11 @@ export const s3UploadHandler: UploadHandler = async ({
   };
 
   const client = new S3Client({
-    endpoint: process.env.S3_ENDPOINT ?? "",
-    region: process.env.S3_REGION ?? "",
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION,
     credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+      accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
     },
   });
 
