@@ -15,7 +15,7 @@ export const s3UploadHandler: UploadHandler = async ({
   filename: baseFileName,
   contentType,
 }) => {
-  s3EnvVariables.parse(process.env);
+  const s3Envs = s3EnvVariables.parse(process.env);
   if (!data) return;
   const filename = baseFileName ?? ObjectID().toString();
 
@@ -24,8 +24,8 @@ export const s3UploadHandler: UploadHandler = async ({
   const key = `${name}_${Date.now()}.${extension}`;
 
   const params: PutObjectCommandInput = {
-    Bucket: process.env.S3_BUCKET,
-    ACL: process.env.S3_ACL ?? "public-read",
+    Bucket: s3Envs.S3_BUCKET,
+    ACL: s3Envs.S3_ACL ?? "public-read",
     Key: key,
     Body: uint8Array,
     ContentType: contentType,
@@ -35,11 +35,11 @@ export const s3UploadHandler: UploadHandler = async ({
   };
 
   const client = new S3Client({
-    endpoint: process.env.S3_ENDPOINT,
-    region: process.env.S3_REGION,
+    endpoint: s3Envs.S3_ENDPOINT,
+    region: s3Envs.S3_REGION,
     credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+      accessKeyId: s3Envs.S3_ACCESS_KEY_ID,
+      secretAccessKey: s3Envs.S3_SECRET_ACCESS_KEY,
     },
   });
 

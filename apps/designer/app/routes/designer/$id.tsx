@@ -6,6 +6,7 @@ import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
 import { uploadAssets } from "~/shared/db/misc.server";
+import { ErrorMessage } from "~/shared/error";
 
 export { links };
 
@@ -56,10 +57,10 @@ const DesignerRoute = () => {
   const actionData = useActionData();
   const data = useLoaderData<Data | Error>();
   if ("errors" in data) {
-    return <p>{data.errors}</p>;
+    return <ErrorMessage message={data.errors} />;
   }
   if (actionData && "errors" in actionData) {
-    return <p>{actionData.errors}</p>;
+    return <ErrorMessage message={actionData.errors} />;
   }
   return <Designer {...data} />;
 };
