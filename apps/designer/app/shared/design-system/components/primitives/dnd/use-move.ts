@@ -14,7 +14,6 @@
  * We had to copy this file from react-aria because we need pageX and pageY.
  */
 
-import type { MoveEvents, PointerType } from "@react-types/shared";
 import React, { HTMLAttributes, useMemo, useRef } from "react";
 import { useGlobalListeners } from "@react-aria/utils";
 
@@ -30,12 +29,60 @@ interface EventBase {
   altKey: boolean;
 }
 
+export type PointerType = "mouse" | "pen" | "touch" | "keyboard" | "virtual";
+
+interface BaseMoveEvent {
+  /** The pointer type that triggered the move event. */
+  pointerType: PointerType;
+  /** Whether the shift keyboard modifier was held during the move event. */
+  shiftKey: boolean;
+  /** Whether the ctrl keyboard modifier was held during the move event. */
+  ctrlKey: boolean;
+  /** Whether the meta keyboard modifier was held during the move event. */
+  metaKey: boolean;
+  /** Whether the alt keyboard modifier was held during the move event. */
+  altKey: boolean;
+}
+
+interface MoveStartEvent extends BaseMoveEvent {
+  /** The type of move event being fired. */
+  type: "movestart";
+  target: HTMLElement;
+  pageX: number;
+  pageY: number;
+}
+
+interface MoveMoveEvent extends BaseMoveEvent {
+  /** The type of move event being fired. */
+  type: "move";
+  /** The amount moved in the X direction since the last event. */
+  deltaX: number;
+  /** The amount moved in the Y direction since the last event. */
+  deltaY: number;
+  pageX: number;
+  pageY: number;
+}
+
+interface MoveEndEvent extends BaseMoveEvent {
+  /** The type of move event being fired. */
+  type: "moveend";
+}
+
+interface MoveEvents {
+  /** Handler that is called when a move interaction starts. */
+  onMoveStart?: (e: MoveStartEvent) => void;
+  /** Handler that is called when the element is moved. */
+  onMove?: (e: MoveMoveEvent) => void;
+  /** Handler that is called when a move interaction ends. */
+  onMoveEnd?: (e: MoveEndEvent) => void;
+}
+
 /**
  * Handles move interactions across mouse, touch, and keyboard, including dragging with
  * the mouse or touch, and using the arrow keys. Normalizes behavior across browsers and
  * platforms, and ignores emulated mouse events on touch devices.
  */
-export function useMove(props: /*MoveEvents*/ any): MoveResult {
+export function useMove(props: MoveEvents): MoveResult {
   let { onMoveStart, onMove, onMoveEnd } = props;
 
   let state = useRef<{
@@ -54,12 +101,21 @@ export function useMove(props: /*MoveEvents*/ any): MoveResult {
       state.current.didMove = false;
     };
     let move = (
-      originalEvent: any /*EventBase*/,
+      originalEvent: MouseEvent | TouchEvent | React.KeyboardEvent,
       pointerType: PointerType,
       deltaX: number,
       deltaY: number
     ) => {
       if (deltaX === 0 && deltaY === 0) {
+        return;
+      }
+
+      // FIXME: this is a temporary fix
+      // we need to figure out how to properly support keyboard and touch
+      if (
+        !(originalEvent.target instanceof HTMLElement) ||
+        !("pageX" in originalEvent)
+      ) {
         return;
       }
 
@@ -77,6 +133,7 @@ export function useMove(props: /*MoveEvents*/ any): MoveResult {
           pageY: originalEvent.pageY,
         });
       }
+
       onMove?.({
         type: "move",
         pointerType,
@@ -86,7 +143,6 @@ export function useMove(props: /*MoveEvents*/ any): MoveResult {
         metaKey: originalEvent.metaKey,
         ctrlKey: originalEvent.ctrlKey,
         altKey: originalEvent.altKey,
-        target: originalEvent.target,
         pageX: originalEvent.pageX,
         pageY: originalEvent.pageY,
       });
@@ -224,7 +280,7 @@ export function useMove(props: /*MoveEvents*/ any): MoveResult {
     }
 
     let triggerKeyboardMove = (
-      e: EventBase,
+      e: React.KeyboardEvent,
       deltaX: number,
       deltaY: number
     ) => {

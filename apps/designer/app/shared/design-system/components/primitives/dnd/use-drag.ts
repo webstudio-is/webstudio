@@ -3,26 +3,15 @@ import { useRef } from "react";
 
 type State =
   | {
-      status: "idle";
+      status: "idle" | "canceled";
     }
   | {
-      status: "pending";
+      status: "pending" | "dragging";
       x: number;
       y: number;
       initialX: number;
       initialY: number;
       shifts: number;
-    }
-  | {
-      status: "dragging";
-      x: number;
-      y: number;
-      initialX: number;
-      initialY: number;
-      shifts: number;
-    }
-  | {
-      status: "canceled";
     };
 
 const initialState = {
@@ -79,15 +68,7 @@ export const useDrag = ({
       };
       onStart({ target, cancel });
     },
-    onMove({
-      pageX: x,
-      pageY: y,
-      target,
-    }: {
-      pageX: number;
-      pageY: number;
-      target: HTMLElement;
-    }) {
+    onMove({ pageX: x, pageY: y }: { pageX: number; pageY: number }) {
       if (state.current.status === "canceled") {
         return;
       }

@@ -1,5 +1,5 @@
-import { ComponentStory, ComponentMeta } from "@storybook/react";
-import { useEffect, useRef, useState } from "react";
+import { ComponentMeta } from "@storybook/react";
+import { useRef, useState } from "react";
 import { Box } from "../../box";
 import { useDropTarget, type Area } from "./use-drop-target";
 import { useDrag } from "./use-drag";
@@ -42,6 +42,7 @@ export const Playground = () => {
 
   const dragProps = useDrag({
     onStart(event: any) {
+      // FIXME: can't have target here, won't work with iframe
       if (event.target.dataset.draggable === "false") {
         event.cancel();
         return;
@@ -55,7 +56,7 @@ export const Playground = () => {
       setPlacementIndicatorRect(undefined);
       handleHoldEnd();
     },
-    onShiftChange({ shifts, target }: any) {
+    onShiftChange({ shifts }: any) {
       console.log("shifts", shifts);
       if (dragItemRef.current) {
         dragItemRef.current.textContent = `shifted ${shifts}`;

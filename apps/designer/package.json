@@ -94,7 +94,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.18.5",
-    "@react-types/shared": "^3.13.1",
     "@remix-run/dev": "^1.6.4",
     "@storybook/addon-actions": "^6.5.9",
     "@storybook/addon-essentials": "^6.5.9",
