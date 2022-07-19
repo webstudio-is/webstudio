@@ -4,18 +4,20 @@ import { Box } from "../../box";
 import { useDropTarget, type Area } from "./use-drop-target";
 import { useDrag } from "./use-drag";
 import { getPlacement, PlacementIndicator, type Rect } from "./placement";
+import { useAutoScroll } from "./use-auto-scroll";
 
 export const Playground = () => {
   const [dropTargetRect, setDropTargetRect] = useState<Rect>();
   const [placementIndicatorRect, setPlacementIndicatorRect] = useState<Rect>();
   const holdRef = useRef<HTMLElement>();
   const dragItemRef = useRef<HTMLElement>();
+  const scrollRef = useRef<HTMLElement | null>(null);
 
   const handleHoldEnd = () => {
     holdRef.current?.style.removeProperty("background");
   };
 
-  const { rootRef, handleMove, handleEnd } = useDropTarget({
+  const dropTargetHandlers = useDropTarget({
     isDropTarget(element: HTMLElement) {
       return element.dataset.draggable === "true";
     },
@@ -31,7 +33,6 @@ export const Playground = () => {
       setDropTargetRect(rect);
       const placementRect = getPlacement({ target });
       setPlacementIndicatorRect(placementRect);
-      console.log("area", area);
     },
     onHold({ target }: { target: HTMLElement }) {
       handleHoldEnd();
@@ -40,24 +41,29 @@ export const Playground = () => {
     },
   });
 
+  const autoScrollHandlers = useAutoScroll({ target: scrollRef });
+
   const dragProps = useDrag({
     onStart(event: any) {
-      // FIXME: can't have target here, won't work with iframe
       if (event.target.dataset.draggable === "false") {
         event.cancel();
         return;
       }
       dragItemRef.current = event.target;
+      autoScrollHandlers.setEnabled(true);
     },
-    onMove: handleMove,
+    onMove: (poiterCoordinate: any) => {
+      dropTargetHandlers.handleMove(poiterCoordinate);
+      autoScrollHandlers.handleMove(poiterCoordinate);
+    },
     onEnd() {
-      handleEnd();
+      dropTargetHandlers.handleEnd();
       setDropTargetRect(undefined);
       setPlacementIndicatorRect(undefined);
       handleHoldEnd();
+      autoScrollHandlers.setEnabled(false);
     },
     onShiftChange({ shifts }: any) {
-      console.log("shifts", shifts);
       if (dragItemRef.current) {
         dragItemRef.current.textContent = `shifted ${shifts}`;
       }
@@ -65,7 +71,29 @@ export const Playground = () => {
   });
 
   return (
-    <Box {...dragProps} ref={rootRef} css={{ display: "flex" }}>
+    <Box
+      {...dragProps}
+      ref={(el) => {
+        dropTargetHandlers.rootRef(el);
+
+        // TODO: do same as above for consistency
+        scrollRef.current = el;
+      }}
+      css={{ display: "block", overflow: "auto", height: 500 }}
+    >
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
+      <Item background="$cyanA9" />
       <Item background="$cyanA9" />
       <Item background="$slateA9" />
       <Item background="$blueA9" draggable={false}>
