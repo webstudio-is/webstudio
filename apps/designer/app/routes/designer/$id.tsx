@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Project, Asset } from "@webstudio-is/react-sdk";
 import { Designer, links } from "~/designer";
@@ -53,9 +53,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 const DesignerRoute = () => {
+  const actionData = useActionData();
   const data = useLoaderData<Data | Error>();
   if ("errors" in data) {
     return <p>{data.errors}</p>;
+  }
+  if (actionData && "errors" in actionData) {
+    return <p>{actionData.errors}</p>;
   }
   return <Designer {...data} />;
 };
