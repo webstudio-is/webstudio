@@ -50,7 +50,11 @@ const Property = ({
           onChange(id, "prop", event.target.value);
         }}
       />
-      {!isInvalidProp ? (
+      {isInvalidProp ? (
+        <Tooltip content={`Invalid property name: ${prop}`}>
+          <ExclamationTriangleIcon width={12} height={12} />
+        </Tooltip>      
+      ) : (
         <Control
           type={type}
           required={required}
@@ -59,10 +63,6 @@ const Property = ({
           value={value}
           onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
         />
-      ) : (
-        <Tooltip content={`Invalid property name: ${prop}`}>
-          <ExclamationTriangleIcon width={12} height={12} />
-        </Tooltip>
       )}
       <Button
         ghost
