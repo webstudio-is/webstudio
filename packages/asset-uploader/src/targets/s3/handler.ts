@@ -1,3 +1,4 @@
+import { UploadHandlerPart } from "@remix-run/node";
 import { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import ObjectID from "bson-objectid";
@@ -7,12 +8,19 @@ import {
   assetEnvVariables,
   ImagesUploadedSuccess,
   s3EnvVariables,
-  S3UploadHandler,
 } from "../../schema";
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
 } from "../../helpers/array-buffer-helpers";
+
+export type S3UploadHandler = ({
+  file,
+  maxPartSize,
+}: {
+  file: UploadHandlerPart;
+  maxPartSize: number;
+}) => Promise<string>;
 
 export const s3UploadHandler: S3UploadHandler = async ({
   file: { data, filename: baseFileName, contentType },
@@ -20,7 +28,9 @@ export const s3UploadHandler: S3UploadHandler = async ({
 }) => {
   const s3Envs = s3EnvVariables.parse(process.env);
   const { MAX_UPLOAD_SIZE } = assetEnvVariables.parse(process.env);
-  if (!data) return;
+  if (!data) {
+    throw new Error("Your asset seems to be empty");
+  }
   const filename = baseFileName ?? ObjectID().toString();
 
   const uint8Array = await getArrayBufferFromIterable(data);
@@ -34,7 +44,7 @@ export const s3UploadHandler: S3UploadHandler = async ({
 
   const params: PutObjectCommandInput = {
     Bucket: s3Envs.S3_BUCKET,
-    ACL: s3Envs.S3_ACL ?? "public-read",
+    ACL: s3Envs.S3_ACL,
     Key: key,
     Body: uint8Array,
     ContentType: contentType,
