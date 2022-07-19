@@ -19,23 +19,20 @@ const getSpeed = (
   const startAdjusted = containerStart + thresholdSafe;
   const endAdjusted = containerEnd - thresholdSafe;
 
-  const distanceToSpeed = (distance: number) => {
+  const distanceFromEdgeToSpeed = (distance: number) => {
     // between 0 and 1
-    const urgency = Math.min(distance, thresholdSafe) / thresholdSafe;
+    const normalized = Math.min(distance, thresholdSafe) / thresholdSafe;
 
-    // speed in pixels second
-    const speed = urgency * (maxSpeed - minSpeed);
-
-    // speed in pixels per frame
-    return (speed * FRAME_PERIOD) / 1000;
+    // speed in pixels per second
+    return minSpeed + normalized * (maxSpeed - minSpeed);
   };
 
   if (pointerPosition < startAdjusted) {
-    return -1 * distanceToSpeed(startAdjusted - pointerPosition);
+    return -1 * distanceFromEdgeToSpeed(startAdjusted - pointerPosition);
   }
 
   if (pointerPosition > endAdjusted) {
-    return distanceToSpeed(pointerPosition - endAdjusted);
+    return distanceFromEdgeToSpeed(pointerPosition - endAdjusted);
   }
 
   return 0;
@@ -45,7 +42,7 @@ export const useAutoScroll = ({
   target,
   edgeDistanceThreshold = 100,
   minSpeed = 1,
-  maxSpeed = 30,
+  maxSpeed = 500,
 }: {
   target: MutableRefObject<HTMLElement | null>;
   edgeDistanceThreshold?: number;
@@ -87,8 +84,8 @@ export const useAutoScroll = ({
     state.current.prevTimestamp = timestamp;
 
     target.current.scrollBy(
-      elapsed * state.current.speedX,
-      elapsed * state.current.speedY
+      (state.current.speedX / 1000) * elapsed,
+      (state.current.speedY / 1000) * elapsed
     );
 
     scheduleStep();
