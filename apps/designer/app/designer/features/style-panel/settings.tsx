@@ -5,7 +5,7 @@ import {
   type CssRule,
   type Category,
   type Style,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { Flex, Collapsible, Button } from "~/shared/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import { styleConfigs, type StyleConfig } from "~/shared/style-panel-configs";

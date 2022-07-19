@@ -1,4 +1,4 @@
-import { publish } from "@webstudio-is/sdk";
+import { publish } from "@webstudio-is/react-sdk";
 import { useScrollState } from "~/shared/dom-hooks";
 
 export const usePublishScrollState = () => {

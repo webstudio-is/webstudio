@@ -1,4 +1,7 @@
-import { type AllUserProps, type UserPropsUpdates } from "@webstudio-is/sdk";
+import {
+  type AllUserProps,
+  type UserPropsUpdates,
+} from "@webstudio-is/react-sdk";
 import { updateAllUserPropsMutable } from "./update-props";
 
 describe("Update props", () => {

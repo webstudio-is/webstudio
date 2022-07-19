@@ -1,7 +1,12 @@
 import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { type Project, useSubscribe, usePublish } from "@webstudio-is/sdk";
+import { TouchBackend } from "react-dnd-touch-backend";
+import {
+  type Project,
+  type Asset,
+  useSubscribe,
+  usePublish,
+} from "@webstudio-is/react-sdk";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
@@ -167,12 +172,15 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
   );
 };
 
+const dndOptions = { enableMouseEvents: true };
+
 type DesignerProps = {
   config: Config;
   project: Project;
+  assets: Array<Asset>;
 };
 
-export const Designer = ({ config, project }: DesignerProps) => {
+export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -196,7 +204,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   );
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={TouchBackend} options={dndOptions}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <Topbar
           css={{ gridArea: "header" }}
@@ -219,7 +227,11 @@ export const Designer = ({ config, project }: DesignerProps) => {
           </Workspace>
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft onDragChange={setIsDragging} publish={publish} />
+          <SidebarLeft
+            assets={assets}
+            onDragChange={setIsDragging}
+            publish={publish}
+          />
         </SidePanel>
         <SidePanel
           gridArea="inspector"

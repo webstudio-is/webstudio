@@ -3,8 +3,8 @@ import type {
   Publish,
   UserProp,
   UserPropsUpdates,
-} from "@webstudio-is/sdk";
-import { componentsMeta } from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
+import { componentsMeta } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
 import uniqBy from "lodash/uniqBy";

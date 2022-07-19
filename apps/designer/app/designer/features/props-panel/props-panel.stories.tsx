@@ -1,5 +1,5 @@
 import { ComponentStoryObj } from "@storybook/react";
-import { componentsMeta, type UserProp } from "@webstudio-is/sdk";
+import { componentsMeta, type UserProp } from "@webstudio-is/react-sdk";
 import { PropsPanel } from "./props-panel";
 
 export default {

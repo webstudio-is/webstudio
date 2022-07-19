@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSubscribe, type Instance } from "@webstudio-is/sdk";
+import { useSubscribe, type Instance } from "@webstudio-is/react-sdk";
 import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import {
   createCommand,

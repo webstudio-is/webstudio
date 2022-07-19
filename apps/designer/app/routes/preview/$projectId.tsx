@@ -1,6 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
-import { Root } from "@webstudio-is/sdk";
+import { Root } from "@webstudio-is/react-sdk";
 import { loadPreviewData, type PreviewData, type ErrorData } from "~/shared/db";
 import env, { Env } from "~/env.server";
 

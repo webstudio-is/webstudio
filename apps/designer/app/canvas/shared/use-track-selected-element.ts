@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { type Instance, publish, useSubscribe } from "@webstudio-is/sdk";
+import { type Instance, publish, useSubscribe } from "@webstudio-is/react-sdk";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
   useRootInstance,

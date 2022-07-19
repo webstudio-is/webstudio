@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import {
   Flex,
   Text,
@@ -64,7 +64,7 @@ export const Tree = ({
     instance.children.length > 1 || typeof instance.children[0] === "object";
 
   const children = useMemo(() => {
-    if (isOpen === false || showChildren === false) {
+    if ((isOpen === false && animate === false) || showChildren === false) {
       return null;
     }
     const children = [];
@@ -127,7 +127,7 @@ export const Tree = ({
           <Text>{label}</Text>
         </Button>
       </Flex>
-      <CollapsibleContent>{children}</CollapsibleContent>
+      {children != null && <CollapsibleContent>{children}</CollapsibleContent>}
     </Collapsible.Root>
   );
 };

@@ -9,7 +9,7 @@ import {
   useAllUserProps,
   useSubscribe,
   publish,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import {
   deleteInstanceMutable,
   populateInstance,

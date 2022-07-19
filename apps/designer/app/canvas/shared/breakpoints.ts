@@ -5,7 +5,7 @@ import {
   useSubscribe,
   setBreakpoints,
   publish,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
   breakpointsContainer,

@@ -1,4 +1,4 @@
-import { publish } from "@webstudio-is/sdk";
+import { publish } from "@webstudio-is/react-sdk";
 import { useEffect } from "react";
 
 export const ErrorMessage = ({ message }: { message: string }) => {

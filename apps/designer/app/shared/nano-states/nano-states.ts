@@ -1,5 +1,5 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import { type Breakpoint, type Instance } from "@webstudio-is/sdk";
+import { type Breakpoint, type Instance } from "@webstudio-is/react-sdk";
 
 export const rootInstanceContainer = createValueContainer<
   Instance | undefined

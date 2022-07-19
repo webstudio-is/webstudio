@@ -2,7 +2,7 @@ import {
   type Tree,
   type AllUserProps,
   UserPropsSchema,
-} from "@webstudio-is/sdk";
+} from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "./prisma.server";
 import { Project } from "./project.server";

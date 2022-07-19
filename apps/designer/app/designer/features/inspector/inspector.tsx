@@ -1,4 +1,4 @@
-import type { Publish } from "@webstudio-is/sdk";
+import type { Publish } from "@webstudio-is/react-sdk";
 import {
   Text,
   Tabs,

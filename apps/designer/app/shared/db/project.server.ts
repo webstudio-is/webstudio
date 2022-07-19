@@ -1,6 +1,6 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import type { Project as BaseProject, User } from "@webstudio-is/sdk";
+import type { Project as BaseProject, User } from "@webstudio-is/react-sdk";
 import { z } from "zod";
 import { prisma, Prisma } from "./prisma.server";
 import * as db from ".";

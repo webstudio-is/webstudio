@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useDragLayer, type XYCoord } from "react-dnd";
-import { type Instance } from "@webstudio-is/sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import { ComponentThumb } from "./component-thumb";
 
