@@ -3,7 +3,7 @@ import { useRef, type MutableRefObject } from "react";
 // Time between framse of scroll animation in milliseconds
 const FRAME_PERIOD = 30;
 
-let getSpeed = (
+const getSpeed = (
   pointerPosition: number,
   containerStart: number,
   containerEnd: number,
