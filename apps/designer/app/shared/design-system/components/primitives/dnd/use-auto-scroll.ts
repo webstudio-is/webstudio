@@ -56,7 +56,7 @@ export const useAutoScroll = ({
 } => {
   const state = useRef({
     enabled: false,
-    prevTimestamp: 0,
+    prevTimestamp: undefined as number | undefined,
     speedX: 0,
     speedY: 0,
     stepScheduled: false,
@@ -71,6 +71,12 @@ export const useAutoScroll = ({
       (Math.round(state.current.speedX * FRAME_PERIOD) === 0 &&
         Math.round(state.current.speedY * FRAME_PERIOD) === 0)
     ) {
+      return;
+    }
+
+    if (state.current.prevTimestamp === undefined) {
+      state.current.prevTimestamp = timestamp;
+      scheduleStep();
       return;
     }
 
@@ -128,6 +134,7 @@ export const useAutoScroll = ({
     },
     setEnabled(newEnabled) {
       state.current.enabled = newEnabled;
+      state.current.prevTimestamp = undefined;
       scheduleStep();
     },
   };
