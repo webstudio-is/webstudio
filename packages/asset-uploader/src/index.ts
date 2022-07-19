@@ -1,4 +1,3 @@
-import { DEFAULT_UPLPOAD_PATH, S3_ENV_KEYS } from "./constants";
 import path from "path";
 import {
   unstable_createFileUploadHandler,
@@ -7,11 +6,9 @@ import {
 import { s3UploadHandler } from "./targets/s3/handler";
 import { uploadToS3 } from "./targets/s3/uploader";
 import { uploadToDisk } from "./targets/disk/upload";
-import { fsEnvVariables } from "./schema";
+import { fsEnvVariables, s3EnvVariables } from "./schema";
 
-const isS3Upload = Boolean(
-  S3_ENV_KEYS.every((key) => Object.keys(process.env).includes(key))
-);
+const isS3Upload = s3EnvVariables.safeParse(process.env).success;
 const fsUploadVars = fsEnvVariables.parse(process.env);
 
 export const uploadAsset = async ({
@@ -47,7 +44,7 @@ export const uploadAsset = async ({
     return await uploadToDisk({
       projectId,
       formData,
-      folderInPublic,
+      folderInPublic: fsUploadVars.FILE_UPLOAD_PATH,
       db,
     });
   }
