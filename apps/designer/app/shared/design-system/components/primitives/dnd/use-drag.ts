@@ -11,7 +11,7 @@ type State =
       y: number;
       initialX: number;
       initialY: number;
-      hasShifted: boolean;
+      shifts: number;
     }
   | {
       status: "dragging";
@@ -19,7 +19,7 @@ type State =
       y: number;
       initialX: number;
       initialY: number;
-      hasShifted: boolean;
+      shifts: number;
     }
   | {
       status: "canceled";
@@ -32,10 +32,9 @@ const initialState = {
 export const useDrag = ({
   startDistanceThreashold = 3,
   shiftDistanceThreshold = 20,
-  verticalDistanceTolerance = 5,
   onStart,
   onMove,
-  onShift,
+  onShiftChange,
   onEnd,
 }: any = {}) => {
   const state = useRef<State>(initialState);
@@ -44,19 +43,19 @@ export const useDrag = ({
     state.current = { status: "canceled" };
   };
 
-  const detectShift = (target: HTMLElement) => {
-    if (state.current.status !== "dragging" || state.current.hasShifted) {
+  const detectShift = () => {
+    if (state.current.status !== "dragging") {
       return;
     }
     const deltaX = state.current.x - state.current.initialX;
-    const hasShifted = Math.abs(deltaX) > shiftDistanceThreshold;
-    const hasVerticallyMoved =
-      Math.abs(state.current.y - state.current.initialY) >
-      verticalDistanceTolerance;
-    if (hasShifted && hasVerticallyMoved === false) {
-      const direction = deltaX > 0 ? "right" : "left";
-      state.current.hasShifted = true;
-      onShift({ direction, cancel, target });
+    const shifts =
+      deltaX > 0
+        ? Math.floor(deltaX / shiftDistanceThreshold)
+        : Math.ceil(deltaX / shiftDistanceThreshold);
+
+    if (shifts !== state.current.shifts) {
+      state.current.shifts = shifts;
+      onShiftChange({ shifts });
     }
   };
 
@@ -76,7 +75,7 @@ export const useDrag = ({
         y,
         initialX: x,
         initialY: y,
-        hasShifted: false,
+        shifts: 0,
       };
       onStart({ target, cancel });
     },
@@ -113,12 +112,12 @@ export const useDrag = ({
           y,
           initialX: state.current.initialX,
           initialY: state.current.initialY,
-          hasShifted: state.current.hasShifted,
+          shifts: state.current.shifts,
         };
       }
 
       onMove({ x, y });
-      detectShift(target);
+      detectShift();
     },
     onMoveEnd() {
       state.current = initialState;

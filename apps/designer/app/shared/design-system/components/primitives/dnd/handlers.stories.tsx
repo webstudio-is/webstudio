@@ -10,6 +10,7 @@ export const Playground = () => {
   const [dropTargetRect, setDropTargetRect] = useState<Rect>();
   const [placementIndicatorRect, setPlacementIndicatorRect] = useState<Rect>();
   const holdRef = useRef<HTMLElement>();
+  const dragItemRef = useRef<HTMLElement>();
 
   const handleHoldEnd = () => {
     holdRef.current?.style.removeProperty("background");
@@ -40,7 +41,9 @@ export const Playground = () => {
     onStart(event: any) {
       if (event.target.dataset.draggable === "false") {
         event.cancel();
+        return;
       }
+      dragItemRef.current = event.target;
     },
     onMove: handleMove,
     onEnd() {
@@ -49,11 +52,11 @@ export const Playground = () => {
       setPlacementIndicatorRect(undefined);
       handleHoldEnd();
     },
-    onShift({ direction, target }: any) {
-      target.textContent = `shifted ${direction}`;
-      setTimeout(() => {
-        target.textContent = "";
-      }, 1000);
+    onShiftChange({ shifts, target }: any) {
+      console.log("shifts", shifts);
+      if (dragItemRef.current) {
+        dragItemRef.current.textContent = `shifted ${shifts}`;
+      }
     },
   });
 
