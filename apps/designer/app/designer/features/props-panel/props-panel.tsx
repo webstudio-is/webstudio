@@ -46,6 +46,7 @@ const Property = ({
         placeholder="Property"
         name="prop"
         value={prop}
+        autoFocus={prop === ""}
         onChange={(event) => {
           onChange(id, "prop", event.target.value);
         }}
@@ -53,7 +54,7 @@ const Property = ({
       {isInvalidProp ? (
         <Tooltip content={`Invalid property name: ${prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
-        </Tooltip>      
+        </Tooltip>
       ) : (
         <Control
           type={type}
