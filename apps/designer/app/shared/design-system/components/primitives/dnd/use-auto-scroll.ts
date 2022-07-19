@@ -1,6 +1,6 @@
 import { useRef, type MutableRefObject } from "react";
 
-// Time between framse of scroll animation in milliseconds
+// Time between frames of scroll animation in milliseconds
 const FRAME_PERIOD = 30;
 
 const getSpeed = (
@@ -16,8 +16,8 @@ const getSpeed = (
     edgeDistanceThreshold
   );
 
-  const startAdjusted = containerStart + edgeDistanceThreshold;
-  const endAdjusted = containerEnd - edgeDistanceThreshold;
+  const startAdjusted = containerStart + thresholdSafe;
+  const endAdjusted = containerEnd - thresholdSafe;
 
   const distanceToSpeed = (distance: number) => {
     // between 0 and 1
