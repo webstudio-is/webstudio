@@ -1,25 +1,34 @@
-import { UploadHandler } from "@remix-run/node";
 import { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import ObjectID from "bson-objectid";
 
 import sharp from "sharp";
-import { ImagesUploadedSuccess, s3EnvVariables } from "../../schema";
+import {
+  assetEnvVariables,
+  ImagesUploadedSuccess,
+  s3EnvVariables,
+  S3UploadHandler,
+} from "../../schema";
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
 } from "../../helpers/array-buffer-helpers";
 
-export const s3UploadHandler: UploadHandler = async ({
-  data,
-  filename: baseFileName,
-  contentType,
+export const s3UploadHandler: S3UploadHandler = async ({
+  file: { data, filename: baseFileName, contentType },
+  maxPartSize,
 }) => {
   const s3Envs = s3EnvVariables.parse(process.env);
+  const { MAX_UPLOAD_SIZE } = assetEnvVariables.parse(process.env);
   if (!data) return;
   const filename = baseFileName ?? ObjectID().toString();
 
   const uint8Array = await getArrayBufferFromIterable(data);
+
+  if (uint8Array.byteLength > maxPartSize) {
+    throw new Error(`Your asset cannot be bigger than ${MAX_UPLOAD_SIZE}mb`);
+  }
+
   const [name, extension] = getFilenameAndExtension(filename);
   const key = `${name}_${Date.now()}.${extension}`;
 

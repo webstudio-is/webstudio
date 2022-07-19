@@ -6,10 +6,14 @@ import {
 import { s3UploadHandler } from "./targets/s3/handler";
 import { uploadToS3 } from "./targets/s3/uploader";
 import { uploadToDisk } from "./targets/disk/upload";
-import { fsEnvVariables, s3EnvVariables } from "./schema";
+import { assetEnvVariables, fsEnvVariables, s3EnvVariables } from "./schema";
 
 const isS3Upload = s3EnvVariables.safeParse(process.env).success;
 const fsUploadVars = fsEnvVariables.parse(process.env);
+const commonUploadVars = assetEnvVariables.parse(process.env);
+
+// user inputs the max value in mb and we transform it to bytes
+export const MAX_UPLOAD_SIZE = commonUploadVars.MAX_UPLOAD_SIZE * 1e6;
 
 export const uploadAssets = async ({
   request,
@@ -27,9 +31,13 @@ export const uploadAssets = async ({
   const formData = await unstable_parseMultipartFormData(
     request,
     isS3Upload
-      ? (file) => s3UploadHandler(file)
+      ? (file) =>
+          s3UploadHandler({
+            file,
+            maxPartSize: MAX_UPLOAD_SIZE,
+          })
       : unstable_createFileUploadHandler({
-          maxPartSize: 10_000_000,
+          maxPartSize: MAX_UPLOAD_SIZE,
           directory,
           file: ({ filename }) => filename,
         })

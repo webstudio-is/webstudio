@@ -1,3 +1,4 @@
+import { UploadHandlerPart } from "@remix-run/node";
 import { z } from "zod";
 import { NodeOnDiskFile } from "@remix-run/node";
 import { DEFAULT_UPLPOAD_PATH } from "./constants";
@@ -26,3 +27,15 @@ export const s3EnvVariables = z.object({
 export const fsEnvVariables = z.object({
   FILE_UPLOAD_PATH: z.string().optional().default(DEFAULT_UPLPOAD_PATH),
 });
+
+export const assetEnvVariables = z.object({
+  MAX_UPLOAD_SIZE: z.number().optional().default(10),
+});
+
+export type S3UploadHandler = ({
+  file,
+  maxPartSize,
+}: {
+  file: UploadHandlerPart;
+  maxPartSize: number;
+}) => Promise<File | string | null | undefined>;
