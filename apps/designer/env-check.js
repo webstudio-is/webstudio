@@ -14,6 +14,12 @@
 require("dotenv").config();
 
 const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET"];
+const S3_KEYS = [
+  "S3_ENDPOINT",
+  "S3_REGION",
+  "S3_SECRET_ACCESS_KEY",
+  "S3_ACCESS_KEY_ID",
+];
 
 const errors = [];
 
@@ -28,6 +34,21 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production DEPLOYMENT_URL is required for website functionality. Please set it to your production URL"
     );
   }
+}
+
+// check for when user has some S3 env variables but not all required
+if (
+  S3_KEYS.some((key) => Object.keys(process.env).includes(key)) &&
+  !S3_KEYS.every((key) => Object.keys(process.env).includes(key))
+) {
+  const notIncluded = S3_KEYS.filter(
+    (key) => !Object.keys(process.env).includes(key)
+  );
+  errors.push(
+    `👉 You don't have all the necessary envriroment variables to have S3 asset hosting, you are missing ${notIncluded.join(
+      ","
+    )}`
+  );
 }
 
 if (errors.length) {
