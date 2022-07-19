@@ -7,10 +7,12 @@ import {
 import { s3UploadHandler } from "./targets/s3/handler";
 import { uploadToS3 } from "./targets/s3/uploader";
 import { uploadToDisk } from "./targets/disk/upload";
+import { fsEnvVariables } from "./schema";
 
 const isS3Upload = Boolean(
   S3_ENV_KEYS.every((key) => Object.keys(process.env).includes(key))
 );
+const fsUploadVars = fsEnvVariables.parse(process.env);
 
 export const uploadAsset = async ({
   request,
@@ -24,8 +26,7 @@ export const uploadAsset = async ({
   dirname: string;
 }) => {
   const uploads = path.join(dirname, "../public");
-  const folderInPublic = process.env.FILE_UPLOAD_PATH || DEFAULT_UPLPOAD_PATH;
-  const directory = path.join(uploads, folderInPublic);
+  const directory = path.join(uploads, fsUploadVars.FILE_UPLOAD_PATH);
   const formData = await unstable_parseMultipartFormData(
     request,
     isS3Upload

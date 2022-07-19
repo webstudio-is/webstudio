@@ -4,7 +4,7 @@ import { Upload } from "@aws-sdk/lib-storage";
 import ObjectID from "bson-objectid";
 
 import sharp from "sharp";
-import { ImagesUploadedSuccess, s3EnvVariables } from "../../types";
+import { ImagesUploadedSuccess, s3EnvVariables } from "../../schema";
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
