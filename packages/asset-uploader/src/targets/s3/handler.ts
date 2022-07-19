@@ -14,7 +14,7 @@ import {
   getFilenameAndExtension,
 } from "../../helpers/array-buffer-helpers";
 
-export type S3UploadHandler = ({
+type S3UploadHandler = ({
   file,
   maxPartSize,
 }: {
