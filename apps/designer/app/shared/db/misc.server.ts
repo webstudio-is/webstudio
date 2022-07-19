@@ -1,8 +1,5 @@
-import { uploadAssets as assetUploaderAssetsUploader } from "@webstudio-is/asset-uploader";
+export { uploadAssets  } from "@webstudio-is/asset-uploader";
 import * as db from "./";
-
-export const uploadAssets = assetUploaderAssetsUploader;
-
 /**
  * Conceptually publishing is cloning all data that affects user site
  * and referencing it under a new tree id.
