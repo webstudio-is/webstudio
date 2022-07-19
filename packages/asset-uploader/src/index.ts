@@ -13,7 +13,7 @@ const fsUploadVars = fsEnvVariables.parse(process.env);
 const commonUploadVars = assetEnvVariables.parse(process.env);
 
 // user inputs the max value in mb and we transform it to bytes
-export const MAX_UPLOAD_SIZE = commonUploadVars.MAX_UPLOAD_SIZE * 1e6;
+export const MAX_UPLOAD_SIZE = parseInt(commonUploadVars.MAX_UPLOAD_SIZE) * 1e6;
 
 export const uploadAssets = async ({
   request,
