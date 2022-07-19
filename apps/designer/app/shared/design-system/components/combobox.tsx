@@ -4,19 +4,19 @@ import { TextField } from "./text-field";
 import { IconButton } from "./icon-button";
 import { MenuAnchor, Menu, MenuContent, MenuItem } from "./menu";
 
-type Item = { label: string };
+type Option = { label: string };
 
 type ComboboxProps = ComponentProps<typeof TextField> & {
-  items: Array<Item>;
-  onValueSelect: (value: string) => void;
-  onValueEnter: (value: string) => void;
-  onItemEnter: (value: string) => void;
-  onItemLeave: (value: string) => void;
-  value: string;
+  options: Array<Option>;
+  onValueSelect: (value: Option) => void;
+  onValueEnter: (value: Option) => void;
+  onItemEnter: (value: Option) => void;
+  onItemLeave: (value: Option) => void;
+  value: Option;
 };
 
 export const Combobox = ({
-  items,
+  options,
   onValueSelect,
   onValueEnter,
   onItemEnter,
@@ -72,15 +72,12 @@ export const Combobox = ({
       </IconButton>
       <MenuContent loop portalled asChild>
         <div>
-          {items.map(({ label }, index) => {
+          {options.map(({ label }, index) => {
             return (
               <MenuItem
                 key={index}
                 onMouseEnter={() => {
                   onItemEnter(label);
-                }}
-                onMouseLeave={() => {
-                  onItemLeave(label);
                 }}
                 onFocus={() => {
                   onItemEnter(label);
