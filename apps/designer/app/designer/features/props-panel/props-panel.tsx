@@ -4,7 +4,7 @@ import {
   type Publish,
   type UserProp,
 } from "@webstudio-is/react-sdk";
-import { Control } from "~/designer/features/props-panel/control";
+import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 import {
