@@ -15,3 +15,4 @@ export * from "./flex-direction";
 export * from "./flex-wrap";
 export * from "./gap";
 export * from "./justify-content";
+export * from "./lock";

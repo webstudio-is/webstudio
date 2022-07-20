@@ -74,6 +74,7 @@ type StyleSettingsProps = {
 };
 
 export const StyleSettings = ({
+  setProperty,
   currentStyle,
   search,
   ...rest
@@ -102,6 +103,7 @@ export const StyleSettings = ({
       if (isInCategory && isApplicable && isRendered === false) {
         const element = renderProperty({
           ...rest,
+          setProperty,
           currentStyle,
           styleConfig,
           category,
@@ -132,6 +134,7 @@ export const StyleSettings = ({
       >
         <>
           {renderCategory({
+            setProperty,
             currentStyle,
             category,
             styleConfigsByCategory,

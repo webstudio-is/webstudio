@@ -1,4 +1,4 @@
-import { ChangeEvent, ChangeEventHandler, useState } from "react";
+import { ChangeEvent, ChangeEventHandler, useState, useEffect } from "react";
 import {
   Box,
   Flex,
@@ -197,7 +197,7 @@ const ComboboxControl = ({
       return (
         <input
           type="number"
-          value={String(value.value)}
+          value={value.value}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             setValue(event.target.value)
           }
@@ -314,6 +314,14 @@ const GridControl = ({ css, currentStyle }: any) => {
   return <></>;
 };
 
+const LockControl = ({ css, currentStyle, setProperty }: any) => {
+  return (
+    <IconButton css={{ width: "100%", ...css }}>
+      <icons.lock.closed />
+    </IconButton>
+  );
+};
+
 const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
   const [isOpen, setIsOpen] = useState(false);
   if (styleConfigs.length === 0) return null;
@@ -371,14 +379,16 @@ export const renderProperty = ({
 };
 
 type RenderCategoryProps = {
+  setProperty: SetProperty;
   currentStyle: Style;
   category: Category;
   styleConfigsByCategory: JSX.Element[];
   moreStyleConfigsByCategory: JSX.Element[];
 };
-// Categories should render themselves because most Categories will not be dump un-ordered lists with
+// Categories should render themselves because most Categories will not be flat un-ordered lists with
 // the new designs, refactor ColorControl, SpacingControl if needed.
 export const renderCategory = ({
+  setProperty,
   currentStyle,
   category,
   styleConfigsByCategory,
@@ -389,26 +399,6 @@ export const renderCategory = ({
       const display = currentStyle.display?.value;
       switch (currentStyle.display?.value) {
         case "flex": {
-          styleConfigsByCategory = [
-            <GridControl
-              key="grid"
-              css={{ gridArea: "grid" }}
-              currentStyle={currentStyle}
-            />,
-            <Box
-              key="lock"
-              css={{
-                gridArea: "lock",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              <IconButton>
-                <LockClosedIcon />
-              </IconButton>
-            </Box>,
-            ...styleConfigsByCategory,
-          ];
           return (
             <>
               <Grid
@@ -417,13 +407,26 @@ export const renderCategory = ({
                   gridTemplateColumns: "repeat(12, 1fr);",
                   gridTemplateRows: "auto auto auto auto",
                   gridTemplateAreas: `
-                  "display display display display display display display display display display display display"
-                  "grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems . ."
-                  "grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent . ."
-                  "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
-                `,
+                    "display display display display display display display display display display display display"
+                    "grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems . ."
+                    "grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent . ."
+                    "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
+                  `,
+                  "[data-property=placeContent]": {
+                    display: "none",
+                  },
                 }}
               >
+                <GridControl
+                  css={{ gridArea: "grid" }}
+                  currentStyle={currentStyle}
+                  setProperty={setProperty}
+                />
+                <LockControl
+                  css={{ gridArea: "lock" }}
+                  currentStyle={currentStyle}
+                  setProperty={setProperty}
+                />
                 {styleConfigsByCategory}
               </Grid>
               <ShowMore styleConfigs={moreStyleConfigsByCategory} />
