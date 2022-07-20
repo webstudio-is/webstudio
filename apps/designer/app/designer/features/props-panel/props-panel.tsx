@@ -53,6 +53,7 @@ const Property = ({
     >
       <Combobox
         name="prop"
+        autoFocus={prop === ""}
         options={allProps}
         value={{
           value: prop,

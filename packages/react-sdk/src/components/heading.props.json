@@ -2200,5 +2200,47 @@
     "control": {
       "type": "text"
     }
+  },
+  "tag": {
+    "defaultValue": {
+      "value": "h1"
+    },
+    "description": "",
+    "name": "tag",
+    "declarations": [
+      {
+        "fileName": "src/components/heading.tsx",
+        "name": "TypeLiteral"
+      }
+    ],
+    "required": false,
+    "type": {
+      "name": "enum",
+      "raw": "\"h1\" | \"h2\" | \"h3\" | \"h4\" | \"h5\" | \"h6\"",
+      "value": [
+        {
+          "value": "\"h1\""
+        },
+        {
+          "value": "\"h2\""
+        },
+        {
+          "value": "\"h3\""
+        },
+        {
+          "value": "\"h4\""
+        },
+        {
+          "value": "\"h5\""
+        },
+        {
+          "value": "\"h6\""
+        }
+      ]
+    },
+    "control": {
+      "type": "select"
+    },
+    "options": ["h1", "h2", "h3", "h4", "h5", "h6"]
   }
 }

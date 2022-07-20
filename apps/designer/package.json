@@ -55,6 +55,7 @@
     "@sentry/remix": "^7.5.0",
     "@stitches/react": "^1.2.7",
     "@vercel/node": "^2.4.1",
+    "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/react-sdk": "*",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
