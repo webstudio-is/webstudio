@@ -2,61 +2,65 @@ import { ComponentStory } from "@storybook/react";
 import React from "react";
 import { Combobox } from "~/shared/design-system";
 import { TextField } from "./text-field";
+import { Flex } from "./flex";
+import { ChevronDownIcon } from "~/shared/icons";
+import { IconButton } from "./icon-button";
 
 export default {
   component: Combobox,
 };
 
 export const Simple: ComponentStory<typeof Combobox> = () => {
-  const options = [
-    { label: "Apple" },
-    { label: "Banana" },
-    { label: "Orange" },
-  ];
-  const [value, setValue] = React.useState(options[0]);
+  const items = [{ label: "Apple" }, { label: "Banana" }, { label: "Orange" }];
+  const [value, setValue] = React.useState(items[0]);
   return (
     <Combobox
       name="fruit"
-      options={options}
+      items={items}
       value={value}
-      onOptionSelect={setValue}
+      onItemSelect={setValue}
     />
   );
 };
 export const CustomInput: ComponentStory<typeof Combobox> = () => {
-  const options = [
+  const items = [
     { label: "Apple", value: "apple", disabled: true },
     { label: "Banana", value: "banana" },
     { label: "Orange", value: "orange" },
   ];
-  const [value, setValue] = React.useState(options[0]);
+  const [value, setValue] = React.useState(items[0]);
 
   return (
     <Combobox
       name="fruit"
-      options={options}
+      items={items}
       value={value}
-      onOptionSelect={setValue}
-      onOptionHighlight={(option) => {
-        console.log(option);
+      onItemSelect={setValue}
+      onItemHighlight={(item) => {
+        console.log(item);
       }}
-      disclosure={(props) => (
-        <TextField
-          {...props}
-          onKeyDown={(event) => {
-            props.onKeyDown(event);
-            switch (event.key) {
-              case "Enter": {
-                console.log(props.value);
-                break;
+      disclosure={({ inputProps, toggleProps }) => (
+        <Flex>
+          <TextField
+            {...inputProps}
+            onKeyDown={(event) => {
+              inputProps?.onKeyDown(event);
+              switch (event.key) {
+                case "Enter": {
+                  console.log(inputProps.value);
+                  break;
+                }
               }
-            }
-          }}
-          onBlur={(event) => {
-            props.onBlur(event);
-            console.log(props.value);
-          }}
-        />
+            }}
+            onBlur={(event) => {
+              inputProps?.onBlur(event);
+              console.log(inputProps.value);
+            }}
+          />
+          <IconButton variant="ghost" size="1" {...toggleProps}>
+            <ChevronDownIcon />
+          </IconButton>
+        </Flex>
       )}
     />
   );

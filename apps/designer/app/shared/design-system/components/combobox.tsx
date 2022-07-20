@@ -1,52 +1,59 @@
+import { type ComponentProps, useState } from "react";
 import { CheckIcon } from "@radix-ui/react-icons";
+import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox } from "downshift";
 import { matchSorter } from "match-sorter";
-import { type ComponentProps, useState } from "react";
-import {
-  Box,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  styled,
-} from "~/shared/design-system";
-import { itemCss } from "~/shared/design-system/components/menu";
-import { panelStyles } from "~/shared/design-system/components/panel";
-import { ChevronDownIcon } from "~/shared/icons";
+import { styled, type CSS } from "../stitches.config";
+import { itemCss } from "./menu";
+import { panelStyles } from "./panel";
 import { IconButton } from "./icon-button";
 import { TextField } from "./text-field";
+import { Box } from "./box";
 
-type BaseOption = { label: string };
+type BaseItem = { label: string; disabled?: boolean };
 
-const getTextValue = <Option extends BaseOption>(option?: Option) => {
-  return option ? option.label : "";
+const getTextValue = <Item extends BaseItem>(item?: Item) => {
+  return item ? item.label : "";
 };
 
-type DisclosureProps = ComponentProps<typeof TextField>;
-
-type ComboboxProps<Option> = {
+type ComboboxProps<Item> = {
   name: string;
-  options: ReadonlyArray<Option>;
-  value?: Option;
-  onOptionSelect?: (value: Option) => void;
-  onOptionHighlight?: (value?: Option) => void;
-  disclosure?: (props: DisclosureProps) => JSX.Element;
+  items: Array<Item>;
+  value?: Item;
+  onItemSelect?: (value: Item) => void;
+  onItemHighlight?: (value?: Item) => void;
+  disclosure?: (items: {
+    inputProps: ComponentProps<typeof TextField>;
+    toggleProps: ComponentProps<typeof IconButton>;
+  }) => JSX.Element;
+  // @todo should we spread those props flat?
+  popperProps?: ComponentProps<typeof PopperContent>;
+  listCss: CSS;
 };
 
-const Listbox = styled("ul", panelStyles, { padding: 0, margin: 0 });
-const ListboxItem = styled("li", itemCss, { padding: 0, margin: 0 });
+const Listbox = styled("ul", panelStyles, {
+  padding: 0,
+  margin: 0,
+  overflow: "auto",
+  // @todo need some non-hardcoded value
+  maxHeight: 400,
+});
+const ListboxItem = styled("li", itemCss);
 
-export const Combobox = <Option extends BaseOption>({
-  options,
+export const Combobox = <Item extends BaseItem>({
+  items,
   value,
   name,
-  onOptionSelect,
-  onOptionHighlight,
-  disclosure = (props) => <TextField {...props} />,
-}: ComboboxProps<Option>) => {
-  const [items, setItems] = useState(options);
+  popperProps,
+  listCss,
+  onItemSelect,
+  onItemHighlight,
+  disclosure = ({ inputProps }) => <TextField {...inputProps} />,
+}: ComboboxProps<Item>) => {
+  const [filteredItems, setFilteredItems] = useState(items);
   const {
     isOpen,
-    // getToggleButtonProps,
+    getToggleButtonProps,
     // getLabelProps,
     getMenuProps,
     getInputProps,
@@ -56,62 +63,66 @@ export const Combobox = <Option extends BaseOption>({
     selectedItem,
   } = useCombobox({
     onInputValueChange({ inputValue }) {
-      const filteredItems = matchSorter(options, inputValue, {
-        keys: ["label", "value"],
-      });
-      setItems(filteredItems);
+      if (inputValue) {
+        const filteredItems = matchSorter(items, inputValue, {
+          keys: ["label", "value"],
+        });
+        setFilteredItems(filteredItems);
+      }
     },
-    items,
+    items: filteredItems,
     selectedItem: value,
     itemToString(item) {
       return item ? item.label : "";
     },
     onSelectedItemChange({ selectedItem }) {
-      onOptionSelect?.(selectedItem);
+      if (selectedItem) {
+        onItemSelect?.(selectedItem);
+      }
     },
     onHighlightedIndexChange({ highlightedIndex }) {
-      onOptionHighlight?.(items[highlightedIndex]);
+      if (highlightedIndex !== undefined) {
+        onItemHighlight?.(items[highlightedIndex]);
+      }
     },
   });
 
+  const inputProps = getInputProps({ name });
+  const toggleProps = getToggleButtonProps();
+  const comboboxProps = getComboboxProps();
+  const menuProps = getMenuProps();
+
   return (
-    <Box
-      {...getComboboxProps()}
-      css={{
-        position: "relative",
-      }}
-    >
-      {disclosure(getInputProps({ name }))}
-      {/*<IconButton variant="ghost" size="1">*/}
-      {/*  <ChevronDownIcon />*/}
-      {/*</IconButton>*/}
-      {isOpen && (
-        <Listbox
-          {...getMenuProps()}
-          css={{
-            position: "absolute",
-            width: "100%",
-          }}
-        >
-          {items.map((item, index) => {
-            return (
-              <ListboxItem
-                key={index}
-                {...getItemProps({
+    <Popper>
+      <Box {...comboboxProps}>
+        <PopperAnchor asChild>
+          {disclosure({ inputProps, toggleProps })}
+        </PopperAnchor>
+        {isOpen && (
+          <PopperContent {...popperProps}>
+            <Listbox {...menuProps} css={listCss}>
+              {filteredItems.map((item, index) => {
+                const itemProps = getItemProps({
                   item,
                   index,
-                  disabled: item.disabled,
-                  ...(item.disabled ? { "data-disabled": true } : {}),
+                  key: index,
+                  ...(item.disabled
+                    ? { "data-disabled": true, disabled: true }
+                    : {}),
                   ...(highlightedIndex === index ? { "data-found": true } : {}),
-                })}
-              >
-                {getTextValue<Option>(item)}
-                {selectedItem === item && <CheckIcon />}
-              </ListboxItem>
-            );
-          })}
-        </Listbox>
-      )}
-    </Box>
+                });
+
+                return (
+                  <ListboxItem {...itemProps}>
+                    {selectedItem === item && <CheckIcon />}
+                    {getTextValue<Item>(item)}
+                  </ListboxItem>
+                );
+              })}
+            </Listbox>
+          </PopperContent>
+        )}
+      </Box>
+    </Popper>
   );
 };

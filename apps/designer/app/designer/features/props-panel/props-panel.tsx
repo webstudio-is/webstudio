@@ -54,23 +54,29 @@ const Property = ({
       <Combobox
         name="prop"
         autoFocus={prop === ""}
-        options={allProps}
+        items={allProps}
         value={{
           value: prop,
           label: prop,
         }}
-        onOptionSelect={({ value }) => {
+        onItemSelect={({ value }) => {
           console.log(value);
           onChange(id, "prop", value);
         }}
-        disclosure={(props) => (
+        disclosure={({ inputProps }) => (
           <TextField
-            {...props}
+            {...inputProps}
             readOnly={required}
             variant="ghost"
             placeholder="Property"
           />
         )}
+        popperProps={{
+          align: "start",
+          sideOffset: 5,
+        }}
+        // @todo should we use the side panel (width - x) or something?
+        listCss={{ width: 230 }}
       />
 
       {isInvalidProp ? (
