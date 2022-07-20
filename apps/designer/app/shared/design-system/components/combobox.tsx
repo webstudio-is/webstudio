@@ -3,6 +3,7 @@ import { useCombobox } from "downshift";
 import { matchSorter } from "match-sorter";
 import { type ComponentProps, useState } from "react";
 import {
+  Box,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -31,8 +32,8 @@ type ComboboxProps<Option> = {
   disclosure?: (props: DisclosureProps) => JSX.Element;
 };
 
-const Listbox = styled("ul", panelStyles, { margin: 0 });
-const ListboxItem = styled("li", itemCss);
+const Listbox = styled("ul", panelStyles, { padding: 0, margin: 0 });
+const ListboxItem = styled("li", itemCss, { padding: 0, margin: 0 });
 
 export const Combobox = <Option extends BaseOption>({
   options,
@@ -74,30 +75,43 @@ export const Combobox = <Option extends BaseOption>({
   });
 
   return (
-    <div {...getComboboxProps()}>
+    <Box
+      {...getComboboxProps()}
+      css={{
+        position: "relative",
+      }}
+    >
       {disclosure(getInputProps({ name }))}
-      <IconButton variant="ghost" size="1">
-        <ChevronDownIcon />
-      </IconButton>
-      <Listbox {...getMenuProps()}>
-        {items.map((item, index) => {
-          return (
-            <ListboxItem
-              key={index}
-              {...getItemProps({
-                item,
-                index,
-                disabled: item.disabled,
-                ...(item.disabled ? { "data-disabled": true } : {}),
-                ...(highlightedIndex === index ? { "data-found": true } : {}),
-              })}
-            >
-              {getTextValue<Option>(item)}
-              {selectedItem === item && <CheckIcon />}
-            </ListboxItem>
-          );
-        })}
-      </Listbox>
-    </div>
+      {/*<IconButton variant="ghost" size="1">*/}
+      {/*  <ChevronDownIcon />*/}
+      {/*</IconButton>*/}
+      {isOpen && (
+        <Listbox
+          {...getMenuProps()}
+          css={{
+            position: "absolute",
+            width: "100%",
+          }}
+        >
+          {items.map((item, index) => {
+            return (
+              <ListboxItem
+                key={index}
+                {...getItemProps({
+                  item,
+                  index,
+                  disabled: item.disabled,
+                  ...(item.disabled ? { "data-disabled": true } : {}),
+                  ...(highlightedIndex === index ? { "data-found": true } : {}),
+                })}
+              >
+                {getTextValue<Option>(item)}
+                {selectedItem === item && <CheckIcon />}
+              </ListboxItem>
+            );
+          })}
+        </Listbox>
+      )}
+    </Box>
   );
 };

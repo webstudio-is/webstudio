@@ -7,7 +7,14 @@ import {
 import { Control } from "~/designer/features/props-panel/control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { Box, Button, Grid, TextField, Tooltip } from "~/shared/design-system";
+import {
+  Box,
+  Button,
+  Combobox,
+  Grid,
+  TextField,
+  Tooltip,
+} from "~/shared/design-system";
 import { PlusIcon, TrashIcon, ExclamationTriangleIcon } from "~/shared/icons";
 import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
@@ -35,25 +42,40 @@ const Property = ({
   const type = argType?.control.type || "text";
   const defaultValue = argType?.control.defaultValue;
   const options = argType?.options;
+  const allProps = Object.keys(meta.argTypes).map((prop) => ({
+    value: prop,
+    label: prop,
+  }));
   return (
     <Grid
       gap="1"
       css={{ gridTemplateColumns: "1fr 1fr auto", alignItems: "center" }}
     >
-      <TextField
-        readOnly={required}
-        variant="ghost"
-        placeholder="Property"
+      <Combobox
         name="prop"
-        value={prop}
-        onChange={(event) => {
-          onChange(id, "prop", event.target.value);
+        options={allProps}
+        value={{
+          value: prop,
+          label: prop,
         }}
+        onOptionSelect={({ value }) => {
+          console.log(value);
+          onChange(id, "prop", value);
+        }}
+        disclosure={(props) => (
+          <TextField
+            {...props}
+            readOnly={required}
+            variant="ghost"
+            placeholder="Property"
+          />
+        )}
       />
+
       {isInvalidProp ? (
         <Tooltip content={`Invalid property name: ${prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
-        </Tooltip>      
+        </Tooltip>
       ) : (
         <Control
           type={type}
