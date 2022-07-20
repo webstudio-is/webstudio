@@ -1,8 +1,5 @@
 name: Main workflow
-on: 
- push:
-   paths:
-      - '!packages/react-sdk/**'
+on: [push]
 jobs:
   checks:
     env:
