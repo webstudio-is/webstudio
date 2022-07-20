@@ -2,7 +2,8 @@ name: SDK publish
 on: 
  push:
    paths:
-      - 'packages/react-sdk/**'
+      - 'packages/react-sdk/**/*'
+      - '.github/workflows/react-sdk-publish.yml'
 jobs:
   publish:
     runs-on: ubuntu-latest
