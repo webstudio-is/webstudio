@@ -85,8 +85,6 @@ interface MoveEvents {
  * platforms, and ignores emulated mouse events on touch devices.
  */
 export function useMove(props: MoveEvents): MoveResult {
-  let { onMoveStart, onMove, onMoveEnd } = props;
-
   let state = useRef<{
     didMove: boolean;
     lastPosition: { pageX: number; pageY: number } | null;
@@ -94,6 +92,13 @@ export function useMove(props: MoveEvents): MoveResult {
   }>({ didMove: false, lastPosition: null, id: null });
 
   let { addGlobalListener, removeGlobalListener } = useGlobalListeners();
+
+  // Because addGlobalListener is used to set callbacks,
+  // noramlly it will "see" the version of "props" at the time of addGlobalListener call.
+  // This in turn means that user's callbakcs will see old state variables etc.
+  // To workaround this, we use a ref that always points to the latest props.
+  let latestProps = useRef<MoveEvents>(props);
+  latestProps.current = props;
 
   let moveProps = useMemo(() => {
     let moveProps: HTMLAttributes<HTMLElement> = {};
@@ -123,7 +128,7 @@ export function useMove(props: MoveEvents): MoveResult {
 
       if (!state.current.didMove) {
         state.current.didMove = true;
-        onMoveStart?.({
+        latestProps.current.onMoveStart?.({
           type: "movestart",
           pointerType,
           shiftKey: originalEvent.shiftKey,
@@ -136,7 +141,7 @@ export function useMove(props: MoveEvents): MoveResult {
         });
       }
 
-      onMove?.({
+      latestProps.current.onMove?.({
         type: "move",
         pointerType,
         deltaX: deltaX,
@@ -152,7 +157,7 @@ export function useMove(props: MoveEvents): MoveResult {
     let end = (originalEvent: EventBase, pointerType: PointerType) => {
       //restoreTextSelection();
       if (state.current.didMove) {
-        onMoveEnd?.({
+        latestProps.current.onMoveEnd?.({
           type: "moveend",
           pointerType,
           shiftKey: originalEvent.shiftKey,
@@ -321,14 +326,7 @@ export function useMove(props: MoveEvents): MoveResult {
     };
 
     return moveProps;
-  }, [
-    state,
-    onMoveStart,
-    onMove,
-    onMoveEnd,
-    addGlobalListener,
-    removeGlobalListener,
-  ]);
+  }, [addGlobalListener, removeGlobalListener]);
 
   return { moveProps };
 }
