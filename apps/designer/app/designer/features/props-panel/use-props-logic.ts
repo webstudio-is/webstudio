@@ -85,6 +85,7 @@ export const usePropsLogic = ({
   }>({});
 
   // @todo this may call the last callback after unmount
+  // @todo we don't need to debounce change events on select for instance, so debounce is only needed on text inputs
   const updateProps = debounce((updates: UserPropsUpdates["updates"]) => {
     publish<"updateProps", UserPropsUpdates>({
       type: "updateProps",
@@ -98,7 +99,7 @@ export const usePropsLogic = ({
     for (const update of updates) {
       delete propsToPublishRef.current[update.id];
     }
-  }, 1000);
+  }, 100);
 
   const deleteProp = (id: UserProp["id"]) => {
     publish<"deleteProp", DeleteProp>({

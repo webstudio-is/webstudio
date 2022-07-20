@@ -50,7 +50,10 @@ describe("usePropsLogic", () => {
         publish: jest.fn(),
       })
     );
-    expect(res1.current.userProps[0]).toBeUndefined();
+    expect(res1.current.userProps[0]).toMatchObject({
+      prop: "tag",
+      value: "h1",
+    });
     expect(res2.current.userProps[0]).toMatchObject({
       prop: "type",
       value: "submit",
