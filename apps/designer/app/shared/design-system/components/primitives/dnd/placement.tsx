@@ -52,11 +52,11 @@ const getClosestRectIndex = (rects: Rect[], point: Coordinates) => {
 
 const isEqualRect = (a: Rect | undefined, b: Rect) => {
   return (
-    a === undefined ||
-    (a.top === b.top &&
-      a.left === b.left &&
-      a.width === b.width &&
-      a.height === b.height)
+    a !== undefined &&
+    a.top === b.top &&
+    a.left === b.left &&
+    a.width === b.width &&
+    a.height === b.height
   );
 };
 
