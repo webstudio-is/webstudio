@@ -18,6 +18,6 @@ module.exports = {
   serverBuildPath: "api/index.js",
   // publicPath: "/build/",
   watchPaths: () => {
-    return ["../../packages/webstudio-react-sdk/lib/**/*"];
+    return ["../../packages/react-sdk/lib/**/*"];
   },
 };
