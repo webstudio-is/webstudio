@@ -14,8 +14,7 @@
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
-    "storybook": "turbo run storybook:run",
-    "publish:react-sdk": "turbo run prepublishOnly --filter react-sdk"
+    "storybook": "turbo run storybook:run"
   },
   "devDependencies": {
     "eslint-config-custom": "*",

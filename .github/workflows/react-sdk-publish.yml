@@ -12,7 +12,6 @@ jobs:
         with:
           node-version: 16
       - run: yarn install
-      - run: yarn publish:react-sdk
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
