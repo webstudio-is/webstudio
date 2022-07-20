@@ -62,10 +62,11 @@
     "mitt": "^3.0.0",
     "prisma": "^3.10.0",
     "react-nano-state": "^0.4.0",
+    "jest-config": "*",
     "zod": "^3.17.3"
   },
   "main": "lib/index.js",
-  "types": "src/index.ts",
+  "types": "lib/index.d.ts",
   "files": [
     "lib/*",
     "README.md",
