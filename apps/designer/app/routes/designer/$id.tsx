@@ -1,17 +1,12 @@
-import { useLoaderData } from "@remix-run/react";
-import path from "path";
-import {
-  ActionFunction,
-  LoaderFunction,
-  unstable_createFileUploadHandler,
-  unstable_parseMultipartFormData,
-} from "@remix-run/node";
+import { useActionData, useLoaderData } from "@remix-run/react";
+import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Project, Asset } from "@webstudio-is/react-sdk";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
 import env from "~/env.server";
-import { ImagesUpload } from "~/designer/features/sidebar-left/types";
+import { uploadAssets } from "~/shared/db/misc.server";
+import { ErrorMessage } from "~/shared/error";
 
 export { links };
 
@@ -37,55 +32,35 @@ type Error = {
 
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
-  const uploads = path.join(__dirname, "../public");
-  const folderInPublic =
-    process.env.FILE_UPLOAD_PATH || config.defaultUploadPath;
-  const directory = path.join(uploads, folderInPublic);
-  try {
-    const formData = await unstable_parseMultipartFormData(
-      request,
-      unstable_createFileUploadHandler({
-        maxPartSize: 10_000_000,
-        directory,
-        file: ({ filename }) => filename,
-      })
-    );
-
-    const imagesInfo = ImagesUpload.parse(formData.getAll("image"));
-
-    const allInfo = imagesInfo.map(async (image) => {
-      const arrayBuffer = await image.arrayBuffer();
-      const data = {
-        name: image.name,
-        path: path.join("/", folderInPublic, image.name),
-        size: image.size,
-        arrayBuffer,
-      };
-
-      const projectId = params.id as string;
-      const newAsset = await db.assets.create(projectId, data);
-
-      return newAsset;
-    });
-
-    await Promise.all(allInfo);
-
-    return {
-      ok: true,
-    };
-  } catch (error) {
-    if (error instanceof Error) {
+  if (request.method === "POST") {
+    try {
+      const assets = await uploadAssets({
+        request,
+        projectId: params.id,
+        db,
+        dirname: __dirname,
+      });
       return {
-        errors: error.message,
+        assets,
       };
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          errors: error.message,
+        };
+      }
     }
   }
 };
 
 const DesignerRoute = () => {
+  const actionData = useActionData();
   const data = useLoaderData<Data | Error>();
   if ("errors" in data) {
-    return <p>{data.errors}</p>;
+    return <ErrorMessage message={data.errors} />;
+  }
+  if (actionData && "errors" in actionData) {
+    return <ErrorMessage message={actionData.errors} />;
   }
   return <Designer {...data} />;
 };
