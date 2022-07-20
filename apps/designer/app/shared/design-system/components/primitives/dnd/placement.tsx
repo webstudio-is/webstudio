@@ -50,6 +50,16 @@ const getClosestRectIndex = (rects: Rect[], point: Coordinates) => {
   return sorted[0].index;
 };
 
+const isEqualRect = (a: Rect | undefined, b: Rect) => {
+  return (
+    a === undefined ||
+    (a.top === b.top &&
+      a.left === b.left &&
+      a.width === b.width &&
+      a.height === b.height)
+  );
+};
+
 type Parameters = {
   onPalcementChange: (event: { index: number; placementRect: Rect }) => void;
 };
@@ -68,6 +78,7 @@ export const usePlacement = ({ onPalcementChange }: Parameters): Handlers => {
     targetRect: undefined as DOMRect | undefined,
     pointerCoordinate: undefined as Coordinates | undefined,
     index: undefined as number | undefined,
+    placementRext: undefined as Rect | undefined,
   });
 
   const getChildrenRects = (parent: HTMLElement, parentRect: DOMRect) => {
@@ -133,7 +144,9 @@ export const usePlacement = ({ onPalcementChange }: Parameters): Handlers => {
     }
   };
 
-  const detectChange = (reason: "move" | "scroll" | "target-change") => {
+  const detectChange = (
+    reason: "pointer-move" | "scroll" | "target-change"
+  ) => {
     const { target, pointerCoordinate } = state.current;
 
     if (target === undefined || pointerCoordinate === undefined) {
@@ -141,23 +154,30 @@ export const usePlacement = ({ onPalcementChange }: Parameters): Handlers => {
     }
 
     const nextTargetRect = target.getBoundingClientRect();
-    const targetRectChanged =
-      state.current.targetRect === undefined ||
-      nextTargetRect.top !== state.current.targetRect.top ||
-      nextTargetRect.left !== state.current.targetRect.left ||
-      nextTargetRect.width !== state.current.targetRect.width ||
-      nextTargetRect.height !== state.current.targetRect.height;
+    const targetRectChanged = !isEqualRect(
+      state.current.targetRect,
+      nextTargetRect
+    );
+
     state.current.targetRect = nextTargetRect;
 
     const nextIndex = getIndex(target, nextTargetRect, pointerCoordinate);
     const indexChanged = nextIndex !== state.current.index;
     state.current.index = nextIndex;
 
-    if (indexChanged || reason === "target-change" || targetRectChanged) {
-      onPalcementChange({
-        index: nextIndex,
-        placementRect: getPlacement({ target, index: nextIndex }),
-      });
+    if (reason !== "target-change" && !indexChanged && !targetRectChanged) {
+      return;
+    }
+
+    const nextPlacementRect = getPlacement({ target, index: nextIndex });
+    const placementRectChanged = !isEqualRect(
+      state.current.placementRext,
+      nextPlacementRect
+    );
+    state.current.placementRext = nextPlacementRect;
+
+    if (placementRectChanged || indexChanged) {
+      onPalcementChange({ index: nextIndex, placementRect: nextPlacementRect });
     }
   };
 
@@ -169,11 +189,12 @@ export const usePlacement = ({ onPalcementChange }: Parameters): Handlers => {
         targetRect: undefined,
         pointerCoordinate: undefined,
         index: undefined,
+        placementRext: undefined,
       };
     },
     handleMove(pointerCoordinate) {
       state.current.pointerCoordinate = pointerCoordinate;
-      detectChange("move");
+      detectChange("pointer-move");
     },
     handleScroll() {
       detectChange("scroll");
