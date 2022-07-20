@@ -38,6 +38,7 @@ module.exports = {
         ignoreRestSiblings: true,
       },
     ],
+    "@typescript-eslint/no-explicit-any": ["error"],
     "react/react-in-jsx-scope": 0,
     "func-style": ["error", "expression", { allowArrowFunctions: true }],
     "unicorn/filename-case": [
