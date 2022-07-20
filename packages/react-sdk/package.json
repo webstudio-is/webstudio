@@ -15,7 +15,7 @@
     "postinstall": "prisma generate",
     "test": "jest",
     "checks": "yarn typecheck && yarn test",
-    "prepublishOnly": "yarn install && yarn checks && yarn build:lib",
+    "prepublishOnly": "yarn checks && yarn build:lib",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook"
   },
