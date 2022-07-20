@@ -12,10 +12,10 @@ jobs:
         with:
           node-version: 16
       - run: yarn install
-      - run: yarn publish:react-sdk
+      - run: yarn prepublishOnly
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
           dry-run: true
           check-version: true
-          greater-version-only: true
+          package: './packages/react-sdk/package.json'
