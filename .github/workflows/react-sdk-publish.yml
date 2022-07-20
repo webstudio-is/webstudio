@@ -4,12 +4,13 @@ on:
    paths:
       - 'packages/react-sdk/**/*'
       - '.github/workflows/react-sdk-publish.yml'
+
+defaults:
+  run:
+    working-directory: 'packages/react-sdk'
 jobs:
   publish:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: 'packages/react-sdk/'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
