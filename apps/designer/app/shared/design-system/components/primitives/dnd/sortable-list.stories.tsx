@@ -15,7 +15,6 @@ const ListItem = styled("li", {
   background: "$mint12",
   padding: 10,
   userSelect: "none",
-  cursor: "grab",
 });
 
 const List = styled("ul", {
@@ -25,11 +24,11 @@ const List = styled("ul", {
 });
 
 const Item = ({ data }: { data: ItemData }) => {
-  return <ListItem>{data.text}</ListItem>;
+  return <ListItem data-id={data.id}>{data.text}</ListItem>;
 };
 
 export const SortableList = () => {
-  const [data, _setData] = useState([
+  const [data, setData] = useState([
     { id: "0", text: "First" },
     { id: "1", text: "Second" },
     { id: "2", text: "Third" },
@@ -55,6 +54,8 @@ export const SortableList = () => {
     placementRect: Rect;
   }>();
 
+  const [dragItemId, setDragItemId] = useState<string>();
+
   const dropTargetHandlers = useDropTarget({
     isDropTarget(element: HTMLElement) {
       return element instanceof HTMLUListElement;
@@ -72,6 +73,7 @@ export const SortableList = () => {
         event.cancel();
         return;
       }
+      setDragItemId(event.target.dataset.id);
       autoScrollHandlers.setEnabled(true);
     },
     onMove: (poiterCoordinate) => {
@@ -80,9 +82,30 @@ export const SortableList = () => {
       placementHandlers.handleMove(poiterCoordinate);
     },
     onEnd() {
+      if (placement !== undefined && dragItemId !== undefined) {
+        const oldIndex = data.findIndex((item) => item.id === dragItemId);
+        if (oldIndex !== -1) {
+          let newIndex = placement.index;
+
+          // placement.index does not take into account the fact that the drag item will be removed.
+          // we need to do this to account for that
+          if (oldIndex < newIndex) {
+            newIndex = Math.max(0, newIndex - 1);
+          }
+
+          if (oldIndex !== newIndex) {
+            const newData = [...data];
+            newData.splice(oldIndex, 1);
+            newData.splice(newIndex, 0, data[oldIndex]);
+            setData(newData);
+          }
+        }
+      }
+
       dropTargetHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
       placementHandlers.handleEnd();
+      setDragItemId(undefined);
       setPalcement(undefined);
     },
   });
@@ -109,7 +132,12 @@ export const SortableList = () => {
         }}
         {...dragProps}
       >
-        <List ref={dropTargetHandlers.rootRef}>
+        <List
+          ref={dropTargetHandlers.rootRef}
+          css={{
+            li: { cursor: dragItemId === undefined ? "grab" : "default" },
+          }}
+        >
           {data.map((item) => (
             <Item key={item.id} data={item} />
           ))}
