@@ -8,8 +8,6 @@ const config = {
   googleCallbackPath: "/google/callback",
   githubCallbackPath: "/github/callback",
   authPath: "/auth",
-
-  defaultUploadPath: "uploads",
 };
 export default config;
 export type Config = typeof config;

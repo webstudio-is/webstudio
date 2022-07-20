@@ -1,5 +1,5 @@
 import { type Project } from "@webstudio-is/react-sdk";
-import { prisma, Prisma } from "./prisma.server";
+import { prisma } from "./prisma.server";
 import sharp from "sharp";
 
 export const loadByProject = async (projectId?: Project["id"]) => {
@@ -19,21 +19,18 @@ export const loadByProject = async (projectId?: Project["id"]) => {
 
 export const create = async (
   projectId: Project["id"],
-  values: { name: string; path: string; size: number; arrayBuffer: ArrayBuffer }
+  values: { name: string; path: string; size: number; metadata: sharp.Metadata }
 ) => {
-  // there is an issue in the @types/sharp, it also accepts array buffers
-  const image = sharp(values.arrayBuffer as Uint8Array);
-  const metadata = await image.metadata();
+  const size = values.size || values.metadata.size || 0;
+  const { metadata, name, path } = values;
   const newAsset = await prisma.asset.create({
     data: {
-      name: values.name,
-      path: values.path,
-      size: values.size,
+      name,
+      path,
+      size,
       format: metadata.format,
-      ...(metadata.width ? { width: new Prisma.Decimal(metadata.width) } : {}),
-      ...(metadata.height
-        ? { height: new Prisma.Decimal(metadata.height) }
-        : {}),
+      ...(metadata.width ? { width: metadata.width } : {}),
+      ...(metadata.height ? { height: metadata.height } : {}),
       projectId,
     },
   });

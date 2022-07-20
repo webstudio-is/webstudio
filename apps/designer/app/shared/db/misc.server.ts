@@ -1,5 +1,5 @@
+export { uploadAssets } from "@webstudio-is/asset-uploader";
 import * as db from "./";
-
 /**
  * Conceptually publishing is cloning all data that affects user site
  * and referencing it under a new tree id.
