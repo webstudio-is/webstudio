@@ -23,11 +23,25 @@ const List = styled("ul", {
   padding: 10,
 });
 
-const Item = ({ data }: { data: ItemData }) => {
-  return <ListItem data-id={data.id}>{data.text}</ListItem>;
+const Item = ({
+  data,
+  isDragging,
+}: {
+  data: ItemData;
+  isDragging: boolean;
+}) => {
+  return (
+    <ListItem css={{ opacity: isDragging ? 0.3 : 1 }} data-id={data.id}>
+      {data.text}
+    </ListItem>
+  );
 };
 
-export const SortableList = () => {
+export const SortableList = ({
+  direction = "vertical",
+}: {
+  direction?: "horizontal" | "vertical" | "wrap";
+}) => {
   const [data, setData] = useState([
     { id: "0", text: "First" },
     { id: "1", text: "Second" },
@@ -120,7 +134,8 @@ export const SortableList = () => {
     <>
       <Box
         css={{
-          height: 500,
+          height: direction === "horizontal" ? "auto" : 500,
+          width: direction === "wrap" ? 200 : "auto",
           overflow: "auto",
           background: "white",
           color: "black",
@@ -136,10 +151,17 @@ export const SortableList = () => {
           ref={dropTargetHandlers.rootRef}
           css={{
             li: { cursor: dragItemId === undefined ? "grab" : "default" },
+            display: direction === "vertical" ? "block" : "flex",
+            flexDirection: direction === "vertical" ? "none" : "row",
+            flexWrap: direction === "wrap" ? "wrap" : "none",
           }}
         >
           {data.map((item) => (
-            <Item key={item.id} data={item} />
+            <Item
+              key={item.id}
+              data={item}
+              isDragging={item.id === dragItemId}
+            />
           ))}
         </List>
       </Box>
@@ -147,5 +169,11 @@ export const SortableList = () => {
     </>
   );
 };
+
+export const SortableListHorizontal = () => (
+  <SortableList direction="horizontal" />
+);
+
+export const SortableListWrap = () => <SortableList direction="wrap" />;
 
 export default {} as ComponentMeta<typeof SortableList>;
