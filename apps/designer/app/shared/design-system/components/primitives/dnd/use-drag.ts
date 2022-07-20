@@ -23,7 +23,7 @@ export type Parameters = {
   shiftDistanceThreshold?: number;
   onStart: (event: { target: HTMLElement; cancel: () => void }) => void;
   onMove: (event: { x: number; y: number }) => void;
-  onShiftChange: (event: { shifts: number }) => void;
+  onShiftChange?: (event: { shifts: number }) => void;
   onEnd: () => void;
 };
 
@@ -32,7 +32,8 @@ export const useDrag = ({
   shiftDistanceThreshold = 20,
   onStart,
   onMove,
-  onShiftChange,
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  onShiftChange = () => {},
   onEnd,
 }: Parameters): React.HTMLAttributes<HTMLElement> => {
   const state = useRef<State>(initialState);

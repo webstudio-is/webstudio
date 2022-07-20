@@ -11,7 +11,7 @@ export type Parameters = {
     area: Area;
     target: HTMLElement;
   }) => void;
-  onHold: (event: { target: HTMLElement }) => void;
+  onHold?: (event: { target: HTMLElement }) => void;
 };
 
 export type Handlers = {
@@ -26,7 +26,8 @@ export const useDropTarget = ({
   edgeDistanceThreshold = 3,
   holdTimeThreshold = 500,
   onDropTargetChange,
-  onHold,
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  onHold = () => {},
 }: Parameters): Handlers => {
   const state = useRef({
     root: null as HTMLElement | null,
@@ -35,6 +36,7 @@ export const useDropTarget = ({
     rect: undefined as DOMRect | undefined,
     holdTimeout: undefined as NodeJS.Timeout | undefined,
     pointerCoordinate: undefined as Coordinate | undefined,
+    dropIndex: undefined as number | undefined,
   });
 
   const clearHoldTimeout = () => {
@@ -95,6 +97,7 @@ export const useDropTarget = ({
     if (hasTargetChanged || hasAreaChanged || hasRectChanged) {
       onDropTargetChange({
         rect: nextRect,
+        // NOTE: might make more sense to pass the area to isDropTarget instead of here
         area: nextArea,
         target: nextTarget,
       });
