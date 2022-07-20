@@ -5,7 +5,7 @@
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
     "build": "yarn build:mdn-data && yarn build:args",
     "build:mdn-data": "./bin/mdn-data.ts ./src/css",
     "build:args": "./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
@@ -40,11 +40,12 @@
     "esbuild": "^0.14.25",
     "esbuild-node-externals": "^1.4.1",
     "esbuild-node-loader": "^0.8.0",
+    "jest-config": "*",
     "mdn-data": "2.0.23",
     "react": "^17.0.2",
     "react-docgen-typescript": "^2.2.2",
     "react-dom": "^17.0.2",
-    "jest-config": "*",
+    "tsup": "^6.1.3",
     "typescript": "^4.6.2"
   },
   "peerDependencies": {

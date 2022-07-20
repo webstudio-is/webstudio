@@ -18,6 +18,6 @@ module.exports = {
   serverBuildPath: "api/index.js",
   // publicPath: "/build/",
   watchPaths: () => {
-    return ["../../packages/react-sdk/lib/**/*"];
+    return ["../../packages/**/*"];
   },
 };
