@@ -158,6 +158,8 @@ export const alignItems = {
   normal: AlignItemsStart,
   start: AlignItemsStart,
   end: AlignItemsEnd,
+  "flex-start": AlignItemsStart,
+  "flex-end": AlignItemsEnd,
   center: AlignItemsCenter,
   baseline: AlignItemsBaseline,
   stretch: AlignItemsStretch,

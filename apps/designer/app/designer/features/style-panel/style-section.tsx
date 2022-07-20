@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, ChangeEventHandler, useState } from "react";
 import {
   Box,
   Flex,
@@ -191,6 +191,22 @@ const ComboboxControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
+  switch (styleConfig.property) {
+    case "rowGap":
+    case "columnGap": {
+      return (
+        <input
+          type="number"
+          value={String(value.value)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            setValue(event.target.value)
+          }
+          style={{ width: "100%", boxSizing: "border-box" }}
+        />
+      );
+    }
+  }
+
   return (
     <Grid columns={2} align="center" gapX="1">
       {/* @todo needs icon variant */}
@@ -269,7 +285,6 @@ const ComboiconControl = ({
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
   const Icon = (icons as any)[styleConfig.property]?.[currentValue];
-  console.log(currentValue);
   return (
     <Comboicon
       id={styleConfig.property}
@@ -380,11 +395,17 @@ export const renderCategory = ({
               css={{ gridArea: "grid" }}
               currentStyle={currentStyle}
             />,
-            <Box key="lock" css={{ gridArea: "lock" }}>
+            <Box
+              key="lock"
+              css={{
+                gridArea: "lock",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
               <IconButton>
                 <LockClosedIcon />
               </IconButton>
-              ,
             </Box>,
             ...styleConfigsByCategory,
           ];
@@ -397,7 +418,7 @@ export const renderCategory = ({
                   gridTemplateRows: "auto auto auto auto",
                   gridTemplateAreas: `
                   "display display display display display display display display display display display display"
-                  "grid grid grid grid flexDirection flexDirection flexWrap flexWrap . . . ."
+                  "grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems . ."
                   "grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent . ."
                   "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
                 `,
@@ -408,6 +429,9 @@ export const renderCategory = ({
               <ShowMore styleConfigs={moreStyleConfigsByCategory} />
             </>
           );
+        }
+        default: {
+          styleConfigsByCategory = [styleConfigsByCategory[0]];
         }
       }
     }
