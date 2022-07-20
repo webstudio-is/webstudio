@@ -11,7 +11,6 @@ export const Playground = () => {
   const [placementIndicatorRect, setPlacementIndicatorRect] = useState<Rect>();
   const holdRef = useRef<HTMLElement>();
   const dragItemRef = useRef<HTMLElement>();
-  const scrollRef = useRef<HTMLElement | null>(null);
 
   const handleHoldEnd = () => {
     holdRef.current?.style.removeProperty("background");
@@ -33,7 +32,7 @@ export const Playground = () => {
     },
   });
 
-  const autoScrollHandlers = useAutoScroll({ target: scrollRef });
+  const autoScrollHandlers = useAutoScroll();
 
   const dragProps = useDrag({
     onStart(event) {
@@ -67,11 +66,10 @@ export const Playground = () => {
       {...dragProps}
       ref={(el) => {
         dropTargetHandlers.rootRef(el);
-
-        // TODO: do same as above for consistency
-        scrollRef.current = el;
+        autoScrollHandlers.targetRef(el);
       }}
       css={{ display: "block", overflow: "auto", height: 500 }}
+      onScroll={dropTargetHandlers.handleScroll}
     >
       <Item background="$cyanA9" />
       <Item background="$cyanA9" />

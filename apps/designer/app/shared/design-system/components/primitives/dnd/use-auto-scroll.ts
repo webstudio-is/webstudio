@@ -1,4 +1,4 @@
-import { useRef, type MutableRefObject } from "react";
+import { useRef } from "react";
 
 // Time between frames of scroll animation in milliseconds
 const FRAME_PERIOD = 30;
@@ -39,7 +39,6 @@ const getSpeed = (
 };
 
 export type Parameters = {
-  target: MutableRefObject<HTMLElement | null>;
   edgeDistanceThreshold?: number;
 
   // min/max speed of the scroll animation in pixels per second
@@ -47,18 +46,21 @@ export type Parameters = {
   maxSpeed?: number;
 };
 
+export type Handlers = {
+  handleMove: (pointerCoordinate: { x: number; y: number }) => void;
+  setEnabled: (enabled: boolean) => void;
+  targetRef: (element: HTMLElement | null) => void;
+};
+
 export const useAutoScroll = ({
-  target,
   edgeDistanceThreshold = 100,
   minSpeed = 1,
   maxSpeed = 500,
-}: Parameters): {
-  handleMove: (pointerCoordinate: { x: number; y: number }) => void;
-  setEnabled: (enabled: boolean) => void;
-} => {
+}: Parameters = {}): Handlers => {
   const state = useRef({
+    target: null as HTMLElement | null,
     enabled: false,
-    prevTimestamp: undefined as number | undefined,
+    prevTimestamp: 0,
     speedX: 0,
     speedY: 0,
     stepScheduled: false,
@@ -69,20 +71,20 @@ export const useAutoScroll = ({
 
     if (
       !state.current.enabled ||
-      target.current === null ||
-      (Math.round(state.current.speedX * FRAME_PERIOD) === 0 &&
-        Math.round(state.current.speedY * FRAME_PERIOD) === 0)
+      (Math.round((state.current.speedX / 1000) * FRAME_PERIOD) === 0 &&
+        Math.round((state.current.speedY / 1000) * FRAME_PERIOD) === 0)
     ) {
       return;
     }
 
-    if (state.current.prevTimestamp === undefined) {
+    const elapsed = timestamp - state.current.prevTimestamp;
+
+    // to avoid a big jump when auto-scroll becomes enabled
+    if (elapsed > 3000) {
       state.current.prevTimestamp = timestamp;
       scheduleStep();
       return;
     }
-
-    const elapsed = timestamp - state.current.prevTimestamp;
 
     if (elapsed < FRAME_PERIOD) {
       scheduleStep();
@@ -91,7 +93,12 @@ export const useAutoScroll = ({
 
     state.current.prevTimestamp = timestamp;
 
-    target.current.scrollBy(
+    // for TypeScript
+    if (state.current.target === null) {
+      return;
+    }
+
+    state.current.target.scrollBy(
       (state.current.speedX / 1000) * elapsed,
       (state.current.speedY / 1000) * elapsed
     );
@@ -108,11 +115,11 @@ export const useAutoScroll = ({
 
   return {
     handleMove({ x, y }) {
-      if (!state.current.enabled || target.current === null) {
+      if (!state.current.enabled || state.current.target === null) {
         return;
       }
 
-      const rect = target.current.getBoundingClientRect();
+      const rect = state.current.target.getBoundingClientRect();
 
       state.current.speedY = getSpeed(
         y,
@@ -136,8 +143,10 @@ export const useAutoScroll = ({
     },
     setEnabled(newEnabled) {
       state.current.enabled = newEnabled;
-      state.current.prevTimestamp = undefined;
       scheduleStep();
+    },
+    targetRef: (element) => {
+      state.current.target = element;
     },
   };
 };

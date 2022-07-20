@@ -34,7 +34,7 @@ export const useDrag = ({
   onMove,
   onShiftChange,
   onEnd,
-}: Parameters) => {
+}: Parameters): React.HTMLAttributes<HTMLElement> => {
   const state = useRef<State>(initialState);
 
   const cancel = () => {

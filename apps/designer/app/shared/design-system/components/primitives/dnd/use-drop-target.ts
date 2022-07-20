@@ -14,77 +14,110 @@ export type Parameters = {
   onHold: (event: { target: HTMLElement }) => void;
 };
 
+export type Handlers = {
+  handleMove: (pointerCoordinate: Coordinate) => void;
+  handleScroll: () => void;
+  handleEnd: () => void;
+  rootRef: (element: HTMLElement | null) => void;
+};
+
 export const useDropTarget = ({
   isDropTarget,
   edgeDistanceThreshold = 3,
   holdTimeThreshold = 500,
   onDropTargetChange,
   onHold,
-}: Parameters) => {
-  const rootRef = useRef<HTMLElement | null>(null);
-  const targetRef = useRef<HTMLElement>();
-  const targetRectRef = useRef<DOMRect>();
-  const areaRef = useRef<Area>("center");
-  const holdTimeoutRef = useRef<NodeJS.Timeout>();
+}: Parameters): Handlers => {
+  const state = useRef({
+    root: null as HTMLElement | null,
+    target: undefined as HTMLElement | undefined,
+    area: "center" as Area,
+    rect: undefined as DOMRect | undefined,
+    holdTimeout: undefined as NodeJS.Timeout | undefined,
+    pointerCoordinate: undefined as Coordinate | undefined,
+  });
+
+  const clearHoldTimeout = () => {
+    if (state.current.holdTimeout) {
+      clearTimeout(state.current.holdTimeout);
+      state.current.holdTimeout = undefined;
+    }
+  };
 
   const detectHold = (target: HTMLElement) => {
-    clearTimeout(holdTimeoutRef.current);
-    holdTimeoutRef.current = setTimeout(() => {
-      if (target === targetRef.current) {
+    clearHoldTimeout();
+    state.current.holdTimeout = setTimeout(() => {
+      state.current.holdTimeout = undefined;
+      if (target === state.current.target) {
         onHold({ target });
       }
     }, holdTimeThreshold);
   };
 
+  const detectTarget = () => {
+    const pointerCoordinate = state.current.pointerCoordinate;
+    if (pointerCoordinate === undefined) {
+      return;
+    }
+
+    const target = elementFromPoint(pointerCoordinate);
+    if (target === undefined || state.current.root === null) {
+      return;
+    }
+
+    const nextTarget = findClosestDropTarget({
+      root: state.current.root,
+      target,
+      isDropTarget,
+    });
+
+    const hasTargetChanged = nextTarget !== state.current.target;
+    state.current.target = nextTarget;
+
+    if (hasTargetChanged) {
+      detectHold(nextTarget);
+    }
+
+    const nextRect = nextTarget.getBoundingClientRect();
+
+    const hasRectChanged = nextRect !== state.current.rect;
+    state.current.rect = nextRect;
+
+    const nextArea = getArea(
+      pointerCoordinate,
+      edgeDistanceThreshold,
+      nextRect
+    );
+
+    const hasAreaChanged = nextArea !== state.current.area;
+    state.current.area = nextArea;
+
+    if (hasTargetChanged || hasAreaChanged || hasRectChanged) {
+      onDropTargetChange({
+        rect: nextRect,
+        area: nextArea,
+        target: nextTarget,
+      });
+    }
+  };
+
   return {
     handleMove(pointerCoordinate: Coordinate) {
-      const target = elementFromPoint(pointerCoordinate);
-      if (target === undefined || rootRef.current === null) {
-        return;
-      }
+      state.current.pointerCoordinate = pointerCoordinate;
+      detectTarget();
+    },
 
-      const nextTarget = findClosestDropTarget({
-        root: rootRef.current,
-        target,
-        isDropTarget,
-      });
-
-      const hasTargetChanged = nextTarget !== targetRef.current;
-      targetRef.current = nextTarget;
-
-      if (hasTargetChanged) {
-        targetRectRef.current = nextTarget.getBoundingClientRect();
-        detectHold(nextTarget);
-      }
-
-      const nextArea = getArea(
-        pointerCoordinate,
-        edgeDistanceThreshold,
-        targetRectRef.current
-      );
-
-      const hasAreaChanged = nextArea !== areaRef.current;
-      areaRef.current = nextArea;
-
-      if (
-        (hasTargetChanged || hasAreaChanged) &&
-        targetRectRef.current !== undefined
-      ) {
-        onDropTargetChange({
-          rect: targetRectRef.current,
-          area: nextArea,
-          target: nextTarget,
-        });
-      }
+    handleScroll() {
+      detectTarget();
     },
 
     handleEnd() {
       // Clear onHold timeout if we ended interaction before it fired
-      clearTimeout(holdTimeoutRef.current);
+      clearHoldTimeout();
     },
 
     rootRef(rootElement: HTMLElement | null) {
-      rootRef.current = rootElement;
+      state.current.root = rootElement;
     },
   };
 };
