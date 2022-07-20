@@ -4,47 +4,49 @@ import { TextField } from "./text-field";
 import { IconButton } from "./icon-button";
 import { MenuAnchor, Menu, MenuContent, MenuItem } from "./menu";
 
-type Option = { label: string };
+type BaseOption = { label: string };
 
-type ComboboxProps = ComponentProps<typeof TextField> & {
-  options: Array<Option>;
-  onValueSelect: (value: Option) => void;
-  onValueEnter: (value: Option) => void;
-  onItemEnter: (value: Option) => void;
-  onItemLeave: (value: Option) => void;
-  value: Option;
+const getTextValue = <Option extends BaseOption>(option?: Option) => {
+  return option ? option.label : "";
 };
 
-export const Combobox = ({
+type DisclosureProps = ComponentProps<typeof TextField>;
+
+type ComboboxProps<Option> = {
+  name: string;
+  options: ReadonlyArray<Option>;
+  value?: Option;
+  onOptionSelect?: (value: Option) => void;
+  onOptionHighlight?: (value?: Option) => void;
+  disclosure?: (props: DisclosureProps) => JSX.Element;
+};
+
+export const Combobox = <Option extends BaseOption>({
   options,
-  onValueSelect,
-  onValueEnter,
-  onItemEnter,
-  onItemLeave,
   value,
-  css,
-  ...rest
-}: ComboboxProps) => {
+  name,
+  onOptionSelect,
+  onOptionHighlight,
+  disclosure = (props) => <TextField {...props} />,
+}: ComboboxProps<Option>) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentValue, setCurrentValue] = useState(value);
+  const [textValue, setTextValue] = useState(getTextValue<Option>(value));
 
   useEffect(() => {
-    setCurrentValue(value);
+    setTextValue(getTextValue<Option>(value));
   }, [value]);
 
   return (
     <Menu open={isOpen} modal={true} onOpenChange={setIsOpen}>
       <MenuAnchor asChild>
-        <TextField
-          {...rest}
-          value={currentValue}
-          autoComplete="off"
-          // @todo avoid hardcoding padding
-          css={{ ...css, paddingRight: 30 }}
-          onChange={(event) => {
-            setCurrentValue(event.target.value);
-          }}
-          onKeyDown={(event) => {
+        {disclosure({
+          name,
+          autoComplete: "off",
+          value: textValue,
+          onChange: (event) => {
+            setTextValue(event.target.value);
+          },
+          onKeyDown: (event) => {
             switch (event.key) {
               case "ArrowDown":
               case "ArrowUp": {
@@ -52,41 +54,32 @@ export const Combobox = ({
                 break;
               }
               case "Enter": {
-                onValueEnter(event.currentTarget.value);
                 break;
               }
             }
-          }}
-        />
+          },
+        })}
+        <IconButton variant="ghost" size="1">
+          <ChevronDownIcon />
+        </IconButton>
       </MenuAnchor>
-      <IconButton
-        variant="ghost"
-        size="1"
-        // @todo avoid hardcoding margin
-        css={{ marginLeft: -32 }}
-        onClick={() => {
-          setIsOpen(true);
-        }}
-      >
-        <ChevronDownIcon />
-      </IconButton>
       <MenuContent loop portalled asChild>
         <div>
-          {options.map(({ label }, index) => {
+          {options.map((option, index) => {
             return (
               <MenuItem
                 key={index}
                 onMouseEnter={() => {
-                  onItemEnter(label);
+                  // onOptionHighlight(option);
                 }}
                 onFocus={() => {
-                  onItemEnter(label);
+                  // onOptionHighlight(option);
                 }}
                 onSelect={() => {
-                  onValueSelect(label);
+                  //onOptionSelect(option);
                 }}
               >
-                {label}
+                {getTextValue<Option>(option)}
               </MenuItem>
             );
           })}

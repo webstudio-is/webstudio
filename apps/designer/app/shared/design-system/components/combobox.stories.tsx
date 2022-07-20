@@ -19,11 +19,10 @@ export const Simple: ComponentStory<typeof Combobox> = () => {
       name="fruit"
       options={options}
       value={value}
-      onValueChange={setValue}
+      onOptionSelect={setValue}
     />
   );
 };
-
 export const CustomInput: ComponentStory<typeof Combobox> = () => {
   const options = [
     { label: "Apple", value: "apple", disabled: true },
@@ -37,8 +36,8 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
       name="fruit"
       options={options}
       value={value}
-      onChange={setValue}
-      onOptionHightlight={(option: Option) => {}}
+      onOptionSelect={setValue}
+      onOptionHighlight={(option) => {}}
       disclosure={(props) => (
         <TextField
           {...props}
