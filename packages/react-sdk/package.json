@@ -66,6 +66,7 @@
   "main": "lib/index.js",
   "types": "src/index.ts",
   "files": [
+    "lib/*",
     "README.md",
     "!*.test.*",
     "prisma/*"

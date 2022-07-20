@@ -14,9 +14,9 @@ jobs:
           node-version: 16
       - name: Install Dependencies
         run: yarn install
-        working-directory: ./packages/react-sdk
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
           dry-run: true
           check-version: true
+          package: './packages/react-sdk/package.json'
