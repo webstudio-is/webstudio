@@ -142,7 +142,7 @@ export const AlignItemsStretch = React.forwardRef<SVGSVGElement, IconProps>(
           fill="white"
         />
         <path
-          fill-rule="evenodd"
+          fillRule="evenodd"
           clipRule="evenodd"
           d="M16 16H19.2V17.6H4.80005V16H8.00005V7.99999H4.80005V6.39999H19.2V7.99999H16V16ZM12.8 16V7.99999H11.2V16H12.8Z"
           fill="#11181C"

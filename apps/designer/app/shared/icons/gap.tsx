@@ -28,3 +28,8 @@ export const ColumnGap = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+
+export const gap = {
+  "row-gap": RowGap,
+  "column-gap": ColumnGap,
+};

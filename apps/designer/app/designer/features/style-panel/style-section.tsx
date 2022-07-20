@@ -269,22 +269,17 @@ const ComboiconControl = ({
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
   const Icon = (icons as any)[styleConfig.property]?.[currentValue];
-
-  if (Icon === undefined) return null;
-
+  console.log(currentValue);
   return (
-    <IconButton>
-      <Icon />
-    </IconButton>
+    <Comboicon
+      id={styleConfig.property}
+      items={styleConfig.items}
+      value={String(currentValue)}
+      onChange={setValue}
+    >
+      {Icon && <Icon />}
+    </Comboicon>
   );
-  // return (
-  //   <Comboicon
-  //     id={styleConfig.property}
-  //     items={styleConfig.items}
-  //     value={String(value.value)}
-  //     onChange={setValue}
-  //   />
-  // );
 };
 
 const GridControl = ({ css, currentStyle }: any) => {
@@ -377,7 +372,6 @@ export const renderCategory = ({
   switch (category) {
     case "layout": {
       const display = currentStyle.display?.value;
-      console.log(display);
       switch (currentStyle.display?.value) {
         case "flex": {
           styleConfigsByCategory = [

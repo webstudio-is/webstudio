@@ -57,13 +57,11 @@ const IconButton = styled("button", {
   "&:hover": { backgroundColor: "$colors$gray6" },
 });
 
-export const Comboicon = ({ id, value, items, onChange }: any) => {
+export const Comboicon = ({ id, value, items, onChange, children }: any) => {
   return (
     <DropdownMenuPrimitive.Root>
       <DropdownMenuPrimitive.Trigger asChild>
-        <IconButton aria-label={id}>
-          <HamburgerMenuIcon />
-        </IconButton>
+        <IconButton aria-label={id}>{children}</IconButton>
       </DropdownMenuPrimitive.Trigger>
 
       <StyledContent>
