@@ -1,6 +1,8 @@
 name: SDK publish
-on: push
-
+on: 
+ push:
+   paths:
+      - 'packages/react-sdk/**'
 jobs:
   publish:
     runs-on: ubuntu-latest
