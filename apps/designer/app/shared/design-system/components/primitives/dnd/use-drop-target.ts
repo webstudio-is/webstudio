@@ -2,7 +2,17 @@ import { useRef } from "react";
 
 export type Area = "top" | "right" | "bottom" | "left" | "center";
 
-type UseDropTarget = any;
+export type Parameters = {
+  isDropTarget: (element: HTMLElement) => boolean;
+  edgeDistanceThreshold?: number;
+  holdTimeThreshold?: number;
+  onDropTargetChange: (event: {
+    rect: DOMRect;
+    area: Area;
+    target: HTMLElement;
+  }) => void;
+  onHold: (event: { target: HTMLElement }) => void;
+};
 
 export const useDropTarget = ({
   isDropTarget,
@@ -10,7 +20,7 @@ export const useDropTarget = ({
   holdTimeThreshold = 500,
   onDropTargetChange,
   onHold,
-}: UseDropTarget) => {
+}: Parameters) => {
   const rootRef = useRef<HTMLElement | null>(null);
   const targetRef = useRef<HTMLElement>();
   const targetRectRef = useRef<DOMRect>();
@@ -56,7 +66,10 @@ export const useDropTarget = ({
       const hasAreaChanged = nextArea !== areaRef.current;
       areaRef.current = nextArea;
 
-      if (hasTargetChanged || hasAreaChanged) {
+      if (
+        (hasTargetChanged || hasAreaChanged) &&
+        targetRectRef.current !== undefined
+      ) {
         onDropTargetChange({
           rect: targetRectRef.current,
           area: nextArea,

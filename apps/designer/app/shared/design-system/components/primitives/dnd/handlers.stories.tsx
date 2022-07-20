@@ -1,7 +1,7 @@
 import { ComponentMeta } from "@storybook/react";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Box } from "../../box";
-import { useDropTarget, type Area } from "./use-drop-target";
+import { useDropTarget } from "./use-drop-target";
 import { useDrag } from "./use-drag";
 import { getPlacement, PlacementIndicator, type Rect } from "./placement";
 import { useAutoScroll } from "./use-auto-scroll";
@@ -21,16 +21,7 @@ export const Playground = () => {
     isDropTarget(element: HTMLElement) {
       return element.dataset.draggable === "true";
     },
-    onDropTargetChange({
-      rect,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      area,
-      target,
-    }: {
-      rect: Rect;
-      area: Area;
-      target: HTMLElement;
-    }) {
+    onDropTargetChange({ rect, target }) {
       setDropTargetRect(rect);
       const placementRect = getPlacement({ target });
       setPlacementIndicatorRect(placementRect);
@@ -45,7 +36,7 @@ export const Playground = () => {
   const autoScrollHandlers = useAutoScroll({ target: scrollRef });
 
   const dragProps = useDrag({
-    onStart(event: any) {
+    onStart(event) {
       if (event.target.dataset.draggable === "false") {
         event.cancel();
         return;
@@ -53,7 +44,7 @@ export const Playground = () => {
       dragItemRef.current = event.target;
       autoScrollHandlers.setEnabled(true);
     },
-    onMove: (poiterCoordinate: any) => {
+    onMove: (poiterCoordinate) => {
       dropTargetHandlers.handleMove(poiterCoordinate);
       autoScrollHandlers.handleMove(poiterCoordinate);
     },
@@ -64,7 +55,7 @@ export const Playground = () => {
       handleHoldEnd();
       autoScrollHandlers.setEnabled(false);
     },
-    onShiftChange({ shifts }: any) {
+    onShiftChange({ shifts }) {
       if (dragItemRef.current) {
         dragItemRef.current.textContent = `shifted ${shifts}`;
       }
@@ -108,7 +99,15 @@ export const Playground = () => {
 
 export default {} as ComponentMeta<typeof Playground>;
 
-const Item = ({ background, draggable = true, children }: any) => (
+const Item = ({
+  background,
+  draggable = true,
+  children,
+}: {
+  background: string;
+  draggable?: boolean;
+  children?: React.ReactNode;
+}) => (
   <Box
     css={{ height: 100, width: 100, background, margin: 10 }}
     data-draggable={draggable}

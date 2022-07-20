@@ -38,19 +38,21 @@ const getSpeed = (
   return 0;
 };
 
-export const useAutoScroll = ({
-  target,
-  edgeDistanceThreshold = 100,
-  minSpeed = 1,
-  maxSpeed = 500,
-}: {
+export type Parameters = {
   target: MutableRefObject<HTMLElement | null>;
   edgeDistanceThreshold?: number;
 
   // min/max speed of the scroll animation in pixels per second
   minSpeed?: number;
   maxSpeed?: number;
-}): {
+};
+
+export const useAutoScroll = ({
+  target,
+  edgeDistanceThreshold = 100,
+  minSpeed = 1,
+  maxSpeed = 500,
+}: Parameters): {
   handleMove: (pointerCoordinate: { x: number; y: number }) => void;
   setEnabled: (enabled: boolean) => void;
 } => {

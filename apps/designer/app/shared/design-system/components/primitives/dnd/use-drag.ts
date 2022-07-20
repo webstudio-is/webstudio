@@ -18,6 +18,15 @@ const initialState = {
   status: "idle",
 } as const;
 
+export type Parameters = {
+  startDistanceThreashold?: number;
+  shiftDistanceThreshold?: number;
+  onStart: (event: { target: HTMLElement; cancel: () => void }) => void;
+  onMove: (event: { x: number; y: number }) => void;
+  onShiftChange: (event: { shifts: number }) => void;
+  onEnd: () => void;
+};
+
 export const useDrag = ({
   startDistanceThreashold = 3,
   shiftDistanceThreshold = 20,
@@ -25,7 +34,7 @@ export const useDrag = ({
   onMove,
   onShiftChange,
   onEnd,
-}: any = {}) => {
+}: Parameters) => {
   const state = useRef<State>(initialState);
 
   const cancel = () => {
