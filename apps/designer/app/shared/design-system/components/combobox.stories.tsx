@@ -37,7 +37,9 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
       options={options}
       value={value}
       onOptionSelect={setValue}
-      onOptionHighlight={(option) => {}}
+      onOptionHighlight={(option) => {
+        console.log(option);
+      }}
       disclosure={(props) => (
         <TextField
           {...props}

@@ -1,8 +1,18 @@
-import { type ComponentProps, useState, useEffect } from "react";
+import { CheckIcon } from "@radix-ui/react-icons";
+import { useCombobox } from "downshift";
+import { matchSorter } from "match-sorter";
+import { type ComponentProps, useState } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  styled,
+} from "~/shared/design-system";
+import { itemCss } from "~/shared/design-system/components/menu";
+import { panelStyles } from "~/shared/design-system/components/panel";
 import { ChevronDownIcon } from "~/shared/icons";
-import { TextField } from "./text-field";
 import { IconButton } from "./icon-button";
-import { MenuAnchor, Menu, MenuContent, MenuItem } from "./menu";
+import { TextField } from "./text-field";
 
 type BaseOption = { label: string };
 
@@ -21,6 +31,9 @@ type ComboboxProps<Option> = {
   disclosure?: (props: DisclosureProps) => JSX.Element;
 };
 
+const Listbox = styled("ul", panelStyles, { margin: 0 });
+const ListboxItem = styled("li", itemCss);
+
 export const Combobox = <Option extends BaseOption>({
   options,
   value,
@@ -29,62 +42,62 @@ export const Combobox = <Option extends BaseOption>({
   onOptionHighlight,
   disclosure = (props) => <TextField {...props} />,
 }: ComboboxProps<Option>) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [textValue, setTextValue] = useState(getTextValue<Option>(value));
-
-  useEffect(() => {
-    setTextValue(getTextValue<Option>(value));
-  }, [value]);
+  const [items, setItems] = useState(options);
+  const {
+    isOpen,
+    // getToggleButtonProps,
+    // getLabelProps,
+    getMenuProps,
+    getInputProps,
+    getComboboxProps,
+    highlightedIndex,
+    getItemProps,
+    selectedItem,
+  } = useCombobox({
+    onInputValueChange({ inputValue }) {
+      const filteredItems = matchSorter(options, inputValue, {
+        keys: ["label", "value"],
+      });
+      setItems(filteredItems);
+    },
+    items,
+    selectedItem: value,
+    itemToString(item) {
+      return item ? item.label : "";
+    },
+    onSelectedItemChange({ selectedItem }) {
+      onOptionSelect?.(selectedItem);
+    },
+    onHighlightedIndexChange({ highlightedIndex }) {
+      onOptionHighlight?.(items[highlightedIndex]);
+    },
+  });
 
   return (
-    <Menu open={isOpen} modal={true} onOpenChange={setIsOpen}>
-      <MenuAnchor asChild>
-        {disclosure({
-          name,
-          autoComplete: "off",
-          value: textValue,
-          onChange: (event) => {
-            setTextValue(event.target.value);
-          },
-          onKeyDown: (event) => {
-            switch (event.key) {
-              case "ArrowDown":
-              case "ArrowUp": {
-                setIsOpen(true);
-                break;
-              }
-              case "Enter": {
-                break;
-              }
-            }
-          },
+    <div {...getComboboxProps()}>
+      {disclosure(getInputProps({ name }))}
+      <IconButton variant="ghost" size="1">
+        <ChevronDownIcon />
+      </IconButton>
+      <Listbox {...getMenuProps()}>
+        {items.map((item, index) => {
+          return (
+            <ListboxItem
+              key={index}
+              {...getItemProps({
+                item,
+                index,
+                disabled: item.disabled,
+                ...(item.disabled ? { "data-disabled": true } : {}),
+                ...(highlightedIndex === index ? { "data-found": true } : {}),
+              })}
+            >
+              {getTextValue<Option>(item)}
+              {selectedItem === item && <CheckIcon />}
+            </ListboxItem>
+          );
         })}
-        <IconButton variant="ghost" size="1">
-          <ChevronDownIcon />
-        </IconButton>
-      </MenuAnchor>
-      <MenuContent loop portalled asChild>
-        <div>
-          {options.map((option, index) => {
-            return (
-              <MenuItem
-                key={index}
-                onMouseEnter={() => {
-                  // onOptionHighlight(option);
-                }}
-                onFocus={() => {
-                  // onOptionHighlight(option);
-                }}
-                onSelect={() => {
-                  //onOptionSelect(option);
-                }}
-              >
-                {getTextValue<Option>(option)}
-              </MenuItem>
-            );
-          })}
-        </div>
-      </MenuContent>
-    </Menu>
+      </Listbox>
+    </div>
   );
 };
