@@ -5,6 +5,7 @@
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
+    "dev": "tsc -w",
     "build": "yarn build:mdn-data && yarn build:args",
     "build:mdn-data": "./bin/mdn-data.ts ./src/css",
     "build:args": "./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
@@ -14,7 +15,7 @@
     "postinstall": "prisma generate",
     "test": "jest",
     "checks": "yarn typecheck && yarn test",
-    "prepublishOnly": "yarn checks && yarn build:lib",
+    "prepublishOnly": "yarn install && yarn checks && yarn build:lib",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook"
   },
@@ -64,7 +65,7 @@
     "react-nano-state": "^0.4.0",
     "zod": "^3.17.3"
   },
-  "main": "src/index.ts",
+  "main": "lib/index.js",
   "types": "src/index.ts",
   "files": [
     "README.md",

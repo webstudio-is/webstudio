@@ -12,6 +12,9 @@
     },
     "storybook:run": {
       "cache": false
+    },
+    "prepublishOnly": {
+      "cache": false
     }
   }
 }
