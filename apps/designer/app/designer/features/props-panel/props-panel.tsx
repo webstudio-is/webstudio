@@ -12,10 +12,17 @@ import {
   Button,
   Combobox,
   Grid,
+  IconButton,
   TextField,
   Tooltip,
+  Flex,
 } from "~/shared/design-system";
-import { PlusIcon, TrashIcon, ExclamationTriangleIcon } from "~/shared/icons";
+import {
+  PlusIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
+  ChevronDownIcon,
+} from "~/shared/icons";
 import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
 type PropertyProps = UserProp & {
@@ -60,16 +67,20 @@ const Property = ({
           label: prop,
         }}
         onItemSelect={({ value }) => {
-          console.log(value);
           onChange(id, "prop", value);
         }}
-        disclosure={({ inputProps }) => (
-          <TextField
-            {...inputProps}
-            readOnly={required}
-            variant="ghost"
-            placeholder="Property"
-          />
+        disclosure={({ inputProps, toggleProps }) => (
+          <Flex>
+            <TextField
+              {...inputProps}
+              readOnly={required}
+              variant="ghost"
+              placeholder="Property"
+            />
+            <IconButton variant="ghost" size="1" {...toggleProps}>
+              <ChevronDownIcon />
+            </IconButton>
+          </Flex>
         )}
         popperProps={{
           align: "start",
@@ -78,7 +89,6 @@ const Property = ({
         // @todo should we use the side panel (width - x) or something?
         listCss={{ width: 230 }}
       />
-
       {isInvalidProp ? (
         <Tooltip content={`Invalid property name: ${prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
