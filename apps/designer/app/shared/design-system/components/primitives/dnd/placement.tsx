@@ -10,7 +10,7 @@ const probe = document.createElement("div");
  * We place a div at the position where future drop will happen.
  * We learn if the indicator will render vertically or horizontally as well as its width/heigh.
  */
-export const getPlacement = ({
+const getPlacement = ({
   target,
   index = 0,
 }: {
