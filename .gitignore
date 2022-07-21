@@ -41,3 +41,7 @@ yarn-error.log*
 *.db
 *.db-journal
 
+
+# builds
+lib
+generated
