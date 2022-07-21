@@ -207,17 +207,25 @@ export const usePlacement = ({ onPalcementChange }: Parameters): Handlers => {
 };
 
 export const PlacementIndicator = ({ rect }: { rect?: Rect }) => {
-  if (rect === undefined) return null;
+  if (rect === undefined) {
+    return null;
+  }
+
   const style = {
-    top: rect.top,
-    left: rect.left,
+    top: rect.top - 1,
+    left: rect.left - 1,
     width: rect.width,
     height: rect.height,
   };
+
   return (
     <Box
       style={style}
-      css={{ position: "absolute", border: "1px solid green" }}
+      css={{
+        boxSizing: "content-box",
+        position: "absolute",
+        border: "1px solid $grass9",
+      }}
     />
   );
 };
