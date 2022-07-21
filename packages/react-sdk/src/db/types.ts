@@ -10,5 +10,3 @@ export type Tree = {
 export type InstanceProps = Omit<DbInstanceProps, "props"> & {
   props: Array<UserProp>;
 };
-
-export type { DbInstanceProps };
