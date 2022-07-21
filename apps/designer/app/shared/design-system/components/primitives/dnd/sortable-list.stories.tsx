@@ -102,7 +102,7 @@ export const SortableList = ({
           let newIndex = placement.index;
 
           // placement.index does not take into account the fact that the drag item will be removed.
-          // we need to do this to account for that
+          // we need to do this to account for it.
           if (oldIndex < newIndex) {
             newIndex = Math.max(0, newIndex - 1);
           }
