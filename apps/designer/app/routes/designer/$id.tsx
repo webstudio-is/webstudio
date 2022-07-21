@@ -9,7 +9,7 @@ import { uploadAssets } from "~/shared/db/misc.server";
 import { ErrorMessage } from "~/shared/error";
 // if this file does not end in .server remix will not build
 // since it only allows node code in those files
-import { loadByProject } from "@webstudio-is/asset-uploader/src/db/index.server";
+import { loadByProject } from "@webstudio-is/asset-uploader/index.server";
 
 export { links };
 

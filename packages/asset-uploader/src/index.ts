@@ -1,2 +1,2 @@
 export * from "./upload";
-export * from "./db/index.server";
+export * from "./db";
