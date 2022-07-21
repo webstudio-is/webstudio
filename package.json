@@ -14,7 +14,8 @@
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
-    "storybook": "turbo run storybook:run"
+    "storybook": "turbo run storybook:run",
+    "postinstall": "yarn prisma migrate dev"
   },
   "devDependencies": {
     "eslint-config-custom": "*",

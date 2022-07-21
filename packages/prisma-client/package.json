@@ -8,8 +8,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint",
-    "build:prisma": "prisma format && prisma generate",
-    "migrate": "dotenv -e ../../apps/designer/.env -- prisma migrate"
+    "build:prisma": "prisma format && prisma generate"
   },
   "devDependencies": {
     "dotenv-cli": "^6.0.0",
