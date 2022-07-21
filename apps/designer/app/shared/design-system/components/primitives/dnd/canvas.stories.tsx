@@ -154,6 +154,7 @@ export const Canvas = () => {
   };
 
   const dropTargetHandlers = useDropTarget({
+    edgeDistanceThreshold: 10,
     isDropTarget(element: HTMLElement) {
       return elementToId(element) !== undefined;
     },
@@ -166,16 +167,22 @@ export const Canvas = () => {
       }
 
       if (id !== ROOT_ID) {
-        const path = findItemPath(data, id) ?? [];
+        let path = findItemPath(data, id) ?? [];
+
+        // NOTE: not sure we should always do this.
+        // Might depend on whether there's a parent with acceptsChildren, or something.
+        if (event.area !== "center") {
+          path = path.slice(1);
+        }
 
         // to make sure we are not dropping on ourself
         const dragItemIndex = path.findIndex((item) => item.id === dragItemId);
+        if (dragItemIndex !== -1) {
+          path = path.slice(dragItemIndex + 1);
+        }
 
         for (const item of path) {
-          if (
-            item.acceptsChildren &&
-            (dragItemIndex === -1 || path.indexOf(item) > dragItemIndex)
-          ) {
+          if (item.acceptsChildren) {
             const element = idToElement(rootElement, item.id);
             if (element) {
               setDropTarget(item.id, element);
@@ -274,7 +281,9 @@ export const Canvas = () => {
           width: 500,
           height: 500,
           overflow: "auto",
-          "[data-id]": { cursor: "grab" },
+          "[data-id]": {
+            cursor: dragItemId === undefined ? "grab" : "default",
+          },
         }}
         ref={(element) => {
           dropTargetHandlers.rootRef(element);

@@ -97,7 +97,6 @@ export const useDropTarget = ({
     if (hasTargetChanged || hasAreaChanged || hasRectChanged) {
       onDropTargetChange({
         rect: nextRect,
-        // NOTE: might make more sense to pass the area to isDropTarget instead of here
         area: nextArea,
         target: nextTarget,
       });

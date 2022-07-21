@@ -225,6 +225,7 @@ export const PlacementIndicator = ({ rect }: { rect?: Rect }) => {
         boxSizing: "content-box",
         position: "absolute",
         border: "1px solid $grass9",
+        pointerEvents: "none",
       }}
     />
   );
