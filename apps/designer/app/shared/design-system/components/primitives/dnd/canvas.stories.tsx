@@ -135,7 +135,7 @@ export const Canvas = () => {
     },
     { id: "4", style: {}, children: [], acceptsChildren: true },
     { id: "5", style: {}, children: [], acceptsChildren: true },
-    { id: "6", style: {}, children: [], acceptsChildren: true },
+    { id: "6", style: {}, children: [], acceptsChildren: false },
   ]);
 
   const [placement, setPalcement] = useState<{
