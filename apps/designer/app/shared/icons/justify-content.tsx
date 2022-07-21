@@ -109,6 +109,8 @@ export const justifyContent = {
   start: JustifyContentStart,
   end: JustifyContentEnd,
   center: JustifyContentCenter,
+  "flex-start": JustifyContentStart,
+  "flex-end": JustifyContentEnd,
   "space-between": JustifyContentSpaceBetween,
   "space-around": JustifyContentSpaceAround,
 };
