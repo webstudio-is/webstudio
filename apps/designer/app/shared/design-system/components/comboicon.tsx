@@ -4,12 +4,13 @@ import { HamburgerMenuIcon, CheckIcon } from "@radix-ui/react-icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
-  minWidth: 220,
-  backgroundColor: "white",
-  borderRadius: 6,
-  padding: 5,
+  maxWidth: "224px",
+  backgroundColor: "$colors$gray4",
+  borderRadius: "4px",
+  padding: "8px",
   boxShadow:
-    "0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2)",
+    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 0 1px $colors$gray1",
+  border: "1px solid $colors$gray8",
 });
 
 const itemStyles = {
@@ -40,29 +41,53 @@ const StyledItemIndicator = styled(DropdownMenuPrimitive.ItemIndicator, {
 });
 
 const StyledArrow = styled(DropdownMenuPrimitive.Arrow, {
-  fill: "white",
+  fill: "$colors$gray4",
+  // filter: 'drop-shadow(0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15))',
 });
 
 const IconButton = styled("button", {
   all: "unset",
   fontFamily: "inherit",
   borderRadius: "2px",
-  height: "100%",
   width: "100%",
+  height: "100%",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   color: "$colors$gray12",
-  backgroundColor: "white",
-  "&:hover": { backgroundColor: "$colors$gray3" },
-  "& svg": { width: "24px", height: "24px" },
+  backgroundColor: "$colors$loContrast",
+  "&:hover": {
+    backgroundColor: "$colors$gray3",
+  },
+  "& svg": {
+    width: "24px",
+    height: "24px",
+  },
+  "&:not(:hover) path": {
+    fill: "currentColor",
+  },
+  "&[data-state=open]": {
+    backgroundColor: "$colors$blue10",
+    "& path": {
+      fill: "$colors$blue1",
+    },
+  },
 });
 
-export const Comboicon = ({ id, value, items, onChange, children }: any) => {
+export const Comboicon = ({
+  id,
+  value,
+  items,
+  onChange,
+  children,
+  css,
+}: any) => {
   return (
     <DropdownMenuPrimitive.Root>
       <DropdownMenuPrimitive.Trigger asChild>
-        <IconButton aria-label={id}>{children}</IconButton>
+        <IconButton aria-label={id} css={css}>
+          {children}
+        </IconButton>
       </DropdownMenuPrimitive.Trigger>
 
       <StyledContent>

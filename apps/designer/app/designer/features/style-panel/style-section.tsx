@@ -37,6 +37,7 @@ import {
 } from "./lib/spacing-widget";
 import { useIsFromCurrentBreakpoint } from "./lib/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./lib/constants";
+import { isCatchResponse } from "@remix-run/react/dist/data";
 
 const getFinalValue = ({
   currentStyle,
@@ -204,7 +205,14 @@ const ComboboxControl = ({
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             setValue(event.target.value)
           }
-          style={{ width: "100%", boxSizing: "border-box" }}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            outline: "none",
+            borderRadius: "4px",
+            height: "28px",
+            border: "1px solid var(--colors-slate8)",
+          }}
         />
       );
     }
@@ -292,12 +300,28 @@ const ComboiconControl = ({
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
   const Icon = (icons as any)[styleConfig.property]?.[currentValue];
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
   return (
     <Comboicon
       id={styleConfig.property}
       items={styleConfig.items}
       value={String(currentValue)}
       onChange={setValue}
+      css={
+        isCurrentBreakpoint
+          ? {
+              color: "$colors$blue11",
+              backgroundColor: "$colors$blue4",
+              "&:hover": {
+                color: "$colors$blue11",
+                backgroundColor: "$colors$blue4",
+              },
+              "& path": {
+                fill: "$colors$blue11",
+              },
+            }
+          : {}
+      }
     >
       {Icon && <Icon />}
     </Comboicon>
@@ -308,15 +332,15 @@ const GridControl = ({ css, currentStyle, ...rest }: any) => {
   return (
     <Box
       css={{
-        border: "2px solid $colors$blue9",
+        border: "2px solid $colors$slate8",
         background: "#FFF",
         borderRadius: "4px",
         textAlign: "center",
         width: "100%",
-        height: "72px",
+        aspectRatio: "1 / 1",
+        padding: "30px",
         ...css,
       }}
-      {...rest}
     ></Box>
   );
   return <></>;
@@ -413,17 +437,20 @@ export const renderCategory = ({
                 css={{
                   alignItems: "center",
                   gridTemplateColumns: "repeat(12, 1fr);",
-                  gridTemplateRows: "auto auto auto auto",
+                  gridTemplateRows: "auto 0px auto auto 0px auto",
                   gridTemplateAreas: `
                     "display display display display display display display display display display display display"
+                    "grid grid grid grid grid . . . . . . ."
                     "grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
                     "grid grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent ."
+                    "grid grid grid grid grid . . . . . . ."
                     "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
                   `,
-                  gap: "8px 4px",
+                  gap: "8px",
                   "& > [data-type=comboicon]": {
                     display: "flex",
                     justifyContent: "center",
+                    alignItems: "center",
                     height: "100%",
                   },
                   // @todo placeContent is shorthand prop for other properties, thus a duplicate
