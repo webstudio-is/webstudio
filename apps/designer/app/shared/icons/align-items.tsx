@@ -12,10 +12,6 @@ export const AlignItemsStart = React.forwardRef<SVGSVGElement, IconProps>(
         ref={forwardedRef}
       >
         <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
-        <path
           fillRule="evenodd"
           clipRule="evenodd"
           d="M12.8 7.99999H11.2V14.4H8.00005V7.99999H4.80005V6.39999H19.2V7.99999H16V17.6H12.8V7.99999Z"
@@ -36,10 +32,6 @@ export const AlignItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -62,10 +54,6 @@ export const AlignItemsCenter = React.forwardRef<SVGSVGElement, IconProps>(
         ref={forwardedRef}
       >
         <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
-        <path
           fillRule="evenodd"
           clipRule="evenodd"
           d="M10.4 11H12.8V5L15 5V11H20V12.6H15V19H12.8V12.6H10.4V17H8.2V12.6H4V11H8.2V7H10.4V11Z"
@@ -86,10 +74,6 @@ export const AlignItemsBaseline = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -137,10 +121,6 @@ export const AlignItemsStretch = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path
           fillRule="evenodd"
           clipRule="evenodd"

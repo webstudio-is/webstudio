@@ -11,10 +11,6 @@ export const FlexWrapWrap = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path d="M16 13H20V20H16V13Z" fill="#11181C" />
         <path d="M4 13H8V20H4V13Z" fill="#11181C" />
         <path d="M10 13H14V20H10V13Z" fill="#11181C" />
@@ -40,10 +36,6 @@ export const FlexWrapNowrap = React.forwardRef<SVGSVGElement, IconProps>(
         ref={forwardedRef}
       >
         <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
-        <path
           fillRule="evenodd"
           clipRule="evenodd"
           d="M13 9H11V15H13V9ZM19 9H17V15H19V9ZM7 9H5V15H7V9ZM4 8V16H8V8H4ZM14 8V16H10V8H14ZM20 8V16H16V8H20Z"
@@ -65,10 +57,6 @@ export const FlexWrapWrapReverse = React.forwardRef<SVGSVGElement, IconProps>(
         ref={forwardedRef}
         style={{ transform: "rotate(180deg)" }}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path d="M16 13H20V20H16V13Z" fill="#11181C" />
         <path d="M4 13H8V20H4V13Z" fill="#11181C" />
         <path d="M10 13H14V20H10V13Z" fill="#11181C" />

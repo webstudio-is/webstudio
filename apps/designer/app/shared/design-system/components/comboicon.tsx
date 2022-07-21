@@ -47,14 +47,15 @@ const IconButton = styled("button", {
   all: "unset",
   fontFamily: "inherit",
   borderRadius: "2px",
-  height: "32px",
-  width: "32px",
+  height: "100%",
+  width: "100%",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   color: "$colors$gray12",
   backgroundColor: "white",
-  "&:hover": { backgroundColor: "$colors$gray6" },
+  "&:hover": { backgroundColor: "$colors$gray3" },
+  "& svg": { width: "24px", height: "24px" },
 });
 
 export const Comboicon = ({ id, value, items, onChange, children }: any) => {

@@ -25,6 +25,7 @@ import {
   type StyleProperty,
   type Category,
   type StyleValue,
+  type CSS,
 } from "@webstudio-is/react-sdk";
 import type { SetProperty } from "./lib/use-style-data";
 import type { InheritedStyle } from "./lib/get-inherited-style";
@@ -58,9 +59,10 @@ const getFinalValue = ({
 type PropertyProps = {
   property: StyleProperty;
   label: string;
+  css?: CSS;
 };
 
-const PropertyName = ({ property, label }: PropertyProps) => {
+const PropertyName = ({ property, label, css }: PropertyProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   return (
@@ -70,6 +72,7 @@ const PropertyName = ({ property, label }: PropertyProps) => {
         color: isCurrentBreakpoint
           ? propertyNameColorForSelectedBreakpoint
           : "$hiContrast",
+        ...css,
       }}
       variant="contrast"
       size="1"
@@ -258,7 +261,11 @@ const SelectControl = ({
 
   return (
     <>
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <PropertyName
+        property={styleConfig.property}
+        label={styleConfig.label}
+        css={{ fontWeight: "500", marginRight: "8px" }}
+      />
       <Select
         options={styleConfig.items.map(({ label }) => label)}
         value={String(value.value)}
@@ -297,7 +304,7 @@ const ComboiconControl = ({
   );
 };
 
-const GridControl = ({ css, currentStyle }: any) => {
+const GridControl = ({ css, currentStyle, ...rest }: any) => {
   return (
     <Box
       css={{
@@ -305,18 +312,19 @@ const GridControl = ({ css, currentStyle }: any) => {
         background: "#FFF",
         borderRadius: "4px",
         textAlign: "center",
-        width: "72px",
+        width: "100%",
         height: "72px",
         ...css,
       }}
+      {...rest}
     ></Box>
   );
   return <></>;
 };
 
-const LockControl = ({ css, currentStyle, setProperty }: any) => {
+const LockControl = ({ css, currentStyle, setProperty, ...rest }: any) => {
   return (
-    <IconButton css={{ width: "100%", ...css }}>
+    <IconButton css={{ width: "100%", ...css }} {...rest}>
       <icons.lock.closed />
     </IconButton>
   );
@@ -364,7 +372,7 @@ export const renderProperty = ({
   return (
     <Box
       key={key}
-      data-category={category}
+      data-type={styleConfig.control.toLowerCase()}
       data-property={property}
       css={{ gridArea: property }}
     >
@@ -408,21 +416,33 @@ export const renderCategory = ({
                   gridTemplateRows: "auto auto auto auto",
                   gridTemplateAreas: `
                     "display display display display display display display display display display display display"
-                    "grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems . ."
-                    "grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent . ."
+                    "grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
+                    "grid grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent ."
                     "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
                   `,
-                  "[data-property=placeContent]": {
+                  gap: "8px 4px",
+                  "& > [data-type=comboicon]": {
+                    display: "flex",
+                    justifyContent: "center",
+                    height: "100%",
+                  },
+                  // @todo placeContent is shorthand prop for other properties, thus a duplicate
+                  "& > [data-property=placeContent]": {
+                    display: "none",
+                  },
+                  "& > [data-property=justifyItems]": {
                     display: "none",
                   },
                 }}
               >
                 <GridControl
+                  data-property="grid"
                   css={{ gridArea: "grid" }}
                   currentStyle={currentStyle}
                   setProperty={setProperty}
                 />
                 <LockControl
+                  data-property="lock"
                   css={{ gridArea: "lock" }}
                   currentStyle={currentStyle}
                   setProperty={setProperty}

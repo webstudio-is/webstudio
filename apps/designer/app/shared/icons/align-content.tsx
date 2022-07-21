@@ -11,10 +11,6 @@ export const AlignContentStart = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path d="M4 6H20V7H4V6Z" fill="#11181C" />
         <path d="M8 9H11V12H8V9Z" fill="#11181C" />
         <path d="M16 9H13V12H16V9Z" fill="#11181C" />
@@ -35,10 +31,6 @@ export const AlignContentCenter = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -61,10 +53,6 @@ export const AlignContentEnd = React.forwardRef<SVGSVGElement, IconProps>(
         ref={forwardedRef}
       >
         <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
-        <path
           fillRule="evenodd"
           clipRule="evenodd"
           d="M8 8H11V11H8V8ZM4 18H20V19H4V18ZM16 8H13V11H16V8ZM13 13H16V16H13V13ZM11 13H8V16H11V13Z"
@@ -85,10 +73,6 @@ export const AlignContentStretch = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <path
-          d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-          fill="white"
-        />
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -113,10 +97,6 @@ export const AlignContentSpaceAround = React.forwardRef<
       ref={forwardedRef}
     >
       <path
-        d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-        fill="white"
-      />
-      <path
         fillRule="evenodd"
         clipRule="evenodd"
         d="M19 5H5V6H19V5ZM19 18H5V19H19V18ZM8 8H11V11H8V8ZM16 8H13V11H16V8ZM13 13H16V16H13V13ZM11 13H8V16H11V13Z"
@@ -138,10 +118,6 @@ export const AlignContentSpaceBetween = React.forwardRef<
       {...props}
       ref={forwardedRef}
     >
-      <path
-        d="M0 2C0 0.89543 0.895431 0 2 0H22C23.1046 0 24 0.895431 24 2V22C24 23.1046 23.1046 24 22 24H2C0.89543 24 0 23.1046 0 22V2Z"
-        fill="white"
-      />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
