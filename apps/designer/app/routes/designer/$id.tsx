@@ -7,13 +7,14 @@ import config from "~/config";
 import env from "~/env.server";
 import { uploadAssets } from "~/shared/db/misc.server";
 import { ErrorMessage } from "~/shared/error";
+import { loadByProject } from "@webstudio-is/asset-uploader/src/db/index.server";
 
 export { links };
 
 export const loader: LoaderFunction = async ({ params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
   const project = await db.project.loadById(params.id);
-  const assets = await db.assets.loadByProject(params.id);
+  const assets = await loadByProject(params.id);
   if (project === null) {
     return { errors: `Project "${params.id}" not found` };
   }
@@ -37,7 +38,6 @@ export const action: ActionFunction = async ({ request, params }) => {
       const assets = await uploadAssets({
         request,
         projectId: params.id,
-        db,
         dirname: __dirname,
       });
       return {
