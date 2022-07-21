@@ -164,7 +164,7 @@ const findClosestDropTarget = ({
   while (currentTarget !== null && currentTarget !== root) {
     const isValid = isDropTarget(currentTarget);
     if (isValid) {
-      return target;
+      return currentTarget;
     }
     currentTarget = currentTarget.parentElement;
   }
