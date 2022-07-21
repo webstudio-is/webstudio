@@ -1,3 +1,3 @@
-# Webstudio Asset Uploader
+# Webstudio Prisma client
 
-The asset uploader is the packages that handles all the logic for our assets upload
+Package conatining our API to interact with prisma

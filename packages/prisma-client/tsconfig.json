@@ -6,7 +6,6 @@
     "module": "commonjs",
     "target": "ES2019",
     "strict": true,
-    "baseUrl": ".",
-    "outDir": "./lib"
+    "baseUrl": "."
   }
 }
