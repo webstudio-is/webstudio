@@ -281,6 +281,7 @@ export const Canvas = () => {
           width: 500,
           height: 500,
           overflow: "auto",
+          touchAction: dragItemId === undefined ? "none" : "auto",
           "[data-id]": {
             cursor: dragItemId === undefined ? "grab" : "default",
           },

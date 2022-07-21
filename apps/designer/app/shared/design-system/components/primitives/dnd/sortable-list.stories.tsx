@@ -139,6 +139,7 @@ export const SortableList = ({
           overflow: "auto",
           background: "white",
           color: "black",
+          touchAction: dragItemId === undefined ? "none" : "auto",
         }}
         ref={autoScrollHandlers.targetRef}
         onScroll={() => {
