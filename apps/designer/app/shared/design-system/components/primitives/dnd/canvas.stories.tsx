@@ -281,7 +281,8 @@ export const Canvas = () => {
           width: 500,
           height: 500,
           overflow: "auto",
-          touchAction: dragItemId === undefined ? "none" : "auto",
+          // to make DnD work we have to disable scrolling using touch
+          touchAction: "none",
           "[data-id]": {
             cursor: dragItemId === undefined ? "grab" : "default",
           },

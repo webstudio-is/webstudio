@@ -139,7 +139,9 @@ export const SortableList = ({
           overflow: "auto",
           background: "white",
           color: "black",
-          touchAction: dragItemId === undefined ? "none" : "auto",
+
+          // to make DnD work we have to disable scrolling using touch
+          touchAction: "none",
         }}
         ref={autoScrollHandlers.targetRef}
         onScroll={() => {
