@@ -20,12 +20,18 @@ const itemStyles = {
   borderRadius: 3,
   display: "flex",
   alignItems: "center",
-  height: 25,
+  height: 28,
   padding: "0 5px",
   position: "relative",
   paddingLeft: 25,
+  paddingRight: 25,
   userSelect: "none",
   gap: "8px",
+  "&:hover": {
+    background: "$colors$blue10",
+    color: "$colors$blue1",
+    "& *": { fill: "$colors$blue1" },
+  },
 };
 
 const StyledRadioItem = styled(DropdownMenuPrimitive.RadioItem, {
