@@ -1,5 +1,4 @@
-import { type Project } from "@webstudio-is/react-sdk";
-import { prisma } from "./prisma.server";
+import { prisma, Project } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
 
 export const loadByProject = async (projectId?: Project["id"]) => {

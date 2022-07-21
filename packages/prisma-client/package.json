@@ -1,0 +1,27 @@
+{
+  "name": "@webstudio-is/prisma-client",
+  "version": "0.0.1",
+  "description": "Webstudio Prisma layer",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "scripts": {
+    "checks": "tsc --noEmit",
+    "build:prisma": "prisma format && prisma generate",
+    "migrate": "dotenv -e ../../apps/designer/.env -- prisma migrate"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^6.0.0",
+    "prisma": "^4.1.0"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "README.md",
+    "!*.test.*"
+  ],
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@prisma/client": "^4.1.0"
+  }
+}

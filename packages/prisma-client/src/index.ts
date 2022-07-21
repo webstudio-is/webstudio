@@ -1,5 +1,12 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
+import type {
+  InstanceProps,
+  Project,
+  User,
+  Breakpoints,
+  Asset,
+} from "@prisma/client";
 
 declare global {
   // allow global `var` declarations
@@ -15,3 +22,4 @@ export const prisma = global.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== "production") global.prisma = prisma;
 
 export { Prisma, PrismaClientKnownRequestError };
+export type { InstanceProps, Project, User, Breakpoints, Asset };

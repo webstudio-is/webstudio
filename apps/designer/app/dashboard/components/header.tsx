@@ -9,7 +9,7 @@ import {
   Text,
   Flex,
 } from "~/shared/design-system";
-import { User } from "@prisma/client";
+import { User } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
 
 export const DashboardHeader = ({ user }: { user: User }) => {
