@@ -58,14 +58,21 @@ const Items = ({
   );
 };
 
-const findItem = (data: ItemData[], id: string): ItemData | undefined => {
-  for (const item of data) {
-    if (item.id === id) {
-      return item;
-    }
-    const found = findItem(item.children, id);
-    if (found) {
-      return found;
+const elementToId = (element: HTMLElement) => element.dataset.id;
+
+const idToElement = (
+  root: HTMLElement,
+  id: string
+): HTMLElement | undefined => {
+  if (elementToId(root) === id) {
+    return root;
+  }
+  for (const child of root.children) {
+    if (child instanceof HTMLElement) {
+      const found = idToElement(child, id);
+      if (found) {
+        return found;
+      }
     }
   }
   return undefined;
@@ -88,19 +95,47 @@ const mapItems = (
   }).children;
 };
 
+const findItem = (data: ItemData[], id: string): ItemData | undefined => {
+  for (const item of data) {
+    if (item.id === id) {
+      return item;
+    }
+    const found = findItem(item.children, id);
+    if (found) {
+      return found;
+    }
+  }
+  return undefined;
+};
+
+const findItemPath = (data: ItemData[], id: string): ItemData[] | undefined => {
+  for (const item of data) {
+    if (item.id === id) {
+      return [item];
+    }
+    const found = findItemPath(item.children, id);
+    if (found) {
+      return [...found, item];
+    }
+  }
+  return undefined;
+};
+
 export const Canvas = () => {
   const [data, setData] = useState<ItemData[]>([
     {
       id: "0",
       style: {},
-      children: [],
+      children: [
+        { id: "1", style: { margin: 0 }, children: [], acceptsChildren: true },
+        { id: "2", style: { margin: 0 }, children: [], acceptsChildren: true },
+        { id: "3", style: { margin: 0 }, children: [], acceptsChildren: true },
+      ],
       acceptsChildren: true,
     },
-    { id: "1", style: {}, children: [], acceptsChildren: true },
-    { id: "2", style: {}, children: [], acceptsChildren: true },
-    { id: "3", style: {}, children: [], acceptsChildren: true },
     { id: "4", style: {}, children: [], acceptsChildren: true },
     { id: "5", style: {}, children: [], acceptsChildren: true },
+    { id: "6", style: {}, children: [], acceptsChildren: true },
   ]);
 
   const [placement, setPalcement] = useState<{
@@ -111,18 +146,46 @@ export const Canvas = () => {
   const [dragItemId, setDragItemId] = useState<string>();
 
   const dropTargetId = useRef<string>();
+  const rootRef = useRef<HTMLElement | null>(null);
+
+  const setDropTarget = (id: string, element: HTMLElement) => {
+    dropTargetId.current = id;
+    placementHandlers.handleTargetChange(element);
+  };
 
   const dropTargetHandlers = useDropTarget({
     isDropTarget(element: HTMLElement) {
-      const id = element.dataset.id;
-      return (
-        id != null &&
-        (id === ROOT_ID || findItem(data, id)?.acceptsChildren === true)
-      );
+      return elementToId(element) !== undefined;
     },
     onDropTargetChange(event) {
-      dropTargetId.current = event.target.dataset.id;
-      placementHandlers.handleTargetChange(event.target);
+      const id = elementToId(event.target);
+      const rootElement = rootRef.current;
+
+      if (id === undefined || rootElement === null) {
+        return;
+      }
+
+      if (id !== ROOT_ID) {
+        const path = findItemPath(data, id) ?? [];
+
+        // to make sure we are not dropping on ourself
+        const dragItemIndex = path.findIndex((item) => item.id === dragItemId);
+
+        for (const item of path) {
+          if (
+            item.acceptsChildren &&
+            (dragItemIndex === -1 || path.indexOf(item) > dragItemIndex)
+          ) {
+            const element = idToElement(rootElement, item.id);
+            if (element) {
+              setDropTarget(item.id, element);
+              return;
+            }
+          }
+        }
+      }
+
+      setDropTarget(ROOT_ID, rootElement);
     },
   });
 
@@ -216,6 +279,7 @@ export const Canvas = () => {
         ref={(element) => {
           dropTargetHandlers.rootRef(element);
           autoScrollHandlers.targetRef(element);
+          rootRef.current = element;
         }}
         onScroll={() => {
           dropTargetHandlers.handleScroll();
