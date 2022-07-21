@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Box } from "../../box";
 
 export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
-type Coordinates = { x: number; y: number };
+type Point = { x: number; y: number };
 
 const probe = document.createElement("div");
 
@@ -29,13 +29,13 @@ const getPlacement = ({
 };
 
 // https://stackoverflow.com/a/18157551/478603
-const getDistance = (rect: Rect, { x, y }: Coordinates) => {
+const getDistance = (rect: Rect, { x, y }: Point) => {
   const dx = Math.max(rect.left - x, 0, x - (rect.left + rect.width));
   const dy = Math.max(rect.top - y, 0, y - (rect.top + rect.height));
   return Math.sqrt(dx * dx + dy * dy);
 };
 
-const getClosestRectIndex = (rects: Rect[], point: Coordinates) => {
+const getClosestRectIndex = (rects: Rect[], point: Point) => {
   if (rects.length === 0) {
     return -1;
   }
@@ -60,23 +60,25 @@ const isEqualRect = (a: Rect | undefined, b: Rect) => {
   );
 };
 
-type Parameters = {
+type UsePlacementProps = {
   onPlacementChange: (event: { index: number; placementRect: Rect }) => void;
 };
 
 type Handlers = {
   handleEnd: () => void;
-  handleMove: (pointerCoordinate: Coordinates) => void;
+  handleMove: (pointerPoint: Point) => void;
   handleScroll: () => void;
   handleTargetChange: (target: HTMLElement) => void;
 };
 
-export const usePlacement = ({ onPlacementChange }: Parameters): Handlers => {
+export const usePlacement = ({
+  onPlacementChange,
+}: UsePlacementProps): Handlers => {
   const state = useRef({
     childrenRectsCache: new WeakMap<HTMLElement, Rect[]>(),
     target: undefined as HTMLElement | undefined,
     targetRect: undefined as DOMRect | undefined,
-    pointerCoordinate: undefined as Coordinates | undefined,
+    pointerPoint: undefined as Point | undefined,
     index: undefined as number | undefined,
     placementRext: undefined as Rect | undefined,
   });
@@ -108,7 +110,7 @@ export const usePlacement = ({ onPlacementChange }: Parameters): Handlers => {
   const getIndex = (
     parent: HTMLElement,
     parentRect: DOMRect,
-    pointerCoordinate: Coordinates
+    pointerPoint: Point
   ) => {
     if (parent.children.length === 0) {
       return 0;
@@ -117,8 +119,8 @@ export const usePlacement = ({ onPlacementChange }: Parameters): Handlers => {
     const childrenRects = getChildrenRects(parent, parentRect);
 
     const pointerAdjusted = {
-      x: pointerCoordinate.x - parentRect.left,
-      y: pointerCoordinate.y - parentRect.top,
+      x: pointerPoint.x - parentRect.left,
+      y: pointerPoint.y - parentRect.top,
     };
 
     const closestRectIndex = getClosestRectIndex(
@@ -147,9 +149,9 @@ export const usePlacement = ({ onPlacementChange }: Parameters): Handlers => {
   const detectChange = (
     reason: "pointer-move" | "scroll" | "target-change"
   ) => {
-    const { target, pointerCoordinate } = state.current;
+    const { target, pointerPoint } = state.current;
 
-    if (target === undefined || pointerCoordinate === undefined) {
+    if (target === undefined || pointerPoint === undefined) {
       return;
     }
 
@@ -161,7 +163,7 @@ export const usePlacement = ({ onPlacementChange }: Parameters): Handlers => {
 
     state.current.targetRect = nextTargetRect;
 
-    const nextIndex = getIndex(target, nextTargetRect, pointerCoordinate);
+    const nextIndex = getIndex(target, nextTargetRect, pointerPoint);
     const indexChanged = nextIndex !== state.current.index;
     state.current.index = nextIndex;
 
@@ -187,13 +189,13 @@ export const usePlacement = ({ onPlacementChange }: Parameters): Handlers => {
         childrenRectsCache: new WeakMap(),
         target: undefined,
         targetRect: undefined,
-        pointerCoordinate: undefined,
+        pointerPoint: undefined,
         index: undefined,
         placementRext: undefined,
       };
     },
-    handleMove(pointerCoordinate) {
-      state.current.pointerCoordinate = pointerCoordinate;
+    handleMove(pointerPoint) {
+      state.current.pointerPoint = pointerPoint;
       detectChange("pointer-move");
     },
     handleScroll() {
