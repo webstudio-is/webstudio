@@ -2,10 +2,10 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import noop from "lodash.noop";
 import React, { ReactNode, Ref } from "react";
 import {
-  CaretSortIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  CaretDownIcon,
 } from "~/shared/icons";
 import { styled } from "../stitches.config";
 
@@ -177,7 +177,7 @@ const SelectBase = (
           {value ? getLabel(value) : placeholder}
         </SelectPrimitive.Value>
         <StyledIcon>
-          <CaretSortIcon />
+          <CaretDownIcon />
         </StyledIcon>
       </StyledTrigger>
 

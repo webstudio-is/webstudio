@@ -2,9 +2,11 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 export const AlignContentStart = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -20,11 +22,14 @@ export const AlignContentStart = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignContentStart.displayName = "AlignContentStart";
 
 export const AlignContentCenter = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -41,11 +46,14 @@ export const AlignContentCenter = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignContentCenter.displayName = "AlignContentCenter";
 
 export const AlignContentEnd = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -62,11 +70,14 @@ export const AlignContentEnd = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignContentEnd.displayName = "AlignContentEnd";
 
 export const AlignContentStretch = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -83,13 +94,16 @@ export const AlignContentStretch = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignContentStretch.displayName = "AlignContentStretch";
 
 export const AlignContentSpaceAround = React.forwardRef<
   SVGSVGElement,
   IconProps
->(({ color = "currentColor", ...props }, forwardedRef) => {
+>((props, forwardedRef) => {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -105,13 +119,16 @@ export const AlignContentSpaceAround = React.forwardRef<
     </svg>
   );
 });
+AlignContentSpaceAround.displayName = "AlignContentSpaceAround";
 
 export const AlignContentSpaceBetween = React.forwardRef<
   SVGSVGElement,
   IconProps
->(({ color = "currentColor", ...props }, forwardedRef) => {
+>((props, forwardedRef) => {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -127,6 +144,7 @@ export const AlignContentSpaceBetween = React.forwardRef<
     </svg>
   );
 });
+AlignContentSpaceBetween.displayName = "AlignContentSpaceBetween";
 
 export const alignContent = {
   normal: AlignContentStart,

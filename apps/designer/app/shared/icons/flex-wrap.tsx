@@ -2,9 +2,11 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 export const FlexWrapWrap = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -24,11 +26,14 @@ export const FlexWrapWrap = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+FlexWrapWrap.displayName = "FlexWrapWrap";
 
 export const FlexWrapNowrap = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -45,11 +50,14 @@ export const FlexWrapNowrap = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+FlexWrapNowrap.displayName = "FlexWrapNowrap";
 
 export const FlexWrapWrapReverse = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -70,6 +78,7 @@ export const FlexWrapWrapReverse = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+FlexWrapWrapReverse.displayName = "FlexWrapWrapReverse";
 
 export const flexWrap = {
   normal: FlexWrapNowrap,

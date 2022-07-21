@@ -2,7 +2,7 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 export const LockOpened = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
         width="8"
@@ -39,9 +39,10 @@ export const LockOpened = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+LockOpened.displayName = "LockOpened";
 
 export const LockClosed = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
         width="8"
@@ -80,6 +81,7 @@ export const LockClosed = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+LockClosed.displayName = "LockClosed";
 
 export const lock = {
   normal: LockOpened,

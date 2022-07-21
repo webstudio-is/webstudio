@@ -1,4 +1,4 @@
-import { ChangeEvent, ChangeEventHandler, useState, useEffect } from "react";
+import { ChangeEvent, useState } from "react";
 import {
   Box,
   Flex,
@@ -11,12 +11,9 @@ import {
   Comboicon,
   Select,
   IconButton,
+  TextField,
 } from "~/shared/design-system";
-import {
-  TriangleRightIcon,
-  TriangleDownIcon,
-  LockClosedIcon,
-} from "~/shared/icons";
+import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
 import * as icons from "~/shared/icons";
 import type { StyleConfig } from "./lib/configs";
 import {
@@ -37,7 +34,6 @@ import {
 } from "./lib/spacing-widget";
 import { useIsFromCurrentBreakpoint } from "./lib/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./lib/constants";
-import { isCatchResponse } from "@remix-run/react/dist/data";
 
 const getFinalValue = ({
   currentStyle,
@@ -70,9 +66,16 @@ const PropertyName = ({ property, label, css }: PropertyProps) => {
     <Label
       css={{
         gridColumn: "1",
-        color: isCurrentBreakpoint
-          ? propertyNameColorForSelectedBreakpoint
-          : "$hiContrast",
+        ...(isCurrentBreakpoint
+          ? {
+              color: propertyNameColorForSelectedBreakpoint,
+              backgroundColor: "$colors$blue4",
+              padding: "2px 4px",
+              borderRadius: "3px",
+            }
+          : {
+              color: "$hiContrast",
+            }),
         ...css,
       }}
       variant="contrast"
@@ -199,20 +202,13 @@ const ComboboxControl = ({
     case "rowGap":
     case "columnGap": {
       return (
-        <input
+        <TextField
           type="number"
-          value={value.value}
+          value={parseFloat(String(value.value)) || 0}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             setValue(event.target.value)
           }
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            outline: "none",
-            borderRadius: "4px",
-            height: "28px",
-            border: "1px solid var(--colors-slate8)",
-          }}
+          css={{ cursor: "default" }}
         />
       );
     }
@@ -268,18 +264,29 @@ const SelectControl = ({
   const setValue = setProperty(styleConfig.property);
 
   return (
-    <>
+    <Flex align="center">
       <PropertyName
         property={styleConfig.property}
         label={styleConfig.label}
-        css={{ fontWeight: "500", marginRight: "8px" }}
+        css={{
+          fontWeight: "500",
+          // marginRight: "2px",
+        }}
       />
       <Select
         options={styleConfig.items.map(({ label }) => label)}
         value={String(value.value)}
         onChange={setValue}
+        ghost
+        css={{
+          gap: "3px",
+          px: "6px",
+          fontWeight: "500",
+          textTransform: "capitalize",
+          "&:hover": { background: "none" },
+        }}
       />
-    </>
+    </Flex>
   );
 };
 
@@ -294,41 +301,35 @@ const ComboiconControl = ({
     inheritedStyle,
     property: styleConfig.property,
   });
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
 
   if (value === undefined) return null;
 
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
-  const Icon = (icons as any)[styleConfig.property]?.[currentValue];
-  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
   return (
     <Comboicon
       id={styleConfig.property}
       items={styleConfig.items}
       value={String(currentValue)}
       onChange={setValue}
+      icons={(icons as any)[styleConfig.property]}
       css={
         isCurrentBreakpoint
           ? {
               color: "$colors$blue11",
               backgroundColor: "$colors$blue4",
-              "&:hover": {
-                color: "$colors$blue11",
+              "&:not([data-state=open]):hover": {
                 backgroundColor: "$colors$blue4",
-              },
-              "& path": {
-                fill: "$colors$blue11",
               },
             }
           : {}
       }
-    >
-      {Icon && <Icon />}
-    </Comboicon>
+    ></Comboicon>
   );
 };
 
-const GridControl = ({ css, currentStyle, ...rest }: any) => {
+const GridControl = ({ css }: any) => {
   return (
     <Box
       css={{
@@ -428,7 +429,6 @@ export const renderCategory = ({
 }: RenderCategoryProps) => {
   switch (category) {
     case "layout": {
-      const display = currentStyle.display?.value;
       switch (currentStyle.display?.value) {
         case "flex": {
           return (

@@ -2,9 +2,11 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 export const JustifyContentStart = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -20,11 +22,14 @@ export const JustifyContentStart = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+JustifyContentStart.displayName = "JustifyContentStart";
 
 export const JustifyContentCenter = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -41,11 +46,14 @@ export const JustifyContentCenter = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+JustifyContentCenter.displayName = "JustifyContentCenter";
 
 export const JustifyContentEnd = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -61,13 +69,16 @@ export const JustifyContentEnd = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+JustifyContentEnd.displayName = "JustifyContentEnd";
 
 export const JustifyContentSpaceBetween = React.forwardRef<
   SVGSVGElement,
   IconProps
->(({ color = "currentColor", ...props }, forwardedRef) => {
+>((props, forwardedRef) => {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -83,13 +94,16 @@ export const JustifyContentSpaceBetween = React.forwardRef<
     </svg>
   );
 });
+JustifyContentSpaceBetween.displayName = "JustifyContentSpaceBetween";
 
 export const JustifyContentSpaceAround = React.forwardRef<
   SVGSVGElement,
   IconProps
->(({ color = "currentColor", ...props }, forwardedRef) => {
+>((props, forwardedRef) => {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -103,14 +117,13 @@ export const JustifyContentSpaceAround = React.forwardRef<
     </svg>
   );
 });
+JustifyContentSpaceAround.displayName = "JustifyContentSpaceAround";
 
 export const justifyContent = {
   normal: JustifyContentStart,
   start: JustifyContentStart,
   end: JustifyContentEnd,
   center: JustifyContentCenter,
-  "flex-start": JustifyContentStart,
-  "flex-end": JustifyContentEnd,
   "space-between": JustifyContentSpaceBetween,
   "space-around": JustifyContentSpaceAround,
 };

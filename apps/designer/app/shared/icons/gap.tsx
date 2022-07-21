@@ -2,9 +2,11 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 export const RowGap = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -14,11 +16,14 @@ export const RowGap = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+RowGap.displayName = "RowGap";
 
 export const ColumnGap = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -28,6 +33,7 @@ export const ColumnGap = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+ColumnGap.displayName = "ColumnGap";
 
 export const gap = {
   "row-gap": RowGap,

@@ -2,9 +2,11 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 export const AlignItemsStart = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -21,11 +23,14 @@ export const AlignItemsStart = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignItemsStart.displayName = "AlignItemsStart";
 
 export const AlignItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -42,11 +47,14 @@ export const AlignItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignItemsEnd.displayName = "AlignItemsEnd";
 
 export const AlignItemsCenter = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -63,11 +71,14 @@ export const AlignItemsCenter = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignItemsCenter.displayName = "AlignItemsCenter";
 
 export const AlignItemsBaseline = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -110,11 +121,14 @@ export const AlignItemsBaseline = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+AlignItemsBaseline.displayName = "AlignItemsBaseline";
 
 export const AlignItemsStretch = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -131,15 +145,12 @@ export const AlignItemsStretch = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
-
-export const AlignItemsNormal = AlignItemsStart;
+AlignItemsStretch.displayName = "AlignItemsStretch";
 
 export const alignItems = {
   normal: AlignItemsStart,
   start: AlignItemsStart,
   end: AlignItemsEnd,
-  "flex-start": AlignItemsStart,
-  "flex-end": AlignItemsEnd,
   center: AlignItemsCenter,
   baseline: AlignItemsBaseline,
   stretch: AlignItemsStretch,

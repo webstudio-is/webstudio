@@ -2,9 +2,11 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 export const FlexDirectionRow = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -19,11 +21,14 @@ export const FlexDirectionRow = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+FlexDirectionRow.displayName = "FlexDirectionRow";
 
 export const FlexDirectionColumn = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  (props, forwardedRef) => {
     return (
       <svg
+        width="24"
+        height="24"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -38,13 +43,16 @@ export const FlexDirectionColumn = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
+FlexDirectionColumn.displayName = "FlexDirectionColumn";
 
 export const FlexDirectionRowReverse = React.forwardRef<
   SVGSVGElement,
   IconProps
->(({ color = "currentColor", ...props }, forwardedRef) => {
+>((props, forwardedRef) => {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -59,13 +67,16 @@ export const FlexDirectionRowReverse = React.forwardRef<
     </svg>
   );
 });
+FlexDirectionRowReverse.displayName = "FlexDirectionRowReverse";
 
 export const FlexDirectionColumnReverse = React.forwardRef<
   SVGSVGElement,
   IconProps
->(({ color = "currentColor", ...props }, forwardedRef) => {
+>((props, forwardedRef) => {
   return (
     <svg
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -80,6 +91,7 @@ export const FlexDirectionColumnReverse = React.forwardRef<
     </svg>
   );
 });
+FlexDirectionColumnReverse.displayName = "FlexDirectionColumnReverse";
 
 export const flexDirection = {
   normal: FlexDirectionRow,

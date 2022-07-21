@@ -1,6 +1,6 @@
 import React from "react";
 import { styled } from "@stitches/react";
-import { HamburgerMenuIcon, CheckIcon } from "@radix-ui/react-icons";
+import { CheckIcon } from "@radix-ui/react-icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
@@ -9,8 +9,7 @@ const StyledContent = styled(DropdownMenuPrimitive.Content, {
   borderRadius: "4px",
   padding: "8px",
   boxShadow:
-    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 0 1px $colors$gray1",
-  border: "1px solid $colors$gray8",
+    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 0 1px $colors$gray1, 0 0 0 1px $colors$gray8",
 });
 
 const itemStyles = {
@@ -26,6 +25,7 @@ const itemStyles = {
   position: "relative",
   paddingLeft: 25,
   userSelect: "none",
+  gap: "8px",
 };
 
 const StyledRadioItem = styled(DropdownMenuPrimitive.RadioItem, {
@@ -42,7 +42,10 @@ const StyledItemIndicator = styled(DropdownMenuPrimitive.ItemIndicator, {
 
 const StyledArrow = styled(DropdownMenuPrimitive.Arrow, {
   fill: "$colors$gray4",
-  // filter: 'drop-shadow(0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15))',
+  // @todo convert to clip-path of it's parent so that the shadow applies
+  "& *": {
+    fill: "transparent",
+  },
 });
 
 const IconButton = styled("button", {
@@ -63,7 +66,7 @@ const IconButton = styled("button", {
     width: "24px",
     height: "24px",
   },
-  "&:not(:hover) path": {
+  "& path": {
     fill: "currentColor",
   },
   "&[data-state=open]": {
@@ -74,20 +77,12 @@ const IconButton = styled("button", {
   },
 });
 
-export const Comboicon = ({
-  id,
-  value,
-  items,
-  onChange,
-  children,
-  css,
-}: any) => {
+export const Comboicon = ({ value, items, onChange, icons, css }: any) => {
+  const TriggerIcon = icons?.[value];
   return (
-    <DropdownMenuPrimitive.Root>
+    <DropdownMenuPrimitive.Root modal={false}>
       <DropdownMenuPrimitive.Trigger asChild>
-        <IconButton aria-label={id} css={css}>
-          {children}
-        </IconButton>
+        <IconButton css={css}>{TriggerIcon && <TriggerIcon />}</IconButton>
       </DropdownMenuPrimitive.Trigger>
 
       <StyledContent>
@@ -95,16 +90,24 @@ export const Comboicon = ({
           value={value}
           onValueChange={onChange}
         >
-          {items.map(({ name, label }: any) => {
-            return (
-              <StyledRadioItem key={name} value={label}>
-                <StyledItemIndicator>
-                  <CheckIcon />
-                </StyledItemIndicator>
-                {label}
-              </StyledRadioItem>
-            );
-          })}
+          {items
+            .map(({ name, label }: any) => ({
+              icon: icons?.[name],
+              name,
+              label,
+            }))
+            .filter(({ icon }: any) => Boolean(icon))
+            .map(({ name, label, icon: ItemIcon }: any) => {
+              return (
+                <StyledRadioItem key={name} value={label}>
+                  <StyledItemIndicator>
+                    <CheckIcon />
+                  </StyledItemIndicator>
+                  <ItemIcon />
+                  {label}
+                </StyledRadioItem>
+              );
+            })}
         </DropdownMenuPrimitive.RadioGroup>
         <StyledArrow offset={12} />
       </StyledContent>
