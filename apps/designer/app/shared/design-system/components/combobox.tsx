@@ -1,29 +1,23 @@
-import { CheckIcon } from "@radix-ui/react-icons";
-import { Popper, PopperAnchor, PopperContent } from "@radix-ui/react-popper";
+import {
+  useState,
+  forwardRef,
+  type ElementRef,
+  type ComponentProps,
+} from "react";
+import { CheckIcon, ChevronDownIcon } from "~/shared/icons";
+import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox } from "downshift";
 import { matchSorter } from "match-sorter";
-import { ComponentProps, useState } from "react";
-import { Box, Grid } from "..";
-import { styled } from "../stitches.config";
+import { styled, type CSS } from "../stitches.config";
 import { IconButton } from "./icon-button";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
 import { TextField } from "./text-field";
+import { Box } from "./box";
+import { Flex } from "./flex";
+import { Grid } from "./grid";
 
 type BaseItem = { label: string; disabled?: boolean } | string;
-
-type ComboboxProps<Item> = {
-  name: string;
-  items: Array<Item>;
-  value?: Item;
-  onItemSelect?: (value: Item) => void;
-  onItemHighlight?: (value?: Item) => void;
-  itemToString?: (item: Item) => string;
-  disclosure?: (items: {
-    inputProps: ComponentProps<typeof TextField>;
-    toggleProps: ComponentProps<typeof IconButton>;
-  }) => JSX.Element;
-};
 
 const Listbox = styled("ul", panelStyles, {
   padding: 0,
@@ -38,14 +32,49 @@ const ListboxItem = styled("li", itemCss, {
   margin: 0,
 });
 
+type ComboboxTextFieldProps = {
+  inputProps: ComponentProps<typeof TextField>;
+  toggleProps: ComponentProps<typeof IconButton>;
+};
+
+export const ComboboxTextField = forwardRef<
+  ElementRef<typeof Flex>,
+  ComboboxTextFieldProps
+>(({ inputProps, toggleProps }, ref) => {
+  return (
+    <Flex ref={ref}>
+      <TextField {...inputProps} />
+      <IconButton variant="ghost" size="1" {...toggleProps}>
+        <ChevronDownIcon />
+      </IconButton>
+    </Flex>
+  );
+});
+
+type ComboboxProps<Item> = {
+  name: string;
+  items: Array<Item>;
+  value?: Item;
+  onItemSelect?: (value: Item) => void;
+  onItemHighlight?: (value?: Item) => void;
+  itemToString?: (item: Item | null) => string;
+  disclosure?: (props: ComponentProps<typeof ComboboxTextField>) => JSX.Element;
+  // @todo should we spread those props flat?
+  popperProps?: ComponentProps<typeof PopperContent>;
+  listCss?: CSS;
+};
+
 export const Combobox = <Item extends BaseItem>({
   items,
   value,
   name,
-  itemToString = (item) => item?.label ?? item ?? "",
+  itemToString = (item) =>
+    item !== null && "label" in item ? item.label : item ?? "",
   onItemSelect,
   onItemHighlight,
-  disclosure = ({ inputProps }) => <TextField {...inputProps} />,
+  disclosure = ({ inputProps, toggleProps }) => (
+    <ComboboxTextField inputProps={inputProps} toggleProps={toggleProps} />
+  ),
 }: ComboboxProps<Item>) => {
   const [filteredItems, setFilteredItems] = useState(items);
   const {
@@ -62,7 +91,7 @@ export const Combobox = <Item extends BaseItem>({
     onInputValueChange({ inputValue }) {
       if (inputValue) {
         const filteredItems = matchSorter(items, inputValue, {
-          ...(items[0]?.label ? { keys: ["label"] } : {}),
+          ...("label" in items[0] ? { keys: ["label"] } : {}),
         });
         setFilteredItems(filteredItems);
       }
@@ -82,10 +111,10 @@ export const Combobox = <Item extends BaseItem>({
     },
   });
 
-  const inputProps = getInputProps({ name });
-  const toggleProps = getToggleButtonProps();
-  const comboboxProps = getComboboxProps();
-  const menuProps = getMenuProps();
+  const inputProps: Record<string, unknown> = getInputProps({ name });
+  const toggleProps: Record<string, unknown> = getToggleButtonProps();
+  const comboboxProps: Record<string, unknown> = getComboboxProps();
+  const menuProps: Record<string, unknown> = getMenuProps();
 
   return (
     <Popper>
@@ -101,7 +130,7 @@ export const Combobox = <Item extends BaseItem>({
                   item,
                   index,
                   key: index,
-                  ...(item.disabled
+                  ...("disabled" in item && item.disabled
                     ? { "data-disabled": true, disabled: true }
                     : {}),
                   ...(highlightedIndex === index ? { "data-found": true } : {}),

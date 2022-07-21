@@ -11,6 +11,7 @@ import {
   Box,
   Button,
   Combobox,
+  ComboboxTextField,
   Grid,
   IconButton,
   TextField,
@@ -64,18 +65,14 @@ const Property = ({
           onChange(id, "prop", value);
         }}
         disclosure={({ inputProps, toggleProps }) => (
-          <Flex>
-            <TextField
-              {...inputProps}
-              autoFocus={prop === ""}
-              readOnly={required}
-              variant="ghost"
-              placeholder="Property"
-            />
-            <IconButton variant="ghost" size="1" {...toggleProps}>
-              <ChevronDownIcon />
-            </IconButton>
-          </Flex>
+          <ComboboxTextField
+            toggleProps={toggleProps}
+            inputProps={{
+              ...inputProps,
+              readOnly: required,
+              placeholder: "Property",
+            }}
+          />
         )}
       />
       {isInvalidProp ? (

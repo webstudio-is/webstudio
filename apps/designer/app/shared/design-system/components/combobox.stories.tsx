@@ -1,10 +1,6 @@
 import { ComponentStory } from "@storybook/react";
 import React from "react";
-import { Combobox } from "~/shared/design-system";
-import { TextField } from "./text-field";
-import { Flex } from "./flex";
-import { ChevronDownIcon } from "~/shared/icons";
-import { IconButton } from "./icon-button";
+import { Combobox, ComboboxTextField } from "./combobox";
 
 export default {
   component: Combobox,
@@ -40,27 +36,25 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
         console.log(item);
       }}
       disclosure={({ inputProps, toggleProps }) => (
-        <Flex>
-          <TextField
-            {...inputProps}
-            onKeyDown={(event) => {
-              inputProps?.onKeyDown(event);
+        <ComboboxTextField
+          toggleProps={toggleProps}
+          inputProps={{
+            ...inputProps,
+            onKeyDown: (event) => {
+              inputProps.onKeyDown?.(event);
               switch (event.key) {
                 case "Enter": {
                   console.log(inputProps.value);
                   break;
                 }
               }
-            }}
-            onBlur={(event) => {
-              inputProps?.onBlur(event);
+            },
+            onBlur: (event) => {
+              inputProps.onBlur?.(event);
               console.log(inputProps.value);
-            }}
-          />
-          <IconButton variant="ghost" size="1" {...toggleProps}>
-            <ChevronDownIcon />
-          </IconButton>
-        </Flex>
+            },
+          }}
+        />
       )}
     />
   );

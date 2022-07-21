@@ -180,7 +180,7 @@ const ComboboxControl = ({
           id={styleConfig.property}
           items={styleConfig.items}
           variant="ghost"
-          popperProps={{ align: "right", sideOffset: 5 }}
+          popperProps={{ align: "end", sideOffset: 5 }}
           state={value.type === "invalid" ? "invalid" : undefined}
           value={String(value.value)}
           onValueSelect={setValue}
