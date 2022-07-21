@@ -61,7 +61,7 @@ const isEqualRect = (a: Rect | undefined, b: Rect) => {
 };
 
 type Parameters = {
-  onPalcementChange: (event: { index: number; placementRect: Rect }) => void;
+  onPlacementChange: (event: { index: number; placementRect: Rect }) => void;
 };
 
 type Handlers = {
@@ -71,7 +71,7 @@ type Handlers = {
   handleTargetChange: (target: HTMLElement) => void;
 };
 
-export const usePlacement = ({ onPalcementChange }: Parameters): Handlers => {
+export const usePlacement = ({ onPlacementChange }: Parameters): Handlers => {
   const state = useRef({
     childrenRectsCache: new WeakMap<HTMLElement, Rect[]>(),
     target: undefined as HTMLElement | undefined,
@@ -177,7 +177,7 @@ export const usePlacement = ({ onPalcementChange }: Parameters): Handlers => {
     state.current.placementRext = nextPlacementRect;
 
     if (placementRectChanged || indexChanged) {
-      onPalcementChange({ index: nextIndex, placementRect: nextPlacementRect });
+      onPlacementChange({ index: nextIndex, placementRect: nextPlacementRect });
     }
   };
 

@@ -125,7 +125,7 @@ export const SortableList = ({
   });
 
   const placementHandlers = usePlacement({
-    onPalcementChange: (event) => {
+    onPlacementChange: (event) => {
       setPalcement(event);
     },
   });
