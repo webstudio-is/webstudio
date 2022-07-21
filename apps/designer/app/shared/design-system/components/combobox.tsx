@@ -1,20 +1,16 @@
-import { type ComponentProps, useState } from "react";
 import { CheckIcon } from "@radix-ui/react-icons";
-import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
+import { Popper, PopperAnchor, PopperContent } from "@radix-ui/react-popper";
 import { useCombobox } from "downshift";
 import { matchSorter } from "match-sorter";
+import { ComponentProps, useState } from "react";
+import { Box, Grid } from "..";
 import { styled } from "../stitches.config";
+import { IconButton } from "./icon-button";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
-import { IconButton } from "./icon-button";
 import { TextField } from "./text-field";
-import { Box, Grid } from "..";
 
-type BaseItem = { label: string; disabled?: boolean };
-
-const getTextValue = <Item extends BaseItem>(item?: Item) => {
-  return item ? item.label : "";
-};
+type BaseItem = { label: string; disabled?: boolean } | string;
 
 type ComboboxProps<Item> = {
   name: string;
@@ -22,6 +18,7 @@ type ComboboxProps<Item> = {
   value?: Item;
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value?: Item) => void;
+  itemToString?: (item: Item) => string;
   disclosure?: (items: {
     inputProps: ComponentProps<typeof TextField>;
     toggleProps: ComponentProps<typeof IconButton>;
@@ -45,7 +42,7 @@ export const Combobox = <Item extends BaseItem>({
   items,
   value,
   name,
-  listCss,
+  itemToString = (item) => item?.label ?? item ?? "",
   onItemSelect,
   onItemHighlight,
   disclosure = ({ inputProps }) => <TextField {...inputProps} />,
@@ -65,16 +62,14 @@ export const Combobox = <Item extends BaseItem>({
     onInputValueChange({ inputValue }) {
       if (inputValue) {
         const filteredItems = matchSorter(items, inputValue, {
-          keys: ["label", "value"],
+          ...(items[0]?.label ? { keys: ["label"] } : {}),
         });
         setFilteredItems(filteredItems);
       }
     },
     items: filteredItems,
     selectedItem: value,
-    itemToString(item) {
-      return item ? item.label : "";
-    },
+    itemToString,
     onSelectedItemChange({ selectedItem }) {
       if (selectedItem) {
         onItemSelect?.(selectedItem);
@@ -100,7 +95,7 @@ export const Combobox = <Item extends BaseItem>({
         </PopperAnchor>
         {isOpen && (
           <PopperContent align="start" sideOffset={5}>
-            <Listbox {...menuProps} css={listCss}>
+            <Listbox {...menuProps}>
               {filteredItems.map((item, index) => {
                 const itemProps = getItemProps({
                   item,
@@ -120,9 +115,7 @@ export const Combobox = <Item extends BaseItem>({
                       css={{ gridTemplateColumns: "20px 1fr" }}
                     >
                       {selectedItem === item && <CheckIcon />}
-                      <Box css={{ gridColumn: 2 }}>
-                        {getTextValue<Item>(item)}
-                      </Box>
+                      <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
                     </Grid>
                   </ListboxItem>
                 );

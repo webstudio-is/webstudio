@@ -49,10 +49,7 @@ const Property = ({
   const type = argType?.control.type || "text";
   const defaultValue = argType?.control.defaultValue;
   const options = argType?.options;
-  const allProps = Object.keys(meta.argTypes).map((prop) => ({
-    value: prop,
-    label: prop,
-  }));
+  const allProps = Object.keys(meta.argTypes);
   return (
     <Grid
       gap="1"
@@ -60,19 +57,17 @@ const Property = ({
     >
       <Combobox
         name="prop"
-        autoFocus={prop === ""}
         items={allProps}
-        value={{
-          value: prop,
-          label: prop,
-        }}
-        onItemSelect={({ value }) => {
+        value={prop}
+        itemToString={(item) => item}
+        onItemSelect={(value) => {
           onChange(id, "prop", value);
         }}
         disclosure={({ inputProps, toggleProps }) => (
           <Flex>
             <TextField
               {...inputProps}
+              autoFocus={prop === ""}
               readOnly={required}
               variant="ghost"
               placeholder="Property"
