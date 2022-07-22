@@ -79,14 +79,14 @@ const useDragAndDrop = () => {
         path = [rootInstance];
       }
 
-      const targetInstance = path.reverse().find((instance) => {
+      const _targetInstance = path.reverse().find((instance) => {
         return primitives[instance.component].canAcceptChild();
       });
 
       // TODO: take area into account
       // but not sure we can use event.area, we want targetInstance's area actually
 
-      console.log("onDropTargetChange", targetInstance);
+      // console.log("onDropTargetChange", targetInstance);
     },
   });
 

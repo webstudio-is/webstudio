@@ -14,7 +14,7 @@ const isSameRect = (rect1: DOMRect, rect2: DOMRect) =>
   rect1.bottom === rect2.bottom &&
   rect1.right === rect2.right;
 
-const isEqualDropTarget = <Data>(
+const isSameDropTarget = <Data>(
   prev: DropTarget<Data> | undefined,
   next: DropTarget<Data>,
   isSameData: (data1: Data, data2: Data) => boolean
@@ -31,11 +31,10 @@ export type UseDropTargetProps<Data> = {
 
   elementToData: (element: HTMLElement) => Data | undefined;
 
-  swapDropTarget: (args: {
+  swapDropTarget: (args: { element: HTMLElement; data: Data; area: Area }) => {
     element: HTMLElement;
     data: Data;
-    area: Area;
-  }) => HTMLElement;
+  };
 
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
 };
@@ -87,7 +86,7 @@ export const useDropTarget = <Data>({
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const newElement = swapDropTarget({
+      const newTarget = swapDropTarget({
         element: dropTarget.element,
         data: dropTarget.data,
         area: getArea(
@@ -97,23 +96,16 @@ export const useDropTarget = <Data>({
         ),
       });
 
-      if (newElement === dropTarget.element) {
+      if (newTarget.element === dropTarget.element) {
         break;
       }
 
-      const newData = elementToData(newElement);
-
-      // NOTE: might make sense to throw an error in this case
-      if (newData === undefined) {
-        return;
-      }
-
-      dropTarget.element = newElement;
-      dropTarget.rect = newElement.getBoundingClientRect();
-      dropTarget.data = newData;
+      dropTarget.element = newTarget.element;
+      dropTarget.data = newTarget.data;
+      dropTarget.rect = newTarget.element.getBoundingClientRect();
     }
 
-    if (!isEqualDropTarget(state.current.dropTarget, dropTarget, isSameData)) {
+    if (!isSameDropTarget(state.current.dropTarget, dropTarget, isSameData)) {
       onDropTargetChange(dropTarget);
     }
   };
