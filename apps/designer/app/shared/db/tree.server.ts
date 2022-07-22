@@ -51,6 +51,10 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
             unit: "vh",
             value: 100,
           },
+          display: {
+            type: "keyword",
+            value: "flex",
+          },
           flexDirection: {
             type: "keyword",
             value: "column",
