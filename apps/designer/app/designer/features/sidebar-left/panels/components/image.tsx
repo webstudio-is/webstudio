@@ -4,27 +4,18 @@ import { Box } from "~/shared/design-system";
 import placholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 
-const getImagePaths = (loadedImage: string) => ({
-  loadedImage: loadedImage,
-  placeholder: placholderImage,
-  error: brokenImage,
-});
-
 const useImageWithFallbaack = ({ path }: { path: string }) => {
-  const images = useMemo(() => getImagePaths(path), [path]);
-  const [src, setSrc] = useState(images.placeholder);
+  const [src, setSrc] = useState(placholderImage);
 
   useEffect(() => {
     const newImage = new Image();
     newImage.src = path;
 
-    newImage.onload = () => setImageSrc(path);
-    newImage.onerror = () => setImageSrc(images.error);
-  }, [images, path]);
+    newImage.onload = () => setSrc(path);
+    newImage.onerror = () => setSrc(brokenImage);
+  }, [path]);
 
-  return {
-    imageSrc,
-  };
+  return src;
 };
 
 export const AssetManagerImage = ({
@@ -32,7 +23,7 @@ export const AssetManagerImage = ({
 }: {
   asset: Asset;
 }) => {
-  const { imageSrc } = useImageWithFallbaack({ path });
+  const src = useImageWithFallbaack({ path });
   return (
     <Box
       title={alt || ""}
@@ -40,7 +31,7 @@ export const AssetManagerImage = ({
         aspectRatio: "1/1",
         width: "100%",
         height: "100%",
-        backgroundImage: `url(${imageSrc})`,
+        backgroundImage: `url(${src})`,
         backgroundSize: "contain",
       }}
     ></Box>
