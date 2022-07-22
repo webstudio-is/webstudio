@@ -1,8 +1,12 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import type { Project as BaseProject, User } from "@webstudio-is/react-sdk";
 import { z } from "zod";
-import { prisma, Prisma } from "./prisma.server";
+import {
+  User,
+  prisma,
+  Prisma,
+  Project as BaseProject,
+} from "@webstudio-is/prisma-client";
 import * as db from ".";
 
 const TreeHistorySchema = z.array(z.string());
