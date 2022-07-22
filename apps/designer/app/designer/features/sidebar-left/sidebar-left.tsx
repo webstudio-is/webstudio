@@ -1,9 +1,6 @@
 import { useState, useCallback } from "react";
-import {
-  useSubscribe,
-  type Publish,
-  type Asset,
-} from "@webstudio-is/react-sdk";
+import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
+import type { Asset } from "@webstudio-is/prisma-client";
 import {
   Box,
   SidebarTabs,

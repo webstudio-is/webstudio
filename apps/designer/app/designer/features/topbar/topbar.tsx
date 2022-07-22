@@ -1,4 +1,5 @@
-import type { Project, Publish } from "@webstudio-is/react-sdk";
+import type { Publish } from "@webstudio-is/react-sdk";
+import type { Project } from "@webstudio-is/prisma-client";
 import { darkTheme, Flex, type CSS } from "~/shared/design-system";
 import type { Config } from "~/config";
 import { PreviewButton } from "./preview";

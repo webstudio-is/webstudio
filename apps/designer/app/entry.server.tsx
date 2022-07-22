@@ -4,7 +4,7 @@ import { insertCriticalCss } from "./critical-css";
 import type { EntryContext } from "@remix-run/node";
 import * as Sentry from "@sentry/remix";
 import { initSentry } from "./shared/sentry";
-import { prisma } from "./shared/db/prisma.server";
+import { prisma } from "@webstudio-is/prisma-client";
 
 initSentry({
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],

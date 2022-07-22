@@ -1,13 +1,12 @@
 import {
   initialBreakpoints,
-  type Project,
   type Tree,
   type Breakpoint,
   BreakpointsSchema,
 } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
-import { prisma } from "./prisma.server";
+import { prisma, Project } from "@webstudio-is/prisma-client";
 
 export const load = async (treeId?: Tree["id"]) => {
   if (typeof treeId !== "string") {
