@@ -1,3 +1,4 @@
+import { action } from "@storybook/addon-actions";
 import { ComponentStory } from "@storybook/react";
 import React from "react";
 import { Combobox, ComboboxTextField } from "./combobox";
@@ -34,7 +35,7 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
       value={value}
       onItemSelect={setValue}
       onItemHighlight={(item) => {
-        console.log(item);
+        action("Highlight")(item);
       }}
       disclosure={({ inputProps, toggleProps }) => (
         <ComboboxTextField
@@ -45,14 +46,14 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
               inputProps.onKeyDown?.(event);
               switch (event.key) {
                 case "Enter": {
-                  console.log(inputProps.value);
+                  action("Enter")(inputProps.value);
                   break;
                 }
               }
             },
             onBlur: (event) => {
               inputProps.onBlur?.(event);
-              console.log(inputProps.value);
+              action("Blur")(inputProps.value);
             },
           }}
         />

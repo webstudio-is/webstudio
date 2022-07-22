@@ -1,4 +1,11 @@
-import { Flex, Grid, Label, Text, Combobox } from "~/shared/design-system";
+import {
+  Flex,
+  Grid,
+  Label,
+  Text,
+  Combobox,
+  ComboboxTextField,
+} from "~/shared/design-system";
 import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
   categories,
@@ -162,13 +169,13 @@ const ComboboxControl = ({
   if (styleConfig.control !== "Combobox") return null;
 
   // @todo show which instance we inherited the value from
-  const value = getFinalValue({
+  const currentValue = getFinalValue({
     currentStyle,
     inheritedStyle,
     property: styleConfig.property,
   });
 
-  if (value === undefined) return null;
+  if (currentValue === undefined) return null;
 
   const setValue = setProperty(styleConfig.property);
 
@@ -177,22 +184,46 @@ const ComboboxControl = ({
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Combobox
-          id={styleConfig.property}
+          name="prop"
           items={styleConfig.items}
-          variant="ghost"
-          popperProps={{ align: "end", sideOffset: 5 }}
-          state={value.type === "invalid" ? "invalid" : undefined}
-          value={String(value.value)}
-          onValueSelect={setValue}
-          onValueEnter={setValue}
-          onItemEnter={(value) => {
-            setValue(value, { isEphemeral: true });
+          contentProps={{ sideOffset: 5 }}
+          value={{
+            name: String(currentValue.value),
+            label: String(currentValue.value),
           }}
-          onItemLeave={() => {
-            setValue(String(value.value), { isEphemeral: true });
+          itemToString={(item) => (item ? item.name : "")}
+          onItemHighlight={(value) => {
+            if (value === undefined) {
+              setValue(String(currentValue.value), { isEphemeral: true });
+              return;
+            }
+            setValue(value.name, { isEphemeral: true });
           }}
+          disclosure={({ inputProps, toggleProps }) => (
+            <ComboboxTextField
+              toggleProps={toggleProps}
+              inputProps={{
+                ...inputProps,
+                id: styleConfig.property,
+                state: currentValue.type === "invalid" ? "invalid" : undefined,
+                onKeyDown(event) {
+                  inputProps.onKeyDown?.(event);
+                  switch (event.key) {
+                    case "Enter": {
+                      setValue(event.currentTarget.value);
+                      break;
+                    }
+                  }
+                },
+                onBlur(event) {
+                  inputProps.onBlur?.(event);
+                  setValue(event.target.value);
+                },
+              }}
+            />
+          )}
         />
-        <Unit value={value} />
+        <Unit value={currentValue} />
       </Flex>
     </Grid>
   );

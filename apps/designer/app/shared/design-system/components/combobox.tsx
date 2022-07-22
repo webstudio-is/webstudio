@@ -8,16 +8,16 @@ import { CheckIcon, ChevronDownIcon } from "~/shared/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox } from "downshift";
 import { matchSorter } from "match-sorter";
-import { styled, type CSS } from "../stitches.config";
-import { IconButton, iconButtonReset } from "./icon-button";
+import { styled } from "../stitches.config";
+import { IconButton } from "./icon-button";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
-import { TextField, textFieldReset } from "./text-field";
+import { TextField } from "./text-field";
 import { Box } from "./box";
 import { Flex } from "./flex";
 import { Grid } from "./grid";
 
-type Label = "string";
+type Label = string;
 
 type BaseItem = { label: Label; disabled?: boolean } | Label;
 
@@ -44,8 +44,8 @@ export const ComboboxTextField = forwardRef<
   ComboboxTextFieldProps
 >(({ inputProps, toggleProps }, ref) => {
   return (
-    <Box ref={ref}>
-      <TextField {...inputProps} />
+    <Box ref={ref} css={{ position: "relative" }}>
+      <TextField css={{ paddingRight: "$4" }} {...inputProps} />
       <IconButton
         {...toggleProps}
         css={{
@@ -59,6 +59,8 @@ export const ComboboxTextField = forwardRef<
     </Box>
   );
 });
+
+ComboboxTextField.displayName = "ComboboxTextField";
 
 type ComboboxProps<Item> = {
   name: string;
@@ -133,7 +135,7 @@ export const Combobox = <Item extends BaseItem>({
         <PopperAnchor asChild>
           {disclosure({ inputProps, toggleProps })}
         </PopperAnchor>
-        <PopperContent {...contentProps}>
+        <PopperContent {...contentProps} style={{ zIndex: 1 }}>
           <Listbox {...menuProps}>
             {isOpen &&
               filteredItems.map((item, index) => {
@@ -166,3 +168,5 @@ export const Combobox = <Item extends BaseItem>({
     </Popper>
   );
 };
+
+Combobox.displayName = "Combobox";

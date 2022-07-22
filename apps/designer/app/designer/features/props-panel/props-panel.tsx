@@ -13,17 +13,9 @@ import {
   Combobox,
   ComboboxTextField,
   Grid,
-  IconButton,
-  TextField,
   Tooltip,
-  Flex,
 } from "~/shared/design-system";
-import {
-  PlusIcon,
-  TrashIcon,
-  ExclamationTriangleIcon,
-  ChevronDownIcon,
-} from "~/shared/icons";
+import { PlusIcon, TrashIcon, ExclamationTriangleIcon } from "~/shared/icons";
 import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
 type PropertyProps = UserProp & {
@@ -50,7 +42,7 @@ const Property = ({
   const type = argType?.control.type || "text";
   const defaultValue = argType?.control.defaultValue;
   const options = argType?.options;
-  const allProps = Object.keys(meta.argTypes);
+  const allProps = meta.argTypes ? Object.keys(meta.argTypes) : [];
 
   return (
     <Grid
@@ -61,7 +53,7 @@ const Property = ({
         name="prop"
         items={allProps}
         value={prop}
-        itemToString={(item) => item}
+        itemToString={(item) => item ?? ""}
         onItemSelect={(value) => {
           onChange(id, "prop", value);
         }}
