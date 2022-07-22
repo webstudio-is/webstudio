@@ -1,7 +1,6 @@
 import { Asset } from "@webstudio-is/prisma-client";
 import { useEffect, useMemo, useState } from "react";
 import { Box } from "~/shared/design-system";
-import { Image as Thumbnail } from "~/shared/design-system/components/image";
 import placholderImage from "~/assets/images/image_place_holder.svg";
 import brokenImage from "~/assets/images/broken_image_place_holder.svg";
 
@@ -31,16 +30,14 @@ const useImageWithFallbaack = ({ path }: { path: string }) => {
 export const AssetManagerImage = ({ asset: { path } }: { asset: Asset }) => {
   const { imageSrc } = useImageWithFallbaack({ path });
   return (
-    <Box css={{ paddingTop: "100%", position: "relative", aspectRatio: "1/1" }}>
-      <Thumbnail
-        css={{
-          position: "absolute",
-          top: "50%",
-          transform: "translateY(-50%) translateX(-50%)",
-          left: "50%",
-        }}
-        src={imageSrc}
-      ></Thumbnail>
-    </Box>
+    <Box
+      css={{
+        aspectRatio: "1/1",
+        width: "100%",
+        height: "100%",
+        backgroundImage: `url(${imageSrc})`,
+        backgroundSize: "contain",
+      }}
+    ></Box>
   );
 };
