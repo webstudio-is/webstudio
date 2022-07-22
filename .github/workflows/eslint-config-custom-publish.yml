@@ -1,0 +1,22 @@
+name: Eslint Config Publish
+on: 
+ push:
+   paths:
+      - 'packages/eslint-config-custom/**/*'
+      - '.github/workflows/eslint-config-custom-publish.yml'
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install Dependencies
+        run: yarn install
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dry-run: false
+          check-version: true
+          package: './packages/eslint-config-custom/package.json'
