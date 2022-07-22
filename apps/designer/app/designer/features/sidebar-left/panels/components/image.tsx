@@ -1,8 +1,8 @@
 import { Asset } from "@webstudio-is/prisma-client";
 import { useEffect, useMemo, useState } from "react";
 import { Box } from "~/shared/design-system";
-import placholderImage from "~/assets/images/image_place_holder.svg";
-import brokenImage from "~/assets/images/broken_image_place_holder.svg";
+import placholderImage from "~/shared/images/image-placeholder.svg";
+import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 
 const getImagePaths = (loadedImage: string) => ({
   loadedImage: loadedImage,
