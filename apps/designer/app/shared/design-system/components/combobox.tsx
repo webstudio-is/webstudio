@@ -122,36 +122,33 @@ export const Combobox = <Item extends BaseItem>({
         <PopperAnchor asChild>
           {disclosure({ inputProps, toggleProps })}
         </PopperAnchor>
-        {isOpen && (
-          <PopperContent align="start" sideOffset={5}>
-            <Listbox {...menuProps}>
-              {filteredItems.map((item, index) => {
-                const itemProps = getItemProps({
-                  item,
-                  index,
-                  key: index,
-                  ...("disabled" in item && item.disabled
-                    ? { "data-disabled": true, disabled: true }
-                    : {}),
-                  ...(highlightedIndex === index ? { "data-found": true } : {}),
-                });
+        <Listbox {...menuProps}>
+          {isOpen &&
+            filteredItems.map((item, index) => {
+              const itemProps: Record<string, unknown> = getItemProps({
+                item,
+                index,
+                key: index,
+                ...("disabled" in item && item.disabled
+                  ? { "data-disabled": true, disabled: true }
+                  : {}),
+                ...(highlightedIndex === index ? { "data-found": true } : {}),
+              });
 
-                return (
-                  // eslint-disable-next-line react/jsx-key
-                  <ListboxItem {...itemProps}>
-                    <Grid
-                      align="center"
-                      css={{ gridTemplateColumns: "20px 1fr" }}
-                    >
-                      {selectedItem === item && <CheckIcon />}
-                      <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
-                    </Grid>
-                  </ListboxItem>
-                );
-              })}
-            </Listbox>
-          </PopperContent>
-        )}
+              return (
+                // eslint-disable-next-line react/jsx-key
+                <ListboxItem {...itemProps}>
+                  <Grid
+                    align="center"
+                    css={{ gridTemplateColumns: "20px 1fr" }}
+                  >
+                    {selectedItem === item && <CheckIcon />}
+                    <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
+                  </Grid>
+                </ListboxItem>
+              );
+            })}
+        </Listbox>
       </Box>
     </Popper>
   );
