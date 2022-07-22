@@ -1,4 +1,5 @@
 import { prisma, Project } from "@webstudio-is/prisma-client";
+import { getAssetPath } from "../helpers/get-asset-path";
 
 export const loadByProject = async (projectId?: Project["id"]) => {
   if (typeof projectId !== "string") {
@@ -12,5 +13,8 @@ export const loadByProject = async (projectId?: Project["id"]) => {
     },
   });
 
-  return assets;
+  return assets.map((asset) => ({
+    ...asset,
+    path: getAssetPath(asset),
+  }));
 };

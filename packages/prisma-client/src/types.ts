@@ -4,4 +4,5 @@ export type {
   User,
   Breakpoints,
   Asset,
+  Location,
 } from "@prisma/client";
