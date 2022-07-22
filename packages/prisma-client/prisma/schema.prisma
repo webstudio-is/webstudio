@@ -15,6 +15,11 @@ model Team {
   users User[]
 }
 
+enum Location {
+  FS
+  REMOTE
+}
+
 model Asset {
   id        String   @id @default(uuid())
   project   Project  @relation(fields: [projectId], references: [id])
@@ -24,8 +29,8 @@ model Asset {
   width     Decimal?
   height    Decimal?
   name      String
-  path      String
   alt       String?
+  location  Location
   createdAt DateTime @default(now())
 }
 

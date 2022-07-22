@@ -21,6 +21,7 @@ export const s3EnvVariables = z.object({
   S3_SECRET_ACCESS_KEY: z.string(),
   S3_BUCKET: z.string(),
   S3_ACL: z.string().optional().default("public-read"),
+  WORKER_URL: z.string().optional(),
 });
 
 export const fsEnvVariables = z.object({
