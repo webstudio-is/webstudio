@@ -1,7 +1,6 @@
-import { User } from "@prisma/client";
 import { GitHubProfile } from "remix-auth-github";
 import { GoogleProfile } from "remix-auth-google";
-import { prisma } from "./prisma.server";
+import { prisma, User } from "@webstudio-is/prisma-client";
 
 export const createDemoUser = async (userId: string) => {
   await prisma.team.create({
