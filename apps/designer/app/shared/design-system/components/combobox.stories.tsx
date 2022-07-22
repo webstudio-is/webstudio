@@ -18,6 +18,7 @@ export const Simple: ComponentStory<typeof Combobox> = () => {
     />
   );
 };
+
 export const CustomInput: ComponentStory<typeof Combobox> = () => {
   const items = [
     { label: "Apple", value: "apple", disabled: true },
