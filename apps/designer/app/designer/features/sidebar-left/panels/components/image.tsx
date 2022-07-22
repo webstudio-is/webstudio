@@ -30,6 +30,8 @@ export const AssetManagerImage = ({
         aspectRatio: "1/1",
         backgroundImage: `url(${src})`,
         backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
       }}
     ></Box>
   );
