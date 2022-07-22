@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "Webstudio Designer UI as a service",
   "scripts": {
-    "install": "yarn install",
     "build": "remix build",
     "dev": "remix dev",
     "start": "remix-serve build",
