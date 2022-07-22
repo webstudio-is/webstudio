@@ -5,7 +5,6 @@
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
-    "build": "yarn build:mdn-data && yarn build:args && yarn build:prisma",
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
     "build": "yarn build:mdn-data && yarn build:args && yarn build:lib",
     "build:mdn-data": "node --experimental-loader esbuild-node-loader ./bin/mdn-data.ts ./src/css",
@@ -40,7 +39,6 @@
     "esbuild": "^0.14.25",
     "esbuild-node-externals": "^1.4.1",
     "esbuild-node-loader": "^0.8.0",
-    "jest-config": "*",
     "mdn-data": "2.0.23",
     "react": "^17.0.2",
     "react-docgen-typescript": "^2.2.2",
