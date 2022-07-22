@@ -5,7 +5,7 @@
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
-    "build": "yarn build:mdn-data && yarn build:args",
+    "build": "yarn build:mdn-data && yarn build:args && yarn build:prisma",
     "build:mdn-data": "node --experimental-loader esbuild-node-loader ./bin/mdn-data.ts ./src/css",
     "build:args": "node --experimental-loader esbuild-node-loader ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
     "build:prisma": "prisma format && prisma generate",
