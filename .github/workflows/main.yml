@@ -23,5 +23,5 @@ jobs:
 
       - run: yarn install --frozen-lockfile --ignore-scripts
       - run: yarn prisma generate
-      - run: yarn checks
       - run: yarn build
+      - run: yarn checks

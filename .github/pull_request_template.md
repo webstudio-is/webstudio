@@ -8,13 +8,13 @@
   - [ ] detailed
   - [ ] with testing
 
-##  Test cases
+## Test cases
 
 - [ ] step by step interaction description and what is expected to happen
 
 ## Before merging
 
 - [ ] tested locally and on preview environment
-- [ ] updated [test cases](https://github.com/webstudio-is/webstudio-designer/blob/main/apps/designer/docs/test-cases.md) document 
+- [ ] updated [test cases](https://github.com/webstudio-is/webstudio-designer/blob/main/apps/designer/docs/test-cases.md) document
 - [ ] added tests
 - [ ] if any new env variables are added, added them to `.env.example` and the `designer/env-check.js` if mandatory
