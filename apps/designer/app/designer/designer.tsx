@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
-import { type Project, type Asset } from "@webstudio-is/prisma-client";
+import { type Project, type AssetWithPath } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
@@ -173,7 +173,7 @@ const dndOptions = { enableMouseEvents: true };
 type DesignerProps = {
   config: Config;
   project: Project;
-  assets: Array<Asset>;
+  assets: Array<AssetWithPath>;
 };
 
 export const Designer = ({ config, project, assets }: DesignerProps) => {

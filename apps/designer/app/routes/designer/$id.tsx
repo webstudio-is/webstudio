@@ -1,6 +1,6 @@
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
-import type { Project, Asset } from "@webstudio-is/prisma-client";
+import type { Project, AssetWithPath } from "@webstudio-is/prisma-client";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
@@ -26,7 +26,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 type Data = {
   config: typeof config;
   project: Project;
-  assets: Asset[];
+  assets: AssetWithPath[];
 };
 
 type Error = {

@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
-import type { Asset } from "@webstudio-is/prisma-client";
+import type { AssetWithPath } from "@webstudio-is/prisma-client";
 import {
   Box,
   SidebarTabs,
@@ -28,7 +28,7 @@ const none = { TabContent: () => null };
 type SidebarLeftProps = {
   onDragChange: (isDragging: boolean) => void;
   publish: Publish;
-  assets: Array<Asset>;
+  assets: Array<AssetWithPath>;
 };
 
 export const SidebarLeft = ({
