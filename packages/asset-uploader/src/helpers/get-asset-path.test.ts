@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Decimal } from "@prisma/client/runtime";
+import { Location } from "@webstudio-is/prisma-client";
 
 const commonAsset = {
   id: "sa-546",
@@ -36,7 +37,7 @@ describe("getAssetPath", () => {
         getAssetPath({
           ...commonAsset,
           name: "test.png",
-          location: "FS",
+          location: Location.FS,
         })
       ).toBe("/uploads/test.png");
     });
@@ -48,7 +49,7 @@ describe("getAssetPath", () => {
         getAssetPath({
           ...commonAsset,
           name: "test.png",
-          location: "FS",
+          location: Location.FS,
         })
       ).toBe("/assets/test.png");
     });
@@ -63,7 +64,7 @@ describe("getAssetPath", () => {
         getAssetPath({
           ...commonAsset,
           name: "test.png",
-          location: "REMOTE",
+          location: Location.REMOTE,
         })
       ).toBe("https://bucket.fr1.s3.com/test.png");
     });
@@ -76,7 +77,7 @@ describe("getAssetPath", () => {
         getAssetPath({
           ...commonAsset,
           name: "test.png",
-          location: "REMOTE",
+          location: Location.REMOTE,
         })
       ).toBe("https://bucket.fr1.s3.com/test.png");
     });
@@ -92,7 +93,7 @@ describe("getAssetPath", () => {
         getAssetPath({
           ...commonAsset,
           name: "test.png",
-          location: "REMOTE",
+          location: Location.REMOTE,
         })
       ).toBe("https://worker-test.workers.dev/test.png");
     });
