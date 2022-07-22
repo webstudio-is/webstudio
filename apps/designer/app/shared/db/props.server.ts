@@ -4,7 +4,7 @@ import {
   UserPropsSchema,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma } from "./prisma.server";
+import { prisma } from "@webstudio-is/prisma-client";
 import { Project } from "./project.server";
 
 export const loadByProject = async (

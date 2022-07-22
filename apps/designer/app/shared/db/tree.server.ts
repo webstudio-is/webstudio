@@ -5,7 +5,7 @@ import {
   InstanceSchema,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma } from "./prisma.server";
+import { prisma } from "@webstudio-is/prisma-client";
 import { createInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
@@ -50,6 +50,10 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
             type: "unit",
             unit: "vh",
             value: 100,
+          },
+          display: {
+            type: "keyword",
+            value: "flex",
           },
           flexDirection: {
             type: "keyword",

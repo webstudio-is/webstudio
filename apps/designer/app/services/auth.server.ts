@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { User } from "@webstudio-is/prisma-client";
 import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy } from "remix-auth-github";

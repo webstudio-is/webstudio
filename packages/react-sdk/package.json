@@ -5,13 +5,12 @@
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
-    "build": "yarn build:mdn-data && yarn build:args",
+    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
+    "build": "yarn build:mdn-data && yarn build:args && yarn build:lib",
     "build:mdn-data": "node --experimental-loader esbuild-node-loader ./bin/mdn-data.ts ./src/css",
     "build:args": "node --experimental-loader esbuild-node-loader ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx'",
-    "build:prisma": "prisma format && prisma generate",
     "typecheck": "tsc --noEmit",
     "build:lib": "rm -fr lib && tsc",
-    "postinstall": "prisma generate",
     "test": "jest",
     "checks": "yarn typecheck && yarn test",
     "prepublishOnly": "yarn checks && yarn build:lib",
@@ -44,6 +43,8 @@
     "react-docgen-typescript": "^2.2.2",
     "react-dom": "^17.0.2",
     "jest-config": "*",
+    "@webstudio-is/prisma-client": "*",
+    "tsup": "^6.1.3",
     "typescript": "^4.6.2"
   },
   "peerDependencies": {
@@ -54,20 +55,19 @@
     "react-dom": "^17.0.2"
   },
   "dependencies": {
-    "@prisma/client": "^3.10.0",
     "@stitches/core": "^1.2.7",
     "immer": "^9.0.12",
     "mitt": "^3.0.0",
-    "prisma": "^3.10.0",
     "react-nano-state": "^0.4.0",
+    "jest-config": "*",
     "zod": "^3.17.3"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
+    "lib/*",
     "README.md",
-    "!*.test.*",
-    "prisma/*"
+    "!*.test.*"
   ],
   "license": "MIT",
   "private": false

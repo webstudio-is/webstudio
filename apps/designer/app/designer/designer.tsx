@@ -1,10 +1,6 @@
 import { useCallback, useState } from "react";
-import {
-  type Project,
-  type Asset,
-  useSubscribe,
-  usePublish,
-} from "@webstudio-is/react-sdk";
+import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
+import { type Project, type Asset } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
