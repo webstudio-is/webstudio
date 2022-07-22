@@ -19,4 +19,5 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
           dry-run: false
           check-version: true
+          access: 'public'
           package: './packages/tsconfig/package.json'
