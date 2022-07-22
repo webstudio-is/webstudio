@@ -12,7 +12,7 @@ const getImagePaths = (loadedImage: string) => ({
 
 const useImageWithFallbaack = ({ path }: { path: string }) => {
   const images = useMemo(() => getImagePaths(path), [path]);
-  const [imageSrc, setImageSrc] = useState(images.placeholder);
+  const [src, setSrc] = useState(images.placeholder);
 
   useEffect(() => {
     const newImage = new Image();
