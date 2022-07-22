@@ -1,6 +1,9 @@
-import { prisma, Project } from "@webstudio-is/prisma-client";
+import { prisma, Project, Asset } from "@webstudio-is/prisma-client";
+import { getAssetPath } from "../helpers/get-asset-path";
 
-export const loadByProject = async (projectId?: Project["id"]) => {
+export const loadByProject = async (
+  projectId?: Project["id"]
+): Promise<Asset[]> => {
   if (typeof projectId !== "string") {
     throw new Error("Tree ID required");
   }
@@ -12,5 +15,8 @@ export const loadByProject = async (projectId?: Project["id"]) => {
     },
   });
 
-  return assets;
+  return assets.map((asset) => ({
+    ...asset,
+    path: getAssetPath(asset),
+  }));
 };

@@ -49,7 +49,6 @@ export const uploadAssets = async ({
     return await uploadToDisk({
       projectId,
       formData,
-      folderInPublic: fsUploadVars.FILE_UPLOAD_PATH,
     });
   }
 };

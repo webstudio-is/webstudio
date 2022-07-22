@@ -1,4 +1,4 @@
-import path from "path";
+import { Location } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
 import { create } from "../../";
 import { ImagesUpload } from "../../schema";
@@ -6,11 +6,9 @@ import { ImagesUpload } from "../../schema";
 export const uploadToDisk = async ({
   formData,
   projectId,
-  folderInPublic,
 }: {
   formData: FormData;
   projectId: string;
-  folderInPublic: string;
 }) => {
   const imagesInfo = ImagesUpload.parse(formData.getAll("image"));
   const allInfo = imagesInfo.map(async (image) => {
@@ -21,9 +19,9 @@ export const uploadToDisk = async ({
 
     const data = {
       name: image.name,
-      path: path.join("/", folderInPublic, image.name),
       size: image.size,
       metadata,
+      location: Location.FS,
     };
 
     const newAsset = await create(projectId, data);
