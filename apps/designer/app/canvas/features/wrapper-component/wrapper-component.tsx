@@ -10,7 +10,6 @@ import {
 import { primitives } from "~/shared/canvas-components";
 import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
-import { useDraggable } from "./use-draggable";
 import { useEnsureFocus } from "./use-ensure-focus";
 import { EditorMemoized, useContentEditable } from "./text-editor";
 import noop from "lodash.noop";
@@ -35,28 +34,16 @@ export const WrapperComponentDev = ({
   const [, setSelectedElement] = useSelectedElement();
   const isEditing = editingInstanceId === instance.id;
   const [editableRefCallback, editableProps] = useContentEditable(isEditing);
-  const { dragRefCallback, ...draggableProps } = useDraggable({
-    instance,
-    // We can't drag if we are editing text.
-    isDisabled: isEditing === true,
-  });
   const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
     (element) => {
       if (isEditing) editableRefCallback(element);
-      dragRefCallback(element);
       focusRefCallback(element);
       // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
       if (element !== null) setSelectedElement(element);
     },
-    [
-      dragRefCallback,
-      focusRefCallback,
-      editableRefCallback,
-      setSelectedElement,
-      isEditing,
-    ]
+    [focusRefCallback, editableRefCallback, setSelectedElement, isEditing]
   );
 
   const userProps = useUserProps(instance.id);
@@ -68,7 +55,6 @@ export const WrapperComponentDev = ({
   const props = {
     ...userProps,
     ...rest,
-    ...draggableProps,
     ...readonlyProps,
     ...editableProps,
     // @todo merge className with props

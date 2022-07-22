@@ -1,6 +1,4 @@
 import { useCallback, useMemo, useState } from "react";
-import { DndProvider } from "react-dnd";
-import { TouchBackend } from "react-dnd-touch-backend";
 import store from "immerhin";
 import * as db from "~/shared/db";
 import {
@@ -16,7 +14,6 @@ import {
   createElementsTree,
   setInstanceChildrenMutable,
 } from "~/shared/tree-utils";
-import { useDragDropHandlers } from "./shared/use-drag-drop-handlers";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   usePopulateRootInstance,
@@ -105,14 +102,7 @@ type DesignModeProps = {
   project: db.project.Project;
 };
 
-const dndOptions = {
-  enableMouseEvents: true,
-  // Prevents accidental dragging when trying to select an instance
-  delay: 10,
-};
-
 const DesignMode = ({ treeId, project }: DesignModeProps) => {
-  useDragDropHandlers();
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
@@ -135,12 +125,11 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   usePublishTextEditingInstanceId();
   const elements = useElementsTree();
   return (
-    // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
-    <DndProvider backend={TouchBackend} options={dndOptions}>
+    <>
       {elements && (
         <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
       )}
-    </DndProvider>
+    </>
   );
 };
 

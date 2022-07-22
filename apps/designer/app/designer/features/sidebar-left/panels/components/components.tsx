@@ -1,42 +1,15 @@
-import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
-import { useDrag } from "react-dnd";
-import { getEmptyImage } from "react-dnd-html5-backend";
+import { type MouseEventHandler, useCallback } from "react";
 import { type Instance, type Publish } from "@webstudio-is/react-sdk";
 import { Flex } from "~/shared/design-system";
 import { PlusIcon } from "~/shared/icons";
-import { primitives, type DragData } from "~/shared/canvas-components";
+import { primitives } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
-import { CustomDragLayer } from "./custom-drag-layer";
 import { ComponentThumb } from "./component-thumb";
 
 type UseDraggableProps = {
   component: Instance["component"];
   onDragChange: (isDragging: boolean) => void;
-};
-
-const useDraggable = ({ component, onDragChange }: UseDraggableProps) => {
-  const lastIsDragging = useRef<boolean | void>();
-  const [{ isDragging }, dragRef, preview] = useDrag(
-    () => ({
-      type: component,
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    }),
-    []
-  );
-
-  useEffect(() => {
-    if (lastIsDragging.current !== undefined) onDragChange(isDragging);
-    lastIsDragging.current = isDragging;
-  }, [isDragging, onDragChange]);
-
-  useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
-  }, [preview]);
-
-  return dragRef;
 };
 
 type DraggableThumbProps = {
@@ -45,13 +18,10 @@ type DraggableThumbProps = {
 
 const DraggableThumb = ({
   component,
-  onDragChange,
+  // onDragChange,
   onClick,
 }: DraggableThumbProps) => {
-  const dragRef = useDraggable({ component, onDragChange });
-  return (
-    <ComponentThumb component={component} ref={dragRef} onClick={onClick} />
-  );
+  return <ComponentThumb component={component} onClick={onClick} />;
 };
 
 type TabContentProps = {
@@ -95,17 +65,6 @@ export const TabContent = ({
           onDragChange={handleDragChange}
         />
       ))}
-      <CustomDragLayer
-        onDrag={(dragData) => {
-          publish<"dragInstance", DragData>({
-            type: "dragInstance",
-            payload: {
-              instance: createInstance({ component: dragData.component }),
-              currentOffset: dragData.currentOffset,
-            },
-          });
-        }}
-      />
     </Flex>
   );
 };

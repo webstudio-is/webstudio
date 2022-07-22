@@ -1,6 +1,4 @@
 import { useCallback, useState } from "react";
-import { DndProvider } from "react-dnd";
-import { TouchBackend } from "react-dnd-touch-backend";
 import {
   type Project,
   type Asset,
@@ -172,8 +170,6 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
   );
 };
 
-const dndOptions = { enableMouseEvents: true };
-
 type DesignerProps = {
   config: Config;
   project: Project;
@@ -204,44 +200,42 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   );
 
   return (
-    <DndProvider backend={TouchBackend} options={dndOptions}>
-      <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar
-          css={{ gridArea: "header" }}
-          config={config}
-          project={project}
+    <ChromeWrapper isPreviewMode={isPreviewMode}>
+      <Topbar
+        css={{ gridArea: "header" }}
+        config={config}
+        project={project}
+        publish={publish}
+      />
+      <Main>
+        <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+          <CanvasIframe
+            ref={iframeRefCallback}
+            src={`${config.canvasPath}/${project.id}`}
+            pointerEvents={isDragging ? "none" : "all"}
+            title={project.title}
+            css={{
+              height: "100%",
+              width: "100%",
+            }}
+          />
+        </Workspace>
+      </Main>
+      <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+        <SidebarLeft
+          assets={assets}
+          onDragChange={setIsDragging}
           publish={publish}
         />
-        <Main>
-          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
-            <CanvasIframe
-              ref={iframeRefCallback}
-              src={`${config.canvasPath}/${project.id}`}
-              pointerEvents={isDragging ? "none" : "all"}
-              title={project.title}
-              css={{
-                height: "100%",
-                width: "100%",
-              }}
-            />
-          </Workspace>
-        </Main>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft
-            assets={assets}
-            onDragChange={setIsDragging}
-            publish={publish}
-          />
-        </SidePanel>
-        <SidePanel
-          gridArea="inspector"
-          isPreviewMode={isPreviewMode}
-          css={{ overflow: "hidden" }}
-        >
-          {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
-        </SidePanel>
-        <Breadcrumbs publish={publish} />
-      </ChromeWrapper>
-    </DndProvider>
+      </SidePanel>
+      <SidePanel
+        gridArea="inspector"
+        isPreviewMode={isPreviewMode}
+        css={{ overflow: "hidden" }}
+      >
+        {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
+      </SidePanel>
+      <Breadcrumbs publish={publish} />
+    </ChromeWrapper>
   );
 };
