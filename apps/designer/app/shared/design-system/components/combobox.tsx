@@ -9,15 +9,17 @@ import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled, type CSS } from "../stitches.config";
-import { IconButton } from "./icon-button";
+import { IconButton, iconButtonReset } from "./icon-button";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
-import { TextField } from "./text-field";
+import { TextField, textFieldReset } from "./text-field";
 import { Box } from "./box";
 import { Flex } from "./flex";
 import { Grid } from "./grid";
 
-type BaseItem = { label: string; disabled?: boolean } | string;
+type Label = "string";
+
+type BaseItem = { label: Label; disabled?: boolean } | Label;
 
 const Listbox = styled("ul", panelStyles, {
   padding: 0,
@@ -42,12 +44,19 @@ export const ComboboxTextField = forwardRef<
   ComboboxTextFieldProps
 >(({ inputProps, toggleProps }, ref) => {
   return (
-    <Flex ref={ref}>
+    <Box ref={ref}>
       <TextField {...inputProps} />
-      <IconButton variant="ghost" size="1" {...toggleProps}>
+      <IconButton
+        {...toggleProps}
+        css={{
+          position: "absolute",
+          transform: "translateX(-100%)",
+          width: "$4",
+        }}
+      >
         <ChevronDownIcon />
       </IconButton>
-    </Flex>
+    </Box>
   );
 });
 
@@ -60,14 +69,14 @@ type ComboboxProps<Item> = {
   itemToString?: (item: Item | null) => string;
   disclosure?: (props: ComponentProps<typeof ComboboxTextField>) => JSX.Element;
   // @todo should we spread those props flat?
-  popperProps?: ComponentProps<typeof PopperContent>;
-  listCss?: CSS;
+  contentProps?: ComponentProps<typeof PopperContent>;
 };
 
 export const Combobox = <Item extends BaseItem>({
   items,
   value,
   name,
+  contentProps,
   itemToString = (item) =>
     item !== null && "label" in item ? item.label : item ?? "",
   onItemSelect,
@@ -90,9 +99,11 @@ export const Combobox = <Item extends BaseItem>({
   } = useCombobox({
     onInputValueChange({ inputValue }) {
       if (inputValue) {
-        const filteredItems = matchSorter(items, inputValue, {
-          ...("label" in items[0] ? { keys: ["label"] } : {}),
-        });
+        const options =
+          typeof items[0] === "object" && "label" in items[0]
+            ? { keys: ["label"] }
+            : undefined;
+        const filteredItems = matchSorter(items, inputValue, options);
         setFilteredItems(filteredItems);
       }
     },
@@ -122,7 +133,7 @@ export const Combobox = <Item extends BaseItem>({
         <PopperAnchor asChild>
           {disclosure({ inputProps, toggleProps })}
         </PopperAnchor>
-        <PopperContent>
+        <PopperContent {...contentProps}>
           <Listbox {...menuProps}>
             {isOpen &&
               filteredItems.map((item, index) => {

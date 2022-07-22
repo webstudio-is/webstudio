@@ -51,6 +51,7 @@ const Property = ({
   const defaultValue = argType?.control.defaultValue;
   const options = argType?.options;
   const allProps = Object.keys(meta.argTypes);
+
   return (
     <Grid
       gap="1"
@@ -74,6 +75,10 @@ const Property = ({
             }}
           />
         )}
+        contentProps={{
+          align: "start",
+          sideOffset: 5,
+        }}
       />
       {isInvalidProp ? (
         <Tooltip content={`Invalid property name: ${prop}`}>
@@ -82,22 +87,23 @@ const Property = ({
       ) : (
         <Control
           type={type}
-          required={required}
           defaultValue={defaultValue}
           options={options}
           value={value}
           onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
         />
       )}
-      <Button
-        ghost
-        disabled={required}
-        onClick={() => {
-          onDelete(id);
-        }}
-      >
-        <TrashIcon />
-      </Button>
+      {required === false && (
+        <Button
+          ghost
+          disabled={required}
+          onClick={() => {
+            onDelete(id);
+          }}
+        >
+          <TrashIcon />
+        </Button>
+      )}
     </Grid>
   );
 };
