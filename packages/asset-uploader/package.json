@@ -15,6 +15,7 @@
     "@types/node": "^17.0.21",
     "jest-config": "*",
     "typescript": "^4.6.2",
+    "@webstudio-is/prisma-client": "*",
     "zod": "^3.17.3"
   },
   "main": "src/index.ts",

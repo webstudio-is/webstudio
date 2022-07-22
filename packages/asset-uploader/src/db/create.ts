@@ -1,21 +1,6 @@
 import { prisma, Project } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
 
-export const loadByProject = async (projectId?: Project["id"]) => {
-  if (typeof projectId !== "string") {
-    throw new Error("Tree ID required");
-  }
-
-  const assets = await prisma.asset.findMany({
-    where: { projectId },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  return assets;
-};
-
 export const create = async (
   projectId: Project["id"],
   values: { name: string; path: string; size: number; metadata: sharp.Metadata }
