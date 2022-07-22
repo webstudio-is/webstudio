@@ -27,10 +27,15 @@ const useImageWithFallbaack = ({ path }: { path: string }) => {
   };
 };
 
-export const AssetManagerImage = ({ asset: { path } }: { asset: Asset }) => {
+export const AssetManagerImage = ({
+  asset: { path, alt },
+}: {
+  asset: Asset;
+}) => {
   const { imageSrc } = useImageWithFallbaack({ path });
   return (
     <Box
+      title={alt || ""}
       css={{
         aspectRatio: "1/1",
         width: "100%",
