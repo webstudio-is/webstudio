@@ -7,7 +7,7 @@ const fsEnvs = fsEnvVariables.parse(process.env);
 
 export const getAssetPath = (asset: Asset) => {
   if (asset.location === "FS") {
-    return path.join(fsEnvs.FILE_UPLOAD_PATH, asset.name);
+    return path.join("/", fsEnvs.FILE_UPLOAD_PATH, asset.name);
   }
 
   if (asset.location === "REMOTE" && s3Envs.success) {
