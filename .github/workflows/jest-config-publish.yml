@@ -1,0 +1,22 @@
+name: Jest Config Publish
+on: 
+ push:
+   paths:
+      - 'packages/jest-config/**/*'
+      - '.github/workflows/jest-config-publish.yml'
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install Dependencies
+        run: yarn install
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          dry-run: false
+          check-version: true
+          package: './packages/jest-config/package.json'
