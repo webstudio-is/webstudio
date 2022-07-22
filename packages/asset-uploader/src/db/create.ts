@@ -1,4 +1,4 @@
-import { prisma, Project } from "@webstudio-is/prisma-client";
+import { type Location, prisma, Project } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
 
 export const create = async (
@@ -7,7 +7,7 @@ export const create = async (
     name: string;
     size: number;
     metadata: sharp.Metadata;
-    location: "FS" | "REMOTE";
+    location: Location;
   }
 ) => {
   const size = values.size || values.metadata.size || 0;

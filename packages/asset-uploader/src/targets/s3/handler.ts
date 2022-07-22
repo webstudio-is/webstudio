@@ -13,6 +13,7 @@ import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
 } from "../../helpers/array-buffer-helpers";
+import { Location } from "@webstudio-is/prisma-client";
 
 type S3UploadHandler = ({
   file,
@@ -75,6 +76,6 @@ export const s3UploadHandler: S3UploadHandler = async ({
   return JSON.stringify({
     metadata,
     name: key,
-    location: "REMOTE",
+    location: Location.REMOTE,
   });
 };

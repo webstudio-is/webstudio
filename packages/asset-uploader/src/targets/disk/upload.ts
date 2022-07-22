@@ -1,3 +1,4 @@
+import { Location } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
 import { create } from "../../";
 import { ImagesUpload } from "../../schema";
@@ -20,7 +21,7 @@ export const uploadToDisk = async ({
       name: image.name,
       size: image.size,
       metadata,
-      location: "FS" as "FS" | "REMOTE",
+      location: Location.FS,
     };
 
     const newAsset = await create(projectId, data);

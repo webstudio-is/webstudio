@@ -1,4 +1,4 @@
-import { Asset } from "@webstudio-is/prisma-client";
+import { Asset, Location } from "@webstudio-is/prisma-client";
 import { fsEnvVariables, s3EnvVariables } from "../schema";
 import path from "path";
 
@@ -6,11 +6,11 @@ const s3Envs = s3EnvVariables.safeParse(process.env);
 const fsEnvs = fsEnvVariables.parse(process.env);
 
 export const getAssetPath = (asset: Asset) => {
-  if (asset.location === "FS") {
+  if (asset.location === Location.FS) {
     return path.join("/", fsEnvs.FILE_UPLOAD_PATH, asset.name);
   }
 
-  if (asset.location === "REMOTE" && s3Envs.success) {
+  if (asset.location === Location.REMOTE && s3Envs.success) {
     const s3Url = new URL(s3Envs.data.S3_ENDPOINT);
 
     if (s3Envs.data.WORKER_URL) {

@@ -21,6 +21,7 @@ describe("getAssetPath", () => {
       ...OLD_ENV,
       S3_ACCESS_KEY_ID: "testid",
       S3_SECRET_ACCESS_KEY: "testkey",
+      WORKER_URL: "",
     };
   });
 
