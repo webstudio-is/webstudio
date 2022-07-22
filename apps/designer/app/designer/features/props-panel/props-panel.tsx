@@ -85,7 +85,7 @@ const Property = ({
           onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
         />
       )}
-      {required === false && (
+      {required !== true && (
         <Button
           ghost
           disabled={required}
