@@ -1,5 +1,4 @@
-import { prisma, Project } from "@webstudio-is/prisma-client";
-import { AssetWithPath } from "../schema";
+import { prisma, Project, AssetWithPath } from "@webstudio-is/prisma-client";
 import { getAssetPath } from "../helpers/get-asset-path";
 
 export const loadByProject = async (

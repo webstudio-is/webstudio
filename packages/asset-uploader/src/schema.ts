@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { NodeOnDiskFile } from "@remix-run/node";
 import { DEFAULT_UPLPOAD_PATH } from "./constants";
-import { Asset } from "@webstudio-is/prisma-client";
 
 const SingleImageInUpload = z.instanceof(NodeOnDiskFile);
 
@@ -32,5 +31,3 @@ export const fsEnvVariables = z.object({
 export const assetEnvVariables = z.object({
   MAX_UPLOAD_SIZE: z.string().optional().default("10"),
 });
-
-export type AssetWithPath = Asset & { path: string };

@@ -1,3 +1,5 @@
+import { Asset } from "@prisma/client";
+
 export type {
   InstanceProps,
   Project,
@@ -6,3 +8,4 @@ export type {
   Asset,
   Location,
 } from "@prisma/client";
+export type AssetWithPath = Asset & { path: string };

@@ -3,7 +3,7 @@ import { Button, Flex, Grid, Heading } from "~/shared/design-system";
 import { useRef } from "react";
 import { Form, useSubmit } from "@remix-run/react";
 import { Image } from "~/shared/design-system/components/image";
-import type { AssetWithPath } from "@webstudio-is/asset-uploader/src/schema";
+import { AssetWithPath } from "@webstudio-is/prisma-client";
 
 export const TabContent = ({ assets }: { assets: Array<AssetWithPath> }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
