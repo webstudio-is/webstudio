@@ -5,7 +5,11 @@ import { Form, useSubmit } from "@remix-run/react";
 import { type Asset } from "@webstudio-is/prisma-client";
 import { Image } from "~/shared/design-system/components/image";
 
-export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
+export const TabContent = ({
+  assets,
+}: {
+  assets: Array<Asset & { path: string }>;
+}) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const submit = useSubmit();
 
