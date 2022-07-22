@@ -47,10 +47,9 @@ const StyledItemIndicator = styled(DropdownMenuPrimitive.ItemIndicator, {
 });
 
 const StyledArrow = styled(DropdownMenuPrimitive.Arrow, {
-  fill: "$colors$gray4",
-  // @todo convert to clip-path of it's parent so that the shadow applies
   "& *": {
-    fill: "transparent",
+    fill: "$colors$gray4",
+    stroke: "$colors$gray8",
   },
 });
 
@@ -91,7 +90,7 @@ export const Comboicon = ({ value, items, onChange, icons, css }: any) => {
         <IconButton css={css}>{TriggerIcon && <TriggerIcon />}</IconButton>
       </DropdownMenuPrimitive.Trigger>
 
-      <StyledContent>
+      <StyledContent sideOffset={4}>
         <DropdownMenuPrimitive.RadioGroup
           value={value}
           onValueChange={onChange}

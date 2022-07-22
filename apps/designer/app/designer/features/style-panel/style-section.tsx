@@ -222,7 +222,6 @@ const ComboboxControl = ({
         <Combobox
           id={styleConfig.property}
           items={styleConfig.items}
-          variant="ghost"
           css={{
             // @todo drag&drop cursor to adjust numeric value
             // const cursorUrl = data:image/svg+xml;base64,${btoa(svgCursor)}

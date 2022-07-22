@@ -40,7 +40,7 @@ export const Combobox = ({
           value={currentValue}
           autoComplete="off"
           // @todo avoid hardcoding padding
-          css={{ ...css, paddingRight: 30 }}
+          css={{ ...css, paddingRight: 30 - 4 }}
           onChange={(event) => {
             setCurrentValue(event.target.value);
           }}
@@ -63,7 +63,11 @@ export const Combobox = ({
         variant="ghost"
         size="1"
         // @todo avoid hardcoding margin
-        css={{ marginLeft: -32 }}
+        css={{
+          marginLeft: -32 + 4,
+          height: "$4",
+          width: "$4",
+        }}
         onClick={() => {
           setIsOpen(true);
         }}
