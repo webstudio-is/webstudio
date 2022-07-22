@@ -9,10 +9,9 @@ const useImageWithFallback = ({ path }: { path: string }) => {
 
   useEffect(() => {
     const newImage = new Image();
-    newImage.src = path;
-
     newImage.onload = () => setSrc(path);
     newImage.onerror = () => setSrc(brokenImage);
+    newImage.src = path;
   }, [path]);
 
   return src;
