@@ -2,8 +2,8 @@ import { ImageIcon } from "~/shared/icons";
 import { Button, Flex, Grid, Heading } from "~/shared/design-system";
 import { useRef } from "react";
 import { Form, useSubmit } from "@remix-run/react";
-import { Image } from "~/shared/design-system/components/image";
-import { Asset } from "@webstudio-is/prisma-client";
+import type { Asset } from "@webstudio-is/prisma-client";
+import { SingleImage } from "./components/single-image";
 
 export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -38,11 +38,7 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
       </Flex>
       <Grid columns={2} gap={2}>
         {assets.map((asset) => (
-          <Image
-            key={asset.id}
-            src={asset.path}
-            alt={asset.alt || asset.name}
-          />
+          <SingleImage key={asset.id} path={asset.path} />
         ))}
       </Grid>
     </Flex>
