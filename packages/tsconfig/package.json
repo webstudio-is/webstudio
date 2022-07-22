@@ -1,6 +1,6 @@
 {
-  "name": "tsconfig",
-  "version": "0.0.0",
+  "name": "@webstudio-is/tsconfig",
+  "version": "0.1.0",
   "private": true,
   "main": "index.js",
   "files": [

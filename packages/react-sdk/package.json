@@ -40,7 +40,7 @@
     "esbuild": "^0.14.25",
     "esbuild-node-externals": "^1.4.1",
     "esbuild-node-loader": "^0.8.0",
-    "jest-config": "*",
+    "@webstudio-is/jest-config": "*",
     "mdn-data": "2.0.23",
     "react": "^17.0.2",
     "react-docgen-typescript": "^2.2.2",
@@ -62,7 +62,7 @@
     "mitt": "^3.0.0",
     "prisma": "^3.10.0",
     "react-nano-state": "^0.4.0",
-    "jest-config": "*",
+    "@webstudio-is/jest-config": "*",
     "zod": "^3.17.3"
   },
   "main": "lib/index.js",
