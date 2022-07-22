@@ -7,19 +7,27 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "checks": "yarn typecheck && yarn test"
+    "checks": "yarn typecheck && yarn test",
+    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
+    "build": "rm -fr lib && tsc"
   },
-  "devDependencies": {
+  "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",
     "@aws-sdk/lib-storage": "^3.131.0",
+    "sharp": "^0.30.7"
+  },
+  "devDependencies": {
     "@types/node": "^17.0.21",
+    "@types/sharp": "^0.30.4",
     "jest-config": "*",
+    "tsup": "^6.1.3",
     "typescript": "^4.6.2",
     "zod": "^3.17.3"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
+    "lib/*",
     "README.md",
     "!*.test.*"
   ],

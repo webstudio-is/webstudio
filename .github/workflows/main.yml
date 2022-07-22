@@ -14,7 +14,14 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
-      - run: yarn install
+        
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: "yarn"
+          
+      - run: yarn install --frozen-lockfile
       - run: yarn prisma generate
-      - run: yarn checks
       - run: yarn build
+      - run: yarn checks
