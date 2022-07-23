@@ -12,7 +12,6 @@ export const AlignItemsStart = React.forwardRef<SVGSVGElement, IconProps>(
         xmlns="http://www.w3.org/2000/svg"
         {...props}
         ref={forwardedRef}
-        style={{ transform: "rotate(-90deg)" }}
       >
         <path
           fillRule="evenodd"
@@ -37,7 +36,6 @@ export const AlignItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
         xmlns="http://www.w3.org/2000/svg"
         {...props}
         ref={forwardedRef}
-        style={{ transform: "rotate(-90deg)" }}
       >
         <path
           fillRule="evenodd"
@@ -62,7 +60,6 @@ export const AlignItemsCenter = React.forwardRef<SVGSVGElement, IconProps>(
         xmlns="http://www.w3.org/2000/svg"
         {...props}
         ref={forwardedRef}
-        style={{ transform: "rotate(-90deg)" }}
       >
         <path
           fillRule="evenodd"
@@ -87,7 +84,6 @@ export const AlignItemsBaseline = React.forwardRef<SVGSVGElement, IconProps>(
         xmlns="http://www.w3.org/2000/svg"
         {...props}
         ref={forwardedRef}
-        style={{ transform: "rotate(-90deg)" }}
       >
         <path
           fillRule="evenodd"
@@ -138,7 +134,6 @@ export const AlignItemsStretch = React.forwardRef<SVGSVGElement, IconProps>(
         xmlns="http://www.w3.org/2000/svg"
         {...props}
         ref={forwardedRef}
-        style={{ transform: "rotate(-90deg)" }}
       >
         <path
           fillRule="evenodd"
