@@ -192,14 +192,17 @@ const ComboboxControl = ({
             label: String(currentValue.value),
           }}
           itemToString={(item) => (item ? item.name : "")}
-          onItemHighlight={(value) => {
-            if (value === undefined) {
+          onItemSelect={(item) => {
+            setValue(item.name);
+          }}
+          onItemHighlight={(item) => {
+            if (item === undefined) {
               setValue(String(currentValue.value), { isEphemeral: true });
               return;
             }
-            setValue(value.name, { isEphemeral: true });
+            setValue(item.name, { isEphemeral: true });
           }}
-          disclosure={({ inputProps, toggleProps }) => (
+          disclosure={({ inputProps, toggleProps, highlightedItem }) => (
             <ComboboxTextField
               toggleProps={toggleProps}
               inputProps={{
@@ -208,9 +211,11 @@ const ComboboxControl = ({
                 state: currentValue.type === "invalid" ? "invalid" : undefined,
                 onKeyDown(event) {
                   inputProps.onKeyDown?.(event);
+                  // While highlightedItem is there, combobox is handling it.
+                  if (highlightedItem) return;
                   switch (event.key) {
                     case "Enter": {
-                      setValue(event.currentTarget.value);
+                      setValue(String(inputProps.value));
                       break;
                     }
                   }

@@ -1,8 +1,10 @@
 import {
   useState,
   forwardRef,
+  useEffect,
   type ElementRef,
   type ComponentProps,
+  type ForwardRefRenderFunction,
 } from "react";
 import { CheckIcon, ChevronDownIcon } from "~/shared/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
@@ -34,15 +36,16 @@ const ListboxItem = styled("li", itemCss, {
   margin: 0,
 });
 
-type ComboboxTextFieldProps = {
+type ComboboxTextFieldProps<Item> = {
   inputProps: ComponentProps<typeof TextField>;
   toggleProps: ComponentProps<typeof IconButton>;
+  highlightedItem?: Item;
 };
 
-export const ComboboxTextField = forwardRef<
-  ElementRef<typeof Flex>,
-  ComboboxTextFieldProps
->(({ inputProps, toggleProps }, ref) => {
+const ComboboxTextFieldBase: ForwardRefRenderFunction<
+  HTMLDivElement,
+  ComboboxTextFieldProps<BaseItem>
+> = ({ inputProps, toggleProps }, ref) => {
   return (
     <Box ref={ref} css={{ position: "relative" }}>
       <TextField css={{ paddingRight: "$4" }} {...inputProps} />
@@ -58,7 +61,9 @@ export const ComboboxTextField = forwardRef<
       </IconButton>
     </Box>
   );
-});
+};
+
+export const ComboboxTextField = forwardRef(ComboboxTextFieldBase);
 
 ComboboxTextField.displayName = "ComboboxTextField";
 
@@ -69,7 +74,9 @@ type ComboboxProps<Item> = {
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value?: Item) => void;
   itemToString?: (item: Item | null) => string;
-  disclosure?: (props: ComponentProps<typeof ComboboxTextField>) => JSX.Element;
+  disclosure?: <Item>(
+    props: ComponentProps<typeof ComboboxTextField>
+  ) => JSX.Element;
   // @todo should we spread those props flat?
   contentProps?: ComponentProps<typeof PopperContent>;
 };
@@ -83,11 +90,9 @@ export const Combobox = <Item extends BaseItem>({
     item !== null && "label" in item ? item.label : item ?? "",
   onItemSelect,
   onItemHighlight,
-  disclosure = ({ inputProps, toggleProps }) => (
-    <ComboboxTextField inputProps={inputProps} toggleProps={toggleProps} />
-  ),
+  disclosure = (props) => <ComboboxTextField {...props} />,
 }: ComboboxProps<Item>) => {
-  const [filteredItems, setFilteredItems] = useState(items);
+  const [foundItems, setFoundItems] = useState(items);
   const {
     isOpen,
     getToggleButtonProps,
@@ -105,11 +110,11 @@ export const Combobox = <Item extends BaseItem>({
           typeof items[0] === "object" && "label" in items[0]
             ? { keys: ["label"] }
             : undefined;
-        const filteredItems = matchSorter(items, inputValue, options);
-        setFilteredItems(filteredItems);
+        const foundItems = matchSorter(items, inputValue, options);
+        setFoundItems(foundItems);
       }
     },
-    items: filteredItems,
+    items: foundItems,
     selectedItem: value,
     itemToString,
     onSelectedItemChange({ selectedItem }) {
@@ -124,21 +129,28 @@ export const Combobox = <Item extends BaseItem>({
     },
   });
 
+  useEffect(() => {
+    if (isOpen === false) {
+      setFoundItems(items);
+    }
+  }, [isOpen]);
+
   const inputProps: Record<string, unknown> = getInputProps({ name });
   const toggleProps: Record<string, unknown> = getToggleButtonProps();
   const comboboxProps: Record<string, unknown> = getComboboxProps();
   const menuProps: Record<string, unknown> = getMenuProps();
+  const highlightedItem = foundItems[highlightedIndex];
 
   return (
     <Popper>
       <Box {...comboboxProps}>
         <PopperAnchor asChild>
-          {disclosure({ inputProps, toggleProps })}
+          {disclosure<Item>({ inputProps, toggleProps, highlightedItem })}
         </PopperAnchor>
         <PopperContent {...contentProps} style={{ zIndex: 1 }}>
           <Listbox {...menuProps}>
             {isOpen &&
-              filteredItems.map((item, index) => {
+              foundItems.map((item, index) => {
                 const itemProps: Record<string, unknown> = getItemProps({
                   item,
                   index,
