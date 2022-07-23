@@ -7,18 +7,18 @@ import { Box } from "~/shared/design-system";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   maxWidth: "224px",
-  backgroundColor: "$colors$gray4",
+  backgroundColor: "$colors$slate4",
   borderRadius: "4px",
   padding: "8px",
   boxShadow:
-    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 0 1px $colors$gray1, 0 0 0 1px $colors$gray8",
+    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$gray1, 0 0 0 1px $colors$gray8",
 });
 
 const itemStyles = {
   all: "unset",
-  fontSize: 13,
+  fontSize: "$2",
   lineHeight: 1,
-  color: "$colors$gray12",
+  color: "$colors$slate12",
   borderRadius: 3,
   display: "flex",
   alignItems: "center",

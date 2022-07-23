@@ -58,10 +58,10 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
 
 const StyledContent = styled(SelectPrimitive.Content, {
   overflow: "hidden",
-  backgroundColor: "$muted",
+  backgroundColor: "$colors$slate4",
   borderRadius: "$1",
   boxShadow:
-    "0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2)",
+    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
 });
 
 const StyledViewport = styled(SelectPrimitive.Viewport, {
@@ -70,7 +70,7 @@ const StyledViewport = styled(SelectPrimitive.Viewport, {
 
 const StyledItem = styled(SelectPrimitive.Item, {
   all: "unset",
-  fontSize: "$1",
+  fontSize: "$2",
   lineHeight: 1,
   color: "$hiContrast",
   display: "flex",

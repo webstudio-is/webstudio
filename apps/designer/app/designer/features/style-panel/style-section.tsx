@@ -269,7 +269,7 @@ const SelectControl = ({
         label={styleConfig.label}
         css={{
           fontWeight: "500",
-          // marginRight: "2px",
+          marginRight: "4px",
         }}
       />
       <Select
