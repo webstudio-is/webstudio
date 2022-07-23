@@ -60,12 +60,12 @@ export const useDrag = ({
 
   const props = useMove({
     onMoveStart({
-      pageX: x,
-      pageY: y,
+      clientX: x,
+      clientY: y,
       target,
     }: {
-      pageX: number;
-      pageY: number;
+      clientX: number;
+      clientY: number;
       target: HTMLElement;
     }) {
       state.current = {
@@ -78,7 +78,7 @@ export const useDrag = ({
       };
       onStart({ target, cancel });
     },
-    onMove({ pageX: x, pageY: y }: { pageX: number; pageY: number }) {
+    onMove({ clientX: x, clientY: y }: { clientX: number; clientY: number }) {
       if (state.current.status === "canceled") {
         return;
       }

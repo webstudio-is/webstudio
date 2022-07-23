@@ -4,6 +4,7 @@ import {
   useDropTarget,
   useDrag,
   usePlacement,
+  useAutoScroll,
   type Rect,
   type DropTarget,
 } from "~/shared/design-system/components/primitives/dnd";
@@ -24,7 +25,12 @@ export type DropData = {
 // });
 
 // data shared between iframe and main window
-export type DropTargetSharedData = { rect: Rect; placementRect: Rect };
+export type DropTargetSharedData = {
+  rect: Rect;
+  placementRect: Rect;
+  instanceId: Instance["id"];
+  instanceComponent: Instance["component"];
+};
 
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
@@ -44,9 +50,13 @@ export const useDragAndDrop = () => {
       payload: {
         rect: dropTarget.rect,
         placementRect: placement.placementRect,
+        instanceId: dropTarget.data.id,
+        instanceComponent: dropTarget.data.component,
       },
     });
   };
+
+  const autoScrollHandlers = useAutoScroll();
 
   const placementHandlers = usePlacement({
     onPlacementChange: (placement) => {
@@ -116,21 +126,21 @@ export const useDragAndDrop = () => {
 
   const dragProps = useDrag({
     onStart(_event) {
-      // autoScrollHandlers.setEnabled(true);
-
       // @todo: Find drag item instance or cancel the event
+
+      autoScrollHandlers.setEnabled(true);
 
       // @todo: Pass drag item instance id
       publish<"dragStart">({ type: "dragStart" });
     },
     onMove: (poiterCoordinate) => {
       dropTargetHandlers.handleMove(poiterCoordinate);
-      // autoScrollHandlers.handleMove(poiterCoordinate);
+      autoScrollHandlers.handleMove(poiterCoordinate);
       placementHandlers.handleMove(poiterCoordinate);
     },
     onEnd() {
       dropTargetHandlers.handleEnd();
-      // autoScrollHandlers.setEnabled(false);
+      autoScrollHandlers.setEnabled(false);
       placementHandlers.handleEnd();
 
       publish<"dragEnd">({ type: "dragEnd" });
@@ -139,9 +149,9 @@ export const useDragAndDrop = () => {
 
   // We want to use <body> as a root for drag items.
   // The DnD hooks weren't designed for that.
-  // This is a temporary solution.
   //
-  // NOTE: maybe use root instance's element as a root?
+  // @todo: This is a temporary solution, need to change hooks' API.
+  // Also, maybe use root instance's element as a root?
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       dragProps.onPointerDown?.(
@@ -157,15 +167,24 @@ export const useDragAndDrop = () => {
     const rootElement = document.body;
 
     rootElement.addEventListener("pointerdown", handlePointerDown);
-    rootElement.addEventListener("scroll", handleScroll);
     dropTargetHandlers.rootRef(rootElement);
+
+    // @todo: we're probably subscribing on a wrong element here
+    rootElement.addEventListener("scroll", handleScroll);
+
+    // @todo: We need a special mode for when we want to scroll the whole page.
+    // Because our rect for edge detection is a viewport,
+    // but the element which we want to scroll has a rect corresponding to the document.
+    // Maybe just have two separate refs?
+    autoScrollHandlers.targetRef(document.body.parentElement);
     () => {
       rootElement.removeEventListener("pointerdown", handlePointerDown);
       rootElement.removeEventListener("scroll", handleScroll);
       dropTargetHandlers.rootRef(null);
+      autoScrollHandlers.targetRef(null);
     };
 
-    // NOTE: need to make the dependencies more stable,
+    // @todo: need to make the dependencies more stable,
     // because as is this will fire on every render
-  }, [dragProps, dropTargetHandlers, placementHandlers]);
+  }, [dragProps, dropTargetHandlers, placementHandlers, autoScrollHandlers]);
 };
