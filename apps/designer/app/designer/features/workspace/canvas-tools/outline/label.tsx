@@ -3,6 +3,7 @@ import { styled } from "~/shared/design-system";
 import { primitives } from "~/shared/canvas-components";
 import { type Instance } from "@webstudio-is/react-sdk";
 
+type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
 
@@ -13,7 +14,7 @@ type LabelRefCallback = (element: HTMLElement | null) => void;
  * - else inside-top - last resort because it covers a bit of the instance content
  */
 const useLabelPosition = (
-  instanceRect: DOMRect
+  instanceRect: Rect
 ): [LabelRefCallback, LabelPosition] => {
   const [position, setPosition] = useState<LabelPosition>("top");
 
@@ -70,7 +71,7 @@ const LabelContainer = styled(
 
 type LabelProps = {
   component: Instance["component"];
-  instanceRect: DOMRect;
+  instanceRect: Rect;
 };
 
 export const Label = ({ component, instanceRect }: LabelProps) => {

@@ -2,7 +2,7 @@ import { useRef } from "react";
 
 export type Area = "top" | "right" | "bottom" | "left" | "center";
 
-type DropTarget<Data> = {
+export type DropTarget<Data> = {
   data: Data;
   element: HTMLElement;
   rect: DOMRect;
