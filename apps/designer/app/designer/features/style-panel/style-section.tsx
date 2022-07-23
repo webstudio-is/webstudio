@@ -315,7 +315,9 @@ const ComboiconControl = ({
       css={{
         ...(styleConfig.property !== "flexDirection" && {
           transform: `rotate(${
-            currentStyle.flexDirection?.value === "column" ? 90 : 0
+            currentStyle.flexDirection?.value === "column"
+              ? 90 * (styleConfig.property === "alignItems" ? -1 : 1)
+              : 0
           }deg)`,
         }),
         ...(isCurrentBreakpoint && {
@@ -368,9 +370,7 @@ const GridControl = ({
         color: "$colors$blue9", // $colors$slate8
         background: "#FFF",
         border: "2px solid currentColor",
-        transform: `rotate(${direction ? -90 : 0}deg) scaleX(${
-          direction ? -1 : 1
-        })`,
+        transform: `scale(${direction ? -1 : 1})`,
       }}
     >
       {cells.map((value, index) => (
@@ -391,7 +391,9 @@ const GridControl = ({
               color: "$colors$gray8",
               "&:focus": { boxShadow: "none" },
             }}
-            onClick={() => setPosition(index)}
+            onClick={() => {
+              // setPosition(index)
+            }}
           >
             <icons.DotFilledIcon></icons.DotFilledIcon>
           </IconButton>
