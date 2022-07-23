@@ -306,12 +306,6 @@ const ComboiconControl = ({
 
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
-  const direction = (currentStyle.direction?.value as string).includes(
-    "column"
-  );
-  const orientation = (currentStyle.direction?.value as string).includes(
-    "reverse"
-  );
   return (
     <Comboicon
       items={styleConfig.items}
@@ -347,7 +341,7 @@ const GridControl = ({
   const flexDirection = currentStyle.flexDirection?.value as string;
   const justifyContent = currentStyle.justifyContent?.value as string;
   const alignItems = currentStyle.alignItems?.value as string;
-  const alignContent = currentStyle.alignContent?.value as string;
+  // const alignContent = currentStyle.alignContent?.value as string;
 
   const direction = Number(flexDirection.includes("column"));
   const orientation = Number(flexDirection.includes("reverse"));
@@ -357,10 +351,6 @@ const GridControl = ({
     justifyContent
   ] as number;
   const [position, setPosition] = useState(row * 3 + column);
-  {
-    const [position, setPosition] = useState(row * 3 + column);
-    console.log(alignItems, justifyContent, row, column, position);
-  }
   return (
     <Grid
       css={{
