@@ -13,7 +13,7 @@
  */
 
 /**
- * We had to copy this file from react-aria because we need pageX and pageY.
+ * We had to copy this file from react-aria because we need clientX and clientY.
  */
 
 import React, { HTMLAttributes, useMemo, useRef } from "react";
@@ -50,8 +50,8 @@ interface MoveStartEvent extends BaseMoveEvent {
   /** The type of move event being fired. */
   type: "movestart";
   target: HTMLElement;
-  pageX: number;
-  pageY: number;
+  clientX: number;
+  clientY: number;
 }
 
 interface MoveMoveEvent extends BaseMoveEvent {
@@ -61,8 +61,8 @@ interface MoveMoveEvent extends BaseMoveEvent {
   deltaX: number;
   /** The amount moved in the Y direction since the last event. */
   deltaY: number;
-  pageX: number;
-  pageY: number;
+  clientX: number;
+  clientY: number;
 }
 
 interface MoveEndEvent extends BaseMoveEvent {
@@ -136,8 +136,8 @@ export function useMove(props: MoveEvents): MoveResult {
           ctrlKey: originalEvent.ctrlKey,
           altKey: originalEvent.altKey,
           target: originalEvent.target,
-          pageX: originalEvent.pageX,
-          pageY: originalEvent.pageY,
+          clientX: originalEvent.clientX,
+          clientY: originalEvent.clientY,
         });
       }
 
@@ -150,8 +150,8 @@ export function useMove(props: MoveEvents): MoveResult {
         metaKey: originalEvent.metaKey,
         ctrlKey: originalEvent.ctrlKey,
         altKey: originalEvent.altKey,
-        pageX: originalEvent.pageX,
-        pageY: originalEvent.pageY,
+        clientX: originalEvent.clientX,
+        clientY: originalEvent.clientY,
       });
     };
     let end = (originalEvent: EventBase, pointerType: PointerType) => {
