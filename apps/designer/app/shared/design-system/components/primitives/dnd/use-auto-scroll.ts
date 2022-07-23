@@ -38,7 +38,7 @@ const getSpeed = (
   return 0;
 };
 
-export type Parameters = {
+export type UseAutoScrollProps = {
   edgeDistanceThreshold?: number;
 
   // min/max speed of the scroll animation in pixels per second
@@ -46,7 +46,7 @@ export type Parameters = {
   maxSpeed?: number;
 };
 
-export type Handlers = {
+export type UseAutoScrollHandlers = {
   handleMove: (pointerCoordinate: { x: number; y: number }) => void;
   setEnabled: (enabled: boolean) => void;
   targetRef: (element: HTMLElement | null) => void;
@@ -56,7 +56,7 @@ export const useAutoScroll = ({
   edgeDistanceThreshold = 100,
   minSpeed = 1,
   maxSpeed = 500,
-}: Parameters = {}): Handlers => {
+}: UseAutoScrollProps = {}): UseAutoScrollHandlers => {
   const state = useRef({
     target: null as HTMLElement | null,
     enabled: false,

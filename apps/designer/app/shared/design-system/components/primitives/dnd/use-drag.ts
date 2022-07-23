@@ -18,7 +18,7 @@ const initialState = {
   status: "idle",
 } as const;
 
-export type Parameters = {
+export type UseDragProps = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
   onStart: (event: { target: HTMLElement; cancel: () => void }) => void;
@@ -35,7 +35,7 @@ export const useDrag = ({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   onShiftChange = () => {},
   onEnd,
-}: Parameters): React.HTMLAttributes<HTMLElement> => {
+}: UseDragProps): React.HTMLAttributes<HTMLElement> => {
   const state = useRef<State>(initialState);
 
   const cancel = () => {

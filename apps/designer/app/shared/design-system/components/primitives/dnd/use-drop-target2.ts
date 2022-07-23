@@ -19,7 +19,7 @@ const isSameRect = (a: DOMRect, b: DOMRect) =>
 // doesn't have to be looked up again in swapDropTarget.
 export type UseDropTargetProps<Data> = {
   // To check that the element can qualify as a target
-  isDropTarget: (element: HTMLElement) => Data | undefined;
+  isDropTarget: (element: HTMLElement) => Data | false;
 
   // Given the potential target that has passed isDropTarget check,
   // and the position of the pointer on the target,
@@ -74,6 +74,9 @@ export const useDropTarget = <Data>({
       return;
     }
 
+    // @todo: if neither potentialTarget nor area has changed since the last time,
+    // don't call swapDropTarget.
+
     const dropTarget = {
       ...potentialTarget,
       rect: potentialTarget.element.getBoundingClientRect(),
@@ -106,6 +109,7 @@ export const useDropTarget = <Data>({
       !isSameData(state.current.dropTarget.data, dropTarget.data) ||
       !isSameRect(state.current.dropTarget.rect, dropTarget.rect)
     ) {
+      state.current.dropTarget = dropTarget;
       onDropTargetChange(dropTarget);
     }
   };
@@ -164,12 +168,12 @@ const findClosestDropTarget = <Data>({
 }: {
   root: HTMLElement;
   target: HTMLElement;
-  isDropTarget: (target: HTMLElement) => Data | undefined;
+  isDropTarget: (target: HTMLElement) => Data | false;
 }) => {
   let currentTarget: HTMLElement | null = target;
   while (currentTarget !== null && currentTarget !== root) {
     const data = isDropTarget(currentTarget);
-    if (data !== undefined) {
+    if (data !== false) {
       return { data: data, element: currentTarget };
     }
     currentTarget = currentTarget.parentElement;

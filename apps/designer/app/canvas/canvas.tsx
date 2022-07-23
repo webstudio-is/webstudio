@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
 import * as db from "~/shared/db";
 import {
@@ -48,105 +48,11 @@ import {
 import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
+import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
   LexicalComposer,
   config,
 } from "~/canvas/features/wrapper-component/text-editor";
-
-// TODO: move this somewhere else
-import { useDrag } from "~/shared/design-system/components/primitives/dnd/use-drag";
-import { useDropTarget } from "~/shared/design-system/components/primitives/dnd/use-drop-target";
-import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
-import { primitives } from "~/shared/canvas-components";
-const useDragAndDrop = () => {
-  const [rootInstance] = useRootInstance();
-
-  const dropTargetHandlers = useDropTarget({
-    isDropTarget(element) {
-      return (
-        rootInstance !== undefined &&
-        element.id !== "" &&
-        findInstanceById(rootInstance, element.id) !== undefined
-      );
-    },
-    onDropTargetChange(event) {
-      if (rootInstance === undefined) {
-        return;
-      }
-
-      let path = getInstancePath(rootInstance, event.target.id);
-      if (path.length === 0) {
-        path = [rootInstance];
-      }
-
-      const _targetInstance = path.reverse().find((instance) => {
-        return primitives[instance.component].canAcceptChild();
-      });
-
-      // TODO: take area into account
-      // but not sure we can use event.area, we want targetInstance's area actually
-
-      // console.log("onDropTargetChange", targetInstance);
-    },
-  });
-
-  const dragProps = useDrag({
-    onStart(_event) {
-      // const id = event.target.dataset.id;
-      // if (id == null) {
-      //   event.cancel();
-      //   return;
-      // }
-      // setDragItemId(id);
-      // autoScrollHandlers.setEnabled(true);
-    },
-    onMove: (poiterCoordinate) => {
-      dropTargetHandlers.handleMove(poiterCoordinate);
-      // autoScrollHandlers.handleMove(poiterCoordinate);
-      // placementHandlers.handleMove(poiterCoordinate);
-    },
-    onEnd() {
-      dropTargetHandlers.handleEnd();
-      // autoScrollHandlers.setEnabled(false);
-      // placementHandlers.handleEnd();
-      // setDragItemId(undefined);
-      // setPalcement(undefined);
-      // dropTargetId.current = undefined;
-    },
-  });
-
-  // We want to use <body> as a root for drag items.
-  // The DnD hooks weren't designed for that.
-  // This is a temporary solution.
-  //
-  // NOTE: maybe use root instance's element as a root?
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      dragProps.onPointerDown?.(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        event as any as React.PointerEvent<HTMLElement>
-      );
-    };
-
-    const handleScroll = () => {
-      dropTargetHandlers.handleScroll();
-    };
-
-    const rootElement = document.body;
-
-    rootElement.addEventListener("pointerdown", handlePointerDown);
-    rootElement.addEventListener("scroll", handleScroll);
-    dropTargetHandlers.rootRef(rootElement);
-    () => {
-      rootElement.removeEventListener("pointerdown", handlePointerDown);
-      rootElement.removeEventListener("scroll", handleScroll);
-      dropTargetHandlers.rootRef(null);
-    };
-
-    // NOTE: need to make the dependencies more stable,
-    // because as is this will fire on every render
-  }, [dragProps, dropTargetHandlers]);
-};
 
 registerContainers();
 
