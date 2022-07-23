@@ -1,13 +1,22 @@
 import React, { useEffect } from "react";
 import { useRootInstance } from "~/shared/nano-states";
-import { useDrag } from "~/shared/design-system/components/primitives/dnd";
-import { useDropTarget } from "~/shared/design-system/components/primitives/dnd";
+import {
+  useDropTarget,
+  useDrag,
+  usePlacement,
+} from "~/shared/design-system/components/primitives/dnd";
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import { primitives } from "~/shared/canvas-components";
 import { type Instance } from "@webstudio-is/react-sdk";
 
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
+
+  const placementHandlers = usePlacement({
+    onPlacementChange: (placement) => {
+      console.log(placement);
+    },
+  });
 
   const dropTargetHandlers = useDropTarget<Instance>({
     isDropTarget(element) {
@@ -56,23 +65,7 @@ export const useDragAndDrop = () => {
     },
 
     onDropTargetChange(dropTarget) {
-      // if (rootInstance === undefined) {
-      //   return;
-      // }
-
-      // let path = getInstancePath(rootInstance, event.target.id);
-      // if (path.length === 0) {
-      //   path = [rootInstance];
-      // }
-
-      // const _targetInstance = path.reverse().find((instance) => {
-      //   return primitives[instance.component].canAcceptChild();
-      // });
-
-      // @todo: take area into account
-      // but not sure we can use event.area, we want targetInstance's area actually
-
-      console.log("onDropTargetChange", dropTarget);
+      placementHandlers.handleTargetChange(dropTarget.element);
     },
   });
 
@@ -89,12 +82,12 @@ export const useDragAndDrop = () => {
     onMove: (poiterCoordinate) => {
       dropTargetHandlers.handleMove(poiterCoordinate);
       // autoScrollHandlers.handleMove(poiterCoordinate);
-      // placementHandlers.handleMove(poiterCoordinate);
+      placementHandlers.handleMove(poiterCoordinate);
     },
     onEnd() {
       dropTargetHandlers.handleEnd();
       // autoScrollHandlers.setEnabled(false);
-      // placementHandlers.handleEnd();
+      placementHandlers.handleEnd();
       // setDragItemId(undefined);
       // setPalcement(undefined);
       // dropTargetId.current = undefined;
@@ -115,6 +108,7 @@ export const useDragAndDrop = () => {
 
     const handleScroll = () => {
       dropTargetHandlers.handleScroll();
+      placementHandlers.handleScroll();
     };
 
     const rootElement = document.body;
