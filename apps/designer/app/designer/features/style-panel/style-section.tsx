@@ -341,16 +341,13 @@ const GridControl = ({
   const flexDirection = currentStyle.flexDirection?.value as string;
   const justifyContent = currentStyle.justifyContent?.value as string;
   const alignItems = currentStyle.alignItems?.value as string;
-  // const alignContent = currentStyle.alignContent?.value as string;
-
   const direction = Number(flexDirection.includes("column"));
-  const orientation = Number(flexDirection.includes("reverse"));
   const cells = ["a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2", "c3"];
   const row = { normal: 0, start: 0, center: 1, end: 2 }[alignItems] as number;
   const column = { normal: 0, start: 0, center: 1, end: 2 }[
     justifyContent
   ] as number;
-  const [position, setPosition] = useState(row * 3 + column);
+  const position = row * 3 + column;
   return (
     <Grid
       css={{
@@ -371,9 +368,9 @@ const GridControl = ({
         color: "$colors$blue9", // $colors$slate8
         background: "#FFF",
         border: "2px solid currentColor",
-        transform: `scale${direction ? "Y" : "X"}(${
-          orientation ? -1 : 1
-        }) rotate(${direction ? -90 : 0}deg) scaleX(${direction ? -1 : 1})`,
+        transform: `rotate(${direction ? -90 : 0}deg) scaleX(${
+          direction ? -1 : 1
+        })`,
       }}
     >
       {cells.map((value, index) => (
