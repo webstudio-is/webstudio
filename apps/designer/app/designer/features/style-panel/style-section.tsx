@@ -347,6 +347,7 @@ const GridControl = ({
   return (
     <Grid
       css={{
+        ...css,
         alignItems: "center",
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
@@ -363,7 +364,7 @@ const GridControl = ({
         color: "$colors$blue9", // $colors$slate8
         background: "#FFF",
         border: "2px solid currentColor",
-        ...css,
+        transform: `scale${direction ? "Y" : "X"}(${orientation ? -1 : 1})`,
       }}
     >
       {cells.map((value, index) => (
@@ -397,15 +398,20 @@ const GridControl = ({
             `start center end start center end start center end`.split(" "),
             `start start start center center center end end end`.split(" "),
           ][direction][position],
-          writingMode: [
-            ["vertical-lr", "horizontal-tb"],
-            ["vertical-rl", "horizontal-bt"],
-          ][orientation][direction],
+          writingMode: ["vertical-lr", "horizontal-tb"][direction],
           width: "100%",
           height: "100%",
           gap: "3px",
           color: "currentColor",
           // flexDirection: flexDirection,
+          // transform: `scale(${[
+          //   [1, 1],
+          //   [1, -1],
+          // ][orientation][direction]})`
+          // flexDirection: [
+          //   ["row", "column"],
+          //   ["row-reverse", "column-reverse"],
+          // ][orientation][direction],
           // transform: `rotate(${direction ? 0 : -90}deg) scale(${
           //   orientation ? -1 : 1
           // })`,
@@ -415,8 +421,10 @@ const GridControl = ({
           <Flex
             key={index}
             css={{
-              [["height", "width"][direction]]: "calc(100% / 3)",
-              [["width", "height"][direction]]: value,
+              inlineSize: "33.3333%",
+              blockSize: value,
+              // [["height", "width"][direction]]: "calc(100% / 3)",
+              // [["width", "height"][direction]]: value,
               background: "currentColor",
               borderRadius: "2px",
             }}
