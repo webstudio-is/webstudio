@@ -56,7 +56,7 @@ export const StylePanel = ({
   return (
     <>
       {
-        <Box css={{ p: "$3" }}>
+        <Box css={{ p: "$3 $3 $1 $3" }}>
           <ComponentInfo selectedInstanceData={selectedInstanceData} />
         </Box>
       }

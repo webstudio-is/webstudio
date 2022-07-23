@@ -1,6 +1,11 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { Box, Flex, Text, Collapsible } from "~/shared/design-system";
-import { PlusIcon, MinusIcon } from "~/shared/icons";
+import {
+  PlusIcon,
+  MinusIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+} from "~/shared/icons";
 
 type CollapsibleSectionProps = {
   label: string;
@@ -58,8 +63,10 @@ export const CollapsibleSection = ({
               {label}
             </Text>
             {/* @todo: props panel shows double plus icon when rightSlot is set */}
-            {isOpenFinal ? <MinusIcon /> : <PlusIcon />}
             {rightSlot}
+            <Box css={{ marginRight: "-6px" }}>
+              {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            </Box>
           </Flex>
         </Collapsible.Trigger>
         <Collapsible.Content asChild>

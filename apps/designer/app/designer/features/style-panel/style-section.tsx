@@ -329,19 +329,46 @@ const ComboiconControl = ({
 };
 
 const GridControl = ({ css }: any) => {
+  const gridAreas = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((v) => `gridArea_${v}`);
+  const gridTemplateAreas = `
+    "${gridAreas.slice(0, 0 + 3).join(" ")}" 
+    "${gridAreas.slice(3, 3 + 3).join(" ")}" 
+    "${gridAreas.slice(6, 6 + 3).join(" ")}"
+  `;
+
   return (
-    <Box
+    <Grid
       css={{
+        alignItems: "center",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gridTemplateRows: "repeat(3, 1fr)",
+        gridTemplateAreas: gridTemplateAreas,
+        gap: "0px",
         border: "2px solid $colors$slate8",
         background: "#FFF",
         borderRadius: "4px",
         textAlign: "center",
         width: "100%",
         aspectRatio: "1 / 1",
-        padding: "30px",
+        padding: "4px",
         ...css,
       }}
-    ></Box>
+    >
+      {gridAreas.map((gridArea) => (
+        <Flex
+          justify="center"
+          align="center"
+          key={gridArea}
+          css={{ gridArea: gridArea, width: "100%", height: "100%" }}
+        >
+          <IconButton
+            css={{ width: "100%", height: "100%", color: "$colors$gray8" }}
+          >
+            <icons.DotFilledIcon></icons.DotFilledIcon>
+          </IconButton>
+        </Flex>
+      ))}
+    </Grid>
   );
   return <></>;
 };
@@ -435,7 +462,7 @@ export const renderCategory = ({
               <Grid
                 css={{
                   alignItems: "center",
-                  gridTemplateColumns: "repeat(12, 1fr);",
+                  gridTemplateColumns: "repeat(12, 1fr)",
                   gridTemplateRows: "auto 0px auto auto 0px auto",
                   gridTemplateAreas: `
                     "display display display display display display display display display display display display"

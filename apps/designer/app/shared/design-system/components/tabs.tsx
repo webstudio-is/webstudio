@@ -12,7 +12,7 @@ export const Tabs = styled(TabsPrimitive.Root, {
 
 export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   flexShrink: 0,
-  height: "$7",
+  height: "$6",
   display: "inline-flex",
   lineHeight: 1,
   fontFamily: "inherit",
@@ -30,8 +30,8 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   },
   [`& > ${Text}`]: {
     color: "$gray9",
-    fontSize: "11px",
-    fontWeight: "600",
+    fontSize: "calc($fontSizes$1 - 1px)",
+    fontWeight: "500",
   },
   "@hover": {
     "&:hover": {
