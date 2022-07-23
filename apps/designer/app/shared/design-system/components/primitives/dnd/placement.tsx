@@ -4,7 +4,13 @@ import { Box } from "../../box";
 export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 type Point = { x: number; y: number };
 
-const probe = document.createElement("div");
+let probeCache: undefined | HTMLElement;
+const getProbe = () => {
+  if (probeCache === undefined) {
+    probeCache = document.createElement("div");
+  }
+  return probeCache;
+};
 
 /**
  * We place a div at the position where future drop will happen.
@@ -17,6 +23,7 @@ const getPlacement = ({
   target: HTMLElement;
   index?: number;
 }) => {
+  const probe = getProbe();
   const { children } = target;
   if (index > children.length - 1) {
     target.appendChild(probe);
