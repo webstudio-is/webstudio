@@ -339,24 +339,10 @@ const GridControl = ({
   currentStyle: Style;
   setProperty: SetProperty;
 }) => {
-  const direction = (currentStyle.flexDirection?.value as string).includes(
-    "column"
-  );
-  const orientation = (currentStyle.flexDirection?.value as string).includes(
-    "reverse"
-  );
+  const flexDirection = currentStyle.flexDirection?.value as string;
+  const direction = Number(flexDirection.includes("column"));
+  const orientation = Number(flexDirection.includes("reverse"));
   const cells = ["a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2", "c3"];
-  const align = [
-    "start",
-    "center",
-    "end",
-    "start",
-    "center",
-    "end",
-    "start",
-    "center",
-    "end",
-  ];
   const [position, setPosition] = useState(0);
   return (
     <Grid
@@ -385,7 +371,11 @@ const GridControl = ({
           justify="center"
           align="center"
           key={index}
-          css={{ gridArea: value, width: "100%", height: "100%" }}
+          css={{
+            gridArea: value,
+            width: "100%",
+            height: "100%",
+          }}
         >
           <IconButton
             css={{
@@ -403,22 +393,30 @@ const GridControl = ({
       <Flex
         css={{
           gridArea: cells[position],
-          alignItems: align[position],
+          alignItems: [
+            `start center end start center end start center end`.split(" "),
+            `start start start center center center end end end`.split(" "),
+          ][direction][position],
+          writingMode: [
+            ["vertical-lr", "horizontal-tb"],
+            ["vertical-rl", "horizontal-bt"],
+          ][orientation][direction],
           width: "100%",
           height: "100%",
           gap: "3px",
           color: "currentColor",
-          transform: `rotate(${direction ? 0 : -90}deg) scale(${
-            orientation ? -1 : 1
-          })`,
+          // flexDirection: flexDirection,
+          // transform: `rotate(${direction ? 0 : -90}deg) scale(${
+          //   orientation ? -1 : 1
+          // })`,
         }}
       >
         {["60%", "100%", "60%"].map((value, index) => (
           <Flex
             key={index}
             css={{
-              width: "calc(100% / 3)",
-              height: value,
+              [["height", "width"][direction]]: "calc(100% / 3)",
+              [["width", "height"][direction]]: value,
               background: "currentColor",
               borderRadius: "2px",
             }}
