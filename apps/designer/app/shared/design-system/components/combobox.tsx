@@ -2,7 +2,6 @@ import {
   useState,
   forwardRef,
   useEffect,
-  type ElementRef,
   type ComponentProps,
   type ForwardRefRenderFunction,
 } from "react";
@@ -16,7 +15,6 @@ import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
 import { TextField } from "./text-field";
 import { Box } from "./box";
-import { Flex } from "./flex";
 import { Grid } from "./grid";
 
 type Label = string;
@@ -74,9 +72,7 @@ type ComboboxProps<Item> = {
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value?: Item) => void;
   itemToString?: (item: Item | null) => string;
-  disclosure?: <Item>(
-    props: ComponentProps<typeof ComboboxTextField>
-  ) => JSX.Element;
+  disclosure?: (props: ComponentProps<typeof ComboboxTextField>) => JSX.Element;
   // @todo should we spread those props flat?
   contentProps?: ComponentProps<typeof PopperContent>;
 };
@@ -133,7 +129,7 @@ export const Combobox = <Item extends BaseItem>({
     if (isOpen === false) {
       setFoundItems(items);
     }
-  }, [isOpen]);
+  }, [isOpen, items]);
 
   const inputProps: Record<string, unknown> = getInputProps({ name });
   const toggleProps: Record<string, unknown> = getToggleButtonProps();
