@@ -306,74 +306,138 @@ const ComboiconControl = ({
 
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
+  const direction = (currentStyle.direction?.value as string).includes(
+    "column"
+  );
+  const orientation = (currentStyle.direction?.value as string).includes(
+    "reverse"
+  );
   return (
     <Comboicon
-      id={styleConfig.property}
       items={styleConfig.items}
       value={String(currentValue)}
       onChange={setValue}
       icons={(icons as any)[styleConfig.property]}
-      css={
-        isCurrentBreakpoint
-          ? {
-              color: "$colors$blue11",
-              backgroundColor: "$colors$blue4",
-              "&:not([data-state=open]):hover": {
-                backgroundColor: "$colors$blue4",
-              },
-            }
-          : {}
-      }
+      css={{
+        ...(isCurrentBreakpoint && {
+          color: "$colors$blue11",
+          backgroundColor: "$colors$blue4",
+          "&:not([data-state=open]):hover": {
+            backgroundColor: "$colors$blue4",
+          },
+        }),
+      }}
     ></Comboicon>
   );
 };
 
-const GridControl = ({ css }: any) => {
-  const gridAreas = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((v) => `gridArea_${v}`);
-  const gridTemplateAreas = `
-    "${gridAreas.slice(0, 0 + 3).join(" ")}" 
-    "${gridAreas.slice(3, 3 + 3).join(" ")}" 
-    "${gridAreas.slice(6, 6 + 3).join(" ")}"
-  `;
-
+const GridControl = ({
+  css,
+  currentStyle,
+}: {
+  css: CSS;
+  currentStyle: Style;
+  setProperty: SetProperty;
+}) => {
+  const direction = (currentStyle.flexDirection?.value as string).includes(
+    "column"
+  );
+  const orientation = (currentStyle.flexDirection?.value as string).includes(
+    "reverse"
+  );
+  const cells = ["a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2", "c3"];
+  const align = [
+    "start",
+    "center",
+    "end",
+    "start",
+    "center",
+    "end",
+    "start",
+    "center",
+    "end",
+  ];
+  const [position, setPosition] = useState(0);
   return (
     <Grid
       css={{
         alignItems: "center",
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
-        gridTemplateAreas: gridTemplateAreas,
-        gap: "0px",
+        gridTemplateAreas: `
+          "${cells.slice(0, 0 + 3).join(" ")}" 
+          "${cells.slice(3, 3 + 3).join(" ")}" 
+          "${cells.slice(6, 6 + 3).join(" ")}"
+        `,
+        gap: "1px",
         border: "2px solid $colors$slate8",
         background: "#FFF",
         borderRadius: "4px",
-        textAlign: "center",
         width: "100%",
         aspectRatio: "1 / 1",
-        padding: "4px",
+        padding: "6px",
         ...css,
       }}
     >
-      {gridAreas.map((gridArea) => (
+      {cells.map((value, index) => (
         <Flex
           justify="center"
           align="center"
-          key={gridArea}
-          css={{ gridArea: gridArea, width: "100%", height: "100%" }}
+          key={index}
+          css={{ gridArea: value, width: "100%", height: "100%" }}
         >
           <IconButton
-            css={{ width: "100%", height: "100%", color: "$colors$gray8" }}
+            css={{
+              width: "100%",
+              height: "100%",
+              color: "$colors$gray8",
+              "&:focus": { boxShadow: "none" },
+            }}
+            onClick={() => setPosition(index)}
           >
             <icons.DotFilledIcon></icons.DotFilledIcon>
           </IconButton>
         </Flex>
       ))}
+      <Flex
+        css={{
+          gridArea: cells[position],
+          alignItems: align[position],
+          width: "100%",
+          height: "100%",
+          gap: "3px",
+          color: "$colors$blue9",
+          transform: `rotate(${direction ? 0 : -90}deg) scale(${
+            orientation ? -1 : 1
+          })`,
+        }}
+      >
+        {["60%", "100%", "60%"].map((value, index) => (
+          <Flex
+            key={index}
+            css={{
+              width: "calc(100% / 3)",
+              height: value,
+              background: "currentColor",
+              borderRadius: "2px",
+            }}
+          ></Flex>
+        ))}
+      </Flex>
     </Grid>
   );
-  return <></>;
 };
 
-const LockControl = ({ css, currentStyle, setProperty, ...rest }: any) => {
+const LockControl = ({
+  css,
+  currentStyle,
+  setProperty,
+  ...rest
+}: {
+  css: CSS;
+  currentStyle: StyleConfig;
+  setProperty: SetProperty;
+}) => {
   return (
     <IconButton css={{ width: "100%", ...css }} {...rest}>
       <icons.lock.closed />
@@ -488,19 +552,19 @@ export const renderCategory = ({
                   },
                 }}
               >
-                <GridControl
-                  data-property="grid"
-                  css={{ gridArea: "grid" }}
-                  currentStyle={currentStyle}
-                  setProperty={setProperty}
-                />
+                {styleConfigsByCategory}
                 <LockControl
                   data-property="lock"
                   css={{ gridArea: "lock" }}
                   currentStyle={currentStyle}
                   setProperty={setProperty}
                 />
-                {styleConfigsByCategory}
+                <GridControl
+                  data-property="grid"
+                  css={{ gridArea: "grid" }}
+                  currentStyle={currentStyle}
+                  setProperty={setProperty}
+                />
               </Grid>
               <ShowMore styleConfigs={moreStyleConfigsByCategory} />
             </>

@@ -2,6 +2,8 @@ import React from "react";
 import { styled } from "@stitches/react";
 import { CheckIcon } from "@radix-ui/react-icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
+import type { CSS } from "@webstudio-is/react-sdk";
+import { Box } from "~/shared/design-system";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   maxWidth: "224px",
@@ -82,7 +84,19 @@ const IconButton = styled("button", {
   },
 });
 
-export const Comboicon = ({ value, items, onChange, icons, css }: any) => {
+export const Comboicon = ({
+  value,
+  items,
+  onChange,
+  icons,
+  css,
+}: {
+  value: string;
+  items: Array<{ label: string; name: string }>;
+  onChange: (value: string) => void;
+  icons?: Record<string, Function>;
+  css: CSS;
+}) => {
   const TriggerIcon = icons?.[value];
   return (
     <DropdownMenuPrimitive.Root modal={false}>
@@ -108,7 +122,9 @@ export const Comboicon = ({ value, items, onChange, icons, css }: any) => {
                   <StyledItemIndicator>
                     <CheckIcon />
                   </StyledItemIndicator>
-                  <ItemIcon />
+                  <Box css={{ transform: css.transform }}>
+                    <ItemIcon />
+                  </Box>
                   {label}
                 </StyledRadioItem>
               );
