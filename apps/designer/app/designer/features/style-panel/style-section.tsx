@@ -403,18 +403,6 @@ const GridControl = ({
           height: "100%",
           gap: "3px",
           color: "currentColor",
-          // flexDirection: flexDirection,
-          // transform: `scale(${[
-          //   [1, 1],
-          //   [1, -1],
-          // ][orientation][direction]})`
-          // flexDirection: [
-          //   ["row", "column"],
-          //   ["row-reverse", "column-reverse"],
-          // ][orientation][direction],
-          // transform: `rotate(${direction ? 0 : -90}deg) scale(${
-          //   orientation ? -1 : 1
-          // })`,
         }}
       >
         {["60%", "100%", "60%"].map((value, index) => (
@@ -423,8 +411,6 @@ const GridControl = ({
             css={{
               inlineSize: "33.3333%",
               blockSize: value,
-              // [["height", "width"][direction]]: "calc(100% / 3)",
-              // [["width", "height"][direction]]: value,
               background: "currentColor",
               borderRadius: "2px",
             }}
