@@ -319,6 +319,11 @@ const ComboiconControl = ({
       onChange={setValue}
       icons={(icons as any)[styleConfig.property]}
       css={{
+        ...(styleConfig.property !== "flexDirection" && {
+          transform: `rotate(${
+            currentStyle.flexDirection?.value === "column" ? 90 : 0
+          }deg)`,
+        }),
         ...(isCurrentBreakpoint && {
           color: "$colors$blue11",
           backgroundColor: "$colors$blue4",
@@ -340,10 +345,22 @@ const GridControl = ({
   setProperty: SetProperty;
 }) => {
   const flexDirection = currentStyle.flexDirection?.value as string;
+  const justifyContent = currentStyle.justifyContent?.value as string;
+  const alignItems = currentStyle.alignItems?.value as string;
+  const alignContent = currentStyle.alignContent?.value as string;
+
   const direction = Number(flexDirection.includes("column"));
   const orientation = Number(flexDirection.includes("reverse"));
   const cells = ["a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2", "c3"];
-  const [position, setPosition] = useState(0);
+  const row = { normal: 0, start: 0, center: 1, end: 2 }[alignItems] as number;
+  const column = { normal: 0, start: 0, center: 1, end: 2 }[
+    justifyContent
+  ] as number;
+  const [position, setPosition] = useState(row * 3 + column);
+  {
+    const [position, setPosition] = useState(row * 3 + column);
+    console.log(alignItems, justifyContent, row, column, position);
+  }
   return (
     <Grid
       css={{
@@ -364,7 +381,9 @@ const GridControl = ({
         color: "$colors$blue9", // $colors$slate8
         background: "#FFF",
         border: "2px solid currentColor",
-        transform: `scale${direction ? "Y" : "X"}(${orientation ? -1 : 1})`,
+        transform: `scale${direction ? "Y" : "X"}(${
+          orientation ? -1 : 1
+        }) rotate(${direction ? -90 : 0}deg) scaleX(${direction ? -1 : 1})`,
       }}
     >
       {cells.map((value, index) => (
@@ -394,11 +413,11 @@ const GridControl = ({
       <Flex
         css={{
           gridArea: cells[position],
-          alignItems: [
-            `start center end start center end start center end`.split(" "),
-            `start start start center center center end end end`.split(" "),
-          ][direction][position],
-          writingMode: ["vertical-lr", "horizontal-tb"][direction],
+          alignItems:
+            `start center end start center end start center end`.split(" ")[
+              position
+            ],
+          flexDirection: "column",
           width: "100%",
           height: "100%",
           gap: "3px",
@@ -409,8 +428,8 @@ const GridControl = ({
           <Flex
             key={index}
             css={{
-              inlineSize: "33.3333%",
-              blockSize: value,
+              blockSize: "33.3333%",
+              inlineSize: value,
               background: "currentColor",
               borderRadius: "2px",
             }}
