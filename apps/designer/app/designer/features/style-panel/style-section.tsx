@@ -370,12 +370,13 @@ const GridControl = ({
           "${cells.slice(6, 6 + 3).join(" ")}"
         `,
         gap: "1px",
-        border: "2px solid $colors$slate8",
-        background: "#FFF",
-        borderRadius: "4px",
         width: "100%",
         aspectRatio: "1 / 1",
         padding: "6px",
+        borderRadius: "4px",
+        color: "$colors$blue9", // $colors$slate8
+        background: "#FFF",
+        border: "2px solid currentColor",
         ...css,
       }}
     >
@@ -406,7 +407,7 @@ const GridControl = ({
           width: "100%",
           height: "100%",
           gap: "3px",
-          color: "$colors$blue9",
+          color: "currentColor",
           transform: `rotate(${direction ? 0 : -90}deg) scale(${
             orientation ? -1 : 1
           })`,
@@ -440,7 +441,7 @@ const LockControl = ({
 }) => {
   return (
     <IconButton css={{ width: "100%", ...css }} {...rest}>
-      <icons.lock.closed />
+      <icons.lock.opened />
     </IconButton>
   );
 };
