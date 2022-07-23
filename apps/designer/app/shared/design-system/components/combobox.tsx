@@ -141,7 +141,7 @@ export const Combobox = <Item extends BaseItem>({
     <Popper>
       <Box {...comboboxProps}>
         <PopperAnchor asChild>
-          {disclosure<Item>({ inputProps, toggleProps, highlightedItem })}
+          {disclosure({ inputProps, toggleProps, highlightedItem })}
         </PopperAnchor>
         <PopperContent {...contentProps} style={{ zIndex: 1 }}>
           <Listbox {...menuProps}>
