@@ -22,6 +22,7 @@ export * as ToggleGroup from "./components/toggle-group";
 export * from "./components/select";
 export { TextField } from "./components/text-field";
 export { Flex } from "./components/flex";
+export { Image } from "./components/image";
 export { Grid } from "./components/grid";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/tabs";
 export {
