@@ -88,7 +88,6 @@ const Property = ({
       {required !== true && (
         <Button
           ghost
-          disabled={required}
           onClick={() => {
             onDelete(id);
           }}
