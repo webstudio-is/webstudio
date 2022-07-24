@@ -1,5 +1,4 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 
 declare global {
@@ -15,4 +14,4 @@ export const prisma = global.prisma || new PrismaClient();
 
 if (process.env.NODE_ENV !== "production") global.prisma = prisma;
 
-export { Prisma, PrismaClientKnownRequestError, Decimal };
+export { Prisma, PrismaClientKnownRequestError };
