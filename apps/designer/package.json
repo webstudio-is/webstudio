@@ -114,7 +114,6 @@
     "@types/lodash.merge": "^4.6.6",
     "@types/lodash.noop": "^3.0.6",
     "@types/lodash.snakecase": "^4.1.6",
-    "@types/lodash.camelcase": "^4.3.0",
     "@types/react": "^17.0.24",
     "@types/react-color": "^3.0.6",
     "@types/react-dom": "^17.0.9",

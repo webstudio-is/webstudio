@@ -16,7 +16,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.2430101,
-    appliesTo: "flexContainers",
+    appliesTo: "multilineFlexContainers",
   },
   alignItems: {
     inherited: false,

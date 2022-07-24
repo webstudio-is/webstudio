@@ -6,7 +6,7 @@ import {
   type StyleProperty,
   type AppliesTo,
 } from "@webstudio-is/react-sdk";
-import { humanizeString } from "../../../../shared/string-utils";
+import { humanizeString } from "~/shared/string-utils";
 
 type BaseStyleConfig = {
   label: string;

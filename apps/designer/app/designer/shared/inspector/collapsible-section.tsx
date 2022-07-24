@@ -51,7 +51,7 @@ export const CollapsibleSection = ({
               px: "$3",
               color: "$hiContrast",
               cursor: "default",
-              ...(isOpenFinal && { paddingBottom: "0px" }),
+              ...(isOpenFinal && { paddingBottom: 0 }),
             }}
           >
             <Text size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
@@ -59,7 +59,7 @@ export const CollapsibleSection = ({
             </Text>
             {/* @todo: props panel shows double plus icon when rightSlot is set */}
             {rightSlot}
-            <Box css={{ marginRight: "-6px" }}>
+            <Box css={{ marginRight: -6 }}>
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </Box>
           </Flex>
