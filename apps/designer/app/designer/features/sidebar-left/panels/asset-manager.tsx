@@ -1,7 +1,7 @@
 import { ImageIcon } from "~/shared/icons";
 import { Button, Flex, Grid, Heading } from "~/shared/design-system";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { Form, useSubmit } from "@remix-run/react";
+import { Form, useActionData, useSubmit } from "@remix-run/react";
 import type { Asset } from "@webstudio-is/prisma-client";
 import { AssetManagerImage } from "./components/image";
 import ObjectID from "bson-objectid";
@@ -36,6 +36,7 @@ type ParsedFiles = {
 }[];
 
 export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
+  const newImages = useActionData();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const submit = useSubmit();
   const [uploadedImages, setUploadedImages] = useState<ParsedFiles>([]);
@@ -52,8 +53,10 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
   };
 
   useEffect(() => {
-    setUploadedImages([]);
-  }, [assets?.length]);
+    if (newImages?.assets.length) {
+      setUploadedImages([]);
+    }
+  }, [newImages]);
 
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
