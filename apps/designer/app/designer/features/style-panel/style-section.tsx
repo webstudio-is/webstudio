@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import {
   Box,
   Flex,
@@ -203,7 +203,11 @@ const ComboboxControl = ({
   switch (styleConfig.property) {
     case "rowGap":
     case "columnGap": {
-      const Icon = (icons as any).gap[styleConfig.property];
+      const Icon = (
+        icons as unknown as {
+          gap: Record<string, (props: unknown) => JSX.Element>;
+        }
+      ).gap[styleConfig.property];
       return (
         <Grid
           css={{
@@ -353,7 +357,14 @@ const ComboiconControl = ({
       items={styleConfig.items}
       value={String(currentValue)}
       onChange={setValue}
-      icons={(icons as any)[styleConfig.property]}
+      icons={
+        (
+          icons as unknown as Record<
+            string,
+            Record<string, (props: unknown) => JSX.Element>
+          >
+        )[styleConfig.property]
+      }
       css={{
         ...(styleConfig.property !== "flexDirection" && {
           transform: `rotate(${
@@ -377,6 +388,7 @@ const ComboiconControl = ({
 const GridControl = ({
   css,
   currentStyle,
+  setProperty,
 }: {
   css: CSS;
   currentStyle: Style;
@@ -386,12 +398,27 @@ const GridControl = ({
   const justifyContent = currentStyle.justifyContent?.value as string;
   const alignItems = currentStyle.alignItems?.value as string;
   const direction = Number(flexDirection.includes("column"));
-  const cells = ["a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2", "c3"];
-  const row = { normal: 0, start: 0, center: 1, end: 2 }[alignItems] as number;
-  const column = { normal: 0, start: 0, center: 1, end: 2 }[
-    justifyContent
-  ] as number;
+  const cells = [
+    "_0_0",
+    "_0_1",
+    "_0_2",
+    "_1_0",
+    "_1_1",
+    "_1_2",
+    "_2_0",
+    "_2_1",
+    "_2_2",
+  ];
+  const row = (
+    { normal: 0, start: 0, center: 1, end: 2 } as Record<string, number>
+  )[alignItems];
+  const column = (
+    { normal: 0, start: 0, center: 1, end: 2 } as Record<string, number>
+  )[justifyContent];
   const position = row * 3 + column;
+  const setAlignItems = setProperty("alignItems");
+  const setJustifyContent = setProperty("justifyContent");
+
   return (
     <Grid
       css={{
@@ -436,7 +463,13 @@ const GridControl = ({
               "&:focus": { boxShadow: "none" },
             }}
             onClick={() => {
-              // setPosition(index)
+              const [alignItems, justifyContent] = cells[index]
+                .slice(1)
+                .split("_")
+                .map((value) => ["start", "center", "end"][parseFloat(value)]);
+              // @todo: these two should be set in one instead of two seperate updates
+              setAlignItems(alignItems);
+              setJustifyContent(justifyContent);
             }}
           >
             <icons.DotFilledIcon></icons.DotFilledIcon>
@@ -480,7 +513,7 @@ const LockControl = ({
   ...rest
 }: {
   css: CSS;
-  currentStyle: StyleConfig;
+  currentStyle: Style;
   setProperty: SetProperty;
 }) => {
   return (
