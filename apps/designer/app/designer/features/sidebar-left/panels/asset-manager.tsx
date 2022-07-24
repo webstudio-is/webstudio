@@ -31,8 +31,8 @@ const readImages = async (fileList: FileList) => {
 
 type ParsedFiles = {
   path: string;
-  name?: string;
-  id?: string;
+  name: string;
+  id: string;
 }[];
 
 export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
@@ -83,10 +83,15 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
             key={asset.id}
             path={asset.path}
             uploading={true}
+            alt={asset.name}
           />
         ))}
         {assets.map((asset) => (
-          <AssetManagerImage key={asset.id} path={asset.path} />
+          <AssetManagerImage
+            key={asset.id}
+            path={asset.path}
+            alt={asset.alt || asset.name}
+          />
         ))}
       </Grid>
     </Flex>
