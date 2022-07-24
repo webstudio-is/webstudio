@@ -86,13 +86,18 @@ export const useStyleData = ({
     });
   };
 
+  const toStyleValue = (property: StyleProperty, value: string) => {
+    if (currentStyle === undefined) return;
+    const currentValue = currentStyle[property];
+    const defaultUnit =
+      currentValue?.type === "unit" ? currentValue?.unit : undefined;
+    return parseCssValue(property, value, defaultUnit);
+  };
+
   const setProperty: SetProperty = (property) => {
     return (input, options = { isEphemeral: false }) => {
-      if (currentStyle === undefined) return;
-      const currentValue = currentStyle[property];
-      const defaultUnit =
-        currentValue?.type === "unit" ? currentValue?.unit : undefined;
-      const nextValue = parseCssValue(property, input, defaultUnit);
+      const nextValue = toStyleValue(property, input);
+      if (nextValue === undefined) return;
       if (nextValue.type !== "invalid") {
         const updates = [{ property, value: nextValue }];
         const type = options.isEphemeral ? "preview" : "update";
@@ -104,5 +109,37 @@ export const useStyleData = ({
     };
   };
 
-  return { currentStyle, inheritedStyle, setProperty };
+  const createBatchUpdate = () => {
+    const updates: StyleUpdates["updates"] = [];
+
+    const setProperty = (property: StyleProperty) => {
+      const setValue = (input: string) => {
+        const value = toStyleValue(property, input);
+        if (value === undefined || value.type === "invalid") {
+          return;
+        }
+        updates.push({ property, value });
+      };
+      return setValue;
+    };
+
+    const publish = () => {
+      publishUpdates("update", updates);
+      const nextStyle = updates.reduce(
+        (currentStyle, { property, value }) => {
+          currentStyle[property] = value;
+          return currentStyle;
+        },
+        { ...currentStyle }
+      );
+      setCurrentStyle(nextStyle);
+    };
+
+    return {
+      setProperty,
+      publish,
+    };
+  };
+
+  return { currentStyle, inheritedStyle, setProperty, createBatchUpdate };
 };
