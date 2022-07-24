@@ -370,7 +370,9 @@ const GridControl = ({
         color: "$colors$blue9", // $colors$slate8
         background: "#FFF",
         border: "2px solid currentColor",
-        transform: `scale(${direction ? -1 : 1})`,
+        transform: direction
+          ? "rotate(-90deg) scaleX(-1)"
+          : "rotate(0deg) scaleX(1)",
       }}
     >
       {cells.map((value, index) => (
