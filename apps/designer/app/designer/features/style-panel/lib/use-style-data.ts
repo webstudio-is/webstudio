@@ -21,6 +21,11 @@ export type SetProperty = (
   property: StyleProperty
 ) => (value: string, options?: StyleUpdateOptions) => void;
 
+export type CreateBatchUpdate = () => {
+  setProperty: SetProperty;
+  publish: () => void;
+};
+
 export const useStyleData = ({
   selectedInstanceData,
   publish,
