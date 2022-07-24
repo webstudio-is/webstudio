@@ -59,7 +59,7 @@ export const useDragAndDrop = () => {
     });
   };
 
-  const autoScrollHandlers = useAutoScroll();
+  const autoScrollHandlers = useAutoScroll({ fullScreen: true });
 
   const placementHandlers = usePlacement({
     onPlacementChange: (placement) => {
@@ -183,24 +183,14 @@ export const useDragAndDrop = () => {
       placementHandlers.handleScroll();
     };
 
-    const rootElement = document.body;
+    document.body.addEventListener("pointerdown", handlePointerDown);
+    dropTargetHandlers.rootRef(document.body);
+    window.addEventListener("scroll", handleScroll);
 
-    rootElement.addEventListener("pointerdown", handlePointerDown);
-    dropTargetHandlers.rootRef(rootElement);
-
-    // @todo: we're probably subscribing on a wrong element here
-    rootElement.addEventListener("scroll", handleScroll);
-
-    // @todo: We need a special mode for when we want to scroll the whole page.
-    // Because our rect for edge detection is a viewport,
-    // but the element which we want to scroll has a rect corresponding to the document.
-    // Maybe just have two separate refs?
-    autoScrollHandlers.targetRef(document.body.parentElement);
     () => {
-      rootElement.removeEventListener("pointerdown", handlePointerDown);
-      rootElement.removeEventListener("scroll", handleScroll);
+      document.body.removeEventListener("pointerdown", handlePointerDown);
       dropTargetHandlers.rootRef(null);
-      autoScrollHandlers.targetRef(null);
+      window.removeEventListener("scroll", handleScroll);
     };
 
     // @todo: need to make the dependencies more stable,

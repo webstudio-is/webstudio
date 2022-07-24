@@ -41,6 +41,10 @@ const getSpeed = (
 export type UseAutoScrollProps = {
   edgeDistanceThreshold?: number;
 
+  // If set to true entire document will be scrolled.
+  // No need to set targetRef in this case.
+  fullScreen?: boolean;
+
   // min/max speed of the scroll animation in pixels per second
   minSpeed?: number;
   maxSpeed?: number;
@@ -56,6 +60,7 @@ export const useAutoScroll = ({
   edgeDistanceThreshold = 100,
   minSpeed = 1,
   maxSpeed = 500,
+  fullScreen = false,
 }: UseAutoScrollProps = {}): UseAutoScrollHandlers => {
   const state = useRef({
     target: null as HTMLElement | null,
@@ -65,6 +70,35 @@ export const useAutoScroll = ({
     speedY: 0,
     stepScheduled: false,
   });
+
+  const getViewportRect = () => {
+    if (fullScreen) {
+      return {
+        top: 0,
+        left: 0,
+        bottom: window.innerHeight,
+        right: window.innerWidth,
+      };
+    }
+
+    if (state.current.target === null) {
+      return;
+    }
+
+    return state.current.target.getBoundingClientRect();
+  };
+
+  const scrollBy = (x: number, y: number) => {
+    if (fullScreen) {
+      window.scrollBy(x, y);
+    }
+
+    if (state.current.target === null) {
+      return;
+    }
+
+    state.current.target.scrollBy(x, y);
+  };
 
   const step = (timestamp: number) => {
     state.current.stepScheduled = false;
@@ -80,7 +114,7 @@ export const useAutoScroll = ({
     const elapsed = timestamp - state.current.prevTimestamp;
 
     // to avoid a big jump when auto-scroll becomes enabled
-    if (elapsed > 3000) {
+    if (elapsed > FRAME_PERIOD * 100) {
       state.current.prevTimestamp = timestamp;
       scheduleStep();
       return;
@@ -93,12 +127,7 @@ export const useAutoScroll = ({
 
     state.current.prevTimestamp = timestamp;
 
-    // for TypeScript
-    if (state.current.target === null) {
-      return;
-    }
-
-    state.current.target.scrollBy(
+    scrollBy(
       (state.current.speedX / 1000) * elapsed,
       (state.current.speedY / 1000) * elapsed
     );
@@ -115,11 +144,14 @@ export const useAutoScroll = ({
 
   return {
     handleMove({ x, y }) {
-      if (!state.current.enabled || state.current.target === null) {
+      if (!state.current.enabled) {
         return;
       }
 
-      const rect = state.current.target.getBoundingClientRect();
+      const rect = getViewportRect();
+      if (rect === undefined) {
+        return;
+      }
 
       state.current.speedY = getSpeed(
         y,
