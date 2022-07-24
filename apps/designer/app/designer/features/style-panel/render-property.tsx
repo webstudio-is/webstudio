@@ -5,6 +5,7 @@ import {
   Text,
   Combobox,
   ComboboxTextField,
+  ComboboxPopperContent,
 } from "~/shared/design-system";
 import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
@@ -186,7 +187,6 @@ const ComboboxControl = ({
         <Combobox
           name="prop"
           items={styleConfig.items}
-          contentProps={{ sideOffset: 5 }}
           value={{
             name: String(currentValue.value),
             label: String(currentValue.value),
@@ -202,6 +202,9 @@ const ComboboxControl = ({
             }
             setValue(item.name, { isEphemeral: true });
           }}
+          renderPopperContent={(props) => (
+            <ComboboxPopperContent {...props} sideOffset={5} />
+          )}
           renderTextField={({ inputProps, toggleProps, highlightedItem }) => (
             <ComboboxTextField
               toggleProps={toggleProps}

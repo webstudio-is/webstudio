@@ -77,7 +77,7 @@ type ListProps<Item> = {
   itemToString: (item: Item | null) => string;
 };
 
-const List = <Item extends BaseItem>({
+export const List = <Item extends BaseItem>({
   containerProps,
   items,
   getItemProps,
@@ -112,6 +112,8 @@ const List = <Item extends BaseItem>({
   );
 };
 
+export const ComboboxPopperContent = PopperContent;
+
 type ComboboxProps<Item> = {
   name: string;
   items: Array<Item>;
@@ -123,21 +125,22 @@ type ComboboxProps<Item> = {
     props: ComponentProps<typeof ComboboxTextField>
   ) => JSX.Element;
   renderList?: (props: ListProps<Item>) => JSX.Element;
-  // @todo should we spread those props flat?
-  contentProps?: ComponentProps<typeof PopperContent>;
+  renderPopperContent?: (
+    props: ComponentProps<typeof ComboboxPopperContent>
+  ) => JSX.Element;
 };
 
 export const Combobox = <Item extends BaseItem>({
   items,
   value,
   name,
-  contentProps,
   itemToString = (item) =>
     item !== null && "label" in item ? item.label : item ?? "",
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,
   renderList = (props) => <List {...props} />,
+  renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
 }: ComboboxProps<Item>) => {
   const [foundItems, setFoundItems] = useState(items);
   const {
@@ -194,16 +197,17 @@ export const Combobox = <Item extends BaseItem>({
         <PopperAnchor asChild>
           {renderTextField({ inputProps, toggleProps, highlightedItem })}
         </PopperAnchor>
-        <PopperContent {...contentProps} style={{ zIndex: 1 }}>
-          {renderList({
+        {renderPopperContent({
+          style: { zIndex: 1 },
+          children: renderList({
             containerProps: menuProps,
             items: isOpen ? foundItems : [],
             getItemProps,
             highlightedIndex,
             selectedItem,
             itemToString,
-          })}
-        </PopperContent>
+          }),
+        })}
       </Box>
     </Popper>
   );

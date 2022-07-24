@@ -12,6 +12,7 @@ import {
   Button,
   Combobox,
   ComboboxTextField,
+  ComboboxPopperContent,
   Grid,
   Tooltip,
 } from "~/shared/design-system";
@@ -67,10 +68,9 @@ const Property = ({
             }}
           />
         )}
-        contentProps={{
-          align: "start",
-          sideOffset: 5,
-        }}
+        renderPopperContent={(props) => (
+          <ComboboxPopperContent {...props} align="start" sideOffset={5} />
+        )}
       />
       {isInvalidProp ? (
         <Tooltip content={`Invalid property name: ${prop}`}>
