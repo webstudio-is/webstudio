@@ -12,22 +12,11 @@ import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import { primitives } from "~/shared/canvas-components";
 import { publish, type Instance } from "@webstudio-is/react-sdk";
 
-// This is used in tree-preview
-// @todo: Update it to use the new events, or fire these events as well.
-export type DragData = { instance: Instance };
-export type DropData = {
-  instance: { id: Instance["id"] };
-  position: number | "end";
-};
-// publish<"dropPreview", { dropData: DropData; dragData: DragData }>({
-//   type: "dropPreview",
-//   payload: { dropData, dragData },
-// });
-
 // data shared between iframe and main window
 export type DropTargetSharedData = {
   rect: Rect;
   placementRect: Rect;
+  position: number;
   instanceId: Instance["id"];
   instanceComponent: Instance["component"];
 };
@@ -53,6 +42,12 @@ export const useDragAndDrop = () => {
       payload: {
         rect: dropTarget.rect,
         placementRect: placement.placementRect,
+
+        // @todo: adjust index if the parent stays the same
+        // (account for the item being removed from the old position)
+        // Can the hook do that for us automatically?
+        position: placement.index,
+
         instanceId: dropTarget.data.id,
         instanceComponent: dropTarget.data.component,
       },
@@ -84,24 +79,27 @@ export const useDragAndDrop = () => {
 
     // This must be fast, it can be called multiple times per pointer move
     swapDropTarget(dropTarget) {
+      const { dragItem } = state.current;
       if (
+        dragItem === undefined ||
         rootInstance === undefined ||
         dropTarget.data.id === rootInstance.id
       ) {
         return dropTarget;
       }
 
-      if (
-        primitives[dropTarget.data.component].canAcceptChild() &&
-        dropTarget.area === "center"
-      ) {
-        return dropTarget;
+      const path = getInstancePath(rootInstance, dropTarget.data.id);
+      path.reverse();
+
+      if (dropTarget.area !== "center") {
+        path.shift();
       }
 
-      // @todo: Don't allow to dpop inside drag item or any of its children
-
-      const path = getInstancePath(rootInstance, dropTarget.data.id);
-      path.reverse().shift();
+      // Don't allow to dpop inside drag item or any of its children
+      const dragItemIndex = path.findIndex((x) => x.id === dragItem.id);
+      if (dragItemIndex !== -1) {
+        path.splice(0, dragItemIndex + 1);
+      }
 
       const data =
         path.find((instance) =>
@@ -109,6 +107,7 @@ export const useDragAndDrop = () => {
         ) || rootInstance;
 
       const element = document.getElementById(data.id);
+
       if (element == null) {
         return dropTarget;
       }
@@ -147,9 +146,9 @@ export const useDragAndDrop = () => {
 
       autoScrollHandlers.setEnabled(true);
 
-      publish<"dragStart", { dragItem: { instanceId: Instance["id"] } }>({
+      publish<"dragStart", { dragItem: { instance: Instance } }>({
         type: "dragStart",
-        payload: { dragItem: { instanceId: instance.id } },
+        payload: { dragItem: { instance } },
       });
     },
     onMove: (poiterCoordinate) => {
@@ -179,6 +178,10 @@ export const useDragAndDrop = () => {
             instance: dragItem,
             dropTarget: {
               instanceId: dropTarget.data.id,
+
+              // @todo: adjust index if the parent stays the same
+              // (account for the item being removed from the old position)
+              // Can the hook do that for us automatically?
               position: placement.index,
             },
           },

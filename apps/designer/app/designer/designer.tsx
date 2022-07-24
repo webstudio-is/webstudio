@@ -30,7 +30,11 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
-import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
+import {
+  useIsPreviewMode,
+  useRootInstance,
+  useDragAndDropState,
+} from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
 
 export const links = () => {
@@ -186,6 +190,9 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
 
+  // @todo: useIsDragging propably should live here too eventually?
+  const [dragAndDrop] = useDragAndDropState();
+
   const iframeRefCallback = useCallback(
     (ref) => {
       publishRef.current = ref;
@@ -229,7 +236,11 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         isPreviewMode={isPreviewMode}
         css={{ overflow: "hidden" }}
       >
-        {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
+        {isDragging || dragAndDrop.isDragging ? (
+          <TreePrevew />
+        ) : (
+          <Inspector publish={publish} />
+        )}
       </SidePanel>
       <Breadcrumbs publish={publish} />
     </ChromeWrapper>

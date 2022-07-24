@@ -35,13 +35,11 @@ const textEditingInstanceIdContainer = createValueContainer<
 export const useTextEditingInstanceId = () =>
   useValue(textEditingInstanceIdContainer);
 
-export type DragAndDropState =
-  | { isDragging: false }
-  | {
-      isDragging: true;
-      dropTarget?: DropTargetSharedData;
-      dragItem: { instanceId: Instance["id"] };
-    };
+export type DragAndDropState = {
+  isDragging: boolean;
+  dropTarget?: DropTargetSharedData;
+  dragItem?: { instance: Instance };
+};
 const dragAndDropStateContainer = createValueContainer<DragAndDropState>({
   isDragging: false,
 });

@@ -1,12 +1,10 @@
-import { Instance, useSubscribe } from "@webstudio-is/react-sdk";
 import produce from "immer";
-import { useState } from "react";
+import { useMemo } from "react";
 import { Tree } from "~/designer/shared/tree";
-import { type DragData, type DropData } from "~/canvas/shared/use-drag-drop";
 import { Flex } from "~/shared/design-system";
-import { useRootInstance } from "~/shared/nano-states";
+import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
-  findInstanceById,
+  // findInstanceById,
   getInstancePath,
   insertInstanceMutable,
   deleteInstanceMutable,
@@ -14,38 +12,70 @@ import {
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
-  const [draftRootInstance, setDraftRootInstance] = useState(rootInstance);
-  const [instanceId, setInstanceId] = useState<Instance["id"]>();
+  const [dragAndDropState] = useDragAndDropState();
 
-  useSubscribe<"dropPreview", { dragData: DragData; dropData: DropData }>(
-    "dropPreview",
-    ({ dragData, dropData }) => {
-      if (rootInstance === undefined) return;
-      setInstanceId(dragData.instance.id);
+  // const [draftRootInstance, setDraftRootInstance] = useState(rootInstance);
+  // const [instanceId, setInstanceId] = useState<Instance["id"]>();
 
-      const isNew =
-        findInstanceById(rootInstance, dragData.instance.id) === undefined;
+  // useSubscribe<"dropPreview", { dragData: DragData; dropData: DropData }>(
+  //   "dropPreview",
+  //   ({ dragData, dropData }) => {
+  //     if (rootInstance === undefined) return;
+  //     setInstanceId(dragData.instance.id);
 
-      const updatedRootInstance = produce((rootInstanceDraft) => {
-        // - Only delete if the instance existed before.
-        // - Can't reparent an instance inside itself.
-        if (isNew === false && dropData.instance.id !== dragData.instance.id) {
-          deleteInstanceMutable(rootInstanceDraft, dragData.instance.id);
-        }
-        insertInstanceMutable(rootInstanceDraft, dragData.instance, {
-          parentId: dropData.instance.id,
-          position: dropData.position,
-        });
-      })(rootInstance);
-      setDraftRootInstance(updatedRootInstance);
+  //     const isNew =
+  //       findInstanceById(rootInstance, dragData.instance.id) === undefined;
+
+  //     const updatedRootInstance = produce((rootInstanceDraft) => {
+  //       // - Only delete if the instance existed before.
+  //       // - Can't reparent an instance inside itself.
+  //       if (isNew === false && dropData.instance.id !== dragData.instance.id) {
+  //         deleteInstanceMutable(rootInstanceDraft, dragData.instance.id);
+  //       }
+  //       insertInstanceMutable(rootInstanceDraft, dragData.instance, {
+  //         parentId: dropData.instance.id,
+  //         position: dropData.position,
+  //       });
+  //     })(rootInstance);
+  //     setDraftRootInstance(updatedRootInstance);
+  //   }
+  // );
+
+  const dragItemInstance = dragAndDropState.dragItem?.instance;
+  const dropTargetInstanceId = dragAndDropState.dropTarget?.instanceId;
+  const dropTargetPosition = dragAndDropState.dropTarget?.position;
+
+  const draftRootInstance = useMemo(() => {
+    if (
+      dragItemInstance === undefined ||
+      dropTargetInstanceId === undefined ||
+      dropTargetPosition === undefined
+    ) {
+      return rootInstance;
     }
-  );
 
-  if (draftRootInstance === undefined || instanceId === undefined) {
+    return produce((draft) => {
+      deleteInstanceMutable(draft, dragItemInstance.id);
+      insertInstanceMutable(draft, dragItemInstance, {
+        parentId: dropTargetInstanceId,
+        position: dropTargetPosition,
+      });
+    })(rootInstance);
+  }, [
+    rootInstance,
+    dragItemInstance,
+    dropTargetInstanceId,
+    dropTargetPosition,
+  ]);
+
+  if (draftRootInstance === undefined || dragItemInstance === undefined) {
     return null;
   }
 
-  const selectedInstancePath = getInstancePath(draftRootInstance, instanceId);
+  const selectedInstancePath = getInstancePath(
+    draftRootInstance,
+    dragItemInstance.id
+  );
 
   if (selectedInstancePath.length === 0) return null;
 
@@ -54,7 +84,7 @@ export const TreePrevew = () => {
       <Tree
         instance={draftRootInstance}
         selectedInstancePath={selectedInstancePath}
-        selectedInstanceId={instanceId}
+        selectedInstanceId={dragItemInstance.id}
         animate={false}
       />
     </Flex>
