@@ -24,7 +24,7 @@ import {
   type StyleValue,
   type CSS,
 } from "@webstudio-is/react-sdk";
-import type { SetProperty } from "./lib/use-style-data";
+import type { SetProperty, CreateBatchUpdate } from "./lib/use-style-data";
 import type { InheritedStyle } from "./lib/get-inherited-style";
 import { ColorPicker } from "./lib/color-picker";
 import {
@@ -389,10 +389,12 @@ const GridControl = ({
   css,
   currentStyle,
   setProperty,
+  createBatchUpdate,
 }: {
   css: CSS;
   currentStyle: Style;
   setProperty: SetProperty;
+  createBatchUpdate: CreateBatchUpdate;
 }) => {
   const flexDirection = currentStyle.flexDirection?.value as string;
   const justifyContent = currentStyle.justifyContent?.value as string;
@@ -416,8 +418,9 @@ const GridControl = ({
     { normal: 0, start: 0, center: 1, end: 2 } as Record<string, number>
   )[justifyContent];
   const position = row * 3 + column;
-  const setAlignItems = setProperty("alignItems");
-  const setJustifyContent = setProperty("justifyContent");
+  const batch = createBatchUpdate();
+  const setAlignItems = batch.setProperty("alignItems");
+  const setJustifyContent = batch.setProperty("justifyContent");
 
   return (
     <Grid
@@ -470,6 +473,7 @@ const GridControl = ({
               // @todo: these two should be set in one instead of two seperate updates
               setAlignItems(alignItems);
               setJustifyContent(justifyContent);
+              batch.publish();
             }}
           >
             <icons.DotFilledIcon></icons.DotFilledIcon>
@@ -546,6 +550,7 @@ const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
 
 type RenderPropertyProps = {
   setProperty: SetProperty;
+  createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
@@ -556,6 +561,7 @@ export const renderProperty = ({
   currentStyle,
   inheritedStyle,
   setProperty,
+  createBatchUpdate,
   styleConfig,
   category,
 }: RenderPropertyProps) => {
@@ -581,6 +587,7 @@ export const renderProperty = ({
 
 type RenderCategoryProps = {
   setProperty: SetProperty;
+  createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   category: Category;
   styleConfigsByCategory: JSX.Element[];
@@ -590,6 +597,7 @@ type RenderCategoryProps = {
 // the new designs, refactor ColorControl, SpacingControl if needed.
 export const renderCategory = ({
   setProperty,
+  createBatchUpdate,
   currentStyle,
   category,
   styleConfigsByCategory,
@@ -642,6 +650,7 @@ export const renderCategory = ({
                   css={{ gridArea: "grid" }}
                   currentStyle={currentStyle}
                   setProperty={setProperty}
+                  createBatchUpdate={createBatchUpdate}
                 />
               </Grid>
               <ShowMore styleConfigs={moreStyleConfigsByCategory} />

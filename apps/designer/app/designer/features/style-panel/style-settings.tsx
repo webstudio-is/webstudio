@@ -11,7 +11,7 @@ import { CollapsibleSection } from "~/designer/shared/inspector";
 import { renderProperty, renderCategory } from "./style-section";
 import { dependencies } from "./lib/dependencies";
 import { type InheritedStyle } from "./lib/get-inherited-style";
-import { type SetProperty } from "./lib/use-style-data";
+import { type SetProperty, type CreateBatchUpdate } from "./lib/use-style-data";
 import { type SelectedInstanceData } from "~/shared/canvas-components";
 
 // Finds a property/value by using any available form: property, label, value
@@ -69,12 +69,14 @@ type StyleSettingsProps = {
   inheritedStyle: InheritedStyle;
   cssRule?: CssRule;
   setProperty: SetProperty;
+  createBatchUpdate: CreateBatchUpdate;
   selectedInstanceData: SelectedInstanceData;
   search: string;
 };
 
 export const StyleSettings = ({
   setProperty,
+  createBatchUpdate,
   currentStyle,
   search,
   ...rest
@@ -104,6 +106,7 @@ export const StyleSettings = ({
         const element = renderProperty({
           ...rest,
           setProperty,
+          createBatchUpdate,
           currentStyle,
           styleConfig,
           category,
@@ -135,6 +138,7 @@ export const StyleSettings = ({
         <>
           {renderCategory({
             setProperty,
+            createBatchUpdate,
             currentStyle,
             category,
             styleConfigsByCategory,
