@@ -59,6 +59,7 @@
    - Resizing canvas width in preview mode doesn't limit resize slider to each breakpoint
 
 1. Auth
+
    - Try to access the dashboard when not logged in to make sure you will be redirected to the login page
    - Open the login page when logged in to make sure you are redirected to the dashboard
    - Ensure you can view a built site in an incognito tab
@@ -67,3 +68,9 @@
    - Click on dev login and write a wrong value to make sure you get an error message and stay in the login page.
    - Click on login with GitHub and make sure that you are redirected to the dashboard
    - Click on login with Google and make sure that you are redirected to the dashboard
+
+1. Default properties
+
+   - Add a Box component to the canvas
+   - Open Props panel
+   - See the default tag is provided and can be modified
