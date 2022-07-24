@@ -86,10 +86,29 @@ export const useReparentInstance = () => {
   >("reparentInstance", ({ instance, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
       if (rootInstance === undefined) return;
+
+      // placement.index does not take into account the fact that the drag item will be removed.
+      // we need to do this to account for it.
+      //
+      // @todo we need an util that can do reparenting with this adjustment
+      const currentParent = findParentInstance(rootInstance, instance.id);
+      let dropTargetPositionAdjusted = dropTarget.position;
+      if (
+        currentParent !== undefined &&
+        currentParent.id === dropTarget.instanceId
+      ) {
+        const currentPosition = currentParent.children.findIndex(
+          (x) => typeof x !== "string" && x.id === instance.id
+        );
+        if (currentPosition < dropTarget.position) {
+          dropTargetPositionAdjusted--;
+        }
+      }
+
       deleteInstanceMutable(rootInstance, instance.id);
       insertInstanceMutable(rootInstance, instance, {
         parentId: dropTarget.instanceId,
-        position: dropTarget.position,
+        position: dropTargetPositionAdjusted,
       });
     });
   });

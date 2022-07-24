@@ -133,10 +133,6 @@ export const useDragAndDrop = () => {
         event.target.id !== "" &&
         findInstanceById(rootInstance, event.target.id);
 
-      // @todo: If we can't find the data corresponding to the target element,
-      // should we climb up the DOM tree for another element?
-      // Should the hook do that for us?
-
       if (!instance || instance.id === rootInstance.id) {
         event.cancel();
         return;
@@ -178,10 +174,6 @@ export const useDragAndDrop = () => {
             instance: dragItem,
             dropTarget: {
               instanceId: dropTarget.data.id,
-
-              // @todo: adjust index if the parent stays the same
-              // (account for the item being removed from the old position)
-              // Can the hook do that for us automatically?
               position: placement.index,
             },
           },

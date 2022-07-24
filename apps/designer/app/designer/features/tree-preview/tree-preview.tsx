@@ -1,66 +1,65 @@
 import produce from "immer";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
 import { Tree } from "~/designer/shared/tree";
 import { Flex } from "~/shared/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
-  // findInstanceById,
   getInstancePath,
   insertInstanceMutable,
   deleteInstanceMutable,
+  findParentInstance,
 } from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
   const [dragAndDropState] = useDragAndDropState();
 
-  // const [draftRootInstance, setDraftRootInstance] = useState(rootInstance);
-  // const [instanceId, setInstanceId] = useState<Instance["id"]>();
-
-  // useSubscribe<"dropPreview", { dragData: DragData; dropData: DropData }>(
-  //   "dropPreview",
-  //   ({ dragData, dropData }) => {
-  //     if (rootInstance === undefined) return;
-  //     setInstanceId(dragData.instance.id);
-
-  //     const isNew =
-  //       findInstanceById(rootInstance, dragData.instance.id) === undefined;
-
-  //     const updatedRootInstance = produce((rootInstanceDraft) => {
-  //       // - Only delete if the instance existed before.
-  //       // - Can't reparent an instance inside itself.
-  //       if (isNew === false && dropData.instance.id !== dragData.instance.id) {
-  //         deleteInstanceMutable(rootInstanceDraft, dragData.instance.id);
-  //       }
-  //       insertInstanceMutable(rootInstanceDraft, dragData.instance, {
-  //         parentId: dropData.instance.id,
-  //         position: dropData.position,
-  //       });
-  //     })(rootInstance);
-  //     setDraftRootInstance(updatedRootInstance);
-  //   }
-  // );
-
   const dragItemInstance = dragAndDropState.dragItem?.instance;
   const dropTargetInstanceId = dragAndDropState.dropTarget?.instanceId;
   const dropTargetPosition = dragAndDropState.dropTarget?.position;
 
-  const draftRootInstance = useMemo(() => {
+  const treeProps = useMemo(() => {
     if (
       dragItemInstance === undefined ||
       dropTargetInstanceId === undefined ||
       dropTargetPosition === undefined
     ) {
-      return rootInstance;
+      return null;
     }
 
-    return produce((draft) => {
+    const instance: Instance = produce((draft) => {
+      const currentParent = findParentInstance(draft, dragItemInstance.id);
+
+      // placement.index does not take into account the fact that the drag item will be removed.
+      // we need to do this to account for it.
+      //
+      // @todo we need an util that can do reparenting with this adjustment
+      let dropTargetPositionAdjusted = dropTargetPosition;
+      if (
+        currentParent !== undefined &&
+        currentParent.id === dropTargetInstanceId
+      ) {
+        const currentPosition = currentParent.children.findIndex(
+          (x) => typeof x !== "string" && x.id === dragItemInstance.id
+        );
+        if (currentPosition < dropTargetPosition) {
+          dropTargetPositionAdjusted--;
+        }
+      }
+
       deleteInstanceMutable(draft, dragItemInstance.id);
       insertInstanceMutable(draft, dragItemInstance, {
         parentId: dropTargetInstanceId,
-        position: dropTargetPosition,
+        position: dropTargetPositionAdjusted,
       });
     })(rootInstance);
+
+    return {
+      instance,
+      selectedInstanceId: dragItemInstance.id,
+      selectedInstancePath: getInstancePath(instance, dragItemInstance.id),
+    };
   }, [
     rootInstance,
     dragItemInstance,
@@ -68,25 +67,11 @@ export const TreePrevew = () => {
     dropTargetPosition,
   ]);
 
-  if (draftRootInstance === undefined || dragItemInstance === undefined) {
-    return null;
-  }
-
-  const selectedInstancePath = getInstancePath(
-    draftRootInstance,
-    dragItemInstance.id
-  );
-
-  if (selectedInstancePath.length === 0) return null;
-
   return (
-    <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-      <Tree
-        instance={draftRootInstance}
-        selectedInstancePath={selectedInstancePath}
-        selectedInstanceId={dragItemInstance.id}
-        animate={false}
-      />
-    </Flex>
+    treeProps && (
+      <Flex gap="3" direction="column" css={{ padding: "$1" }}>
+        <Tree {...treeProps} animate={false} />
+      </Flex>
+    )
   );
 };
