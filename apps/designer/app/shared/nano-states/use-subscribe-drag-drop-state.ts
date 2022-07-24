@@ -1,4 +1,4 @@
-import { useSubscribe } from "@webstudio-is/react-sdk";
+import { useSubscribe, type Instance } from "@webstudio-is/react-sdk";
 import { useDragAndDropState } from "./nano-states";
 import { DropTargetSharedData } from "~/canvas/shared/use-drag-drop";
 
@@ -14,9 +14,12 @@ export const useSubscribeDragAndDropState = () => {
     }
   );
 
-  useSubscribe<"dragStart">("dragStart", () => {
-    setState({ isDragging: true });
-  });
+  useSubscribe<"dragStart", { dragItem: { instanceId: Instance["id"] } }>(
+    "dragStart",
+    ({ dragItem }) => {
+      setState({ isDragging: true, dragItem });
+    }
+  );
 
   useSubscribe<"dragEnd">("dragEnd", () => {
     setState({ isDragging: false });

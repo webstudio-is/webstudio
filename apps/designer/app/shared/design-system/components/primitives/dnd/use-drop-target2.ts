@@ -31,6 +31,10 @@ export type UseDropTargetProps<Data> = {
 
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
   edgeDistanceThreshold?: number;
+
+  // @todo: not sure we should do any data comparisons here.
+  // On the contrary, we may want to rely on the assumption
+  // that the data for the same element is always the same (for caching)
   isSameData?: (data1: Data, data2: Data) => boolean;
 };
 
@@ -65,6 +69,7 @@ export const useDropTarget = <Data>({
       return;
     }
 
+    // @todo: cache this? Not expensive by itself, but it may call isDropTarget a lot
     const potentialTarget = findClosestDropTarget({
       root,
       target,
@@ -142,6 +147,8 @@ const elementFromPoint = (coordinate: Coordinate): HTMLElement | undefined => {
   if (element instanceof HTMLElement) return element;
 };
 
+// @todo: it seems we only care about whether the area is center or on an edge.
+// Knowing which edge doesn't help much.
 const getArea = (
   pointerCoordinate: Coordinate,
   edgeDistanceThreshold: number,
@@ -161,6 +168,9 @@ const getArea = (
   return area;
 };
 
+// @todo: maybe rather than climbing the DOM tree,
+// we should use document.elementsFromPoint() array?
+// Might work better with absolute positioned elements.
 const findClosestDropTarget = <Data>({
   root,
   target,

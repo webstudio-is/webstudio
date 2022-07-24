@@ -32,13 +32,16 @@ export type DropTargetSharedData = {
   instanceComponent: Instance["component"];
 };
 
+const initialState = {
+  dropTarget: undefined as DropTarget<Instance> | undefined,
+  placement: undefined as { index: number; placementRect: Rect } | undefined,
+  dragItem: undefined as Instance | undefined,
+};
+
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
 
-  const state = useRef({
-    dropTarget: undefined as DropTarget<Instance> | undefined,
-    placement: undefined as { index: number; placementRect: Rect } | undefined,
-  });
+  const state = useRef({ ...initialState });
 
   const publishDropTargetChange = () => {
     const { dropTarget, placement } = state.current;
@@ -125,13 +128,29 @@ export const useDragAndDrop = () => {
   });
 
   const dragProps = useDrag({
-    onStart(_event) {
-      // @todo: Find drag item instance or cancel the event
+    onStart(event) {
+      const instance =
+        rootInstance !== undefined &&
+        event.target.id !== "" &&
+        findInstanceById(rootInstance, event.target.id);
+
+      // @todo: If we can't find the data corresponding to the target element,
+      // should we climb up the DOM tree for another element?
+      // Should the hook do that for us?
+
+      if (!instance || instance.id === rootInstance.id) {
+        event.cancel();
+        return;
+      }
+
+      state.current.dragItem = instance;
 
       autoScrollHandlers.setEnabled(true);
 
-      // @todo: Pass drag item instance id
-      publish<"dragStart">({ type: "dragStart" });
+      publish<"dragStart", { dragItem: { instanceId: Instance["id"] } }>({
+        type: "dragStart",
+        payload: { dragItem: { instanceId: instance.id } },
+      });
     },
     onMove: (poiterCoordinate) => {
       dropTargetHandlers.handleMove(poiterCoordinate);
@@ -142,8 +161,8 @@ export const useDragAndDrop = () => {
       dropTargetHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
       placementHandlers.handleEnd();
-
       publish<"dragEnd">({ type: "dragEnd" });
+      state.current = { ...initialState };
     },
   });
 

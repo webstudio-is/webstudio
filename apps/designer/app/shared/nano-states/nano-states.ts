@@ -37,7 +37,11 @@ export const useTextEditingInstanceId = () =>
 
 export type DragAndDropState =
   | { isDragging: false }
-  | { isDragging: true; dropTarget?: DropTargetSharedData };
+  | {
+      isDragging: true;
+      dropTarget?: DropTargetSharedData;
+      dragItem: { instanceId: Instance["id"] };
+    };
 const dragAndDropStateContainer = createValueContainer<DragAndDropState>({
   isDragging: false,
 });
