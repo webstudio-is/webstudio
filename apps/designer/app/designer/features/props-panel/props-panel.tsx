@@ -57,7 +57,7 @@ const Property = ({
         onItemSelect={(value) => {
           onChange(id, "prop", value);
         }}
-        disclosure={({ inputProps, toggleProps }) => (
+        renderTextField={({ inputProps, toggleProps }) => (
           <ComboboxTextField
             toggleProps={toggleProps}
             inputProps={{

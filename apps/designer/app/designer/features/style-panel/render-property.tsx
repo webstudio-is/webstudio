@@ -202,7 +202,7 @@ const ComboboxControl = ({
             }
             setValue(item.name, { isEphemeral: true });
           }}
-          disclosure={({ inputProps, toggleProps, highlightedItem }) => (
+          renderTextField={({ inputProps, toggleProps, highlightedItem }) => (
             <ComboboxTextField
               toggleProps={toggleProps}
               inputProps={{

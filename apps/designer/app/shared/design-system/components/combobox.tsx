@@ -7,7 +7,7 @@ import {
 } from "react";
 import { CheckIcon, ChevronDownIcon } from "~/shared/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
-import { useCombobox } from "downshift";
+import { useCombobox, type UseComboboxGetItemPropsOptions } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled } from "../stitches.config";
 import { IconButton } from "./icon-button";
@@ -20,19 +20,6 @@ import { Grid } from "./grid";
 type Label = string;
 
 type BaseItem = { label: Label; disabled?: boolean } | Label;
-
-const Listbox = styled("ul", panelStyles, {
-  padding: 0,
-  margin: 0,
-  overflow: "auto",
-  // @todo need some non-hardcoded value
-  maxHeight: 400,
-  minWidth: 230,
-});
-const ListboxItem = styled("li", itemCss, {
-  padding: 0,
-  margin: 0,
-});
 
 type ComboboxTextFieldProps<Item> = {
   inputProps: ComponentProps<typeof TextField>;
@@ -65,6 +52,66 @@ export const ComboboxTextField = forwardRef(ComboboxTextFieldBase);
 
 ComboboxTextField.displayName = "ComboboxTextField";
 
+const Listbox = styled("ul", panelStyles, {
+  padding: 0,
+  margin: 0,
+  overflow: "auto",
+  // @todo need some non-hardcoded value
+  maxHeight: 400,
+  minWidth: 230,
+});
+
+const ListboxItem = styled("li", itemCss, {
+  padding: 0,
+  margin: 0,
+});
+
+type ListProps<Item> = {
+  containerProps: ComponentProps<typeof Listbox>;
+  items: Array<Item>;
+  getItemProps: (
+    options: UseComboboxGetItemPropsOptions<Item>
+  ) => ComponentProps<typeof ListboxItem>;
+  highlightedIndex: number;
+  selectedItem: Item | null;
+  itemToString: (item: Item | null) => string;
+};
+
+const List = <Item extends BaseItem>({
+  containerProps,
+  items,
+  getItemProps,
+  highlightedIndex,
+  selectedItem,
+  itemToString,
+}: ListProps<Item>) => {
+  return (
+    <Listbox {...containerProps}>
+      {items.map((item, index) => {
+        const itemProps: Record<string, unknown> = getItemProps({
+          item,
+          index,
+          key: index,
+          ...(typeof item === "object" && item.disabled
+            ? { "data-disabled": true, disabled: true }
+            : {}),
+          ...(highlightedIndex === index ? { "data-found": true } : {}),
+        });
+
+        return (
+          // eslint-disable-next-line react/jsx-key
+          <ListboxItem {...itemProps}>
+            <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+              {selectedItem === item && <CheckIcon />}
+              <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
+            </Grid>
+          </ListboxItem>
+        );
+      })}
+    </Listbox>
+  );
+};
+
 type ComboboxProps<Item> = {
   name: string;
   items: Array<Item>;
@@ -72,7 +119,10 @@ type ComboboxProps<Item> = {
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value?: Item) => void;
   itemToString?: (item: Item | null) => string;
-  disclosure?: (props: ComponentProps<typeof ComboboxTextField>) => JSX.Element;
+  renderTextField?: (
+    props: ComponentProps<typeof ComboboxTextField>
+  ) => JSX.Element;
+  renderList?: (props: ListProps<Item>) => JSX.Element;
   // @todo should we spread those props flat?
   contentProps?: ComponentProps<typeof PopperContent>;
 };
@@ -86,7 +136,8 @@ export const Combobox = <Item extends BaseItem>({
     item !== null && "label" in item ? item.label : item ?? "",
   onItemSelect,
   onItemHighlight,
-  disclosure = (props) => <ComboboxTextField {...props} />,
+  renderTextField = (props) => <ComboboxTextField {...props} />,
+  renderList = (props) => <List {...props} />,
 }: ComboboxProps<Item>) => {
   const [foundItems, setFoundItems] = useState(items);
   const {
@@ -141,36 +192,17 @@ export const Combobox = <Item extends BaseItem>({
     <Popper>
       <Box {...comboboxProps}>
         <PopperAnchor asChild>
-          {disclosure({ inputProps, toggleProps, highlightedItem })}
+          {renderTextField({ inputProps, toggleProps, highlightedItem })}
         </PopperAnchor>
         <PopperContent {...contentProps} style={{ zIndex: 1 }}>
-          <Listbox {...menuProps}>
-            {isOpen &&
-              foundItems.map((item, index) => {
-                const itemProps: Record<string, unknown> = getItemProps({
-                  item,
-                  index,
-                  key: index,
-                  ...(typeof item === "object" && item.disabled
-                    ? { "data-disabled": true, disabled: true }
-                    : {}),
-                  ...(highlightedIndex === index ? { "data-found": true } : {}),
-                });
-
-                return (
-                  // eslint-disable-next-line react/jsx-key
-                  <ListboxItem {...itemProps}>
-                    <Grid
-                      align="center"
-                      css={{ gridTemplateColumns: "20px 1fr" }}
-                    >
-                      {selectedItem === item && <CheckIcon />}
-                      <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
-                    </Grid>
-                  </ListboxItem>
-                );
-              })}
-          </Listbox>
+          {renderList({
+            containerProps: menuProps,
+            items: isOpen ? foundItems : [],
+            getItemProps,
+            highlightedIndex,
+            selectedItem,
+            itemToString,
+          })}
         </PopperContent>
       </Box>
     </Popper>

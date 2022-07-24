@@ -37,7 +37,7 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
       onItemHighlight={(item) => {
         action("Highlight")(item);
       }}
-      disclosure={({ inputProps, toggleProps }) => (
+      renderTextField={({ inputProps, toggleProps }) => (
         <ComboboxTextField
           toggleProps={toggleProps}
           inputProps={{
