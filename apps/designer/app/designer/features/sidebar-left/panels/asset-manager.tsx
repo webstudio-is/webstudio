@@ -21,9 +21,7 @@ export const TabContent = ({
     if (newImages?.assets.length) {
       setAsssets((currentAssets) => [
         ...newImages.assets,
-        ...currentAssets.filter(
-          (asset) => "uploading" in asset && !asset.uploading
-        ),
+        ...currentAssets.filter((asset) => !("uploading" in asset)),
       ]);
     }
   }, [newImages]);

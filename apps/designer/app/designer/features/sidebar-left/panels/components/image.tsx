@@ -43,16 +43,27 @@ export const AssetManagerImage = ({
       title={alt || ""}
       css={{
         aspectRatio: "1/1",
-        backgroundImage: `url(${src})`,
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         padding: "0 $2",
+        position: "relative",
       }}
     >
+      <Box
+        css={{
+          backgroundImage: `url(${src})`,
+          width: "100%",
+          height: "100%",
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          position: "absolute",
+          left: 0,
+          top: 0,
+          ...(uploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
+        }}
+      ></Box>
       {uploading && (
         <ProgressBar
           value={progressBarPercentage}
