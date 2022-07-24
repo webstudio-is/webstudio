@@ -1,6 +1,6 @@
 import { Asset } from "@webstudio-is/prisma-client";
 import { useEffect, useState } from "react";
-import { Box } from "~/shared/design-system";
+import { Box, ProgressBar } from "~/shared/design-system";
 import placholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 
@@ -18,7 +18,7 @@ const useImageWithFallback = ({ path }: { path: string }) => {
 };
 
 export const AssetManagerImage = ({
-  asset: { path, alt },
+  asset: { path, alt, uploading },
 }: {
   asset: Asset;
 }) => {
@@ -27,12 +27,20 @@ export const AssetManagerImage = ({
     <Box
       title={alt || ""}
       css={{
+        opacity: uploading ? 0.5 : 1,
         aspectRatio: "1/1",
+
         backgroundImage: `url(${src})`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 $2",
       }}
-    ></Box>
+    >
+      <ProgressBar css={{ width: "100%" }} />
+    </Box>
   );
 };

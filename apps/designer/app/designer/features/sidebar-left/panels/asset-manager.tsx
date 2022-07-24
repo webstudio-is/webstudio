@@ -1,13 +1,52 @@
 import { ImageIcon } from "~/shared/icons";
 import { Button, Flex, Grid, Heading } from "~/shared/design-system";
-import { useRef } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Form, useSubmit } from "@remix-run/react";
 import type { Asset } from "@webstudio-is/prisma-client";
 import { AssetManagerImage } from "./components/image";
 
-export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
+const readImages = async (fileList: FileList) => {
+  const images = [];
+  for (const file of fileList) {
+    const path = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.addEventListener("load", (event) => {
+        resolve(event?.target?.result);
+      });
+      reader.readAsDataURL(file);
+    });
+
+    images.push({ path, name: file.name, size: file.size, uploading: true });
+  }
+
+  return images;
+};
+
+export const TabContent = ({
+  assets: baseAssets,
+}: {
+  assets: Array<Asset>;
+}) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const submit = useSubmit();
+  const [assets, setAssets] = useState(baseAssets);
+
+  useEffect(() => {
+    if (baseAssets.length === assets.length) {
+      setAssets(baseAssets);
+    }
+  }, [baseAssets, assets.length]);
+
+  const onFormChange = async (event: ChangeEvent<HTMLFormElement>) => {
+    const newFiles = inputRef?.current?.files;
+    if (newFiles) {
+      submit(event.currentTarget);
+      const parsedFiles = await readImages(newFiles);
+      setAssets((assets) => [...parsedFiles, ...assets]);
+
+      //event.currentTarget.reset();
+    }
+  };
 
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
@@ -16,12 +55,7 @@ export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
         <Form
           method="post"
           encType="multipart/form-data"
-          onChange={(event) => {
-            if (inputRef.current?.files) {
-              submit(event.currentTarget);
-              event.currentTarget.reset();
-            }
-          }}
+          onChange={onFormChange}
         >
           <input
             accept="image/*"
