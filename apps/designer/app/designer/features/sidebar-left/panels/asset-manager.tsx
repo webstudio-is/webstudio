@@ -6,11 +6,12 @@ import { Asset } from "@webstudio-is/prisma-client";
 import { AssetManagerImage } from "./components/image";
 
 import { AddAnAssetForm } from "./components/add-an-asset-form";
+import { UploadingAsset } from "../types";
 
 export const TabContent = ({
   assets: baseAssets,
 }: {
-  assets: Array<Asset & { uploading?: boolean }>;
+  assets: Array<Asset | UploadingAsset>;
 }) => {
   const newImages = useActionData();
 
@@ -20,7 +21,9 @@ export const TabContent = ({
     if (newImages?.assets.length) {
       setAsssets((currentAssets) => [
         ...newImages.assets,
-        ...currentAssets.filter((a) => !a.uploading),
+        ...currentAssets.filter(
+          (asset) => "uploading" in asset && !asset.uploading
+        ),
       ]);
     }
   }, [newImages]);
@@ -30,7 +33,7 @@ export const TabContent = ({
       <Flex justify="between">
         <Heading>Assets</Heading>
         <AddAnAssetForm
-          onSubmit={(uploadedAssets: Array<Asset>) =>
+          onSubmit={(uploadedAssets: Array<UploadingAsset>) =>
             setAsssets((assets) => [...uploadedAssets, ...assets])
           }
         />
@@ -41,7 +44,7 @@ export const TabContent = ({
             key={asset.id}
             path={asset.path}
             alt={asset.alt || asset.name}
-            uploading={asset.uploading}
+            uploading={"uploading" in asset && asset.uploading}
           />
         ))}
       </Grid>

@@ -1,10 +1,10 @@
-import { Form, useParams, useSubmit } from "@remix-run/react";
-import { Asset, Decimal, Location } from "@webstudio-is/prisma-client";
+import { Form, useSubmit } from "@remix-run/react";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button } from "~/shared/design-system";
+import { UploadingAsset } from "../../types";
 
-const readImages = async (fileList: FileList, projectId: string) => {
+const readImages = async (fileList: FileList) => {
   const images = [];
   for (const file of fileList) {
     const path = await new Promise((resolve) => {
@@ -21,15 +21,8 @@ const readImages = async (fileList: FileList, projectId: string) => {
       path: path as string,
       name: file.name,
       id: ObjectID().toString(),
-      width: 0 as unknown as Decimal,
-      height: 0 as unknown as Decimal,
-      projectId,
-      size: file.size,
-      format: file.type,
-      createdAt: new Date(),
-      location: "FS" as Location,
-      alt: "",
       uploading: true,
+      alt: file.name,
     });
   }
 
@@ -39,17 +32,16 @@ const readImages = async (fileList: FileList, projectId: string) => {
 export const AddAnAssetForm = ({
   onSubmit,
 }: {
-  onSubmit: (uploadedAssets: Array<Asset>) => void;
+  onSubmit: (uploadedAssets: Array<UploadingAsset>) => void;
 }) => {
   const submit = useSubmit();
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const { id } = useParams();
 
   const onFormChange = async (event: ChangeEvent<HTMLFormElement>) => {
     const newFiles = inputRef?.current?.files;
-    if (newFiles && id) {
+    if (newFiles) {
       submit(event.currentTarget);
-      const parsedFiles = await readImages(newFiles, id);
+      const parsedFiles = await readImages(newFiles);
       onSubmit(parsedFiles);
       event.currentTarget.reset();
     }
