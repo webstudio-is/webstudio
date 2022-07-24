@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Form, useSubmit } from "@remix-run/react";
 import type { Asset } from "@webstudio-is/prisma-client";
 import { AssetManagerImage } from "./components/image";
+import ObjectID from "bson-objectid";
 
 const readImages = async (fileList: FileList) => {
   const images = [];
@@ -11,42 +12,48 @@ const readImages = async (fileList: FileList) => {
     const path = await new Promise((resolve) => {
       const reader = new FileReader();
       reader.addEventListener("load", (event) => {
-        resolve(event?.target?.result);
+        const dataUri = event?.target?.result;
+
+        resolve(dataUri);
       });
       reader.readAsDataURL(file);
     });
 
-    images.push({ path, name: file.name, size: file.size, uploading: true });
+    images.push({
+      path: path as string,
+      name: file.name,
+      id: ObjectID.toString(),
+    });
   }
 
   return images;
 };
 
-export const TabContent = ({
-  assets: baseAssets,
-}: {
-  assets: Array<Asset>;
-}) => {
+type ParsedFiles = {
+  path: string;
+  name?: string;
+  id?: string;
+}[];
+
+export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const submit = useSubmit();
-  const [assets, setAssets] = useState(baseAssets);
-
-  useEffect(() => {
-    if (baseAssets.length === assets.length) {
-      setAssets(baseAssets);
-    }
-  }, [baseAssets, assets.length]);
+  const [uploadedImages, setUploadedImages] = useState<ParsedFiles>([]);
 
   const onFormChange = async (event: ChangeEvent<HTMLFormElement>) => {
     const newFiles = inputRef?.current?.files;
     if (newFiles) {
       submit(event.currentTarget);
       const parsedFiles = await readImages(newFiles);
-      setAssets((assets) => [...parsedFiles, ...assets]);
+      setUploadedImages(parsedFiles);
 
-      //event.currentTarget.reset();
+      event.currentTarget.reset();
     }
   };
+
+  useEffect(() => {
+    setUploadedImages([]);
+  }, [assets?.length]);
 
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
@@ -71,8 +78,15 @@ export const TabContent = ({
         </Form>
       </Flex>
       <Grid columns={2} gap={2}>
+        {uploadedImages.map((asset) => (
+          <AssetManagerImage
+            key={asset.id}
+            path={asset.path}
+            uploading={true}
+          />
+        ))}
         {assets.map((asset) => (
-          <AssetManagerImage key={asset.id} asset={asset} />
+          <AssetManagerImage key={asset.id} path={asset.path} />
         ))}
       </Grid>
     </Flex>

@@ -1,4 +1,3 @@
-import { Asset } from "@webstudio-is/prisma-client";
 import { useEffect, useState } from "react";
 import { Box, ProgressBar } from "~/shared/design-system";
 import placholderImage from "~/shared/images/image-placeholder.svg";
@@ -18,18 +17,30 @@ const useImageWithFallback = ({ path }: { path: string }) => {
 };
 
 export const AssetManagerImage = ({
-  asset: { path, alt, uploading },
+  path,
+  alt,
+  uploading,
 }: {
-  asset: Asset;
+  path: string;
+  alt?: string;
+  uploading?: boolean;
 }) => {
   const src = useImageWithFallback({ path });
+  const [progressBarPercentage, setProgressBarPercentage] = useState(0);
+
+  useEffect(() => {
+    setInterval(() => {
+      if (progressBarPercentage < 60) {
+        setProgressBarPercentage((percentage) => percentage + 1);
+      }
+    }, 100);
+  }, []);
+
   return (
     <Box
       title={alt || ""}
       css={{
-        opacity: uploading ? 0.5 : 1,
         aspectRatio: "1/1",
-
         backgroundImage: `url(${src})`,
         backgroundSize: "contain",
         backgroundRepeat: "no-repeat",
@@ -40,7 +51,13 @@ export const AssetManagerImage = ({
         padding: "0 $2",
       }}
     >
-      <ProgressBar css={{ width: "100%" }} />
+      {uploading && (
+        <ProgressBar
+          value={progressBarPercentage}
+          max={60}
+          css={{ width: "100%", height: "$1" }}
+        />
+      )}
     </Box>
   );
 };
