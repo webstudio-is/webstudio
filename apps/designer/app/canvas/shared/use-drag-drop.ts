@@ -161,7 +161,37 @@ export const useDragAndDrop = () => {
       dropTargetHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
       placementHandlers.handleEnd();
+
       publish<"dragEnd">({ type: "dragEnd" });
+
+      const { dropTarget, placement, dragItem } = state.current;
+
+      if (dropTarget && placement && dragItem) {
+        publish<
+          "reparentInstance",
+          {
+            instance: Instance;
+            dropTarget: { instanceId: Instance["id"]; position: number };
+          }
+        >({
+          type: "reparentInstance",
+          payload: {
+            instance: dragItem,
+            dropTarget: {
+              instanceId: dropTarget.data.id,
+              position: placement.index,
+            },
+          },
+        });
+      }
+
+      // if (isNew) {
+      //   publish<"insertInstance", typeof data>({
+      //     type: "insertInstance",
+      //     payload: data,
+      //   });
+      // }
+
       state.current = { ...initialState };
     },
   });

@@ -20,7 +20,6 @@ import {
 } from "~/shared/tree-utils";
 import store from "immerhin";
 import {
-  DropData,
   HoveredInstanceData,
   type SelectedInstanceData,
 } from "~/shared/canvas-components";
@@ -49,8 +48,8 @@ export const useInsertInstance = () => {
 
   useSubscribe<
     "insertInstance",
-    { instance: Instance; dropData?: DropData; props?: InstanceProps }
-  >("insertInstance", ({ instance, dropData, props }) => {
+    { instance: Instance; /*dropData?: DropData;*/ props?: InstanceProps }
+  >("insertInstance", ({ instance, /*dropData,*/ props }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
@@ -61,8 +60,9 @@ export const useInsertInstance = () => {
           populatedInstance,
           {
             parentId:
-              dropData?.instance.id ?? selectedInstance?.id ?? rootInstance.id,
-            position: dropData?.position || "end",
+              /*dropData?.instance.id ??*/ selectedInstance?.id ??
+              rootInstance.id,
+            position: /*dropData?.position ||*/ "end",
           }
         );
         if (hasInserted) {
@@ -77,19 +77,22 @@ export const useInsertInstance = () => {
 };
 
 export const useReparentInstance = () => {
-  useSubscribe<"reparentInstance", { instance: Instance; dropData: DropData }>(
+  useSubscribe<
     "reparentInstance",
-    ({ instance, dropData }) => {
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) return;
-        deleteInstanceMutable(rootInstance, instance.id);
-        insertInstanceMutable(rootInstance, instance, {
-          parentId: dropData.instance.id,
-          position: dropData.position,
-        });
-      });
+    {
+      instance: Instance;
+      dropTarget: { instanceId: Instance["id"]; position: number };
     }
-  );
+  >("reparentInstance", ({ instance, dropTarget }) => {
+    store.createTransaction([rootInstanceContainer], (rootInstance) => {
+      if (rootInstance === undefined) return;
+      deleteInstanceMutable(rootInstance, instance.id);
+      insertInstanceMutable(rootInstance, instance, {
+        parentId: dropTarget.instanceId,
+        position: dropTarget.position,
+      });
+    });
+  });
 };
 
 export const useDeleteInstance = () => {
