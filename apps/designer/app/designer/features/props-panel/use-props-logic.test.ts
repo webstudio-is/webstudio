@@ -102,20 +102,26 @@ describe("usePropsLogic", () => {
       })
     );
 
-    expect(result.current.userProps.length).toEqual(0);
+    expect(result.current.userProps.length).toEqual(1);
 
     act(() => {
       result.current.addEmptyProp();
     });
 
-    expect(result.current.userProps.length).toEqual(1);
-    expect(result.current.userProps[0]).toMatchObject({ prop: "", value: "" });
+    expect(result.current.userProps.length).toEqual(2);
+    expect(result.current.userProps[1]).toMatchObject({ prop: "", value: "" });
   });
 
   test("should remove a prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Box", [
+          {
+            id: "1",
+            prop: "tag",
+            value: "div",
+            required: true,
+          },
           {
             id: "disabled",
             prop: "disabled",
@@ -130,14 +136,29 @@ describe("usePropsLogic", () => {
       result.current.handleDeleteProp("disabled");
     });
 
-    expect(result.current.userProps.length).toEqual(0);
-    expect(result.current.userProps).toMatchInlineSnapshot(`Array []`);
+    expect(result.current.userProps.length).toEqual(1);
+    expect(result.current.userProps).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "div",
+        },
+      ]
+    `);
   });
 
   test("should update a prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Box", [
+          {
+            id: "1",
+            prop: "tag",
+            value: "div",
+            required: true,
+          },
           {
             id: "disabled",
             prop: "disabled",
@@ -159,6 +180,12 @@ describe("usePropsLogic", () => {
     expect(result.current.userProps).toMatchInlineSnapshot(`
       Array [
         Object {
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "div",
+        },
+        Object {
           "id": "disabled",
           "prop": "disabled2",
           "value": false,
@@ -172,6 +199,12 @@ describe("usePropsLogic", () => {
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Box", [
           {
+            id: "1",
+            prop: "tag",
+            value: "div",
+            required: true,
+          },
+          {
             id: "disabled",
             prop: "disabled",
             value: "true",
@@ -182,15 +215,21 @@ describe("usePropsLogic", () => {
       })
     );
 
-    expect(result.current.userProps.length).toEqual(1);
+    expect(result.current.userProps.length).toEqual(2);
 
     act(() => {
       result.current.handleDeleteProp("disabled");
     });
 
-    expect(result.current.userProps.length).toEqual(1);
+    expect(result.current.userProps.length).toEqual(2);
     expect(result.current.userProps).toMatchInlineSnapshot(`
       Array [
+        Object {
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "div",
+        },
         Object {
           "id": "disabled",
           "prop": "disabled",
@@ -206,7 +245,13 @@ describe("usePropsLogic", () => {
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Box", [
           {
-            id: "test",
+            id: "1",
+            prop: "tag",
+            value: "div",
+            required: true,
+          },
+          {
+            id: "2",
             prop: "test",
             value: "test",
             required: true,
@@ -217,13 +262,19 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangeProp("test", "prop", "test-example");
+      result.current.handleChangeProp("2", "prop", "test-example");
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
       Array [
         Object {
-          "id": "test",
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "div",
+        },
+        Object {
+          "id": "2",
           "prop": "test",
           "required": true,
           "value": "test",
@@ -237,7 +288,13 @@ describe("usePropsLogic", () => {
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Box", [
           {
-            id: "test",
+            id: "1",
+            prop: "tag",
+            value: "div",
+            required: true,
+          },
+          {
+            id: "2",
             prop: "test",
             value: true,
             required: true,
@@ -248,13 +305,19 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangeProp("test", "value", false);
+      result.current.handleChangeProp("2", "value", false);
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
       Array [
         Object {
-          "id": "test",
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "div",
+        },
+        Object {
+          "id": "2",
           "prop": "test",
           "required": true,
           "value": false,
