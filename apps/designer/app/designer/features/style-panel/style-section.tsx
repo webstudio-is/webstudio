@@ -185,6 +185,8 @@ const ComboboxControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
+
   if (styleConfig.control !== "Combobox") return null;
 
   // @todo show which instance we inherited the value from
@@ -201,15 +203,55 @@ const ComboboxControl = ({
   switch (styleConfig.property) {
     case "rowGap":
     case "columnGap": {
+      const Icon = (icons as any).gap[styleConfig.property];
       return (
-        <TextField
-          type="number"
-          value={parseFloat(String(value.value)) || 0}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            setValue(event.target.value)
-          }
-          css={{ cursor: "default" }}
-        />
+        <Grid
+          css={{
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateRows: "repeat(1, 1fr)",
+          }}
+        >
+          <IconButton
+            variant="ghost"
+            size="1"
+            css={{
+              zIndex: 1,
+              gridArea: "1 / 1 / 2 / 2",
+              marginLeft: 2,
+              marginTop: 2,
+              borderRadius: 1,
+              height: "calc($sizes$5 - 4px)",
+              width: "calc($sizes$5 - 4px)",
+              "&:focus": {
+                boxShadow: "none",
+              },
+              ...(isCurrentBreakpoint && {
+                bc: "$colors$blue4",
+                "& svg *": {
+                  fill: "$colors$blue11",
+                },
+              }),
+            }}
+          >
+            <Icon />
+          </IconButton>
+          <TextField
+            type="number"
+            defaultValue={parseFloat(String(value.value)) || 0}
+            // @todo looses input state and focus
+            // onChange={(event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value + "px")
+            onKeyDown={(event) =>
+              event.key === "Enter" &&
+              setValue(event.currentTarget.value + "px")
+            }
+            css={{
+              fontWeight: "500",
+              paddingLeft: "calc($5 + 6px)",
+              gridArea: "1 / 1 / -1 / -1",
+              cursor: "default",
+            }}
+          />
+        </Grid>
       );
     }
   }
@@ -537,7 +579,7 @@ export const renderCategory = ({
                     "grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
                     "grid grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent ."
                     "grid grid grid grid grid . . . . . . ."
-                    "rowGap rowGap rowGap rowGap rowGap lock lock columnGap columnGap columnGap columnGap columnGap"
+                    "columnGap columnGap columnGap columnGap columnGap lock lock rowGap rowGap rowGap rowGap rowGap"
                   `,
                   gap: "8px",
                   "& > [data-type=comboicon]": {
