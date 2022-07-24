@@ -139,7 +139,8 @@ export const Combobox = <Item extends BaseItem>({
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,
-  renderList = (props) => <List {...props} />,
+  // IMPORTANT! Without Item passed to list <List<Item> typescript is 10x slower!
+  renderList = (props) => <List<Item> {...props} />,
   renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
 }: ComboboxProps<Item>) => {
   const [foundItems, setFoundItems] = useState(items);
