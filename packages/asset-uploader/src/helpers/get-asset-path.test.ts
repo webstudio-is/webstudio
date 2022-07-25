@@ -22,7 +22,7 @@ describe("getAssetPath", () => {
       ...OLD_ENV,
       S3_ACCESS_KEY_ID: "testid",
       S3_SECRET_ACCESS_KEY: "testkey",
-      WORKER_URL: "",
+      ASSET_CDN_URL: "",
     };
   });
 
@@ -87,7 +87,7 @@ describe("getAssetPath", () => {
       process.env.S3_ENDPOINT = "https://userid.r2.cloudflarestorage.com";
       process.env.S3_BUCKET = "bucket";
       process.env.S3_REGION = "auto";
-      process.env.WORKER_URL = "https://worker-test.workers.dev";
+      process.env.ASSET_CDN_URL = "https://worker-test.workers.dev";
       const { getAssetPath } = require("./get-asset-path");
       expect(
         getAssetPath({

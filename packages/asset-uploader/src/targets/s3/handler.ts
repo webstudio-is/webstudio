@@ -43,8 +43,8 @@ export const s3UploadHandler: S3UploadHandler = async ({
   const [name, extension] = getFilenameAndExtension(filename);
   const key = encodeURI(`${name}_${Date.now()}.${extension}`);
 
-  // r2 does not have ACL support so in that case we pass nothing there
-  const ACL = s3Envs.WORKER_URL ? {} : { ACL: s3Envs.S3_ACL };
+  // if there is no ACL passed we do not default since some providers do not support it
+  const ACL = s3Envs.S3_ACL ? { ACL: s3Envs.S3_ACL } : {};
 
   const params: PutObjectCommandInput = {
     Bucket: s3Envs.S3_BUCKET,
