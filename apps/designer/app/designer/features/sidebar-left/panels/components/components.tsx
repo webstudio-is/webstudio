@@ -1,4 +1,5 @@
 import { type MouseEventHandler, useState } from "react";
+import { createPortal } from "react-dom";
 import { type Instance, type Publish } from "@webstudio-is/react-sdk";
 import { Flex } from "~/shared/design-system";
 import { PlusIcon } from "~/shared/icons";
@@ -13,21 +14,12 @@ const components = (
   Object.keys(primitives) as Array<Instance["component"]>
 ).filter((component) => primitives[component].isInlineOnly === false);
 
-// type UseDraggableProps = {
-//   component: Instance["component"];
-//   onDragChange: (isDragging: boolean) => void;
-// };
-
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
   component: Instance["component"];
 };
 
-const DraggableThumb = ({
-  component,
-  // onDragChange,
-  onClick,
-}: DraggableThumbProps) => {
+const DraggableThumb = ({ component, onClick }: DraggableThumbProps) => {
   return (
     <ComponentThumb
       data-drag-component={component}
@@ -37,21 +29,48 @@ const DraggableThumb = ({
   );
 };
 
+const DragLayer = ({
+  component,
+  pointerPosition,
+}: {
+  component: Instance["component"];
+  pointerPosition: { x: number; y: number };
+}) => {
+  return createPortal(
+    <Flex
+      css={{
+        position: "absolute",
+        pointerEvents: "none",
+        zIndex: 1,
+        left: 0,
+        top: 0,
+        width: "100%",
+        height: "100%",
+      }}
+    >
+      <ComponentThumb
+        component={component}
+        style={{
+          transform: `translate3d(${pointerPosition.x}px, ${pointerPosition.y}px, 0)`,
+        }}
+        state="dragging"
+      />
+    </Flex>,
+    document.body
+  );
+};
+
 type TabContentProps = {
-  // onDragChange: UseDraggableProps["onDragChange"];
   onSetActiveTab: (tabName: TabName) => void;
   publish: Publish;
 };
 
-export const TabContent = ({
-  // onDragChange,
-  publish,
-  onSetActiveTab,
-}: TabContentProps) => {
-  const [_dragItem, setDragItem] = useState<{
-    component: Instance["component"];
-    originalPointerPosition: { x: number; y: number };
-  }>();
+export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
+  const [dragComponent, setDragComponent] = useState<Instance["component"]>();
+  const [pointerPosition, setPointerPosition] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 0, y: 0 });
 
   const [canvasRect] = useCanvasRect();
   const [zoom] = useZoom();
@@ -67,7 +86,6 @@ export const TabContent = ({
   const dragProps = useDrag({
     onStart(event) {
       const { dragComponent } = event.target.dataset;
-      const { x, y } = event;
 
       const component =
         dragComponent != null && components.find((c) => c === dragComponent);
@@ -79,10 +97,7 @@ export const TabContent = ({
 
       const instance = createInstance({ component });
 
-      setDragItem({
-        component,
-        originalPointerPosition: { x, y },
-      });
+      setDragComponent(component);
 
       publish<
         "dragStart",
@@ -93,29 +108,20 @@ export const TabContent = ({
       });
     },
     onMove: (poiterCoordinate) => {
+      setPointerPosition(poiterCoordinate);
       publish<"dragMove", { canvasCoordinates: { x: number; y: number } }>({
         type: "dragMove",
         payload: { canvasCoordinates: toCanvasCoordinates(poiterCoordinate) },
       });
     },
     onEnd() {
-      setDragItem(undefined);
+      setDragComponent(undefined);
       publish<"dragEnd", { origin: "panel" | "canvas" }>({
         type: "dragEnd",
         payload: { origin: "panel" },
       });
     },
   });
-
-  // const handleDragChange = useCallback(
-  //   (isDragging: boolean) => {
-  //     onDragChange(isDragging);
-  //     publish<"dragStartInstance" | "dragEndInstance">({
-  //       type: isDragging === true ? "dragStartInstance" : "dragEndInstance",
-  //     });
-  //   },
-  //   [onDragChange, publish]
-  // );
 
   return (
     <Flex gap="1" wrap="wrap" css={{ padding: "$1" }} {...dragProps}>
@@ -133,59 +139,14 @@ export const TabContent = ({
           // onDragChange={handleDragChange}
         />
       ))}
+      {dragComponent && (
+        <DragLayer
+          component={dragComponent}
+          pointerPosition={pointerPosition}
+        />
+      )}
     </Flex>
   );
 };
 
 export const icon = <PlusIcon />;
-
-/*
-export const CustomDragLayer = ({ onDrag }: CustomDragLayerProps) => {
-  const { component, isDragging, clientOffset, sourceClientOffset } =
-    useDragLayer((monitor) => ({
-      component: monitor.getItemType() as Instance["component"],
-      isDragging: monitor.isDragging(),
-      clientOffset: monitor.getClientOffset(),
-      sourceClientOffset: monitor.getSourceClientOffset(),
-    }));
-  const [canvasRect] = useCanvasRect();
-  const [zoom] = useZoom();
-
-  useEffect(() => {
-    if (
-      clientOffset === null ||
-      component === null ||
-      canvasRect === undefined
-    ) {
-      return;
-    }
-
-    const scale = zoom / 100;
-    const currentOffset = {
-      x: (clientOffset.x - canvasRect.x) / scale,
-      y: (clientOffset.y - canvasRect.y) / scale,
-    };
-
-    onDrag({
-      currentOffset,
-      component,
-    });
-  }, [clientOffset, component, onDrag, zoom, canvasRect]);
-
-  if (isDragging === false || sourceClientOffset === null) return null;
-
-  return createPortal(
-    <div style={layerStyles}>
-      <ComponentThumb
-        component={component}
-        style={{
-          transform: `translate3d(${sourceClientOffset.x}px, ${sourceClientOffset.y}px, 0)`,
-        }}
-        state="dragging"
-      />
-    </div>,
-    document.body
-  );
-};
-
-*/

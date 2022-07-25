@@ -185,13 +185,6 @@ export const useDragAndDrop = () => {
         });
       }
 
-      // if (isNew) {
-      //   publish<"insertInstance", typeof data>({
-      //     type: "insertInstance",
-      //     payload: data,
-      //   });
-      // }
-
       state.current = { ...initialState };
     },
   });
