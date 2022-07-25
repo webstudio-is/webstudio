@@ -64,7 +64,7 @@
    - Open the login page when logged in to make sure you are redirected to the dashboard
    - Ensure you can view a built site in an incognito tab
    - Ensure you can view a forked site in an incognito tab
-   - Click on dev login, add the AUTH_SECRET value in the `.env` value and make sure user is authenticated and redirected to the dashboard
+   - Click on dev login, add the first four characters in AUTH_SECRET value in the `.env` value and make sure user is authenticated and redirected to the dashboard
    - Click on dev login and write a wrong value to make sure you get an error message and stay in the login page.
    - Click on login with GitHub and make sure that you are redirected to the dashboard
    - Click on login with Google and make sure that you are redirected to the dashboard
