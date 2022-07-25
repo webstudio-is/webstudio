@@ -18,14 +18,13 @@ export const TabContent = ({
   const [assets, setAsssets] = useState(baseAssets);
 
   useEffect(() => {
-    if (newImages?.assets.length) {
+    if (newImages?.length) {
       setAsssets((currentAssets) => [
-        ...newImages.assets,
+        ...newImages,
         ...currentAssets.filter((asset) => !("uploading" in asset)),
       ]);
     }
   }, [newImages]);
-
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
       <Flex justify="between">

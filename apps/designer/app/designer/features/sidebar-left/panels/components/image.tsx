@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, ProgressBar } from "~/shared/design-system";
+import { useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 
@@ -28,15 +29,14 @@ export const AssetManagerImage = ({
   const src = useImageWithFallback({ path });
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
 
-  useEffect(() => {
-    if (uploading) {
-      setInterval(() => {
-        setProgressBarPercentage((percentage) =>
-          percentage < 60 ? percentage + 1 : percentage
-        );
-      }, 100);
-    }
-  }, [progressBarPercentage, uploading]);
+  useInterval(
+    () => {
+      setProgressBarPercentage((percentage) =>
+        percentage < 60 ? percentage + 1 : percentage
+      );
+    },
+    uploading ? 100 : null
+  );
 
   return (
     <Box
@@ -52,7 +52,7 @@ export const AssetManagerImage = ({
     >
       <Box
         css={{
-          backgroundImage: `url(${src})`,
+          backgroundImage: `url("${src}")`,
           width: "100%",
           height: "100%",
           backgroundSize: "contain",

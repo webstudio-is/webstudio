@@ -29,5 +29,5 @@ export const uploadToDisk = async ({
     return newAsset;
   });
 
-  await Promise.all(allInfo);
+  return await Promise.all(allInfo);
 };

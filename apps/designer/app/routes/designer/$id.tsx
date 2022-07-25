@@ -42,9 +42,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         projectId: params.id,
         dirname: __dirname,
       });
-      return {
-        assets,
-      };
+      return assets;
     } catch (error) {
       if (error instanceof Error) {
         return {
