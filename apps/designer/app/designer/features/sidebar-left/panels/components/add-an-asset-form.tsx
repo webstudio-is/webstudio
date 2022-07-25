@@ -1,4 +1,5 @@
 import { Form, useSubmit } from "@remix-run/react";
+import { Asset } from "@webstudio-is/prisma-client";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button } from "~/shared/design-system";
@@ -21,7 +22,7 @@ const readImages = async (fileList: FileList) => {
       path: path as string,
       name: file.name,
       id: ObjectID().toString(),
-      uploading: true,
+      status: "uploading" as Asset["status"],
       alt: file.name,
     });
   }

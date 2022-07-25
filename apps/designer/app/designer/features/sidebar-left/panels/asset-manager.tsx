@@ -25,6 +25,7 @@ export const TabContent = ({
       ]);
     }
   }, [newImages]);
+
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
       <Flex justify="between">
@@ -41,7 +42,7 @@ export const TabContent = ({
             key={asset.id}
             path={asset.path}
             alt={asset.alt || asset.name}
-            uploading={"uploading" in asset && asset.uploading}
+            status={asset.status}
           />
         ))}
       </Grid>

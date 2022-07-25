@@ -3,6 +3,7 @@ import { Box, ProgressBar } from "~/shared/design-system";
 import { useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
+import { Asset } from "@webstudio-is/prisma-client";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -20,12 +21,13 @@ const useImageWithFallback = ({ path }: { path: string }) => {
 export const AssetManagerImage = ({
   path,
   alt,
-  uploading,
+  status,
 }: {
   path: string;
   alt?: string;
-  uploading?: boolean;
+  status?: Asset["status"];
 }) => {
+  const uploading = status === "uploading";
   const src = useImageWithFallback({ path });
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
 

@@ -42,7 +42,10 @@ export const action: ActionFunction = async ({ request, params }) => {
         projectId: params.id,
         dirname: __dirname,
       });
-      return assets;
+      return assets.map((asset: Asset) => ({
+        ...asset,
+        status: "uploaded",
+      }));
     } catch (error) {
       if (error instanceof Error) {
         return {
