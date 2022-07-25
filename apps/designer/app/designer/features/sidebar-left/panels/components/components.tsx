@@ -136,7 +136,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               payload: { instance: createInstance({ component }) },
             });
           }}
-          // onDragChange={handleDragChange}
         />
       ))}
       {dragComponent && (

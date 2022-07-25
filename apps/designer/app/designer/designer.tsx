@@ -67,17 +67,6 @@ const useSubscribeSyncStatus = () => {
   useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
 };
 
-// const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {
-//   const [isDragging, setIsDragging] = useState<boolean>(false);
-//   useSubscribe<"dragStartInstance">("dragStartInstance", () => {
-//     setIsDragging(true);
-//   });
-//   useSubscribe<"dragEndInstance">("dragEndInstance", () => {
-//     setIsDragging(false);
-//   });
-//   return [isDragging, setIsDragging];
-// };
-
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
   isPreviewMode: boolean;
@@ -185,12 +174,9 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeClientSetting();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
-  // const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
-
-  // @todo: useIsDragging propably should live here too eventually?
   const [dragAndDrop] = useDragAndDropState();
 
   const iframeRefCallback = useCallback(
@@ -229,24 +215,18 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft
-          assets={assets}
-          // onDragChange={setIsDragging}
-          publish={publish}
-        />
+        <SidebarLeft assets={assets} publish={publish} />
       </SidePanel>
       <SidePanel
         gridArea="inspector"
         isPreviewMode={isPreviewMode}
         css={{ overflow: "hidden" }}
       >
-        {
-          /*isDragging ||*/ dragAndDrop.isDragging ? (
-            <TreePrevew />
-          ) : (
-            <Inspector publish={publish} />
-          )
-        }
+        {dragAndDrop.isDragging ? (
+          <TreePrevew />
+        ) : (
+          <Inspector publish={publish} />
+        )}
       </SidePanel>
       <Breadcrumbs publish={publish} />
     </ChromeWrapper>
