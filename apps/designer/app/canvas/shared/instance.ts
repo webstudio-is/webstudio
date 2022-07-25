@@ -48,8 +48,12 @@ export const useInsertInstance = () => {
 
   useSubscribe<
     "insertInstance",
-    { instance: Instance; /*dropData?: DropData;*/ props?: InstanceProps }
-  >("insertInstance", ({ instance, /*dropData,*/ props }) => {
+    {
+      instance: Instance;
+      dropTarget?: { instanceId: Instance["id"]; position: number };
+      props?: InstanceProps;
+    }
+  >("insertInstance", ({ instance, dropTarget, props }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
@@ -60,9 +64,8 @@ export const useInsertInstance = () => {
           populatedInstance,
           {
             parentId:
-              /*dropData?.instance.id ??*/ selectedInstance?.id ??
-              rootInstance.id,
-            position: /*dropData?.position ||*/ "end",
+              dropTarget?.instanceId ?? selectedInstance?.id ?? rootInstance.id,
+            position: dropTarget?.position || "end",
           }
         );
         if (hasInserted) {

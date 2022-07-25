@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/prisma-client";
 import {
@@ -26,13 +26,13 @@ const sidebarTabsContentStyle = {
 const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
-  onDragChange: (isDragging: boolean) => void;
+  // onDragChange: (isDragging: boolean) => void;
   publish: Publish;
   assets: Array<Asset>;
 };
 
 export const SidebarLeft = ({
-  onDragChange,
+  // onDragChange,
   publish,
   assets,
 }: SidebarLeftProps) => {
@@ -51,16 +51,16 @@ export const SidebarLeft = ({
     setIsDragging(false);
   });
 
-  const handleDragChange = useCallback(
-    (isDragging: boolean) => {
-      // After dragging is done, container is going to become visible
-      // and we need to close it for good.
-      if (isDragging === false) setActiveTab("none");
-      setIsDragging(isDragging);
-      onDragChange(isDragging);
-    },
-    [onDragChange]
-  );
+  // const handleDragChange = useCallback(
+  //   (isDragging: boolean) => {
+  //     // After dragging is done, container is going to become visible
+  //     // and we need to close it for good.
+  //     if (isDragging === false) setActiveTab("none");
+  //     setIsDragging(isDragging);
+  //     onDragChange(isDragging);
+  //   },
+  //   [onDragChange]
+  // );
 
   const enabledPanels = (
     isFeatureEnabled("assets")
@@ -100,7 +100,7 @@ export const SidebarLeft = ({
             selectedInstanceData={selectedInstanceData}
             publish={publish}
             onSetActiveTab={setActiveTab}
-            onDragChange={handleDragChange}
+            // onDragChange={handleDragChange}
           />
         </SidebarTabsContent>
       </SidebarTabs>

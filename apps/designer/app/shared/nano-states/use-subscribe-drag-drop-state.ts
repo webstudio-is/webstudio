@@ -14,14 +14,18 @@ export const useSubscribeDragAndDropState = () => {
     }
   );
 
-  useSubscribe<"dragStart", { dragItem: { instance: Instance } }>(
+  useSubscribe<
     "dragStart",
-    ({ dragItem }) => {
-      setState({ isDragging: true, dragItem });
-    }
-  );
+    { origin: "panel" | "canvas"; dragItem: { instance: Instance } }
+  >("dragStart", ({ origin, dragItem }) => {
+    setState({
+      isDragging: true,
+      origin,
+      dragItem,
+    });
+  });
 
-  useSubscribe<"dragEnd">("dragEnd", () => {
+  useSubscribe<"dragEnd", { origin: "panel" | "canvas" }>("dragEnd", () => {
     setState({ isDragging: false });
   });
 };

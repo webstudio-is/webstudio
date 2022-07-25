@@ -21,7 +21,12 @@ const initialState = {
 export type UseDragProps = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
-  onStart: (event: { target: HTMLElement; cancel: () => void }) => void;
+  onStart: (event: {
+    target: HTMLElement;
+    x: number;
+    y: number;
+    cancel: () => void;
+  }) => void;
   onMove: (event: { x: number; y: number }) => void;
   onShiftChange?: (event: { shifts: number }) => void;
   onEnd: () => void;
@@ -76,7 +81,7 @@ export const useDrag = ({
         initialY: y,
         shifts: 0,
       };
-      onStart({ target, cancel });
+      onStart({ target, x, y, cancel });
     },
     onMove({ clientX: x, clientY: y }: { clientX: number; clientY: number }) {
       if (state.current.status === "canceled") {

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
 import { type Project, type Asset } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
@@ -67,16 +67,16 @@ const useSubscribeSyncStatus = () => {
   useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
 };
 
-const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
-    setIsDragging(true);
-  });
-  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
-    setIsDragging(false);
-  });
-  return [isDragging, setIsDragging];
-};
+// const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {
+//   const [isDragging, setIsDragging] = useState<boolean>(false);
+//   useSubscribe<"dragStartInstance">("dragStartInstance", () => {
+//     setIsDragging(true);
+//   });
+//   useSubscribe<"dragEndInstance">("dragEndInstance", () => {
+//     setIsDragging(false);
+//   });
+//   return [isDragging, setIsDragging];
+// };
 
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
@@ -185,7 +185,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeClientSetting();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
-  const [isDragging, setIsDragging] = useIsDragging();
+  // const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
@@ -215,7 +215,11 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
           <CanvasIframe
             ref={iframeRefCallback}
             src={`${config.canvasPath}/${project.id}`}
-            pointerEvents={isDragging ? "none" : "all"}
+            pointerEvents={
+              dragAndDrop.isDragging && dragAndDrop.origin === "panel"
+                ? "none"
+                : "all"
+            }
             title={project.title}
             css={{
               height: "100%",
@@ -227,7 +231,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
         <SidebarLeft
           assets={assets}
-          onDragChange={setIsDragging}
+          // onDragChange={setIsDragging}
           publish={publish}
         />
       </SidePanel>
@@ -236,11 +240,13 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         isPreviewMode={isPreviewMode}
         css={{ overflow: "hidden" }}
       >
-        {isDragging || dragAndDrop.isDragging ? (
-          <TreePrevew />
-        ) : (
-          <Inspector publish={publish} />
-        )}
+        {
+          /*isDragging ||*/ dragAndDrop.isDragging ? (
+            <TreePrevew />
+          ) : (
+            <Inspector publish={publish} />
+          )
+        }
       </SidePanel>
       <Breadcrumbs publish={publish} />
     </ChromeWrapper>

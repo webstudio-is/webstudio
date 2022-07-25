@@ -10,7 +10,7 @@ import {
 } from "~/shared/design-system/components/primitives/dnd";
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import { primitives } from "~/shared/canvas-components";
-import { publish, type Instance } from "@webstudio-is/react-sdk";
+import { publish, useSubscribe, type Instance } from "@webstudio-is/react-sdk";
 
 // data shared between iframe and main window
 export type DropTargetSharedData = {
@@ -42,12 +42,7 @@ export const useDragAndDrop = () => {
       payload: {
         rect: dropTarget.rect,
         placementRect: placement.placementRect,
-
-        // @todo: adjust index if the parent stays the same
-        // (account for the item being removed from the old position)
-        // Can the hook do that for us automatically?
         position: placement.index,
-
         instanceId: dropTarget.data.id,
         instanceComponent: dropTarget.data.component,
       },
@@ -138,13 +133,20 @@ export const useDragAndDrop = () => {
         return;
       }
 
+      // @todo: If we can't find the data corresponding to the target element,
+      // should we climb up the DOM tree for another element?
+      // Should the hook do that for us?
+
       state.current.dragItem = instance;
 
       autoScrollHandlers.setEnabled(true);
 
-      publish<"dragStart", { dragItem: { instance: Instance } }>({
+      publish<
+        "dragStart",
+        { origin: "panel" | "canvas"; dragItem: { instance: Instance } }
+      >({
         type: "dragStart",
-        payload: { dragItem: { instance } },
+        payload: { origin: "canvas", dragItem: { instance } },
       });
     },
     onMove: (poiterCoordinate) => {
@@ -157,7 +159,10 @@ export const useDragAndDrop = () => {
       autoScrollHandlers.setEnabled(false);
       placementHandlers.handleEnd();
 
-      publish<"dragEnd">({ type: "dragEnd" });
+      publish<"dragEnd", { origin: "panel" | "canvas" }>({
+        type: "dragEnd",
+        payload: { origin: "canvas" },
+      });
 
       const { dropTarget, placement, dragItem } = state.current;
 
@@ -221,4 +226,60 @@ export const useDragAndDrop = () => {
     // @todo: need to make the dependencies more stable,
     // because as is this will fire on every render
   }, [dragProps, dropTargetHandlers, placementHandlers, autoScrollHandlers]);
+
+  // Handle drag from the panel
+  // ================================================================
+
+  useSubscribe<
+    "dragStart",
+    { origin: "panel" | "canvas"; dragItem: { instance: Instance } }
+  >("dragStart", ({ origin, dragItem }) => {
+    if (origin === "panel") {
+      state.current.dragItem = dragItem.instance;
+      autoScrollHandlers.setEnabled(true);
+    }
+  });
+
+  useSubscribe<"dragMove", { canvasCoordinates: { x: number; y: number } }>(
+    "dragMove",
+    ({ canvasCoordinates }) => {
+      dropTargetHandlers.handleMove(canvasCoordinates);
+      autoScrollHandlers.handleMove(canvasCoordinates);
+      placementHandlers.handleMove(canvasCoordinates);
+    }
+  );
+
+  useSubscribe<"dragEnd", { origin: "panel" | "canvas" }>(
+    "dragEnd",
+    ({ origin }) => {
+      if (origin === "panel") {
+        dropTargetHandlers.handleEnd();
+        autoScrollHandlers.setEnabled(false);
+        placementHandlers.handleEnd();
+
+        const { dropTarget, placement, dragItem } = state.current;
+
+        if (dropTarget && placement && dragItem) {
+          publish<
+            "insertInstance",
+            {
+              instance: Instance;
+              dropTarget: { instanceId: Instance["id"]; position: number };
+            }
+          >({
+            type: "insertInstance",
+            payload: {
+              instance: dragItem,
+              dropTarget: {
+                instanceId: dropTarget.data.id,
+                position: placement.index,
+              },
+            },
+          });
+        }
+
+        state.current = { ...initialState };
+      }
+    }
+  );
 };
