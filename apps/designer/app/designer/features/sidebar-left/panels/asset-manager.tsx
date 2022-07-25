@@ -15,13 +15,13 @@ export const TabContent = ({
 }) => {
   const newImages = useActionData();
 
-  const [assets, setAsssets] = useState(baseAssets);
+  const [assets, setAssets] = useState(baseAssets);
 
   useEffect(() => {
     if (newImages?.length) {
-      setAsssets((currentAssets) => [
+      setAssets((currentAssets) => [
         ...newImages,
-        ...currentAssets.filter((asset) => !("uploading" in asset)),
+        ...currentAssets.filter((asset) => asset.status !== "uploading"),
       ]);
     }
   }, [newImages]);
@@ -32,7 +32,7 @@ export const TabContent = ({
         <Heading>Assets</Heading>
         <AddAnAssetForm
           onSubmit={(uploadedAssets: Array<UploadingAsset>) =>
-            setAsssets((assets) => [...uploadedAssets, ...assets])
+            setAssets((assets) => [...uploadedAssets, ...assets])
           }
         />
       </Flex>
