@@ -233,7 +233,10 @@ export const PlacementIndicator = ({ rect }: { rect?: Rect }) => {
       css={{
         boxSizing: "content-box",
         position: "absolute",
-        border: "1px solid $grass9",
+
+        // @todo: this makes the line 2px longer that it should be.
+        // need to render it differently somehow.
+        border: "1px solid $blue9",
         pointerEvents: "none",
       }}
     />
