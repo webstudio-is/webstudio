@@ -5,7 +5,7 @@ export const loadByProject = async (
   projectId?: Project["id"]
 ): Promise<Asset[]> => {
   if (typeof projectId !== "string") {
-    throw new Error("Tree ID required");
+    throw new Error("Project ID required");
   }
 
   const assets = await prisma.asset.findMany({

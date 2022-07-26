@@ -2,13 +2,10 @@ import { ImageIcon } from "~/shared/icons";
 import { Flex, Grid, Heading } from "~/shared/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
-import { Asset as BaseAsset } from "@webstudio-is/prisma-client";
 import { AssetManagerImage } from "./components/image";
 
 import { AddAnAssetForm } from "./components/add-an-asset-form";
-import { UploadingAsset } from "../types";
-
-type Asset = BaseAsset | UploadingAsset;
+import { Asset } from "../types";
 
 export const useAssetsState = (baseAssets: Array<Asset>) => {
   const imageChanges = useActionData();

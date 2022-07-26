@@ -9,9 +9,8 @@ import {
 import { useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
-import { Asset } from "@webstudio-is/prisma-client";
 import { useSubmit } from "@remix-run/react";
-import { UploadingAsset } from "../../types";
+import { Asset } from "~/designer/features/sidebar-left/types";
 import { Cross2Icon } from "@radix-ui/react-icons";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
@@ -27,13 +26,7 @@ const useImageWithFallback = ({ path }: { path: string }) => {
   return src;
 };
 
-export const AssetManagerImage = ({
-  path,
-  alt,
-  status,
-  name,
-  id,
-}: Asset | UploadingAsset) => {
+export const AssetManagerImage = ({ path, alt, status, name, id }: Asset) => {
   const submit = useSubmit();
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });

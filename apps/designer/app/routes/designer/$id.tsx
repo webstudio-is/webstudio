@@ -38,17 +38,28 @@ type Error = {
 
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
-  if (request.method === "DELETE") {
-    const formData = await request.formData();
-    if (formData.get("assetId")) {
-      const id = formData.get("assetId") as string;
-      const name = formData.get("assetName") as string;
-      const deletedAsset = await deleteAsset({ id, name, dirname: __dirname });
+  try {
+    if (request.method === "DELETE") {
+      const formData = await request.formData();
+      if (formData.get("assetId")) {
+        const id = formData.get("assetId") as string;
+        const name = formData.get("assetName") as string;
+        const deletedAsset = await deleteAsset({
+          id,
+          name,
+          dirname: __dirname,
+        });
 
-      return { deletedAsset };
+        return { deletedAsset };
+      }
     }
-
-    return {};
+    return { errors: "No asset was passed" };
+  } catch (error) {
+    if (error instanceof Error) {
+      return {
+        errors: error.message,
+      };
+    }
   }
   if (request.method === "POST") {
     try {
