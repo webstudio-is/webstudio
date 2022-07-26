@@ -24,7 +24,8 @@ const Content = styled(TooltipPrimitive.Content, {
   variants: {
     multiline: {
       true: {
-        maxWidth: 250,
+        // @todo makew this part of the design system
+        maxWidth: 110,
         pb: 7,
       },
     },

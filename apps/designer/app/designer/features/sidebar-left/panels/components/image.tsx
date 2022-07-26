@@ -98,6 +98,7 @@ export const AssetManagerImage = ({ path, alt, status, name, id }: Asset) => {
           >
             <Button
               variant="raw"
+              title="Delete asset"
               onClick={() => setTolltipOpen(true)}
               css={{
                 position: "absolute",

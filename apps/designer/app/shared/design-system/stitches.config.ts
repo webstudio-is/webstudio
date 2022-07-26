@@ -118,22 +118,6 @@ import {
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
-const commonSpace = {
-  1: "4px",
-  2: "8px",
-  3: "16px",
-  4: "24px",
-  5: "32px",
-  6: "48px",
-  7: "56px",
-  8: "64px",
-  9: "72px",
-  10: "80px",
-  11: "88px",
-  12: "96px",
-  13: "104px",
-};
-
 export const {
   styled,
   css,
@@ -226,10 +210,26 @@ export const {
       mono: "Söhne Mono, menlo, monospace",
     },
     space: {
-      ...commonSpace,
+      1: "5px",
+      2: "10px",
+      3: "15px",
+      4: "20px",
+      5: "25px",
+      6: "35px",
+      7: "45px",
+      8: "65px",
+      9: "80px",
     },
     sizes: {
-      ...commonSpace,
+      1: "5px",
+      2: "10px",
+      3: "15px",
+      4: "20px",
+      5: "25px",
+      6: "35px",
+      7: "45px",
+      8: "65px",
+      9: "80px",
     },
     // space: {
     //   1: '4px',
