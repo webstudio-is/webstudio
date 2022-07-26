@@ -57,7 +57,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 
       return { deletedAsset };
     }
-    return { errors: "No asset was passed" };
   } catch (error) {
     if (error instanceof Error) {
       return {
