@@ -39,12 +39,14 @@ export const AssetManagerThumbnail = ({
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
   const [isToolTipOpen, setTolltipOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
+
+  const closeTooltip = () => setTolltipOpen(false);
+
   const tooltipRef = useRef(null);
-  useClickAway(tooltipRef, () => {
-    setTolltipOpen(false);
-  });
-  useHotkeys(shortcuts["escape"], () => setTolltipOpen(false));
+  useClickAway(tooltipRef, closeTooltip);
+  useHotkeys(shortcuts["escape"], closeTooltip);
 
   // @todo rewrite this fake indication to show real progress
   useInterval(
@@ -53,16 +55,18 @@ export const AssetManagerThumbnail = ({
         percentage < 60 ? percentage + 1 : percentage
       );
     },
-    isUploading ? 100 : null
+    isUploading || isDeleting ? 100 : null
   );
 
   const deleteAsset = () => {
     const formData = new FormData();
     formData.append("assetId", id);
     formData.append("assetName", name);
-    setTolltipOpen(false);
+    closeTooltip();
+    setIsDeleting(true);
     submit(formData, { method: "delete" });
   };
+
   return (
     <Box
       title={alt || ""}
@@ -90,37 +94,36 @@ export const AssetManagerThumbnail = ({
         }}
       ></Box>
       {!isUploading && (
-        <Box ref={tooltipRef}>
-          <Tooltip
-            open={isToolTipOpen}
-            multiline
-            content={
-              <Flex direction="column" gap={1} align="center" justify="center">
-                Are you sure you want to delete this asset?
-                <Button variant="red" onClick={deleteAsset}>
-                  Delete
-                </Button>
-              </Flex>
-            }
+        <Tooltip
+          ref={tooltipRef}
+          open={isToolTipOpen}
+          multiline
+          content={
+            <Flex direction="column" gap={1} align="center" justify="center">
+              Are you sure you want to delete this asset?
+              <Button variant="red" onClick={deleteAsset}>
+                Delete
+              </Button>
+            </Flex>
+          }
+        >
+          <Button
+            variant="raw"
+            title="Delete asset"
+            onClick={() => setTolltipOpen(true)}
+            css={{
+              position: "absolute",
+              top: "$1",
+              right: "$1",
+              cursor: "pointer",
+              color: "$highContrast",
+            }}
           >
-            <Button
-              variant="raw"
-              title="Delete asset"
-              onClick={() => setTolltipOpen(true)}
-              css={{
-                position: "absolute",
-                top: "$1",
-                right: "$1",
-                cursor: "pointer",
-                color: "$highContrast",
-              }}
-            >
-              <Cross2Icon />
-            </Button>
-          </Tooltip>
-        </Box>
+            <Cross2Icon />
+          </Button>
+        </Tooltip>
       )}
-      {isUploading && (
+      {(isUploading || isDeleting) && (
         <ProgressBar
           value={progressBarPercentage}
           max={60}

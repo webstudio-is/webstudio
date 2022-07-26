@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Ref } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
@@ -39,16 +39,19 @@ const Arrow = styled(TooltipPrimitive.Arrow, {
   marginTop: -0.5,
 });
 
-export const Tooltip = ({
-  children,
-  content,
-  open,
-  defaultOpen,
-  onOpenChange,
-  multiline,
-  delayDuration,
-  ...props
-}: TooltipProps) => {
+export const Tooltip = React.forwardRef(function TooltipWrapper(
+  {
+    children,
+    content,
+    open,
+    defaultOpen,
+    onOpenChange,
+    multiline,
+    delayDuration,
+    ...props
+  }: TooltipProps,
+  ref: Ref<HTMLDivElement>
+) {
   return (
     <TooltipPrimitive.Root
       open={open}
@@ -59,6 +62,7 @@ export const Tooltip = ({
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 
       <Content
+        ref={ref}
         side="top"
         align="center"
         sideOffset={5}
@@ -81,4 +85,4 @@ export const Tooltip = ({
       </Content>
     </TooltipPrimitive.Root>
   );
-};
+});
