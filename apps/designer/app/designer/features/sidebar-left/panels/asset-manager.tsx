@@ -42,7 +42,7 @@ export const TabContent = ({
   const { assets, onUploadAsset } = useAssetsState(baseAssets);
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-      <Flex justify="between">
+      <Flex justify="between" align="center">
         <Heading>Assets</Heading>
         <AddAnAssetForm onSubmit={onUploadAsset} />
       </Flex>

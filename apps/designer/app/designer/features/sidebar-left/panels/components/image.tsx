@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -6,7 +6,7 @@ import {
   ProgressBar,
   Tooltip,
 } from "~/shared/design-system";
-import { useInterval } from "react-use";
+import { useClickAway, useInterval, useKey } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { useSubmit } from "@remix-run/react";
@@ -32,6 +32,11 @@ export const AssetManagerImage = ({ path, alt, status, name, id }: Asset) => {
   const src = useImageWithFallback({ path });
   const [isToolTipOpen, setTolltipOpen] = useState(false);
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
+  const tooltipRef = useRef(null);
+  useClickAway(tooltipRef, () => {
+    setTolltipOpen(false);
+  });
+  useKey("Escape", () => setTolltipOpen(false));
 
   // @todo rewrite this fake indication to show real progress
   useInterval(
@@ -77,33 +82,35 @@ export const AssetManagerImage = ({ path, alt, status, name, id }: Asset) => {
         }}
       ></Box>
       {!isUploading && (
-        <Tooltip
-          css={{ maxWidth: "$10" }}
-          open={isToolTipOpen}
-          multiline
-          content={
-            <Flex direction="column" gap={1} align="center" justify="center">
-              Are you sure you want to delete this asset?
-              <Button variant="red" onClick={deleteAsset}>
-                Delete
-              </Button>
-            </Flex>
-          }
-        >
-          <Button
-            variant="raw"
-            onClick={() => setTolltipOpen(true)}
-            css={{
-              position: "absolute",
-              top: "$1",
-              right: "$1",
-              cursor: "pointer",
-              color: "$highContrast",
-            }}
+        <Box ref={tooltipRef}>
+          <Tooltip
+            css={{ maxWidth: "$13" }}
+            open={isToolTipOpen}
+            multiline
+            content={
+              <Flex direction="column" gap={1} align="center" justify="center">
+                Are you sure you want to delete this asset?
+                <Button variant="red" onClick={deleteAsset}>
+                  Delete
+                </Button>
+              </Flex>
+            }
           >
-            <Cross2Icon />
-          </Button>
-        </Tooltip>
+            <Button
+              variant="raw"
+              onClick={() => setTolltipOpen(true)}
+              css={{
+                position: "absolute",
+                top: "$1",
+                right: "$1",
+                cursor: "pointer",
+                color: "$highContrast",
+              }}
+            >
+              <Cross2Icon />
+            </Button>
+          </Tooltip>
+        </Box>
       )}
       {isUploading && (
         <ProgressBar
