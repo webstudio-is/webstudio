@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Box, ProgressBar } from "~/shared/design-system";
+import { Box, Button, ProgressBar } from "~/shared/design-system";
 import { useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { Asset } from "@webstudio-is/prisma-client";
+import { useSubmit } from "@remix-run/react";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -22,11 +23,14 @@ export const AssetManagerImage = ({
   path,
   alt,
   status,
+  id,
 }: {
+  id: string;
   path: string;
   alt?: string;
   status?: Asset["status"];
 }) => {
+  const submit = useSubmit();
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
@@ -41,6 +45,11 @@ export const AssetManagerImage = ({
     isUploading ? 100 : null
   );
 
+  const deleteAsset = () => {
+    const formData = new FormData();
+    formData.append("assetId", id);
+    submit(formData, { method: "delete" });
+  };
   return (
     <Box
       title={alt || ""}
@@ -67,6 +76,9 @@ export const AssetManagerImage = ({
           ...(isUploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
         }}
       ></Box>
+      <Button onClick={deleteAsset} css={{ position: "relative" }}>
+        Remove
+      </Button>
       {isUploading && (
         <ProgressBar
           value={progressBarPercentage}

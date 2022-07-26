@@ -9,7 +9,10 @@ import { uploadAssets } from "~/shared/db/misc.server";
 import { ErrorMessage } from "~/shared/error";
 // if this file does not end in .server remix will not build
 // since it only allows node code in those files
-import { loadByProject } from "@webstudio-is/asset-uploader/index.server";
+import {
+  deleteAsset,
+  loadByProject,
+} from "@webstudio-is/asset-uploader/index.server";
 
 export { links };
 
@@ -35,6 +38,17 @@ type Error = {
 
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
+  if (request.method === "DELETE") {
+    const formData = await request.formData();
+    if (formData.get("assetId")) {
+      const id = formData.get("assetId") as string;
+      const deletedAsset = await deleteAsset(id);
+
+      return { deletedAsset };
+    }
+
+    return {};
+  }
   if (request.method === "POST") {
     try {
       const assets = await uploadAssets({
@@ -42,10 +56,12 @@ export const action: ActionFunction = async ({ request, params }) => {
         projectId: params.id,
         dirname: __dirname,
       });
-      return assets.map((asset: Asset) => ({
-        ...asset,
-        status: "uploaded",
-      }));
+      return {
+        uploadedAssets: assets.map((asset: Asset) => ({
+          ...asset,
+          status: "uploaded",
+        })),
+      };
     } catch (error) {
       if (error instanceof Error) {
         return {
