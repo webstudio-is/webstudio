@@ -3,6 +3,7 @@ import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
 import { Text } from "./text";
+import type { CSS } from "@webstudio-is/react-sdk";
 
 type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
   React.ComponentProps<typeof TooltipPrimitive.Content> & {
@@ -10,6 +11,7 @@ type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
     content: React.ReactNode;
     multiline?: boolean;
     delayDuration?: number;
+    css?: CSS;
   };
 
 const Content = styled(TooltipPrimitive.Content, {
@@ -27,6 +29,13 @@ const Content = styled(TooltipPrimitive.Content, {
       },
     },
   },
+});
+
+const Arrow = styled(TooltipPrimitive.Arrow, {
+  fill: "$loContrast",
+  stroke: "$slate7",
+  strokeWidth: "$1",
+  marginTop: -0.5,
 });
 
 export const Tooltip = ({
@@ -66,14 +75,7 @@ export const Tooltip = ({
           {content}
         </Text>
         <Box css={{ color: "$transparentExtreme" }}>
-          <TooltipPrimitive.Arrow
-            offset={5}
-            width={11}
-            height={5}
-            style={{
-              fill: "$loContrast",
-            }}
-          />
+          <Arrow offset={5} width={11} height={5} />
         </Box>
       </Content>
     </TooltipPrimitive.Root>

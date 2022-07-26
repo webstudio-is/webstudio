@@ -219,6 +219,7 @@ export const {
       7: "45px",
       8: "65px",
       9: "80px",
+      10: "105px",
     },
     sizes: {
       1: "5px",
@@ -230,6 +231,7 @@ export const {
       7: "45px",
       8: "65px",
       9: "80px",
+      10: "105px",
     },
     // space: {
     //   1: '4px',
