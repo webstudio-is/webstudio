@@ -5,6 +5,7 @@ import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { Asset } from "@webstudio-is/prisma-client";
 import { useSubmit } from "@remix-run/react";
+import { UploadingAsset } from "../../types";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -23,13 +24,9 @@ export const AssetManagerImage = ({
   path,
   alt,
   status,
+  name,
   id,
-}: {
-  id: string;
-  path: string;
-  alt?: string;
-  status?: Asset["status"];
-}) => {
+}: Asset | UploadingAsset) => {
   const submit = useSubmit();
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
@@ -48,6 +45,7 @@ export const AssetManagerImage = ({
   const deleteAsset = () => {
     const formData = new FormData();
     formData.append("assetId", id);
+    formData.append("assetName", name);
     submit(formData, { method: "delete" });
   };
   return (

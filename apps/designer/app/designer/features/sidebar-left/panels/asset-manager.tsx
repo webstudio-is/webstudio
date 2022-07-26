@@ -51,13 +51,7 @@ export const TabContent = ({
       </Flex>
       <Grid columns={2} gap={2}>
         {assets.map((asset) => (
-          <AssetManagerImage
-            key={asset.id}
-            path={asset.path}
-            alt={asset.alt || asset.name}
-            status={asset.status}
-            id={asset.id}
-          />
+          <AssetManagerImage key={asset.id} {...asset} />
         ))}
       </Grid>
     </Flex>

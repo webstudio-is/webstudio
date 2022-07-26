@@ -14,7 +14,7 @@ import {
   getFilenameAndExtension,
 } from "../../helpers/array-buffer-helpers";
 import { Location } from "@webstudio-is/prisma-client";
-import { s3Client } from "./client";
+import { getS3Client } from "./client";
 
 type S3UploadHandler = ({
   file,
@@ -58,7 +58,7 @@ export const s3UploadHandler: S3UploadHandler = async ({
     },
   };
 
-  const upload = new Upload({ client: s3Client, params });
+  const upload = new Upload({ client: getS3Client(), params });
 
   ImagesUploadedSuccess.parse(await upload.done());
   const image = sharp(uint8Array);
