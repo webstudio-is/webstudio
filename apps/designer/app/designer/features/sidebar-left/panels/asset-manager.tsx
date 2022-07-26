@@ -2,7 +2,7 @@ import { ImageIcon } from "~/shared/icons";
 import { Flex, Grid, Heading } from "~/shared/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
-import { AssetManagerImage } from "./components/image";
+import { AssetManagerThumbnail } from "./components/thumbnail";
 
 import { AddAnAssetForm } from "./components/add-an-asset-form";
 import { Asset } from "../types";
@@ -48,7 +48,7 @@ export const TabContent = ({
       </Flex>
       <Grid columns={2} gap={2}>
         {assets.map((asset) => (
-          <AssetManagerImage key={asset.id} {...asset} />
+          <AssetManagerThumbnail key={asset.id} {...asset} />
         ))}
       </Grid>
     </Flex>

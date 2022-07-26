@@ -6,12 +6,14 @@ import {
   ProgressBar,
   Tooltip,
 } from "~/shared/design-system";
-import { useClickAway, useInterval, useKey } from "react-use";
+import { useClickAway, useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { useSubmit } from "@remix-run/react";
 import { Asset } from "~/designer/features/sidebar-left/types";
 import { Cross2Icon } from "@radix-ui/react-icons";
+import { useHotkeys } from "react-hotkeys-hook";
+import { shortcuts } from "~/shared/shortcuts";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -26,7 +28,13 @@ const useImageWithFallback = ({ path }: { path: string }) => {
   return src;
 };
 
-export const AssetManagerImage = ({ path, alt, status, name, id }: Asset) => {
+export const AssetManagerThumbnail = ({
+  path,
+  alt,
+  status,
+  name,
+  id,
+}: Asset) => {
   const submit = useSubmit();
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
@@ -36,7 +44,7 @@ export const AssetManagerImage = ({ path, alt, status, name, id }: Asset) => {
   useClickAway(tooltipRef, () => {
     setTolltipOpen(false);
   });
-  useKey("Escape", () => setTolltipOpen(false));
+  useHotkeys(shortcuts["escape"], () => setTolltipOpen(false));
 
   // @todo rewrite this fake indication to show real progress
   useInterval(
@@ -84,7 +92,6 @@ export const AssetManagerImage = ({ path, alt, status, name, id }: Asset) => {
       {!isUploading && (
         <Box ref={tooltipRef}>
           <Tooltip
-            css={{ maxWidth: "$13" }}
             open={isToolTipOpen}
             multiline
             content={
