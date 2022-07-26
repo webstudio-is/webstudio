@@ -42,7 +42,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const formData = await request.formData();
     if (formData.get("assetId")) {
       const id = formData.get("assetId") as string;
-      const deletedAsset = await deleteAsset(id);
+      const deletedAsset = await deleteAsset({ id });
 
       return { deletedAsset };
     }
