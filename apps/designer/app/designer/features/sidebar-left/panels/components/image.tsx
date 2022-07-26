@@ -31,6 +31,7 @@ export const AssetManagerImage = ({
   const src = useImageWithFallback({ path });
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
 
+  @todo rewrite this fake indication to show real progress
   useInterval(
     () => {
       setProgressBarPercentage((percentage) =>
