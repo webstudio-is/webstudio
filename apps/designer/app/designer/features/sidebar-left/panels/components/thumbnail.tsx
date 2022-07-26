@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -6,14 +6,12 @@ import {
   ProgressBar,
   Tooltip,
 } from "~/shared/design-system";
-import { useClickAway, useInterval } from "react-use";
+import { useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { useSubmit } from "@remix-run/react";
 import { Asset } from "~/designer/features/sidebar-left/types";
 import { Cross2Icon } from "@radix-ui/react-icons";
-import { useHotkeys } from "react-hotkeys-hook";
-import { shortcuts } from "~/shared/shortcuts";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -38,15 +36,11 @@ export const AssetManagerThumbnail = ({
   const submit = useSubmit();
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
-  const [isToolTipOpen, setTolltipOpen] = useState(false);
+  const [isTooltipOpen, setTolltipOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
 
   const closeTooltip = () => setTolltipOpen(false);
-
-  const tooltipRef = useRef(null);
-  useClickAway(tooltipRef, closeTooltip);
-  useHotkeys(shortcuts["escape"], closeTooltip);
 
   // @todo rewrite this fake indication to show real progress
   useInterval(
@@ -95,9 +89,10 @@ export const AssetManagerThumbnail = ({
       ></Box>
       {!isUploading && (
         <Tooltip
-          ref={tooltipRef}
-          open={isToolTipOpen}
+          open={isTooltipOpen}
           multiline
+          onEscapeKeyDown={closeTooltip}
+          onPointerDownOutside={closeTooltip}
           content={
             <Flex direction="column" gap={1} align="center" justify="center">
               Are you sure you want to delete this asset?

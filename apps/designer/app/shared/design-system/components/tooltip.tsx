@@ -20,6 +20,8 @@ const Content = styled(TooltipPrimitive.Content, {
   color: "$hiContrast",
   borderRadius: "$1",
   padding: "$1 $2",
+  zIndex: "$max",
+  position: "relative",
 
   variants: {
     multiline: {
