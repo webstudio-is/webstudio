@@ -27,18 +27,18 @@ export const AssetManagerImage = ({
   alt?: string;
   status?: Asset["status"];
 }) => {
-  const uploading = status === "uploading";
+  const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
 
-  @todo rewrite this fake indication to show real progress
+  // @todo rewrite this fake indication to show real progress
   useInterval(
     () => {
       setProgressBarPercentage((percentage) =>
         percentage < 60 ? percentage + 1 : percentage
       );
     },
-    uploading ? 100 : null
+    isUploading ? 100 : null
   );
 
   return (
@@ -64,10 +64,10 @@ export const AssetManagerImage = ({
           position: "absolute",
           left: 0,
           top: 0,
-          ...(uploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
+          ...(isUploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
         }}
       ></Box>
-      {uploading && (
+      {isUploading && (
         <ProgressBar
           value={progressBarPercentage}
           max={60}
