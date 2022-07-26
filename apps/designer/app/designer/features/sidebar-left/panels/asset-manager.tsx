@@ -16,9 +16,9 @@ export const useAssetsState = (baseAssets: Array<Asset>) => {
   const [assets, setAssets] = useState<Asset[]>(baseAssets);
 
   useEffect(() => {
-    if (imageChanges?.uploadAssets?.length) {
+    if (imageChanges?.uploadedAssets?.length) {
       setAssets((currentAssets) => [
-        ...imageChanges.uploadAsset,
+        ...imageChanges.uploadedAssets,
         ...currentAssets.filter((asset) => asset.status !== "uploading"),
       ]);
     }

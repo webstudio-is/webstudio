@@ -83,33 +83,35 @@ export const AssetManagerImage = ({
           ...(isUploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
         }}
       ></Box>
-      <Tooltip
-        css={{ maxWidth: "$10" }}
-        open={isToolTipOpen}
-        multiline
-        content={
-          <Flex direction="column" gap={1} align="center" justify="center">
-            Are you sure you want to delete this asset?
-            <Button variant="red" onClick={deleteAsset}>
-              Delete
-            </Button>
-          </Flex>
-        }
-      >
-        <Button
-          variant="raw"
-          onClick={() => setTolltipOpen(true)}
-          css={{
-            position: "absolute",
-            top: "$1",
-            right: "$1",
-            cursor: "pointer",
-            color: "$highContrast",
-          }}
+      {!isUploading && (
+        <Tooltip
+          css={{ maxWidth: "$10" }}
+          open={isToolTipOpen}
+          multiline
+          content={
+            <Flex direction="column" gap={1} align="center" justify="center">
+              Are you sure you want to delete this asset?
+              <Button variant="red" onClick={deleteAsset}>
+                Delete
+              </Button>
+            </Flex>
+          }
         >
-          <Cross2Icon />
-        </Button>
-      </Tooltip>
+          <Button
+            variant="raw"
+            onClick={() => setTolltipOpen(true)}
+            css={{
+              position: "absolute",
+              top: "$1",
+              right: "$1",
+              cursor: "pointer",
+              color: "$highContrast",
+            }}
+          >
+            <Cross2Icon />
+          </Button>
+        </Tooltip>
+      )}
       {isUploading && (
         <ProgressBar
           value={progressBarPercentage}
