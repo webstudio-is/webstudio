@@ -13,6 +13,7 @@ import {
   deleteAsset,
   loadByProject,
 } from "@webstudio-is/asset-uploader/index.server";
+import { zfd } from "zod-form-data";
 
 export { links };
 
@@ -36,22 +37,25 @@ type Error = {
   errors: "string";
 };
 
+const deleteAssetSchema = zfd.formData({
+  assetId: zfd.text(),
+  assetName: zfd.text(),
+});
+
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
   try {
     if (request.method === "DELETE") {
-      const formData = await request.formData();
-      if (formData.get("assetId")) {
-        const id = formData.get("assetId") as string;
-        const name = formData.get("assetName") as string;
-        const deletedAsset = await deleteAsset({
-          id,
-          name,
-          dirname: __dirname,
-        });
+      const { assetId, assetName } = deleteAssetSchema.parse(
+        await request.formData()
+      );
+      const deletedAsset = await deleteAsset({
+        id: assetId,
+        name: assetName,
+        dirname: __dirname,
+      });
 
-        return { deletedAsset };
-      }
+      return { deletedAsset };
     }
     return { errors: "No asset was passed" };
   } catch (error) {

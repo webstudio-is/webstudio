@@ -19,23 +19,22 @@ export const deleteAsset = async ({
   const currentAsset = await prisma?.asset.findUnique({
     where: { id },
   });
-  if (currentAsset && currentAsset.name) {
-    if (currentAsset.location === "REMOTE") {
-      const s3Envs = s3EnvVariables.parse(process.env);
-      await getS3Client().send(
-        new DeleteObjectCommand({
-          Bucket: s3Envs.S3_BUCKET,
-          Key: name,
-        })
-      );
+  if (!currentAsset) throw new Error("Asset does not exist");
 
-      return await deleteAssetInDb(id);
-    } else {
-      const directory = await getImageLocalDirectory(dirname);
-      await unlink(path.join(directory, name));
+  if (currentAsset.location === "REMOTE") {
+    const s3Envs = s3EnvVariables.parse(process.env);
+    await getS3Client().send(
+      new DeleteObjectCommand({
+        Bucket: s3Envs.S3_BUCKET,
+        Key: name,
+      })
+    );
 
-      return await deleteAssetInDb(id);
-    }
+    return await deleteAssetInDb(id);
+  } else {
+    const directory = await getImageLocalDirectory(dirname);
+    await unlink(path.join(directory, name));
+
+    return await deleteAssetInDb(id);
   }
-  throw new Error("Asset does not exist");
 };
