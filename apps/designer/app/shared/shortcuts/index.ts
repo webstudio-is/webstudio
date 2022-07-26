@@ -9,7 +9,6 @@ export const shortcuts = {
     .map((_, index) => `cmd+${index + 1}, ctrl+${index + 1}`)
     .join(", "),
   zoom: "cmd+=, ctrl+=, cmd+-, ctrl+-",
-  escape: "escape",
 } as const;
 
 export const options = { splitKey: "+", keydown: true };
