@@ -4,7 +4,7 @@ import {
   AccessibleIcon,
   styled,
   Box,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { CheckIcon, DotsHorizontalIcon } from "@webstudio-is/icons";
 import { useSyncStatus } from "../../shared/nano-states";
 

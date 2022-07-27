@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { styled } from "~/shared/design-system";
+import { styled } from "@webstudio-is/design-system";
 import { type Instance, components } from "@webstudio-is/react-sdk";
 
 type LabelPosition = "top" | "inside" | "bottom";

@@ -7,7 +7,7 @@ import {
   Button,
   keyframes,
   styled,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
 import noop from "lodash.noop";
 

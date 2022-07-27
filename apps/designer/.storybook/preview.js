@@ -1,5 +1,5 @@
 import React from "react";
-import { globalCss, darkTheme } from "../app/shared/design-system";
+import { globalCss, darkTheme } from "@webstudio-is/design-system";
 
 const globalStyles = globalCss({
   body: {

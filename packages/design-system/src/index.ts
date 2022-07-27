@@ -15,7 +15,7 @@ export {
 export * as Collapsible from "@radix-ui/react-collapsible";
 export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * as Portal from "@radix-ui/react-portal";
-
+export * from "@radix-ui/react-id";
 export { Container } from "./components/container";
 export { Label } from "./components/label";
 export * as ToggleGroup from "./components/toggle-group";
@@ -57,3 +57,5 @@ export * from "./components/slider";
 export * from "./components/control-group";
 export * from "./components/radio";
 export * from "./components/combobox";
+export * from "./components/checkbox";
+export * from "./components/avatar";
