@@ -12,7 +12,7 @@ import {
   LaptopIcon,
   MobileIcon,
   TabletIcon,
-} from "~/shared/icons";
+} from "@webstudio-is/icons";
 
 type TriggerButtonProps = ComponentProps<typeof Button>;
 
