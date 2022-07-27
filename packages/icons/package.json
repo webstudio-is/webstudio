@@ -6,6 +6,7 @@
   "homepage": "https://webstudio.is",
   "scripts": {
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
+    "build": "rm -fr lib && tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint"
