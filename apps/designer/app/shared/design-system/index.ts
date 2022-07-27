@@ -39,6 +39,7 @@ export { Tooltip } from "./components/tooltip";
 export { Button } from "./components/button";
 export { IconButton } from "./components/icon-button";
 export { Box } from "./components/box";
+export { ProgressBar } from "./components/progress-bar";
 export {
   Popover,
   PopoverContent,

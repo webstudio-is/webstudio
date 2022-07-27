@@ -1,5 +1,6 @@
 import { type Location, prisma, Project } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
+import { getAssetPath } from "../helpers/get-asset-path";
 
 export const create = async (
   projectId: Project["id"],
@@ -24,5 +25,8 @@ export const create = async (
     },
   });
 
-  return newAsset;
+  return {
+    ...newAsset,
+    path: getAssetPath(newAsset),
+  };
 };
