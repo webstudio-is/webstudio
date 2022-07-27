@@ -15,15 +15,20 @@ import {
   Link,
 } from "~/shared/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
+import env from "~/shared/env";
 
 type PublishButtonProps = { project: Project };
 
-const host =
-  typeof location === "object"
-    ? location.host.includes("webstudio.is")
-      ? "wstd.io"
-      : location.host
-    : "";
+const host = () => {
+  if (env.EDGE_DEPLOYMENT && env.EDGE_DOMAIN) {
+    return env.EDGE_DOMAIN;
+  }
+  if (typeof location === "object") {
+    if (location.host.includes("webstudio.is")) return "wstd.io";
+    else return location.host;
+  }
+  return "";
+};
 
 const Content = ({ project }: PublishButtonProps) => {
   const id = useId();
@@ -35,7 +40,7 @@ const Content = ({ project }: PublishButtonProps) => {
     if (typeof location !== "object" || !domain) {
       return;
     }
-    setUrl(`${location.protocol}//${domain}.${host}`);
+    setUrl(`${location.protocol}//${domain}.${host()}`);
   }, [domain]);
 
   return (
@@ -64,7 +69,7 @@ const Content = ({ project }: PublishButtonProps) => {
                   textOverflow: "ellipsis",
                 }}
               >
-                {`${domain}.${host}`}{" "}
+                {`${domain}.${host()}`}{" "}
               </Text>
               <ExternalLinkIcon />
             </Link>
