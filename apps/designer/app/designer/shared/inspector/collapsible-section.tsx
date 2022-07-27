@@ -1,6 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { Box, Flex, Text, Collapsible } from "~/shared/design-system";
-import { ChevronDownIcon, ChevronRightIcon } from "~/shared/icons";
+import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
 
 type CollapsibleSectionProps = {
   label: string;

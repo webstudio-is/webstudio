@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useRef } from "react";
-import { type Instance, publish, useSubscribe } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  publish,
+  useSubscribe,
+  components,
+} from "@webstudio-is/react-sdk";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { findInstanceById } from "~/shared/tree-utils";
-import { primitives } from "~/shared/canvas-components";
 
 const eventOptions = {
   passive: true,
@@ -83,10 +87,10 @@ export const useTrackSelectedElement = () => {
       // It's the second click in a double click.
       if (event.detail === 2) {
         const component = dataset.component as Instance["component"];
-        if (component === undefined || component in primitives === false) {
+        if (component === undefined || component in components === false) {
           return;
         }
-        const { isInlineOnly, isContentEditable } = primitives[component];
+        const { isInlineOnly, isContentEditable } = components[component];
 
         if (isContentEditable === false) {
           return;

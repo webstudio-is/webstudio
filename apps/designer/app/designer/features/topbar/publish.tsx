@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
 import { useId } from "@radix-ui/react-id";
-import { RocketIcon, ExternalLinkIcon } from "~/shared/icons";
+import { RocketIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import { type Project } from "@webstudio-is/prisma-client";
 import {
   Button,

@@ -1,5 +1,5 @@
 import React from "react";
-import { CheckIcon } from "~/shared/icons";
+import { CheckIcon } from "@webstudio-is/icons";
 import { styled, CSS } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { menuCss, separatorCss, itemCss, labelCss } from "./menu";
