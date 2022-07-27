@@ -1,5 +1,5 @@
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import { Button, Flex, Text, darkTheme } from "~/shared/design-system";
+import { Button, Flex, Text, darkTheme } from "@webstudio-is/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
 import { type Publish, type Instance } from "@webstudio-is/react-sdk";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";

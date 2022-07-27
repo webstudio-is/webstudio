@@ -10,7 +10,7 @@ import {
   Button,
   Heading,
   Text,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 
 type SelectProjectProjectCardProps = {
   projects: Array<{ id: string; title: string }>;

@@ -2,7 +2,7 @@ import {
   insertCriticalCss as insert,
   getCssText as getCanvasCssText,
 } from "@webstudio-is/react-sdk";
-import { getCssText as getDesignerCssText } from "~/shared/design-system";
+import { getCssText as getDesignerCssText } from "@webstudio-is/design-system";
 import config from "./config";
 
 const getCssTextFunctions = {

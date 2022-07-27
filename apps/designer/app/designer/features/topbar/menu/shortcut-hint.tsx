@@ -1,4 +1,4 @@
-import { Text } from "~/shared/design-system";
+import { Text } from "@webstudio-is/design-system";
 
 const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;

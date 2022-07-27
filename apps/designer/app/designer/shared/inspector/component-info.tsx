@@ -1,5 +1,5 @@
 import { components } from "@webstudio-is/react-sdk";
-import { Flex, Text } from "~/shared/design-system";
+import { Flex, Text } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 export const ComponentInfo = ({

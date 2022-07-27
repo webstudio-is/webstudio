@@ -10,8 +10,8 @@ import {
   Switch,
   Text,
   TextField,
-} from "~/shared/design-system";
-import { Checkbox } from "~/shared/design-system/components/checkbox";
+} from "@webstudio-is/design-system";
+import { Checkbox } from "@webstudio-is/design-system";
 
 type BaseControlProps<T = UserProp["value"]> = {
   value?: T;

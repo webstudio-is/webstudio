@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   TextField,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
 import { type Project } from "@webstudio-is/prisma-client";
 import { useIsShareDialogOpen } from "../../shared/nano-states";

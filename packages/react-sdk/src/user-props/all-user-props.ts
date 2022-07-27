@@ -15,6 +15,7 @@ export const useAllUserProps = (initialUserProps?: Array<InstanceProps>) => {
     }
     //We don't need to trigger rerender when setting the initial value
     allUserPropsContainer.value = propsMap;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return useValue(allUserPropsContainer);
 };

@@ -21,7 +21,9 @@ export const propsToArgTypes = (
   const filterFn = filter ?? validAttributes;
   const entries = Object.entries(props);
   return entries.reduce((result, current) => {
-    const [propName, prop] = current;
+    // @todo need halp
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [propName, prop] = current as any;
 
     // Filter out props
     if (!filterFn(prop)) {
@@ -39,7 +41,7 @@ const matchers = {
   date: /Date$/,
 };
 
-export const mapControlForType = (propItem: PropItem): any => {
+export const mapControlForType = (propItem: PropItem) => {
   const { type, name } = propItem;
   if (!type) {
     return undefined;
@@ -76,7 +78,7 @@ export const mapControlForType = (propItem: PropItem): any => {
       const { value } = type;
       // Remove additional quotes from enum values
       // @ts-expect-error Original type has `any` type
-      const values = value.map((val) => val.value.replace(/^\"(.+)\"$/, "$1"));
+      const values = value.map((val) => val.value.replace(/^"(.+)"$/, "$1"));
       return {
         control: { type: values?.length <= 5 ? "radio" : "select" },
         options: values,

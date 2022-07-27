@@ -1,5 +1,5 @@
-import { ChevronDownIcon } from "@radix-ui/react-icons";
-import { Avatar } from "~/shared/design-system/components/avatar";
+import { ChevronDownIcon } from "@webstudio-is/icons";
+import { Avatar } from "@webstudio-is/design-system";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -8,7 +8,7 @@ import {
   Button,
   Text,
   Flex,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { User } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
 

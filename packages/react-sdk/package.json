@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "build:lib": "rm -fr lib && tsc",
     "test": "jest",
-    "checks": "yarn typecheck && yarn test",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "checks": "yarn typecheck && yarn lint && yarn test",
     "prepublishOnly": "yarn checks && yarn build:lib",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook"
