@@ -3,7 +3,7 @@ import { useDrag } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
 import { type Instance, type Publish } from "@webstudio-is/react-sdk";
 import { Flex } from "~/shared/design-system";
-import { PlusIcon } from "~/shared/icons";
+import { PlusIcon } from "@webstudio-is/icons";
 import { primitives, type DragData } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";

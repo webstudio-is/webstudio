@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Card, Flex, Heading, Text, TextField } from "~/shared/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 
-import { GithubIcon, CommitIcon, GoogleIcon } from "~/shared/icons";
+import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./components/login-button";
 import loginStyles from "./login.css";
 
