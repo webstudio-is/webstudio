@@ -12,3 +12,4 @@ jobs:
      - uses: ./.github/actions/publish
        with:
         package: './packages/eslint-config-custom/package.json'
+        token: $ {{ secrets.NPM_TOKEN }}
