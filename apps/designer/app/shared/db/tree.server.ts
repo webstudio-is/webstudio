@@ -5,7 +5,7 @@ import {
   InstanceSchema,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma } from "./prisma.server";
+import { prisma } from "@webstudio-is/prisma-client";
 import { createInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
@@ -17,7 +17,7 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   if (defaultBreakpoint === undefined) {
     throw new Error("A breakpoint with minWidth 0 is required");
   }
-  // @todo this should be part of a root primitive in primitives
+  // @todo this should be part of a root component in sdk
   const rootConfig: Pick<Instance, "component" | "cssRules"> = {
     component: "Box",
     cssRules: [
@@ -50,6 +50,10 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
             type: "unit",
             unit: "vh",
             value: 100,
+          },
+          display: {
+            type: "keyword",
+            value: "flex",
           },
           flexDirection: {
             type: "keyword",

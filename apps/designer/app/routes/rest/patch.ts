@@ -1,7 +1,8 @@
 import { type ActionFunction } from "@remix-run/node";
 import * as db from "~/shared/db";
 import { type SyncItem } from "immerhin";
-import { type Project, type Tree } from "@webstudio-is/react-sdk";
+import { type Tree } from "@webstudio-is/react-sdk";
+import { type Project } from "@webstudio-is/prisma-client";
 
 const updaters = {
   root: db.tree.patchRoot,

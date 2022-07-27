@@ -1,6 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { Box, Flex, Text, Collapsible } from "~/shared/design-system";
-import { PlusIcon, MinusIcon } from "~/shared/icons";
+import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
 
 type CollapsibleSectionProps = {
   label: string;
@@ -53,11 +53,10 @@ export const CollapsibleSection = ({
               cursor: "default",
             }}
           >
+            {isOpenFinal ? <ChevronDownIcon /> : <ChevronRightIcon />}
             <Text size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
               {label}
             </Text>
-            {/* @todo: props panel shows double plus icon when rightSlot is set */}
-            {isOpenFinal ? <MinusIcon /> : <PlusIcon />}
             {rightSlot}
           </Flex>
         </Collapsible.Trigger>

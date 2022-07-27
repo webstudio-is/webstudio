@@ -1,5 +1,5 @@
 import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
-import { EyeOpenIcon } from "~/shared/icons";
+import { EyeOpenIcon } from "@webstudio-is/icons";
 import { SimpleToggle } from "~/shared/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
 

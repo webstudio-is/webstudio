@@ -1,47 +1,48 @@
-import { ImageIcon } from "~/shared/icons";
-import { Button, Flex, Grid, Heading } from "~/shared/design-system";
-import { useRef } from "react";
-import { Form, useSubmit } from "@remix-run/react";
-import { type Asset } from "@webstudio-is/react-sdk";
-import { Image } from "~/shared/design-system/components/image";
+import { ImageIcon } from "@webstudio-is/icons";
+import { Flex, Grid, Heading } from "~/shared/design-system";
+import { useEffect, useState } from "react";
+import { useActionData } from "@remix-run/react";
+import { Asset } from "@webstudio-is/prisma-client";
+import { AssetManagerImage } from "./components/image";
 
-export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const submit = useSubmit();
+import { AddAnAssetForm } from "./components/add-an-asset-form";
+import { UploadingAsset } from "../types";
+
+export const TabContent = ({
+  assets: baseAssets,
+}: {
+  assets: Array<Asset | UploadingAsset>;
+}) => {
+  const newImages = useActionData();
+
+  const [assets, setAssets] = useState(baseAssets);
+
+  useEffect(() => {
+    if (newImages?.length) {
+      setAssets((currentAssets) => [
+        ...newImages,
+        ...currentAssets.filter((asset) => asset.status !== "uploading"),
+      ]);
+    }
+  }, [newImages]);
 
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
       <Flex justify="between">
         <Heading>Assets</Heading>
-        <Form
-          method="post"
-          encType="multipart/form-data"
-          onChange={(event) => {
-            if (inputRef.current?.files) {
-              submit(event.currentTarget);
-              event.currentTarget.reset();
-            }
-          }}
-        >
-          <input
-            accept="image/*"
-            type="file"
-            name="image"
-            multiple
-            ref={inputRef}
-            style={{ display: "none" }}
-          />
-          <Button onClick={() => inputRef?.current?.click()}>
-            Upload Image
-          </Button>
-        </Form>
+        <AddAnAssetForm
+          onSubmit={(uploadedAssets: Array<UploadingAsset>) =>
+            setAssets((assets) => [...uploadedAssets, ...assets])
+          }
+        />
       </Flex>
       <Grid columns={2} gap={2}>
         {assets.map((asset) => (
-          <Image
+          <AssetManagerImage
             key={asset.id}
-            src={asset.path}
+            path={asset.path}
             alt={asset.alt || asset.name}
+            status={asset.status}
           />
         ))}
       </Grid>

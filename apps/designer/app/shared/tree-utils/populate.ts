@@ -1,5 +1,4 @@
-import { type Instance } from "@webstudio-is/react-sdk";
-import { primitives } from "~/shared/canvas-components";
+import { type Instance, components } from "@webstudio-is/react-sdk";
 
 /**
  * Populate instance with:
@@ -8,11 +7,11 @@ import { primitives } from "~/shared/canvas-components";
  */
 export const populateInstance = (instance: Instance): Instance => {
   const populatedInstance = { ...instance };
-  const primitive = primitives[instance.component];
-  if (primitive !== undefined && "defaultStyle" in primitive) {
+  const componentMeta = components[instance.component];
+  if (componentMeta !== undefined && "defaultStyle" in componentMeta) {
     const cssRule = {
       breakpoint: "",
-      style: primitive.defaultStyle,
+      style: componentMeta.defaultStyle,
     };
     populatedInstance.cssRules.push(cssRule);
   }

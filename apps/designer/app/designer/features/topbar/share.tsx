@@ -7,8 +7,8 @@ import {
   PopoverTrigger,
   TextField,
 } from "~/shared/design-system";
-import { Share1Icon } from "~/shared/icons";
-import { type Project } from "@webstudio-is/react-sdk";
+import { Share1Icon } from "@webstudio-is/icons";
+import { type Project } from "@webstudio-is/prisma-client";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
 type ShareButtonProps = { path: string; project: Project };
