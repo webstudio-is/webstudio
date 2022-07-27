@@ -25,4 +25,4 @@ runs:
           dry-run: false
           check-version: true
           access: 'public'
-          package: $ {{ inputs.package }}
+          package: ${{ inputs.package }}
