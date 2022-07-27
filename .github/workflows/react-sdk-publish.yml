@@ -1,23 +1,15 @@
 name: SDK publish
-on: 
- push:
-   paths:
-      - 'packages/react-sdk/**/*'
-      - '.github/workflows/react-sdk-publish.yml'
+on:
+  push:
+    paths:
+      - "packages/react-sdk/**/*"
+      - ".github/workflows/react-sdk-publish.yml"
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: ./.github/actions/publish
         with:
-          node-version: 16
-      - name: Install Dependencies
-        run: yarn install
-      - uses: JS-DevTools/npm-publish@v1
-        with:
+          package: "./packages/react-sdk/package.json"
           token: ${{ secrets.NPM_TOKEN }}
-          dry-run: false
-          check-version: true
-          access: 'public'
-          package: './packages/react-sdk/package.json'
