@@ -23,7 +23,11 @@ export const action: ActionFunction = async ({ request }) => {
       headers.append("Authorization", `Bearer ${process.env.CF_TOKEN || ""}`);
       headers.append("Content-Type", "text/plain");
       const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/storage/kv/namespaces/${process.env.CF_NAMESPACE_ID}/values/${domain}`,
+        `https://api.cloudflare.com/client/v4/accounts/${
+          process.env.CF_ACCOUNT_ID
+        }/storage/kv/namespaces/${
+          process.env.CF_NAMESPACE_ID
+        }/values/${domain.toLowerCase()}`,
         {
           method: "PUT",
           headers,
