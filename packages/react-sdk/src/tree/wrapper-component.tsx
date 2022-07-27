@@ -36,12 +36,12 @@ export type WrapperComponentProps = {
 export const WrapperComponent = ({
   instance,
   css,
-  onChangeChildren, // prevent it from passing to primitives
+  onChangeChildren, // prevent it from passing to sdk component
   children,
   ...rest
 }: WrapperComponentProps) => {
   const className = useMemo(() => createCss(css)(), [css]);
-  const Component = components[instance.component];
+  const { Component } = components[instance.component];
   const userProps = useUserProps(instance.id);
   return (
     <Component {...userProps} {...rest} id={instance.id} className={className}>
