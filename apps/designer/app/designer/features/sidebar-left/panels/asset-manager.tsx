@@ -1,4 +1,4 @@
-import { ImageIcon } from "~/shared/icons";
+import { ImageIcon } from "@webstudio-is/icons";
 import { Flex, Grid, Heading } from "~/shared/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";

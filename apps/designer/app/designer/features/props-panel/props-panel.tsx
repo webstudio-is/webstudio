@@ -16,7 +16,11 @@ import {
   Grid,
   Tooltip,
 } from "~/shared/design-system";
-import { PlusIcon, TrashIcon, ExclamationTriangleIcon } from "~/shared/icons";
+import {
+  PlusIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
+} from "@webstudio-is/icons";
 import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
 type PropertyProps = UserProp & {

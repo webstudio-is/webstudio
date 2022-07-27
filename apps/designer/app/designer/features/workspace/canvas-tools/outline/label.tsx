@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { styled } from "~/shared/design-system";
-import { primitives } from "~/shared/canvas-components";
-import { type Instance } from "@webstudio-is/react-sdk";
+import { type Instance, components } from "@webstudio-is/react-sdk";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -75,12 +74,11 @@ type LabelProps = {
 
 export const Label = ({ component, instanceRect }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
-  const primitive = primitives[component];
-  const { Icon } = primitive;
+  const { Icon, label } = components[component];
   return (
     <LabelContainer position={position} ref={labelRef}>
       <Icon width="1em" height="1em" />
-      {primitive.label}
+      {label}
     </LabelContainer>
   );
 };

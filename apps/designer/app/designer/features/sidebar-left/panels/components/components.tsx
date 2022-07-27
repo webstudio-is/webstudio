@@ -1,10 +1,14 @@
 import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
 import { useDrag } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
-import { type Instance, type Publish } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  type Publish,
+  components,
+} from "@webstudio-is/react-sdk";
 import { Flex } from "~/shared/design-system";
-import { PlusIcon } from "~/shared/icons";
-import { primitives, type DragData } from "~/shared/canvas-components";
+import { PlusIcon } from "@webstudio-is/icons";
+import { type DragData } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
 import { CustomDragLayer } from "./custom-drag-layer";
@@ -65,9 +69,9 @@ export const TabContent = ({
   publish,
   onSetActiveTab,
 }: TabContentProps) => {
-  const components = (
-    Object.keys(primitives) as Array<Instance["component"]>
-  ).filter((component) => primitives[component].isInlineOnly === false);
+  const componentNames = (
+    Object.keys(components) as Array<Instance["component"]>
+  ).filter((component) => components[component].isInlineOnly === false);
 
   const handleDragChange = useCallback(
     (isDragging: boolean) => {
@@ -81,7 +85,7 @@ export const TabContent = ({
 
   return (
     <Flex gap="1" wrap="wrap" css={{ padding: "$1" }}>
-      {components.map((component: Instance["component"]) => (
+      {componentNames.map((component: Instance["component"]) => (
         <DraggableThumb
           key={component}
           component={component}
