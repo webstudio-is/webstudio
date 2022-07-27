@@ -1,5 +1,5 @@
 import { type Style, components } from "@webstudio-is/react-sdk";
-export { TextAlignLeftIcon as Icon } from "~/shared/icons";
+export { TextAlignLeftIcon as Icon } from "@webstudio-is/icons";
 
 // Webstudio specific default styles for the node type.
 export const defaultStyle: Style = {};

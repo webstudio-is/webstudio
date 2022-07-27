@@ -1,5 +1,5 @@
 import { components } from "@webstudio-is/react-sdk";
-export { FontBoldIcon as Icon } from "~/shared/icons";
+export { FontBoldIcon as Icon } from "@webstudio-is/icons";
 
 export const canAcceptChild = (): boolean => {
   return false;

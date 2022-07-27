@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { ChevronDownIcon } from "~/shared/icons";
+import { ChevronDownIcon } from "@webstudio-is/icons";
 
 const StyledAccordion = styled(AccordionPrimitive.Root, {});
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, CSS } from "../stitches.config";
 import { Flex } from "../components/flex";
-import { CheckIcon } from "~/shared/icons";
+import { CheckIcon } from "@webstudio-is/icons";
 
 const StyledVerifiedBadge = styled("div", Flex, {
   alignItems: "center",

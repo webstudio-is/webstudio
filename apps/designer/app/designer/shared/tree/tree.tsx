@@ -8,7 +8,7 @@ import {
   keyframes,
   styled,
 } from "~/shared/design-system";
-import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
+import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
 import { primitives } from "~/shared/canvas-components";
 import noop from "lodash.noop";
 
