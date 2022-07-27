@@ -20,7 +20,7 @@ import env from "~/shared/env";
 type PublishButtonProps = { project: Project };
 
 const host = () => {
-  if (env.EDGE_DEPLOYMENT && env.EDGE_DOMAIN) {
+  if (env.EDGE_DEPLOYMENT === "true" && env.EDGE_DOMAIN !== "") {
     return env.EDGE_DOMAIN;
   }
   if (typeof location === "object") {
