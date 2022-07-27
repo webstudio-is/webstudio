@@ -1,10 +1,10 @@
-name: Icons Publish
+name: SDK publish
 on:
   push:
     paths:
-      - "packages/icons/**/*"
-      - ".github/workflows/icons.yml"
-      - ".github/workflows/publish/action.yaml"
+      - "packages/react-sdk/**/*"
+      - ".github/workflows/publish/react-sdk.yml"
+      - ".github/actions/publish/action.yaml"
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -12,5 +12,5 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/icons/package.json"
+          package: "./packages/react-sdk/package.json"
           token: ${{ secrets.NPM_TOKEN }}

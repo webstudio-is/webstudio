@@ -3,8 +3,8 @@ on:
   push:
     paths:
       - "packages/jest-config/**/*"
-      - ".github/workflows/jest-config-publish.yml"
-      - ".github/workflows/publish/action.yaml"
+      - ".github/workflows/publish/jest-config.yml"
+      - ".github/actions/publish/action.yaml"
 jobs:
   publish:
     runs-on: ubuntu-latest

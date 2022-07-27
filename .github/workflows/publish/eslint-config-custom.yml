@@ -3,8 +3,8 @@ on:
   push:
     paths:
       - "packages/eslint-config-custom/**/*"
-      - ".github/workflows/eslint-config-custom-publish.yml"
-      - ".github/workflows/publish/action.yaml"
+      - ".github/workflows/publish/eslint-config-custom.yml"
+      - ".github/actions/publish/action.yaml"
 jobs:
   publish:
     runs-on: ubuntu-latest

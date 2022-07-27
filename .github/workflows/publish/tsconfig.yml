@@ -1,10 +1,10 @@
-name: SDK publish
+name: Tsconfig Publish
 on:
   push:
     paths:
-      - "packages/react-sdk/**/*"
-      - ".github/workflows/react-sdk-publish.yml"
-      - ".github/workflows/publish/action.yaml"
+      - "packages/tsconfig/**/*"
+      - ".github/workflows/publish/tsconfig.yml"
+      - ".github/actions/publish/action.yaml"
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -12,5 +12,5 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/react-sdk/package.json"
+          package: "./packages/tsconfig/package.json"
           token: ${{ secrets.NPM_TOKEN }}
