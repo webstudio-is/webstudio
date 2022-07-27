@@ -1,7 +1,7 @@
 inputs:
   package: 
     description: 'Package.json location (relative)'
-    default: null
+    default: ''
 runs:
   using: "composite"
   steps: 
