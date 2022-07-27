@@ -1,9 +1,9 @@
-name: Eslint Config Publish
+name: Tsconfig Publish
 on:
   push:
     paths:
-      - "packages/eslint-config-custom/**/*"
-      - ".github/workflows/publish/eslint-config-custom.yml"
+      - "packages/tsconfig/**/*"
+      - ".github/workflows/tsconfig.yml"
       - ".github/actions/publish/action.yaml"
 jobs:
   publish:
@@ -12,5 +12,5 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/eslint-config-custom/package.json"
+          package: "./packages/tsconfig/package.json"
           token: ${{ secrets.NPM_TOKEN }}

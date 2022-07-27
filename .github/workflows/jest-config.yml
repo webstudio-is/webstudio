@@ -1,9 +1,9 @@
-name: SDK publish
+name: Jest Config Publish
 on:
   push:
     paths:
-      - "packages/react-sdk/**/*"
-      - ".github/workflows/publish/react-sdk.yml"
+      - "packages/jest-config/**/*"
+      - ".github/workflows/jest-config.yml"
       - ".github/actions/publish/action.yaml"
 jobs:
   publish:
@@ -12,5 +12,5 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/react-sdk/package.json"
+          package: "./packages/jest-config/package.json"
           token: ${{ secrets.NPM_TOKEN }}

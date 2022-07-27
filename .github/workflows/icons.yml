@@ -1,9 +1,9 @@
-name: Tsconfig Publish
+name: Icons Publish
 on:
   push:
     paths:
-      - "packages/tsconfig/**/*"
-      - ".github/workflows/publish/tsconfig.yml"
+      - "packages/icons/**/*"
+      - ".github/workflows/icons-publish.yml"
       - ".github/actions/publish/action.yaml"
 jobs:
   publish:
@@ -12,5 +12,5 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/tsconfig/package.json"
+          package: "./packages/icons/package.json"
           token: ${{ secrets.NPM_TOKEN }}
