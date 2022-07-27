@@ -4,6 +4,7 @@ on:
     paths:
       - "packages/react-sdk/**/*"
       - ".github/workflows/react-sdk-publish.yml"
+      - ".github/workflows/publish/action.yaml"
 jobs:
   publish:
     runs-on: ubuntu-latest

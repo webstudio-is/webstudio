@@ -4,6 +4,7 @@ on:
     paths:
       - "packages/eslint-config-custom/**/*"
       - ".github/workflows/eslint-config-custom-publish.yml"
+      - ".github/workflows/publish/action.yaml"
 jobs:
   publish:
     runs-on: ubuntu-latest
