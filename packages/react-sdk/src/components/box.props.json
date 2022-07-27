@@ -2200,5 +2200,70 @@
     "control": {
       "type": "text"
     }
+  },
+  "tag": {
+    "defaultValue": {
+      "value": "div"
+    },
+    "description": "",
+    "name": "tag",
+    "declarations": [
+      {
+        "fileName": "src/components/box.tsx",
+        "name": "TypeLiteral"
+      }
+    ],
+    "required": false,
+    "type": {
+      "name": "enum",
+      "raw": "\"div\" | \"address\" | \"article\" | \"aside\" | \"figure\" | \"footer\" | \"header\" | \"main\" | \"nav\" | \"section\"",
+      "value": [
+        {
+          "value": "\"div\""
+        },
+        {
+          "value": "\"address\""
+        },
+        {
+          "value": "\"article\""
+        },
+        {
+          "value": "\"aside\""
+        },
+        {
+          "value": "\"figure\""
+        },
+        {
+          "value": "\"footer\""
+        },
+        {
+          "value": "\"header\""
+        },
+        {
+          "value": "\"main\""
+        },
+        {
+          "value": "\"nav\""
+        },
+        {
+          "value": "\"section\""
+        }
+      ]
+    },
+    "control": {
+      "type": "select"
+    },
+    "options": [
+      "div",
+      "address",
+      "article",
+      "aside",
+      "figure",
+      "footer",
+      "header",
+      "main",
+      "nav",
+      "section"
+    ]
   }
 }

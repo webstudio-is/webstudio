@@ -13,6 +13,7 @@ import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
 } from "../../helpers/array-buffer-helpers";
+import { Location } from "@webstudio-is/prisma-client";
 
 type S3UploadHandler = ({
   file,
@@ -40,11 +41,14 @@ export const s3UploadHandler: S3UploadHandler = async ({
   }
 
   const [name, extension] = getFilenameAndExtension(filename);
-  const key = `${name}_${Date.now()}.${extension}`;
+  const key = encodeURI(`${name}_${Date.now()}.${extension}`);
+
+  // if there is no ACL passed we do not default since some providers do not support it
+  const ACL = s3Envs.S3_ACL ? { ACL: s3Envs.S3_ACL } : {};
 
   const params: PutObjectCommandInput = {
     Bucket: s3Envs.S3_BUCKET,
-    ACL: s3Envs.S3_ACL,
+    ...ACL,
     Key: key,
     Body: uint8Array,
     ContentType: contentType,
@@ -64,7 +68,7 @@ export const s3UploadHandler: S3UploadHandler = async ({
 
   const upload = new Upload({ client, params });
 
-  const newFile = ImagesUploadedSuccess.parse(await upload.done());
+  ImagesUploadedSuccess.parse(await upload.done());
   const image = sharp(uint8Array);
   const metadata = await image.metadata();
 
@@ -72,6 +76,6 @@ export const s3UploadHandler: S3UploadHandler = async ({
   return JSON.stringify({
     metadata,
     name: key,
-    path: newFile.Location,
+    location: Location.REMOTE,
   });
 };
