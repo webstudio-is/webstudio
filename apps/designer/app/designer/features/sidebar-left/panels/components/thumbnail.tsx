@@ -26,7 +26,7 @@ const useImageWithFallback = ({ path }: { path: string }) => {
   return src;
 };
 
-export const useFakeProgress = ({
+const useFakeProgress = ({
   isUploading,
   isDeleting,
 }: {
