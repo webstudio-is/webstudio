@@ -26,21 +26,14 @@ const useImageWithFallback = ({ path }: { path: string }) => {
   return src;
 };
 
-export const AssetManagerThumbnail = ({
-  path,
-  alt,
-  status,
-  name,
-  id,
-}: Asset) => {
-  const submit = useSubmit();
-  const isUploading = status === "uploading";
-  const src = useImageWithFallback({ path });
-  const [isTooltipOpen, setTolltipOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+export const useFakeProgress = ({
+  isUploading,
+  isDeleting,
+}: {
+  isUploading: boolean;
+  isDeleting: boolean;
+}) => {
   const [progressBarPercentage, setProgressBarPercentage] = useState(0);
-
-  const closeTooltip = () => setTolltipOpen(false);
 
   // @todo rewrite this fake indication to show real progress
   useInterval(
@@ -51,6 +44,25 @@ export const AssetManagerThumbnail = ({
     },
     isUploading || isDeleting ? 100 : null
   );
+
+  return progressBarPercentage;
+};
+
+export const AssetManagerThumbnail = ({
+  path,
+  alt,
+  status,
+  name,
+  id,
+}: Asset) => {
+  const submit = useSubmit();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const isUploading = status === "uploading";
+  const src = useImageWithFallback({ path });
+  const [isTooltipOpen, setTolltipOpen] = useState(false);
+  const progressBarPercentage = useFakeProgress({ isUploading, isDeleting });
+
+  const closeTooltip = () => setTolltipOpen(false);
 
   const deleteAsset = () => {
     const formData = new FormData();
