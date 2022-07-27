@@ -8,6 +8,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-     - uses: ./.github/actions/publish/base
+     - uses: ./.github/actions/publish
        with:
         package: './packages/eslint-config-custom/package.json'
