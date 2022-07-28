@@ -4,15 +4,14 @@ import { fsEnvVariables } from "../schema";
 const fsUploadVars = fsEnvVariables.parse(process.env);
 
 export const imageFSDirectory = () => {
-  const basePath =
-    process.env.NODE_ENV === "development"
-      ? path.join(
-          appRoot.path,
-          "apps",
-          "designer",
-          fsUploadVars.FILE_UPLOAD_PATH
-        )
-      : "";
+  const isProd = process.env.NODE_ENV === "production";
 
-  return basePath;
+  if (isProd) return path.join(appRoot.path, fsUploadVars.FILE_UPLOAD_PATH);
+
+  return path.join(
+    appRoot.path,
+    "apps",
+    "designer",
+    fsUploadVars.FILE_UPLOAD_PATH
+  );
 };
