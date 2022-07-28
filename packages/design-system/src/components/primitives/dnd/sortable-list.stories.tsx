@@ -81,7 +81,7 @@ export const SortableList = ({
 
   const autoScrollHandlers = useAutoScroll();
 
-  const dragProps = useDrag({
+  const useDragHandlers = useDrag({
     onStart(event) {
       if (!(event.target instanceof HTMLLIElement)) {
         event.cancel();
@@ -148,10 +148,12 @@ export const SortableList = ({
           dropTargetHandlers.handleScroll();
           placementHandlers.handleScroll();
         }}
-        {...dragProps}
       >
         <List
-          ref={dropTargetHandlers.rootRef}
+          ref={(element) => {
+            dropTargetHandlers.rootRef(element);
+            useDragHandlers.rootRef(element);
+          }}
           css={{
             li: { cursor: dragItemId === undefined ? "grab" : "default" },
             display: direction === "vertical" ? "block" : "flex",

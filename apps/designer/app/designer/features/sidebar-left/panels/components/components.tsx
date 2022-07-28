@@ -86,7 +86,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
   };
 
-  const dragProps = useDrag({
+  const useDragHandlers = useDrag({
     onStart(event) {
       const { dragComponent } = event.target.dataset;
 
@@ -128,7 +128,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <Flex gap="1" wrap="wrap" css={{ padding: "$1" }} {...dragProps}>
+    <Flex
+      gap="1"
+      wrap="wrap"
+      css={{ padding: "$1" }}
+      ref={useDragHandlers.rootRef}
+    >
       {componentNames.map((component: Instance["component"]) => (
         <DraggableThumb
           key={component}

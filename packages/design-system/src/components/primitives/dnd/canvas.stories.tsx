@@ -198,7 +198,7 @@ export const Canvas = () => {
 
   const autoScrollHandlers = useAutoScroll();
 
-  const dragProps = useDrag({
+  const useDragHandlers = useDrag({
     onStart(event) {
       const id = event.target.dataset.id;
       if (id == null) {
@@ -290,6 +290,7 @@ export const Canvas = () => {
         ref={(element) => {
           dropTargetHandlers.rootRef(element);
           autoScrollHandlers.targetRef(element);
+          useDragHandlers.rootRef(element);
           rootRef.current = element;
         }}
         onScroll={() => {
@@ -297,7 +298,6 @@ export const Canvas = () => {
           placementHandlers.handleScroll();
         }}
         data-id={ROOT_ID}
-        {...dragProps}
       >
         <Items data={data} dragItemId={dragItemId} />
       </Box>

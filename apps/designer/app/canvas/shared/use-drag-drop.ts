@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useRootInstance } from "~/shared/nano-states";
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import {
@@ -125,7 +125,7 @@ export const useDragAndDrop = () => {
     },
   });
 
-  const dragProps = useDrag({
+  const useDragHandlers = useDrag({
     onStart(event) {
       const instance =
         rootInstance !== undefined &&
@@ -193,36 +193,34 @@ export const useDragAndDrop = () => {
     },
   });
 
-  // We want to use <body> as a root for drag items.
-  // The DnD hooks weren't designed for that.
-  //
-  // @todo: This is a temporary solution, need to change hooks' API.
-  // Also, maybe use root instance's element as a root?
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      dragProps.onPointerDown?.(
-        event as any as React.PointerEvent<HTMLElement>
-      );
-    };
-
+  // We have to use useLayoutEffect to setup the refs
+  // because we want to use <body> as a root.
+  // We prefer useLayoutEffect over useEffect
+  // because it's closer in the life cycle to when React noramlly calls the "ref" callbacks.
+  useLayoutEffect(() => {
     const handleScroll = () => {
       dropTargetHandlers.handleScroll();
       placementHandlers.handleScroll();
     };
 
-    document.body.addEventListener("pointerdown", handlePointerDown);
     dropTargetHandlers.rootRef(document.body);
+    useDragHandlers.rootRef(document.body);
     window.addEventListener("scroll", handleScroll);
 
     () => {
-      document.body.removeEventListener("pointerdown", handlePointerDown);
       dropTargetHandlers.rootRef(null);
+      useDragHandlers.rootRef(null);
       window.removeEventListener("scroll", handleScroll);
     };
 
     // @todo: need to make the dependencies more stable,
     // because as is this will fire on every render
-  }, [dragProps, dropTargetHandlers, placementHandlers, autoScrollHandlers]);
+  }, [
+    useDragHandlers,
+    dropTargetHandlers,
+    placementHandlers,
+    autoScrollHandlers,
+  ]);
 
   // Handle drag from the panel
   // ================================================================

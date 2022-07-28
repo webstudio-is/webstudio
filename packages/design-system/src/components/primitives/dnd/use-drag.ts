@@ -1,5 +1,5 @@
 import { useMove } from "./use-move";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 
 type State =
   | {
@@ -32,6 +32,10 @@ export type UseDragProps = {
   onEnd: () => void;
 };
 
+export type UseDropTargetHandlers = {
+  rootRef: (element: HTMLElement | null) => void;
+};
+
 export const useDrag = ({
   startDistanceThreashold = 3,
   shiftDistanceThreshold = 20,
@@ -40,8 +44,9 @@ export const useDrag = ({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   onShiftChange = () => {},
   onEnd,
-}: UseDragProps): React.HTMLAttributes<HTMLElement> => {
+}: UseDragProps): UseDropTargetHandlers => {
   const state = useRef<State>(initialState);
+  const rootRef = useRef<HTMLElement | null>(null);
 
   const cancel = () => {
     state.current = { status: "canceled" };
@@ -63,7 +68,7 @@ export const useDrag = ({
     }
   };
 
-  const props = useMove({
+  const { onPointerDown } = useMove({
     onMoveStart({
       clientX: x,
       clientY: y,
@@ -121,5 +126,19 @@ export const useDrag = ({
     },
   });
 
-  return props.moveProps;
+  useEffect(() => {
+    const roorElement = rootRef.current;
+    if (roorElement !== null) {
+      roorElement.addEventListener("pointerdown", onPointerDown);
+      return () => {
+        roorElement.removeEventListener("pointerdown", onPointerDown);
+      };
+    }
+  }, [onPointerDown]);
+
+  return {
+    rootRef(element) {
+      rootRef.current = element;
+    },
+  };
 };
