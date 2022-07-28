@@ -1,5 +1,5 @@
 import { useMove } from "./use-move";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 
 type State =
   | {
@@ -136,9 +136,12 @@ export const useDrag = ({
     }
   }, [onPointerDown]);
 
-  return {
-    rootRef(element) {
-      rootRef.current = element;
-    },
-  };
+  // We want to retrun a stable object to avoid re-renders when it's a dependency
+  return useMemo(() => {
+    return {
+      rootRef(element) {
+        rootRef.current = element;
+      },
+    };
+  }, []);
 };

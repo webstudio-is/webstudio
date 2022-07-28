@@ -4,7 +4,8 @@ import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
 import { useDropTarget } from "./use-drop-target";
 import { useDrag } from "./use-drag";
-import { usePlacement, PlacementIndicator, type Rect } from "./placement";
+import { type Rect } from "./rect";
+import { usePlacement, PlacementIndicator } from "./placement";
 import { useAutoScroll } from "./use-auto-scroll";
 
 type ItemData = { id: string; text: string };
@@ -75,7 +76,6 @@ export const SortableList = ({
       return element instanceof HTMLUListElement;
     },
     onDropTargetChange(event) {
-      console.log(event);
       placementHandlers.handleTargetChange(event.element);
     },
   });

@@ -3,7 +3,8 @@ import React, { useState, useRef } from "react";
 import { Box } from "../../box";
 import { useDropTarget } from "./use-drop-target";
 import { useDrag } from "./use-drag";
-import { usePlacement, PlacementIndicator, type Rect } from "./placement";
+import { type Rect } from "./rect";
+import { usePlacement, PlacementIndicator } from "./placement";
 import { useAutoScroll } from "./use-auto-scroll";
 
 const ROOT_ID = "root";

@@ -2,7 +2,6 @@ import { useLayoutEffect, useRef } from "react";
 import { useRootInstance } from "~/shared/nano-states";
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import {
-  type Rect,
   type DropTarget,
   useAutoScroll,
   usePlacement,
@@ -15,6 +14,8 @@ import {
   type Instance,
   components as primitives,
 } from "@webstudio-is/react-sdk";
+
+export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
 // data shared between iframe and main window
 export type DropTargetSharedData = {
@@ -207,14 +208,11 @@ export const useDragAndDrop = () => {
     useDragHandlers.rootRef(document.body);
     window.addEventListener("scroll", handleScroll);
 
-    () => {
+    return () => {
       dropTargetHandlers.rootRef(null);
       useDragHandlers.rootRef(null);
       window.removeEventListener("scroll", handleScroll);
     };
-
-    // @todo: need to make the dependencies more stable,
-    // because as is this will fire on every render
   }, [
     useDragHandlers,
     dropTargetHandlers,

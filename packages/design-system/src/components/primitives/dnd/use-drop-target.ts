@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
+import { isEqualRect } from "./rect";
 
 export type Area = "top" | "right" | "bottom" | "left" | "center";
 
@@ -7,12 +8,6 @@ export type DropTarget<Data> = {
   element: HTMLElement;
   rect: DOMRect;
 };
-
-const isSameRect = (a: DOMRect, b: DOMRect) =>
-  a.top === b.top &&
-  a.left === b.left &&
-  a.bottom === b.bottom &&
-  a.right === b.right;
 
 // We pass around data, to avoid extra data lookups.
 // For example, data found in isDropTarget
@@ -45,99 +40,112 @@ export type UseDropTargetHandlers = {
   rootRef: (element: HTMLElement | null) => void;
 };
 
-export const useDropTarget = <Data>({
-  edgeDistanceThreshold = 3,
-  isSameData = (data1: Data, data2: Data) => data1 === data2,
-  isDropTarget,
-  swapDropTarget = (args) => args,
-  onDropTargetChange,
-}: UseDropTargetProps<Data>): UseDropTargetHandlers => {
+export const useDropTarget = <Data>(
+  props: UseDropTargetProps<Data>
+): UseDropTargetHandlers => {
+  // We want to use fresh props every time we use them,
+  // but we don't need to react to updates.
+  // So we can put them in a ref and make useMemo below very efficient.
+  const latestProps = useRef<UseDropTargetProps<Data>>(props);
+  latestProps.current = props;
+
   const state = useRef({
     root: null as HTMLElement | null,
     pointerCoordinate: undefined as Coordinate | undefined,
     dropTarget: undefined as DropTarget<Data> | undefined,
   });
 
-  const detectTarget = () => {
-    const { pointerCoordinate, root } = state.current;
-    if (pointerCoordinate === undefined || root === null) {
-      return;
-    }
+  // We want to retrun a stable object to avoid re-renders when it's a dependency
+  return useMemo(() => {
+    const detectTarget = () => {
+      const {
+        edgeDistanceThreshold = 3,
+        isSameData = (data1: Data, data2: Data) => data1 === data2,
+        isDropTarget,
+        swapDropTarget = (args) => args,
+        onDropTargetChange,
+      } = latestProps.current;
 
-    const target = elementFromPoint(pointerCoordinate);
-    if (target === undefined) {
-      return;
-    }
-
-    // @todo: cache this? Not expensive by itself, but it may call isDropTarget a lot
-    const potentialTarget = findClosestDropTarget({
-      root,
-      target,
-      isDropTarget,
-    });
-    if (potentialTarget === undefined) {
-      return;
-    }
-
-    // @todo: if neither potentialTarget nor area has changed since the last time,
-    // don't call swapDropTarget.
-
-    const dropTarget = {
-      ...potentialTarget,
-      rect: potentialTarget.element.getBoundingClientRect(),
-    };
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const swappedTarget = swapDropTarget({
-        element: dropTarget.element,
-        data: dropTarget.data,
-        area: getArea(
-          pointerCoordinate,
-          edgeDistanceThreshold,
-          dropTarget.rect
-        ),
-      });
-
-      if (swappedTarget.element === dropTarget.element) {
-        break;
+      const { pointerCoordinate, root } = state.current;
+      if (pointerCoordinate === undefined || root === null) {
+        return;
       }
 
-      dropTarget.element = swappedTarget.element;
-      dropTarget.data = swappedTarget.data;
-      dropTarget.rect = swappedTarget.element.getBoundingClientRect();
-    }
+      const target = elementFromPoint(pointerCoordinate);
+      if (target === undefined) {
+        return;
+      }
 
-    if (
-      state.current.dropTarget === undefined ||
-      state.current.dropTarget.element !== dropTarget.element ||
-      !isSameData(state.current.dropTarget.data, dropTarget.data) ||
-      !isSameRect(state.current.dropTarget.rect, dropTarget.rect)
-    ) {
-      state.current.dropTarget = dropTarget;
-      onDropTargetChange(dropTarget);
-    }
-  };
+      // @todo: cache this? Not expensive by itself, but it may call isDropTarget a lot
+      const potentialTarget = findClosestDropTarget({
+        root,
+        target,
+        isDropTarget,
+      });
+      if (potentialTarget === undefined) {
+        return;
+      }
 
-  return {
-    handleMove(pointerCoordinate: Coordinate) {
-      state.current.pointerCoordinate = pointerCoordinate;
-      detectTarget();
-    },
+      // @todo: if neither potentialTarget nor area has changed since the last time,
+      // don't call swapDropTarget.
 
-    handleScroll() {
-      detectTarget();
-    },
+      const dropTarget = {
+        ...potentialTarget,
+        rect: potentialTarget.element.getBoundingClientRect(),
+      };
 
-    handleEnd() {
-      state.current.pointerCoordinate = undefined;
-      state.current.dropTarget = undefined;
-    },
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const swappedTarget = swapDropTarget({
+          element: dropTarget.element,
+          data: dropTarget.data,
+          area: getArea(
+            pointerCoordinate,
+            edgeDistanceThreshold,
+            dropTarget.rect
+          ),
+        });
 
-    rootRef(rootElement: HTMLElement | null) {
-      state.current.root = rootElement;
-    },
-  };
+        if (swappedTarget.element === dropTarget.element) {
+          break;
+        }
+
+        dropTarget.element = swappedTarget.element;
+        dropTarget.data = swappedTarget.data;
+        dropTarget.rect = swappedTarget.element.getBoundingClientRect();
+      }
+
+      if (
+        state.current.dropTarget === undefined ||
+        state.current.dropTarget.element !== dropTarget.element ||
+        !isSameData(state.current.dropTarget.data, dropTarget.data) ||
+        !isEqualRect(state.current.dropTarget.rect, dropTarget.rect)
+      ) {
+        state.current.dropTarget = dropTarget;
+        onDropTargetChange(dropTarget);
+      }
+    };
+
+    return {
+      handleMove(pointerCoordinate: Coordinate) {
+        state.current.pointerCoordinate = pointerCoordinate;
+        detectTarget();
+      },
+
+      handleScroll() {
+        detectTarget();
+      },
+
+      handleEnd() {
+        state.current.pointerCoordinate = undefined;
+        state.current.dropTarget = undefined;
+      },
+
+      rootRef(rootElement: HTMLElement | null) {
+        state.current.root = rootElement;
+      },
+    };
+  }, []);
 };
 
 type Coordinate = { x: number; y: number };
