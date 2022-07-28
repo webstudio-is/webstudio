@@ -1,6 +1,6 @@
 import { type Publish } from "@webstudio-is/react-sdk";
 import { Box } from "@webstudio-is/design-system";
-import { PlacementIndicator } from "@webstudio-is/design-system/src/components/primitives/dnd";
+import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
   useIsScrolling,

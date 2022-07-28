@@ -59,3 +59,4 @@ export * from "./components/radio";
 export * from "./components/combobox";
 export * from "./components/checkbox";
 export * from "./components/avatar";
+export * from "./components/primitives/dnd";
