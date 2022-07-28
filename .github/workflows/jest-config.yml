@@ -1,0 +1,16 @@
+name: Jest Config Publish
+on:
+  push:
+    paths:
+      - "packages/jest-config/**/*"
+      - ".github/workflows/jest-config.yml"
+      - ".github/actions/publish/action.yaml"
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/publish
+        with:
+          package: "./packages/jest-config/package.json"
+          token: ${{ secrets.NPM_TOKEN }}

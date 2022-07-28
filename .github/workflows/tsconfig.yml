@@ -1,0 +1,16 @@
+name: Tsconfig Publish
+on:
+  push:
+    paths:
+      - "packages/tsconfig/**/*"
+      - ".github/workflows/tsconfig.yml"
+      - ".github/actions/publish/action.yaml"
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/publish
+        with:
+          package: "./packages/tsconfig/package.json"
+          token: ${{ secrets.NPM_TOKEN }}
