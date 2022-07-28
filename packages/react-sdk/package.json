@@ -59,7 +59,6 @@
     "@stitches/core": "^1.2.7",
     "@webstudio-is/icons": "*",
     "immer": "^9.0.12",
-    "jest-config": "*",
     "mitt": "^3.0.0",
     "react-nano-state": "^0.4.0",
     "@webstudio-is/jest-config": "*",
