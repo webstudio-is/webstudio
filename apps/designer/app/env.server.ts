@@ -7,7 +7,6 @@ const env = {
   FEATURES: process.env.FEATURES,
   EDGE_DEPLOYMENT: process.env.EDGE_DEPLOYMENT === "true",
   EDGE_DOMAIN: process.env.EDGE_DOMAIN,
-  DEV_LOGIN: process.env.DEV_LOGIN === "true",
 } as const;
 
 export default env;
