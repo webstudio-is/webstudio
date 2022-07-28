@@ -70,12 +70,13 @@ export const SortableList = ({
 
   const [dragItemId, setDragItemId] = useState<string>();
 
-  const dropTargetHandlers = useDropTarget({
+  const dropTargetHandlers = useDropTarget<true>({
     isDropTarget(element: HTMLElement) {
       return element instanceof HTMLUListElement;
     },
     onDropTargetChange(event) {
-      placementHandlers.handleTargetChange(event.target);
+      console.log(event);
+      placementHandlers.handleTargetChange(event.element);
     },
   });
 

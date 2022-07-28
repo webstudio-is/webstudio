@@ -148,51 +148,53 @@ export const Canvas = () => {
   const dropTargetId = useRef<string>();
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const setDropTarget = (id: string, element: HTMLElement) => {
-    dropTargetId.current = id;
-    placementHandlers.handleTargetChange(element);
-  };
-
-  const dropTargetHandlers = useDropTarget({
+  const dropTargetHandlers = useDropTarget<string>({
     edgeDistanceThreshold: 10,
     isDropTarget(element: HTMLElement) {
-      return elementToId(element) !== undefined;
+      return elementToId(element) ?? false;
     },
-    onDropTargetChange(event) {
-      const id = elementToId(event.target);
+    swapDropTarget(dropTarget) {
       const rootElement = rootRef.current;
-
-      if (id === undefined || rootElement === null) {
-        return;
+      if (rootElement === null) {
+        return dropTarget;
       }
 
-      if (id !== ROOT_ID) {
-        let path = findItemPath(data, id) ?? [];
+      const { data: id, area } = dropTarget;
 
-        // NOTE: not sure we should always do this.
-        // Might depend on whether there's a parent with acceptsChildren, or something.
-        if (event.area !== "center") {
-          path = path.slice(1);
-        }
-
-        // to make sure we are not dropping on ourself
-        const dragItemIndex = path.findIndex((item) => item.id === dragItemId);
-        if (dragItemIndex !== -1) {
-          path = path.slice(dragItemIndex + 1);
-        }
-
-        for (const item of path) {
-          if (item.acceptsChildren) {
-            const element = idToElement(rootElement, item.id);
-            if (element) {
-              setDropTarget(item.id, element);
-              return;
-            }
-          }
-        }
+      if (id === ROOT_ID) {
+        return dropTarget;
       }
 
-      setDropTarget(ROOT_ID, rootElement);
+      const path = findItemPath(data, id) ?? [];
+
+      if (area !== "center") {
+        path.shift();
+      }
+
+      // Don't allow to dpop inside drag item or any of its children
+      const dragItemIndex = path.findIndex((item) => item.id === dragItemId);
+      if (dragItemIndex !== -1) {
+        path.splice(0, dragItemIndex + 1);
+      }
+
+      const newItem = path.find((item) => item.acceptsChildren);
+
+      if (newItem === undefined) {
+        return { data: ROOT_ID, element: rootElement };
+      }
+
+      const element = idToElement(rootElement, newItem.id);
+
+      if (element === undefined) {
+        return { data: ROOT_ID, element: rootElement };
+      }
+
+      return { data: newItem.id, element };
+    },
+
+    onDropTargetChange({ data, element }) {
+      dropTargetId.current = data;
+      placementHandlers.handleTargetChange(element);
     },
   });
 
