@@ -177,7 +177,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
-  const [dragAndDrop] = useDragAndDropState();
+  const [dragAndDropState] = useDragAndDropState();
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -202,7 +202,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
             ref={iframeRefCallback}
             src={`${config.canvasPath}/${project.id}`}
             pointerEvents={
-              dragAndDrop.isDragging && dragAndDrop.origin === "panel"
+              dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"
                 : "all"
             }
@@ -222,7 +222,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         isPreviewMode={isPreviewMode}
         css={{ overflow: "hidden" }}
       >
-        {dragAndDrop.isDragging ? (
+        {dragAndDropState.isDragging ? (
           <TreePrevew />
         ) : (
           <Inspector publish={publish} />

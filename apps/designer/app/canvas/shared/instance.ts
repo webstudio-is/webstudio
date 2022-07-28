@@ -17,6 +17,7 @@ import {
   findClosestSiblingInstance,
   insertInstanceMutable,
   findInstanceById,
+  reparentInstanceMutable,
 } from "~/shared/tree-utils";
 import store from "immerhin";
 import {
@@ -83,36 +84,18 @@ export const useReparentInstance = () => {
   useSubscribe<
     "reparentInstance",
     {
-      instance: Instance;
+      instanceId: Instance["id"];
       dropTarget: { instanceId: Instance["id"]; position: number };
     }
-  >("reparentInstance", ({ instance, dropTarget }) => {
+  >("reparentInstance", ({ instanceId, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
       if (rootInstance === undefined) return;
-
-      // placement.index does not take into account the fact that the drag item will be removed.
-      // we need to do this to account for it.
-      //
-      // @todo we need an util that can do reparenting with this adjustment
-      const currentParent = findParentInstance(rootInstance, instance.id);
-      let dropTargetPositionAdjusted = dropTarget.position;
-      if (
-        currentParent !== undefined &&
-        currentParent.id === dropTarget.instanceId
-      ) {
-        const currentPosition = currentParent.children.findIndex(
-          (x) => typeof x !== "string" && x.id === instance.id
-        );
-        if (currentPosition < dropTarget.position) {
-          dropTargetPositionAdjusted--;
-        }
-      }
-
-      deleteInstanceMutable(rootInstance, instance.id);
-      insertInstanceMutable(rootInstance, instance, {
-        parentId: dropTarget.instanceId,
-        position: dropTargetPositionAdjusted,
-      });
+      reparentInstanceMutable(
+        rootInstance,
+        instanceId,
+        dropTarget.instanceId,
+        dropTarget.position
+      );
     });
   });
 };

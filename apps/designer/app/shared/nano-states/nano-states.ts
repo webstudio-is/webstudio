@@ -41,7 +41,7 @@ export type DragAndDropState = {
   isDragging: boolean;
   origin?: "canvas" | "panel";
   dropTarget?: DropTargetSharedData;
-  dragItem?: { instance: Instance };
+  dragItem?: { instanceId: Instance["id"] };
 };
 const dragAndDropStateContainer = createValueContainer<DragAndDropState>({
   isDragging: false,

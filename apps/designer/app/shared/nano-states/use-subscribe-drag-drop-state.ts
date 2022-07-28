@@ -16,7 +16,7 @@ export const useSubscribeDragAndDropState = () => {
 
   useSubscribe<
     "dragStart",
-    { origin: "panel" | "canvas"; dragItem: { instance: Instance } }
+    { origin: "panel" | "canvas"; dragItem: { instanceId: Instance["id"] } }
   >("dragStart", ({ origin, dragItem }) => {
     setState({
       isDragging: true,

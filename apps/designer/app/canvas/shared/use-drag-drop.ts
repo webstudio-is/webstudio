@@ -148,10 +148,10 @@ export const useDragAndDrop = () => {
 
       publish<
         "dragStart",
-        { origin: "panel" | "canvas"; dragItem: { instance: Instance } }
+        { origin: "panel" | "canvas"; dragItem: { instanceId: Instance["id"] } }
       >({
         type: "dragStart",
-        payload: { origin: "canvas", dragItem: { instance } },
+        payload: { origin: "canvas", dragItem: { instanceId: instance.id } },
       });
     },
     onMove: (poiterCoordinate) => {
@@ -175,13 +175,13 @@ export const useDragAndDrop = () => {
         publish<
           "reparentInstance",
           {
-            instance: Instance;
+            instanceId: Instance["id"];
             dropTarget: { instanceId: Instance["id"]; position: number };
           }
         >({
           type: "reparentInstance",
           payload: {
-            instance: dragItem,
+            instanceId: dragItem.id,
             dropTarget: {
               instanceId: dropTarget.data.id,
               position: placement.index,
