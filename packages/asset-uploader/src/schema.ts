@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { NodeOnDiskFile } from "@remix-run/node";
-import { DEFAULT_UPLPOAD_PATH } from "./constants";
+import { DEFAULT_UPLOAD_PATH } from "./constants";
 
 const SingleImageInUpload = z.instanceof(NodeOnDiskFile);
 
@@ -25,7 +25,7 @@ export const s3EnvVariables = z.object({
 });
 
 export const fsEnvVariables = z.object({
-  FILE_UPLOAD_PATH: z.string().optional().default(DEFAULT_UPLPOAD_PATH),
+  FILE_UPLOAD_PATH: z.string().optional().default(DEFAULT_UPLOAD_PATH),
 });
 
 export const assetEnvVariables = z.object({

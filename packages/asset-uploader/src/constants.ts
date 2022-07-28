@@ -1,1 +1,1 @@
-export const DEFAULT_UPLPOAD_PATH = "pub lic/uploads";
+export const DEFAULT_UPLOAD_PATH = "public/uploads";
