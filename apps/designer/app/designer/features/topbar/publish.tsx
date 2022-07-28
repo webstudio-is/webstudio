@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
-import { useId } from "@radix-ui/react-id";
 import { RocketIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import { type Project } from "@webstudio-is/prisma-client";
 import {
@@ -13,7 +12,8 @@ import {
   Text,
   Label,
   Link,
-} from "~/shared/design-system";
+  useId,
+} from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
 

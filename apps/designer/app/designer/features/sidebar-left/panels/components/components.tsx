@@ -6,7 +6,7 @@ import {
   type Publish,
   components,
 } from "@webstudio-is/react-sdk";
-import { Flex } from "~/shared/design-system";
+import { Flex } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { type DragData } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";

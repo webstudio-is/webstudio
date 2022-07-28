@@ -1,0 +1,17 @@
+// Extends can't use node's resolution rn https://github.com/dividab/tsconfig-paths/issues/209#issuecomment-1177261091
+{
+  "extends": "../../node_modules/tsconfig/base.json",
+  "include": ["./src/**/*.ts", "./src/**/*.tsx"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "module": "commonjs",
+    "jsx": "react-jsx",
+    "target": "ES2019",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "outDir": "./lib"
+  }
+}

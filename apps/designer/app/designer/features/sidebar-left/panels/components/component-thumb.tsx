@@ -1,6 +1,6 @@
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { Flex, Text, styled } from "~/shared/design-system";
+import { Flex, Text, styled } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
   px: 5,

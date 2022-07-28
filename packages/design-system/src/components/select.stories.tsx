@@ -1,6 +1,6 @@
 import { ComponentStory } from "@storybook/react";
 import React from "react";
-import { Select, SelectOption } from "~/shared/design-system";
+import { Select, SelectOption } from "./select";
 
 export default {
   component: Select,
