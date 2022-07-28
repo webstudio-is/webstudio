@@ -19,8 +19,8 @@ import env from "~/shared/env";
 
 type PublishButtonProps = { project: Project };
 
-const host = () => {
-  if (env.EDGE_DEPLOYMENT === "true" && env.EDGE_DOMAIN !== "") {
+const host = (isLocal: boolean = false) => {
+  if (!isLocal && env.EDGE_DEPLOYMENT && env.EDGE_DOMAIN !== "") {
     return env.EDGE_DOMAIN;
   }
   if (typeof location === "object") {
@@ -54,25 +54,52 @@ const Content = ({ project }: PublishButtonProps) => {
       <fetcher.Form method="post" action="/rest/publish">
         <Flex direction="column" gap="2">
           {url !== undefined && (
-            <Link
-              href={url}
-              target="_blank"
-              css={{
-                display: "flex",
-                gap: "$0",
-              }}
-            >
-              <Text
+            <>
+              {env.DEV_LOGIN && env.EDGE_DEPLOYMENT && (
+                <>
+                  Local Deployment:
+                  <Link
+                    href={`${domain}.${host(true)}`}
+                    target="_blank"
+                    css={{
+                      display: "flex",
+                      gap: "$0",
+                    }}
+                  >
+                    <Text
+                      css={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {`${domain}.${host(true)}`}{" "}
+                    </Text>
+                    <ExternalLinkIcon />
+                  </Link>
+                </>
+              )}
+              {env.DEV_LOGIN && env.EDGE_DEPLOYMENT && <>Edge Deployment:</>}
+              <Link
+                href={url}
+                target="_blank"
                 css={{
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
+                  display: "flex",
+                  gap: "$0",
                 }}
               >
-                {`${domain}.${host()}`}{" "}
-              </Text>
-              <ExternalLinkIcon />
-            </Link>
+                <Text
+                  css={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {`${domain}.${host()}`}{" "}
+                </Text>
+                <ExternalLinkIcon />
+              </Link>
+            </>
           )}
           <Flex gap="2" align="center">
             <input type="hidden" name="projectId" value={project.id} />
