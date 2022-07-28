@@ -1,5 +1,8 @@
 import { useLayoutEffect, useRef } from "react";
-import { useRootInstance } from "~/shared/nano-states";
+import {
+  useRootInstance,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import {
   type DropTarget,
@@ -34,6 +37,7 @@ const initialState = {
 
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
+  const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const state = useRef({ ...initialState });
 
@@ -127,20 +131,27 @@ export const useDragAndDrop = () => {
   });
 
   const useDragHandlers = useDrag({
+    isDragItem(element) {
+      if (rootInstance === undefined || element.id === "") {
+        return false;
+      }
+      const instance = findInstanceById(rootInstance, element.id);
+      return (
+        instance !== undefined &&
+        instance.id !== rootInstance.id &&
+        // We can't drag if we are editing text.
+        instance.id !== textEditingInstanceId
+      );
+    },
     onStart(event) {
       const instance =
         rootInstance !== undefined &&
         event.target.id !== "" &&
         findInstanceById(rootInstance, event.target.id);
 
-      if (!instance || instance.id === rootInstance.id) {
-        event.cancel();
+      if (!instance) {
         return;
       }
-
-      // @todo: If we can't find the data corresponding to the target element,
-      // should we climb up the DOM tree for another element?
-      // Should the hook do that for us?
 
       state.current.dragItem = instance;
 

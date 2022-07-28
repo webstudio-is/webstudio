@@ -3,7 +3,7 @@ import { useRef, useEffect, useMemo } from "react";
 
 type State =
   | {
-      status: "idle" | "canceled";
+      status: "idle";
     }
   | {
       status: "pending" | "dragging";
@@ -21,12 +21,8 @@ const initialState = {
 export type UseDragProps = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
-  onStart: (event: {
-    target: HTMLElement;
-    x: number;
-    y: number;
-    cancel: () => void;
-  }) => void;
+  isDragItem: (element: HTMLElement) => boolean;
+  onStart: (event: { target: HTMLElement }) => void;
   onMove: (event: { x: number; y: number }) => void;
   onShiftChange?: (event: { shifts: number }) => void;
   onEnd: () => void;
@@ -44,13 +40,10 @@ export const useDrag = ({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   onShiftChange = () => {},
   onEnd,
+  isDragItem,
 }: UseDragProps): UseDragHandlers => {
   const state = useRef<State>(initialState);
   const rootRef = useRef<HTMLElement | null>(null);
-
-  const cancel = () => {
-    state.current = { status: "canceled" };
-  };
 
   const detectShift = () => {
     if (state.current.status !== "dragging") {
@@ -69,6 +62,9 @@ export const useDrag = ({
   };
 
   const { onPointerDown } = useMove({
+    shouldStart: (e) => {
+      return e.target instanceof HTMLElement && isDragItem(e.target);
+    },
     onMoveStart({
       clientX: x,
       clientY: y,
@@ -86,13 +82,9 @@ export const useDrag = ({
         initialY: y,
         shifts: 0,
       };
-      onStart({ target, x, y, cancel });
+      onStart({ target });
     },
     onMove({ clientX: x, clientY: y }: { clientX: number; clientY: number }) {
-      if (state.current.status === "canceled") {
-        return;
-      }
-
       // We want to start dragging only when the user has moved more than startDistanceThreashold.
       if (
         state.current.status === "pending" &&

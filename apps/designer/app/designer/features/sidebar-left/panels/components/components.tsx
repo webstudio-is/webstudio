@@ -87,15 +87,17 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   };
 
   const useDragHandlers = useDrag({
+    isDragItem(element) {
+      const { dragComponent } = element.dataset;
+      return (
+        dragComponent != null &&
+        (componentNames as string[]).includes(dragComponent)
+      );
+    },
     onStart(event) {
       const { dragComponent } = event.target.dataset;
-
-      const component =
-        dragComponent != null &&
-        componentNames.find((c) => c === dragComponent);
-
+      const component = componentNames.find((c) => c === dragComponent);
       if (!component) {
-        event.cancel();
         return;
       }
 

@@ -202,10 +202,12 @@ export const Canvas = () => {
   const autoScrollHandlers = useAutoScroll();
 
   const useDragHandlers = useDrag({
+    isDragItem(element) {
+      return element.dataset.id != null;
+    },
     onStart(event) {
       const id = event.target.dataset.id;
       if (id == null) {
-        event.cancel();
         return;
       }
       setDragItemId(id);

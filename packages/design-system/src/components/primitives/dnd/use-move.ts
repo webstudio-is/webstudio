@@ -70,6 +70,8 @@ interface MoveEndEvent extends BaseMoveEvent {
 }
 
 interface MoveEvents {
+  shouldStart: (e: PointerEvent) => boolean;
+
   /** Handler that is called when a move interaction starts. */
   onMoveStart?: (e: MoveStartEvent) => void;
   /** Handler that is called when the element is moved. */
@@ -190,7 +192,11 @@ export function useMove(props: MoveEvents): MoveResult {
 
     return {
       onPointerDown: (e: PointerEvent) => {
-        if (e.button === 0 && state.current.id == null) {
+        if (
+          e.button === 0 &&
+          state.current.id == null &&
+          latestProps.current.shouldStart(e)
+        ) {
           start();
           e.stopPropagation();
           e.preventDefault();
