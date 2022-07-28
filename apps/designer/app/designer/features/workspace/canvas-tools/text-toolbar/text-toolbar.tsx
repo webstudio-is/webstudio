@@ -4,8 +4,8 @@ import {
   useSelectedInstanceData,
   useSelectionRect,
 } from "~/designer/shared/nano-states";
-import { ToggleGroup, type CSS } from "~/shared/design-system";
-import { FontBoldIcon, FontItalicIcon, Link2Icon } from "~/shared/icons";
+import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
+import { FontBoldIcon, FontItalicIcon, Link2Icon } from "@webstudio-is/icons";
 import { createInstance } from "~/shared/tree-utils";
 
 const getPlacement = ({

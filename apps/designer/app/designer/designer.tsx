@@ -8,7 +8,7 @@ import type {
   HoveredInstanceData,
   SelectedInstanceData,
 } from "~/shared/canvas-components";
-import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
+import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -35,13 +35,6 @@ import { type SyncStatus } from "~/shared/sync";
 import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
 import toast from "react-hot-toast/headless";
-import {
-  AngleIcon,
-  CheckIcon,
-  Cross1Icon,
-  ExclamationTriangleIcon,
-  TriangleDownIcon,
-} from "@radix-ui/react-icons";
 
 export const links = () => {
   return [

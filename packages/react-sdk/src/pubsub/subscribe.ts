@@ -5,6 +5,7 @@ import { useEffect } from "react";
 // Pro - you can't use a wrong event with a wrong data
 // Contra - if we have hundreds of events, this list will become a central thing to change,
 // may result in maintenance downsides and merge conflicts, because it will have to import each data type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Events = Record<string, any>;
 
 export const emitter = mitt<Events>();

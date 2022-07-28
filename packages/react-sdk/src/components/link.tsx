@@ -2,7 +2,7 @@ import React, { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 const defaultTag = "a";
 
-export type LinkProps = Omit<ComponentProps<typeof defaultTag>, "href"> & {
+type LinkProps = Omit<ComponentProps<typeof defaultTag>, "href"> & {
   href?: string;
 };
 

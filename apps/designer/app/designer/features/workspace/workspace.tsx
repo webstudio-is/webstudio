@@ -1,5 +1,4 @@
-import { Notifications } from "~/shared/design-system/components/toast";
-import { Box, Flex } from "~/shared/design-system";
+import { Box, Flex, Notifications } from "@webstudio-is/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { type Publish } from "@webstudio-is/react-sdk";

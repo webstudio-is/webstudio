@@ -1,11 +1,21 @@
 {
-  // Extends can't use node's resolution rn https://github.com/dividab/tsconfig-paths/issues/209#issuecomment-1177261091
-  "extends": "../../node_modules/tsconfig/remix.json",
+  "extends": "../../node_modules/@webstudio-is/tsconfig/remix.json",
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "paths": {
       "~/*": ["app/*"]
     },
-    "baseUrl": "."
+    "baseUrl": ".",
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "strict": true,
+    "target": "ES2019",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "resolveJsonModule": true
   }
 }

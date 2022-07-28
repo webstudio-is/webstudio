@@ -1,6 +1,11 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { type Instance, publish, useSubscribe } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  publish,
+  useSubscribe,
+  components,
+} from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
@@ -8,7 +13,6 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { primitives } from "~/shared/canvas-components";
 
 const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
 
@@ -100,7 +104,7 @@ export const useShortcuts = () => {
     "enter",
     (event) => {
       if (selectedInstance === undefined) return;
-      const { isContentEditable } = primitives[selectedInstance.component];
+      const { isContentEditable } = components[selectedInstance.component];
       if (isContentEditable === false) return;
       // Prevents inserting a newline when entering text-editing mode
       event.preventDefault();

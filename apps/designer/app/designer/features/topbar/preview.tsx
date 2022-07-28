@@ -1,6 +1,6 @@
 import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
-import { EyeOpenIcon } from "~/shared/icons";
-import { SimpleToggle } from "~/shared/design-system";
+import { EyeOpenIcon } from "@webstudio-is/icons";
+import { SimpleToggle } from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
 
 type PreviewButtonProps = {

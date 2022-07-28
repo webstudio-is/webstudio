@@ -74,3 +74,10 @@
    - Add a Box component to the canvas
    - Open Props panel
    - See the default tag is provided and can be modified
+
+1. Asset manager
+
+   - Open assets panel
+   - Upload an image
+   - Check it loads and shows a progress bar
+   - Delete an asset by clicking on the `x` icon and then the delete button in the tooltip

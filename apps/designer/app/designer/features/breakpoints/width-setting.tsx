@@ -3,7 +3,7 @@ import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
-import { Slider, Text, Flex } from "~/shared/design-system";
+import { Slider, Text, Flex } from "@webstudio-is/design-system";
 import { sort } from "~/shared/breakpoints";
 import { useBreakpoints, useIsPreviewMode } from "~/shared/nano-states";
 
