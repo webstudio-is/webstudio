@@ -32,7 +32,7 @@ export type UseDragProps = {
   onEnd: () => void;
 };
 
-export type UseDropTargetHandlers = {
+export type UseDragHandlers = {
   rootRef: (element: HTMLElement | null) => void;
 };
 
@@ -44,7 +44,7 @@ export const useDrag = ({
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   onShiftChange = () => {},
   onEnd,
-}: UseDragProps): UseDropTargetHandlers => {
+}: UseDragProps): UseDragHandlers => {
   const state = useRef<State>(initialState);
   const rootRef = useRef<HTMLElement | null>(null);
 
