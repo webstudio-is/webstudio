@@ -1,16 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import { useRootInstance } from "~/shared/nano-states";
+import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import {
-  useDropTarget,
-  useDrag,
-  usePlacement,
-  useAutoScroll,
   type Rect,
   type DropTarget,
-} from "~/shared/design-system/components/primitives/dnd";
-import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
-import { primitives } from "~/shared/canvas-components";
-import { publish, useSubscribe, type Instance } from "@webstudio-is/react-sdk";
+  useAutoScroll,
+  usePlacement,
+  useDrag,
+  useDropTarget,
+} from "@webstudio-is/design-system";
+import {
+  publish,
+  useSubscribe,
+  type Instance,
+  components as primitives,
+} from "@webstudio-is/react-sdk";
 
 // data shared between iframe and main window
 export type DropTargetSharedData = {

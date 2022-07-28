@@ -2,11 +2,8 @@ import produce from "immer";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
 import { Tree } from "~/designer/shared/tree";
-import { Flex } from "~/shared/design-system";
-import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
-import { type DragData, type DropData } from "~/shared/canvas-components";
 import { Flex } from "@webstudio-is/design-system";
-import { useRootInstance } from "~/shared/nano-states";
+import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 
 import {
   getInstancePath,

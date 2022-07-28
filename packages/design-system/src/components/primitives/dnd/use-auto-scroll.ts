@@ -41,7 +41,7 @@ const getSpeed = (
 export type UseAutoScrollProps = {
   edgeDistanceThreshold?: number;
 
-  // If set to true entire document will be scrolled.
+  // If set to true the entire document will be scrolled.
   // No need to set targetRef in this case.
   fullScreen?: boolean;
 
