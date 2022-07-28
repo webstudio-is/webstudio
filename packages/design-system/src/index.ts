@@ -59,6 +59,3 @@ export * from "./components/radio";
 export * from "./components/combobox";
 export * from "./components/checkbox";
 export * from "./components/avatar";
-
-// @todo: make sure everything that's exported has unique enough names
-export * from "./components/primitives/dnd";

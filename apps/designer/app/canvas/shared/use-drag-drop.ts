@@ -8,7 +8,7 @@ import {
   usePlacement,
   useDrag,
   useDropTarget,
-} from "@webstudio-is/design-system";
+} from "@webstudio-is/design-system/src/components/primitives/dnd";
 import {
   publish,
   useSubscribe,

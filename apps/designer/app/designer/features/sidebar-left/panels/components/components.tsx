@@ -5,7 +5,8 @@ import {
   type Publish,
   components,
 } from "@webstudio-is/react-sdk";
-import { Flex, useDrag } from "@webstudio-is/design-system";
+import { Flex } from "@webstudio-is/design-system";
+import { useDrag } from "@webstudio-is/design-system/src/components/primitives/dnd";
 import { PlusIcon } from "@webstudio-is/icons";
 import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
