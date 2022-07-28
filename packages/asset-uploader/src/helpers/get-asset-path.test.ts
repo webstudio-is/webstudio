@@ -39,7 +39,7 @@ describe("getAssetPath", () => {
           name: "test.png",
           location: Location.FS,
         })
-      ).toBe("/uploads/test.png");
+      ).toBe("/public/uploads/test.png");
     });
 
     test("return local path with custom path", () => {
