@@ -1,8 +1,9 @@
-import React from "react";
+import React, { Ref } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
 import { Text } from "./text";
+import type { CSS } from "@webstudio-is/react-sdk";
 
 type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
   React.ComponentProps<typeof TooltipPrimitive.Content> & {
@@ -10,6 +11,7 @@ type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
     content: React.ReactNode;
     multiline?: boolean;
     delayDuration?: number;
+    css?: CSS;
   };
 
 const Content = styled(TooltipPrimitive.Content, {
@@ -18,27 +20,40 @@ const Content = styled(TooltipPrimitive.Content, {
   color: "$hiContrast",
   borderRadius: "$1",
   padding: "$1 $2",
+  zIndex: "$max",
+  position: "relative",
 
   variants: {
     multiline: {
       true: {
-        maxWidth: 250,
+        // @todo makew this part of the design system
+        maxWidth: 110,
         pb: 7,
       },
     },
   },
 });
 
-export const Tooltip = ({
-  children,
-  content,
-  open,
-  defaultOpen,
-  onOpenChange,
-  multiline,
-  delayDuration,
-  ...props
-}: TooltipProps) => {
+const Arrow = styled(TooltipPrimitive.Arrow, {
+  fill: "$loContrast",
+  stroke: "$slate7",
+  strokeWidth: "$1",
+  marginTop: -0.5,
+});
+
+export const Tooltip = React.forwardRef(function TooltipWrapper(
+  {
+    children,
+    content,
+    open,
+    defaultOpen,
+    onOpenChange,
+    multiline,
+    delayDuration,
+    ...props
+  }: TooltipProps,
+  ref: Ref<HTMLDivElement>
+) {
   return (
     <TooltipPrimitive.Root
       open={open}
@@ -49,6 +64,7 @@ export const Tooltip = ({
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 
       <Content
+        ref={ref}
         side="top"
         align="center"
         sideOffset={5}
@@ -66,16 +82,9 @@ export const Tooltip = ({
           {content}
         </Text>
         <Box css={{ color: "$transparentExtreme" }}>
-          <TooltipPrimitive.Arrow
-            offset={5}
-            width={11}
-            height={5}
-            style={{
-              fill: "$loContrast",
-            }}
-          />
+          <Arrow offset={5} width={11} height={5} />
         </Box>
       </Content>
     </TooltipPrimitive.Root>
   );
-};
+});

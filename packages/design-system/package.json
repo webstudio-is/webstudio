@@ -45,9 +45,10 @@
     "@radix-ui/react-tabs": "^0.1.5",
     "@radix-ui/react-toggle": "^0.1.4",
     "@radix-ui/react-toggle-group": "^0.1.5",
-    "@radix-ui/react-tooltip": "^0.1.7",
+    "@radix-ui/react-tooltip": "^1.0.0",
     "@radix-ui/react-use-layout-effect": "^0.1.0",
-    "@webstudio-is/icons": "*"
+    "@webstudio-is/icons": "*",
+    "@webstudio-is/react-sdk": "*"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
