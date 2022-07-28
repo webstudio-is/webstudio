@@ -3,17 +3,15 @@ import { prisma, Asset } from "@webstudio-is/prisma-client";
 import { unlink } from "fs/promises";
 import path from "path";
 import { deleteAssetInDb } from "./db";
-import { getImageLocalDirectory } from "./helpers/get-image-local-path";
+import { imageFSDirectory } from "./helpers/image-fs-path";
 import { s3EnvVariables } from "./schema";
 import { getS3Client } from "./targets/s3/client";
 
 export const deleteAsset = async ({
   id,
   name,
-  dirname,
 }: {
   id: string;
-  dirname: string;
   name: string;
 }): Promise<Asset> => {
   const currentAsset = await prisma?.asset.findUnique({
@@ -32,7 +30,7 @@ export const deleteAsset = async ({
 
     return await deleteAssetInDb(id);
   } else {
-    const directory = await getImageLocalDirectory(dirname);
+    const directory = await imageFSDirectory();
     await unlink(path.join(directory, name));
 
     return await deleteAssetInDb(id);

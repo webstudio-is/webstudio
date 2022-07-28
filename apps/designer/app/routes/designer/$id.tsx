@@ -52,7 +52,6 @@ export const action: ActionFunction = async ({ request, params }) => {
       const deletedAsset = await deleteAsset({
         id: assetId,
         name: assetName,
-        dirname: __dirname,
       });
 
       return { deletedAsset };
@@ -69,7 +68,6 @@ export const action: ActionFunction = async ({ request, params }) => {
       const assets = await uploadAssets({
         request,
         projectId: params.id,
-        dirname: __dirname,
       });
       return {
         uploadedAssets: assets.map((asset: Asset) => ({
