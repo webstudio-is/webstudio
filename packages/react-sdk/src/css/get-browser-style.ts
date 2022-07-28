@@ -34,8 +34,8 @@ export const getBrowserStyle = (element?: Element): Style => {
   const computedStyle = getComputedStyle(element);
   for (knownProperty in properties) {
     if (knownProperty in computedStyle === false) continue;
-    // @ts-ignore Typescript doesn't know we can access CSSStyleDeclaration properties by keys
-    const computedValue = computedStyle[knownProperty];
+    // Typescript doesn't know we can access CSSStyleDeclaration properties by keys
+    const computedValue = computedStyle[knownProperty as unknown as number];
     browserStyle[knownProperty] = parseValue(knownProperty, computedValue);
   }
   return browserStyle;

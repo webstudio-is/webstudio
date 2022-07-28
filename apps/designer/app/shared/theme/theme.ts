@@ -1,5 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
-import { darkTheme } from "~/shared/design-system";
+import { darkTheme } from "@webstudio-is/design-system";
 import type { ColorScheme, ThemeSetting } from "./types";
 
 // User selected theme setting.

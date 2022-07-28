@@ -6,7 +6,7 @@ import {
   Combobox,
   ComboboxTextField,
   ComboboxPopperContent,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import type { StyleConfig } from "~/shared/style-panel-configs";
 import {
   categories,

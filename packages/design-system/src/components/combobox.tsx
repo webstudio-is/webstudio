@@ -5,7 +5,7 @@ import {
   type ComponentProps,
   type ForwardRefRenderFunction,
 } from "react";
-import { CheckIcon, ChevronDownIcon } from "~/shared/icons";
+import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox, type UseComboboxGetItemPropsOptions } from "downshift";
 import { matchSorter } from "match-sorter";

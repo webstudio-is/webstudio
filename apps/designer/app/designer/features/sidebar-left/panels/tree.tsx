@@ -1,6 +1,6 @@
 import { type Instance, type Publish } from "@webstudio-is/react-sdk";
-import { ListNestedIcon } from "~/shared/icons";
-import { Flex } from "~/shared/design-system";
+import { ListNestedIcon } from "@webstudio-is/icons";
+import { Flex } from "@webstudio-is/design-system";
 import { type SelectedInstanceData } from "~/shared/canvas-components";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 import { Tree } from "~/designer/shared/tree";

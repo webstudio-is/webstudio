@@ -1,5 +1,5 @@
-import { ImageIcon } from "~/shared/icons";
-import { Flex, Grid, Heading } from "~/shared/design-system";
+import { ImageIcon } from "@webstudio-is/icons";
+import { Flex, Grid, Heading } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
 import { AssetManagerThumbnail } from "./components/thumbnail";

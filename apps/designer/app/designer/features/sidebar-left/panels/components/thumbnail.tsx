@@ -5,7 +5,7 @@ import {
   Flex,
   ProgressBar,
   Tooltip,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";

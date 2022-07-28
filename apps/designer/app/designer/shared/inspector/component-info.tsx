@@ -1,6 +1,6 @@
-import { Flex, Text } from "~/shared/design-system";
+import { components } from "@webstudio-is/react-sdk";
+import { Flex, Text } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { primitives } from "~/shared/canvas-components";
 
 export const ComponentInfo = ({
   selectedInstanceData,
@@ -15,7 +15,7 @@ export const ComponentInfo = ({
           color: "$colors$slate11",
           fontWeight: "500",
         }}
-      >{`Selected: ${primitives[selectedInstanceData.component].label}`}</Text>
+      >{`Selected: ${components[selectedInstanceData.component].label}`}</Text>
     </Flex>
   );
 };

@@ -8,7 +8,7 @@ import {
   Card,
   Paragraph,
   Box,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";

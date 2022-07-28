@@ -11,8 +11,8 @@ import {
   DropdownMenuSeparator,
   IconButton,
   Box,
-} from "~/shared/design-system";
-import { HamburgerMenuIcon, ChevronRightIcon } from "~/shared/icons";
+} from "@webstudio-is/design-system";
+import { HamburgerMenuIcon, ChevronRightIcon } from "@webstudio-is/icons";
 import type { Config } from "~/config";
 import { ShortcutHint } from "./shortcut-hint";
 import {
