@@ -3,7 +3,7 @@ import appRoot from "app-root-path";
 import { fsEnvVariables } from "../schema";
 const fsUploadVars = fsEnvVariables.parse(process.env);
 
-export const imageFSDirectory = () => {
+export const imageFsDirectory = () => {
   const isProd = process.env.NODE_ENV === "production";
 
   if (isProd) return path.join(appRoot.path, fsUploadVars.FILE_UPLOAD_PATH);

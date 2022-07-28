@@ -75,7 +75,7 @@ export const AssetManagerThumbnail = ({
 
   return (
     <Box
-      title={alt || ""}
+      title={alt || name}
       css={{
         aspectRatio: "1/1",
         display: "flex",

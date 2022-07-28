@@ -7,7 +7,7 @@ import { uploadToS3 } from "./targets/s3/uploader";
 import { uploadToDisk } from "./targets/disk/upload";
 import { assetEnvVariables, s3EnvVariables } from "./schema";
 import { Asset } from "@webstudio-is/prisma-client";
-import { imageFSDirectory } from "./helpers/image-fs-path";
+import { imageFsDirectory } from "./helpers/image-fs-path";
 
 const isS3Upload = s3EnvVariables.safeParse(process.env).success;
 
@@ -23,7 +23,7 @@ export const uploadAssets = async ({
   request: Request;
   projectId: string;
 }): Promise<Asset[]> => {
-  const directory = await imageFSDirectory();
+  const directory = await imageFsDirectory();
   const formData = await unstable_parseMultipartFormData(
     request,
     isS3Upload
