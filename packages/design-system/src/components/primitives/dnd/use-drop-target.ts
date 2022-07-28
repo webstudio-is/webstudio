@@ -2,104 +2,120 @@ import { useRef } from "react";
 
 export type Area = "top" | "right" | "bottom" | "left" | "center";
 
-export type Parameters = {
-  isDropTarget: (element: HTMLElement) => boolean;
-  edgeDistanceThreshold?: number;
-  holdTimeThreshold?: number;
-  onDropTargetChange: (event: {
-    rect: DOMRect;
-    area: Area;
-    target: HTMLElement;
-  }) => void;
-  onHold?: (event: { target: HTMLElement }) => void;
+export type DropTarget<Data> = {
+  data: Data;
+  element: HTMLElement;
+  rect: DOMRect;
 };
 
-export type Handlers = {
+const isSameRect = (a: DOMRect, b: DOMRect) =>
+  a.top === b.top &&
+  a.left === b.left &&
+  a.bottom === b.bottom &&
+  a.right === b.right;
+
+// We pass around data, to avoid extra data lookups.
+// For example, data found in isDropTarget
+// doesn't have to be looked up again in swapDropTarget.
+export type UseDropTargetProps<Data> = {
+  // To check that the element can qualify as a target
+  isDropTarget: (element: HTMLElement) => Data | false;
+
+  // Given the potential target that has passed isDropTarget check,
+  // and the position of the pointer on the target,
+  // you can swap to another target
+  swapDropTarget?: (args: { element: HTMLElement; data: Data; area: Area }) => {
+    element: HTMLElement;
+    data: Data;
+  };
+
+  onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
+  edgeDistanceThreshold?: number;
+
+  // @todo: not sure we should do any data comparisons here.
+  // On the contrary, we may want to rely on the assumption
+  // that the data for the same element is always the same (for caching)
+  isSameData?: (data1: Data, data2: Data) => boolean;
+};
+
+export type UseDropTargetHandlers = {
   handleMove: (pointerCoordinate: Coordinate) => void;
   handleScroll: () => void;
   handleEnd: () => void;
   rootRef: (element: HTMLElement | null) => void;
 };
 
-export const useDropTarget = ({
-  isDropTarget,
+export const useDropTarget = <Data>({
   edgeDistanceThreshold = 3,
-  holdTimeThreshold = 500,
+  isSameData = (data1: Data, data2: Data) => data1 === data2,
+  isDropTarget,
+  swapDropTarget = (args) => args,
   onDropTargetChange,
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  onHold = () => {},
-}: Parameters): Handlers => {
+}: UseDropTargetProps<Data>): UseDropTargetHandlers => {
   const state = useRef({
     root: null as HTMLElement | null,
-    target: undefined as HTMLElement | undefined,
-    area: "center" as Area,
-    rect: undefined as DOMRect | undefined,
-    holdTimeout: undefined as NodeJS.Timeout | undefined,
     pointerCoordinate: undefined as Coordinate | undefined,
-    dropIndex: undefined as number | undefined,
+    dropTarget: undefined as DropTarget<Data> | undefined,
   });
 
-  const clearHoldTimeout = () => {
-    if (state.current.holdTimeout) {
-      clearTimeout(state.current.holdTimeout);
-      state.current.holdTimeout = undefined;
-    }
-  };
-
-  const detectHold = (target: HTMLElement) => {
-    clearHoldTimeout();
-    state.current.holdTimeout = setTimeout(() => {
-      state.current.holdTimeout = undefined;
-      if (target === state.current.target) {
-        onHold({ target });
-      }
-    }, holdTimeThreshold);
-  };
-
   const detectTarget = () => {
-    const pointerCoordinate = state.current.pointerCoordinate;
-    if (pointerCoordinate === undefined) {
+    const { pointerCoordinate, root } = state.current;
+    if (pointerCoordinate === undefined || root === null) {
       return;
     }
 
     const target = elementFromPoint(pointerCoordinate);
-    if (target === undefined || state.current.root === null) {
+    if (target === undefined) {
       return;
     }
 
-    const nextTarget = findClosestDropTarget({
-      root: state.current.root,
+    // @todo: cache this? Not expensive by itself, but it may call isDropTarget a lot
+    const potentialTarget = findClosestDropTarget({
+      root,
       target,
       isDropTarget,
     });
-
-    const hasTargetChanged = nextTarget !== state.current.target;
-    state.current.target = nextTarget;
-
-    if (hasTargetChanged) {
-      detectHold(nextTarget);
+    if (potentialTarget === undefined) {
+      return;
     }
 
-    const nextRect = nextTarget.getBoundingClientRect();
+    // @todo: if neither potentialTarget nor area has changed since the last time,
+    // don't call swapDropTarget.
 
-    const hasRectChanged = nextRect !== state.current.rect;
-    state.current.rect = nextRect;
+    const dropTarget = {
+      ...potentialTarget,
+      rect: potentialTarget.element.getBoundingClientRect(),
+    };
 
-    const nextArea = getArea(
-      pointerCoordinate,
-      edgeDistanceThreshold,
-      nextRect
-    );
-
-    const hasAreaChanged = nextArea !== state.current.area;
-    state.current.area = nextArea;
-
-    if (hasTargetChanged || hasAreaChanged || hasRectChanged) {
-      onDropTargetChange({
-        rect: nextRect,
-        area: nextArea,
-        target: nextTarget,
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const swappedTarget = swapDropTarget({
+        element: dropTarget.element,
+        data: dropTarget.data,
+        area: getArea(
+          pointerCoordinate,
+          edgeDistanceThreshold,
+          dropTarget.rect
+        ),
       });
+
+      if (swappedTarget.element === dropTarget.element) {
+        break;
+      }
+
+      dropTarget.element = swappedTarget.element;
+      dropTarget.data = swappedTarget.data;
+      dropTarget.rect = swappedTarget.element.getBoundingClientRect();
+    }
+
+    if (
+      state.current.dropTarget === undefined ||
+      state.current.dropTarget.element !== dropTarget.element ||
+      !isSameData(state.current.dropTarget.data, dropTarget.data) ||
+      !isSameRect(state.current.dropTarget.rect, dropTarget.rect)
+    ) {
+      state.current.dropTarget = dropTarget;
+      onDropTargetChange(dropTarget);
     }
   };
 
@@ -114,8 +130,8 @@ export const useDropTarget = ({
     },
 
     handleEnd() {
-      // Clear onHold timeout if we ended interaction before it fired
-      clearHoldTimeout();
+      state.current.pointerCoordinate = undefined;
+      state.current.dropTarget = undefined;
     },
 
     rootRef(rootElement: HTMLElement | null) {
@@ -131,6 +147,8 @@ const elementFromPoint = (coordinate: Coordinate): HTMLElement | undefined => {
   if (element instanceof HTMLElement) return element;
 };
 
+// @todo: it seems we only care about whether the area is center or on an edge.
+// Knowing which edge doesn't help much.
 const getArea = (
   pointerCoordinate: Coordinate,
   edgeDistanceThreshold: number,
@@ -150,22 +168,30 @@ const getArea = (
   return area;
 };
 
-const findClosestDropTarget = ({
+// @todo: maybe rather than climbing the DOM tree,
+// we should use document.elementsFromPoint() array?
+// Might work better with absolute positioned elements.
+const findClosestDropTarget = <Data>({
   root,
   target,
   isDropTarget,
 }: {
   root: HTMLElement;
   target: HTMLElement;
-  isDropTarget: (target: HTMLElement) => boolean;
-}): HTMLElement => {
+  isDropTarget: (target: HTMLElement) => Data | false;
+}) => {
   let currentTarget: HTMLElement | null = target;
-  while (currentTarget !== null && currentTarget !== root) {
-    const isValid = isDropTarget(currentTarget);
-    if (isValid) {
-      return currentTarget;
+  while (currentTarget !== null) {
+    const data = isDropTarget(currentTarget);
+    if (data !== false) {
+      return { data: data, element: currentTarget };
     }
+
+    // @todo: what makes us think that document.elementFromPoint() is inside the root in the first place?
+    if (currentTarget === root) {
+      break;
+    }
+
     currentTarget = currentTarget.parentElement;
   }
-  return root;
 };
