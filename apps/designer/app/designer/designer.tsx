@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
@@ -34,6 +34,14 @@ import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
 import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
+import toast from "react-hot-toast/headless";
+import {
+  AngleIcon,
+  CheckIcon,
+  Cross1Icon,
+  ExclamationTriangleIcon,
+  TriangleDownIcon,
+} from "@radix-ui/react-icons";
 
 export const links = () => {
   return [
@@ -199,6 +207,18 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
 
+  useEffect(() => {
+    window.setTimeout(() => {
+      toast.success("Hiiiii, I am a success toast");
+    }, 2500);
+    window.setTimeout(() => {
+      toast.error("Hi am an error");
+    }, 3000);
+    window.setTimeout(() => {
+      toast("Hi I am a message");
+    }, 3500);
+  }, []);
+
   return (
     <DndProvider backend={TouchBackend} options={dndOptions}>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
@@ -208,6 +228,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
           project={project}
           publish={publish}
         />
+
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
             <CanvasIframe

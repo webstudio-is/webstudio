@@ -1,3 +1,4 @@
+import { Notifications } from "~/shared/design-system/components/toast";
 import { Box, Flex } from "~/shared/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
@@ -9,6 +10,7 @@ const workspaceStyle = {
   // scroll behaviour should be derived from the iframe
   overflow: "hidden",
   scrollbarGutter: "stable",
+  position: "relative",
 };
 
 const zoomStyle = {
@@ -55,6 +57,7 @@ export const Workspace = ({
           <CanvasTools publish={publish} />
         </Box>
       </Flex>
+      <Notifications />
     </Box>
   );
 };
