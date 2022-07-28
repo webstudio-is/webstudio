@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, ProgressBar } from "~/shared/design-system";
+import { Box, ProgressBar } from "@webstudio-is/design-system";
 import { useInterval } from "react-use";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";

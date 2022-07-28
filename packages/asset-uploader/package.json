@@ -7,9 +7,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "checks": "yarn typecheck && yarn test",
+    "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
-    "build": "rm -fr lib && tsc"
+    "build": "rm -fr lib && tsc",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",

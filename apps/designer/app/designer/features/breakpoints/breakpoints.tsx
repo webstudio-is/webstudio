@@ -14,7 +14,7 @@ import {
   DropdownMenuCheckboxItem,
   Text,
   Flex,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { sort } from "~/shared/breakpoints";
 import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { BreakpointsEditor } from "./breakpoints-editor";

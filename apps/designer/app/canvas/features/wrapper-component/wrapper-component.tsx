@@ -6,8 +6,8 @@ import {
   toCss,
   useUserProps,
   renderWrapperComponentChildren,
+  components,
 } from "@webstudio-is/react-sdk";
-import { primitives } from "~/shared/canvas-components";
 import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
 import { useDraggable } from "./use-draggable";
@@ -63,7 +63,7 @@ export const WrapperComponentDev = ({
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
 
-  const { Component } = primitives[instance.component];
+  const { Component } = components[instance.component];
 
   const props = {
     ...userProps,
@@ -122,7 +122,7 @@ export const InlineWrapperComponentDev = ({
   );
   const className = useCss({ instance, css });
   const userProps = useUserProps(instance.id);
-  const { Component } = primitives[instance.component];
+  const { Component } = components[instance.component];
 
   return (
     <Component

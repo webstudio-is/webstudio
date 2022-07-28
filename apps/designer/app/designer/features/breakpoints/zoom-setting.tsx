@@ -1,5 +1,5 @@
 import { useZoom } from "~/designer/shared/nano-states";
-import { Slider, Text, Flex } from "~/shared/design-system";
+import { Slider, Text, Flex } from "@webstudio-is/design-system";
 
 export const minZoom = 10;
 

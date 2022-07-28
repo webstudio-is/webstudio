@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { type Instance } from "@webstudio-is/react-sdk";
+import { type Instance, components } from "@webstudio-is/react-sdk";
 import {
   Flex,
   Text,
@@ -7,9 +7,8 @@ import {
   Button,
   keyframes,
   styled,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
-import { primitives } from "~/shared/canvas-components";
 import noop from "lodash.noop";
 
 const openKeyframes = keyframes({
@@ -94,7 +93,7 @@ export const Tree = ({
     animate,
   ]);
 
-  const { Icon, label } = primitives[instance.component];
+  const { Icon, label } = components[instance.component];
   const CollapsibleContent = animate
     ? CollapsibleContentAnimated
     : CollapsibleContentUnanimated;
