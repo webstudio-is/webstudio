@@ -7,7 +7,7 @@ import {
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { useSelectedInstanceData } from "../../shared/nano-states";
 import { useDragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";

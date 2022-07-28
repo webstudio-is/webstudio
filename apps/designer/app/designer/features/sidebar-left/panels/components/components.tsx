@@ -4,13 +4,24 @@ import { type Instance, type Publish } from "@webstudio-is/react-sdk";
 import { Flex } from "~/shared/design-system";
 import { PlusIcon } from "~/shared/icons";
 import { primitives } from "~/shared/canvas-components";
+import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
+import { useDrag } from "react-dnd";
+import { getEmptyImage } from "react-dnd-html5-backend";
+import {
+  type Instance,
+  type Publish,
+  components,
+} from "@webstudio-is/react-sdk";
+import { Flex } from "@webstudio-is/design-system";
+import { PlusIcon } from "@webstudio-is/icons";
+import { type DragData } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";
 import { useDrag } from "~/shared/design-system/components/primitives/dnd";
 import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 
-const components = (
+const componentNames = (
   Object.keys(primitives) as Array<Instance["component"]>
 ).filter((component) => primitives[component].isInlineOnly === false);
 
@@ -88,7 +99,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       const { dragComponent } = event.target.dataset;
 
       const component =
-        dragComponent != null && components.find((c) => c === dragComponent);
+        dragComponent != null && componentNames.find((c) => c === dragComponent);
 
       if (!component) {
         event.cancel();
@@ -125,7 +136,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
   return (
     <Flex gap="1" wrap="wrap" css={{ padding: "$1" }} {...dragProps}>
-      {components.map((component: Instance["component"]) => (
+      {componentNames.map((component: Instance["component"]) => (
         <DraggableThumb
           key={component}
           component={component}

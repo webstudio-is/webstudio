@@ -17,7 +17,7 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   if (defaultBreakpoint === undefined) {
     throw new Error("A breakpoint with minWidth 0 is required");
   }
-  // @todo this should be part of a root primitive in primitives
+  // @todo this should be part of a root component in sdk
   const rootConfig: Pick<Instance, "component" | "cssRules"> = {
     component: "Box",
     cssRules: [

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { styled } from "~/shared/design-system";
+import { styled } from "@webstudio-is/design-system";
 
 type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 

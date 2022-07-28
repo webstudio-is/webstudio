@@ -1,7 +1,6 @@
-import { type Instance } from "@webstudio-is/react-sdk";
+import { type Instance, components } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { primitives } from "~/shared/canvas-components";
-import { Flex, Text, styled } from "~/shared/design-system";
+import { Flex, Text, styled } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
   px: 5,
@@ -31,7 +30,7 @@ export const ComponentThumb = forwardRef<
   ElementRef<typeof Thumb>,
   ComponentThumbProps
 >(({ component, ...rest }, ref) => {
-  const { Icon, label } = primitives[component];
+  const { Icon, label } = components[component];
   return (
     <Thumb
       direction="column"

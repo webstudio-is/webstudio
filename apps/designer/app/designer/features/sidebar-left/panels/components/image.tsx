@@ -1,11 +1,12 @@
-import { Asset } from "@webstudio-is/prisma-client";
 import { useEffect, useState } from "react";
-import { Box } from "~/shared/design-system";
-import placholderImage from "~/shared/images/image-placeholder.svg";
+import { Box, ProgressBar } from "@webstudio-is/design-system";
+import { useInterval } from "react-use";
+import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
+import { Asset } from "@webstudio-is/prisma-client";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
-  const [src, setSrc] = useState(placholderImage);
+  const [src, setSrc] = useState(placeholderImage);
 
   useEffect(() => {
     const newImage = new Image();
@@ -18,21 +19,61 @@ const useImageWithFallback = ({ path }: { path: string }) => {
 };
 
 export const AssetManagerImage = ({
-  asset: { path, alt },
+  path,
+  alt,
+  status,
 }: {
-  asset: Asset;
+  path: string;
+  alt?: string;
+  status?: Asset["status"];
 }) => {
+  const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
+  const [progressBarPercentage, setProgressBarPercentage] = useState(0);
+
+  // @todo rewrite this fake indication to show real progress
+  useInterval(
+    () => {
+      setProgressBarPercentage((percentage) =>
+        percentage < 60 ? percentage + 1 : percentage
+      );
+    },
+    isUploading ? 100 : null
+  );
+
   return (
     <Box
       title={alt || ""}
       css={{
         aspectRatio: "1/1",
-        backgroundImage: `url(${src})`,
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 $2",
+        position: "relative",
       }}
-    ></Box>
+    >
+      <Box
+        css={{
+          backgroundImage: `url("${src}")`,
+          width: "100%",
+          height: "100%",
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          position: "absolute",
+          left: 0,
+          top: 0,
+          ...(isUploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
+        }}
+      ></Box>
+      {isUploading && (
+        <ProgressBar
+          value={progressBarPercentage}
+          max={60}
+          css={{ width: "100%", height: "$1" }}
+        />
+      )}
+    </Box>
   );
 };

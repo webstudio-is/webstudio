@@ -5,7 +5,7 @@ import {
   type Instance,
 } from "@webstudio-is/react-sdk";
 import { createInstance } from "~/shared/tree-utils";
-import { Box, Button } from "~/shared/design-system";
+import { Box, Button } from "@webstudio-is/design-system";
 import { LexicalComposer, ContentEditable } from "./lexical";
 import { TreeViewPlugin } from "./plugins/tree-view-plugin";
 import { config } from "./config";
