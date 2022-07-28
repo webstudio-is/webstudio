@@ -15,10 +15,12 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",
     "@aws-sdk/lib-storage": "^3.131.0",
-    "sharp": "^0.30.7",
-    "@webstudio-is/prisma-client": "*"
+    "@webstudio-is/prisma-client": "*",
+    "app-root-path": "^3.0.0",
+    "sharp": "^0.30.7"
   },
   "devDependencies": {
+    "@types/app-root-path": "^1.2.4",
     "@types/node": "^17.0.21",
     "@types/sharp": "^0.30.4",
     "@webstudio-is/jest-config": "*",
