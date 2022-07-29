@@ -26,8 +26,8 @@
     "@stitches/react": "^1.2.7",
     "@vercel/node": "^2.4.1",
     "@webstudio-is/asset-uploader": "*",
-    "@webstudio-is/react-sdk": "*",
     "@webstudio-is/prisma-client": "*",
+    "@webstudio-is/react-sdk": "*",
     "@webstudio-is/design-system": "*",
     "@webstudio-is/icons": "*",
     "bson-objectid": "^2.0.2",
@@ -60,7 +60,8 @@
     "remix-auth-github": "^1.1.1",
     "remix-auth-google": "^1.1.0",
     "sharp": "^0.30.7",
-    "slugify": "^1.6.5"
+    "slugify": "^1.6.5",
+    "zod-form-data": "^1.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.18.5",
@@ -98,12 +99,12 @@
     "esbuild-jest": "^0.5.0",
     "esbuild-node-externals": "^1.4.1",
     "esbuild-node-loader": "^0.8.0",
-    "eslint-config-custom": "*",
     "jest": "^27.5.1",
     "prettier": "^2.6.2",
     "react-test-renderer": "^17.0.2",
     "relative-deps": "^1.0.7",
-    "tsconfig": "*",
+    "@webstudio-is/eslint-config-custom": "*",
+    "@webstudio-is/tsconfig": "*",
     "typescript": "4.6.4"
   },
   "sideEffects": false,

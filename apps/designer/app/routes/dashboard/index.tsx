@@ -10,12 +10,16 @@ import * as db from "~/shared/db";
 import config from "~/config";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
+import { zfd } from "zod-form-data";
 export { links };
 
+const schema = zfd.formData({
+  project: zfd.text(),
+});
+
 export const action: ActionFunction = async ({ request }) => {
-  const formData = await request.formData();
-  const title = formData.get("project");
-  if (typeof title !== "string") return { errors: "Title required" };
+  const { project: title } = schema.parse(await request.formData());
+
   const { userId, headers } = await ensureUserCookie(request);
   const authenticatedUser = await authenticator.isAuthenticated(request);
   try {
