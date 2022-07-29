@@ -1,11 +1,9 @@
-import { styled } from "@stitches/react";
-import { slate } from "@radix-ui/colors";
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import { useToaster } from "react-hot-toast/headless";
-import { keyframes } from "../stitches.config";
+import { keyframes, styled } from "../stitches.config";
 import { CheckIcon, Cross1Icon } from "@webstudio-is/icons";
 
-const VIEWPORT_PADDING = 10;
+const VIEWPORT_PADDING = "$2";
 
 const hide = keyframes({
   "0%": { opacity: 1 },
@@ -35,7 +33,7 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
   maxWidth: "100vw",
   margin: 0,
   listStyle: "none",
-  zIndex: 2147483649,
+  zIndex: "$max",
   outline: "none",
 });
 
@@ -43,13 +41,13 @@ const StyledToast = styled(ToastPrimitive.Root, {
   borderRadius: 6,
   boxShadow:
     "hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px",
-  padding: 15,
+  padding: "$3",
   display: "flex",
-  gap: 15,
+  gap: "$3",
   alignItems: "center",
-  color: slate.slate12,
+  color: "$highContrast",
   fontWeight: 500,
-  fontSize: 15,
+  fontSize: "$3",
 
   "@media (prefers-reduced-motion: no-preference)": {
     '&[data-state="open"]': {
@@ -88,13 +86,13 @@ const StyledToast = styled(ToastPrimitive.Root, {
 });
 
 const StyledTitle = styled(ToastPrimitive.Title, {
-  marginBottom: 5,
+  marginBottom: "$1",
 });
 
-export const Notifications = () => {
+export const Toaster = () => {
   const { toasts, handlers } = useToaster();
   const { startPause, endPause } = handlers;
-
+  console.log(toasts);
   return (
     <ToastPrimitive.ToastProvider>
       {toasts.map((toast) => (

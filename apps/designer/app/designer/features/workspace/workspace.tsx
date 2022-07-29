@@ -1,7 +1,9 @@
-import { Box, Flex, Notifications } from "@webstudio-is/design-system";
+import { Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { type Publish } from "@webstudio-is/react-sdk";
+import { useEffect } from "react";
+import toast from "react-hot-toast/headless";
 
 const workspaceStyle = {
   flexGrow: 1,
@@ -42,6 +44,20 @@ export const Workspace = ({
     publish<"unselectInstance">({ type: "unselectInstance" });
   };
 
+  useEffect(() => {
+    window.setTimeout(() => {
+      toast.success("Hiiiii, I am a success toast", {
+        duration: Infinity,
+      });
+    }, 2500);
+    window.setTimeout(() => {
+      toast.error("Hi am an error");
+    }, 3000);
+    window.setTimeout(() => {
+      toast("Hi I am a message");
+    }, 3500);
+  }, []);
+
   return (
     <Box css={workspaceStyle} onClick={handleWorkspaceClick}>
       <Flex
@@ -56,7 +72,7 @@ export const Workspace = ({
           <CanvasTools publish={publish} />
         </Box>
       </Flex>
-      <Notifications />
+      <Toaster />
     </Box>
   );
 };

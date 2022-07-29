@@ -11,7 +11,7 @@ export {
   theme,
   type CSS,
 } from "./stitches.config";
-export { Notifications } from "./components/toast";
+export { Toaster } from "./components/toast";
 
 export * as Collapsible from "@radix-ui/react-collapsible";
 export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
