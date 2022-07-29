@@ -1,12 +1,13 @@
-import { FontBoldIcon } from "@webstudio-is/icons";
+import { FontItalicIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta } from "./component-type";
 import { Italic } from "./italic";
 
 export default {
-  Icon: FontBoldIcon,
+  Icon: FontItalicIcon,
   Component: Italic,
   canAcceptChild: () => false,
   isContentEditable: false,
   isInlineOnly: true,
   label: "Italic Text",
+  isListed: false,
 } as WsComponentMeta<typeof Italic>;

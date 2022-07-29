@@ -15,5 +15,7 @@ export default {
   defaultStyle,
   canAcceptChild: () => true,
   isContentEditable: false,
+  isInlineOnly: false,
+  isListed: true,
   label: "Box",
 } as WsComponentMeta<typeof Box>;

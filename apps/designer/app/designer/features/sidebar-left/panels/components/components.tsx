@@ -71,7 +71,7 @@ export const TabContent = ({
 }: TabContentProps) => {
   const componentNames = (
     Object.keys(components) as Array<Instance["component"]>
-  ).filter((component) => components[component].isInlineOnly === false);
+  ).filter((component) => components[component].isListed);
 
   const handleDragChange = useCallback(
     (isDragging: boolean) => {

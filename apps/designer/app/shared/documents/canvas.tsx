@@ -28,13 +28,15 @@ export const Canvas = ({
         <Links />
         <CriticalCss />
       </head>
-      <body>
-        <Outlet />
-        <ScrollRestoration />
-        <Env />
-        <Scripts />
-        {process.env.NODE_ENV === "development" && <LiveReload />}
-      </body>
+      <Outlet />
+      {
+        // @todo may need to figure out how to put in script tags inside the body
+        // body is rendered by outlet because its part of the user tree
+      }
+      <ScrollRestoration />
+      <Env />
+      <Scripts />
+      {process.env.NODE_ENV === "development" && <LiveReload />}
     </html>
   );
 };

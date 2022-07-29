@@ -48,14 +48,13 @@ const usePreviewCss = ({ instance, css }: UseCssProps) => {
 
 const voidElements =
   "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
-const rootElement = "body > div";
 
 const defaultStyle = {
   "&": {
     // When double clicking into an element to edit text, it should not select the word.
     userSelect: "none",
   },
-  [`&:not(${voidElements}):not(${rootElement}):empty`]: {
+  [`&:not(${voidElements}):empty`]: {
     outline: "1px dashed #555",
     outlineOffset: -1,
     paddingTop: 50,
