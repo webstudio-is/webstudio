@@ -20,14 +20,22 @@ import {
 
 export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
-// data shared between iframe and main window
-export type DropTargetSharedData = {
+export type DropTargetChangePayload = {
   rect: Rect;
   placementRect: Rect;
   position: number;
   instanceId: Instance["id"];
   instanceComponent: Instance["component"];
 };
+
+export type DragStartPayload = {
+  origin: "panel" | "canvas";
+  dragItem: Instance;
+};
+
+export type DragEndPayload = { origin: "panel" | "canvas" };
+
+export type DragMovePayload = { canvasCoordinates: { x: number; y: number } };
 
 const initialState = {
   dropTarget: undefined as DropTarget<Instance> | undefined,
@@ -46,7 +54,7 @@ export const useDragAndDrop = () => {
     if (dropTarget === undefined || placement === undefined) {
       return;
     }
-    publish<"dropTargetChange", DropTargetSharedData>({
+    publish<"dropTargetChange", DropTargetChangePayload>({
       type: "dropTargetChange",
       payload: {
         rect: dropTarget.rect,
@@ -157,12 +165,12 @@ export const useDragAndDrop = () => {
 
       autoScrollHandlers.setEnabled(true);
 
-      publish<
-        "dragStart",
-        { origin: "panel" | "canvas"; dragItem: { instanceId: Instance["id"] } }
-      >({
+      publish<"dragStart", DragStartPayload>({
         type: "dragStart",
-        payload: { origin: "canvas", dragItem: { instanceId: instance.id } },
+        payload: {
+          origin: "canvas",
+          dragItem: instance,
+        },
       });
     },
     onMove: (poiterCoordinate) => {
@@ -175,7 +183,7 @@ export const useDragAndDrop = () => {
       autoScrollHandlers.setEnabled(false);
       placementHandlers.handleEnd();
 
-      publish<"dragEnd", { origin: "panel" | "canvas" }>({
+      publish<"dragEnd", DragEndPayload>({
         type: "dragEnd",
         payload: { origin: "canvas" },
       });
@@ -234,17 +242,17 @@ export const useDragAndDrop = () => {
   // Handle drag from the panel
   // ================================================================
 
-  useSubscribe<
+  useSubscribe<"dragStart", DragStartPayload>(
     "dragStart",
-    { origin: "panel" | "canvas"; dragItem: { instance: Instance } }
-  >("dragStart", ({ origin, dragItem }) => {
-    if (origin === "panel") {
-      state.current.dragItem = dragItem.instance;
-      autoScrollHandlers.setEnabled(true);
+    ({ origin, dragItem }) => {
+      if (origin === "panel") {
+        state.current.dragItem = dragItem;
+        autoScrollHandlers.setEnabled(true);
+      }
     }
-  });
+  );
 
-  useSubscribe<"dragMove", { canvasCoordinates: { x: number; y: number } }>(
+  useSubscribe<"dragMove", DragMovePayload>(
     "dragMove",
     ({ canvasCoordinates }) => {
       dropTargetHandlers.handleMove(canvasCoordinates);
@@ -253,37 +261,34 @@ export const useDragAndDrop = () => {
     }
   );
 
-  useSubscribe<"dragEnd", { origin: "panel" | "canvas" }>(
-    "dragEnd",
-    ({ origin }) => {
-      if (origin === "panel") {
-        dropTargetHandlers.handleEnd();
-        autoScrollHandlers.setEnabled(false);
-        placementHandlers.handleEnd();
+  useSubscribe<"dragEnd", DragEndPayload>("dragEnd", ({ origin }) => {
+    if (origin === "panel") {
+      dropTargetHandlers.handleEnd();
+      autoScrollHandlers.setEnabled(false);
+      placementHandlers.handleEnd();
 
-        const { dropTarget, placement, dragItem } = state.current;
+      const { dropTarget, placement, dragItem } = state.current;
 
-        if (dropTarget && placement && dragItem) {
-          publish<
-            "insertInstance",
-            {
-              instance: Instance;
-              dropTarget: { instanceId: Instance["id"]; position: number };
-            }
-          >({
-            type: "insertInstance",
-            payload: {
-              instance: dragItem,
-              dropTarget: {
-                instanceId: dropTarget.data.id,
-                position: placement.index,
-              },
+      if (dropTarget && placement && dragItem) {
+        publish<
+          "insertInstance",
+          {
+            instance: Instance;
+            dropTarget: { instanceId: Instance["id"]; position: number };
+          }
+        >({
+          type: "insertInstance",
+          payload: {
+            instance: dragItem,
+            dropTarget: {
+              instanceId: dropTarget.data.id,
+              position: placement.index,
             },
-          });
-        }
-
-        state.current = { ...initialState };
+          },
+        });
       }
+
+      state.current = { ...initialState };
     }
-  );
+  });
 };

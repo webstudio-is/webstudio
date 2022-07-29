@@ -4,42 +4,58 @@ import { useMemo } from "react";
 import { Tree } from "~/designer/shared/tree";
 import { Flex } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
-import { getInstancePath, reparentInstanceMutable } from "~/shared/tree-utils";
+import {
+  getInstancePath,
+  reparentInstanceMutable,
+  insertInstanceMutable,
+  findInstanceById,
+} from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
   const [dragAndDropState] = useDragAndDropState();
 
-  const dragItemInstanceId = dragAndDropState.dragItem?.instanceId;
+  const dragItemInstance = dragAndDropState.dragItem;
   const dropTargetInstanceId = dragAndDropState.dropTarget?.instanceId;
   const dropTargetPosition = dragAndDropState.dropTarget?.position;
 
   const treeProps = useMemo(() => {
     if (
-      dragItemInstanceId === undefined ||
+      dragItemInstance === undefined ||
       dropTargetInstanceId === undefined ||
-      dropTargetPosition === undefined
+      dropTargetPosition === undefined ||
+      rootInstance === undefined
     ) {
       return null;
     }
 
+    const isNew =
+      findInstanceById(rootInstance, dragItemInstance.id) === undefined;
+
     const instance: Instance = produce((draft) => {
-      reparentInstanceMutable(
-        draft,
-        dragItemInstanceId,
-        dropTargetInstanceId,
-        dropTargetPosition
-      );
+      if (isNew) {
+        insertInstanceMutable(draft, dragItemInstance, {
+          parentId: dropTargetInstanceId,
+          position: dropTargetPosition,
+        });
+      } else {
+        reparentInstanceMutable(
+          draft,
+          dragItemInstance.id,
+          dropTargetInstanceId,
+          dropTargetPosition
+        );
+      }
     })(rootInstance);
 
     return {
       instance,
-      selectedInstanceId: dragItemInstanceId,
-      selectedInstancePath: getInstancePath(instance, dragItemInstanceId),
+      selectedInstanceId: dragItemInstance.id,
+      selectedInstancePath: getInstancePath(instance, dragItemInstance.id),
     };
   }, [
     rootInstance,
-    dragItemInstanceId,
+    dragItemInstance,
     dropTargetInstanceId,
     dropTargetPosition,
   ]);

@@ -12,6 +12,11 @@ import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
+import {
+  DragEndPayload,
+  DragMovePayload,
+  DragStartPayload,
+} from "~/canvas/shared/use-drag-drop";
 
 const componentNames = (
   Object.keys(components) as Array<Instance["component"]>
@@ -101,28 +106,26 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         return;
       }
 
-      const instance = createInstance({ component });
-
       setDragComponent(component);
 
-      publish<
-        "dragStart",
-        { origin: "panel" | "canvas"; dragItem: { instance: Instance } }
-      >({
+      publish<"dragStart", DragStartPayload>({
         type: "dragStart",
-        payload: { origin: "panel", dragItem: { instance } },
+        payload: {
+          origin: "panel",
+          dragItem: createInstance({ component }),
+        },
       });
     },
     onMove: (poiterCoordinate) => {
       setPointerPosition(poiterCoordinate);
-      publish<"dragMove", { canvasCoordinates: { x: number; y: number } }>({
+      publish<"dragMove", DragMovePayload>({
         type: "dragMove",
         payload: { canvasCoordinates: toCanvasCoordinates(poiterCoordinate) },
       });
     },
     onEnd() {
       setDragComponent(undefined);
-      publish<"dragEnd", { origin: "panel" | "canvas" }>({
+      publish<"dragEnd", DragEndPayload>({
         type: "dragEnd",
         payload: { origin: "panel" },
       });

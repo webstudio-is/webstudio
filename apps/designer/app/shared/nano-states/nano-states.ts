@@ -1,6 +1,9 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { type Breakpoint, type Instance } from "@webstudio-is/react-sdk";
-import { DropTargetSharedData } from "~/canvas/shared/use-drag-drop";
+import {
+  DropTargetChangePayload,
+  DragStartPayload,
+} from "~/canvas/shared/use-drag-drop";
 
 export const rootInstanceContainer = createValueContainer<
   Instance | undefined
@@ -40,8 +43,8 @@ export const useTextEditingInstanceId = () =>
 export type DragAndDropState = {
   isDragging: boolean;
   origin?: "canvas" | "panel";
-  dropTarget?: DropTargetSharedData;
-  dragItem?: { instanceId: Instance["id"] };
+  dropTarget?: DropTargetChangePayload;
+  dragItem?: DragStartPayload["dragItem"];
 };
 const dragAndDropStateContainer = createValueContainer<DragAndDropState>({
   isDragging: false,
