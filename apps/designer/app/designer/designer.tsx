@@ -208,7 +208,6 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
           project={project}
           publish={publish}
         />
-
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
             <CanvasIframe
