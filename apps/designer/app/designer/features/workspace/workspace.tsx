@@ -1,9 +1,8 @@
-import { Box, Flex, Toaster } from "@webstudio-is/design-system";
+import { Box, Flex, Toaster, toast } from "@webstudio-is/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { type Publish } from "@webstudio-is/react-sdk";
 import { useEffect } from "react";
-import toast from "react-hot-toast/headless";
 
 const workspaceStyle = {
   flexGrow: 1,
@@ -46,7 +45,7 @@ export const Workspace = ({
 
   useEffect(() => {
     window.setTimeout(() => {
-      toast.success("Hiiiii, I am a success toast", {
+      toast.success("Success", {
         duration: Infinity,
       });
     }, 2500);

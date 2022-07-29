@@ -1,7 +1,8 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
-import { useToaster } from "react-hot-toast/headless";
+import BaseToast, { useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
 import { CheckIcon, Cross1Icon } from "@webstudio-is/icons";
+import { Box } from "./box";
 
 const VIEWPORT_PADDING = "$2";
 
@@ -40,14 +41,15 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
 const StyledToast = styled(ToastPrimitive.Root, {
   borderRadius: 6,
   boxShadow:
-    "hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px",
+    "$colors$highContrast 0 $2 $6 -$2, $colors$highContrast 0 $2 $4 -$3",
   padding: "$3",
   display: "flex",
-  gap: "$3",
+  gap: "$1",
   alignItems: "center",
   color: "$highContrast",
   fontWeight: 500,
   fontSize: "$3",
+  background: "white",
 
   "@media (prefers-reduced-motion: no-preference)": {
     '&[data-state="open"]': {
@@ -70,15 +72,12 @@ const StyledToast = styled(ToastPrimitive.Root, {
   variants: {
     variant: {
       error: {
-        backgroundColor: "red",
-        color: "white",
+        color: "$red11",
       },
       success: {
-        backgroundColor: "green",
+        color: "$green9",
       },
-      blank: {
-        background: "white",
-      },
+      blank: {},
       custom: {},
       loading: {},
     },
@@ -92,7 +91,6 @@ const StyledTitle = styled(ToastPrimitive.Title, {
 export const Toaster = () => {
   const { toasts, handlers } = useToaster();
   const { startPause, endPause } = handlers;
-  console.log(toasts);
   return (
     <ToastPrimitive.ToastProvider>
       {toasts.map((toast) => (
@@ -102,8 +100,10 @@ export const Toaster = () => {
           onMouseEnter={startPause}
           onMouseLeave={endPause}
         >
-          {toast.type === "success" && <CheckIcon />}
-          {toast.type === "error" && <Cross1Icon />}
+          <Box>
+            {toast.type === "success" && <CheckIcon />}
+            {toast.type === "error" && <Cross1Icon />}
+          </Box>
           <StyledTitle>{toast.message}</StyledTitle>
         </StyledToast>
       ))}
@@ -111,3 +111,5 @@ export const Toaster = () => {
     </ToastPrimitive.ToastProvider>
   );
 };
+
+export const toast = BaseToast;
