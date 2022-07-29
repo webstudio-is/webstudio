@@ -138,32 +138,31 @@ export const useDragAndDrop = () => {
     },
   });
 
-  const useDragHandlers = useDrag({
+  const useDragHandlers = useDrag<Instance>({
     isDragItem(element) {
       if (rootInstance === undefined || element.id === "") {
         return false;
       }
-      const instance = findInstanceById(rootInstance, element.id);
-      return (
-        instance !== undefined &&
-        instance.id !== rootInstance.id &&
-        // We can't drag if we are editing text.
-        instance.id !== textEditingInstanceId
-      );
-    },
-    onStart(event) {
-      const instance =
-        rootInstance !== undefined &&
-        event.target.id !== "" &&
-        findInstanceById(rootInstance, event.target.id);
 
-      // For TypeScript
-      // @todo: Allow to pass information from isDragItem to here,
-      //        so we wouldn't need to do this?
-      if (!instance) {
-        return;
+      const instance = findInstanceById(rootInstance, element.id);
+
+      if (instance === undefined) {
+        return false;
       }
 
+      // We can't drag if we are editing text
+      if (instance.id === textEditingInstanceId) {
+        return false;
+      }
+
+      // Cannot drag root
+      if (instance.id === rootInstance.id) {
+        return false;
+      }
+
+      return instance;
+    },
+    onStart({ data: instance }) {
       state.current.dragItem = instance;
 
       autoScrollHandlers.setEnabled(true);

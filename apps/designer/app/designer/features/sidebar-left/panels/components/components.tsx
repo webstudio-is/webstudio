@@ -100,27 +100,21 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
   };
 
-  const useDragHandlers = useDrag({
+  const useDragHandlers = useDrag<Instance["component"]>({
     isDragItem(element) {
-      return elementToComponentName(element) !== undefined;
-    },
-    onStart(event) {
-      const component = elementToComponentName(event.target);
-
-      // For TypeScript
-      // @todo: Allow to pass information from isDragItem to here,
-      //        so we wouldn't need to do this?
-      if (!component) {
-        return;
+      const componentName = elementToComponentName(element);
+      if (componentName === undefined) {
+        return false;
       }
-
-      setDragComponent(component);
-
+      return componentName;
+    },
+    onStart({ data: componentName }) {
+      setDragComponent(componentName);
       publish<"dragStart", DragStartPayload>({
         type: "dragStart",
         payload: {
           origin: "panel",
-          dragItem: createInstance({ component }),
+          dragItem: createInstance({ component: componentName }),
         },
       });
     },

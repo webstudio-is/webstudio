@@ -71,15 +71,13 @@ export const usePlacement = (props: UsePlacementProps): Handlers => {
       const result: Rect[] = [];
 
       for (const child of parent.children) {
-        if (child instanceof HTMLElement) {
-          const rect = child.getBoundingClientRect();
-          result.push({
-            top: rect.top - parentRect.top,
-            left: rect.left - parentRect.left,
-            width: rect.width,
-            height: rect.height,
-          });
-        }
+        const rect = child.getBoundingClientRect();
+        result.push({
+          top: rect.top - parentRect.top,
+          left: rect.left - parentRect.left,
+          width: rect.width,
+          height: rect.height,
+        });
       }
 
       state.current.childrenRectsCache.set(parent, result);

@@ -18,11 +18,11 @@ const initialState = {
   status: "idle",
 } as const;
 
-export type UseDragProps = {
+export type UseDragProps<DragItemData> = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
-  isDragItem: (element: Element) => boolean;
-  onStart: (event: { target: HTMLElement }) => void;
+  isDragItem: (element: Element) => DragItemData | false;
+  onStart: (event: { target: HTMLElement; data: DragItemData }) => void;
   onMove: (event: { x: number; y: number }) => void;
   onShiftChange?: (event: { shifts: number }) => void;
   onEnd: () => void;
@@ -32,18 +32,18 @@ export type UseDragHandlers = {
   rootRef: (element: HTMLElement | null) => void;
 };
 
-export const useDrag = ({
+export const useDrag = <DragItemData>({
   startDistanceThreashold = 3,
   shiftDistanceThreshold = 20,
   onStart,
   onMove,
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  onShiftChange = () => {},
+  onShiftChange,
   onEnd,
   isDragItem,
-}: UseDragProps): UseDragHandlers => {
+}: UseDragProps<DragItemData>): UseDragHandlers => {
   const state = useRef<State>(initialState);
   const rootRef = useRef<HTMLElement | null>(null);
+  const dragItemData = useRef<DragItemData>();
 
   const detectShift = () => {
     if (state.current.status !== "dragging") {
@@ -57,13 +57,25 @@ export const useDrag = ({
 
     if (shifts !== state.current.shifts) {
       state.current.shifts = shifts;
-      onShiftChange({ shifts });
+      onShiftChange?.({ shifts });
     }
   };
 
   const { onPointerDown } = useMove({
-    shouldStart: (e) => {
-      return e.target instanceof Element && isDragItem(e.target);
+    shouldStart: ({ target }) => {
+      if (!(target instanceof Element)) {
+        return false;
+      }
+
+      const data = isDragItem(target);
+
+      if (data === false) {
+        return false;
+      }
+
+      dragItemData.current = data;
+
+      return true;
     },
     onMoveStart({
       clientX: x,
@@ -82,7 +94,9 @@ export const useDrag = ({
         initialY: y,
         shifts: 0,
       };
-      onStart({ target });
+      if (dragItemData.current !== undefined) {
+        onStart({ target, data: dragItemData.current });
+      }
     },
     onMove({ clientX: x, clientY: y }: { clientX: number; clientY: number }) {
       // We want to start dragging only when the user has moved more than startDistanceThreashold.
