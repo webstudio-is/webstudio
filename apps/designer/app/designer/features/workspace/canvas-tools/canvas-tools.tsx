@@ -36,7 +36,6 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   if (isPreviewMode || isScrolling) {
     return null;
   }
-
   return (
     <Box css={toolsStyle}>
       <SelectedInstanceOutline />
