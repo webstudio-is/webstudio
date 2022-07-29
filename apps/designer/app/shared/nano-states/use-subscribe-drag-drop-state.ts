@@ -9,17 +9,17 @@ import {
 export const useSubscribeDragAndDropState = () => {
   const [state, setState] = useDragAndDropState();
 
-  useSubscribe<"dropTargetChange", DropTargetChangePayload>(
-    "dropTargetChange",
-    (dropTarget) => {
-      setState({ ...state, dropTarget });
-    }
-  );
-
   useSubscribe<"dragStart", DragStartPayload>(
     "dragStart",
     ({ origin, dragItem }) => {
       setState({ isDragging: true, origin, dragItem });
+    }
+  );
+
+  useSubscribe<"dropTargetChange", DropTargetChangePayload>(
+    "dropTargetChange",
+    (dropTarget) => {
+      setState({ ...state, dropTarget });
     }
   );
 

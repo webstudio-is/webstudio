@@ -73,6 +73,15 @@ type TabContentProps = {
   publish: Publish;
 };
 
+const elementToComponentName = (element: Element) => {
+  const parentWithData = element.closest("[data-drag-component]");
+  if (parentWithData === null || !(parentWithData instanceof HTMLElement)) {
+    return;
+  }
+  const { dragComponent } = parentWithData.dataset;
+  return componentNames.find((c) => c === dragComponent);
+};
+
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [pointerPosition, setPointerPosition] = useState<{
@@ -93,15 +102,14 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
   const useDragHandlers = useDrag({
     isDragItem(element) {
-      const { dragComponent } = element.dataset;
-      return (
-        dragComponent != null &&
-        (componentNames as string[]).includes(dragComponent)
-      );
+      return elementToComponentName(element) !== undefined;
     },
     onStart(event) {
-      const { dragComponent } = event.target.dataset;
-      const component = componentNames.find((c) => c === dragComponent);
+      const component = elementToComponentName(event.target);
+
+      // For TypeScript
+      // @todo: Allow to pass information from isDragItem to here,
+      //        so we wouldn't need to do this?
       if (!component) {
         return;
       }

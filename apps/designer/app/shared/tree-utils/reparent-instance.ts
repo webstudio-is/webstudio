@@ -15,9 +15,10 @@ export const reparentInstanceMutable = (
     return;
   }
 
+  let newPositionAdjusted = newPosition;
+
   // If parent is the same, we need to adjust the position to account for the removal of the instance.
   const currentParent = findParentInstance(rootInstance, instance.id);
-  let newPositionAdjusted = newPosition;
   if (currentParent !== undefined && currentParent.id === newParentId) {
     const currentPosition = currentParent.children.findIndex(
       (x) => typeof x !== "string" && x.id === instance.id

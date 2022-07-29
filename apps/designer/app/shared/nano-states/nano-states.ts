@@ -38,8 +38,6 @@ const textEditingInstanceIdContainer = createValueContainer<
 export const useTextEditingInstanceId = () =>
   useValue(textEditingInstanceIdContainer);
 
-// @todo: not sure it's a good idea to keep all this state in one container.
-// Spliting to separate containers may let us avoid some re-renders.
 export type DragAndDropState = {
   isDragging: boolean;
   origin?: "canvas" | "panel";

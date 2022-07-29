@@ -203,7 +203,7 @@ export const Canvas = () => {
 
   const useDragHandlers = useDrag({
     isDragItem(element) {
-      return element.dataset.id != null;
+      return element instanceof HTMLElement && element.dataset.id != null;
     },
     onStart(event) {
       const id = event.target.dataset.id;

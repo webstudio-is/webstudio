@@ -55,7 +55,7 @@ export const useDropTarget = <Data>(
     dropTarget: undefined as DropTarget<Data> | undefined,
   });
 
-  // We want to retrun a stable object to avoid re-renders when it's a dependency
+  // We want to rerurn a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
     const detectTarget = () => {
       const {

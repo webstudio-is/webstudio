@@ -18,7 +18,7 @@ import {
   components as primitives,
 } from "@webstudio-is/react-sdk";
 
-export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
+type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
 export type DropTargetChangePayload = {
   rect: Rect;
@@ -157,6 +157,9 @@ export const useDragAndDrop = () => {
         event.target.id !== "" &&
         findInstanceById(rootInstance, event.target.id);
 
+      // For TypeScript
+      // @todo: Allow to pass information from isDragItem to here,
+      //        so we wouldn't need to do this?
       if (!instance) {
         return;
       }
@@ -255,7 +258,10 @@ export const useDragAndDrop = () => {
   useSubscribe<"dragMove", DragMovePayload>(
     "dragMove",
     ({ canvasCoordinates }) => {
+      // @todo: This will only produce and update a drop target if the mouse is over the canvas.
+      // We should figure out a way to default to the root instance as a drop target when we're not over the canvas.
       dropTargetHandlers.handleMove(canvasCoordinates);
+
       autoScrollHandlers.handleMove(canvasCoordinates);
       placementHandlers.handleMove(canvasCoordinates);
     }

@@ -21,7 +21,7 @@ const initialState = {
 export type UseDragProps = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
-  isDragItem: (element: HTMLElement) => boolean;
+  isDragItem: (element: Element) => boolean;
   onStart: (event: { target: HTMLElement }) => void;
   onMove: (event: { x: number; y: number }) => void;
   onShiftChange?: (event: { shifts: number }) => void;
@@ -63,7 +63,7 @@ export const useDrag = ({
 
   const { onPointerDown } = useMove({
     shouldStart: (e) => {
-      return e.target instanceof HTMLElement && isDragItem(e.target);
+      return e.target instanceof Element && isDragItem(e.target);
     },
     onMoveStart({
       clientX: x,
@@ -128,7 +128,7 @@ export const useDrag = ({
     }
   }, [onPointerDown]);
 
-  // We want to retrun a stable object to avoid re-renders when it's a dependency
+  // We want to rerurn a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
     return {
       rootRef(element) {
