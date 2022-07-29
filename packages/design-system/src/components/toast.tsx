@@ -41,7 +41,7 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
 const StyledToast = styled(ToastPrimitive.Root, {
   borderRadius: 6,
   boxShadow:
-    "$colors$highContrast 0 $2 $6 -$2, $colors$highContrast 0 $2 $4 -$3",
+    "hsl(206 22% 7% / 35%) 0 $space$2 $space$6 -$space$2, hsl(206 22% 7% / 20%) 0 $space$2 $space$4 -$space$3",
   padding: "$3",
   display: "flex",
   gap: "$1",
@@ -49,7 +49,7 @@ const StyledToast = styled(ToastPrimitive.Root, {
   color: "$highContrast",
   fontWeight: 500,
   fontSize: "$3",
-  background: "white",
+  background: "$loContrast",
 
   "@media (prefers-reduced-motion: no-preference)": {
     '&[data-state="open"]': {
