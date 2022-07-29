@@ -1,8 +1,8 @@
 import { useCallback, MouseEvent, FormEvent, useMemo } from "react";
-import type { OnChangeChildren } from "~/shared/tree-utils";
 import {
   type Instance,
   type CSS,
+  type OnChangeChildren,
   toCss,
   useUserProps,
   renderWrapperComponentChildren,

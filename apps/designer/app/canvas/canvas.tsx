@@ -11,11 +11,9 @@ import {
   WrapperComponent,
   globalStyles,
   useSubscribe,
-} from "@webstudio-is/react-sdk";
-import {
   createElementsTree,
-  setInstanceChildrenMutable,
-} from "~/shared/tree-utils";
+} from "@webstudio-is/react-sdk";
+import { setInstanceChildrenMutable } from "~/shared/tree-utils";
 import { useDragDropHandlers } from "./shared/use-drag-drop-handlers";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {

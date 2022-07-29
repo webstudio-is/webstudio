@@ -48,6 +48,10 @@ export const createElementsTree = ({
     children.push(element);
   }
 
+  //if (instance.component === "Body") {
+  //  return children;
+  //}
+
   const props = {
     instance,
     children,

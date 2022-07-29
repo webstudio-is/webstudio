@@ -1,13 +1,13 @@
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet as DefaultOutlet,
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { CriticalCss } from "@webstudio-is/react-sdk";
-import { Env } from "~/shared/env";
+import { CriticalCss, components } from "@webstudio-is/react-sdk";
+
+const Body = components.Body.Component;
 
 /**
  * We are using Outlet prop from index layout when user renders site from a subdomain.
@@ -28,15 +28,11 @@ export const Canvas = ({
         <Links />
         <CriticalCss />
       </head>
-      <Outlet />
-      {
-        // @todo may need to figure out how to put in script tags inside the body
-        // body is rendered by outlet because its part of the user tree
-      }
-      <ScrollRestoration />
-      <Env />
-      <Scripts />
-      {process.env.NODE_ENV === "development" && <LiveReload />}
+      <body>
+        <Outlet />
+        <ScrollRestoration />
+        <Scripts />
+      </body>
     </html>
   );
 };

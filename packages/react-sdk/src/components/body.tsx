@@ -3,6 +3,7 @@ import {
   forwardRef,
   type ElementRef,
   type ComponentProps,
+  useEffect,
 } from "react";
 
 const defaultTag = "body";
@@ -10,6 +11,11 @@ const defaultTag = "body";
 export const Body = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag>
->((props, ref) => createElement(defaultTag, { ...props, ref }));
+>(({ children, className }, ref) => {
+  useEffect(() => {
+    document.body.className = className;
+  }, []);
+  return children;
+});
 
 Body.displayName = "Body";
