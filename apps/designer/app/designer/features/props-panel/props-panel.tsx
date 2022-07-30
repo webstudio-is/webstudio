@@ -4,11 +4,23 @@ import {
   type Publish,
   type UserProp,
 } from "@webstudio-is/react-sdk";
-import { Control } from "~/designer/features/props-panel/control";
+import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { Box, Button, Grid, TextField } from "~/shared/design-system";
-import { PlusIcon, TrashIcon } from "~/shared/icons";
+import {
+  Box,
+  Button,
+  Combobox,
+  ComboboxTextField,
+  ComboboxPopperContent,
+  Grid,
+  Tooltip,
+} from "@webstudio-is/design-system";
+import {
+  PlusIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
+} from "@webstudio-is/icons";
 import { handleChangePropType, usePropsLogic } from "./use-props-logic";
 
 type PropertyProps = UserProp & {
@@ -27,39 +39,66 @@ const Property = ({
   onDelete,
 }: PropertyProps) => {
   const meta = componentsMeta[component];
-  const argType = meta?.argTypes?.[prop as keyof typeof meta.argTypes];
-  const type = argType?.control.type;
+  const argType = meta.argTypes?.[prop as keyof typeof meta.argTypes];
+  const isInvalidProp =
+    prop.length > 0 &&
+    typeof argType === "undefined" &&
+    !prop.match(/^data-(.)+/);
+  const type = argType?.control.type || "text";
   const defaultValue = argType?.control.defaultValue;
   const options = argType?.options;
+  const allProps = meta.argTypes ? Object.keys(meta.argTypes) : [];
+
   return (
-    <Grid gap="1" css={{ gridTemplateColumns: "auto 1fr auto" }}>
-      <TextField
-        readOnly={required}
-        variant="ghost"
-        placeholder="Property"
+    <Grid
+      gap="1"
+      css={{ gridTemplateColumns: "1fr 1fr auto", alignItems: "center" }}
+    >
+      <Combobox
         name="prop"
+        items={allProps}
         value={prop}
-        onChange={(event) => {
-          onChange(id, "prop", event.target.value);
+        itemToString={(item) => item ?? ""}
+        onItemSelect={(value) => {
+          onChange(id, "prop", value);
         }}
+        renderTextField={({ inputProps, toggleProps }) => (
+          <ComboboxTextField
+            toggleProps={toggleProps}
+            inputProps={{
+              ...inputProps,
+              readOnly: required,
+              placeholder: "Property",
+            }}
+          />
+        )}
+        renderPopperContent={(props) => (
+          <ComboboxPopperContent {...props} align="start" sideOffset={5} />
+        )}
       />
-      <Control
-        type={type}
-        required={required}
-        defaultValue={defaultValue}
-        options={options}
-        value={value}
-        onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
-      />
-      <Button
-        ghost
-        disabled={required}
-        onClick={() => {
-          onDelete(id);
-        }}
-      >
-        <TrashIcon />
-      </Button>
+      {isInvalidProp ? (
+        <Tooltip content={`Invalid property name: ${prop}`}>
+          <ExclamationTriangleIcon width={12} height={12} />
+        </Tooltip>
+      ) : (
+        <Control
+          type={type}
+          defaultValue={defaultValue}
+          options={options}
+          value={value}
+          onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
+        />
+      )}
+      {required !== true && (
+        <Button
+          ghost
+          onClick={() => {
+            onDelete(id);
+          }}
+        >
+          <TrashIcon />
+        </Button>
+      )}
     </Grid>
   );
 };

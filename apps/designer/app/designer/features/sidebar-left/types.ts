@@ -1,12 +1,10 @@
+import { Asset as BaseAsset } from "@webstudio-is/prisma-client";
 import { panels } from "./panels";
-import { z } from "zod";
-import { NodeOnDiskFile } from "@remix-run/node";
 
 export type TabName = keyof typeof panels | "none";
 
-const SingleImageInUpload = z.instanceof(NodeOnDiskFile);
-
-export const ImagesUpload = z.array(SingleImageInUpload);
-
-export type ImagesUpload = z.infer<typeof ImagesUpload>;
-export type SingleImageInUpload = z.infer<typeof SingleImageInUpload>;
+export type UploadingAsset = Pick<
+  BaseAsset,
+  "id" | "status" | "name" | "path" | "alt"
+>;
+export type Asset = BaseAsset | UploadingAsset;

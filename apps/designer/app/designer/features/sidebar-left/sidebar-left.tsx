@@ -1,16 +1,13 @@
 import { useState, useCallback } from "react";
-import {
-  useSubscribe,
-  type Publish,
-  type Asset,
-} from "@webstudio-is/react-sdk";
+import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
+import type { Asset } from "@webstudio-is/prisma-client";
 import {
   Box,
   SidebarTabs,
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { useSelectedInstanceData } from "../../shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";

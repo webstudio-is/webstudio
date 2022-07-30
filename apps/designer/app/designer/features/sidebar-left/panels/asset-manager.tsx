@@ -1,48 +1,54 @@
-import { ImageIcon } from "~/shared/icons";
-import { Button, Flex, Grid, Heading } from "~/shared/design-system";
-import { useRef } from "react";
-import { Form, useSubmit } from "@remix-run/react";
-import { type Asset } from "@webstudio-is/react-sdk";
-import { Image } from "~/shared/design-system/components/image";
+import { ImageIcon } from "@webstudio-is/icons";
+import { Flex, Grid, Heading } from "@webstudio-is/design-system";
+import { useEffect, useState } from "react";
+import { useActionData } from "@remix-run/react";
+import { AssetManagerThumbnail } from "./components/thumbnail";
 
-export const TabContent = ({ assets }: { assets: Array<Asset> }) => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const submit = useSubmit();
+import { AddAnAssetForm } from "./components/add-an-asset-form";
+import { Asset } from "../types";
 
+export const useAssetsState = (baseAssets: Array<Asset>) => {
+  const imageChanges = useActionData();
+
+  const [assets, setAssets] = useState<Asset[]>(baseAssets);
+
+  useEffect(() => {
+    if (imageChanges?.uploadedAssets?.length) {
+      setAssets((currentAssets) => [
+        ...imageChanges.uploadedAssets,
+        ...currentAssets.filter((asset) => asset.status !== "uploading"),
+      ]);
+    }
+    if (imageChanges?.deletedAsset?.id) {
+      setAssets((currentAssets) => [
+        ...currentAssets.filter(
+          (asset) => asset.id !== imageChanges.deletedAsset.id
+        ),
+      ]);
+    }
+  }, [imageChanges]);
+
+  const onUploadAsset = (uploadedAssets: Array<Asset>) =>
+    setAssets((assets) => [...uploadedAssets, ...assets]);
+
+  return { assets, onUploadAsset };
+};
+
+export const TabContent = ({
+  assets: baseAssets,
+}: {
+  assets: Array<Asset>;
+}) => {
+  const { assets, onUploadAsset } = useAssetsState(baseAssets);
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-      <Flex justify="between">
+      <Flex justify="between" align="center">
         <Heading>Assets</Heading>
-        <Form
-          method="post"
-          encType="multipart/form-data"
-          onChange={(event) => {
-            if (inputRef.current?.files) {
-              submit(event.currentTarget);
-              event.currentTarget.reset();
-            }
-          }}
-        >
-          <input
-            accept="image/*"
-            type="file"
-            name="image"
-            multiple
-            ref={inputRef}
-            style={{ display: "none" }}
-          />
-          <Button onClick={() => inputRef?.current?.click()}>
-            Upload Image
-          </Button>
-        </Form>
+        <AddAnAssetForm onSubmit={onUploadAsset} />
       </Flex>
       <Grid columns={2} gap={2}>
         {assets.map((asset) => (
-          <Image
-            key={asset.id}
-            src={asset.path}
-            alt={asset.alt || asset.name}
-          />
+          <AssetManagerThumbnail key={asset.id} {...asset} />
         ))}
       </Grid>
     </Flex>

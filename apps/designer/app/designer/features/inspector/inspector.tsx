@@ -8,7 +8,7 @@ import {
   Card,
   Paragraph,
   Box,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
@@ -28,9 +28,9 @@ export const Inspector = ({ publish }: InspectorProps) => {
 
   if (selectedInstanceData === undefined) {
     return (
-      <Box css={{ p: "$2" }}>
+      <Box css={{ p: "$2", flexBasis: "100%" }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
-        <Card css={{ p: "$3", mt: "$3" }}>
+        <Card css={{ p: "$3", mt: "$3", width: "100%" }}>
           <Paragraph>Select an instance on the canvas</Paragraph>
         </Card>
       </Box>

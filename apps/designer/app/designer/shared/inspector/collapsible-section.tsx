@@ -54,6 +54,7 @@ export const CollapsibleSection = ({
               ...(isOpenFinal && { paddingBottom: 0 }),
             }}
           >
+            {isOpenFinal ? <ChevronDownIcon /> : <ChevronRightIcon />}
             <Text size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
               {label}
             </Text>

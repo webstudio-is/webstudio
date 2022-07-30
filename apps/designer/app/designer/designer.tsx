@@ -1,18 +1,14 @@
 import { useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { TouchBackend } from "react-dnd-touch-backend";
-import {
-  type Project,
-  type Asset,
-  useSubscribe,
-  usePublish,
-} from "@webstudio-is/react-sdk";
+import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
+import { type Project, type Asset } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
   SelectedInstanceData,
 } from "~/shared/canvas-components";
-import { Box, Flex, Grid, type CSS } from "~/shared/design-system";
+import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";

@@ -40,4 +40,8 @@ yarn-error.log*
 /data
 *.db
 *.db-journal
-uploads
+
+
+# builds
+lib
+generated

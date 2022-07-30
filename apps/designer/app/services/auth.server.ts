@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { User } from "@webstudio-is/prisma-client";
 import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy } from "remix-auth-github";
@@ -55,7 +55,7 @@ if (process.env.DEV_LOGIN === "true") {
     new FormStrategy(async ({ form }) => {
       const secret = form.get("secret");
 
-      if (secret === process.env.AUTH_SECRET) {
+      if (secret === process.env.AUTH_SECRET?.slice(0, 4)) {
         try {
           const user = await db.user.createOrLoginWithDev();
           return user;
