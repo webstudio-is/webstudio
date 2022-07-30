@@ -54,15 +54,14 @@ export const CollapsibleSection = ({
               ...(isOpenFinal && { paddingBottom: 0 }),
             }}
           >
-            {isOpenFinal ? <ChevronDownIcon /> : <ChevronRightIcon />}
             <Text size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
               {label}
             </Text>
-            {/* @todo: props panel shows double plus icon when rightSlot is set */}
-            {rightSlot}
-            <Box css={{ marginRight: -6 }}>
+            <Box css={{ marginRight: -5 }}>
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </Box>
+            {/* @todo: props panel shows double plus icon when rightSlot is set */}
+            {rightSlot}
           </Flex>
         </Collapsible.Trigger>
         <Collapsible.Content asChild>

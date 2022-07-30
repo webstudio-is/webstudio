@@ -135,7 +135,9 @@ export const Combobox = <Item extends BaseItem>({
   value,
   name,
   itemToString = (item) =>
-    item !== null && "label" in item ? item.label : item ?? "",
+    typeof item === "object" && item !== null && "label" in item
+      ? item.label
+      : item ?? "",
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,
