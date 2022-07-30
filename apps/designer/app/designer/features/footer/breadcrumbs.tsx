@@ -1,39 +1,34 @@
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import { Button, Flex, Text, darkTheme } from "@webstudio-is/design-system";
+import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 import { type Publish, type Instance } from "@webstudio-is/react-sdk";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type BreadcrumbProps = {
   component: Instance["component"];
-  onClick: () => void;
+  onClick?: () => void;
 };
 
 const Breadcrumb = ({ component, onClick }: BreadcrumbProps) => {
   return (
-    <Flex
-      align="center"
-      css={{
-        // @todo: this could be on the button itself, right?
-        "& button": {
+    <>
+      <Button
+        ghost
+        onClick={onClick}
+        css={{
           color: "$hiContrast",
-          px: "0",
-        },
-        // @todo: and this on the svg, e.g. styled(Chevron...)(style)
-        "& path": {
-          fill: "$hiContrast",
-        },
-      }}
-    >
-      <Button ghost onClick={onClick}>
+          px: "$2",
+          borderRadius: "100vh",
+          height: "100%",
+          lineHeight: "100%",
+        }}
+      >
         {component}
       </Button>
-      <ChevronRightIcon />
-    </Flex>
+      <ChevronRightIcon color="white" />
+    </>
   );
 };
-
-const EmptyState = () => <Text size="1">No instance selected</Text>;
 
 type BreadcrumbsProps = {
   publish: Publish;
@@ -44,22 +39,9 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
     selectedInstanceData?.id
   );
   return (
-    <Flex
-      className={darkTheme}
-      as="footer"
-      align="center"
-      css={{
-        gridArea: "footer",
-        height: "$5",
-        background: "$loContrast",
-        padding: "$2",
-        "[data-theme=dark] &": {
-          boxShadow: "inset 0 1px 0 0 $colors$gray7",
-        },
-      }}
-    >
+    <Flex align="center" css={{ height: "100%" }}>
       {selectedInstancePath.length === 0 ? (
-        <EmptyState />
+        <Breadcrumb component={<Text size="1">No instance selected</Text>} />
       ) : (
         selectedInstancePath.map((instance) => (
           <Breadcrumb

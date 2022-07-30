@@ -231,6 +231,8 @@ export const {
       7: "45px",
       8: "65px",
       9: "80px",
+      sidebarLeft: "45px",
+      sidebarRight: "240px",
     },
     // space: {
     //   1: '4px',

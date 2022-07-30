@@ -2,7 +2,7 @@ import type { Publish } from "@webstudio-is/react-sdk";
 import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { useStyleData } from "./lib/use-style-data";
+import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 import { Search } from "./search";
 import { useState } from "react";

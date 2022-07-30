@@ -19,7 +19,7 @@ import {
 } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { Breadcrumbs } from "./features/footer";
+import { Footer } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
 import {
   useUpdateCanvasWidth,
@@ -144,7 +144,7 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
               `,
       }
     : {
-        gridTemplateColumns: "auto 1fr 240px",
+        gridTemplateColumns: "auto 1fr $sizes$sidebarRight",
         gridTemplateRows: "auto 1fr auto",
         gridTemplateAreas: `
                 "header header header"
@@ -234,7 +234,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         >
           {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
         </SidePanel>
-        <Breadcrumbs publish={publish} />
+        <Footer publish={publish} />
       </ChromeWrapper>
     </DndProvider>
   );

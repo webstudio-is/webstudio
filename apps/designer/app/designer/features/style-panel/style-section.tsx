@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, KeyboardEvent } from "react";
 import {
   Box,
   Flex,
@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
 import * as icons from "@webstudio-is/icons";
-import type { StyleConfig } from "./lib/configs";
+import type { StyleConfig } from "./shared/configs";
 import {
   categories,
   type Style,
@@ -24,16 +24,16 @@ import {
   type StyleValue,
   type CSS,
 } from "@webstudio-is/react-sdk";
-import type { SetProperty, CreateBatchUpdate } from "./lib/use-style-data";
-import type { InheritedStyle } from "./lib/get-inherited-style";
-import { ColorPicker } from "./lib/color-picker";
+import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
+import type { InheritedStyle } from "./shared/get-inherited-style";
+import { ColorPicker } from "./shared/color-picker";
 import {
   SpacingWidget,
   type SpacingProperty,
   type SpacingStyles,
-} from "./lib/spacing-widget";
-import { useIsFromCurrentBreakpoint } from "./lib/use-is-from-current-breakpoint";
-import { propertyNameColorForSelectedBreakpoint } from "./lib/constants";
+} from "./shared/spacing-widget";
+import { useIsFromCurrentBreakpoint } from "./shared/use-is-from-current-breakpoint";
+import { propertyNameColorForSelectedBreakpoint } from "./shared/constants";
 
 const getFinalValue = ({
   currentStyle,
@@ -203,6 +203,7 @@ const ComboboxControl = ({
   switch (styleConfig.property) {
     case "rowGap":
     case "columnGap": {
+      console.log(currentStyle, styleConfig);
       const Icon = (
         icons as unknown as {
           gap: Record<string, (props: unknown) => JSX.Element>;
@@ -244,7 +245,7 @@ const ComboboxControl = ({
             defaultValue={parseFloat(String(value.value)) || 0}
             // @todo looses input state and focus
             // onChange={(event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value + "px")
-            onKeyDown={(event) =>
+            onKeyDown={(event: KeyboardEvent<HTMLInputElement>) =>
               event.key === "Enter" &&
               setValue(event.currentTarget.value + "px")
             }
@@ -276,6 +277,7 @@ const ComboboxControl = ({
           }}
           state={value.type === "invalid" ? "invalid" : undefined}
           value={String(value.value)}
+          // @todo new combobox doesn't include any of these event handlers
           onValueSelect={setValue}
           onValueEnter={setValue}
           onItemEnter={(value) => {
@@ -390,12 +392,10 @@ const ComboiconControl = ({
 const GridControl = ({
   css,
   currentStyle,
-  setProperty,
   createBatchUpdate,
 }: {
   css: CSS;
   currentStyle: Style;
-  setProperty: SetProperty;
   createBatchUpdate: CreateBatchUpdate;
 }) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint([
@@ -562,7 +562,6 @@ const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
 
 type RenderPropertyProps = {
   setProperty: SetProperty;
-  createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
@@ -573,7 +572,6 @@ export const renderProperty = ({
   currentStyle,
   inheritedStyle,
   setProperty,
-  createBatchUpdate,
   styleConfig,
   category,
 }: RenderPropertyProps) => {
@@ -645,7 +643,7 @@ export const renderCategory = ({
                   "${"grid ".repeat(5)} . . . . . . ."
                   "${"columnGap ".repeat(5)} lock lock ${"rowGap ".repeat(5)}"
                 `,
-                  // @todo justify icons are using justifycontent icons atm
+                  // @todo justifyItems icons are using justifycontent icons atm
                   "& > [data-property=justifyItems]": {
                     display: "none",
                   },
@@ -662,7 +660,6 @@ export const renderCategory = ({
                   data-property="grid"
                   css={{ gridArea: "grid" }}
                   currentStyle={currentStyle}
-                  setProperty={setProperty}
                   createBatchUpdate={createBatchUpdate}
                 />
               </Grid>

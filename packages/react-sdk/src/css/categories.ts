@@ -89,7 +89,6 @@ const typography = [
   "textIndent",
 
   "columnCount",
-  "columnGap",
   "columnRuleStyle",
   "columnRuleWidth",
   "columnRuleColor",

@@ -6,12 +6,15 @@ import {
   type Style,
 } from "@webstudio-is/react-sdk";
 
-import { type StyleConfig, styleConfigs } from "./lib/configs";
+import { type StyleConfig, styleConfigs } from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
 import { renderProperty, renderCategory } from "./style-section";
-import { dependencies } from "./lib/dependencies";
-import { type InheritedStyle } from "./lib/get-inherited-style";
-import { type SetProperty, type CreateBatchUpdate } from "./lib/use-style-data";
+import { dependencies } from "./shared/dependencies";
+import { type InheritedStyle } from "./shared/get-inherited-style";
+import {
+  type SetProperty,
+  type CreateBatchUpdate,
+} from "./shared/use-style-data";
 import { type SelectedInstanceData } from "~/shared/canvas-components";
 
 // Finds a property/value by using any available form: property, label, value
