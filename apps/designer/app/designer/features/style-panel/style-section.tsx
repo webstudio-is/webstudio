@@ -70,8 +70,8 @@ const PropertyName = ({ property, label, css }: PropertyProps) => {
           ? {
               color: propertyNameColorForSelectedBreakpoint,
               backgroundColor: "$colors$blue4",
-              padding: "2px 4px",
-              borderRadius: "3px",
+              padding: "calc($radii$1 / 2) $radii$1",
+              borderRadius: "$radii$1",
             }
           : {
               color: "$hiContrast",
@@ -630,12 +630,8 @@ export const renderCategory = ({
                   gridTemplateAreas: `
                   "${"display ".repeat(12)}"
                   "${"grid ".repeat(5)} . . . . . . ."
-                  "${"grid ".repeat(
-                    5
-                  )} flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
-                  "${"grid ".repeat(
-                    5
-                  )} alignItems alignItems justifyContent justifyContent alignContent alignContent ."
+                  "grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
+                  "grid grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent ."
                   "${"grid ".repeat(5)} . . . . . . ."
                   "${"columnGap ".repeat(5)} lock lock ${"rowGap ".repeat(5)}"
                 `,
