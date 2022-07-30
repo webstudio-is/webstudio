@@ -20,7 +20,7 @@ const filterProperties = (properties: Array<string>, search: string) => {
   const includes = (property: string) => {
     if (property.toLowerCase().includes(search)) return true;
     if (hyphenate(property).includes(search)) return true;
-    // Enables "ba co" to match "backgorund color"
+    // Enables "ba co" to match "background color"
     return searchParts.every((searchPart) =>
       property.toLowerCase().includes(searchPart)
     );

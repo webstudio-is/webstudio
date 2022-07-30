@@ -3,7 +3,7 @@ import { styled } from "@stitches/react";
 import { CheckIcon } from "@radix-ui/react-icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { CSS } from "@webstudio-is/react-sdk";
-import { Box } from "~/shared/design-system";
+import { Box } from "@webstudio-is/design-system";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   maxWidth: "224px",

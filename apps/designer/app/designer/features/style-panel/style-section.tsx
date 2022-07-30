@@ -12,9 +12,9 @@ import {
   Select,
   IconButton,
   TextField,
-} from "~/shared/design-system";
-import { TriangleRightIcon, TriangleDownIcon } from "~/shared/icons";
-import * as icons from "~/shared/icons";
+} from "@webstudio-is/design-system";
+import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
+import * as icons from "@webstudio-is/icons";
 import type { StyleConfig } from "./lib/configs";
 import {
   categories,

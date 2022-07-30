@@ -6,7 +6,7 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   CaretDownIcon,
-} from "~/shared/icons";
+} from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
