@@ -13,6 +13,7 @@ export * from "./align-content";
 export * from "./align-items";
 export * from "./flex-direction";
 export * from "./flex-wrap";
-export * from "./gap";
 export * from "./justify-content";
+export * from "./justify-items";
+export * from "./gap";
 export * from "./lock";

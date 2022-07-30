@@ -14,7 +14,13 @@ type BaseStyleConfig = {
   appliesTo: AppliesTo;
 };
 
-export type Control = "Spacing" | "Combobox" | "Color" | "Comboicon" | "Select";
+export type Control =
+  | "Spacing"
+  | "Combobox"
+  | "Color"
+  | "Comboicon"
+  | "Select"
+  | "Empty";
 
 type StyleConfigWithItems = BaseStyleConfig & {
   control: Control;
@@ -49,6 +55,9 @@ const getControl = (property: StyleProperty): Control => {
     case "justifyContent":
     case "alignContent": {
       return "Comboicon";
+    }
+    case "placeContent": {
+      return "Empty";
     }
   }
 

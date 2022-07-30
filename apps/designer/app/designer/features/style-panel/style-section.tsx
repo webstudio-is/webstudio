@@ -367,11 +367,13 @@ const ComboiconControl = ({
       }
       css={{
         ...(styleConfig.property !== "flexDirection" && {
-          transform: `rotate(${
-            currentStyle.flexDirection?.value === "column"
-              ? 90 * (styleConfig.property === "alignItems" ? -1 : 1)
-              : 0
-          }deg)`,
+          "& svg": {
+            transform: `rotate(${
+              currentStyle.flexDirection?.value === "column"
+                ? 90 * (styleConfig.property === "alignItems" ? -1 : 1)
+                : 0
+            }deg)`,
+          },
         }),
         ...(isCurrentBreakpoint && {
           color: "$colors$blue11",
@@ -568,6 +570,7 @@ export const renderProperty = ({
   const Control = controls[styleConfig.control];
   const { property } = styleConfig;
   const key = category + "-" + property;
+  if (!Control) return null;
   return (
     <Box
       key={key}
@@ -605,34 +608,38 @@ export const renderCategory = ({
 }: RenderCategoryProps) => {
   switch (category) {
     case "layout": {
+      const css = {
+        alignItems: "center",
+        gap: "8px",
+        "& > [data-type=comboicon]": {
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        },
+      };
       switch (currentStyle.display?.value) {
         case "flex": {
           return (
             <>
               <Grid
                 css={{
-                  alignItems: "center",
+                  ...css,
                   gridTemplateColumns: "repeat(12, 1fr)",
                   gridTemplateRows: "auto 0px auto auto 0px auto",
                   gridTemplateAreas: `
-                    "display display display display display display display display display display display display"
-                    "grid grid grid grid grid . . . . . . ."
-                    "grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
-                    "grid grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent ."
-                    "grid grid grid grid grid . . . . . . ."
-                    "columnGap columnGap columnGap columnGap columnGap lock lock rowGap rowGap rowGap rowGap rowGap"
-                  `,
-                  gap: "8px",
-                  "& > [data-type=comboicon]": {
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100%",
-                  },
-                  // @todo placeContent is shorthand prop for other properties, thus a duplicate
-                  "& > [data-property=placeContent]": {
-                    display: "none",
-                  },
+                  "${"display ".repeat(12)}"
+                  "${"grid ".repeat(5)} . . . . . . ."
+                  "${"grid ".repeat(
+                    5
+                  )} flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
+                  "${"grid ".repeat(
+                    5
+                  )} alignItems alignItems justifyContent justifyContent alignContent alignContent ."
+                  "${"grid ".repeat(5)} . . . . . . ."
+                  "${"columnGap ".repeat(5)} lock lock ${"rowGap ".repeat(5)}"
+                `,
+                  // @todo justify icons are using justifycontent icons atm
                   "& > [data-property=justifyItems]": {
                     display: "none",
                   },
@@ -657,8 +664,40 @@ export const renderCategory = ({
             </>
           );
         }
-        default: {
-          styleConfigsByCategory = [styleConfigsByCategory[0]];
+        case "grid": {
+          return (
+            <>
+              <Grid
+                css={{
+                  ...css,
+                  gridTemplateColumns: "repeat(12, 1fr)",
+                  gridTemplateRows: "repeat(11, auto)",
+                  gridTemplateAreas: `
+                    "${"display ".repeat(12)}"
+                    "${"gridTemplateAreas ".repeat(12)}"
+                    "${"gridAutoRows ".repeat(12)}"
+                    "${"gridAutoColumns ".repeat(12)}"
+                    "${"gridTemplateColumns ".repeat(12)}"
+                    "${"gridTemplateRows ".repeat(12)}"
+                    "${"gridAutoFlow ".repeat(12)}"
+                    "${"alignItems ".repeat(12)}"
+                    "${"justifyItems ".repeat(12)}"
+                    "${"alignContent ".repeat(12)}"
+                    "${"columnGap ".repeat(5)} lock lock ${"rowGap ".repeat(5)}"
+                  `,
+                }}
+              >
+                {styleConfigsByCategory}
+                <LockControl
+                  data-property="lock"
+                  css={{ gridArea: "lock" }}
+                  currentStyle={currentStyle}
+                  setProperty={setProperty}
+                />
+              </Grid>
+              <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+            </>
+          );
         }
       }
     }
@@ -673,8 +712,9 @@ export const renderCategory = ({
 };
 
 const controls: {
-  [key: string]: (props: ControlProps) => JSX.Element | null;
+  [key: string]: ((props: ControlProps) => JSX.Element | null) | null;
 } = {
+  Empty: null,
   Color: ColorControl,
   Spacing: SpacingControl,
   Combobox: ComboboxControl,
