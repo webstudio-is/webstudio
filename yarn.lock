@@ -3956,13 +3956,6 @@
   dependencies:
     "@types/node" "*"
 
-"@types/lodash.camelcase@^4.3.0":
-  version "4.3.7"
-  resolved "https://registry.yarnpkg.com/@types/lodash.camelcase/-/lodash.camelcase-4.3.7.tgz#b0a06a216542335c0326c0d2fbad3f121b1f29a7"
-  integrity sha512-Nfi6jpo9vuEOSIJP+mpbTezKyEt75DQlbwjiDvs/JctWkbnHDoyQo5lWqdvgNiJmVUjcmkfvlrvSEgJYvurOKg==
-  dependencies:
-    "@types/lodash" "*"
-
 "@types/lodash.capitalize@^4.2.6":
   version "4.2.7"
   resolved "https://registry.yarnpkg.com/@types/lodash.capitalize/-/lodash.capitalize-4.2.7.tgz#9332f52b8333bd1d32ae88224c313fb647ff4f16"
