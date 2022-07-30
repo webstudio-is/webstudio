@@ -9,7 +9,9 @@ import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 /**
  * Identify if the provided property is defined in the instance css rule matching the selected breakpoint.
  */
-export const useIsFromCurrentBreakpoint = (property: StyleProperty) => {
+export const useIsFromCurrentBreakpoint = (
+  property: StyleProperty | StyleProperty[]
+) => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const [selectedInstanceData] = useSelectedInstanceData();
   const cssRule = useMemo(
@@ -21,5 +23,7 @@ export const useIsFromCurrentBreakpoint = (property: StyleProperty) => {
     [selectedInstanceData, selectedBreakpoint]
   );
   if (cssRule === undefined) return false;
+  if (Array.isArray(property))
+    return property.some((property) => property in cssRule.style);
   return property in cssRule.style;
 };

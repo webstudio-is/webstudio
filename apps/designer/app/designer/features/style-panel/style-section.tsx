@@ -398,6 +398,16 @@ const GridControl = ({
   setProperty: SetProperty;
   createBatchUpdate: CreateBatchUpdate;
 }) => {
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint([
+    "flexDirection",
+    "flexWrap",
+    "justifyContent",
+    "justifyItems",
+    "alignContent",
+    "alignItems",
+    "rowGap",
+    "columnGap",
+  ]);
   const flexDirection = currentStyle.flexDirection?.value as string;
   const justifyContent = currentStyle.justifyContent?.value as string;
   const alignItems = currentStyle.alignItems?.value as string;
@@ -441,8 +451,8 @@ const GridControl = ({
         aspectRatio: "1 / 1",
         padding: "6px",
         borderRadius: "4px",
-        color: "$colors$blue9", // $colors$slate8
-        background: "#FFF",
+        color: isCurrentBreakpoint ? "$colors$blue9" : "$colors$slate8",
+        background: "$loContrast",
         border: "2px solid currentColor",
         transform: direction
           ? "rotate(-90deg) scaleX(-1)"

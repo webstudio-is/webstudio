@@ -104,11 +104,9 @@ const SidePanel = ({
         height: "100%",
         ...css,
         "&:first-of-type": {
-          boxShadow: "inset -1px 0 0 0 $colors$gray7",
+          boxShadow: "inset -1px 0 0 0 $colors$panelOutline",
         },
-        "&:last-of-type": {
-          boxShadow: "inset 1px 0 0 0 $colors$gray7",
-        },
+        "&:last-of-type": { boxShadow: "inset 1px 0 0 0 $colors$panelOutline" },
       }}
     >
       {children}

@@ -12,7 +12,7 @@ export const Tabs = styled(TabsPrimitive.Root, {
 
 export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   flexShrink: 0,
-  height: "$6",
+  height: "$7",
   display: "inline-flex",
   lineHeight: 1,
   fontFamily: "inherit",
