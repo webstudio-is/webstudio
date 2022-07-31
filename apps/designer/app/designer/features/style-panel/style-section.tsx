@@ -203,61 +203,63 @@ const ComboboxControl = ({
   switch (styleConfig.property) {
     case "rowGap":
     case "columnGap": {
-      console.log(currentStyle, styleConfig);
-      const Icon = (
-        icons as unknown as {
-          gap: Record<string, (props: unknown) => JSX.Element>;
-        }
-      ).gap[styleConfig.property];
-      return (
-        <Grid
-          css={{
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gridTemplateRows: "repeat(1, 1fr)",
-          }}
-        >
-          <IconButton
-            variant="ghost"
-            size="1"
-            css={{
-              zIndex: 1,
-              gridArea: "1 / 1 / 2 / 2",
-              marginLeft: 2,
-              marginTop: 2,
-              borderRadius: 1,
-              height: "calc($sizes$5 - 4px)",
-              width: "calc($sizes$5 - 4px)",
-              "&:focus": {
-                boxShadow: "none",
-              },
-              ...(isCurrentBreakpoint && {
-                bc: "$colors$blue4",
-                "& svg *": {
-                  fill: "$colors$blue11",
-                },
-              }),
-            }}
-          >
-            <Icon />
-          </IconButton>
-          <TextField
-            type="number"
-            defaultValue={parseFloat(String(value.value)) || 0}
-            // @todo looses input state and focus
-            // onChange={(event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value + "px")
-            onKeyDown={(event: KeyboardEvent<HTMLInputElement>) =>
-              event.key === "Enter" &&
-              setValue(event.currentTarget.value + "px")
+      switch (styleConfig.category) {
+        case "layout":
+          const Icon = (
+            icons as unknown as {
+              gap: Record<string, (props: unknown) => JSX.Element>;
             }
-            css={{
-              fontWeight: "500",
-              paddingLeft: "calc($5 + 6px)",
-              gridArea: "1 / 1 / -1 / -1",
-              cursor: "default",
-            }}
-          />
-        </Grid>
-      );
+          ).gap[styleConfig.property];
+          return (
+            <Grid
+              css={{
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gridTemplateRows: "repeat(1, 1fr)",
+              }}
+            >
+              <IconButton
+                variant="ghost"
+                size="1"
+                css={{
+                  zIndex: 1,
+                  gridArea: "1 / 1 / 2 / 2",
+                  marginLeft: 2,
+                  marginTop: 2,
+                  borderRadius: 1,
+                  height: "calc($sizes$5 - 4px)",
+                  width: "calc($sizes$5 - 4px)",
+                  "&:focus": {
+                    boxShadow: "none",
+                  },
+                  ...(isCurrentBreakpoint && {
+                    bc: "$colors$blue4",
+                    "& svg *": {
+                      fill: "$colors$blue11",
+                    },
+                  }),
+                }}
+              >
+                <Icon />
+              </IconButton>
+              <TextField
+                type="number"
+                defaultValue={parseFloat(String(value.value)) || 0}
+                // @todo looses input state and focus
+                // onChange={(event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value + "px")
+                onKeyDown={(event: KeyboardEvent<HTMLInputElement>) =>
+                  event.key === "Enter" &&
+                  setValue(event.currentTarget.value + "px")
+                }
+                css={{
+                  fontWeight: "500",
+                  paddingLeft: "calc($5 + 6px)",
+                  gridArea: "1 / 1 / -1 / -1",
+                  cursor: "default",
+                }}
+              />
+            </Grid>
+          );
+      }
     }
   }
 

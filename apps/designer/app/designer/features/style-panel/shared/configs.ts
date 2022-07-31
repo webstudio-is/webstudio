@@ -23,6 +23,7 @@ export type Control =
   | "Empty";
 
 type StyleConfigWithItems = BaseStyleConfig & {
+  category: Category;
   control: Control;
   items: Array<{ label: string; name: string }>;
 };
@@ -83,6 +84,7 @@ const createStyleConfigs = () => {
         label,
         property,
         appliesTo: properties[property].appliesTo,
+        category: category,
         control: getControl(property),
         items: keywords.map((keyword: string) => ({
           label: keyword,
