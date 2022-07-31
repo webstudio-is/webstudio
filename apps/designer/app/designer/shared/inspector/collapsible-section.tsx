@@ -64,7 +64,6 @@ export const CollapsibleSection = ({
             >
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </Flex>
-            {/* @todo: props panel shows double plus icon when rightSlot is set */}
             {rightSlot}
           </Flex>
         </Collapsible.Trigger>
