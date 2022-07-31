@@ -106,6 +106,7 @@ type ControlProps = {
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
+  category: Category;
 };
 
 const ColorControl = ({
@@ -184,6 +185,7 @@ const ComboboxControl = ({
   inheritedStyle,
   setProperty,
   styleConfig,
+  category,
 }: ControlProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
 
@@ -203,8 +205,8 @@ const ComboboxControl = ({
   switch (styleConfig.property) {
     case "rowGap":
     case "columnGap": {
-      switch (styleConfig.category) {
-        case "layout":
+      switch (category) {
+        case "layout": {
           const Icon = (
             icons as unknown as {
               gap: Record<string, (props: unknown) => JSX.Element>;
@@ -259,6 +261,7 @@ const ComboboxControl = ({
               />
             </Grid>
           );
+        }
       }
     }
   }
@@ -593,6 +596,7 @@ export const renderProperty = ({
         inheritedStyle={inheritedStyle}
         setProperty={setProperty}
         styleConfig={styleConfig}
+        category={category}
       />
     </Box>
   );

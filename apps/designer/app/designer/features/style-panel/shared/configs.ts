@@ -84,7 +84,6 @@ const createStyleConfigs = () => {
         label,
         property,
         appliesTo: properties[property].appliesTo,
-        category: category,
         control: getControl(property),
         items: keywords.map((keyword: string) => ({
           label: keyword,
