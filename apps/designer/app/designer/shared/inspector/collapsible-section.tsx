@@ -38,7 +38,7 @@ export const CollapsibleSection = ({
     <Collapsible.Root open={isOpenFinal} onOpenChange={setIsOpenByUser}>
       <Box
         css={{
-          boxShadow: "0px 1px 0 $colors$gray6",
+          boxShadow: "0px 1px 0 $colors$panelOutline",
         }}
       >
         <Collapsible.Trigger asChild>
