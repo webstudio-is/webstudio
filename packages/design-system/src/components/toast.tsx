@@ -1,5 +1,5 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
-import BaseToast, { useToaster } from "react-hot-toast/headless";
+import toast, { useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
 import { CheckIcon, Cross1Icon } from "@webstudio-is/icons";
 import { Box } from "./box";
@@ -112,4 +112,4 @@ export const Toaster = () => {
   );
 };
 
-export const toast = BaseToast;
+export { toast };
