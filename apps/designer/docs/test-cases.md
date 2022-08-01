@@ -81,3 +81,14 @@
    - Upload an image
    - Check it loads and shows a progress bar
    - Delete an asset by clicking on the `x` icon and then the delete button in the tooltip
+
+1. Flex panel
+
+   - Select an instance
+   - Select "flexbox" as the selected display option.
+   - Check if clicking a flex property icon opens a dropdown.
+   - Check if all flexbox states are computable through the icons seletables.
+   - Check if all flexbox states are computable through the grid.
+   - Check if gap inputs work.
+   - Check if tooltips are present on all icons(including gap input icons).
+   - Check that tooltips have a first time interaction delay.
