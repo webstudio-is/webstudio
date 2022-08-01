@@ -1,10 +1,9 @@
 import { ComponentMeta } from "@storybook/react";
 import React, { useState, useRef } from "react";
 import { Box } from "../../box";
-import { useDrop } from "./use-drop";
+import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
-import { type Rect } from "./rect";
-import { usePlacement, PlacementIndicator } from "./placement";
+import { PlacementIndicator } from "./placement";
 import { useAutoScroll } from "./use-auto-scroll";
 
 const ROOT_ID = "root";
@@ -155,17 +154,14 @@ export const Canvas = () => {
     { id: "6", style: {}, children: [], acceptsChildren: false },
   ]);
 
-  const [placement, setPalcement] = useState<{
-    index: number;
-    placementRect: Rect;
-  }>();
-
+  const [currentDropTarget, setCurrentDropTarget] = useState<
+    DropTarget<string> | undefined
+  >();
   const [dragItemId, setDragItemId] = useState<string>();
 
-  const dropTargetId = useRef<string>();
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const dropTargetHandlers = useDrop<string>({
+  const dropHandlers = useDrop<string>({
     edgeDistanceThreshold: 10,
 
     isDropTarget(element) {
@@ -218,9 +214,8 @@ export const Canvas = () => {
       return { data: newItem.id, element };
     },
 
-    onDropTargetChange({ data, element }) {
-      dropTargetId.current = data;
-      placementHandlers.handleTargetChange(element as any);
+    onDropTargetChange(dropTarget) {
+      setCurrentDropTarget(dropTarget);
     },
   });
 
@@ -239,17 +234,11 @@ export const Canvas = () => {
       autoScrollHandlers.setEnabled(true);
     },
     onMove: (poiterCoordinate) => {
-      dropTargetHandlers.handleMove(poiterCoordinate);
+      dropHandlers.handleMove(poiterCoordinate);
       autoScrollHandlers.handleMove(poiterCoordinate);
-      placementHandlers.handleMove(poiterCoordinate);
     },
     onEnd() {
-      const currentDropTargetId = dropTargetId.current;
-      if (
-        placement !== undefined &&
-        dragItemId !== undefined &&
-        currentDropTargetId !== undefined
-      ) {
+      if (dragItemId !== undefined && currentDropTarget !== undefined) {
         setData((current) => {
           const dragItem = findItem(current, dragItemId);
 
@@ -270,13 +259,14 @@ export const Canvas = () => {
               children.splice(oldIndex, 1);
             }
 
-            if (item.id === currentDropTargetId) {
+            if (item.id === currentDropTarget.data) {
               // placement.index does not take into account the fact that the drag item will be removed.
               // we need to do this to account for it.
               const newIndex =
-                oldIndex !== -1 && oldIndex < placement.index
-                  ? placement.index - 1
-                  : placement.index;
+                oldIndex !== -1 &&
+                oldIndex < currentDropTarget.indexWithinChildren
+                  ? currentDropTarget.indexWithinChildren - 1
+                  : currentDropTarget.indexWithinChildren;
 
               children = children.slice();
               children.splice(newIndex, 0, dragItem);
@@ -287,18 +277,10 @@ export const Canvas = () => {
         });
       }
 
-      dropTargetHandlers.handleEnd();
+      dropHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
-      placementHandlers.handleEnd();
       setDragItemId(undefined);
-      setPalcement(undefined);
-      dropTargetId.current = undefined;
-    },
-  });
-
-  const placementHandlers = usePlacement({
-    onPlacementChange: (event) => {
-      setPalcement(event);
+      setCurrentDropTarget(undefined);
     },
   });
 
@@ -318,22 +300,32 @@ export const Canvas = () => {
           },
         }}
         ref={(element) => {
-          dropTargetHandlers.rootRef(element);
+          dropHandlers.rootRef(element);
           autoScrollHandlers.targetRef(element);
           useDragHandlers.rootRef(element);
           rootRef.current = element;
         }}
-        onScroll={() => {
-          dropTargetHandlers.handleScroll();
-          placementHandlers.handleScroll();
-        }}
+        onScroll={dropHandlers.handleScroll}
         data-id={ROOT_ID}
       >
         <Items data={data} dragItemId={dragItemId} />
       </Box>
-      {placement && <PlacementIndicator rect={placement.placementRect} />}
+      {currentDropTarget && (
+        <PlacementIndicator
+          rect={tmpToLegacyPlacementRect(currentDropTarget.placement)}
+        />
+      )}
     </>
   );
+};
+
+const tmpToLegacyPlacementRect = (placement: DropTarget<null>["placement"]) => {
+  return {
+    top: placement.y,
+    left: placement.x,
+    width: placement.direction === "horizontal" ? placement.length : 0,
+    height: placement.direction === "vertical" ? placement.length : 0,
+  };
 };
 
 export default {} as ComponentMeta<typeof Canvas>;
