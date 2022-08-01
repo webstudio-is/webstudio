@@ -5,11 +5,11 @@ import { type Publish, type Instance } from "@webstudio-is/react-sdk";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type BreadcrumbProps = {
-  component: Instance["component"];
+  children: JSX.Element | string;
   onClick?: () => void;
 };
 
-const Breadcrumb = ({ component, onClick }: BreadcrumbProps) => {
+const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
   return (
     <>
       <Button
@@ -23,7 +23,7 @@ const Breadcrumb = ({ component, onClick }: BreadcrumbProps) => {
           lineHeight: "100%",
         }}
       >
-        {component}
+        {children}
       </Button>
       <ChevronRightIcon color="white" />
     </>
@@ -41,19 +41,22 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
   return (
     <Flex align="center" css={{ height: "100%" }}>
       {selectedInstancePath.length === 0 ? (
-        <Breadcrumb component={<Text size="1">No instance selected</Text>} />
+        <Breadcrumb>
+          <Text size="1">No instance selected</Text>
+        </Breadcrumb>
       ) : (
         selectedInstancePath.map((instance) => (
           <Breadcrumb
             key={instance.id}
-            component={instance.component}
             onClick={() => {
               publish<"selectInstanceById", Instance["id"]>({
                 type: "selectInstanceById",
                 payload: instance.id,
               });
             }}
-          />
+          >
+            {instance.component}
+          </Breadcrumb>
         ))
       )}
     </Flex>

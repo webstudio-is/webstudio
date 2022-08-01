@@ -23,7 +23,6 @@ export type Control =
   | "Empty";
 
 type StyleConfigWithItems = BaseStyleConfig & {
-  category: Category;
   control: Control;
   items: Array<{ label: string; name: string }>;
 };

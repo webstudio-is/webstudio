@@ -94,8 +94,8 @@ export const StyleSettings = ({
       search
     );
     const { moreFrom } = categories[category];
-    const styleConfigsByCategory: Array<JSX.Element> = [];
-    const moreStyleConfigsByCategory: Array<JSX.Element> = [];
+    const styleConfigsByCategory: Array<JSX.Element | null> = [];
+    const moreStyleConfigsByCategory: Array<JSX.Element | null> = [];
 
     for (const styleConfig of styleConfigs) {
       const isInCategory = categoryProperties.includes(styleConfig.property);
@@ -109,7 +109,6 @@ export const StyleSettings = ({
         const element = renderProperty({
           ...rest,
           setProperty,
-          createBatchUpdate,
           currentStyle,
           styleConfig,
           category,

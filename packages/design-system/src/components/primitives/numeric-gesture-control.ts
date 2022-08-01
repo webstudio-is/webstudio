@@ -72,7 +72,7 @@ export const numericGestureControl = (
   const handleEvent = (event: PointerEvent) => {
     const { type, clientX, clientY, movementY, movementX } = event;
     const offset = direction === "horizontal" ? clientX : clientY;
-    let movement = direction === "horizontal" ? movementX : -movementY;
+    const movement = direction === "horizontal" ? movementX : -movementY;
     switch (type) {
       case "pointerup": {
         state.offset = 0;

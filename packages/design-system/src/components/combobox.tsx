@@ -115,7 +115,8 @@ export const List = <Item extends BaseItem>({
 export const ComboboxPopperContent = PopperContent;
 
 type ComboboxProps<Item> = {
-  name: string;
+  name?: string;
+  label?: string;
   items: Array<Item>;
   value?: Item;
   onItemSelect?: (value: Item) => void;

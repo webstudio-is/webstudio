@@ -302,25 +302,19 @@ const ComboboxControl = ({
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Combobox
-          id={styleConfig.property}
+          label={styleConfig.property}
           items={styleConfig.items}
-          css={{
-            // @todo drag&drop cursor to adjust numeric value
-            // const cursorUrl = data:image/svg+xml;base64,${btoa(svgCursor)}
-            //cursor: `url(${cursorUrl}), text`,
-            textAlign: "right",
-          }}
-          state={value.type === "invalid" ? "invalid" : undefined}
-          value={String(value.value)}
+          // state={value.type === "invalid" ? "invalid" : undefined}
+          value={String(value.value) as string}
           // @todo new combobox doesn't include any of these event handlers
-          onValueSelect={setValue}
-          onValueEnter={setValue}
-          onItemEnter={(value) => {
-            setValue(value, { isEphemeral: true });
-          }}
-          onItemLeave={() => {
-            setValue(String(value.value), { isEphemeral: true });
-          }}
+          // onValueSelect={setValue}
+          // onValueEnter={setValue}
+          // onItemEnter={(value: unknown) => {
+          //   setValue(value as string, { isEphemeral: true });
+          // }}
+          // onItemLeave={() => {
+          //   setValue(String(value.value), { isEphemeral: true });
+          // }}
         />
         <Unit value={value} />
       </Flex>
@@ -575,7 +569,11 @@ const LockControl = ({
   );
 };
 
-const ShowMore = ({ styleConfigs }: { styleConfigs: Array<JSX.Element> }) => {
+const ShowMore = ({
+  styleConfigs,
+}: {
+  styleConfigs: Array<JSX.Element | null>;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   if (styleConfigs.length === 0) return null;
   return (
@@ -638,8 +636,8 @@ type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   category: Category;
-  styleConfigsByCategory: JSX.Element[];
-  moreStyleConfigsByCategory: JSX.Element[];
+  styleConfigsByCategory: Array<JSX.Element | null>;
+  moreStyleConfigsByCategory: Array<JSX.Element | null>;
 };
 // Categories should render themselves because most Categories will not be flat un-ordered lists with
 // the new designs, refactor ColorControl, SpacingControl if needed.
