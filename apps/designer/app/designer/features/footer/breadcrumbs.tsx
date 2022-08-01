@@ -20,7 +20,6 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
           px: "$2",
           borderRadius: "100vh",
           height: "100%",
-          lineHeight: "100%",
         }}
       >
         {children}
