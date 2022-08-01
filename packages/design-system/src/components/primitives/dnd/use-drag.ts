@@ -142,7 +142,7 @@ export const useDrag = <DragItemData>({
     }
   }, [onPointerDown]);
 
-  // We want to rerurn a stable object to avoid re-renders when it's a dependency
+  // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
     return {
       rootRef(element) {

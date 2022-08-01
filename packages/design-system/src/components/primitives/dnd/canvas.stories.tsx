@@ -1,7 +1,7 @@
 import { ComponentMeta } from "@storybook/react";
 import React, { useState, useRef } from "react";
 import { Box } from "../../box";
-import { useDropTarget } from "./use-drop-target";
+import { useDrop } from "./use-drop";
 import { useDrag } from "./use-drag";
 import { type Rect } from "./rect";
 import { usePlacement, PlacementIndicator } from "./placement";
@@ -31,7 +31,7 @@ const Item = ({
         minHeight: 100,
         margin: 10,
         padding: 10,
-        background: "$mint12",
+        background: "$mint5",
         border: "1px solid $mint9",
       }}
       style={data.style}
@@ -59,7 +59,8 @@ const Items = ({
   );
 };
 
-const elementToId = (element: HTMLElement) => element.dataset.id;
+const elementToId = (element: Element) =>
+  element instanceof HTMLElement && element.dataset.id;
 
 const idToElement = (
   root: HTMLElement,
@@ -83,16 +84,16 @@ const mapItems = (
   data: ItemData[],
   fn: (item: ItemData) => ItemData
 ): ItemData[] => {
+  const recur = (
+    data: ItemData[],
+    fn: (item: ItemData) => ItemData
+  ): ItemData[] =>
+    data.map((item) => fn({ ...item, children: recur(item.children, fn) }));
   return fn({
     id: ROOT_ID,
     style: {},
     acceptsChildren: true,
-    children: data.map((item) => {
-      return fn({
-        ...item,
-        children: mapItems(item.children, fn),
-      });
-    }),
+    children: recur(data, fn),
   }).children;
 };
 
@@ -128,9 +129,24 @@ export const Canvas = () => {
       id: "0",
       style: {},
       children: [
-        { id: "1", style: { margin: 0 }, children: [], acceptsChildren: true },
-        { id: "2", style: { margin: 0 }, children: [], acceptsChildren: true },
-        { id: "3", style: { margin: 0 }, children: [], acceptsChildren: true },
+        {
+          id: "1",
+          style: { margin: 0, background: "#ff7878" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "2",
+          style: { margin: 0, background: "#a8d1ff" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "3",
+          style: { margin: 0, background: "#94ef94" },
+          children: [],
+          acceptsChildren: true,
+        },
       ],
       acceptsChildren: true,
     },
@@ -149,18 +165,27 @@ export const Canvas = () => {
   const dropTargetId = useRef<string>();
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const dropTargetHandlers = useDropTarget<string>({
+  const dropTargetHandlers = useDrop<string>({
     edgeDistanceThreshold: 10,
-    isDropTarget(element: HTMLElement) {
+
+    isDropTarget(element) {
       return elementToId(element) ?? false;
     },
+
+    getDefaultDropTarget() {
+      if (rootRef.current === null) {
+        throw new Error("should not happen");
+      }
+      return { data: ROOT_ID, element: rootRef.current };
+    },
+
     swapDropTarget(dropTarget) {
       const rootElement = rootRef.current;
       if (rootElement === null) {
         return dropTarget;
       }
 
-      const { data: id, area } = dropTarget;
+      const { data: id, nearEdge } = dropTarget;
 
       if (id === ROOT_ID) {
         return dropTarget;
@@ -168,7 +193,7 @@ export const Canvas = () => {
 
       const path = findItemPath(data, id) ?? [];
 
-      if (area !== "center") {
+      if (nearEdge) {
         path.shift();
       }
 
@@ -195,7 +220,7 @@ export const Canvas = () => {
 
     onDropTargetChange({ data, element }) {
       dropTargetId.current = data;
-      placementHandlers.handleTargetChange(element);
+      placementHandlers.handleTargetChange(element as any);
     },
   });
 

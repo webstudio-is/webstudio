@@ -60,7 +60,7 @@ export const usePlacement = (props: UsePlacementProps): Handlers => {
     placementRext: undefined as Rect | undefined,
   });
 
-  // We want to rerurn a stable object to avoid re-renders when it's a dependency
+  // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
     const getChildrenRects = (parent: HTMLElement, parentRect: DOMRect) => {
       const fromCache = state.current.childrenRectsCache.get(parent);
@@ -104,19 +104,19 @@ export const usePlacement = (props: UsePlacementProps): Handlers => {
         childrenRects,
         pointerAdjusted
       );
-      const closesRect = childrenRects[closestRectIndex];
+      const closestRect = childrenRects[closestRectIndex];
 
       const isOrientationVertical =
         childrenRects.length < 2 ||
         childrenRects[0].left === childrenRects[1].left;
 
       if (isOrientationVertical) {
-        const middleY = closesRect.top + closesRect.height / 2;
+        const middleY = closestRect.top + closestRect.height / 2;
         return pointerAdjusted.y < middleY
           ? closestRectIndex
           : closestRectIndex + 1;
       } else {
-        const middleX = closesRect.left + closesRect.width / 2;
+        const middleX = closestRect.left + closestRect.width / 2;
         return pointerAdjusted.x < middleX
           ? closestRectIndex
           : closestRectIndex + 1;
