@@ -3,6 +3,7 @@ import { CheckIcon } from "@webstudio-is/icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { styled, CSS } from "../stitches.config";
 import { Box } from "./box";
+import { Tooltip } from "./tooltip";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   maxWidth: "224px",
@@ -84,12 +85,14 @@ const IconButton = styled("button", {
 });
 
 export const Comboicon = ({
+  label,
   value,
   items,
   onChange,
   icons,
   css,
 }: {
+  label: string;
   value: string;
   items: Array<{ label: string; name: string }>;
   onChange: (value: string) => void;
@@ -99,9 +102,15 @@ export const Comboicon = ({
   const TriggerIcon = icons?.[value];
   return (
     <DropdownMenuPrimitive.Root modal={false}>
-      <DropdownMenuPrimitive.Trigger asChild>
-        <IconButton css={css}>{TriggerIcon && <TriggerIcon />}</IconButton>
-      </DropdownMenuPrimitive.Trigger>
+      <Tooltip
+        content={label}
+        delayDuration={700 * 2}
+        disableHoverableContent={true}
+      >
+        <DropdownMenuPrimitive.Trigger asChild>
+          <IconButton css={css}>{TriggerIcon && <TriggerIcon />}</IconButton>
+        </DropdownMenuPrimitive.Trigger>
+      </Tooltip>
 
       <StyledContent sideOffset={4}>
         <DropdownMenuPrimitive.RadioGroup

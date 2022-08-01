@@ -1,4 +1,8 @@
-import { useState, KeyboardEvent } from "react";
+import {
+  useState,
+  KeyboardEvent,
+  // useCallback,
+} from "react";
 import {
   Box,
   Flex,
@@ -12,6 +16,8 @@ import {
   Select,
   IconButton,
   TextField,
+  Tooltip,
+  // numericGestureControl,
 } from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
 import * as icons from "@webstudio-is/icons";
@@ -189,6 +195,22 @@ const ComboboxControl = ({
 }: ControlProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
 
+  // @todo, better hook abstraction(use effects), update value, should be part of the updated(per next todo below) combobox abstraction
+  // const refCallback = useCallback((node: HTMLElement) => {
+  //   let disconnectedCallback = () => {};
+  //   if (node) {
+  //     disconnectedCallback = numericGestureControl(node, {
+  //       minValue: 0,
+  //       initialValue: parseFloat(String(value?.value)) || 0,
+  //       onValueChange: (event) => {
+  //         event.target.parentNode.querySelector("input").value = event.value;
+  //       },
+  //     }).disconnectedCallback;
+  //   } else {
+  //     disconnectedCallback?.();
+  //   }
+  // }, []);
+
   if (styleConfig.control !== "Combobox") return null;
 
   // @todo show which instance we inherited the value from
@@ -212,6 +234,7 @@ const ComboboxControl = ({
               gap: Record<string, (props: unknown) => JSX.Element>;
             }
           ).gap[styleConfig.property];
+          // @todo abstract to a variant of the combobox component
           return (
             <Grid
               css={{
@@ -219,30 +242,37 @@ const ComboboxControl = ({
                 gridTemplateRows: "repeat(1, 1fr)",
               }}
             >
-              <IconButton
-                variant="ghost"
-                size="1"
-                css={{
-                  zIndex: 1,
-                  gridArea: "1 / 1 / 2 / 2",
-                  marginLeft: 2,
-                  marginTop: 2,
-                  borderRadius: 1,
-                  height: "calc($sizes$5 - 4px)",
-                  width: "calc($sizes$5 - 4px)",
-                  "&:focus": {
-                    boxShadow: "none",
-                  },
-                  ...(isCurrentBreakpoint && {
-                    bc: "$colors$blue4",
-                    "& svg *": {
-                      fill: "$colors$blue11",
-                    },
-                  }),
-                }}
+              <Tooltip
+                content={styleConfig.label}
+                delayDuration={700}
+                disableHoverableContent={true}
               >
-                <Icon />
-              </IconButton>
+                <IconButton
+                  // ref={refCallback}
+                  variant="ghost"
+                  size="1"
+                  css={{
+                    zIndex: 1,
+                    gridArea: "1 / 1 / 2 / 2",
+                    marginLeft: 2,
+                    marginTop: 2,
+                    borderRadius: 1,
+                    height: "calc($sizes$5 - 4px)",
+                    width: "calc($sizes$5 - 4px)",
+                    "&:focus": {
+                      boxShadow: "none",
+                    },
+                    ...(isCurrentBreakpoint && {
+                      bc: "$colors$blue4",
+                      "& svg *": {
+                        fill: "$colors$blue11",
+                      },
+                    }),
+                  }}
+                >
+                  <Icon />
+                </IconButton>
+              </Tooltip>
               <TextField
                 type="number"
                 defaultValue={parseFloat(String(value.value)) || 0}
@@ -361,6 +391,7 @@ const ComboiconControl = ({
   const currentValue = value.value as string;
   return (
     <Comboicon
+      label={styleConfig.label}
       items={styleConfig.items}
       value={String(currentValue)}
       onChange={setValue}

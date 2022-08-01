@@ -60,3 +60,4 @@ export * from "./components/combobox";
 export * from "./components/checkbox";
 export * from "./components/avatar";
 export * from "./components/comboicon";
+export * from "./components/primitives/numeric-gesture-control";

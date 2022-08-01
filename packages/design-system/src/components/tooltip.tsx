@@ -11,13 +11,13 @@ type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
     content: React.ReactNode;
     multiline?: boolean;
     delayDuration?: number;
+    disableHoverableContent?: boolean;
     css?: CSS;
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: "$loContrast",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
-  color: "$hiContrast",
+  backgroundColor: "$hiContrast",
+  color: "$loContrast",
   borderRadius: "$1",
   padding: "$1 $2",
   zIndex: "$max",
@@ -26,7 +26,7 @@ const Content = styled(TooltipPrimitive.Content, {
   variants: {
     multiline: {
       true: {
-        // @todo makew this part of the design system
+        // @todo make this part of the design system
         maxWidth: 110,
         pb: 7,
       },
@@ -35,8 +35,7 @@ const Content = styled(TooltipPrimitive.Content, {
 });
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: "$loContrast",
-  stroke: "$slate7",
+  fill: "$hiContrast",
   strokeWidth: "$1",
   marginTop: -0.5,
 });
@@ -50,6 +49,7 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
     onOpenChange,
     multiline,
     delayDuration,
+    disableHoverableContent,
     ...props
   }: TooltipProps,
   ref: Ref<HTMLDivElement>
@@ -60,6 +60,7 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
       defaultOpen={defaultOpen}
       onOpenChange={onOpenChange}
       delayDuration={delayDuration}
+      disableHoverableContent={disableHoverableContent}
     >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
 

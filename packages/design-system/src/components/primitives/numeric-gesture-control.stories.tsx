@@ -1,8 +1,8 @@
 import { useRef, useEffect, RefObject } from "react";
 import {
   numericGestureControl,
-  type Value,
-  type Direction,
+  type NumericGestureValue,
+  type NumericGestureDirection,
 } from "./numeric-gesture-control";
 
 const useNumericGestureControl = ({
@@ -11,8 +11,8 @@ const useNumericGestureControl = ({
   direction,
 }: {
   ref: RefObject<HTMLInputElement>;
-  value: Value;
-  direction: Direction;
+  value: NumericGestureValue;
+  direction: NumericGestureDirection;
 }) => {
   useEffect(() => {
     if (ref.current === null) return;
@@ -34,8 +34,8 @@ const Input = ({
   value,
   direction,
 }: {
-  value: Value;
-  direction: Direction;
+  value: NumericGestureValue;
+  direction: NumericGestureDirection;
 }) => {
   const ref = useRef<HTMLInputElement | null>(null);
   useNumericGestureControl({ ref, value, direction });
