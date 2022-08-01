@@ -355,21 +355,36 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
         let placement: Placement | undefined;
 
+        const toAbsoluteCoordinates = (
+          placement: Placement | undefined
+        ): Placement | undefined => {
+          if (placement === undefined) {
+            return;
+          }
+          return {
+            ...placement,
+            x: placement.x + rect.left,
+            y: placement.y + rect.top,
+          };
+        };
+
         if (aRect !== undefined && bRect !== undefined) {
-          placement = getPlacementBetween(aRect, bRect);
+          placement = toAbsoluteCoordinates(getPlacementBetween(aRect, bRect));
         }
 
         if (placement === undefined && aRect !== undefined) {
-          placement = getPlacementNextTo(
-            rect,
-            aRect,
-            childrenOrientation === "horizontal"
-              ? bIndex > aIndex
-                ? "right"
-                : "left"
-              : bIndex > aIndex
-              ? "bottom"
-              : "top"
+          placement = toAbsoluteCoordinates(
+            getPlacementNextTo(
+              rectRelativeToRect(rect, rect),
+              aRect,
+              childrenOrientation === "horizontal"
+                ? bIndex > aIndex
+                  ? "right"
+                  : "left"
+                : bIndex > aIndex
+                ? "bottom"
+                : "top"
+            )
           );
         }
 

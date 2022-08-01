@@ -299,16 +299,19 @@ export const Canvas = () => {
             cursor: dragItemId === undefined ? "grab" : "default",
           },
         }}
-        ref={(element) => {
-          dropHandlers.rootRef(element);
-          autoScrollHandlers.targetRef(element);
-          useDragHandlers.rootRef(element);
-          rootRef.current = element;
-        }}
+        ref={autoScrollHandlers.targetRef}
         onScroll={dropHandlers.handleScroll}
-        data-id={ROOT_ID}
       >
-        <Items data={data} dragItemId={dragItemId} />
+        <Box
+          ref={(element) => {
+            dropHandlers.rootRef(element);
+            useDragHandlers.rootRef(element);
+            rootRef.current = element;
+          }}
+          data-id={ROOT_ID}
+        >
+          <Items data={data} dragItemId={dragItemId} />
+        </Box>
       </Box>
       {currentDropTarget && (
         <PlacementIndicator
