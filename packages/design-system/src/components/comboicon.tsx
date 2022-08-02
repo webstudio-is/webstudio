@@ -96,7 +96,7 @@ export const Comboicon = ({
   value: string;
   items: Array<{ label: string; name: string }>;
   onChange: (value: string) => void;
-  icons?: Record<string, (props: unknown) => JSX.Element>;
+  icons: Record<string, (props: unknown) => JSX.Element>;
   css: CSS;
 }) => {
   const TriggerIcon = icons?.[value];
@@ -117,27 +117,21 @@ export const Comboicon = ({
           value={value}
           onValueChange={onChange}
         >
-          {items
-            .map(({ name, label }: { name: string; label: string }) => ({
-              icon: icons?.[name],
-              name,
-              label,
-            }))
-            .filter(({ icon }) => Boolean(icon))
-            .map(({ name, label, icon }) => {
-              const ItemIcon = icon as (props: unknown) => JSX.Element;
-              return (
-                <StyledRadioItem key={name} value={label}>
-                  <StyledItemIndicator>
-                    <CheckIcon />
-                  </StyledItemIndicator>
-                  <Box css={{ transform: css.transform }}>
-                    <ItemIcon />
-                  </Box>
-                  {label}
-                </StyledRadioItem>
-              );
-            })}
+          {items.map(({ name, label }: { name: string; label: string }) => {
+            const ItemIcon = icons[name];
+            if (!ItemIcon) return null;
+            return (
+              <StyledRadioItem key={name} value={label}>
+                <StyledItemIndicator>
+                  <CheckIcon />
+                </StyledItemIndicator>
+                <Box css={{ transform: css.transform }}>
+                  <ItemIcon />
+                </Box>
+                {label}
+              </StyledRadioItem>
+            );
+          })}
         </DropdownMenuPrimitive.RadioGroup>
         <StyledArrow offset={12} />
       </StyledContent>
