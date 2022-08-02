@@ -125,7 +125,7 @@ export const Comboicon = ({
                 <StyledItemIndicator>
                   <CheckIcon />
                 </StyledItemIndicator>
-                <Box css={{ transform: css.transform }}>
+                <Box css={{ svg: css.svg }}>
                   <ItemIcon />
                 </Box>
                 {label}

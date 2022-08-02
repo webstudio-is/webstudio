@@ -305,7 +305,7 @@ const ComboboxControl = ({
           label={styleConfig.property}
           items={styleConfig.items}
           // state={value.type === "invalid" ? "invalid" : undefined}
-          value={String(value.value) as string}
+          value={String(value.value)}
           // @todo new combobox doesn't include any of these event handlers
           // onValueSelect={setValue}
           // onValueEnter={setValue}
@@ -399,7 +399,7 @@ const ComboiconControl = ({
       }
       css={{
         ...(styleConfig.property !== "flexDirection" && {
-          "& svg": {
+          svg: {
             transform: `rotate(${
               currentStyle.flexDirection?.value === "column"
                 ? 90 * (styleConfig.property === "alignItems" ? -1 : 1)
@@ -512,7 +512,6 @@ const GridControl = ({
                 .slice(1)
                 .split("_")
                 .map((value) => ["start", "center", "end"][parseFloat(value)]);
-              // @todo: these two should be set in one instead of two seperate updates
               setAlignItems(alignItems);
               setJustifyContent(justifyContent);
               batch.publish();
