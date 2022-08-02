@@ -69,6 +69,12 @@ export const getPlacementBetween = (
     return undefined;
   }
 
+  // if rects aren't aligned (vertically or horizontally)
+  // we don't want to put placement between them
+  if (distanceX >= 0 && distanceY >= 0) {
+    return undefined;
+  }
+
   if (distanceX < 0 || (distanceY >= 0 && distanceY < distanceX)) {
     const minX = Math.min(a.left, b.left);
     const maxX = Math.max(a.left + a.width, b.left + b.width);
@@ -167,30 +173,67 @@ export const getPlacementInside = (
   };
 };
 
+const getSegmentsOrder = (
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number
+): "a-after-b" | "b-after-a" | "overlap" => {
+  if (aStart >= bEnd) {
+    return "a-after-b";
+  }
+  if (bStart >= aEnd) {
+    return "b-after-a";
+  }
+  return "overlap";
+};
+
+const getTwoRectsOrientation = (
+  first: Rect,
+  second: Rect
+): ChildrenOrientation => {
+  const xOrder = getSegmentsOrder(
+    first.left,
+    first.left + first.width,
+    second.left,
+    second.left + second.width
+  );
+  const yOrder = getSegmentsOrder(
+    first.top,
+    first.top + first.height,
+    second.top,
+    second.top + second.height
+  );
+  if (xOrder !== "overlap" && yOrder === "overlap") {
+    return "horizontal";
+  }
+  if (xOrder === "overlap" && yOrder !== "overlap") {
+    return "vertical";
+  }
+  return "mixed";
+};
+
 export const getRectsOrientation = (
   first: Rect | undefined,
   second: Rect,
   third: Rect | undefined
 ): ChildrenOrientation => {
-  // @todo: We need a slightly more sofisticated way to determine orientation.
-  // For example, detect this as "vertical":
-  //   [    ]
-  //    [  ]
-
   // @todo: add "vertical-reversed", "horizontal-reversed", "mixed-reversed"
 
-  if (
-    (first === undefined || first.top === second.top) &&
-    (third === undefined || third.top === second.top)
-  ) {
-    return "horizontal";
+  const orientations = [
+    first && getTwoRectsOrientation(first, second),
+    third && getTwoRectsOrientation(second, third),
+  ];
+
+  const includesVertical = orientations.includes("vertical");
+  const includesHorizontal = orientations.includes("horizontal");
+
+  if (includesVertical && !includesHorizontal) {
+    return "vertical";
   }
 
-  if (
-    (first === undefined || first.left === second.left) &&
-    (third === undefined || third.left === second.left)
-  ) {
-    return "vertical";
+  if (includesHorizontal && !includesVertical) {
+    return "horizontal";
   }
 
   return "mixed";

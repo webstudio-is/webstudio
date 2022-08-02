@@ -6,52 +6,16 @@ import {
   getPlacementBetween,
   getPlacementInside,
   getPlacementNextTo,
-  getRectsOrientation,
   getIndexAdjustment,
   type Rect,
-  type ChildrenOrientation,
   type Placement,
 } from "./geometry-utils";
-
-// @todo: use this in useDrag as well
-type UsableElement = HTMLElement | SVGElement;
-const toUseableElement = (
-  element: Element | undefined | null
-): UsableElement | undefined => {
-  if (element instanceof HTMLElement || element instanceof SVGElement) {
-    return element;
-  }
-};
-
-// By looking at a specific child and it's neighbours,
-// determines their orientation relative to each other
-const getLocalChildrenOrientation = (
-  parent: UsableElement,
-  childrentRects: Rect[],
-  childIndex: number
-): ChildrenOrientation => {
-  const previous = childrentRects[childIndex - 1] as Rect | undefined;
-  const current = childrentRects[childIndex] as Rect | undefined;
-  const next = childrentRects[childIndex + 1] as Rect | undefined;
-
-  if (current === undefined || (next === undefined && previous === undefined)) {
-    const probe = document.createElement("div");
-    const { children } = parent;
-    if (childIndex > children.length - 1) {
-      parent.appendChild(probe);
-    } else {
-      parent.insertBefore(probe, children[childIndex]);
-    }
-    const probeRect = probe.getBoundingClientRect();
-    parent.removeChild(probe);
-
-    return probeRect.width === 0 && probeRect.height !== 0
-      ? "horizontal"
-      : "vertical";
-  }
-
-  return getRectsOrientation(previous, current, next);
-};
+import {
+  type UsableElement,
+  toUseableElement,
+  getLocalChildrenOrientation,
+  getChildrenRects,
+} from "./dom-utils";
 
 // Partial information about a drop target
 // used during the selection of a new drop target
@@ -116,25 +80,12 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
   // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
-    const getChildrenRects = (parent: UsableElement, parentRect: Rect) => {
+    const getChildrenRectsMemoized = (parent: UsableElement) => {
       const fromCache = state.current.childrenRectsCache.get(parent);
       if (fromCache !== undefined) {
         return fromCache;
       }
-
-      // We convert to relative coordinates to be able to store the result in cache.
-      // Otherwise we would have to clear cache on scroll.
-      const toRelativeCoordinates = (rect: Rect) => ({
-        left: rect.left - parentRect.left,
-        top: rect.top - parentRect.top,
-        width: rect.width,
-        height: rect.height,
-      });
-
-      const result = Array.from(parent.children).map((child) =>
-        toRelativeCoordinates(child.getBoundingClientRect())
-      );
-
+      const result = getChildrenRects(parent);
       state.current.childrenRectsCache.set(parent, result);
       return result;
     };
@@ -152,10 +103,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         y: pointerCoordinates.y - parentRect.top,
       };
 
-      const childrenRects = getChildrenRects(
-        partialDropTarget.element,
-        parentRect
-      );
+      const childrenRects = getChildrenRectsMemoized(partialDropTarget.element);
 
       const closestChildIndex =
         childrenRects.length === 0
@@ -302,7 +250,6 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
     return {
       handleMove(pointerCoordinates) {
-        // console.log("handleMove", pointerCoordinates);
         state.current.pointerCoordinates = pointerCoordinates;
         detectTarget();
       },
@@ -322,9 +269,6 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
   }, []);
 };
 
-// @todo: maybe rather than climbing the DOM tree,
-// we should use document.elementsFromPoint() array?
-// Might work better with absolutly positioned elements.
 const findClosestDropTarget = <Data>({
   root,
   initialElement,
