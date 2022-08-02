@@ -73,19 +73,16 @@ export type UseDropProps<Data> = {
   // To check that the element can qualify as a target
   isDropTarget: (target: UsableElement) => Data | false;
 
-  // A target to use when no suitable element is found under the pointer,
-  // or swapDropTarget returns "DEFAULT"
-  getDefaultDropTarget: () => PartialDropTarget<Data>;
-
   // Distance from an edge to set nearEdge to true in swapDropTarget
   edgeDistanceThreshold?: number;
 
   // Given the potential target that has passed the isDropTarget check,
   // and the position of the pointer on the target,
   // you can swap to another target
-  swapDropTarget?: (
-    dropTarget: PartialDropTarget<Data> & { nearEdge: boolean }
-  ) => PartialDropTarget<Data> | "DEFAULT";
+  swapDropTarget: (
+    // undefined is passed when no suitable element is found under the pointer
+    dropTarget: (PartialDropTarget<Data> & { nearEdge: boolean }) | undefined
+  ) => PartialDropTarget<Data>;
 
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
 };
@@ -234,31 +231,34 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       const {
         edgeDistanceThreshold = 3,
         isDropTarget,
-        swapDropTarget = (x) => x,
-        getDefaultDropTarget,
+        swapDropTarget,
       } = latestProps.current;
 
       const { pointerCoordinates, root } = state.current;
-      if (pointerCoordinates === undefined || root === undefined) {
-        setDropTarget(getDefaultDropTarget());
-        return;
-      }
 
       // @todo: Cache this?
       // Not expensive by itself, but it may call isDropTarget multiple times.
-      let candidate = findClosestDropTarget({
-        root,
-        initialElement: toUseableElement(
-          document.elementFromPoint(pointerCoordinates.x, pointerCoordinates.y)
-        ),
-        isDropTarget,
-      });
+      let candidate =
+        root &&
+        findClosestDropTarget({
+          root,
+          initialElement:
+            pointerCoordinates &&
+            toUseableElement(
+              document.elementFromPoint(
+                pointerCoordinates.x,
+                pointerCoordinates.y
+              )
+            ),
+          isDropTarget,
+        });
 
       const isNewCandidate =
         candidate?.element !== state.current.lastCandidateElement;
       state.current.lastCandidateElement = candidate?.element;
       const candidateIsNearEdge =
         candidate &&
+        pointerCoordinates &&
         isNearEdge(
           pointerCoordinates,
           edgeDistanceThreshold,
@@ -273,28 +273,21 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         return;
       }
 
-      if (candidate === undefined) {
-        setDropTarget(getDefaultDropTarget());
-        return;
-      }
-
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        const swappedTo = swapDropTarget({
-          ...candidate,
-          nearEdge: isNearEdge(
-            pointerCoordinates,
-            edgeDistanceThreshold,
-            candidate.element.getBoundingClientRect()
-          ),
-        });
+        const swappedTo = swapDropTarget(
+          candidate &&
+            pointerCoordinates && {
+              ...candidate,
+              nearEdge: isNearEdge(
+                pointerCoordinates,
+                edgeDistanceThreshold,
+                candidate.element.getBoundingClientRect()
+              ),
+            }
+        );
 
-        if (swappedTo === "DEFAULT") {
-          setDropTarget(getDefaultDropTarget());
-          return;
-        }
-
-        if (swappedTo.element === candidate.element) {
+        if (swappedTo.element === candidate?.element) {
           setDropTarget(candidate);
           return;
         }

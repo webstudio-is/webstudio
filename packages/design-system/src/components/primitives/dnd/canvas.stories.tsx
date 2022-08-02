@@ -151,7 +151,37 @@ export const Canvas = () => {
     },
     { id: "4", style: {}, children: [], acceptsChildren: true },
     { id: "5", style: {}, children: [], acceptsChildren: true },
-    { id: "6", style: {}, children: [], acceptsChildren: false },
+    {
+      id: "6",
+      style: { background: "whitesmoke" },
+      children: [],
+      acceptsChildren: false,
+    },
+    {
+      id: "7",
+      style: { display: "flex" },
+      children: [
+        {
+          id: "8",
+          style: { margin: 0, background: "#ff7878" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "9",
+          style: { margin: 0, background: "#a8d1ff" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "10",
+          style: { margin: 0, background: "#94ef94" },
+          children: [],
+          acceptsChildren: true,
+        },
+      ],
+      acceptsChildren: true,
+    },
   ]);
 
   const [currentDropTarget, setCurrentDropTarget] = useState<
@@ -161,6 +191,13 @@ export const Canvas = () => {
 
   const rootRef = useRef<HTMLElement | null>(null);
 
+  const getDefaultDropTarget = () => {
+    if (rootRef.current === null) {
+      throw new Error("should not happen");
+    }
+    return { data: ROOT_ID, element: rootRef.current };
+  };
+
   const dropHandlers = useDrop<string>({
     edgeDistanceThreshold: 10,
 
@@ -168,17 +205,10 @@ export const Canvas = () => {
       return elementToId(element) ?? false;
     },
 
-    getDefaultDropTarget() {
-      if (rootRef.current === null) {
-        throw new Error("should not happen");
-      }
-      return { data: ROOT_ID, element: rootRef.current };
-    },
-
     swapDropTarget(dropTarget) {
       const rootElement = rootRef.current;
-      if (rootElement === null) {
-        return dropTarget;
+      if (dropTarget === undefined || rootElement === null) {
+        return getDefaultDropTarget();
       }
 
       const { data: id, nearEdge } = dropTarget;
@@ -202,13 +232,13 @@ export const Canvas = () => {
       const newItem = path.find((item) => item.acceptsChildren);
 
       if (newItem === undefined) {
-        return { data: ROOT_ID, element: rootElement };
+        return getDefaultDropTarget();
       }
 
       const element = idToElement(rootElement, newItem.id);
 
       if (element === undefined) {
-        return { data: ROOT_ID, element: rootElement };
+        return getDefaultDropTarget();
       }
 
       return { data: newItem.id, element };

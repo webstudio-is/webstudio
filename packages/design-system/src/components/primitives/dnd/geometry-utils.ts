@@ -2,6 +2,13 @@ export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
 export type ChildrenOrientation = "vertical" | "horizontal" | "mixed";
 
+export type Placement = {
+  x: number;
+  y: number;
+  length: number;
+  direction: "horizontal" | "vertical";
+};
+
 // https://stackoverflow.com/a/18157551/478603
 const getDistanceToRect = (rect: Rect, { x, y }: { x: number; y: number }) => {
   const dx = Math.max(rect.left - x, 0, x - (rect.left + rect.width));
@@ -43,13 +50,6 @@ export const isNearEdge = (
     x - rect.left,
     rect.left + rect.width - x
   ) <= edgeDistanceThreshold;
-
-export type Placement = {
-  x: number;
-  y: number;
-  length: number;
-  direction: "horizontal" | "vertical";
-};
 
 export const getPlacementBetween = (
   a: Rect | undefined,
@@ -196,7 +196,7 @@ export const getRectsOrientation = (
   return "mixed";
 };
 
-// Checks whether we should place item before or after the closest child.
+// Determines whether we should place the item before or after the closest child.
 // Returns the number that should be added to the closest child index to get the final index.
 export const getIndexAdjustment = (
   pointer: { x: number; y: number },
