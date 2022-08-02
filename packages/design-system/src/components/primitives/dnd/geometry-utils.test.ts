@@ -26,7 +26,7 @@ describe("getPlacementBetween", () => {
       // [b]
       { top: 0, left: 600 },
       { top: 200, left: 0 },
-      { direction: "horizontal", x: 0, y: 150, length: 700 },
+      undefined,
     ],
 
     [
@@ -36,7 +36,7 @@ describe("getPlacementBetween", () => {
       //     | [b]
       { top: 0, left: 0 },
       { top: 600, left: 200 },
-      { direction: "vertical", x: 150, y: 0, length: 700 },
+      undefined,
     ],
 
     // overlaps ...
