@@ -4,7 +4,7 @@ import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
 import { useDropTarget } from "./use-drop-target";
 import { useDrag } from "./use-drag";
-import { type Rect } from "./rect";
+import { type Rect } from "./geometry-utils";
 import { usePlacement, PlacementIndicator } from "./placement";
 import { useAutoScroll } from "./use-auto-scroll";
 

@@ -1,4 +1,4 @@
-import { getPlacementBetween } from "./use-drop";
+import { getPlacementBetween } from "./geometry-utils";
 
 const size = { width: 100, height: 100 };
 

@@ -2,11 +2,16 @@ import { useRef, useMemo } from "react";
 import {
   isEqualRect,
   isNearEdge,
-  rectRelativeToRect,
-  pointRelativeToRect,
   getClosestRectIndex,
+  getPlacementBetween,
+  getPlacementInside,
+  getPlacementNextTo,
+  getRectsOrientation,
+  getIndexAdjustment,
   type Rect,
-} from "./rect";
+  type ChildrenOrientation,
+  type Placement,
+} from "./geometry-utils";
 
 // @todo: use this in useDrag as well
 type UsableElement = HTMLElement | SVGElement;
@@ -18,18 +23,8 @@ const toUseableElement = (
   }
 };
 
-// let probeCache: undefined | HTMLElement;
-// const getProbe = () => {
-//   if (probeCache === undefined) {
-//     probeCache = document.createElement("div");
-//   }
-//   return probeCache;
-// };
-
-// @todo: add "vertical-reversed", "horizontal-reversed", "mixed-reversed"
-type ChildrenOrientation = "vertical" | "horizontal" | "mixed";
-
-// @todo: describe this function
+// By looking at a specific child and it's neighbours,
+// determines their orientation relative to each other
 const getLocalChildrenOrientation = (
   parent: UsableElement,
   childrentRects: Rect[],
@@ -40,184 +35,29 @@ const getLocalChildrenOrientation = (
   const next = childrentRects[childIndex + 1] as Rect | undefined;
 
   if (current === undefined || (next === undefined && previous === undefined)) {
-    // @todo: use probe
-    return "vertical";
-  }
-
-  if (
-    (next === undefined || next.top === current.top) &&
-    (previous === undefined || previous.top === current.top)
-  ) {
-    return "horizontal";
-  }
-
-  if (
-    (next === undefined || next.left === current.left) &&
-    (previous === undefined || previous.left === current.left)
-  ) {
-    return "vertical";
-  }
-
-  return "mixed";
-};
-
-const getIndexAdjustment = (
-  pointer: { x: number; y: number },
-  closestChildRect: Rect,
-  childrenOrientation: ChildrenOrientation
-) => {
-  const { top, left, width, height } = closestChildRect;
-
-  if (childrenOrientation === "vertical") {
-    const middleY = top + height / 2;
-    return pointer.y < middleY ? 0 : 1;
-  }
-
-  if (childrenOrientation === "horizontal") {
-    const middleX = left + width / 2;
-    return pointer.x < middleX ? 0 : 1;
-  }
-
-  // For the "mixed" orientation,
-  // we are looking at whether the pointer is above or below the diagonal
-
-  // diagonal equation
-  const getDiagonalY = (diagonalX: number) => {
-    if (width === 0) {
-      return undefined;
+    const probe = document.createElement("div");
+    const { children } = parent;
+    if (childIndex > children.length - 1) {
+      parent.appendChild(probe);
+    } else {
+      parent.insertBefore(probe, children[childIndex]);
     }
-    const slope = height / width;
-    const topRightCorner = { x: left + width, y: top };
-    return slope * (diagonalX - topRightCorner.x) + topRightCorner.y;
-  };
+    const probeRect = probe.getBoundingClientRect();
+    parent.removeChild(probe);
 
-  const diagonalY = getDiagonalY(pointer.x);
-  if (diagonalY === undefined) {
-    return 0;
+    return probeRect.width === 0 && probeRect.height !== 0
+      ? "horizontal"
+      : "vertical";
   }
-  return pointer.y < diagonalY ? 0 : 1;
+
+  return getRectsOrientation(previous, current, next);
 };
 
 // Partial information about a drop target
 // used during the selection of a new drop target
-type PartialDropTarget<Data> = {
+export type PartialDropTarget<Data> = {
   data: Data;
   element: UsableElement;
-};
-
-type Placement = {
-  x: number;
-  y: number;
-  length: number;
-  direction: "horizontal" | "vertical";
-};
-
-export const getPlacementBetween = (
-  a: Rect,
-  b: Rect
-): Placement | undefined => {
-  const [firstY, secondY] = a.top < b.top ? [a, b] : [b, a];
-  const [firstX, secondX] = a.left < b.left ? [a, b] : [b, a];
-  const distanceY = secondY.top - firstY.top - firstY.height;
-  const distanceX = secondX.left - firstX.left - firstX.width;
-
-  // if rects overlap we don't want to put placement between them
-  if (distanceX < 0 && distanceY < 0) {
-    return undefined;
-  }
-
-  if (distanceX < 0 || (distanceY >= 0 && distanceY < distanceX)) {
-    const minX = Math.min(a.left, b.left);
-    const maxX = Math.max(a.left + a.width, b.left + b.width);
-    return {
-      y: firstY.top + firstY.height + distanceY / 2,
-      x: minX,
-      length: maxX - minX,
-      direction: "horizontal",
-    };
-  }
-
-  const minY = Math.min(a.top, b.top);
-  const maxY = Math.max(a.top + a.height, b.top + b.height);
-  return {
-    y: minY,
-    x: firstX.left + firstX.width + distanceX / 2,
-    length: maxY - minY,
-    direction: "vertical",
-  };
-};
-
-export const getPlacementNextTo = (
-  parentRect: Rect,
-  rect: Rect,
-  side: "top" | "bottom" | "left" | "right"
-): Placement => {
-  const margin = 5;
-
-  if (side === "top") {
-    return {
-      x: rect.left,
-      y: Math.min(rect.top, Math.max(parentRect.top, rect.top - margin)),
-      length: rect.width,
-      direction: "horizontal",
-    };
-  }
-
-  if (side === "bottom") {
-    return {
-      x: rect.left,
-      y: Math.max(
-        rect.top + rect.height,
-        Math.min(parentRect.top + parentRect.height, rect.top + margin)
-      ),
-      length: rect.width,
-      direction: "horizontal",
-    };
-  }
-
-  if (side === "left") {
-    return {
-      x: Math.min(rect.left, Math.max(parentRect.left, rect.left - margin)),
-      y: rect.top,
-      length: rect.height,
-      direction: "vertical",
-    };
-  }
-
-  return {
-    x: Math.max(
-      rect.left + rect.width,
-      Math.min(parentRect.left + parentRect.width, rect.left + margin)
-    ),
-    y: rect.top,
-    length: rect.height,
-    direction: "vertical",
-  };
-};
-
-export const getPlacementInside = (
-  parentRect: Rect,
-  childrenOrientation: ChildrenOrientation
-): Placement => {
-  const padding = 5;
-
-  if (childrenOrientation === "horizontal") {
-    const safePadding = Math.min(parentRect.width / 2, padding);
-    return {
-      y: parentRect.top + safePadding,
-      x: parentRect.left + safePadding,
-      length: parentRect.height - safePadding * 2,
-      direction: "vertical",
-    };
-  }
-
-  const safePadding = Math.min(parentRect.height / 2, padding);
-  return {
-    y: parentRect.top + safePadding,
-    x: parentRect.left + safePadding,
-    length: parentRect.width - safePadding * 2,
-    direction: "horizontal",
-  };
 };
 
 export type DropTarget<Data> = PartialDropTarget<Data> & {
@@ -233,12 +73,14 @@ export type UseDropProps<Data> = {
   // To check that the element can qualify as a target
   isDropTarget: (target: UsableElement) => Data | false;
 
+  // A target to use when no suitable element is found under the pointer,
+  // or swapDropTarget returns "DEFAULT"
   getDefaultDropTarget: () => PartialDropTarget<Data>;
 
-  // Distance from an edge for pointer to be considered on an edge.
+  // Distance from an edge to set nearEdge to true in swapDropTarget
   edgeDistanceThreshold?: number;
 
-  // Given the potential target that has passed isDropTarget check,
+  // Given the potential target that has passed the isDropTarget check,
   // and the position of the pointer on the target,
   // you can swap to another target
   swapDropTarget?: (
@@ -261,6 +103,8 @@ const getInitialState = <Data>() => {
     pointerCoordinates: undefined as { x: number; y: number } | undefined,
     dropTarget: undefined as DropTarget<Data> | undefined,
     childrenRectsCache: new WeakMap<UsableElement, Rect[]>(),
+    lastCandidateElement: undefined as UsableElement | undefined,
+    lastCandidateIsNearEdge: undefined as boolean | undefined,
   };
 };
 
@@ -271,7 +115,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
   const latestProps = useRef<UseDropProps<Data>>(props);
   latestProps.current = props;
 
-  const state = useRef(getInitialState());
+  const state = useRef(getInitialState<Data>());
 
   // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
@@ -281,119 +125,106 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         return fromCache;
       }
 
+      // We convert to relative coordinates to be able to store the result in cache.
+      // Otherwise we would have to clear cache on scroll.
+      const toRelativeCoordinates = (rect: Rect) => ({
+        left: rect.left - parentRect.left,
+        top: rect.top - parentRect.top,
+        width: rect.width,
+        height: rect.height,
+      });
+
       const result = Array.from(parent.children).map((child) =>
-        rectRelativeToRect(parentRect, child.getBoundingClientRect())
+        toRelativeCoordinates(child.getBoundingClientRect())
       );
 
       state.current.childrenRectsCache.set(parent, result);
       return result;
     };
 
-    const getIndex = (
-      parent: UsableElement,
-      parentRect: Rect,
-      pointer: { x: number; y: number }
-
-      // @todo: don't return array here like that
-    ): [number, ChildrenOrientation, number, number] => {
-      const pointerRelativeToParent = pointRelativeToRect(parentRect, pointer);
-      const childrenRects = getChildrenRects(parent, parentRect);
-
-      if (childrenRects.length === 0) {
-        // @todo: still call getLocalChildrenOrientation
-        return [0, "vertical", -1, 0];
-      }
-
-      const closestChildIndex = getClosestRectIndex(
-        childrenRects,
-        pointerRelativeToParent
-      );
-
-      const orientation = getLocalChildrenOrientation(
-        parent,
-        childrenRects,
-        closestChildIndex
-      );
-
-      const adjustment = getIndexAdjustment(
-        pointerRelativeToParent,
-        childrenRects[closestChildIndex],
-        orientation
-      );
-
-      return [
-        closestChildIndex + adjustment,
-        orientation,
-        closestChildIndex,
-        adjustment === 0 ? closestChildIndex - 1 : closestChildIndex + 1,
-      ];
-    };
-
-    const handleDropTargetChange = (
-      partialDropTarget: PartialDropTarget<Data>
-    ) => {
+    const setDropTarget = (partialDropTarget: PartialDropTarget<Data>) => {
       const { pointerCoordinates } = state.current;
       if (pointerCoordinates === undefined) {
         return;
       }
 
-      const rect = partialDropTarget.element.getBoundingClientRect();
+      const parentRect = partialDropTarget.element.getBoundingClientRect();
 
-      const [indexWithinChildren, childrenOrientation, aIndex, bIndex] =
-        getIndex(partialDropTarget.element, rect, pointerCoordinates);
+      const pointerRelativeToParent = {
+        x: pointerCoordinates.x - parentRect.left,
+        y: pointerCoordinates.y - parentRect.top,
+      };
+
+      const childrenRects = getChildrenRects(
+        partialDropTarget.element,
+        parentRect
+      );
+
+      const closestChildIndex =
+        childrenRects.length === 0
+          ? 0
+          : getClosestRectIndex(childrenRects, pointerRelativeToParent);
+      const closestChildRect = childrenRects[closestChildIndex] as
+        | Rect
+        | undefined;
+
+      const childrenOrientation = getLocalChildrenOrientation(
+        partialDropTarget.element,
+        childrenRects,
+        closestChildIndex
+      );
+
+      const indexAdjustment = getIndexAdjustment(
+        pointerRelativeToParent,
+        closestChildRect,
+        childrenOrientation
+      );
+
+      const indexWithinChildren = closestChildIndex + indexAdjustment;
 
       const current = state.current.dropTarget;
       if (
         current === undefined ||
         current.element !== partialDropTarget.element ||
         current.indexWithinChildren !== indexWithinChildren ||
-        !isEqualRect(current.rect, rect)
+        !isEqualRect(current.rect, parentRect)
       ) {
-        const childrenRects = getChildrenRects(partialDropTarget.element, rect);
-        const aRect = childrenRects[aIndex] as Rect | undefined;
-        const bRect = childrenRects[bIndex] as Rect | undefined;
+        const side =
+          childrenOrientation === "horizontal"
+            ? indexAdjustment > 0
+              ? "right"
+              : "left"
+            : indexAdjustment > 0
+            ? "bottom"
+            : "top";
 
-        let placement: Placement | undefined;
-
-        const toAbsoluteCoordinates = (
-          placement: Placement | undefined
-        ): Placement | undefined => {
-          if (placement === undefined) {
-            return;
-          }
-          return {
+        const toGlobalCoordinates = (placement: Placement | undefined) =>
+          placement && {
             ...placement,
-            x: placement.x + rect.left,
-            y: placement.y + rect.top,
+            x: placement.x + parentRect.left,
+            y: placement.y + parentRect.top,
           };
-        };
 
-        if (aRect !== undefined && bRect !== undefined) {
-          placement = toAbsoluteCoordinates(getPlacementBetween(aRect, bRect));
-        }
+        const neighbourRect = childrenRects[
+          indexAdjustment === 0 ? closestChildIndex - 1 : closestChildIndex + 1
+        ] as Rect | undefined;
 
-        if (placement === undefined && aRect !== undefined) {
-          placement = toAbsoluteCoordinates(
-            getPlacementNextTo(
-              rectRelativeToRect(rect, rect),
-              aRect,
-              childrenOrientation === "horizontal"
-                ? bIndex > aIndex
-                  ? "right"
-                  : "left"
-                : bIndex > aIndex
-                ? "bottom"
-                : "top"
-            )
-          );
-        }
+        const placement =
+          toGlobalCoordinates(
+            getPlacementBetween(closestChildRect, neighbourRect)
+          ) ||
+          toGlobalCoordinates(
+            getPlacementNextTo(parentRect, closestChildRect, side)
+          ) ||
+          getPlacementInside(parentRect, childrenOrientation);
 
         const dropTarget: DropTarget<Data> = {
           ...partialDropTarget,
-          rect,
-          indexWithinChildren: indexWithinChildren,
-          placement: placement || getPlacementInside(rect, childrenOrientation),
+          rect: parentRect,
+          indexWithinChildren,
+          placement,
         };
+
         state.current.dropTarget = dropTarget;
         latestProps.current.onDropTargetChange(dropTarget);
       }
@@ -409,31 +240,43 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
       const { pointerCoordinates, root } = state.current;
       if (pointerCoordinates === undefined || root === undefined) {
-        handleDropTargetChange(getDefaultDropTarget());
+        setDropTarget(getDefaultDropTarget());
         return;
       }
 
-      const target = toUseableElement(
-        document.elementFromPoint(pointerCoordinates.x, pointerCoordinates.y)
-      );
-      if (!target) {
-        handleDropTargetChange(getDefaultDropTarget());
-        return;
-      }
-
-      // @todo: cache this? Not expensive by itself, but it may call isDropTarget a lot
+      // @todo: Cache this?
+      // Not expensive by itself, but it may call isDropTarget multiple times.
       let candidate = findClosestDropTarget({
         root,
-        target,
+        initialElement: toUseableElement(
+          document.elementFromPoint(pointerCoordinates.x, pointerCoordinates.y)
+        ),
         isDropTarget,
       });
-      if (candidate === undefined) {
-        handleDropTargetChange(getDefaultDropTarget());
+
+      const isNewCandidate =
+        candidate?.element !== state.current.lastCandidateElement;
+      state.current.lastCandidateElement = candidate?.element;
+      const candidateIsNearEdge =
+        candidate &&
+        isNearEdge(
+          pointerCoordinates,
+          edgeDistanceThreshold,
+          candidate.element.getBoundingClientRect()
+        );
+      const isNewIsNearEdge =
+        candidateIsNearEdge !== state.current.lastCandidateIsNearEdge;
+      state.current.lastCandidateIsNearEdge = candidateIsNearEdge;
+
+      // to avoid calling swapDropTarget unnecessarily on every pointermove
+      if (!isNewCandidate && !isNewIsNearEdge) {
         return;
       }
 
-      // @todo: if neither potentialTarget nor area has changed since the last time,
-      // don't call swapDropTarget.
+      if (candidate === undefined) {
+        setDropTarget(getDefaultDropTarget());
+        return;
+      }
 
       // eslint-disable-next-line no-constant-condition
       while (true) {
@@ -447,12 +290,12 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         });
 
         if (swappedTo === "DEFAULT") {
-          handleDropTargetChange(getDefaultDropTarget());
+          setDropTarget(getDefaultDropTarget());
           return;
         }
 
         if (swappedTo.element === candidate.element) {
-          handleDropTargetChange(candidate);
+          setDropTarget(candidate);
           return;
         }
 
@@ -483,30 +326,30 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
 // @todo: maybe rather than climbing the DOM tree,
 // we should use document.elementsFromPoint() array?
-// Might work better with absolute positioned elements.
+// Might work better with absolutly positioned elements.
 const findClosestDropTarget = <Data>({
   root,
-  target,
+  initialElement,
   isDropTarget,
 }: {
   root: UsableElement;
-  target: UsableElement;
+  initialElement: UsableElement | undefined;
   isDropTarget: (target: UsableElement) => Data | false;
 }): PartialDropTarget<Data> | undefined => {
   // The element we get from elementFromPoint() might not be inside the root
-  if (!root.contains(target)) {
+  if (!initialElement || !root.contains(initialElement)) {
     return undefined;
   }
 
-  let currentTarget: UsableElement | undefined = target;
-  while (currentTarget !== undefined) {
-    const data = isDropTarget(currentTarget);
+  let currentElement: UsableElement | undefined = initialElement;
+  while (currentElement !== undefined) {
+    const data = isDropTarget(currentElement);
     if (data !== false) {
-      return { data: data, element: currentTarget };
+      return { data: data, element: currentElement };
     }
-    if (currentTarget === root) {
+    if (currentElement === root) {
       break;
     }
-    currentTarget = toUseableElement(currentTarget.parentElement);
+    currentElement = toUseableElement(currentElement.parentElement);
   }
 };

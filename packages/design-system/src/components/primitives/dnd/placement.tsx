@@ -1,6 +1,6 @@
 import { useRef, useMemo } from "react";
 import { Box } from "../../box";
-import { type Rect, getClosestRectIndex, isEqualRect } from "./rect";
+import { type Rect, getClosestRectIndex, isEqualRect } from "./geometry-utils";
 
 let probeCache: undefined | HTMLElement;
 const getProbe = () => {

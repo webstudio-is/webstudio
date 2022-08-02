@@ -1,5 +1,5 @@
 import { useRef, useMemo } from "react";
-import { isEqualRect } from "./rect";
+import { isEqualRect } from "./geometry-utils";
 
 export type Area = "top" | "right" | "bottom" | "left" | "center";
 
