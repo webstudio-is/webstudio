@@ -1,11 +1,10 @@
 import { ComponentMeta } from "@storybook/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
-import { useDropTarget } from "./use-drop-target";
+import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
-import { type Rect } from "./geometry-utils";
-import { usePlacement, PlacementIndicator } from "./placement";
+import { PlacementIndicator } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
 
 type ItemData = { id: string; text: string };
@@ -64,19 +63,25 @@ export const SortableList = ({
     { id: "17", text: "Eighteenth" },
   ] as ItemData[]);
 
-  const [placement, setPalcement] = useState<{
-    index: number;
-    placementRect: Rect;
-  }>();
-
+  const [dropTarget, setDropTarget] = useState<DropTarget<true>>();
   const [dragItemId, setDragItemId] = useState<string>();
+  const rootRef = useRef<HTMLUListElement | null>(null);
 
-  const dropTargetHandlers = useDropTarget<true>({
-    isDropTarget(element: HTMLElement) {
+  const useDropHandlers = useDrop<true>({
+    isDropTarget(element) {
       return element instanceof HTMLUListElement;
     },
-    onDropTargetChange(event) {
-      placementHandlers.handleTargetChange(event.element);
+    swapDropTarget(dropTarget) {
+      if (!dropTarget) {
+        if (rootRef.current === null) {
+          throw new Error("should not happen");
+        }
+        return { data: true, element: rootRef.current };
+      }
+      return dropTarget;
+    },
+    onDropTargetChange(dropTarget) {
+      setDropTarget(dropTarget);
     },
   });
 
@@ -91,15 +96,14 @@ export const SortableList = ({
       autoScrollHandlers.setEnabled(true);
     },
     onMove: (poiterCoordinate) => {
-      dropTargetHandlers.handleMove(poiterCoordinate);
+      useDropHandlers.handleMove(poiterCoordinate);
       autoScrollHandlers.handleMove(poiterCoordinate);
-      placementHandlers.handleMove(poiterCoordinate);
     },
     onEnd() {
-      if (placement !== undefined && dragItemId !== undefined) {
+      if (dropTarget !== undefined && dragItemId !== undefined) {
         const oldIndex = data.findIndex((item) => item.id === dragItemId);
         if (oldIndex !== -1) {
-          let newIndex = placement.index;
+          let newIndex = dropTarget.indexWithinChildren;
 
           // placement.index does not take into account the fact that the drag item will be removed.
           // we need to do this to account for it.
@@ -116,17 +120,10 @@ export const SortableList = ({
         }
       }
 
-      dropTargetHandlers.handleEnd();
+      useDropHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
-      placementHandlers.handleEnd();
       setDragItemId(undefined);
-      setPalcement(undefined);
-    },
-  });
-
-  const placementHandlers = usePlacement({
-    onPlacementChange: (event) => {
-      setPalcement(event);
+      setDropTarget(undefined);
     },
   });
 
@@ -144,15 +141,13 @@ export const SortableList = ({
           touchAction: "none",
         }}
         ref={autoScrollHandlers.targetRef}
-        onScroll={() => {
-          dropTargetHandlers.handleScroll();
-          placementHandlers.handleScroll();
-        }}
+        onScroll={useDropHandlers.handleScroll}
       >
         <List
           ref={(element) => {
-            dropTargetHandlers.rootRef(element);
+            useDropHandlers.rootRef(element);
             useDragHandlers.rootRef(element);
+            rootRef.current = element;
           }}
           css={{
             li: { cursor: dragItemId === undefined ? "grab" : "default" },
@@ -170,7 +165,7 @@ export const SortableList = ({
           ))}
         </List>
       </Box>
-      {placement && <PlacementIndicator rect={placement.placementRect} />}
+      {dropTarget && <PlacementIndicator placement={dropTarget.placement} />}
     </>
   );
 };

@@ -7,9 +7,8 @@ import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import {
   type DropTarget,
   useAutoScroll,
-  usePlacement,
   useDrag,
-  useDropTarget,
+  useDrop,
 } from "@webstudio-is/design-system";
 import {
   publish,
@@ -18,11 +17,9 @@ import {
   components as primitives,
 } from "@webstudio-is/react-sdk";
 
-type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
-
 export type DropTargetChangePayload = {
-  rect: Rect;
-  placementRect: Rect;
+  rect: DropTarget<null>["rect"];
+  placement: DropTarget<null>["placement"];
   position: number;
   instanceId: Instance["id"];
   instanceComponent: Instance["component"];
@@ -39,7 +36,6 @@ export type DragMovePayload = { canvasCoordinates: { x: number; y: number } };
 
 const initialState = {
   dropTarget: undefined as DropTarget<Instance> | undefined,
-  placement: undefined as { index: number; placementRect: Rect } | undefined,
   dragItem: undefined as Instance | undefined,
 };
 
@@ -49,33 +45,20 @@ export const useDragAndDrop = () => {
 
   const state = useRef({ ...initialState });
 
-  const publishDropTargetChange = () => {
-    const { dropTarget, placement } = state.current;
-    if (dropTarget === undefined || placement === undefined) {
-      return;
-    }
-    publish<"dropTargetChange", DropTargetChangePayload>({
-      type: "dropTargetChange",
-      payload: {
-        rect: dropTarget.rect,
-        placementRect: placement.placementRect,
-        position: placement.index,
-        instanceId: dropTarget.data.id,
-        instanceComponent: dropTarget.data.component,
-      },
-    });
-  };
-
   const autoScrollHandlers = useAutoScroll({ fullScreen: true });
 
-  const placementHandlers = usePlacement({
-    onPlacementChange: (placement) => {
-      state.current.placement = placement;
-      publishDropTargetChange();
-    },
-  });
+  const getDefaultDropTarget = () => {
+    const element = rootInstance && document.getElementById(rootInstance.id);
 
-  const dropTargetHandlers = useDropTarget<Instance>({
+    // Should never happen
+    if (!element || !rootInstance) {
+      throw new Error("Could not find root instance element");
+    }
+
+    return { element, data: rootInstance };
+  };
+
+  const dropHandlers = useDrop<Instance>({
     isDropTarget(element) {
       return (
         (rootInstance !== undefined &&
@@ -85,25 +68,22 @@ export const useDragAndDrop = () => {
       );
     },
 
-    isSameData(a, b) {
-      return a.id === b.id;
-    },
-
     // This must be fast, it can be called multiple times per pointer move
     swapDropTarget(dropTarget) {
       const { dragItem } = state.current;
-      if (
-        dragItem === undefined ||
-        rootInstance === undefined ||
-        dropTarget.data.id === rootInstance.id
-      ) {
+
+      if (!dropTarget || dragItem === undefined || rootInstance === undefined) {
+        return getDefaultDropTarget();
+      }
+
+      if (dropTarget.data.id === rootInstance.id) {
         return dropTarget;
       }
 
       const path = getInstancePath(rootInstance, dropTarget.data.id);
       path.reverse();
 
-      if (dropTarget.area !== "center") {
+      if (dropTarget.nearEdge) {
         path.shift();
       }
 
@@ -113,15 +93,22 @@ export const useDragAndDrop = () => {
         path.splice(0, dragItemIndex + 1);
       }
 
-      const data =
-        path.find((instance) =>
-          primitives[instance.component].canAcceptChild()
-        ) || rootInstance;
+      const data = path.find((instance) =>
+        primitives[instance.component].canAcceptChild()
+      );
 
-      const element = document.getElementById(data.id);
+      if (!data) {
+        return getDefaultDropTarget();
+      }
 
-      if (element == null) {
+      if (data.id === dropTarget.data.id) {
         return dropTarget;
+      }
+
+      const element = data && document.getElementById(data.id);
+
+      if (!element) {
+        return getDefaultDropTarget();
       }
 
       return { data, element };
@@ -129,12 +116,16 @@ export const useDragAndDrop = () => {
 
     onDropTargetChange(dropTarget) {
       state.current.dropTarget = dropTarget;
-      placementHandlers.handleTargetChange(dropTarget.element);
-
-      // @todo: The line above may or may not fire publishDropTargetChange as well.
-      // So we're firing duplicate events.
-      // One more reason to merge useDropTarget and usePlacement.
-      publishDropTargetChange();
+      publish<"dropTargetChange", DropTargetChangePayload>({
+        type: "dropTargetChange",
+        payload: {
+          rect: dropTarget.rect,
+          placement: dropTarget.placement,
+          position: dropTarget.indexWithinChildren,
+          instanceId: dropTarget.data.id,
+          instanceComponent: dropTarget.data.component,
+        },
+      });
     },
   });
 
@@ -176,23 +167,21 @@ export const useDragAndDrop = () => {
       });
     },
     onMove: (poiterCoordinate) => {
-      dropTargetHandlers.handleMove(poiterCoordinate);
+      dropHandlers.handleMove(poiterCoordinate);
       autoScrollHandlers.handleMove(poiterCoordinate);
-      placementHandlers.handleMove(poiterCoordinate);
     },
     onEnd() {
-      dropTargetHandlers.handleEnd();
+      dropHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
-      placementHandlers.handleEnd();
 
       publish<"dragEnd", DragEndPayload>({
         type: "dragEnd",
         payload: { origin: "canvas" },
       });
 
-      const { dropTarget, placement, dragItem } = state.current;
+      const { dropTarget, dragItem } = state.current;
 
-      if (dropTarget && placement && dragItem) {
+      if (dropTarget && dragItem) {
         publish<
           "reparentInstance",
           {
@@ -205,7 +194,7 @@ export const useDragAndDrop = () => {
             instanceId: dragItem.id,
             dropTarget: {
               instanceId: dropTarget.data.id,
-              position: placement.index,
+              position: dropTarget.indexWithinChildren,
             },
           },
         });
@@ -220,26 +209,16 @@ export const useDragAndDrop = () => {
   // We prefer useLayoutEffect over useEffect
   // because it's closer in the life cycle to when React noramlly calls the "ref" callbacks.
   useLayoutEffect(() => {
-    const handleScroll = () => {
-      dropTargetHandlers.handleScroll();
-      placementHandlers.handleScroll();
-    };
-
-    dropTargetHandlers.rootRef(document.body);
+    dropHandlers.rootRef(document.body);
     useDragHandlers.rootRef(document.body);
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", dropHandlers.handleScroll);
 
     return () => {
-      dropTargetHandlers.rootRef(null);
+      dropHandlers.rootRef(null);
       useDragHandlers.rootRef(null);
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", dropHandlers.handleScroll);
     };
-  }, [
-    useDragHandlers,
-    dropTargetHandlers,
-    placementHandlers,
-    autoScrollHandlers,
-  ]);
+  }, [useDragHandlers, dropHandlers, autoScrollHandlers]);
 
   // Handle drag from the panel
   // ================================================================
@@ -257,24 +236,19 @@ export const useDragAndDrop = () => {
   useSubscribe<"dragMove", DragMovePayload>(
     "dragMove",
     ({ canvasCoordinates }) => {
-      // @todo: This will only produce and update a drop target if the mouse is over the canvas.
-      // We should figure out a way to default to the root instance as a drop target when we're not over the canvas.
-      dropTargetHandlers.handleMove(canvasCoordinates);
-
+      dropHandlers.handleMove(canvasCoordinates);
       autoScrollHandlers.handleMove(canvasCoordinates);
-      placementHandlers.handleMove(canvasCoordinates);
     }
   );
 
   useSubscribe<"dragEnd", DragEndPayload>("dragEnd", ({ origin }) => {
     if (origin === "panel") {
-      dropTargetHandlers.handleEnd();
+      dropHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
-      placementHandlers.handleEnd();
 
-      const { dropTarget, placement, dragItem } = state.current;
+      const { dropTarget, dragItem } = state.current;
 
-      if (dropTarget && placement && dragItem) {
+      if (dropTarget && dragItem) {
         publish<
           "insertInstance",
           {
@@ -287,7 +261,7 @@ export const useDragAndDrop = () => {
             instance: dragItem,
             dropTarget: {
               instanceId: dropTarget.data.id,
-              position: placement.index,
+              position: dropTarget.indexWithinChildren,
             },
           },
         });

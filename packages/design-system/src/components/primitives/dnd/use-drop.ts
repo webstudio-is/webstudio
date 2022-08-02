@@ -96,7 +96,6 @@ export type UseDropHandlers = {
 
 const getInitialState = <Data>() => {
   return {
-    root: undefined as UsableElement | undefined,
     pointerCoordinates: undefined as { x: number; y: number } | undefined,
     dropTarget: undefined as DropTarget<Data> | undefined,
     childrenRectsCache: new WeakMap<UsableElement, Rect[]>(),
@@ -112,6 +111,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
   const latestProps = useRef<UseDropProps<Data>>(props);
   latestProps.current = props;
 
+  const rootRef = useRef<UsableElement>();
   const state = useRef(getInitialState<Data>());
 
   // We want to return a stable object to avoid re-renders when it's a dependency
@@ -234,7 +234,8 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         swapDropTarget,
       } = latestProps.current;
 
-      const { pointerCoordinates, root } = state.current;
+      const { pointerCoordinates } = state.current;
+      const root = rootRef.current;
 
       // @todo: Cache this?
       // Not expensive by itself, but it may call isDropTarget multiple times.
@@ -253,6 +254,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
           isDropTarget,
         });
 
+      // To avoid calling swapDropTarget unnecessarily on every pointermove
       const isNewCandidate =
         candidate?.element !== state.current.lastCandidateElement;
       state.current.lastCandidateElement = candidate?.element;
@@ -267,9 +269,11 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       const isNewIsNearEdge =
         candidateIsNearEdge !== state.current.lastCandidateIsNearEdge;
       state.current.lastCandidateIsNearEdge = candidateIsNearEdge;
-
-      // to avoid calling swapDropTarget unnecessarily on every pointermove
-      if (!isNewCandidate && !isNewIsNearEdge) {
+      if (!isNewCandidate && !isNewIsNearEdge && state.current.dropTarget) {
+        // Still need to call setDropTarget to update rect and/or placement.
+        // Because indexWithinChildren might have changed,
+        // or parent coordinates might have moved in case of a scroll
+        setDropTarget(state.current.dropTarget);
         return;
       }
 
@@ -298,6 +302,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
     return {
       handleMove(pointerCoordinates) {
+        // console.log("handleMove", pointerCoordinates);
         state.current.pointerCoordinates = pointerCoordinates;
         detectTarget();
       },
@@ -311,7 +316,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       },
 
       rootRef(rootElement) {
-        state.current.root = toUseableElement(rootElement);
+        rootRef.current = toUseableElement(rootElement);
       },
     };
   }, []);

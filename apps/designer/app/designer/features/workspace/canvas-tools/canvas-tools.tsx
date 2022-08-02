@@ -50,7 +50,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
     return (
       <Box css={toolsStyle}>
         <DropTargetOutline dropTarget={dragAndDropState.dropTarget} />
-        <PlacementIndicator rect={dragAndDropState.dropTarget.placementRect} />
+        <PlacementIndicator placement={dragAndDropState.dropTarget.placement} />
       </Box>
     );
   }

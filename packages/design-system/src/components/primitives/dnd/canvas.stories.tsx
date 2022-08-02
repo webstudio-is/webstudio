@@ -3,7 +3,7 @@ import React, { useState, useRef } from "react";
 import { Box } from "../../box";
 import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
-import { PlacementIndicator } from "./placement";
+import { PlacementIndicator } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
 
 const ROOT_ID = "root";
@@ -344,21 +344,10 @@ export const Canvas = () => {
         </Box>
       </Box>
       {currentDropTarget && (
-        <PlacementIndicator
-          rect={tmpToLegacyPlacementRect(currentDropTarget.placement)}
-        />
+        <PlacementIndicator placement={currentDropTarget.placement} />
       )}
     </>
   );
-};
-
-const tmpToLegacyPlacementRect = (placement: DropTarget<null>["placement"]) => {
-  return {
-    top: placement.y,
-    left: placement.x,
-    width: placement.direction === "horizontal" ? placement.length : 0,
-    height: placement.direction === "vertical" ? placement.length : 0,
-  };
 };
 
 export default {} as ComponentMeta<typeof Canvas>;

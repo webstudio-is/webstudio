@@ -115,7 +115,7 @@ export const getPlacementNextTo = (
       x: rect.left,
       y: Math.max(
         rect.top + rect.height,
-        Math.min(parentRect.height, rect.top + margin)
+        Math.min(parentRect.height, rect.top + rect.height + margin)
       ),
       length: rect.width,
       direction: "horizontal",
@@ -134,7 +134,7 @@ export const getPlacementNextTo = (
   return {
     x: Math.max(
       rect.left + rect.width,
-      Math.min(parentRect.width, rect.left + margin)
+      Math.min(parentRect.width, rect.left + rect.width + margin)
     ),
     y: rect.top,
     length: rect.height,
