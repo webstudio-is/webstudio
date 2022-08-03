@@ -1,5 +1,7 @@
 export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
+export type Point = { x: number; y: number };
+
 export type ChildrenOrientation =
   | { type: "horizontal" | "vertical"; reverse: boolean }
   | { type: "mixed"; reverse?: boolean };
@@ -12,16 +14,13 @@ export type Placement = {
 };
 
 // https://stackoverflow.com/a/18157551/478603
-const getDistanceToRect = (rect: Rect, { x, y }: { x: number; y: number }) => {
+const getDistanceToRect = (rect: Rect, { x, y }: Point) => {
   const dx = Math.max(rect.left - x, 0, x - (rect.left + rect.width));
   const dy = Math.max(rect.top - y, 0, y - (rect.top + rect.height));
   return Math.sqrt(dx * dx + dy * dy);
 };
 
-export const getClosestRectIndex = (
-  rects: Rect[],
-  point: { x: number; y: number }
-) => {
+export const getClosestRectIndex = (rects: Rect[], point: Point) => {
   if (rects.length === 0) {
     return -1;
   }
@@ -42,7 +41,7 @@ export const isEqualRect = (a: Rect | undefined, b: Rect) =>
   a.height === b.height;
 
 export const isNearEdge = (
-  { x, y }: { x: number; y: number },
+  { x, y }: Point,
   edgeDistanceThreshold: number,
   rect: Rect
 ) =>
@@ -266,7 +265,7 @@ export const getRectsOrientation = (
 // Determines whether we should place the item before or after the closest child.
 // Returns the number that should be added to the closest child index to get the final index.
 export const getIndexAdjustment = (
-  pointer: { x: number; y: number },
+  pointer: Point,
   closestChildRect: Rect | undefined,
   { type: orientationType, reverse }: ChildrenOrientation
 ) => {

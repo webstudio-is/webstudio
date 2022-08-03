@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
-import { styled } from "@webstudio-is/design-system";
+import { styled, type Rect } from "@webstudio-is/design-system";
 import { type Instance, components } from "@webstudio-is/react-sdk";
 
-type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
 

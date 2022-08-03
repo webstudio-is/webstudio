@@ -6,7 +6,7 @@ import {
   components,
 } from "@webstudio-is/react-sdk";
 import { Flex } from "@webstudio-is/design-system";
-import { useDrag } from "@webstudio-is/design-system";
+import { useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
@@ -42,7 +42,7 @@ const DragLayer = ({
   point,
 }: {
   component: Instance["component"];
-  point: { x: number; y: number };
+  point: Point;
 }) => {
   return createPortal(
     <Flex
@@ -87,12 +87,12 @@ const elementToComponentName = (element: Element) => {
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
-  const [point, setPoint] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
 
   const [canvasRect] = useCanvasRect();
   const [zoom] = useZoom();
 
-  const toCanvasCoordinates = ({ x, y }: { x: number; y: number }) => {
+  const toCanvasCoordinates = ({ x, y }: Point) => {
     if (canvasRect === undefined) {
       return { x: 0, y: 0 };
     }

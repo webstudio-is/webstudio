@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { type Point } from "@webstudio-is/design-system";
 
 // Draw a point where we think the pointer is to visualize if calculations are based on the right position
 // Only needed for debugging.
@@ -20,7 +21,7 @@ export const usePointerOutline = () => {
     };
   }, []);
 
-  return (offset: { x: number; y: number }) => {
+  return (offset: Point) => {
     if (ref.current === undefined) return;
     ref.current.style.left = `${offset.x}px`;
     ref.current.style.top = `${offset.y}px`;

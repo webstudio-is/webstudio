@@ -8,6 +8,7 @@ import {
   getPlacementNextTo,
   getIndexAdjustment,
   type Rect,
+  type Point,
   type Placement,
 } from "./geometry-utils";
 import { getLocalChildrenOrientation, getChildrenRects } from "./dom-utils";
@@ -47,7 +48,7 @@ export type UseDropProps<Data> = {
 };
 
 export type UseDropHandlers = {
-  handleMove: (pointerCoordinates: { x: number; y: number }) => void;
+  handleMove: (pointerCoordinates: Point) => void;
   handleScroll: () => void;
   handleEnd: () => void;
   rootRef: (target: Element | null) => void;
@@ -55,7 +56,7 @@ export type UseDropHandlers = {
 
 const getInitialState = <Data>() => {
   return {
-    pointerCoordinates: undefined as { x: number; y: number } | undefined,
+    pointerCoordinates: undefined as Point | undefined,
     dropTarget: undefined as DropTarget<Data> | undefined,
     childrenRectsCache: new WeakMap<Element, Rect[]>(),
     lastCandidateElement: undefined as Element | undefined,

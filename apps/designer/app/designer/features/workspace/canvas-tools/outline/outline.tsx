@@ -1,7 +1,5 @@
 import { useMemo } from "react";
-import { styled } from "@webstudio-is/design-system";
-
-type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
+import { styled, type Rect } from "@webstudio-is/design-system";
 
 const OutlineContainer = styled("div", {
   position: "absolute",

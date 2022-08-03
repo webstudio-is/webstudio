@@ -1,4 +1,5 @@
 import { useRef, useMemo } from "react";
+import { type Point } from "./geometry-utils";
 
 // Time between frames of scroll animation in milliseconds
 const FRAME_PERIOD = 30;
@@ -51,7 +52,7 @@ export type UseAutoScrollProps = {
 };
 
 export type UseAutoScrollHandlers = {
-  handleMove: (pointerCoordinate: { x: number; y: number }) => void;
+  handleMove: (pointerCoordinate: Point) => void;
   setEnabled: (enabled: boolean) => void;
   targetRef: (element: HTMLElement | null) => void;
 };

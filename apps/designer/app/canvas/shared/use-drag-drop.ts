@@ -6,6 +6,7 @@ import {
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import {
   type DropTarget,
+  type Point,
   useAutoScroll,
   useDrag,
   useDrop,
@@ -32,7 +33,7 @@ export type DragStartPayload = {
 
 export type DragEndPayload = { origin: "panel" | "canvas" };
 
-export type DragMovePayload = { canvasCoordinates: { x: number; y: number } };
+export type DragMovePayload = { canvasCoordinates: Point };
 
 const initialState = {
   dropTarget: undefined as DropTarget<Instance> | undefined,

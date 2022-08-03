@@ -1,5 +1,6 @@
 import { useMove } from "./use-move";
 import { useRef, useEffect, useMemo } from "react";
+import { type Point } from "./geometry-utils";
 
 type State =
   | {
@@ -23,7 +24,7 @@ export type UseDragProps<DragItemData> = {
   shiftDistanceThreshold?: number;
   isDragItem: (element: Element) => DragItemData | false;
   onStart: (event: { target: HTMLElement; data: DragItemData }) => void;
-  onMove: (event: { x: number; y: number }) => void;
+  onMove: (event: Point) => void;
   onShiftChange?: (event: { shifts: number }) => void;
   onEnd: () => void;
 };
