@@ -1,6 +1,8 @@
 export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
 
-export type ChildrenOrientation = "vertical" | "horizontal" | "mixed";
+export type ChildrenOrientation =
+  | { type: "horizontal" | "vertical"; reverse: boolean }
+  | { type: "mixed"; reverse?: boolean };
 
 export type Placement = {
   x: number;
@@ -75,7 +77,7 @@ export const getPlacementBetween = (
     return undefined;
   }
 
-  if (distanceX < 0 || (distanceY >= 0 && distanceY < distanceX)) {
+  if (distanceX < 0) {
     const minX = Math.min(a.left, b.left);
     const maxX = Math.max(a.left + a.width, b.left + b.width);
     return {
@@ -99,11 +101,25 @@ export const getPlacementBetween = (
 export const getPlacementNextTo = (
   parentRect: Rect,
   rect: Rect | undefined,
-  side: "top" | "bottom" | "left" | "right"
+  childrenOrientation: ChildrenOrientation,
+  direction: "forward" | "backward"
 ): Placement | undefined => {
   if (rect === undefined) {
     return undefined;
   }
+
+  const isForward = childrenOrientation.reverse
+    ? direction === "backward"
+    : direction === "forward";
+
+  const side =
+    childrenOrientation.type === "horizontal"
+      ? isForward
+        ? "right"
+        : "left"
+      : isForward
+      ? "bottom"
+      : "top";
 
   const margin = 5;
 
@@ -154,7 +170,7 @@ export const getPlacementInside = (
 ): Placement => {
   const padding = 5;
 
-  if (childrenOrientation === "horizontal") {
+  if (childrenOrientation.type === "horizontal") {
     const safePadding = Math.min(parentRect.width / 2, padding);
     return {
       y: parentRect.top + safePadding,
@@ -178,12 +194,12 @@ const getSegmentsOrder = (
   aEnd: number,
   bStart: number,
   bEnd: number
-): "a-after-b" | "b-after-a" | "overlap" => {
+): "b-first" | "a-first" | "overlap" => {
   if (aStart >= bEnd) {
-    return "a-after-b";
+    return "b-first";
   }
   if (bStart >= aEnd) {
-    return "b-after-a";
+    return "a-first";
   }
   return "overlap";
 };
@@ -205,12 +221,13 @@ const getTwoRectsOrientation = (
     second.top + second.height
   );
   if (xOrder !== "overlap" && yOrder === "overlap") {
-    return "horizontal";
+    return { type: "horizontal", reverse: xOrder === "b-first" };
   }
   if (xOrder === "overlap" && yOrder !== "overlap") {
-    return "vertical";
+    return { type: "vertical", reverse: yOrder === "b-first" };
   }
-  return "mixed";
+
+  return { type: "mixed" };
 };
 
 export const getRectsOrientation = (
@@ -218,25 +235,29 @@ export const getRectsOrientation = (
   second: Rect,
   third: Rect | undefined
 ): ChildrenOrientation => {
-  // @todo: add "vertical-reversed", "horizontal-reversed", "mixed-reversed"
-
   const orientations = [
     first && getTwoRectsOrientation(first, second),
     third && getTwoRectsOrientation(second, third),
   ];
 
-  const includesVertical = orientations.includes("vertical");
-  const includesHorizontal = orientations.includes("horizontal");
+  // @todo: Maybe we should check that at least one is reversed.
+  // Need to test what works better, but keep an eye on false positives.
+  const allReverse = orientations.every((x) => !x || x.reverse !== false);
+
+  const types = orientations.map((x) => x && x.type);
+
+  const includesVertical = types.includes("vertical");
+  const includesHorizontal = types.includes("horizontal");
 
   if (includesVertical && !includesHorizontal) {
-    return "vertical";
+    return { type: "vertical", reverse: allReverse };
   }
 
   if (includesHorizontal && !includesVertical) {
-    return "horizontal";
+    return { type: "horizontal", reverse: allReverse };
   }
 
-  return "mixed";
+  return { type: "mixed" };
 };
 
 // Determines whether we should place the item before or after the closest child.
@@ -244,7 +265,7 @@ export const getRectsOrientation = (
 export const getIndexAdjustment = (
   pointer: { x: number; y: number },
   closestChildRect: Rect | undefined,
-  childrenOrientation: ChildrenOrientation
+  { type: orientationType, reverse }: ChildrenOrientation
 ) => {
   if (closestChildRect === undefined) {
     return 0;
@@ -252,14 +273,14 @@ export const getIndexAdjustment = (
 
   const { top, left, width, height } = closestChildRect;
 
-  if (childrenOrientation === "vertical") {
+  if (orientationType === "vertical") {
     const middleY = top + height / 2;
-    return pointer.y < middleY ? 0 : 1;
+    return pointer.y < middleY ? (reverse ? 1 : 0) : reverse ? 0 : 1;
   }
 
-  if (childrenOrientation === "horizontal") {
+  if (orientationType === "horizontal") {
     const middleX = left + width / 2;
-    return pointer.x < middleX ? 0 : 1;
+    return pointer.x < middleX ? (reverse ? 1 : 0) : reverse ? 0 : 1;
   }
 
   // For the "mixed" orientation,

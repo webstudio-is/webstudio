@@ -134,15 +134,6 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         current.indexWithinChildren !== indexWithinChildren ||
         !isEqualRect(current.rect, parentRect)
       ) {
-        const side =
-          childrenOrientation === "horizontal"
-            ? indexAdjustment > 0
-              ? "right"
-              : "left"
-            : indexAdjustment > 0
-            ? "bottom"
-            : "top";
-
         const toGlobalCoordinates = (placement: Placement | undefined) =>
           placement && {
             ...placement,
@@ -159,7 +150,12 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
             getPlacementBetween(closestChildRect, neighbourRect)
           ) ||
           toGlobalCoordinates(
-            getPlacementNextTo(parentRect, closestChildRect, side)
+            getPlacementNextTo(
+              parentRect,
+              closestChildRect,
+              childrenOrientation,
+              indexAdjustment > 0 ? "forward" : "backward"
+            )
           ) ||
           getPlacementInside(parentRect, childrenOrientation);
 

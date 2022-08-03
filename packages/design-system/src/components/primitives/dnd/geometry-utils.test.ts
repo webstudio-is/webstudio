@@ -21,8 +21,7 @@ describe("getPlacementBetween", () => {
     ],
 
     [
-      //         [a]
-      // -----------
+      //       [a]
       // [b]
       { top: 0, left: 600 },
       { top: 200, left: 0 },
@@ -30,10 +29,9 @@ describe("getPlacementBetween", () => {
     ],
 
     [
-      // [a] |
-      //     |
-      //     |
-      //     | [b]
+      // [a]
+      //
+      //     [b]
       { top: 0, left: 0 },
       { top: 600, left: 200 },
       undefined,

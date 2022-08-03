@@ -9,12 +9,20 @@ const placementStyle = {
 };
 
 export const PlacementIndicator = ({ placement }: { placement: Placement }) => {
-  const style = {
-    top: placement.y - (placement.direction === "horizontal" ? 1 : 0),
-    left: placement.x - (placement.direction === "vertical" ? 1 : 0),
-    width: placement.direction === "horizontal" ? placement.length : 2,
-    height: placement.direction === "vertical" ? placement.length : 2,
-  };
+  const style =
+    placement.direction === "horizontal"
+      ? {
+          top: placement.y - 1,
+          left: placement.x,
+          width: placement.length,
+          height: 2,
+        }
+      : {
+          top: placement.y,
+          left: placement.x - 1,
+          width: 2,
+          height: placement.length,
+        };
 
   return <Box style={style} css={placementStyle} />;
 };

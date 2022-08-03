@@ -6,6 +6,10 @@ import {
 
 export type UsableElement = HTMLElement | SVGElement;
 
+// Many DOM APIs produce values of type Element,
+// which lacks certain methods that we often need.
+// It's also usually safe to assume that the value is in fact HTMLElement or SVGElement.
+// We use this helper to convince TypeScript that the value is a UsableElement.
 export const toUseableElement = (
   element: EventTarget | Element | undefined | null
 ): UsableElement | undefined => {
@@ -36,9 +40,10 @@ export const getLocalChildrenOrientation = (
     const probeRect = probe.getBoundingClientRect();
     parent.removeChild(probe);
 
-    return probeRect.width === 0 && probeRect.height !== 0
-      ? "horizontal"
-      : "vertical";
+    return {
+      type: probeRect.width === 0 ? "horizontal" : "vertical",
+      reverse: false,
+    };
   }
 
   return getRectsOrientation(previous, current, next);

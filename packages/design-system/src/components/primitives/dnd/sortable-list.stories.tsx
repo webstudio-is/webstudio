@@ -12,7 +12,7 @@ type ItemData = { id: string; text: string };
 const ListItem = styled("li", {
   display: "block",
   margin: 10,
-  background: "$mint12",
+  background: "$mint5",
   padding: 10,
   userSelect: "none",
 });
@@ -39,8 +39,10 @@ const Item = ({
 
 export const SortableList = ({
   direction = "vertical",
+  reversed = false,
 }: {
   direction?: "horizontal" | "vertical" | "wrap";
+  reversed?: boolean;
 }) => {
   const [data, setData] = useState([
     { id: "0", text: "First" },
@@ -132,10 +134,14 @@ export const SortableList = ({
       <Box
         css={{
           height: direction === "horizontal" ? "auto" : 500,
-          width: direction === "wrap" ? 200 : "auto",
+          width: direction === "horizontal" ? 500 : 200,
           overflow: "auto",
           background: "white",
           color: "black",
+
+          // these are needed to make scroll work with column-reverse/row-reverse below
+          display: "flex",
+          flexDirection: direction === "horizontal" ? "row" : "column",
 
           // to make DnD work we have to disable scrolling using touch
           touchAction: "none",
@@ -151,8 +157,15 @@ export const SortableList = ({
           }}
           css={{
             li: { cursor: dragItemId === undefined ? "grab" : "default" },
-            display: direction === "vertical" ? "block" : "flex",
-            flexDirection: direction === "vertical" ? "none" : "row",
+            display: "flex",
+            flexDirection:
+              direction === "vertical"
+                ? reversed
+                  ? "column-reverse"
+                  : "column"
+                : reversed
+                ? "row-reverse"
+                : "row",
             flexWrap: direction === "wrap" ? "wrap" : "none",
           }}
         >
@@ -170,10 +183,18 @@ export const SortableList = ({
   );
 };
 
-export const SortableListHorizontal = () => (
-  <SortableList direction="horizontal" />
+export const SortableListHorizontal = (args: Args) => (
+  <SortableList direction="horizontal" {...args} />
 );
 
-export const SortableListWrap = () => <SortableList direction="wrap" />;
+export const SortableListWrap = (args: Args) => (
+  <SortableList direction="wrap" {...args} />
+);
 
-export default {} as ComponentMeta<typeof SortableList>;
+type Args = { reversed: boolean };
+
+export default {
+  args: {
+    reversed: false,
+  },
+} as ComponentMeta<typeof SortableList>;
