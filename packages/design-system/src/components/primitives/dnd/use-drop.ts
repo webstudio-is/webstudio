@@ -132,7 +132,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         current === undefined ||
         current.element !== partialDropTarget.element ||
         current.indexWithinChildren !== indexWithinChildren ||
-        !isEqualRect(current.rect, parentRect)
+        isEqualRect(current.rect, parentRect) === false
       ) {
         const toGlobalCoordinates = (placement: Placement | undefined) =>
           placement && {
@@ -213,7 +213,11 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       const isNewIsNearEdge =
         candidateIsNearEdge !== state.current.lastCandidateIsNearEdge;
       state.current.lastCandidateIsNearEdge = candidateIsNearEdge;
-      if (!isNewCandidate && !isNewIsNearEdge && state.current.dropTarget) {
+      if (
+        isNewCandidate === false &&
+        isNewIsNearEdge === false &&
+        state.current.dropTarget
+      ) {
         // Still need to call setDropTarget to update rect and/or placement.
         // Because indexWithinChildren might have changed,
         // or parent coordinates might have moved in case of a scroll
@@ -275,7 +279,7 @@ const findClosestDropTarget = <Data>({
   isDropTarget: (target: UsableElement) => Data | false;
 }): PartialDropTarget<Data> | undefined => {
   // The element we get from elementFromPoint() might not be inside the root
-  if (!initialElement || !root.contains(initialElement)) {
+  if (initialElement === undefined || root.contains(initialElement) === false) {
     return undefined;
   }
 

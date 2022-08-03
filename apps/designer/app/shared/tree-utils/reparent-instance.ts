@@ -21,7 +21,7 @@ export const reparentInstanceMutable = (
   const currentParent = findParentInstance(rootInstance, instance.id);
   if (currentParent !== undefined && currentParent.id === newParentId) {
     const currentPosition = currentParent.children.findIndex(
-      (x) => typeof x !== "string" && x.id === instance.id
+      (child) => typeof child !== "string" && child.id === instance.id
     );
     if (currentPosition < newPosition) {
       newPositionAdjusted--;

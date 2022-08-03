@@ -243,18 +243,20 @@ export const getRectsOrientation = (
 
   // @todo: Maybe we should check that at least one is reversed.
   // Need to test what works better, but keep an eye on false positives.
-  const allReverse = orientations.every((x) => !x || x.reverse !== false);
+  const allReverse = orientations.every(
+    (orientation) => orientation?.reverse !== false
+  );
 
-  const types = orientations.map((x) => x && x.type);
+  const types = orientations.map((orientation) => orientation?.type);
 
   const includesVertical = types.includes("vertical");
   const includesHorizontal = types.includes("horizontal");
 
-  if (includesVertical && !includesHorizontal) {
+  if (includesVertical && includesHorizontal === false) {
     return { type: "vertical", reverse: allReverse };
   }
 
-  if (includesHorizontal && !includesVertical) {
+  if (includesHorizontal && includesVertical === false) {
     return { type: "horizontal", reverse: allReverse };
   }
 

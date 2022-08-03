@@ -223,7 +223,7 @@ export const Canvas = () => {
         path.shift();
       }
 
-      // Don't allow to dpop inside drag item or any of its children
+      // Don't allow to drop inside drag item or any of its children
       const dragItemIndex = path.findIndex((item) => item.id === dragItemId);
       if (dragItemIndex !== -1) {
         path.splice(0, dragItemIndex + 1);
@@ -263,9 +263,9 @@ export const Canvas = () => {
       setDragItemId(id);
       autoScrollHandlers.setEnabled(true);
     },
-    onMove: (poiterCoordinate) => {
-      dropHandlers.handleMove(poiterCoordinate);
-      autoScrollHandlers.handleMove(poiterCoordinate);
+    onMove: (point) => {
+      dropHandlers.handleMove(point);
+      autoScrollHandlers.handleMove(point);
     },
     onEnd() {
       if (dragItemId !== undefined && currentDropTarget !== undefined) {

@@ -43,7 +43,7 @@ export type UseAutoScrollProps = {
 
   // If set to true the entire document will be scrolled.
   // No need to set targetRef in this case.
-  fullScreen?: boolean;
+  fullscreen?: boolean;
 
   // min/max speed of the scroll animation in pixels per second
   minSpeed?: number;
@@ -76,7 +76,7 @@ export const useAutoScroll = (
 
   return useMemo(() => {
     const getViewportRect = () => {
-      if (latestProps.current.fullScreen) {
+      if (latestProps.current.fullscreen) {
         return {
           top: 0,
           left: 0,
@@ -93,7 +93,7 @@ export const useAutoScroll = (
     };
 
     const scrollBy = (x: number, y: number) => {
-      if (latestProps.current.fullScreen) {
+      if (latestProps.current.fullscreen) {
         window.scrollBy(x, y);
       }
 

@@ -159,30 +159,30 @@ export function useMove(props: MoveEvents): MoveResult {
       }
     };
 
-    let onPointerMove = (e: PointerEvent) => {
+    let onPointerMove = (event: PointerEvent) => {
       if (
-        e.pointerId === state.current.id &&
+        event.pointerId === state.current.id &&
         state.current.lastPosition !== null
       ) {
-        let pointerType = (e.pointerType || "mouse") as PointerType;
+        let pointerType = (event.pointerType || "mouse") as PointerType;
 
         // Problems with PointerEvent#movementX/movementY:
         // 1. it is always 0 on macOS Safari.
         // 2. On Chrome Android, it's scaled by devicePixelRatio, but not on Chrome macOS
         move(
-          e,
+          event,
           pointerType,
-          e.pageX - state.current.lastPosition.pageX,
-          e.pageY - state.current.lastPosition.pageY
+          event.pageX - state.current.lastPosition.pageX,
+          event.pageY - state.current.lastPosition.pageY
         );
-        state.current.lastPosition = { pageX: e.pageX, pageY: e.pageY };
+        state.current.lastPosition = { pageX: event.pageX, pageY: event.pageY };
       }
     };
 
-    let onPointerUp = (e: PointerEvent) => {
-      if (e.pointerId === state.current.id) {
-        let pointerType = (e.pointerType || "mouse") as PointerType;
-        end(e, pointerType);
+    let onPointerUp = (event: PointerEvent) => {
+      if (event.pointerId === state.current.id) {
+        let pointerType = (event.pointerType || "mouse") as PointerType;
+        end(event, pointerType);
         state.current.id = null;
         removeGlobalListener(window, "pointermove", onPointerMove, false);
         removeGlobalListener(window, "pointerup", onPointerUp, false);
@@ -191,17 +191,20 @@ export function useMove(props: MoveEvents): MoveResult {
     };
 
     return {
-      onPointerDown: (e: PointerEvent) => {
+      onPointerDown: (event: PointerEvent) => {
         if (
-          e.button === 0 &&
+          event.button === 0 &&
           state.current.id == null &&
-          latestProps.current.shouldStart(e)
+          latestProps.current.shouldStart(event)
         ) {
           start();
-          e.stopPropagation();
-          e.preventDefault();
-          state.current.lastPosition = { pageX: e.pageX, pageY: e.pageY };
-          state.current.id = e.pointerId;
+          event.stopPropagation();
+          event.preventDefault();
+          state.current.lastPosition = {
+            pageX: event.pageX,
+            pageY: event.pageY,
+          };
+          state.current.id = event.pointerId;
           addGlobalListener(window, "pointermove", onPointerMove, false);
           addGlobalListener(window, "pointerup", onPointerUp, false);
           addGlobalListener(window, "pointercancel", onPointerUp, false);

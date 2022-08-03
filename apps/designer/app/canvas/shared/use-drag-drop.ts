@@ -22,7 +22,7 @@ export type DropTargetChangePayload = {
   placement: DropTarget<null>["placement"];
   position: number;
   instanceId: Instance["id"];
-  instanceComponent: Instance["component"];
+  component: Instance["component"];
 };
 
 export type DragStartPayload = {
@@ -45,7 +45,7 @@ export const useDragAndDrop = () => {
 
   const state = useRef({ ...initialState });
 
-  const autoScrollHandlers = useAutoScroll({ fullScreen: true });
+  const autoScrollHandlers = useAutoScroll({ fullscreen: true });
 
   const getDefaultDropTarget = () => {
     const element = rootInstance && document.getElementById(rootInstance.id);
@@ -87,8 +87,10 @@ export const useDragAndDrop = () => {
         path.shift();
       }
 
-      // Don't allow to dpop inside drag item or any of its children
-      const dragItemIndex = path.findIndex((x) => x.id === dragItem.id);
+      // Don't allow to drop inside drag item or any of its children
+      const dragItemIndex = path.findIndex(
+        (instance) => instance.id === dragItem.id
+      );
       if (dragItemIndex !== -1) {
         path.splice(0, dragItemIndex + 1);
       }
@@ -107,7 +109,7 @@ export const useDragAndDrop = () => {
 
       const element = data && document.getElementById(data.id);
 
-      if (!element) {
+      if (element === null) {
         return getDefaultDropTarget();
       }
 
@@ -122,8 +124,10 @@ export const useDragAndDrop = () => {
           rect: dropTarget.rect,
           placement: dropTarget.placement,
           position: dropTarget.indexWithinChildren,
+
+          // @todo: use ShalowInstance
           instanceId: dropTarget.data.id,
-          instanceComponent: dropTarget.data.component,
+          component: dropTarget.data.component,
         },
       });
     },
@@ -166,9 +170,9 @@ export const useDragAndDrop = () => {
         },
       });
     },
-    onMove: (poiterCoordinate) => {
-      dropHandlers.handleMove(poiterCoordinate);
-      autoScrollHandlers.handleMove(poiterCoordinate);
+    onMove: (point) => {
+      dropHandlers.handleMove(point);
+      autoScrollHandlers.handleMove(point);
     },
     onEnd() {
       dropHandlers.handleEnd();

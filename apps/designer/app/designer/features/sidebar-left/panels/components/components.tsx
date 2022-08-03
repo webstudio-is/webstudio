@@ -39,10 +39,10 @@ const DraggableThumb = ({ component, onClick }: DraggableThumbProps) => {
 
 const DragLayer = ({
   component,
-  pointerPosition,
+  point,
 }: {
   component: Instance["component"];
-  pointerPosition: { x: number; y: number };
+  point: { x: number; y: number };
 }) => {
   return createPortal(
     <Flex
@@ -59,7 +59,7 @@ const DragLayer = ({
       <ComponentThumb
         component={component}
         style={{
-          transform: `translate3d(${pointerPosition.x}px, ${pointerPosition.y}px, 0)`,
+          transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
         }}
         state="dragging"
       />
@@ -74,20 +74,20 @@ type TabContentProps = {
 };
 
 const elementToComponentName = (element: Element) => {
+  // If drag doesn't start on the button element directly but on one of its children,
+  // we need to trace back to the button that has the data.
   const parentWithData = element.closest("[data-drag-component]");
-  if (parentWithData === null || !(parentWithData instanceof HTMLElement)) {
+
+  if (!(parentWithData instanceof HTMLElement)) {
     return;
   }
   const { dragComponent } = parentWithData.dataset;
-  return componentNames.find((c) => c === dragComponent);
+  return componentNames.find((component) => component === dragComponent);
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
-  const [pointerPosition, setPointerPosition] = useState<{
-    x: number;
-    y: number;
-  }>({ x: 0, y: 0 });
+  const [point, setPoint] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const [canvasRect] = useCanvasRect();
   const [zoom] = useZoom();
@@ -118,11 +118,11 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         },
       });
     },
-    onMove: (poiterCoordinate) => {
-      setPointerPosition(poiterCoordinate);
+    onMove: (point) => {
+      setPoint(point);
       publish<"dragMove", DragMovePayload>({
         type: "dragMove",
-        payload: { canvasCoordinates: toCanvasCoordinates(poiterCoordinate) },
+        payload: { canvasCoordinates: toCanvasCoordinates(point) },
       });
     },
     onEnd() {
@@ -154,12 +154,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           }}
         />
       ))}
-      {dragComponent && (
-        <DragLayer
-          component={dragComponent}
-          pointerPosition={pointerPosition}
-        />
-      )}
+      {dragComponent && <DragLayer component={dragComponent} point={point} />}
     </Flex>
   );
 };

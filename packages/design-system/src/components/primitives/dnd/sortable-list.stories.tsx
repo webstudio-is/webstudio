@@ -74,13 +74,15 @@ export const SortableList = ({
       return element instanceof HTMLUListElement;
     },
     swapDropTarget(dropTarget) {
-      if (!dropTarget) {
-        if (rootRef.current === null) {
-          throw new Error("should not happen");
-        }
-        return { data: true, element: rootRef.current };
+      if (dropTarget) {
+        return dropTarget;
       }
-      return dropTarget;
+
+      if (rootRef.current === null) {
+        throw new Error("should not happen");
+      }
+
+      return { data: true, element: rootRef.current };
     },
     onDropTargetChange(dropTarget) {
       setDropTarget(dropTarget);
@@ -97,9 +99,9 @@ export const SortableList = ({
       setDragItemId(event.target.dataset.id);
       autoScrollHandlers.setEnabled(true);
     },
-    onMove: (poiterCoordinate) => {
-      useDropHandlers.handleMove(poiterCoordinate);
-      autoScrollHandlers.handleMove(poiterCoordinate);
+    onMove: (point) => {
+      useDropHandlers.handleMove(point);
+      autoScrollHandlers.handleMove(point);
     },
     onEnd() {
       if (dropTarget !== undefined && dragItemId !== undefined) {
