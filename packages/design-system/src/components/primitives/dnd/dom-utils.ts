@@ -4,24 +4,10 @@ import {
   getRectsOrientation,
 } from "./geometry-utils";
 
-export type UsableElement = HTMLElement | SVGElement;
-
-// Many DOM APIs produce values of type Element,
-// which lacks certain methods that we often need.
-// It's also usually safe to assume that the value is in fact HTMLElement or SVGElement.
-// We use this helper to convince TypeScript that the value is a UsableElement.
-export const toUseableElement = (
-  element: EventTarget | Element | undefined | null
-): UsableElement | undefined => {
-  if (element instanceof HTMLElement || element instanceof SVGElement) {
-    return element;
-  }
-};
-
 // By looking at a specific child and it's neighbours,
 // determines their orientation relative to each other
 export const getLocalChildrenOrientation = (
-  parent: UsableElement,
+  parent: Element,
   childrentRects: Rect[],
   childIndex: number
 ): ChildrenOrientation => {
@@ -52,7 +38,7 @@ export const getLocalChildrenOrientation = (
   return getRectsOrientation(previous, current, next);
 };
 
-export const getChildrenRects = (parent: UsableElement) => {
+export const getChildrenRects = (parent: Element) => {
   const parentRect = parent.getBoundingClientRect();
 
   // We convert to relative coordinates to be able to store the result in cache.

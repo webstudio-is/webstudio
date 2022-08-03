@@ -10,18 +10,13 @@ import {
   type Rect,
   type Placement,
 } from "./geometry-utils";
-import {
-  type UsableElement,
-  toUseableElement,
-  getLocalChildrenOrientation,
-  getChildrenRects,
-} from "./dom-utils";
+import { getLocalChildrenOrientation, getChildrenRects } from "./dom-utils";
 
 // Partial information about a drop target
 // used during the selection of a new drop target
 export type PartialDropTarget<Data> = {
   data: Data;
-  element: UsableElement;
+  element: Element;
 };
 
 export type DropTarget<Data> = PartialDropTarget<Data> & {
@@ -35,7 +30,7 @@ export type DropTarget<Data> = PartialDropTarget<Data> & {
 // doesn't have to be looked up again in swapDropTarget.
 export type UseDropProps<Data> = {
   // To check that the element can qualify as a target
-  isDropTarget: (target: UsableElement) => Data | false;
+  isDropTarget: (target: Element) => Data | false;
 
   // Distance from an edge to set nearEdge to true in swapDropTarget
   edgeDistanceThreshold?: number;
@@ -62,8 +57,8 @@ const getInitialState = <Data>() => {
   return {
     pointerCoordinates: undefined as { x: number; y: number } | undefined,
     dropTarget: undefined as DropTarget<Data> | undefined,
-    childrenRectsCache: new WeakMap<UsableElement, Rect[]>(),
-    lastCandidateElement: undefined as UsableElement | undefined,
+    childrenRectsCache: new WeakMap<Element, Rect[]>(),
+    lastCandidateElement: undefined as Element | undefined,
     lastCandidateIsNearEdge: undefined as boolean | undefined,
   };
 };
@@ -75,12 +70,12 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
   const latestProps = useRef<UseDropProps<Data>>(props);
   latestProps.current = props;
 
-  const rootRef = useRef<UsableElement>();
+  const rootRef = useRef<Element | null>(null);
   const state = useRef(getInitialState<Data>());
 
   // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
-    const getChildrenRectsMemoized = (parent: UsableElement) => {
+    const getChildrenRectsMemoized = (parent: Element) => {
       const fromCache = state.current.childrenRectsCache.get(parent);
       if (fromCache !== undefined) {
         return fromCache;
@@ -189,11 +184,9 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
           root,
           initialElement:
             pointerCoordinates &&
-            toUseableElement(
-              document.elementFromPoint(
-                pointerCoordinates.x,
-                pointerCoordinates.y
-              )
+            document.elementFromPoint(
+              pointerCoordinates.x,
+              pointerCoordinates.y
             ),
           isDropTarget,
         });
@@ -203,13 +196,13 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         candidate?.element !== state.current.lastCandidateElement;
       state.current.lastCandidateElement = candidate?.element;
       const candidateIsNearEdge =
-        candidate &&
-        pointerCoordinates &&
-        isNearEdge(
-          pointerCoordinates,
-          edgeDistanceThreshold,
-          candidate.element.getBoundingClientRect()
-        );
+        candidate && pointerCoordinates
+          ? isNearEdge(
+              pointerCoordinates,
+              edgeDistanceThreshold,
+              candidate.element.getBoundingClientRect()
+            )
+          : undefined;
       const isNewIsNearEdge =
         candidateIsNearEdge !== state.current.lastCandidateIsNearEdge;
       state.current.lastCandidateIsNearEdge = candidateIsNearEdge;
@@ -226,17 +219,18 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       }
 
       let didSwap = true;
-      while (didSwap || candidate === undefined) {
+      while (didSwap || candidate == null) {
         const swappedTo = swapDropTarget(
-          candidate &&
-            pointerCoordinates && {
-              ...candidate,
-              nearEdge: isNearEdge(
-                pointerCoordinates,
-                edgeDistanceThreshold,
-                candidate.element.getBoundingClientRect()
-              ),
-            }
+          candidate && pointerCoordinates
+            ? {
+                ...candidate,
+                nearEdge: isNearEdge(
+                  pointerCoordinates,
+                  edgeDistanceThreshold,
+                  candidate.element.getBoundingClientRect()
+                ),
+              }
+            : undefined
         );
         didSwap = swappedTo.element !== candidate?.element;
         candidate = swappedTo;
@@ -260,7 +254,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       },
 
       rootRef(rootElement) {
-        rootRef.current = toUseableElement(rootElement);
+        rootRef.current = rootElement;
       },
     };
   }, []);
@@ -271,17 +265,17 @@ const findClosestDropTarget = <Data>({
   initialElement,
   isDropTarget,
 }: {
-  root: UsableElement;
-  initialElement: UsableElement | undefined;
-  isDropTarget: (target: UsableElement) => Data | false;
+  root: Element;
+  initialElement: Element | undefined | null;
+  isDropTarget: (target: Element) => Data | false;
 }): PartialDropTarget<Data> | undefined => {
   // The element we get from elementFromPoint() might not be inside the root
   if (initialElement === undefined || root.contains(initialElement) === false) {
     return undefined;
   }
 
-  let currentElement: UsableElement | undefined = initialElement;
-  while (currentElement !== undefined) {
+  let currentElement = initialElement;
+  while (currentElement != null) {
     const data = isDropTarget(currentElement);
     if (data !== false) {
       return { data: data, element: currentElement };
@@ -289,6 +283,6 @@ const findClosestDropTarget = <Data>({
     if (currentElement === root) {
       break;
     }
-    currentElement = toUseableElement(currentElement.parentElement);
+    currentElement = currentElement.parentElement;
   }
 };

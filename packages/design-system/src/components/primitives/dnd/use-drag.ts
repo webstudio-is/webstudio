@@ -1,6 +1,5 @@
 import { useMove } from "./use-move";
 import { useRef, useEffect, useMemo } from "react";
-import { type UsableElement, toUseableElement } from "./dom-utils";
 
 type State =
   | {
@@ -22,7 +21,7 @@ const initialState = {
 export type UseDragProps<DragItemData> = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
-  isDragItem: (element: UsableElement) => DragItemData | false;
+  isDragItem: (element: Element) => DragItemData | false;
   onStart: (event: { target: HTMLElement; data: DragItemData }) => void;
   onMove: (event: { x: number; y: number }) => void;
   onShiftChange?: (event: { shifts: number }) => void;
@@ -64,13 +63,11 @@ export const useDrag = <DragItemData>({
 
   const { onPointerDown } = useMove({
     shouldStart: ({ target }) => {
-      const targetElement = toUseableElement(target);
-
-      if (!targetElement) {
+      if (!target) {
         return false;
       }
 
-      const data = isDragItem(targetElement);
+      const data = isDragItem(target as Element);
 
       if (data === false) {
         return false;
