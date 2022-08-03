@@ -36,6 +36,7 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useMeasure } from "~/shared/dom-hooks";
+import { findInstanceByElement } from "~/shared/dom-utils";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -238,8 +239,8 @@ export const useSetHoveredInstance = () => {
 
   useEffect(() => {
     let instance;
-    if (rootInstance !== undefined && hoveredElement?.id) {
-      instance = findInstanceById(rootInstance, hoveredElement.id);
+    if (rootInstance !== undefined && hoveredElement) {
+      instance = findInstanceByElement(rootInstance, hoveredElement);
     }
     setHoveredInstance(instance);
   }, [rootInstance, hoveredElement, setHoveredInstance]);

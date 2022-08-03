@@ -3,12 +3,11 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
+import { getInstancePath, createInstance } from "~/shared/tree-utils";
 import {
-  findInstanceById,
-  getInstancePath,
-  createInstance,
-} from "~/shared/tree-utils";
-import { getInstanceElementById } from "~/shared/dom-utils";
+  findInstanceByElement,
+  getInstanceElementById,
+} from "~/shared/dom-utils";
 import {
   type DropTarget,
   type Point,
@@ -67,12 +66,11 @@ export const useDragAndDrop = () => {
 
   const dropHandlers = useDrop<Instance>({
     isDropTarget(element) {
-      return (
-        (rootInstance !== undefined &&
-          element.id !== "" &&
-          findInstanceById(rootInstance, element.id)) ||
-        false
-      );
+      const instance =
+        rootInstance !== undefined &&
+        findInstanceByElement(rootInstance, element);
+
+      return instance || false;
     },
 
     // This must be fast, it can be called multiple times per pointer move
@@ -139,11 +137,11 @@ export const useDragAndDrop = () => {
 
   const dragHandlers = useDrag<Instance>({
     isDragItem(element) {
-      if (rootInstance === undefined || element.id === "") {
+      if (rootInstance === undefined) {
         return false;
       }
 
-      const instance = findInstanceById(rootInstance, element.id);
+      const instance = findInstanceByElement(rootInstance, element);
 
       if (instance === undefined) {
         return false;
