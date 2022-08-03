@@ -4,7 +4,7 @@ import { type Placement } from "./geometry-utils";
 const placementStyle = {
   boxSizing: "content-box",
   position: "absolute",
-  background: "$blue9",
+  background: "#f531b3",
   pointerEvents: "none",
 };
 
