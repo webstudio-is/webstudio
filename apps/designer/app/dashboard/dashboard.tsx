@@ -6,7 +6,6 @@ import dashboardStyles from "./dashboard.css";
 import { User } from "@webstudio-is/prisma-client";
 import { DashboardHeader } from "./components/header";
 import { SelectProjectCard } from "./components/card";
-
 export const links = () => {
   return [
     {
@@ -23,7 +22,7 @@ export const links = () => {
 type DashboardProps = {
   projects?: Array<{ id: string; title: string }>;
   user: User;
-  config: { designerPath: "string" };
+  config: { designerPath: string };
 };
 
 export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
