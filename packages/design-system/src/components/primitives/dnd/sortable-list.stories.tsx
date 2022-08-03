@@ -38,11 +38,11 @@ const Item = ({
 };
 
 export const SortableList = ({
-  direction = "vertical",
-  reversed = false,
+  direction,
+  reversed,
 }: {
-  direction?: "horizontal" | "vertical" | "wrap";
-  reversed?: boolean;
+  direction: "horizontal" | "vertical" | "wrap";
+  reversed: boolean;
 }) => {
   const [data, setData] = useState([
     { id: "0", text: "First" },
@@ -183,18 +183,14 @@ export const SortableList = ({
   );
 };
 
-export const SortableListHorizontal = (args: Args) => (
-  <SortableList direction="horizontal" {...args} />
-);
-
-export const SortableListWrap = (args: Args) => (
-  <SortableList direction="wrap" {...args} />
-);
-
-type Args = { reversed: boolean };
-
 export default {
   args: {
+    direction: "vertical",
     reversed: false,
+  },
+  argTypes: {
+    direction: {
+      control: { type: "select", options: ["horizontal", "vertical", "wrap"] },
+    },
   },
 } as ComponentMeta<typeof SortableList>;
