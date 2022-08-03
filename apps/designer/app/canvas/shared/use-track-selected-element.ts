@@ -11,6 +11,7 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { findInstanceById } from "~/shared/tree-utils";
+import { getInstanceElementById } from "~/shared/dom-utils";
 
 const eventOptions = {
   passive: true,
@@ -44,7 +45,7 @@ export const useTrackSelectedElement = () => {
       (selectedElement === undefined ||
         selectedInstance?.id !== selectedElement.id)
     ) {
-      const element = document.getElementById(selectedInstance.id);
+      const element = getInstanceElementById(selectedInstance.id);
       if (element === null) return;
       element.focus();
       setSelectedElement(element);

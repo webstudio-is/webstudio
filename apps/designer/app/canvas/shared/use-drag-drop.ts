@@ -4,6 +4,7 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
+import { getInstanceElementById } from "~/shared/dom-utils";
 import {
   type DropTarget,
   type Point,
@@ -49,7 +50,7 @@ export const useDragAndDrop = () => {
   const autoScrollHandlers = useAutoScroll({ fullscreen: true });
 
   const getDefaultDropTarget = () => {
-    const element = rootInstance && document.getElementById(rootInstance.id);
+    const element = rootInstance && getInstanceElementById(rootInstance.id);
 
     // Should never happen
     if (!element || !rootInstance) {
@@ -108,7 +109,7 @@ export const useDragAndDrop = () => {
         return dropTarget;
       }
 
-      const element = data && document.getElementById(data.id);
+      const element = data && getInstanceElementById(data.id);
 
       if (element === null) {
         return getDefaultDropTarget();
