@@ -8,6 +8,7 @@ import {
   getInstancePath,
   reparentInstanceMutable,
   insertInstanceMutable,
+  createInstance,
   findInstanceById,
 } from "~/shared/tree-utils";
 
@@ -16,7 +17,7 @@ export const TreePrevew = () => {
   const [dragAndDropState] = useDragAndDropState();
 
   const dragItemInstance = dragAndDropState.dragItem;
-  const dropTargetInstanceId = dragAndDropState.dropTarget?.instanceId;
+  const dropTargetInstanceId = dragAndDropState.dropTarget?.instance.id;
   const dropTargetPosition = dragAndDropState.dropTarget?.position;
 
   const treeProps = useMemo(() => {
@@ -34,10 +35,14 @@ export const TreePrevew = () => {
 
     const instance: Instance = produce((draft) => {
       if (isNew) {
-        insertInstanceMutable(draft, dragItemInstance, {
-          parentId: dropTargetInstanceId,
-          position: dropTargetPosition,
-        });
+        insertInstanceMutable(
+          draft,
+          createInstance({ component: dragItemInstance.component }),
+          {
+            parentId: dropTargetInstanceId,
+            position: dropTargetPosition,
+          }
+        );
       } else {
         reparentInstanceMutable(
           draft,

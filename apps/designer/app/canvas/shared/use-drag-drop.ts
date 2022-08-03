@@ -3,7 +3,11 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
+import {
+  findInstanceById,
+  getInstancePath,
+  createInstance,
+} from "~/shared/tree-utils";
 import { getInstanceElementById } from "~/shared/dom-utils";
 import {
   type DropTarget,
@@ -17,19 +21,20 @@ import {
   useSubscribe,
   type Instance,
   components as primitives,
+  BaseInstance,
+  toBaseInstance,
 } from "@webstudio-is/react-sdk";
 
 export type DropTargetChangePayload = {
   rect: DropTarget<null>["rect"];
   placement: DropTarget<null>["placement"];
   position: number;
-  instanceId: Instance["id"];
-  component: Instance["component"];
+  instance: BaseInstance;
 };
 
 export type DragStartPayload = {
   origin: "panel" | "canvas";
-  dragItem: Instance;
+  dragItem: BaseInstance;
 };
 
 export type DragEndPayload = { origin: "panel" | "canvas" };
@@ -38,7 +43,7 @@ export type DragMovePayload = { canvasCoordinates: Point };
 
 const initialState = {
   dropTarget: undefined as DropTarget<Instance> | undefined,
-  dragItem: undefined as Instance | undefined,
+  dragItem: undefined as BaseInstance | undefined,
 };
 
 export const useDragAndDrop = () => {
@@ -126,10 +131,7 @@ export const useDragAndDrop = () => {
           rect: dropTarget.rect,
           placement: dropTarget.placement,
           position: dropTarget.indexWithinChildren,
-
-          // @todo: use ShalowInstance
-          instanceId: dropTarget.data.id,
-          component: dropTarget.data.component,
+          instance: toBaseInstance(dropTarget.data),
         },
       });
     },
@@ -168,7 +170,7 @@ export const useDragAndDrop = () => {
         type: "dragStart",
         payload: {
           origin: "canvas",
-          dragItem: instance,
+          dragItem: toBaseInstance(instance),
         },
       });
     },
@@ -264,7 +266,7 @@ export const useDragAndDrop = () => {
         >({
           type: "insertInstance",
           payload: {
-            instance: dragItem,
+            instance: createInstance({ component: dragItem.component }),
             dropTarget: {
               instanceId: dropTarget.data.id,
               position: dropTarget.indexWithinChildren,
