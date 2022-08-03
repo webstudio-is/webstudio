@@ -8,7 +8,6 @@ import {
   type Data,
   type Tree,
   useAllUserProps,
-  WrapperComponent,
   globalStyles,
   useSubscribe,
   createElementsTree,
@@ -70,7 +69,7 @@ const useElementsTree = () => {
   }, []);
 
   return useMemo(() => {
-    if (rootInstance === undefined) return;
+    if (rootInstance === undefined) return null;
 
     return createElementsTree({
       instance: rootInstance,
@@ -87,20 +86,10 @@ const useSubscribePreviewMode = () => {
   return isPreviewMode;
 };
 
-const PreviewMode = () => {
-  const [rootInstance] = useRootInstance();
-  const [breakpoints] = useBreakpoints();
-  if (rootInstance === undefined) return null;
-  return createElementsTree({
-    breakpoints,
-    instance: rootInstance,
-    Component: WrapperComponent,
-  });
-};
-
 type DesignModeProps = {
   treeId: Tree["id"];
   project: db.project.Project;
+  children: JSX.Element | null;
 };
 
 const dndOptions = {
@@ -109,7 +98,7 @@ const dndOptions = {
   delay: 10,
 };
 
-const DesignMode = ({ treeId, project }: DesignModeProps) => {
+const DesignMode = ({ treeId, project, children }: DesignModeProps) => {
   useDragDropHandlers();
   useUpdateStyle();
   useManageProps();
@@ -131,12 +120,11 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   usePublishScrollState();
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
-  const elements = useElementsTree();
   return (
     // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
     <DndProvider backend={TouchBackend} options={dndOptions}>
-      {elements && (
-        <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
+      {children && (
+        <LexicalComposer initialConfig={config}>{children}</LexicalComposer>
       )}
     </DndProvider>
   );
@@ -157,10 +145,14 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   const isPreviewMode = useSubscribePreviewMode();
-
+  const elements = useElementsTree();
   if (isPreviewMode) {
-    return <PreviewMode />;
+    return elements;
   }
 
-  return <DesignMode treeId={data.tree.id} project={data.project} />;
+  return (
+    <DesignMode treeId={data.tree.id} project={data.project}>
+      {elements}
+    </DesignMode>
+  );
 };

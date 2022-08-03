@@ -1,8 +1,13 @@
 import { useLoaderData } from "@remix-run/react";
-import type { LoaderFunction } from "@remix-run/node";
+import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Root } from "@webstudio-is/react-sdk";
 import { loadPreviewData, type PreviewData, type ErrorData } from "~/shared/db";
+import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
 import env, { Env } from "~/env.server";
+
+export const meta: MetaFunction = () => {
+  return { title: "Webstudio site preview" };
+};
 
 type LoaderReturnType = Promise<
   (PreviewData & { env: Env }) | (ErrorData & { env: Env })
@@ -34,7 +39,9 @@ const PreviewRoute = () => {
   if ("errors" in data) {
     return <p>{data.errors}</p>;
   }
-  return <Root data={data} />;
+  const Outlet = () => <Root data={data} />;
+
+  return <CanvasDocument Outlet={Outlet} />;
 };
 
 export default PreviewRoute;

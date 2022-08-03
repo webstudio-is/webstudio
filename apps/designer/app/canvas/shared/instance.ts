@@ -38,10 +38,10 @@ import {
 import { useMeasure } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
-  const [, setRootInstance] = useRootInstance();
-  useEffect(() => {
-    setRootInstance(tree.root);
-  }, [tree, setRootInstance]);
+  // It is only set once when the canvas is first loaded.
+  if (rootInstanceContainer.value === undefined) {
+    rootInstanceContainer.value = tree.root;
+  }
 };
 
 export const useInsertInstance = () => {

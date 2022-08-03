@@ -11,11 +11,6 @@ const defaultTag = "body";
 export const Body = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag>
->(({ children, className }, ref) => {
-  useEffect(() => {
-    document.body.className = className;
-  }, []);
-  return children;
-});
+>((props, ref) => <body {...props} ref={ref} />);
 
 Body.displayName = "Body";

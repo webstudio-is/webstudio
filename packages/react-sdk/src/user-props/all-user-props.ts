@@ -7,15 +7,16 @@ export type AllUserProps = { [id: Instance["id"]]: InstanceProps };
 export const allUserPropsContainer = createValueContainer<AllUserProps>({});
 
 export const useAllUserProps = (initialUserProps?: Array<InstanceProps>) => {
-  useMemo(() => {
-    if (initialUserProps === undefined) return;
+  if (
+    allUserPropsContainer.value === undefined &&
+    initialUserProps !== undefined
+  ) {
     const propsMap: AllUserProps = {};
     for (const props of initialUserProps) {
       propsMap[props.instanceId] = props;
     }
     //We don't need to trigger rerender when setting the initial value
     allUserPropsContainer.value = propsMap;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
   return useValue(allUserPropsContainer);
 };

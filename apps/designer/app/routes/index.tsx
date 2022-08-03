@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { Root, type Data } from "@webstudio-is/react-sdk";
 import config from "~/config";
 import * as db from "~/shared/db";
-import Document from "./canvas";
+import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
 import env, { Env } from "~/env.server";
 
 // @todo all this subdomain logic is very hacky
@@ -71,7 +71,7 @@ const Index = () => {
     // We need to render essentially the preview route but from the index,
     // so we have to know the layout and the outlet from here.
     // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
-    return <Document Outlet={Outlet} />;
+    return <CanvasDocument Outlet={Outlet} />;
   }
 
   return null;

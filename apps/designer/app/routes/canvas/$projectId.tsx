@@ -1,12 +1,17 @@
 import { useLoaderData } from "@remix-run/react";
-import type { LoaderFunction } from "@remix-run/node";
+import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Canvas } from "~/canvas";
 import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
 import env, { Env } from "~/env.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
+import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
 
 type Data = (CanvasData | ErrorData) & { env: Env };
+
+export const meta: MetaFunction = () => {
+  return { title: "Webstudio canvas" };
+};
 
 export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
   if (params.projectId === undefined) {
@@ -37,7 +42,9 @@ const CanvasRoute = () => {
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
-  return <Canvas data={data} />;
+  const Outlet = () => <Canvas data={data} />;
+
+  return <CanvasDocument Outlet={Outlet} />;
 };
 
 export default CanvasRoute;

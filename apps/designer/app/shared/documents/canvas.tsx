@@ -1,13 +1,5 @@
-import {
-  Links,
-  Meta,
-  Outlet as DefaultOutlet,
-  Scripts,
-  ScrollRestoration,
-} from "@remix-run/react";
-import { CriticalCss, components } from "@webstudio-is/react-sdk";
-
-const Body = components.Body.Component;
+import { Links, Meta, Outlet as DefaultOutlet } from "@remix-run/react";
+import { CriticalCss } from "@webstudio-is/react-sdk";
 
 /**
  * We are using Outlet prop from index layout when user renders site from a subdomain.
@@ -28,11 +20,7 @@ export const Canvas = ({
         <Links />
         <CriticalCss />
       </head>
-      <body>
-        <Outlet />
-        <ScrollRestoration />
-        <Scripts />
-      </body>
+      <Outlet />
     </html>
   );
 };
