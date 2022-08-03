@@ -229,6 +229,9 @@ const ComboboxControl = ({
     case "columnGap": {
       switch (category) {
         case "layout": {
+          // @todo display sectons should filter what they render instead of relying on MDN data
+          if (String(currentStyle.display?.value).includes("flex") !== true)
+            break;
           const Icon = (
             icons as unknown as {
               gap: Record<string, (props: unknown) => JSX.Element>;
@@ -371,6 +374,7 @@ const ComboiconControl = ({
   inheritedStyle,
   setProperty,
   styleConfig,
+  category,
 }: ControlProps) => {
   const value = getFinalValue({
     currentStyle,
@@ -383,6 +387,20 @@ const ComboiconControl = ({
 
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
+
+  if (String(currentStyle.display?.value).includes("flex") !== true) {
+    styleConfig.control = "Combobox";
+    return (
+      <ComboboxControl
+        currentStyle={currentStyle}
+        inheritedStyle={inheritedStyle}
+        setProperty={setProperty}
+        styleConfig={styleConfig}
+        category={category}
+      />
+    );
+  }
+
   return (
     <Comboicon
       label={styleConfig.label}
@@ -661,6 +679,7 @@ export const renderCategory = ({
         },
       };
       switch (currentStyle.display?.value) {
+        case "inline-flex":
         case "flex": {
           return (
             <>
@@ -702,39 +721,40 @@ export const renderCategory = ({
           );
         }
         case "grid": {
-          return (
-            <>
-              <Grid
-                css={{
-                  ...css,
-                  gridTemplateColumns: "repeat(12, 1fr)",
-                  gridTemplateRows: "repeat(11, auto)",
-                  gridTemplateAreas: `
-                    "${"display ".repeat(12)}"
-                    "${"gridTemplateAreas ".repeat(12)}"
-                    "${"gridAutoRows ".repeat(12)}"
-                    "${"gridAutoColumns ".repeat(12)}"
-                    "${"gridTemplateColumns ".repeat(12)}"
-                    "${"gridTemplateRows ".repeat(12)}"
-                    "${"gridAutoFlow ".repeat(12)}"
-                    "${"alignItems ".repeat(12)}"
-                    "${"justifyItems ".repeat(12)}"
-                    "${"alignContent ".repeat(12)}"
-                    "${"columnGap ".repeat(5)} lock lock ${"rowGap ".repeat(5)}"
-                  `,
-                }}
-              >
-                {styleConfigsByCategory}
-                <LockControl
-                  data-property="lock"
-                  css={{ gridArea: "lock" }}
-                  currentStyle={currentStyle}
-                  setProperty={setProperty}
-                />
-              </Grid>
-              <ShowMore styleConfigs={moreStyleConfigsByCategory} />
-            </>
-          );
+          // @todo general structure of how other sections would be layed out, commented for now because we don't yet have a design for the grid section
+          // return (
+          //   <>
+          //     <Grid
+          //       css={{
+          //         ...css,
+          //         gridTemplateColumns: "repeat(12, 1fr)",
+          //         gridTemplateRows: "repeat(11, auto)",
+          //         gridTemplateAreas: `
+          //           "${"display ".repeat(12)}"
+          //           "${"gridTemplateAreas ".repeat(12)}"
+          //           "${"gridAutoRows ".repeat(12)}"
+          //           "${"gridAutoColumns ".repeat(12)}"
+          //           "${"gridTemplateColumns ".repeat(12)}"
+          //           "${"gridTemplateRows ".repeat(12)}"
+          //           "${"gridAutoFlow ".repeat(12)}"
+          //           "${"alignItems ".repeat(12)}"
+          //           "${"justifyItems ".repeat(12)}"
+          //           "${"alignContent ".repeat(12)}"
+          //           "${"columnGap ".repeat(5)} lock lock ${"rowGap ".repeat(5)}"
+          //         `,
+          //       }}
+          //     >
+          //       {styleConfigsByCategory}
+          //       <LockControl
+          //         data-property="lock"
+          //         css={{ gridArea: "lock" }}
+          //         currentStyle={currentStyle}
+          //         setProperty={setProperty}
+          //       />
+          //     </Grid>
+          //     <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+          //   </>
+          // );
         }
       }
     }
