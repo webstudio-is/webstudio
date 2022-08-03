@@ -1,23 +1,23 @@
 import { useRef, useEffect, RefObject } from "react";
 import {
-  numericGestureControl,
-  type NumericGestureValue,
-  type NumericGestureDirection,
+  numericScrubControl,
+  type NumericScrubValue,
+  type NumericScrubDirection,
 } from "./numeric-gesture-control";
 
-const useNumericGestureControl = ({
+const useNumericScrubControl = ({
   ref,
   value,
   direction,
 }: {
   ref: RefObject<HTMLInputElement>;
-  value: NumericGestureValue;
-  direction: NumericGestureDirection;
+  value: NumericScrubValue;
+  direction: NumericScrubDirection;
 }) => {
   useEffect(() => {
     if (ref.current === null) return;
     ref.current.value = String(value);
-    const { disconnectedCallback } = numericGestureControl(ref.current, {
+    const { disconnectedCallback } = numericScrubControl(ref.current, {
       initialValue: value,
       direction: direction,
       onValueChange: (event) => {
@@ -34,11 +34,11 @@ const Input = ({
   value,
   direction,
 }: {
-  value: NumericGestureValue;
-  direction: NumericGestureDirection;
+  value: NumericScrubValue;
+  direction: NumericScrubDirection;
 }) => {
   const ref = useRef<HTMLInputElement | null>(null);
-  useNumericGestureControl({ ref, value, direction });
+  useNumericScrubControl({ ref, value, direction });
   return <input defaultValue={value} ref={ref} />;
 };
 
@@ -47,7 +47,7 @@ export const NumericInput = Object.assign(Input.bind({}), {
 });
 
 export default {
-  title: "numericGestureControl",
+  title: "numericScrubControl",
   component: Input,
   argTypes: {
     value: {

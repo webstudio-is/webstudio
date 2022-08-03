@@ -5,7 +5,7 @@
  * - dispatches {onValueChange} method while pointermove and pointerdown are active
  * - dispatched {onValueChange} recieves a new value: old value + accumulation of the pointer move axis
  * @example
- * numericGestureControl(document.querySelector('input'), {
+ * numericScrubControl(document.querySelector('input'), {
  *   onValueChange: (event) => {
  *     event.preventDefault();
  *     event.target.value = event.value;
@@ -14,23 +14,23 @@
  * });
  */
 
-export type NumericGestureDirection = "horizontal" | "vertical";
+export type NumericScrubDirection = "horizontal" | "vertical";
 
-export type NumericGestureValue = number;
+export type NumericScrubValue = number;
 
-export type NumericGestureOptions = {
-  minValue?: NumericGestureValue;
-  maxValue?: NumericGestureValue;
-  initialValue?: NumericGestureValue;
-  direction?: NumericGestureDirection;
+export type NumericScrubOptions = {
+  minValue?: NumericScrubValue;
+  maxValue?: NumericScrubValue;
+  initialValue?: NumericScrubValue;
+  direction?: NumericScrubDirection;
   onValueChange: (event: {
     target: HTMLInputElement;
-    value: NumericGestureValue;
+    value: NumericScrubValue;
     preventDefault: () => void;
   }) => void;
 };
 
-type NumericGestureState = {
+type NumericScrubState = {
   value: number;
   cursor?: SVGElement;
   offset: number;
@@ -38,7 +38,7 @@ type NumericGestureState = {
   direction: string;
 };
 
-export const numericGestureControl = (
+export const numericScrubControl = (
   targetNode: HTMLInputElement,
   {
     minValue = Number.MIN_SAFE_INTEGER,
@@ -46,10 +46,10 @@ export const numericGestureControl = (
     initialValue = 0,
     direction = "horizontal",
     onValueChange = () => null,
-  }: NumericGestureOptions
+  }: NumericScrubOptions
 ) => {
   const eventNames = ["pointerup", "pointerdown", "pointermove"] as const;
-  const state: NumericGestureState = {
+  const state: NumericScrubState = {
     value: initialValue,
     cursor: undefined,
     offset: 0,
@@ -119,7 +119,7 @@ export const numericGestureControl = (
 };
 
 const requestPointerLock = (
-  state: NumericGestureState,
+  state: NumericScrubState,
   event: PointerEvent,
   targetNode: HTMLElement
 ) => {
@@ -166,7 +166,7 @@ const requestPointerLock = (
 };
 
 const exitPointerLock = (
-  state: NumericGestureState,
+  state: NumericScrubState,
   event: PointerEvent,
   targetNode: HTMLElement
 ) => {

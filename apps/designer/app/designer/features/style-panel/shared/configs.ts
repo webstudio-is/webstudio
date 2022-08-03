@@ -18,7 +18,7 @@ export type Control =
   | "Spacing"
   | "Combobox"
   | "Color"
-  | "Comboicon"
+  | "IconButtonWithMenu"
   | "Select"
   | "Empty";
 
@@ -54,7 +54,7 @@ const getControl = (property: StyleProperty): Control => {
     case "justifyItems":
     case "justifyContent":
     case "alignContent": {
-      return "Comboicon";
+      return "IconButtonWithMenu";
     }
     case "placeContent": {
       return "Empty";

@@ -84,7 +84,7 @@ const IconButton = styled("button", {
   },
 });
 
-export const Comboicon = ({
+export const IconButtonWithMenu = ({
   label,
   value,
   items,

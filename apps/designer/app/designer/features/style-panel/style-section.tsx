@@ -12,12 +12,12 @@ import {
   Button,
   Collapsible,
   Combobox,
-  Comboicon,
+  IconButtonWithMenu,
   Select,
   IconButton,
   TextField,
   Tooltip,
-  // numericGestureControl,
+  // numericScrubControl,
 } from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
 import * as icons from "@webstudio-is/icons";
@@ -199,7 +199,7 @@ const ComboboxControl = ({
   // const refCallback = useCallback((node: HTMLElement) => {
   //   let disconnectedCallback = () => {};
   //   if (node) {
-  //     disconnectedCallback = numericGestureControl(node, {
+  //     disconnectedCallback = numericScrubControl(node, {
   //       minValue: 0,
   //       initialValue: parseFloat(String(value?.value)) || 0,
   //       onValueChange: (event) => {
@@ -369,7 +369,7 @@ const SelectControl = ({
   );
 };
 
-const ComboiconControl = ({
+const IconButtonWithMenuControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -402,7 +402,7 @@ const ComboiconControl = ({
   }
 
   return (
-    <Comboicon
+    <IconButtonWithMenu
       label={styleConfig.label}
       items={styleConfig.items}
       value={String(currentValue)}
@@ -433,7 +433,7 @@ const ComboiconControl = ({
           },
         }),
       }}
-    ></Comboicon>
+    ></IconButtonWithMenu>
   );
 };
 
@@ -671,7 +671,7 @@ export const renderCategory = ({
       const css = {
         alignItems: "center",
         gap: "8px",
-        "& > [data-type=comboicon]": {
+        "& > [data-type=iconbuttonwithmenu]": {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -775,6 +775,6 @@ const controls: {
   Color: ColorControl,
   Spacing: SpacingControl,
   Combobox: ComboboxControl,
-  Comboicon: ComboiconControl,
+  IconButtonWithMenu: IconButtonWithMenuControl,
   Select: SelectControl,
 };
