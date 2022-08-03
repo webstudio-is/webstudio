@@ -1,10 +1,4 @@
-import {
-  createElement,
-  forwardRef,
-  type ElementRef,
-  type ComponentProps,
-  useEffect,
-} from "react";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 const defaultTag = "body";
 
