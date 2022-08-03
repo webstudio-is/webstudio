@@ -41,7 +41,10 @@ export const getLocalChildrenOrientation = (
     parent.removeChild(probe);
 
     return {
-      type: probeRect.width === 0 ? "horizontal" : "vertical",
+      type:
+        probeRect.width === 0 && probeRect.height > 0
+          ? "horizontal"
+          : "vertical",
       reverse: false,
     };
   }

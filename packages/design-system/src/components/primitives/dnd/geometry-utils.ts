@@ -121,12 +121,13 @@ export const getPlacementNextTo = (
       ? "bottom"
       : "top";
 
-  const margin = 5;
+  const getMargin = (distnaceToParentEdge: number) =>
+    Math.min(10, Math.max(0, distnaceToParentEdge)) / 2;
 
   if (side === "top") {
     return {
       x: rect.left,
-      y: Math.min(rect.top, Math.max(0, rect.top - margin)),
+      y: rect.top - getMargin(rect.top),
       length: rect.width,
       direction: "horizontal",
     };
@@ -135,10 +136,10 @@ export const getPlacementNextTo = (
   if (side === "bottom") {
     return {
       x: rect.left,
-      y: Math.max(
-        rect.top + rect.height,
-        Math.min(parentRect.height, rect.top + rect.height + margin)
-      ),
+      y:
+        rect.top +
+        rect.height +
+        getMargin(parentRect.height - rect.top - rect.height),
       length: rect.width,
       direction: "horizontal",
     };
@@ -146,7 +147,7 @@ export const getPlacementNextTo = (
 
   if (side === "left") {
     return {
-      x: Math.min(rect.left, Math.max(0, rect.left - margin)),
+      x: rect.left - getMargin(rect.left),
       y: rect.top,
       length: rect.height,
       direction: "vertical",
@@ -154,10 +155,10 @@ export const getPlacementNextTo = (
   }
 
   return {
-    x: Math.max(
-      rect.left + rect.width,
-      Math.min(parentRect.width, rect.left + rect.width + margin)
-    ),
+    x:
+      rect.left +
+      rect.width +
+      getMargin(parentRect.width - rect.left - rect.width),
     y: rect.top,
     length: rect.height,
     direction: "vertical",

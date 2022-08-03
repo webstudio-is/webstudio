@@ -129,7 +129,7 @@ export const useDragAndDrop = () => {
     },
   });
 
-  const useDragHandlers = useDrag<Instance>({
+  const dragHandlers = useDrag<Instance>({
     isDragItem(element) {
       if (rootInstance === undefined || element.id === "") {
         return false;
@@ -210,15 +210,15 @@ export const useDragAndDrop = () => {
   // because it's closer in the life cycle to when React noramlly calls the "ref" callbacks.
   useLayoutEffect(() => {
     dropHandlers.rootRef(document.body);
-    useDragHandlers.rootRef(document.body);
+    dragHandlers.rootRef(document.body);
     window.addEventListener("scroll", dropHandlers.handleScroll);
 
     return () => {
       dropHandlers.rootRef(null);
-      useDragHandlers.rootRef(null);
+      dragHandlers.rootRef(null);
       window.removeEventListener("scroll", dropHandlers.handleScroll);
     };
-  }, [useDragHandlers, dropHandlers, autoScrollHandlers]);
+  }, [dragHandlers, dropHandlers, autoScrollHandlers]);
 
   // Handle drag from the panel
   // ================================================================
