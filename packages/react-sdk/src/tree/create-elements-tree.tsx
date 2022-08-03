@@ -44,9 +44,11 @@ export const createElementsTree = ({
     Component,
     instance,
     children: [
-      <Fragment key="children">{children}</Fragment>,
-      <ScrollRestoration key="scrollRestoration" />,
-      <Scripts key="scripts" />,
+      <Fragment key="children">
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </Fragment>,
     ],
     breakpoints,
   });
