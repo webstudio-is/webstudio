@@ -225,8 +225,8 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         return;
       }
 
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
+      let didSwap = true;
+      while (didSwap || candidate === undefined) {
         const swappedTo = swapDropTarget(
           candidate &&
             pointerCoordinates && {
@@ -238,14 +238,11 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
               ),
             }
         );
-
-        if (swappedTo.element === candidate?.element) {
-          setDropTarget(candidate);
-          return;
-        }
-
+        didSwap = swappedTo.element !== candidate?.element;
         candidate = swappedTo;
       }
+
+      setDropTarget(candidate);
     };
 
     return {
