@@ -67,7 +67,7 @@ export const useInsertInstance = () => {
           {
             parentId:
               dropTarget?.instanceId ?? selectedInstance?.id ?? rootInstance.id,
-            position: dropTarget?.position || "end",
+            position: dropTarget === undefined ? "end" : dropTarget.position,
           }
         );
         if (hasInserted) {
