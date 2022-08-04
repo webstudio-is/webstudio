@@ -17,7 +17,7 @@
     "storybook": "turbo run storybook:run"
   },
   "devDependencies": {
-    "eslint-config-custom": "*",
+    "@webstudio-is/eslint-config-custom": "*",
     "husky": ">=6",
     "lint-staged": "^13.0.2",
     "prettier": "latest",

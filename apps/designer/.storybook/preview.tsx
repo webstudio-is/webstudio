@@ -1,5 +1,5 @@
 import React from "react";
-import { darkTheme, globalCss } from "~/shared/design-system";
+import { darkTheme, globalCss } from "@webstudio-is/design-system";
 
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },

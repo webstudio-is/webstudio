@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Tooltip } from "~/shared/design-system";
+import { Button, Tooltip } from "@webstudio-is/design-system";
 import env from "~/shared/env";
 
 const isPreviewEnvironment = env.VERCEL_ENV === "preview";

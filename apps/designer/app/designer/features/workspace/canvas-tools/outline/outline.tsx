@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { styled } from "~/shared/design-system";
+import { styled, type Rect } from "@webstudio-is/design-system";
 
 const OutlineContainer = styled("div", {
   position: "absolute",
@@ -10,7 +10,7 @@ const OutlineContainer = styled("div", {
   left: 0,
 });
 
-const useStyle = (rect?: DOMRect) => {
+const useStyle = (rect?: Rect) => {
   return useMemo(() => {
     if (rect === undefined) return;
     return {
@@ -23,7 +23,7 @@ const useStyle = (rect?: DOMRect) => {
 
 type OutlineProps = {
   children: JSX.Element;
-  rect?: DOMRect;
+  rect?: Rect;
 };
 
 export const Outline = ({ children, rect }: OutlineProps) => {

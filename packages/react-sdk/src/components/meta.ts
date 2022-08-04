@@ -1,3 +1,4 @@
+export { default as Body } from "./body.stories";
 export { default as Button } from "./button.stories";
 export { default as Bold } from "./bold.stories";
 export { default as Box } from "./box.stories";

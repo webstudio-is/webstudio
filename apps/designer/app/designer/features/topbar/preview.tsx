@@ -1,6 +1,6 @@
 import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
 import { EyeOpenIcon } from "@webstudio-is/icons";
-import { SimpleToggle } from "~/shared/design-system";
+import { SimpleToggle } from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
 
 type PreviewButtonProps = {
@@ -19,7 +19,7 @@ export const PreviewButton = ({ publish }: PreviewButtonProps) => {
   };
 
   useSubscribe<"togglePreviewMode">("togglePreviewMode", () => {
-    setValue(!isPreviewMode);
+    setValue(isPreviewMode === false);
   });
 
   return (

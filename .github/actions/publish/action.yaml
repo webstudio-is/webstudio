@@ -1,0 +1,28 @@
+name: 'Release NPM package'
+description: 'Release NPM package'
+inputs:
+  package: 
+    description: 'Package.json location (relative)'
+    default: 'package.json'
+    required: true
+  token:
+    description: 'NPM Token'
+    default: 'null'
+    required: true
+runs:
+  using: "composite"
+  steps: 
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install Dependencies
+        run: yarn install
+        shell: bash
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ inputs.token }}
+          dry-run: false
+          check-version: true
+          access: 'public'
+          package: ${{ inputs.package }}

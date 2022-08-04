@@ -2,7 +2,7 @@ import { Form, useSubmit } from "@remix-run/react";
 import { Asset } from "@webstudio-is/prisma-client";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
-import { Button } from "~/shared/design-system";
+import { Button } from "@webstudio-is/design-system";
 import { UploadingAsset } from "../../types";
 
 const readImages = async (fileList: FileList) => {

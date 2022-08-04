@@ -9,4 +9,5 @@ export default {
   isContentEditable: false,
   label: "Bold Text",
   isInlineOnly: true,
+  isListed: false,
 } as WsComponentMeta<typeof Bold>;

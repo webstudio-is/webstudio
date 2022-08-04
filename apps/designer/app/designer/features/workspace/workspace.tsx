@@ -1,4 +1,4 @@
-import { Box, Flex } from "~/shared/design-system";
+import { Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { type Publish } from "@webstudio-is/react-sdk";
@@ -9,6 +9,7 @@ const workspaceStyle = {
   // scroll behaviour should be derived from the iframe
   overflow: "hidden",
   scrollbarGutter: "stable",
+  position: "relative",
 };
 
 const zoomStyle = {
@@ -55,6 +56,7 @@ export const Workspace = ({
           <CanvasTools publish={publish} />
         </Box>
       </Flex>
+      <Toaster />
     </Box>
   );
 };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { css, IconButton, TextField } from "~/shared/design-system";
+import { css, IconButton, TextField } from "@webstudio-is/design-system";
 import { Cross1Icon } from "@webstudio-is/icons";
 
 const formStyle = css({

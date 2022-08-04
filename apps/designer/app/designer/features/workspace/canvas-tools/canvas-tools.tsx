@@ -1,11 +1,18 @@
 import { type Publish } from "@webstudio-is/react-sdk";
-import { Box } from "~/shared/design-system";
+import { Box } from "@webstudio-is/design-system";
+import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
   useIsPreviewMode,
   useIsScrolling,
   useSubscribeScrollState,
+  useDragAndDropState,
+  useSubscribeDragAndDropState,
 } from "~/shared/nano-states";
-import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
+import {
+  HoveredInstanceOutline,
+  SelectedInstanceOutline,
+  DropTargetOutline,
+} from "./outline";
 import { TextToolbar } from "./text-toolbar";
 import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";
 import { useSubscribeSelectionRect } from "./hooks/use-subscribe-selection-rect";
@@ -29,10 +36,25 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
   useSubscribeInstanceRect();
   useSubscribeSelectionRect();
   useSubscribeScrollState();
+  useSubscribeDragAndDropState();
   useSubscribeTextEditingInstanceId();
 
   const [isPreviewMode] = useIsPreviewMode();
   const [isScrolling] = useIsScrolling();
+  const [dragAndDropState] = useDragAndDropState();
+
+  if (
+    dragAndDropState.isDragging &&
+    dragAndDropState.dropTarget !== undefined
+  ) {
+    return (
+      <Box css={toolsStyle}>
+        <DropTargetOutline dropTarget={dragAndDropState.dropTarget} />
+        <PlacementIndicator placement={dragAndDropState.dropTarget.placement} />
+      </Box>
+    );
+  }
+
   if (isPreviewMode || isScrolling) {
     return null;
   }

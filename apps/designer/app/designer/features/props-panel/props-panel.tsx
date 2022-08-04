@@ -15,7 +15,7 @@ import {
   ComboboxPopperContent,
   Grid,
   Tooltip,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 import {
   PlusIcon,
   TrashIcon,

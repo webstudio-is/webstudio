@@ -9,7 +9,7 @@
    - Drag a box over a box, drop it - check if it was inserted in that box
    - Drag a box and place it before a box - check if it was inserted before
    - Drag a box and place it after a box - check if it was inserted after
-   - Select an instance, got to components, click a box - check if it was inserted at the end of the selected instance
+   - Select an instance, go to components, click a box - check if it was inserted at the end of the selected instance
    - Drag a box exactly between 2 boxs - check if it was inserted between
    - Drag a box to the bottom edge - check if parent box gets outlined and insertion happened after that dragged over box inside that outlined parent
    - Drag a box to the top edge - check if parent box gets outlined and insertion happened before that dragged over box inside that outlined parent
@@ -74,3 +74,10 @@
    - Add a Box component to the canvas
    - Open Props panel
    - See the default tag is provided and can be modified
+
+1. Asset manager
+
+   - Open assets panel
+   - Upload an image
+   - Check it loads and shows a progress bar
+   - Delete an asset by clicking on the `x` icon and then the delete button in the tooltip

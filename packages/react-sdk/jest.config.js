@@ -1,6 +1,1 @@
-// eslint-disable-next-line
-const base = require("jest-config/jest.config.js");
-
-module.exports = {
-  ...base,
-};
+module.exports = require("@webstudio-is/jest-config");

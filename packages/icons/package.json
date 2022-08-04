@@ -1,14 +1,14 @@
 {
   "name": "@webstudio-is/icons",
-  "version": "0.5.0",
-  "description": "Webstudio JavaScript / TypeScript API",
+  "version": "0.1.0",
+  "description": "Webstudio Icons",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
     "build": "rm -fr lib && tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint"
   },
   "devDependencies": {

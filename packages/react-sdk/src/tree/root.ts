@@ -15,8 +15,8 @@ export type Data = {
 };
 
 export const globalStyles = globalCss({
-  body: {
-    margin: 0,
+  html: {
+    height: "100%",
   },
 });
 

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Form, useTransition } from "@remix-run/react";
 import { useNavigate } from "react-router-dom";
-
 import {
   Flex,
   Card,
@@ -10,11 +9,11 @@ import {
   Button,
   Heading,
   Text,
-} from "~/shared/design-system";
+} from "@webstudio-is/design-system";
 
 type SelectProjectProjectCardProps = {
   projects: Array<{ id: string; title: string }>;
-  config: { designerPath: "string" };
+  config: { designerPath: string };
   errors: string;
 };
 

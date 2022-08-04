@@ -1,7 +1,6 @@
 import {
   createStitches,
   globalCss,
-  type CreateStitches,
   type CSS,
   css as createCss,
 } from "@stitches/core";
@@ -10,6 +9,7 @@ import type { Breakpoint } from "../css";
 let media = {};
 
 // @todo needs fixing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let stitches: any;
 
 export const getCachedConfig = () => {

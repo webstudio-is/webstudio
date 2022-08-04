@@ -1,7 +1,7 @@
 {
-  "name": "tsconfig",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@webstudio-is/tsconfig",
+  "version": "1.0.0",
+  "private": false,
   "main": "index.js",
   "files": [
     "base.json",

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import store from "immerhin";
 import {
   type Breakpoint,
@@ -15,10 +15,13 @@ import {
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
-  useEffect(() => {
+  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
+  const ref = useRef(false);
+  if (ref.current === false) {
+    ref.current = true;
     setBreakpoints(breakpoints);
     setCurrentBreakpoints(breakpoints);
-  }, [breakpoints, setCurrentBreakpoints]);
+  }
 };
 
 const usePublishBreakpoints = () => {
