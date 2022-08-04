@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import store from "immerhin";
 import {
   type Breakpoint,
@@ -15,7 +15,8 @@ import {
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
-  useEffect(() => {
+  // Using useMemo instead of useEffect to run it server-side too.
+  useMemo(() => {
     setBreakpoints(breakpoints);
     setCurrentBreakpoints(breakpoints);
   }, [breakpoints, setCurrentBreakpoints]);
