@@ -1,90 +1,151 @@
-import { useEffect, useRef, type MouseEventHandler, useCallback } from "react";
-import { useDrag } from "react-dnd";
-import { getEmptyImage } from "react-dnd-html5-backend";
+import { type MouseEventHandler, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   type Instance,
   type Publish,
   components,
+  useSubscribe,
 } from "@webstudio-is/react-sdk";
 import { Flex } from "@webstudio-is/design-system";
+import { useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { type DragData } from "~/shared/canvas-components";
 import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
-import { CustomDragLayer } from "./custom-drag-layer";
 import { ComponentThumb } from "./component-thumb";
+import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
+import {
+  DragEndPayload,
+  DragMovePayload,
+  DragStartPayload,
+} from "~/canvas/shared/use-drag-drop";
 
-type UseDraggableProps = {
-  component: Instance["component"];
-  onDragChange: (isDragging: boolean) => void;
-};
-
-const useDraggable = ({ component, onDragChange }: UseDraggableProps) => {
-  const lastIsDragging = useRef<boolean | void>();
-  const [{ isDragging }, dragRef, preview] = useDrag(
-    () => ({
-      type: component,
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-    }),
-    []
-  );
-
-  useEffect(() => {
-    if (lastIsDragging.current !== undefined) onDragChange(isDragging);
-    lastIsDragging.current = isDragging;
-  }, [isDragging, onDragChange]);
-
-  useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
-  }, [preview]);
-
-  return dragRef;
-};
+const componentNames = (
+  Object.keys(components) as Array<Instance["component"]>
+).filter((component) => components[component].isInlineOnly === false);
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
-} & UseDraggableProps;
+  component: Instance["component"];
+};
 
-const DraggableThumb = ({
-  component,
-  onDragChange,
-  onClick,
-}: DraggableThumbProps) => {
-  const dragRef = useDraggable({ component, onDragChange });
+const DraggableThumb = ({ component, onClick }: DraggableThumbProps) => {
   return (
-    <ComponentThumb component={component} ref={dragRef} onClick={onClick} />
+    <ComponentThumb
+      data-drag-component={component}
+      component={component}
+      onClick={onClick}
+    />
+  );
+};
+
+const DragLayer = ({
+  component,
+  point,
+}: {
+  component: Instance["component"];
+  point: Point;
+}) => {
+  return createPortal(
+    <Flex
+      css={{
+        position: "absolute",
+        pointerEvents: "none",
+        zIndex: 1,
+        left: 0,
+        top: 0,
+        width: "100%",
+        height: "100%",
+      }}
+    >
+      <ComponentThumb
+        component={component}
+        style={{
+          transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
+        }}
+        state="dragging"
+      />
+    </Flex>,
+    document.body
   );
 };
 
 type TabContentProps = {
-  onDragChange: UseDraggableProps["onDragChange"];
   onSetActiveTab: (tabName: TabName) => void;
   publish: Publish;
 };
 
-export const TabContent = ({
-  onDragChange,
-  publish,
-  onSetActiveTab,
-}: TabContentProps) => {
-  const componentNames = (
-    Object.keys(components) as Array<Instance["component"]>
-  ).filter((component) => components[component].isInlineOnly === false);
+const elementToComponentName = (element: Element) => {
+  // If drag doesn't start on the button element directly but on one of its children,
+  // we need to trace back to the button that has the data.
+  const parentWithData = element.closest("[data-drag-component]");
 
-  const handleDragChange = useCallback(
-    (isDragging: boolean) => {
-      onDragChange(isDragging);
-      publish<"dragStartInstance" | "dragEndInstance">({
-        type: isDragging === true ? "dragStartInstance" : "dragEndInstance",
+  if (!(parentWithData instanceof HTMLElement)) {
+    return;
+  }
+  const { dragComponent } = parentWithData.dataset;
+  return componentNames.find((component) => component === dragComponent);
+};
+
+export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
+  const [dragComponent, setDragComponent] = useState<Instance["component"]>();
+  const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
+
+  const [canvasRect] = useCanvasRect();
+  const [zoom] = useZoom();
+
+  const toCanvasCoordinates = ({ x, y }: Point) => {
+    if (canvasRect === undefined) {
+      return { x: 0, y: 0 };
+    }
+    const scale = zoom / 100;
+    return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
+  };
+
+  const useDragHandlers = useDrag<Instance["component"]>({
+    elementToData(element) {
+      const componentName = elementToComponentName(element);
+      if (componentName === undefined) {
+        return false;
+      }
+      return componentName;
+    },
+    onStart({ data: componentName }) {
+      setDragComponent(componentName);
+      publish<"dragStart", DragStartPayload>({
+        type: "dragStart",
+        payload: {
+          origin: "panel",
+          dragItem: createInstance({ component: componentName }),
+        },
       });
     },
-    [onDragChange, publish]
-  );
+    onMove: (point) => {
+      setPoint(point);
+      publish<"dragMove", DragMovePayload>({
+        type: "dragMove",
+        payload: { canvasCoordinates: toCanvasCoordinates(point) },
+      });
+    },
+    onEnd({ isCanceled }) {
+      setDragComponent(undefined);
+      publish<"dragEnd", DragEndPayload>({
+        type: "dragEnd",
+        payload: { origin: "panel", isCanceled },
+      });
+    },
+  });
+
+  useSubscribe("cancelCurrentDrag", () => {
+    useDragHandlers.cancelCurrentDrag();
+  });
 
   return (
-    <Flex gap="1" wrap="wrap" css={{ padding: "$1" }}>
+    <Flex
+      gap="1"
+      wrap="wrap"
+      css={{ padding: "$1" }}
+      ref={useDragHandlers.rootRef}
+    >
       {componentNames.map((component: Instance["component"]) => (
         <DraggableThumb
           key={component}
@@ -96,20 +157,9 @@ export const TabContent = ({
               payload: { instance: createInstance({ component }) },
             });
           }}
-          onDragChange={handleDragChange}
         />
       ))}
-      <CustomDragLayer
-        onDrag={(dragData) => {
-          publish<"dragInstance", DragData>({
-            type: "dragInstance",
-            payload: {
-              instance: createInstance({ component: dragData.component }),
-              currentOffset: dragData.currentOffset,
-            },
-          });
-        }}
-      />
+      {dragComponent && <DragLayer component={dragComponent} point={point} />}
     </Flex>
   );
 };

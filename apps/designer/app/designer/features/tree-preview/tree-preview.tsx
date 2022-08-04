@@ -1,62 +1,75 @@
-import { Instance, useSubscribe } from "@webstudio-is/react-sdk";
 import produce from "immer";
-import { useState } from "react";
+import { type Instance } from "@webstudio-is/react-sdk";
+import { useMemo } from "react";
 import { Tree } from "~/designer/shared/tree";
-import { type DragData, type DropData } from "~/shared/canvas-components";
 import { Flex } from "@webstudio-is/design-system";
-import { useRootInstance } from "~/shared/nano-states";
+import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
-  findInstanceById,
   getInstancePath,
+  reparentInstanceMutable,
   insertInstanceMutable,
-  deleteInstanceMutable,
+  createInstance,
+  findInstanceById,
 } from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
-  const [draftRootInstance, setDraftRootInstance] = useState(rootInstance);
-  const [instanceId, setInstanceId] = useState<Instance["id"]>();
+  const [dragAndDropState] = useDragAndDropState();
 
-  useSubscribe<"dropPreview", { dragData: DragData; dropData: DropData }>(
-    "dropPreview",
-    ({ dragData, dropData }) => {
-      if (rootInstance === undefined) return;
-      setInstanceId(dragData.instance.id);
+  const dragItemInstance = dragAndDropState.dragItem;
+  const dropTargetInstanceId = dragAndDropState.dropTarget?.instance.id;
+  const dropTargetPosition = dragAndDropState.dropTarget?.position;
 
-      const isNew =
-        findInstanceById(rootInstance, dragData.instance.id) === undefined;
-
-      const updatedRootInstance = produce((rootInstanceDraft) => {
-        // - Only delete if the instance existed before.
-        // - Can't reparent an instance inside itself.
-        if (isNew === false && dropData.instance.id !== dragData.instance.id) {
-          deleteInstanceMutable(rootInstanceDraft, dragData.instance.id);
-        }
-        insertInstanceMutable(rootInstanceDraft, dragData.instance, {
-          parentId: dropData.instance.id,
-          position: dropData.position,
-        });
-      })(rootInstance);
-      setDraftRootInstance(updatedRootInstance);
+  const treeProps = useMemo(() => {
+    if (
+      dragItemInstance === undefined ||
+      dropTargetInstanceId === undefined ||
+      dropTargetPosition === undefined ||
+      rootInstance === undefined
+    ) {
+      return null;
     }
-  );
 
-  if (draftRootInstance === undefined || instanceId === undefined) {
-    return null;
-  }
+    const isNew =
+      findInstanceById(rootInstance, dragItemInstance.id) === undefined;
 
-  const selectedInstancePath = getInstancePath(draftRootInstance, instanceId);
+    const instance: Instance = produce((draft) => {
+      if (isNew) {
+        insertInstanceMutable(
+          draft,
+          createInstance({ component: dragItemInstance.component }),
+          {
+            parentId: dropTargetInstanceId,
+            position: dropTargetPosition,
+          }
+        );
+      } else {
+        reparentInstanceMutable(
+          draft,
+          dragItemInstance.id,
+          dropTargetInstanceId,
+          dropTargetPosition
+        );
+      }
+    })(rootInstance);
 
-  if (selectedInstancePath.length === 0) return null;
+    return {
+      instance,
+      selectedInstanceId: dragItemInstance.id,
+      selectedInstancePath: getInstancePath(instance, dragItemInstance.id),
+    };
+  }, [
+    rootInstance,
+    dragItemInstance,
+    dropTargetInstanceId,
+    dropTargetPosition,
+  ]);
 
   return (
-    <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-      <Tree
-        instance={draftRootInstance}
-        selectedInstancePath={selectedInstancePath}
-        selectedInstanceId={instanceId}
-        animate={false}
-      />
-    </Flex>
+    treeProps && (
+      <Flex gap="3" direction="column" css={{ padding: "$1" }}>
+        <Tree {...treeProps} animate={false} />
+      </Flex>
+    )
   );
 };

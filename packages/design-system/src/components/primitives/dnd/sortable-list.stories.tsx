@@ -1,10 +1,10 @@
 import { ComponentMeta } from "@storybook/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Box } from "../../box";
 import { styled } from "../../../stitches.config";
-import { useDropTarget } from "./use-drop-target";
+import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
-import { usePlacement, PlacementIndicator, type Rect } from "./placement";
+import { PlacementIndicator } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
 
 type ItemData = { id: string; text: string };
@@ -12,7 +12,7 @@ type ItemData = { id: string; text: string };
 const ListItem = styled("li", {
   display: "block",
   margin: 10,
-  background: "$mint12",
+  background: "$mint5",
   padding: 10,
   userSelect: "none",
 });
@@ -38,9 +38,11 @@ const Item = ({
 };
 
 export const SortableList = ({
-  direction = "vertical",
+  direction,
+  reversed,
 }: {
-  direction?: "horizontal" | "vertical" | "wrap";
+  direction: "horizontal" | "vertical" | "wrap";
+  reversed: boolean;
 }) => {
   const [data, setData] = useState([
     { id: "0", text: "First" },
@@ -63,43 +65,49 @@ export const SortableList = ({
     { id: "17", text: "Eighteenth" },
   ] as ItemData[]);
 
-  const [placement, setPalcement] = useState<{
-    index: number;
-    placementRect: Rect;
-  }>();
-
+  const [dropTarget, setDropTarget] = useState<DropTarget<true>>();
   const [dragItemId, setDragItemId] = useState<string>();
+  const rootRef = useRef<HTMLUListElement | null>(null);
 
-  const dropTargetHandlers = useDropTarget({
-    isDropTarget(element: HTMLElement) {
+  const useDropHandlers = useDrop<true>({
+    elementToData(element) {
       return element instanceof HTMLUListElement;
     },
-    onDropTargetChange(event) {
-      placementHandlers.handleTargetChange(event.target);
+    swapDropTarget(dropTarget) {
+      if (dropTarget) {
+        return dropTarget;
+      }
+
+      if (rootRef.current === null) {
+        throw new Error("Unexpected empty rootRef during drag");
+      }
+
+      return { data: true, element: rootRef.current };
+    },
+    onDropTargetChange(dropTarget) {
+      setDropTarget(dropTarget);
     },
   });
 
   const autoScrollHandlers = useAutoScroll();
 
-  const dragProps = useDrag({
+  const useDragHandlers = useDrag<true>({
+    elementToData(element) {
+      return element instanceof HTMLLIElement;
+    },
     onStart(event) {
-      if (!(event.target instanceof HTMLLIElement)) {
-        event.cancel();
-        return;
-      }
       setDragItemId(event.target.dataset.id);
       autoScrollHandlers.setEnabled(true);
     },
-    onMove: (poiterCoordinate) => {
-      dropTargetHandlers.handleMove(poiterCoordinate);
-      autoScrollHandlers.handleMove(poiterCoordinate);
-      placementHandlers.handleMove(poiterCoordinate);
+    onMove: (point) => {
+      useDropHandlers.handleMove(point);
+      autoScrollHandlers.handleMove(point);
     },
     onEnd() {
-      if (placement !== undefined && dragItemId !== undefined) {
+      if (dropTarget !== undefined && dragItemId !== undefined) {
         const oldIndex = data.findIndex((item) => item.id === dragItemId);
         if (oldIndex !== -1) {
-          let newIndex = placement.index;
+          let newIndex = dropTarget.indexWithinChildren;
 
           // placement.index does not take into account the fact that the drag item will be removed.
           // we need to do this to account for it.
@@ -116,17 +124,10 @@ export const SortableList = ({
         }
       }
 
-      dropTargetHandlers.handleEnd();
+      useDropHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
-      placementHandlers.handleEnd();
       setDragItemId(undefined);
-      setPalcement(undefined);
-    },
-  });
-
-  const placementHandlers = usePlacement({
-    onPlacementChange: (event) => {
-      setPalcement(event);
+      setDropTarget(undefined);
     },
   });
 
@@ -135,27 +136,38 @@ export const SortableList = ({
       <Box
         css={{
           height: direction === "horizontal" ? "auto" : 500,
-          width: direction === "wrap" ? 200 : "auto",
+          width: direction === "horizontal" ? 500 : 200,
           overflow: "auto",
           background: "white",
           color: "black",
+
+          // these are needed to make scroll work with column-reverse/row-reverse below
+          display: "flex",
+          flexDirection: direction === "horizontal" ? "row" : "column",
 
           // to make DnD work we have to disable scrolling using touch
           touchAction: "none",
         }}
         ref={autoScrollHandlers.targetRef}
-        onScroll={() => {
-          dropTargetHandlers.handleScroll();
-          placementHandlers.handleScroll();
-        }}
-        {...dragProps}
+        onScroll={useDropHandlers.handleScroll}
       >
         <List
-          ref={dropTargetHandlers.rootRef}
+          ref={(element) => {
+            useDropHandlers.rootRef(element);
+            useDragHandlers.rootRef(element);
+            rootRef.current = element;
+          }}
           css={{
             li: { cursor: dragItemId === undefined ? "grab" : "default" },
-            display: direction === "vertical" ? "block" : "flex",
-            flexDirection: direction === "vertical" ? "none" : "row",
+            display: "flex",
+            flexDirection:
+              direction === "vertical"
+                ? reversed
+                  ? "column-reverse"
+                  : "column"
+                : reversed
+                ? "row-reverse"
+                : "row",
             flexWrap: direction === "wrap" ? "wrap" : "none",
           }}
         >
@@ -168,15 +180,19 @@ export const SortableList = ({
           ))}
         </List>
       </Box>
-      {placement && <PlacementIndicator rect={placement.placementRect} />}
+      {dropTarget && <PlacementIndicator placement={dropTarget.placement} />}
     </>
   );
 };
 
-export const SortableListHorizontal = () => (
-  <SortableList direction="horizontal" />
-);
-
-export const SortableListWrap = () => <SortableList direction="wrap" />;
-
-export default {} as ComponentMeta<typeof SortableList>;
+export default {
+  args: {
+    direction: "vertical",
+    reversed: false,
+  },
+  argTypes: {
+    direction: {
+      control: { type: "select", options: ["horizontal", "vertical", "wrap"] },
+    },
+  },
+} as ComponentMeta<typeof SortableList>;
