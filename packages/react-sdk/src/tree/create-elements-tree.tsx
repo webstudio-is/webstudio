@@ -72,11 +72,18 @@ const createInstanceChildrenElements = ({
       elements.push(child);
       continue;
     }
+    const children = createInstanceChildrenElements({
+      children: child.children,
+      breakpoints,
+      Component,
+      onChangeChildren,
+    });
     const element = createInstanceElement({
       instance: child,
       breakpoints,
       Component,
       onChangeChildren,
+      children,
     });
     elements.push(element);
   }
@@ -94,7 +101,7 @@ const createInstanceElement = ({
   breakpoints: Array<Breakpoint>;
   Component: (props: WrapperComponentProps) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
-  children?: Array<JSX.Element>;
+  children?: Array<JSX.Element | string>;
 }) => {
   const props = {
     instance,
