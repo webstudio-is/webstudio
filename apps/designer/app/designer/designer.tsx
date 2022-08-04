@@ -226,7 +226,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
           <Inspector publish={publish} />
         )}
       </SidePanel>
-      <Breadcrumbs publish={publish} />
+      <Footer publish={publish} />
     </ChromeWrapper>
   );
 };
