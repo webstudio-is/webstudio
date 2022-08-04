@@ -1,6 +1,4 @@
 import { useCallback, useMemo, useState } from "react";
-import { DndProvider } from "react-dnd";
-import { TouchBackend } from "react-dnd-touch-backend";
 import store from "immerhin";
 import * as db from "~/shared/db";
 import {
@@ -12,8 +10,6 @@ import {
   useSubscribe,
   createElementsTree,
 } from "@webstudio-is/react-sdk";
-import { setInstanceChildrenMutable } from "~/shared/tree-utils";
-import { useDragDropHandlers } from "./shared/use-drag-drop-handlers";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   usePopulateRootInstance,
@@ -48,10 +44,12 @@ import {
 import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
+import { useDragAndDrop } from "./shared/use-drag-drop";
 import {
   LexicalComposer,
   config,
 } from "~/canvas/features/wrapper-component/text-editor";
+import { setInstanceChildrenMutable } from "~/shared/tree-utils";
 
 registerContainers();
 
@@ -92,14 +90,7 @@ type DesignModeProps = {
   children: JSX.Element | null;
 };
 
-const dndOptions = {
-  enableMouseEvents: true,
-  // Prevents accidental dragging when trying to select an instance
-  delay: 10,
-};
-
 const DesignMode = ({ treeId, project, children }: DesignModeProps) => {
-  useDragDropHandlers();
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
@@ -120,13 +111,13 @@ const DesignMode = ({ treeId, project, children }: DesignModeProps) => {
   usePublishScrollState();
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
+  useDragAndDrop();
   return (
-    // Using touch backend becuase html5 drag&drop doesn't fire drag events in our case
-    <DndProvider backend={TouchBackend} options={dndOptions}>
+    <>
       {children && (
         <LexicalComposer initialConfig={config}>{children}</LexicalComposer>
       )}
-    </DndProvider>
+    </>
   );
 };
 

@@ -117,7 +117,7 @@ export const usePropsLogic = ({
       const isPropRequired = draft[index].required;
       switch (field) {
         case "prop":
-          if (!isPropRequired) {
+          if (isPropRequired !== true) {
             // TODO: Use discriminant type to make this more clear or separate into 2 functions
             draft[index].prop = value as UserProp["prop"];
           }

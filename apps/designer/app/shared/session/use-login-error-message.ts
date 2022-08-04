@@ -1,4 +1,3 @@
-import isNil from "lodash/isNil";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { sentryException } from "../sentry";
@@ -26,7 +25,7 @@ export const useLoginErrorMessage = (): string => {
     const message = searchParams.get("message");
 
     const hasMessageToShow =
-      error !== null && !isNil(message) && message !== "";
+      error !== null && message != null && message !== "";
 
     if (hasMessageToShow) {
       sentryException({
