@@ -21,13 +21,7 @@ import { useGlobalListeners } from "@react-aria/utils";
 
 interface MoveResult {
   onPointerDown: (e: PointerEvent) => void;
-}
-
-interface EventBase {
-  shiftKey: boolean;
-  ctrlKey: boolean;
-  metaKey: boolean;
-  altKey: boolean;
+  cancelCurrentMove: () => void;
 }
 
 export type PointerType = "mouse" | "pen" | "touch" | "keyboard" | "virtual";
@@ -77,7 +71,7 @@ interface MoveEvents {
   /** Handler that is called when the element is moved. */
   onMove?: (e: MoveMoveEvent) => void;
   /** Handler that is called when a move interaction ends. */
-  onMoveEnd?: (e: MoveEndEvent) => void;
+  onMoveEnd?: (e: MoveEndEvent | "canceled") => void;
 }
 
 /**
@@ -146,17 +140,27 @@ export function useMove(props: MoveEvents): MoveResult {
         clientY: originalEvent.clientY,
       });
     };
-    let end = (originalEvent: EventBase, pointerType: PointerType) => {
+
+    let end = (event: PointerEvent | "canceled") => {
       if (state.current.didMove) {
-        latestProps.current.onMoveEnd?.({
-          type: "moveend",
-          pointerType,
-          shiftKey: originalEvent.shiftKey,
-          metaKey: originalEvent.metaKey,
-          ctrlKey: originalEvent.ctrlKey,
-          altKey: originalEvent.altKey,
-        });
+        latestProps.current.onMoveEnd?.(
+          event === "canceled"
+            ? "canceled"
+            : {
+                type: "moveend",
+                pointerType: (event.pointerType || "mouse") as PointerType,
+                shiftKey: event.shiftKey,
+                metaKey: event.metaKey,
+                ctrlKey: event.ctrlKey,
+                altKey: event.altKey,
+              }
+        );
       }
+
+      state.current.id = null;
+      removeGlobalListener(window, "pointermove", onPointerMove, false);
+      removeGlobalListener(window, "pointerup", onPointerUp, false);
+      removeGlobalListener(window, "pointercancel", onPointerUp, false);
     };
 
     let onPointerMove = (event: PointerEvent) => {
@@ -181,12 +185,7 @@ export function useMove(props: MoveEvents): MoveResult {
 
     let onPointerUp = (event: PointerEvent) => {
       if (event.pointerId === state.current.id) {
-        let pointerType = (event.pointerType || "mouse") as PointerType;
-        end(event, pointerType);
-        state.current.id = null;
-        removeGlobalListener(window, "pointermove", onPointerMove, false);
-        removeGlobalListener(window, "pointerup", onPointerUp, false);
-        removeGlobalListener(window, "pointercancel", onPointerUp, false);
+        end(event);
       }
     };
 
@@ -209,6 +208,10 @@ export function useMove(props: MoveEvents): MoveResult {
           addGlobalListener(window, "pointerup", onPointerUp, false);
           addGlobalListener(window, "pointercancel", onPointerUp, false);
         }
+      },
+
+      cancelCurrentMove: () => {
+        end("canceled");
       },
     };
   }, [addGlobalListener, removeGlobalListener]);

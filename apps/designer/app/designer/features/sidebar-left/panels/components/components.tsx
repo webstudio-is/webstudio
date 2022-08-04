@@ -4,6 +4,7 @@ import {
   type Instance,
   type Publish,
   components,
+  useSubscribe,
 } from "@webstudio-is/react-sdk";
 import { Flex } from "@webstudio-is/design-system";
 import { useDrag, type Point } from "@webstudio-is/design-system";
@@ -125,13 +126,17 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         payload: { canvasCoordinates: toCanvasCoordinates(point) },
       });
     },
-    onEnd() {
+    onEnd({ isCanceled }) {
       setDragComponent(undefined);
       publish<"dragEnd", DragEndPayload>({
         type: "dragEnd",
-        payload: { origin: "panel" },
+        payload: { origin: "panel", isCanceled },
       });
     },
+  });
+
+  useSubscribe("cancelCurrentDrag", () => {
+    useDragHandlers.cancelCurrentDrag();
   });
 
   return (

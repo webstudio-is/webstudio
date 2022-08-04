@@ -44,6 +44,10 @@ const publishOpenBreakpointsMenu = () => {
   publish({ type: "openBreakpointsMenu" });
 };
 
+const publishCancelCurrentDrag = () => {
+  publish({ type: "cancelCurrentDrag" });
+};
+
 export const useShortcuts = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
@@ -75,6 +79,7 @@ export const useShortcuts = () => {
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
     zoom: publishZoom,
+    cancel: publishCancelCurrentDrag,
   } as const;
 
   useHotkeys(
@@ -134,6 +139,8 @@ export const useShortcuts = () => {
     options,
     []
   );
+
+  useHotkeys(shortcuts.cancel, shortcutHandlerMap.cancel, options, []);
 
   // Shortcuts from the parent window
   useSubscribe<"shortcut", { name: keyof typeof shortcuts; key: string }>(

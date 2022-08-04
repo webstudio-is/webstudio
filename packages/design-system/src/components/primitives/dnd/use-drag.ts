@@ -26,11 +26,12 @@ export type UseDragProps<DragItemData> = {
   onStart: (event: { target: HTMLElement; data: DragItemData }) => void;
   onMove: (event: Point) => void;
   onShiftChange?: (event: { shifts: number }) => void;
-  onEnd: () => void;
+  onEnd: (event: { isCanceled: boolean }) => void;
 };
 
 export type UseDragHandlers = {
   rootRef: (element: HTMLElement | null) => void;
+  cancelCurrentDrag: () => void;
 };
 
 export const useDrag = <DragItemData>({
@@ -62,7 +63,7 @@ export const useDrag = <DragItemData>({
     }
   };
 
-  const { onPointerDown } = useMove({
+  const useMoveHandlers = useMove({
     shouldStart: ({ target }) => {
       if (!target) {
         return false;
@@ -127,21 +128,27 @@ export const useDrag = <DragItemData>({
       onMove({ x, y });
       detectShift();
     },
-    onMoveEnd() {
+    onMoveEnd(event) {
       state.current = initialState;
-      onEnd();
+      onEnd({ isCanceled: event === "canceled" });
     },
   });
 
   useEffect(() => {
     const roorElement = rootRef.current;
     if (roorElement !== null) {
-      roorElement.addEventListener("pointerdown", onPointerDown);
+      roorElement.addEventListener(
+        "pointerdown",
+        useMoveHandlers.onPointerDown
+      );
       return () => {
-        roorElement.removeEventListener("pointerdown", onPointerDown);
+        roorElement.removeEventListener(
+          "pointerdown",
+          useMoveHandlers.onPointerDown
+        );
       };
     }
-  }, [onPointerDown]);
+  }, [useMoveHandlers]);
 
   // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
@@ -149,6 +156,9 @@ export const useDrag = <DragItemData>({
       rootRef(element) {
         rootRef.current = element;
       },
+      cancelCurrentDrag() {
+        useMoveHandlers.cancelCurrentMove();
+      },
     };
-  }, []);
+  }, [useMoveHandlers]);
 };

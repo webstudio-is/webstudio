@@ -36,7 +36,10 @@ export type DragStartPayload = {
   dragItem: BaseInstance;
 };
 
-export type DragEndPayload = { origin: "panel" | "canvas" };
+export type DragEndPayload = {
+  origin: "panel" | "canvas";
+  isCanceled: boolean;
+};
 
 export type DragMovePayload = { canvasCoordinates: Point };
 
@@ -176,18 +179,18 @@ export const useDragAndDrop = () => {
       dropHandlers.handleMove(point);
       autoScrollHandlers.handleMove(point);
     },
-    onEnd() {
+    onEnd({ isCanceled }) {
       dropHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
 
       publish<"dragEnd", DragEndPayload>({
         type: "dragEnd",
-        payload: { origin: "canvas" },
+        payload: { origin: "canvas", isCanceled },
       });
 
       const { dropTarget, dragItem } = state.current;
 
-      if (dropTarget && dragItem) {
+      if (dropTarget && dragItem && isCanceled === false) {
         publish<
           "reparentInstance",
           {
@@ -226,6 +229,10 @@ export const useDragAndDrop = () => {
     };
   }, [dragHandlers, dropHandlers, autoScrollHandlers]);
 
+  useSubscribe("cancelCurrentDrag", () => {
+    dragHandlers.cancelCurrentDrag();
+  });
+
   // Handle drag from the panel
   // ================================================================
 
@@ -247,33 +254,36 @@ export const useDragAndDrop = () => {
     }
   );
 
-  useSubscribe<"dragEnd", DragEndPayload>("dragEnd", ({ origin }) => {
-    if (origin === "panel") {
-      dropHandlers.handleEnd();
-      autoScrollHandlers.setEnabled(false);
+  useSubscribe<"dragEnd", DragEndPayload>(
+    "dragEnd",
+    ({ origin, isCanceled }) => {
+      if (origin === "panel") {
+        dropHandlers.handleEnd();
+        autoScrollHandlers.setEnabled(false);
 
-      const { dropTarget, dragItem } = state.current;
+        const { dropTarget, dragItem } = state.current;
 
-      if (dropTarget && dragItem) {
-        publish<
-          "insertInstance",
-          {
-            instance: Instance;
-            dropTarget: { instanceId: Instance["id"]; position: number };
-          }
-        >({
-          type: "insertInstance",
-          payload: {
-            instance: createInstance({ component: dragItem.component }),
-            dropTarget: {
-              instanceId: dropTarget.data.id,
-              position: dropTarget.indexWithinChildren,
+        if (dropTarget && dragItem && isCanceled === false) {
+          publish<
+            "insertInstance",
+            {
+              instance: Instance;
+              dropTarget: { instanceId: Instance["id"]; position: number };
+            }
+          >({
+            type: "insertInstance",
+            payload: {
+              instance: createInstance({ component: dragItem.component }),
+              dropTarget: {
+                instanceId: dropTarget.data.id,
+                position: dropTarget.indexWithinChildren,
+              },
             },
-          },
-        });
-      }
+          });
+        }
 
-      state.current = { ...initialState };
+        state.current = { ...initialState };
+      }
     }
-  });
+  );
 };

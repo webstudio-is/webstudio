@@ -13,7 +13,7 @@ export const useSubscribeDragAndDropState = () => {
     "dragStart",
     ({ origin, dragItem }) => {
       // It's possible that dropTargetChange comes before dragStart.
-      // Sot it's important to spread the current ...state here.
+      // So it's important to spread the current ...state here.
       setState({ ...state, isDragging: true, origin, dragItem });
     }
   );
