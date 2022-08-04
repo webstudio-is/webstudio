@@ -11,6 +11,10 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { findInstanceById } from "~/shared/tree-utils";
+import {
+  getInstanceElementById,
+  getInstanceIdFromElement,
+} from "~/shared/dom-utils";
 
 const eventOptions = {
   passive: true,
@@ -42,9 +46,9 @@ export const useTrackSelectedElement = () => {
     if (
       selectedInstance !== undefined &&
       (selectedElement === undefined ||
-        selectedInstance?.id !== selectedElement.id)
+        selectedInstance?.id !== getInstanceIdFromElement(selectedElement))
     ) {
-      const element = document.getElementById(selectedInstance.id);
+      const element = getInstanceElementById(selectedInstance.id);
       if (element === null) return;
       element.focus();
       setSelectedElement(element);
@@ -99,7 +103,9 @@ export const useTrackSelectedElement = () => {
         // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
         // Inline instances are not directly, only through parent instance.
         if (isInlineOnly) {
-          const parentId = element.parentElement?.id;
+          const parentId =
+            element.parentElement &&
+            getInstanceIdFromElement(element.parentElement);
           if (parentId) {
             selectInstance(parentId);
             setEditingInstanceId(parentId);

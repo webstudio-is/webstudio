@@ -99,7 +99,7 @@ export const AssetManagerThumbnail = ({
           ...(isUploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
         }}
       ></Box>
-      {!isUploading && (
+      {isUploading === false && (
         <Tooltip
           open={isTooltipOpen}
           multiline

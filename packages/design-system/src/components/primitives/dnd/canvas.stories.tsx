@@ -1,9 +1,9 @@
 import { ComponentMeta } from "@storybook/react";
 import React, { useState, useRef } from "react";
 import { Box } from "../../box";
-import { useDropTarget } from "./use-drop-target";
+import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
-import { usePlacement, PlacementIndicator, type Rect } from "./placement";
+import { PlacementIndicator } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
 
 const ROOT_ID = "root";
@@ -30,7 +30,7 @@ const Item = ({
         minHeight: 100,
         margin: 10,
         padding: 10,
-        background: "$mint12",
+        background: "$mint5",
         border: "1px solid $mint9",
       }}
       style={data.style}
@@ -58,7 +58,8 @@ const Items = ({
   );
 };
 
-const elementToId = (element: HTMLElement) => element.dataset.id;
+const elementToId = (element: Element) =>
+  element instanceof HTMLElement && element.dataset.id;
 
 const idToElement = (
   root: HTMLElement,
@@ -82,16 +83,16 @@ const mapItems = (
   data: ItemData[],
   fn: (item: ItemData) => ItemData
 ): ItemData[] => {
+  const recur = (
+    data: ItemData[],
+    fn: (item: ItemData) => ItemData
+  ): ItemData[] =>
+    data.map((item) => fn({ ...item, children: recur(item.children, fn) }));
   return fn({
     id: ROOT_ID,
     style: {},
     acceptsChildren: true,
-    children: data.map((item) => {
-      return fn({
-        ...item,
-        children: mapItems(item.children, fn),
-      });
-    }),
+    children: recur(data, fn),
   }).children;
 };
 
@@ -127,99 +128,147 @@ export const Canvas = () => {
       id: "0",
       style: {},
       children: [
-        { id: "1", style: { margin: 0 }, children: [], acceptsChildren: true },
-        { id: "2", style: { margin: 0 }, children: [], acceptsChildren: true },
-        { id: "3", style: { margin: 0 }, children: [], acceptsChildren: true },
+        {
+          id: "1",
+          style: { margin: 0, background: "#ff7878" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "2",
+          style: { margin: 0, background: "#a8d1ff" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "3",
+          style: { margin: 0, background: "#94ef94" },
+          children: [],
+          acceptsChildren: true,
+        },
       ],
       acceptsChildren: true,
     },
     { id: "4", style: {}, children: [], acceptsChildren: true },
     { id: "5", style: {}, children: [], acceptsChildren: true },
-    { id: "6", style: {}, children: [], acceptsChildren: false },
+    {
+      id: "6",
+      style: { background: "whitesmoke" },
+      children: [],
+      acceptsChildren: false,
+    },
+    {
+      id: "7",
+      style: { display: "flex" },
+      children: [
+        {
+          id: "8",
+          style: { margin: 0, background: "#ff7878" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "9",
+          style: { margin: 0, background: "#a8d1ff" },
+          children: [],
+          acceptsChildren: true,
+        },
+        {
+          id: "10",
+          style: { margin: 0, background: "#94ef94" },
+          children: [],
+          acceptsChildren: true,
+        },
+      ],
+      acceptsChildren: true,
+    },
   ]);
 
-  const [placement, setPalcement] = useState<{
-    index: number;
-    placementRect: Rect;
-  }>();
-
+  const [currentDropTarget, setCurrentDropTarget] = useState<
+    DropTarget<string> | undefined
+  >();
   const [dragItemId, setDragItemId] = useState<string>();
 
-  const dropTargetId = useRef<string>();
   const rootRef = useRef<HTMLElement | null>(null);
 
-  const setDropTarget = (id: string, element: HTMLElement) => {
-    dropTargetId.current = id;
-    placementHandlers.handleTargetChange(element);
+  const getDefaultDropTarget = () => {
+    if (rootRef.current === null) {
+      throw new Error("Unexpected empty rootRef during drag");
+    }
+    return { data: ROOT_ID, element: rootRef.current };
   };
 
-  const dropTargetHandlers = useDropTarget({
+  const dropHandlers = useDrop<string>({
     edgeDistanceThreshold: 10,
-    isDropTarget(element: HTMLElement) {
-      return elementToId(element) !== undefined;
+
+    elementToData(element) {
+      return elementToId(element) ?? false;
     },
-    onDropTargetChange(event) {
-      const id = elementToId(event.target);
+
+    swapDropTarget(dropTarget) {
       const rootElement = rootRef.current;
-
-      if (id === undefined || rootElement === null) {
-        return;
+      if (dropTarget === undefined || rootElement === null) {
+        return getDefaultDropTarget();
       }
 
-      if (id !== ROOT_ID) {
-        let path = findItemPath(data, id) ?? [];
+      const { data: id, nearEdge } = dropTarget;
 
-        // NOTE: not sure we should always do this.
-        // Might depend on whether there's a parent with acceptsChildren, or something.
-        if (event.area !== "center") {
-          path = path.slice(1);
-        }
-
-        // to make sure we are not dropping on ourself
-        const dragItemIndex = path.findIndex((item) => item.id === dragItemId);
-        if (dragItemIndex !== -1) {
-          path = path.slice(dragItemIndex + 1);
-        }
-
-        for (const item of path) {
-          if (item.acceptsChildren) {
-            const element = idToElement(rootElement, item.id);
-            if (element) {
-              setDropTarget(item.id, element);
-              return;
-            }
-          }
-        }
+      if (id === ROOT_ID) {
+        return dropTarget;
       }
 
-      setDropTarget(ROOT_ID, rootElement);
+      const path = findItemPath(data, id) ?? [];
+
+      if (nearEdge) {
+        path.shift();
+      }
+
+      // Don't allow to drop inside drag item or any of its children
+      const dragItemIndex = path.findIndex((item) => item.id === dragItemId);
+      if (dragItemIndex !== -1) {
+        path.splice(0, dragItemIndex + 1);
+      }
+
+      const newItem = path.find((item) => item.acceptsChildren);
+
+      if (newItem === undefined) {
+        return getDefaultDropTarget();
+      }
+
+      const element = idToElement(rootElement, newItem.id);
+
+      if (element === undefined) {
+        return getDefaultDropTarget();
+      }
+
+      return { data: newItem.id, element };
+    },
+
+    onDropTargetChange(dropTarget) {
+      setCurrentDropTarget(dropTarget);
     },
   });
 
   const autoScrollHandlers = useAutoScroll();
 
-  const dragProps = useDrag({
-    onStart(event) {
-      const id = event.target.dataset.id;
-      if (id == null) {
-        event.cancel();
-        return;
+  const useDragHandlers = useDrag<string>({
+    elementToData(element) {
+      const id = element instanceof HTMLElement && element.dataset.id;
+      if (id) {
+        return id;
       }
+      return false;
+    },
+    onStart({ data: id }) {
       setDragItemId(id);
       autoScrollHandlers.setEnabled(true);
     },
-    onMove: (poiterCoordinate) => {
-      dropTargetHandlers.handleMove(poiterCoordinate);
-      autoScrollHandlers.handleMove(poiterCoordinate);
-      placementHandlers.handleMove(poiterCoordinate);
+    onMove: (point) => {
+      dropHandlers.handleMove(point);
+      autoScrollHandlers.handleMove(point);
     },
     onEnd() {
-      const currentDropTargetId = dropTargetId.current;
-      if (
-        placement !== undefined &&
-        dragItemId !== undefined &&
-        currentDropTargetId !== undefined
-      ) {
+      if (dragItemId !== undefined && currentDropTarget !== undefined) {
         setData((current) => {
           const dragItem = findItem(current, dragItemId);
 
@@ -240,13 +289,14 @@ export const Canvas = () => {
               children.splice(oldIndex, 1);
             }
 
-            if (item.id === currentDropTargetId) {
+            if (item.id === currentDropTarget.data) {
               // placement.index does not take into account the fact that the drag item will be removed.
               // we need to do this to account for it.
               const newIndex =
-                oldIndex !== -1 && oldIndex < placement.index
-                  ? placement.index - 1
-                  : placement.index;
+                oldIndex !== -1 &&
+                oldIndex < currentDropTarget.indexWithinChildren
+                  ? currentDropTarget.indexWithinChildren - 1
+                  : currentDropTarget.indexWithinChildren;
 
               children = children.slice();
               children.splice(newIndex, 0, dragItem);
@@ -257,18 +307,10 @@ export const Canvas = () => {
         });
       }
 
-      dropTargetHandlers.handleEnd();
+      dropHandlers.handleEnd();
       autoScrollHandlers.setEnabled(false);
-      placementHandlers.handleEnd();
       setDragItemId(undefined);
-      setPalcement(undefined);
-      dropTargetId.current = undefined;
-    },
-  });
-
-  const placementHandlers = usePlacement({
-    onPlacementChange: (event) => {
-      setPalcement(event);
+      setCurrentDropTarget(undefined);
     },
   });
 
@@ -287,21 +329,23 @@ export const Canvas = () => {
             cursor: dragItemId === undefined ? "grab" : "default",
           },
         }}
-        ref={(element) => {
-          dropTargetHandlers.rootRef(element);
-          autoScrollHandlers.targetRef(element);
-          rootRef.current = element;
-        }}
-        onScroll={() => {
-          dropTargetHandlers.handleScroll();
-          placementHandlers.handleScroll();
-        }}
-        data-id={ROOT_ID}
-        {...dragProps}
+        ref={autoScrollHandlers.targetRef}
+        onScroll={dropHandlers.handleScroll}
       >
-        <Items data={data} dragItemId={dragItemId} />
+        <Box
+          ref={(element) => {
+            dropHandlers.rootRef(element);
+            useDragHandlers.rootRef(element);
+            rootRef.current = element;
+          }}
+          data-id={ROOT_ID}
+        >
+          <Items data={data} dragItemId={dragItemId} />
+        </Box>
       </Box>
-      {placement && <PlacementIndicator rect={placement.placementRect} />}
+      {currentDropTarget && (
+        <PlacementIndicator placement={currentDropTarget.placement} />
+      )}
     </>
   );
 };

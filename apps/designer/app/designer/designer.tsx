@@ -1,6 +1,4 @@
-import { useCallback, useState } from "react";
-import { DndProvider } from "react-dnd";
-import { TouchBackend } from "react-dnd-touch-backend";
+import { useCallback } from "react";
 import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
 import { type Project, type Asset } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
@@ -32,7 +30,11 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import { type SyncStatus } from "~/shared/sync";
-import { useIsPreviewMode, useRootInstance } from "~/shared/nano-states";
+import {
+  useIsPreviewMode,
+  useRootInstance,
+  useDragAndDropState,
+} from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
 
 export const links = () => {
@@ -63,17 +65,6 @@ const useSubscribeHoveredInstanceData = () => {
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
   useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
-};
-
-const useIsDragging = (): [boolean, (isDragging: boolean) => void] => {
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  useSubscribe<"dragStartInstance">("dragStartInstance", () => {
-    setIsDragging(true);
-  });
-  useSubscribe<"dragEndInstance">("dragEndInstance", () => {
-    setIsDragging(false);
-  });
-  return [isDragging, setIsDragging];
 };
 
 type SidePanelProps = {
@@ -166,8 +157,6 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
   );
 };
 
-const dndOptions = { enableMouseEvents: true };
-
 type DesignerProps = {
   config: Config;
   project: Project;
@@ -183,10 +172,10 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeClientSetting();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
-  const [isDragging, setIsDragging] = useIsDragging();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
+  const [dragAndDropState] = useDragAndDropState();
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -198,44 +187,46 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   );
 
   return (
-    <DndProvider backend={TouchBackend} options={dndOptions}>
-      <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar
-          css={{ gridArea: "header" }}
-          config={config}
-          project={project}
-          publish={publish}
-        />
-        <Main>
-          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
-            <CanvasIframe
-              ref={iframeRefCallback}
-              src={`${config.canvasPath}/${project.id}`}
-              pointerEvents={isDragging ? "none" : "all"}
-              title={project.title}
-              css={{
-                height: "100%",
-                width: "100%",
-              }}
-            />
-          </Workspace>
-        </Main>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft
-            assets={assets}
-            onDragChange={setIsDragging}
-            publish={publish}
+    <ChromeWrapper isPreviewMode={isPreviewMode}>
+      <Topbar
+        css={{ gridArea: "header" }}
+        config={config}
+        project={project}
+        publish={publish}
+      />
+      <Main>
+        <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+          <CanvasIframe
+            ref={iframeRefCallback}
+            src={`${config.canvasPath}/${project.id}`}
+            pointerEvents={
+              dragAndDropState.isDragging && dragAndDropState.origin === "panel"
+                ? "none"
+                : "all"
+            }
+            title={project.title}
+            css={{
+              height: "100%",
+              width: "100%",
+            }}
           />
-        </SidePanel>
-        <SidePanel
-          gridArea="inspector"
-          isPreviewMode={isPreviewMode}
-          css={{ overflow: "hidden" }}
-        >
-          {isDragging ? <TreePrevew /> : <Inspector publish={publish} />}
-        </SidePanel>
-        <Footer publish={publish} />
-      </ChromeWrapper>
-    </DndProvider>
+        </Workspace>
+      </Main>
+      <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+        <SidebarLeft assets={assets} publish={publish} />
+      </SidePanel>
+      <SidePanel
+        gridArea="inspector"
+        isPreviewMode={isPreviewMode}
+        css={{ overflow: "hidden" }}
+      >
+        {dragAndDropState.isDragging ? (
+          <TreePrevew />
+        ) : (
+          <Inspector publish={publish} />
+        )}
+      </SidePanel>
+      <Breadcrumbs publish={publish} />
+    </ChromeWrapper>
   );
 };

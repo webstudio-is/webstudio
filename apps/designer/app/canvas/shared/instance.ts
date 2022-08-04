@@ -17,10 +17,10 @@ import {
   findClosestSiblingInstance,
   insertInstanceMutable,
   findInstanceById,
+  reparentInstanceMutable,
 } from "~/shared/tree-utils";
 import store from "immerhin";
 import {
-  DropData,
   HoveredInstanceData,
   type SelectedInstanceData,
 } from "~/shared/canvas-components";
@@ -36,6 +36,7 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useMeasure } from "~/shared/dom-hooks";
+import { findInstanceByElement } from "~/shared/dom-utils";
 
 export const usePopulateRootInstance = (tree: Tree) => {
   const [, setRootInstance] = useRootInstance();
@@ -49,8 +50,12 @@ export const useInsertInstance = () => {
 
   useSubscribe<
     "insertInstance",
-    { instance: Instance; dropData?: DropData; props?: InstanceProps }
-  >("insertInstance", ({ instance, dropData, props }) => {
+    {
+      instance: Instance;
+      dropTarget?: { instanceId: Instance["id"]; position: number };
+      props?: InstanceProps;
+    }
+  >("insertInstance", ({ instance, dropTarget, props }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
@@ -61,8 +66,8 @@ export const useInsertInstance = () => {
           populatedInstance,
           {
             parentId:
-              dropData?.instance.id ?? selectedInstance?.id ?? rootInstance.id,
-            position: dropData?.position || "end",
+              dropTarget?.instanceId ?? selectedInstance?.id ?? rootInstance.id,
+            position: dropTarget === undefined ? "end" : dropTarget.position,
           }
         );
         if (hasInserted) {
@@ -77,19 +82,23 @@ export const useInsertInstance = () => {
 };
 
 export const useReparentInstance = () => {
-  useSubscribe<"reparentInstance", { instance: Instance; dropData: DropData }>(
+  useSubscribe<
     "reparentInstance",
-    ({ instance, dropData }) => {
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) return;
-        deleteInstanceMutable(rootInstance, instance.id);
-        insertInstanceMutable(rootInstance, instance, {
-          parentId: dropData.instance.id,
-          position: dropData.position,
-        });
-      });
+    {
+      instanceId: Instance["id"];
+      dropTarget: { instanceId: Instance["id"]; position: number };
     }
-  );
+  >("reparentInstance", ({ instanceId, dropTarget }) => {
+    store.createTransaction([rootInstanceContainer], (rootInstance) => {
+      if (rootInstance === undefined) return;
+      reparentInstanceMutable(
+        rootInstance,
+        instanceId,
+        dropTarget.instanceId,
+        dropTarget.position
+      );
+    });
+  });
 };
 
 export const useDeleteInstance = () => {
@@ -230,8 +239,8 @@ export const useSetHoveredInstance = () => {
 
   useEffect(() => {
     let instance;
-    if (rootInstance !== undefined && hoveredElement?.id) {
-      instance = findInstanceById(rootInstance, hoveredElement.id);
+    if (rootInstance !== undefined && hoveredElement) {
+      instance = findInstanceByElement(rootInstance, hoveredElement);
     }
     setHoveredInstance(instance);
   }, [rootInstance, hoveredElement, setHoveredInstance]);

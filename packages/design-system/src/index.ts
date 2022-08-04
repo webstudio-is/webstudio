@@ -60,5 +60,6 @@ export * from "./components/radio";
 export * from "./components/combobox";
 export * from "./components/checkbox";
 export * from "./components/avatar";
+export * from "./components/primitives/dnd";
 export * from "./components/icon-button-with-menu";
 export * from "./components/primitives/numeric-gesture-control";
