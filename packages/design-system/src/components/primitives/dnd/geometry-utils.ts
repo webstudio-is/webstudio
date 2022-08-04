@@ -1,4 +1,9 @@
-export type Rect = Pick<DOMRect, "top" | "left" | "width" | "height">;
+export type Rect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
 
 export type Point = { x: number; y: number };
 
