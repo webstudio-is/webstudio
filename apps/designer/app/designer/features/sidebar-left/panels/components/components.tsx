@@ -21,7 +21,7 @@ import {
 
 const componentNames = (
   Object.keys(components) as Array<Instance["component"]>
-).filter((component) => components[component].isInlineOnly === false);
+).filter((component) => components[component].isListed);
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -83,9 +83,6 @@ const elementToComponentName = (element: Element) => {
     return;
   }
   const { dragComponent } = parentWithData.dataset;
-  const componentNames = (
-    Object.keys(components) as Array<Instance["component"]>
-  ).filter((component) => components[component].isListed);
   return componentNames.find((component) => component === dragComponent);
 };
 
