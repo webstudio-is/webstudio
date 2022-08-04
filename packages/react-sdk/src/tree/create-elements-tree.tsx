@@ -1,8 +1,9 @@
-import React from "react";
+import { Fragment } from "react";
 import { toCss } from "../stitches";
 import type { Instance } from "../db";
 import type { Breakpoint } from "../css";
 import { type WrapperComponentProps } from "./wrapper-component";
+import { Scripts, ScrollRestoration } from "@remix-run/react";
 
 export type ChildrenUpdates = Array<
   | string
@@ -32,22 +33,69 @@ export const createElementsTree = ({
   breakpoints: Array<Breakpoint>;
   Component: (props: WrapperComponentProps) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
-}): JSX.Element => {
-  const children: Array<string | JSX.Element> = [];
+}) => {
+  const children = createInstanceChildrenElements({
+    Component,
+    children: instance.children,
+    breakpoints,
+    onChangeChildren,
+  });
+  const body = createInstanceElement({
+    Component,
+    instance,
+    children: [
+      <Fragment key="children">
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </Fragment>,
+    ],
+    breakpoints,
+  });
+  return body;
+};
 
-  for (const child of instance.children) {
-    const element =
-      typeof child === "string"
-        ? child
-        : createElementsTree({
-            instance: child,
-            breakpoints,
-            Component,
-            onChangeChildren,
-          });
-    children.push(element);
+const createInstanceChildrenElements = ({
+  children,
+  breakpoints,
+  Component,
+  onChangeChildren,
+}: {
+  children: Instance["children"];
+  breakpoints: Array<Breakpoint>;
+  Component: (props: WrapperComponentProps) => JSX.Element;
+  onChangeChildren?: OnChangeChildren;
+}) => {
+  const elements = [];
+  for (const child of children) {
+    if (typeof child === "string") {
+      elements.push(child);
+      continue;
+    }
+    const element = createInstanceElement({
+      instance: child,
+      breakpoints,
+      Component,
+      onChangeChildren,
+    });
+    elements.push(element);
   }
+  return elements;
+};
 
+const createInstanceElement = ({
+  Component,
+  instance,
+  children = [],
+  breakpoints,
+  onChangeChildren,
+}: {
+  instance: Instance;
+  breakpoints: Array<Breakpoint>;
+  Component: (props: WrapperComponentProps) => JSX.Element;
+  onChangeChildren?: OnChangeChildren;
+  children?: Array<JSX.Element>;
+}) => {
   const props = {
     instance,
     children,
@@ -55,5 +103,6 @@ export const createElementsTree = ({
     key: instance.id,
     onChangeChildren,
   };
+
   return <Component {...props} />;
 };

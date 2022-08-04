@@ -17,6 +17,7 @@ export default {
   canAcceptChild: () => false,
   isContentEditable: true,
   isInlineOnly: false,
+  isListed: true,
   label: "Text Block",
   children: ["Block of text you can edit"],
 } as WsComponentMeta<typeof TextBlock>;

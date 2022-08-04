@@ -21,6 +21,7 @@ export default {
   canAcceptChild: () => false,
   isContentEditable: true,
   isInlineOnly: false,
+  isListed: true,
   label: "Link",
   children: ["Link text you can edit"],
 } as WsComponentMeta<typeof Link>;

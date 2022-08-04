@@ -21,5 +21,6 @@ export default {
   canAcceptChild: () => true,
   isContentEditable: false,
   isInlineOnly: false,
+  isListed: true,
   label: "Form",
 } as WsComponentMeta<typeof Form>;

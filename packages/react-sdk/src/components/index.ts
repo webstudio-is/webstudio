@@ -1,3 +1,4 @@
+export { default as Body } from "./body.ws";
 export { default as Box } from "./box.ws";
 export { default as TextBlock } from "./text-block.ws";
 export { default as Heading } from "./heading.ws";

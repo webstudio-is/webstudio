@@ -6,14 +6,10 @@ import {
   type Data,
   type Tree,
   useAllUserProps,
-  WrapperComponent,
   globalStyles,
   useSubscribe,
-} from "@webstudio-is/react-sdk";
-import {
   createElementsTree,
-  setInstanceChildrenMutable,
-} from "~/shared/tree-utils";
+} from "@webstudio-is/react-sdk";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   usePopulateRootInstance,
@@ -53,6 +49,7 @@ import {
   LexicalComposer,
   config,
 } from "~/canvas/features/wrapper-component/text-editor";
+import { setInstanceChildrenMutable } from "~/shared/tree-utils";
 
 registerContainers();
 
@@ -70,7 +67,7 @@ const useElementsTree = () => {
   }, []);
 
   return useMemo(() => {
-    if (rootInstance === undefined) return;
+    if (rootInstance === undefined) return null;
 
     return createElementsTree({
       instance: rootInstance,
@@ -87,23 +84,13 @@ const useSubscribePreviewMode = () => {
   return isPreviewMode;
 };
 
-const PreviewMode = () => {
-  const [rootInstance] = useRootInstance();
-  const [breakpoints] = useBreakpoints();
-  if (rootInstance === undefined) return null;
-  return createElementsTree({
-    breakpoints,
-    instance: rootInstance,
-    Component: WrapperComponent,
-  });
-};
-
 type DesignModeProps = {
   treeId: Tree["id"];
   project: db.project.Project;
+  children: JSX.Element | null;
 };
 
-const DesignMode = ({ treeId, project }: DesignModeProps) => {
+const DesignMode = ({ treeId, project, children }: DesignModeProps) => {
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
@@ -125,11 +112,10 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
   useDragAndDrop();
-  const elements = useElementsTree();
   return (
     <>
-      {elements && (
-        <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
+      {children && (
+        <LexicalComposer initialConfig={config}>{children}</LexicalComposer>
       )}
     </>
   );
@@ -150,10 +136,14 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   const isPreviewMode = useSubscribePreviewMode();
-
+  const elements = useElementsTree();
   if (isPreviewMode) {
-    return <PreviewMode />;
+    return elements;
   }
 
-  return <DesignMode treeId={data.tree.id} project={data.project} />;
+  return (
+    <DesignMode treeId={data.tree.id} project={data.project}>
+      {elements}
+    </DesignMode>
+  );
 };

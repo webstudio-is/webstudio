@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import ObjectId from "bson-objectid";
 import {
   type InstanceProps,
@@ -39,10 +39,13 @@ import { useMeasure } from "~/shared/dom-hooks";
 import { findInstanceByElement } from "~/shared/dom-utils";
 
 export const usePopulateRootInstance = (tree: Tree) => {
-  const [, setRootInstance] = useRootInstance();
-  useEffect(() => {
-    setRootInstance(tree.root);
-  }, [tree, setRootInstance]);
+  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
+  const ref = useRef(false);
+  // It is only set once when the canvas is first loaded.
+  if (ref.current === false) {
+    ref.current = true;
+    rootInstanceContainer.value = tree.root;
+  }
 };
 
 export const useInsertInstance = () => {
