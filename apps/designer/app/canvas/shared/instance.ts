@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import ObjectId from "bson-objectid";
 import {
   type InstanceProps,
@@ -38,8 +38,10 @@ import {
 import { useMeasure } from "~/shared/dom-hooks";
 
 export const usePopulateRootInstance = (tree: Tree) => {
+  const ref = useRef(false);
   // It is only set once when the canvas is first loaded.
-  if (rootInstanceContainer.value === undefined) {
+  if (ref.current === false) {
+    ref.current = true;
     rootInstanceContainer.value = tree.root;
   }
 };
