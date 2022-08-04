@@ -571,9 +571,9 @@ const GridControl = ({
 
 const LockControl = ({
   name,
-  currentStyle,
-  setProperty,
-}: {
+}: // currentStyle,
+// setProperty,
+{
   name: string;
   currentStyle: Style;
   setProperty: SetProperty;
