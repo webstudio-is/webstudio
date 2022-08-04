@@ -22,7 +22,7 @@ const initialState = {
 export type UseDragProps<DragItemData> = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
-  isDragItem: (element: Element) => DragItemData | false;
+  elementToData: (element: Element) => DragItemData | false;
   onStart: (event: { target: HTMLElement; data: DragItemData }) => void;
   onMove: (event: Point) => void;
   onShiftChange?: (event: { shifts: number }) => void;
@@ -41,7 +41,7 @@ export const useDrag = <DragItemData>({
   onMove,
   onShiftChange,
   onEnd,
-  isDragItem,
+  elementToData,
 }: UseDragProps<DragItemData>): UseDragHandlers => {
   const state = useRef<State>(initialState);
   const rootRef = useRef<HTMLElement | null>(null);
@@ -69,7 +69,7 @@ export const useDrag = <DragItemData>({
         return false;
       }
 
-      const data = isDragItem(target as Element);
+      const data = elementToData(target as Element);
 
       if (data === false) {
         return false;

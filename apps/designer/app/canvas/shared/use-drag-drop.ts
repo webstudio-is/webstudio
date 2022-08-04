@@ -68,7 +68,7 @@ export const useDragAndDrop = () => {
   };
 
   const dropHandlers = useDrop<Instance>({
-    isDropTarget(element) {
+    elementToData(element) {
       const instance =
         rootInstance !== undefined &&
         findInstanceByElement(rootInstance, element);
@@ -139,7 +139,7 @@ export const useDragAndDrop = () => {
   });
 
   const dragHandlers = useDrag<Instance>({
-    isDragItem(element) {
+    elementToData(element) {
       if (rootInstance === undefined) {
         return false;
       }

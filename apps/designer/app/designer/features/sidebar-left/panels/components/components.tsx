@@ -102,7 +102,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   };
 
   const useDragHandlers = useDrag<Instance["component"]>({
-    isDragItem(element) {
+    elementToData(element) {
       const componentName = elementToComponentName(element);
       if (componentName === undefined) {
         return false;

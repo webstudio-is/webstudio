@@ -70,7 +70,7 @@ export const SortableList = ({
   const rootRef = useRef<HTMLUListElement | null>(null);
 
   const useDropHandlers = useDrop<true>({
-    isDropTarget(element) {
+    elementToData(element) {
       return element instanceof HTMLUListElement;
     },
     swapDropTarget(dropTarget) {
@@ -91,8 +91,8 @@ export const SortableList = ({
 
   const autoScrollHandlers = useAutoScroll();
 
-  const useDragHandlers = useDrag({
-    isDragItem(element) {
+  const useDragHandlers = useDrag<true>({
+    elementToData(element) {
       return element instanceof HTMLLIElement;
     },
     onStart(event) {

@@ -27,16 +27,16 @@ export type DropTarget<Data> = PartialDropTarget<Data> & {
 };
 
 // We pass around data, to avoid extra data lookups.
-// For example, data found in isDropTarget
+// For example, data found in elementToData
 // doesn't have to be looked up again in swapDropTarget.
 export type UseDropProps<Data> = {
   // To check that the element can qualify as a target
-  isDropTarget: (target: Element) => Data | false;
+  elementToData: (target: Element) => Data | false;
 
   // Distance from an edge to set nearEdge to true in swapDropTarget
   edgeDistanceThreshold?: number;
 
-  // Given the potential target that has passed the isDropTarget check,
+  // Given the potential target that has passed the elementToData check,
   // and the position of the pointer on the target,
   // you can swap to another target
   swapDropTarget: (
@@ -170,7 +170,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
     const detectTarget = () => {
       const {
         edgeDistanceThreshold = 3,
-        isDropTarget,
+        elementToData,
         swapDropTarget,
       } = latestProps.current;
 
@@ -178,7 +178,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       const root = rootRef.current;
 
       // @todo: Cache this?
-      // Not expensive by itself, but it may call isDropTarget multiple times.
+      // Not expensive by itself, but it may call elementToData multiple times.
       let candidate =
         root &&
         findClosestDropTarget({
@@ -189,7 +189,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
               pointerCoordinates.x,
               pointerCoordinates.y
             ),
-          isDropTarget,
+          elementToData,
         });
 
       // To avoid calling swapDropTarget unnecessarily on every pointermove
@@ -264,11 +264,11 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 const findClosestDropTarget = <Data>({
   root,
   initialElement,
-  isDropTarget,
+  elementToData,
 }: {
   root: Element;
   initialElement: Element | undefined | null;
-  isDropTarget: (target: Element) => Data | false;
+  elementToData: (target: Element) => Data | false;
 }): PartialDropTarget<Data> | undefined => {
   // The element we get from elementFromPoint() might not be inside the root
   if (initialElement === undefined || root.contains(initialElement) === false) {
@@ -277,7 +277,7 @@ const findClosestDropTarget = <Data>({
 
   let currentElement = initialElement;
   while (currentElement != null) {
-    const data = isDropTarget(currentElement);
+    const data = elementToData(currentElement);
     if (data !== false) {
       return { data: data, element: currentElement };
     }

@@ -201,7 +201,7 @@ export const Canvas = () => {
   const dropHandlers = useDrop<string>({
     edgeDistanceThreshold: 10,
 
-    isDropTarget(element) {
+    elementToData(element) {
       return elementToId(element) ?? false;
     },
 
@@ -252,7 +252,7 @@ export const Canvas = () => {
   const autoScrollHandlers = useAutoScroll();
 
   const useDragHandlers = useDrag<string>({
-    isDragItem(element) {
+    elementToData(element) {
       const id = element instanceof HTMLElement && element.dataset.id;
       if (id) {
         return id;
