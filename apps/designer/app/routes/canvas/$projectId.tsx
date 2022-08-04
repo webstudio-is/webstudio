@@ -37,13 +37,16 @@ export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
   return { errors: "Unexpected error", env };
 };
 
+const Outlet = () => {
+  const data = useLoaderData<CanvasData>();
+  return <Canvas data={data} />;
+};
+
 const CanvasRoute = () => {
   const data = useLoaderData<Data>();
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
-  const Outlet = () => <Canvas data={data} />;
-
   return <CanvasDocument Outlet={Outlet} />;
 };
 

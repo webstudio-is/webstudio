@@ -34,13 +34,16 @@ export const loader: LoaderFunction = async ({ params }): LoaderReturnType => {
   return { errors: "Unexpected error", env };
 };
 
+const Outlet = () => {
+  const data = useLoaderData<PreviewData>();
+  return <Root data={data} />;
+};
+
 const PreviewRoute = () => {
   const data = useLoaderData<PreviewData | ErrorData>();
   if ("errors" in data) {
     return <p>{data.errors}</p>;
   }
-  const Outlet = () => <Root data={data} />;
-
   return <CanvasDocument Outlet={Outlet} />;
 };
 
