@@ -8,21 +8,23 @@ const placementStyle = {
   pointerEvents: "none",
 };
 
-export const PlacementIndicator = ({ placement }: { placement: Placement }) => {
-  const style =
-    placement.direction === "horizontal"
-      ? {
-          top: placement.y - 1,
-          left: placement.x,
-          width: placement.length,
-          height: 2,
-        }
-      : {
-          top: placement.y,
-          left: placement.x - 1,
-          width: 2,
-          height: placement.length,
-        };
+const getStyle = (placement: Placement) => {
+  if (placement.direction === "horizontal") {
+    return {
+      top: placement.y - 1,
+      left: placement.x,
+      width: placement.length,
+      height: 2,
+    };
+  }
+  return {
+    top: placement.y,
+    left: placement.x - 1,
+    width: 2,
+    height: placement.length,
+  };
+};
 
-  return <Box style={style} css={placementStyle} />;
+export const PlacementIndicator = ({ placement }: { placement: Placement }) => {
+  return <Box style={getStyle(placement)} css={placementStyle} />;
 };

@@ -19,7 +19,7 @@ import {
   publish,
   useSubscribe,
   type Instance,
-  components as primitives,
+  components,
   BaseInstance,
   toBaseInstance,
 } from "@webstudio-is/react-sdk";
@@ -104,7 +104,7 @@ export const useDragAndDrop = () => {
       }
 
       const data = path.find((instance) =>
-        primitives[instance.component].canAcceptChild()
+        components[instance.component].canAcceptChild()
       );
 
       if (!data) {

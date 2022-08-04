@@ -79,7 +79,7 @@ export const SortableList = ({
       }
 
       if (rootRef.current === null) {
-        throw new Error("should not happen");
+        throw new Error("Unexpected empty rootRef during drag");
       }
 
       return { data: true, element: rootRef.current };

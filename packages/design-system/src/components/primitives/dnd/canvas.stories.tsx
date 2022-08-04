@@ -193,7 +193,7 @@ export const Canvas = () => {
 
   const getDefaultDropTarget = () => {
     if (rootRef.current === null) {
-      throw new Error("should not happen");
+      throw new Error("Unexpected empty rootRef during drag");
     }
     return { data: ROOT_ID, element: rootRef.current };
   };

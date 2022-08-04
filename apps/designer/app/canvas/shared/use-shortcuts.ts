@@ -79,7 +79,7 @@ export const useShortcuts = () => {
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
     zoom: publishZoom,
-    cancel: publishCancelCurrentDrag,
+    esc: publishCancelCurrentDrag,
   } as const;
 
   useHotkeys(
@@ -140,7 +140,7 @@ export const useShortcuts = () => {
     []
   );
 
-  useHotkeys(shortcuts.cancel, shortcutHandlerMap.cancel, options, []);
+  useHotkeys(shortcuts.esc, shortcutHandlerMap.esc, options, []);
 
   // Shortcuts from the parent window
   useSubscribe<"shortcut", { name: keyof typeof shortcuts; key: string }>(
