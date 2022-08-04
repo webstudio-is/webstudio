@@ -211,7 +211,7 @@ const ComboboxControl = ({
   //   }
   // }, []);
 
-  if (styleConfig.control !== "Combobox") return null;
+  // if (styleConfig.control !== "Combobox") return null;
 
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
@@ -349,7 +349,7 @@ const SelectControl = ({
         label={styleConfig.label}
         css={{
           fontWeight: "500",
-          marginRight: "4px",
+          marginRight: "$sizes$1",
         }}
       />
       <Select
@@ -358,8 +358,8 @@ const SelectControl = ({
         onChange={setValue}
         ghost
         css={{
-          gap: "3px",
-          px: "6px",
+          gap: "calc($sizes$1 / 2)",
+          px: "$sizes$1",
           fontWeight: "500",
           textTransform: "capitalize",
           "&:hover": { background: "none" },
@@ -389,7 +389,6 @@ const IconButtonWithMenuControl = ({
   const currentValue = value.value as string;
 
   if (String(currentStyle.display?.value).includes("flex") !== true) {
-    styleConfig.control = "Combobox";
     return (
       <ComboboxControl
         currentStyle={currentStyle}
@@ -438,11 +437,11 @@ const IconButtonWithMenuControl = ({
 };
 
 const GridControl = ({
-  css,
+  name,
   currentStyle,
   createBatchUpdate,
 }: {
-  css: CSS;
+  name: string;
   currentStyle: Style;
   createBatchUpdate: CreateBatchUpdate;
 }) => {
@@ -484,8 +483,9 @@ const GridControl = ({
 
   return (
     <Grid
+      data-property={name}
       css={{
-        ...css,
+        gridArea: name,
         alignItems: "center",
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
@@ -549,7 +549,7 @@ const GridControl = ({
           flexDirection: "column",
           width: "100%",
           height: "100%",
-          gap: "3px",
+          gap: "calc($sizes$1 / 2)",
           color: "currentColor",
         }}
       >
@@ -557,10 +557,10 @@ const GridControl = ({
           <Flex
             key={index}
             css={{
-              blockSize: "33.3333%",
+              blockSize: "calc(100% / 3)",
               inlineSize: value,
               background: "currentColor",
-              borderRadius: "2px",
+              borderRadius: "calc($radii$1 / 2)",
             }}
           ></Flex>
         ))}
@@ -570,17 +570,16 @@ const GridControl = ({
 };
 
 const LockControl = ({
-  css,
+  name,
   currentStyle,
   setProperty,
-  ...rest
 }: {
-  css: CSS;
+  name: string;
   currentStyle: Style;
   setProperty: SetProperty;
 }) => {
   return (
-    <IconButton css={{ width: "100%", ...css }} {...rest}>
+    <IconButton data-property={name} css={{ width: "100%", gridArea: name }}>
       <icons.lock.opened />
     </IconButton>
   );
@@ -670,7 +669,7 @@ export const renderCategory = ({
     case "layout": {
       const css = {
         alignItems: "center",
-        gap: "8px",
+        gap: "$space$styleSection",
         "& > [data-type=iconbuttonwithmenu]": {
           display: "flex",
           justifyContent: "center",
@@ -704,14 +703,12 @@ export const renderCategory = ({
               >
                 {styleConfigsByCategory}
                 <LockControl
-                  data-property="lock"
-                  css={{ gridArea: "lock" }}
+                  name="lock"
                   currentStyle={currentStyle}
                   setProperty={setProperty}
                 />
                 <GridControl
-                  data-property="grid"
-                  css={{ gridArea: "grid" }}
+                  name="grid"
                   currentStyle={currentStyle}
                   createBatchUpdate={createBatchUpdate}
                 />

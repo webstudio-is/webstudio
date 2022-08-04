@@ -220,6 +220,7 @@ export const {
       7: "45px",
       8: "65px",
       9: "80px",
+      styleSection: "8px",
     },
     sizes: {
       1: "5px",
@@ -233,6 +234,7 @@ export const {
       9: "80px",
       sidebarLeft: "45px",
       sidebarRight: "240px",
+      dropdownMenu: "224px",
     },
     // space: {
     //   1: '4px',

@@ -22,12 +22,10 @@ export type Control =
   | "Select"
   | "Empty";
 
-type StyleConfigWithItems = BaseStyleConfig & {
+export type StyleConfig = BaseStyleConfig & {
   control: Control;
   items: Array<{ label: string; name: string }>;
 };
-
-export type StyleConfig = StyleConfigWithItems;
 
 type Property = keyof typeof keywordValues;
 

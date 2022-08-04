@@ -6,10 +6,10 @@ import { Box } from "./box";
 import { Tooltip } from "./tooltip";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
-  maxWidth: "224px",
+  maxWidth: "$sizes$dropdownMenu",
   backgroundColor: "$colors$slate4",
-  borderRadius: "4px",
-  padding: "8px",
+  borderRadius: "$radii$1",
+  padding: "$sizes$2",
   boxShadow:
     "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$gray1, 0 0 0 1px $colors$gray8",
 });
@@ -19,16 +19,16 @@ const itemStyles = {
   fontSize: "$2",
   lineHeight: 1,
   color: "$colors$slate12",
-  borderRadius: 3,
+  borderRadius: "$radii$1",
   display: "flex",
   alignItems: "center",
-  height: 28,
-  padding: "0 5px",
+  height: "$sizes$5",
+  padding: "0 $space$5",
   position: "relative",
-  paddingLeft: 25,
-  paddingRight: 25,
+  paddingLeft: "$space$5",
+  paddingRight: "$space$5",
   userSelect: "none",
-  gap: "8px",
+  gap: "$space$2",
   "&:hover": {
     background: "$colors$blue10",
     color: "$colors$blue1",
@@ -58,7 +58,7 @@ const StyledArrow = styled(DropdownMenuPrimitive.Arrow, {
 const IconButton = styled("button", {
   all: "unset",
   fontFamily: "inherit",
-  borderRadius: "2px",
+  borderRadius: "calc($radii$1 / 2)",
   width: "100%",
   height: "100%",
   display: "inline-flex",
@@ -68,10 +68,6 @@ const IconButton = styled("button", {
   backgroundColor: "$colors$loContrast",
   "&:hover": {
     backgroundColor: "$colors$gray3",
-  },
-  "& svg": {
-    width: "24px",
-    height: "24px",
   },
   "& path": {
     fill: "currentColor",
