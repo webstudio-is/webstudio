@@ -39,6 +39,7 @@ import { useMeasure } from "~/shared/dom-hooks";
 import { findInstanceByElement } from "~/shared/dom-utils";
 
 export const usePopulateRootInstance = (tree: Tree) => {
+  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
   const ref = useRef(false);
   // It is only set once when the canvas is first loaded.
   if (ref.current === false) {

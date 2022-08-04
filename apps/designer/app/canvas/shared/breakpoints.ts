@@ -15,6 +15,7 @@ import {
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
+  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
   const ref = useRef(false);
   if (ref.current === false) {
     ref.current = true;
