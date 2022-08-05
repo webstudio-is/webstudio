@@ -219,7 +219,9 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         <SidebarLeft assets={assets} publish={publish} />
       </SidePanel>
       <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-        <Navigator publish={publish} />
+        <Box css={{ borderRight: "1px solid $slate7", width: 240 }}>
+          <Navigator publish={publish} />
+        </Box>
       </SidePanel>
       <SidePanel
         gridArea="inspector"

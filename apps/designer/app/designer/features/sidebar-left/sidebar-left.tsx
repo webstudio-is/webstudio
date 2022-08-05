@@ -13,16 +13,6 @@ import { panels } from "./panels";
 import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 
-const sidebarTabsContentStyle = {
-  position: "absolute",
-  left: "100%",
-  width: 250,
-  height: "100%",
-  bc: "$loContrast",
-  // @todo: focus state should be same as hover/active state: hover and focus yes, probably same, active? not so sure.
-  outline: "none",
-};
-
 const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
@@ -68,7 +58,6 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
-            ...sidebarTabsContentStyle,
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility:
