@@ -67,7 +67,7 @@ const useElementsTree = () => {
   }, []);
 
   return useMemo(() => {
-    if (rootInstance === undefined) return null;
+    if (rootInstance === undefined) return;
 
     return createElementsTree({
       instance: rootInstance,
@@ -87,10 +87,9 @@ const useSubscribePreviewMode = () => {
 type DesignModeProps = {
   treeId: Tree["id"];
   project: db.project.Project;
-  children: JSX.Element | null;
 };
 
-const DesignMode = ({ treeId, project, children }: DesignModeProps) => {
+const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
@@ -112,13 +111,7 @@ const DesignMode = ({ treeId, project, children }: DesignModeProps) => {
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
   useDragAndDrop();
-  return (
-    <>
-      {children && (
-        <LexicalComposer initialConfig={config}>{children}</LexicalComposer>
-      )}
-    </>
-  );
+  return null;
 };
 
 type CanvasProps = {
@@ -137,13 +130,21 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useShortcuts();
   const isPreviewMode = useSubscribePreviewMode();
   const elements = useElementsTree();
+
+  if (elements === undefined) return null;
+
+  const children = (
+    <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
+  );
+
   if (isPreviewMode) {
-    return elements;
+    return children;
   }
 
   return (
-    <DesignMode treeId={data.tree.id} project={data.project}>
-      {elements}
-    </DesignMode>
+    <>
+      <DesignMode treeId={data.tree.id} project={data.project} />
+      {children}
+    </>
   );
 };
