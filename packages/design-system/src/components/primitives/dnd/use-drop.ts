@@ -81,15 +81,13 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
   // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
     const getChildrenRectsMemoized = (parent: Element) => {
+      const { getValidChildren = (parent) => parent.children } =
+        latestProps.current;
       const fromCache = state.current.childrenRectsCache.get(parent);
       if (fromCache !== undefined) {
         return fromCache;
       }
-      const children =
-        latestProps.current.getValidChildren !== undefined
-          ? latestProps.current.getValidChildren(parent)
-          : parent.children;
-      const result = getChildrenRects(parent, children);
+      const result = getChildrenRects(parent, getValidChildren(parent));
       state.current.childrenRectsCache.set(parent, result);
       return result;
     };

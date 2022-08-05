@@ -7,6 +7,7 @@ import { getInstancePath, createInstance } from "~/shared/tree-utils";
 import {
   findInstanceByElement,
   getInstanceElementById,
+  getInstanceIdFromElement,
 } from "~/shared/dom-utils";
 import {
   type DropTarget,
@@ -138,15 +139,9 @@ export const useDragAndDrop = () => {
     },
 
     getValidChildren: (parent) => {
-      if (!(parent instanceof HTMLBodyElement)) {
-        return parent.children;
-      }
-      return Array.from(parent.children).filter((child) => {
-        return (
-          !(child instanceof HTMLScriptElement) &&
-          !(child instanceof HTMLLinkElement)
-        );
-      });
+      return Array.from(parent.children).filter(
+        (child) => getInstanceIdFromElement(child) !== undefined
+      );
     },
   });
 
