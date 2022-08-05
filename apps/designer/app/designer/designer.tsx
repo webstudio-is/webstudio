@@ -36,7 +36,7 @@ import {
   useDragAndDropState,
 } from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
-import { Navigator } from "./features/navigator";
+import { Navigator } from "./features/sidebar-left";
 
 export const links = () => {
   return [
