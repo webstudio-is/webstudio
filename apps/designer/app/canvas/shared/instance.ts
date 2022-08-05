@@ -51,7 +51,7 @@ export const usePopulateRootInstance = (tree: Tree) => {
   }
 };
 
-const findInsertLocation = (
+export const findInsertLocation = (
   rootInstance: Instance,
   selectedInstanceId: Instance["id"] | undefined
 ): InstanceInsertionSpec => {
