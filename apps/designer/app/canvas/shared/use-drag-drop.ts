@@ -136,6 +136,18 @@ export const useDragAndDrop = () => {
         },
       });
     },
+
+    getValidChildren: (parent) => {
+      if (!(parent instanceof HTMLBodyElement)) {
+        return parent.children;
+      }
+      return Array.from(parent.children).filter((child) => {
+        return (
+          !(child instanceof HTMLScriptElement) &&
+          !(child instanceof HTMLLinkElement)
+        );
+      });
+    },
   });
 
   const dragHandlers = useDrag<Instance>({

@@ -45,6 +45,10 @@ export type UseDropProps<Data> = {
   ) => PartialDropTarget<Data>;
 
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
+
+  // Allows you to customize children
+  // that will be used to determine placement and indexWithinChildren
+  getValidChildren?: (parent: Element) => Element[] | HTMLCollection;
 };
 
 export type UseDropHandlers = {
@@ -81,7 +85,11 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       if (fromCache !== undefined) {
         return fromCache;
       }
-      const result = getChildrenRects(parent);
+      const children =
+        latestProps.current.getValidChildren !== undefined
+          ? latestProps.current.getValidChildren(parent)
+          : parent.children;
+      const result = getChildrenRects(parent, children);
       state.current.childrenRectsCache.set(parent, result);
       return result;
     };
