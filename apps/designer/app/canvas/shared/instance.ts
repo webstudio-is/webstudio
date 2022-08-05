@@ -4,6 +4,7 @@ import {
   type InstanceProps,
   type Instance,
   type Tree,
+  components,
   allUserPropsContainer,
   getBrowserStyle,
   useAllUserProps,
@@ -18,6 +19,8 @@ import {
   insertInstanceMutable,
   findInstanceById,
   reparentInstanceMutable,
+  getInstancePathWithPositions,
+  type InstanceInsertionSpec,
 } from "~/shared/tree-utils";
 import store from "immerhin";
 import {
@@ -48,6 +51,32 @@ export const usePopulateRootInstance = (tree: Tree) => {
   }
 };
 
+export const findInsertLocation = (
+  rootInstance: Instance,
+  selectedInstanceId: Instance["id"] | undefined
+): InstanceInsertionSpec => {
+  if (selectedInstanceId === undefined) {
+    return { parentId: rootInstance.id, position: "end" };
+  }
+
+  const path = getInstancePathWithPositions(rootInstance, selectedInstanceId);
+  path.reverse();
+
+  const parentIndex = path.findIndex(({ instance }) =>
+    components[instance.component].canAcceptChild()
+  );
+
+  // Just in case selected Instance is not in the tree for some reason.
+  if (parentIndex === -1) {
+    return { parentId: rootInstance.id, position: "end" };
+  }
+
+  return {
+    parentId: path[parentIndex].instance.id,
+    position: parentIndex === 0 ? "end" : path[parentIndex - 1].position + 1,
+  };
+};
+
 export const useInsertInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
@@ -55,7 +84,7 @@ export const useInsertInstance = () => {
     "insertInstance",
     {
       instance: Instance;
-      dropTarget?: { instanceId: Instance["id"]; position: number };
+      dropTarget?: { parentId: Instance["id"]; position: number };
       props?: InstanceProps;
     }
   >("insertInstance", ({ instance, dropTarget, props }) => {
@@ -67,11 +96,7 @@ export const useInsertInstance = () => {
         const hasInserted = insertInstanceMutable(
           rootInstance,
           populatedInstance,
-          {
-            parentId:
-              dropTarget?.instanceId ?? selectedInstance?.id ?? rootInstance.id,
-            position: dropTarget === undefined ? "end" : dropTarget.position,
-          }
+          dropTarget ?? findInsertLocation(rootInstance, selectedInstance?.id)
         );
         if (hasInserted) {
           setSelectedInstance(instance);

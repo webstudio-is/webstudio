@@ -38,7 +38,10 @@ export const getLocalChildrenOrientation = (
   return getRectsOrientation(previous, current, next);
 };
 
-export const getChildrenRects = (parent: Element) => {
+export const getChildrenRects = (
+  parent: Element,
+  children: Element[] | HTMLCollection
+) => {
   const parentRect = parent.getBoundingClientRect();
 
   // We convert to relative coordinates to be able to store the result in cache.
@@ -50,7 +53,7 @@ export const getChildrenRects = (parent: Element) => {
     height: rect.height,
   });
 
-  return Array.from(parent.children).map((child) =>
+  return Array.from(children).map((child) =>
     toRelativeCoordinates(child.getBoundingClientRect())
   );
 };
