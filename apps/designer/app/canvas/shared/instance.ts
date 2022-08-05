@@ -4,6 +4,7 @@ import {
   type InstanceProps,
   type Instance,
   type Tree,
+  components,
   allUserPropsContainer,
   getBrowserStyle,
   useAllUserProps,
@@ -18,6 +19,7 @@ import {
   insertInstanceMutable,
   findInstanceById,
   reparentInstanceMutable,
+  getInstancePath,
 } from "~/shared/tree-utils";
 import store from "immerhin";
 import {
@@ -48,6 +50,22 @@ export const usePopulateRootInstance = (tree: Tree) => {
   }
 };
 
+const getClosestValidParent = (
+  rootInstance: Instance,
+  instanceId: Instance["id"] | undefined
+) => {
+  if (instanceId === undefined) {
+    return rootInstance;
+  }
+
+  const path = getInstancePath(rootInstance, instanceId);
+  path.reverse();
+  return (
+    path.find((instance) => components[instance.component].canAcceptChild()) ??
+    rootInstance
+  );
+};
+
 export const useInsertInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
@@ -69,7 +87,8 @@ export const useInsertInstance = () => {
           populatedInstance,
           {
             parentId:
-              dropTarget?.instanceId ?? selectedInstance?.id ?? rootInstance.id,
+              dropTarget?.instanceId ??
+              getClosestValidParent(rootInstance, selectedInstance?.id).id,
             position: dropTarget === undefined ? "end" : dropTarget.position,
           }
         );
