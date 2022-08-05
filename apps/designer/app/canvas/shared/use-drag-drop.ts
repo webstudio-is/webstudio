@@ -7,6 +7,7 @@ import { getInstancePath, createInstance } from "~/shared/tree-utils";
 import {
   findInstanceByElement,
   getInstanceElementById,
+  getInstanceIdFromElement,
 } from "~/shared/dom-utils";
 import {
   type DropTarget,
@@ -135,6 +136,12 @@ export const useDragAndDrop = () => {
           instance: toBaseInstance(dropTarget.data),
         },
       });
+    },
+
+    getValidChildren: (parent) => {
+      return Array.from(parent.children).filter(
+        (child) => getInstanceIdFromElement(child) !== undefined
+      );
     },
   });
 
@@ -268,14 +275,14 @@ export const useDragAndDrop = () => {
             "insertInstance",
             {
               instance: Instance;
-              dropTarget: { instanceId: Instance["id"]; position: number };
+              dropTarget: { parentId: Instance["id"]; position: number };
             }
           >({
             type: "insertInstance",
             payload: {
               instance: createInstance({ component: dragItem.component }),
               dropTarget: {
-                instanceId: dropTarget.data.id,
+                parentId: dropTarget.data.id,
                 position: dropTarget.indexWithinChildren,
               },
             },

@@ -14,6 +14,15 @@
    - Drag a box to the bottom edge - check if parent box gets outlined and insertion happened after that dragged over box inside that outlined parent
    - Drag a box to the top edge - check if parent box gets outlined and insertion happened before that dragged over box inside that outlined parent
 
+1. Create instance by clicking on a component
+
+   - Make sure no instance is selected (no outline in the canvas)
+   - Click on a component in the panel - check that it's inserted at the end of the root instance
+   - Select an istance that can accept children (e.g. Box), by clicking on it on the canvas
+   - Click on a component in the panel - check that it's inserted at the end of the selected instance
+   - Select an instance that cannot accept children (e.g. Heading), but choose one that is not the last child of its parent
+   - Click on a component in the panel - check that it's inserted in the parent of the selected instance, and that it's positioned right after the selected instance
+
 1. Styles apply
 
    - Select an instance
