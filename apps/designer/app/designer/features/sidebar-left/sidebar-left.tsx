@@ -8,7 +8,6 @@ import {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "@webstudio-is/design-system";
-import { useSelectedInstanceData } from "../../shared/nano-states";
 import { useDragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
@@ -32,7 +31,6 @@ type SidebarLeftProps = {
 };
 
 export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
-  const [selectedInstanceData] = useSelectedInstanceData();
   const [dragAndDropState] = useDragAndDropState();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
@@ -82,7 +80,6 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
         >
           <TabContent
             assets={assets}
-            selectedInstanceData={selectedInstanceData}
             publish={publish}
             onSetActiveTab={setActiveTab}
           />

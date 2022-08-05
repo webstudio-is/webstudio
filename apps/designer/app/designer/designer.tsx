@@ -36,6 +36,7 @@ import {
   useDragAndDropState,
 } from "~/shared/nano-states";
 import { useSubscribeClientSetting } from "./shared/client-settings";
+import { Navigator } from "./features/navigator";
 
 export const links = () => {
   return [
@@ -71,7 +72,7 @@ type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
   isPreviewMode: boolean;
   css?: CSS;
-  gridArea: "inspector" | "sidebar";
+  gridArea: "inspector" | "sidebar" | "navigator";
 };
 
 const SidePanel = ({
@@ -131,19 +132,19 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
         gridTemplateColumns: "auto 1fr",
         gridTemplateRows: "auto 1fr auto",
         gridTemplateAreas: `
-                "header header"
-                "sidebar main"
-                "footer footer"
-              `,
+          "header header"
+          "sidebar main"
+          "footer footer"
+        `,
       }
     : {
-        gridTemplateColumns: "auto 1fr 240px",
+        gridTemplateColumns: "auto 240px 1fr 240px",
         gridTemplateRows: "auto 1fr auto",
         gridTemplateAreas: `
-                "header header header"
-                "sidebar main inspector"
-                "footer footer footer"
-              `,
+          "header header header header"
+          "sidebar navigator main inspector"
+          "footer footer footer footer"
+        `,
       };
   return (
     <Grid
@@ -216,6 +217,9 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
         <SidebarLeft assets={assets} publish={publish} />
+      </SidePanel>
+      <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
+        <Navigator publish={publish} />
       </SidePanel>
       <SidePanel
         gridArea="inspector"
