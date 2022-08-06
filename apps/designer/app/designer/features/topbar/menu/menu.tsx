@@ -70,12 +70,6 @@ const ThemeMenuItem = () => {
 
 const ViewMenuItem = () => {
   const [clientSettings, setClientSetting] = useClientSettings();
-  const labels = {
-    attached: "Attached",
-    detached: "Detached",
-  } as const;
-
-  const settings = Object.keys(labels) as Array<keyof typeof labels>;
 
   return (
     <DropdownMenu>
@@ -84,18 +78,19 @@ const ViewMenuItem = () => {
         <ChevronRightIcon />
       </DropdownMenuTriggerItem>
       <DropdownMenuContent>
-        {settings.map((setting) => (
-          <DropdownMenuCheckboxItem
-            key={setting}
-            checked={clientSettings.navigatorLayout === setting}
-            css={menuItemCss}
-            onSelect={() => {
-              setClientSetting("navigatorLayout", setting);
-            }}
-          >
-            {labels[setting]}
-          </DropdownMenuCheckboxItem>
-        ))}
+        <DropdownMenuCheckboxItem
+          checked={clientSettings.navigatorLayout === "detached"}
+          css={menuItemCss}
+          onSelect={() => {
+            const setting =
+              clientSettings.navigatorLayout === "detached"
+                ? "attached"
+                : "detached";
+            setClientSetting("navigatorLayout", setting);
+          }}
+        >
+          Show navigator
+        </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
