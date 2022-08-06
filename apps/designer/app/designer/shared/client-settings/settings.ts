@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createValueContainer, useValue } from "react-nano-state";
 import { sentryException } from "~/shared/sentry";
 import * as config from "./config";
@@ -68,10 +68,15 @@ export const setSetting = (name: Name, value: Value) => {
 
 const settingsContainer = createValueContainer<Settings>(defaultSettings);
 
-export const useClientSettings = (): [Settings, typeof setSetting] => {
+export const useClientSettings = (): [Settings, typeof setSetting, boolean] => {
   const [settings, setSettings] = useValue(settingsContainer);
+  // We need to know if the settings were loaded from local storage.
+  // E.g. to decide if we should wait till the actual setting is loaded or use the default.
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     setSettings(read());
+    setIsLoaded(true);
   }, [setSettings]);
 
   const setSettingValue = (name: Name, value: Value) => {
@@ -79,5 +84,5 @@ export const useClientSettings = (): [Settings, typeof setSetting] => {
     setSettings({ ...settings, [name]: value });
     setSetting(name, value);
   };
-  return [settings, setSettingValue];
+  return [settings, setSettingValue, isLoaded];
 };

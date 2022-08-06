@@ -1,5 +1,9 @@
 import { useCallback } from "react";
-import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
+import {
+  useSubscribe,
+  usePublish,
+  type Publish,
+} from "@webstudio-is/react-sdk";
 import { type Project, type Asset } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
 import type {
@@ -68,6 +72,13 @@ const useSubscribeSyncStatus = () => {
   useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
 };
 
+const useNavigatorLayout = () => {
+  // We need to render the detached state only once the setting was actually loaded from local storage.
+  // Otherwise we may show the detached state because its the default and then hide it immediately.
+  const [clientSettings, _, isLoaded] = useClientSettings();
+  return isLoaded ? clientSettings.navigatorLayout : "attached";
+};
+
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
   isPreviewMode: boolean;
@@ -126,6 +137,8 @@ type ChromeWrapperProps = {
   isPreviewMode: boolean;
 };
 
+const PANEL_WIDTH = "240px";
+
 const getChromeLayout = ({
   isPreviewMode,
   navigatorLayout,
@@ -146,7 +159,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "detached") {
     return {
-      gridTemplateColumns: "auto 240px 1fr 240px",
+      gridTemplateColumns: `auto ${PANEL_WIDTH} 1fr ${PANEL_WIDTH}`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -156,7 +169,7 @@ const getChromeLayout = ({
   }
 
   return {
-    gridTemplateColumns: "auto 1fr 240px",
+    gridTemplateColumns: `auto 1fr ${PANEL_WIDTH}`,
     gridTemplateAreas: `
           "header header header"
           "sidebar main inspector"
@@ -166,10 +179,10 @@ const getChromeLayout = ({
 };
 
 const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
-  const [clientSettings] = useClientSettings();
+  const navigatorLayout = useNavigatorLayout();
   const gridLayout = getChromeLayout({
     isPreviewMode,
-    navigatorLayout: clientSettings.navigatorLayout,
+    navigatorLayout,
   });
 
   return (
@@ -184,6 +197,24 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
     >
       {children}
     </Grid>
+  );
+};
+
+type NavigatorPanelProps = { publish: Publish; isPreviewMode: boolean };
+
+const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
+  const navigatorLayout = useNavigatorLayout();
+
+  if (navigatorLayout === "attached") {
+    return null;
+  }
+
+  return (
+    <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
+      <Box css={{ borderRight: "1px solid $slate7", width: PANEL_WIDTH }}>
+        <Navigator publish={publish} isClosable={false} />
+      </Box>
+    </SidePanel>
   );
 };
 
@@ -205,7 +236,6 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
-  const [clientSettings] = useClientSettings();
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -245,13 +275,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
         <SidebarLeft assets={assets} publish={publish} />
       </SidePanel>
-      {clientSettings.navigatorLayout === "detached" ? (
-        <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-          <Box css={{ borderRight: "1px solid $slate7", width: 240 }}>
-            <Navigator publish={publish} isClosable={false} />
-          </Box>
-        </SidePanel>
-      ) : null}
+      <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel
         gridArea="inspector"
         isPreviewMode={isPreviewMode}
