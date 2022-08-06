@@ -8,10 +8,11 @@ import { Header } from "../lib/header";
 
 type NavigatorProps = {
   publish: Publish;
+  isClosable?: boolean;
   onClose?: () => void;
 };
 
-export const Navigator = ({ publish, onClose }: NavigatorProps) => {
+export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const [rootInstance] = useRootInstance();
   const selectedInstancePath = useSelectedInstancePath(
@@ -21,7 +22,7 @@ export const Navigator = ({ publish, onClose }: NavigatorProps) => {
   if (rootInstance === undefined) return null;
   return (
     <>
-      <Header title="Navigator" onClose={onClose} />
+      <Header title="Navigator" onClose={onClose} isClosable={isClosable} />
       <Box css={{ padding: "$1" }}>
         <Tree
           instance={rootInstance}

@@ -24,6 +24,7 @@ import {
   setThemeSetting,
   type ThemeSetting,
 } from "~/shared/theme";
+import { useClientSettings } from "~/designer/shared/client-settings";
 
 const menuItemCss = {
   display: "flex",
@@ -57,6 +58,39 @@ const ThemeMenuItem = () => {
             css={menuItemCss}
             onSelect={() => {
               setThemeSetting(setting);
+            }}
+          >
+            {labels[setting]}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const ViewMenuItem = () => {
+  const [clientSettings, setClientSetting] = useClientSettings();
+  const labels = {
+    attached: "Attached",
+    detached: "Detached",
+  } as const;
+
+  const settings = Object.keys(labels) as Array<keyof typeof labels>;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTriggerItem>
+        View
+        <ChevronRightIcon />
+      </DropdownMenuTriggerItem>
+      <DropdownMenuContent>
+        {settings.map((setting) => (
+          <DropdownMenuCheckboxItem
+            key={setting}
+            checked={clientSettings.navigatorLayout === setting}
+            css={menuItemCss}
+            onSelect={() => {
+              setClientSetting("navigatorLayout", setting);
             }}
           >
             {labels[setting]}
@@ -205,6 +239,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <ThemeMenuItem />
+        <ViewMenuItem />
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {

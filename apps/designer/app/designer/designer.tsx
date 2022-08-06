@@ -35,7 +35,7 @@ import {
   useRootInstance,
   useDragAndDropState,
 } from "~/shared/nano-states";
-import { useSubscribeClientSetting } from "./shared/client-settings";
+import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 
 export const links = () => {
@@ -122,36 +122,63 @@ const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
 );
 
 type ChromeWrapperProps = {
-  children: Array<JSX.Element>;
+  children: Array<JSX.Element | null>;
   isPreviewMode: boolean;
 };
 
+const getChromeLayout = ({
+  isPreviewMode,
+  navigatorLayout,
+}: {
+  isPreviewMode: boolean;
+  navigatorLayout: "attached" | "detached";
+}) => {
+  if (isPreviewMode) {
+    return {
+      gridTemplateColumns: "auto 1fr",
+      gridTemplateAreas: `
+            "header header"
+            "sidebar main"
+            "footer footer"
+          `,
+    };
+  }
+
+  if (navigatorLayout === "detached") {
+    return {
+      gridTemplateColumns: "auto 240px 1fr 240px",
+      gridTemplateAreas: `
+            "header header header header"
+            "sidebar navigator main inspector"
+            "footer footer footer footer"
+          `,
+    };
+  }
+
+  return {
+    gridTemplateColumns: "auto 1fr 240px",
+    gridTemplateAreas: `
+          "header header header"
+          "sidebar main inspector"
+          "footer footer footer"
+        `,
+  };
+};
+
 const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
-  const gridLayout = isPreviewMode
-    ? {
-        gridTemplateColumns: "auto 1fr",
-        gridTemplateRows: "auto 1fr auto",
-        gridTemplateAreas: `
-          "header header"
-          "sidebar main"
-          "footer footer"
-        `,
-      }
-    : {
-        gridTemplateColumns: "auto 240px 1fr 240px",
-        gridTemplateRows: "auto 1fr auto",
-        gridTemplateAreas: `
-          "header header header header"
-          "sidebar navigator main inspector"
-          "footer footer footer footer"
-        `,
-      };
+  const [clientSettings] = useClientSettings();
+  const gridLayout = getChromeLayout({
+    isPreviewMode,
+    navigatorLayout: clientSettings.navigatorLayout,
+  });
+
   return (
     <Grid
       css={{
         height: "100vh",
         overflow: "hidden",
         display: "grid",
+        gridTemplateRows: "auto 1fr auto",
         ...gridLayout,
       }}
     >
@@ -172,13 +199,13 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
-  useSubscribeClientSetting();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
+  const [clientSettings] = useClientSettings();
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -218,11 +245,13 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
         <SidebarLeft assets={assets} publish={publish} />
       </SidePanel>
-      <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-        <Box css={{ borderRight: "1px solid $slate7", width: 240 }}>
-          <Navigator publish={publish} />
-        </Box>
-      </SidePanel>
+      {clientSettings.navigatorLayout === "detached" ? (
+        <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
+          <Box css={{ borderRight: "1px solid $slate7", width: 240 }}>
+            <Navigator publish={publish} isClosable={false} />
+          </Box>
+        </SidePanel>
+      ) : null}
       <SidePanel
         gridArea="inspector"
         isPreviewMode={isPreviewMode}

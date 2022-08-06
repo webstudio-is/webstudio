@@ -12,6 +12,7 @@ import { useDragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
+import { useClientSettings } from "~/designer/shared/client-settings";
 
 const none = { TabContent: () => null };
 
@@ -24,6 +25,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
   const [dragAndDropState] = useDragAndDropState();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
+  const [clientSettings] = useClientSettings();
 
   useSubscribe<"clickCanvas">("clickCanvas", () => {
     setActiveTab("none");
@@ -32,11 +34,17 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
     setActiveTab("none");
   });
 
-  const enabledPanels = (
-    isFeatureEnabled("assets")
-      ? Object.keys(panels)
-      : Object.keys(panels).filter((panel) => panel !== "assetManager")
-  ) as Array<TabName>;
+  const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
+    (panel) => {
+      switch (panel) {
+        case "assetManager":
+          return isFeatureEnabled("assets");
+        case "navigator":
+          return clientSettings.navigatorLayout === "attached";
+      }
+      return true;
+    }
+  );
 
   return (
     <Box css={{ position: "relative", zIndex: 1 }}>
