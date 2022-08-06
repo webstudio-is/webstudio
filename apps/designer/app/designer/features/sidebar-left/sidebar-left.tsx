@@ -13,6 +13,7 @@ import { panels } from "./panels";
 import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
+import { PANEL_WIDTH } from "~/designer/shared/constants";
 
 const none = { TabContent: () => null };
 
@@ -66,6 +67,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
+            width: PANEL_WIDTH,
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility:

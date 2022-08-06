@@ -41,6 +41,7 @@ import {
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
+import { PANEL_WIDTH } from "./shared/constants";
 
 export const links = () => {
   return [
@@ -137,8 +138,6 @@ type ChromeWrapperProps = {
   isPreviewMode: boolean;
 };
 
-const PANEL_WIDTH = "240px";
-
 const getChromeLayout = ({
   isPreviewMode,
   navigatorLayout,
@@ -159,7 +158,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "detached") {
     return {
-      gridTemplateColumns: `auto ${PANEL_WIDTH} 1fr ${PANEL_WIDTH}`,
+      gridTemplateColumns: `auto ${PANEL_WIDTH}px 1fr ${PANEL_WIDTH}px`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -169,7 +168,7 @@ const getChromeLayout = ({
   }
 
   return {
-    gridTemplateColumns: `auto 1fr ${PANEL_WIDTH}`,
+    gridTemplateColumns: `auto 1fr ${PANEL_WIDTH}px`,
     gridTemplateAreas: `
           "header header header"
           "sidebar main inspector"
