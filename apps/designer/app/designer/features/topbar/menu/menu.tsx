@@ -89,7 +89,7 @@ const ViewMenuItem = () => {
             setClientSetting("navigatorLayout", setting);
           }}
         >
-          Show navigator
+          Undock navigator
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>

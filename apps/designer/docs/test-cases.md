@@ -94,7 +94,7 @@
 1. Navigator view settings
 
    - Initially navigator always shown
-   - Check that `Menu > View > Show navigator` is checked
+   - Check that `Menu > View > Undock navigator` is checked
    - Click on "Show navigator"
    - Navigator is now not shown
    - New tab was added that lets you open navigator
