@@ -90,3 +90,11 @@
    - Upload an image
    - Check it loads and shows a progress bar
    - Delete an asset by clicking on the `x` icon and then the delete button in the tooltip
+
+1. Navigator view settings
+
+   - Initially navigator always shown
+   - Check that `Menu > View > Show navigator` is checked
+   - Click on "Show navigator"
+   - Navigator is now not shown
+   - New tab was added that lets you open navigator
