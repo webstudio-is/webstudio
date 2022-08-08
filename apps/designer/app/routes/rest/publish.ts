@@ -9,42 +9,25 @@ export const action: ActionFunction = async ({ request }) => {
     throw new Error("Domain or ProjectId not provided.");
   }
   try {
-    const project = await db.misc.publish({ projectId, domain });
-    const projectLoad = await db.project.loadById(projectId);
-    const tree = await db.tree.loadByProject(projectLoad);
-    if (!tree) {
-      throw new Error("No tree found!");
-    }
-    const breakpoints = await db.breakpoints.getBreakpointsWithId();
-    const props = await db.props.loadByTreeId(tree.id);
-
-    if (process.env.EDGE_DEPLOYMENT) {
+    await db.misc.publish({ projectId, domain });
+    if (process.env.EDGE_PUBLISHER_ENDPOINT) {
       const headers = new Headers();
-      headers.append("Authorization", `Bearer ${process.env.CF_TOKEN || ""}`);
+      headers.append("X-AUTH-WEBSTUDIO", process.env.EDGE_TOKEN || "");
       headers.append("Content-Type", "text/plain");
-      const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${
-          process.env.CF_ACCOUNT_ID
-        }/storage/kv/namespaces/${
-          process.env.CF_NAMESPACE_ID
-        }/values/${domain.toLowerCase()}`,
-        {
-          method: "PUT",
-          headers,
-          body: JSON.stringify({
-            updated: new Date().getTime(),
-            tree,
-            breakpoints,
-            props,
-          }),
-        }
-      );
+      const response = await fetch(process.env.EDGE_PUBLISHER_ENDPOINT, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          projectId,
+          domain,
+        }),
+      });
       const text = await response.text();
       if (!response.ok) {
         throw new Error(text);
       }
     }
-    return { domain: project.domain };
+    return { domain };
   } catch (error) {
     if (error instanceof Error) {
       return {
