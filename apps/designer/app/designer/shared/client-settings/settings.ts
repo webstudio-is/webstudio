@@ -1,10 +1,19 @@
-import { useSubscribe } from "@webstudio-is/react-sdk";
+import { useEffect, useState } from "react";
+import { createValueContainer, useValue } from "react-nano-state";
 import { sentryException } from "~/shared/sentry";
-import * as values from "./values";
+import * as config from "./config";
 
-type Name = keyof typeof values;
-type Value = typeof values[Name]["values"][number];
-type Settings = Partial<Record<Name, Value>>;
+type Name = keyof typeof config;
+type Value = typeof config[Name]["values"][number];
+type Settings = Record<Name, Value>;
+
+const defaultSettings = (Object.keys(config) as Array<Name>).reduce(
+  (acc, settingName) => {
+    acc[settingName] = config[settingName].defaultValue;
+    return acc;
+  },
+  {} as Settings
+);
 
 const namespace = "__webstudio_user_settings__";
 
@@ -16,7 +25,7 @@ const read = (): Settings => {
     // We don't need to handle this one.
   }
 
-  if (settingsString == null) return {};
+  if (settingsString == null) return defaultSettings;
 
   try {
     // @todo add zod schema
@@ -31,7 +40,7 @@ const read = (): Settings => {
       });
     }
   }
-  return {};
+  return defaultSettings;
 };
 
 const write = (settings: Settings) => {
@@ -43,25 +52,37 @@ const write = (settings: Settings) => {
  */
 export const getSetting = (name: Name) => {
   const settings = read();
-  const validValues = values[name].values;
+  const validValues = config[name].values;
   const value = settings[name];
   const isValidValue = value !== undefined && validValues.includes(value);
   if (isValidValue) return value;
-  return values[name].defaultValue;
+  return config[name].defaultValue;
 };
 
 export const setSetting = (name: Name, value: Value) => {
   const settings = read();
-  const validValues = values[name].values;
+  const validValues = config[name].values;
   const isValidValue = validValues.includes(value);
   if (isValidValue) write({ ...settings, [name]: value });
 };
 
-export const useSubscribeClientSetting = () => {
-  useSubscribe<"setClientSetting", { name: Name; value: Value }>(
-    "setClientSetting",
-    (payload) => {
-      setSetting(payload.name, payload.value);
-    }
-  );
+const settingsContainer = createValueContainer<Settings>(defaultSettings);
+
+export const useClientSettings = (): [Settings, typeof setSetting, boolean] => {
+  const [settings, setSettings] = useValue(settingsContainer);
+  // We need to know if the settings were loaded from local storage.
+  // E.g. to decide if we should wait till the actual setting is loaded or use the default.
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setSettings(read());
+    setIsLoaded(true);
+  }, [setSettings]);
+
+  const setSettingValue = (name: Name, value: Value) => {
+    if (settings[name] === value) return;
+    setSettings({ ...settings, [name]: value });
+    setSetting(name, value);
+  };
+  return [settings, setSettingValue, isLoaded];
 };
