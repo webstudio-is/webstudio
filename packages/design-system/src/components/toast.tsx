@@ -1,7 +1,11 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import toast, { useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
-import { CheckIcon, Cross1Icon } from "@webstudio-is/icons";
+import {
+  CheckCircledIcon,
+  CrossCircledIcon,
+  InfoCircledIcon,
+} from "@webstudio-is/icons";
 import { Box } from "./box";
 
 const VIEWPORT_PADDING = "$2";
@@ -40,15 +44,15 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
 
 const StyledToast = styled(ToastPrimitive.Root, {
   borderRadius: 6,
-  boxShadow:
-    "hsl(206 22% 7% / 35%) 0 $space$2 $space$6 -$space$2, hsl(206 22% 7% / 20%) 0 $space$2 $space$4 -$space$3",
+  boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
   padding: "$3",
   display: "flex",
-  gap: "$1",
+  maxWidth: 250,
+  gap: "$3",
   alignItems: "center",
   color: "$highContrast",
   fontWeight: 500,
-  fontSize: "$3",
+  fontSize: "$2",
   background: "$loContrast",
 
   "@media (prefers-reduced-motion: no-preference)": {
@@ -72,12 +76,17 @@ const StyledToast = styled(ToastPrimitive.Root, {
   variants: {
     variant: {
       error: {
-        color: "$red11",
+        background: "$red9",
+        color: "$loContrast",
       },
       success: {
-        color: "$green9",
+        background: "$green10",
+        color: "$loContrast",
       },
-      blank: {},
+      blank: {
+        background: "$blue11",
+        color: "$loContrast",
+      },
       custom: {},
       loading: {},
     },
@@ -100,9 +109,17 @@ export const Toaster = () => {
           onMouseEnter={startPause}
           onMouseLeave={endPause}
         >
-          <Box>
-            {toast.type === "success" && <CheckIcon />}
-            {toast.type === "error" && <Cross1Icon />}
+          <Box
+            css={{
+              svg: {
+                width: "$5",
+                height: "$5",
+              },
+            }}
+          >
+            {toast.type === "success" && <CheckCircledIcon />}
+            {toast.type === "error" && <CrossCircledIcon />}
+            {toast.type === "blank" && <InfoCircledIcon />}
           </Box>
           <StyledTitle>{toast.message}</StyledTitle>
         </StyledToast>
