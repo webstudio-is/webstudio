@@ -1,6 +1,7 @@
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Project, Asset } from "@webstudio-is/prisma-client";
+import { toast } from "@webstudio-is/design-system";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
@@ -88,11 +89,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 const DesignerRoute = () => {
   const actionData = useActionData();
   const data = useLoaderData<Data | Error>();
+
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
   if (actionData && "errors" in actionData) {
-    return <ErrorMessage message={actionData.errors} />;
+    toast.error(actionData.errors, { id: "upload-error" });
   }
   return <Designer {...data} />;
 };

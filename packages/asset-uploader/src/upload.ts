@@ -6,7 +6,6 @@ import { s3UploadHandler } from "./targets/s3/handler";
 import { uploadToS3 } from "./targets/s3/uploader";
 import { uploadToDisk } from "./targets/disk/upload";
 import { assetEnvVariables, s3EnvVariables } from "./schema";
-import { Asset } from "@webstudio-is/prisma-client";
 import { imageFsDirectory } from "./helpers/image-fs-path";
 
 const isS3Upload = s3EnvVariables.safeParse(process.env).success;
@@ -22,31 +21,42 @@ export const uploadAssets = async ({
 }: {
   request: Request;
   projectId: string;
-}): Promise<Asset[]> => {
-  const directory = await imageFsDirectory();
-  const formData = await unstable_parseMultipartFormData(
-    request,
-    isS3Upload
-      ? (file) =>
-          s3UploadHandler({
-            file,
+}) => {
+  try {
+    const directory = await imageFsDirectory();
+    const formData = await unstable_parseMultipartFormData(
+      request,
+      isS3Upload
+        ? (file) =>
+            s3UploadHandler({
+              file,
+              maxPartSize: MAX_UPLOAD_SIZE,
+            })
+        : unstable_createFileUploadHandler({
             maxPartSize: MAX_UPLOAD_SIZE,
+            directory,
+            file: ({ filename }) => filename,
           })
-      : unstable_createFileUploadHandler({
-          maxPartSize: MAX_UPLOAD_SIZE,
-          directory,
-          file: ({ filename }) => filename,
-        })
-  );
-  if (isS3Upload) {
-    return await uploadToS3({
-      projectId,
-      formData,
-    });
-  } else {
-    return await uploadToDisk({
-      projectId,
-      formData,
-    });
+    );
+    if (isS3Upload) {
+      return await uploadToS3({
+        projectId,
+        formData,
+      });
+    } else {
+      return await uploadToDisk({
+        projectId,
+        formData,
+      });
+    }
+  } catch (error) {
+    if ("maxBytes" in error) {
+      throw new Error(
+        `Asset cannot be bigger than ${commonUploadVars.MAX_UPLOAD_SIZE}MB`
+      );
+    }
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
   }
 };
