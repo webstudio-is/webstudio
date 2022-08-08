@@ -77,7 +77,7 @@ const useNavigatorLayout = () => {
   // We need to render the detached state only once the setting was actually loaded from local storage.
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
-  return isLoaded ? clientSettings.navigatorLayout : "attached";
+  return isLoaded ? clientSettings.navigatorLayout : "docked";
 };
 
 type SidePanelProps = {
@@ -143,7 +143,7 @@ const getChromeLayout = ({
   navigatorLayout,
 }: {
   isPreviewMode: boolean;
-  navigatorLayout: "attached" | "detached";
+  navigatorLayout: "docked" | "undocked";
 }) => {
   if (isPreviewMode) {
     return {
@@ -156,7 +156,7 @@ const getChromeLayout = ({
     };
   }
 
-  if (navigatorLayout === "detached") {
+  if (navigatorLayout === "undocked") {
     return {
       gridTemplateColumns: `auto ${PANEL_WIDTH}px 1fr ${PANEL_WIDTH}px`,
       gridTemplateAreas: `
@@ -204,7 +204,7 @@ type NavigatorPanelProps = { publish: Publish; isPreviewMode: boolean };
 const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
   const navigatorLayout = useNavigatorLayout();
 
-  if (navigatorLayout === "attached") {
+  if (navigatorLayout === "docked") {
     return null;
   }
 

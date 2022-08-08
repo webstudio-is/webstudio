@@ -79,13 +79,13 @@ const ViewMenuItem = () => {
       </DropdownMenuTriggerItem>
       <DropdownMenuContent>
         <DropdownMenuCheckboxItem
-          checked={clientSettings.navigatorLayout === "detached"}
+          checked={clientSettings.navigatorLayout === "undocked"}
           css={menuItemCss}
           onSelect={() => {
             const setting =
-              clientSettings.navigatorLayout === "detached"
-                ? "attached"
-                : "detached";
+              clientSettings.navigatorLayout === "undocked"
+                ? "docked"
+                : "undocked";
             setClientSetting("navigatorLayout", setting);
           }}
         >

@@ -41,7 +41,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
         case "assetManager":
           return isFeatureEnabled("assets");
         case "navigator":
-          return clientSettings.navigatorLayout === "attached";
+          return clientSettings.navigatorLayout === "docked";
       }
       return true;
     }

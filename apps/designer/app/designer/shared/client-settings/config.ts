@@ -1,4 +1,4 @@
 export const navigatorLayout = {
-  defaultValue: "detached",
-  values: ["attached", "detached"],
+  defaultValue: "undocked",
+  values: ["docked", "undocked"],
 } as const;
