@@ -24,6 +24,7 @@ import {
   setThemeSetting,
   type ThemeSetting,
 } from "~/shared/theme";
+import { useClientSettings } from "~/designer/shared/client-settings";
 
 const menuItemCss = {
   display: "flex",
@@ -62,6 +63,34 @@ const ThemeMenuItem = () => {
             {labels[setting]}
           </DropdownMenuCheckboxItem>
         ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const ViewMenuItem = () => {
+  const [clientSettings, setClientSetting] = useClientSettings();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTriggerItem>
+        View
+        <ChevronRightIcon />
+      </DropdownMenuTriggerItem>
+      <DropdownMenuContent>
+        <DropdownMenuCheckboxItem
+          checked={clientSettings.navigatorLayout === "undocked"}
+          css={menuItemCss}
+          onSelect={() => {
+            const setting =
+              clientSettings.navigatorLayout === "undocked"
+                ? "docked"
+                : "undocked";
+            setClientSetting("navigatorLayout", setting);
+          }}
+        >
+          Undock navigator
+        </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -205,6 +234,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <ThemeMenuItem />
+        <ViewMenuItem />
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {

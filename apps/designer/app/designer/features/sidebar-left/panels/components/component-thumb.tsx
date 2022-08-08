@@ -3,9 +3,9 @@ import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { Flex, Text, styled } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
-  px: 5,
-  width: 75,
-  height: 75,
+  px: "$1",
+  width: 72,
+  height: 72,
   border: "1px solid $slate6",
   userSelect: "none",
   color: "$hiContrast",

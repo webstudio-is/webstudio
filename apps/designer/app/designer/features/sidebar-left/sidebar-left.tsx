@@ -8,21 +8,12 @@ import {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "@webstudio-is/design-system";
-import { useSelectedInstanceData } from "../../shared/nano-states";
 import { useDragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-
-const sidebarTabsContentStyle = {
-  position: "absolute",
-  left: "100%",
-  width: 250,
-  height: "100%",
-  bc: "$loContrast",
-  // @todo: focus state should be same as hover/active state: hover and focus yes, probably same, active? not so sure.
-  outline: "none",
-};
+import { useClientSettings } from "~/designer/shared/client-settings";
+import { PANEL_WIDTH } from "~/designer/shared/constants";
 
 const none = { TabContent: () => null };
 
@@ -32,10 +23,10 @@ type SidebarLeftProps = {
 };
 
 export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
-  const [selectedInstanceData] = useSelectedInstanceData();
   const [dragAndDropState] = useDragAndDropState();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
+  const [clientSettings] = useClientSettings();
 
   useSubscribe<"clickCanvas">("clickCanvas", () => {
     setActiveTab("none");
@@ -44,11 +35,17 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
     setActiveTab("none");
   });
 
-  const enabledPanels = (
-    isFeatureEnabled("assets")
-      ? Object.keys(panels)
-      : Object.keys(panels).filter((panel) => panel !== "assetManager")
-  ) as Array<TabName>;
+  const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
+    (panel) => {
+      switch (panel) {
+        case "assetManager":
+          return isFeatureEnabled("assets");
+        case "navigator":
+          return clientSettings.navigatorLayout === "docked";
+      }
+      return true;
+    }
+  );
 
   return (
     <Box css={{ position: "relative", zIndex: 1 }}>
@@ -70,7 +67,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
-            ...sidebarTabsContentStyle,
+            width: PANEL_WIDTH,
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility:
@@ -82,7 +79,6 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
         >
           <TabContent
             assets={assets}
-            selectedInstanceData={selectedInstanceData}
             publish={publish}
             onSetActiveTab={setActiveTab}
           />
