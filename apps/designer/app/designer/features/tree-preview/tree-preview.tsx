@@ -5,7 +5,6 @@ import { Tree } from "~/designer/shared/tree";
 import { Flex } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
-  getInstancePath,
   reparentInstanceMutable,
   insertInstanceMutable,
   createInstance,
@@ -54,9 +53,8 @@ export const TreePrevew = () => {
     })(rootInstance);
 
     return {
-      instance,
+      root: instance,
       selectedInstanceId: dragItemInstance.id,
-      selectedInstancePath: getInstancePath(instance, dragItemInstance.id),
     };
   }, [
     rootInstance,
