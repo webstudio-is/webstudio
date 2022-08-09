@@ -29,6 +29,15 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
               payload: instance.id,
             });
           }}
+          onDragEnd={(payload) => {
+            publish<
+              "reparentInstance",
+              {
+                instanceId: Instance["id"];
+                dropTarget: { instanceId: Instance["id"]; position: number };
+              }
+            >({ type: "reparentInstance", payload });
+          }}
         />
       </Box>
     </>

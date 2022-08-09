@@ -106,7 +106,8 @@ export const getPlacementNextTo = (
   parentRect: Rect,
   rect: Rect | undefined,
   childrenOrientation: ChildrenOrientation,
-  direction: "forward" | "backward"
+  direction: "forward" | "backward",
+  padding = 5
 ): Placement | undefined => {
   if (rect === undefined) {
     return undefined;
@@ -126,7 +127,7 @@ export const getPlacementNextTo = (
       : "top";
 
   const getMargin = (distnaceToParentEdge: number) =>
-    Math.min(10, Math.max(0, distnaceToParentEdge)) / 2;
+    Math.min(padding * 2, Math.max(0, distnaceToParentEdge)) / 2;
 
   if (side === "top") {
     return {
@@ -171,10 +172,9 @@ export const getPlacementNextTo = (
 
 export const getPlacementInside = (
   parentRect: Rect,
-  childrenOrientation: ChildrenOrientation
+  childrenOrientation: ChildrenOrientation,
+  padding = 5
 ): Placement => {
-  const padding = 5;
-
   if (childrenOrientation.type === "horizontal") {
     const safePadding = Math.min(parentRect.width / 2, padding);
     return {

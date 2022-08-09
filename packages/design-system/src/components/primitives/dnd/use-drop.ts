@@ -49,6 +49,23 @@ export type UseDropProps<Data> = {
   // Allows you to customize children
   // that will be used to determine placement and indexWithinChildren
   getValidChildren?: (parent: Element) => Element[] | HTMLCollection;
+
+  // If set to true, the target selection will work as if
+  // the pointer is always inside the root element's bounds.
+  //
+  // For example:
+  //  ___________
+  // |           |
+  // |          *|   * - real pointer
+  // |          ^------- emulated pointer
+  // |           |
+  // |___________|
+  //
+  // The pointer will be always at least 2px away from any edge of the root.
+  emulatePointerAlwaysInRootBounds?: boolean;
+
+  // Distance from an edge when placement is put next to an element edge
+  placementPadding?: number;
 };
 
 export type UseDropHandlers = {
@@ -107,6 +124,8 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
       const childrenRects = getChildrenRectsMemoized(partialDropTarget.element);
 
+      console.log({ parentRect, pointerRelativeToParent, childrenRects });
+
       const closestChildIndex =
         childrenRects.length === 0
           ? 0
@@ -156,10 +175,15 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
               parentRect,
               closestChildRect,
               childrenOrientation,
-              indexAdjustment > 0 ? "forward" : "backward"
+              indexAdjustment > 0 ? "forward" : "backward",
+              latestProps.current.placementPadding
             )
           ) ||
-          getPlacementInside(parentRect, childrenOrientation);
+          getPlacementInside(
+            parentRect,
+            childrenOrientation,
+            latestProps.current.placementPadding
+          );
 
         const dropTarget: DropTarget<Data> = {
           ...partialDropTarget,
@@ -218,6 +242,8 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         isNewIsNearEdge === false &&
         state.current.dropTarget
       ) {
+        console.log("skipping swap", state.current.dropTarget);
+
         // Still need to call setDropTarget to update rect and/or placement.
         // Because indexWithinChildren might have changed,
         // or parent coordinates might have moved in case of a scroll
@@ -248,7 +274,17 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
     return {
       handleMove(pointerCoordinates) {
-        state.current.pointerCoordinates = pointerCoordinates;
+        if (latestProps.current.emulatePointerAlwaysInRootBounds === true) {
+          const rect = (rootRef.current as Element).getBoundingClientRect();
+          const padding = 2;
+          const { x, y } = pointerCoordinates;
+          state.current.pointerCoordinates = {
+            x: Math.max(rect.left + padding, Math.min(rect.right - padding, x)),
+            y: Math.max(rect.top + padding, Math.min(rect.bottom - padding, y)),
+          };
+        } else {
+          state.current.pointerCoordinates = pointerCoordinates;
+        }
         detectTarget();
       },
 
