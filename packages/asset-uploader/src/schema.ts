@@ -29,5 +29,5 @@ export const fsEnvVariables = z.object({
 });
 
 export const assetEnvVariables = z.object({
-  MAX_UPLOAD_SIZE: z.string().optional().default("1"),
+  MAX_UPLOAD_SIZE: z.string().optional().default("10"),
 });
