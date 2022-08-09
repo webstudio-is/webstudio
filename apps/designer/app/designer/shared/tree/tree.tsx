@@ -1,13 +1,10 @@
-/* eslint-disable */
-// @todo: enable eslint
-
 import {
   useState,
   useMemo,
-  useEffect,
   forwardRef,
   type ElementRef,
   useRef,
+  useCallback,
 } from "react";
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import {
@@ -18,9 +15,6 @@ import {
   keyframes,
   styled,
   type DropTarget,
-  type Point,
-  PlacementIndicator,
-  useAutoScroll,
   useDrag,
   useDrop,
   Box,
@@ -60,65 +54,28 @@ type NodeProps = {
   level: number;
   onSelect: (instance: Instance) => void;
   animate: boolean;
-};
+} & ExpandState;
 
-// @todo: remove forwardRef if not needed
+// eslint-disable-next-line react/display-name
 const Node = forwardRef<ElementRef<typeof Collapsible.Root>, NodeProps>(
-  (
-    {
-      instance,
-      selectedInstanceId,
-      selectedInstancePath,
-      level,
-      onSelect,
+  ({ instance, level, ...commonProps }, ref) => {
+    const {
+      getIsExpanded,
       animate,
-    },
-    ref
-  ) => {
-    const [isOpen, setIsOpen] = useState(
-      selectedInstancePath.includes(instance)
-    );
-
-    useEffect(() => {
-      setIsOpen(selectedInstancePath.includes(instance));
-    }, [selectedInstancePath, instance]);
-
-    // Text nodes have only one child which is a string.
-    const showChildren =
-      instance.children.length > 1 || typeof instance.children[0] === "object";
-
-    const children = useMemo(() => {
-      if ((isOpen === false && animate === false) || showChildren === false) {
-        return null;
-      }
-      const children = [];
-      for (const child of instance.children) {
-        if (typeof child === "string") continue;
-        children.push(
-          <Node
-            instance={child}
-            selectedInstanceId={selectedInstanceId}
-            selectedInstancePath={selectedInstancePath}
-            level={level + 1}
-            key={child.id}
-            onSelect={onSelect}
-            animate={animate}
-          />
-        );
-      }
-      return children;
-    }, [
-      instance,
-      level,
-      isOpen,
+      setIsExpanded,
       selectedInstanceId,
-      selectedInstancePath,
       onSelect,
-      showChildren,
-      animate,
-    ]);
+      selectedInstancePath,
+    } = commonProps;
+
+    const isExpandable = getIsExpandable(instance);
+    const isExpanded =
+      getIsExpanded(instance) ||
+      selectedInstancePath.some((item) => item.id === instance.id);
+    const isSelected = instance.id === selectedInstanceId;
 
     const { Icon, label } = components[instance.component];
+
     const CollapsibleContent = animate
       ? CollapsibleContentAnimated
       : CollapsibleContentUnanimated;
@@ -126,39 +83,48 @@ const Node = forwardRef<ElementRef<typeof Collapsible.Root>, NodeProps>(
     return (
       <Collapsible.Root
         ref={ref}
-        open={isOpen}
-        onOpenChange={setIsOpen}
+        open={isExpanded}
+        onOpenChange={(isOpen: boolean) => setIsExpanded(instance.id, isOpen)}
         data-drop-target-id={instance.id}
       >
         <Flex
           css={{
             // @todo don't hardcode the padding
-            paddingLeft: level * 15 + (showChildren ? 0 : 15),
+            paddingLeft: level * 15 + (isExpandable ? 0 : 15),
             color: "$hiContrast",
             alignItems: "center",
           }}
         >
-          {showChildren && (
+          {isExpandable && (
             <Collapsible.Trigger asChild>
-              {isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}
+              {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
             </Collapsible.Trigger>
           )}
           <Button
-            {...(instance.id === selectedInstanceId
-              ? { state: "active" }
-              : { ghost: true })}
+            {...(isSelected ? { state: "active" } : { ghost: true })}
             css={{ display: "flex", gap: "$1", padding: "$1" }}
             data-drag-item-id={instance.id}
-            onFocus={() => {
-              onSelect(instance);
-            }}
+            onFocus={() => onSelect(instance)}
           >
             <Icon />
             <Text size="1">{label}</Text>
           </Button>
         </Flex>
-        {children != null && (
-          <CollapsibleContent>{children}</CollapsibleContent>
+        {isExpandable && (isExpanded || animate) && (
+          <CollapsibleContent>
+            {instance.children.flatMap((child) =>
+              typeof child === "string"
+                ? []
+                : [
+                    <Node
+                      key={child.id}
+                      instance={child}
+                      level={level + 1}
+                      {...commonProps}
+                    />,
+                  ]
+            )}
+          </CollapsibleContent>
         )}
       </Collapsible.Root>
     );
@@ -172,9 +138,17 @@ type TreeProps = {
   animate?: boolean;
 };
 
-export const Tree = forwardRef<ElementRef<typeof Node>, TreeProps>(
+// eslint-disable-next-line react/display-name
+const BaseTree = forwardRef<ElementRef<typeof Node>, TreeProps & ExpandState>(
   (
-    { root, selectedInstanceId, onSelect = () => null, animate = true },
+    {
+      root,
+      selectedInstanceId,
+      onSelect = () => null,
+      animate = true,
+      getIsExpanded,
+      setIsExpanded,
+    },
     ref
   ) => {
     const selectedInstancePath = useMemo(
@@ -192,11 +166,18 @@ export const Tree = forwardRef<ElementRef<typeof Node>, TreeProps>(
         onSelect={onSelect}
         animate={animate}
         level={0}
+        getIsExpanded={getIsExpanded}
+        setIsExpanded={setIsExpanded}
         ref={ref}
       />
     );
   }
 );
+
+export const Tree = (props: TreeProps) => {
+  const expandState = useExpandState();
+  return <BaseTree {...props} {...expandState} />;
+};
 
 export const SortableTree = (
   props: TreeProps & {
@@ -208,6 +189,8 @@ export const SortableTree = (
 ) => {
   const { root, onDragEnd } = props;
 
+  const expandState = useExpandState();
+
   const rootRef = useRef<HTMLElement | null>(null);
 
   const [dragItem, setDragItem] = useState<Instance>();
@@ -218,7 +201,6 @@ export const SortableTree = (
   //
   // maybe we should return previous dropTarget, or current dragItem's parent?
   const getFallbackDropTarget = () => {
-    console.warn("getFallbackDropTarget");
     return {
       data: root,
       element: rootRef.current as HTMLElement,
@@ -239,8 +221,6 @@ export const SortableTree = (
     },
 
     swapDropTarget: (dropTarget) => {
-      console.log("swapDropTarget", dropTarget);
-
       if (dragItem === undefined || dropTarget === undefined) {
         return getFallbackDropTarget();
       }
@@ -284,7 +264,6 @@ export const SortableTree = (
     },
 
     onDropTargetChange: (dropTarget) => {
-      console.log("onDropTargetChange", dropTarget);
       setDropTarget(dropTarget);
     },
 
@@ -333,25 +312,130 @@ export const SortableTree = (
 
   return (
     <>
-      <Tree
+      <BaseTree
         {...props}
+        {...expandState}
+        animate={props.animate && dropTarget === undefined}
         ref={(element) => {
           rootRef.current = element;
           dragHandlers.rootRef(element);
           dropHandlers.rootRef(element);
         }}
       />
-      {/* @todo: need to render an outline instead of the line when there're no children */}
-      {/* @todo: need to adjust line length according to the depth of the drop target inside the tree */}
       {dropTarget && (
-        <PlacementIndicatorLayer placement={dropTarget.placement} />
+        <PlacementIndicator
+          root={root}
+          getIsExpanded={expandState.getIsExpanded}
+          dropTarget={dropTarget}
+        />
       )}
     </>
   );
 };
 
-const PlacementIndicatorLayer = (
-  props: React.ComponentProps<typeof PlacementIndicator>
-) => {
-  return createPortal(<PlacementIndicator {...props} />, document.body);
+const PlacementIndicator = ({
+  root,
+  dropTarget,
+  getIsExpanded,
+}: {
+  root: Instance;
+  getIsExpanded: (instanceId: Instance) => boolean;
+  dropTarget: DropTarget<Instance>;
+}) => {
+  const depth = useMemo(() => {
+    // We only need depth if we're rendering a line
+    if (getIsExpanded(dropTarget.data)) {
+      return getInstancePath(root, dropTarget.data.id).length;
+    }
+    return undefined;
+  }, [dropTarget.data, getIsExpanded, root]);
+
+  if (depth !== undefined) {
+    const { placement } = dropTarget;
+
+    // @todo: fix magic numbers
+    const shift = depth * 15 + 15 + 4;
+
+    return createPortal(
+      <Box
+        style={{
+          top: placement.y - 1,
+          left: placement.x + shift,
+          width: placement.length - shift,
+          height: 2,
+        }}
+        css={{
+          boxSizing: "content-box",
+          position: "absolute",
+          background: "#f531b3",
+          pointerEvents: "none",
+        }}
+      >
+        <Box
+          css={{
+            // @todo: fix magic numbers
+            width: 8,
+            height: 8,
+            top: -3,
+            left: -7,
+            position: "absolute",
+            border: "solid 2px #f531b3",
+            borderRadius: "50%",
+          }}
+        />
+      </Box>,
+      document.body
+    );
+  }
+
+  const { rect } = dropTarget;
+
+  return createPortal(
+    <Box
+      style={{
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      }}
+      css={{
+        position: "absolute",
+        pointerEvents: "none",
+        outline: "2px solid #f531b3",
+        borderRadius: 6,
+      }}
+    />,
+    document.body
+  );
+};
+
+const getIsExpandable = (instance: Instance) => {
+  return (
+    // Text nodes have only one child which is a string.
+    instance.children.length > 1 || typeof instance.children[0] === "object"
+  );
+};
+
+type ExpandState = {
+  getIsExpanded: (instance: Instance) => boolean;
+  setIsExpanded: (instanceId: Instance["id"], expanded: boolean) => void;
+};
+
+const useExpandState = (): ExpandState => {
+  const [record, setRecord] = useState<Record<Instance["id"], boolean>>({});
+
+  const getIsExpanded = useCallback(
+    (instance: Instance) =>
+      getIsExpandable(instance) && record[instance.id] === true,
+    [record]
+  );
+
+  const setIsExpanded = useCallback(
+    (instanceId: Instance["id"], expanded: boolean) => {
+      setRecord((record) => ({ ...record, [instanceId]: expanded }));
+    },
+    []
+  );
+
+  return { getIsExpanded, setIsExpanded };
 };
