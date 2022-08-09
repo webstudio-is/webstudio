@@ -15,6 +15,7 @@ import {
   loadByProject,
 } from "@webstudio-is/asset-uploader/index.server";
 import { zfd } from "zod-form-data";
+import { useEffect } from "react";
 
 export { links };
 
@@ -90,12 +91,16 @@ const DesignerRoute = () => {
   const actionData = useActionData();
   const data = useLoaderData<Data | Error>();
 
+  useEffect(() => {
+    if (actionData && "errors" in actionData) {
+      toast.error(actionData.errors);
+    }
+  }, [actionData]);
+
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
-  if (actionData && "errors" in actionData) {
-    toast.error(actionData.errors, { id: "upload-error" });
-  }
+
   return <Designer {...data} />;
 };
 
