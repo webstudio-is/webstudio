@@ -18,6 +18,8 @@ export type Placement = {
   direction: "horizontal" | "vertical";
 };
 
+export type Area = "top" | "bottom" | "left" | "right" | "center";
+
 // https://stackoverflow.com/a/18157551/478603
 const getDistanceToRect = (rect: Rect, { x, y }: Point) => {
   const dx = Math.max(rect.left - x, 0, x - (rect.left + rect.width));
@@ -45,17 +47,25 @@ export const isEqualRect = (a: Rect | undefined, b: Rect) =>
   a.width === b.width &&
   a.height === b.height;
 
-export const isNearEdge = (
+export const getArea = (
   { x, y }: Point,
   edgeDistanceThreshold: number,
   rect: Rect
-) =>
-  Math.min(
-    y - rect.top,
-    rect.top + rect.height - y,
-    x - rect.left,
-    rect.left + rect.width - x
-  ) <= edgeDistanceThreshold;
+): Area => {
+  if (x - rect.left <= edgeDistanceThreshold) {
+    return "left";
+  }
+  if (rect.left + rect.width - x <= edgeDistanceThreshold) {
+    return "right";
+  }
+  if (y - rect.top <= edgeDistanceThreshold) {
+    return "top";
+  }
+  if (rect.top + rect.height - y <= edgeDistanceThreshold) {
+    return "bottom";
+  }
+  return "center";
+};
 
 export const getPlacementBetween = (
   a: Rect | undefined,

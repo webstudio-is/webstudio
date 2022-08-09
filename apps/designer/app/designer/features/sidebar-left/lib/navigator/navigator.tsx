@@ -1,7 +1,7 @@
 import { Box } from "@webstudio-is/design-system";
 import type { Instance, Publish } from "@webstudio-is/react-sdk";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
-import { Tree } from "~/designer/shared/tree";
+import { SortableTree } from "~/designer/shared/tree";
 import { useRootInstance } from "~/shared/nano-states";
 import { Header } from "../header";
 
@@ -20,7 +20,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
     <>
       <Header title="Navigator" onClose={onClose} isClosable={isClosable} />
       <Box css={{ padding: "$1" }}>
-        <Tree
+        <SortableTree
           root={rootInstance}
           selectedInstanceId={selectedInstanceData?.id}
           onSelect={(instance) => {

@@ -1,7 +1,7 @@
 import { useRef, useMemo } from "react";
 import {
   isEqualRect,
-  isNearEdge,
+  getArea,
   getClosestRectIndex,
   getPlacementBetween,
   getPlacementInside,
@@ -10,6 +10,7 @@ import {
   type Rect,
   type Point,
   type Placement,
+  type Area,
 } from "./geometry-utils";
 import { getLocalChildrenOrientation, getChildrenRects } from "./dom-utils";
 
@@ -33,7 +34,7 @@ export type UseDropProps<Data> = {
   // To check that the element can qualify as a target
   elementToData: (target: Element) => Data | false;
 
-  // Distance from an edge to set nearEdge to true in swapDropTarget
+  // Distance from an edge to determine "area" argument for swapDropTarget
   edgeDistanceThreshold?: number;
 
   // Given the potential target that has passed the elementToData check,
@@ -41,7 +42,7 @@ export type UseDropProps<Data> = {
   // you can swap to another target
   swapDropTarget: (
     // undefined is passed when no suitable element is found under the pointer
-    dropTarget: (PartialDropTarget<Data> & { nearEdge: boolean }) | undefined
+    dropTarget: (PartialDropTarget<Data> & { area: Area }) | undefined
   ) => PartialDropTarget<Data>;
 
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
@@ -81,7 +82,7 @@ const getInitialState = <Data>() => {
     dropTarget: undefined as DropTarget<Data> | undefined,
     childrenRectsCache: new WeakMap<Element, Rect[]>(),
     lastCandidateElement: undefined as Element | undefined,
-    lastCandidateIsNearEdge: undefined as boolean | undefined,
+    lastCandidateArea: undefined as Area | undefined,
   };
 };
 
@@ -123,8 +124,6 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       };
 
       const childrenRects = getChildrenRectsMemoized(partialDropTarget.element);
-
-      console.log({ parentRect, pointerRelativeToParent, childrenRects });
 
       const closestChildIndex =
         childrenRects.length === 0
@@ -226,24 +225,21 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       const isNewCandidate =
         candidate?.element !== state.current.lastCandidateElement;
       state.current.lastCandidateElement = candidate?.element;
-      const candidateIsNearEdge =
+      const candidateArea =
         candidate && pointerCoordinates
-          ? isNearEdge(
+          ? getArea(
               pointerCoordinates,
               edgeDistanceThreshold,
               candidate.element.getBoundingClientRect()
             )
           : undefined;
-      const isNewIsNearEdge =
-        candidateIsNearEdge !== state.current.lastCandidateIsNearEdge;
-      state.current.lastCandidateIsNearEdge = candidateIsNearEdge;
+      const isNewArea = candidateArea !== state.current.lastCandidateArea;
+      state.current.lastCandidateArea = candidateArea;
       if (
         isNewCandidate === false &&
-        isNewIsNearEdge === false &&
+        isNewArea === false &&
         state.current.dropTarget
       ) {
-        console.log("skipping swap", state.current.dropTarget);
-
         // Still need to call setDropTarget to update rect and/or placement.
         // Because indexWithinChildren might have changed,
         // or parent coordinates might have moved in case of a scroll
@@ -257,7 +253,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
           candidate && pointerCoordinates
             ? {
                 ...candidate,
-                nearEdge: isNearEdge(
+                area: getArea(
                   pointerCoordinates,
                   edgeDistanceThreshold,
                   candidate.element.getBoundingClientRect()

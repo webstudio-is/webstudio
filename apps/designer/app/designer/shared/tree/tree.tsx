@@ -170,28 +170,43 @@ type TreeProps = {
   selectedInstanceId?: Instance["id"];
   onSelect?: (instance: Instance) => void;
   animate?: boolean;
-
-  // @todo: export a Tree component without drag and drop, to use in tree preview etc.
-  onDragEnd?: (event: {
-    instanceId: Instance["id"];
-    dropTarget: { instanceId: Instance["id"]; position: number };
-  }) => void;
 };
 
-export const Tree = ({
-  root,
-  selectedInstanceId,
-  onSelect = () => null,
-  animate = true,
-  onDragEnd = () => null,
-}: TreeProps) => {
-  const selectedInstancePath = useMemo(
-    () =>
-      selectedInstanceId !== undefined
-        ? getInstancePath(root, selectedInstanceId)
-        : [],
-    [root, selectedInstanceId]
-  );
+export const Tree = forwardRef<ElementRef<typeof Node>, TreeProps>(
+  (
+    { root, selectedInstanceId, onSelect = () => null, animate = true },
+    ref
+  ) => {
+    const selectedInstancePath = useMemo(
+      () =>
+        selectedInstanceId !== undefined
+          ? getInstancePath(root, selectedInstanceId)
+          : [],
+      [root, selectedInstanceId]
+    );
+    return (
+      <Node
+        instance={root}
+        selectedInstanceId={selectedInstanceId}
+        selectedInstancePath={selectedInstancePath}
+        onSelect={onSelect}
+        animate={animate}
+        level={0}
+        ref={ref}
+      />
+    );
+  }
+);
+
+export const SortableTree = (
+  props: TreeProps & {
+    onDragEnd: (event: {
+      instanceId: Instance["id"];
+      dropTarget: { instanceId: Instance["id"]; position: number };
+    }) => void;
+  }
+) => {
+  const { root, onDragEnd } = props;
 
   const rootRef = useRef<HTMLElement | null>(null);
 
@@ -237,7 +252,7 @@ export const Tree = ({
       const path = getInstancePath(root, dropTarget.data.id);
       path.reverse();
 
-      if (dropTarget.nearEdge) {
+      if (dropTarget.area === "top" || dropTarget.area === "bottom") {
         path.shift();
       }
 
@@ -318,20 +333,14 @@ export const Tree = ({
 
   return (
     <>
-      <Node
-        instance={root}
-        selectedInstanceId={selectedInstanceId}
-        selectedInstancePath={selectedInstancePath}
-        onSelect={onSelect}
-        animate={animate}
-        level={0}
+      <Tree
+        {...props}
         ref={(element) => {
           rootRef.current = element;
           dragHandlers.rootRef(element);
           dropHandlers.rootRef(element);
         }}
       />
-
       {/* @todo: need to render an outline instead of the line when there're no children */}
       {/* @todo: need to adjust line length according to the depth of the drop target inside the tree */}
       {dropTarget && (
