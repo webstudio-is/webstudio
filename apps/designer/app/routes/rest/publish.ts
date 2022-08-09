@@ -10,11 +10,11 @@ export const action: ActionFunction = async ({ request }) => {
   }
   try {
     await db.misc.publish({ projectId, domain });
-    if (process.env.EDGE_PUBLISHER_ENDPOINT) {
+    if (process.env.PUBLISHER_ENDPOINT) {
       const headers = new Headers();
-      headers.append("X-AUTH-WEBSTUDIO", process.env.EDGE_TOKEN || "");
+      headers.append("X-AUTH-WEBSTUDIO", process.env.PUBLISHER_TOKEN || "");
       headers.append("Content-Type", "text/plain");
-      const response = await fetch(process.env.EDGE_PUBLISHER_ENDPOINT, {
+      const response = await fetch(process.env.PUBLISHER_ENDPOINT, {
         method: "PUT",
         headers,
         body: JSON.stringify({

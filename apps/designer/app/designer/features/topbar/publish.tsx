@@ -20,8 +20,8 @@ import env from "~/shared/env";
 type PublishButtonProps = { project: Project };
 
 const host = () => {
-  if (env.EDGE_PUBLISHER_ENDPOINT && env.EDGE_DOMAIN !== "") {
-    return env.EDGE_DOMAIN;
+  if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_DOMAIN !== "") {
+    return env.PUBLISHER_DOMAIN;
   }
   if (typeof location === "object") {
     if (location.host.includes("webstudio.is")) return "wstd.io";
