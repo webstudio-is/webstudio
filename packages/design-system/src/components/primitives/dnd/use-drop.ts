@@ -34,7 +34,7 @@ export type UseDropProps<Data> = {
   // To check that the element can qualify as a target
   elementToData: (target: Element) => Data | false;
 
-  // Distance from an edge to determine "area" argument for swapDropTarget
+  // Distance from an edge to determine "area" value for swapDropTarget
   edgeDistanceThreshold?: number;
 
   // Given the potential target that has passed the elementToData check,

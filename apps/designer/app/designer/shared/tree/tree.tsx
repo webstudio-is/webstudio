@@ -1,11 +1,4 @@
-import {
-  useState,
-  useMemo,
-  forwardRef,
-  type ElementRef,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useMemo, forwardRef, useRef, useCallback } from "react";
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import {
   Flex,
@@ -57,7 +50,7 @@ type NodeProps = {
 } & ExpandState;
 
 // eslint-disable-next-line react/display-name
-const Node = forwardRef<ElementRef<typeof Collapsible.Root>, NodeProps>(
+const Node = forwardRef<HTMLDivElement, NodeProps>(
   ({ instance, level, ...commonProps }, ref) => {
     const {
       getIsExpanded,
@@ -139,7 +132,7 @@ type TreeProps = {
 };
 
 // eslint-disable-next-line react/display-name
-const BaseTree = forwardRef<ElementRef<typeof Node>, TreeProps & ExpandState>(
+const BaseTree = forwardRef<HTMLDivElement, TreeProps & ExpandState>(
   (
     {
       root,
