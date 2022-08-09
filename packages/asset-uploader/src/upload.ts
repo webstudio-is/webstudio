@@ -50,13 +50,11 @@ export const uploadAssets = async ({
       });
     }
   } catch (error) {
-    if ("maxBytes" in error) {
+    if (error instanceof Error && "maxBytes" in error) {
       throw new Error(
         `Asset cannot be bigger than ${commonUploadVars.MAX_UPLOAD_SIZE}MB`
       );
     }
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
+    throw error;
   }
 };
