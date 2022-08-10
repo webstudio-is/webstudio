@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/prisma-client";
 import {
@@ -8,65 +8,44 @@ import {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "@webstudio-is/design-system";
-import { useSelectedInstanceData } from "../../shared/nano-states";
+import { useDragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-
-const sidebarTabsContentStyle = {
-  position: "absolute",
-  left: "100%",
-  width: 250,
-  height: "100%",
-  bc: "$loContrast",
-  // @todo: focus state should be same as hover/active state: hover and focus yes, probably same, active? not so sure.
-  outline: "none",
-};
+import { useClientSettings } from "~/designer/shared/client-settings";
+import { PANEL_WIDTH } from "~/designer/shared/constants";
 
 const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
-  onDragChange: (isDragging: boolean) => void;
   publish: Publish;
   assets: Array<Asset>;
 };
 
-export const SidebarLeft = ({
-  onDragChange,
-  publish,
-  assets,
-}: SidebarLeftProps) => {
-  const [selectedInstanceData] = useSelectedInstanceData();
+export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
+  const [dragAndDropState] = useDragAndDropState();
   const [activeTab, setActiveTab] = useState<TabName>("none");
-  const [isDragging, setIsDragging] = useState(false);
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
+  const [clientSettings] = useClientSettings();
 
   useSubscribe<"clickCanvas">("clickCanvas", () => {
     setActiveTab("none");
   });
-  useSubscribe("dragStartInstance", () => {
-    setIsDragging(true);
-  });
-  useSubscribe("dragEndInstance", () => {
-    setIsDragging(false);
+  useSubscribe<"dragEnd">("dragEnd", () => {
+    setActiveTab("none");
   });
 
-  const handleDragChange = useCallback(
-    (isDragging: boolean) => {
-      // After dragging is done, container is going to become visible
-      // and we need to close it for good.
-      if (isDragging === false) setActiveTab("none");
-      setIsDragging(isDragging);
-      onDragChange(isDragging);
-    },
-    [onDragChange]
+  const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
+    (panel) => {
+      switch (panel) {
+        case "assetManager":
+          return isFeatureEnabled("assets");
+        case "navigator":
+          return clientSettings.navigatorLayout === "docked";
+      }
+      return true;
+    }
   );
-
-  const enabledPanels = (
-    isFeatureEnabled("assets")
-      ? Object.keys(panels)
-      : Object.keys(panels).filter((panel) => panel !== "assetManager")
-  ) as Array<TabName>;
 
   return (
     <Box css={{ position: "relative", zIndex: 1 }}>
@@ -88,19 +67,20 @@ export const SidebarLeft = ({
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
-            ...sidebarTabsContentStyle,
+            width: PANEL_WIDTH,
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
-            visibility: isDragging ? "hidden" : "visible",
+            visibility:
+              dragAndDropState.isDragging && dragAndDropState.origin === "panel"
+                ? "hidden"
+                : "visible",
             overflow: "auto",
           }}
         >
           <TabContent
             assets={assets}
-            selectedInstanceData={selectedInstanceData}
             publish={publish}
             onSetActiveTab={setActiveTab}
-            onDragChange={handleDragChange}
           />
         </SidebarTabsContent>
       </SidebarTabs>

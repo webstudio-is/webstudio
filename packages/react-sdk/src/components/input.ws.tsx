@@ -8,5 +8,6 @@ export default {
   canAcceptChild: () => false,
   isContentEditable: false,
   isInlineOnly: false,
+  isListed: true,
   label: "Input",
 } as WsComponentMeta<typeof Input>;

@@ -1,10 +1,14 @@
 import { type ActionFunction } from "@remix-run/node";
+import { zfd } from "zod-form-data";
 import * as db from "~/shared/db";
 
+const schema = zfd.formData({
+  domain: zfd.text(),
+  projectId: zfd.text(),
+});
+
 export const action: ActionFunction = async ({ request }) => {
-  const formData = await request.formData();
-  const domain = formData.get("domain") as string | null;
-  const projectId = formData.get("projectId") as string | null;
+  const { domain, projectId } = schema.parse(await request.formData());
   if (!domain || !projectId) {
     throw new Error("Domain or ProjectId not provided.");
   }

@@ -5,7 +5,7 @@ export const Separator = styled(SeparatorPrimitive.Root, {
   border: "none",
   margin: 0,
   flexShrink: 0,
-  backgroundColor: "$slate6",
+  backgroundColor: "$slate7",
   cursor: "default",
 
   variants: {
@@ -32,9 +32,18 @@ export const Separator = styled(SeparatorPrimitive.Root, {
           height: "$7",
         },
       },
+      auto: {
+        '&[data-orientation="horizontal"]': {
+          height: "1px",
+        },
+
+        '&[data-orientation="vertical"]': {
+          width: "1px",
+        },
+      },
     },
   },
   defaultVariants: {
-    size: "1",
+    size: "auto",
   },
 });

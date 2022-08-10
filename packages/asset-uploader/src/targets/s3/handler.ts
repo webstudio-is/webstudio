@@ -1,5 +1,5 @@
 import { UploadHandlerPart } from "@remix-run/node";
-import { PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import ObjectID from "bson-objectid";
 
@@ -14,6 +14,7 @@ import {
   getFilenameAndExtension,
 } from "../../helpers/array-buffer-helpers";
 import { Location } from "@webstudio-is/prisma-client";
+import { getS3Client } from "./client";
 
 type S3UploadHandler = ({
   file,
@@ -37,7 +38,7 @@ export const s3UploadHandler: S3UploadHandler = async ({
   const uint8Array = await getArrayBufferFromIterable(data);
 
   if (uint8Array.byteLength > maxPartSize) {
-    throw new Error(`Your asset cannot be bigger than ${MAX_UPLOAD_SIZE}mb`);
+    throw new Error(`Asset cannot be bigger than ${MAX_UPLOAD_SIZE}MB`);
   }
 
   const [name, extension] = getFilenameAndExtension(filename);
@@ -57,16 +58,7 @@ export const s3UploadHandler: S3UploadHandler = async ({
     },
   };
 
-  const client = new S3Client({
-    endpoint: s3Envs.S3_ENDPOINT,
-    region: s3Envs.S3_REGION,
-    credentials: {
-      accessKeyId: s3Envs.S3_ACCESS_KEY_ID,
-      secretAccessKey: s3Envs.S3_SECRET_ACCESS_KEY,
-    },
-  });
-
-  const upload = new Upload({ client, params });
+  const upload = new Upload({ client: getS3Client(), params });
 
   ImagesUploadedSuccess.parse(await upload.done());
   const image = sharp(uint8Array);

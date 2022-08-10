@@ -9,9 +9,21 @@
     "build": "rm -fr lib && tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "yarn typecheck && yarn lint"
+    "test": "jest",
+    "checks": "yarn typecheck && yarn lint && yarn test",
+    "storybook:run": "start-storybook -p 6006",
+    "storybook:build": "build-storybook"
   },
   "devDependencies": {
+    "@storybook/addon-actions": "^6.5.6",
+    "@storybook/addon-essentials": "^6.5.6",
+    "@storybook/addon-interactions": "^6.5.6",
+    "@storybook/addon-links": "^6.5.6",
+    "@storybook/builder-webpack4": "^6.5.6",
+    "@storybook/manager-webpack4": "^6.5.6",
+    "@storybook/react": "^6.5.6",
+    "@storybook/testing-library": "^0.0.11",
+    "@webstudio-is/jest-config": "*",
     "tsup": "^6.1.3",
     "typescript": "^4.6.2"
   },
@@ -43,11 +55,14 @@
     "@radix-ui/react-slider": "^0.1.4",
     "@radix-ui/react-switch": "^0.1.5",
     "@radix-ui/react-tabs": "^0.1.5",
+    "@radix-ui/react-toast": "^1.0.0",
     "@radix-ui/react-toggle": "^0.1.4",
     "@radix-ui/react-toggle-group": "^0.1.5",
-    "@radix-ui/react-tooltip": "^0.1.7",
+    "@radix-ui/react-tooltip": "^1.0.0",
     "@radix-ui/react-use-layout-effect": "^0.1.0",
-    "@webstudio-is/icons": "*"
+    "@webstudio-is/icons": "*",
+    "@webstudio-is/react-sdk": "*",
+    "react-hot-toast": "^2.3.0"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

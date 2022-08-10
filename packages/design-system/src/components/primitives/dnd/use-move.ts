@@ -13,22 +13,15 @@
  */
 
 /**
- * We had to copy this file from react-aria because we need pageX and pageY.
+ * We had to copy this file from react-aria because we need clientX and clientY.
  */
 
-import React, { HTMLAttributes, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useGlobalListeners } from "@react-aria/utils";
 
 interface MoveResult {
-  /** Props to spread on the target element. */
-  moveProps: HTMLAttributes<HTMLElement>;
-}
-
-interface EventBase {
-  shiftKey: boolean;
-  ctrlKey: boolean;
-  metaKey: boolean;
-  altKey: boolean;
+  onPointerDown: (e: PointerEvent) => void;
+  cancelCurrentMove: () => void;
 }
 
 export type PointerType = "mouse" | "pen" | "touch" | "keyboard" | "virtual";
@@ -50,8 +43,8 @@ interface MoveStartEvent extends BaseMoveEvent {
   /** The type of move event being fired. */
   type: "movestart";
   target: HTMLElement;
-  pageX: number;
-  pageY: number;
+  clientX: number;
+  clientY: number;
 }
 
 interface MoveMoveEvent extends BaseMoveEvent {
@@ -61,8 +54,8 @@ interface MoveMoveEvent extends BaseMoveEvent {
   deltaX: number;
   /** The amount moved in the Y direction since the last event. */
   deltaY: number;
-  pageX: number;
-  pageY: number;
+  clientX: number;
+  clientY: number;
 }
 
 interface MoveEndEvent extends BaseMoveEvent {
@@ -71,12 +64,14 @@ interface MoveEndEvent extends BaseMoveEvent {
 }
 
 interface MoveEvents {
+  shouldStart: (e: PointerEvent) => boolean;
+
   /** Handler that is called when a move interaction starts. */
   onMoveStart?: (e: MoveStartEvent) => void;
   /** Handler that is called when the element is moved. */
   onMove?: (e: MoveMoveEvent) => void;
   /** Handler that is called when a move interaction ends. */
-  onMoveEnd?: (e: MoveEndEvent) => void;
+  onMoveEnd?: (e: MoveEndEvent | "canceled") => void;
 }
 
 /**
@@ -100,15 +95,12 @@ export function useMove(props: MoveEvents): MoveResult {
   let latestProps = useRef<MoveEvents>(props);
   latestProps.current = props;
 
-  let moveProps = useMemo(() => {
-    let moveProps: HTMLAttributes<HTMLElement> = {};
-
+  let moveResult = useMemo(() => {
     let start = () => {
-      //disableTextSelection();
       state.current.didMove = false;
     };
     let move = (
-      originalEvent: MouseEvent | TouchEvent | React.KeyboardEvent,
+      originalEvent: PointerEvent,
       pointerType: PointerType,
       deltaX: number,
       deltaY: number
@@ -117,16 +109,10 @@ export function useMove(props: MoveEvents): MoveResult {
         return;
       }
 
-      // FIXME: this is a temporary fix
-      // we need to figure out how to properly support keyboard and touch
       if (
-        !(originalEvent.target instanceof HTMLElement) ||
-        !("pageX" in originalEvent)
+        !state.current.didMove &&
+        originalEvent.target instanceof HTMLElement
       ) {
-        return;
-      }
-
-      if (!state.current.didMove) {
         state.current.didMove = true;
         latestProps.current.onMoveStart?.({
           type: "movestart",
@@ -136,8 +122,8 @@ export function useMove(props: MoveEvents): MoveResult {
           ctrlKey: originalEvent.ctrlKey,
           altKey: originalEvent.altKey,
           target: originalEvent.target,
-          pageX: originalEvent.pageX,
-          pageY: originalEvent.pageY,
+          clientX: originalEvent.clientX,
+          clientY: originalEvent.clientY,
         });
       }
 
@@ -150,183 +136,85 @@ export function useMove(props: MoveEvents): MoveResult {
         metaKey: originalEvent.metaKey,
         ctrlKey: originalEvent.ctrlKey,
         altKey: originalEvent.altKey,
-        pageX: originalEvent.pageX,
-        pageY: originalEvent.pageY,
+        clientX: originalEvent.clientX,
+        clientY: originalEvent.clientY,
       });
     };
-    let end = (originalEvent: EventBase, pointerType: PointerType) => {
-      //restoreTextSelection();
+
+    let end = (event: PointerEvent | "canceled") => {
       if (state.current.didMove) {
-        latestProps.current.onMoveEnd?.({
-          type: "moveend",
+        latestProps.current.onMoveEnd?.(
+          event === "canceled"
+            ? "canceled"
+            : {
+                type: "moveend",
+                pointerType: (event.pointerType || "mouse") as PointerType,
+                shiftKey: event.shiftKey,
+                metaKey: event.metaKey,
+                ctrlKey: event.ctrlKey,
+                altKey: event.altKey,
+              }
+        );
+      }
+
+      state.current.id = null;
+      removeGlobalListener(window, "pointermove", onPointerMove, false);
+      removeGlobalListener(window, "pointerup", onPointerUp, false);
+      removeGlobalListener(window, "pointercancel", onPointerUp, false);
+    };
+
+    let onPointerMove = (event: PointerEvent) => {
+      if (
+        event.pointerId === state.current.id &&
+        state.current.lastPosition !== null
+      ) {
+        let pointerType = (event.pointerType || "mouse") as PointerType;
+
+        // Problems with PointerEvent#movementX/movementY:
+        // 1. it is always 0 on macOS Safari.
+        // 2. On Chrome Android, it's scaled by devicePixelRatio, but not on Chrome macOS
+        move(
+          event,
           pointerType,
-          shiftKey: originalEvent.shiftKey,
-          metaKey: originalEvent.metaKey,
-          ctrlKey: originalEvent.ctrlKey,
-          altKey: originalEvent.altKey,
-        });
+          event.pageX - state.current.lastPosition.pageX,
+          event.pageY - state.current.lastPosition.pageY
+        );
+        state.current.lastPosition = { pageX: event.pageX, pageY: event.pageY };
       }
     };
 
-    if (typeof PointerEvent === "undefined") {
-      let onMouseMove = (e: MouseEvent) => {
-        if (e.button === 0 && state.current.lastPosition !== null) {
-          move(
-            e,
-            "mouse",
-            e.pageX - state.current.lastPosition.pageX,
-            e.pageY - state.current.lastPosition.pageY
-          );
-          state.current.lastPosition = { pageX: e.pageX, pageY: e.pageY };
-        }
-      };
-      let onMouseUp = (e: MouseEvent) => {
-        if (e.button === 0) {
-          end(e, "mouse");
-          removeGlobalListener(window, "mousemove", onMouseMove, false);
-          removeGlobalListener(window, "mouseup", onMouseUp, false);
-        }
-      };
-      moveProps.onMouseDown = (e: React.MouseEvent) => {
-        if (e.button === 0) {
-          start();
-          e.stopPropagation();
-          e.preventDefault();
-          state.current.lastPosition = { pageX: e.pageX, pageY: e.pageY };
-          addGlobalListener(window, "mousemove", onMouseMove, false);
-          addGlobalListener(window, "mouseup", onMouseUp, false);
-        }
-      };
+    let onPointerUp = (event: PointerEvent) => {
+      if (event.pointerId === state.current.id) {
+        end(event);
+      }
+    };
 
-      let onTouchMove = (e: TouchEvent) => {
-        let touch = [...e.changedTouches].findIndex(
-          ({ identifier }) => identifier === state.current.id
-        );
-        if (touch >= 0 && state.current.lastPosition !== null) {
-          let { pageX, pageY } = e.changedTouches[touch];
-          move(
-            e,
-            "touch",
-            pageX - state.current.lastPosition.pageX,
-            pageY - state.current.lastPosition.pageY
-          );
-          state.current.lastPosition = { pageX, pageY };
-        }
-      };
-      let onTouchEnd = (e: TouchEvent) => {
-        let touch = [...e.changedTouches].findIndex(
-          ({ identifier }) => identifier === state.current.id
-        );
-        if (touch >= 0) {
-          end(e, "touch");
-          state.current.id = null;
-          removeGlobalListener(window, "touchmove", onTouchMove);
-          removeGlobalListener(window, "touchend", onTouchEnd);
-          removeGlobalListener(window, "touchcancel", onTouchEnd);
-        }
-      };
-      moveProps.onTouchStart = (e: React.TouchEvent) => {
-        if (e.changedTouches.length === 0 || state.current.id != null) {
-          return;
-        }
-
-        let { pageX, pageY, identifier } = e.changedTouches[0];
-        start();
-        e.stopPropagation();
-        e.preventDefault();
-        state.current.lastPosition = { pageX, pageY };
-        state.current.id = identifier;
-        addGlobalListener(window, "touchmove", onTouchMove, false);
-        addGlobalListener(window, "touchend", onTouchEnd, false);
-        addGlobalListener(window, "touchcancel", onTouchEnd, false);
-      };
-    } else {
-      let onPointerMove = (e: PointerEvent) => {
+    return {
+      onPointerDown: (event: PointerEvent) => {
         if (
-          e.pointerId === state.current.id &&
-          state.current.lastPosition !== null
+          event.button === 0 &&
+          state.current.id == null &&
+          latestProps.current.shouldStart(event)
         ) {
-          let pointerType = (e.pointerType || "mouse") as PointerType;
-
-          // Problems with PointerEvent#movementX/movementY:
-          // 1. it is always 0 on macOS Safari.
-          // 2. On Chrome Android, it's scaled by devicePixelRatio, but not on Chrome macOS
-          move(
-            e,
-            pointerType,
-            e.pageX - state.current.lastPosition.pageX,
-            e.pageY - state.current.lastPosition.pageY
-          );
-          state.current.lastPosition = { pageX: e.pageX, pageY: e.pageY };
-        }
-      };
-
-      let onPointerUp = (e: PointerEvent) => {
-        if (e.pointerId === state.current.id) {
-          let pointerType = (e.pointerType || "mouse") as PointerType;
-          end(e, pointerType);
-          state.current.id = null;
-          removeGlobalListener(window, "pointermove", onPointerMove, false);
-          removeGlobalListener(window, "pointerup", onPointerUp, false);
-          removeGlobalListener(window, "pointercancel", onPointerUp, false);
-        }
-      };
-
-      moveProps.onPointerDown = (e: React.PointerEvent) => {
-        if (e.button === 0 && state.current.id == null) {
           start();
-          e.stopPropagation();
-          e.preventDefault();
-          state.current.lastPosition = { pageX: e.pageX, pageY: e.pageY };
-          state.current.id = e.pointerId;
+          event.stopPropagation();
+          event.preventDefault();
+          state.current.lastPosition = {
+            pageX: event.pageX,
+            pageY: event.pageY,
+          };
+          state.current.id = event.pointerId;
           addGlobalListener(window, "pointermove", onPointerMove, false);
           addGlobalListener(window, "pointerup", onPointerUp, false);
           addGlobalListener(window, "pointercancel", onPointerUp, false);
         }
-      };
-    }
+      },
 
-    let triggerKeyboardMove = (
-      e: React.KeyboardEvent,
-      deltaX: number,
-      deltaY: number
-    ) => {
-      start();
-      move(e, "keyboard", deltaX, deltaY);
-      end(e, "keyboard");
+      cancelCurrentMove: () => {
+        end("canceled");
+      },
     };
-
-    moveProps.onKeyDown = (e) => {
-      switch (e.key) {
-        case "Left":
-        case "ArrowLeft":
-          e.preventDefault();
-          e.stopPropagation();
-          triggerKeyboardMove(e, -1, 0);
-          break;
-        case "Right":
-        case "ArrowRight":
-          e.preventDefault();
-          e.stopPropagation();
-          triggerKeyboardMove(e, 1, 0);
-          break;
-        case "Up":
-        case "ArrowUp":
-          e.preventDefault();
-          e.stopPropagation();
-          triggerKeyboardMove(e, 0, -1);
-          break;
-        case "Down":
-        case "ArrowDown":
-          e.preventDefault();
-          e.stopPropagation();
-          triggerKeyboardMove(e, 0, 1);
-          break;
-      }
-    };
-
-    return moveProps;
   }, [addGlobalListener, removeGlobalListener]);
 
-  return { moveProps };
+  return moveResult;
 }

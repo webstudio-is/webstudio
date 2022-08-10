@@ -7,15 +7,26 @@ import {
 } from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
 import * as db from "~/shared/db";
-import config from "~/config";
+import config, { type Config } from "~/config";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
+import { zfd } from "zod-form-data";
+import { User, type Project } from "@webstudio-is/prisma-client";
+
 export { links };
+const schema = zfd.formData({
+  project: zfd.text(),
+});
+
+type Data = {
+  config: Config;
+  projects: Array<Project>;
+  user: User;
+};
 
 export const action: ActionFunction = async ({ request }) => {
-  const formData = await request.formData();
-  const title = formData.get("project");
-  if (typeof title !== "string") return { errors: "Title required" };
+  const { project: title } = schema.parse(await request.formData());
+
   const { userId, headers } = await ensureUserCookie(request);
   const authenticatedUser = await authenticator.isAuthenticated(request);
   try {
@@ -43,7 +54,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 const DashboardRoute = () => {
-  const { config, projects, user } = useLoaderData();
+  const { config, projects, user } = useLoaderData<Data>();
+
   return <Dashboard config={config} user={user} projects={projects} />;
 };
 

@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
-import { createInstance } from "~/shared/tree-utils";
+import { createInstance, populateInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
 import { Project } from "./project.server";
@@ -17,53 +17,8 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   if (defaultBreakpoint === undefined) {
     throw new Error("A breakpoint with minWidth 0 is required");
   }
-  // @todo this should be part of a root component in sdk
-  const rootConfig: Pick<Instance, "component" | "cssRules"> = {
-    component: "Box",
-    cssRules: [
-      {
-        breakpoint: defaultBreakpoint.id,
-        style: {
-          backgroundColor: {
-            type: "keyword",
-            value: "white",
-          },
-          fontFamily: {
-            type: "keyword",
-            value: "Arial",
-          },
-          fontSize: {
-            type: "unit",
-            unit: "px",
-            value: 14,
-          },
-          lineHeight: {
-            type: "unit",
-            unit: "number",
-            value: 1.5,
-          },
-          color: {
-            type: "keyword",
-            value: "#232323",
-          },
-          minHeight: {
-            type: "unit",
-            unit: "vh",
-            value: 100,
-          },
-          display: {
-            type: "keyword",
-            value: "flex",
-          },
-          flexDirection: {
-            type: "keyword",
-            value: "column",
-          },
-        },
-      },
-    ],
-  };
-  return createInstance(rootConfig);
+  const instance = createInstance({ component: "Body" });
+  return populateInstance(instance, defaultBreakpoint.id);
 };
 
 export const create = async (root: Instance): Promise<DbTree> => {

@@ -1,6 +1,7 @@
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Project, Asset } from "@webstudio-is/prisma-client";
+import { toast } from "@webstudio-is/design-system";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
@@ -9,7 +10,12 @@ import { uploadAssets } from "~/shared/db/misc.server";
 import { ErrorMessage } from "~/shared/error";
 // if this file does not end in .server remix will not build
 // since it only allows node code in those files
-import { loadByProject } from "@webstudio-is/asset-uploader/index.server";
+import {
+  deleteAsset,
+  loadByProject,
+} from "@webstudio-is/asset-uploader/index.server";
+import { zfd } from "zod-form-data";
+import { useEffect } from "react";
 
 export { links };
 
@@ -33,19 +39,44 @@ type Error = {
   errors: "string";
 };
 
+const deleteAssetSchema = zfd.formData({
+  assetId: zfd.text(),
+  assetName: zfd.text(),
+});
+
 export const action: ActionFunction = async ({ request, params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
+  try {
+    if (request.method === "DELETE") {
+      const { assetId, assetName } = deleteAssetSchema.parse(
+        await request.formData()
+      );
+      const deletedAsset = await deleteAsset({
+        id: assetId,
+        name: assetName,
+      });
+
+      return { deletedAsset };
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      return {
+        errors: error.message,
+      };
+    }
+  }
   if (request.method === "POST") {
     try {
       const assets = await uploadAssets({
         request,
         projectId: params.id,
-        dirname: __dirname,
       });
-      return assets.map((asset: Asset) => ({
-        ...asset,
-        status: "uploaded",
-      }));
+      return {
+        uploadedAssets: assets.map((asset: Asset) => ({
+          ...asset,
+          status: "uploaded",
+        })),
+      };
     } catch (error) {
       if (error instanceof Error) {
         return {
@@ -59,12 +90,17 @@ export const action: ActionFunction = async ({ request, params }) => {
 const DesignerRoute = () => {
   const actionData = useActionData();
   const data = useLoaderData<Data | Error>();
+
+  useEffect(() => {
+    if (actionData && "errors" in actionData) {
+      toast.error(actionData.errors);
+    }
+  }, [actionData]);
+
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
-  if (actionData && "errors" in actionData) {
-    return <ErrorMessage message={actionData.errors} />;
-  }
+
   return <Designer {...data} />;
 };
 

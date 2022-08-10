@@ -8,5 +8,7 @@ export default {
   canAcceptChild: () => false,
   isContentEditable: true,
   isInlineOnly: false,
+  isListed: true,
   label: "Heading",
+  children: ["Heading you can edit"],
 } as WsComponentMeta<typeof Heading>;

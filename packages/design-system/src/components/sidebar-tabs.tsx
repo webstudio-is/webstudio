@@ -42,12 +42,9 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  "&:focus": {
-    outline: "none",
-    boxShadow: "inset 0 0 0 1px $slate8, 0 0 0 1px $slate8",
-  },
-  '&[data-orientation="vertical"]': {
-    boxShadow: "inset -1px 0 0 $slate6",
+  outline: "none",
+  '&[data-state="active"]': {
+    borderRight: "1px solid $slate7",
   },
 });
 
@@ -70,12 +67,10 @@ export const SidebarTabsContent = styled(TabsPrimitive.Content, {
   position: "absolute",
   top: 0,
   left: "100%",
-  width: 400,
   height: "100%",
   bc: "$loContrast",
-  outline: "1px solid $slate6",
-  "&:focus": {
-    outline: "none",
-    boxShadow: "inset 0 0 0 1px $slate8, 0 0 0 1px $slate8",
+  outline: "none",
+  '&[data-state="active"]': {
+    borderRight: "1px solid $slate7",
   },
 });

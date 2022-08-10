@@ -19,7 +19,7 @@ export const PreviewButton = ({ publish }: PreviewButtonProps) => {
   };
 
   useSubscribe<"togglePreviewMode">("togglePreviewMode", () => {
-    setValue(!isPreviewMode);
+    setValue(isPreviewMode === false);
   });
 
   return (
