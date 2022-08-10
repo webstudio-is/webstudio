@@ -20,6 +20,7 @@ export * from "@radix-ui/react-id";
 export { Container } from "./components/container";
 export { Label } from "./components/label";
 export * as ToggleGroup from "./components/toggle-group";
+export * from "./components/progress-radial";
 export * from "./components/select";
 export { TextField } from "./components/text-field";
 export { Flex } from "./components/flex";

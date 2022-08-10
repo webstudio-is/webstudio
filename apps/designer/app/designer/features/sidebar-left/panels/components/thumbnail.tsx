@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Flex,
-  ProgressBar,
-  Tooltip,
-} from "@webstudio-is/design-system";
-import { useInterval } from "react-use";
+import { Box, Button, Flex, Tooltip } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { useSubmit } from "@remix-run/react";
 import { Asset } from "~/designer/features/sidebar-left/types";
 import { Cross2Icon } from "@radix-ui/react-icons";
+import { UploadingAnimation } from "./uploading-animation";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -26,28 +20,6 @@ const useImageWithFallback = ({ path }: { path: string }) => {
   return src;
 };
 
-const useFakeProgress = ({
-  isUploading,
-  isDeleting,
-}: {
-  isUploading: boolean;
-  isDeleting: boolean;
-}) => {
-  const [progressBarPercentage, setProgressBarPercentage] = useState(0);
-
-  // @todo rewrite this fake indication to show real progress
-  useInterval(
-    () => {
-      setProgressBarPercentage((percentage) =>
-        percentage < 60 ? percentage + 1 : percentage
-      );
-    },
-    isUploading || isDeleting ? 100 : null
-  );
-
-  return progressBarPercentage;
-};
-
 export const AssetManagerThumbnail = ({
   path,
   alt,
@@ -60,7 +32,6 @@ export const AssetManagerThumbnail = ({
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
   const [isTooltipOpen, setTolltipOpen] = useState(false);
-  const progressBarPercentage = useFakeProgress({ isUploading, isDeleting });
 
   const closeTooltip = () => setTolltipOpen(false);
 
@@ -131,11 +102,7 @@ export const AssetManagerThumbnail = ({
         </Tooltip>
       )}
       {(isUploading || isDeleting) && (
-        <ProgressBar
-          value={progressBarPercentage}
-          max={60}
-          css={{ width: "100%", height: "$1" }}
-        />
+        <UploadingAnimation isDeleting={isDeleting} isUploading={isUploading} />
       )}
     </Box>
   );
