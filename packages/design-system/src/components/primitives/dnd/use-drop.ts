@@ -42,7 +42,12 @@ export type UseDropProps<Data> = {
   // you can swap to another target
   swapDropTarget: (
     // undefined is passed when no suitable element is found under the pointer
-    dropTarget: (PartialDropTarget<Data> & { area: Area }) | undefined
+    dropTarget:
+      | (PartialDropTarget<Data> & {
+          // @todo: revert to isNearEdge
+          area: Area;
+        })
+      | undefined
   ) => PartialDropTarget<Data> & {
     // Set "final" to true if you don't want to swap
     // any further for the current pointer position.
@@ -50,6 +55,8 @@ export type UseDropProps<Data> = {
     final?: boolean;
   };
 
+  // @todo: remove this
+  //
   // Set this to true if your swapDropTarget function
   // reads from an outside state rather than only using the arguments.
   // In this case it will be called on every pointer move even if the arguments are the same.

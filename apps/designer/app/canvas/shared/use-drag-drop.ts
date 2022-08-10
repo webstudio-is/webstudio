@@ -108,7 +108,7 @@ export const useDragAndDrop = () => {
         components[instance.component].canAcceptChild()
       );
 
-      if (!data) {
+      if (data === undefined) {
         return getDefaultDropTarget();
       }
 
@@ -116,7 +116,7 @@ export const useDragAndDrop = () => {
         return dropTarget;
       }
 
-      const element = data && getInstanceElementById(data.id);
+      const element = getInstanceElementById(data.id);
 
       if (element === null) {
         return getDefaultDropTarget();

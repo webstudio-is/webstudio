@@ -8,7 +8,11 @@ import {
   Box,
   Rect,
 } from "@webstudio-is/design-system";
-import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
+import {
+  findInstanceById,
+  getInstancePath,
+  getInstancePathWithPositions,
+} from "~/shared/tree-utils";
 import { createPortal } from "react-dom";
 import { getIsExpandable } from "./tree-node";
 import { BaseTree, useExpandState, type TreeProps } from "./base-tree";
@@ -30,11 +34,65 @@ export const SortableTree = (
   const [dragItem, setDragItem] = useState<Instance>();
   const [dropTarget, setDropTarget] = useState<DropTarget<Instance>>();
 
-  const horizontalShift = useRef(0);
+  const [horizontalShift, setHorizontalShift] = useState(0);
+
   const dragItemDepth = useMemo(
     () => dragItem && getInstancePath(root, dragItem.id).length - 1,
     [dragItem, root]
   );
+
+  // Here we want to allow user to shift placement line horizontally
+  // but only if that corresponds to a meaningful position in the tree
+  const finalDropTarget = useMemo((): DropTarget<Instance> | undefined => {
+    if (dragItemDepth === undefined || dropTarget === undefined) {
+      return dropTarget;
+    }
+
+    // This is the case where we render an outline instead of a line
+    if (dropTarget.placement.type === "inside-parent") {
+      return dropTarget;
+    }
+
+    const dropTargetPath = getInstancePathWithPositions(
+      root,
+      dropTarget.data.id
+    );
+    dropTargetPath.reverse();
+
+    const currentDepth = dropTargetPath.length;
+    const desiredDepth = dragItemDepth + horizontalShift;
+
+    // @todo: shift deeper if <
+    if (currentDepth <= desiredDepth) {
+      return dropTarget;
+    }
+
+    // Unless we're currently at the bottom of drop target's children,
+    // decreasing depth will not correspond to a new meaningful position
+    if (dropTarget.indexWithinChildren !== dropTarget.data.children.length) {
+      return dropTarget;
+    }
+
+    const difference = Math.min(
+      dropTargetPath.length - 1,
+      currentDepth - desiredDepth
+    );
+
+    // Ideally we should check canAcceptChildren on the new target
+    // but we assume that because it already has a child it can accept more
+
+    // @todo: if this works, move logic of placement modification here as well
+
+    return {
+      data: dropTargetPath[difference].instance,
+      placement: dropTarget.placement,
+      indexWithinChildren: dropTargetPath[difference - 1].position + 1,
+
+      // @todo: these are wrong now, but not used
+      element: dropTarget.element,
+      rect: dropTarget.rect,
+    };
+  }, [dragItemDepth, dropTarget, root, horizontalShift]);
 
   // @todo: not sure what this should return,
   // need to understand better when it's used
@@ -73,18 +131,11 @@ export const SortableTree = (
       return instance || false;
     },
 
-    // because we're reading from horizontalShift
-    swapDropTargetNotPure: true,
-
-    // @todo: fix magic number (half of item's height)
-    edgeDistanceThreshold: 24 / 2,
+    // We don't use area so setting this to 0 to get less frequent updates
+    edgeDistanceThreshold: 0,
 
     swapDropTarget: (dropTarget) => {
-      if (
-        dragItem === undefined ||
-        dropTarget === undefined ||
-        dragItemDepth === undefined
-      ) {
+      if (dragItem === undefined || dropTarget === undefined) {
         return getFallbackDropTarget();
       }
 
@@ -94,11 +145,6 @@ export const SortableTree = (
 
       const path = getInstancePath(root, dropTarget.data.id);
       path.reverse();
-
-      if (dropTarget.area.isNearBottom) {
-        const desiredDepth = dragItemDepth + horizontalShift.current;
-        path.splice(0, path.length - desiredDepth);
-      }
 
       // Don't allow to drop inside drag item or any of its children
       const dragItemIndex = path.findIndex(
@@ -112,13 +158,13 @@ export const SortableTree = (
         components[instance.component].canAcceptChild()
       );
 
-      if (!data) {
+      if (data === undefined) {
         return getFallbackDropTarget();
       }
 
-      const element =
-        data &&
-        rootRef.current?.querySelector(`[data-drop-target-id="${data.id}"]`);
+      const element = rootRef.current?.querySelector(
+        `[data-drop-target-id="${data.id}"]`
+      );
 
       if (element == null) {
         return getFallbackDropTarget();
@@ -163,20 +209,20 @@ export const SortableTree = (
       dropHandlers.handleMove(point);
     },
     onShiftChange: ({ shifts }) => {
-      horizontalShift.current = shifts;
+      setHorizontalShift(shifts);
     },
     onEnd: ({ isCanceled }) => {
-      if (dropTarget && dragItem && isCanceled === false) {
+      if (finalDropTarget && dragItem && isCanceled === false) {
         onDragEnd({
           instanceId: dragItem.id,
           dropTarget: {
-            instanceId: dropTarget.data.id,
-            position: dropTarget.indexWithinChildren,
+            instanceId: finalDropTarget.data.id,
+            position: finalDropTarget.indexWithinChildren,
           },
         });
       }
 
-      horizontalShift.current = 0;
+      setHorizontalShift(0);
       setDragItem(undefined);
       setDropTarget(undefined);
       dropHandlers.handleEnd();
@@ -196,15 +242,15 @@ export const SortableTree = (
           dropHandlers.rootRef(element);
         }}
       />
-      {dropTarget &&
+      {finalDropTarget &&
         createPortal(
           // Placement type "inside-parent" means that useDrop didn't find any children,
           // and the placement coorespond to a line near an edge of the parent.
           // In tree this doesn't make sense, so we're rendering an outline around the parent instead of a line.
-          dropTarget.placement.type === "inside-parent" ? (
-            <PlacementIndicatorOutline rect={dropTarget.rect} />
+          finalDropTarget.placement.type === "inside-parent" ? (
+            <PlacementIndicatorOutline rect={finalDropTarget.rect} />
           ) : (
-            <PlacementIndicatorLine dropTarget={dropTarget} root={root} />
+            <PlacementIndicatorLine dropTarget={finalDropTarget} root={root} />
           ),
 
           document.body
