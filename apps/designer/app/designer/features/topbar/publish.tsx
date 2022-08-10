@@ -23,13 +23,8 @@ const host = () => {
   if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_DOMAIN) {
     return env.PUBLISHER_DOMAIN;
   }
-  if (typeof location === "object") {
-    if (location.host.includes("webstudio.is")) return "wstd.io";
-    else return location.host;
-  }
-  return "";
+  return env.DESIGNER_DOMAIN;
 };
-console.log(host());
 
 const Content = ({ project }: PublishButtonProps) => {
   const id = useId();

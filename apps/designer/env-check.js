@@ -13,7 +13,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv").config();
 
-const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET"];
+const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET", "DESIGNER_DOMAIN"];
 const S3_KEYS = [
   "S3_ENDPOINT",
   "S3_REGION",
