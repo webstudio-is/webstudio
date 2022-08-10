@@ -6,6 +6,7 @@ import {
   useDrop,
   useHold,
   Box,
+  Rect,
 } from "@webstudio-is/design-system";
 import { findInstanceById, getInstancePath } from "~/shared/tree-utils";
 import { createPortal } from "react-dom";
@@ -170,67 +171,73 @@ export const SortableTree = (
           dropHandlers.rootRef(element);
         }}
       />
-      {dropTarget && <PlacementIndicator root={root} dropTarget={dropTarget} />}
+      {dropTarget &&
+        createPortal(
+          // Placement type "inside-parent" means that useDrop didn't find any children,
+          // and the placement coorespond to a line near an edge of the parent.
+          // In tree this doesn't make sense, so we're rendering an outline around the parent instead of a line.
+          dropTarget.placement.type === "inside-parent" ? (
+            <PlacementIndicatorOutline rect={dropTarget.rect} />
+          ) : (
+            <PlacementIndicatorLine dropTarget={dropTarget} root={root} />
+          ),
+
+          document.body
+        )}
     </>
   );
 };
 
-const PlacementIndicator = ({
-  root,
+const PlacementIndicatorLine = ({
   dropTarget,
+  root,
 }: {
   root: Instance;
   dropTarget: DropTarget<Instance>;
 }) => {
-  const depth = useMemo(() => {
-    // We only need depth if we're rendering a line
-    if (dropTarget.placement.type !== "inside-parent") {
-      return getInstancePath(root, dropTarget.data.id).length;
-    }
-    return undefined;
-  }, [dropTarget.data.id, dropTarget.placement.type, root]);
+  const depth = useMemo(
+    () => getInstancePath(root, dropTarget.data.id).length,
+    [dropTarget.data.id, root]
+  );
 
-  if (depth !== undefined) {
-    const { placement } = dropTarget;
+  const { placement } = dropTarget;
 
-    // @todo: fix magic numbers
-    const shift = depth * 15 + 15 + 4;
+  // @todo: fix magic numbers
+  const shift = depth * 15 + 15 + 4;
 
-    return createPortal(
+  return (
+    <Box
+      style={{
+        top: placement.y - 1,
+        left: placement.x + shift,
+        width: placement.length - shift,
+        height: 2,
+      }}
+      css={{
+        boxSizing: "content-box",
+        position: "absolute",
+        background: "#f531b3",
+        pointerEvents: "none",
+      }}
+    >
       <Box
-        style={{
-          top: placement.y - 1,
-          left: placement.x + shift,
-          width: placement.length - shift,
-          height: 2,
-        }}
         css={{
-          boxSizing: "content-box",
+          // @todo: fix magic numbers
+          width: 8,
+          height: 8,
+          top: -3,
+          left: -7,
           position: "absolute",
-          background: "#f531b3",
-          pointerEvents: "none",
+          border: "solid 2px #f531b3",
+          borderRadius: "50%",
         }}
-      >
-        <Box
-          css={{
-            // @todo: fix magic numbers
-            width: 8,
-            height: 8,
-            top: -3,
-            left: -7,
-            position: "absolute",
-            border: "solid 2px #f531b3",
-            borderRadius: "50%",
-          }}
-        />
-      </Box>,
-      document.body
-    );
-  }
+      />
+    </Box>
+  );
+};
 
-  const { rect } = dropTarget;
-
-  return createPortal(
+const PlacementIndicatorOutline = ({ rect }: { rect: Rect }) => {
+  return (
     <Box
       style={{
         top: rect.top,
@@ -244,7 +251,6 @@ const PlacementIndicator = ({
         outline: "2px solid #f531b3",
         borderRadius: 6,
       }}
-    />,
-    document.body
+    />
   );
 };
