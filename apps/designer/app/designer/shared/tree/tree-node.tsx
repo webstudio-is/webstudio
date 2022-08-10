@@ -128,23 +128,27 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
             <Text size="1">{label}</Text>
           </Button>
         </Flex>
-        {isExpandable && (isExpanded || animate) && (
+        {isExpandable && (
           <CollapsibleContent
             onAnimationEnd={handleAnimationEnd}
             ref={collapsibleContentRef}
           >
-            {instance.children.flatMap((child) =>
-              typeof child === "string"
-                ? []
-                : [
-                    <TreeNode
-                      key={child.id}
-                      instance={child}
-                      level={level + 1}
-                      {...commonProps}
-                    />,
-                  ]
-            )}
+            {
+              // CollapsibleContent automatically doesn't render children when collapsed.
+              // No need to worry about optimizing this.
+              instance.children.flatMap((child) =>
+                typeof child === "string"
+                  ? []
+                  : [
+                      <TreeNode
+                        key={child.id}
+                        instance={child}
+                        level={level + 1}
+                        {...commonProps}
+                      />,
+                    ]
+              )
+            }
           </CollapsibleContent>
         )}
       </Collapsible.Root>
