@@ -20,7 +20,7 @@ import env from "~/shared/env";
 type PublishButtonProps = { project: Project };
 
 const host = () => {
-  if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_DOMAIN !== "") {
+  if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_DOMAIN) {
     return env.PUBLISHER_DOMAIN;
   }
   if (typeof location === "object") {
@@ -29,6 +29,7 @@ const host = () => {
   }
   return "";
 };
+console.log(host());
 
 const Content = ({ project }: PublishButtonProps) => {
   const id = useId();

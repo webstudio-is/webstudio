@@ -9,12 +9,9 @@ const schema = zfd.formData({
 
 export const action: ActionFunction = async ({ request }) => {
   const { domain, projectId } = schema.parse(await request.formData());
-  if (!domain || !projectId) {
-    throw new Error("Domain or ProjectId not provided.");
-  }
   try {
     await db.misc.publish({ projectId, domain });
-    if (process.env.PUBLISHER_ENDPOINT) {
+    if (process.env.PUBLISHER_ENDPOINT && process.env.PUBLISHER_TOKEN) {
       const headers = new Headers();
       headers.append("X-AUTH-WEBSTUDIO", process.env.PUBLISHER_TOKEN || "");
       headers.append("Content-Type", "text/plain");
