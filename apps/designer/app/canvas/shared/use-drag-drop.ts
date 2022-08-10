@@ -173,6 +173,7 @@ export const useDragAndDrop = () => {
       state.current.dragItem = instance;
 
       autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
 
       publish<"dragStart", DragStartPayload>({
         type: "dragStart",
@@ -249,6 +250,7 @@ export const useDragAndDrop = () => {
       if (origin === "panel") {
         state.current.dragItem = dragItem;
         autoScrollHandlers.setEnabled(true);
+        dropHandlers.handleStart();
       }
     }
   );

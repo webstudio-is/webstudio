@@ -12,6 +12,7 @@ export type ChildrenOrientation =
   | { type: "mixed"; reverse?: boolean };
 
 export type Placement = {
+  type: "between-children" | "next-to-child" | "inside-parent";
   x: number;
   y: number;
   length: number;
@@ -95,6 +96,7 @@ export const getPlacementBetween = (
     const minX = Math.min(a.left, b.left);
     const maxX = Math.max(a.left + a.width, b.left + b.width);
     return {
+      type: "between-children",
       y: firstY.top + firstY.height + distanceY / 2,
       x: minX,
       length: maxX - minX,
@@ -105,6 +107,7 @@ export const getPlacementBetween = (
   const minY = Math.min(a.top, b.top);
   const maxY = Math.max(a.top + a.height, b.top + b.height);
   return {
+    type: "between-children",
     y: minY,
     x: firstX.left + firstX.width + distanceX / 2,
     length: maxY - minY,
@@ -141,6 +144,7 @@ export const getPlacementNextTo = (
 
   if (side === "top") {
     return {
+      type: "next-to-child",
       x: rect.left,
       y: rect.top - getMargin(rect.top),
       length: rect.width,
@@ -150,6 +154,7 @@ export const getPlacementNextTo = (
 
   if (side === "bottom") {
     return {
+      type: "next-to-child",
       x: rect.left,
       y:
         rect.top +
@@ -162,6 +167,7 @@ export const getPlacementNextTo = (
 
   if (side === "left") {
     return {
+      type: "next-to-child",
       x: rect.left - getMargin(rect.left),
       y: rect.top,
       length: rect.height,
@@ -170,6 +176,7 @@ export const getPlacementNextTo = (
   }
 
   return {
+    type: "next-to-child",
     x:
       rect.left +
       rect.width +
@@ -188,6 +195,7 @@ export const getPlacementInside = (
   if (childrenOrientation.type === "horizontal") {
     const safePadding = Math.min(parentRect.width / 2, padding);
     return {
+      type: "inside-parent",
       y: parentRect.top + safePadding,
       x: parentRect.left + safePadding,
       length: parentRect.height - safePadding * 2,
@@ -197,6 +205,7 @@ export const getPlacementInside = (
 
   const safePadding = Math.min(parentRect.height / 2, padding);
   return {
+    type: "inside-parent",
     y: parentRect.top + safePadding,
     x: parentRect.left + safePadding,
     length: parentRect.width - safePadding * 2,

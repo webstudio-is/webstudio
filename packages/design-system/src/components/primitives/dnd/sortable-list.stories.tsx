@@ -98,6 +98,7 @@ export const SortableList = ({
     onStart(event) {
       setDragItemId(event.target.dataset.id);
       autoScrollHandlers.setEnabled(true);
+      useDropHandlers.handleStart();
     },
     onMove: (point) => {
       useDropHandlers.handleMove(point);

@@ -72,12 +72,15 @@ export type UseDropProps<Data> = {
 export type UseDropHandlers = {
   handleMove: (pointerCoordinates: Point) => void;
   handleScroll: () => void;
+  handleStart: () => void;
   handleEnd: () => void;
   rootRef: (target: Element | null) => void;
+  handleDomMutation: () => void;
 };
 
 const getInitialState = <Data>() => {
   return {
+    started: false,
     pointerCoordinates: undefined as Point | undefined,
     dropTarget: undefined as DropTarget<Data> | undefined,
     childrenRectsCache: new WeakMap<Element, Rect[]>(),
@@ -203,6 +206,10 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         swapDropTarget,
       } = latestProps.current;
 
+      if (state.current.started === false) {
+        return;
+      }
+
       const { pointerCoordinates } = state.current;
       const root = rootRef.current;
 
@@ -288,12 +295,22 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         detectTarget();
       },
 
+      handleStart() {
+        state.current.started = true;
+      },
+
       handleEnd() {
         state.current = getInitialState();
       },
 
       rootRef(rootElement) {
         rootRef.current = rootElement;
+      },
+
+      handleDomMutation() {
+        state.current.childrenRectsCache = new WeakMap();
+        state.current.lastCandidateElement = undefined;
+        detectTarget();
       },
     };
   }, []);

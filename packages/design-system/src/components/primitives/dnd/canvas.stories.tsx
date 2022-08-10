@@ -262,6 +262,7 @@ export const Canvas = () => {
     onStart({ data: id }) {
       setDragItemId(id);
       autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
     },
     onMove: (point) => {
       dropHandlers.handleMove(point);
