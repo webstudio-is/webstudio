@@ -3,12 +3,7 @@ import { type Instance } from "@webstudio-is/react-sdk";
 import { getInstancePath } from "~/shared/tree-utils";
 import { TreeNode, getIsExpandable } from "./tree-node";
 
-type ExpandState = {
-  getIsExpanded: (instance: Instance) => boolean;
-  setIsExpanded: (instanceId: Instance["id"], expanded: boolean) => void;
-};
-
-export const useExpandState = (): ExpandState => {
+export const useExpandState = () => {
   const [record, setRecord] = useState<Record<Instance["id"], boolean>>({});
 
   const getIsExpanded = useCallback(
@@ -37,7 +32,7 @@ export type TreeProps = {
 type BaseTreeProps = TreeProps & {
   getIsExpanded: (instance: Instance) => boolean;
   setIsExpanded: (instanceId: Instance["id"], expanded: boolean) => void;
-  onAnimationEnd?: () => void;
+  onExpandTransitionEnd?: () => void;
 };
 
 export const BaseTree = forwardRef<HTMLDivElement, BaseTreeProps>(

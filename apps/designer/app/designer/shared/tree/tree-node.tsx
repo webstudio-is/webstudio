@@ -51,7 +51,7 @@ type TreeNodeProps = {
   animate?: boolean;
   getIsExpanded: (instance: Instance) => boolean;
   setIsExpanded: (instanceId: Instance["id"], expanded: boolean) => void;
-  onAnimationEnd?: () => void;
+  onExpandTransitionEnd?: () => void;
 };
 
 export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
@@ -63,7 +63,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
       selectedInstanceId,
       onSelect = noop,
       selectedInstancePath,
-      onAnimationEnd = noop,
+      onExpandTransitionEnd = noop,
     } = commonProps;
 
     const collapsibleContentRef = useRef<HTMLDivElement>(null);
@@ -83,19 +83,20 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
     const handleAnimationEnd = useCallback(
       (event: React.AnimationEvent<HTMLDivElement>) => {
         if (event.target === collapsibleContentRef.current) {
-          onAnimationEnd();
+          onExpandTransitionEnd();
         }
       },
-      [onAnimationEnd]
+      [onExpandTransitionEnd]
     );
 
+    // If ther's no animation, we need to manually trigger onExpandTransitionEnd
     const prevIsExpanded = useRef(isExpanded);
     useEffect(() => {
       if (animate === false && isExpanded !== prevIsExpanded.current) {
-        onAnimationEnd();
+        onExpandTransitionEnd();
       }
       prevIsExpanded.current = isExpanded;
-    }, [animate, onAnimationEnd, isExpanded]);
+    }, [animate, onExpandTransitionEnd, isExpanded]);
 
     return (
       <Collapsible.Root

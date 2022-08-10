@@ -163,7 +163,7 @@ export const SortableTree = (
       <BaseTree
         {...props}
         {...expandState}
-        onAnimationEnd={dropHandlers.handleDomMutation}
+        onExpandTransitionEnd={dropHandlers.handleDomMutation}
         ref={(element) => {
           rootRef.current = element;
           dragHandlers.rootRef(element);
