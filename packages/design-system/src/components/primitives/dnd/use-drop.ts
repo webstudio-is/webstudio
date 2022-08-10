@@ -43,7 +43,17 @@ export type UseDropProps<Data> = {
   swapDropTarget: (
     // undefined is passed when no suitable element is found under the pointer
     dropTarget: (PartialDropTarget<Data> & { area: Area }) | undefined
-  ) => PartialDropTarget<Data>;
+  ) => PartialDropTarget<Data> & {
+    // Set "final" to true if you don't want to swap
+    // any further for the current pointer position.
+    // (Normally swapDropTarget is called repeatedly until it returns the same value twice)
+    final?: boolean;
+  };
+
+  // Set this to true if your swapDropTarget function
+  // reads from an outside state rather than only using the arguments.
+  // In this case it will be called on every pointer move even if the arguments are the same.
+  swapDropTargetNotPure?: boolean;
 
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
 
@@ -204,6 +214,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         edgeDistanceThreshold = 3,
         elementToData,
         swapDropTarget,
+        swapDropTargetNotPure = false,
       } = latestProps.current;
 
       if (state.current.started === false) {
@@ -229,33 +240,36 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         });
 
       // To avoid calling swapDropTarget unnecessarily on every pointermove
-      const isNewCandidate =
-        candidate?.element !== state.current.lastCandidateElement;
-      state.current.lastCandidateElement = candidate?.element;
-      const candidateArea =
-        candidate && pointerCoordinates
-          ? getArea(
-              pointerCoordinates,
-              edgeDistanceThreshold,
-              candidate.element.getBoundingClientRect()
-            )
-          : undefined;
-      const isNewArea = candidateArea !== state.current.lastCandidateArea;
-      state.current.lastCandidateArea = candidateArea;
-      if (
-        isNewCandidate === false &&
-        isNewArea === false &&
-        state.current.dropTarget
-      ) {
-        // Still need to call setDropTarget to update rect and/or placement.
-        // Because indexWithinChildren might have changed,
-        // or parent coordinates might have moved in case of a scroll
-        setDropTarget(state.current.dropTarget);
-        return;
+      if (swapDropTargetNotPure === false) {
+        const isNewCandidate =
+          candidate?.element !== state.current.lastCandidateElement;
+        state.current.lastCandidateElement = candidate?.element;
+        const candidateArea =
+          candidate && pointerCoordinates
+            ? getArea(
+                pointerCoordinates,
+                edgeDistanceThreshold,
+                candidate.element.getBoundingClientRect()
+              )
+            : undefined;
+        const isNewArea =
+          isSameArea(candidateArea, state.current.lastCandidateArea) === false;
+        state.current.lastCandidateArea = candidateArea;
+        if (
+          isNewCandidate === false &&
+          isNewArea === false &&
+          state.current.dropTarget
+        ) {
+          // Still need to call setDropTarget to update rect and/or placement.
+          // Because indexWithinChildren might have changed,
+          // or parent coordinates might have moved in case of a scroll
+          setDropTarget(state.current.dropTarget);
+          return;
+        }
       }
 
-      let didSwap = true;
-      while (didSwap || candidate == null) {
+      let continueSwapping = true;
+      while (continueSwapping || candidate == null) {
         const swappedTo = swapDropTarget(
           candidate && pointerCoordinates
             ? {
@@ -268,7 +282,8 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
               }
             : undefined
         );
-        didSwap = swappedTo.element !== candidate?.element;
+        continueSwapping =
+          swappedTo.element !== candidate?.element && swappedTo.final !== true;
         candidate = swappedTo;
       }
 
@@ -341,4 +356,19 @@ const findClosestDropTarget = <Data>({
     }
     currentElement = currentElement.parentElement;
   }
+};
+
+const isSameArea = (a: Area | undefined, b: Area | undefined) => {
+  if (a === undefined && b === undefined) {
+    return true;
+  }
+  if (a === undefined || b === undefined) {
+    return false;
+  }
+  return (
+    a.isNearBottom === b.isNearBottom &&
+    a.isNearLeft === b.isNearLeft &&
+    a.isNearRight === b.isNearRight &&
+    a.isNearTop === b.isNearTop
+  );
 };

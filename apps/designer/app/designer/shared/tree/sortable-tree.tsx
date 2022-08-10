@@ -30,6 +30,12 @@ export const SortableTree = (
   const [dragItem, setDragItem] = useState<Instance>();
   const [dropTarget, setDropTarget] = useState<DropTarget<Instance>>();
 
+  const horizontalShift = useRef(0);
+  const dragItemDepth = useMemo(
+    () => dragItem && getInstancePath(root, dragItem.id).length - 1,
+    [dragItem, root]
+  );
+
   // @todo: not sure what this should return,
   // need to understand better when it's used
   //
@@ -38,6 +44,7 @@ export const SortableTree = (
     return {
       data: root,
       element: rootRef.current as HTMLElement,
+      final: true,
     };
   };
 
@@ -66,8 +73,18 @@ export const SortableTree = (
       return instance || false;
     },
 
+    // because we're reading from horizontalShift
+    swapDropTargetNotPure: true,
+
+    // @todo: fix magic number (half of item's height)
+    edgeDistanceThreshold: 24 / 2,
+
     swapDropTarget: (dropTarget) => {
-      if (dragItem === undefined || dropTarget === undefined) {
+      if (
+        dragItem === undefined ||
+        dropTarget === undefined ||
+        dragItemDepth === undefined
+      ) {
         return getFallbackDropTarget();
       }
 
@@ -78,8 +95,9 @@ export const SortableTree = (
       const path = getInstancePath(root, dropTarget.data.id);
       path.reverse();
 
-      if (dropTarget.area === "top" || dropTarget.area === "bottom") {
-        path.shift();
+      if (dropTarget.area.isNearBottom) {
+        const desiredDepth = dragItemDepth + horizontalShift.current;
+        path.splice(0, path.length - desiredDepth);
       }
 
       // Don't allow to drop inside drag item or any of its children
@@ -106,7 +124,7 @@ export const SortableTree = (
         return getFallbackDropTarget();
       }
 
-      return { data, element };
+      return { data, element, final: true };
     },
 
     onDropTargetChange: (dropTarget) => {
@@ -123,6 +141,9 @@ export const SortableTree = (
   });
 
   const dragHandlers = useDrag<Instance>({
+    // @todo: fix magic number
+    shiftDistanceThreshold: 15,
+
     elementToData: (element) => {
       const dragItemElement = element.closest("[data-drag-item-id]");
       if (!(dragItemElement instanceof HTMLElement)) {
@@ -141,6 +162,9 @@ export const SortableTree = (
     onMove: (point) => {
       dropHandlers.handleMove(point);
     },
+    onShiftChange: ({ shifts }) => {
+      horizontalShift.current = shifts;
+    },
     onEnd: ({ isCanceled }) => {
       if (dropTarget && dragItem && isCanceled === false) {
         onDragEnd({
@@ -152,6 +176,7 @@ export const SortableTree = (
         });
       }
 
+      horizontalShift.current = 0;
       setDragItem(undefined);
       setDropTarget(undefined);
       dropHandlers.handleEnd();

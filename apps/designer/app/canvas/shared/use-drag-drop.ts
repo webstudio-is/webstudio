@@ -92,7 +92,7 @@ export const useDragAndDrop = () => {
       const path = getInstancePath(rootInstance, dropTarget.data.id);
       path.reverse();
 
-      if (dropTarget.area !== "center") {
+      if (dropTarget.area.isNearEdge === false) {
         path.shift();
       }
 

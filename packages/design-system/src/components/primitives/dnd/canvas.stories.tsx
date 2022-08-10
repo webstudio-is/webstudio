@@ -219,7 +219,7 @@ export const Canvas = () => {
 
       const path = findItemPath(data, id) ?? [];
 
-      if (area !== "center") {
+      if (area.isNearEdge === false) {
         path.shift();
       }
 
