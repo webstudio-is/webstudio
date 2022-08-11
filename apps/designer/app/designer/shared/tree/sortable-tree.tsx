@@ -1,5 +1,9 @@
 import { useState, useMemo, useRef } from "react";
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  components,
+  useSubscribe,
+} from "@webstudio-is/react-sdk";
 import {
   type DropTarget,
   type Rect,
@@ -312,6 +316,10 @@ export const SortableTree = ({
       dropHandlers.handleEnd();
       useHoldHandler.reset();
     },
+  });
+
+  useSubscribe("cancelCurrentDrag", () => {
+    dragHandlers.cancelCurrentDrag();
   });
 
   const autoScrollHandlers = useAutoScroll();
