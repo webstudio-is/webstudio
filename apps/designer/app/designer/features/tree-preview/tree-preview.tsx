@@ -66,7 +66,7 @@ export const TreePrevew = () => {
   return (
     treeProps && (
       <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-        {/* <Tree {...treeProps} animate={false} /> */}
+        <Tree {...treeProps} animate={false} />
       </Flex>
     )
   );
