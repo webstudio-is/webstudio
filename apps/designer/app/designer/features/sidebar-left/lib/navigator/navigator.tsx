@@ -34,7 +34,10 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
               "reparentInstance",
               {
                 instanceId: Instance["id"];
-                dropTarget: { instanceId: Instance["id"]; position: number };
+                dropTarget: {
+                  instanceId: Instance["id"];
+                  position: number | "end";
+                };
               }
             >({ type: "reparentInstance", payload });
           }}

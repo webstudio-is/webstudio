@@ -42,16 +42,10 @@ export type UseDropProps<Data> = {
   // you can swap to another target
   swapDropTarget: (
     // undefined is passed when no suitable element is found under the pointer
-    dropTarget:
-      | (PartialDropTarget<Data> & {
-          // @todo: revert to isNearEdge
-          area: Area;
-        })
-      | undefined
+    dropTarget: (PartialDropTarget<Data> & { area: Area }) | undefined
   ) => PartialDropTarget<Data> & {
-    // Set "final" to true if you don't want to swap
-    // any further for the current pointer position.
-    // (Normally swapDropTarget is called repeatedly until it returns the same value twice)
+    // Set "final" to true if you don't want to swap any further.
+    // (Normally swapDropTarget is called repeatedly until the output is the same as the input)
     final?: boolean;
   };
 
@@ -259,8 +253,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
                 candidate.element.getBoundingClientRect()
               )
             : undefined;
-        const isNewArea =
-          isSameArea(candidateArea, state.current.lastCandidateArea) === false;
+        const isNewArea = candidateArea !== state.current.lastCandidateArea;
         state.current.lastCandidateArea = candidateArea;
         if (
           isNewCandidate === false &&
@@ -363,19 +356,4 @@ const findClosestDropTarget = <Data>({
     }
     currentElement = currentElement.parentElement;
   }
-};
-
-const isSameArea = (a: Area | undefined, b: Area | undefined) => {
-  if (a === undefined && b === undefined) {
-    return true;
-  }
-  if (a === undefined || b === undefined) {
-    return false;
-  }
-  return (
-    a.isNearBottom === b.isNearBottom &&
-    a.isNearLeft === b.isNearLeft &&
-    a.isNearRight === b.isNearRight &&
-    a.isNearTop === b.isNearTop
-  );
 };

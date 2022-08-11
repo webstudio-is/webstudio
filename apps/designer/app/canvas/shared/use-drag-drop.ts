@@ -92,7 +92,7 @@ export const useDragAndDrop = () => {
       const path = getInstancePath(rootInstance, dropTarget.data.id);
       path.reverse();
 
-      if (dropTarget.area.isNearEdge === false) {
+      if (dropTarget.area !== "center") {
         path.shift();
       }
 
@@ -122,15 +122,7 @@ export const useDragAndDrop = () => {
         return getDefaultDropTarget();
       }
 
-      return {
-        data,
-        element,
-
-        // The only reason we might need to swap again is if we're on the ende of the new target.
-        // But that shouldn't be possible unless we're also on the edge of the current target.
-        // @todo: test this
-        final: dropTarget.area.isNearEdge === false,
-      };
+      return { data, element };
     },
 
     onDropTargetChange(dropTarget) {

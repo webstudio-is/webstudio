@@ -114,7 +114,7 @@ export const useReparentInstance = () => {
     "reparentInstance",
     {
       instanceId: Instance["id"];
-      dropTarget: { instanceId: Instance["id"]; position: number };
+      dropTarget: { instanceId: Instance["id"]; position: number | "end" };
     }
   >("reparentInstance", ({ instanceId, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {

@@ -3,13 +3,31 @@ import { type Instance } from "@webstudio-is/react-sdk";
 import { getInstancePath } from "~/shared/tree-utils";
 import { TreeNode, getIsExpandable } from "./tree-node";
 
-export const useExpandState = () => {
+export const useExpandState = ({
+  selectedInstanceId,
+  root,
+}: {
+  root: Instance;
+  selectedInstanceId?: Instance["id"];
+}) => {
   const [record, setRecord] = useState<Record<Instance["id"], boolean>>({});
+
+  const selectedInstancePath = useMemo(
+    () =>
+      selectedInstanceId !== undefined
+        ? getInstancePath(root, selectedInstanceId).map(
+            (instance) => instance.id
+          )
+        : [],
+    [root, selectedInstanceId]
+  );
 
   const getIsExpanded = useCallback(
     (instance: Instance) =>
-      getIsExpandable(instance) && record[instance.id] === true,
-    [record]
+      getIsExpandable(instance) &&
+      (record[instance.id] === true ||
+        selectedInstancePath.includes(instance.id)),
+    [record, selectedInstancePath]
   );
 
   const setIsExpanded = useCallback(
@@ -37,21 +55,12 @@ type BaseTreeProps = TreeProps & {
 
 export const BaseTree = forwardRef<HTMLDivElement, BaseTreeProps>(
   ({ root, selectedInstanceId, ...rest }, ref) => {
-    const selectedInstancePath = useMemo(
-      () =>
-        selectedInstanceId !== undefined
-          ? getInstancePath(root, selectedInstanceId)
-          : [],
-      [root, selectedInstanceId]
-    );
-
     return (
       <TreeNode
         ref={ref}
         instance={root}
         level={0}
         selectedInstanceId={selectedInstanceId}
-        selectedInstancePath={selectedInstancePath}
         {...rest}
       />
     );
@@ -60,6 +69,6 @@ export const BaseTree = forwardRef<HTMLDivElement, BaseTreeProps>(
 BaseTree.displayName = "BaseTree";
 
 export const Tree = (props: TreeProps) => {
-  const expandState = useExpandState();
+  const expandState = useExpandState(props);
   return <BaseTree {...props} {...expandState} />;
 };

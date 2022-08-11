@@ -45,7 +45,6 @@ const CollapsibleContentUnanimated = styled(Collapsible.Content, {
 type TreeNodeProps = {
   instance: Instance;
   selectedInstanceId: Instance["id"] | undefined;
-  selectedInstancePath: Array<Instance>;
   level: number;
   onSelect?: (instance: Instance) => void;
   animate?: boolean;
@@ -62,16 +61,13 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
       setIsExpanded,
       selectedInstanceId,
       onSelect = noop,
-      selectedInstancePath,
       onExpandTransitionEnd = noop,
     } = commonProps;
 
     const collapsibleContentRef = useRef<HTMLDivElement>(null);
 
     const isExpandable = getIsExpandable(instance);
-    const isExpanded =
-      getIsExpanded(instance) ||
-      selectedInstancePath.some((item) => item.id === instance.id);
+    const isExpanded = getIsExpanded(instance);
     const isSelected = instance.id === selectedInstanceId;
 
     const { Icon, label } = components[instance.component];

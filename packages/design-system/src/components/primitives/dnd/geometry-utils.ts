@@ -19,13 +19,7 @@ export type Placement = {
   direction: "horizontal" | "vertical";
 };
 
-export type Area = {
-  isNearTop: boolean;
-  isNearLeft: boolean;
-  isNearRight: boolean;
-  isNearBottom: boolean;
-  isNearEdge: boolean;
-};
+export type Area = "top" | "bottom" | "left" | "right" | "center";
 
 // https://stackoverflow.com/a/18157551/478603
 const getDistanceToRect = (rect: Rect, { x, y }: Point) => {
@@ -59,12 +53,19 @@ export const getArea = (
   edgeDistanceThreshold: number,
   rect: Rect
 ): Area => {
-  const isNearTop = y - rect.top <= edgeDistanceThreshold;
-  const isNearLeft = x - rect.left <= edgeDistanceThreshold;
-  const isNearRight = rect.left + rect.width - x <= edgeDistanceThreshold;
-  const isNearBottom = rect.top + rect.height - y <= edgeDistanceThreshold;
-  const isNearEdge = isNearTop || isNearLeft || isNearRight || isNearBottom;
-  return { isNearTop, isNearLeft, isNearRight, isNearBottom, isNearEdge };
+  if (y - rect.top <= edgeDistanceThreshold) {
+    return "top";
+  }
+  if (rect.top + rect.height - y <= edgeDistanceThreshold) {
+    return "bottom";
+  }
+  if (x - rect.left <= edgeDistanceThreshold) {
+    return "left";
+  }
+  if (rect.left + rect.width - x <= edgeDistanceThreshold) {
+    return "right";
+  }
+  return "center";
 };
 
 export const getPlacementBetween = (
