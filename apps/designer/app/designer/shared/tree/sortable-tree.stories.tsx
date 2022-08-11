@@ -4,6 +4,7 @@ import { useState } from "react";
 import produce from "immer";
 import { createInstance, reparentInstanceMutable } from "~/shared/tree-utils";
 import { SortableTree } from "./sortable-tree";
+import { Box } from "@webstudio-is/design-system";
 
 export const StressTest = ({ animate }: { animate: boolean }) => {
   const [root, setRoot] = useState<Instance>(() => {
@@ -44,25 +45,26 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
   >();
 
   return (
-    <SortableTree
-      height={500}
-      animate={animate}
-      root={root}
-      selectedInstanceId={selectedInstanceId}
-      onSelect={(instance) => setSelectedInstanceId(instance.id)}
-      onDragEnd={(payload) =>
-        setRoot(
-          produce((draft) =>
-            reparentInstanceMutable(
-              draft,
-              payload.instanceId,
-              payload.dropTarget.instanceId,
-              payload.dropTarget.position
+    <Box css={{ width: 300, height: 500, position: "relative" }}>
+      <SortableTree
+        animate={animate}
+        root={root}
+        selectedInstanceId={selectedInstanceId}
+        onSelect={(instance) => setSelectedInstanceId(instance.id)}
+        onDragEnd={(payload) =>
+          setRoot(
+            produce((draft) =>
+              reparentInstanceMutable(
+                draft,
+                payload.instanceId,
+                payload.dropTarget.instanceId,
+                payload.dropTarget.position
+              )
             )
           )
-        )
-      }
-    />
+        }
+      />
+    </Box>
   );
 };
 

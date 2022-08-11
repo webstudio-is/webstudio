@@ -27,7 +27,6 @@ export const SortableTree = ({
   onSelect,
   animate,
   onDragEnd,
-  height,
 }: TreeProps & {
   onDragEnd: (event: {
     instanceId: Instance["id"];
@@ -320,8 +319,13 @@ export const SortableTree = ({
   return (
     <Box
       css={{
-        height,
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         overflowY: "auto",
+        padding: "$1 0 $1 $1",
       }}
       ref={autoScrollHandlers.targetRef}
       onScroll={dropHandlers.handleScroll}

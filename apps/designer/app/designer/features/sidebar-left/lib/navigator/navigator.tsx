@@ -1,4 +1,4 @@
-import { Box } from "@webstudio-is/design-system";
+import { Box, Flex } from "@webstudio-is/design-system";
 import type { Instance, Publish } from "@webstudio-is/react-sdk";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { SortableTree } from "~/designer/shared/tree";
@@ -17,9 +17,9 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
 
   if (rootInstance === undefined) return null;
   return (
-    <>
+    <Flex css={{ height: "100%", flexDirection: "column" }}>
       <Header title="Navigator" onClose={onClose} isClosable={isClosable} />
-      <Box css={{ padding: "$1" }}>
+      <Box css={{ flexGrow: 1, position: "relative" }}>
         <SortableTree
           root={rootInstance}
           selectedInstanceId={selectedInstanceData?.id}
@@ -43,6 +43,6 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
           }}
         />
       </Box>
-    </>
+    </Flex>
   );
 };
