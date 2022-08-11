@@ -7,6 +7,7 @@ import {
   useDrop,
   useHold,
   Box,
+  useAutoScroll,
 } from "@webstudio-is/design-system";
 import {
   findInstanceById,
@@ -14,24 +15,32 @@ import {
   getInstancePathWithPositions,
 } from "~/shared/tree-utils";
 import { createPortal } from "react-dom";
-import { getIsExpandable } from "./tree-node";
-import { BaseTree, useExpandState, type TreeProps } from "./base-tree";
+import { TreeNode, getIsExpandable } from "./tree-node";
+import { useExpandState, type TreeProps } from "./tree";
+import { CSSProperties } from "@stitches/react";
 
 type Placement = DropTarget<unknown>["placement"];
 
-export const SortableTree = (
-  props: TreeProps & {
-    onDragEnd: (event: {
-      instanceId: Instance["id"];
-      dropTarget: { instanceId: Instance["id"]; position: number | "end" };
-    }) => void;
-  }
-) => {
-  const { root, onDragEnd } = props;
+export const SortableTree = ({
+  root,
+  selectedInstanceId,
+  onSelect,
+  animate,
+  onDragEnd,
+  height,
+}: TreeProps & {
+  onDragEnd: (event: {
+    instanceId: Instance["id"];
+    dropTarget: { instanceId: Instance["id"]; position: number | "end" };
+  }) => void;
+  height?: CSSProperties["height"];
+}) => {
+  const { getIsExpanded, setIsExpanded } = useExpandState({
+    root,
+    selectedInstanceId,
+  });
 
-  const { getIsExpanded, setIsExpanded } = useExpandState(props);
-
-  const rootRef = useRef<HTMLElement | null>(null);
+  const rootNodeRef = useRef<HTMLElement | null>(null);
 
   const [dragItem, setDragItem] = useState<Instance>();
   const [dropTarget, setDropTarget] = useState<DropTarget<Instance>>();
@@ -106,18 +115,11 @@ export const SortableTree = (
       if (indexWithinChildren !== data.children.length) {
         // But there's a special case when the index is `last - 1` and the last child is the drag item.
         // When drag item is removed from its current position, `last - 1` will become `last`.
-
         if (indexWithinChildren !== data.children.length - 1) {
           return withoutShift;
         }
-
         const lastChild = data.children[data.children.length - 1];
-        const lastChildIsDragItem =
-          lastChild !== undefined &&
-          typeof lastChild !== "string" &&
-          lastChild.id === dragItem.id;
-
-        if (lastChildIsDragItem === false) {
+        if (typeof lastChild !== "object" || lastChild.id !== dragItem.id) {
           return withoutShift;
         }
       }
@@ -157,6 +159,10 @@ export const SortableTree = (
         shifted++;
       }
 
+      if (shifted === 0) {
+        return withoutShift;
+      }
+
       return {
         instance: newParent,
         position: "end",
@@ -174,14 +180,10 @@ export const SortableTree = (
     getIsExpanded,
   ]);
 
-  // @todo: not sure what this should return,
-  // need to understand better when it's used
-  //
-  // maybe we should return previous dropTarget, or current dragItem's parent?
   const getFallbackDropTarget = () => {
     return {
       data: root,
-      element: rootRef.current as HTMLElement,
+      element: rootNodeRef.current as HTMLElement,
       final: true,
     };
   };
@@ -242,7 +244,7 @@ export const SortableTree = (
         return getFallbackDropTarget();
       }
 
-      const element = rootRef.current?.querySelector(
+      const element = rootNodeRef.current?.querySelector(
         `[data-drop-target-id="${data.id}"]`
       );
 
@@ -284,9 +286,11 @@ export const SortableTree = (
     onStart: ({ data }) => {
       setDragItem(data);
       dropHandlers.handleStart();
+      autoScrollHandlers.setEnabled(true);
     },
     onMove: (point) => {
       dropHandlers.handleMove(point);
+      autoScrollHandlers.handleMove(point);
     },
     onShiftChange: ({ shifts }) => {
       setHorizontalShift(shifts);
@@ -302,6 +306,7 @@ export const SortableTree = (
         });
       }
 
+      autoScrollHandlers.setEnabled(false);
       setHorizontalShift(0);
       setDragItem(undefined);
       setDropTarget(undefined);
@@ -310,15 +315,28 @@ export const SortableTree = (
     },
   });
 
+  const autoScrollHandlers = useAutoScroll();
+
   return (
-    <>
-      <BaseTree
-        {...props}
+    <Box
+      css={{
+        height,
+        overflowY: "auto",
+      }}
+      ref={autoScrollHandlers.targetRef}
+      onScroll={dropHandlers.handleScroll}
+    >
+      <TreeNode
+        animate={animate}
+        onSelect={onSelect}
+        selectedInstanceId={selectedInstanceId}
+        instance={root}
+        level={0}
         getIsExpanded={getIsExpanded}
         setIsExpanded={setIsExpanded}
         onExpandTransitionEnd={dropHandlers.handleDomMutation}
         ref={(element) => {
-          rootRef.current = element;
+          rootNodeRef.current = element;
           dragHandlers.rootRef(element);
           dropHandlers.rootRef(element);
         }}
@@ -333,7 +351,7 @@ export const SortableTree = (
 
           document.body
         )}
-    </>
+    </Box>
   );
 };
 

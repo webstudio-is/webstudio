@@ -130,7 +130,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
             ref={collapsibleContentRef}
           >
             {
-              // CollapsibleContent automatically doesn't render children when collapsed.
+              // CollapsibleContent doesn't render children when collapsed.
               // No need to worry about optimizing this.
               instance.children.flatMap((child) =>
                 typeof child === "string"
