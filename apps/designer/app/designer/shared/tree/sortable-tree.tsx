@@ -141,22 +141,26 @@ export const SortableTree = (
     }
 
     if (desiredDepth > currentDepth) {
-      // When increasing depth we're moving inside the instance above the placement line.
-      const instanceAbove = data.children[indexWithinChildren - 1];
-      if (
-        instanceAbove === undefined ||
-        typeof instanceAbove === "string" ||
-        getIsExpanded(instanceAbove) === false ||
-        components[instanceAbove.component].canAcceptChild() === false
+      let shifted = 0;
+      let newParent = data;
+      let potentialNewParent = data.children[indexWithinChildren - 1];
+
+      while (
+        potentialNewParent !== undefined &&
+        typeof potentialNewParent !== "string" &&
+        getIsExpanded(potentialNewParent) &&
+        components[potentialNewParent.component].canAcceptChild() &&
+        shifted < desiredDepth - currentDepth
       ) {
-        return withoutShift;
+        newParent = potentialNewParent;
+        potentialNewParent = newParent.children[newParent.children.length - 1];
+        shifted++;
       }
 
-      // @todo: allow shifting by more than one level
       return {
-        instance: instanceAbove,
+        instance: newParent,
         position: "end",
-        placement: { type: "line", line: shiftLine(currentDepth + 1) },
+        placement: { type: "line", line: shiftLine(currentDepth + shifted) },
       };
     }
 
