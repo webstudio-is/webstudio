@@ -1,4 +1,4 @@
-import { Box, Flex } from "@webstudio-is/design-system";
+import { Flex } from "@webstudio-is/design-system";
 import type { Instance, Publish } from "@webstudio-is/react-sdk";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { SortableTree } from "~/designer/shared/tree";
@@ -19,7 +19,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
       <Header title="Navigator" onClose={onClose} isClosable={isClosable} />
-      <Box css={{ flexGrow: 1, position: "relative" }}>
+      <Flex css={{ flexGrow: 1, flexDirection: "column" }}>
         <SortableTree
           root={rootInstance}
           selectedInstanceId={selectedInstanceData?.id}
@@ -42,7 +42,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
             >({ type: "reparentInstance", payload });
           }}
         />
-      </Box>
+      </Flex>
     </Flex>
   );
 };

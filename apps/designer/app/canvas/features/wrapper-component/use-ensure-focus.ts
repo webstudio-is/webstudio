@@ -14,7 +14,8 @@ export const useEnsureFocus = () => {
         getInstanceIdFromElement(element) === selectedInstance?.id &&
         document.activeElement !== element
       ) {
-        element.focus();
+        // @todo: uncomment
+        // element.focus();
       }
     },
     [selectedInstance]

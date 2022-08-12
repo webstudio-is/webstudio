@@ -4,7 +4,7 @@ import { useState } from "react";
 import produce from "immer";
 import { createInstance, reparentInstanceMutable } from "~/shared/tree-utils";
 import { SortableTree } from "./sortable-tree";
-import { Box } from "@webstudio-is/design-system";
+import { Flex } from "@webstudio-is/design-system";
 
 export const StressTest = ({ animate }: { animate: boolean }) => {
   const [root, setRoot] = useState<Instance>(() => {
@@ -45,7 +45,7 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
   >();
 
   return (
-    <Box css={{ width: 300, height: 500, position: "relative" }}>
+    <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
       <SortableTree
         animate={animate}
         root={root}
@@ -64,7 +64,7 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
           )
         }
       />
-    </Box>
+    </Flex>
   );
 };
 

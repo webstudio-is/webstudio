@@ -4,17 +4,99 @@ import {
   Flex,
   Text,
   Collapsible,
-  Button,
   keyframes,
   styled,
+  Box,
 } from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
 import noop from "lodash.noop";
+
+export const INDENT = 16;
+const ITEM_HEIGHT = 32;
+const ICONS_SIZE = 15;
 
 export const getIsExpandable = (instance: Instance) => {
   return (
     // Text nodes have only one child which is a string.
     instance.children.length > 1 || typeof instance.children[0] === "object"
+  );
+};
+
+const CustomButton = styled("button", {
+  all: "unset",
+  display: "flex",
+  alignItems: "center",
+  gap: "$1",
+  boxSizing: "border-box",
+  userSelect: "none",
+  height: ITEM_HEIGHT,
+  margin: 0,
+  padding: 0,
+  flexBasis: 0,
+  flexGrow: 1,
+  variants: {
+    enableHoverState: {
+      true: {
+        "&:hover :before": {
+          content: "''",
+          display: "block",
+          position: "absolute",
+          top: 0,
+          left: 2,
+          right: 2,
+          bottom: 0,
+          boxSizing: "border-box",
+          border: "2px solid $blue10",
+          borderRadius: "$2",
+          pointerEvents: "none",
+        },
+      },
+    },
+  },
+});
+
+const nestingLineStyles = {
+  width: Math.ceil(INDENT / 2),
+  height: ITEM_HEIGHT,
+  borderRight: "1px solid",
+  borderColor: "$slate9",
+};
+const nestingLineStylesSelected = {
+  ...nestingLineStyles,
+  borderColor: "$blue7",
+};
+
+const NestingLines = ({
+  isSelected,
+  level,
+  followedByExpandButton,
+}: {
+  isSelected: boolean;
+  level: number;
+  followedByExpandButton: boolean;
+}) => {
+  if (level === 0) {
+    return null;
+  }
+
+  if (level === 1) {
+    return followedByExpandButton ? null : <Box css={{ width: INDENT }} />;
+  }
+
+  return (
+    <>
+      {Array.from({ length: level - 1 }, (_, i) => (
+        <Box
+          key={i}
+          style={{
+            marginRight:
+              Math.floor(INDENT / 2) +
+              (!followedByExpandButton && i === level - 2 ? INDENT : 0),
+          }}
+          css={isSelected ? nestingLineStylesSelected : nestingLineStyles}
+        />
+      ))}
+    </>
   );
 };
 
@@ -43,18 +125,20 @@ const CollapsibleContentUnanimated = styled(Collapsible.Content, {
 });
 
 type TreeNodeProps = {
+  disableHoverStates?: boolean;
   instance: Instance;
   selectedInstanceId: Instance["id"] | undefined;
+  parentIsSelected?: boolean;
   level: number;
   onSelect?: (instance: Instance) => void;
   animate?: boolean;
   getIsExpanded: (instance: Instance) => boolean;
-  setIsExpanded: (instanceId: Instance["id"], expanded: boolean) => void;
+  setIsExpanded: (instance: Instance, expanded: boolean) => void;
   onExpandTransitionEnd?: () => void;
 };
 
 export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
-  ({ instance, level, ...commonProps }, ref) => {
+  ({ instance, level, parentIsSelected, ...commonProps }, ref) => {
     const {
       getIsExpanded,
       animate = true,
@@ -62,13 +146,23 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
       selectedInstanceId,
       onSelect = noop,
       onExpandTransitionEnd = noop,
+      disableHoverStates = false,
     } = commonProps;
 
     const collapsibleContentRef = useRef<HTMLDivElement>(null);
 
+    const isAlwaysExpanded = level === 0;
     const isExpandable = getIsExpandable(instance);
-    const isExpanded = getIsExpanded(instance);
+    const isExpanded = getIsExpanded(instance) || isAlwaysExpanded;
     const isSelected = instance.id === selectedInstanceId;
+
+    const makeSelected = () => {
+      if (isSelected === false) {
+        onSelect(instance);
+      }
+    };
+
+    const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
     const { Icon, label } = components[instance.component];
 
@@ -98,31 +192,71 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
       <Collapsible.Root
         ref={ref}
         open={isExpanded}
-        onOpenChange={(isOpen: boolean) => setIsExpanded(instance.id, isOpen)}
+        onOpenChange={(isOpen) => setIsExpanded(instance, isOpen)}
         data-drop-target-id={instance.id}
       >
         <Flex
           css={{
-            // @todo don't hardcode the padding
-            paddingLeft: level * 15 + (isExpandable ? 0 : 15),
-            color: "$hiContrast",
+            color: isSelected ? "$loContrast" : "$hiContrast",
             alignItems: "center",
+            pr: "$2",
+            pl: "$2",
+            backgroundColor: isSelected
+              ? "$blue10"
+              : parentIsSelected
+              ? "$blue4"
+              : "transparent",
+            position: "relative",
           }}
         >
-          {isExpandable && (
+          <NestingLines
+            isSelected={isSelected}
+            level={level}
+            followedByExpandButton={shouldRenderExpandButton}
+          />
+          {shouldRenderExpandButton && (
             <Collapsible.Trigger asChild>
-              {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
+              <Flex
+                css={{
+                  pr: INDENT - ICONS_SIZE,
+                  height: ITEM_HEIGHT,
+                  alignItems: "center",
+
+                  // We want the button to take extra space so it's easier to hit
+                  ml: "-$2",
+                  pl: "$2",
+                }}
+              >
+                {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
+              </Flex>
             </Collapsible.Trigger>
           )}
-          <Button
-            {...(isSelected ? { state: "active" } : { ghost: true })}
-            css={{ display: "flex", gap: "$1", padding: "$1" }}
+          <CustomButton
             data-drag-item-id={instance.id}
-            onFocus={() => onSelect(instance)}
+            onFocus={makeSelected}
+            onClick={makeSelected}
+            enableHoverState={disableHoverStates === false}
           >
             <Icon />
-            <Text size="1">{label}</Text>
-          </Button>
+            <Text
+              size="1"
+              variant={isSelected ? "loContrast" : "contrast"}
+              css={{
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                lineHeight: 1.4,
+                flexBasis: 0,
+                flexGrow: 1,
+
+                // For some reason flexBasis:0 is not anough
+                // to stop it growing past the container
+                width: 0,
+              }}
+            >
+              {label}
+            </Text>
+          </CustomButton>
         </Flex>
         {isExpandable && (
           <CollapsibleContent
@@ -140,6 +274,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
                         key={child.id}
                         instance={child}
                         level={level + 1}
+                        parentIsSelected={isSelected || parentIsSelected}
                         {...commonProps}
                       />,
                     ]

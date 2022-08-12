@@ -41,6 +41,7 @@ export const SortableTree = ({
   const { getIsExpanded, setIsExpanded } = useExpandState({
     root,
     selectedInstanceId,
+    onSelect,
   });
 
   const rootNodeRef = useRef<HTMLElement | null>(null);
@@ -199,7 +200,7 @@ export const SortableTree = ({
         getIsExpandable(dropTarget.data) &&
         getIsExpanded(dropTarget.data) === false
       ) {
-        setIsExpanded(dropTarget.data.id, true);
+        setIsExpanded(dropTarget.data, true);
       }
     },
   });
@@ -265,7 +266,6 @@ export const SortableTree = ({
 
     getValidChildren: (element) => {
       return Array.from(
-        // @todo: if this works as expected, we need a selector that assumes less about the DOM structure
         element.querySelectorAll(":scope > div > [data-drop-target-id]")
       );
     },
@@ -284,7 +284,18 @@ export const SortableTree = ({
       if (id === undefined || id === root.id) {
         return false;
       }
-      return findInstanceById(root, id) || false;
+
+      const instance = findInstanceById(root, id);
+
+      if (instance === undefined) {
+        return false;
+      }
+
+      if (components[instance.component].isInlineOnly) {
+        return false;
+      }
+
+      return instance;
     },
     onStart: ({ data }) => {
       setDragItem(data);
@@ -327,13 +338,13 @@ export const SortableTree = ({
   return (
     <Box
       css={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        width: "100%",
         overflowY: "auto",
-        padding: "$1 0 $1 $1",
+        overflowX: "hidden",
+        flexBasis: 0,
+        flexGrow: 1,
+        pt: 2,
+        pb: 2,
       }}
       ref={autoScrollHandlers.targetRef}
       onScroll={dropHandlers.handleScroll}
@@ -341,12 +352,15 @@ export const SortableTree = ({
       <TreeNode
         animate={animate}
         onSelect={onSelect}
-        selectedInstanceId={selectedInstanceId}
+        selectedInstanceId={
+          dragItem === undefined ? selectedInstanceId : dragItem.id
+        }
         instance={root}
         level={0}
         getIsExpanded={getIsExpanded}
         setIsExpanded={setIsExpanded}
         onExpandTransitionEnd={dropHandlers.handleDomMutation}
+        disableHoverStates={dragItem !== undefined}
         ref={(element) => {
           rootNodeRef.current = element;
           dragHandlers.rootRef(element);
@@ -405,15 +419,17 @@ const PlacementIndicatorOutline = ({ rect }: { rect: Rect }) => {
     <Box
       style={{
         top: rect.top,
-        left: rect.left,
-        width: rect.width,
+        left: rect.left + 2,
+        width: rect.width - 4,
         height: rect.height,
       }}
       css={{
         position: "absolute",
         pointerEvents: "none",
-        outline: "2px solid #f531b3",
-        borderRadius: 6,
+        boxSizing: "border-box",
+        // @todo: add color to theme
+        border: "2px solid #f531b3",
+        borderRadius: "$2",
       }}
     />
   );
