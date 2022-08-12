@@ -49,13 +49,6 @@ export type UseDropProps<Data> = {
     final?: boolean;
   };
 
-  // @todo: remove this
-  //
-  // Set this to true if your swapDropTarget function
-  // reads from an outside state rather than only using the arguments.
-  // In this case it will be called on every pointer move even if the arguments are the same.
-  swapDropTargetNotPure?: boolean;
-
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
 
   // Allows you to customize children
@@ -215,7 +208,6 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         edgeDistanceThreshold = 3,
         elementToData,
         swapDropTarget,
-        swapDropTargetNotPure = false,
       } = latestProps.current;
 
       if (state.current.started === false) {
@@ -241,31 +233,29 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         });
 
       // To avoid calling swapDropTarget unnecessarily on every pointermove
-      if (swapDropTargetNotPure === false) {
-        const isNewCandidate =
-          candidate?.element !== state.current.lastCandidateElement;
-        state.current.lastCandidateElement = candidate?.element;
-        const candidateArea =
-          candidate && pointerCoordinates
-            ? getArea(
-                pointerCoordinates,
-                edgeDistanceThreshold,
-                candidate.element.getBoundingClientRect()
-              )
-            : undefined;
-        const isNewArea = candidateArea !== state.current.lastCandidateArea;
-        state.current.lastCandidateArea = candidateArea;
-        if (
-          isNewCandidate === false &&
-          isNewArea === false &&
-          state.current.dropTarget
-        ) {
-          // Still need to call setDropTarget to update rect and/or placement.
-          // Because indexWithinChildren might have changed,
-          // or parent coordinates might have moved in case of a scroll
-          setDropTarget(state.current.dropTarget);
-          return;
-        }
+      const isNewCandidate =
+        candidate?.element !== state.current.lastCandidateElement;
+      state.current.lastCandidateElement = candidate?.element;
+      const candidateArea =
+        candidate && pointerCoordinates
+          ? getArea(
+              pointerCoordinates,
+              edgeDistanceThreshold,
+              candidate.element.getBoundingClientRect()
+            )
+          : undefined;
+      const isNewArea = candidateArea !== state.current.lastCandidateArea;
+      state.current.lastCandidateArea = candidateArea;
+      if (
+        isNewCandidate === false &&
+        isNewArea === false &&
+        state.current.dropTarget
+      ) {
+        // Still need to call setDropTarget to update rect and/or placement.
+        // Because indexWithinChildren might have changed,
+        // or parent coordinates might have moved in case of a scroll
+        setDropTarget(state.current.dropTarget);
+        return;
       }
 
       let continueSwapping = true;
