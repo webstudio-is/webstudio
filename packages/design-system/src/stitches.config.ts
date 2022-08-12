@@ -204,6 +204,7 @@ export const {
       shadowDark: "hsl(206 22% 7% / 20%)",
       background: "$slate1",
       text: "$slate12",
+      dropPlacement: "#f531b3",
     },
     fonts: {
       sans: "Inter, -apple-system, system-ui, sans-serif",
@@ -478,5 +479,6 @@ export const darkTheme = createTheme({
 
     background: "$slate12",
     text: "$slate1",
+    dropPlacement: "#f531b3",
   },
 });

@@ -1,7 +1,7 @@
 import produce from "immer";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
-import { Tree } from "~/designer/shared/tree";
+import { TreeNode } from "~/designer/shared/tree";
 import { Flex } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
@@ -9,6 +9,7 @@ import {
   insertInstanceMutable,
   createInstance,
   findInstanceById,
+  getInstancePath,
 } from "~/shared/tree-utils";
 
 export const TreePrevew = () => {
@@ -52,9 +53,17 @@ export const TreePrevew = () => {
       }
     })(rootInstance);
 
+    const dropTargetPath = getInstancePath(
+      rootInstance,
+      dropTargetInstanceId
+    ).map((item) => item.id);
+
     return {
-      root: instance,
+      instance,
       selectedInstanceId: dragItemInstance.id,
+      getIsExpanded: (instance: Instance) =>
+        dropTargetPath.includes(instance.id),
+      animate: false,
     };
   }, [
     rootInstance,
@@ -65,8 +74,8 @@ export const TreePrevew = () => {
 
   return (
     treeProps && (
-      <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-        <Tree {...treeProps} animate={false} />
+      <Flex direction="column" css={{ pt: "$1", pb: "$1", width: "100%" }}>
+        <TreeNode {...treeProps} />
       </Flex>
     )
   );

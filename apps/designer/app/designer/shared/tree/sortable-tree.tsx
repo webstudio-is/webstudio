@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import {
   type Instance,
   components,
@@ -25,10 +25,18 @@ import {
   getPlacementIndicatorAlignment,
   INDENT,
 } from "./tree-node";
-import { useExpandState, type TreeProps } from "./tree";
 import { CSSProperties } from "@stitches/react";
+import {
+  PlacementIndicatorLine,
+  PlacementIndicatorOutline,
+} from "./placement-indicator";
 
-type Placement = DropTarget<unknown>["placement"];
+type TreeProps = {
+  root: Instance;
+  selectedInstanceId?: Instance["id"];
+  onSelect?: (instance: Instance) => void;
+  animate?: boolean;
+};
 
 export const SortableTree = ({
   root,
@@ -46,7 +54,6 @@ export const SortableTree = ({
   const { getIsExpanded, setIsExpanded } = useExpandState({
     root,
     selectedInstanceId,
-    onSelect,
   });
 
   const rootNodeRef = useRef<HTMLElement | null>(null);
@@ -69,7 +76,7 @@ export const SortableTree = ({
         position: number | "end";
         placement:
           | { type: "rect"; rect: Rect }
-          | { type: "line"; line: Placement };
+          | { type: "line"; line: DropTarget<unknown>["placement"] };
       }
     | undefined
   >(() => {
@@ -301,6 +308,7 @@ export const SortableTree = ({
       return instance;
     },
     onStart: ({ data }) => {
+      onSelect?.(data);
       setDragItem(data);
       dropHandlers.handleStart();
       autoScrollHandlers.setEnabled(true);
@@ -355,9 +363,7 @@ export const SortableTree = ({
       <TreeNode
         animate={animate}
         onSelect={onSelect}
-        selectedInstanceId={
-          dragItem === undefined ? selectedInstanceId : dragItem.id
-        }
+        selectedInstanceId={selectedInstanceId}
         instance={root}
         level={0}
         getIsExpanded={getIsExpanded}
@@ -377,74 +383,59 @@ export const SortableTree = ({
           ) : (
             <PlacementIndicatorLine line={finalDropTarget.placement.line} />
           ),
-
           document.body
         )}
     </Box>
   );
 };
 
-// @todo: if we decide to keep this color, we need to add it to design-system
-const PLACEMENT_INDICATOR_COLOR = "#f531b3";
+const useExpandState = ({
+  selectedInstanceId,
+  root,
+}: {
+  root: Instance;
+  selectedInstanceId?: Instance["id"];
+}) => {
+  const [record, setRecord] = useState<Record<Instance["id"], boolean>>({});
 
-const PlacementIndicatorLine = ({ line }: { line: Placement }) => {
-  const circleSize = 8;
-  const lineHeight = 2;
+  // We want to automatically expand all parents of the selected instance whenever it changes
+  const prevSelectedInstanceId = useRef(selectedInstanceId);
+  useEffect(() => {
+    if (selectedInstanceId === prevSelectedInstanceId.current) {
+      return;
+    }
+    prevSelectedInstanceId.current = selectedInstanceId;
+    if (selectedInstanceId === undefined) {
+      return;
+    }
+    const path = getInstancePath(root, selectedInstanceId).map(
+      (instance) => instance.id
+    );
+    // Don't want to expand the selected instance itself
+    path.pop();
+    const toExpand = path.filter((id) => record[id] !== true);
+    if (toExpand.length === 0) {
+      return;
+    }
+    setRecord((record) => {
+      const newRecord = { ...record };
+      for (const id of toExpand) {
+        newRecord[id] = true;
+      }
+      return newRecord;
+    });
+  }, [record, root, selectedInstanceId]);
 
-  // overlap the line with the circle by this much
-  // to make sure they are connected
-  const ovelap = 1;
-
-  // The goal is to put center of the circle at line.x/y
-
-  return (
-    <Box
-      style={{
-        top: line.y - lineHeight / 2,
-        left: line.x + (circleSize / 2 - ovelap),
-        width: line.length - (circleSize / 2 - ovelap),
-        height: lineHeight,
-      }}
-      css={{
-        boxSizing: "content-box",
-        position: "absolute",
-        background: PLACEMENT_INDICATOR_COLOR,
-        pointerEvents: "none",
-      }}
-    >
-      <Box
-        css={{
-          width: circleSize,
-          height: circleSize,
-          top: (lineHeight - circleSize) / 2,
-          left: ovelap - circleSize,
-          position: "absolute",
-          border: `solid ${PLACEMENT_INDICATOR_COLOR}`,
-          borderWidth: "$2",
-          borderRadius: "50%",
-        }}
-      />
-    </Box>
+  const getIsExpanded = useCallback(
+    (instance: Instance) => {
+      return getIsExpandable(instance) && record[instance.id] === true;
+    },
+    [record]
   );
-};
 
-const PlacementIndicatorOutline = ({ rect }: { rect: Rect }) => {
-  return (
-    <Box
-      style={{
-        top: rect.top,
-        left: rect.left + 2,
-        width: rect.width - 4,
-        height: rect.height,
-      }}
-      css={{
-        position: "absolute",
-        pointerEvents: "none",
-        boxSizing: "border-box",
-        border: `solid ${PLACEMENT_INDICATOR_COLOR}`,
-        borderWidth: "$2",
-        borderRadius: "$2",
-      }}
-    />
-  );
+  const setIsExpanded = useCallback((instance: Instance, expanded: boolean) => {
+    setRecord((record) => ({ ...record, [instance.id]: expanded }));
+  }, []);
+
+  return { getIsExpanded, setIsExpanded };
 };

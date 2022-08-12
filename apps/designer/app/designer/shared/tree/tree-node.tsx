@@ -27,7 +27,7 @@ export const getIsExpandable = (instance: Instance) => {
   );
 };
 
-const CustomButton = styled("button", {
+const ItemButton = styled("button", {
   all: "unset",
   display: "flex",
   alignItems: "center",
@@ -61,17 +61,16 @@ const CustomButton = styled("button", {
   },
 });
 
-const nestingLineStyles = {
+const NestingLine = styled(Box, {
   width: Math.ceil(INDENT / 2),
   height: ITEM_HEIGHT,
   borderRight: "solid",
   borderRightWidth: "$1",
   borderColor: "$slate9",
-};
-const nestingLineStylesSelected = {
-  ...nestingLineStyles,
-  borderColor: "$blue7",
-};
+  variants: {
+    isSelected: { true: { borderColor: "$blue7" } },
+  },
+});
 
 const NestingLines = ({
   isSelected,
@@ -93,14 +92,14 @@ const NestingLines = ({
   return (
     <>
       {Array.from({ length: level - 1 }, (_, i) => (
-        <Box
+        <NestingLine
           key={i}
           style={{
             marginRight:
               Math.floor(INDENT / 2) +
               (!followedByExpandButton && i === level - 2 ? INDENT : 0),
           }}
-          css={isSelected ? nestingLineStylesSelected : nestingLineStyles}
+          isSelected={isSelected}
         />
       ))}
     </>
@@ -131,25 +130,66 @@ const CollapsibleContentUnanimated = styled(Collapsible.Content, {
   overflow: "hidden",
 });
 
+const CollapsibleTrigger = styled(Collapsible.Trigger, {
+  all: "unset",
+  display: "flex",
+  pr: INDENT - ICONS_SIZE,
+  height: ITEM_HEIGHT,
+  alignItems: "center",
+
+  // We want the button to take extra space so it's easier to hit
+  ml: "-$2",
+  pl: "$2",
+});
+
+const ItemWrapper = styled(Flex, {
+  color: "$hiContrast",
+  alignItems: "center",
+  pr: ITEM_PADDING,
+  pl: ITEM_PADDING,
+  position: "relative",
+  variants: {
+    isSelected: {
+      true: { color: "$loContrast", bc: "$blue10" },
+    },
+    parentIsSelected: {
+      true: { bc: "$blue4" },
+    },
+  },
+});
+
+const Label = styled(Text, {
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  lineHeight: 1.4,
+  flexBasis: 0,
+  flexGrow: 1,
+
+  // For some reason flexBasis:0 is not enough
+  // to stop it growing past the container
+  width: 0,
+});
+
 type TreeNodeProps = {
   disableHoverStates?: boolean;
   instance: Instance;
-  selectedInstanceId: Instance["id"] | undefined;
+  selectedInstanceId?: Instance["id"];
   parentIsSelected?: boolean;
-  level: number;
+  level?: number;
   onSelect?: (instance: Instance) => void;
   animate?: boolean;
   getIsExpanded: (instance: Instance) => boolean;
-  setIsExpanded: (instance: Instance, expanded: boolean) => void;
+  setIsExpanded?: (instance: Instance, expanded: boolean) => void;
   onExpandTransitionEnd?: () => void;
 };
 
 export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
-  ({ instance, level, parentIsSelected, ...commonProps }, ref) => {
+  ({ instance, level = 0, parentIsSelected, ...commonProps }, ref) => {
     const {
       getIsExpanded,
       animate = true,
-      setIsExpanded,
+      setIsExpanded = noop,
       selectedInstanceId,
       onSelect = noop,
       onExpandTransitionEnd = noop,
@@ -202,19 +242,9 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
         onOpenChange={(isOpen) => setIsExpanded(instance, isOpen)}
         data-drop-target-id={instance.id}
       >
-        <Flex
-          css={{
-            color: isSelected ? "$loContrast" : "$hiContrast",
-            alignItems: "center",
-            pr: ITEM_PADDING,
-            pl: ITEM_PADDING,
-            backgroundColor: isSelected
-              ? "$blue10"
-              : parentIsSelected
-              ? "$blue4"
-              : "transparent",
-            position: "relative",
-          }}
+        <ItemWrapper
+          isSelected={isSelected}
+          parentIsSelected={parentIsSelected}
         >
           <NestingLines
             isSelected={isSelected}
@@ -222,49 +252,22 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
             followedByExpandButton={shouldRenderExpandButton}
           />
           {shouldRenderExpandButton && (
-            <Collapsible.Trigger asChild>
-              <Flex
-                css={{
-                  pr: INDENT - ICONS_SIZE,
-                  height: ITEM_HEIGHT,
-                  alignItems: "center",
-
-                  // We want the button to take extra space so it's easier to hit
-                  ml: "-$2",
-                  pl: "$2",
-                }}
-              >
-                {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
-              </Flex>
-            </Collapsible.Trigger>
+            <CollapsibleTrigger>
+              {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
+            </CollapsibleTrigger>
           )}
-          <CustomButton
+          <ItemButton
             data-drag-item-id={instance.id}
             onFocus={makeSelected}
             onClick={makeSelected}
             enableHoverState={disableHoverStates === false}
           >
             <Icon />
-            <Text
-              size="1"
-              variant={isSelected ? "loContrast" : "contrast"}
-              css={{
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                lineHeight: 1.4,
-                flexBasis: 0,
-                flexGrow: 1,
-
-                // For some reason flexBasis:0 is not anough
-                // to stop it growing past the container
-                width: 0,
-              }}
-            >
+            <Label size="1" variant={isSelected ? "loContrast" : "contrast"}>
               {label}
-            </Text>
-          </CustomButton>
-        </Flex>
+            </Label>
+          </ItemButton>
+        </ItemWrapper>
         {isExpandable && (
           <CollapsibleContent
             onAnimationEnd={handleAnimationEnd}
