@@ -14,6 +14,11 @@ import noop from "lodash.noop";
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
 const ICONS_SIZE = 15;
+const ITEM_PADDING = 8;
+
+export const getPlacementIndicatorAlignment = (depth: number) => {
+  return depth * INDENT + ITEM_PADDING;
+};
 
 export const getIsExpandable = (instance: Instance) => {
   return (
@@ -41,12 +46,13 @@ const CustomButton = styled("button", {
           content: "''",
           display: "block",
           position: "absolute",
-          top: 0,
           left: 2,
           right: 2,
+          top: 0,
           bottom: 0,
           boxSizing: "border-box",
-          border: "2px solid $blue10",
+          border: "solid $blue10",
+          borderWidth: "$2",
           borderRadius: "$2",
           pointerEvents: "none",
         },
@@ -58,7 +64,8 @@ const CustomButton = styled("button", {
 const nestingLineStyles = {
   width: Math.ceil(INDENT / 2),
   height: ITEM_HEIGHT,
-  borderRight: "1px solid",
+  borderRight: "solid",
+  borderRightWidth: "$1",
   borderColor: "$slate9",
 };
 const nestingLineStylesSelected = {
@@ -199,8 +206,8 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
           css={{
             color: isSelected ? "$loContrast" : "$hiContrast",
             alignItems: "center",
-            pr: "$2",
-            pl: "$2",
+            pr: ITEM_PADDING,
+            pl: ITEM_PADDING,
             backgroundColor: isSelected
               ? "$blue10"
               : parentIsSelected

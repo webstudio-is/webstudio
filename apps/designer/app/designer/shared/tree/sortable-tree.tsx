@@ -19,7 +19,12 @@ import {
   getInstancePathWithPositions,
 } from "~/shared/tree-utils";
 import { createPortal } from "react-dom";
-import { TreeNode, getIsExpandable } from "./tree-node";
+import {
+  TreeNode,
+  getIsExpandable,
+  getPlacementIndicatorAlignment,
+  INDENT,
+} from "./tree-node";
 import { useExpandState, type TreeProps } from "./tree";
 import { CSSProperties } from "@stitches/react";
 
@@ -98,8 +103,7 @@ export const SortableTree = ({
     const desiredDepth = dragItemDepth + horizontalShift;
 
     const shiftLine = (depth: number) => {
-      // @todo: fix magic numbers
-      const shift = depth * 15 + 15;
+      const shift = getPlacementIndicatorAlignment(depth);
       return {
         ...placement,
         x: placement.x + shift,
@@ -272,8 +276,7 @@ export const SortableTree = ({
   });
 
   const dragHandlers = useDrag<Instance>({
-    // @todo: fix magic number
-    shiftDistanceThreshold: 15,
+    shiftDistanceThreshold: INDENT,
 
     elementToData: (element) => {
       const dragItemElement = element.closest("[data-drag-item-id]");
@@ -381,32 +384,43 @@ export const SortableTree = ({
   );
 };
 
+// @todo: if we decide to keep this color, we need to add it to design-system
+const PLACEMENT_INDICATOR_COLOR = "#f531b3";
+
 const PlacementIndicatorLine = ({ line }: { line: Placement }) => {
+  const circleSize = 8;
+  const lineHeight = 2;
+
+  // overlap the line with the circle by this much
+  // to make sure they are connected
+  const ovelap = 1;
+
+  // The goal is to put center of the circle at line.x/y
+
   return (
     <Box
       style={{
-        // @todo: fix magic numbers
-        top: line.y - 1,
-        left: line.x + 4,
-        width: line.length - 4,
-        height: 2,
+        top: line.y - lineHeight / 2,
+        left: line.x + (circleSize / 2 - ovelap),
+        width: line.length - (circleSize / 2 - ovelap),
+        height: lineHeight,
       }}
       css={{
         boxSizing: "content-box",
         position: "absolute",
-        background: "#f531b3",
+        background: PLACEMENT_INDICATOR_COLOR,
         pointerEvents: "none",
       }}
     >
       <Box
         css={{
-          // @todo: fix magic numbers
-          width: 8,
-          height: 8,
-          top: -3,
-          left: -7,
+          width: circleSize,
+          height: circleSize,
+          top: (lineHeight - circleSize) / 2,
+          left: ovelap - circleSize,
           position: "absolute",
-          border: "solid 2px #f531b3",
+          border: `solid ${PLACEMENT_INDICATOR_COLOR}`,
+          borderWidth: "$2",
           borderRadius: "50%",
         }}
       />
@@ -427,8 +441,8 @@ const PlacementIndicatorOutline = ({ rect }: { rect: Rect }) => {
         position: "absolute",
         pointerEvents: "none",
         boxSizing: "border-box",
-        // @todo: add color to theme
-        border: "2px solid #f531b3",
+        border: `solid ${PLACEMENT_INDICATOR_COLOR}`,
+        borderWidth: "$2",
         borderRadius: "$2",
       }}
     />
