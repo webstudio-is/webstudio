@@ -141,6 +141,10 @@ export const Tree = ({
         currentDepth - desiredDepth
       );
 
+      if (difference === 0) {
+        return withoutShift;
+      }
+
       // Ideally we should check canAcceptChildren on the new target
       // but we assume that because it already has a child, it can accept more.
 
