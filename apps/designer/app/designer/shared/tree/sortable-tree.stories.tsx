@@ -3,7 +3,7 @@ import { Instance } from "@webstudio-is/react-sdk";
 import { useState } from "react";
 import produce from "immer";
 import { createInstance, reparentInstanceMutable } from "~/shared/tree-utils";
-import { SortableTree } from "./sortable-tree";
+import { Tree } from "./tree";
 import { Flex } from "@webstudio-is/design-system";
 
 export const StressTest = ({ animate }: { animate: boolean }) => {
@@ -46,7 +46,7 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
 
   return (
     <Flex css={{ width: 300, height: 500, flexDirection: "column" }}>
-      <SortableTree
+      <Tree
         animate={animate}
         root={root}
         selectedInstanceId={selectedInstanceId}
@@ -70,4 +70,4 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
 
 export default {
   args: { animate: true },
-} as ComponentMeta<typeof SortableTree>;
+} as ComponentMeta<typeof Tree>;

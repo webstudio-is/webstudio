@@ -25,7 +25,6 @@ import {
   getPlacementIndicatorAlignment,
   INDENT,
 } from "./tree-node";
-import { CSSProperties } from "@stitches/react";
 import {
   PlacementIndicatorLine,
   PlacementIndicatorOutline,
@@ -36,21 +35,19 @@ type TreeProps = {
   selectedInstanceId?: Instance["id"];
   onSelect?: (instance: Instance) => void;
   animate?: boolean;
+  onDragEnd: (event: {
+    instanceId: Instance["id"];
+    dropTarget: { instanceId: Instance["id"]; position: number | "end" };
+  }) => void;
 };
 
-export const SortableTree = ({
+export const Tree = ({
   root,
   selectedInstanceId,
   onSelect,
   animate,
   onDragEnd,
-}: TreeProps & {
-  onDragEnd: (event: {
-    instanceId: Instance["id"];
-    dropTarget: { instanceId: Instance["id"]; position: number | "end" };
-  }) => void;
-  height?: CSSProperties["height"];
-}) => {
+}: TreeProps) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     root,
     selectedInstanceId,
