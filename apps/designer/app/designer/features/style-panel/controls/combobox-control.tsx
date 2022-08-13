@@ -48,11 +48,13 @@ export const ComboboxControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
+  // @todo abstract to a variant of the combobox component
+  // this whole switch block is a stop-gap measure, because i worked on flex-controls before the combobox update
+  // the combobox should be updated to supporting this rendered production
   switch (styleConfig.property) {
     case "rowGap":
     case "columnGap": {
       if (category == "layout") {
-        // @todo abstract to a variant of the combobox component
         if (String(currentStyle.display?.value).includes("flex") !== true)
           break;
         const Icon =
@@ -96,6 +98,9 @@ export const ComboboxControl = ({
             </Tooltip>
             <TextField
               type="number"
+              // @todo as above fit into that as a better abstraction
+              // was returning value with unit i.e 0px instead of 0, so we first stringify to satisfy the typechecker
+              // then parseFloat for the value
               defaultValue={parseFloat(String(value.value)) || 0}
               // @todo looses input state and focus
               // onChange={(event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value + "px")
