@@ -12,3 +12,6 @@ export interface IconProps extends SVGAttributes<SVGElement> {
 export type IconComponent = ForwardRefExoticComponent<
   IconProps & RefAttributes<SVGSVGElement>
 >;
+
+export type IconRecord = Record<string, IconComponent>;
+export type IconRecords = Record<string, IconRecord>;

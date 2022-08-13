@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react";
 import {
+  categories,
   toValue,
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/react-sdk";
 import { Box } from "@webstudio-is/design-system";
-import { SetProperty } from "./use-style-data";
-import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
-import { propertyNameColorForSelectedBreakpoint } from "./constants";
+import { SetProperty } from "../shared/use-style-data";
+import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
+import { propertyNameColorForSelectedBreakpoint } from "../shared/constants";
+import { getFinalValue } from "../shared/get-final-value";
+import type { ControlProps } from "../style-sections";
 
 type SpacingSingularStyle = { [property in SpacingProperty]?: StyleValue };
 
-export type SpacingStyles = {
+type SpacingStyles = {
   paddings: SpacingSingularStyle;
   margins: SpacingSingularStyle;
 };
 
-export type SpacingProperty = Margin | Padding;
+type SpacingProperty = Margin | Padding;
 
 type Margin = "marginTop" | "marginRight" | "marginBottom" | "marginLeft";
 
@@ -158,7 +161,7 @@ type SpacingWidgetProps = {
   values: SpacingStyles;
 };
 
-export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
+const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
   const margins = toCss(values.margins);
   const paddings = toCss(values.paddings);
 
@@ -239,3 +242,36 @@ export const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
     </Box>
   );
 };
+
+const SpacingControl = ({
+  currentStyle,
+  inheritedStyle,
+  setProperty,
+  styleConfig,
+}: ControlProps) => {
+  if (styleConfig.control !== "Spacing") return null;
+
+  const styles = categories.spacing.properties.reduce(
+    (acc: SpacingStyles, property: SpacingProperty): SpacingStyles => {
+      const value = getFinalValue({
+        currentStyle,
+        inheritedStyle,
+        property,
+      });
+      if (value !== undefined) {
+        if (property.includes("margin")) {
+          acc.margins[property] = value;
+        } else {
+          acc.paddings[property] = value;
+        }
+      }
+
+      return acc;
+    },
+    { margins: {}, paddings: {} } as SpacingStyles
+  );
+
+  return <SpacingWidget setProperty={setProperty} values={styles} />;
+};
+
+export { SpacingControl };

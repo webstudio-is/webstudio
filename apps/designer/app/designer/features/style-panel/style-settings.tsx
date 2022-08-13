@@ -8,7 +8,7 @@ import {
 
 import { type StyleConfig, styleConfigs } from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
-import { renderProperty, renderCategory } from "./style-section";
+import { renderProperty, renderCategory } from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import { type InheritedStyle } from "./shared/get-inherited-style";
 import {
@@ -77,7 +77,7 @@ type StyleSettingsProps = {
   search: string;
 };
 
-export const StyleSettings = ({
+const StyleSettings = ({
   setProperty,
   createBatchUpdate,
   currentStyle,
@@ -152,3 +152,5 @@ export const StyleSettings = ({
   }
   return <>{all}</>;
 };
+
+export { StyleSettings };

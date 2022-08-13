@@ -1,8 +1,7 @@
 import React from "react";
-import { CheckIcon } from "@webstudio-is/icons";
+import { CheckIcon, IconComponent } from "@webstudio-is/icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { styled, CSS } from "../stitches.config";
-import { Box } from "./box";
+import { styled } from "../stitches.config";
 import { Tooltip } from "./tooltip";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
@@ -85,17 +84,20 @@ export const IconButtonWithMenu = ({
   value,
   items,
   onChange,
-  icons,
-  css,
+  isFromCurrentBreakpoint,
 }: {
   label: string;
   value: string;
-  items: Array<{ label: string; name: string }>;
+  items: Array<{
+    label: string;
+    name: string;
+    icon: ReturnType<IconComponent>;
+  }>;
   onChange: (value: string) => void;
-  icons: Record<string, (props: unknown) => JSX.Element>;
-  css: CSS;
+  isFromCurrentBreakpoint: boolean;
 }) => {
-  const TriggerIcon = icons?.[value];
+  const activeItem = items.find(({ name }) => name === value);
+  const TriggerIcon = activeItem?.icon;
   return (
     <DropdownMenuPrimitive.Root modal={false}>
       <Tooltip
@@ -104,7 +106,21 @@ export const IconButtonWithMenu = ({
         disableHoverableContent={true}
       >
         <DropdownMenuPrimitive.Trigger asChild>
-          <IconButton css={css}>{TriggerIcon && <TriggerIcon />}</IconButton>
+          <IconButton
+            css={
+              isFromCurrentBreakpoint
+                ? {
+                    color: "$colors$blue11",
+                    backgroundColor: "$colors$blue4",
+                    "&:not([data-state=open]):hover": {
+                      backgroundColor: "$colors$blue4",
+                    },
+                  }
+                : {}
+            }
+          >
+            {TriggerIcon}
+          </IconButton>
         </DropdownMenuPrimitive.Trigger>
       </Tooltip>
 
@@ -113,17 +129,13 @@ export const IconButtonWithMenu = ({
           value={value}
           onValueChange={onChange}
         >
-          {items.map(({ name, label }: { name: string; label: string }) => {
-            const ItemIcon = icons[name];
-            if (!ItemIcon) return null;
+          {items.map(({ name, label, icon }) => {
             return (
               <StyledRadioItem key={name} value={label}>
                 <StyledItemIndicator>
                   <CheckIcon />
                 </StyledItemIndicator>
-                <Box css={{ svg: css.svg }}>
-                  <ItemIcon />
-                </Box>
+                {icon}
                 {label}
               </StyledRadioItem>
             );
