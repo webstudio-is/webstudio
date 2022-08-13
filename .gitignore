@@ -43,5 +43,5 @@ yarn-error.log*
 
 
 # builds
-lib
+packages/**/lib
 generated

@@ -123,7 +123,7 @@ export const Tree = ({
           }}
         >
           <Icon />
-          <Text>{label}</Text>
+          <Text size="1">{label}</Text>
         </Button>
       </Flex>
       {children != null && <CollapsibleContent>{children}</CollapsibleContent>}

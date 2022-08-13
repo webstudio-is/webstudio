@@ -6,14 +6,10 @@ import {
   type Data,
   type Tree,
   useAllUserProps,
-  WrapperComponent,
   globalStyles,
   useSubscribe,
-} from "@webstudio-is/react-sdk";
-import {
   createElementsTree,
-  setInstanceChildrenMutable,
-} from "~/shared/tree-utils";
+} from "@webstudio-is/react-sdk";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   usePopulateRootInstance,
@@ -53,6 +49,7 @@ import {
   LexicalComposer,
   config,
 } from "~/canvas/features/wrapper-component/text-editor";
+import { setInstanceChildrenMutable } from "~/shared/tree-utils";
 
 registerContainers();
 
@@ -87,17 +84,6 @@ const useSubscribePreviewMode = () => {
   return isPreviewMode;
 };
 
-const PreviewMode = () => {
-  const [rootInstance] = useRootInstance();
-  const [breakpoints] = useBreakpoints();
-  if (rootInstance === undefined) return null;
-  return createElementsTree({
-    breakpoints,
-    instance: rootInstance,
-    Component: WrapperComponent,
-  });
-};
-
 type DesignModeProps = {
   treeId: Tree["id"];
   project: db.project.Project;
@@ -125,14 +111,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
   useDragAndDrop();
-  const elements = useElementsTree();
-  return (
-    <>
-      {elements && (
-        <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
-      )}
-    </>
-  );
+  return null;
 };
 
 type CanvasProps = {
@@ -150,10 +129,22 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   const isPreviewMode = useSubscribePreviewMode();
+  const elements = useElementsTree();
+
+  if (elements === undefined) return null;
+
+  const children = (
+    <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
+  );
 
   if (isPreviewMode) {
-    return <PreviewMode />;
+    return children;
   }
 
-  return <DesignMode treeId={data.tree.id} project={data.project} />;
+  return (
+    <>
+      <DesignMode treeId={data.tree.id} project={data.project} />
+      {children}
+    </>
+  );
 };

@@ -1,6 +1,7 @@
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import type { Project, Asset } from "@webstudio-is/prisma-client";
+import { toast } from "@webstudio-is/design-system";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
@@ -14,6 +15,7 @@ import {
   loadByProject,
 } from "@webstudio-is/asset-uploader/index.server";
 import { zfd } from "zod-form-data";
+import { useEffect } from "react";
 
 export { links };
 
@@ -88,12 +90,17 @@ export const action: ActionFunction = async ({ request, params }) => {
 const DesignerRoute = () => {
   const actionData = useActionData();
   const data = useLoaderData<Data | Error>();
+
+  useEffect(() => {
+    if (actionData && "errors" in actionData) {
+      toast.error(actionData.errors);
+    }
+  }, [actionData]);
+
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
-  if (actionData && "errors" in actionData) {
-    return <ErrorMessage message={actionData.errors} />;
-  }
+
   return <Designer {...data} />;
 };
 

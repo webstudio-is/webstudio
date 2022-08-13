@@ -8,6 +8,7 @@ export * from "./google";
 export * from "./github";
 export * from "./devices";
 export * from "./tablet";
+export * from "./body";
 export * from "./types";
 export * from "./align-content-center";
 export * from "./align-content-end";

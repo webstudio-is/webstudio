@@ -45,6 +45,10 @@ export type UseDropProps<Data> = {
   ) => PartialDropTarget<Data>;
 
   onDropTargetChange: (dropTarget: DropTarget<Data>) => void;
+
+  // Allows you to customize children
+  // that will be used to determine placement and indexWithinChildren
+  getValidChildren?: (parent: Element) => Element[] | HTMLCollection;
 };
 
 export type UseDropHandlers = {
@@ -77,11 +81,13 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
   // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
     const getChildrenRectsMemoized = (parent: Element) => {
+      const { getValidChildren = (parent) => parent.children } =
+        latestProps.current;
       const fromCache = state.current.childrenRectsCache.get(parent);
       if (fromCache !== undefined) {
         return fromCache;
       }
-      const result = getChildrenRects(parent);
+      const result = getChildrenRects(parent, getValidChildren(parent));
       state.current.childrenRectsCache.set(parent, result);
       return result;
     };

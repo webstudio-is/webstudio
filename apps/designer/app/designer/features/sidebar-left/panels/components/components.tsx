@@ -18,10 +18,11 @@ import {
   DragMovePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
+import { Header } from "../../lib/header";
 
 const componentNames = (
   Object.keys(components) as Array<Instance["component"]>
-).filter((component) => components[component].isInlineOnly === false);
+).filter((component) => components[component].isListed);
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -140,27 +141,35 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <Flex
-      gap="1"
-      wrap="wrap"
-      css={{ padding: "$1" }}
-      ref={useDragHandlers.rootRef}
-    >
-      {componentNames.map((component: Instance["component"]) => (
-        <DraggableThumb
-          key={component}
-          component={component}
-          onClick={() => {
-            onSetActiveTab("none");
-            publish<"insertInstance", { instance: Instance }>({
-              type: "insertInstance",
-              payload: { instance: createInstance({ component }) },
-            });
-          }}
-        />
-      ))}
-      {dragComponent && <DragLayer component={dragComponent} point={point} />}
-    </Flex>
+    <>
+      <Header
+        title="Add"
+        onClose={() => {
+          onSetActiveTab("none");
+        }}
+      />
+      <Flex
+        gap="1"
+        wrap="wrap"
+        css={{ padding: "$1" }}
+        ref={useDragHandlers.rootRef}
+      >
+        {componentNames.map((component: Instance["component"]) => (
+          <DraggableThumb
+            key={component}
+            component={component}
+            onClick={() => {
+              onSetActiveTab("none");
+              publish<"insertInstance", { instance: Instance }>({
+                type: "insertInstance",
+                payload: { instance: createInstance({ component }) },
+              });
+            }}
+          />
+        ))}
+        {dragComponent && <DragLayer component={dragComponent} point={point} />}
+      </Flex>
+    </>
   );
 };
 

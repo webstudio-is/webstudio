@@ -8,6 +8,7 @@ export default {
   canAcceptChild: () => false,
   isContentEditable: true,
   isInlineOnly: false,
+  isListed: true,
   label: "Paragraph",
   children: ["Pragraph you can edit"],
 } as WsComponentMeta<typeof Paragraph>;
