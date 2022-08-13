@@ -77,7 +77,7 @@ type StyleSettingsProps = {
   search: string;
 };
 
-const StyleSettings = ({
+export const StyleSettings = ({
   setProperty,
   createBatchUpdate,
   currentStyle,
@@ -152,5 +152,3 @@ const StyleSettings = ({
   }
   return <>{all}</>;
 };
-
-export { StyleSettings };

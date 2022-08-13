@@ -4,84 +4,9 @@ import { ComboboxControl } from "./combobox-control";
 import { getFinalValue } from "../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
 import type { ControlProps } from "../style-sections";
-import {
-  AlignContentStart,
-  AlignContentEnd,
-  AlignContentCenter,
-  AlignContentStretch,
-  AlignContentSpaceAround,
-  AlignContentSpaceBetween,
-  AlignItemsStart,
-  AlignItemsEnd,
-  AlignItemsCenter,
-  AlignItemsBaseline,
-  AlignItemsStretch,
-  FlexDirectionRow,
-  FlexDirectionColumn,
-  FlexDirectionRowReverse,
-  FlexDirectionColumnReverse,
-  FlexWrapNowrap,
-  FlexWrapWrap,
-  FlexWrapWrapReverse,
-  JustifyContentStart,
-  JustifyContentEnd,
-  JustifyContentCenter,
-  JustifyContentSpaceBetween,
-  JustifyContentSpaceAround,
-  JustifyItemsStart,
-  JustifyItemsEnd,
-  JustifyItemsCenter,
-  IconRecords,
-} from "@webstudio-is/icons";
+import { iconConfigs } from "../shared/configs";
 
-const icons: IconRecords = {
-  alignContent: {
-    normal: AlignContentStart,
-    start: AlignContentStart,
-    end: AlignContentEnd,
-    center: AlignContentCenter,
-    stretch: AlignContentStretch,
-    "space-around": AlignContentSpaceAround,
-    "space-between": AlignContentSpaceBetween,
-  },
-  alignItems: {
-    normal: AlignItemsStart,
-    start: AlignItemsStart,
-    end: AlignItemsEnd,
-    center: AlignItemsCenter,
-    baseline: AlignItemsBaseline,
-    stretch: AlignItemsStretch,
-  },
-  flexDirection: {
-    normal: FlexDirectionRow,
-    row: FlexDirectionRow,
-    column: FlexDirectionColumn,
-    "row-reverse": FlexDirectionRowReverse,
-    "column-reverse": FlexDirectionColumnReverse,
-  },
-  flexWrap: {
-    normal: FlexWrapNowrap,
-    nowrap: FlexWrapNowrap,
-    wrap: FlexWrapWrap,
-    "wrap-reverse": FlexWrapWrapReverse,
-  },
-  justifyContent: {
-    normal: JustifyContentStart,
-    start: JustifyContentStart,
-    end: JustifyContentEnd,
-    center: JustifyContentCenter,
-    "space-between": JustifyContentSpaceBetween,
-    "space-around": JustifyContentSpaceAround,
-  },
-  justifyItems: {
-    normal: JustifyItemsStart,
-    start: JustifyItemsStart,
-    end: JustifyItemsEnd,
-    center: JustifyItemsCenter,
-  },
-};
-
-const IconButtonWithMenuControl = ({
+export const IconButtonWithMenuControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -114,7 +39,7 @@ const IconButtonWithMenuControl = ({
     );
   }
 
-  const iconProps = icons[styleConfig.property];
+  const iconProps = iconConfigs[styleConfig.property];
   const iconStyle =
     styleConfig.property === "flexDirection"
       ? {}
@@ -144,5 +69,3 @@ const IconButtonWithMenuControl = ({
     ></IconButtonWithMenu>
   );
 };
-
-export { IconButtonWithMenuControl };

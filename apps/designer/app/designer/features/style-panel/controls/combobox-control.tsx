@@ -9,7 +9,7 @@ import {
   TextField,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { PropertyName } from "./property-name";
+import { PropertyNameUtility } from "./property-name-utility";
 import { getFinalValue } from "../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
 import { ControlProps } from "../style-sections";
@@ -29,7 +29,7 @@ const Unit = ({ value }: { value: StyleValue }) => {
   );
 };
 
-const ComboboxControl = ({
+export const ComboboxControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -118,7 +118,10 @@ const ComboboxControl = ({
   return (
     <Grid columns={2} align="center" gapX="1">
       {/* @todo needs icon variant */}
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <PropertyNameUtility
+        property={styleConfig.property}
+        label={styleConfig.label}
+      />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Combobox
           name={styleConfig.property}
@@ -141,5 +144,3 @@ const ComboboxControl = ({
     </Grid>
   );
 };
-
-export { ComboboxControl };

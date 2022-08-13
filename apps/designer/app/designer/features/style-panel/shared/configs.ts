@@ -7,6 +7,35 @@ import {
   type AppliesTo,
 } from "@webstudio-is/react-sdk";
 import { humanizeString } from "~/shared/string-utils";
+import {
+  AlignContentStart,
+  AlignContentEnd,
+  AlignContentCenter,
+  AlignContentStretch,
+  AlignContentSpaceAround,
+  AlignContentSpaceBetween,
+  AlignItemsStart,
+  AlignItemsEnd,
+  AlignItemsCenter,
+  AlignItemsBaseline,
+  AlignItemsStretch,
+  FlexDirectionRow,
+  FlexDirectionColumn,
+  FlexDirectionRowReverse,
+  FlexDirectionColumnReverse,
+  FlexWrapNowrap,
+  FlexWrapWrap,
+  FlexWrapWrapReverse,
+  JustifyContentStart,
+  JustifyContentEnd,
+  JustifyContentCenter,
+  JustifyContentSpaceBetween,
+  JustifyContentSpaceAround,
+  JustifyItemsStart,
+  JustifyItemsEnd,
+  JustifyItemsCenter,
+  IconRecords,
+} from "@webstudio-is/icons";
 
 type BaseStyleConfig = {
   label: string;
@@ -94,3 +123,50 @@ const createStyleConfigs = () => {
 };
 
 export const styleConfigs: Array<StyleConfig> = createStyleConfigs();
+
+export const iconConfigs: IconRecords = {
+  alignContent: {
+    normal: AlignContentStart,
+    start: AlignContentStart,
+    end: AlignContentEnd,
+    center: AlignContentCenter,
+    stretch: AlignContentStretch,
+    "space-around": AlignContentSpaceAround,
+    "space-between": AlignContentSpaceBetween,
+  },
+  alignItems: {
+    normal: AlignItemsStart,
+    start: AlignItemsStart,
+    end: AlignItemsEnd,
+    center: AlignItemsCenter,
+    baseline: AlignItemsBaseline,
+    stretch: AlignItemsStretch,
+  },
+  flexDirection: {
+    normal: FlexDirectionRow,
+    row: FlexDirectionRow,
+    column: FlexDirectionColumn,
+    "row-reverse": FlexDirectionRowReverse,
+    "column-reverse": FlexDirectionColumnReverse,
+  },
+  flexWrap: {
+    normal: FlexWrapNowrap,
+    nowrap: FlexWrapNowrap,
+    wrap: FlexWrapWrap,
+    "wrap-reverse": FlexWrapWrapReverse,
+  },
+  justifyContent: {
+    normal: JustifyContentStart,
+    start: JustifyContentStart,
+    end: JustifyContentEnd,
+    center: JustifyContentCenter,
+    "space-between": JustifyContentSpaceBetween,
+    "space-around": JustifyContentSpaceAround,
+  },
+  justifyItems: {
+    normal: JustifyItemsStart,
+    start: JustifyItemsStart,
+    end: JustifyItemsEnd,
+    center: JustifyItemsCenter,
+  },
+};

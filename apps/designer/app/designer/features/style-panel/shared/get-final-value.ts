@@ -2,7 +2,7 @@ import type { Style, StyleValue, StyleProperty } from "@webstudio-is/react-sdk";
 import type { InheritedStyle } from "./get-inherited-style";
 
 // @todo expose which instance we inherited the value from
-const getFinalValue = ({
+export const getFinalValue = ({
   currentStyle,
   inheritedStyle,
   property,
@@ -19,5 +19,3 @@ const getFinalValue = ({
   }
   return currentValue;
 };
-
-export { getFinalValue };

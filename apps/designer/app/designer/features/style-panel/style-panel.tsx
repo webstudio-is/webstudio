@@ -17,7 +17,10 @@ type StylePanelProps = {
   selectedInstanceData?: SelectedInstanceData;
 };
 
-const StylePanel = ({ selectedInstanceData, publish }: StylePanelProps) => {
+export const StylePanel = ({
+  selectedInstanceData,
+  publish,
+}: StylePanelProps) => {
   const { currentStyle, inheritedStyle, setProperty, createBatchUpdate } =
     useStyleData({
       selectedInstanceData,
@@ -72,5 +75,3 @@ const StylePanel = ({ selectedInstanceData, publish }: StylePanelProps) => {
     </>
   );
 };
-
-export { StylePanel };

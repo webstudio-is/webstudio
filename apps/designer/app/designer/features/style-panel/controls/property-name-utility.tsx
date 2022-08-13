@@ -3,7 +3,11 @@ import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakp
 import { propertyNameColorForSelectedBreakpoint } from "../shared/constants";
 import type { PropertyProps } from "../style-sections";
 
-const PropertyName = ({ property, label, css }: PropertyProps) => {
+export const PropertyNameUtility = ({
+  property,
+  label,
+  css,
+}: PropertyProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   return (
@@ -30,5 +34,3 @@ const PropertyName = ({ property, label, css }: PropertyProps) => {
     </Label>
   );
 };
-
-export { PropertyName };

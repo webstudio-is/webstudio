@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Flex, Button, Collapsible } from "@webstudio-is/design-system";
 import { TriangleDownIcon, TriangleRightIcon } from "@webstudio-is/icons";
 
-const ShowMore = ({
+export const ShowMoreUtility = ({
   styleConfigs,
 }: {
   styleConfigs: Array<JSX.Element | null>;
@@ -26,5 +26,3 @@ const ShowMore = ({
     </Collapsible.Root>
   );
 };
-
-export { ShowMore };

@@ -1,9 +1,9 @@
 import { Flex, Select } from "@webstudio-is/design-system";
 import { getFinalValue } from "../shared/get-final-value";
-import { PropertyName } from "./property-name";
+import { PropertyNameUtility } from "./property-name-utility";
 import type { ControlProps } from "../style-sections";
 
-const SelectControl = ({
+export const SelectControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -22,7 +22,7 @@ const SelectControl = ({
 
   return (
     <Flex align="center">
-      <PropertyName
+      <PropertyNameUtility
         property={styleConfig.property}
         label={styleConfig.label}
         css={{
@@ -46,5 +46,3 @@ const SelectControl = ({
     </Flex>
   );
 };
-
-export { SelectControl };

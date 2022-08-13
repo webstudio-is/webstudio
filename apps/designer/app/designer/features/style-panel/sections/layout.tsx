@@ -1,6 +1,6 @@
 import { Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../style-sections";
-import { GridControl, LockControl, ShowMore } from "../controls";
+import { GridUtility, LockUtility, ShowMoreUtility } from "../controls";
 
 const CSSLayoutSection = {
   alignItems: "center",
@@ -40,7 +40,7 @@ const LayoutSectionFlex = ({
   return (
     <Grid css={CSSLayoutSectionFlex}>
       {styleConfigsByCategory}
-      <LockControl
+      <LockUtility
         name="lock"
         currentStyle={{
           columnGap: currentStyle.columnGap,
@@ -48,7 +48,7 @@ const LayoutSectionFlex = ({
         }}
         batchUpdate={batchUpdate}
       />
-      <GridControl
+      <GridUtility
         name="grid"
         currentStyle={currentStyle}
         batchUpdate={batchUpdate}
@@ -57,7 +57,7 @@ const LayoutSectionFlex = ({
   );
 };
 
-const LayoutSection = ({
+export const LayoutSection = ({
   setProperty,
   createBatchUpdate,
   currentStyle,
@@ -82,7 +82,7 @@ const LayoutSection = ({
 
   return (
     <>
-      <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+      <ShowMoreUtility styleConfigs={moreStyleConfigsByCategory} />
       {styleConfigsByCategory}
     </>
   );
@@ -97,5 +97,3 @@ const layouts = new Map([
   ["grid", null],
   ["inline-grid", null],
 ]);
-
-export { LayoutSection };

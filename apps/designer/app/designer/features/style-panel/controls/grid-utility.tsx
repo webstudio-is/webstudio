@@ -4,7 +4,7 @@ import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakp
 import type { Style } from "@webstudio-is/react-sdk";
 import type { CreateBatchUpdate } from "../shared/use-style-data";
 
-const GridControl = ({
+export const GridUtility = ({
   name,
   currentStyle,
   batchUpdate,
@@ -150,5 +150,3 @@ const GridControl = ({
     </Grid>
   );
 };
-
-export { GridControl };

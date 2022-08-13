@@ -9,7 +9,7 @@ import {
   PopoverContent,
   TextField,
 } from "@webstudio-is/design-system";
-import { PropertyName } from "./property-name";
+import { PropertyNameUtility } from "./property-name-utility";
 import { getFinalValue } from "../shared/get-final-value";
 import type { ControlProps } from "../style-sections";
 
@@ -83,7 +83,7 @@ const ColorPicker = ({
   );
 };
 
-const ColorControl = ({
+export const ColorControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -99,7 +99,10 @@ const ColorControl = ({
 
   return (
     <Grid columns={2} align="center" gapX="1">
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <PropertyNameUtility
+        property={styleConfig.property}
+        label={styleConfig.label}
+      />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <ColorPicker
           id={styleConfig.property}
@@ -113,5 +116,3 @@ const ColorControl = ({
     </Grid>
   );
 };
-
-export { ColorControl };

@@ -14,17 +14,17 @@ import {
   ComboboxControl,
   SelectControl,
   IconButtonWithMenuControl,
-  ShowMore,
+  ShowMoreUtility,
 } from "./controls";
 import { LayoutSection } from "./sections";
 
-type PropertyProps = {
+export type PropertyProps = {
   property: StyleProperty;
   label: string;
   css?: CSS;
 };
 
-type ControlProps = {
+export type ControlProps = {
   setProperty: SetProperty;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
@@ -32,7 +32,7 @@ type ControlProps = {
   category: Category;
 };
 
-type RenderCategoryProps = {
+export type RenderCategoryProps = {
   setProperty: SetProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
@@ -41,7 +41,7 @@ type RenderCategoryProps = {
   moreStyleConfigsByCategory: Array<JSX.Element | null>;
 };
 
-type RenderPropertyProps = {
+export type RenderPropertyProps = {
   setProperty: SetProperty;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
@@ -49,7 +49,7 @@ type RenderPropertyProps = {
   category: Category;
 };
 
-const renderProperty = ({
+export const renderProperty = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -77,7 +77,7 @@ const renderProperty = ({
   );
 };
 
-const renderCategory = ({
+export const renderCategory = ({
   setProperty,
   createBatchUpdate,
   currentStyle,
@@ -90,7 +90,7 @@ const renderCategory = ({
     return (
       <>
         {styleConfigsByCategory}
-        <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+        <ShowMoreUtility styleConfigs={moreStyleConfigsByCategory} />
       </>
     );
   }
@@ -120,12 +120,4 @@ const controls: {
   Combobox: ComboboxControl,
   IconButtonWithMenu: IconButtonWithMenuControl,
   Select: SelectControl,
-};
-
-export { renderCategory, renderProperty };
-export type {
-  PropertyProps,
-  ControlProps,
-  RenderCategoryProps,
-  RenderPropertyProps,
 };

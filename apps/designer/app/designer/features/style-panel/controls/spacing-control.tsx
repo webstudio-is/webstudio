@@ -243,7 +243,7 @@ const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
   );
 };
 
-const SpacingControl = ({
+export const SpacingControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -273,5 +273,3 @@ const SpacingControl = ({
 
   return <SpacingWidget setProperty={setProperty} values={styles} />;
 };
-
-export { SpacingControl };

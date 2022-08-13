@@ -3,7 +3,7 @@ import { LockOpened } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/react-sdk";
 import type { CreateBatchUpdate } from "../shared/use-style-data";
 
-const LockControl = ({
+export const LockUtility = ({
   name,
 }: {
   name: string;
@@ -16,5 +16,3 @@ const LockControl = ({
     </IconButton>
   );
 };
-
-export { LockControl };
