@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconProps } from "./types";
 
-export const FlexWrapNowrap = React.forwardRef<SVGSVGElement, IconProps>(
+export const FlexWrapNowrapIcon = React.forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg
@@ -23,4 +23,4 @@ export const FlexWrapNowrap = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
-FlexWrapNowrap.displayName = "FlexWrapNowrap";
+FlexWrapNowrapIcon.displayName = "FlexWrapNowrapIcon";

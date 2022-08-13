@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconProps } from "./types";
 
-export const AlignItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
+export const AlignItemsEndIcon = React.forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg
@@ -23,4 +23,4 @@ export const AlignItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
-AlignItemsEnd.displayName = "AlignItemsEnd";
+AlignItemsEndIcon.displayName = "AlignItemsEndIcon";

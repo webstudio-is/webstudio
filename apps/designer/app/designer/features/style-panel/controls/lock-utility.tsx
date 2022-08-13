@@ -1,5 +1,5 @@
 import { IconButton } from "@webstudio-is/design-system";
-import { LockOpened } from "@webstudio-is/icons";
+import { LockOpenIcon } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/react-sdk";
 import type { CreateBatchUpdate } from "../shared/use-style-data";
 
@@ -12,7 +12,7 @@ export const LockUtility = ({
 }) => {
   return (
     <IconButton data-property={name} css={{ width: "100%", gridArea: name }}>
-      <LockOpened />
+      <LockOpenIcon />
     </IconButton>
   );
 };

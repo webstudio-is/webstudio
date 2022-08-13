@@ -2,7 +2,7 @@ import * as React from "react";
 import { IconProps } from "./types";
 
 // @todo this is just a copy of justifyContent icons for now
-export const JustifyItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
+export const JustifyItemsEndIcon = React.forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg
@@ -23,4 +23,4 @@ export const JustifyItemsEnd = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
-JustifyItemsEnd.displayName = "JustifyItemsEnd";
+JustifyItemsEndIcon.displayName = "JustifyItemsEndIcon";

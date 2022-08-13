@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconProps } from "./types";
 
-export const AlignContentSpaceAround = React.forwardRef<
+export const AlignContentSpaceAroundIcon = React.forwardRef<
   SVGSVGElement,
   IconProps
 >(({ color = "currentColor", ...props }, forwardedRef) => {
@@ -24,4 +24,4 @@ export const AlignContentSpaceAround = React.forwardRef<
     </svg>
   );
 });
-AlignContentSpaceAround.displayName = "AlignContentSpaceAround";
+AlignContentSpaceAroundIcon.displayName = "AlignContentSpaceAroundIcon";

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconProps } from "./types";
 
-export const RowGap = React.forwardRef<SVGSVGElement, IconProps>(
+export const RowGapIcon = React.forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg
@@ -31,4 +31,4 @@ export const RowGap = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
-RowGap.displayName = "RowGap";
+RowGapIcon.displayName = "RowGapIcon";

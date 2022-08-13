@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconProps } from "./types";
 
-export const LockOpened = React.forwardRef<SVGSVGElement, IconProps>(
+export const LockOpenIcon = React.forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
       <svg
@@ -34,4 +34,4 @@ export const LockOpened = React.forwardRef<SVGSVGElement, IconProps>(
     );
   }
 );
-LockOpened.displayName = "LockOpened";
+LockOpenIcon.displayName = "LockOpenIcon";

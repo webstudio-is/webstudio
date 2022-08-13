@@ -13,7 +13,7 @@ import { PropertyNameUtility } from "./property-name-utility";
 import { getFinalValue } from "../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
 import { ControlProps } from "../style-sections";
-import { RowGap, ColumnGap } from "@webstudio-is/icons";
+import { RowGapIcon, ColumnGapIcon } from "@webstudio-is/icons";
 
 const Unit = ({ value }: { value: StyleValue }) => {
   if (value.type !== "unit" || value.unit === "number") return null;
@@ -55,7 +55,8 @@ export const ComboboxControl = ({
         // @todo abstract to a variant of the combobox component
         if (String(currentStyle.display?.value).includes("flex") !== true)
           break;
-        const Icon = styleConfig.property == "rowGap" ? RowGap : ColumnGap;
+        const Icon =
+          styleConfig.property == "rowGap" ? RowGapIcon : ColumnGapIcon;
         return (
           <Grid
             css={{

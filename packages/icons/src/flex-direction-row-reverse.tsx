@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IconProps } from "./types";
 
-export const FlexDirectionRowReverse = React.forwardRef<
+export const FlexDirectionRowReverseIcon = React.forwardRef<
   SVGSVGElement,
   IconProps
 >(({ color = "currentColor", ...props }, forwardedRef) => {
@@ -23,4 +23,4 @@ export const FlexDirectionRowReverse = React.forwardRef<
     </svg>
   );
 });
-FlexDirectionRowReverse.displayName = "FlexDirectionRowReverse";
+FlexDirectionRowReverseIcon.displayName = "FlexDirectionRowReverseIcon";

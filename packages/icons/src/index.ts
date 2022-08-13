@@ -40,5 +40,5 @@ export * from "./justify-items-space-between";
 export * from "./justify-items-start";
 export * from "./gap-row";
 export * from "./gap-column";
-export * from "./lock-opened";
-export * from "./lock-closed";
+export * from "./lock-open";
+export * from "./lock-close";
