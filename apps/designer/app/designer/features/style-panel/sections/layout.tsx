@@ -42,6 +42,7 @@ const LayoutSectionFlex = ({
       {styleConfigsByCategory}
       <LockUtility
         name="lock"
+        pairedKeys={["columnGap", "rowGap"]}
         currentStyle={{
           columnGap: currentStyle.columnGap,
           rowGap: currentStyle.rowGap,

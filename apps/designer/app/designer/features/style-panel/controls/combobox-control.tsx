@@ -1,4 +1,4 @@
-import { KeyboardEvent } from "react";
+import { ChangeEvent } from "react";
 import type { StyleValue } from "@webstudio-is/react-sdk";
 import {
   Flex,
@@ -98,15 +98,9 @@ export const ComboboxControl = ({
             </Tooltip>
             <TextField
               type="number"
-              // @todo as above fit into that as a better abstraction
-              // was returning value with unit i.e 0px instead of 0, so we first stringify to satisfy the typechecker
-              // then parseFloat for the value
-              defaultValue={parseFloat(String(value.value)) || 0}
-              // @todo looses input state and focus
-              // onChange={(event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value + "px")
-              onKeyDown={(event: KeyboardEvent<HTMLInputElement>) =>
-                event.key === "Enter" &&
-                setValue(event.currentTarget.value + "px")
+              value={value.value}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setValue(event.target.value + "px")
               }
               css={{
                 fontWeight: "500",
