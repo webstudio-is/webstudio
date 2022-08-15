@@ -1,7 +1,7 @@
 import { type Publish } from "@webstudio-is/react-sdk";
 import { ListNestedIcon } from "@webstudio-is/icons";
-import { Navigator } from "../navigator";
-import { TabName } from "../types";
+import { Navigator } from "../../navigator";
+import { TabName } from "../../types";
 
 type TabContentProps = {
   publish: Publish;

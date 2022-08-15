@@ -1,2 +1,1 @@
-export * from "./add-an-asset-form";
-export * from "./thumbnail";
+export * from "./asset-manager";
