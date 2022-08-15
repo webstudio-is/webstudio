@@ -78,7 +78,7 @@ export type UseDropHandlers = {
   handleScroll: () => void;
   handleStart: () => void;
   handleEnd: () => void;
-  rootRef: (target: Element | null) => void;
+  rootRef: (target: Element | Document | null) => void;
   handleDomMutation: () => void;
 };
 
@@ -100,7 +100,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
   const latestProps = useRef<UseDropProps<Data>>(props);
   latestProps.current = props;
 
-  const rootRef = useRef<Element | null>(null);
+  const rootRef = useRef<Element | Document | null>(null);
   const state = useRef(getInitialState<Data>());
 
   // We want to return a stable object to avoid re-renders when it's a dependency
@@ -326,7 +326,7 @@ const findClosestDropTarget = <Data>({
   initialElement,
   elementToData,
 }: {
-  root: Element;
+  root: Element | Document;
   initialElement: Element | undefined | null;
   elementToData: (target: Element) => Data | false;
 }): PartialDropTarget<Data> | undefined => {
