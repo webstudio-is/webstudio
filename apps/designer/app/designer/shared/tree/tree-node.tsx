@@ -252,14 +252,19 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
             followedByExpandButton={shouldRenderExpandButton}
           />
           {shouldRenderExpandButton && (
-            <CollapsibleTrigger>
+            <CollapsibleTrigger
+              // We don't want a separate focusable control inside a tree item.
+              tabIndex={-1}
+            >
               {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
             </CollapsibleTrigger>
           )}
           <ItemButton
+            type="button"
             data-drag-item-id={instance.id}
             onFocus={makeSelected}
-            onClick={makeSelected}
+            // Focus on click works inconsistently
+            onClick={(event) => event.currentTarget.focus()}
             enableHoverState={disableHoverStates === false}
           >
             <Icon />

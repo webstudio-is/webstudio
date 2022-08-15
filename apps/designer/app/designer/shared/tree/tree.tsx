@@ -31,6 +31,7 @@ import {
   PlacementIndicatorLine,
   PlacementIndicatorOutline,
 } from "./placement-indicator";
+import { useHotkeys } from "react-hotkeys-hook";
 
 type TreeProps = {
   root: Instance;
@@ -361,6 +362,38 @@ export const Tree = ({
 
   useDragCursor(dragItem !== undefined);
 
+  const selectedInstance = useMemo(() => {
+    if (selectedInstanceId === undefined) {
+      return undefined;
+    }
+    return findInstanceById(root, selectedInstanceId);
+  }, [root, selectedInstanceId]);
+
+  const hotkeysRef = useHotkeys(
+    "up,down,right,left,space",
+    (_, { shortcut }) => {
+      if (selectedInstance === undefined) {
+        return;
+      }
+      if (shortcut === "right" && getIsExpanded(selectedInstance) === false) {
+        setIsExpanded(selectedInstance, true);
+      }
+      if (shortcut === "left" && getIsExpanded(selectedInstance)) {
+        setIsExpanded(selectedInstance, false);
+      }
+      if (shortcut === "space") {
+        setIsExpanded(selectedInstance, !getIsExpanded(selectedInstance));
+      }
+      if (shortcut === "up") {
+        // @todo
+      }
+      if (shortcut === "down") {
+        // @todo
+      }
+    },
+    [selectedInstance, getIsExpanded, setIsExpanded]
+  );
+
   return (
     <Box
       css={{
@@ -372,7 +405,10 @@ export const Tree = ({
         pt: 2,
         pb: 2,
       }}
-      ref={autoScrollHandlers.targetRef}
+      ref={(element) => {
+        autoScrollHandlers.targetRef(element);
+        hotkeysRef.current = element;
+      }}
       onScroll={dropHandlers.handleScroll}
     >
       <TreeNode
