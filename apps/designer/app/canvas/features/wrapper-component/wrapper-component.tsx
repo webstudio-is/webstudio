@@ -10,7 +10,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
-import { useEnsureFocus } from "./use-ensure-focus";
 import { EditorMemoized, useContentEditable } from "./text-editor";
 import noop from "lodash.noop";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
@@ -34,16 +33,22 @@ export const WrapperComponentDev = ({
   const [, setSelectedElement] = useSelectedElement();
   const isEditing = editingInstanceId === instance.id;
   const [editableRefCallback, editableProps] = useContentEditable(isEditing);
-  const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
     (element) => {
-      if (isEditing) editableRefCallback(element);
-      focusRefCallback(element);
+      if (isEditing) {
+        editableRefCallback(element);
+
+        // focus the element when starting to edit
+        if (element != null) {
+          element.focus();
+        }
+      }
+
       // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
       if (element !== null) setSelectedElement(element);
     },
-    [focusRefCallback, editableRefCallback, setSelectedElement, isEditing]
+    [editableRefCallback, setSelectedElement, isEditing]
   );
 
   const userProps = useUserProps(instance.id);

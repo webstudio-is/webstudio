@@ -50,8 +50,6 @@ export const useTrackSelectedElement = () => {
     ) {
       const element = getInstanceElementById(selectedInstance.id);
       if (element === null) return;
-      // @todo: uncomment
-      // element.focus();
       setSelectedElement(element);
     }
   }, [selectedInstance, selectedElement, setSelectedElement]);
