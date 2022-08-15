@@ -1,5 +1,9 @@
 import { useCallback } from "react";
-import { useSubscribe, usePublish } from "@webstudio-is/react-sdk";
+import {
+  useSubscribe,
+  usePublish,
+  type Publish,
+} from "@webstudio-is/react-sdk";
 import { type Project, type Asset } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
 import type {
@@ -35,7 +39,9 @@ import {
   useRootInstance,
   useDragAndDropState,
 } from "~/shared/nano-states";
-import { useSubscribeClientSetting } from "./shared/client-settings";
+import { useClientSettings } from "./shared/client-settings";
+import { Navigator } from "./features/sidebar-left";
+import { PANEL_WIDTH } from "./shared/constants";
 
 export const links = () => {
   return [
@@ -67,11 +73,18 @@ const useSubscribeSyncStatus = () => {
   useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
 };
 
+const useNavigatorLayout = () => {
+  // We need to render the detached state only once the setting was actually loaded from local storage.
+  // Otherwise we may show the detached state because its the default and then hide it immediately.
+  const [clientSettings, _, isLoaded] = useClientSettings();
+  return isLoaded ? clientSettings.navigatorLayout : "docked";
+};
+
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
   isPreviewMode: boolean;
   css?: CSS;
-  gridArea: "inspector" | "sidebar";
+  gridArea: "inspector" | "sidebar" | "navigator";
 };
 
 const SidePanel = ({
@@ -121,41 +134,86 @@ const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
 );
 
 type ChromeWrapperProps = {
-  children: Array<JSX.Element>;
+  children: Array<JSX.Element | null>;
   isPreviewMode: boolean;
 };
 
+const getChromeLayout = ({
+  isPreviewMode,
+  navigatorLayout,
+}: {
+  isPreviewMode: boolean;
+  navigatorLayout: "docked" | "undocked";
+}) => {
+  if (isPreviewMode) {
+    return {
+      gridTemplateColumns: "auto 1fr",
+      gridTemplateAreas: `
+            "header header"
+            "sidebar main"
+            "footer footer"
+          `,
+    };
+  }
+
+  if (navigatorLayout === "undocked") {
+    return {
+      gridTemplateColumns: `auto ${PANEL_WIDTH}px 1fr ${PANEL_WIDTH}px`,
+      gridTemplateAreas: `
+            "header header header header"
+            "sidebar navigator main inspector"
+            "footer footer footer footer"
+          `,
+    };
+  }
+
+  return {
+    gridTemplateColumns: `auto 1fr ${PANEL_WIDTH}px`,
+    gridTemplateAreas: `
+          "header header header"
+          "sidebar main inspector"
+          "footer footer footer"
+        `,
+  };
+};
+
 const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
-  const gridLayout = isPreviewMode
-    ? {
-        gridTemplateColumns: "auto 1fr",
-        gridTemplateRows: "auto 1fr auto",
-        gridTemplateAreas: `
-                "header header"
-                "sidebar main"
-                "footer footer"
-              `,
-      }
-    : {
-        gridTemplateColumns: "auto 1fr 240px",
-        gridTemplateRows: "auto 1fr auto",
-        gridTemplateAreas: `
-                "header header header"
-                "sidebar main inspector"
-                "footer footer footer"
-              `,
-      };
+  const navigatorLayout = useNavigatorLayout();
+  const gridLayout = getChromeLayout({
+    isPreviewMode,
+    navigatorLayout,
+  });
+
   return (
     <Grid
       css={{
         height: "100vh",
         overflow: "hidden",
         display: "grid",
+        gridTemplateRows: "auto 1fr auto",
         ...gridLayout,
       }}
     >
       {children}
     </Grid>
+  );
+};
+
+type NavigatorPanelProps = { publish: Publish; isPreviewMode: boolean };
+
+const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
+  const navigatorLayout = useNavigatorLayout();
+
+  if (navigatorLayout === "docked") {
+    return null;
+  }
+
+  return (
+    <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
+      <Box css={{ borderRight: "1px solid $slate7", width: PANEL_WIDTH }}>
+        <Navigator publish={publish} isClosable={false} />
+      </Box>
+    </SidePanel>
   );
 };
 
@@ -171,7 +229,6 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
-  useSubscribeClientSetting();
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -217,6 +274,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
         <SidebarLeft assets={assets} publish={publish} />
       </SidePanel>
+      <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel
         gridArea="inspector"
         isPreviewMode={isPreviewMode}

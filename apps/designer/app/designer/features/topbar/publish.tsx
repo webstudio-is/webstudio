@@ -15,15 +15,17 @@ import {
   useId,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
+import env from "~/shared/env";
 
 type PublishButtonProps = { project: Project };
 
-const host =
-  typeof location === "object"
-    ? location.host.includes("webstudio.is")
-      ? "wstd.io"
-      : location.host
-    : "";
+const getHost = () => {
+  if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST) {
+    return env.PUBLISHER_HOST;
+  }
+  // We use location.host to get the hostname and port in development mode and to not break local testing.
+  return env.DESIGNER_HOST || location.host;
+};
 
 const Content = ({ project }: PublishButtonProps) => {
   const id = useId();
@@ -35,7 +37,7 @@ const Content = ({ project }: PublishButtonProps) => {
     if (typeof location !== "object" || !domain) {
       return;
     }
-    setUrl(`${location.protocol}//${domain}.${host}`);
+    setUrl(`${location.protocol}//${domain}.${getHost()}`);
   }, [domain]);
 
   return (
@@ -64,7 +66,7 @@ const Content = ({ project }: PublishButtonProps) => {
                   textOverflow: "ellipsis",
                 }}
               >
-                {`${domain}.${host}`}{" "}
+                {`${domain}.${getHost()}`}{" "}
               </Text>
               <ExternalLinkIcon />
             </Link>

@@ -38,7 +38,7 @@ export const s3UploadHandler: S3UploadHandler = async ({
   const uint8Array = await getArrayBufferFromIterable(data);
 
   if (uint8Array.byteLength > maxPartSize) {
-    throw new Error(`Your asset cannot be bigger than ${MAX_UPLOAD_SIZE}mb`);
+    throw new Error(`Asset cannot be bigger than ${MAX_UPLOAD_SIZE}MB`);
   }
 
   const [name, extension] = getFilenameAndExtension(filename);
