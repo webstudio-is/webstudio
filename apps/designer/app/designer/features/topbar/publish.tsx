@@ -23,6 +23,7 @@ const getHost = () => {
   if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST) {
     return env.PUBLISHER_HOST;
   }
+  // We use location.host to get the hostname and port in development mode and to not break local testing.
   return env.DESIGNER_HOST || location.host;
 };
 
