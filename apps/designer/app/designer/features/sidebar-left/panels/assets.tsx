@@ -1,10 +1,9 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import { Flex, Grid, Heading } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
-import { AssetManagerThumbnail } from "./components/thumbnail";
+import { AssetManagerThumbnail, AddAnAssetForm } from "./asset-manager";
 
-import { AddAnAssetForm } from "./components/add-an-asset-form";
 import { Asset, TabName } from "../types";
 import { Header } from "../lib/header";
 
