@@ -13,7 +13,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv").config();
 
-const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET", "DESIGNER_DOMAIN"];
+const REQUIRED_ENVS = ["DATABASE_URL", "AUTH_SECRET"];
 const S3_KEYS = [
   "S3_ENDPOINT",
   "S3_REGION",
@@ -32,7 +32,12 @@ REQUIRED_ENVS.map((env) => {
 if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
   if (!process.env.DEPLOYMENT_URL) {
     errors.push(
-      "👉 In production DEPLOYMENT_URL is required for website functionality. Please set it to your production URL"
+      "👉 In production DEPLOYMENT_URL is required for website functionality. Please set it to your production URL."
+    );
+  }
+  if (!process.env.DESIGNER_DOMAIN) {
+    errors.push(
+      "👉 In production DESIGNER_DOMAIN is required for website functionality. Please set it to your production URL of the designer."
     );
   }
 }

@@ -23,7 +23,7 @@ const host = () => {
   if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_DOMAIN) {
     return env.PUBLISHER_DOMAIN;
   }
-  return env.DESIGNER_DOMAIN;
+  return env.DESIGNER_DOMAIN || location.host;
 };
 
 const Content = ({ project }: PublishButtonProps) => {
