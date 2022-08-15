@@ -5,6 +5,9 @@ const env = {
   VERCEL_ENV: process.env.VERCEL_ENV,
   DEBUG: process.env.DEBUG,
   FEATURES: process.env.FEATURES,
+  DESIGNER_HOST: process.env.DESIGNER_HOST,
+  PUBLISHER_ENDPOINT: process.env.PUBLISHER_ENDPOINT || null,
+  PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
 } as const;
 
 export default env;

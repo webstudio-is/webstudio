@@ -10,8 +10,25 @@ const schema = zfd.formData({
 export const action: ActionFunction = async ({ request }) => {
   const { domain, projectId } = schema.parse(await request.formData());
   try {
-    const project = await db.misc.publish({ projectId, domain });
-    return { domain: project.domain };
+    await db.misc.publish({ projectId, domain });
+    if (process.env.PUBLISHER_ENDPOINT && process.env.PUBLISHER_TOKEN) {
+      const headers = new Headers();
+      headers.append("X-AUTH-WEBSTUDIO", process.env.PUBLISHER_TOKEN || "");
+      headers.append("Content-Type", "text/plain");
+      const response = await fetch(process.env.PUBLISHER_ENDPOINT, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          projectId,
+          domain,
+        }),
+      });
+      const text = await response.text();
+      if (!response.ok) {
+        throw new Error(text);
+      }
+    }
+    return { domain };
   } catch (error) {
     if (error instanceof Error) {
       return {

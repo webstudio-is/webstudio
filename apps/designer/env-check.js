@@ -32,7 +32,12 @@ REQUIRED_ENVS.map((env) => {
 if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
   if (!process.env.DEPLOYMENT_URL) {
     errors.push(
-      "👉 In production DEPLOYMENT_URL is required for website functionality. Please set it to your production URL"
+      "👉 In production DEPLOYMENT_URL is required for website functionality. Please set it to your production URL."
+    );
+  }
+  if (!process.env.DESIGNER_HOST) {
+    errors.push(
+      "👉 In production DESIGNER_HOST is required for website functionality. Please set it to your production URL of the designer."
     );
   }
 }
