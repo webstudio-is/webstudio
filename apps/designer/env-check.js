@@ -35,9 +35,9 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production DEPLOYMENT_URL is required for website functionality. Please set it to your production URL."
     );
   }
-  if (!process.env.DESIGNER_DOMAIN) {
+  if (!process.env.DESIGNER_HOST) {
     errors.push(
-      "👉 In production DESIGNER_DOMAIN is required for website functionality. Please set it to your production URL of the designer."
+      "👉 In production DESIGNER_HOST is required for website functionality. Please set it to your production URL of the designer."
     );
   }
 }
