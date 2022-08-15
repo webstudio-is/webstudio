@@ -226,8 +226,8 @@ export const useDragAndDrop = () => {
   // We prefer useLayoutEffect over useEffect
   // because it's closer in the life cycle to when React noramlly calls the "ref" callbacks.
   useLayoutEffect(() => {
-    dropHandlers.rootRef(document);
-    dragHandlers.rootRef(document);
+    dropHandlers.rootRef(document.documentElement);
+    dragHandlers.rootRef(document.documentElement);
     window.addEventListener("scroll", dropHandlers.handleScroll);
 
     return () => {

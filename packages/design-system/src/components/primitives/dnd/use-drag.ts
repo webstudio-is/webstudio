@@ -30,7 +30,7 @@ export type UseDragProps<DragItemData> = {
 };
 
 export type UseDragHandlers = {
-  rootRef: (element: HTMLElement | Document | null) => void;
+  rootRef: (element: HTMLElement | null) => void;
   cancelCurrentDrag: () => void;
 };
 
@@ -44,7 +44,7 @@ export const useDrag = <DragItemData>({
   elementToData,
 }: UseDragProps<DragItemData>): UseDragHandlers => {
   const state = useRef<State>(initialState);
-  const rootRef = useRef<HTMLElement | Document | null>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
   const dragItemData = useRef<DragItemData>();
 
   const detectShift = () => {
@@ -137,16 +137,12 @@ export const useDrag = <DragItemData>({
   useEffect(() => {
     const roorElement = rootRef.current;
     if (roorElement !== null) {
-      // It should be fine to cast Document to HTMLElement here.
-      // The reason TypeScript complains otherwise is because for the Document's addEventListener()
-      // they don't define each type of event like "pointerdown",
-      // but only define a general case where the callback takes an `Event`.
-      (roorElement as HTMLElement).addEventListener(
+      roorElement.addEventListener(
         "pointerdown",
         useMoveHandlers.onPointerDown
       );
       return () => {
-        (roorElement as HTMLElement).removeEventListener(
+        roorElement.removeEventListener(
           "pointerdown",
           useMoveHandlers.onPointerDown
         );
