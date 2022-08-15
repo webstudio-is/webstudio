@@ -3,4 +3,4 @@ export * from "./use-drop";
 export * from "./use-auto-scroll";
 export * from "./placement-indicator";
 export * from "./use-hold";
-export { type Rect, type Point } from "./geometry-utils";
+export { type Rect, type Point, type Placement } from "./geometry-utils";

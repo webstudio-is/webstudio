@@ -1,4 +1,4 @@
-import { Box, DropTarget, Rect, styled } from "@webstudio-is/design-system";
+import { Box, Placement, Rect, styled } from "@webstudio-is/design-system";
 
 const CIRCLE_SIZE = 8;
 const LINE_THICKNESS = 2;
@@ -26,15 +26,15 @@ const Line = styled(Box, {
 });
 
 export const PlacementIndicatorLine = ({
-  line,
+  placement,
 }: {
-  line: DropTarget<unknown>["placement"];
+  placement: Placement;
 }) => (
   <Line
     style={{
-      top: line.y - LINE_THICKNESS / 2,
-      left: line.x + (CIRCLE_SIZE / 2 - OVERLAP),
-      width: line.length - (CIRCLE_SIZE / 2 - OVERLAP),
+      top: placement.y - LINE_THICKNESS / 2,
+      left: placement.x + (CIRCLE_SIZE / 2 - OVERLAP),
+      width: placement.length - (CIRCLE_SIZE / 2 - OVERLAP),
       height: LINE_THICKNESS,
     }}
   >

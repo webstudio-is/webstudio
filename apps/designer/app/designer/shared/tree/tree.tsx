@@ -12,6 +12,7 @@ import {
   useHold,
   Box,
   useAutoScroll,
+  Placement,
 } from "@webstudio-is/design-system";
 import {
   findInstanceById,
@@ -73,7 +74,7 @@ export const Tree = ({
         position: number | "end";
         placement:
           | { type: "rect"; rect: Rect }
-          | { type: "line"; line: DropTarget<unknown>["placement"] };
+          | { type: "line"; placement: Placement };
       }
     | undefined
   >(() => {
@@ -87,8 +88,7 @@ export const Tree = ({
 
     const { data, placement, rect, indexWithinChildren } = dropTarget;
 
-    // Placement type “inside-parent” means that useDrop didn’t find any children,
-    // and the “placement” corresponds to a line near an edge of the parent.
+    // Placement type “inside-parent” means that useDrop didn’t find any children.
     // This means the drop target is empty or collapsed.
     // In this case, we want to show a rect instead of a line.
     // Also, we don’t want to apply shift, as there’s no line to shift.
@@ -106,34 +106,29 @@ export const Tree = ({
     const currentDepth = dropTargetPath.length;
     const desiredDepth = dragItemDepth + horizontalShift;
 
-    const shiftLine = (depth: number) => {
-      const shift = getPlacementIndicatorAlignment(depth);
-      return {
-        ...placement,
-        x: placement.x + shift,
-        length: placement.length - shift,
-      };
-    };
-
     const withoutShift = {
       instance: data,
       position: indexWithinChildren,
-      placement: { type: "line", line: shiftLine(currentDepth) },
+      placement: {
+        type: "line",
+        placement: shiftPlacement(placement, currentDepth),
+      },
     } as const;
 
+    const isDragItem = (instance: Instance | undefined | string) =>
+      typeof instance === "object" && instance.id === dragItem.id;
+
     if (desiredDepth < currentDepth) {
+      // There's a special case when the placement line is above the drag item.
+      // For reparenting above and below the drag item means the same thing.
+      const indexCorrected = isDragItem(data.children[indexWithinChildren])
+        ? indexWithinChildren + 1
+        : indexWithinChildren;
+
       // Unless we're currently at the bottom of drop target's children,
       // decreasing depth will not correspond to a new meaningful position
-      if (indexWithinChildren !== data.children.length) {
-        // But there's a special case when the index is `last - 1` and the last child is the drag item.
-        // When drag item is removed from its current position, `last - 1` will become `last`.
-        if (indexWithinChildren !== data.children.length - 1) {
-          return withoutShift;
-        }
-        const lastChild = data.children[data.children.length - 1];
-        if (typeof lastChild !== "object" || lastChild.id !== dragItem.id) {
-          return withoutShift;
-        }
+      if (indexCorrected !== data.children.length) {
+        return withoutShift;
       }
 
       const difference = Math.min(
@@ -153,7 +148,7 @@ export const Tree = ({
         position: dropTargetPath[difference - 1].position + 1,
         placement: {
           type: "line",
-          line: shiftLine(currentDepth - difference),
+          placement: shiftPlacement(placement, currentDepth - difference),
         },
       };
     }
@@ -161,17 +156,30 @@ export const Tree = ({
     if (desiredDepth > currentDepth) {
       let shifted = 0;
       let newParent = data;
-      let potentialNewParent = data.children[indexWithinChildren - 1];
+
+      // There's a special case when the placement line is below the drag item.
+      // For reparenting above and below the drag item means the same thing.
+      const getChildAbove = (
+        parent: Instance,
+        index: number
+      ): string | undefined | Instance =>
+        isDragItem(parent.children[index - 1])
+          ? parent.children[index - 2]
+          : parent.children[index - 1];
+
+      let potentialNewParent = getChildAbove(data, indexWithinChildren);
 
       while (
-        potentialNewParent !== undefined &&
-        typeof potentialNewParent !== "string" &&
+        typeof potentialNewParent === "object" &&
         getIsExpanded(potentialNewParent) &&
         components[potentialNewParent.component].canAcceptChild() &&
         shifted < desiredDepth - currentDepth
       ) {
         newParent = potentialNewParent;
-        potentialNewParent = newParent.children[newParent.children.length - 1];
+        potentialNewParent = getChildAbove(
+          newParent,
+          newParent.children.length
+        );
         shifted++;
       }
 
@@ -182,7 +190,10 @@ export const Tree = ({
       return {
         instance: newParent,
         position: "end",
-        placement: { type: "line", line: shiftLine(currentDepth + shifted) },
+        placement: {
+          type: "line",
+          placement: shiftPlacement(placement, currentDepth + shifted),
+        },
       };
     }
 
@@ -382,7 +393,9 @@ export const Tree = ({
           finalDropTarget.placement.type === "rect" ? (
             <PlacementIndicatorOutline rect={finalDropTarget.placement.rect} />
           ) : (
-            <PlacementIndicatorLine line={finalDropTarget.placement.line} />
+            <PlacementIndicatorLine
+              placement={finalDropTarget.placement.placement}
+            />
           ),
           document.body
         )}
@@ -439,4 +452,13 @@ const useExpandState = ({
   }, []);
 
   return { getIsExpanded, setIsExpanded };
+};
+
+const shiftPlacement = (placement: Placement, depth: number) => {
+  const shift = getPlacementIndicatorAlignment(depth);
+  return {
+    ...placement,
+    x: placement.x + shift,
+    length: placement.length - shift,
+  };
 };
