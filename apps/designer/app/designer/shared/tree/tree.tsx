@@ -218,7 +218,7 @@ export const Tree = ({
 
   const useHoldHandler = useHold<DropTarget<Instance>>({
     isEqual: (a, b) => a.data.id === b.data.id,
-    holdTimeThreshold: 1000,
+    holdTimeThreshold: 600,
     onHold: (dropTarget) => {
       if (
         getIsExpandable(dropTarget.data) &&
