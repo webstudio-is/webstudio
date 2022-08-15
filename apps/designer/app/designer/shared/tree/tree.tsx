@@ -7,12 +7,13 @@ import {
 import {
   type DropTarget,
   type Rect,
+  type Placement,
   useDrag,
   useDrop,
   useHold,
-  Box,
   useAutoScroll,
-  Placement,
+  useDragCursor,
+  Box,
 } from "@webstudio-is/design-system";
 import {
   findInstanceById,
@@ -357,6 +358,8 @@ export const Tree = ({
   });
 
   const autoScrollHandlers = useAutoScroll();
+
+  useDragCursor(dragItem !== undefined);
 
   return (
     <Box
