@@ -58,7 +58,11 @@ export const AddAnAssetForm = ({
         ref={inputRef}
         style={{ display: "none" }}
       />
-      <Button type="button" onClick={() => inputRef?.current?.click()}>
+      <Button
+        variant="blue"
+        type="button"
+        onClick={() => inputRef?.current?.click()}
+      >
         Upload Image
       </Button>
     </Form>

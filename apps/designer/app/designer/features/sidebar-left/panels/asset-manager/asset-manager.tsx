@@ -1,11 +1,12 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import { Flex, Grid, Heading } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
-import { AssetManagerThumbnail } from "./components/thumbnail";
 
-import { AddAnAssetForm } from "./components/add-an-asset-form";
-import { Asset } from "../types";
+import { Asset, TabName } from "../../types";
+import { Header } from "../../lib/header";
+import { AddAnAssetForm } from "./add-an-asset-form";
+import { AssetManagerThumbnail } from "./thumbnail";
 
 export const useAssetsState = (baseAssets: Array<Asset>) => {
   const imageChanges = useActionData();
@@ -41,22 +42,31 @@ export const useAssetsState = (baseAssets: Array<Asset>) => {
 
 export const TabContent = ({
   assets: baseAssets,
+  onSetActiveTab,
 }: {
+  onSetActiveTab: (tabName: TabName) => void;
   assets: Array<Asset>;
 }) => {
   const { assets, onUploadAsset } = useAssetsState(baseAssets);
   return (
-    <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-      <Flex justify="between" align="center">
-        <Heading>Assets</Heading>
-        <AddAnAssetForm onSubmit={onUploadAsset} />
+    <>
+      <Header
+        title="Assets"
+        onClose={() => {
+          onSetActiveTab("none");
+        }}
+      />
+      <Flex gap="3" direction="column" css={{ padding: "$1" }}>
+        <Flex justify="end">
+          <AddAnAssetForm onSubmit={onUploadAsset} />
+        </Flex>
+        <Grid columns={2} gap={2}>
+          {assets.map((asset) => (
+            <AssetManagerThumbnail key={asset.id} {...asset} />
+          ))}
+        </Grid>
       </Flex>
-      <Grid columns={2} gap={2}>
-        {assets.map((asset) => (
-          <AssetManagerThumbnail key={asset.id} {...asset} />
-        ))}
-      </Grid>
-    </Flex>
+    </>
   );
 };
 

@@ -4,7 +4,7 @@ import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { Tree } from "~/designer/shared/tree";
 import { useRootInstance } from "~/shared/nano-states";
-import { Header } from "../lib/header";
+import { Header } from "../header";
 
 type NavigatorProps = {
   publish: Publish;
