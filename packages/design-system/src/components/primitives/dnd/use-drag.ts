@@ -131,6 +131,19 @@ export const useDrag = <DragItemData>({
     onMoveEnd(event) {
       state.current = initialState;
       onEnd({ isCanceled: event.isCanceled });
+
+      // A drag is basically a very slow click.
+      // But we don't want it to register as a click.
+      if (event.isCanceled === false) {
+        const handleClick = (event: MouseEvent) => {
+          event.preventDefault();
+          event.stopPropagation();
+        };
+        window.addEventListener("click", handleClick, true);
+        setTimeout(() => {
+          window.removeEventListener("click", handleClick, true);
+        });
+      }
     },
   });
 
