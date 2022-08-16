@@ -3,7 +3,7 @@
 // We have to use getBoundingClientRect instead.
 // @todo optimize for the case when many consumers need to measure the same element
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScrollState } from "./use-scroll-state";
 
 export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
@@ -28,14 +28,11 @@ export const useMeasure = <
     onScrollEnd: handleChange,
   });
 
+  useDetectReparenting(element, handleChange);
+
   const resizeObserver = useMemo(() => {
     if (typeof window === "undefined") return;
     return new window.ResizeObserver(handleChange);
-  }, [handleChange]);
-
-  const mutationObserver = useMemo(() => {
-    if (typeof window === "undefined") return;
-    return new window.MutationObserver(handleChange);
   }, [handleChange]);
 
   useEffect(() => {
@@ -43,21 +40,46 @@ export const useMeasure = <
       if (element === null) resizeObserver.disconnect();
       else resizeObserver.observe(element);
     }
-
-    // detect reparenting of the element
-    if (mutationObserver) {
-      const parent = element?.parentElement;
-      if (parent == null) mutationObserver.disconnect();
-      else mutationObserver.observe(parent, { childList: true });
-    }
-
-    return () => {
-      resizeObserver?.disconnect();
-      mutationObserver?.disconnect();
-    };
-  }, [element, resizeObserver, mutationObserver]);
+    return () => resizeObserver?.disconnect();
+  }, [element, resizeObserver]);
 
   useEffect(handleChange, [handleChange]);
 
   return [setElement, rect];
+};
+
+const useDetectReparenting = (
+  element: HTMLElement | null,
+  callback: () => void
+) => {
+  // putting callback into a ref allows us to avoid adding it as a dependency
+  const latestCallback = useRef(callback);
+  latestCallback.current = callback;
+
+  const [timeOfLastMutation, setTimeOfLastMutation] = useState(0);
+
+  // We intentionally add timeOfLastMutation to dependency list
+  // to force parent to update after a mutation.
+  const parent = useMemo(
+    () => element?.parentElement,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [element, timeOfLastMutation]
+  );
+
+  const observer = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      new window.MutationObserver(() => {
+        setTimeOfLastMutation(Date.now());
+        latestCallback.current();
+      }),
+    []
+  );
+
+  useEffect(() => {
+    if (observer && parent) {
+      observer.observe(parent, { childList: true });
+      return () => observer.disconnect();
+    }
+  }, [observer, parent]);
 };
