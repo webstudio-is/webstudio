@@ -30,18 +30,20 @@ export const useMeasure = <
 
   useDetectReparenting(element, handleChange);
 
-  const resizeObserver = useMemo(() => {
+  const observer = useMemo(() => {
     if (typeof window === "undefined") return;
     return new window.ResizeObserver(handleChange);
   }, [handleChange]);
 
   useEffect(() => {
-    if (resizeObserver) {
-      if (element === null) resizeObserver.disconnect();
-      else resizeObserver.observe(element);
+    if (observer) {
+      if (element === null) observer.disconnect();
+      else observer.observe(element);
     }
-    return () => resizeObserver?.disconnect();
-  }, [element, resizeObserver]);
+    return () => {
+      observer?.disconnect();
+    };
+  }, [element, observer]);
 
   useEffect(handleChange, [handleChange]);
 
