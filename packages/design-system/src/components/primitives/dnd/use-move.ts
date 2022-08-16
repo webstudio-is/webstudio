@@ -197,8 +197,6 @@ export function useMove(props: MoveEvents): MoveResult {
           latestProps.current.shouldStart(event)
         ) {
           start();
-          event.stopPropagation();
-          event.preventDefault();
           state.current.lastPosition = {
             pageX: event.pageX,
             pageY: event.pageY,
@@ -210,6 +208,7 @@ export function useMove(props: MoveEvents): MoveResult {
         }
       },
 
+      // @todo: use this to cancel due to not enough movement (in useDrag)
       cancelCurrentMove: () => {
         end("canceled");
       },
