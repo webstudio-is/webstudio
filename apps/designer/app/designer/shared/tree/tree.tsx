@@ -536,11 +536,16 @@ const useExpandState = ({
 
   // We want to automatically expand all parents of the selected instance whenever it changes
   const prevSelectedInstanceId = useRef(selectedInstanceId);
+  const prevRoot = useRef(root);
   useEffect(() => {
-    if (selectedInstanceId === prevSelectedInstanceId.current) {
+    if (
+      selectedInstanceId === prevSelectedInstanceId.current &&
+      prevRoot.current === root
+    ) {
       return;
     }
     prevSelectedInstanceId.current = selectedInstanceId;
+    prevRoot.current = root;
     if (selectedInstanceId === undefined) {
       return;
     }
