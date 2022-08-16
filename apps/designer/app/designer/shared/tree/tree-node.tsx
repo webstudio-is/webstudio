@@ -9,7 +9,6 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
-import noop from "lodash.noop";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -177,7 +176,7 @@ type TreeNodeProps = {
   selectedInstanceId?: Instance["id"];
   parentIsSelected?: boolean;
   level?: number;
-  onSelect?: (instance: Instance) => void;
+  onSelect?: (instanceId: Instance["id"]) => void;
   animate?: boolean;
   getIsExpanded: (instance: Instance) => boolean;
   setIsExpanded?: (instance: Instance, expanded: boolean) => void;
@@ -189,10 +188,10 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
     const {
       getIsExpanded,
       animate = true,
-      setIsExpanded = noop,
+      setIsExpanded,
       selectedInstanceId,
-      onSelect = noop,
-      onExpandTransitionEnd = noop,
+      onSelect,
+      onExpandTransitionEnd,
       disableHoverStates = false,
     } = commonProps;
 
@@ -205,7 +204,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
 
     const makeSelected = () => {
       if (isSelected === false) {
-        onSelect(instance);
+        onSelect?.(instance.id);
       }
     };
 
@@ -220,7 +219,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
     const handleAnimationEnd = useCallback(
       (event: React.AnimationEvent<HTMLDivElement>) => {
         if (event.target === collapsibleContentRef.current) {
-          onExpandTransitionEnd();
+          onExpandTransitionEnd?.();
         }
       },
       [onExpandTransitionEnd]
@@ -230,7 +229,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
     const prevIsExpanded = useRef(isExpanded);
     useEffect(() => {
       if (animate === false && isExpanded !== prevIsExpanded.current) {
-        onExpandTransitionEnd();
+        onExpandTransitionEnd?.();
       }
       prevIsExpanded.current = isExpanded;
     }, [animate, onExpandTransitionEnd, isExpanded]);
@@ -239,7 +238,7 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
       <Collapsible.Root
         ref={ref}
         open={isExpanded}
-        onOpenChange={(isOpen) => setIsExpanded(instance, isOpen)}
+        onOpenChange={(isOpen) => setIsExpanded?.(instance, isOpen)}
         data-drop-target-id={instance.id}
       >
         <ItemWrapper
@@ -254,6 +253,8 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
           {shouldRenderExpandButton && (
             <CollapsibleTrigger
               // We don't want a separate focusable control inside a tree item.
+              // tabIndex makes it skipped over when tabbing.
+              // It still can be focused using mouse, but we handle this elsewhere.
               tabIndex={-1}
             >
               {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
@@ -262,9 +263,8 @@ export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
           <ItemButton
             type="button"
             data-drag-item-id={instance.id}
+            data-item-button-id={instance.id}
             onFocus={makeSelected}
-            // Focus on click works inconsistently
-            onClick={(event) => event.currentTarget.focus()}
             enableHoverState={disableHoverStates === false}
           >
             <Icon />

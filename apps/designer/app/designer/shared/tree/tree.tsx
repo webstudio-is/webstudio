@@ -36,7 +36,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 type TreeProps = {
   root: Instance;
   selectedInstanceId?: Instance["id"];
-  onSelect?: (instance: Instance) => void;
+  onSelect?: (instanceId: Instance["id"]) => void;
   animate?: boolean;
   onDragEnd: (event: {
     instanceId: Instance["id"];
@@ -322,7 +322,7 @@ export const Tree = ({
       return instance;
     },
     onStart: ({ data }) => {
-      onSelect?.(data);
+      onSelect?.(data.id);
       setDragItem(data);
       dropHandlers.handleStart();
       autoScrollHandlers.setEnabled(true);
@@ -362,37 +362,12 @@ export const Tree = ({
 
   useDragCursor(dragItem !== undefined);
 
-  const selectedInstance = useMemo(() => {
-    if (selectedInstanceId === undefined) {
-      return undefined;
-    }
-    return findInstanceById(root, selectedInstanceId);
-  }, [root, selectedInstanceId]);
-
-  const hotkeysRef = useHotkeys(
-    "up,down,right,left,space",
-    (_, { shortcut }) => {
-      if (selectedInstance === undefined) {
-        return;
-      }
-      if (shortcut === "right" && getIsExpanded(selectedInstance) === false) {
-        setIsExpanded(selectedInstance, true);
-      }
-      if (shortcut === "left" && getIsExpanded(selectedInstance)) {
-        setIsExpanded(selectedInstance, false);
-      }
-      if (shortcut === "space") {
-        setIsExpanded(selectedInstance, !getIsExpanded(selectedInstance));
-      }
-      if (shortcut === "up") {
-        // @todo
-      }
-      if (shortcut === "down") {
-        // @todo
-      }
-    },
-    [selectedInstance, getIsExpanded, setIsExpanded]
-  );
+  const keyboardNavigation = useKeyboardNavigation({
+    root,
+    selectedInstanceId,
+    getIsExpanded,
+    setIsExpanded,
+  });
 
   return (
     <Box
@@ -405,28 +380,30 @@ export const Tree = ({
         pt: 2,
         pb: 2,
       }}
-      ref={(element) => {
-        autoScrollHandlers.targetRef(element);
-        hotkeysRef.current = element;
-      }}
+      ref={autoScrollHandlers.targetRef}
       onScroll={dropHandlers.handleScroll}
     >
-      <TreeNode
-        animate={animate}
-        onSelect={onSelect}
-        selectedInstanceId={selectedInstanceId}
-        instance={root}
-        level={0}
-        getIsExpanded={getIsExpanded}
-        setIsExpanded={setIsExpanded}
-        onExpandTransitionEnd={dropHandlers.handleDomMutation}
-        disableHoverStates={dragItem !== undefined}
-        ref={(element) => {
-          rootNodeRef.current = element;
-          dragHandlers.rootRef(element);
-          dropHandlers.rootRef(element);
-        }}
-      />
+      <Box
+        ref={keyboardNavigation.rootRef}
+        onClick={keyboardNavigation.handleClick}
+      >
+        <TreeNode
+          animate={animate}
+          onSelect={onSelect}
+          selectedInstanceId={selectedInstanceId}
+          instance={root}
+          level={0}
+          getIsExpanded={getIsExpanded}
+          setIsExpanded={setIsExpanded}
+          onExpandTransitionEnd={dropHandlers.handleDomMutation}
+          disableHoverStates={dragItem !== undefined}
+          ref={(element) => {
+            rootNodeRef.current = element;
+            dragHandlers.rootRef(element);
+            dropHandlers.rootRef(element);
+          }}
+        />
+      </Box>
       {finalDropTarget &&
         createPortal(
           finalDropTarget.placement.type === "rect" ? (
@@ -440,6 +417,112 @@ export const Tree = ({
         )}
     </Box>
   );
+};
+
+const useKeyboardNavigation = ({
+  root,
+  selectedInstanceId,
+  getIsExpanded,
+  setIsExpanded,
+}: {
+  root: Instance;
+  selectedInstanceId: Instance["id"] | undefined;
+  getIsExpanded: (instance: Instance) => boolean;
+  setIsExpanded: (instance: Instance, isExpanded: boolean) => void;
+}) => {
+  const selectedInstance = useMemo(() => {
+    if (selectedInstanceId === undefined) {
+      return undefined;
+    }
+    return findInstanceById(root, selectedInstanceId);
+  }, [root, selectedInstanceId]);
+
+  const flatCurrentlyExpandedTree = useMemo(() => {
+    const result = [] as Instance["id"][];
+    const traverse = (instance: Instance | string) => {
+      if (typeof instance === "string") {
+        return;
+      }
+      result.push(instance.id);
+      if (getIsExpanded(instance)) {
+        instance.children.forEach(traverse);
+      }
+    };
+    traverse(root);
+    return result;
+  }, [root, getIsExpanded]);
+
+  const rootRef = useHotkeys(
+    "up,down,right,left,space",
+    (event, { shortcut }) => {
+      if (selectedInstance === undefined) {
+        return;
+      }
+      if (shortcut === "right" && getIsExpanded(selectedInstance) === false) {
+        setIsExpanded(selectedInstance, true);
+      }
+      if (shortcut === "left" && getIsExpanded(selectedInstance)) {
+        setIsExpanded(selectedInstance, false);
+      }
+      if (shortcut === "space") {
+        setIsExpanded(selectedInstance, !getIsExpanded(selectedInstance));
+      }
+      if (shortcut === "up") {
+        const index = flatCurrentlyExpandedTree.indexOf(selectedInstance.id);
+        if (index > 0) {
+          setFocus(flatCurrentlyExpandedTree[index - 1]);
+
+          // prevent scrolling
+          event.preventDefault();
+        }
+      }
+      if (shortcut === "down") {
+        const index = flatCurrentlyExpandedTree.indexOf(selectedInstance.id);
+        if (index < flatCurrentlyExpandedTree.length - 1) {
+          setFocus(flatCurrentlyExpandedTree[index + 1]);
+
+          // prevent scrolling
+          event.preventDefault();
+        }
+      }
+    },
+    [selectedInstance, flatCurrentlyExpandedTree, getIsExpanded, setIsExpanded]
+  );
+
+  const setFocus = useCallback(
+    (instanceId: Instance["id"]) => {
+      const itemButton = rootRef.current?.querySelector(
+        `[data-item-button-id="${instanceId}"]`
+      );
+      if (itemButton instanceof HTMLElement) {
+        itemButton.focus();
+      }
+    },
+    [rootRef]
+  );
+
+  return {
+    rootRef(element: HTMLElement | null) {
+      rootRef.current = element;
+    },
+    handleClick(event: React.MouseEvent<Element>) {
+      // When clicking on an item button make sure it gets focused.
+      // (see https://zellwk.com/blog/inconsistent-button-behavior/)
+      const itemButton = (event.target as HTMLElement).closest(
+        "[data-item-button-id]"
+      );
+      if (itemButton instanceof HTMLElement) {
+        itemButton.focus();
+        return;
+      }
+
+      // When clicking anywhere else in the tree,
+      // make sure the selected item doesn't loose focus.
+      if (selectedInstanceId !== undefined) {
+        setFocus(selectedInstanceId);
+      }
+    },
+  };
 };
 
 const useExpandState = ({
@@ -481,9 +564,14 @@ const useExpandState = ({
 
   const getIsExpanded = useCallback(
     (instance: Instance) => {
+      // root is always expanded
+      if (instance.id === root.id) {
+        return true;
+      }
+
       return getIsExpandable(instance) && record[instance.id] === true;
     },
-    [record]
+    [record, root]
   );
 
   const setIsExpanded = useCallback((instance: Instance, expanded: boolean) => {

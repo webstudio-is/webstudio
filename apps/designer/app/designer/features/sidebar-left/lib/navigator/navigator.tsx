@@ -23,10 +23,10 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
         <Tree
           root={rootInstance}
           selectedInstanceId={selectedInstanceData?.id}
-          onSelect={(instance) => {
+          onSelect={(instanceId) => {
             publish<"selectInstanceById", Instance["id"]>({
               type: "selectInstanceById",
-              payload: instance.id,
+              payload: instanceId,
             });
           }}
           onDragEnd={(payload) => {
