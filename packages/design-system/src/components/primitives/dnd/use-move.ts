@@ -1,20 +1,5 @@
-/* eslint-disable prefer-const */
-/* eslint-disable func-style */
-/*
- * Copyright 2020 Adobe. All rights reserved.
- * This file is licensed to you under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License. You may obtain a copy
- * of the License at http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under
- * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
- * OF ANY KIND, either express or implied. See the License for the specific language
- * governing permissions and limitations under the License.
- */
-
-/**
- * We had to copy this file from react-aria because we need clientX and clientY.
- */
+// this was taken from https://react-spectrum.adobe.com/react-aria/useMove.html
+// but changed a lot
 
 import { useMemo, useRef } from "react";
 import { useGlobalListeners } from "@react-aria/utils";
@@ -24,84 +9,56 @@ interface MoveResult {
   cancelCurrentMove: () => void;
 }
 
-export type PointerType = "mouse" | "pen" | "touch" | "keyboard" | "virtual";
-
-interface BaseMoveEvent {
-  /** The pointer type that triggered the move event. */
-  pointerType: PointerType;
-  /** Whether the shift keyboard modifier was held during the move event. */
-  shiftKey: boolean;
-  /** Whether the ctrl keyboard modifier was held during the move event. */
-  ctrlKey: boolean;
-  /** Whether the meta keyboard modifier was held during the move event. */
-  metaKey: boolean;
-  /** Whether the alt keyboard modifier was held during the move event. */
-  altKey: boolean;
-}
-
-interface MoveStartEvent extends BaseMoveEvent {
-  /** The type of move event being fired. */
+interface MoveStartEvent {
   type: "movestart";
   target: HTMLElement;
   clientX: number;
   clientY: number;
 }
 
-interface MoveMoveEvent extends BaseMoveEvent {
-  /** The type of move event being fired. */
+interface MoveMoveEvent {
   type: "move";
-  /** The amount moved in the X direction since the last event. */
-  deltaX: number;
-  /** The amount moved in the Y direction since the last event. */
-  deltaY: number;
   clientX: number;
   clientY: number;
 }
 
-interface MoveEndEvent extends BaseMoveEvent {
-  /** The type of move event being fired. */
+interface MoveEndEvent {
   type: "moveend";
+  isCanceled: boolean;
 }
 
 interface MoveEvents {
   shouldStart: (e: PointerEvent) => boolean;
-
   /** Handler that is called when a move interaction starts. */
   onMoveStart?: (e: MoveStartEvent) => void;
   /** Handler that is called when the element is moved. */
   onMove?: (e: MoveMoveEvent) => void;
   /** Handler that is called when a move interaction ends. */
-  onMoveEnd?: (e: MoveEndEvent | "canceled") => void;
+  onMoveEnd?: (e: MoveEndEvent) => void;
 }
 
-/**
- * Handles move interactions across mouse, touch, and keyboard, including dragging with
- * the mouse or touch, and using the arrow keys. Normalizes behavior across browsers and
- * platforms, and ignores emulated mouse events on touch devices.
- */
-export function useMove(props: MoveEvents): MoveResult {
-  let state = useRef<{
+export const useMove = (props: MoveEvents): MoveResult => {
+  const state = useRef<{
     didMove: boolean;
     lastPosition: { pageX: number; pageY: number } | null;
     id: number | null;
   }>({ didMove: false, lastPosition: null, id: null });
 
-  let { addGlobalListener, removeGlobalListener } = useGlobalListeners();
+  const { addGlobalListener, removeGlobalListener } = useGlobalListeners();
 
   // Because addGlobalListener is used to set callbacks,
   // noramlly it will "see" the version of "props" at the time of addGlobalListener call.
   // This in turn means that user's callbakcs will see old state variables etc.
   // To workaround this, we use a ref that always points to the latest props.
-  let latestProps = useRef<MoveEvents>(props);
+  const latestProps = useRef<MoveEvents>(props);
   latestProps.current = props;
 
-  let moveResult = useMemo(() => {
-    let start = () => {
+  const moveResult = useMemo(() => {
+    const start = () => {
       state.current.didMove = false;
     };
-    let move = (
+    const move = (
       originalEvent: PointerEvent,
-      pointerType: PointerType,
       deltaX: number,
       deltaY: number
     ) => {
@@ -116,11 +73,6 @@ export function useMove(props: MoveEvents): MoveResult {
         state.current.didMove = true;
         latestProps.current.onMoveStart?.({
           type: "movestart",
-          pointerType,
-          shiftKey: originalEvent.shiftKey,
-          metaKey: originalEvent.metaKey,
-          ctrlKey: originalEvent.ctrlKey,
-          altKey: originalEvent.altKey,
           target: originalEvent.target,
           clientX: originalEvent.clientX,
           clientY: originalEvent.clientY,
@@ -129,32 +81,17 @@ export function useMove(props: MoveEvents): MoveResult {
 
       latestProps.current.onMove?.({
         type: "move",
-        pointerType,
-        deltaX: deltaX,
-        deltaY: deltaY,
-        shiftKey: originalEvent.shiftKey,
-        metaKey: originalEvent.metaKey,
-        ctrlKey: originalEvent.ctrlKey,
-        altKey: originalEvent.altKey,
         clientX: originalEvent.clientX,
         clientY: originalEvent.clientY,
       });
     };
 
-    let end = (event: PointerEvent | "canceled") => {
+    const end = (event: PointerEvent | "canceled") => {
       if (state.current.didMove) {
-        latestProps.current.onMoveEnd?.(
-          event === "canceled"
-            ? "canceled"
-            : {
-                type: "moveend",
-                pointerType: (event.pointerType || "mouse") as PointerType,
-                shiftKey: event.shiftKey,
-                metaKey: event.metaKey,
-                ctrlKey: event.ctrlKey,
-                altKey: event.altKey,
-              }
-        );
+        latestProps.current.onMoveEnd?.({
+          type: "moveend",
+          isCanceled: event === "canceled",
+        });
       }
 
       state.current.id = null;
@@ -163,19 +100,16 @@ export function useMove(props: MoveEvents): MoveResult {
       removeGlobalListener(window, "pointercancel", onPointerUp, false);
     };
 
-    let onPointerMove = (event: PointerEvent) => {
+    const onPointerMove = (event: PointerEvent) => {
       if (
         event.pointerId === state.current.id &&
         state.current.lastPosition !== null
       ) {
-        let pointerType = (event.pointerType || "mouse") as PointerType;
-
         // Problems with PointerEvent#movementX/movementY:
         // 1. it is always 0 on macOS Safari.
         // 2. On Chrome Android, it's scaled by devicePixelRatio, but not on Chrome macOS
         move(
           event,
-          pointerType,
           event.pageX - state.current.lastPosition.pageX,
           event.pageY - state.current.lastPosition.pageY
         );
@@ -183,7 +117,7 @@ export function useMove(props: MoveEvents): MoveResult {
       }
     };
 
-    let onPointerUp = (event: PointerEvent) => {
+    const onPointerUp = (event: PointerEvent) => {
       if (event.pointerId === state.current.id) {
         end(event);
       }
@@ -208,7 +142,6 @@ export function useMove(props: MoveEvents): MoveResult {
         }
       },
 
-      // @todo: use this to cancel due to not enough movement (in useDrag)
       cancelCurrentMove: () => {
         end("canceled");
       },
@@ -216,4 +149,4 @@ export function useMove(props: MoveEvents): MoveResult {
   }, [addGlobalListener, removeGlobalListener]);
 
   return moveResult;
-}
+};

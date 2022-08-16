@@ -130,7 +130,7 @@ export const useDrag = <DragItemData>({
     },
     onMoveEnd(event) {
       state.current = initialState;
-      onEnd({ isCanceled: event === "canceled" });
+      onEnd({ isCanceled: event.isCanceled });
     },
   });
 
