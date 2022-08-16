@@ -127,12 +127,17 @@ export const useReparentInstance = () => {
         dropTarget.instanceId,
         dropTarget.position
       );
-
-      // Make the drag item selected
-      if (selectedInstance?.id !== instanceId) {
-        setSelectedInstance(findInstanceById(rootInstance, instanceId));
-      }
     });
+
+    // Make the drag item the selected instance
+    if (
+      selectedInstance?.id !== instanceId &&
+      rootInstanceContainer.value !== undefined
+    ) {
+      setSelectedInstance(
+        findInstanceById(rootInstanceContainer.value, instanceId)
+      );
+    }
   });
 };
 
