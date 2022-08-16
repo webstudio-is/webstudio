@@ -77,7 +77,7 @@ export type UseDropHandlers = {
   handleMove: (pointerCoordinates: Point) => void;
   handleScroll: () => void;
   handleStart: () => void;
-  handleEnd: () => void;
+  handleEnd: (event: { isCanceled: boolean }) => void;
   rootRef: (target: Element | null) => void;
   handleDomMutation: () => void;
 };
@@ -304,8 +304,29 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
         state.current.started = true;
       },
 
-      handleEnd() {
+      handleEnd({ isCanceled }) {
         state.current = getInitialState();
+
+        // A drag is basically a very slow click.
+        // But we don't want it to register as a click.
+        if (isCanceled === false && rootRef.current != null) {
+          const root = rootRef.current;
+          if (root === null) {
+            return;
+          }
+          const handleClick = (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+          };
+          (root as HTMLElement).addEventListener("click", handleClick, true);
+          setTimeout(() => {
+            (root as HTMLElement).removeEventListener(
+              "click",
+              handleClick,
+              true
+            );
+          });
+        }
       },
 
       rootRef(rootElement) {

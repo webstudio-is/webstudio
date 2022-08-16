@@ -204,7 +204,7 @@ export const useDragAndDrop = () => {
       autoScrollHandlers.handleMove(point);
     },
     onEnd({ isCanceled }) {
-      dropHandlers.handleEnd();
+      dropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
 
       publish<"dragEnd", DragEndPayload>({
@@ -283,7 +283,7 @@ export const useDragAndDrop = () => {
     "dragEnd",
     ({ origin, isCanceled }) => {
       if (origin === "panel") {
-        dropHandlers.handleEnd();
+        dropHandlers.handleEnd({ isCanceled });
         autoScrollHandlers.setEnabled(false);
 
         const { dropTarget, dragItem } = state.current;

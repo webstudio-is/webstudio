@@ -104,7 +104,7 @@ export const SortableList = ({
       useDropHandlers.handleMove(point);
       autoScrollHandlers.handleMove(point);
     },
-    onEnd() {
+    onEnd({ isCanceled }) {
       if (dropTarget !== undefined && dragItemId !== undefined) {
         const oldIndex = data.findIndex((item) => item.id === dragItemId);
         if (oldIndex !== -1) {
@@ -125,7 +125,7 @@ export const SortableList = ({
         }
       }
 
-      useDropHandlers.handleEnd();
+      useDropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
       setDragItemId(undefined);
       setDropTarget(undefined);

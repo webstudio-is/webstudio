@@ -349,7 +349,7 @@ export const Tree = ({
       setHorizontalShift(0);
       setDragItem(undefined);
       setDropTarget(undefined);
-      dropHandlers.handleEnd();
+      dropHandlers.handleEnd({ isCanceled });
       useHoldHandler.reset();
     },
   });

@@ -268,7 +268,7 @@ export const Canvas = () => {
       dropHandlers.handleMove(point);
       autoScrollHandlers.handleMove(point);
     },
-    onEnd() {
+    onEnd({ isCanceled }) {
       if (dragItemId !== undefined && currentDropTarget !== undefined) {
         setData((current) => {
           const dragItem = findItem(current, dragItemId);
@@ -308,7 +308,7 @@ export const Canvas = () => {
         });
       }
 
-      dropHandlers.handleEnd();
+      dropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
       setDragItemId(undefined);
       setCurrentDropTarget(undefined);
