@@ -11,7 +11,7 @@ export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
 ) => void;
 export type UseMeasureResult<
   MeasuredElement extends HTMLElement = HTMLElement
-> = [UseMeasureRef<MeasuredElement>, DOMRect | undefined, () => void];
+> = [UseMeasureRef<MeasuredElement>, DOMRect | undefined];
 
 export const useMeasure = <
   MeasuredElement extends HTMLElement = HTMLElement
@@ -28,22 +28,36 @@ export const useMeasure = <
     onScrollEnd: handleChange,
   });
 
-  const observer = useMemo(() => {
+  const resizeObserver = useMemo(() => {
     if (typeof window === "undefined") return;
     return new window.ResizeObserver(handleChange);
   }, [handleChange]);
 
+  const mutationObserver = useMemo(() => {
+    if (typeof window === "undefined") return;
+    return new window.MutationObserver(handleChange);
+  }, [handleChange]);
+
   useEffect(() => {
-    if (observer) {
-      if (element === null) observer.disconnect();
-      else observer.observe(element);
+    if (resizeObserver) {
+      if (element === null) resizeObserver.disconnect();
+      else resizeObserver.observe(element);
     }
+
+    // detect reparenting of the element
+    if (mutationObserver) {
+      const parent = element?.parentElement;
+      if (parent == null) mutationObserver.disconnect();
+      else mutationObserver.observe(parent, { childList: true });
+    }
+
     return () => {
-      observer?.disconnect();
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
     };
-  }, [element, observer]);
+  }, [element, resizeObserver, mutationObserver]);
 
   useEffect(handleChange, [handleChange]);
 
-  return [setElement, rect, handleChange];
+  return [setElement, rect];
 };

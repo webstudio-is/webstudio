@@ -243,14 +243,7 @@ const publishRect = (rect: DOMRect) => {
 
 export const usePublishSelectedInstanceDataRect = () => {
   const [element] = useSelectedElement();
-  const [refCallback, rect, handleChange] = useMeasure();
-
-  // Reparenting an instance may update the rect.
-  // This is a bit hacky, maybe we should use a mutation observer instead.
-  useSubscribe("reparentInstance", () => {
-    // Using setTimeout to make sure all other "reparentInstance" handlers are finished
-    setTimeout(handleChange);
-  });
+  const [refCallback, rect] = useMeasure();
 
   useEffect(() => {
     // Disconnect observer when there is no element.
