@@ -96,6 +96,8 @@ export const useDrag = <DragItemData>({
         initialY: y,
         shifts: 0,
       };
+
+      // @todo: should call onStart only after state.status becomes "dragging"
       if (dragItemData.current !== undefined) {
         onStart({ target, data: dragItemData.current });
       }
@@ -129,12 +131,9 @@ export const useDrag = <DragItemData>({
       detectShift();
     },
     onMoveEnd(event) {
-      state.current = initialState;
-      onEnd({ isCanceled: event.isCanceled });
-
       // A drag is basically a very slow click.
       // But we don't want it to register as a click.
-      if (event.isCanceled === false) {
+      if (event.isCanceled === false && state.current.status === "dragging") {
         const handleClick = (event: MouseEvent) => {
           event.preventDefault();
           event.stopPropagation();
@@ -144,6 +143,9 @@ export const useDrag = <DragItemData>({
           window.removeEventListener("click", handleClick, true);
         });
       }
+
+      state.current = initialState;
+      onEnd({ isCanceled: event.isCanceled });
     },
   });
 
