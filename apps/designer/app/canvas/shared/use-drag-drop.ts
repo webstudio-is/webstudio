@@ -167,6 +167,22 @@ export const useDragAndDrop = () => {
         return false;
       }
 
+      // When trying to drag an inline instance, drag its parent instead
+      if (components[instance.component].isInlineOnly) {
+        const path = getInstancePath(rootInstance, instance.id);
+        path.reverse();
+        const nonInlineParent = path.find(
+          (item) => components[item.component].isInlineOnly === false
+        );
+        if (
+          nonInlineParent !== undefined &&
+          rootInstance.id !== nonInlineParent.id
+        ) {
+          return nonInlineParent;
+        }
+        return false;
+      }
+
       return instance;
     },
     onStart({ data: instance }) {
