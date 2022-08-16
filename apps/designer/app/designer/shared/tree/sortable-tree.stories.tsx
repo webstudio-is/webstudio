@@ -50,7 +50,7 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
         animate={animate}
         root={root}
         selectedInstanceId={selectedInstanceId}
-        onSelect={(instance) => setSelectedInstanceId(instance.id)}
+        onSelect={(instanceId) => setSelectedInstanceId(instanceId)}
         onDragEnd={(payload) =>
           setRoot(
             produce((draft) =>

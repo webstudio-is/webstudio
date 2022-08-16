@@ -110,6 +110,8 @@ export const useInsertInstance = () => {
 };
 
 export const useReparentInstance = () => {
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+
   useSubscribe<
     "reparentInstance",
     {
@@ -125,6 +127,11 @@ export const useReparentInstance = () => {
         dropTarget.instanceId,
         dropTarget.position
       );
+
+      // Make the drag item selected
+      if (selectedInstance?.id !== instanceId) {
+        setSelectedInstance(findInstanceById(rootInstance, instanceId));
+      }
     });
   });
 };
@@ -236,7 +243,14 @@ const publishRect = (rect: DOMRect) => {
 
 export const usePublishSelectedInstanceDataRect = () => {
   const [element] = useSelectedElement();
-  const [refCallback, rect] = useMeasure();
+  const [refCallback, rect, handleChange] = useMeasure();
+
+  // Reparenting an instance may update the rect.
+  // This is a bit hacky, maybe we should use a mutation observer instead.
+  useSubscribe("reparentInstance", () => {
+    // Using setTimeout to make sure all other "reparentInstance" handlers are finished
+    setTimeout(handleChange);
+  });
 
   useEffect(() => {
     // Disconnect observer when there is no element.

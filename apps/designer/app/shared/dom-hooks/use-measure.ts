@@ -11,7 +11,7 @@ export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
 ) => void;
 export type UseMeasureResult<
   MeasuredElement extends HTMLElement = HTMLElement
-> = [UseMeasureRef<MeasuredElement>, DOMRect | undefined];
+> = [UseMeasureRef<MeasuredElement>, DOMRect | undefined, () => void];
 
 export const useMeasure = <
   MeasuredElement extends HTMLElement = HTMLElement
@@ -45,5 +45,5 @@ export const useMeasure = <
 
   useEffect(handleChange, [handleChange]);
 
-  return [setElement, rect];
+  return [setElement, rect, handleChange];
 };
