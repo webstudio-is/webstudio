@@ -97,7 +97,7 @@ export const useMove = (props: MoveEvents): MoveResult => {
       state.current.id = null;
       removeGlobalListener(window, "pointermove", onPointerMove, false);
       removeGlobalListener(window, "pointerup", onPointerUp, false);
-      removeGlobalListener(window, "pointercancel", onPointerUp, false);
+      removeGlobalListener(window, "pointercancel", onPointerCancel, false);
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -123,6 +123,12 @@ export const useMove = (props: MoveEvents): MoveResult => {
       }
     };
 
+    const onPointerCancel = (event: PointerEvent) => {
+      if (event.pointerId === state.current.id) {
+        end("canceled");
+      }
+    };
+
     return {
       onPointerDown: (event: PointerEvent) => {
         if (
@@ -138,7 +144,7 @@ export const useMove = (props: MoveEvents): MoveResult => {
           state.current.id = event.pointerId;
           addGlobalListener(window, "pointermove", onPointerMove, false);
           addGlobalListener(window, "pointerup", onPointerUp, false);
-          addGlobalListener(window, "pointercancel", onPointerUp, false);
+          addGlobalListener(window, "pointercancel", onPointerCancel, false);
         }
       },
 
