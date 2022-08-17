@@ -14,10 +14,9 @@ const TreeHistorySchema = z.array(z.string());
 
 export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
-  Asset?: Asset[];
 };
 
-const parseProject = (project: any): (Project & { assets: Asset[] }) | null => {
+const parseProject = (project: BaseProject | null): Project | null => {
   if (project === null) return null;
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   TreeHistorySchema.parse(prodTreeIdHistory);
@@ -27,9 +26,7 @@ const parseProject = (project: any): (Project & { assets: Asset[] }) | null => {
   };
 };
 
-export const loadById = async (
-  projectId?: Project["id"]
-): Promise<(Project & { assets: Asset[] }) | null> => {
+export const loadById = async (projectId?: Project["id"]) => {
   if (typeof projectId !== "string") {
     throw new Error("Project ID required");
   }
@@ -62,7 +59,6 @@ export const loadManyByUserId = async (
         id: userId,
       },
     },
-    include: { assets: true },
   });
 
   return projects.map(parseProject) as Project[];
@@ -110,10 +106,7 @@ export const create = async ({
   return parseProject(project);
 };
 
-export const clone = async (
-  clonableDomain: string,
-  userId: string
-): Promise<Project> => {
+export const clone = async (clonableDomain: string, userId: string) => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
@@ -159,7 +152,7 @@ export const update = async ({
   prodTreeId?: string;
   devTreeId?: string;
   prodTreeIdHistory: Array<string>;
-}): Promise<Project & { assets: Asset[] }> => {
+}) => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
     if (data.domain.length < MIN_DOMAIN_LENGTH) {

@@ -4,7 +4,7 @@ import {
   usePublish,
   type Publish,
 } from "@webstudio-is/react-sdk";
-import { type Project, type Asset } from "@webstudio-is/prisma-client";
+import { type Project } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
@@ -219,7 +219,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: Project & { assets: Asset[] };
+  project: Project;
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
