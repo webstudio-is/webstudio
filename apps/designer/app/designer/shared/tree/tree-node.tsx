@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import {
   Flex,
@@ -183,122 +183,120 @@ type TreeNodeProps = {
   onExpandTransitionEnd?: () => void;
 };
 
-export const TreeNode = forwardRef<HTMLDivElement, TreeNodeProps>(
-  ({ instance, level = 0, parentIsSelected, ...commonProps }, ref) => {
-    const {
-      getIsExpanded,
-      animate = true,
-      setIsExpanded,
-      selectedInstanceId,
-      onSelect,
-      onExpandTransitionEnd,
-      disableHoverStates = false,
-    } = commonProps;
+export const TreeNode = ({
+  instance,
+  level = 0,
+  parentIsSelected,
+  ...commonProps
+}: TreeNodeProps) => {
+  const {
+    getIsExpanded,
+    animate = true,
+    setIsExpanded,
+    selectedInstanceId,
+    onSelect,
+    onExpandTransitionEnd,
+    disableHoverStates = false,
+  } = commonProps;
 
-    const collapsibleContentRef = useRef<HTMLDivElement>(null);
+  const collapsibleContentRef = useRef<HTMLDivElement>(null);
 
-    const isAlwaysExpanded = level === 0;
-    const isExpandable = getIsExpandable(instance);
-    const isExpanded = getIsExpanded(instance) || isAlwaysExpanded;
-    const isSelected = instance.id === selectedInstanceId;
+  const isAlwaysExpanded = level === 0;
+  const isExpandable = getIsExpandable(instance);
+  const isExpanded = getIsExpanded(instance) || isAlwaysExpanded;
+  const isSelected = instance.id === selectedInstanceId;
 
-    const makeSelected = () => {
-      if (isSelected === false) {
-        onSelect?.(instance.id);
-      }
-    };
+  const makeSelected = () => {
+    if (isSelected === false) {
+      onSelect?.(instance.id);
+    }
+  };
 
-    const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
+  const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
-    const { Icon, label } = components[instance.component];
+  const { Icon, label } = components[instance.component];
 
-    const CollapsibleContent = animate
-      ? CollapsibleContentAnimated
-      : CollapsibleContentUnanimated;
+  const CollapsibleContent = animate
+    ? CollapsibleContentAnimated
+    : CollapsibleContentUnanimated;
 
-    const handleAnimationEnd = useCallback(
-      (event: React.AnimationEvent<HTMLDivElement>) => {
-        if (event.target === collapsibleContentRef.current) {
-          onExpandTransitionEnd?.();
-        }
-      },
-      [onExpandTransitionEnd]
-    );
-
-    // If ther's no animation, we need to manually trigger onExpandTransitionEnd
-    const prevIsExpanded = useRef(isExpanded);
-    useEffect(() => {
-      if (animate === false && isExpanded !== prevIsExpanded.current) {
+  const handleAnimationEnd = useCallback(
+    (event: React.AnimationEvent<HTMLDivElement>) => {
+      if (event.target === collapsibleContentRef.current) {
         onExpandTransitionEnd?.();
       }
-      prevIsExpanded.current = isExpanded;
-    }, [animate, onExpandTransitionEnd, isExpanded]);
+    },
+    [onExpandTransitionEnd]
+  );
 
-    return (
-      <Collapsible.Root
-        ref={ref}
-        open={isExpanded}
-        onOpenChange={(isOpen) => setIsExpanded?.(instance, isOpen)}
-        data-drop-target-id={instance.id}
-      >
-        <ItemWrapper
+  // If ther's no animation, we need to manually trigger onExpandTransitionEnd
+  const prevIsExpanded = useRef(isExpanded);
+  useEffect(() => {
+    if (animate === false && isExpanded !== prevIsExpanded.current) {
+      onExpandTransitionEnd?.();
+    }
+    prevIsExpanded.current = isExpanded;
+  }, [animate, onExpandTransitionEnd, isExpanded]);
+
+  return (
+    <Collapsible.Root
+      open={isExpanded}
+      onOpenChange={(isOpen) => setIsExpanded?.(instance, isOpen)}
+      data-drop-target-id={instance.id}
+    >
+      <ItemWrapper isSelected={isSelected} parentIsSelected={parentIsSelected}>
+        <NestingLines
           isSelected={isSelected}
-          parentIsSelected={parentIsSelected}
-        >
-          <NestingLines
-            isSelected={isSelected}
-            level={level}
-            followedByExpandButton={shouldRenderExpandButton}
-          />
-          {shouldRenderExpandButton && (
-            <CollapsibleTrigger
-              // We don't want a separate focusable control inside a tree item.
-              // tabIndex makes it skipped over when tabbing.
-              // It still can be focused using mouse, but we handle this elsewhere.
-              tabIndex={-1}
-            >
-              {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
-            </CollapsibleTrigger>
-          )}
-          <ItemButton
-            type="button"
-            data-drag-item-id={instance.id}
-            data-item-button-id={instance.id}
-            onFocus={makeSelected}
-            enableHoverState={disableHoverStates === false}
+          level={level}
+          followedByExpandButton={shouldRenderExpandButton}
+        />
+        {shouldRenderExpandButton && (
+          <CollapsibleTrigger
+            // We don't want a separate focusable control inside a tree item.
+            // tabIndex makes it skipped over when tabbing.
+            // It still can be focused using mouse, but we handle this elsewhere.
+            tabIndex={-1}
           >
-            <Icon />
-            <Label size="1" variant={isSelected ? "loContrast" : "contrast"}>
-              {label}
-            </Label>
-          </ItemButton>
-        </ItemWrapper>
-        {isExpandable && (
-          <CollapsibleContent
-            onAnimationEnd={handleAnimationEnd}
-            ref={collapsibleContentRef}
-          >
-            {
-              // CollapsibleContent doesn't render children when collapsed.
-              // No need to worry about optimizing this.
-              instance.children.flatMap((child) =>
-                typeof child === "string"
-                  ? []
-                  : [
-                      <TreeNode
-                        key={child.id}
-                        instance={child}
-                        level={level + 1}
-                        parentIsSelected={isSelected || parentIsSelected}
-                        {...commonProps}
-                      />,
-                    ]
-              )
-            }
-          </CollapsibleContent>
+            {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
+          </CollapsibleTrigger>
         )}
-      </Collapsible.Root>
-    );
-  }
-);
-TreeNode.displayName = "TreeNode";
+        <ItemButton
+          type="button"
+          data-drag-item-id={instance.id}
+          data-item-button-id={instance.id}
+          onFocus={makeSelected}
+          enableHoverState={disableHoverStates === false}
+        >
+          <Icon />
+          <Label size="1" variant={isSelected ? "loContrast" : "contrast"}>
+            {label}
+          </Label>
+        </ItemButton>
+      </ItemWrapper>
+      {isExpandable && (
+        <CollapsibleContent
+          onAnimationEnd={handleAnimationEnd}
+          ref={collapsibleContentRef}
+        >
+          {
+            // CollapsibleContent doesn't render children when collapsed.
+            // No need to worry about optimizing this.
+            instance.children.flatMap((child) =>
+              typeof child === "string"
+                ? []
+                : [
+                    <TreeNode
+                      key={child.id}
+                      instance={child}
+                      level={level + 1}
+                      parentIsSelected={isSelected || parentIsSelected}
+                      {...commonProps}
+                    />,
+                  ]
+            )
+          }
+        </CollapsibleContent>
+      )}
+    </Collapsible.Root>
+  );
+};

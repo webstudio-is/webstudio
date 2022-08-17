@@ -212,9 +212,12 @@ export const Tree = ({
   ]);
 
   const getFallbackDropTarget = () => {
+    const element = rootNodeRef.current?.querySelector(
+      `[data-drop-target-id="${root.id}"]`
+    );
     return {
       data: root,
-      element: rootNodeRef.current as HTMLElement,
+      element: element as HTMLElement,
       final: true,
     };
   };
@@ -383,7 +386,12 @@ export const Tree = ({
         pt: 2,
         pb: 2,
       }}
-      ref={autoScrollHandlers.targetRef}
+      ref={(element) => {
+        rootNodeRef.current = element;
+        autoScrollHandlers.targetRef(element);
+        dragHandlers.rootRef(element);
+        dropHandlers.rootRef(element);
+      }}
       onScroll={dropHandlers.handleScroll}
     >
       <Box
@@ -401,11 +409,6 @@ export const Tree = ({
           setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
           disableHoverStates={dragItem !== undefined}
-          ref={(element) => {
-            rootNodeRef.current = element;
-            dragHandlers.rootRef(element);
-            dropHandlers.rootRef(element);
-          }}
         />
       </Box>
       {finalDropTarget &&

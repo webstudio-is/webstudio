@@ -72,7 +72,6 @@ export const useShortcuts = () => {
     esc: publishCancelCurrentDrag,
   } as const;
 
-  // @todo: doesnt allow to delete when navigator is in focus
   useHotkeys(
     "backspace, delete",
     shortcutHandlerMap.delete,

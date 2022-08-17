@@ -63,6 +63,7 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
             )
           )
         }
+        onDelete={() => null}
       />
     </Flex>
   );
