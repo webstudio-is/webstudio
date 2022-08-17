@@ -63,153 +63,12 @@ export const Tree = ({
   const [dragItem, setDragItem] = useState<Instance>();
   const [dropTarget, setDropTarget] = useState<DropTarget<Instance>>();
 
-  const [horizontalShift, setHorizontalShift] = useState(0);
-
-  const dragItemDepth = useMemo(
-    () => dragItem && getInstancePath(root, dragItem.id).length - 1,
-    [dragItem, root]
-  );
-
-  // Here we want to allow user to shift placement line horizontally
-  // but only if that corresponds to a meaningful position in the tree
-  const finalDropTarget = useMemo<
-    | {
-        instance: Instance;
-        position: number | "end";
-        placement:
-          | { type: "rect"; rect: Rect }
-          | { type: "line"; placement: Placement };
-      }
-    | undefined
-  >(() => {
-    if (
-      dropTarget === undefined ||
-      dragItemDepth === undefined ||
-      dragItem === undefined
-    ) {
-      return undefined;
-    }
-
-    const { data, placement, rect, indexWithinChildren } = dropTarget;
-
-    // Placement type “inside-parent” means that useDrop didn’t find any children.
-    // This means the drop target is empty or collapsed.
-    // In this case, we want to show a rect instead of a line.
-    // Also, we don’t want to apply shift, as there’s no line to shift.
-    if (placement.type === "inside-parent") {
-      return {
-        instance: data,
-        position: "end",
-        placement: { type: "rect", rect: rect },
-      };
-    }
-
-    const dropTargetPath = getInstancePathWithPositions(root, data.id);
-    dropTargetPath.reverse();
-
-    const currentDepth = dropTargetPath.length;
-    const desiredDepth = dragItemDepth + horizontalShift;
-
-    const withoutShift = {
-      instance: data,
-      position: indexWithinChildren,
-      placement: {
-        type: "line",
-        placement: shiftPlacement(placement, currentDepth),
-      },
-    } as const;
-
-    const isDragItem = (instance: Instance | undefined | string) =>
-      typeof instance === "object" && instance.id === dragItem.id;
-
-    if (desiredDepth < currentDepth) {
-      // There's a special case when the placement line is above the drag item.
-      // For reparenting above and below the drag item means the same thing.
-      const indexCorrected = isDragItem(data.children[indexWithinChildren])
-        ? indexWithinChildren + 1
-        : indexWithinChildren;
-
-      // Unless we're currently at the bottom of drop target's children,
-      // decreasing depth will not correspond to a new meaningful position
-      if (indexCorrected !== data.children.length) {
-        return withoutShift;
-      }
-
-      const difference = Math.min(
-        dropTargetPath.length - 1,
-        currentDepth - desiredDepth
-      );
-
-      if (difference === 0) {
-        return withoutShift;
-      }
-
-      // Ideally we should check canAcceptChildren on the new target
-      // but we assume that because it already has a child, it can accept more.
-
-      return {
-        instance: dropTargetPath[difference].instance,
-        position: dropTargetPath[difference - 1].position + 1,
-        placement: {
-          type: "line",
-          placement: shiftPlacement(placement, currentDepth - difference),
-        },
-      };
-    }
-
-    if (desiredDepth > currentDepth) {
-      let shifted = 0;
-      let newParent = data;
-
-      // There's a special case when the placement line is below the drag item.
-      // For reparenting above and below the drag item means the same thing.
-      const getChildAbove = (
-        parent: Instance,
-        index: number
-      ): string | undefined | Instance =>
-        isDragItem(parent.children[index - 1])
-          ? parent.children[index - 2]
-          : parent.children[index - 1];
-
-      let potentialNewParent = getChildAbove(data, indexWithinChildren);
-
-      while (
-        typeof potentialNewParent === "object" &&
-        getIsExpanded(potentialNewParent) &&
-        components[potentialNewParent.component].canAcceptChild() &&
-        shifted < desiredDepth - currentDepth
-      ) {
-        newParent = potentialNewParent;
-        potentialNewParent = getChildAbove(
-          newParent,
-          newParent.children.length
-        );
-        shifted++;
-      }
-
-      if (shifted === 0) {
-        return withoutShift;
-      }
-
-      return {
-        instance: newParent,
-        position: "end",
-        placement: {
-          type: "line",
-          placement: shiftPlacement(placement, currentDepth + shifted),
-        },
-      };
-    }
-
-    return withoutShift;
-  }, [
+  const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
     dragItem,
-    dragItemDepth,
     dropTarget,
     root,
-    horizontalShift,
     getIsExpanded,
-  ]);
+  });
 
   const getFallbackDropTarget = () => {
     const element = rootNodeRef.current?.querySelector(
@@ -340,12 +199,12 @@ export const Tree = ({
       setHorizontalShift(shifts);
     },
     onEnd: ({ isCanceled }) => {
-      if (finalDropTarget && dragItem && isCanceled === false) {
+      if (shiftedDropTarget && dragItem && isCanceled === false) {
         onDragEnd({
           instanceId: dragItem.id,
           dropTarget: {
-            instanceId: finalDropTarget.instance.id,
-            position: finalDropTarget.position,
+            instanceId: shiftedDropTarget.instance.id,
+            position: shiftedDropTarget.position,
           },
         });
       }
@@ -411,13 +270,15 @@ export const Tree = ({
           disableHoverStates={dragItem !== undefined}
         />
       </Box>
-      {finalDropTarget &&
+      {shiftedDropTarget &&
         createPortal(
-          finalDropTarget.placement.type === "rect" ? (
-            <PlacementIndicatorOutline rect={finalDropTarget.placement.rect} />
+          shiftedDropTarget.placement.type === "rect" ? (
+            <PlacementIndicatorOutline
+              rect={shiftedDropTarget.placement.rect}
+            />
           ) : (
             <PlacementIndicatorLine
-              placement={finalDropTarget.placement.placement}
+              placement={shiftedDropTarget.placement.placement}
             />
           ),
           document.body
@@ -631,11 +492,172 @@ const useExpandState = ({
   return { getIsExpanded, setIsExpanded };
 };
 
-const shiftPlacement = (placement: Placement, depth: number) => {
-  const shift = getPlacementIndicatorAlignment(depth);
-  return {
-    ...placement,
-    x: placement.x + shift,
-    length: placement.length - shift,
-  };
+type ShiftedDropTarget = {
+  instance: Instance;
+  position: number | "end";
+  placement:
+    | { type: "rect"; rect: Rect }
+    | { type: "line"; placement: Placement };
+};
+
+export const useHorizontalShift = ({
+  dragItem,
+  dropTarget,
+  root,
+  getIsExpanded,
+}: {
+  dragItem: Instance | undefined;
+  dropTarget: DropTarget<Instance> | undefined;
+  root: Instance;
+  getIsExpanded: (instance: Instance) => boolean;
+}) => {
+  const [horizontalShift, setHorizontalShift] = useState(0);
+
+  const dragItemDepth = useMemo(
+    () => dragItem && getInstancePath(root, dragItem.id).length - 1,
+    [dragItem, root]
+  );
+
+  // Here we want to allow user to shift placement line horizontally
+  // but only if that corresponds to a meaningful position in the tree
+  const shiftedDropTarget = useMemo<ShiftedDropTarget | undefined>(() => {
+    if (
+      dropTarget === undefined ||
+      dragItemDepth === undefined ||
+      dragItem === undefined
+    ) {
+      return undefined;
+    }
+
+    const { data, placement, rect, indexWithinChildren } = dropTarget;
+
+    const shiftPlacement = (depth: number) => {
+      const shift = getPlacementIndicatorAlignment(depth);
+      return {
+        ...placement,
+        x: placement.x + shift,
+        length: placement.length - shift,
+      };
+    };
+
+    // Placement type “inside-parent” means that useDrop didn’t find any children.
+    // This means the drop target is empty or collapsed.
+    // In this case, we want to show a rect instead of a line.
+    // Also, we don’t want to apply shift, as there’s no line to shift.
+    if (placement.type === "inside-parent") {
+      return {
+        instance: data,
+        position: "end",
+        placement: { type: "rect", rect: rect },
+      };
+    }
+
+    const dropTargetPath = getInstancePathWithPositions(root, data.id);
+    dropTargetPath.reverse();
+
+    const currentDepth = dropTargetPath.length;
+    const desiredDepth = dragItemDepth + horizontalShift;
+
+    const withoutShift = {
+      instance: data,
+      position: indexWithinChildren,
+      placement: {
+        type: "line",
+        placement: shiftPlacement(currentDepth),
+      },
+    } as const;
+
+    const isDragItem = (instance: Instance | undefined | string) =>
+      typeof instance === "object" && instance.id === dragItem.id;
+
+    if (desiredDepth < currentDepth) {
+      // There's a special case when the placement line is above the drag item.
+      // For reparenting above and below the drag item means the same thing.
+      const indexCorrected = isDragItem(data.children[indexWithinChildren])
+        ? indexWithinChildren + 1
+        : indexWithinChildren;
+
+      // Unless we're currently at the bottom of drop target's children,
+      // decreasing depth will not correspond to a new meaningful position
+      if (indexCorrected !== data.children.length) {
+        return withoutShift;
+      }
+
+      const difference = Math.min(
+        dropTargetPath.length - 1,
+        currentDepth - desiredDepth
+      );
+
+      if (difference === 0) {
+        return withoutShift;
+      }
+
+      // Ideally we should check canAcceptChildren on the new target
+      // but we assume that because it already has a child, it can accept more.
+
+      return {
+        instance: dropTargetPath[difference].instance,
+        position: dropTargetPath[difference - 1].position + 1,
+        placement: {
+          type: "line",
+          placement: shiftPlacement(currentDepth - difference),
+        },
+      };
+    }
+
+    if (desiredDepth > currentDepth) {
+      let shifted = 0;
+      let newParent = data;
+
+      // There's a special case when the placement line is below the drag item.
+      // For reparenting above and below the drag item means the same thing.
+      const getChildAbove = (
+        parent: Instance,
+        index: number
+      ): string | undefined | Instance =>
+        isDragItem(parent.children[index - 1])
+          ? parent.children[index - 2]
+          : parent.children[index - 1];
+
+      let potentialNewParent = getChildAbove(data, indexWithinChildren);
+
+      while (
+        typeof potentialNewParent === "object" &&
+        getIsExpanded(potentialNewParent) &&
+        components[potentialNewParent.component].canAcceptChild() &&
+        shifted < desiredDepth - currentDepth
+      ) {
+        newParent = potentialNewParent;
+        potentialNewParent = getChildAbove(
+          newParent,
+          newParent.children.length
+        );
+        shifted++;
+      }
+
+      if (shifted === 0) {
+        return withoutShift;
+      }
+
+      return {
+        instance: newParent,
+        position: "end",
+        placement: {
+          type: "line",
+          placement: shiftPlacement(currentDepth + shifted),
+        },
+      };
+    }
+
+    return withoutShift;
+  }, [
+    dragItem,
+    dragItemDepth,
+    dropTarget,
+    root,
+    horizontalShift,
+    getIsExpanded,
+  ]);
+
+  return [shiftedDropTarget, setHorizontalShift] as const;
 };

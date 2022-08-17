@@ -124,5 +124,5 @@
      - check that by moving horizontally you're able to change how deeply the item is nested inside the tree
    - Drag an item between some tree items
      - check that moving the cursor horizontally allows you to change the depth of the placement indicator line
-     - check that after you drop, the drag item moves to the correct depth
+     - check that after you drop, the dragged item moves to the correct depth
    - Check that after a drag&drop the dragged item is the selected item
