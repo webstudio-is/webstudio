@@ -16,7 +16,9 @@ export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
 };
 
-const parseProject = (project: BaseProject | null): Project | null => {
+const parseProject = (
+  project: BaseProject | Omit<BaseProject, "assets"> | null
+): Project | null => {
   if (project === null) return null;
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   TreeHistorySchema.parse(prodTreeIdHistory);
@@ -98,7 +100,6 @@ export const create = async ({
       domain,
       devTreeId: tree.id,
     },
-    include: { assets: true },
   });
 
   await db.breakpoints.create(tree.id, breakpoints);
