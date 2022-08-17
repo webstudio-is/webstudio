@@ -571,36 +571,43 @@ export const useHorizontalShift = ({
       typeof instance === "object" && instance.id === dragItem.id;
 
     if (desiredDepth < currentDepth) {
-      // There's a special case when the placement line is above the drag item.
-      // For reparenting above and below the drag item means the same thing.
-      const indexCorrected = isDragItem(data.children[indexWithinChildren])
-        ? indexWithinChildren + 1
-        : indexWithinChildren;
+      let shifted = 0;
+      let newParent = data;
+      let newPosition = indexWithinChildren;
 
-      // Unless we're currently at the bottom of drop target's children,
-      // decreasing depth will not correspond to a new meaningful position
-      if (indexCorrected !== data.children.length) {
-        return withoutShift;
+      const isAtTheBottom = (parent: Instance, index: number) => {
+        // There's a special case when the placement line is above the drag item.
+        // For reparenting above and below the drag item means the same thing.
+        const indexCorrected = isDragItem(parent.children[index])
+          ? index + 1
+          : index;
+        return indexCorrected === parent.children.length;
+      };
+
+      let potentialNewParent = dropTargetPath[shifted + 1];
+
+      while (
+        isAtTheBottom(newParent, newPosition) &&
+        typeof potentialNewParent === "object" &&
+        components[potentialNewParent.instance.component].canAcceptChild() &&
+        shifted < currentDepth - desiredDepth
+      ) {
+        shifted++;
+        newPosition = dropTargetPath[shifted - 1].position + 1;
+        newParent = potentialNewParent.instance;
+        potentialNewParent = dropTargetPath[shifted + 1];
       }
 
-      const difference = Math.min(
-        dropTargetPath.length - 1,
-        currentDepth - desiredDepth
-      );
-
-      if (difference === 0) {
+      if (shifted === 0) {
         return withoutShift;
       }
-
-      // Ideally we should check canAcceptChildren on the new target
-      // but we assume that because it already has a child, it can accept more.
 
       return {
-        instance: dropTargetPath[difference].instance,
-        position: dropTargetPath[difference - 1].position + 1,
+        instance: newParent,
+        position: newPosition,
         placement: {
           type: "line",
-          placement: shiftPlacement(currentDepth - difference),
+          placement: shiftPlacement(currentDepth - shifted),
         },
       };
     }
