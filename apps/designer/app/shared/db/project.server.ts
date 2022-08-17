@@ -9,6 +9,7 @@ import {
   Asset,
 } from "@webstudio-is/prisma-client";
 import * as db from ".";
+import { getAssetPath } from "@webstudio-is/asset-uploader/src/helpers/get-asset-path";
 
 const TreeHistorySchema = z.array(z.string());
 
@@ -17,13 +18,21 @@ export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
 };
 
 const parseProject = (
-  project: BaseProject | Omit<BaseProject, "assets"> | null
-): Project | null => {
+  project: BaseProject | null
+): Project | Omit<BaseProject, "assets"> | null => {
   if (project === null) return null;
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   TreeHistorySchema.parse(prodTreeIdHistory);
+  const newAssets =
+    "assets" in project
+      ? project.assets.map((asset) => ({
+          ...asset,
+          path: getAssetPath(asset),
+        }))
+      : {};
   return {
     ...project,
+    ...newAssets,
     prodTreeIdHistory,
   };
 };
