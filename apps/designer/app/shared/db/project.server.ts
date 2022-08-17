@@ -53,7 +53,7 @@ export const loadManyByUserId = async (
 ): Promise<Array<Project>> => {
   const projects = await prisma.project.findMany({
     where: {
-      User: {
+      user: {
         id: userId,
       },
     },
