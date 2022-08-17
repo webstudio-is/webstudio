@@ -32,7 +32,7 @@ const parseProject = (
       : {};
   return {
     ...project,
-    ...newAssets,
+    assets: newAssets,
     prodTreeIdHistory,
   };
 };
