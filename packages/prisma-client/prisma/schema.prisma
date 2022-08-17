@@ -41,7 +41,7 @@ model User {
   image     String?
   username  String?
   createdAt DateTime  @default(now())
-  Team      Team?     @relation(fields: [teamId], references: [id])
+  team      Team?     @relation(fields: [teamId], references: [id])
   teamId    String?
   projects  Project[]
 }
@@ -53,7 +53,7 @@ model Project {
   prodTreeId        String? // exists when published
   devTreeId         String
   prodTreeIdHistory String  @default("[]")
-  User              User?   @relation(fields: [userId], references: [id])
+  user              User?   @relation(fields: [userId], references: [id])
   userId            String?
   assets            Asset[]
 }
