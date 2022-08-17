@@ -3,7 +3,7 @@
 // We have to use getBoundingClientRect instead.
 // @todo optimize for the case when many consumers need to measure the same element
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useScrollState } from "./use-scroll-state";
 
 export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
@@ -28,7 +28,17 @@ export const useMeasure = <
     onScrollEnd: handleChange,
   });
 
-  useDetectReparenting(element, handleChange);
+  // Detect movement of the element without remounting.
+  useEffect(() => {
+    // No need to worry about parent changing while element stays the same.
+    // React cannot do that. It can only move within the same parent.
+    const parent = element?.parentElement;
+    if (parent) {
+      const observer = new window.MutationObserver(handleChange);
+      observer.observe(parent, { childList: true });
+      return () => observer.disconnect();
+    }
+  }, [element, handleChange]);
 
   const observer = useMemo(() => {
     if (typeof window === "undefined") return;
@@ -48,40 +58,4 @@ export const useMeasure = <
   useEffect(handleChange, [handleChange]);
 
   return [setElement, rect];
-};
-
-const useDetectReparenting = (
-  element: HTMLElement | null,
-  callback: () => void
-) => {
-  // putting callback into a ref allows us to avoid adding it as a dependency
-  const latestCallback = useRef(callback);
-  latestCallback.current = callback;
-
-  const [timeOfLastMutation, setTimeOfLastMutation] = useState(0);
-
-  // We intentionally add timeOfLastMutation to dependency list
-  // to force parent to update after a mutation.
-  const parent = useMemo(
-    () => element?.parentElement,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [element, timeOfLastMutation]
-  );
-
-  const observer = useMemo(
-    () =>
-      typeof window !== "undefined" &&
-      new window.MutationObserver(() => {
-        setTimeOfLastMutation(Date.now());
-        latestCallback.current();
-      }),
-    []
-  );
-
-  useEffect(() => {
-    if (observer && parent) {
-      observer.observe(parent, { childList: true });
-      return () => observer.disconnect();
-    }
-  }, [observer, parent]);
 };

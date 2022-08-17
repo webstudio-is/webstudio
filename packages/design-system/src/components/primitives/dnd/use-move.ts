@@ -10,20 +10,16 @@ interface MoveResult {
 }
 
 interface MoveStartEvent {
-  type: "movestart";
-  target: HTMLElement;
   clientX: number;
   clientY: number;
 }
 
 interface MoveMoveEvent {
-  type: "move";
   clientX: number;
   clientY: number;
 }
 
 interface MoveEndEvent {
-  type: "moveend";
   isCanceled: boolean;
 }
 
@@ -71,25 +67,15 @@ export const useMove = (props: MoveEvents): MoveResult => {
         originalEvent.target instanceof HTMLElement
       ) {
         state.current.didMove = true;
-        latestProps.current.onMoveStart?.({
-          type: "movestart",
-          target: originalEvent.target,
-          clientX: originalEvent.clientX,
-          clientY: originalEvent.clientY,
-        });
+        latestProps.current.onMoveStart?.(originalEvent);
       }
 
-      latestProps.current.onMove?.({
-        type: "move",
-        clientX: originalEvent.clientX,
-        clientY: originalEvent.clientY,
-      });
+      latestProps.current.onMove?.(originalEvent);
     };
 
     const end = (event: PointerEvent | "canceled") => {
       if (state.current.didMove) {
         latestProps.current.onMoveEnd?.({
-          type: "moveend",
           isCanceled: event === "canceled",
         });
       }

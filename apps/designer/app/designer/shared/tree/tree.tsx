@@ -471,18 +471,14 @@ const useKeyboardNavigation = ({
         const index = flatCurrentlyExpandedTree.indexOf(selectedInstance.id);
         if (index > 0) {
           setFocus(flatCurrentlyExpandedTree[index - 1]);
-
-          // prevent scrolling
-          event.preventDefault();
+          event.preventDefault(); // prevent scrolling
         }
       }
       if (shortcut === "down") {
         const index = flatCurrentlyExpandedTree.indexOf(selectedInstance.id);
         if (index < flatCurrentlyExpandedTree.length - 1) {
           setFocus(flatCurrentlyExpandedTree[index + 1]);
-
-          // prevent scrolling
-          event.preventDefault();
+          event.preventDefault(); // prevent scrolling
         }
       }
     },

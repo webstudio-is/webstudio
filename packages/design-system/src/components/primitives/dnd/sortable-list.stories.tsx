@@ -91,12 +91,13 @@ export const SortableList = ({
 
   const autoScrollHandlers = useAutoScroll();
 
-  const useDragHandlers = useDrag<true>({
+  const useDragHandlers = useDrag<string>({
     elementToData(element) {
-      return element instanceof HTMLLIElement;
+      const id = element instanceof HTMLLIElement && element.dataset.id;
+      return id || false;
     },
-    onStart(event) {
-      setDragItemId(event.target.dataset.id);
+    onStart({ data }) {
+      setDragItemId(data);
       autoScrollHandlers.setEnabled(true);
       useDropHandlers.handleStart();
     },

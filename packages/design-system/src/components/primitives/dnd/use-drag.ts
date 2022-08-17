@@ -2,28 +2,29 @@ import { useMove } from "./use-move";
 import { useRef, useEffect, useMemo } from "react";
 import { type Point } from "./geometry-utils";
 
-type State =
-  | {
-      status: "idle";
-    }
-  | {
-      status: "pending" | "dragging";
-      x: number;
-      y: number;
-      initialX: number;
-      initialY: number;
-      shifts: number;
-    };
+type State<Data> = {
+  status: "pending" | "dragging" | "idle";
+  initialX: number;
+  initialY: number;
+  shifts: number;
+  root: HTMLElement | null;
+  dragItemData: Data | undefined;
+};
 
-const initialState = {
+const initialState: State<unknown> = {
   status: "idle",
-} as const;
+  initialX: 0,
+  initialY: 0,
+  shifts: 0,
+  root: null,
+  dragItemData: undefined,
+};
 
 export type UseDragProps<DragItemData> = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
   elementToData: (element: Element) => DragItemData | false;
-  onStart: (event: { target: HTMLElement; data: DragItemData }) => void;
+  onStart: (event: { data: DragItemData }) => void;
   onMove: (event: Point) => void;
   onShiftChange?: (event: { shifts: number }) => void;
   onEnd: (event: { isCanceled: boolean }) => void;
@@ -43,15 +44,12 @@ export const useDrag = <DragItemData>({
   onEnd,
   elementToData,
 }: UseDragProps<DragItemData>): UseDragHandlers => {
-  const state = useRef<State>(initialState);
-  const rootRef = useRef<HTMLElement | null>(null);
-  const dragItemData = useRef<DragItemData>();
+  const state = useRef<State<DragItemData>>({
+    ...(initialState as State<DragItemData>),
+  });
 
-  const detectShift = () => {
-    if (state.current.status !== "dragging") {
-      return;
-    }
-    const deltaX = state.current.x - state.current.initialX;
+  const detectShift = (x: number) => {
+    const deltaX = x - state.current.initialX;
     const shifts =
       deltaX > 0
         ? Math.floor(deltaX / shiftDistanceThreshold)
@@ -75,65 +73,44 @@ export const useDrag = <DragItemData>({
         return false;
       }
 
-      dragItemData.current = data;
-
+      state.current.dragItemData = data;
       return true;
     },
-    onMoveStart({
-      clientX: x,
-      clientY: y,
-      target,
-    }: {
-      clientX: number;
-      clientY: number;
-      target: HTMLElement;
-    }) {
+    onMoveStart({ clientX: x, clientY: y }) {
       state.current = {
+        ...state.current,
         status: "pending",
-        x,
-        y,
         initialX: x,
         initialY: y,
-        shifts: 0,
       };
-
-      // @todo: should call onStart only after state.status becomes "dragging"
-      if (dragItemData.current !== undefined) {
-        onStart({ target, data: dragItemData.current });
-      }
     },
-    onMove({ clientX: x, clientY: y }: { clientX: number; clientY: number }) {
+    onMove({ clientX: x, clientY: y }) {
       // We want to start dragging only when the user has moved more than startDistanceThreashold.
       if (
         state.current.status === "pending" &&
-        Math.abs(x - state.current.x) < startDistanceThreashold &&
-        Math.abs(y - state.current.y) < startDistanceThreashold
+        Math.abs(x - state.current.initialX) < startDistanceThreashold &&
+        Math.abs(y - state.current.initialY) < startDistanceThreashold
       ) {
         return;
       }
 
-      // We shouldn't be in non-pending state when we get here, unles user has ended the drag and yet somehow we ended up with onMove() call.
       if (
-        state.current.status === "pending" ||
-        state.current.status === "dragging"
+        state.current.status === "pending" &&
+        state.current.dragItemData !== undefined
       ) {
-        state.current = {
-          status: "dragging",
-          x,
-          y,
-          initialX: state.current.initialX,
-          initialY: state.current.initialY,
-          shifts: state.current.shifts,
-        };
+        onStart({ data: state.current.dragItemData });
+        state.current.status = "dragging";
       }
 
-      onMove({ x, y });
-      detectShift();
+      if (state.current.status === "dragging") {
+        onMove({ x, y });
+        detectShift(x);
+      }
     },
-    onMoveEnd(event) {
+    onMoveEnd({ isCanceled }) {
       // A drag is basically a very slow click.
       // But we don't want it to register as a click.
-      if (event.isCanceled === false && state.current.status === "dragging") {
+      if (isCanceled === false && state.current.status === "dragging") {
         const handleClick = (event: MouseEvent) => {
           event.preventDefault();
           event.stopPropagation();
@@ -144,13 +121,16 @@ export const useDrag = <DragItemData>({
         });
       }
 
-      state.current = initialState;
-      onEnd({ isCanceled: event.isCanceled });
+      state.current = {
+        ...(initialState as State<DragItemData>),
+        root: state.current.root,
+      };
+      onEnd({ isCanceled: isCanceled });
     },
   });
 
   useEffect(() => {
-    const roorElement = rootRef.current;
+    const roorElement = state.current.root;
     if (roorElement !== null) {
       roorElement.addEventListener(
         "pointerdown",
@@ -169,7 +149,7 @@ export const useDrag = <DragItemData>({
   return useMemo(() => {
     return {
       rootRef(element) {
-        rootRef.current = element;
+        state.current.root = element;
       },
       cancelCurrentDrag() {
         useMoveHandlers.cancelCurrentMove();
