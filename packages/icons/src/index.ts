@@ -10,3 +10,6 @@ export * from "./devices";
 export * from "./tablet";
 export * from "./body";
 export * from "./types";
+export { AspectRatioIcon } from "./aspect-ratio";
+export * from "./cloud";
+export { TrashIcon } from "./trash";

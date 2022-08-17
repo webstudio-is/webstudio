@@ -1,11 +1,32 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Flex, Tooltip } from "@webstudio-is/design-system";
+import {
+  Box,
+  Button,
+  Flex,
+  IconButton,
+  Text,
+  Tooltip,
+  Separator,
+  Grid,
+} from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { useSubmit } from "@remix-run/react";
 import { Asset } from "~/designer/features/sidebar-left/types";
-import { Cross2Icon } from "@radix-ui/react-icons";
 import { UploadingAnimation } from "./uploading-animation";
+import {
+  CloudIcon,
+  AspectRatioIcon,
+  Cross1Icon,
+  GearIcon,
+  SizeIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
+import {
+  getAspectRatio,
+  getStartAndEndOfString,
+  getHumanReadableFileSize,
+} from "./utils";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -24,6 +45,9 @@ export const AssetManagerThumbnail = ({
   path,
   alt,
   status,
+  size,
+  width,
+  height,
   name,
   id,
 }: Asset) => {
@@ -76,18 +100,65 @@ export const AssetManagerThumbnail = ({
           multiline
           onEscapeKeyDown={closeTooltip}
           onPointerDownOutside={closeTooltip}
+          css={{ width: 240, maxWidth: 240 }}
           content={
-            <Flex direction="column" gap={1} align="center" justify="center">
-              Are you sure you want to delete this asset?
-              <Button variant="red" onClick={deleteAsset}>
-                Delete
-              </Button>
-            </Flex>
+            <>
+              <Flex
+                css={{ height: 40, paddingLeft: "$3" }}
+                align="center"
+                justify="between"
+              >
+                <Text size="1" css={{ fontWeight: "bold" }}>
+                  Asset Details
+                </Text>
+
+                <IconButton
+                  onClick={() => setTolltipOpen(false)}
+                  size="1"
+                  css={{ marginRight: "$2" }}
+                  aria-label="Close"
+                >
+                  <Cross1Icon />
+                </IconButton>
+              </Flex>
+              <Separator />
+              <Box css={{ p: "$2 $3" }}>
+                <Grid columns={2}>
+                  <Text size="1">{getStartAndEndOfString(name)}</Text>
+                  <Flex align="center" css={{ gap: "$1" }}>
+                    <CloudIcon />
+                    <Text size="1">{getHumanReadableFileSize(size)}</Text>
+                  </Flex>
+                </Grid>
+              </Box>
+              <Box css={{ p: "$2 $3" }}>
+                <Grid columns={2}>
+                  <Flex align="center" css={{ gap: "$1" }}>
+                    <SizeIcon />
+                    <Text size="1">
+                      {width} x {height}
+                    </Text>
+                  </Flex>{" "}
+                  <Flex align="center" css={{ gap: "$1" }}>
+                    <AspectRatioIcon />
+                    <Text size="1">{getAspectRatio(width, height)}</Text>
+                  </Flex>
+                </Grid>
+              </Box>
+              <Box css={{ p: "$2 $3" }}>
+                <Button variant="red" size="2" onClick={deleteAsset}>
+                  <Flex align="center" css={{ gap: "$1" }}>
+                    <TrashIcon />
+                    Delete
+                  </Flex>
+                </Button>
+              </Box>
+            </>
           }
         >
           <Button
             variant="raw"
-            title="Delete asset"
+            title="Options"
             onClick={() => setTolltipOpen(true)}
             css={{
               position: "absolute",
@@ -97,7 +168,7 @@ export const AssetManagerThumbnail = ({
               color: "$highContrast",
             }}
           >
-            <Cross2Icon />
+            <GearIcon />
           </Button>
         </Tooltip>
       )}

@@ -5,6 +5,7 @@ export const Button = styled("button", {
   all: "unset",
   alignItems: "center",
   boxSizing: "border-box",
+  border: "none",
   userSelect: "none",
   "&::before": {
     boxSizing: "border-box",
@@ -129,12 +130,13 @@ export const Button = styled("button", {
         color: "$red11",
         "@hover": {
           "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$slate8",
+            background: "$red11",
+            color: "$loContrast",
           },
         },
         "&:active": {
-          backgroundColor: "$red3",
-          boxShadow: "inset 0 0 0 1px $colors$red8",
+          backgroundColor: "$red11",
+          color: "$loContrast",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$red8, 0 0 0 1px $colors$red8",
