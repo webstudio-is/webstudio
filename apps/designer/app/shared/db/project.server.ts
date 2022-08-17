@@ -39,9 +39,7 @@ export const loadById = async (projectId?: Project["id"]) => {
   return parseProject(project);
 };
 
-export const loadByDomain = async (
-  domain: string
-): Promise<(Project & { assets: Asset[] }) | null> => {
+export const loadByDomain = async (domain: string): Promise<Project | null> => {
   const project = await prisma.project.findUnique({
     where: { domain },
     include: { assets: true },
@@ -100,9 +98,11 @@ export const create = async ({
       domain,
       devTreeId: tree.id,
     },
+    include: { assets: true },
   });
 
   await db.breakpoints.create(tree.id, breakpoints);
+
   return parseProject(project);
 };
 
@@ -125,6 +125,7 @@ export const clone = async (clonableDomain: string, userId: string) => {
         domain,
         devTreeId: tree.id,
       },
+      include: { assets: true },
     }),
     db.props.clone({
       previousTreeId: clonableProject.prodTreeId,
