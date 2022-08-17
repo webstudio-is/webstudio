@@ -389,6 +389,7 @@ export const Tree = ({
       <Box
         ref={keyboardNavigation.rootRef}
         onClick={keyboardNavigation.handleClick}
+        onBlur={keyboardNavigation.handleBlur}
       >
         <TreeNode
           animate={animate}
@@ -511,6 +512,34 @@ const useKeyboardNavigation = ({
     [rootRef]
   );
 
+  const hadFocus = useRef(false);
+  const prevRoot = useRef(root);
+  useEffect(() => {
+    const haveFocus =
+      rootRef.current?.contains(document.activeElement) === true;
+
+    const isRootChanged = prevRoot.current !== root;
+    prevRoot.current = root;
+
+    // If we've lost focus due to a root update, we want to get it back.
+    // This can happen when we delete an item or on drag-end.
+    if (
+      isRootChanged &&
+      haveFocus === false &&
+      hadFocus.current === true &&
+      selectedInstanceId !== undefined
+    ) {
+      setFocus(selectedInstanceId);
+    }
+  }, [root, rootRef, selectedInstanceId, setFocus]);
+
+  // onBlur doesn't fire when the activeElement is removed from the DOM
+  useEffect(() => {
+    const haveFocus =
+      rootRef.current?.contains(document.activeElement) === true;
+    hadFocus.current = haveFocus;
+  });
+
   return {
     rootRef(element: HTMLElement | null) {
       rootRef.current = element;
@@ -531,6 +560,9 @@ const useKeyboardNavigation = ({
       if (selectedInstanceId !== undefined) {
         setFocus(selectedInstanceId);
       }
+    },
+    handleBlur() {
+      hadFocus.current = false;
     },
   };
 };
