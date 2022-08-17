@@ -42,6 +42,7 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
+import * as db from "~/shared/db";
 
 export const links = () => {
   return [
@@ -219,7 +220,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: Project;
+  project: db.project.Project;
   assets: Array<Asset>;
 };
 
