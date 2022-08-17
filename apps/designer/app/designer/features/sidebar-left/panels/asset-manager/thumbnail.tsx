@@ -1,32 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  Flex,
-  IconButton,
-  Text,
-  Tooltip,
-  Separator,
-  Grid,
-} from "@webstudio-is/design-system";
+import { Box, Button, Tooltip } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
-import { useSubmit } from "@remix-run/react";
-import { Asset } from "~/designer/features/sidebar-left/types";
 import { UploadingAnimation } from "./uploading-animation";
-import {
-  CloudIcon,
-  AspectRatioIcon,
-  Cross1Icon,
-  GearIcon,
-  SizeIcon,
-  TrashIcon,
-} from "@webstudio-is/icons";
-import {
-  getAspectRatio,
-  getStartAndEndOfString,
-  getHumanReadableFileSize,
-} from "./utils";
+import { GearIcon } from "@webstudio-is/icons";
+import { AssetInfo } from "./asset-info";
+import { Asset } from "@webstudio-is/prisma-client";
 
 const useImageWithFallback = ({ path }: { path: string }) => {
   const [src, setSrc] = useState(placeholderImage);
@@ -41,32 +20,14 @@ const useImageWithFallback = ({ path }: { path: string }) => {
   return src;
 };
 
-export const AssetManagerThumbnail = ({
-  path,
-  alt,
-  status,
-  size,
-  width,
-  height,
-  name,
-  id,
-}: Asset) => {
-  const submit = useSubmit();
+export const AssetManagerThumbnail = (asset: Asset) => {
+  const { path, alt, status, name } = asset;
   const [isDeleting, setIsDeleting] = useState(false);
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
   const [isTooltipOpen, setTolltipOpen] = useState(false);
 
   const closeTooltip = () => setTolltipOpen(false);
-
-  const deleteAsset = () => {
-    const formData = new FormData();
-    formData.append("assetId", id);
-    formData.append("assetName", name);
-    closeTooltip();
-    setIsDeleting(true);
-    submit(formData, { method: "delete" });
-  };
 
   return (
     <Box
@@ -102,58 +63,11 @@ export const AssetManagerThumbnail = ({
           onPointerDownOutside={closeTooltip}
           css={{ width: 240, maxWidth: 240 }}
           content={
-            <>
-              <Flex
-                css={{ height: 40, paddingLeft: "$3" }}
-                align="center"
-                justify="between"
-              >
-                <Text size="1" css={{ fontWeight: "bold" }}>
-                  Asset Details
-                </Text>
-
-                <IconButton
-                  onClick={() => setTolltipOpen(false)}
-                  size="1"
-                  css={{ marginRight: "$2" }}
-                  aria-label="Close"
-                >
-                  <Cross1Icon />
-                </IconButton>
-              </Flex>
-              <Separator />
-              <Box css={{ p: "$2 $3" }}>
-                <Grid columns={2}>
-                  <Text size="1">{getStartAndEndOfString(name)}</Text>
-                  <Flex align="center" css={{ gap: "$1" }}>
-                    <CloudIcon />
-                    <Text size="1">{getHumanReadableFileSize(size)}</Text>
-                  </Flex>
-                </Grid>
-              </Box>
-              <Box css={{ p: "$2 $3" }}>
-                <Grid columns={2}>
-                  <Flex align="center" css={{ gap: "$1" }}>
-                    <SizeIcon />
-                    <Text size="1">
-                      {width} x {height}
-                    </Text>
-                  </Flex>{" "}
-                  <Flex align="center" css={{ gap: "$1" }}>
-                    <AspectRatioIcon />
-                    <Text size="1">{getAspectRatio(width, height)}</Text>
-                  </Flex>
-                </Grid>
-              </Box>
-              <Box css={{ p: "$2 $3" }}>
-                <Button variant="red" size="2" onClick={deleteAsset}>
-                  <Flex align="center" css={{ gap: "$1" }}>
-                    <TrashIcon />
-                    Delete
-                  </Flex>
-                </Button>
-              </Box>
-            </>
+            <AssetInfo
+              setIsDeleting={setIsDeleting}
+              closeInfo={() => setTolltipOpen(false)}
+              {...asset}
+            />
           }
         >
           <Button
