@@ -219,11 +219,10 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: Project;
-  assets: Array<Asset>;
+  project: Project & { assets: Asset[] };
 };
 
-export const Designer = ({ config, project, assets }: DesignerProps) => {
+export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -272,7 +271,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft assets={assets} publish={publish} />
+        <SidebarLeft assets={project.assets} publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

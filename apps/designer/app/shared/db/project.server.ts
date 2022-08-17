@@ -6,6 +6,7 @@ import {
   prisma,
   Prisma,
   Project as BaseProject,
+  Asset,
 } from "@webstudio-is/prisma-client";
 import * as db from ".";
 
@@ -13,9 +14,10 @@ const TreeHistorySchema = z.array(z.string());
 
 export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
+  Asset?: Asset[];
 };
 
-const parseProject = (project: BaseProject | null): Project | null => {
+const parseProject = (project: any): (Project & { assets: Asset[] }) | null => {
   if (project === null) return null;
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   TreeHistorySchema.parse(prodTreeIdHistory);
@@ -27,20 +29,26 @@ const parseProject = (project: BaseProject | null): Project | null => {
 
 export const loadById = async (
   projectId?: Project["id"]
-): Promise<Project | null> => {
+): Promise<(Project & { assets: Asset[] }) | null> => {
   if (typeof projectId !== "string") {
     throw new Error("Project ID required");
   }
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
+    include: { assets: true },
   });
 
   return parseProject(project);
 };
 
-export const loadByDomain = async (domain: string): Promise<Project | null> => {
-  const project = await prisma.project.findUnique({ where: { domain } });
+export const loadByDomain = async (
+  domain: string
+): Promise<(Project & { assets: Asset[] }) | null> => {
+  const project = await prisma.project.findUnique({
+    where: { domain },
+    include: { assets: true },
+  });
 
   return parseProject(project);
 };
@@ -54,6 +62,7 @@ export const loadManyByUserId = async (
         id: userId,
       },
     },
+    include: { assets: true },
   });
 
   return projects.map(parseProject) as Project[];
@@ -80,7 +89,7 @@ export const create = async ({
 }: {
   userId: string;
   title: string;
-}): Promise<Project | null> => {
+}): Promise<(Project & { assets: Asset[] }) | null> => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
@@ -150,7 +159,7 @@ export const update = async ({
   prodTreeId?: string;
   devTreeId?: string;
   prodTreeIdHistory: Array<string>;
-}): Promise<BaseProject> => {
+}): Promise<Project & { assets: Asset[] }> => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
     if (data.domain.length < MIN_DOMAIN_LENGTH) {
@@ -167,6 +176,7 @@ export const update = async ({
         prodTreeIdHistory: JSON.stringify(data.prodTreeIdHistory),
       },
       where: { id },
+      include: { assets: true },
     });
     return project;
   } catch (error) {
