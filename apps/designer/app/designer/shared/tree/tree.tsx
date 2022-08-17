@@ -42,6 +42,7 @@ type TreeProps = {
     instanceId: Instance["id"];
     dropTarget: { instanceId: Instance["id"]; position: number | "end" };
   }) => void;
+  onDelete: (instanceId: Instance["id"]) => void;
 };
 
 export const Tree = ({
@@ -50,6 +51,7 @@ export const Tree = ({
   onSelect,
   animate,
   onDragEnd,
+  onDelete,
 }: TreeProps) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     root,
@@ -367,6 +369,7 @@ export const Tree = ({
     selectedInstanceId,
     getIsExpanded,
     setIsExpanded,
+    onDelete,
   });
 
   return (
@@ -424,11 +427,13 @@ const useKeyboardNavigation = ({
   selectedInstanceId,
   getIsExpanded,
   setIsExpanded,
+  onDelete,
 }: {
   root: Instance;
   selectedInstanceId: Instance["id"] | undefined;
   getIsExpanded: (instance: Instance) => boolean;
   setIsExpanded: (instance: Instance, isExpanded: boolean) => void;
+  onDelete: (instanceId: Instance["id"]) => void;
 }) => {
   const selectedInstance = useMemo(() => {
     if (selectedInstanceId === undefined) {
@@ -453,7 +458,7 @@ const useKeyboardNavigation = ({
   }, [root, getIsExpanded]);
 
   const rootRef = useHotkeys(
-    "up,down,right,left,space",
+    "up,down,right,left,space,backspace,delete",
     (event, { shortcut }) => {
       if (selectedInstance === undefined) {
         return;
@@ -481,8 +486,17 @@ const useKeyboardNavigation = ({
           event.preventDefault(); // prevent scrolling
         }
       }
+      if (shortcut === "backspace" || shortcut === "delete") {
+        onDelete(selectedInstance.id);
+      }
     },
-    [selectedInstance, flatCurrentlyExpandedTree, getIsExpanded, setIsExpanded]
+    [
+      selectedInstance,
+      flatCurrentlyExpandedTree,
+      getIsExpanded,
+      setIsExpanded,
+      onDelete,
+    ]
   );
 
   const setFocus = useCallback(

@@ -148,6 +148,11 @@ export const useDeleteInstance = () => {
     "deleteInstance",
     ({ id }) => {
       if (rootInstance !== undefined && selectedInstance !== undefined) {
+        // @todo tell user they can't delete root
+        if (id === rootInstance.id) {
+          return;
+        }
+
         const parentInstance = findParentInstance(rootInstance, id);
         if (parentInstance !== undefined) {
           const siblingInstance = findClosestSiblingInstance(

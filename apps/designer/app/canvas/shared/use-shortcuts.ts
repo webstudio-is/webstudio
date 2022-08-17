@@ -9,10 +9,7 @@ import {
 import { shortcuts, options } from "~/shared/shortcuts";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
-import {
-  useRootInstance,
-  useTextEditingInstanceId,
-} from "~/shared/nano-states";
+import { useTextEditingInstanceId } from "~/shared/nano-states";
 
 const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
 
@@ -49,23 +46,16 @@ const publishCancelCurrentDrag = () => {
 };
 
 export const useShortcuts = () => {
-  const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
 
   const publishDeleteInstance = () => {
-    // @todo tell user they can't delete root
-    if (
-      selectedInstance === undefined ||
-      selectedInstance.id === rootInstance?.id
-    ) {
+    if (selectedInstance === undefined) {
       return;
     }
     publish<"deleteInstance", { id: Instance["id"] }>({
       type: "deleteInstance",
-      payload: {
-        id: selectedInstance.id,
-      },
+      payload: { id: selectedInstance.id },
     });
   };
 
@@ -82,6 +72,7 @@ export const useShortcuts = () => {
     esc: publishCancelCurrentDrag,
   } as const;
 
+  // @todo: doesnt allow to delete when navigator is in focus
   useHotkeys(
     "backspace, delete",
     shortcutHandlerMap.delete,
