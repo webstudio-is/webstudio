@@ -6,5 +6,5 @@ export type Asset = DbAsset & {
   path: string;
   status?: "uploading" | "uploaded";
 };
-export type Project = BaseProject & { assets: DbAsset[] };
+export type Project = BaseProject & { assets?: DbAsset[] };
 export type { DbAsset };

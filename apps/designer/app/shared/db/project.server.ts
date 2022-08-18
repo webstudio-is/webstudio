@@ -17,22 +17,23 @@ export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
 };
 
-const parseProject = (
-  project: BaseProject | null
-): Project | Omit<BaseProject, "assets"> | null => {
-  if (project === null) return null;
+const parseProject = (project: BaseProject): Project => {
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   TreeHistorySchema.parse(prodTreeIdHistory);
-  const newAssets =
-    "assets" in project
-      ? project.assets.map((asset) => ({
-          ...asset,
-          path: getAssetPath(asset),
-        }))
-      : {};
+
+  if (project?.assets) {
+    return {
+      assets: project.assets.map((asset) => ({
+        ...asset,
+        path: getAssetPath(asset),
+      })),
+      ...project,
+      prodTreeIdHistory,
+    };
+  }
+
   return {
     ...project,
-    assets: newAssets,
     prodTreeIdHistory,
   };
 };
@@ -47,6 +48,8 @@ export const loadById = async (projectId?: Project["id"]) => {
     include: { assets: true },
   });
 
+  if (!project) return null;
+
   return parseProject(project);
 };
 
@@ -55,6 +58,7 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
     where: { domain },
     include: { assets: true },
   });
+  if (!project) return null;
 
   return parseProject(project);
 };
