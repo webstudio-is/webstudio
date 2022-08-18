@@ -7,7 +7,11 @@ import { Asset } from "~/designer/features/sidebar-left/types";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { UploadingAnimation } from "./uploading-animation";
 
-const useImageWithFallback = ({ path }: { path: string }) => {
+const useImageWithFallback = ({
+  path = placeholderImage,
+}: {
+  path?: string;
+}) => {
   const [src, setSrc] = useState(placeholderImage);
 
   useEffect(() => {
