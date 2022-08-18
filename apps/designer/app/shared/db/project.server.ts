@@ -19,14 +19,13 @@ export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
 const parseProject = (project: BaseProject): Project => {
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   TreeHistorySchema.parse(prodTreeIdHistory);
-
   if (project?.assets) {
     return {
+      ...project,
       assets: project.assets.map((asset) => ({
         ...asset,
         path: getAssetPath(asset),
       })),
-      ...project,
       prodTreeIdHistory,
     };
   }
@@ -44,18 +43,29 @@ export const loadById = async (projectId?: Project["id"]) => {
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    include: { assets: true },
+    include: {
+      assets: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
   });
 
   if (!project) return null;
-
   return parseProject(project);
 };
 
 export const loadByDomain = async (domain: string): Promise<Project | null> => {
   const project = await prisma.project.findUnique({
     where: { domain },
-    include: { assets: true },
+    include: {
+      assets: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
   });
   if (!project) return null;
 
@@ -138,7 +148,13 @@ export const clone = async (clonableDomain: string, userId: string) => {
         domain,
         devTreeId: tree.id,
       },
-      include: { assets: true },
+      include: {
+        assets: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
     }),
     db.props.clone({
       previousTreeId: clonableProject.prodTreeId,
@@ -183,7 +199,13 @@ export const update = async ({
         prodTreeIdHistory: JSON.stringify(data.prodTreeIdHistory),
       },
       where: { id },
-      include: { assets: true },
+      include: {
+        assets: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
     });
     return project;
   } catch (error) {
