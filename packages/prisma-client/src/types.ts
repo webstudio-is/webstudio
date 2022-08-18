@@ -3,8 +3,8 @@ export { Location } from "@prisma/client";
 export type { InstanceProps, User, Breakpoints } from "@prisma/client";
 
 export type Asset = DbAsset & {
-  path: string;
+  path?: string;
   status?: "uploading" | "uploaded";
 };
-export type Project = BaseProject & { assets?: DbAsset[] };
+export type Project = BaseProject & { assets?: Asset[] };
 export type { DbAsset };
