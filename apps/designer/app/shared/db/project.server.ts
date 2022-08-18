@@ -6,7 +6,6 @@ import {
   prisma,
   Prisma,
   Project as BaseProject,
-  Asset,
 } from "@webstudio-is/prisma-client";
 import * as db from ".";
 import { getAssetPath } from "@webstudio-is/asset-uploader/src/helpers/get-asset-path";
@@ -98,7 +97,7 @@ export const create = async ({
 }: {
   userId: string;
   title: string;
-}): Promise<(Project & { assets: Asset[] }) | null> => {
+}) => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
