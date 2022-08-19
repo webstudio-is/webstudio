@@ -47,16 +47,17 @@ model User {
 }
 
 model Project {
-  id             String  @id @default(uuid())
-  title          String
-  domain         String  @unique
-  user           User?   @relation(fields: [userId], references: [id])
-  userId         String?
-  assets         Asset[]
-  build          Build   @relation(fields: [buildIdDev], references: [id])
-  buildIdDev     String
-  buildIdProd    String? // exists when published
-  buildIdHistory String  @default("[]")
+  id     String  @id @default(uuid())
+  title  String
+  domain String  @unique
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+  assets Asset[]
+
+  devBuild   Build  @relation(name: "devBuild", fields: [devBuildId], references: [id])
+  devBuildId String @unique
+
+  prodBuilds Build[] @relation(name: "prodBuilds")
 
   // Migrating away from
   prodTreeId        String? // exists when published
@@ -65,10 +66,14 @@ model Project {
 }
 
 model Build {
-  id        String    @id @default(uuid())
-  createdAt DateTime  @default(now())
-  pages     String    @default("[]") // Each page can be a tree of folders and pages Project
-  Project   Project[]
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  pages     String   @default("[]") // Each page can be a tree of folders and pages 
+
+  projectDev Project? @relation(name: "devBuild")
+
+  projectProd   Project? @relation(name: "prodBuilds", fields: [projectProdId], references: [id])
+  projectProdId String?
 }
 
 model Tree {
