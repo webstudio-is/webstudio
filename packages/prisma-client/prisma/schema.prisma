@@ -66,7 +66,7 @@ model Project {
 }
 
 model Build {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   pages     String   @default("[]") // Each page can be a tree of folders and pages 
 
