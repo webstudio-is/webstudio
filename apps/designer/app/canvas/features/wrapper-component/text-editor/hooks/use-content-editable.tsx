@@ -1,4 +1,4 @@
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useLexicalComposerContext } from "../lexical";
 import { useCallback, useEffect } from "react";
 
 type RefCallback = (rootElement: null | HTMLElement) => void;

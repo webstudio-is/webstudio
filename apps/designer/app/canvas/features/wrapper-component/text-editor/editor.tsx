@@ -1,9 +1,15 @@
-import { type ChildrenUpdates, type Instance } from "@webstudio-is/react-sdk";
-import { RichTextPlugin, HistoryPlugin } from "./lexical";
+import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
+import {
+  RichTextPlugin,
+  HistoryPlugin,
+  LexicalComposer,
+  useLexicalComposerContext,
+} from "./lexical";
 import { InstancePlugin } from "./plugins/plugin-instance";
 import { ToolbarConnectorPlugin } from "./plugins/plugin-toolbar-connector";
 import { OnChangePlugin } from "./plugins/plugin-on-change";
-import { memo } from "react";
+import { config } from "./config";
+import { useEffect } from "react";
 
 type EditorProps = {
   children?: JSX.Element;
@@ -12,12 +18,19 @@ type EditorProps = {
   onChange: (updates: ChildrenUpdates) => void;
 };
 
-export const Editor = ({
+const Editor = ({
+  element,
   instance,
   editable,
   children,
   onChange,
 }: EditorProps) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    editor.setRootElement(element);
+  }, [element]);
+
   return (
     <>
       <RichTextPlugin contentEditable={editable} placeholder="" />
@@ -30,5 +43,12 @@ export const Editor = ({
   );
 };
 
-// Prevent rerender because in editing mode Editor controls the node.
-export const EditorMemoized = memo(Editor, () => true);
+const EditorConfigured = (props) => {
+  return (
+    <LexicalComposer initialConfig={config}>
+      <Editor {...props} />
+    </LexicalComposer>
+  );
+};
+
+export default EditorConfigured;

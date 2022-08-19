@@ -1,4 +1,4 @@
-import { useCallback, MouseEvent, FormEvent, useMemo } from "react";
+import { useCallback, MouseEvent, FormEvent, useMemo, useRef } from "react";
 import {
   type Instance,
   type CSS,
@@ -11,7 +11,7 @@ import {
 import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
 import { useEnsureFocus } from "./use-ensure-focus";
-import { EditorMemoized, useContentEditable } from "./text-editor";
+import { Editor } from "./text-editor";
 import noop from "lodash.noop";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 
@@ -31,24 +31,23 @@ export const WrapperComponentDev = ({
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
   const [editingInstanceId] = useTextEditingInstanceId();
-  const [, setSelectedElement] = useSelectedElement();
+  const [element, setSelectedElement] = useSelectedElement();
   const isEditing = editingInstanceId === instance.id;
-  const [editableRefCallback, editableProps] = useContentEditable(isEditing);
   const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
     (element) => {
-      if (isEditing) editableRefCallback(element);
       focusRefCallback(element);
       // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
       if (element !== null) setSelectedElement(element);
     },
-    [focusRefCallback, editableRefCallback, setSelectedElement, isEditing]
+    [focusRefCallback, setSelectedElement, isEditing]
   );
 
   const userProps = useUserProps(instance.id);
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
+  const editableProps = isEditing ? { contentEditable: true } : undefined;
 
   const { Component } = components[instance.component];
 
@@ -78,7 +77,8 @@ export const WrapperComponentDev = ({
 
   if (isEditing) {
     return (
-      <EditorMemoized
+      <Editor
+        element={element}
         instance={instance}
         editable={<Component {...props} />}
         onChange={(updates) => {
