@@ -13,13 +13,12 @@ import { useEffect } from "react";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 
 type EditorProps = {
-  children?: JSX.Element;
   editable: JSX.Element;
   instance: Instance;
   onChange: (updates: ChildrenUpdates) => void;
 };
 
-const Editor = ({ instance, editable, children, onChange }: EditorProps) => {
+const Editor = ({ instance, editable, onChange }: EditorProps) => {
   const [editor] = useLexicalComposerContext();
   const [element] = useSelectedElement();
 
@@ -37,7 +36,6 @@ const Editor = ({ instance, editable, children, onChange }: EditorProps) => {
       <HistoryPlugin />
       <InstancePlugin>{instance.children}</InstancePlugin>
       <ToolbarConnectorPlugin />
-      {children}
     </>
   );
 };
