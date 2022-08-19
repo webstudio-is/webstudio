@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint",
-    "build:prisma": "prisma format && prisma generate"
+    "build": "prisma format && prisma generate"
   },
   "devDependencies": {
     "prisma": "^4.1.0"
