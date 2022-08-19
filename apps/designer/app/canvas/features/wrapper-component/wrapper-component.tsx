@@ -1,4 +1,4 @@
-import { useCallback, MouseEvent, FormEvent, useMemo, useRef } from "react";
+import { useCallback, MouseEvent, FormEvent, useMemo } from "react";
 import {
   type Instance,
   type CSS,
@@ -31,7 +31,7 @@ export const WrapperComponentDev = ({
 }: WrapperComponentDevProps) => {
   const className = useCss({ instance, css });
   const [editingInstanceId] = useTextEditingInstanceId();
-  const [element, setSelectedElement] = useSelectedElement();
+  const [, setSelectedElement] = useSelectedElement();
   const isEditing = editingInstanceId === instance.id;
   const focusRefCallback = useEnsureFocus();
 
@@ -78,7 +78,6 @@ export const WrapperComponentDev = ({
   if (isEditing) {
     return (
       <Editor
-        element={element}
         instance={instance}
         editable={<Component {...props} />}
         onChange={(updates) => {

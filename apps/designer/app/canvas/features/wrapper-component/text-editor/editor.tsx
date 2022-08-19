@@ -10,6 +10,7 @@ import { ToolbarConnectorPlugin } from "./plugins/plugin-toolbar-connector";
 import { OnChangePlugin } from "./plugins/plugin-on-change";
 import { config } from "./config";
 import { useEffect } from "react";
+import { useSelectedElement } from "~/canvas/shared/nano-states";
 
 type EditorProps = {
   children?: JSX.Element;
@@ -18,17 +19,15 @@ type EditorProps = {
   onChange: (updates: ChildrenUpdates) => void;
 };
 
-const Editor = ({
-  element,
-  instance,
-  editable,
-  children,
-  onChange,
-}: EditorProps) => {
+const Editor = ({ instance, editable, children, onChange }: EditorProps) => {
   const [editor] = useLexicalComposerContext();
+  const [element] = useSelectedElement();
 
   useEffect(() => {
-    editor.setRootElement(element);
+    if (element === undefined) editor.setRootElement(element);
+    return () => {
+      editor.setRootElement(null);
+    };
   }, [element]);
 
   return (
