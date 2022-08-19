@@ -8,6 +8,7 @@ import {
   Project as BaseProject,
 } from "@webstudio-is/prisma-client";
 import * as db from ".";
+import { getAssetPath } from "@webstudio-is/asset-uploader/src/helpers/get-asset-path";
 
 const TreeHistorySchema = z.array(z.string());
 
@@ -15,32 +16,58 @@ export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
   prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
 };
 
-const parseProject = (project: BaseProject | null): Project | null => {
-  if (project === null) return null;
+const parseProject = (project: BaseProject): Project => {
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   TreeHistorySchema.parse(prodTreeIdHistory);
+  if (project?.assets) {
+    return {
+      ...project,
+      assets: project.assets.map((asset) => ({
+        ...asset,
+        path: getAssetPath(asset),
+      })),
+      prodTreeIdHistory,
+    };
+  }
+
   return {
     ...project,
     prodTreeIdHistory,
   };
 };
 
-export const loadById = async (
-  projectId?: Project["id"]
-): Promise<Project | null> => {
+export const loadById = async (projectId?: Project["id"]) => {
   if (typeof projectId !== "string") {
     throw new Error("Project ID required");
   }
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
+    include: {
+      assets: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
   });
 
+  if (!project) return null;
   return parseProject(project);
 };
 
 export const loadByDomain = async (domain: string): Promise<Project | null> => {
-  const project = await prisma.project.findUnique({ where: { domain } });
+  const project = await prisma.project.findUnique({
+    where: { domain },
+    include: {
+      assets: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
+  });
+  if (!project) return null;
 
   return parseProject(project);
 };
@@ -50,7 +77,7 @@ export const loadManyByUserId = async (
 ): Promise<Array<Project>> => {
   const projects = await prisma.project.findMany({
     where: {
-      User: {
+      user: {
         id: userId,
       },
     },
@@ -80,7 +107,7 @@ export const create = async ({
 }: {
   userId: string;
   title: string;
-}): Promise<Project | null> => {
+}) => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
@@ -98,13 +125,11 @@ export const create = async ({
   });
 
   await db.breakpoints.create(tree.id, breakpoints);
+
   return parseProject(project);
 };
 
-export const clone = async (
-  clonableDomain: string,
-  userId: string
-): Promise<Project> => {
+export const clone = async (clonableDomain: string, userId: string) => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
@@ -122,6 +147,13 @@ export const clone = async (
         title: clonableProject.title,
         domain,
         devTreeId: tree.id,
+      },
+      include: {
+        assets: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
     }),
     db.props.clone({
@@ -150,7 +182,7 @@ export const update = async ({
   prodTreeId?: string;
   devTreeId?: string;
   prodTreeIdHistory: Array<string>;
-}): Promise<BaseProject> => {
+}) => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
     if (data.domain.length < MIN_DOMAIN_LENGTH) {
@@ -167,6 +199,13 @@ export const update = async ({
         prodTreeIdHistory: JSON.stringify(data.prodTreeIdHistory),
       },
       where: { id },
+      include: {
+        assets: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
     });
     return project;
   } catch (error) {

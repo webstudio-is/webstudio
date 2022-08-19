@@ -4,7 +4,7 @@ import {
   usePublish,
   type Publish,
 } from "@webstudio-is/react-sdk";
-import { type Project, type Asset } from "@webstudio-is/prisma-client";
+import { type Project } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
 import type {
   HoveredInstanceData,
@@ -218,10 +218,9 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 type DesignerProps = {
   config: Config;
   project: Project;
-  assets: Array<Asset>;
 };
 
-export const Designer = ({ config, project, assets }: DesignerProps) => {
+export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -270,7 +269,7 @@ export const Designer = ({ config, project, assets }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft assets={assets} publish={publish} />
+        <SidebarLeft assets={project.assets} publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel
