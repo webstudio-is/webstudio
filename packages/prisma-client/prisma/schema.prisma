@@ -41,7 +41,7 @@ model User {
   image     String?
   username  String?
   createdAt DateTime  @default(now())
-  Team      Team?     @relation(fields: [teamId], references: [id])
+  team      Team?     @relation(fields: [teamId], references: [id])
   teamId    String?
   projects  Project[]
 }
@@ -50,9 +50,9 @@ model Project {
   id             String  @id @default(uuid())
   title          String
   domain         String  @unique
-  User           User?   @relation(fields: [userId], references: [id])
+  user           User?   @relation(fields: [userId], references: [id])
   userId         String?
-  Asset          Asset[]
+  assets         Asset[]
   build          Build   @relation(fields: [buildIdDev], references: [id])
   buildIdDev     String
   buildIdProd    String? // exists when published
@@ -68,6 +68,7 @@ model Build {
   id        String    @id @default(uuid())
   createdAt DateTime  @default(now())
   pages     String    @default("[]") // Each page can be a tree of folders and pages Project
+  Project   Project[]
 }
 
 model Tree {

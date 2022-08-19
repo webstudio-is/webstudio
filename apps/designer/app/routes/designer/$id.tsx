@@ -10,10 +10,7 @@ import { uploadAssets } from "~/shared/db/misc.server";
 import { ErrorMessage } from "~/shared/error";
 // if this file does not end in .server remix will not build
 // since it only allows node code in those files
-import {
-  deleteAsset,
-  loadByProject as loadAssetByProject,
-} from "@webstudio-is/asset-uploader/index.server";
+import { deleteAsset } from "@webstudio-is/asset-uploader/index.server";
 import { zfd } from "zod-form-data";
 import { useEffect } from "react";
 
@@ -22,7 +19,6 @@ export { links };
 type Data = {
   config: typeof config;
   project: db.project.Project;
-  assets: Asset[];
   env: Env;
 };
 
@@ -35,12 +31,11 @@ export const loader: LoaderFunction = async ({
 }): Promise<Data | Error> => {
   if (params.id === undefined) throw new Error("Project id undefined");
   const project = await db.project.loadById(params.id);
-  const assets = await loadAssetByProject(params.id);
 
   if (project === null) {
     return { errors: `Project "${params.id}" not found` };
   }
-  return { config, assets, project, env };
+  return { config, project, env };
 };
 
 const deleteAssetSchema = zfd.formData({
