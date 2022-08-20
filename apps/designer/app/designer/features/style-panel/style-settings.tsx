@@ -8,7 +8,11 @@ import {
 
 import { type StyleConfig, styleConfigs } from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
-import { renderProperty, renderCategory } from "./style-sections";
+import {
+  renderProperty,
+  renderCategory,
+  shouldRenderCategory,
+} from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import { type InheritedStyle } from "./shared/get-inherited-style";
 import {
@@ -130,25 +134,24 @@ export const StyleSettings = ({
     }
 
     if (styleConfigsByCategory.length === 0) continue;
-
-    all.push(
-      <CollapsibleSection
-        isOpen={isSearchMode ? true : undefined}
-        label={categories[category].label}
-        key={category}
-      >
-        <>
-          {renderCategory({
-            setProperty,
-            createBatchUpdate,
-            currentStyle,
-            category,
-            styleConfigsByCategory,
-            moreStyleConfigsByCategory,
-          })}
-        </>
-      </CollapsibleSection>
-    );
+    const categoryProps = {
+      setProperty,
+      createBatchUpdate,
+      currentStyle,
+      category,
+      styleConfigsByCategory,
+      moreStyleConfigsByCategory,
+    };
+    if (shouldRenderCategory(categoryProps))
+      all.push(
+        <CollapsibleSection
+          isOpen={isSearchMode ? true : undefined}
+          label={categories[category].label}
+          key={category}
+        >
+          <>{renderCategory(categoryProps)}</>
+        </CollapsibleSection>
+      );
   }
   return <>{all}</>;
 };

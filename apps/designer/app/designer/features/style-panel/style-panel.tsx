@@ -57,11 +57,11 @@ export const StylePanel = ({
   return (
     <>
       <Box css={{ overflow: "auto" }}>
-        <Box css={{ p: "$3 $3 $1 $3" }}>
-          <ComponentInfo selectedInstanceData={selectedInstanceData} />
-        </Box>
-        <Box css={{ p: "$2 $3 $1 $3" }}>
-          <Search onSearch={setSearch} />
+        <Box css={{ px: "$3", paddingBottom: "$1" }}>
+          <Search
+            onSearch={setSearch}
+            selectedInstanceData={selectedInstanceData}
+          />
         </Box>
         <StyleSettings
           search={search}

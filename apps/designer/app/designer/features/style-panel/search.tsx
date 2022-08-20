@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { css, IconButton, TextField } from "@webstudio-is/design-system";
-import { Cross1Icon } from "@webstudio-is/icons";
+import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
+import { components } from "@webstudio-is/react-sdk";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 const formStyle = css({
   position: "relative",
-});
-
-const resetStyle = css({
-  position: "absolute",
-  right: 0,
 });
 
 type OnSearch = (search: string) => void;
@@ -26,9 +23,10 @@ const useSearch = (onSearch: OnSearch): [string, OnSearch] => {
 
 type SearchProps = {
   onSearch: OnSearch;
+  selectedInstanceData: SelectedInstanceData;
 };
 
-export const Search = ({ onSearch }: SearchProps) => {
+export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
   const [search, setSearch] = useSearch(onSearch);
   return (
     <form
@@ -45,32 +43,38 @@ export const Search = ({ onSearch }: SearchProps) => {
       <TextField
         value={search}
         css={{
-          padding: "$2",
-          boxShadow: "0 0 0 1px $colors$slate7",
+          fontSize: "$2",
+          height: "$sizes$6",
+          padding: "$3 calc($2 + $1)",
+          border: "2px solid $colors$slate7",
           bc: "$colors$slate3",
+          borderRadius: "$2",
+          boxShadow: "none",
           "&:focus": {
             bc: "$colors$slate1",
-            boxShadow: "0 0 0 2px $colors$blue10",
+            borderWidth: 2,
+            borderColor: "$colors$blue10",
+            boxShadow: "none",
           },
         }}
-        placeholder="Search property or value"
+        placeholder={components[selectedInstanceData.component].label}
         onChange={(event) => {
           const { value } = event.target;
           setSearch(value.toLowerCase());
         }}
       />
       <IconButton
-        disabled={search.length === 0}
         type="reset"
         aria-label="Reset search"
-        className={resetStyle()}
         css={{
-          // @todo: feels wrong to use transform for this, would setting width/height on the icon directly be a better approach?
-          transform: "scale(.75)",
-          "&:disabled path": { fill: "none" },
+          color: "$slate9",
+          position: "absolute",
+          top: "50%",
+          right: 0,
+          transform: "translate(-25%,-50%)",
         }}
       >
-        <Cross1Icon />
+        {search.length === 0 ? <MagnifyingGlassIcon /> : <Cross2Icon />}
       </IconButton>
     </form>
   );

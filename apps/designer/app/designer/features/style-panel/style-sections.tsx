@@ -107,6 +107,20 @@ export const renderCategory = ({
   );
 };
 
+export const shouldRenderCategory = ({
+  currentStyle,
+  category,
+}: RenderCategoryProps) => {
+  switch (category) {
+    case "flexChild":
+      return (currentStyle.display?.value as string)?.includes("flex");
+    case "gridChild":
+      return (currentStyle.display?.value as string)?.includes("grid");
+  }
+
+  return true;
+};
+
 const sections: {
   [key: string]: (props: RenderCategoryProps) => JSX.Element | null;
 } = {

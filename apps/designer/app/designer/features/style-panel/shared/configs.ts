@@ -8,6 +8,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { humanizeString } from "~/shared/string-utils";
 import {
+  IconRecords,
   AlignContentStartIcon,
   AlignContentEndIcon,
   AlignContentCenterIcon,
@@ -34,7 +35,8 @@ import {
   JustifyItemsStartIcon,
   JustifyItemsEndIcon,
   JustifyItemsCenterIcon,
-  IconRecords,
+  RowGapIcon,
+  ColumnGapIcon,
 } from "@webstudio-is/icons";
 
 type BaseStyleConfig = {
@@ -125,6 +127,7 @@ const createStyleConfigs = () => {
 export const styleConfigs: Array<StyleConfig> = createStyleConfigs();
 
 export const iconConfigs: IconRecords = {
+  // layout
   alignContent: {
     normal: AlignContentStartIcon,
     start: AlignContentStartIcon,
@@ -168,5 +171,124 @@ export const iconConfigs: IconRecords = {
     start: JustifyItemsStartIcon,
     end: JustifyItemsEndIcon,
     center: JustifyItemsCenterIcon,
+  },
+  rowGap: {
+    normal: RowGapIcon,
+  },
+  columnGap: {
+    normal: ColumnGapIcon,
+  },
+  // flex child
+  flexShrink: {
+    normal: ColumnGapIcon,
+  },
+  flexGrow: {
+    normal: ColumnGapIcon,
+  },
+  flexBasis: {
+    normal: ColumnGapIcon,
+  },
+  // grid child
+  alignSelf: {
+    normal: ColumnGapIcon,
+  },
+  order: {
+    normal: ColumnGapIcon,
+  },
+  justifySelf: {
+    normal: ColumnGapIcon,
+  },
+  // size
+  width: {
+    normal: ColumnGapIcon,
+  },
+  height: {
+    normal: ColumnGapIcon,
+  },
+  minWidth: {
+    normal: ColumnGapIcon,
+  },
+  minHeight: {
+    normal: ColumnGapIcon,
+  },
+  maxWidth: {
+    normal: ColumnGapIcon,
+  },
+  maxHeight: {
+    normal: ColumnGapIcon,
+  },
+  overflow: {
+    normal: ColumnGapIcon,
+  },
+  objectFit: {
+    normal: ColumnGapIcon,
+  },
+  // position
+  position: {
+    normal: ColumnGapIcon,
+  },
+  float: {
+    normal: ColumnGapIcon,
+  },
+  // typography
+  fontFamily: {
+    normal: ColumnGapIcon,
+  },
+  fontWeight: {
+    normal: ColumnGapIcon,
+  },
+  fontSize: {
+    normal: ColumnGapIcon,
+  },
+  lineHeight: {
+    normal: ColumnGapIcon,
+  },
+  color: {
+    normal: ColumnGapIcon,
+  },
+  textAlign: {
+    normal: ColumnGapIcon,
+  },
+  fontStyle: {
+    normal: ColumnGapIcon,
+  },
+  textDecorationColor: {
+    normal: ColumnGapIcon,
+  },
+  textDecorationLine: {
+    normal: ColumnGapIcon,
+  },
+  textDecorationStyle: {
+    normal: ColumnGapIcon,
+  },
+  textIndent: {
+    normal: ColumnGapIcon,
+  },
+  letterSpacing: {
+    normal: ColumnGapIcon,
+  },
+  columnCount: {
+    normal: ColumnGapIcon,
+  },
+  columnRuleStyle: {
+    normal: ColumnGapIcon,
+  },
+  columnRuleWidth: {
+    normal: ColumnGapIcon,
+  },
+  columnRuleColor: {
+    normal: ColumnGapIcon,
+  },
+  textTransform: {
+    normal: ColumnGapIcon,
+  },
+  direction: {
+    normal: ColumnGapIcon,
+  },
+  whiteSpace: {
+    normal: ColumnGapIcon,
+  },
+  textShadow: {
+    normal: ColumnGapIcon,
   },
 };

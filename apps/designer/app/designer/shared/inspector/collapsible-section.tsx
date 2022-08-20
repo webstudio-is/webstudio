@@ -51,7 +51,6 @@ export const CollapsibleSection = ({
               px: "$3",
               color: "$hiContrast",
               cursor: "default",
-              ...(isOpenFinal && { paddingBottom: 0 }),
             }}
           >
             <Text size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
@@ -73,6 +72,7 @@ export const CollapsibleSection = ({
             direction="column"
             css={{
               p: "$3",
+              paddingTop: 0,
               "&:empty": {
                 display: "none",
               },
