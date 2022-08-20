@@ -1,6 +1,6 @@
 import { memo, lazy, Suspense } from "react";
 
-const EditorLazy = lazy(() => import("./editor.tsx"));
+const EditorLazy = lazy(() => import("./editor"));
 
 const EditorWithSuspense = (props) => {
   return (

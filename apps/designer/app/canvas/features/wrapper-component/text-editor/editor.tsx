@@ -23,7 +23,8 @@ const Editor = ({ instance, editable, onChange }: EditorProps) => {
   const [element] = useSelectedElement();
 
   useEffect(() => {
-    if (element === undefined) editor.setRootElement(element);
+    if (element === undefined) return;
+    editor.setRootElement(element);
     return () => {
       editor.setRootElement(null);
     };
