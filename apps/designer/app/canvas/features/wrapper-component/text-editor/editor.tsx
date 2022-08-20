@@ -12,7 +12,7 @@ import { config } from "./config";
 import { useEffect } from "react";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 
-type EditorProps = {
+export type EditorProps = {
   editable: JSX.Element;
   instance: Instance;
   onChange: (updates: ChildrenUpdates) => void;
@@ -41,7 +41,7 @@ const Editor = ({ instance, editable, onChange }: EditorProps) => {
   );
 };
 
-const EditorConfigured = (props) => {
+const EditorConfigured = (props: EditorProps) => {
   return (
     <LexicalComposer initialConfig={config}>
       <Editor {...props} />
