@@ -47,6 +47,17 @@ export const Text = styled("div", {
         textIndent: "-.025em",
       },
     },
+    weight: {
+      bold: {
+        fontWeight: "700",
+      },
+      semibold: {
+        fontWeight: "600",
+      },
+      light: {
+        fontWeight: "300",
+      },
+    },
     variant: {
       red: {
         color: "$red11",

@@ -24,7 +24,7 @@ import { useSubmit } from "@remix-run/react";
 
 type AssetInfoProps = Asset & {
   closeInfo: () => void;
-  setIsDeleting: (a: boolean) => void;
+  setIsDeleting: (isDeleting: boolean) => void;
 };
 
 export const AssetInfo = ({
@@ -53,7 +53,7 @@ export const AssetInfo = ({
         align="center"
         justify="between"
       >
-        <Text size="1" css={{ fontWeight: "bold" }}>
+        <Text size="1" weight="bold">
           Asset Details
         </Text>
 
