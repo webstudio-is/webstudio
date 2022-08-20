@@ -11,6 +11,7 @@ import { OnChangePlugin } from "./plugins/plugin-on-change";
 import { config } from "./config";
 import { useEffect } from "react";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
+import { getInstanceIdFromElement } from "~/shared/dom-utils";
 
 export type EditorProps = {
   editable: JSX.Element;
@@ -18,18 +19,18 @@ export type EditorProps = {
   onChange: (updates: ChildrenUpdates) => void;
 };
 
-const Editor = ({ instance, editable, onChange }: EditorProps) => {
+const useSetElement = (instance: Instance) => {
   const [editor] = useLexicalComposerContext();
   const [element] = useSelectedElement();
-
   useEffect(() => {
-    if (element === undefined) return;
-    editor.setRootElement(element);
-    return () => {
-      editor.setRootElement(null);
-    };
-  }, [element]);
+    if (element && getInstanceIdFromElement(element) === instance.id) {
+      editor.setRootElement(element);
+    }
+  }, [element, editor, instance]);
+};
 
+const Editor = ({ instance, editable, onChange }: EditorProps) => {
+  useSetElement(instance);
   return (
     <>
       <RichTextPlugin contentEditable={editable} placeholder="" />

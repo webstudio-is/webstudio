@@ -32,7 +32,6 @@ export const WrapperComponentDev = ({
   const className = useCss({ instance, css });
   const [editingInstanceId] = useTextEditingInstanceId();
   const [, setSelectedElement] = useSelectedElement();
-  const isEditing = editingInstanceId === instance.id;
   const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
@@ -41,13 +40,12 @@ export const WrapperComponentDev = ({
       // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
       if (element !== null) setSelectedElement(element);
     },
-    [focusRefCallback, setSelectedElement, isEditing]
+    [focusRefCallback, setSelectedElement]
   );
 
   const userProps = useUserProps(instance.id);
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
-  const editableProps = isEditing ? { contentEditable: true } : undefined;
 
   const { Component } = components[instance.component];
 
@@ -55,12 +53,13 @@ export const WrapperComponentDev = ({
     ...userProps,
     ...rest,
     ...readonlyProps,
-    ...editableProps,
     // @todo merge className with props
-    className: className,
-    // @todo stop using id to free it up to the user
-    id: instance.id,
+    className,
     tabIndex: 0,
+    // @todo stop using id to free it up to the user
+    // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id
+    // for this we need to also make search by id fast
+    id: instance.id,
     "data-component": instance.component,
     "data-id": instance.id,
     ref: refCallback,
@@ -75,11 +74,11 @@ export const WrapperComponentDev = ({
     },
   };
 
-  if (isEditing) {
+  if (editingInstanceId === instance.id) {
     return (
       <Editor
         instance={instance}
-        editable={<Component {...props} />}
+        editable={<Component {...props} contentEditable={true} />}
         onChange={(updates) => {
           onChangeChildren({ instanceId: instance.id, updates });
         }}
