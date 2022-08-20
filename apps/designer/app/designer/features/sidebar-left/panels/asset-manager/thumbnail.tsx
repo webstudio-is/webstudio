@@ -7,7 +7,11 @@ import { GearIcon } from "@webstudio-is/icons";
 import { AssetInfo } from "./asset-info";
 import { Asset } from "@webstudio-is/prisma-client";
 
-const useImageWithFallback = ({ path }: { path: string }) => {
+const useImageWithFallback = ({
+  path = placeholderImage,
+}: {
+  path?: string;
+}) => {
   const [src, setSrc] = useState(placeholderImage);
 
   useEffect(() => {

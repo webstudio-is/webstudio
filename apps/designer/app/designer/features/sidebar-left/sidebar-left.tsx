@@ -19,7 +19,7 @@ const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
   publish: Publish;
-  assets: Array<Asset>;
+  assets?: Array<Asset>;
 };
 
 export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
@@ -78,7 +78,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
           }}
         >
           <TabContent
-            assets={assets}
+            assets={assets || []}
             publish={publish}
             onSetActiveTab={setActiveTab}
           />
