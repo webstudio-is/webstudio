@@ -8,11 +8,7 @@ import {
   Button,
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/prisma-client";
-import {
-  getFormattedAspectRatio,
-  getHumanReadableFileSize,
-  getStartAndEndOfString,
-} from "./utils";
+import { getFormattedAspectRatio } from "./utils";
 import {
   CloudIcon,
   AspectRatioIcon,
@@ -21,6 +17,26 @@ import {
   TrashIcon,
 } from "@webstudio-is/icons";
 import { useSubmit } from "@remix-run/react";
+import prettyBytes from "pretty-bytes";
+
+const truncatedText = {
+  position: "relative",
+  maxWidth: 80,
+
+  div: {
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    overflow: "hidden",
+
+    "&:after": {
+      content: "attr(data-extension)",
+      position: "absolute",
+      left: "100%",
+      top: 0,
+      whiteSpace: "nowrap",
+    },
+  },
+};
 
 type AssetInfoProps = Asset & {
   onClose: () => void;
@@ -68,11 +84,17 @@ export const AssetInfo = ({
       </Flex>
       <Separator />
       <Box css={{ p: "$2 $3" }}>
-        <Grid columns={2}>
-          <Text size="1">{getStartAndEndOfString(name)}</Text>
+        <Grid columns={2} align="center">
+          <Box css={{ width: 100 }}>
+            <Box css={truncatedText}>
+              <Text size="1" data-extension={name.split(".").pop()}>
+                {name}
+              </Text>
+            </Box>
+          </Box>
           <Flex align="center" css={{ gap: "$1" }}>
             <CloudIcon />
-            <Text size="1">{getHumanReadableFileSize(size)}</Text>
+            <Text size="1">{prettyBytes(size)}</Text>
           </Flex>
         </Grid>
       </Box>
