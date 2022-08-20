@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/prisma-client";
 import {
-  getAspectRatio,
+  getFormattedAspectRatio,
   getHumanReadableFileSize,
   getStartAndEndOfString,
 } from "./utils";
@@ -37,7 +37,7 @@ export const AssetInfo = ({
   setIsDeleting,
 }: AssetInfoProps) => {
   const submit = useSubmit();
-  const onDelete = () => {
+  const handleDeleteAsset = () => {
     const formData = new FormData();
     formData.append("assetId", id);
     formData.append("assetName", name);
@@ -87,7 +87,7 @@ export const AssetInfo = ({
           <Flex align="center" css={{ gap: "$1" }}>
             <AspectRatioIcon />
             <Text size="1">
-              {getAspectRatio(
+              {getFormattedAspectRatio(
                 width as unknown as number,
                 height as unknown as number
               )}
@@ -96,7 +96,7 @@ export const AssetInfo = ({
         </Grid>
       </Box>
       <Box css={{ p: "$2 $3" }}>
-        <Button variant="red" size="2" onClick={onDelete}>
+        <Button variant="red" size="2" onClick={handleDeleteAsset}>
           <Flex align="center" css={{ gap: "$1" }}>
             <TrashIcon />
             Delete

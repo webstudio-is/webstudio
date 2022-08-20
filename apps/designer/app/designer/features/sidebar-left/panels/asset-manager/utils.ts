@@ -11,11 +11,11 @@ export const getStartAndEndOfString = (str: string) => {
   return str;
 };
 
-export const gcd = (a: number, b: number): number => {
+const gcd = (a: number, b: number): number => {
   return b ? gcd(b, a % b) : a;
 };
 
-export const getAspectRatio = (width: number, height: number) => {
+export const getFormattedAspectRatio = (width: number, height: number) => {
   const divisor = gcd(width, height);
 
   return `${width / divisor}:${height / divisor}`;
