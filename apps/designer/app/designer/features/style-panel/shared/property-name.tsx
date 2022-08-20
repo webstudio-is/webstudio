@@ -1,13 +1,9 @@
 import { Label } from "@webstudio-is/design-system";
-import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
-import { propertyNameColorForSelectedBreakpoint } from "../shared/constants";
+import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
+import { propertyNameColorForSelectedBreakpoint } from "./constants";
 import type { PropertyProps } from "../style-sections";
 
-export const PropertyNameUtility = ({
-  property,
-  label,
-  css,
-}: PropertyProps) => {
+export const PropertyName = ({ property, label, css }: PropertyProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   return (

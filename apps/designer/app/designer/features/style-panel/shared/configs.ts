@@ -45,9 +45,9 @@ type BaseStyleConfig = {
 
 export type Control =
   | "Spacing"
-  | "Combobox"
+  | "Text"
   | "Color"
-  | "IconButtonWithMenu"
+  | "Menu"
   | "Select"
   | "Empty";
 
@@ -81,14 +81,14 @@ const getControl = (property: StyleProperty): Control => {
     case "justifyItems":
     case "justifyContent":
     case "alignContent": {
-      return "IconButtonWithMenu";
+      return "Menu";
     }
     case "placeContent": {
       return "Empty";
     }
   }
 
-  return "Combobox";
+  return "Text";
 };
 
 const createStyleConfigs = () => {

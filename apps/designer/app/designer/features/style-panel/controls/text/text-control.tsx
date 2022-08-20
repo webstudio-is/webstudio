@@ -1,35 +1,20 @@
 import { ChangeEvent } from "react";
-import type { StyleValue } from "@webstudio-is/react-sdk";
 import {
   Flex,
   Grid,
-  Text,
   Combobox,
   IconButton,
   TextField,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { PropertyNameUtility } from "./property-name-utility";
-import { getFinalValue } from "../shared/get-final-value";
-import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
-import { ControlProps } from "../style-sections";
+import { PropertyName } from "../../shared/property-name";
+import { getFinalValue } from "../../shared/get-final-value";
+import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
+import { ControlProps } from "../../style-sections";
 import { RowGapIcon, ColumnGapIcon } from "@webstudio-is/icons";
+import { Unit } from "../../shared/unit";
 
-const Unit = ({ value }: { value: StyleValue }) => {
-  if (value.type !== "unit" || value.unit === "number") return null;
-  return (
-    <Text
-      css={{
-        fontSize: "$1",
-        cursor: "default",
-      }}
-    >
-      {value.unit}
-    </Text>
-  );
-};
-
-export const ComboboxControl = ({
+export const TextControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -118,10 +103,7 @@ export const ComboboxControl = ({
   return (
     <Grid columns={2} align="center" gapX="1">
       {/* @todo needs icon variant */}
-      <PropertyNameUtility
-        property={styleConfig.property}
-        label={styleConfig.label}
-      />
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <Combobox
           name={styleConfig.property}

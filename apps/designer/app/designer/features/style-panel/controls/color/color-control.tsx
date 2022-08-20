@@ -9,9 +9,9 @@ import {
   PopoverContent,
   TextField,
 } from "@webstudio-is/design-system";
-import { PropertyNameUtility } from "./property-name-utility";
-import { getFinalValue } from "../shared/get-final-value";
-import type { ControlProps } from "../style-sections";
+import { PropertyName } from "../../shared/property-name";
+import { getFinalValue } from "../../shared/get-final-value";
+import type { ControlProps } from "../../style-sections";
 
 const stringifyRGBA = (color: RGBColor) => {
   const { r, g, b, a = 1 } = color;
@@ -99,10 +99,7 @@ export const ColorControl = ({
 
   return (
     <Grid columns={2} align="center" gapX="1">
-      <PropertyNameUtility
-        property={styleConfig.property}
-        label={styleConfig.label}
-      />
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
         <ColorPicker
           id={styleConfig.property}

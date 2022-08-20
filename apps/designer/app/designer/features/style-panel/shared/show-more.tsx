@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Flex, Button, Collapsible } from "@webstudio-is/design-system";
 import { TriangleDownIcon, TriangleRightIcon } from "@webstudio-is/icons";
 
-export const ShowMoreUtility = ({
+export const ShowMore = ({
   styleConfigs,
 }: {
   styleConfigs: Array<JSX.Element | null>;

@@ -1,10 +1,10 @@
 import { Flex, Grid, IconButton } from "@webstudio-is/design-system";
 import { DotFilledIcon } from "@webstudio-is/icons";
-import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
+import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
 import type { Style } from "@webstudio-is/react-sdk";
-import type { CreateBatchUpdate } from "../shared/use-style-data";
+import type { CreateBatchUpdate } from "./use-style-data";
 
-export const GridUtility = ({
+export const FlexGrid = ({
   name,
   currentStyle,
   batchUpdate,

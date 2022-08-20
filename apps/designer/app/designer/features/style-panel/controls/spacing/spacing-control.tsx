@@ -6,11 +6,11 @@ import {
   type StyleValue,
 } from "@webstudio-is/react-sdk";
 import { Box } from "@webstudio-is/design-system";
-import { SetProperty } from "../shared/use-style-data";
-import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
-import { propertyNameColorForSelectedBreakpoint } from "../shared/constants";
-import { getFinalValue } from "../shared/get-final-value";
-import type { ControlProps } from "../style-sections";
+import { SetProperty } from "../../shared/use-style-data";
+import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
+import { propertyNameColorForSelectedBreakpoint } from "../../shared/constants";
+import { getFinalValue } from "../../shared/get-final-value";
+import type { ControlProps } from "../../style-sections";
 
 type SpacingSingularStyle = { [property in SpacingProperty]?: StyleValue };
 

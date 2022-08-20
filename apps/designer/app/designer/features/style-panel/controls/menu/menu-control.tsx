@@ -1,12 +1,11 @@
-import React from "react";
 import { IconButtonWithMenu } from "@webstudio-is/design-system";
-import { ComboboxControl } from "./combobox-control";
-import { getFinalValue } from "../shared/get-final-value";
-import { useIsFromCurrentBreakpoint } from "../shared/use-is-from-current-breakpoint";
-import type { ControlProps } from "../style-sections";
-import { iconConfigs } from "../shared/configs";
+import { TextControl } from "../text/text-control";
+import { getFinalValue } from "../../shared/get-final-value";
+import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
+import type { ControlProps } from "../../style-sections";
+import { iconConfigs } from "../../shared/configs";
 
-export const IconButtonWithMenuControl = ({
+export const MenuControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -27,9 +26,10 @@ export const IconButtonWithMenuControl = ({
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
 
+  // @todo stop-gap measure until work on grid section is done
   if (String(currentStyle.display?.value).includes("flex") !== true) {
     return (
-      <ComboboxControl
+      <TextControl
         currentStyle={currentStyle}
         inheritedStyle={inheritedStyle}
         setProperty={setProperty}

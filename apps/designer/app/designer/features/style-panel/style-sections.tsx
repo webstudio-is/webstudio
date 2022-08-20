@@ -11,11 +11,11 @@ import type { InheritedStyle } from "./shared/get-inherited-style";
 import {
   ColorControl,
   SpacingControl,
-  ComboboxControl,
+  TextControl,
   SelectControl,
-  IconButtonWithMenuControl,
-  ShowMoreUtility,
+  MenuControl,
 } from "./controls";
+import { ShowMore } from "./shared/show-more";
 import { LayoutSection } from "./sections";
 
 export type PropertyProps = {
@@ -90,7 +90,7 @@ export const renderCategory = ({
     return (
       <>
         {styleConfigsByCategory}
-        <ShowMoreUtility styleConfigs={moreStyleConfigsByCategory} />
+        <ShowMore styleConfigs={moreStyleConfigsByCategory} />
       </>
     );
   }
@@ -115,9 +115,9 @@ const sections: {
 const controls: {
   [key: string]: (props: ControlProps) => JSX.Element | null;
 } = {
+  Menu: MenuControl,
+  Text: TextControl,
   Color: ColorControl,
-  Spacing: SpacingControl,
-  Combobox: ComboboxControl,
-  IconButtonWithMenu: IconButtonWithMenuControl,
   Select: SelectControl,
+  Spacing: SpacingControl,
 };
