@@ -2,8 +2,8 @@ import { ImageIcon } from "@webstudio-is/icons";
 import { Flex, Grid } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
-
-import { Asset, TabName } from "../../types";
+import type { Asset } from "@webstudio-is/prisma-client";
+import { TabName, UploadingAsset } from "../../types";
 import { Header } from "../../lib/header";
 import { AddAnAssetForm } from "./add-an-asset-form";
 import { AssetManagerThumbnail } from "./thumbnail";
@@ -11,7 +11,7 @@ import { AssetManagerThumbnail } from "./thumbnail";
 export const useAssetsState = (baseAssets: Array<Asset>) => {
   const imageChanges = useActionData();
 
-  const [assets, setAssets] = useState<Asset[]>(baseAssets);
+  const [assets, setAssets] = useState<Asset[] | UploadingAsset[]>(baseAssets);
 
   useEffect(() => {
     if (imageChanges?.errors) {
@@ -34,7 +34,7 @@ export const useAssetsState = (baseAssets: Array<Asset>) => {
     }
   }, [imageChanges]);
 
-  const onUploadAsset = (uploadedAssets: Array<Asset>) =>
+  const onUploadAsset = (uploadedAssets: Array<UploadingAsset>) =>
     setAssets((assets) => [...uploadedAssets, ...assets]);
 
   return { assets, onUploadAsset };

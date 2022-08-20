@@ -5,7 +5,8 @@ import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { GearIcon } from "@webstudio-is/icons";
 import { AssetInfo } from "./asset-info";
-import { Asset } from "@webstudio-is/prisma-client";
+import type { Asset } from "@webstudio-is/prisma-client";
+import { UploadingAsset } from "../../types";
 
 const useImageWithFallback = ({
   path = placeholderImage,
@@ -24,12 +25,13 @@ const useImageWithFallback = ({
   return src;
 };
 
-export const AssetManagerThumbnail = (asset: Asset) => {
+export const AssetManagerThumbnail = (asset: Asset | UploadingAsset) => {
   const { path, alt, status, name } = asset;
   const [isDeleting, setIsDeleting] = useState(false);
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
   const [isTooltipOpen, setTolltipOpen] = useState(false);
+  const isUploadedAsset = isUploading === false && "size" in asset;
 
   const closeTooltip = () => setTolltipOpen(false);
 
@@ -59,7 +61,7 @@ export const AssetManagerThumbnail = (asset: Asset) => {
           ...(isUploading ? { filter: "blur(1px)", opacity: 0.7 } : {}),
         }}
       ></Box>
-      {isUploading === false && (
+      {isUploadedAsset && (
         <Tooltip
           open={isTooltipOpen}
           multiline

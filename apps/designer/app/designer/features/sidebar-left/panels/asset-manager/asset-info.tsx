@@ -7,7 +7,7 @@ import {
   Separator,
   Button,
 } from "@webstudio-is/design-system";
-import { Asset } from "@webstudio-is/prisma-client";
+import type { Asset } from "@webstudio-is/prisma-client";
 import {
   getAspectRatio,
   getHumanReadableFileSize,

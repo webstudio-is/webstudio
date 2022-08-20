@@ -1,10 +1,9 @@
-import { Asset as BaseAsset } from "@webstudio-is/prisma-client";
+import { Asset } from "@webstudio-is/prisma-client";
 import { panels } from "./panels";
 
 export type TabName = keyof typeof panels | "none";
 
 export type UploadingAsset = Pick<
-  BaseAsset,
+  Asset,
   "id" | "status" | "name" | "path" | "alt"
 >;
-export type Asset = BaseAsset | UploadingAsset;
