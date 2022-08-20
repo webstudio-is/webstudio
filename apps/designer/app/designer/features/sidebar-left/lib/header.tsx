@@ -16,7 +16,7 @@ export const Header = ({ title, isClosable = true, onClose }: HeaderProps) => {
         align="center"
         justify="between"
       >
-        <Text size="1" css={{ fontWeight: "bold" }}>
+        <Text size="1" weight="700">
           {title}
         </Text>
         {isClosable && (

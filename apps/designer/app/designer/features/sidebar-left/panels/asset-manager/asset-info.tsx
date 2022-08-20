@@ -53,7 +53,7 @@ export const AssetInfo = ({
         align="center"
         justify="between"
       >
-        <Text size="1" weight="bold">
+        <Text size="1" weight="700">
           Asset Details
         </Text>
 

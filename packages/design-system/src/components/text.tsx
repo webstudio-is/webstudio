@@ -48,14 +48,17 @@ export const Text = styled("div", {
       },
     },
     weight: {
-      bold: {
-        fontWeight: "700",
+      "500": {
+        fontWeight: 500,
       },
-      semibold: {
-        fontWeight: "600",
+      "700": {
+        fontWeight: 700,
       },
-      light: {
-        fontWeight: "300",
+      "600": {
+        fontWeight: 600,
+      },
+      "300": {
+        fontWeight: 300,
       },
     },
     variant: {
