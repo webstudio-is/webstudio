@@ -30,10 +30,10 @@ export const AssetManagerThumbnail = (asset: Asset | UploadingAsset) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const isUploading = status === "uploading";
   const src = useImageWithFallback({ path });
-  const [isTooltipOpen, setTolltipOpen] = useState(false);
+  const [isTooltipOpen, setTooltipOpen] = useState(false);
   const isUploadedAsset = isUploading === false && "size" in asset;
 
-  const closeTooltip = () => setTolltipOpen(false);
+  const closeTooltip = () => setTooltipOpen(false);
 
   return (
     <Box
@@ -71,7 +71,7 @@ export const AssetManagerThumbnail = (asset: Asset | UploadingAsset) => {
           content={
             <AssetInfo
               setIsDeleting={setIsDeleting}
-              closeInfo={() => setTolltipOpen(false)}
+              onClose={() => setTooltipOpen(false)}
               {...asset}
             />
           }
@@ -79,7 +79,7 @@ export const AssetManagerThumbnail = (asset: Asset | UploadingAsset) => {
           <Button
             variant="raw"
             title="Options"
-            onClick={() => setTolltipOpen(true)}
+            onClick={() => setTooltipOpen(true)}
             css={{
               position: "absolute",
               top: "$1",

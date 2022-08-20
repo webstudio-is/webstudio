@@ -23,7 +23,7 @@ import {
 import { useSubmit } from "@remix-run/react";
 
 type AssetInfoProps = Asset & {
-  closeInfo: () => void;
+  onClose: () => void;
   setIsDeleting: (isDeleting: boolean) => void;
 };
 
@@ -33,15 +33,15 @@ export const AssetInfo = ({
   height,
   id,
   name,
-  closeInfo,
+  onClose,
   setIsDeleting,
 }: AssetInfoProps) => {
   const submit = useSubmit();
-  const deleteAsset = () => {
+  const onDelete = () => {
     const formData = new FormData();
     formData.append("assetId", id);
     formData.append("assetName", name);
-    closeInfo();
+    onClose();
     setIsDeleting(true);
     submit(formData, { method: "delete" });
   };
@@ -58,7 +58,7 @@ export const AssetInfo = ({
         </Text>
 
         <IconButton
-          onClick={closeInfo}
+          onClick={onClose}
           size="1"
           css={{ marginRight: "$2" }}
           aria-label="Close"
@@ -96,7 +96,7 @@ export const AssetInfo = ({
         </Grid>
       </Box>
       <Box css={{ p: "$2 $3" }}>
-        <Button variant="red" size="2" onClick={deleteAsset}>
+        <Button variant="red" size="2" onClick={onDelete}>
           <Flex align="center" css={{ gap: "$1" }}>
             <TrashIcon />
             Delete
