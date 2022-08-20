@@ -17,15 +17,15 @@ export const Lock = ({
 }) => {
   const aKey = pairedKeys[0];
   const bKey = pairedKeys[1];
-  const aVal = currentStyle[aKey]?.value;
-  const bVal = currentStyle[bKey]?.value;
+  const aVal = parseFloat(currentStyle[aKey]?.value as string);
+  const bVal = parseFloat(currentStyle[bKey]?.value as string);
   const [isPaired, setIsPaired] = useState(aVal === bVal);
 
   useEffect(() => {
     if (!isPaired) return;
     if (aVal === bVal) return;
-    batchUpdate.setProperty(aKey)(String(aVal));
-    batchUpdate.setProperty(bKey)(String(aVal));
+    batchUpdate.setProperty(aKey)(String(aVal) + "px");
+    batchUpdate.setProperty(bKey)(String(aVal) + "px");
     batchUpdate.publish();
   }, [batchUpdate, isPaired, aKey, bKey, aVal, bVal]);
 

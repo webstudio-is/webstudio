@@ -54,7 +54,7 @@ const ColorPicker = ({
         >
           <Tooltip
             content={styleConfig.label}
-            delayDuration={150}
+            delayDuration={700 / 4}
             disableHoverableContent={true}
           >
             <Box

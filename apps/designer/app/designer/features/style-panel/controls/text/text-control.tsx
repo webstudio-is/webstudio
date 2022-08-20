@@ -33,7 +33,10 @@ export const TextControl = ({
   const props = isNaN(parseFloat(String(value.value)))
     ? {
         type: "text",
-        onChange: (event: ChangeEvent<HTMLInputElement>) => {},
+        spellCheck: "false",
+        onChange: (event: ChangeEvent<HTMLInputElement>) => {
+          setValue(event.target.value);
+        },
       }
     : {
         type: "number",
@@ -41,7 +44,6 @@ export const TextControl = ({
           setValue(event.target.value + "px");
         },
       };
-  console.log(value, styleConfig);
   const Icon = iconConfigs[styleConfig.property]?.normal || "noscript";
   return (
     <Grid
