@@ -7,7 +7,6 @@ const unitProps = ["columnGap", "rowGap"];
 
 // @todo use a parser
 const parseValue = (property: StyleProperty, value: string): StyleValue => {
-  if (value === "normal" && unitProps.includes(property)) value = "0";
   const number = parseFloat(value);
   const parsedUnit = unitRegex.exec(value);
   if (value === "rgba(0, 0, 0, 0)") value = "transparent";

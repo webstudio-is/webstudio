@@ -48,7 +48,7 @@ const ColorPicker = ({
       <PopoverTrigger asChild aria-label="Open color picker">
         <Grid
           css={{
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: "$sizes$6 auto",
             gridTemplateRows: "repeat(1, 1fr)",
           }}
         >

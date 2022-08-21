@@ -48,6 +48,16 @@ const normalizedValues = {
     value: 0,
     unit: "%",
   },
+  "column-gap": {
+    type: "unit",
+    value: 0,
+    unit: "px",
+  },
+  "row-gap": {
+    type: "unit",
+    value: 0,
+    unit: "px",
+  },
   // https://github.com/mdn/data/issues/556
   // @todo remove once fixed
   "background-size": autoValue,

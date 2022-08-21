@@ -24,8 +24,8 @@ export const Lock = ({
   useEffect(() => {
     if (!isPaired) return;
     if (aVal === bVal) return;
-    batchUpdate.setProperty(aKey)(String(aVal) + "px");
-    batchUpdate.setProperty(bKey)(String(aVal) + "px");
+    batchUpdate.setProperty(aKey)(String(aVal));
+    batchUpdate.setProperty(bKey)(String(aVal));
     batchUpdate.publish();
   }, [batchUpdate, isPaired, aKey, bKey, aVal, bVal]);
 
