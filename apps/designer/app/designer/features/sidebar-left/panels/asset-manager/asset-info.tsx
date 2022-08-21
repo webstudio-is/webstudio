@@ -28,7 +28,7 @@ const truncatedText = {
     textOverflow: "ellipsis",
     overflow: "hidden",
 
-    "&:after": {
+    "&::after": {
       content: "attr(data-extension)",
       position: "absolute",
       left: "100%",
