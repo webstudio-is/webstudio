@@ -88,7 +88,9 @@ export const TextControl = ({
             ...CSSIconButton,
             ...(isCurrentBreakpoint && {
               bc: "$colors$blue4",
-              color: "$colors$blue11",
+              "&:not(:hover)": {
+                color: "$colors$blue11",
+              },
             }),
           }}
         >
@@ -103,11 +105,11 @@ export const TextControl = ({
           setValue(event.target.value)
         }
         onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
-        onKeyUp={(event: KeyboardEvent<HTMLInputElement>) => {
+        onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
           if (value.type !== "unit") return;
+          event.preventDefault();
           if (event.code === "ArrowUp") setValue(String(value.value + 1));
           if (event.code === "ArrowDown") setValue(String(value.value - 1));
-          event.preventDefault();
         }}
       />
       {value.type === "unit" ? (
