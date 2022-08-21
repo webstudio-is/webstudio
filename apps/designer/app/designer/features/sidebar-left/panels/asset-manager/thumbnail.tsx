@@ -70,7 +70,7 @@ export const AssetManagerThumbnail = (asset: Asset | UploadingAsset) => {
           css={{ width: 240, maxWidth: 240 }}
           content={
             <AssetInfo
-              setIsDeleting={setIsDeleting}
+              onDelete={() => setIsDeleting(true)}
               onClose={() => setTooltipOpen(false)}
               {...asset}
             />

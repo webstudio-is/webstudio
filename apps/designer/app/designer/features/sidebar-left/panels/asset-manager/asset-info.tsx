@@ -40,7 +40,7 @@ const truncatedText = {
 
 type AssetInfoProps = Asset & {
   onClose: () => void;
-  setIsDeleting: (isDeleting: boolean) => void;
+  onDelete: () => void;
 };
 
 export const AssetInfo = ({
@@ -50,7 +50,7 @@ export const AssetInfo = ({
   id,
   name,
   onClose,
-  setIsDeleting,
+  onDelete,
 }: AssetInfoProps) => {
   const submit = useSubmit();
   const handleDeleteAsset = () => {
@@ -58,7 +58,7 @@ export const AssetInfo = ({
     formData.append("assetId", id);
     formData.append("assetName", name);
     onClose();
-    setIsDeleting(true);
+    onDelete();
     submit(formData, { method: "delete" });
   };
 
