@@ -2,7 +2,6 @@ import {
   Box,
   Flex,
   Grid,
-  IconButton,
   Text,
   Separator,
   Button,
@@ -12,16 +11,16 @@ import { getFormattedAspectRatio } from "./utils";
 import {
   CloudIcon,
   AspectRatioIcon,
-  Cross1Icon,
   SizeIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
 import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
+import { Header } from "../../lib/header";
 
 const truncatedText = {
   position: "relative",
-  maxWidth: 80,
+  maxWidth: "70%",
 
   div: {
     whiteSpace: "nowrap",
@@ -64,24 +63,7 @@ export const AssetInfo = ({
 
   return (
     <>
-      <Flex
-        css={{ height: 40, paddingLeft: "$3" }}
-        align="center"
-        justify="between"
-      >
-        <Text size="1" weight="700">
-          Asset Details
-        </Text>
-
-        <IconButton
-          onClick={onClose}
-          size="1"
-          css={{ marginRight: "$2" }}
-          aria-label="Close"
-        >
-          <Cross1Icon />
-        </IconButton>
-      </Flex>
+      <Header title="Asset Details" onClose={onClose} />
       <Separator />
       <Box css={{ p: "$2 $3" }}>
         <Grid columns={2} align="center">
