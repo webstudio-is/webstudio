@@ -4,7 +4,7 @@ import { styled } from "../stitches.config";
 import { Tooltip } from "./tooltip";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
-  maxWidth: "$sizes$dropdownMenu",
+  width: 192,
   maxHeight: 320,
   overflow: "auto",
   backgroundColor: "$colors$slate4",
@@ -116,7 +116,7 @@ export const IconButtonWithMenu = ({
         </DropdownMenuPrimitive.Trigger>
       </Tooltip>
 
-      <StyledContent sideOffset={4}>
+      <StyledContent sideOffset={4} alignOffset={-4}>
         <DropdownMenuPrimitive.RadioGroup
           value={value}
           onValueChange={onChange}

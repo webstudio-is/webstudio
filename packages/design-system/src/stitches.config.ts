@@ -234,7 +234,6 @@ export const {
       9: "80px",
       sidebarLeft: "45px",
       sidebarRight: "240px",
-      dropdownMenu: "224px",
     },
     fontSizes: {
       1: "12px",
