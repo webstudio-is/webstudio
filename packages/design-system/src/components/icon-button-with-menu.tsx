@@ -1,4 +1,3 @@
-import React from "react";
 import { CheckIcon, IconComponent } from "@webstudio-is/icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { styled } from "../stitches.config";
@@ -6,6 +5,8 @@ import { Tooltip } from "./tooltip";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   maxWidth: "$sizes$dropdownMenu",
+  maxHeight: 320,
+  overflow: "auto",
   backgroundColor: "$colors$slate4",
   borderRadius: "$radii$1",
   padding: "$sizes$2",
@@ -58,8 +59,8 @@ const IconButton = styled("button", {
   all: "unset",
   fontFamily: "inherit",
   borderRadius: "calc($radii$1 / 2)",
-  width: "100%",
-  height: "100%",
+  width: "$6",
+  height: "$6",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -68,36 +69,27 @@ const IconButton = styled("button", {
   "&:hover": {
     backgroundColor: "$colors$gray3",
   },
-  "& path": {
-    fill: "currentColor",
-  },
-  "&[data-state=open]": {
-    backgroundColor: "$colors$blue10",
-    "& path": {
-      fill: "$colors$blue1",
-    },
-  },
 });
 
 export const IconButtonWithMenu = ({
+  icon: Icon,
   label,
   value,
   items,
+  isActive,
   onChange,
-  isFromCurrentBreakpoint,
 }: {
-  label: string;
+  icon?: JSX.Element;
+  label?: string;
   value: string;
   items: Array<{
     label: string;
     name: string;
-    icon: ReturnType<IconComponent>;
+    icon?: ReturnType<IconComponent>;
   }>;
-  onChange: (value: string) => void;
-  isFromCurrentBreakpoint: boolean;
+  isActive?: boolean;
+  onChange?: (value: string) => void;
 }) => {
-  const activeItem = items.find(({ name }) => name === value);
-  const TriggerIcon = activeItem?.icon;
   return (
     <DropdownMenuPrimitive.Root modal={false}>
       <Tooltip
@@ -108,18 +100,18 @@ export const IconButtonWithMenu = ({
         <DropdownMenuPrimitive.Trigger asChild>
           <IconButton
             css={
-              isFromCurrentBreakpoint
+              isActive
                 ? {
                     color: "$colors$blue11",
                     backgroundColor: "$colors$blue4",
-                    "&:not([data-state=open]):hover": {
+                    "&:hover": {
                       backgroundColor: "$colors$blue4",
                     },
                   }
                 : {}
             }
           >
-            {TriggerIcon}
+            {Icon}
           </IconButton>
         </DropdownMenuPrimitive.Trigger>
       </Tooltip>

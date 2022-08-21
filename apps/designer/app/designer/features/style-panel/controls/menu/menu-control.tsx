@@ -61,11 +61,12 @@ export const MenuControl = ({
     .filter((item) => item.icon);
   return (
     <IconButtonWithMenu
+      icon={items.find(({ name }) => name === currentValue)?.icon}
       label={styleConfig.label}
       items={items}
       value={String(currentValue)}
       onChange={setValue}
-      isFromCurrentBreakpoint={isFromCurrentBreakpoint}
+      isActive={isFromCurrentBreakpoint}
     ></IconButtonWithMenu>
   );
 };

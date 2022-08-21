@@ -54,6 +54,7 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
   }: TooltipProps,
   ref: Ref<HTMLDivElement>
 ) {
+  if (!content) return children;
   return (
     <TooltipPrimitive.Root
       open={open}

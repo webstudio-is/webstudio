@@ -10,7 +10,6 @@ import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
-import { ComponentInfo } from "~/designer/shared/inspector";
 
 type StylePanelProps = {
   publish: Publish;

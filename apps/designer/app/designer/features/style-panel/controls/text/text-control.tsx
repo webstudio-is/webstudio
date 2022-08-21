@@ -1,17 +1,18 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
 import {
+  Box,
   Text,
   Grid,
   IconButton,
-  Button,
   TextField,
   Tooltip,
+  IconButtonWithMenu,
 } from "@webstudio-is/design-system";
 import { getFinalValue } from "../../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import { ControlProps } from "../../style-sections";
 import { iconConfigs, StyleConfig } from "../../shared/configs";
-import type { StyleValue, Unit } from "@webstudio-is/react-sdk";
+import { type StyleValue, type Unit, units } from "@webstudio-is/react-sdk";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 
 const CSSGridLeft = {
@@ -78,7 +79,7 @@ export const TextControl = ({
         delayDuration={700 / 4}
         disableHoverableContent={true}
       >
-        {/* @todo unite values should feature the ScrubControl */}
+        {/* @todo unit values should feature the ScrubControl */}
         <IconButton
           variant="ghost"
           size="1"
@@ -95,58 +96,101 @@ export const TextControl = ({
         </IconButton>
       </Tooltip>
       <TextField
+        css={CSSTextField}
         spellCheck={false}
         value={value.value}
         onChange={(event: ChangeEvent<HTMLInputElement>) =>
           setValue(event.target.value)
         }
-        css={CSSTextField}
+        onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
+        onKeyUp={(event: KeyboardEvent<HTMLInputElement>) => {
+          if (value.type !== "unit") return;
+          if (event.code === "ArrowUp") setValue(String(value.value + 1));
+          if (event.code === "ArrowDown") setValue(String(value.value - 1));
+          event.preventDefault();
+        }}
       />
       {value.type === "unit" ? (
-        <Units value={value.unit} />
+        <Units
+          value={value.unit}
+          items={units
+            .filter((v) =>
+              [
+                "%",
+                "px",
+                "rem",
+                "em",
+                "ch",
+                "vh",
+                "vw",
+                "hv",
+                "vmin",
+                "vmax",
+              ].includes(v)
+            )
+            .map((unit) => ({ name: unit, label: unit }))}
+          onChange={(unit) => setValue(value.value + unit)}
+        />
       ) : (
         <Items
           value={value.value}
           items={styleConfig.items}
-          onChange={() => {}}
+          onChange={(item) => setValue(item)}
         />
       )}
     </Grid>
   );
 };
 
-// @todo open unit menu on click
-const Units = ({ value }: { value: Unit }) => {
+const Units = ({
+  value,
+  items,
+  onChange,
+}: {
+  value: Unit;
+  items: StyleConfig["items"];
+  onChange?: (value: string) => void;
+}) => {
   return (
-    <IconButton
+    <Box
       css={{
         ...CSSGridRight,
-        ...CSSIconButton,
+        button: { ...CSSIconButton },
       }}
     >
-      <Text css={CSSTextUnit}>{value === "number" ? "—" : value}</Text>
-    </IconButton>
+      <IconButtonWithMenu
+        icon={<Text css={CSSTextUnit}>{value === "number" ? "—" : value}</Text>}
+        items={items}
+        value={String(value)}
+        onChange={onChange}
+      ></IconButtonWithMenu>
+    </Box>
   );
 };
 
-// @todo open items menu on click
 const Items = ({
   value,
   items,
+  onChange,
 }: {
   value: StyleValue["value"];
   items: StyleConfig["items"];
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
 }) => {
-  if (!items) return null;
+  if (!items?.length) return null;
   return (
-    <IconButton
+    <Box
       css={{
         ...CSSGridRight,
-        ...CSSIconButton,
+        button: { ...CSSIconButton },
       }}
     >
-      <ChevronDownIcon />
-    </IconButton>
+      <IconButtonWithMenu
+        icon={<ChevronDownIcon />}
+        items={items}
+        value={String(value)}
+        onChange={onChange}
+      ></IconButtonWithMenu>
+    </Box>
   );
 };

@@ -3,7 +3,6 @@ import { properties } from "./properties";
 import { units } from "./units";
 
 const unitRegex = new RegExp(`${units.join("|")}`);
-const unitProps = ["columnGap", "rowGap"];
 
 // @todo use a parser
 const parseValue = (property: StyleProperty, value: string): StyleValue => {
