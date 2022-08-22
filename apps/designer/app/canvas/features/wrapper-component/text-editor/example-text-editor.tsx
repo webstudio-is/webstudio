@@ -100,7 +100,7 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
           }}
         >
           <Editor
-            renderEditable={() => (
+            renderInstance={() => (
               <ContentEditable
                 style={{
                   minHeight: 150,

@@ -11,8 +11,13 @@ import { OnChangePlugin } from "./plugins/plugin-on-change";
 import { config } from "./config";
 import { useCallback } from "react";
 
+type InstanceRenderProps = {
+  ref: (element: HTMLElement | null) => void;
+  contentEditable: boolean;
+};
+
 export type EditorProps = {
-  renderEditable: (ref?: (element: HTMLElement | null) => void) => JSX.Element;
+  renderInstance: (renderProps: InstanceRenderProps) => JSX.Element;
   instance: Instance;
   onChange: (updates: ChildrenUpdates) => void;
 };
@@ -27,9 +32,9 @@ const useSetElement = () => {
   );
 };
 
-const Editor = ({ instance, renderEditable, onChange }: EditorProps) => {
-  const refCallback = useSetElement();
-  const editable = renderEditable(refCallback);
+const Editor = ({ instance, renderInstance, onChange }: EditorProps) => {
+  const ref = useSetElement();
+  const editable = renderInstance({ ref, contentEditable: true });
   return (
     <>
       <RichTextPlugin contentEditable={editable} placeholder="" />

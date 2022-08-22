@@ -74,29 +74,32 @@ export const WrapperComponentDev = ({
     },
   };
 
-  if (editingInstanceId === instance.id) {
-    return (
-      <Editor
-        instance={instance}
-        renderEditable={(ref) => (
-          <Component
-            {...props}
-            ref={(element: HTMLElement | null) => {
-              props.ref(element);
-              ref?.(element);
-            }}
-            contentEditable={true}
-          />
-        )}
-        onChange={(updates) => {
-          onChangeChildren({ instanceId: instance.id, updates });
-        }}
-      />
-    );
+  const instanceElement = (
+    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+  );
+
+  if (editingInstanceId !== instance.id) {
+    return instanceElement;
   }
 
   return (
-    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+    <Editor
+      instance={instance}
+      fallback={instanceElement}
+      renderInstance={({ ref, ...renderProps }) => (
+        <Component
+          {...props}
+          {...renderProps}
+          ref={(element: HTMLElement | null) => {
+            props.ref(element);
+            ref(element);
+          }}
+        />
+      )}
+      onChange={(updates) => {
+        onChangeChildren({ instanceId: instance.id, updates });
+      }}
+    />
   );
 };
 
