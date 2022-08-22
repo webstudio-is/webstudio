@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { TextLegacy } from "./text-legacy";
+import { __DEPRECATED__Text } from "./deprecated/text";
 
 export const Tabs = styled(TabsPrimitive.Root, {
   display: "flex",
@@ -28,7 +28,7 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   ["&:first-child"]: {
     paddingLeft: "$3",
   },
-  [`& > ${Text}`]: {
+  [`& > ${__DEPRECATED__Text}`]: {
     color: "$gray9",
     fontSize: "11px",
     fontWeight: "600",
@@ -40,7 +40,7 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   },
 
   '&[data-state="active"]': {
-    [`& > ${Text}`]: {
+    [`& > ${__DEPRECATED__Text}`]: {
       color: "$hiContrast",
     },
   },

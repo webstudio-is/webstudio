@@ -5,7 +5,7 @@ import {
   Button,
   TextField,
   Flex,
-  TextLegacy,
+  __DEPRECATED__Text,
 } from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import ObjectId from "bson-objectid";
@@ -107,7 +107,7 @@ export const BreakpointsEditor = ({
         justify="between"
         css={{ paddingLeft: "$5", paddingRight: "$3", py: "$1" }}
       >
-        <TextLegacy>Breakpoints</TextLegacy>
+        <__DEPRECATED__Text>Breakpoints</__DEPRECATED__Text>
         <Button
           ghost
           onClick={() => {

@@ -1,5 +1,5 @@
 import { components } from "@webstudio-is/react-sdk";
-import { Flex, TextLegacy } from "@webstudio-is/design-system";
+import { Flex, __DEPRECATED__Text } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 export const ComponentInfo = ({
@@ -9,7 +9,7 @@ export const ComponentInfo = ({
 }) => {
   return (
     <Flex justify="between" align="center">
-      <TextLegacy
+      <__DEPRECATED__Text
         css={{
           fontSize: "$2",
           color: "$colors$slate11",
@@ -17,7 +17,7 @@ export const ComponentInfo = ({
         }}
       >{`Selected: ${
         components[selectedInstanceData.component].label
-      }`}</TextLegacy>
+      }`}</__DEPRECATED__Text>
     </Flex>
   );
 };

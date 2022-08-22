@@ -1,8 +1,8 @@
 import { styled } from "../stitches.config";
 import * as LabelPrimitive from "@radix-ui/react-label";
-import { TextLegacy } from "./text-legacy";
+import { __DEPRECATED__Text } from "./deprecated/text";
 
-export const Label = styled(LabelPrimitive.Root, TextLegacy, {
+export const Label = styled(LabelPrimitive.Root, __DEPRECATED__Text, {
   display: "inline-block",
   verticalAlign: "middle",
   cursor: "default",

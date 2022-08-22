@@ -2,7 +2,7 @@ import { createValueContainer, useValue } from "react-nano-state";
 import {
   Box,
   Flex,
-  TextLegacy,
+  __DEPRECATED__Text,
   Collapsible,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
@@ -59,9 +59,12 @@ export const CollapsibleSection = ({
             }}
           >
             {isOpenFinal ? <ChevronDownIcon /> : <ChevronRightIcon />}
-            <TextLegacy size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
+            <__DEPRECATED__Text
+              size="1"
+              css={{ fontWeight: "500", flexGrow: 1 }}
+            >
               {label}
-            </TextLegacy>
+            </__DEPRECATED__Text>
             {rightSlot}
           </Flex>
         </Collapsible.Trigger>

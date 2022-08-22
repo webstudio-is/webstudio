@@ -12,7 +12,7 @@ import {
   DropdownMenuArrow,
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
-  TextLegacy,
+  __DEPRECATED__Text,
   Flex,
 } from "@webstudio-is/design-system";
 import { sort } from "~/shared/breakpoints";
@@ -38,17 +38,17 @@ const BreakpointSelectorItem = ({
 }: BreakpointSelectorItemProps) => {
   return (
     <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
-      <TextLegacy size="1" css={{ flexGrow: 1, color: "inherit" }}>
+      <__DEPRECATED__Text size="1" css={{ flexGrow: 1, color: "inherit" }}>
         {breakpoint.label}
-      </TextLegacy>
-      <TextLegacy
+      </__DEPRECATED__Text>
+      <__DEPRECATED__Text
         size="1"
         css={{
           color: "inherit",
         }}
       >
         {breakpoint.minWidth}
-      </TextLegacy>
+      </__DEPRECATED__Text>
     </Flex>
   );
 };

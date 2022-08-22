@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import {
   Flex,
-  TextLegacy,
+  __DEPRECATED__Text,
   Collapsible,
   Button,
   keyframes,
@@ -123,7 +123,7 @@ export const Tree = ({
           }}
         >
           <Icon />
-          <TextLegacy size="1">{label}</TextLegacy>
+          <__DEPRECATED__Text size="1">{label}</__DEPRECATED__Text>
         </Button>
       </Flex>
       {children != null && <CollapsibleContent>{children}</CollapsibleContent>}

@@ -3,7 +3,7 @@ import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
-import { Slider, TextLegacy, Flex } from "@webstudio-is/design-system";
+import { Slider, __DEPRECATED__Text, Flex } from "@webstudio-is/design-system";
 import { sort } from "~/shared/breakpoints";
 import { useBreakpoints, useIsPreviewMode } from "~/shared/nano-states";
 
@@ -51,7 +51,7 @@ export const WidthSetting = () => {
 
   return (
     <Flex css={{ px: "$5", py: "$1" }} gap="1" direction="column">
-      <TextLegacy size="1">Canvas width</TextLegacy>
+      <__DEPRECATED__Text size="1">Canvas width</__DEPRECATED__Text>
       <Flex gap="3" align="center">
         <Slider
           min={min}
@@ -61,7 +61,7 @@ export const WidthSetting = () => {
             setValue(value);
           }}
         />
-        <TextLegacy size="1">{`${value}px`}</TextLegacy>
+        <__DEPRECATED__Text size="1">{`${value}px`}</__DEPRECATED__Text>
       </Flex>
     </Flex>
   );

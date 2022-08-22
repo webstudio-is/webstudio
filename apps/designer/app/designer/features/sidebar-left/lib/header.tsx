@@ -1,4 +1,8 @@
-import { Flex, IconButton, TextLegacy } from "@webstudio-is/design-system";
+import {
+  Flex,
+  IconButton,
+  __DEPRECATED__Text,
+} from "@webstudio-is/design-system";
 import { Separator } from "@webstudio-is/design-system";
 import { Cross1Icon } from "@webstudio-is/icons";
 
@@ -16,9 +20,9 @@ export const Header = ({ title, isClosable = true, onClose }: HeaderProps) => {
         align="center"
         justify="between"
       >
-        <TextLegacy size="1" css={{ fontWeight: "bold" }}>
+        <__DEPRECATED__Text size="1" css={{ fontWeight: "bold" }}>
           {title}
-        </TextLegacy>
+        </__DEPRECATED__Text>
         {isClosable && (
           <IconButton
             onClick={() => onClose?.()}

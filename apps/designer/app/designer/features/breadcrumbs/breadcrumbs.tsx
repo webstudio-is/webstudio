@@ -2,7 +2,7 @@ import { ChevronRightIcon } from "@webstudio-is/icons";
 import {
   Button,
   Flex,
-  TextLegacy,
+  __DEPRECATED__Text,
   darkTheme,
 } from "@webstudio-is/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
@@ -38,7 +38,9 @@ const Breadcrumb = ({ component, onClick }: BreadcrumbProps) => {
   );
 };
 
-const EmptyState = () => <TextLegacy size="1">No instance selected</TextLegacy>;
+const EmptyState = () => (
+  <__DEPRECATED__Text size="1">No instance selected</__DEPRECATED__Text>
+);
 
 type BreadcrumbsProps = {
   publish: Publish;

@@ -1,6 +1,6 @@
-import { styled } from "../stitches.config";
+import { styled } from "../../stitches.config";
 
-export const TextLegacy = styled("div", {
+export const __DEPRECATED__Text = styled("div", {
   // Reset
   lineHeight: "1",
   margin: "0",
