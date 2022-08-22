@@ -1,5 +1,5 @@
 import React from "react";
-import { __DEPRECATED__Text } from "./deprecated/text";
+import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
 import { VariantProps, CSS } from "../stitches.config";
 import merge from "lodash.merge";
 

@@ -1,5 +1,5 @@
 import { styled } from "../stitches.config";
-import { __DEPRECATED__Text } from "./deprecated/text";
+import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
 
 export const Link = styled("a", {
   alignItems: "center",
