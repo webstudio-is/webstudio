@@ -8,7 +8,7 @@ import {
   Select,
   Slider,
   Switch,
-  Text,
+  TextLegacy,
   TextField,
 } from "@webstudio-is/design-system";
 import { Checkbox } from "@webstudio-is/design-system";
@@ -138,8 +138,8 @@ const RangeControl = ({
       step={step}
     />
     <Flex direction="row" justify="between">
-      <Text size={1}>{min}</Text>
-      <Text size={1}>{max}</Text>
+      <TextLegacy size={1}>{min}</TextLegacy>
+      <TextLegacy size={1}>{max}</TextLegacy>
     </Flex>
   </Flex>
 );

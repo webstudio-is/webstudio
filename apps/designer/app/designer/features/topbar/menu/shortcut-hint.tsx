@@ -1,4 +1,4 @@
-import { Text } from "@webstudio-is/design-system";
+import { TextLegacy } from "@webstudio-is/design-system";
 
 const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
@@ -32,8 +32,8 @@ const format = (value: ShortcutDefinition) => {
 
 export const ShortcutHint = ({ value }: { value: ShortcutDefinition }) => {
   return (
-    <Text size="1" css={{ letterSpacing: 1.5, color: "inherit" }}>
+    <TextLegacy size="1" css={{ letterSpacing: 1.5, color: "inherit" }}>
       {format(value)}
-    </Text>
+    </TextLegacy>
   );
 };

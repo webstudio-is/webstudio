@@ -1,6 +1,6 @@
 import { styled } from "../stitches.config";
 
-export const Text = styled("div", {
+export const NewText = styled("div", {
   // Reset
   lineHeight: "1",
   margin: "0",

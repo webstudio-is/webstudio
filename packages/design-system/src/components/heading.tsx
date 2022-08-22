@@ -1,11 +1,11 @@
 import React from "react";
-import { Text } from "./text";
+import { TextLegacy } from "./text-legacy";
 import { VariantProps, CSS } from "../stitches.config";
 import merge from "lodash.merge";
 
 const DEFAULT_TAG = "h1";
 
-type TextSizeVariants = Pick<VariantProps<typeof Text>, "size">;
+type TextSizeVariants = Pick<VariantProps<typeof TextLegacy>, "size">;
 type HeadingSizeVariants = "1" | "2" | "3" | "4";
 type HeadingVariants = { size?: HeadingSizeVariants } & Omit<
   VariantProps<typeof Text>,
@@ -37,7 +37,7 @@ export const Heading = React.forwardRef<
   };
 
   return (
-    <Text
+    <TextLegacy
       as={DEFAULT_TAG}
       {...textProps}
       ref={forwardedRef}

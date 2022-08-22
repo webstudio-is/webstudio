@@ -1,6 +1,6 @@
 import type { Publish } from "@webstudio-is/react-sdk";
 import {
-  Text,
+  TextLegacy,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -42,14 +42,14 @@ export const Inspector = ({ publish }: InspectorProps) => {
     <Tabs defaultValue="style" css={{ width: "100%" }}>
       <TabsList>
         <TabsTrigger value="style">
-          <Text>Style</Text>
+          <TextLegacy>Style</TextLegacy>
         </TabsTrigger>
         {/* @note: events would be part of props */}
         <TabsTrigger value="props">
-          <Text>Props</Text>
+          <TextLegacy>Props</TextLegacy>
         </TabsTrigger>
         <TabsTrigger value="inspect">
-          <Text>Inspect</Text>
+          <TextLegacy>Inspect</TextLegacy>
         </TabsTrigger>
       </TabsList>
       <TabsContent value="style" css={contentStyle}>

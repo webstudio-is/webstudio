@@ -2,7 +2,7 @@ import {
   Flex,
   Grid,
   Label,
-  Text,
+  TextLegacy,
   Combobox,
   ComboboxTextField,
   ComboboxPopperContent,
@@ -72,14 +72,14 @@ const PropertyName = ({ property, label }: PropertyProps) => {
 const Unit = ({ value }: { value: StyleValue }) => {
   if (value.type !== "unit" || value.unit === "number") return null;
   return (
-    <Text
+    <TextLegacy
       css={{
         fontSize: "$1",
         cursor: "default",
       }}
     >
       {value.unit}
-    </Text>
+    </TextLegacy>
   );
 };
 

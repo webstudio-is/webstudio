@@ -1,6 +1,6 @@
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { Flex, Text, styled } from "@webstudio-is/design-system";
+import { Flex, TextLegacy, styled } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
   px: "$1",
@@ -41,7 +41,7 @@ export const ComponentThumb = forwardRef<
       {...rest}
     >
       <Icon width={30} height={30} />
-      <Text size="1">{label}</Text>
+      <TextLegacy size="1">{label}</TextLegacy>
     </Thumb>
   );
 });

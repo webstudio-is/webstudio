@@ -6,7 +6,7 @@ import {
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
 import { willRender } from "~/designer/shared/breakpoints";
-import { Button, Text } from "@webstudio-is/design-system";
+import { Button, TextLegacy } from "@webstudio-is/design-system";
 import {
   DesktopIcon,
   LaptopIcon,
@@ -49,9 +49,9 @@ export const TriggerButton = forwardRef<
       aria-label="Show breakpoints"
     >
       {renderIcon(breakpoint, variant)}
-      <Text size="1" variant={variant}>
+      <TextLegacy size="1" variant={variant}>
         {`${breakpoint.label} ${canvasWidth}px / ${zoom}%`}
-      </Text>
+      </TextLegacy>
     </Button>
   );
 });

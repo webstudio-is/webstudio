@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   TextField,
-  Text,
+  TextLegacy,
   Label,
   Link,
   useId,
@@ -59,7 +59,7 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: "$0",
               }}
             >
-              <Text
+              <TextLegacy
                 css={{
                   whiteSpace: "nowrap",
                   overflow: "hidden",
@@ -67,7 +67,7 @@ const Content = ({ project }: PublishButtonProps) => {
                 }}
               >
                 {`${domain}.${getHost()}`}{" "}
-              </Text>
+              </TextLegacy>
               <ExternalLinkIcon />
             </Link>
           )}
@@ -77,7 +77,7 @@ const Content = ({ project }: PublishButtonProps) => {
             <TextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
-            <Text variant="red">{fetcher.data?.errors}</Text>
+            <TextLegacy variant="red">{fetcher.data?.errors}</TextLegacy>
           )}
           {fetcher.state === "idle" ? (
             <Button variant="blue" type="submit">
@@ -99,7 +99,7 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
       <PopoverTrigger asChild aria-label="Publish">
         <Button ghost css={{ display: "flex", gap: "$1" }}>
           <RocketIcon />
-          <Text size="1">Publish</Text>
+          <TextLegacy size="1">Publish</TextLegacy>
         </Button>
       </PopoverTrigger>
       <Content project={project} />
