@@ -6,7 +6,7 @@ import type { Asset } from "@webstudio-is/prisma-client";
 import { TabName, UploadingAsset } from "../../types";
 import { Header } from "../../lib/header";
 import { AddAnAssetForm } from "./add-an-asset-form";
-import { AssetManagerThumbnail } from "./thumbnail";
+import { AssetThumbnail } from "./asset-thumbnail";
 
 export const useAssetsState = (baseAssets: Array<Asset>) => {
   const imageChanges = useActionData();
@@ -62,7 +62,7 @@ export const TabContent = ({
         </Flex>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (
-            <AssetManagerThumbnail key={asset.id} {...asset} />
+            <AssetThumbnail key={asset.id} {...asset} />
           ))}
         </Grid>
       </Flex>
