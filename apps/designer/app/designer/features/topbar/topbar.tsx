@@ -1,7 +1,7 @@
 import type { Publish } from "@webstudio-is/react-sdk";
-import type { Project } from "@webstudio-is/prisma-client";
 import { darkTheme, Flex, type CSS } from "@webstudio-is/design-system";
 import type { Config } from "~/config";
+import * as db from "~/shared/db";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -12,7 +12,7 @@ import { Breakpoints } from "../breakpoints";
 type TopbarProps = {
   config: Config;
   css: CSS;
-  project: Project;
+  project: db.project.Project;
   publish: Publish;
 };
 export const Topbar = ({ config, css, project, publish }: TopbarProps) => {

@@ -6,33 +6,24 @@ import {
   prisma,
   Prisma,
   Project as BaseProject,
+  Asset,
 } from "@webstudio-is/prisma-client";
 import * as db from ".";
-import { getAssetPath } from "@webstudio-is/asset-uploader/src/helpers/get-asset-path";
+import { formatAsset } from "@webstudio-is/asset-uploader";
 
 const TreeHistorySchema = z.array(z.string());
 
-export type Project = Omit<BaseProject, "prodTreeIdHistory"> & {
+export type Project = Omit<BaseProject, "prodTreeIdHistory" | "assets"> & {
   prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
+  assets?: Array<Asset>;
 };
 
 const parseProject = (project: BaseProject): Project => {
   const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
-  TreeHistorySchema.parse(prodTreeIdHistory);
-  if (project?.assets) {
-    return {
-      ...project,
-      assets: project.assets.map((asset) => ({
-        ...asset,
-        path: getAssetPath(asset),
-      })),
-      prodTreeIdHistory,
-    };
-  }
-
   return {
     ...project,
-    prodTreeIdHistory,
+    prodTreeIdHistory: TreeHistorySchema.parse(prodTreeIdHistory),
+    assets: project?.assets?.map(formatAsset),
   };
 };
 

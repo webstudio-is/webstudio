@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
 import { RocketIcon, ExternalLinkIcon } from "@webstudio-is/icons";
-import { type Project } from "@webstudio-is/prisma-client";
+import * as db from "~/shared/db";
 import {
   Button,
   Flex,
@@ -17,7 +17,7 @@ import {
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
 
-type PublishButtonProps = { project: Project };
+type PublishButtonProps = { project: db.project.Project };
 
 const getHost = () => {
   if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST) {

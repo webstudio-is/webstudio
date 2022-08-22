@@ -3,7 +3,7 @@ import { prisma, Asset } from "@webstudio-is/prisma-client";
 import { unlink } from "fs/promises";
 import path from "path";
 import { deleteAssetInDb } from "./db";
-import { imageFsDirectory } from "./helpers/image-fs-path";
+import { imageFsDirectory } from "./utils/image-fs-path";
 import { s3EnvVariables } from "./schema";
 import { getS3Client } from "./targets/s3/client";
 

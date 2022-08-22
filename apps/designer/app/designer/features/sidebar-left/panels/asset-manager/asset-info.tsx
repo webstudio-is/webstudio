@@ -90,12 +90,7 @@ export const AssetInfo = ({
           </Flex>{" "}
           <Flex align="center" css={{ gap: "$1" }}>
             <AspectRatioIcon />
-            <Text size="1">
-              {getFormattedAspectRatio(
-                width as unknown as number,
-                height as unknown as number
-              )}
-            </Text>
+            <Text size="1">{getFormattedAspectRatio(width, height)}</Text>
           </Flex>
         </Grid>
       </Box>
