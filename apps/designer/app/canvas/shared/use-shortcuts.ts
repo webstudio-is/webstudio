@@ -1,38 +1,59 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import {
-  type Instance,
-  publish,
-  useSubscribe,
-  components,
-} from "@webstudio-is/react-sdk";
+import { type Instance, components } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
+import { publish, useSubscribe } from "~/shared/pubsub";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
 import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
+import { type SelectedInstanceData } from "~/shared/canvas-components";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    cancelCurrentDrag: undefined;
+    deleteInstance: {
+      id: Instance["id"];
+    };
+    openBreakpointsMenu: undefined;
+    selectBreakpointFromShortcut: number;
+    selectInstance?: SelectedInstanceData;
+    togglePreviewMode: undefined;
+    zoom: "zoomOut" | "zoomIn";
+  }
+}
 
 const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
 
 type HandlerEvent = {
-  key: string;
+  key?: string;
   preventDefault?: () => void;
 };
 
 const togglePreviewMode = () => {
-  publish<"togglePreviewMode">({ type: "togglePreviewMode" });
+  publish({ type: "togglePreviewMode" });
 };
 
 const publishSelectBreakpoint = ({ key }: HandlerEvent) => {
+  if (!key) {
+    throw new Error(
+      "`publishSelectBreakpoint` doesn't account for being called without a `key`"
+    );
+  }
   publish({
     type: "selectBreakpointFromShortcut",
-    payload: key,
+    payload: parseInt(key, 10),
   });
 };
 
 const publishZoom = (event: HandlerEvent) => {
+  if (!event.key) {
+    throw new Error(
+      "`publishZoom` doesn't account for being called without a `key`"
+    );
+  }
   if (event.preventDefault !== undefined) event.preventDefault();
   publish({
     type: "zoom",
@@ -61,7 +82,7 @@ export const useShortcuts = () => {
     ) {
       return;
     }
-    publish<"deleteInstance", { id: Instance["id"] }>({
+    publish({
       type: "deleteInstance",
       payload: {
         id: selectedInstance.id,
@@ -99,7 +120,7 @@ export const useShortcuts = () => {
         return;
       }
       setSelectedInstance(undefined);
-      publish<"selectInstance">({ type: "selectInstance" });
+      publish({ type: "selectInstance" });
     },
     { ...options, enableOnContentEditable: true, enableOnTags: [...inputTags] },
     [selectedInstance, editingInstanceId]
@@ -143,10 +164,7 @@ export const useShortcuts = () => {
   useHotkeys(shortcuts.esc, shortcutHandlerMap.esc, options, []);
 
   // Shortcuts from the parent window
-  useSubscribe<"shortcut", { name: keyof typeof shortcuts; key: string }>(
-    "shortcut",
-    ({ name, key }) => {
-      shortcutHandlerMap[name]({ key });
-    }
-  );
+  useSubscribe("shortcut", ({ name, key }) => {
+    shortcutHandlerMap[name]({ key });
+  });
 };

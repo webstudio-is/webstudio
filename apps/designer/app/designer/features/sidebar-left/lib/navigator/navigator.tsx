@@ -1,10 +1,17 @@
 import { Box } from "@webstudio-is/design-system";
-import type { Instance, Publish } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { Tree } from "~/designer/shared/tree";
 import { useRootInstance } from "~/shared/nano-states";
 import { Header } from "../header";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    selectInstanceById: Instance["id"];
+  }
+}
 
 type NavigatorProps = {
   publish: Publish;
@@ -29,7 +36,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
           selectedInstancePath={selectedInstancePath}
           selectedInstanceId={selectedInstanceData?.id}
           onSelect={(instance) => {
-            publish<"selectInstanceById", Instance["id"]>({
+            publish({
               type: "selectInstanceById",
               payload: instance.id,
             });

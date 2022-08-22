@@ -1,8 +1,15 @@
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { Button, Flex, Text, darkTheme } from "@webstudio-is/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
-import { type Publish, type Instance } from "@webstudio-is/react-sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    selectInstanceById: Instance["id"];
+  }
+}
 
 type BreadcrumbProps = {
   component: Instance["component"];
@@ -66,7 +73,7 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
             key={instance.id}
             component={instance.component}
             onClick={() => {
-              publish<"selectInstanceById", Instance["id"]>({
+              publish({
                 type: "selectInstanceById",
                 payload: instance.id,
               });

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useDebounce from "react-use/lib/useDebounce";
-import { type Breakpoint, type Publish } from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { Button, TextField, Flex, Text } from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import ObjectId from "bson-objectid";

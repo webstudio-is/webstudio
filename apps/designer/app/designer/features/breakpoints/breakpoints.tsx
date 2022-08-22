@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  useSubscribe,
-  type Breakpoint,
-  type Publish,
-} from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +25,14 @@ import {
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useBreakpoints } from "~/shared/nano-states";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    breakpointDelete: Breakpoint;
+    breakpointChange: Breakpoint;
+    loadBreakpoints: Array<Breakpoint>;
+  }
+}
 
 type BreakpointSelectorItemProps = {
   breakpoint: Breakpoint;

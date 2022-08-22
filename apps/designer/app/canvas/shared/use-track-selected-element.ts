@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
-import {
-  type Instance,
-  publish,
-  useSubscribe,
-  components,
-} from "@webstudio-is/react-sdk";
+import { type Instance, components } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
   useRootInstance,
@@ -15,6 +11,13 @@ import {
   getInstanceElementById,
   getInstanceIdFromElement,
 } from "~/shared/dom-utils";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    clickCanvas: undefined;
+  }
+}
 
 const eventOptions = {
   passive: true,
@@ -36,10 +39,7 @@ export const useTrackSelectedElement = () => {
     [setSelectedInstance, rootInstance]
   );
 
-  useSubscribe<"selectInstanceById", Instance["id"]>(
-    "selectInstanceById",
-    selectInstance
-  );
+  useSubscribe("selectInstanceById", selectInstance);
 
   // Focus and select the element when selected instance changes
   useEffect(() => {
@@ -68,7 +68,7 @@ export const useTrackSelectedElement = () => {
     const handleClick = (event: MouseEvent) => {
       // Notify in general that document was clicked
       // e.g. to hide the side panel
-      publish<"clickCanvas">({ type: "clickCanvas" });
+      publish({ type: "clickCanvas" });
       let element = event.target as HTMLElement;
 
       // If we click on an element that is not a component, we search for a parent component.
