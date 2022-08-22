@@ -9,9 +9,7 @@ import { InstancePlugin } from "./plugins/plugin-instance";
 import { ToolbarConnectorPlugin } from "./plugins/plugin-toolbar-connector";
 import { OnChangePlugin } from "./plugins/plugin-on-change";
 import { config } from "./config";
-import { useCallback, useEffect } from "react";
-import { useSelectedElement } from "~/canvas/shared/nano-states";
-import { getInstanceIdFromElement } from "~/shared/dom-utils";
+import { useCallback } from "react";
 
 export type EditorProps = {
   renderEditable: (ref?: (element: HTMLElement | null) => void) => JSX.Element;
@@ -19,7 +17,7 @@ export type EditorProps = {
   onChange: (updates: ChildrenUpdates) => void;
 };
 
-const useSetElement = (instance: Instance) => {
+const useSetElement = () => {
   const [editor] = useLexicalComposerContext();
   return useCallback(
     (element) => {
@@ -30,7 +28,7 @@ const useSetElement = (instance: Instance) => {
 };
 
 const Editor = ({ instance, renderEditable, onChange }: EditorProps) => {
-  const refCallback = useSetElement(instance);
+  const refCallback = useSetElement();
   const editable = renderEditable(refCallback);
   return (
     <>

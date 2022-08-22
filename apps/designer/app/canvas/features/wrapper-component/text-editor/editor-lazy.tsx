@@ -13,4 +13,3 @@ const EditorWithSuspense = (props: EditorProps) => {
 
 // Prevent rerender because in editing mode Editor controls the node.
 export const Editor = memo(EditorWithSuspense, () => true);
-//export const Editor = EditorWithSuspense;
