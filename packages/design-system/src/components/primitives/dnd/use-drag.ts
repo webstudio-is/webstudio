@@ -111,14 +111,19 @@ export const useDrag = <DragItemData>({
       // A drag is basically a very slow click.
       // But we don't want it to register as a click.
       if (isCanceled === false && state.current.status === "dragging") {
-        const handleClick = (event: MouseEvent) => {
-          event.preventDefault();
-          event.stopPropagation();
-        };
-        window.addEventListener("click", handleClick, true);
-        setTimeout(() => {
-          window.removeEventListener("click", handleClick, true);
-        });
+        const addedAt = Date.now();
+        window.addEventListener(
+          "click",
+          (event) => {
+            // if more than 300ms have passed, we assume this click is unrelated to the drag.
+            if (Date.now() - addedAt > 300) {
+              return;
+            }
+            event.preventDefault();
+            event.stopPropagation();
+          },
+          { capture: true, once: true }
+        );
       }
 
       state.current = {
