@@ -18,24 +18,33 @@ import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
 import { Header } from "../../lib/header";
 
-const truncatedText = {
-  position: "relative",
-  maxWidth: "70%",
-
-  div: {
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    overflow: "hidden",
-
-    "&::after": {
-      content: "attr(data-extension)",
-      position: "absolute",
-      left: "100%",
-      top: 0,
-      whiteSpace: "nowrap",
-    },
-  },
-};
+const Filename = ({ name }: { name: string }) => (
+  <Box
+    css={{
+      position: "relative",
+      maxWidth: "70%",
+    }}
+  >
+    <Text
+      size="1"
+      data-extension={name.split(".").pop()}
+      css={{
+        whiteSpace: "nowrap",
+        textOverflow: "ellipsis",
+        overflow: "hidden",
+        "&::after": {
+          content: "attr(data-extension)",
+          position: "absolute",
+          left: "100%",
+          top: 0,
+          whiteSpace: "nowrap",
+        },
+      }}
+    >
+      {name}
+    </Text>
+  </Box>
+);
 
 type AssetInfoProps = Asset & {
   onClose: () => void;
@@ -68,11 +77,7 @@ export const AssetInfo = ({
       <Box css={{ p: "$2 $3" }}>
         <Grid columns={2} align="center">
           <Box css={{ width: 100 }}>
-            <Box css={truncatedText}>
-              <Text size="1" data-extension={name.split(".").pop()}>
-                {name}
-              </Text>
-            </Box>
+            <Filename name={name} />
           </Box>
           <Flex align="center" css={{ gap: "$1" }}>
             <CloudIcon />
