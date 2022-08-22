@@ -30,38 +30,22 @@ const ItemButton = styled("button", {
   all: "unset",
   display: "flex",
   alignItems: "center",
-  gap: "$1",
   boxSizing: "border-box",
   userSelect: "none",
   height: ITEM_HEIGHT,
   margin: 0,
-  padding: 0,
+  pt: 0,
+  pb: 0,
+  pl: ITEM_PADDING,
+  pr: ITEM_PADDING,
   flexBasis: 0,
   flexGrow: 1,
-  variants: {
-    enableHoverState: {
-      true: {
-        "&:hover :before": {
-          content: "''",
-          display: "block",
-          position: "absolute",
-          left: 2,
-          right: 2,
-          top: 0,
-          bottom: 0,
-          boxSizing: "border-box",
-          border: "solid $blue10",
-          borderWidth: "$2",
-          borderRadius: "$2",
-          pointerEvents: "none",
-        },
-      },
-    },
-  },
+  position: "relative",
 });
 
 const NestingLine = styled(Box, {
   width: Math.ceil(INDENT / 2),
+  marginRight: Math.floor(INDENT / 2),
   height: ITEM_HEIGHT,
   borderRight: "solid",
   borderRightWidth: "$1",
@@ -74,36 +58,17 @@ const NestingLine = styled(Box, {
 const NestingLines = ({
   isSelected,
   level,
-  followedByExpandButton,
 }: {
   isSelected: boolean;
   level: number;
-  followedByExpandButton: boolean;
-}) => {
-  if (level === 0) {
-    return null;
-  }
-
-  if (level === 1) {
-    return followedByExpandButton ? null : <Box css={{ width: INDENT }} />;
-  }
-
-  return (
+}) =>
+  level > 1 ? (
     <>
       {Array.from({ length: level - 1 }, (_, i) => (
-        <NestingLine
-          key={i}
-          style={{
-            marginRight:
-              Math.floor(INDENT / 2) +
-              (!followedByExpandButton && i === level - 2 ? INDENT : 0),
-          }}
-          isSelected={isSelected}
-        />
+        <NestingLine key={i} isSelected={isSelected} />
       ))}
     </>
-  );
-};
+  ) : null;
 
 const openKeyframes = keyframes({
   from: { height: 0 },
@@ -135,17 +100,18 @@ const CollapsibleTrigger = styled(Collapsible.Trigger, {
   pr: INDENT - ICONS_SIZE,
   height: ITEM_HEIGHT,
   alignItems: "center",
+  position: "absolute",
 
   // We want the button to take extra space so it's easier to hit
-  ml: "-$2",
-  pl: "$2",
+  ml: "-$1",
+  pl: "$1",
 });
+
+const TriggerPlaceholder = styled(Box, { width: INDENT });
 
 const ItemWrapper = styled(Flex, {
   color: "$hiContrast",
   alignItems: "center",
-  pr: ITEM_PADDING,
-  pl: ITEM_PADDING,
   position: "relative",
   variants: {
     isSelected: {
@@ -153,6 +119,22 @@ const ItemWrapper = styled(Flex, {
     },
     parentIsSelected: {
       true: { bc: "$blue4" },
+    },
+    enableHoverState: {
+      true: {
+        "&:hover:after": {
+          content: "''",
+          position: "absolute",
+          left: 2,
+          right: 2,
+          height: ITEM_HEIGHT,
+          border: "solid $blue10",
+          borderWidth: "$2",
+          borderRadius: "$2",
+          pointerEvents: "none",
+          boxSizing: "border-box",
+        },
+      },
     },
   },
 });
@@ -164,6 +146,7 @@ const Label = styled(Text, {
   lineHeight: 1.4,
   flexBasis: 0,
   flexGrow: 1,
+  ml: "$1",
 
   // For some reason flexBasis:0 is not enough
   // to stop it growing past the container
@@ -244,14 +227,33 @@ export const TreeNode = ({
       onOpenChange={(isOpen) => setIsExpanded?.(instance, isOpen)}
       data-drop-target-id={instance.id}
     >
-      <ItemWrapper isSelected={isSelected} parentIsSelected={parentIsSelected}>
-        <NestingLines
-          isSelected={isSelected}
-          level={level}
-          followedByExpandButton={shouldRenderExpandButton}
-        />
+      <ItemWrapper
+        isSelected={isSelected}
+        parentIsSelected={parentIsSelected}
+        enableHoverState={disableHoverStates === false}
+      >
+        {/* We want the main ItemButton to take the entire space,
+         * and then position the collapsible trigger on top of it using absolute positionning.
+         * When user clicks anywhere on a tree item, they should either hit the main button or the trigger.
+         */}
+
+        <ItemButton
+          type="button"
+          data-drag-item-id={instance.id}
+          data-item-button-id={instance.id}
+          onFocus={makeSelected}
+        >
+          <NestingLines isSelected={isSelected} level={level} />
+          {isAlwaysExpanded === false && <TriggerPlaceholder />}
+          <Icon />
+          <Label size="1" variant={isSelected ? "loContrast" : "contrast"}>
+            {label}
+          </Label>
+        </ItemButton>
+
         {shouldRenderExpandButton && (
           <CollapsibleTrigger
+            style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
             // We don't want a separate focusable control inside a tree item.
             // tabIndex makes it skipped over when tabbing.
             // It still can be focused using mouse, but we handle this elsewhere.
@@ -260,18 +262,6 @@ export const TreeNode = ({
             {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
           </CollapsibleTrigger>
         )}
-        <ItemButton
-          type="button"
-          data-drag-item-id={instance.id}
-          data-item-button-id={instance.id}
-          onFocus={makeSelected}
-          enableHoverState={disableHoverStates === false}
-        >
-          <Icon />
-          <Label size="1" variant={isSelected ? "loContrast" : "contrast"}>
-            {label}
-          </Label>
-        </ItemButton>
       </ItemWrapper>
       {isExpandable && (
         <CollapsibleContent

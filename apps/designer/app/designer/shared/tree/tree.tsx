@@ -379,6 +379,9 @@ const useKeyboardNavigation = ({
 
     // If we've lost focus due to a root update, we want to get it back.
     // This can happen when we delete an item or on drag-end.
+    //
+    // @todo: This causes selected item to scroll into view when you expand/collapse some other item.
+    // Need avoid this somehow.
     if (
       isRootChanged &&
       haveFocus === false &&
