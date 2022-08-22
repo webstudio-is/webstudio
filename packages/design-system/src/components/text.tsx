@@ -1,5 +1,8 @@
 import { styled } from "../stitches.config";
 
+/**
+ * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
+ */
 export const Text = styled("div", {
   // Reset
   margin: 0,
