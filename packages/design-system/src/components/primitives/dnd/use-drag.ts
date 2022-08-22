@@ -1,5 +1,4 @@
-import { useMove } from "./use-move";
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import { type Point } from "./geometry-utils";
 
 type State<Data> = {
@@ -7,8 +6,8 @@ type State<Data> = {
   initialX: number;
   initialY: number;
   shifts: number;
-  root: HTMLElement | null;
   dragItemData: Data | undefined;
+  pointerId: number | undefined;
 };
 
 const initialState: State<unknown> = {
@@ -16,8 +15,8 @@ const initialState: State<unknown> = {
   initialX: 0,
   initialY: 0,
   shifts: 0,
-  root: null,
   dragItemData: undefined,
+  pointerId: undefined,
 };
 
 export type UseDragProps<DragItemData> = {
@@ -35,56 +34,77 @@ export type UseDragHandlers = {
   cancelCurrentDrag: () => void;
 };
 
-export const useDrag = <DragItemData>({
-  startDistanceThreashold = 3,
-  shiftDistanceThreshold = 20,
-  onStart,
-  onMove,
-  onShiftChange,
-  onEnd,
-  elementToData,
-}: UseDragProps<DragItemData>): UseDragHandlers => {
+export const useDrag = <DragItemData>(
+  props: UseDragProps<DragItemData>
+): UseDragHandlers => {
+  // We want to use fresh props every time we use them,
+  // but we don't need to react to updates.
+  // So we can put them in a ref and make useMemo below very efficient.
+  const latestProps = useRef<UseDragProps<DragItemData>>(props);
+  latestProps.current = props;
+
   const state = useRef<State<DragItemData>>({
     ...(initialState as State<DragItemData>),
   });
 
-  const detectShift = (x: number) => {
-    const deltaX = x - state.current.initialX;
-    const shifts =
-      deltaX > 0
-        ? Math.floor(deltaX / shiftDistanceThreshold)
-        : Math.ceil(deltaX / shiftDistanceThreshold);
+  const [rootElement, setRootElement] = useState<HTMLElement | null>(null);
 
-    if (shifts !== state.current.shifts) {
-      state.current.shifts = shifts;
-      onShiftChange?.({ shifts });
-    }
-  };
+  const { handlePointerDown, end } = useMemo(() => {
+    const detectShift = (x: number) => {
+      const { onShiftChange, shiftDistanceThreshold = 20 } =
+        latestProps.current;
 
-  const useMoveHandlers = useMove({
-    shouldStart: ({ target }) => {
-      if (!target) {
-        return false;
+      const deltaX = x - state.current.initialX;
+      const shifts =
+        deltaX > 0
+          ? Math.floor(deltaX / shiftDistanceThreshold)
+          : Math.ceil(deltaX / shiftDistanceThreshold);
+
+      if (shifts !== state.current.shifts) {
+        state.current.shifts = shifts;
+        onShiftChange?.({ shifts });
+      }
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0 || state.current.status !== "idle") {
+        return;
       }
 
-      const data = elementToData(target as Element);
+      const data = latestProps.current.elementToData(event.target as Element);
 
       if (data === false) {
-        return false;
+        return;
       }
 
-      state.current.dragItemData = data;
-      return true;
-    },
-    onMoveStart({ clientX: x, clientY: y }) {
       state.current = {
         ...state.current,
         status: "pending",
-        initialX: x,
-        initialY: y,
+        initialX: event.clientX,
+        initialY: event.clientY,
+        pointerId: event.pointerId,
+        dragItemData: data,
       };
-    },
-    onMove({ clientX: x, clientY: y }) {
+
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", handlePointerUp);
+      window.addEventListener("pointercancel", handlePointerCancel);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const {
+        startDistanceThreashold = 3,
+        onStart,
+        onMove,
+      } = latestProps.current;
+
+      if (event.pointerId !== state.current.pointerId) {
+        return;
+      }
+
+      const x = event.clientX;
+      const y = event.clientY;
+
       // We want to start dragging only when the user has moved more than startDistanceThreashold.
       if (
         state.current.status === "pending" &&
@@ -106,8 +126,9 @@ export const useDrag = <DragItemData>({
         onMove({ x, y });
         detectShift(x);
       }
-    },
-    onMoveEnd({ isCanceled }) {
+    };
+
+    const end = (isCanceled: boolean) => {
       // A drag is basically a very slow click.
       // But we don't want it to register as a click.
       if (isCanceled === false && state.current.status === "dragging") {
@@ -126,39 +147,51 @@ export const useDrag = <DragItemData>({
         );
       }
 
-      state.current = {
-        ...(initialState as State<DragItemData>),
-        root: state.current.root,
-      };
-      onEnd({ isCanceled: isCanceled });
-    },
-  });
+      state.current = { ...(initialState as State<DragItemData>) };
+
+      latestProps.current.onEnd({ isCanceled: isCanceled });
+
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerCancel);
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      if (event.pointerId === state.current.pointerId) {
+        end(false);
+      }
+    };
+
+    const handlePointerCancel = (event: PointerEvent) => {
+      if (event.pointerId === state.current.pointerId) {
+        end(true);
+      }
+    };
+
+    return {
+      handlePointerDown,
+      end,
+    };
+  }, []);
 
   useEffect(() => {
-    const roorElement = state.current.root;
-    if (roorElement !== null) {
-      roorElement.addEventListener(
-        "pointerdown",
-        useMoveHandlers.onPointerDown
-      );
+    if (rootElement !== null) {
+      rootElement.addEventListener("pointerdown", handlePointerDown);
       return () => {
-        roorElement.removeEventListener(
-          "pointerdown",
-          useMoveHandlers.onPointerDown
-        );
+        rootElement.removeEventListener("pointerdown", handlePointerDown);
       };
     }
-  }, [useMoveHandlers]);
+  }, [rootElement, handlePointerDown]);
 
   // We want to return a stable object to avoid re-renders when it's a dependency
   return useMemo(() => {
     return {
       rootRef(element) {
-        state.current.root = element;
+        setRootElement(element);
       },
       cancelCurrentDrag() {
-        useMoveHandlers.cancelCurrentMove();
+        end(true);
       },
     };
-  }, [useMoveHandlers]);
+  }, [end]);
 };

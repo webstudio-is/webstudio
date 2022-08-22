@@ -17,7 +17,6 @@
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",
-    "@react-aria/utils": "^3.13.1",
     "@remix-run/node": "^1.6.4",
     "@remix-run/react": "^1.6.4",
     "@remix-run/serve": "^1.6.4",
