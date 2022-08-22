@@ -65,13 +65,15 @@ export type UseDropProps<Data> = {
   // |          ^------- emulated pointer
   // |           |
   // |___________|
-  //
-  // The pointer will be always at least 2px away from any edge of the root.
   emulatePointerAlwaysInRootBounds?: boolean;
 
   // Distance from an edge when placement is put next to an element edge
   placementPadding?: number;
 };
+
+// When emulatePointerAlwaysInRootBounds=true,
+// the pointer always will be at least 2px away from any edge of the root.
+const PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS = 2;
 
 export type UseDropHandlers = {
   handleMove: (pointerCoordinates: Point) => void;
@@ -284,11 +286,19 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
       handleMove(pointerCoordinates) {
         if (latestProps.current.emulatePointerAlwaysInRootBounds === true) {
           const rect = (rootRef.current as Element).getBoundingClientRect();
-          const padding = 2;
           const { x, y } = pointerCoordinates;
           state.current.pointerCoordinates = {
-            x: Math.max(rect.left + padding, Math.min(rect.right - padding, x)),
-            y: Math.max(rect.top + padding, Math.min(rect.bottom - padding, y)),
+            x: Math.max(
+              rect.left + PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS,
+              Math.min(rect.right - PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS, x)
+            ),
+            y: Math.max(
+              rect.top + PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS,
+              Math.min(
+                rect.bottom - PADDING_WHEN_EMULATING_POINTER_IN_BOUNDS,
+                y
+              )
+            ),
           };
         } else {
           state.current.pointerCoordinates = pointerCoordinates;
