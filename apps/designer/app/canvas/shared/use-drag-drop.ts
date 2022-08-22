@@ -3,7 +3,11 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { getInstancePath, createInstance } from "~/shared/tree-utils";
+import {
+  getInstancePath,
+  createInstance,
+  findClosestNonInlineParent,
+} from "~/shared/tree-utils";
 import {
   findInstanceByElement,
   getInstanceElementById,
@@ -169,10 +173,9 @@ export const useDragAndDrop = () => {
 
       // When trying to drag an inline instance, drag its parent instead
       if (components[instance.component].isInlineOnly) {
-        const path = getInstancePath(rootInstance, instance.id);
-        path.reverse();
-        const nonInlineParent = path.find(
-          (item) => components[item.component].isInlineOnly === false
+        const nonInlineParent = findClosestNonInlineParent(
+          rootInstance,
+          instance.id
         );
         if (
           nonInlineParent !== undefined &&
