@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 type RefCallback = (rootElement: null | HTMLElement) => void;
 
@@ -21,7 +21,14 @@ export const useContentEditable = (
     [editor]
   );
 
+  const prevIsEditing = useRef(isEditing);
   useEffect(() => {
+    const startedEditing = isEditing && prevIsEditing.current === false;
+    prevIsEditing.current = isEditing;
+    if (startedEditing) {
+      editor.getRootElement()?.focus();
+    }
+
     if (isEditing === true) return;
     // Lets unset the root element when we are not editing
     editor.setRootElement(null);
