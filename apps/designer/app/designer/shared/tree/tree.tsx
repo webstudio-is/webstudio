@@ -6,7 +6,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import {
   type DropTarget,
-  type Rect,
   type Placement,
   useDrag,
   useDrop,
@@ -27,10 +26,7 @@ import {
   getPlacementIndicatorAlignment,
   INDENT,
 } from "./tree-node";
-import {
-  PlacementIndicatorLine,
-  PlacementIndicatorOutline,
-} from "./placement-indicator";
+import { PlacementIndicator } from "./placement-indicator";
 import { useHotkeys } from "react-hotkeys-hook";
 
 type TreeProps = {
@@ -58,10 +54,16 @@ export const Tree = ({
     selectedInstanceId,
   });
 
-  const rootNodeRef = useRef<HTMLElement | null>(null);
+  const rootRef = useRef<HTMLElement | null>(null);
 
   const [dragItem, setDragItem] = useState<Instance>();
   const [dropTarget, setDropTarget] = useState<DropTarget<Instance>>();
+
+  const getDropTargetElement = useCallback(
+    (id: Instance["id"]): HTMLElement | null | undefined =>
+      rootRef.current?.querySelector(`[data-drop-target-id="${id}"]`),
+    []
+  );
 
   const [shiftedDropTarget, setHorizontalShift] = useHorizontalShift({
     dragItem,
@@ -71,12 +73,9 @@ export const Tree = ({
   });
 
   const getFallbackDropTarget = () => {
-    const element = rootNodeRef.current?.querySelector(
-      `[data-drop-target-id="${root.id}"]`
-    );
     return {
       data: root,
-      element: element as HTMLElement,
+      element: getDropTargetElement(root.id) as HTMLElement,
       final: true,
     };
   };
@@ -137,9 +136,7 @@ export const Tree = ({
         return getFallbackDropTarget();
       }
 
-      const element = rootNodeRef.current?.querySelector(
-        `[data-drop-target-id="${data.id}"]`
-      );
+      const element = getDropTargetElement(data.id);
 
       if (element == null) {
         return getFallbackDropTarget();
@@ -246,7 +243,7 @@ export const Tree = ({
         pb: 2,
       }}
       ref={(element) => {
-        rootNodeRef.current = element;
+        rootRef.current = element;
         autoScrollHandlers.targetRef(element);
         dragHandlers.rootRef(element);
         dropHandlers.rootRef(element);
@@ -272,15 +269,10 @@ export const Tree = ({
       </Box>
       {shiftedDropTarget &&
         createPortal(
-          shiftedDropTarget.placement.type === "rect" ? (
-            <PlacementIndicatorOutline
-              rect={shiftedDropTarget.placement.rect}
-            />
-          ) : (
-            <PlacementIndicatorLine
-              placement={shiftedDropTarget.placement.placement}
-            />
-          ),
+          <PlacementIndicator
+            dropTarget={shiftedDropTarget}
+            getDropTargetElement={getDropTargetElement}
+          />,
           document.body
         )}
     </Box>
@@ -492,12 +484,10 @@ const useExpandState = ({
   return { getIsExpanded, setIsExpanded };
 };
 
-type ShiftedDropTarget = {
+export type ShiftedDropTarget = {
   instance: Instance;
   position: number | "end";
-  placement:
-    | { type: "rect"; rect: Rect }
-    | { type: "line"; placement: Placement };
+  placement?: Placement;
 };
 
 export const useHorizontalShift = ({
@@ -529,7 +519,7 @@ export const useHorizontalShift = ({
       return undefined;
     }
 
-    const { data, placement, rect, indexWithinChildren } = dropTarget;
+    const { data, placement, indexWithinChildren } = dropTarget;
 
     const shiftPlacement = (depth: number) => {
       const shift = getPlacementIndicatorAlignment(depth);
@@ -540,16 +530,11 @@ export const useHorizontalShift = ({
       };
     };
 
-    // Placement type “inside-parent” means that useDrop didn’t find any children.
-    // This means the drop target is empty or collapsed.
-    // In this case, we want to show a rect instead of a line.
-    // Also, we don’t want to apply shift, as there’s no line to shift.
+    // Placement type “inside-parent” means that useDrop() didn’t find any children.
+    // In this case the placement line coordinates are meaningless in the context of the tree.
+    // We're dropping the placement and not performing any shifting.
     if (placement.type === "inside-parent") {
-      return {
-        instance: data,
-        position: "end",
-        placement: { type: "rect", rect: rect },
-      };
+      return { instance: data, position: "end" };
     }
 
     const dropTargetPath = getInstancePathWithPositions(root, data.id);
@@ -561,10 +546,7 @@ export const useHorizontalShift = ({
     const withoutShift = {
       instance: data,
       position: indexWithinChildren,
-      placement: {
-        type: "line",
-        placement: shiftPlacement(currentDepth),
-      },
+      placement: shiftPlacement(currentDepth),
     } as const;
 
     const isDragItem = (instance: Instance | undefined | string) =>
@@ -605,10 +587,7 @@ export const useHorizontalShift = ({
       return {
         instance: newParent,
         position: newPosition,
-        placement: {
-          type: "line",
-          placement: shiftPlacement(currentDepth - shifted),
-        },
+        placement: shiftPlacement(currentDepth - shifted),
       };
     }
 
@@ -649,10 +628,7 @@ export const useHorizontalShift = ({
       return {
         instance: newParent,
         position: "end",
-        placement: {
-          type: "line",
-          placement: shiftPlacement(currentDepth + shifted),
-        },
+        placement: shiftPlacement(currentDepth + shifted),
       };
     }
 

@@ -1,4 +1,7 @@
 import { Box, Placement, Rect, styled } from "@webstudio-is/design-system";
+import { Instance } from "@webstudio-is/react-sdk";
+import { useMemo } from "react";
+import { type ShiftedDropTarget } from "./tree";
 
 const CIRCLE_SIZE = 8;
 const LINE_THICKNESS = 2;
@@ -36,11 +39,7 @@ const Line = styled(Box, {
   outlineWidth: OUTLINE_WIDTH,
 });
 
-export const PlacementIndicatorLine = ({
-  placement,
-}: {
-  placement: Placement;
-}) => (
+const PlacementIndicatorLine = ({ placement }: { placement: Placement }) => (
   <>
     <CircleOutline
       style={{
@@ -74,13 +73,44 @@ const Outline = styled(Box, {
   borderRadius: "$2",
 });
 
-export const PlacementIndicatorOutline = ({ rect }: { rect: Rect }) => (
+const PlacementIndicatorOutline = ({ rect }: { rect: Rect }) => (
   <Outline
     style={{
       top: rect.top,
-      left: rect.left + 2,
-      width: rect.width - 4,
+      left: rect.left,
+      width: rect.width,
       height: rect.height,
     }}
   />
 );
+
+export const PlacementIndicator = ({
+  dropTarget,
+  getDropTargetElement,
+}: {
+  dropTarget: ShiftedDropTarget;
+  getDropTargetElement: (id: Instance["id"]) => HTMLElement | null | undefined;
+}) => {
+  const rect = useMemo(
+    // @todo: update rect on scroll
+    // @todo: don't render outline out of bounds
+    // @todo: don't use [data-item-button-id]
+    // @todo: probably should move this rect retriving logic into a hook
+    () =>
+      (
+        (
+          getDropTargetElement(dropTarget.instance.id) || undefined
+        )?.querySelector("[data-item-button-id]") || undefined
+      )?.getBoundingClientRect(),
+    [dropTarget.instance.id, getDropTargetElement]
+  );
+
+  return (
+    <>
+      {rect && <PlacementIndicatorOutline rect={rect} />}
+      {dropTarget.placement && (
+        <PlacementIndicatorLine placement={dropTarget.placement} />
+      )}
+    </>
+  );
+};

@@ -77,17 +77,14 @@ describe("useHorizontalShift", () => {
     after?: Instance;
     placement?: Placement;
   }): DropTarget<Instance> => ({
-    element: null as unknown as HTMLElement, // element is not used
     data: into,
-    rect: {
-      top: Math.random(),
-      left: Math.random(),
-      width: Math.random(),
-      height: Math.random(),
-    } as DOMRect,
     indexWithinChildren:
       after === undefined ? 0 : into.children.indexOf(after) + 1,
     placement,
+
+    // not used
+    element: null as unknown as HTMLElement,
+    rect: null as unknown as DOMRect,
   });
 
   const render = (
@@ -136,11 +133,8 @@ describe("useHorizontalShift", () => {
     // parent doesn't change
     expect(result?.instance.id).toBe(box2.id);
 
-    // placement is the original rect
-    expect(result?.placement).toEqual({
-      type: "rect",
-      rect: dropTarget.rect,
-    });
+    // placement line geometry isn't provided
+    expect(result?.placement).toBeUndefined();
   });
 
   test("placement line coordinates are always adjusted", () => {
@@ -155,8 +149,9 @@ describe("useHorizontalShift", () => {
     // placement line is adjusted to account for depth,
     // even though depth didn't change
     expect(result?.placement).toEqual({
-      type: "line",
-      placement: { ...makePlacement(), length: 260, x: 40 },
+      ...makePlacement(),
+      length: 260,
+      x: 40,
     });
   });
 
@@ -200,8 +195,9 @@ describe("useHorizontalShift", () => {
       expect(result?.instance.id).toBe(tree.id);
       expect(result?.position).toBe(tree.children.indexOf(box3) + 1);
       expect(result?.placement).toEqual({
-        type: "line",
-        placement: { ...makePlacement(), x: 24, length: 276 },
+        ...makePlacement(),
+        x: 24,
+        length: 276,
       });
     });
 
@@ -215,16 +211,18 @@ describe("useHorizontalShift", () => {
       expect(result1?.instance.id).toBe(tree.id);
       expect(result1?.position).toBe(tree.children.indexOf(box3) + 1);
       expect(result1?.placement).toEqual({
-        type: "line",
-        placement: { ...makePlacement(), x: 24, length: 276 },
+        ...makePlacement(),
+        x: 24,
+        length: 276,
       });
 
       const result2 = render(args, 1);
       expect(result2?.instance.id).toBe(box3.id);
       expect(result2?.position).toBe(box3.children.indexOf(box32) + 1);
       expect(result2?.placement).toEqual({
-        type: "line",
-        placement: { ...makePlacement(), x: 40, length: 260 },
+        ...makePlacement(),
+        x: 40,
+        length: 260,
       });
     });
 
