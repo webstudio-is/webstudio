@@ -100,7 +100,7 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
           }}
         >
           <Editor
-            editable={
+            renderEditable={() => (
               <ContentEditable
                 style={{
                   minHeight: 150,
@@ -114,7 +114,7 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
                   background: "#eee",
                 }}
               />
-            }
+            )}
             instance={
               {
                 component: "Paragraph",

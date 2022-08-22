@@ -5,7 +5,7 @@ const EditorLazy = lazy(() => import("./editor"));
 
 const EditorWithSuspense = (props: EditorProps) => {
   return (
-    <Suspense fallback={props.editable}>
+    <Suspense fallback={props.renderEditable()}>
       <EditorLazy {...props} />
     </Suspense>
   );

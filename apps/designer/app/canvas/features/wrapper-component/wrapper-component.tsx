@@ -78,7 +78,16 @@ export const WrapperComponentDev = ({
     return (
       <Editor
         instance={instance}
-        editable={<Component {...props} contentEditable={true} />}
+        renderEditable={(ref) => (
+          <Component
+            {...props}
+            ref={(element: HTMLElement | null) => {
+              props.ref(element);
+              ref?.(element);
+            }}
+            contentEditable={true}
+          />
+        )}
         onChange={(updates) => {
           onChangeChildren({ instanceId: instance.id, updates });
         }}

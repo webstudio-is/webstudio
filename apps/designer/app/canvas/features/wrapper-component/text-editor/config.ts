@@ -1,7 +1,7 @@
 import { InstanceNode } from "./nodes/node-instance";
 
 export const config = {
-  namespace: "ComponentTextEditor",
+  namespace: "WsTextEditor",
   onError(error: Error) {
     throw error;
   },

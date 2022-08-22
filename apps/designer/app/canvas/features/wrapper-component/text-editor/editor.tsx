@@ -9,28 +9,29 @@ import { InstancePlugin } from "./plugins/plugin-instance";
 import { ToolbarConnectorPlugin } from "./plugins/plugin-toolbar-connector";
 import { OnChangePlugin } from "./plugins/plugin-on-change";
 import { config } from "./config";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 import { getInstanceIdFromElement } from "~/shared/dom-utils";
 
 export type EditorProps = {
-  editable: JSX.Element;
+  renderEditable: (ref?: (element: HTMLElement | null) => void) => JSX.Element;
   instance: Instance;
   onChange: (updates: ChildrenUpdates) => void;
 };
 
 const useSetElement = (instance: Instance) => {
   const [editor] = useLexicalComposerContext();
-  const [element] = useSelectedElement();
-  useEffect(() => {
-    if (element && getInstanceIdFromElement(element) === instance.id) {
+  return useCallback(
+    (element) => {
       editor.setRootElement(element);
-    }
-  }, [element, editor, instance]);
+    },
+    [editor]
+  );
 };
 
-const Editor = ({ instance, editable, onChange }: EditorProps) => {
-  useSetElement(instance);
+const Editor = ({ instance, renderEditable, onChange }: EditorProps) => {
+  const refCallback = useSetElement(instance);
+  const editable = renderEditable(refCallback);
   return (
     <>
       <RichTextPlugin contentEditable={editable} placeholder="" />
