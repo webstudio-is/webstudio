@@ -1,6 +1,5 @@
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
-import type { Project, Asset } from "@webstudio-is/prisma-client";
 import { toast } from "@webstudio-is/design-system";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";

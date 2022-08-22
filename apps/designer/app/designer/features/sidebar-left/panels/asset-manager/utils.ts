@@ -6,7 +6,6 @@ export const getFormattedAspectRatio = (
   width: number | null,
   height: number | null
 ) => {
-  console.log(width, height);
   if (width === null || height === null) {
     return "";
   }
