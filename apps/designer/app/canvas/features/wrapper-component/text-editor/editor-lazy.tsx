@@ -3,14 +3,14 @@ import type { EditorProps } from "./editor";
 
 const EditorLazy = lazy(() => import("./editor"));
 
-type EditorPropsWithSuspense = EditorProps & {
+type EditorWithSuspenseProps = EditorProps & {
   fallback: JSX.Element;
 };
 
 const EditorWithSuspense = ({
   fallback,
   ...props
-}: EditorPropsWithSuspense) => {
+}: EditorWithSuspenseProps) => {
   return (
     <Suspense fallback={fallback}>
       <EditorLazy {...props} />

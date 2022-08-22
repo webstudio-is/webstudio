@@ -3,10 +3,10 @@
   "extends": "../../node_modules/@webstudio-is/tsconfig/base.json",
   "include": ["./src/**/*.ts", "./src/**/*.tsx"],
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "es2020"],
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
     "module": "commonjs",
     "jsx": "react-jsx",
-    "target": "es2020",
+    "target": "ES2020",
     "strict": true,
     "baseUrl": ".",
     "paths": {

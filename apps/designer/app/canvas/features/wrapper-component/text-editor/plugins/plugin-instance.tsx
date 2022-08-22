@@ -27,6 +27,7 @@ const INSERT_INSTANCE_COMMAND: LexicalCommand<Instance> = createCommand();
 type InstancePluginProps = {
   children: Instance["children"];
 };
+
 export const InstancePlugin = ({ children }: InstancePluginProps) => {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
