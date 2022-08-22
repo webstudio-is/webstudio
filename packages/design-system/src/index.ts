@@ -63,3 +63,4 @@ export * from "./components/avatar";
 export * from "./components/primitives/dnd";
 export * from "./components/separator";
 export * from "./components/text-legacy";
+export * from "./components/text";

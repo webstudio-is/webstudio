@@ -207,7 +207,7 @@ export const {
     },
     fonts: {
       sans: "Inter, -apple-system, system-ui, sans-serif",
-      mono: "Söhne Mono, menlo, monospace",
+      mono: "Roboto, menlo, monospace",
     },
     space: {
       1: "4px",
