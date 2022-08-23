@@ -1,7 +1,7 @@
 {
-  "name": "@webstudio-is/http-api",
-  "version": "0.0.2",
-  "description": "Webstudio HTTP API",
+  "name": "@webstudio-is/http-client",
+  "version": "0.0.1",
+  "description": "Webstudio HTTP Client",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
@@ -28,5 +28,5 @@
     "!*.test.*"
   ],
   "license": "MIT",
-  "private": false
+  "private": true
 }
