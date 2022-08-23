@@ -109,6 +109,19 @@ const CollapsibleTrigger = styled(Collapsible.Trigger, {
 
 const TriggerPlaceholder = styled(Box, { width: INDENT });
 
+const hoverStyle = {
+  content: "''",
+  position: "absolute",
+  left: 2,
+  right: 2,
+  height: ITEM_HEIGHT,
+  border: "solid $blue10",
+  borderWidth: "$2",
+  borderRadius: "$2",
+  pointerEvents: "none",
+  boxSizing: "border-box",
+};
+
 const ItemWrapper = styled(Flex, {
   color: "$hiContrast",
   alignItems: "center",
@@ -121,20 +134,10 @@ const ItemWrapper = styled(Flex, {
       true: { bc: "$blue4" },
     },
     enableHoverState: {
-      true: {
-        "&:hover:after": {
-          content: "''",
-          position: "absolute",
-          left: 2,
-          right: 2,
-          height: ITEM_HEIGHT,
-          border: "solid $blue10",
-          borderWidth: "$2",
-          borderRadius: "$2",
-          pointerEvents: "none",
-          boxSizing: "border-box",
-        },
-      },
+      true: { "&:hover:after": hoverStyle },
+    },
+    forceHoverState: {
+      true: { "&:after": hoverStyle },
     },
   },
 });
@@ -154,7 +157,6 @@ const Label = styled(Text, {
 });
 
 type TreeNodeProps = {
-  disableHoverStates?: boolean;
   instance: Instance;
   selectedInstanceId?: Instance["id"];
   parentIsSelected?: boolean;
@@ -164,6 +166,7 @@ type TreeNodeProps = {
   getIsExpanded: (instance: Instance) => boolean;
   setIsExpanded?: (instance: Instance, expanded: boolean) => void;
   onExpandTransitionEnd?: () => void;
+  forceHoverStateAtItem?: Instance["id"];
 };
 
 export const TreeNode = ({
@@ -179,7 +182,7 @@ export const TreeNode = ({
     selectedInstanceId,
     onSelect,
     onExpandTransitionEnd,
-    disableHoverStates = false,
+    forceHoverStateAtItem,
   } = commonProps;
 
   const collapsibleContentRef = useRef<HTMLDivElement>(null);
@@ -230,7 +233,8 @@ export const TreeNode = ({
       <ItemWrapper
         isSelected={isSelected}
         parentIsSelected={parentIsSelected}
-        enableHoverState={disableHoverStates === false}
+        enableHoverState={forceHoverStateAtItem === undefined}
+        forceHoverState={forceHoverStateAtItem === instance.id}
       >
         {/* We want the main ItemButton to take the entire space,
          * and then position the collapsible trigger on top of it using absolute positionning.

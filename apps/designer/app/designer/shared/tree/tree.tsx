@@ -264,15 +264,13 @@ export const Tree = ({
           getIsExpanded={getIsExpanded}
           setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
-          disableHoverStates={dragItem !== undefined}
+          forceHoverStateAtItem={shiftedDropTarget?.instance?.id}
         />
       </Box>
-      {shiftedDropTarget &&
+
+      {shiftedDropTarget?.placement &&
         createPortal(
-          <PlacementIndicator
-            dropTarget={shiftedDropTarget}
-            getDropTargetElement={getDropTargetElement}
-          />,
+          <PlacementIndicator placement={shiftedDropTarget.placement} />,
           document.body
         )}
     </Box>
@@ -332,14 +330,14 @@ const useKeyboardNavigation = ({
       if (shortcut === "up") {
         const index = flatCurrentlyExpandedTree.indexOf(selectedInstance.id);
         if (index > 0) {
-          setFocus(flatCurrentlyExpandedTree[index - 1]);
+          setFocus(flatCurrentlyExpandedTree[index - 1], "changing");
           event.preventDefault(); // prevent scrolling
         }
       }
       if (shortcut === "down") {
         const index = flatCurrentlyExpandedTree.indexOf(selectedInstance.id);
         if (index < flatCurrentlyExpandedTree.length - 1) {
-          setFocus(flatCurrentlyExpandedTree[index + 1]);
+          setFocus(flatCurrentlyExpandedTree[index + 1], "changing");
           event.preventDefault(); // prevent scrolling
         }
       }
@@ -357,12 +355,12 @@ const useKeyboardNavigation = ({
   );
 
   const setFocus = useCallback(
-    (instanceId: Instance["id"]) => {
+    (instanceId: Instance["id"], reason: "restoring" | "changing") => {
       const itemButton = rootRef.current?.querySelector(
         `[data-item-button-id="${instanceId}"]`
       );
       if (itemButton instanceof HTMLElement) {
-        itemButton.focus({ preventScroll: true });
+        itemButton.focus({ preventScroll: reason === "restoring" });
       }
     },
     [rootRef]
@@ -385,7 +383,7 @@ const useKeyboardNavigation = ({
       hadFocus.current === true &&
       selectedInstanceId !== undefined
     ) {
-      setFocus(selectedInstanceId);
+      setFocus(selectedInstanceId, "restoring");
     }
   }, [root, rootRef, selectedInstanceId, setFocus]);
 
@@ -414,7 +412,7 @@ const useKeyboardNavigation = ({
       // When clicking anywhere else in the tree,
       // make sure the selected item doesn't loose focus.
       if (selectedInstanceId !== undefined) {
-        setFocus(selectedInstanceId);
+        setFocus(selectedInstanceId, "restoring");
       }
     },
     handleBlur() {
