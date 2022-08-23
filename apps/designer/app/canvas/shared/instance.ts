@@ -62,8 +62,8 @@ export const findInsertLocation = (
   const path = getInstancePathWithPositions(rootInstance, selectedInstanceId);
   path.reverse();
 
-  const parentIndex = path.findIndex(({ item }) =>
-    components[item.component].canAcceptChild()
+  const parentIndex = path.findIndex(
+    ({ item }) => components[item.component].canAcceptChildren
   );
 
   // Just in case selected Instance is not in the tree for some reason.

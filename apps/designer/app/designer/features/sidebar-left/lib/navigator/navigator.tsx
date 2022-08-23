@@ -22,7 +22,7 @@ const tmp = {
     return components[item.component].isInlineOnly !== true;
   },
   canAcceptChild(item: Instance) {
-    return components[item.component].canAcceptChild();
+    return components[item.component].canAcceptChildren;
   },
   getItemChildren(item: Instance) {
     return item.children.filter(

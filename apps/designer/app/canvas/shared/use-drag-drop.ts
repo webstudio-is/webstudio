@@ -108,8 +108,8 @@ export const useDragAndDrop = () => {
         path.splice(0, dragItemIndex + 1);
       }
 
-      const data = path.find((instance) =>
-        components[instance.component].canAcceptChild()
+      const data = path.find(
+        (instance) => components[instance.component].canAcceptChildren
       );
 
       if (data === undefined) {
