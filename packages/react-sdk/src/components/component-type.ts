@@ -1,13 +1,11 @@
 import type { Style } from "../css";
 import { z } from "zod";
+import React from "react";
+import { IconProps } from "@webstudio-is/icons";
 
 export type WsComponentMeta<ComponentType> = {
   Component: ComponentType;
-
-  // @todo: can we do better than `any` here?
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Icon: any;
-
+  Icon: React.FunctionComponent<IconProps>;
   defaultStyle?: Style;
   canAcceptChildren: boolean;
   // Should children of the component be editable?
