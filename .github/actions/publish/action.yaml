@@ -19,6 +19,9 @@ runs:
       - name: Install Dependencies
         run: yarn install
         shell: bash
+      - name: Build Dependencies
+        run: yarn build
+        shell: bash
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ inputs.token }}
