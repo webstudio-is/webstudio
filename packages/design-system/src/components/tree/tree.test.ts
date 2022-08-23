@@ -302,3 +302,7 @@
 // });
 
 export const tmp = 1;
+
+test("tmp", () => {
+  expect(1).toBe(1);
+});
