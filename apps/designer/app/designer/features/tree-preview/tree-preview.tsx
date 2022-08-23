@@ -1,8 +1,7 @@
 import produce from "immer";
-import { type Instance } from "@webstudio-is/react-sdk";
+import { components, type Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
-import { TreeNode } from "~/designer/shared/tree";
-import { Flex } from "@webstudio-is/design-system";
+import { Flex, TreeNode, TreeNodeLabel } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
   reparentInstanceMutable,
@@ -11,6 +10,23 @@ import {
   findInstanceById,
   getInstancePath,
 } from "~/shared/tree-utils";
+
+const tmp = {
+  getItemChildren(item: Instance) {
+    return item.children.filter(
+      (child) => typeof child !== "string"
+    ) as Instance[];
+  },
+  renderItem(props: { data: Instance; isSelected: boolean }) {
+    const { Icon, label } = components[props.data.component];
+    return (
+      <>
+        <Icon />
+        <TreeNodeLabel isSelected={props.isSelected} text={label} withIcon />
+      </>
+    );
+  },
+};
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
@@ -59,8 +75,8 @@ export const TreePrevew = () => {
     ).map((item) => item.id);
 
     return {
-      instance,
-      selectedInstanceId: dragItemInstance.id,
+      itemData: instance,
+      selectedItemId: dragItemInstance.id,
       getIsExpanded: (instance: Instance) =>
         dropTargetPath.includes(instance.id),
       animate: false,
@@ -75,7 +91,7 @@ export const TreePrevew = () => {
   return (
     treeProps && (
       <Flex direction="column" css={{ pt: "$1", pb: "$1", width: "100%" }}>
-        <TreeNode {...treeProps} />
+        <TreeNode {...tmp} {...treeProps} />
       </Flex>
     )
   );

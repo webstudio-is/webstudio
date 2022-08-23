@@ -1,14 +1,10 @@
 import { useCallback, useRef, useEffect } from "react";
-import { type Instance, components } from "@webstudio-is/react-sdk";
-import {
-  Flex,
-  Text,
-  Collapsible,
-  keyframes,
-  styled,
-  Box,
-} from "@webstudio-is/design-system";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
+import { keyframes, styled } from "~/stitches.config";
+import { Box } from "../box";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { Flex } from "../flex";
+import { Text } from "../text";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -17,13 +13,6 @@ const ITEM_PADDING = 8;
 
 export const getPlacementIndicatorAlignment = (depth: number) => {
   return depth * INDENT + ITEM_PADDING;
-};
-
-export const getIsExpandable = (instance: Instance) => {
-  return (
-    // Text nodes have only one child which is a string.
-    instance.children.length > 1 || typeof instance.children[0] === "object"
-  );
 };
 
 const ItemButton = styled("button", {
@@ -142,65 +131,58 @@ const ItemWrapper = styled(Flex, {
   },
 });
 
-const Label = styled(Text, {
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  lineHeight: 1.4,
-  flexBasis: 0,
-  flexGrow: 1,
-  ml: "$1",
+type TreeNodeProps<Data extends { id: string }> = {
+  itemData: Data;
+  getItemChildren: (item: Data) => Data[];
+  renderItem: (props: { data: Data; isSelected: boolean }) => React.ReactNode;
 
-  // For some reason flexBasis:0 is not enough
-  // to stop it growing past the container
-  width: 0,
-});
-
-type TreeNodeProps = {
-  instance: Instance;
-  selectedInstanceId?: Instance["id"];
-  parentIsSelected?: boolean;
-  level?: number;
-  onSelect?: (instanceId: Instance["id"]) => void;
-  animate?: boolean;
-  getIsExpanded: (instance: Instance) => boolean;
-  setIsExpanded?: (instance: Instance, expanded: boolean) => void;
+  getIsExpanded: (item: Data) => boolean;
+  setIsExpanded?: (item: Data, expanded: boolean) => void;
   onExpandTransitionEnd?: () => void;
-  forceHoverStateAtItem?: Instance["id"];
+
+  selectedItemId?: string;
+  parentIsSelected?: boolean;
+  onSelect?: (itemId: string) => void;
+
+  level?: number;
+  animate?: boolean;
+  forceHoverStateAtItem?: string;
 };
 
-export const TreeNode = ({
-  instance,
+export const TreeNode = <Data extends { id: string }>({
+  itemData,
   level = 0,
   parentIsSelected,
   ...commonProps
-}: TreeNodeProps) => {
+}: TreeNodeProps<Data>) => {
   const {
     getIsExpanded,
     animate = true,
     setIsExpanded,
-    selectedInstanceId,
+    selectedItemId,
     onSelect,
     onExpandTransitionEnd,
     forceHoverStateAtItem,
+    renderItem,
+    getItemChildren,
   } = commonProps;
 
   const collapsibleContentRef = useRef<HTMLDivElement>(null);
 
+  const itemChildren = getItemChildren(itemData);
+
   const isAlwaysExpanded = level === 0;
-  const isExpandable = getIsExpandable(instance);
-  const isExpanded = getIsExpanded(instance) || isAlwaysExpanded;
-  const isSelected = instance.id === selectedInstanceId;
+  const isExpandable = itemChildren.length > 0;
+  const isExpanded = getIsExpanded(itemData) || isAlwaysExpanded;
+  const isSelected = itemData.id === selectedItemId;
 
   const makeSelected = () => {
     if (isSelected === false) {
-      onSelect?.(instance.id);
+      onSelect?.(itemData.id);
     }
   };
 
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
-
-  const { Icon, label } = components[instance.component];
 
   const CollapsibleContent = animate
     ? CollapsibleContentAnimated
@@ -227,14 +209,14 @@ export const TreeNode = ({
   return (
     <Collapsible.Root
       open={isExpanded}
-      onOpenChange={(isOpen) => setIsExpanded?.(instance, isOpen)}
-      data-drop-target-id={instance.id}
+      onOpenChange={(isOpen) => setIsExpanded?.(itemData, isOpen)}
+      data-drop-target-id={itemData.id}
     >
       <ItemWrapper
         isSelected={isSelected}
         parentIsSelected={parentIsSelected}
         enableHoverState={forceHoverStateAtItem === undefined}
-        forceHoverState={forceHoverStateAtItem === instance.id}
+        forceHoverState={forceHoverStateAtItem === itemData.id}
       >
         {/* We want the main ItemButton to take the entire space,
          * and then position the collapsible trigger on top of it using absolute positionning.
@@ -243,16 +225,13 @@ export const TreeNode = ({
 
         <ItemButton
           type="button"
-          data-drag-item-id={instance.id}
-          data-item-button-id={instance.id}
+          data-drag-item-id={itemData.id}
+          data-item-button-id={itemData.id}
           onFocus={makeSelected}
         >
           <NestingLines isSelected={isSelected} level={level} />
           {isAlwaysExpanded === false && <TriggerPlaceholder />}
-          <Icon />
-          <Label size="1" variant={isSelected ? "loContrast" : "contrast"}>
-            {label}
-          </Label>
+          {renderItem({ data: itemData, isSelected })}
         </ItemButton>
 
         {shouldRenderExpandButton && (
@@ -275,22 +254,53 @@ export const TreeNode = ({
           {
             // CollapsibleContent doesn't render children when collapsed.
             // No need to worry about optimizing this.
-            instance.children.flatMap((child) =>
-              typeof child === "string"
-                ? []
-                : [
-                    <TreeNode
-                      key={child.id}
-                      instance={child}
-                      level={level + 1}
-                      parentIsSelected={isSelected || parentIsSelected}
-                      {...commonProps}
-                    />,
-                  ]
-            )
+            itemChildren.map((child) => (
+              <TreeNode
+                key={child.id}
+                itemData={child}
+                level={level + 1}
+                parentIsSelected={isSelected || parentIsSelected}
+                {...commonProps}
+              />
+            ))
           }
         </CollapsibleContent>
       )}
     </Collapsible.Root>
   );
 };
+
+const Label = styled(Text, {
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  lineHeight: 1.4,
+  flexBasis: 0,
+  flexGrow: 1,
+
+  // For some reason flexBasis:0 is not enough
+  // to stop it from growing past the container
+  width: 0,
+
+  variants: {
+    withIcon: { true: { ml: "$1" } },
+  },
+});
+
+export const TreeNodeLabel = ({
+  text,
+  isSelected,
+  withIcon = false,
+}: {
+  text: string;
+  isSelected: boolean;
+  withIcon?: boolean;
+}) => (
+  <Label
+    size="1"
+    variant={isSelected ? "loContrast" : "contrast"}
+    withIcon={withIcon}
+  >
+    {text}
+  </Label>
+);

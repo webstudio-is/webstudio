@@ -1,4 +1,6 @@
-import { Box, Placement, styled } from "@webstudio-is/design-system";
+import { styled } from "~/stitches.config";
+import { Box } from "../box";
+import { Placement } from "../primitives/dnd";
 
 const CIRCLE_SIZE = 8;
 const LINE_THICKNESS = 2;

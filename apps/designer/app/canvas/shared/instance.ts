@@ -62,8 +62,8 @@ export const findInsertLocation = (
   const path = getInstancePathWithPositions(rootInstance, selectedInstanceId);
   path.reverse();
 
-  const parentIndex = path.findIndex(({ instance }) =>
-    components[instance.component].canAcceptChild()
+  const parentIndex = path.findIndex(({ item }) =>
+    components[item.component].canAcceptChild()
   );
 
   // Just in case selected Instance is not in the tree for some reason.
@@ -72,7 +72,7 @@ export const findInsertLocation = (
   }
 
   return {
-    parentId: path[parentIndex].instance.id,
+    parentId: path[parentIndex].item.id,
     position: parentIndex === 0 ? "end" : path[parentIndex - 1].position + 1,
   };
 };

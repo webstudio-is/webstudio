@@ -38,14 +38,14 @@ export const getInstancePathWithPositions = (
       if (typeof child === "string") continue;
       const found = find(child);
       if (found) {
-        path.push({ instance: child, position: i });
+        path.push({ item: child, position: i });
         return true;
       }
     }
   };
 
   if (find(instance)) {
-    path.push({ instance, position: 0 });
+    path.push({ item: instance, position: 0 });
   }
 
   return path.reverse();
