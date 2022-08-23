@@ -2,7 +2,6 @@ import isoMorphicFetch from "isomorphic-fetch";
 import type { Includes, Project } from "./index.d";
 
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-
 const fetch = async (url: string, options?: any) => {
   const response = await isoMorphicFetch(url, options);
   const contentType = response.headers.get("content-type");
@@ -13,11 +12,15 @@ const fetch = async (url: string, options?: any) => {
   }
 };
 
-const loadProjectFromRest = async (
-  host: string,
-  projectId: string,
-  include: Includes<boolean> = { tree: true, props: true, breakpoints: true }
-): Promise<Project> => {
+const loadProjectFromRest = async ({
+  projectId,
+  host = process.env.DESIGNER_HOST || "localhost:3000",
+  include = { tree: true, props: true, breakpoints: true },
+}: {
+  projectId: string;
+  host?: string;
+  include?: Includes<boolean>;
+}): Promise<Project> => {
   const domain = `${protocol}://${host}`;
   const [tree, props, breakpoints] = await Promise.all([
     include.tree && fetch(`${domain}/rest/tree/${projectId}`),

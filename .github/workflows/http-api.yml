@@ -1,4 +1,4 @@
-name: Design System Publish
+name: HTTP API Publish
 on:
   push:
     paths:
