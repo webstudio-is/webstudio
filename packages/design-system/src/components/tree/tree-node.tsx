@@ -3,7 +3,7 @@ import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
 import { Box } from "../box";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Flex } from "../flex";
-import { __DEPRECATED__Text } from "../__DEPRECATED__/text";
+import { Text } from "../text";
 import { keyframes, styled } from "../../stitches.config";
 
 export const INDENT = 16;
@@ -270,7 +270,7 @@ export const TreeNode = <Data extends { id: string }>({
   );
 };
 
-const Label = styled(__DEPRECATED__Text, {
+const Label = styled(Text, {
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -298,11 +298,7 @@ export const TreeNodeLabel = ({
   isSelected: boolean;
   withIcon?: boolean;
 }) => (
-  <Label
-    size="1"
-    variant={isSelected ? "loContrast" : "contrast"}
-    withIcon={withIcon}
-  >
+  <Label color={isSelected ? "loContrast" : "contrast"} withIcon={withIcon}>
     {text}
   </Label>
 );

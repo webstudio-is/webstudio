@@ -45,6 +45,14 @@ export const Text = styled("div", {
         textTransform: "uppercase",
       },
     },
+    color: {
+      contrast: {
+        color: "$hiContrast",
+      },
+      loContrast: {
+        color: "$loContrast",
+      },
+    },
   },
 
   defaultVariants: {
