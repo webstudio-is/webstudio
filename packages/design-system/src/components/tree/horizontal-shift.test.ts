@@ -1,12 +1,13 @@
 import { renderHook, act } from "@testing-library/react-hooks";
 import { DropTarget, Placement } from "@webstudio-is/design-system";
 import { useHorizontalShift } from "./horizontal-shift";
-
-type Item = {
-  id: string;
-  canAcceptChildren: boolean;
-  children: Item[];
-};
+import {
+  canAcceptChild,
+  getItemChildren,
+  getItemPath,
+  getItemPathWithPositions,
+  Item,
+} from "./test-tree-data";
 
 const box1: Item = { canAcceptChildren: true, id: "box1", children: [] };
 const box2: Item = { canAcceptChildren: true, id: "box2", children: [] };
@@ -90,30 +91,6 @@ const makeDrop = ({
   rect: null as unknown as DOMRect,
 });
 
-const getItemPathWithPositions = (tree: Item, itemId: string) => {
-  const path = [];
-
-  const find = (item: Item) => {
-    if (item.id === itemId) return true;
-    const children = item.children;
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (typeof child === "string") continue;
-      const found = find(child);
-      if (found) {
-        path.push({ item: child, position: i });
-        return true;
-      }
-    }
-  };
-
-  if (find(tree)) {
-    path.push({ item: tree, position: 0 });
-  }
-
-  return path.reverse();
-};
-
 const render = (
   {
     dragItem,
@@ -130,10 +107,9 @@ const render = (
       dropTarget,
       root: tree,
       getIsExpanded: (item: Item) => item.children.length > 0,
-      canAcceptChild: (item: Item) => item.canAcceptChildren,
-      getItemChildren: (item: Item) => item.children,
-      getItemPath: (tree: Item, id: string) =>
-        getItemPathWithPositions(tree, id).map(({ item }) => item),
+      canAcceptChild,
+      getItemChildren,
+      getItemPath,
       getItemPathWithPositions,
     },
   });

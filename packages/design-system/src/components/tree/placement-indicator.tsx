@@ -1,4 +1,4 @@
-import { styled } from "~/stitches.config";
+import { styled } from "../../stitches.config";
 import { Box } from "../box";
 import { Placement } from "../primitives/dnd";
 

@@ -1,10 +1,10 @@
 import { useCallback, useRef, useEffect } from "react";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
-import { keyframes, styled } from "~/stitches.config";
 import { Box } from "../box";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Flex } from "../flex";
 import { Text } from "../text";
+import { keyframes, styled } from "../../stitches.config";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
