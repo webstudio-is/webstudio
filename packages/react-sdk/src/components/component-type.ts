@@ -33,24 +33,25 @@ export const WsComponentMetaSchema = z.lazy(() =>
       children: z.optional(z.array(z.string())),
     })
 
-    // We need these restrictions because of limitation of current drag&drop implementation.
-    // We need drop target components to never have `string` in their children, only Instances.
-    // Otherwise placement index detection will be confused.
+    // We need these restrictions because of the limitation of the current drag&drop implementation.
+    // Its position detection logic will be confused if drop target has `string` children.
     .refine(
       (val) =>
-        val.canAcceptChildren === false || val.isContentEditable === false,
+        val.isContentEditable === false || val.canAcceptChildren === false,
       {
         message:
-          "Content editable componetns are not allowed to accept children via drag&drop",
+          "Content editable componetns are not allowed to accept children via drag&drop, because they may have `string` children",
         path: ["canAcceptChildren"],
       }
     )
     .refine(
-      (val) => val.children === undefined || val.isContentEditable === true,
+      (val) =>
+        val.canAcceptChildren === false ||
+        val.children === undefined ||
+        val.children.every((child) => typeof child !== "string"),
       {
-        // @todo: consider adding the same check in the InstanceSchema
         message:
-          "Non-content editable componetns are not allowed to have `string` children",
+          "Components that can accept children via drag&drop are not allowed to have `string` children",
         path: ["children"],
       }
     )
