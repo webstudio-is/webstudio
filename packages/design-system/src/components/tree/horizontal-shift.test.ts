@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react-hooks";
-import { DropTarget, Placement } from "@webstudio-is/design-system";
+import { DropTarget, Placement } from "../primitives/dnd";
 import { useHorizontalShift } from "./horizontal-shift";
 import {
   canAcceptChild,
