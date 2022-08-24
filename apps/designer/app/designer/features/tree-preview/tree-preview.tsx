@@ -1,7 +1,7 @@
 import produce from "immer";
-import { components, type Instance } from "@webstudio-is/react-sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
-import { Flex, TreeNode, TreeNodeLabel } from "@webstudio-is/design-system";
+import { Flex } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
   reparentInstanceMutable,
@@ -10,23 +10,7 @@ import {
   findInstanceById,
   getInstancePath,
 } from "~/shared/tree-utils";
-
-const tmp = {
-  getItemChildren(item: Instance) {
-    return item.children.filter(
-      (child) => typeof child !== "string"
-    ) as Instance[];
-  },
-  renderItem(props: { data: Instance; isSelected: boolean }) {
-    const { Icon, label } = components[props.data.component];
-    return (
-      <>
-        <Icon />
-        <TreeNodeLabel isSelected={props.isSelected} text={label} withIcon />
-      </>
-    );
-  },
-};
+import { InstanceTreeNode } from "~/designer/shared/tree";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
@@ -91,7 +75,7 @@ export const TreePrevew = () => {
   return (
     treeProps && (
       <Flex direction="column" css={{ pt: "$1", pb: "$1", width: "100%" }}>
-        <TreeNode {...tmp} {...treeProps} />
+        <InstanceTreeNode {...treeProps} />
       </Flex>
     )
   );

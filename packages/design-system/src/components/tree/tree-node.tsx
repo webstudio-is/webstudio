@@ -131,7 +131,7 @@ const ItemWrapper = styled(Flex, {
   },
 });
 
-type TreeNodeProps<Data extends { id: string }> = {
+export type TreeNodeProps<Data extends { id: string }> = {
   itemData: Data;
   getItemChildren: (item: Data) => Data[];
   renderItem: (props: { data: Data; isSelected: boolean }) => React.ReactNode;
