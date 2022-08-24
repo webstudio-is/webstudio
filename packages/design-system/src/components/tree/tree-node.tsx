@@ -274,9 +274,11 @@ const Label = styled(__DEPRECATED__Text, {
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
-  lineHeight: 1.4,
   flexBasis: 0,
   flexGrow: 1,
+
+  // With the default lineHeight and overflow:hidden letters like "g" get clipped
+  lineHeight: 1.4,
 
   // For some reason flexBasis:0 is not enough
   // to stop it from growing past the container
