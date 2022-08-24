@@ -24,7 +24,7 @@ const Circle = styled(Box, {
   height: CIRCLE_SIZE,
   position: "absolute",
   border: "solid $dropPlacement",
-  borderWidth: "$2",
+  borderWidth: 2,
   borderRadius: "50%",
   pointerEvents: "none",
 });

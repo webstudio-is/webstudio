@@ -258,10 +258,6 @@ export const {
       4: "400",
       max: "999",
     },
-    borderWidths: {
-      1: "1px",
-      2: "2px",
-    },
   },
   media: {
     bp1: "(min-width: 520px)",
