@@ -98,3 +98,31 @@
    - Click on "Show navigator"
    - Navigator is now not shown
    - New tab was added that lets you open navigator
+
+1. Navigator keyboard interactions
+
+   - Move focus to the navigator by clicking on a tree item
+   - Check that pressing `arrow up` and `arrow down` changes the selected item
+   - Check that you can expand and collapse the selected item using `arrow right`, `arrow left`, and `spacebar`
+   - Check that pressing `delete` or `backspace` deletes the selected item
+
+1. Navigator drag&drop
+
+   - Drag a tree item and put the cursor between some tree items
+     - check that a line appeared between the tree items
+     - check that after you drop, the dragged item moves between the tree items
+   - Drag a tree item over an empty `Box` item,
+     - check that an outline appears around the `Box` item,
+     - check that when you drop, the dragged item moves inside the `Box` item
+   - Drag a tree item over a non-empty but collapsed `Box` item
+     - check that the `Box` item expands automatically when you hold over it
+     - check that if you drop before it expands, the dragged item moves inside the `Box`, and becomes the last child
+   - Drag a tree item over a `Heading` item, check that it doesn't allow you to drop inside a `Heading`
+   - Make some text inside a `Heading` "bold" so that the `Heading` item in the tree gets a child item `Bold Text`
+     - check that you cannot drag the `Bold Text` item
+   - Start dragging a tree item but do not move the cursor vertically
+     - check that by moving horizontally you're able to change how deeply the item is nested inside the tree
+   - Drag an item between some tree items
+     - check that moving the cursor horizontally allows you to change the depth of the placement indicator line
+     - check that after you drop, the dragged item moves to the correct depth
+   - Check that after a drag&drop the dragged item is the selected item

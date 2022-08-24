@@ -2,13 +2,15 @@ import { ButtonIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta } from "./component-type";
 import { Button } from "./button";
 
-export default {
+const meta: WsComponentMeta<typeof Button> = {
   Icon: ButtonIcon,
   Component: Button,
-  canAcceptChild: () => false,
+  canAcceptChildren: false,
   isContentEditable: true,
   isInlineOnly: false,
   isListed: true,
   label: "Button",
   children: ["Button text you can edit"],
-} as WsComponentMeta<typeof Button>;
+};
+
+export default meta;

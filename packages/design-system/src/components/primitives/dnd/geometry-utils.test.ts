@@ -8,7 +8,13 @@ describe("getPlacementBetween", () => {
       // [a] | [b]
       { top: 0, left: 0 },
       { top: 0, left: 200 },
-      { direction: "vertical", x: 150, y: 0, length: 100 },
+      {
+        type: "between-children",
+        direction: "vertical",
+        x: 150,
+        y: 0,
+        length: 100,
+      },
     ],
 
     [
@@ -17,7 +23,13 @@ describe("getPlacementBetween", () => {
       // [b]
       { top: 0, left: 0 },
       { top: 200, left: 0 },
-      { direction: "horizontal", x: 0, y: 150, length: 100 },
+      {
+        type: "between-children",
+        direction: "horizontal",
+        x: 0,
+        y: 150,
+        length: 100,
+      },
     ],
 
     [
