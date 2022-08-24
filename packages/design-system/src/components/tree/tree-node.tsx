@@ -270,24 +270,7 @@ export const TreeNode = <Data extends { id: string }>({
   );
 };
 
-const Label = styled(Text, {
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  flexBasis: 0,
-  flexGrow: 1,
-
-  // With the default lineHeight and overflow:hidden letters like "g" get clipped
-  lineHeight: 1.4,
-
-  // For some reason flexBasis:0 is not enough
-  // to stop it from growing past the container
-  width: 0,
-
-  variants: {
-    withIcon: { true: { ml: "$1" } },
-  },
-});
+const Label = styled(Text, { variants: { withIcon: { true: { ml: "$1" } } } });
 
 export const TreeNodeLabel = ({
   text,
@@ -298,7 +281,11 @@ export const TreeNodeLabel = ({
   isSelected: boolean;
   withIcon?: boolean;
 }) => (
-  <Label color={isSelected ? "loContrast" : "contrast"} withIcon={withIcon}>
+  <Label
+    color={isSelected ? "loContrast" : "contrast"}
+    withIcon={withIcon}
+    truncate
+  >
     {text}
   </Label>
 );

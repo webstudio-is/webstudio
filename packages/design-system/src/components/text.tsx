@@ -53,6 +53,25 @@ export const Text = styled("div", {
         color: "$loContrast",
       },
     },
+    truncate: {
+      true: {
+        whiteSpace: "nowrap",
+        textOverflow: "ellipsis",
+        flexBasis: 0,
+        flexGrow: 1,
+
+        // We want to use overflow-x:clip to make sure the text is not clipped vertically.
+        // overflow:hidden is a fallback for when `clip` is not supported,
+        // the text may be clipped vertically in these browsers.
+        overflow: "hidden",
+        overflowX: "clip",
+        overflowY: "visible",
+
+        // For some reason flexBasis:0 is not enough
+        // to stop it from growing past the container
+        width: 0,
+      },
+    },
   },
 
   defaultVariants: {
