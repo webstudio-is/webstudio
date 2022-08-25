@@ -22,7 +22,7 @@ export type Placement = {
 export type Area = "top" | "bottom" | "left" | "right" | "center";
 
 // https://stackoverflow.com/a/18157551/478603
-const getDistanceToRect = (rect: Rect, { x, y }: Point) => {
+export const getDistanceToRect = (rect: Rect, { x, y }: Point) => {
   const dx = Math.max(rect.left - x, 0, x - (rect.left + rect.width));
   const dy = Math.max(rect.top - y, 0, y - (rect.top + rect.height));
   return Math.sqrt(dx * dx + dy * dy);

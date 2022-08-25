@@ -19,7 +19,7 @@ const initialState: State<unknown> = {
   pointerId: undefined,
 };
 
-export type UseDragProps<DragItemData> = {
+type UseDragProps<DragItemData> = {
   startDistanceThreashold?: number;
   shiftDistanceThreshold?: number;
   elementToData: (element: Element) => DragItemData | false;
@@ -29,7 +29,7 @@ export type UseDragProps<DragItemData> = {
   onEnd: (event: { isCanceled: boolean }) => void;
 };
 
-export type UseDragHandlers = {
+type UseDragHandlers = {
   rootRef: (element: HTMLElement | null) => void;
   cancelCurrentDrag: () => void;
 };
@@ -129,9 +129,9 @@ export const useDrag = <DragItemData>(
     };
 
     const end = (isCanceled: boolean) => {
-      // A drag is basically a very slow click.
-      // But we don't want it to register as a click.
-      if (isCanceled === false && state.current.status === "dragging") {
+      if (state.current.status === "dragging") {
+        // A drag is basically a very slow click.
+        // But we don't want it to register as a click.
         const addedAt = Date.now();
         window.addEventListener(
           "click",
@@ -145,11 +145,11 @@ export const useDrag = <DragItemData>(
           },
           { capture: true, once: true }
         );
+
+        latestProps.current.onEnd({ isCanceled });
       }
 
       state.current = { ...(initialState as State<DragItemData>) };
-
-      latestProps.current.onEnd({ isCanceled: isCanceled });
 
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
