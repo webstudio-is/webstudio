@@ -60,10 +60,10 @@ export const Text = styled("div", {
         overflow: "hidden",
 
         // To make sure text is not clipped vertically
-        pt: 10,
-        pb: 10,
-        mt: -10,
-        mb: -10,
+        pt: "0.5em",
+        pb: "0.5em",
+        mt: "-0.5em",
+        mb: "-0.5em",
 
         flexBasis: 0,
         flexGrow: 1,
