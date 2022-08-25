@@ -12,7 +12,7 @@
    - Drag a Box exactly between 2 Boxes - check if it was inserted between
    - Drag a Box to the bottom edge - check if parent Box gets outlined and insertion happened after that dragged over Box inside that outlined parent
    - Drag a Box to the top edge - check if parent Box gets outlined and insertion happened before that dragged over Box inside that outlined parent
-   - Create a Box with child Boxes, where children are aligned vertically — repeat the tests above with trying to insert inside the new Box
+   - Create a Box with child Boxes, where children are aligned vertically - repeat the tests above with trying to insert inside the new Box
    - Try to drop into a Paragraph - check that it's not allowed, and it drops next to the Paragraph instead
 
 1. Moving instances on canvas by drag&drop
@@ -24,7 +24,7 @@
      - drag & drop the Bold component - check that entire Paragraph have been moved
    - Try to drop a Box inside itself - check that it's not allowed, and it drops next to it instead
    - Create a Box that contains another Box, give the parent Box a padding
-     - drag the parent Box, and try to put it inside the child Box — check that it's not allowed, and it gets put next to the parent Box instead
+     - drag the parent Box, and try to put it inside the child Box - check that it's not allowed, and it drops next to the parent Box instead
 
 1. Create instance by clicking on a component
 

@@ -228,7 +228,7 @@ const getSegmentsOrder = (
   return "overlap";
 };
 
-const getTwoRectsOrientation = (
+export const getTwoRectsOrientation = (
   first: Rect,
   second: Rect
 ): ChildrenOrientation => {

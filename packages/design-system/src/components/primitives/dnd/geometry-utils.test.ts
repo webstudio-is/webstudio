@@ -4,6 +4,9 @@ import {
   getArea,
   getPlacementNextTo,
   getPlacementInside,
+  getTwoRectsOrientation,
+  getRectsOrientation,
+  getIndexAdjustment,
 } from "./geometry-utils";
 
 describe("getDistanceToRect", () => {
@@ -272,5 +275,263 @@ describe("getPlacementInside", () => {
         childrenOrientation
       )
     ).toMatchSnapshot();
+  });
+});
+
+describe("getTwoRectsOrientation", () => {
+  test.each([
+    [
+      "horizontal",
+      { top: 0, left: 0, width: 100, height: 100 },
+      { top: 0, left: 100, width: 100, height: 100 },
+    ],
+    [
+      "horizontal",
+      { top: 10, left: 0, width: 80, height: 80 },
+      { top: 0, left: 100, width: 100, height: 100 },
+    ],
+    [
+      "vertical",
+      { top: 0, left: 0, width: 100, height: 100 },
+      { top: 100, left: 0, width: 100, height: 100 },
+    ],
+    [
+      "vertical",
+      { top: 0, left: 10, width: 80, height: 80 },
+      { top: 100, left: 0, width: 100, height: 100 },
+    ],
+  ])("%s %o %o", (type, rectA, rectB) => {
+    expect(getTwoRectsOrientation(rectA, rectB)).toEqual({
+      reverse: false,
+      type,
+    });
+    expect(getTwoRectsOrientation(rectB, rectA)).toEqual({
+      reverse: true,
+      type,
+    });
+  });
+
+  test.each([
+    [
+      { top: 0, left: 0, width: 100, height: 100 },
+      { top: 0, left: 0, width: 100, height: 100 },
+    ],
+    [
+      { top: 10, left: 10, width: 80, height: 80 },
+      { top: 0, left: 0, width: 100, height: 100 },
+    ],
+    [
+      { top: 0, left: 0, width: 100, height: 100 },
+      { top: 50, left: 50, width: 100, height: 100 },
+    ],
+    [
+      { top: 0, left: 0, width: 100, height: 100 },
+      { top: 100, left: 100, width: 100, height: 100 },
+    ],
+  ])("mixed %o %o", (rectA, rectB) => {
+    expect(getTwoRectsOrientation(rectA, rectB)).toEqual({
+      type: "mixed",
+    });
+    expect(getTwoRectsOrientation(rectB, rectA)).toEqual({
+      type: "mixed",
+    });
+  });
+});
+
+describe("getRectsOrientation", () => {
+  const vertical = [
+    { top: 0, left: 100, width: 100, height: 100 },
+    { top: 100, left: 100, width: 100, height: 100 },
+    { top: 200, left: 100, width: 100, height: 100 },
+  ] as const;
+
+  const horizontal = [
+    { top: 100, left: 0, width: 100, height: 100 },
+    { top: 100, left: 100, width: 100, height: 100 },
+    { top: 100, left: 200, width: 100, height: 100 },
+  ] as const;
+
+  test("if all reversed, result is reversed", () => {
+    expect(
+      getRectsOrientation(vertical[2], vertical[1], vertical[0]).reverse
+    ).toBe(true);
+  });
+
+  test("if only one reversed, result is not reversed", () => {
+    expect(
+      getRectsOrientation(vertical[0], vertical[1], vertical[0]).reverse
+    ).toBe(false);
+  });
+
+  test("if all vertical result is vertical", () => {
+    expect(
+      getRectsOrientation(vertical[0], vertical[1], vertical[2]).type
+    ).toBe("vertical");
+    expect(getRectsOrientation(undefined, vertical[1], vertical[2]).type).toBe(
+      "vertical"
+    );
+    expect(getRectsOrientation(vertical[0], vertical[1], undefined).type).toBe(
+      "vertical"
+    );
+  });
+
+  test("if all horizontal result is horizontal", () => {
+    expect(
+      getRectsOrientation(horizontal[0], horizontal[1], horizontal[2]).type
+    ).toBe("horizontal");
+    expect(
+      getRectsOrientation(undefined, horizontal[1], horizontal[2]).type
+    ).toBe("horizontal");
+    expect(
+      getRectsOrientation(horizontal[0], horizontal[1], undefined).type
+    ).toBe("horizontal");
+  });
+
+  test("if mixed result is mixed", () => {
+    expect(
+      getRectsOrientation(horizontal[0], vertical[1], vertical[2]).type
+    ).toBe("mixed");
+  });
+});
+
+describe("getIndexAdjustment", () => {
+  const rect = { top: 100, left: 100, width: 200, height: 200 };
+
+  describe.each([true, false])("orientation.reverse=%s", (reverse) => {
+    describe("orientation.type=vertical", () => {
+      test("above", () => {
+        expect(
+          getIndexAdjustment(
+            { x: rect.left + rect.width / 2, y: rect.top - 10 },
+            rect,
+            { type: "vertical", reverse }
+          )
+        ).toBe(reverse ? 1 : 0);
+      });
+      test("below", () => {
+        expect(
+          getIndexAdjustment(
+            {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.width + 10,
+            },
+            rect,
+            { type: "vertical", reverse }
+          )
+        ).toBe(reverse ? 0 : 1);
+      });
+      test("inside, above middle", () => {
+        expect(
+          getIndexAdjustment(
+            {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 3,
+            },
+            rect,
+            { type: "vertical", reverse }
+          )
+        ).toBe(reverse ? 1 : 0);
+      });
+      test("inside, below middle", () => {
+        expect(
+          getIndexAdjustment(
+            {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height * (2 / 3),
+            },
+            rect,
+            { type: "vertical", reverse }
+          )
+        ).toBe(reverse ? 0 : 1);
+      });
+    });
+    describe("orientation.type=horizontal", () => {
+      test("to the left", () => {
+        expect(
+          getIndexAdjustment(
+            { x: rect.left - 10, y: rect.top + rect.height / 2 },
+            rect,
+            { type: "horizontal", reverse }
+          )
+        ).toBe(reverse ? 1 : 0);
+      });
+      test("to the right", () => {
+        expect(
+          getIndexAdjustment(
+            {
+              x: rect.left + rect.width + 10,
+              y: rect.top + rect.height / 2,
+            },
+            rect,
+            { type: "horizontal", reverse }
+          )
+        ).toBe(reverse ? 0 : 1);
+      });
+      test("inside, to the left of middle", () => {
+        expect(
+          getIndexAdjustment(
+            {
+              x: rect.left + rect.width / 3,
+              y: rect.top + rect.height / 2,
+            },
+            rect,
+            { type: "horizontal", reverse }
+          )
+        ).toBe(reverse ? 1 : 0);
+      });
+      test("inside, to the right of middle", () => {
+        expect(
+          getIndexAdjustment(
+            {
+              x: rect.left + rect.width * (2 / 3),
+              y: rect.top + rect.height / 2,
+            },
+            rect,
+            { type: "horizontal", reverse }
+          )
+        ).toBe(reverse ? 0 : 1);
+      });
+    });
+  });
+  describe("orientation.type=mixed", () => {
+    test.each([
+      ["above", rect.left + rect.width / 2, rect.top - 10, 0],
+      ["below", rect.left + rect.width / 2, rect.top + rect.height + 10, 1],
+      ["to the left", rect.left - 10, rect.top + rect.height / 2, 0],
+      [
+        "to the right",
+        rect.left + rect.width + 10,
+        rect.top + rect.height / 2,
+        1,
+      ],
+      [
+        "inside, above middle",
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 3,
+        0,
+      ],
+      [
+        "inside, below middle",
+        rect.left + rect.width / 2,
+        rect.top + rect.height * (2 / 3),
+        1,
+      ],
+      [
+        "inside, to the left of middle",
+        rect.left + rect.width / 3,
+        rect.top + rect.height / 2,
+        0,
+      ],
+      [
+        "inside, to the right of middle",
+        rect.left + rect.width * (2 / 3),
+        rect.top + rect.height / 2,
+        1,
+      ],
+    ])("%s", (_, x, y, expected) => {
+      expect(getIndexAdjustment({ x, y }, rect, { type: "mixed" })).toBe(
+        expected
+      );
+    });
   });
 });
