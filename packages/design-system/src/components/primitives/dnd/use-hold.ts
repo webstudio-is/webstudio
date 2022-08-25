@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
 
-export type UseHoldProps<Data> = {
+type UseHoldProps<Data> = {
   isEqual: (a: Data, b: Data) => boolean;
   holdTimeThreshold: number;
   onHold: (data: Data) => void;

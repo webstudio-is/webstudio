@@ -246,8 +246,6 @@ export const Tree = <Data extends { id: string }>({
         overflowX: "hidden",
         flexBasis: 0,
         flexGrow: 1,
-        pt: 2,
-        pb: 2,
       }}
       ref={(element) => {
         rootRef.current = element;

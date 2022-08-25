@@ -6,13 +6,25 @@
 1. Create instances by drag&drop
 
    - Drag a component over an instance - check if its outline is correct
-   - Drag a box over a box, drop it - check if it was inserted in that box
-   - Drag a box and place it before a box - check if it was inserted before
-   - Drag a box and place it after a box - check if it was inserted after
-   - Select an instance, go to components, click a box - check if it was inserted at the end of the selected instance
-   - Drag a box exactly between 2 boxs - check if it was inserted between
-   - Drag a box to the bottom edge - check if parent box gets outlined and insertion happened after that dragged over box inside that outlined parent
-   - Drag a box to the top edge - check if parent box gets outlined and insertion happened before that dragged over box inside that outlined parent
+   - Drag a Box over a Box, drop it - check if it was inserted in that Box
+   - Drag a Box and place it before a Box - check if it was inserted before
+   - Drag a Box and place it after a Box - check if it was inserted after
+   - Drag a Box exactly between 2 Boxes - check if it was inserted between
+   - Drag a Box to the bottom edge - check if parent Box gets outlined and insertion happened after that dragged over Box inside that outlined parent
+   - Drag a Box to the top edge - check if parent Box gets outlined and insertion happened before that dragged over Box inside that outlined parent
+   - Create a Box with child Boxes, where children are aligned vertically - repeat the tests above with trying to insert inside the new Box
+   - Try to drop into a Paragraph - check that it's not allowed, and it drops next to the Paragraph instead
+
+1. Moving instances on canvas by drag&drop
+
+   - Do the tests described in "Create instances by drag&drop",
+     but instead of moving a component from the panel to the canvas,
+     move a component that's already on the canvas
+   - Create a Paragraph, and make a word in it Bold
+     - drag & drop the Bold component - check that entire Paragraph have been moved
+   - Try to drop a Box inside itself - check that it's not allowed, and it drops next to it instead
+   - Create a Box that contains another Box, give the parent Box a padding
+     - drag the parent Box, and try to put it inside the child Box - check that it's not allowed, and it drops next to the parent Box instead
 
 1. Create instance by clicking on a component
 
