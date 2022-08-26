@@ -7,8 +7,16 @@ const Page = z.object({
   path: z.string(),
   title: z.string(),
   meta: z.record(z.string(), z.string()),
+  treeId: z.string(),
 });
-const Pages = z.array(Page);
+
+type Page = z.infer<typeof Page>;
+
+const Pages: z.ZodType<{ homePage: Page; pages: Array<Page> }> = z.object({
+  homePage: Page,
+  pages: z.array(Page),
+});
+
 type Pages = z.infer<typeof Pages>;
 
 type Build = {
