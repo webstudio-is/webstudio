@@ -11,92 +11,41 @@ export const Text = styled("div", {
   fontFamily: "$sans",
 
   variants: {
-    size: {
-      "1": {
-        fontSize: "$1",
+    variant: {
+      regular: {
+        fontWeight: 400,
+        fontSize: 12,
+        letterSpacing: "0.005em",
       },
-      "2": {
-        fontSize: "$2",
+      label: {
+        fontWeight: 500,
+        fontSize: 12,
+        letterSpacing: "0.005em",
       },
-      "3": {
-        fontSize: "$3",
+      tiny: {
+        fontWeight: 400,
+        fontSize: 8,
+        letterSpacing: "0.01em",
       },
-      "4": {
-        fontSize: "$4",
+      title: {
+        fontWeight: 700,
+        fontSize: 12,
+        letterSpacing: "0.01em",
       },
-      "5": {
-        fontSize: "$5",
-        letterSpacing: "-.015em",
+      mono: {
+        fontFamily: "$mono",
+        fontWeight: 400,
+        fontSize: 12,
+        textTransform: "uppercase",
       },
-      "6": {
-        fontSize: "$6",
-        letterSpacing: "-.016em",
-      },
-      "7": {
-        fontSize: "$7",
-        letterSpacing: "-.031em",
-        textIndent: "-.005em",
-      },
-      "8": {
-        fontSize: "$8",
-        letterSpacing: "-.034em",
-        textIndent: "-.018em",
-      },
-      "9": {
-        fontSize: "$9",
-        letterSpacing: "-.055em",
-        textIndent: "-.025em",
+      unit: {
+        fontWeight: 500,
+        fontSize: 10,
+        lineHeight: 12,
+        textTransform: "uppercase",
       },
     },
-    variant: {
-      red: {
-        color: "$red11",
-      },
-      crimson: {
-        color: "$crimson11",
-      },
-      pink: {
-        color: "$pink11",
-      },
-      purple: {
-        color: "$purple11",
-      },
-      violet: {
-        color: "$violet11",
-      },
-      indigo: {
-        color: "$indigo11",
-      },
-      blue: {
-        color: "$blue11",
-      },
-      cyan: {
-        color: "$cyan11",
-      },
-      teal: {
-        color: "$teal11",
-      },
-      green: {
-        color: "$green11",
-      },
-      lime: {
-        color: "$lime11",
-      },
-      yellow: {
-        color: "$yellow11",
-      },
-      orange: {
-        color: "$orange11",
-      },
-      gold: {
-        color: "$gold11",
-      },
-      bronze: {
-        color: "$bronze11",
-      },
-      gray: {
-        color: "$slate11",
-      },
+    color: {
       contrast: {
         color: "$hiContrast",
       },
