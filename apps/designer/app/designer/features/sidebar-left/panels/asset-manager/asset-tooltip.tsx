@@ -20,7 +20,7 @@ export const AssetTooltip = ({
       multiline
       onEscapeKeyDown={closeTooltip}
       onPointerDownOutside={closeTooltip}
-      css={{ width: 240, maxWidth: 240 }}
+      css={{ width: 240, maxWidth: 240, padding: 0, paddingBottom: "$2" }}
       content={
         <AssetInfo
           onDelete={onDelete}

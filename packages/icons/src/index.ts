@@ -13,3 +13,4 @@ export * from "./types";
 export { AspectRatioIcon } from "./aspect-ratio";
 export * from "./cloud";
 export { TrashIcon } from "./trash";
+export { SizeIcon } from "./size";
