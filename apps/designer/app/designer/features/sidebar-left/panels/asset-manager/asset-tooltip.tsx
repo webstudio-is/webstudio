@@ -34,6 +34,7 @@ export const AssetTooltip = ({
         title="Options"
         onClick={() => setTooltipOpen(true)}
         css={{
+          opacity: 0,
           position: "absolute",
           top: "$1",
           right: "$1",

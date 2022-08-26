@@ -6,6 +6,7 @@ import { UploadingAnimation } from "./uploading-animation";
 import type { Asset } from "@webstudio-is/prisma-client";
 import { UploadingAsset } from "../../types";
 import { AssetTooltip } from "./asset-tooltip";
+import { GearIcon } from "@webstudio-is/icons";
 
 const useImageWithFallback = ({
   path = placeholderImage,
@@ -58,26 +59,23 @@ export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
   const isUploading = status === "uploading";
   const isUploadedAsset = isUploading === false && "size" in asset;
 
+  const lol = {
+    aspectRatio: "1/1",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "0 $2",
+    position: "relative",
+
+    "&:hover button": {
+      opacity: 1,
+    },
+  };
   return (
-    <Box
-      title={alt || name}
-      css={{
-        aspectRatio: "1/1",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "0 $2",
-        position: "relative",
-      }}
-    >
+    <Box title={alt || name} css={lol}>
       <Thumbnail path={path} status={status} />
       {isUploadedAsset && (
-        <AssetTooltip
-          asset={asset}
-          onDelete={() => {
-            setIsDeleting(true);
-          }}
-        />
+        <AssetTooltip asset={asset} onDelete={() => setIsDeleting(true)} />
       )}
       {(isUploading || isDeleting) && <UploadingAnimation />}
     </Box>
