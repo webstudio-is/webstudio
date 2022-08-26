@@ -2,13 +2,15 @@ import { HeadingIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta } from "./component-type";
 import { Heading } from "./heading";
 
-export default {
+const meta: WsComponentMeta<typeof Heading> = {
   Icon: HeadingIcon,
   Component: Heading,
-  canAcceptChild: () => false,
+  canAcceptChildren: false,
   isContentEditable: true,
   isInlineOnly: false,
   isListed: true,
   label: "Heading",
   children: ["Heading you can edit"],
-} as WsComponentMeta<typeof Heading>;
+};
+
+export default meta;

@@ -50,15 +50,17 @@ const defaultStyle = {
     type: "keyword",
     value: "#232323",
   },
-};
+} as const;
 
-export default {
+const meta: WsComponentMeta<typeof Body> = {
   Icon: BodyIcon,
   Component: Body,
-  canAcceptChild: () => true,
+  canAcceptChildren: true,
   isContentEditable: false,
   label: "Body",
   isInlineOnly: false,
   isListed: false,
   defaultStyle,
-} as WsComponentMeta<typeof Body>;
+};
+
+export default meta;

@@ -1,16 +1,16 @@
 import produce from "immer";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
-import { Tree } from "~/designer/shared/tree";
 import { Flex } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import {
-  getInstancePath,
   reparentInstanceMutable,
   insertInstanceMutable,
   createInstance,
   findInstanceById,
+  getInstancePath,
 } from "~/shared/tree-utils";
+import { InstanceTreeNode } from "~/designer/shared/tree";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
@@ -53,10 +53,17 @@ export const TreePrevew = () => {
       }
     })(rootInstance);
 
+    const dropTargetPath = getInstancePath(
+      rootInstance,
+      dropTargetInstanceId
+    ).map((item) => item.id);
+
     return {
-      instance,
-      selectedInstanceId: dragItemInstance.id,
-      selectedInstancePath: getInstancePath(instance, dragItemInstance.id),
+      itemData: instance,
+      selectedItemId: dragItemInstance.id,
+      getIsExpanded: (instance: Instance) =>
+        dropTargetPath.includes(instance.id),
+      animate: false,
     };
   }, [
     rootInstance,
@@ -67,8 +74,8 @@ export const TreePrevew = () => {
 
   return (
     treeProps && (
-      <Flex gap="3" direction="column" css={{ padding: "$1" }}>
-        <Tree {...treeProps} animate={false} />
+      <Flex direction="column" css={{ pt: "$1", pb: "$1", width: "100%" }}>
+        <InstanceTreeNode {...treeProps} />
       </Flex>
     )
   );
