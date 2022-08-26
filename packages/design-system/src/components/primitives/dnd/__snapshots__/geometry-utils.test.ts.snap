@@ -1,0 +1,451 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getPlacementInside childrenOrientation={ type: 'horizontal', reverse: false } 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 90,
+  "type": "inside-parent",
+  "x": 5,
+  "y": 5,
+}
+`;
+
+exports[`getPlacementInside childrenOrientation={ type: 'horizontal', reverse: true } 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 90,
+  "type": "inside-parent",
+  "x": 5,
+  "y": 5,
+}
+`;
+
+exports[`getPlacementInside childrenOrientation={ type: 'mixed' } 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 90,
+  "type": "inside-parent",
+  "x": 5,
+  "y": 5,
+}
+`;
+
+exports[`getPlacementInside childrenOrientation={ type: 'vertical', reverse: false } 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 90,
+  "type": "inside-parent",
+  "x": 5,
+  "y": 5,
+}
+`;
+
+exports[`getPlacementInside childrenOrientation={ type: 'vertical', reverse: true } 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 90,
+  "type": "inside-parent",
+  "x": 5,
+  "y": 5,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=backward child almost same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 2,
+  "y": 4,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=backward child bigger than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": -10,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=backward child same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 0,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=backward child smaller than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 95,
+  "y": 100,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=forward child almost same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 298,
+  "y": 4,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=forward child bigger than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 310,
+  "type": "next-to-child",
+  "x": 300,
+  "y": -10,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=forward child same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 300,
+  "y": 0,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: false } direction=forward child smaller than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 205,
+  "y": 100,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=backward child almost same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 298,
+  "y": 4,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=backward child bigger than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 310,
+  "type": "next-to-child",
+  "x": 300,
+  "y": -10,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=backward child same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 300,
+  "y": 0,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=backward child smaller than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 205,
+  "y": 100,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=forward child almost same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 2,
+  "y": 4,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=forward child bigger than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": -10,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=forward child same as parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 0,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'horizontal', reverse: true } direction=forward child smaller than parent 1`] = `
+Object {
+  "direction": "vertical",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 95,
+  "y": 100,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=backward child almost same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 4,
+  "y": 2,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=backward child bigger than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": -10,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=backward child same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 0,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=backward child smaller than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 100,
+  "y": 95,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forward child almost same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 4,
+  "y": 298,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forward child bigger than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": 300,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forward child same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 300,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'mixed' } direction=forward child smaller than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 100,
+  "y": 205,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=backward child almost same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 4,
+  "y": 2,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=backward child bigger than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": -10,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=backward child same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 0,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=backward child smaller than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 100,
+  "y": 95,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=forward child almost same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 4,
+  "y": 298,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=forward child bigger than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": 300,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=forward child same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 300,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: false } direction=forward child smaller than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 100,
+  "y": 205,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=backward child almost same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 4,
+  "y": 298,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=backward child bigger than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": 300,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=backward child same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 300,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=backward child smaller than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 100,
+  "y": 205,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=forward child almost same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 292,
+  "type": "next-to-child",
+  "x": 4,
+  "y": 2,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=forward child bigger than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 310,
+  "type": "next-to-child",
+  "x": -10,
+  "y": -10,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=forward child same as parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 300,
+  "type": "next-to-child",
+  "x": 0,
+  "y": 0,
+}
+`;
+
+exports[`getPlacementNextTo childrenOrientation={ type: 'vertical', reverse: true } direction=forward child smaller than parent 1`] = `
+Object {
+  "direction": "horizontal",
+  "length": 100,
+  "type": "next-to-child",
+  "x": 100,
+  "y": 95,
+}
+`;

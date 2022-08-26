@@ -10,7 +10,10 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { findInstanceById } from "~/shared/tree-utils";
+import {
+  findClosestNonInlineParent,
+  findInstanceById,
+} from "~/shared/tree-utils";
 import {
   getInstanceElementById,
   getInstanceIdFromElement,
@@ -50,7 +53,6 @@ export const useTrackSelectedElement = () => {
     ) {
       const element = getInstanceElementById(selectedInstance.id);
       if (element === null) return;
-      element.focus();
       setSelectedElement(element);
     }
   }, [selectedInstance, selectedElement, setSelectedElement]);
@@ -96,22 +98,21 @@ export const useTrackSelectedElement = () => {
         }
         const { isInlineOnly, isContentEditable } = components[component];
 
-        if (isContentEditable === false) {
+        // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
+        // Inline instances are not editable directly, only through parent instance.
+        if (isInlineOnly) {
+          const parent =
+            rootInstance && findClosestNonInlineParent(rootInstance, id);
+          if (parent && components[parent.component].isContentEditable) {
+            selectInstance(parent.id);
+            setEditingInstanceId(parent.id);
+          }
           return;
         }
 
-        // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
-        // Inline instances are not directly, only through parent instance.
-        if (isInlineOnly) {
-          const parentId =
-            element.parentElement &&
-            getInstanceIdFromElement(element.parentElement);
-          if (parentId) {
-            selectInstance(parentId);
-            setEditingInstanceId(parentId);
-          }
-        } else setEditingInstanceId(id);
-        return;
+        if (isContentEditable) {
+          setEditingInstanceId(id);
+        }
       }
 
       selectInstance(id);
@@ -122,5 +123,5 @@ export const useTrackSelectedElement = () => {
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [selectInstance, setEditingInstanceId]);
+  }, [selectInstance, setEditingInstanceId, rootInstance]);
 };

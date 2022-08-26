@@ -8,16 +8,18 @@ const defaultStyle = {
     unit: "em",
     value: 1,
   },
-};
+} as const;
 
-export default {
+const meta: WsComponentMeta<typeof TextBlock> = {
   Icon: TextIcon,
   Component: TextBlock,
   defaultStyle,
-  canAcceptChild: () => false,
+  canAcceptChildren: false,
   isContentEditable: true,
   isInlineOnly: false,
   isListed: true,
   label: "Text Block",
   children: ["Block of text you can edit"],
-} as WsComponentMeta<typeof TextBlock>;
+};
+
+export default meta;

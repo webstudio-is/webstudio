@@ -2,10 +2,11 @@ import { ImageIcon } from "@webstudio-is/icons";
 import { Flex, Grid } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
-import { AssetManagerThumbnail, AddAnAssetForm } from "./asset-manager";
 
-import { Asset, TabName } from "../types";
-import { Header } from "../lib/header";
+import { Asset, TabName } from "../../types";
+import { Header } from "../../lib/header";
+import { AddAnAssetForm } from "./add-an-asset-form";
+import { AssetManagerThumbnail } from "./thumbnail";
 
 export const useAssetsState = (baseAssets: Array<Asset>) => {
   const imageChanges = useActionData();

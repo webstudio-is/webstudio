@@ -4,7 +4,7 @@ import { type Point } from "./geometry-utils";
 // Time between frames of scroll animation in milliseconds
 const FRAME_PERIOD = 30;
 
-const getSpeed = (
+export const getSpeed = (
   pointerPosition: number,
   containerStart: number,
   containerEnd: number,
@@ -39,7 +39,7 @@ const getSpeed = (
   return 0;
 };
 
-export type UseAutoScrollProps = {
+type UseAutoScrollProps = {
   edgeDistanceThreshold?: number;
 
   // If set to true the entire document will be scrolled.
@@ -51,7 +51,7 @@ export type UseAutoScrollProps = {
   maxSpeed?: number;
 };
 
-export type UseAutoScrollHandlers = {
+type UseAutoScrollHandlers = {
   handleMove: (pointerCoordinate: Point) => void;
   setEnabled: (enabled: boolean) => void;
   targetRef: (element: HTMLElement | null) => void;

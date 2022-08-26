@@ -21,11 +21,6 @@ export const createInstance = ({
     component,
     id: id === undefined ? ObjectId().toString() : id,
     cssRules: cssRules ?? [],
-    children:
-      children === undefined
-        ? "children" in componentMeta
-          ? componentMeta.children
-          : []
-        : children,
+    children: children === undefined ? componentMeta.children ?? [] : children,
   };
 };

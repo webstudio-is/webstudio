@@ -1,5 +1,5 @@
 import { styled } from "../stitches.config";
-import { Text } from "./text";
+import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
 
 export const Link = styled("a", {
   alignItems: "center",
@@ -22,7 +22,7 @@ export const Link = styled("a", {
     outlineOffset: "2px",
     textDecorationLine: "none",
   },
-  [`& ${Text}`]: {
+  [`& ${__DEPRECATED__Text}`]: {
     color: "inherit",
   },
   variants: {

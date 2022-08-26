@@ -7,15 +7,17 @@ const defaultStyle = {
     type: "keyword",
     value: "border-box",
   },
-};
+} as const;
 
-export default {
+const meta: WsComponentMeta<typeof Box> = {
   Icon: SquareIcon,
   Component: Box,
   defaultStyle,
-  canAcceptChild: () => true,
+  canAcceptChildren: true,
   isContentEditable: false,
   isInlineOnly: false,
   isListed: true,
   label: "Box",
-} as WsComponentMeta<typeof Box>;
+};
+
+export default meta;
