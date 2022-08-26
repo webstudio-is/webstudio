@@ -6,7 +6,6 @@ import { UploadingAnimation } from "./uploading-animation";
 import type { Asset } from "@webstudio-is/prisma-client";
 import { UploadingAsset } from "../../types";
 import { AssetTooltip } from "./asset-tooltip";
-import { GearIcon } from "@webstudio-is/icons";
 
 const useImageWithFallback = ({
   path = placeholderImage,
