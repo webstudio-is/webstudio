@@ -10,8 +10,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
-import { useEnsureFocus } from "./use-ensure-focus";
-import { EditorMemoized, useContentEditable } from "./text-editor";
+import { Editor } from "./text-editor";
 import noop from "lodash.noop";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 
@@ -32,18 +31,13 @@ export const WrapperComponentDev = ({
   const className = useCss({ instance, css });
   const [editingInstanceId] = useTextEditingInstanceId();
   const [, setSelectedElement] = useSelectedElement();
-  const isEditing = editingInstanceId === instance.id;
-  const [editableRefCallback, editableProps] = useContentEditable(isEditing);
-  const focusRefCallback = useEnsureFocus();
 
   const refCallback = useCallback(
     (element) => {
-      if (isEditing) editableRefCallback(element);
-      focusRefCallback(element);
       // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
       if (element !== null) setSelectedElement(element);
     },
-    [focusRefCallback, editableRefCallback, setSelectedElement, isEditing]
+    [setSelectedElement]
   );
 
   const userProps = useUserProps(instance.id);
@@ -56,12 +50,13 @@ export const WrapperComponentDev = ({
     ...userProps,
     ...rest,
     ...readonlyProps,
-    ...editableProps,
     // @todo merge className with props
-    className: className,
-    // @todo stop using id to free it up to the user
-    id: instance.id,
+    className,
     tabIndex: 0,
+    // @todo stop using id to free it up to the user
+    // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id
+    // for this we need to also make search by id fast
+    id: instance.id,
     "data-component": instance.component,
     "data-id": instance.id,
     ref: refCallback,
@@ -76,20 +71,32 @@ export const WrapperComponentDev = ({
     },
   };
 
-  if (isEditing) {
-    return (
-      <EditorMemoized
-        instance={instance}
-        editable={<Component {...props} />}
-        onChange={(updates) => {
-          onChangeChildren({ instanceId: instance.id, updates });
-        }}
-      />
-    );
+  const instanceElement = (
+    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+  );
+
+  if (editingInstanceId !== instance.id) {
+    return instanceElement;
   }
 
   return (
-    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+    <Editor
+      instance={instance}
+      fallback={instanceElement}
+      renderInstance={({ ref, ...renderProps }) => (
+        <Component
+          {...props}
+          {...renderProps}
+          ref={(element: HTMLElement | null) => {
+            props.ref(element);
+            ref(element);
+          }}
+        />
+      )}
+      onChange={(updates) => {
+        onChangeChildren({ instanceId: instance.id, updates });
+      }}
+    />
   );
 };
 

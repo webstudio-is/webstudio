@@ -2,12 +2,14 @@ import { FontItalicIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta } from "./component-type";
 import { Italic } from "./italic";
 
-export default {
+const meta: WsComponentMeta<typeof Italic> = {
   Icon: FontItalicIcon,
   Component: Italic,
-  canAcceptChild: () => false,
+  canAcceptChildren: false,
   isContentEditable: false,
   isInlineOnly: true,
   label: "Italic Text",
   isListed: false,
-} as WsComponentMeta<typeof Italic>;
+};
+
+export default meta;

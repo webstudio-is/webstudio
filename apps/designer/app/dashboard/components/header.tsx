@@ -6,7 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   Button,
-  Text,
+  __DEPRECATED__Text,
   Flex,
 } from "@webstudio-is/design-system";
 import { User } from "@webstudio-is/prisma-client";
@@ -45,7 +45,7 @@ export const DashboardHeader = ({ user }: { user: User }) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onSelect={() => navigate("/logout")}>
-              <Text>Logout</Text>
+              <__DEPRECATED__Text>Logout</__DEPRECATED__Text>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

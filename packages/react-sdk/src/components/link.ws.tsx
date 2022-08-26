@@ -12,16 +12,18 @@ const defaultStyle = {
     type: "keyword",
     value: "inline-block",
   },
-};
+} as const;
 
-export default {
+const meta: WsComponentMeta<typeof Link> = {
   Icon: Link2Icon,
   Component: Link,
   defaultStyle,
-  canAcceptChild: () => false,
+  canAcceptChildren: false,
   isContentEditable: true,
   isInlineOnly: false,
   isListed: true,
   label: "Link",
   children: ["Link text you can edit"],
-} as WsComponentMeta<typeof Link>;
+};
+
+export default meta;

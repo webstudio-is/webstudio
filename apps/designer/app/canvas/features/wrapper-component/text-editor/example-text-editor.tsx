@@ -9,7 +9,7 @@ import { Box, Button } from "@webstudio-is/design-system";
 import { LexicalComposer, ContentEditable } from "./lexical";
 import { TreeViewPlugin } from "./plugins/tree-view-plugin";
 import { config } from "./config";
-import { Editor } from "./editor";
+import Editor from "./editor";
 
 type ExampleTextEditorProps = {
   onChange: (state: ChildrenUpdates) => void;
@@ -100,7 +100,7 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
           }}
         >
           <Editor
-            editable={
+            renderInstance={() => (
               <ContentEditable
                 style={{
                   minHeight: 150,
@@ -114,7 +114,7 @@ export const ExampleTextEditor = ({ onChange }: ExampleTextEditorProps) => {
                   background: "#eee",
                 }}
               />
-            }
+            )}
             instance={
               {
                 component: "Paragraph",

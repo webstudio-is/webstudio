@@ -28,6 +28,18 @@ export const useMeasure = <
     onScrollEnd: handleChange,
   });
 
+  // Detect movement of the element without remounting.
+  useEffect(() => {
+    // No need to worry about parent changing while element stays the same.
+    // React cannot do that. It can only move within the same parent.
+    const parent = element?.parentElement;
+    if (parent) {
+      const observer = new window.MutationObserver(handleChange);
+      observer.observe(parent, { childList: true });
+      return () => observer.disconnect();
+    }
+  }, [element, handleChange]);
+
   const observer = useMemo(() => {
     if (typeof window === "undefined") return;
     return new window.ResizeObserver(handleChange);
