@@ -79,37 +79,35 @@ export const AssetInfo = ({
   return (
     <>
       <Header title="Asset Details" onClose={onClose} />
-      <Grid cols="2" gap="$1">
-        <Box css={{ p: "$2 $3" }}>
-          <Grid columns={2} align="center">
-            <Box css={{ width: 100 }}>
-              <Filename name={name} />
-            </Box>
-            <Flex align="center" css={{ gap: "$1" }}>
-              <CloudIcon />
-              <__DEPRECATED__Text size="1">
-                {prettyBytes(size)}
-              </__DEPRECATED__Text>
-            </Flex>
-          </Grid>
-        </Box>
-        <Box css={{ p: "$2 $3" }}>
-          <Grid columns={2}>
-            <Flex align="center" css={{ gap: "$1" }}>
-              <SizeIcon />
-              <__DEPRECATED__Text size="1">
-                {width} x {height}
-              </__DEPRECATED__Text>
-            </Flex>{" "}
-            <Flex align="center" css={{ gap: "$1" }}>
-              <AspectRatioIcon />
-              <__DEPRECATED__Text size="1">
-                {getFormattedAspectRatio(width, height)}
-              </__DEPRECATED__Text>
-            </Flex>
-          </Grid>
-        </Box>
-      </Grid>
+      <Box css={{ p: "$2 $3" }}>
+        <Grid columns={2} align="center">
+          <Box css={{ width: 100 }}>
+            <Filename name={name} />
+          </Box>
+          <Flex align="center" css={{ gap: "$1" }}>
+            <CloudIcon />
+            <__DEPRECATED__Text size="1">
+              {prettyBytes(size)}
+            </__DEPRECATED__Text>
+          </Flex>
+        </Grid>
+      </Box>
+      <Box css={{ p: "$2 $3" }}>
+        <Grid columns={2}>
+          <Flex align="center" css={{ gap: "$1" }}>
+            <SizeIcon />
+            <__DEPRECATED__Text size="1">
+              {width} x {height}
+            </__DEPRECATED__Text>
+          </Flex>{" "}
+          <Flex align="center" css={{ gap: "$1" }}>
+            <AspectRatioIcon />
+            <__DEPRECATED__Text size="1">
+              {getFormattedAspectRatio(width, height)}
+            </__DEPRECATED__Text>
+          </Flex>
+        </Grid>
+      </Box>
       <Box css={{ p: "$2 $3" }}>
         <Button variant="red" size="2" onClick={handleDeleteAsset}>
           <Flex align="center" css={{ gap: "$1" }}>
