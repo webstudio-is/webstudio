@@ -40,6 +40,7 @@ export const AssetTooltip = ({
           right: "$1",
           cursor: "pointer",
           color: "$highContrast",
+          transition: "opacity 100ms ease",
         }}
       >
         <GearIcon />
