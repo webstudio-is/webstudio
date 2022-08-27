@@ -22,8 +22,8 @@ const useNumericScrubControl = ({
       direction: direction,
       onValueChange: (event) => {
         event.preventDefault();
-        event.target.value = String(event.value);
-        event.target.select();
+        (event.target as HTMLInputElement).value = String(event.value);
+        (event.target as HTMLInputElement).select();
       },
     });
     return () => disconnectedCallback();

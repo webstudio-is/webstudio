@@ -23,8 +23,8 @@ export type NumericScrubOptions = {
   maxValue?: NumericScrubValue;
   initialValue?: NumericScrubValue;
   direction?: NumericScrubDirection;
-  onValueChange: (event: {
-    target: HTMLInputElement;
+  onValueChange?: (event: {
+    target: HTMLElement;
     value: NumericScrubValue;
     preventDefault: () => void;
   }) => void;
@@ -39,7 +39,7 @@ type NumericScrubState = {
 };
 
 export const numericScrubControl = (
-  targetNode: HTMLInputElement,
+  targetNode: HTMLElement,
   {
     minValue = Number.MIN_SAFE_INTEGER,
     maxValue = Number.MAX_SAFE_INTEGER,

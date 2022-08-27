@@ -1,4 +1,4 @@
-import { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
+import { ChangeEvent, FocusEvent, KeyboardEvent, useRef } from "react";
 import {
   Box,
   Text,
@@ -7,6 +7,7 @@ import {
   TextField,
   Tooltip,
   IconButtonWithMenu,
+  numericScrubControl,
 } from "@webstudio-is/design-system";
 import { getFinalValue } from "../../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
@@ -53,6 +54,7 @@ export const TextControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
+  const numericScrubRef = useRef<{ disconnectedCallback: () => void }>();
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
 
   const value = getFinalValue({
@@ -63,9 +65,10 @@ export const TextControl = ({
 
   if (value === undefined) return null;
 
+  // @todo setValue has a latency issue when updating a value fast(i.e keyboard arrows/scrub control)
   const setValue = setProperty(styleConfig.property);
 
-  const Icon = iconConfigs[styleConfig.property]?.normal || "noscript";
+  const Icon = iconConfigs[styleConfig.property]?.normal;
 
   return (
     <Grid
@@ -79,8 +82,21 @@ export const TextControl = ({
         delayDuration={700 / 4}
         disableHoverableContent={true}
       >
-        {/* @todo unit values should feature the ScrubControl */}
         <IconButton
+          onPointerEnter={({ target }) => {
+            if (value.type !== "unit") return;
+            numericScrubRef.current =
+              numericScrubRef.current ||
+              numericScrubControl(target as HTMLInputElement, {
+                initialValue: value.value as number,
+                onValueChange: ({ value }) => setValue(String(value)),
+              });
+          }}
+          onPointerLeave={() => {
+            if (value.type !== "unit") return;
+            numericScrubRef.current?.disconnectedCallback();
+            numericScrubRef.current = undefined;
+          }}
           variant="ghost"
           size="1"
           css={{
@@ -94,7 +110,7 @@ export const TextControl = ({
             }),
           }}
         >
-          <Icon />
+          {Icon && <Icon />}
         </IconButton>
       </Tooltip>
       <TextField
