@@ -79,7 +79,7 @@ export const TextControl = ({
     >
       <Tooltip
         content={styleConfig.label}
-        delayDuration={700 / 4}
+        delayDuration={200}
         disableHoverableContent={true}
       >
         <IconButton
@@ -123,9 +123,23 @@ export const TextControl = ({
         onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
         onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
           if (value.type !== "unit") return;
+          if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
           event.preventDefault();
-          if (event.code === "ArrowUp") setValue(String(value.value + 1));
-          if (event.code === "ArrowDown") setValue(String(value.value - 1));
+          let currentValue = value.value;
+          let currentDelta = 1;
+          if (event.shiftKey) currentDelta = 10;
+          if (event.altKey) currentDelta = 0.1;
+          if (event.code === "ArrowUp")
+            currentValue = currentValue + currentDelta;
+          if (event.code === "ArrowDown")
+            currentValue = currentValue - currentDelta;
+          const currentValueAsString =
+            currentValue % 1
+              ? currentValue.toPrecision(
+                  Math.abs(currentValue).toString().indexOf(".") + 2
+                )
+              : String(currentValue);
+          setValue(currentValueAsString);
         }}
       />
       {value.type === "unit" ? (

@@ -94,7 +94,7 @@ export const IconButtonWithMenu = ({
     <DropdownMenuPrimitive.Root modal={false}>
       <Tooltip
         content={label}
-        delayDuration={700 * 2}
+        delayDuration={400}
         disableHoverableContent={true}
       >
         <DropdownMenuPrimitive.Trigger asChild>
