@@ -1,10 +1,4 @@
-import {
-  Box,
-  Flex,
-  Grid,
-  __DEPRECATED__Text,
-  Button,
-} from "@webstudio-is/design-system";
+import { Box, Flex, Grid, Text, Button } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/prisma-client";
 import { getFormattedAspectRatio } from "./utils";
 import {
@@ -30,8 +24,8 @@ const Filename = ({ name }: { name: string }) => {
         maxWidth: "70%",
       }}
     >
-      <__DEPRECATED__Text
-        size="1"
+      <Text
+        variant="label"
         data-extension={`${lastLetterBeforeExtension}.${extension}`}
         css={{
           whiteSpace: "nowrap",
@@ -47,7 +41,7 @@ const Filename = ({ name }: { name: string }) => {
         }}
       >
         {name}
-      </__DEPRECATED__Text>
+      </Text>
     </Box>
   );
 };
@@ -86,9 +80,7 @@ export const AssetInfo = ({
           </Box>
           <Flex align="center" css={{ gap: "$1" }}>
             <CloudIcon />
-            <__DEPRECATED__Text size="1">
-              {prettyBytes(size)}
-            </__DEPRECATED__Text>
+            <Text variant="label">{prettyBytes(size)}</Text>
           </Flex>
         </Grid>
       </Box>
@@ -96,15 +88,15 @@ export const AssetInfo = ({
         <Grid columns={2}>
           <Flex align="center" css={{ gap: "$1" }}>
             <SizeIcon />
-            <__DEPRECATED__Text size="1">
+            <Text variant="label">
               {width} x {height}
-            </__DEPRECATED__Text>
+            </Text>
           </Flex>{" "}
           <Flex align="center" css={{ gap: "$1" }}>
             <AspectRatioIcon />
-            <__DEPRECATED__Text size="1">
+            <Text variant="label">
               {getFormattedAspectRatio(width, height)}
-            </__DEPRECATED__Text>
+            </Text>
           </Flex>
         </Grid>
       </Box>
