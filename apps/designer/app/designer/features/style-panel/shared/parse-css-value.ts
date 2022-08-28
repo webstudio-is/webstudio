@@ -14,7 +14,6 @@ const isValid = (property: string, value: string): boolean => {
     return true;
   }
 
-  console.log(hyphenate(property), value);
   try {
     CSSStyleValue.parse(hyphenate(property), value);
   } catch (error) {
