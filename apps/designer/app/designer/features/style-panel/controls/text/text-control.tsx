@@ -17,6 +17,14 @@ import { type StyleValue, type Unit, units } from "@webstudio-is/react-sdk";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
 
+const commonUnitsSubset = units
+  .slice(0)
+  .sort((v) =>
+    ["%", "px", "rem", "em", "ch", "vh", "vw", "hv", "vmin", "vmax"].includes(v)
+      ? -1
+      : 1
+  );
+
 const CSSGridLeft = {
   "& ~ input": {
     paddingLeft: "calc($sizes$6 + 6px)",
@@ -76,7 +84,7 @@ export const TextControl = ({
   // @todo setValue has a latency issue when updating a value fast(i.e keyboard arrows/scrub control)
   const setValue = setProperty(styleConfig.property);
 
-  const Icon = iconConfigs[styleConfig.property]?.normal;
+  let Icon;
 
   const { label, property } = styleConfig;
 
@@ -86,9 +94,10 @@ export const TextControl = ({
     category === "layout" &&
     property.includes("Gap") &&
     (currentStyle.display?.value as string).includes("flex")
-  )
+  ) {
+    Icon = iconConfigs[styleConfig.property]?.normal;
     multiColumn = false;
-
+  }
   return (
     <Grid columns={multiColumn ? 2 : 1}>
       {multiColumn && <PropertyName property={property} label={label} />}
@@ -139,22 +148,10 @@ export const TextControl = ({
         {value.type === "unit" ? (
           <Units
             value={value.unit}
-            items={units
-              .filter((v) =>
-                [
-                  "%",
-                  "px",
-                  "rem",
-                  "em",
-                  "ch",
-                  "vh",
-                  "vw",
-                  "hv",
-                  "vmin",
-                  "vmax",
-                ].includes(v)
-              )
-              .map((unit) => ({ name: unit, label: unit }))}
+            items={commonUnitsSubset.map((unit) => ({
+              name: unit,
+              label: unit,
+            }))}
             onChange={(unit) => setValue(value.value + unit)}
           />
         ) : (

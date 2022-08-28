@@ -5,7 +5,7 @@ import { Tooltip } from "./tooltip";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   width: 192,
-  maxHeight: 320,
+  maxHeight: 238,
   overflow: "auto",
   backgroundColor: "$colors$slate4",
   borderRadius: "$radii$1",
