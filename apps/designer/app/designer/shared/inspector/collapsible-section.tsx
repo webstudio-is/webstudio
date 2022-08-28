@@ -5,7 +5,7 @@ import {
   __DEPRECATED__Text,
   Collapsible,
 } from "@webstudio-is/design-system";
-import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@webstudio-is/icons";
 
 type CollapsibleSectionProps = {
   label: string;
