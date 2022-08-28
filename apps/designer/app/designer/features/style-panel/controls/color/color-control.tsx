@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import {
   Box,
+  Flex,
   Grid,
   Popover,
   PopoverTrigger,
@@ -9,7 +10,7 @@ import {
   TextField,
   Tooltip,
 } from "@webstudio-is/design-system";
-// import { PropertyName } from "../../shared/property-name";
+import { PropertyName } from "../../shared/property-name";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 import { StyleConfig } from "../../shared/configs";
@@ -121,18 +122,18 @@ export const ColorControl = ({
 
   return (
     <Grid columns={1} align="center" gapX="1">
-      {/* <PropertyName property={styleConfig.property} label={styleConfig.label} /> */}
-      {/* <Flex align="center" css={{ gridColumn: "4/4" }} gap="1"> */}
-      <ColorPicker
-        id={styleConfig.property}
-        value={String(value.value)}
-        styleConfig={styleConfig}
-        onChange={(value) => {
-          setValue(value, { isEphemeral: true });
-        }}
-        onChangeComplete={setValue}
-      />
-      {/* </Flex> */}
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <Flex align="center" css={{ gridColumn: "4/4" }} gap="1">
+        <ColorPicker
+          id={styleConfig.property}
+          value={String(value.value)}
+          styleConfig={styleConfig}
+          onChange={(value) => {
+            setValue(value, { isEphemeral: true });
+          }}
+          onChangeComplete={setValue}
+        />
+      </Flex>
     </Grid>
   );
 };
