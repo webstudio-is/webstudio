@@ -115,7 +115,7 @@ export const useStyleData = ({
   };
 
   const createBatchUpdate = () => {
-    const updates: StyleUpdates["updates"] = [];
+    let updates: StyleUpdates["updates"] = [];
 
     const setProperty = (property: StyleProperty) => {
       const setValue = (input: string) => {
@@ -129,6 +129,7 @@ export const useStyleData = ({
     };
 
     const publish = () => {
+      if (!updates.length) return;
       publishUpdates("update", updates);
       const nextStyle = updates.reduce(
         (currentStyle, { property, value }) => {
@@ -137,6 +138,7 @@ export const useStyleData = ({
         },
         { ...currentStyle }
       );
+      updates = [];
       setCurrentStyle(nextStyle);
     };
 

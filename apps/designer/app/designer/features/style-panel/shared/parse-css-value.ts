@@ -14,6 +14,7 @@ const isValid = (property: string, value: string): boolean => {
     return true;
   }
 
+  console.log(hyphenate(property), value);
   try {
     CSSStyleValue.parse(hyphenate(property), value);
   } catch (error) {
@@ -64,7 +65,6 @@ export const parseCssValue = (
     type: "invalid",
     value: input,
   } as const;
-
   if (input.length === 0) {
     return invalidValue;
   }
@@ -88,13 +88,9 @@ export const parseCssValue = (
   const fallbackUnit: Unit = defaultUnit ?? "number";
   const [unit] = parsedUnit || [fallbackUnit];
 
-  if (isValid(property, number) || isValid(property, number + unit)) {
-    return {
-      type: "unit",
-      unit,
-      value: number,
-    };
-  }
-
-  return invalidValue;
+  return {
+    type: "unit",
+    unit: isValid(property, number + unit.replace("number", "")) ? unit : "px",
+    value: number,
+  };
 };

@@ -17,21 +17,25 @@ export const Lock = ({
 }) => {
   const aKey = pairedKeys[0];
   const bKey = pairedKeys[1];
-  const aVal = parseFloat(currentStyle[aKey]?.value as string);
-  const bVal = parseFloat(currentStyle[bKey]?.value as string);
+  const a = currentStyle[aKey];
+  const b = currentStyle[bKey];
+  const aVal =
+    a?.value + (a?.type === "unit" && a.unit !== "number" ? a.unit : "");
+  const bVal =
+    b?.value + (b?.type === "unit" && b.unit !== "number" ? b.unit : "");
   const [isPaired, setIsPaired] = useState(aVal === bVal);
 
   useEffect(() => {
     if (!isPaired) return;
     if (aVal === bVal) return;
-    batchUpdate.setProperty(aKey)(String(aVal));
-    batchUpdate.setProperty(bKey)(String(aVal));
+    batchUpdate.setProperty(aKey)(aVal);
+    batchUpdate.setProperty(bKey)(aVal);
     batchUpdate.publish();
-  }, [batchUpdate, isPaired, aKey, bKey, aVal, bVal]);
+  }, [aKey, bKey, aVal, bVal, isPaired, batchUpdate]);
 
   return (
     <Tooltip
-      content={isPaired ? "Locked" : "Unlocked"}
+      content={isPaired ? "Unlock" : "Lock"}
       delayDuration={400}
       disableHoverableContent={true}
     >
