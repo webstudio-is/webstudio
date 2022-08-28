@@ -16,7 +16,7 @@ export const PropertyName = ({ property, label, css }: PropertyProps) => {
           ? {
               color: propertyNameColorForSelectedBreakpoint,
               // backgroundColor: "$colors$blue4",
-              padding: "calc($radii$1 / 2) $radii$1",
+              // padding: "calc($radii$1 / 2) $radii$1",
               borderRadius: "$radii$1",
             }
           : {
