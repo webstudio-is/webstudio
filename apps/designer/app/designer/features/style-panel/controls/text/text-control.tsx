@@ -15,13 +15,20 @@ import { ControlProps } from "../../style-sections";
 import { iconConfigs, StyleConfig } from "../../shared/configs";
 import { type StyleValue, type Unit, units } from "@webstudio-is/react-sdk";
 import { ChevronDownIcon } from "@webstudio-is/icons";
+import { PropertyName } from "../../shared/property-name";
 
 const CSSGridLeft = {
+  "& ~ input": {
+    paddingLeft: "calc($sizes$6 + 6px)",
+  },
   gridArea: "1 / 1 / 2 / 2",
 };
 
 const CSSGridRight = {
   gridArea: "-1 / -1 / -2 / -2",
+  "& ~ input": {
+    paddingRight: "calc($sizes$5 + 6px)",
+  },
 };
 
 const CSSIconButton = {
@@ -43,12 +50,13 @@ const CSSTextUnit = {
 const CSSTextField = {
   height: "$6",
   fontWeight: "500",
-  paddingLeft: "calc($sizes$6 + 6px)",
+  paddingLeft: "calc($sizes$1 + 6px)",
   gridArea: "1 / 1 / -1 / -1",
   cursor: "default",
 };
 
 export const TextControl = ({
+  category,
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -70,106 +78,124 @@ export const TextControl = ({
 
   const Icon = iconConfigs[styleConfig.property]?.normal;
 
+  const { label, property } = styleConfig;
+
+  // @todo this silo's the flex section
+  let multiColumn = true;
+  if (
+    category === "layout" &&
+    property.includes("Gap") &&
+    (currentStyle.display?.value as string).includes("flex")
+  )
+    multiColumn = false;
+
   return (
-    <Grid
-      css={{
-        gridTemplateColumns: "$sizes$6 auto $sizes$6",
-        gridTemplateRows: "repeat(1, 1fr)",
-      }}
-    >
-      <Tooltip
-        content={styleConfig.label}
-        delayDuration={200}
-        disableHoverableContent={true}
-      >
-        <IconButton
-          onPointerEnter={({ target }) => {
-            if (value.type !== "unit") return;
-            numericScrubRef.current =
-              numericScrubRef.current ||
-              numericScrubControl(target as HTMLInputElement, {
-                initialValue: value.value as number,
-                onValueChange: ({ value }) => setValue(String(value)),
-              });
-          }}
-          onPointerLeave={() => {
-            if (value.type !== "unit") return;
-            numericScrubRef.current?.disconnectedCallback();
-            numericScrubRef.current = undefined;
-          }}
-          variant="ghost"
-          size="1"
-          css={{
-            ...CSSGridLeft,
-            ...CSSIconButton,
-            ...(isCurrentBreakpoint && {
-              bc: "$colors$blue4",
-              "&:not(:hover)": {
-                color: "$colors$blue11",
-              },
-            }),
-          }}
-        >
-          {Icon && <Icon />}
-        </IconButton>
-      </Tooltip>
-      <TextField
-        css={CSSTextField}
-        spellCheck={false}
-        value={value.value}
-        onChange={(event: ChangeEvent<HTMLInputElement>) =>
-          setValue(event.target.value)
-        }
-        onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
-        onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
-          if (value.type !== "unit") return;
-          if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
-          event.preventDefault();
-          let currentValue = value.value;
-          let currentDelta = 1;
-          if (event.shiftKey) currentDelta = 10;
-          if (event.altKey) currentDelta = 0.1;
-          if (event.code === "ArrowUp")
-            currentValue = currentValue + currentDelta;
-          if (event.code === "ArrowDown")
-            currentValue = currentValue - currentDelta;
-          const currentValueAsString =
-            currentValue % 1
-              ? currentValue.toPrecision(
-                  Math.abs(currentValue).toString().indexOf(".") + 2
-                )
-              : String(currentValue);
-          setValue(currentValueAsString);
+    <Grid columns={multiColumn ? 2 : 1}>
+      {multiColumn && <PropertyName property={property} label={label} />}
+      <Grid
+        css={{
+          gridTemplateColumns: "$sizes$6 auto $sizes$6",
+          gridTemplateRows: "repeat(1, 1fr)",
         }}
-      />
-      {value.type === "unit" ? (
-        <Units
-          value={value.unit}
-          items={units
-            .filter((v) =>
-              [
-                "%",
-                "px",
-                "rem",
-                "em",
-                "ch",
-                "vh",
-                "vw",
-                "hv",
-                "vmin",
-                "vmax",
-              ].includes(v)
-            )
-            .map((unit) => ({ name: unit, label: unit }))}
-          onChange={(unit) => setValue(value.value + unit)}
-        />
-      ) : (
-        <Items
+      >
+        {Icon && (
+          <Tooltip
+            content={styleConfig.label}
+            delayDuration={200}
+            disableHoverableContent={true}
+          >
+            <IconButton
+              onPointerEnter={({ target }) => {
+                if (value.type !== "unit") return;
+                numericScrubRef.current =
+                  numericScrubRef.current ||
+                  numericScrubControl(target as HTMLInputElement, {
+                    initialValue: value.value as number,
+                    onValueChange: ({ value }) => setValue(String(value)),
+                  });
+              }}
+              onPointerLeave={() => {
+                if (value.type !== "unit") return;
+                numericScrubRef.current?.disconnectedCallback();
+                numericScrubRef.current = undefined;
+              }}
+              variant="ghost"
+              size="1"
+              css={{
+                ...CSSGridLeft,
+                ...CSSIconButton,
+                ...(isCurrentBreakpoint && {
+                  bc: "$colors$blue4",
+                  "&:not(:hover)": {
+                    color: "$colors$blue11",
+                  },
+                }),
+              }}
+            >
+              {Icon && <Icon />}
+            </IconButton>
+          </Tooltip>
+        )}
+        {value.type === "unit" ? (
+          <Units
+            value={value.unit}
+            items={units
+              .filter((v) =>
+                [
+                  "%",
+                  "px",
+                  "rem",
+                  "em",
+                  "ch",
+                  "vh",
+                  "vw",
+                  "hv",
+                  "vmin",
+                  "vmax",
+                ].includes(v)
+              )
+              .map((unit) => ({ name: unit, label: unit }))}
+            onChange={(unit) => setValue(value.value + unit)}
+          />
+        ) : (
+          <Items
+            value={value.value}
+            items={styleConfig.items}
+            onChange={(item) => setValue(item)}
+          />
+        )}
+        <TextField
+          css={CSSTextField}
+          spellCheck={false}
           value={value.value}
-          items={styleConfig.items}
-          onChange={(item) => setValue(item)}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            setValue(event.target.value)
+          }
+          onFocus={(event: FocusEvent<HTMLInputElement>) =>
+            event.target.select()
+          }
+          onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+            if (value.type !== "unit") return;
+            if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
+            event.preventDefault();
+            let currentValue = value.value;
+            let currentDelta = 1;
+            if (event.shiftKey) currentDelta = 10;
+            if (event.altKey) currentDelta = 0.1;
+            if (event.code === "ArrowUp")
+              currentValue = currentValue + currentDelta;
+            if (event.code === "ArrowDown")
+              currentValue = currentValue - currentDelta;
+            const currentValueAsString =
+              currentValue % 1
+                ? currentValue.toPrecision(
+                    Math.abs(currentValue).toString().indexOf(".") + 2
+                  )
+                : String(currentValue);
+            setValue(currentValueAsString);
+          }}
         />
-      )}
+      </Grid>
     </Grid>
   );
 };

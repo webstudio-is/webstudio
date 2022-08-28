@@ -9,6 +9,8 @@ export const PropertyName = ({ property, label, css }: PropertyProps) => {
   return (
     <Label
       css={{
+        display: "flex",
+        alignItems: "center",
         gridColumn: "1",
         ...(isCurrentBreakpoint
           ? {
