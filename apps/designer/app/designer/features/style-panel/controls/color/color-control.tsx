@@ -121,7 +121,7 @@ export const ColorControl = ({
   const setValue = setProperty(styleConfig.property);
 
   return (
-    <Grid columns={1} align="center" gapX="1">
+    <Grid columns={2} align="center" gapX="1">
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Flex align="center" css={{ gridColumn: "4/4" }} gap="1">
         <ColorPicker
