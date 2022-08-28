@@ -2,12 +2,14 @@ import { FontBoldIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta } from "./component-type";
 import { Bold } from "./bold";
 
-export default {
+const meta: WsComponentMeta<typeof Bold> = {
   Icon: FontBoldIcon,
   Component: Bold,
-  canAcceptChild: () => false,
+  canAcceptChildren: false,
   isContentEditable: false,
   label: "Bold Text",
   isInlineOnly: true,
   isListed: false,
-} as WsComponentMeta<typeof Bold>;
+};
+
+export default meta;

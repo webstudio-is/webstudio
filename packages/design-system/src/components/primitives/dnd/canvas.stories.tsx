@@ -211,7 +211,7 @@ export const Canvas = () => {
         return getDefaultDropTarget();
       }
 
-      const { data: id, nearEdge } = dropTarget;
+      const { data: id, area } = dropTarget;
 
       if (id === ROOT_ID) {
         return dropTarget;
@@ -219,7 +219,7 @@ export const Canvas = () => {
 
       const path = findItemPath(data, id) ?? [];
 
-      if (nearEdge) {
+      if (area !== "center") {
         path.shift();
       }
 
@@ -262,12 +262,13 @@ export const Canvas = () => {
     onStart({ data: id }) {
       setDragItemId(id);
       autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
     },
     onMove: (point) => {
       dropHandlers.handleMove(point);
       autoScrollHandlers.handleMove(point);
     },
-    onEnd() {
+    onEnd({ isCanceled }) {
       if (dragItemId !== undefined && currentDropTarget !== undefined) {
         setData((current) => {
           const dragItem = findItem(current, dragItemId);
@@ -307,7 +308,7 @@ export const Canvas = () => {
         });
       }
 
-      dropHandlers.handleEnd();
+      dropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
       setDragItemId(undefined);
       setCurrentDropTarget(undefined);

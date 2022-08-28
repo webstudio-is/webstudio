@@ -33,7 +33,6 @@ export {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "./components/sidebar-tabs";
-export { Text } from "./components/text";
 export { Card } from "./components/card";
 export { SimpleToggle } from "./components/simple-toggle";
 export { ScrollArea } from "./components/scrollbar";
@@ -65,3 +64,6 @@ export * from "./components/primitives/dnd";
 export * from "./components/icon-button-with-menu";
 export * from "./components/primitives/numeric-gesture-control";
 export * from "./components/separator";
+export * from "./components/tree";
+export * from "./components/__DEPRECATED__/text";
+export * from "./components/text";

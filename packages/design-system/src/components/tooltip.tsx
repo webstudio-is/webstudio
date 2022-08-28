@@ -2,7 +2,7 @@ import React, { Ref } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
-import { Text } from "./text";
+import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
 import type { CSS } from "@webstudio-is/react-sdk";
 
 type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
@@ -73,7 +73,7 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
         {...props}
         multiline={multiline}
       >
-        <Text
+        <__DEPRECATED__Text
           size="1"
           as="p"
           css={{
@@ -82,7 +82,7 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
           }}
         >
           {content}
-        </Text>
+        </__DEPRECATED__Text>
         <Box css={{ color: "$transparentExtreme" }}>
           <Arrow offset={5} width={11} height={5} />
         </Box>

@@ -1,101 +1,51 @@
 import { styled } from "../stitches.config";
 
+/**
+ * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
+ */
 export const Text = styled("div", {
   // Reset
-  lineHeight: "1",
-  margin: "0",
-  fontWeight: 400,
-  fontVariantNumeric: "tabular-nums",
-  display: "block",
+  margin: 0,
+  lineHeight: 1,
   userSelect: "none",
+  fontFamily: "$sans",
 
   variants: {
-    size: {
-      "1": {
-        fontSize: "$1",
+    variant: {
+      regular: {
+        fontWeight: 400,
+        fontSize: 12,
+        letterSpacing: "0.005em",
       },
-      "2": {
-        fontSize: "$2",
+      label: {
+        fontWeight: 500,
+        fontSize: 12,
+        letterSpacing: "0.005em",
       },
-      "3": {
-        fontSize: "$3",
+      tiny: {
+        fontWeight: 400,
+        fontSize: 8,
+        letterSpacing: "0.01em",
       },
-      "4": {
-        fontSize: "$4",
+      title: {
+        fontWeight: 700,
+        fontSize: 12,
+        letterSpacing: "0.01em",
       },
-      "5": {
-        fontSize: "$5",
-        letterSpacing: "-.015em",
+      mono: {
+        fontFamily: "$mono",
+        fontWeight: 400,
+        fontSize: 12,
+        textTransform: "uppercase",
       },
-      "6": {
-        fontSize: "$6",
-        letterSpacing: "-.016em",
-      },
-      "7": {
-        fontSize: "$7",
-        letterSpacing: "-.031em",
-        textIndent: "-.005em",
-      },
-      "8": {
-        fontSize: "$8",
-        letterSpacing: "-.034em",
-        textIndent: "-.018em",
-      },
-      "9": {
-        fontSize: "$9",
-        letterSpacing: "-.055em",
-        textIndent: "-.025em",
+      unit: {
+        fontWeight: 500,
+        fontSize: 10,
+        lineHeight: 12,
+        textTransform: "uppercase",
       },
     },
-    variant: {
-      red: {
-        color: "$red11",
-      },
-      crimson: {
-        color: "$crimson11",
-      },
-      pink: {
-        color: "$pink11",
-      },
-      purple: {
-        color: "$purple11",
-      },
-      violet: {
-        color: "$violet11",
-      },
-      indigo: {
-        color: "$indigo11",
-      },
-      blue: {
-        color: "$blue11",
-      },
-      cyan: {
-        color: "$cyan11",
-      },
-      teal: {
-        color: "$teal11",
-      },
-      green: {
-        color: "$green11",
-      },
-      lime: {
-        color: "$lime11",
-      },
-      yellow: {
-        color: "$yellow11",
-      },
-      orange: {
-        color: "$orange11",
-      },
-      gold: {
-        color: "$gold11",
-      },
-      bronze: {
-        color: "$bronze11",
-      },
-      gray: {
-        color: "$slate11",
-      },
+    color: {
       contrast: {
         color: "$hiContrast",
       },
@@ -103,136 +53,29 @@ export const Text = styled("div", {
         color: "$loContrast",
       },
     },
-    gradient: {
+    truncate: {
       true: {
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
+        whiteSpace: "nowrap",
+        textOverflow: "ellipsis",
+        overflow: "hidden",
+
+        // To make sure text is not clipped vertically
+        pt: "0.5em",
+        pb: "0.5em",
+        mt: "-0.5em",
+        mb: "-0.5em",
+
+        flexBasis: 0,
+        flexGrow: 1,
+
+        // For some reason flexBasis:0 is not enough
+        // to stop it from growing past the container
+        width: 0,
       },
     },
   },
-  compoundVariants: [
-    {
-      variant: "red",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $red11, $crimson11)",
-      },
-    },
-    {
-      variant: "crimson",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $crimson11, $pink11)",
-      },
-    },
-    {
-      variant: "pink",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $pink11, $purple11)",
-      },
-    },
-    {
-      variant: "purple",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $purple11, $violet11)",
-      },
-    },
-    {
-      variant: "violet",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $violet11, $indigo11)",
-      },
-    },
-    {
-      variant: "indigo",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $indigo11, $blue11)",
-      },
-    },
-    {
-      variant: "blue",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $blue11, $cyan11)",
-      },
-    },
-    {
-      variant: "cyan",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $cyan11, $teal11)",
-      },
-    },
-    {
-      variant: "teal",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $teal11, $green11)",
-      },
-    },
-    {
-      variant: "green",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $green11, $lime11)",
-      },
-    },
-    {
-      variant: "lime",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $lime11, $yellow11)",
-      },
-    },
-    {
-      variant: "yellow",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $yellow11, $orange11)",
-      },
-    },
-    {
-      variant: "orange",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $orange11, $red11)",
-      },
-    },
-    {
-      variant: "gold",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $gold11, $gold9)",
-      },
-    },
-    {
-      variant: "bronze",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $bronze11, $bronze9)",
-      },
-    },
-    {
-      variant: "gray",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $gray11, $gray12)",
-      },
-    },
-    {
-      variant: "contrast",
-      gradient: "true",
-      css: {
-        background: "linear-gradient(to right, $hiContrast, $gray12)",
-      },
-    },
-  ],
+
   defaultVariants: {
-    size: "3",
-    variant: "contrast",
+    variant: "regular",
   },
 });

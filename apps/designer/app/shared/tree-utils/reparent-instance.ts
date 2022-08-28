@@ -8,10 +8,19 @@ export const reparentInstanceMutable = (
   rootInstance: Instance,
   instanceId: Instance["id"],
   newParentId: Instance["id"],
-  newPosition: number
+  newPosition: number | "end"
 ) => {
   const instance = findInstanceById(rootInstance, instanceId);
   if (instance === undefined) {
+    return;
+  }
+
+  if (newPosition === "end") {
+    deleteInstanceMutable(rootInstance, instance.id);
+    insertInstanceMutable(rootInstance, instance, {
+      parentId: newParentId,
+      position: "end",
+    });
     return;
   }
 

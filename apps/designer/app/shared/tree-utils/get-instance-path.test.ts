@@ -74,8 +74,8 @@ describe("Get instance path", () => {
 });
 
 const getIdAndPosition = (
-  array: Array<{ instance: { id: string }; position: number }>
-) => array.map((item) => [item.instance.id, item.position]);
+  array: Array<{ item: { id: string }; position: number }>
+) => array.map((item) => [item.item.id, item.position]);
 
 describe("Get instance path with positions", () => {
   test("single possible path", () => {
