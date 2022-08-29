@@ -1,9 +1,9 @@
-name: Tsconfig
+name: Asset Uploader
 on:
   push:
     paths:
-      - "packages/tsconfig/**/*"
-      - ".github/workflows/tsconfig.yml"
+      - "packages/asset-uploader/**/*"
+      - ".github/workflows/asset-uploader.yml"
       - ".github/actions/publish/action.yaml"
 jobs:
   publish:
@@ -12,7 +12,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          skip-build: true
-          workdir: ./packages/tsconfig
-          filter: "@webstudio-is/tsconfig"
+          workdir: ./packages/asset-uploader
+          filter: "@webstudio-is/asset-uploader"
           token: ${{ secrets.NPM_TOKEN }}
