@@ -32,7 +32,7 @@ runs:
         run: yarn build --filter ${{ inputs.filter }}
         shell: bash
       - name: Publish package on NPM 📦
-        run: npm publish -w ${{ inputs.workdir }} --dry-run
+        run: npm publish -w ${{ inputs.workdir }}
         shell: bash
         env:
           NODE_AUTH_TOKEN: ${{ inputs.token }}
