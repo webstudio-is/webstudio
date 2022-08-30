@@ -114,11 +114,11 @@ export const TextControl = ({
             disableHoverableContent={true}
           >
             <IconButton
-              onPointerEnter={({ target }) => {
+              onPointerEnter={(event) => {
                 if (value.type !== "unit") return;
                 numericScrubRef.current =
                   numericScrubRef.current ||
-                  numericScrubControl(target as HTMLInputElement, {
+                  numericScrubControl(event.target as HTMLInputElement, {
                     initialValue: value.value as number,
                     onValueChange: ({ value }) => setValue(String(value)),
                   });
@@ -127,6 +127,9 @@ export const TextControl = ({
                 if (value.type !== "unit") return;
                 numericScrubRef.current?.disconnectedCallback();
                 numericScrubRef.current = undefined;
+              }}
+              onPointerUp={(event) => {
+                setValue((event.target as HTMLInputElement).value);
               }}
               variant="ghost"
               size="1"
@@ -164,18 +167,24 @@ export const TextControl = ({
         <TextField
           css={CSSTextField}
           spellCheck={false}
-          value={value.value}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
-            setValue(event.target.value)
-          }
+          defaultValue={value.value}
           onFocus={(event: FocusEvent<HTMLInputElement>) =>
             event.target.select()
           }
+          onBlur={(event: ChangeEvent<HTMLInputElement>) =>
+            setValue(event.target.value)
+          }
           onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+            const target = event.target as HTMLInputElement;
+            if (event.code === "Enter") {
+              setValue(target.value);
+              const number = parseFloat(target.value);
+              if (!isNaN(number)) target.value = String(number);
+            }
             if (value.type !== "unit") return;
             if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
             event.preventDefault();
-            let currentValue = value.value;
+            let currentValue = parseFloat(target.value);
             let currentDelta = 1;
             if (event.shiftKey) currentDelta = 10;
             if (event.altKey) currentDelta = 0.1;
@@ -189,7 +198,8 @@ export const TextControl = ({
                     Math.abs(currentValue).toString().indexOf(".") + 2
                   )
                 : String(currentValue);
-            setValue(currentValueAsString);
+            target.value = currentValueAsString;
+            setValue(currentValueAsString, { isEphemeral: true });
           }}
         />
       </Grid>
@@ -245,7 +255,7 @@ const Items = ({
         items={items}
         value={String(value)}
         onChange={onChange}
-      ></IconButtonWithMenu>
+      />
     </Box>
   );
 };

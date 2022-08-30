@@ -49,7 +49,7 @@ export const useStyleData = ({
     [selectedInstanceData, cssRule]
   );
 
-  const [currentStyle, setCurrentStyle] = useState(getCurrentStyle());
+  const [currentStyle, setCurrentStyle] = useState(() => getCurrentStyle());
 
   useEffect(() => {
     const currentStyle = getCurrentStyle();
