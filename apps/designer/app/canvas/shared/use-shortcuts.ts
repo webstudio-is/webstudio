@@ -5,10 +5,7 @@ import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
-import {
-  useRootInstance,
-  useTextEditingInstanceId,
-} from "~/shared/nano-states";
+import { useTextEditingInstanceId } from "~/shared/nano-states";
 import { type SelectedInstanceData } from "~/shared/canvas-components";
 
 declare module "~/shared/pubsub" {
@@ -70,23 +67,16 @@ const publishCancelCurrentDrag = () => {
 };
 
 export const useShortcuts = () => {
-  const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
 
   const publishDeleteInstance = () => {
-    // @todo tell user they can't delete root
-    if (
-      selectedInstance === undefined ||
-      selectedInstance.id === rootInstance?.id
-    ) {
+    if (selectedInstance === undefined) {
       return;
     }
     publish({
       type: "deleteInstance",
-      payload: {
-        id: selectedInstance.id,
-      },
+      payload: { id: selectedInstance.id },
     });
   };
 

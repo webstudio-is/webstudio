@@ -2,7 +2,12 @@ import { useState } from "react";
 import useDebounce from "react-use/lib/useDebounce";
 import { type Breakpoint } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
-import { Button, TextField, Flex, Text } from "@webstudio-is/design-system";
+import {
+  Button,
+  TextField,
+  Flex,
+  __DEPRECATED__Text,
+} from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import ObjectId from "bson-objectid";
 import { useBreakpoints } from "~/shared/nano-states";
@@ -103,7 +108,7 @@ export const BreakpointsEditor = ({
         justify="between"
         css={{ paddingLeft: "$5", paddingRight: "$3", py: "$1" }}
       >
-        <Text>Breakpoints</Text>
+        <__DEPRECATED__Text>Breakpoints</__DEPRECATED__Text>
         <Button
           ghost
           onClick={() => {

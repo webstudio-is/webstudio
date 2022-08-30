@@ -1,0 +1,17 @@
+name: HTTP Client
+on:
+  push:
+    paths:
+      - "packages/http-client/**/*"
+      - ".github/workflows/http-client.yml"
+      - ".github/actions/publish/action.yaml"
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/publish
+        with:
+          workdir: ./packages/http-client
+          filter: "@webstudio-is/http-client"
+          token: ${{ secrets.NPM_TOKEN }}

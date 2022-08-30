@@ -11,10 +11,6 @@ declare module "~/shared/pubsub" {
       dropTarget?: { parentId: Instance["id"]; position: number };
       props?: InstanceProps;
     };
-    reparentInstance: {
-      instanceId: Instance["id"];
-      dropTarget: { instanceId: Instance["id"]; position: number };
-    };
     unselectInstance: undefined;
   }
 }

@@ -198,7 +198,13 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
   return (
     <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-      <Box css={{ borderRight: "1px solid $slate7", width: PANEL_WIDTH }}>
+      <Box
+        css={{
+          borderRight: "1px solid $slate7",
+          width: PANEL_WIDTH,
+          height: "100%",
+        }}
+      >
         <Navigator publish={publish} isClosable={false} />
       </Box>
     </SidePanel>

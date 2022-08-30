@@ -12,14 +12,17 @@ export type ChildrenOrientation =
   | { type: "mixed"; reverse?: boolean };
 
 export type Placement = {
+  type: "between-children" | "next-to-child" | "inside-parent";
   x: number;
   y: number;
   length: number;
   direction: "horizontal" | "vertical";
 };
 
+export type Area = "top" | "bottom" | "left" | "right" | "center";
+
 // https://stackoverflow.com/a/18157551/478603
-const getDistanceToRect = (rect: Rect, { x, y }: Point) => {
+export const getDistanceToRect = (rect: Rect, { x, y }: Point) => {
   const dx = Math.max(rect.left - x, 0, x - (rect.left + rect.width));
   const dy = Math.max(rect.top - y, 0, y - (rect.top + rect.height));
   return Math.sqrt(dx * dx + dy * dy);
@@ -45,17 +48,25 @@ export const isEqualRect = (a: Rect | undefined, b: Rect) =>
   a.width === b.width &&
   a.height === b.height;
 
-export const isNearEdge = (
+export const getArea = (
   { x, y }: Point,
   edgeDistanceThreshold: number,
   rect: Rect
-) =>
-  Math.min(
-    y - rect.top,
-    rect.top + rect.height - y,
-    x - rect.left,
-    rect.left + rect.width - x
-  ) <= edgeDistanceThreshold;
+): Area => {
+  if (y - rect.top <= edgeDistanceThreshold) {
+    return "top";
+  }
+  if (rect.top + rect.height - y <= edgeDistanceThreshold) {
+    return "bottom";
+  }
+  if (x - rect.left <= edgeDistanceThreshold) {
+    return "left";
+  }
+  if (rect.left + rect.width - x <= edgeDistanceThreshold) {
+    return "right";
+  }
+  return "center";
+};
 
 export const getPlacementBetween = (
   a: Rect | undefined,
@@ -85,6 +96,7 @@ export const getPlacementBetween = (
     const minX = Math.min(a.left, b.left);
     const maxX = Math.max(a.left + a.width, b.left + b.width);
     return {
+      type: "between-children",
       y: firstY.top + firstY.height + distanceY / 2,
       x: minX,
       length: maxX - minX,
@@ -95,6 +107,7 @@ export const getPlacementBetween = (
   const minY = Math.min(a.top, b.top);
   const maxY = Math.max(a.top + a.height, b.top + b.height);
   return {
+    type: "between-children",
     y: minY,
     x: firstX.left + firstX.width + distanceX / 2,
     length: maxY - minY,
@@ -106,7 +119,8 @@ export const getPlacementNextTo = (
   parentRect: Rect,
   rect: Rect | undefined,
   childrenOrientation: ChildrenOrientation,
-  direction: "forward" | "backward"
+  direction: "forward" | "backward",
+  padding = 5
 ): Placement | undefined => {
   if (rect === undefined) {
     return undefined;
@@ -126,10 +140,11 @@ export const getPlacementNextTo = (
       : "top";
 
   const getMargin = (distnaceToParentEdge: number) =>
-    Math.min(10, Math.max(0, distnaceToParentEdge)) / 2;
+    Math.min(padding * 2, Math.max(0, distnaceToParentEdge)) / 2;
 
   if (side === "top") {
     return {
+      type: "next-to-child",
       x: rect.left,
       y: rect.top - getMargin(rect.top),
       length: rect.width,
@@ -139,6 +154,7 @@ export const getPlacementNextTo = (
 
   if (side === "bottom") {
     return {
+      type: "next-to-child",
       x: rect.left,
       y:
         rect.top +
@@ -151,6 +167,7 @@ export const getPlacementNextTo = (
 
   if (side === "left") {
     return {
+      type: "next-to-child",
       x: rect.left - getMargin(rect.left),
       y: rect.top,
       length: rect.height,
@@ -159,6 +176,7 @@ export const getPlacementNextTo = (
   }
 
   return {
+    type: "next-to-child",
     x:
       rect.left +
       rect.width +
@@ -171,13 +189,13 @@ export const getPlacementNextTo = (
 
 export const getPlacementInside = (
   parentRect: Rect,
-  childrenOrientation: ChildrenOrientation
+  childrenOrientation: ChildrenOrientation,
+  padding = 5
 ): Placement => {
-  const padding = 5;
-
   if (childrenOrientation.type === "horizontal") {
     const safePadding = Math.min(parentRect.width / 2, padding);
     return {
+      type: "inside-parent",
       y: parentRect.top + safePadding,
       x: parentRect.left + safePadding,
       length: parentRect.height - safePadding * 2,
@@ -187,6 +205,7 @@ export const getPlacementInside = (
 
   const safePadding = Math.min(parentRect.height / 2, padding);
   return {
+    type: "inside-parent",
     y: parentRect.top + safePadding,
     x: parentRect.left + safePadding,
     length: parentRect.width - safePadding * 2,
@@ -209,7 +228,7 @@ const getSegmentsOrder = (
   return "overlap";
 };
 
-const getTwoRectsOrientation = (
+export const getTwoRectsOrientation = (
   first: Rect,
   second: Rect
 ): ChildrenOrientation => {

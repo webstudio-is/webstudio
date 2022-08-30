@@ -3,7 +3,11 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { getInstancePath, createInstance } from "~/shared/tree-utils";
+import {
+  getInstancePath,
+  createInstance,
+  findClosestNonInlineParent,
+} from "~/shared/tree-utils";
 import {
   findInstanceByElement,
   getInstanceElementById,
@@ -103,7 +107,7 @@ export const useDragAndDrop = () => {
       const path = getInstancePath(rootInstance, dropTarget.data.id);
       path.reverse();
 
-      if (dropTarget.nearEdge) {
+      if (dropTarget.area !== "center") {
         path.shift();
       }
 
@@ -115,11 +119,11 @@ export const useDragAndDrop = () => {
         path.splice(0, dragItemIndex + 1);
       }
 
-      const data = path.find((instance) =>
-        components[instance.component].canAcceptChild()
+      const data = path.find(
+        (instance) => components[instance.component].canAcceptChildren
       );
 
-      if (!data) {
+      if (data === undefined) {
         return getDefaultDropTarget();
       }
 
@@ -127,7 +131,7 @@ export const useDragAndDrop = () => {
         return dropTarget;
       }
 
-      const element = data && getInstanceElementById(data.id);
+      const element = getInstanceElementById(data.id);
 
       if (element === null) {
         return getDefaultDropTarget();
@@ -178,12 +182,28 @@ export const useDragAndDrop = () => {
         return false;
       }
 
+      // When trying to drag an inline instance, drag its parent instead
+      if (components[instance.component].isInlineOnly) {
+        const nonInlineParent = findClosestNonInlineParent(
+          rootInstance,
+          instance.id
+        );
+        if (
+          nonInlineParent !== undefined &&
+          rootInstance.id !== nonInlineParent.id
+        ) {
+          return nonInlineParent;
+        }
+        return false;
+      }
+
       return instance;
     },
     onStart({ data: instance }) {
       state.current.dragItem = instance;
 
       autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
 
       publish({
         type: "dragStart",
@@ -198,7 +218,7 @@ export const useDragAndDrop = () => {
       autoScrollHandlers.handleMove(point);
     },
     onEnd({ isCanceled }) {
-      dropHandlers.handleEnd();
+      dropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
 
       publish({
@@ -230,8 +250,8 @@ export const useDragAndDrop = () => {
   // We prefer useLayoutEffect over useEffect
   // because it's closer in the life cycle to when React noramlly calls the "ref" callbacks.
   useLayoutEffect(() => {
-    dropHandlers.rootRef(document.body);
-    dragHandlers.rootRef(document.body);
+    dropHandlers.rootRef(document.documentElement);
+    dragHandlers.rootRef(document.documentElement);
     window.addEventListener("scroll", dropHandlers.handleScroll);
 
     return () => {
@@ -252,6 +272,7 @@ export const useDragAndDrop = () => {
     if (origin === "panel") {
       state.current.dragItem = dragItem;
       autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
     }
   });
 
@@ -262,7 +283,7 @@ export const useDragAndDrop = () => {
 
   useSubscribe("dragEnd", ({ origin, isCanceled }) => {
     if (origin === "panel") {
-      dropHandlers.handleEnd();
+      dropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
 
       const { dropTarget, dragItem } = state.current;

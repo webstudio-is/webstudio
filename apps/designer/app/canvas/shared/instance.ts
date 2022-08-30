@@ -72,8 +72,8 @@ export const findInsertLocation = (
   const path = getInstancePathWithPositions(rootInstance, selectedInstanceId);
   path.reverse();
 
-  const parentIndex = path.findIndex(({ instance }) =>
-    components[instance.component].canAcceptChild()
+  const parentIndex = path.findIndex(
+    ({ item }) => components[item.component].canAcceptChildren
   );
 
   // Just in case selected Instance is not in the tree for some reason.
@@ -82,7 +82,7 @@ export const findInsertLocation = (
   }
 
   return {
-    parentId: path[parentIndex].instance.id,
+    parentId: path[parentIndex].item.id,
     position: parentIndex === 0 ? "end" : path[parentIndex - 1].position + 1,
   };
 };
@@ -113,6 +113,8 @@ export const useInsertInstance = () => {
 };
 
 export const useReparentInstance = () => {
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+
   useSubscribe("reparentInstance", ({ instanceId, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
       if (rootInstance === undefined) return;
@@ -123,6 +125,16 @@ export const useReparentInstance = () => {
         dropTarget.position
       );
     });
+
+    // Make the drag item the selected instance
+    if (
+      selectedInstance?.id !== instanceId &&
+      rootInstanceContainer.value !== undefined
+    ) {
+      setSelectedInstance(
+        findInstanceById(rootInstanceContainer.value, instanceId)
+      );
+    }
   });
 };
 
@@ -131,6 +143,11 @@ export const useDeleteInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   useSubscribe("deleteInstance", ({ id }) => {
     if (rootInstance !== undefined && selectedInstance !== undefined) {
+      // @todo tell user they can't delete root
+      if (id === rootInstance.id) {
+        return;
+      }
+
       const parentInstance = findParentInstance(rootInstance, id);
       if (parentInstance !== undefined) {
         const siblingInstance = findClosestSiblingInstance(parentInstance, id);

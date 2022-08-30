@@ -6,7 +6,7 @@ import {
   Card,
   Flex,
   Heading,
-  Text,
+  __DEPRECATED__Text,
   TextField,
 } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
@@ -47,9 +47,9 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
         <Flex direction="column" gap="4" align="center">
           <Heading size="2">Login</Heading>
           {errorMessage.length ? (
-            <Text css={{ textAlign: "center" }} variant="red">
+            <__DEPRECATED__Text css={{ textAlign: "center" }} variant="red">
               {errorMessage}
-            </Text>
+            </__DEPRECATED__Text>
           ) : null}
           <Flex gap="2" direction="column" align="center">
             <Form action="/auth/github" method="post">

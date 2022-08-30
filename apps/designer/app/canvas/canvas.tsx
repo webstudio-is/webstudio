@@ -45,10 +45,7 @@ import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import {
-  LexicalComposer,
-  config,
-} from "~/canvas/features/wrapper-component/text-editor";
+
 import { setInstanceChildrenMutable } from "~/shared/tree-utils";
 
 registerContainers();
@@ -133,18 +130,14 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
 
   if (elements === undefined) return null;
 
-  const children = (
-    <LexicalComposer initialConfig={config}>{elements}</LexicalComposer>
-  );
-
   if (isPreviewMode) {
-    return children;
+    return elements;
   }
 
   return (
     <>
       <DesignMode treeId={data.tree.id} project={data.project} />
-      {children}
+      {elements}
     </>
   );
 };

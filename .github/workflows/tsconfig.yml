@@ -1,4 +1,4 @@
-name: Tsconfig Publish
+name: Tsconfig
 on:
   push:
     paths:
@@ -12,5 +12,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/tsconfig/package.json"
+          skip-build: true
+          workdir: ./packages/tsconfig
+          filter: "@webstudio-is/tsconfig"
           token: ${{ secrets.NPM_TOKEN }}

@@ -1,5 +1,10 @@
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import { Button, Flex, Text, darkTheme } from "@webstudio-is/design-system";
+import {
+  Button,
+  Flex,
+  __DEPRECATED__Text,
+  darkTheme,
+} from "@webstudio-is/design-system";
 import { useSelectedInstancePath } from "../../shared/instance/use-selected-instance-path";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
@@ -40,7 +45,9 @@ const Breadcrumb = ({ component, onClick }: BreadcrumbProps) => {
   );
 };
 
-const EmptyState = () => <Text size="1">No instance selected</Text>;
+const EmptyState = () => (
+  <__DEPRECATED__Text size="1">No instance selected</__DEPRECATED__Text>
+);
 
 type BreadcrumbsProps = {
   publish: Publish;
