@@ -116,11 +116,19 @@ export const TextControl = ({
             <IconButton
               onPointerEnter={(event) => {
                 if (value.type !== "unit") return;
+                const target = event.target as HTMLInputElement;
                 numericScrubRef.current =
                   numericScrubRef.current ||
-                  numericScrubControl(event.target as HTMLInputElement, {
+                  numericScrubControl(target, {
+                    minValue: 0,
                     initialValue: value.value as number,
-                    onValueChange: ({ value }) => setValue(String(value)),
+                    onValueChange: ({ value }) => {
+                      const input = target.parentElement?.querySelector(
+                        ":scope > input"
+                      ) as HTMLInputElement;
+                      input.value = String(value);
+                      setValue(String(value), { isEphemeral: true });
+                    },
                   });
               }}
               onPointerLeave={() => {
