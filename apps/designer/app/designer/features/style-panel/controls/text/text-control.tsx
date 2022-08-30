@@ -72,6 +72,7 @@ export const TextControl = ({
 }: ControlProps) => {
   const numericScrubRef = useRef<{ disconnectedCallback: () => void }>();
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(styleConfig.property);
+  const textFieldRef = useRef<HTMLInputElement>(null);
 
   const value = getFinalValue({
     currentStyle,
@@ -115,18 +116,15 @@ export const TextControl = ({
           >
             <IconButton
               onPointerEnter={(event) => {
-                if (value.type !== "unit") return;
-                const target = event.target as HTMLInputElement;
+                if (value.type !== "unit" || !textFieldRef.current) return;
+                const textFieldNode = textFieldRef.current;
                 numericScrubRef.current =
                   numericScrubRef.current ||
-                  numericScrubControl(target, {
+                  numericScrubControl(event.target as HTMLInputElement, {
                     minValue: 0,
                     initialValue: value.value as number,
                     onValueChange: ({ value }) => {
-                      const input = target.parentElement?.querySelector(
-                        ":scope > input"
-                      ) as HTMLInputElement;
-                      input.value = String(value);
+                      textFieldNode.value = String(value);
                       setValue(String(value), { isEphemeral: true });
                     },
                   });
@@ -173,6 +171,7 @@ export const TextControl = ({
           />
         )}
         <TextField
+          ref={textFieldRef}
           css={CSSTextField}
           spellCheck={false}
           defaultValue={value.value}
