@@ -126,11 +126,11 @@ export const Button = styled("button", {
       },
       red: {
         backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$red11",
-        color: "$red11",
+        boxShadow: "inset 0 0 0 1px $colors$red10",
+        color: "$red10",
         "@hover": {
           "&:hover": {
-            background: "$red11",
+            background: "$red10",
             color: "$loContrast",
           },
         },
