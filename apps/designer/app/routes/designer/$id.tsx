@@ -2,7 +2,7 @@ import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { toast } from "@webstudio-is/design-system";
 import { Designer, links } from "~/designer";
-import * as db from "~/shared/db";
+import type { Project } from "@webstudio-is/prisma-client";
 import config from "~/config";
 import env from "~/env.server";
 import { uploadAssets } from "~/shared/db/misc.server";
@@ -26,7 +26,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 type Data = {
   config: typeof config;
-  project: db.project.Project;
+  project: Project;
 };
 
 type Error = {
