@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import type { Asset } from "@webstudio-is/prisma-client";
+
 import {
   Box,
   SidebarTabs,
@@ -14,6 +14,7 @@ import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const none = { TabContent: () => null };
 

@@ -6,7 +6,7 @@ import { s3UploadHandler } from "./targets/s3/handler";
 import { uploadToS3 } from "./targets/s3/uploader";
 import { uploadToDisk } from "./targets/disk/upload";
 import { assetEnvVariables, s3EnvVariables } from "./schema";
-import { imageFsDirectory } from "./helpers/image-fs-path";
+import { imageFsDirectory } from "./utils/image-fs-path";
 
 const isS3Upload = s3EnvVariables.safeParse(process.env).success;
 
