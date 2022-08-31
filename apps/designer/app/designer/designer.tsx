@@ -2,10 +2,6 @@ import { useCallback } from "react";
 import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
 import { type Project } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
-import type {
-  HoveredInstanceData,
-  SelectedInstanceData,
-} from "~/shared/canvas-components";
 import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
@@ -29,7 +25,6 @@ import {
   CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import { type SyncStatus } from "~/shared/sync";
 import {
   useIsPreviewMode,
   useRootInstance,
@@ -48,25 +43,22 @@ export const links = () => {
 
 const useSubscribeRootInstance = () => {
   const [, setValue] = useRootInstance();
-  useSubscribe<"loadRootInstance">("loadRootInstance", setValue);
+  useSubscribe("loadRootInstance", setValue);
 };
 
 const useSubscribeSelectedInstanceData = () => {
   const [, setValue] = useSelectedInstanceData();
-  useSubscribe<"selectInstance", SelectedInstanceData>(
-    "selectInstance",
-    setValue
-  );
+  useSubscribe("selectInstance", setValue);
 };
 
 const useSubscribeHoveredInstanceData = () => {
   const [, setValue] = useHoveredInstanceData();
-  useSubscribe<"hoverInstance", HoveredInstanceData>("hoverInstance", setValue);
+  useSubscribe("hoverInstance", setValue);
 };
 
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
-  useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
+  useSubscribe("syncStatus", setValue);
 };
 
 const useNavigatorLayout = () => {
@@ -206,7 +198,13 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
   return (
     <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-      <Box css={{ borderRight: "1px solid $slate7", width: PANEL_WIDTH }}>
+      <Box
+        css={{
+          borderRight: "1px solid $slate7",
+          width: PANEL_WIDTH,
+          height: "100%",
+        }}
+      >
         <Navigator publish={publish} isClosable={false} />
       </Box>
     </SidePanel>
