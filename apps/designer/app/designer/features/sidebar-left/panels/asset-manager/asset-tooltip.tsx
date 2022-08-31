@@ -46,7 +46,7 @@ export const AssetTooltip = ({
           top: "$1",
           right: "$1",
           cursor: "pointer",
-          color: "$highContrast",
+          color: "$hiContrast",
           transition: "opacity 100ms ease",
         }}
       >
