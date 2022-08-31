@@ -1,10 +1,11 @@
 import { useCallback } from "react";
-import {
-  useSubscribe,
-  usePublish,
-  type Publish,
-} from "@webstudio-is/react-sdk";
+import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
+import { type Project } from "@webstudio-is/prisma-client";
 import type { Config } from "~/config";
+import type {
+  HoveredInstanceData,
+  SelectedInstanceData,
+} from "~/shared/canvas-components";
 import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
@@ -28,6 +29,7 @@ import {
   CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
+import { type SyncStatus } from "~/shared/sync";
 import {
   useIsPreviewMode,
   useRootInstance,
@@ -36,7 +38,6 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-import * as db from "~/shared/db";
 
 export const links = () => {
   return [
@@ -47,22 +48,25 @@ export const links = () => {
 
 const useSubscribeRootInstance = () => {
   const [, setValue] = useRootInstance();
-  useSubscribe("loadRootInstance", setValue);
+  useSubscribe<"loadRootInstance">("loadRootInstance", setValue);
 };
 
 const useSubscribeSelectedInstanceData = () => {
   const [, setValue] = useSelectedInstanceData();
-  useSubscribe("selectInstance", setValue);
+  useSubscribe<"selectInstance", SelectedInstanceData>(
+    "selectInstance",
+    setValue
+  );
 };
 
 const useSubscribeHoveredInstanceData = () => {
   const [, setValue] = useHoveredInstanceData();
-  useSubscribe("hoverInstance", setValue);
+  useSubscribe<"hoverInstance", HoveredInstanceData>("hoverInstance", setValue);
 };
 
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
-  useSubscribe("syncStatus", setValue);
+  useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
 };
 
 const useNavigatorLayout = () => {
@@ -202,13 +206,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
   return (
     <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-      <Box
-        css={{
-          borderRight: "1px solid $slate7",
-          width: PANEL_WIDTH,
-          height: "100%",
-        }}
-      >
+      <Box css={{ borderRight: "1px solid $slate7", width: PANEL_WIDTH }}>
         <Navigator publish={publish} isClosable={false} />
       </Box>
     </SidePanel>
@@ -217,7 +215,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: db.project.Project;
+  project: Project;
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {

@@ -74,7 +74,7 @@ export const AssetInfo = ({
     <>
       <Header title="Asset Details" onClose={onClose} />
       <Box css={{ p: "$2 $3" }}>
-        <Grid columns={2} align="center">
+        <Grid columns={2} align="center" gap={2}>
           <Box css={{ width: 100 }}>
             <Filename name={name} />
           </Box>
@@ -85,7 +85,7 @@ export const AssetInfo = ({
         </Grid>
       </Box>
       <Box css={{ p: "$2 $3" }}>
-        <Grid columns={2}>
+        <Grid columns={2} gap={2} align="center">
           <Flex align="center" css={{ gap: "$1" }}>
             <SizeIcon />
             <Text variant="label">
