@@ -1,12 +1,10 @@
 name: Package tests (dry-run)
 on:
-  pull_request_target:
+  push:
     paths:
       - "packages/**/*"
       - ".github/workflows/package-tests.yml"
       - ".github/actions/publish-test/action.yaml"
-    types:
-      - opened
 jobs:
   publish-test:
     runs-on: ubuntu-latest
