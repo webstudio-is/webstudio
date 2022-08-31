@@ -1,4 +1,5 @@
-import { prisma, Asset } from "@webstudio-is/prisma-client";
+import { prisma } from "@webstudio-is/prisma-client";
+import { Asset } from "../types";
 import { formatAsset } from "../utils/format-asset";
 
 export const deleteAssetInDb = async (assetId: Asset["id"]) => {

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button, Tooltip } from "@webstudio-is/design-system";
 import { GearIcon } from "@webstudio-is/icons";
-import type { Asset } from "@webstudio-is/prisma-client";
+
 import { AssetInfo } from "./asset-info";
+import { PANEL_WIDTH } from "~/designer/shared/constants";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 export const AssetTooltip = ({
   asset,
@@ -20,7 +22,12 @@ export const AssetTooltip = ({
       multiline
       onEscapeKeyDown={closeTooltip}
       onPointerDownOutside={closeTooltip}
-      css={{ width: 240, maxWidth: 240, padding: 0, paddingBottom: "$2" }}
+      css={{
+        width: PANEL_WIDTH,
+        maxWidth: PANEL_WIDTH,
+        padding: 0,
+        paddingBottom: "$2",
+      }}
       content={
         <AssetInfo
           onDelete={onDelete}

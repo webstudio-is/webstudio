@@ -1,5 +1,4 @@
 import { Box, Flex, Grid, Text, Button } from "@webstudio-is/design-system";
-import type { Asset } from "@webstudio-is/prisma-client";
 import { getFormattedAspectRatio } from "./utils";
 import {
   CloudIcon,
@@ -10,6 +9,7 @@ import {
 import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
 import { Header } from "../../lib/header";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const Filename = ({ name }: { name: string }) => {
   const splitName = name.split(".");

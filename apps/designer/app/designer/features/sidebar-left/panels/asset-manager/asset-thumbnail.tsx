@@ -3,9 +3,8 @@ import { Box } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
-import type { Asset } from "@webstudio-is/prisma-client";
-import { UploadingAsset } from "../../types";
 import { AssetTooltip } from "./asset-tooltip";
+import { Asset, UploadingAsset } from "@webstudio-is/asset-uploader";
 
 const useImageWithFallback = ({
   path = placeholderImage,

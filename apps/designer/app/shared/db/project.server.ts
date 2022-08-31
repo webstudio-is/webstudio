@@ -6,10 +6,10 @@ import {
   prisma,
   Prisma,
   Project as BaseProject,
-  Asset,
 } from "@webstudio-is/prisma-client";
 import * as db from ".";
 import { formatAsset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 const TreeHistorySchema = z.array(z.string());
 
