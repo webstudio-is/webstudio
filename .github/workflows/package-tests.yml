@@ -5,6 +5,9 @@ on:
       - "packages/**/*"
       - ".github/workflows/package-tests.yml"
       - ".github/actions/publish-test/action.yaml"
+  pull_request_target:
+    types:
+      - opened
 jobs:
   publish-test:
     runs-on: ubuntu-latest
