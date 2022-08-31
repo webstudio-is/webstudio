@@ -1,4 +1,4 @@
-name: Asset Uploader
+name: Package tests (dry-run)
 on:
   push:
     paths:
@@ -11,11 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish-test
+        if: always()
         with:
           workdir: ./packages/asset-uploader
           filter: "@webstudio-is/asset-uploader"
           token: ${{ secrets.NPM_TOKEN }}
       - uses: ./.github/actions/publish-test
+        if: always()
         with:
           workdir: ./packages/design-system
           filter: "@webstudio-is/design-system"
