@@ -1,10 +1,8 @@
 name: Jest Config
 on:
   push:
-    paths:
-      - "packages/jest-config/**/*"
-      - ".github/workflows/jest-config.yml"
-      - ".github/actions/publish/action.yaml"
+    branches:    
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest

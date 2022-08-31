@@ -1,10 +1,8 @@
 name: Design System
 on:
   push:
-    paths:
-      - "packages/design-system/**/*"
-      - ".github/workflows/design-system.yml"
-      - ".github/actions/publish/action.yaml"
+    branches:    
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest

@@ -1,10 +1,8 @@
 name: Eslint Config
 on:
   push:
-    paths:
-      - "packages/eslint-config-custom/**/*"
-      - ".github/workflows/eslint-config-custom.yml"
-      - ".github/actions/publish/action.yaml"
+    branches:    
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest
