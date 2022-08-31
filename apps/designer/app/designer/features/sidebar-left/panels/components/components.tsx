@@ -1,11 +1,7 @@
 import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  type Instance,
-  type Publish,
-  components,
-  useSubscribe,
-} from "@webstudio-is/react-sdk";
+import { type Instance, components } from "@webstudio-is/react-sdk";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { Flex } from "@webstudio-is/design-system";
 import { useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
@@ -13,11 +9,6 @@ import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
-import {
-  DragEndPayload,
-  DragMovePayload,
-  DragStartPayload,
-} from "~/canvas/shared/use-drag-drop";
 import { Header } from "../../lib/header";
 
 const componentNames = (
@@ -112,7 +103,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     },
     onStart({ data: componentName }) {
       setDragComponent(componentName);
-      publish<"dragStart", DragStartPayload>({
+      publish({
         type: "dragStart",
         payload: {
           origin: "panel",
@@ -122,14 +113,14 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     },
     onMove: (point) => {
       setPoint(point);
-      publish<"dragMove", DragMovePayload>({
+      publish({
         type: "dragMove",
         payload: { canvasCoordinates: toCanvasCoordinates(point) },
       });
     },
     onEnd({ isCanceled }) {
       setDragComponent(undefined);
-      publish<"dragEnd", DragEndPayload>({
+      publish({
         type: "dragEnd",
         payload: { origin: "panel", isCanceled },
       });
@@ -160,7 +151,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             component={component}
             onClick={() => {
               onSetActiveTab("none");
-              publish<"insertInstance", { instance: Instance }>({
+              publish({
                 type: "insertInstance",
                 payload: { instance: createInstance({ component }) },
               });

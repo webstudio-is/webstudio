@@ -1,6 +1,12 @@
 import { useHotkeys } from "react-hotkeys-hook";
-import { type Publish } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
+import { type Publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    shortcut: { name: keyof typeof shortcuts; key?: string };
+  }
+}
 
 const names = Object.keys(shortcuts) as Array<keyof typeof shortcuts>;
 
@@ -15,7 +21,7 @@ export const usePublishShortcuts = (publish: Publish) => {
       shortcuts[name],
       (event) => {
         event.preventDefault();
-        publish<"shortcut", { name: string; key: string }>({
+        publish({
           type: "shortcut",
           payload: { name, key: event.key },
         });
