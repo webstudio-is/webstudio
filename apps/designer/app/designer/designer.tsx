@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
-import { type Project } from "@webstudio-is/prisma-client";
+import * as db from "~/shared/db";
 import type { Config } from "~/config";
 import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
@@ -214,7 +214,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: Project;
+  project: db.project.Project;
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
