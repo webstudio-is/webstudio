@@ -6,7 +6,7 @@ on:
       - ".github/workflows/package-tests.yml"
       - ".github/actions/publish-test/action.yaml"
 jobs:
-  publish:
+  publish-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
