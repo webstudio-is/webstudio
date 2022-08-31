@@ -46,8 +46,17 @@ export const AssetTooltip = ({
           top: "$1",
           right: "$1",
           cursor: "pointer",
-          color: "$hiContrast",
           transition: "opacity 100ms ease",
+
+          "svg path": {
+            fill: "$loContrast",
+          },
+
+          "&:hover": {
+            "svg path, svg circle": {
+              stroke: "$hiContrast",
+            },
+          },
         }}
       >
         <GearIcon />

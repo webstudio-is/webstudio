@@ -3,6 +3,10 @@ import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button } from "@webstudio-is/design-system";
 import { Asset, UploadingAsset } from "@webstudio-is/asset-uploader";
+import { UploadIcon } from "@webstudio-is/icons";
+import { Box } from "@webstudio-is/design-system";
+import { Flex } from "@webstudio-is/design-system";
+import { Text } from "@webstudio-is/design-system";
 
 const readImages = async (fileList: FileList) => {
   const images = [];
@@ -61,8 +65,12 @@ export const AddAnAssetForm = ({
         variant="blue"
         type="button"
         onClick={() => inputRef?.current?.click()}
+        size={2}
       >
-        Upload Image
+        <Flex align="center" gap={1}>
+          <UploadIcon />
+          <Text>Upload</Text>
+        </Flex>
       </Button>
     </Form>
   );

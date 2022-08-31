@@ -70,6 +70,9 @@ export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
 
         "&:hover button": {
           opacity: 1,
+          "path, circle": {
+            stroke: "$slate11",
+          },
         },
       }}
     >
