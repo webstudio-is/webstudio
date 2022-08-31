@@ -22,3 +22,39 @@ jobs:
           workdir: ./packages/design-system
           filter: "@webstudio-is/design-system"
           token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/eslint-config-custom
+          filter: "@webstudio-is/eslint-config-custom"
+          token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/http-client
+          filter: "@webstudio-is/http-client"
+          token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/icons
+          filter: "@webstudio-is/icons"
+          token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/jest-config
+          filter: "@webstudio-is/jest-config"
+          token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/react-sdk
+          filter: "@webstudio-is/react-sdk"
+          token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/tsconfig
+          filter: "@webstudio-is/tsconfig"
+          token: ${{ secrets.NPM_TOKEN }}
