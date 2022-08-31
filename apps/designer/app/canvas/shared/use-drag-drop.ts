@@ -21,13 +21,21 @@ import {
   useDrop,
 } from "@webstudio-is/design-system";
 import {
-  publish,
-  useSubscribe,
   type Instance,
   components,
   BaseInstance,
   toBaseInstance,
 } from "@webstudio-is/react-sdk";
+import { publish, useSubscribe } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    dragEnd: DragEndPayload;
+    dragMove: DragMovePayload;
+    dragStart: DragStartPayload;
+    dropTargetChange: DropTargetChangePayload;
+  }
+}
 
 export type DropTargetChangePayload = {
   rect: DropTarget<null>["rect"];
@@ -48,9 +56,12 @@ export type DragEndPayload = {
 
 export type DragMovePayload = { canvasCoordinates: Point };
 
-const initialState = {
-  dropTarget: undefined as DropTarget<Instance> | undefined,
-  dragItem: undefined as BaseInstance | undefined,
+const initialState: {
+  dropTarget: DropTarget<Instance> | undefined;
+  dragItem: BaseInstance | undefined;
+} = {
+  dropTarget: undefined,
+  dragItem: undefined,
 };
 
 export const useDragAndDrop = () => {
@@ -131,7 +142,7 @@ export const useDragAndDrop = () => {
 
     onDropTargetChange(dropTarget) {
       state.current.dropTarget = dropTarget;
-      publish<"dropTargetChange", DropTargetChangePayload>({
+      publish({
         type: "dropTargetChange",
         payload: {
           rect: dropTarget.rect,
@@ -194,7 +205,7 @@ export const useDragAndDrop = () => {
       autoScrollHandlers.setEnabled(true);
       dropHandlers.handleStart();
 
-      publish<"dragStart", DragStartPayload>({
+      publish({
         type: "dragStart",
         payload: {
           origin: "canvas",
@@ -210,7 +221,7 @@ export const useDragAndDrop = () => {
       dropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
 
-      publish<"dragEnd", DragEndPayload>({
+      publish({
         type: "dragEnd",
         payload: { origin: "canvas", isCanceled },
       });
@@ -218,13 +229,7 @@ export const useDragAndDrop = () => {
       const { dropTarget, dragItem } = state.current;
 
       if (dropTarget && dragItem && isCanceled === false) {
-        publish<
-          "reparentInstance",
-          {
-            instanceId: Instance["id"];
-            dropTarget: { instanceId: Instance["id"]; position: number };
-          }
-        >({
+        publish({
           type: "reparentInstance",
           payload: {
             instanceId: dragItem.id,
@@ -263,55 +268,40 @@ export const useDragAndDrop = () => {
   // Handle drag from the panel
   // ================================================================
 
-  useSubscribe<"dragStart", DragStartPayload>(
-    "dragStart",
-    ({ origin, dragItem }) => {
-      if (origin === "panel") {
-        state.current.dragItem = dragItem;
-        autoScrollHandlers.setEnabled(true);
-        dropHandlers.handleStart();
-      }
+  useSubscribe("dragStart", ({ origin, dragItem }) => {
+    if (origin === "panel") {
+      state.current.dragItem = dragItem;
+      autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
     }
-  );
+  });
 
-  useSubscribe<"dragMove", DragMovePayload>(
-    "dragMove",
-    ({ canvasCoordinates }) => {
-      dropHandlers.handleMove(canvasCoordinates);
-      autoScrollHandlers.handleMove(canvasCoordinates);
-    }
-  );
+  useSubscribe("dragMove", ({ canvasCoordinates }) => {
+    dropHandlers.handleMove(canvasCoordinates);
+    autoScrollHandlers.handleMove(canvasCoordinates);
+  });
 
-  useSubscribe<"dragEnd", DragEndPayload>(
-    "dragEnd",
-    ({ origin, isCanceled }) => {
-      if (origin === "panel") {
-        dropHandlers.handleEnd({ isCanceled });
-        autoScrollHandlers.setEnabled(false);
+  useSubscribe("dragEnd", ({ origin, isCanceled }) => {
+    if (origin === "panel") {
+      dropHandlers.handleEnd({ isCanceled });
+      autoScrollHandlers.setEnabled(false);
 
-        const { dropTarget, dragItem } = state.current;
+      const { dropTarget, dragItem } = state.current;
 
-        if (dropTarget && dragItem && isCanceled === false) {
-          publish<
-            "insertInstance",
-            {
-              instance: Instance;
-              dropTarget: { parentId: Instance["id"]; position: number };
-            }
-          >({
-            type: "insertInstance",
-            payload: {
-              instance: createInstance({ component: dragItem.component }),
-              dropTarget: {
-                parentId: dropTarget.data.id,
-                position: dropTarget.indexWithinChildren,
-              },
+      if (dropTarget && dragItem && isCanceled === false) {
+        publish({
+          type: "insertInstance",
+          payload: {
+            instance: createInstance({ component: dragItem.component }),
+            dropTarget: {
+              parentId: dropTarget.data.id,
+              position: dropTarget.indexWithinChildren,
             },
-          });
-        }
-
-        state.current = { ...initialState };
+          },
+        });
       }
+
+      state.current = { ...initialState };
     }
-  );
+  });
 };

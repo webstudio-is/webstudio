@@ -1,9 +1,5 @@
-import {
-  type UserPropsUpdates,
-  useSubscribe,
-  allUserPropsContainer,
-  DeleteProp,
-} from "@webstudio-is/react-sdk";
+import { allUserPropsContainer } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import store from "immerhin";
 import {
   updateAllUserPropsMutable,
@@ -11,16 +7,13 @@ import {
 } from "~/shared/props-utils";
 
 export const useManageProps = () => {
-  useSubscribe<"updateProps", UserPropsUpdates>(
-    "updateProps",
-    (userPropsUpdates) => {
-      store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        updateAllUserPropsMutable(allUserProps, userPropsUpdates);
-      });
-    }
-  );
+  useSubscribe("updateProps", (userPropsUpdates) => {
+    store.createTransaction([allUserPropsContainer], (allUserProps) => {
+      updateAllUserPropsMutable(allUserProps, userPropsUpdates);
+    });
+  });
 
-  useSubscribe<"deleteProp", DeleteProp>("deleteProp", (deleteProp) => {
+  useSubscribe("deleteProp", (deleteProp) => {
     store.createTransaction([allUserPropsContainer], (allUserProps) => {
       deletePropMutable(allUserProps, deleteProp);
     });

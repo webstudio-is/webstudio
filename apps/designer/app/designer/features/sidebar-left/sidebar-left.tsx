@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/prisma-client";
 import {
   Box,
@@ -28,10 +28,10 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [clientSettings] = useClientSettings();
 
-  useSubscribe<"clickCanvas">("clickCanvas", () => {
+  useSubscribe("clickCanvas", () => {
     setActiveTab("none");
   });
-  useSubscribe<"dragEnd">("dragEnd", () => {
+  useSubscribe("dragEnd", () => {
     setActiveTab("none");
   });
 

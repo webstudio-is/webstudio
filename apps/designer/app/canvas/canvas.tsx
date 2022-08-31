@@ -7,9 +7,9 @@ import {
   type Tree,
   useAllUserProps,
   globalStyles,
-  useSubscribe,
   createElementsTree,
 } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   usePopulateRootInstance,
@@ -77,7 +77,7 @@ const useElementsTree = () => {
 
 const useSubscribePreviewMode = () => {
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
-  useSubscribe<"previewMode", boolean>("previewMode", setIsPreviewMode);
+  useSubscribe("previewMode", setIsPreviewMode);
   return isPreviewMode;
 };
 

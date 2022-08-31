@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/jest-config",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "dependencies": {
     "@types/jest": "^27.4.1",

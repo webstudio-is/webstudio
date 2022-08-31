@@ -1,4 +1,4 @@
-import type { Publish } from "@webstudio-is/react-sdk";
+import type { Publish } from "~/shared/pubsub";
 import {
   __DEPRECATED__Text,
   Tabs,
