@@ -1,4 +1,4 @@
-import { type Publish } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { Box } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {

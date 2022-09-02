@@ -1,4 +1,4 @@
-import { type Publish } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { ListNestedIcon } from "@webstudio-is/icons";
 import { Navigator } from "../../lib/navigator";
 import { TabName } from "../../types";

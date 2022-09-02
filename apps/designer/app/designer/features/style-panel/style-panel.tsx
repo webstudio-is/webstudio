@@ -1,4 +1,4 @@
-import type { Publish } from "@webstudio-is/react-sdk";
+import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";

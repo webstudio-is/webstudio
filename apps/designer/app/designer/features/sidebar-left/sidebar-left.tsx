@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useSubscribe, type Publish } from "@webstudio-is/react-sdk";
-import type { Asset } from "@webstudio-is/prisma-client";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
+
 import {
   Box,
   SidebarTabs,
@@ -14,6 +14,7 @@ import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const none = { TabContent: () => null };
 
@@ -28,10 +29,10 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [clientSettings] = useClientSettings();
 
-  useSubscribe<"clickCanvas">("clickCanvas", () => {
+  useSubscribe("clickCanvas", () => {
     setActiveTab("none");
   });
-  useSubscribe<"dragEnd">("dragEnd", () => {
+  useSubscribe("dragEnd", () => {
     setActiveTab("none");
   });
 

@@ -1,4 +1,4 @@
-import { type Instance, type Publish } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,
@@ -105,7 +105,7 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
       css={placement}
       onValueChange={(component) => {
         const instance = createInstance({ component });
-        publish<"insertInlineInstance", Instance>({
+        publish({
           type: "insertInlineInstance",
           payload: instance,
         });

@@ -1,17 +1,14 @@
 import { useEffect, useRef } from "react";
 import store from "immerhin";
-import {
-  type Breakpoint,
-  useSubscribe,
-  setBreakpoints,
-  publish,
-} from "@webstudio-is/react-sdk";
+import { type Breakpoint, setBreakpoints } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
   breakpointsContainer,
   rootInstanceContainer,
   useBreakpoints,
 } from "~/shared/nano-states";
+import { publish } from "~/shared/pubsub";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
@@ -27,7 +24,7 @@ export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
 const usePublishBreakpoints = () => {
   const [breakpoints] = useBreakpoints();
   useEffect(() => {
-    publish<"loadBreakpoints", Array<Breakpoint>>({
+    publish({
       type: "loadBreakpoints",
       payload: breakpoints,
     });
@@ -35,46 +32,38 @@ const usePublishBreakpoints = () => {
 };
 
 const useBreakpointChange = () => {
-  useSubscribe<"breakpointChange", Breakpoint>(
-    "breakpointChange",
-    (breakpoint) => {
-      store.createTransaction([breakpointsContainer], (breakpoints) => {
-        const foundBreakpoint = breakpoints.find(
-          ({ id }) => id == breakpoint.id
-        );
-        if (foundBreakpoint) {
-          foundBreakpoint.label = breakpoint.label;
-          foundBreakpoint.minWidth = breakpoint.minWidth;
-        } else {
-          // Its a new breakpoint
-          breakpoints.push(breakpoint);
-        }
+  useSubscribe("breakpointChange", (breakpoint) => {
+    store.createTransaction([breakpointsContainer], (breakpoints) => {
+      const foundBreakpoint = breakpoints.find(({ id }) => id == breakpoint.id);
+      if (foundBreakpoint) {
+        foundBreakpoint.label = breakpoint.label;
+        foundBreakpoint.minWidth = breakpoint.minWidth;
+      } else {
+        // Its a new breakpoint
+        breakpoints.push(breakpoint);
+      }
 
-        setBreakpoints(breakpoints);
-      });
-    }
-  );
+      setBreakpoints(breakpoints);
+    });
+  });
 };
 
 const useBreakpointDelete = () => {
-  useSubscribe<"breakpointDelete", Breakpoint>(
-    "breakpointDelete",
-    (breakpoint) => {
-      store.createTransaction(
-        [breakpointsContainer, rootInstanceContainer],
-        (breakpoints, rootInstance) => {
-          if (rootInstance === undefined) return;
+  useSubscribe("breakpointDelete", (breakpoint) => {
+    store.createTransaction(
+      [breakpointsContainer, rootInstanceContainer],
+      (breakpoints, rootInstance) => {
+        if (rootInstance === undefined) return;
 
-          const index = breakpoints.findIndex(({ id }) => id == breakpoint.id);
-          if (index !== -1) {
-            breakpoints.splice(index, 1);
-          }
-
-          deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
+        const index = breakpoints.findIndex(({ id }) => id == breakpoint.id);
+        if (index !== -1) {
+          breakpoints.splice(index, 1);
         }
-      );
-    }
-  );
+
+        deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
+      }
+    );
+  });
 };
 
 export const useHandleBreakpoints = () => {

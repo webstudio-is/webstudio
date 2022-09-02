@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { useSubscribe, type Instance } from "@webstudio-is/react-sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import {
   createCommand,
@@ -67,12 +68,9 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
     });
   }, [editor, children]);
 
-  useSubscribe<"insertInlineInstance", Instance>(
-    "insertInlineInstance",
-    (payload) => {
-      editor.dispatchCommand<Instance>(INSERT_INSTANCE_COMMAND, payload);
-    }
-  );
+  useSubscribe("insertInlineInstance", (payload) => {
+    editor.dispatchCommand<Instance>(INSERT_INSTANCE_COMMAND, payload);
+  });
 
   return null;
 };

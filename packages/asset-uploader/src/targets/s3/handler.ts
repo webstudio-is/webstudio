@@ -12,7 +12,7 @@ import {
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
-} from "../../helpers/array-buffer-helpers";
+} from "../../utils/array-buffer-helpers";
 import { Location } from "@webstudio-is/prisma-client";
 import { getS3Client } from "./client";
 

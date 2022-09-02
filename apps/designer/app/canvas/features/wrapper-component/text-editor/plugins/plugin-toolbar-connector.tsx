@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from "react";
-import { publish } from "@webstudio-is/react-sdk";
 
 import {
   $isRangeSelection,
@@ -8,6 +7,13 @@ import {
   COMMAND_PRIORITY_LOW,
   useLexicalComposerContext,
 } from "../lexical";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    selectionRect?: DOMRect;
+  }
+}
 
 export const ToolbarConnectorPlugin = () => {
   const [editor] = useLexicalComposerContext();
@@ -16,7 +22,7 @@ export const ToolbarConnectorPlugin = () => {
   const clearSelectionRect = () => {
     if (lastSelectionRef.current) {
       // Undefined Rect will hide toolbar
-      publish<"selectionRect">({ type: "selectionRect", payload: undefined });
+      publish({ type: "selectionRect", payload: undefined });
       lastSelectionRef.current = undefined;
     }
   };
@@ -31,7 +37,7 @@ export const ToolbarConnectorPlugin = () => {
     if (isTextSelected) {
       const domRange = nativeSelection.getRangeAt(0);
       const rect = domRange.getBoundingClientRect();
-      publish<"selectionRect", DOMRect>({
+      publish({
         type: "selectionRect",
         payload: rect,
       });

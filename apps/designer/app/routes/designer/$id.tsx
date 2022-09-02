@@ -1,6 +1,5 @@
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { ActionFunction, LoaderFunction } from "@remix-run/node";
-import type { Project, Asset } from "@webstudio-is/prisma-client";
 import { toast } from "@webstudio-is/design-system";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
@@ -27,7 +26,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 type Data = {
   config: typeof config;
-  project: Project;
+  project: db.project.Project;
 };
 
 type Error = {
@@ -67,7 +66,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         projectId: params.id,
       });
       return {
-        uploadedAssets: assets.map((asset: Asset) => ({
+        uploadedAssets: assets.map((asset) => ({
           ...asset,
           status: "uploaded",
         })),

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { type Publish } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -140,9 +140,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {
-            publish<"shortcut", string>({
+            publish({
               type: "shortcut",
-              payload: "undo",
+              payload: { name: "undo" },
             });
           }}
         >
@@ -152,9 +152,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {
-            publish<"shortcut", string>({
+            publish({
               type: "shortcut",
-              payload: "redo",
+              payload: { name: "redo" },
             });
           }}
         >
@@ -165,9 +165,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {
-            publish<"shortcut", string>({
+            publish({
               type: "shortcut",
-              payload: "copy",
+              payload: { name: "copy" },
             });
           }}
         >
@@ -177,9 +177,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {
-            publish<"shortcut", string>({
+            publish({
               type: "shortcut",
-              payload: "paste",
+              payload: { name: "paste" },
             });
           }}
         >
@@ -189,9 +189,9 @@ export const Menu = ({ config, publish }: MenuProps) => {
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {
-            publish<"shortcut", string>({
+            publish({
               type: "shortcut",
-              payload: "delete",
+              payload: { name: "delete" },
             });
           }}
         >
@@ -238,7 +238,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
         <DropdownMenuItem
           css={menuItemCss}
           onSelect={() => {
-            publish<"togglePreviewMode">({
+            publish({
               type: "togglePreviewMode",
             });
           }}

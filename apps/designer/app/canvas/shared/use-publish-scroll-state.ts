@@ -1,13 +1,19 @@
-import { publish } from "@webstudio-is/react-sdk";
 import { useScrollState } from "~/shared/dom-hooks";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    scrollState: boolean;
+  }
+}
 
 export const usePublishScrollState = () => {
   useScrollState({
     onScrollStart() {
-      publish<"scrollState", boolean>({ type: "scrollState", payload: true });
+      publish({ type: "scrollState", payload: true });
     },
     onScrollEnd() {
-      publish<"scrollState", boolean>({
+      publish({
         type: "scrollState",
         payload: false,
       });

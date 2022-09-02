@@ -1,15 +1,7 @@
 import { useCallback } from "react";
-import {
-  useSubscribe,
-  usePublish,
-  type Publish,
-} from "@webstudio-is/react-sdk";
-import { type Project } from "@webstudio-is/prisma-client";
+import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
+import * as db from "~/shared/db";
 import type { Config } from "~/config";
-import type {
-  HoveredInstanceData,
-  SelectedInstanceData,
-} from "~/shared/canvas-components";
 import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
@@ -33,7 +25,6 @@ import {
   CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import { type SyncStatus } from "~/shared/sync";
 import {
   useIsPreviewMode,
   useRootInstance,
@@ -42,6 +33,7 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 export const links = () => {
   return [
@@ -52,25 +44,22 @@ export const links = () => {
 
 const useSubscribeRootInstance = () => {
   const [, setValue] = useRootInstance();
-  useSubscribe<"loadRootInstance">("loadRootInstance", setValue);
+  useSubscribe("loadRootInstance", setValue);
 };
 
 const useSubscribeSelectedInstanceData = () => {
   const [, setValue] = useSelectedInstanceData();
-  useSubscribe<"selectInstance", SelectedInstanceData>(
-    "selectInstance",
-    setValue
-  );
+  useSubscribe("selectInstance", setValue);
 };
 
 const useSubscribeHoveredInstanceData = () => {
   const [, setValue] = useHoveredInstanceData();
-  useSubscribe<"hoverInstance", HoveredInstanceData>("hoverInstance", setValue);
+  useSubscribe("hoverInstance", setValue);
 };
 
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
-  useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
+  useSubscribe("syncStatus", setValue);
 };
 
 const useNavigatorLayout = () => {
@@ -223,7 +212,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: Project;
+  project: db.project.Project;
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
@@ -275,7 +264,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft assets={project.assets} publish={publish} />
+        <SidebarLeft assets={project.assets as Asset[]} publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

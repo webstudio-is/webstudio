@@ -42,3 +42,7 @@ export * from "./gap-row";
 export * from "./gap-column";
 export * from "./lock-open";
 export * from "./lock-close";
+export { AspectRatioIcon } from "./aspect-ratio";
+export * from "./cloud";
+export { TrashIcon } from "./trash";
+export { SizeIcon } from "./size";
