@@ -54,6 +54,7 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
 export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
   const { path, alt, status, name } = asset;
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBeingHovered, setIsBeingHovered] = useState(false);
   const isUploading = status === "uploading";
   const isUploadedAsset = isUploading === false && "size" in asset;
 
@@ -67,16 +68,17 @@ export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
         alignItems: "center",
         padding: "0 $2",
         position: "relative",
-
-        "&:hover button": {
-          opacity: 1,
-          color: "$slate11",
-        },
       }}
+      onMouseEnter={() => setIsBeingHovered(true)}
+      onMouseLeave={() => setIsBeingHovered(false)}
     >
       <Thumbnail path={path} status={status} />
       {isUploadedAsset && (
-        <AssetTooltip asset={asset} onDelete={() => setIsDeleting(true)} />
+        <AssetTooltip
+          isParentHovered={isBeingHovered}
+          asset={asset}
+          onDelete={() => setIsDeleting(true)}
+        />
       )}
       {(isUploading || isDeleting) && <UploadingAnimation />}
     </Box>

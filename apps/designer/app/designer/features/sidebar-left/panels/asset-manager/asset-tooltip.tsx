@@ -9,9 +9,11 @@ import { Asset } from "@webstudio-is/asset-uploader";
 export const AssetTooltip = ({
   asset,
   onDelete,
+  isParentHovered,
 }: {
   asset: Asset;
   onDelete: () => void;
+  isParentHovered: boolean;
 }) => {
   const [isTooltipOpen, setTooltipOpen] = useState(false);
   const closeTooltip = () => setTooltipOpen(false);
@@ -41,19 +43,20 @@ export const AssetTooltip = ({
         title="Options"
         onClick={() => setTooltipOpen(true)}
         css={{
-          opacity: 0,
+          opacity: isParentHovered ? 1 : 0,
           position: "absolute",
+          color: "$slate11",
           top: "$1",
           right: "$1",
           cursor: "pointer",
           transition: "opacity 100ms ease",
 
-          "svg path": {
-            fill: "$loContrast",
+          "&:hover": {
+            color: "$hiContrast",
           },
 
-          "&:hover svg": {
-            color: "$hiContrast",
+          "svg path": {
+            fill: "$loContrast",
           },
         }}
       >
