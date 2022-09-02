@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "packages/tsconfig/**/*"
-      - ".github/workflows/package-tests.yml"
+      - ".github/workflows/tsconfig.yml"
       - ".github/actions/publish-test/action.yaml"
     branches:    
       - main

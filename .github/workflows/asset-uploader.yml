@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "packages/asset-uploader/**/*"
-      - ".github/workflows/package-tests.yml"
+      - ".github/workflows/asset-uploader.yml"
       - ".github/actions/publish-test/action.yaml"
     branches:    
       - main

@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "packages/react-sdk/**/*"
-      - ".github/workflows/package-tests.yml"
+      - ".github/workflows/react-sdk.yml"
       - ".github/actions/publish-test/action.yaml"
     branches:    
       - main

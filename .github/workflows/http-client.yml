@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "packages/http-client/**/*"
-      - ".github/workflows/package-tests.yml"
+      - ".github/workflows/http-client.yml"
       - ".github/actions/publish-test/action.yaml"
     branches:    
       - main

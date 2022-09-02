@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "packages/eslint-config-custom/**/*"
-      - ".github/workflows/package-tests.yml"
+      - ".github/workflows/eslint-config-custom.yml"
       - ".github/actions/publish-test/action.yaml"
     branches:    
       - main

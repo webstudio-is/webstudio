@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "packages/design-system/**/*"
-      - ".github/workflows/package-tests.yml"
+      - ".github/workflows/design-system.yml"
       - ".github/actions/publish-test/action.yaml"
     branches:    
       - main
