@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Tooltip } from "@webstudio-is/design-system";
+import { Button, theme, Tooltip } from "@webstudio-is/design-system";
 import { GearIcon } from "@webstudio-is/icons";
 
 import { AssetInfo } from "./asset-info";
@@ -39,7 +39,6 @@ export const AssetInfoTrigger = ({
         variant="raw"
         title="Options"
         onClick={() => setTooltipOpen(true)}
-        data-info-trigger="true"
         css={{
           display: "var(--display-info-trigger)",
           position: "absolute",
@@ -48,17 +47,12 @@ export const AssetInfoTrigger = ({
           right: "$1",
           cursor: "pointer",
           transition: "opacity 100ms ease",
-
           "&:hover": {
             color: "$hiContrast",
           },
-
-          "svg path": {
-            fill: "$loContrast",
-          },
         }}
       >
-        <GearIcon />
+        <GearIcon fill={theme.colors.loContrast} />
       </Button>
     </Tooltip>
   );
