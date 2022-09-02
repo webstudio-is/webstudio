@@ -1,6 +1,10 @@
 name: Icons
 on:
   push:
+    paths:
+      - "packages/icons/**/*"
+      - ".github/workflows/package-tests.yml"
+      - ".github/actions/publish-test/action.yaml"
     branches:    
       - main
 jobs:

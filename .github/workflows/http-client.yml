@@ -1,6 +1,10 @@
 name: HTTP Client
 on:
   push:
+    paths:
+      - "packages/http-client/**/*"
+      - ".github/workflows/package-tests.yml"
+      - ".github/actions/publish-test/action.yaml"
     branches:    
       - main
 jobs:

@@ -1,6 +1,10 @@
 name: Design System
 on:
   push:
+    paths:
+      - "packages/design-system/**/*"
+      - ".github/workflows/package-tests.yml"
+      - ".github/actions/publish-test/action.yaml"
     branches:    
       - main
 jobs:
