@@ -3,7 +3,7 @@ import { Box } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
-import { AssetTooltip } from "./asset-tooltip";
+import { AssetInfoTrigger } from "./asset-info-tigger";
 import { Asset, UploadingAsset } from "@webstudio-is/asset-uploader";
 
 const useImageWithFallback = ({
@@ -54,7 +54,6 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
 export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
   const { path, alt, status, name } = asset;
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isBeingHovered, setIsBeingHovered] = useState(false);
   const isUploading = status === "uploading";
   const isUploadedAsset = isUploading === false && "size" in asset;
 
@@ -68,17 +67,15 @@ export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
         alignItems: "center",
         padding: "0 $2",
         position: "relative",
+        "--display-info-trigger": "none",
+        "&:hover": {
+          "--display-info-trigger": "block",
+        },
       }}
-      onMouseEnter={() => setIsBeingHovered(true)}
-      onMouseLeave={() => setIsBeingHovered(false)}
     >
       <Thumbnail path={path} status={status} />
       {isUploadedAsset && (
-        <AssetTooltip
-          isParentHovered={isBeingHovered}
-          asset={asset}
-          onDelete={() => setIsDeleting(true)}
-        />
+        <AssetInfoTrigger asset={asset} onDelete={() => setIsDeleting(true)} />
       )}
       {(isUploading || isDeleting) && <UploadingAnimation />}
     </Box>

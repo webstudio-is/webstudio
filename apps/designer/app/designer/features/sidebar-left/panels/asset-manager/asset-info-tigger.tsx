@@ -6,18 +6,15 @@ import { AssetInfo } from "./asset-info";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
 
-export const AssetTooltip = ({
+export const AssetInfoTrigger = ({
   asset,
   onDelete,
-  isParentHovered,
 }: {
   asset: Asset;
   onDelete: () => void;
-  isParentHovered: boolean;
 }) => {
   const [isTooltipOpen, setTooltipOpen] = useState(false);
   const closeTooltip = () => setTooltipOpen(false);
-
   return (
     <Tooltip
       open={isTooltipOpen}
@@ -42,8 +39,9 @@ export const AssetTooltip = ({
         variant="raw"
         title="Options"
         onClick={() => setTooltipOpen(true)}
+        data-info-trigger="true"
         css={{
-          opacity: isParentHovered ? 1 : 0,
+          display: "var(--display-info-trigger)",
           position: "absolute",
           color: "$slate11",
           top: "$1",
