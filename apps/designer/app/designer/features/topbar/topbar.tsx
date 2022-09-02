@@ -8,11 +8,12 @@ import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
+import * as db from "~/shared/db";
 
 type TopbarProps = {
   config: Config;
   css: CSS;
-  project: Project;
+  project: db.project.Project;
   publish: Publish;
 };
 export const Topbar = ({ config, css, project, publish }: TopbarProps) => {

@@ -1,9 +1,8 @@
 import { Form, useSubmit } from "@remix-run/react";
-import { Asset } from "@webstudio-is/prisma-client";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button } from "@webstudio-is/design-system";
-import { UploadingAsset } from "../../types";
+import { Asset, UploadingAsset } from "@webstudio-is/asset-uploader";
 
 const readImages = async (fileList: FileList) => {
   const images = [];

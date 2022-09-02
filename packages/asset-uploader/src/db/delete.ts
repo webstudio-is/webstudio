@@ -1,12 +1,12 @@
-import { prisma, Asset } from "@webstudio-is/prisma-client";
-import { getAssetPath } from "../helpers/get-asset-path";
+import { prisma } from "@webstudio-is/prisma-client";
+import { Asset } from "../types";
+import { formatAsset } from "../utils/format-asset";
 
-export const deleteAssetInDb = async (assetId: Asset["id"]): Promise<Asset> => {
+export const deleteAssetInDb = async (assetId: Asset["id"]) => {
   if (typeof assetId !== "string") {
     throw new Error("Asset ID required");
   }
 
   const removedAsset = await prisma.asset.delete({ where: { id: assetId } });
-
-  return { ...removedAsset, path: getAssetPath(removedAsset) };
+  return formatAsset(removedAsset);
 };
