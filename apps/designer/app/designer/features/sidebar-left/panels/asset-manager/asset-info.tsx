@@ -53,7 +53,8 @@ type AssetInfoProps = BaseAsset & {
 
 export const AssetInfo = ({
   size,
-  meta,
+  width,
+  height,
   id,
   name,
   onClose,
@@ -88,12 +89,14 @@ export const AssetInfo = ({
           <Flex align="center" css={{ gap: "$1" }}>
             <SizeIcon />
             <Text variant="label">
-              {meta.width} x {meta.height}
+              {width} x {height}
             </Text>
           </Flex>{" "}
           <Flex align="center" css={{ gap: "$1" }}>
             <AspectRatioIcon />
-            <Text variant="label">{getFormattedAspectRatio(meta)}</Text>
+            <Text variant="label">
+              {getFormattedAspectRatio({ width, height })}
+            </Text>
           </Flex>
         </Grid>
       </Box>
