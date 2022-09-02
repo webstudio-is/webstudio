@@ -40,7 +40,7 @@ export const AssetInfoTrigger = ({
         title="Options"
         onClick={() => setTooltipOpen(true)}
         css={{
-          display: "var(--display-info-trigger)",
+          visibility: "var(--info-trigger-visibility)",
           position: "absolute",
           color: "$slate11",
           top: "$1",
@@ -52,7 +52,7 @@ export const AssetInfoTrigger = ({
           },
         }}
       >
-        <GearIcon fill={theme.colors.loContrast} />
+        <GearIcon fill={String(theme.colors.loContrast)} />
       </Button>
     </Tooltip>
   );

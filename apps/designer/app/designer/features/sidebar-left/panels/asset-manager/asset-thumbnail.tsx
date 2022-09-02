@@ -67,9 +67,9 @@ export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
         alignItems: "center",
         padding: "0 $2",
         position: "relative",
-        "--display-info-trigger": "none",
+        "--info-trigger-visibility": "hidden",
         "&:hover": {
-          "--display-info-trigger": "block",
+          "--info-trigger-visibility": "visible",
         },
       }}
     >
