@@ -52,10 +52,8 @@ export const AssetTooltip = ({
             fill: "$loContrast",
           },
 
-          "&:hover": {
-            "svg path, svg circle": {
-              stroke: "$hiContrast",
-            },
+          "&:hover svg": {
+            color: "$hiContrast",
           },
         }}
       >
