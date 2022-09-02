@@ -52,14 +52,14 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
 };
 
 export const AssetThumbnail = (asset: BaseAsset) => {
-  const { path, description, status, name } = asset;
+  const { path, alt, status, name } = asset;
   const [isDeleting, setIsDeleting] = useState(false);
   const isUploading = status === "uploading";
   const isUploadedAsset = isUploading === false && "size" in asset;
 
   return (
     <Box
-      title={description || name}
+      title={alt || name}
       css={{
         aspectRatio: "1/1",
         display: "flex",

@@ -21,8 +21,7 @@ const readImages = async (fileList: FileList): Promise<BaseAsset[]> => {
       name: file.name,
       id: ObjectID().toString(),
       status: "uploading" as BaseAsset["status"],
-      description: file.name,
-      meta: {},
+      alt: file.name,
       size: file.size,
     });
   }
