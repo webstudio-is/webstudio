@@ -5,7 +5,7 @@ import type {
 } from "~/shared/canvas-components";
 import { Instance, type StyleProperty } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
-import { useSelectedBreakpoint } from "../../shared/nano-states";
+import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle } from "./get-inherited-style";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
