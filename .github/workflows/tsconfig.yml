@@ -4,7 +4,9 @@ on:
     paths:
       - "packages/tsconfig/**/*"
       - ".github/workflows/tsconfig.yml"
-      - ".github/actions/publish/action.yaml"
+      - ".github/actions/publish-test/action.yaml"
+    branches:    
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest
