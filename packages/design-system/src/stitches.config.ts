@@ -211,6 +211,14 @@ export const {
       sans: "Inter, -apple-system, system-ui, sans-serif",
       mono: "Roboto, menlo, monospace",
     },
+    opacity: {
+      1: "0.4",
+    },
+    nudge: {
+      1: "1px",
+      2: "3px",
+      3: "6px",
+    },
     space: {
       1: "4px",
       2: "8px",

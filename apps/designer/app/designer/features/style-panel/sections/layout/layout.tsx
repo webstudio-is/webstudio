@@ -1,10 +1,10 @@
 import { Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
-import { FlexGrid } from "../../shared/flex-grid";
-import { Lock } from "../../shared/lock";
+import { FlexGrid } from "./shared/flex-grid";
+import { Lock } from "./shared/lock";
 import { ShowMore } from "../../shared/show-more";
 
-const CSSLayoutSection = {
+const layoutSectionStyle = {
   alignItems: "center",
   gap: "$space$styleSection",
   "& > [data-type=iconbuttonwithmenu]": {
@@ -15,8 +15,8 @@ const CSSLayoutSection = {
   },
 };
 
-const CSSLayoutSectionFlex = {
-  ...CSSLayoutSection,
+const layoutSectionFlexStyle = {
+  ...layoutSectionStyle,
   gridTemplateColumns: "repeat(12, 1fr)",
   gridTemplateRows: "auto 0px auto auto 0px auto",
   gridTemplateAreas: `
@@ -31,6 +31,14 @@ const CSSLayoutSectionFlex = {
   "& > [data-property=justifyItems]": {
     display: "none",
   },
+  "& [data-control=text]": {
+    "& > :first-child": {
+      gridTemplateColumns: "repeat(1, 1fr)",
+      "& > :first-child": {
+        display: "none",
+      },
+    },
+  },
 };
 
 const LayoutSectionFlex = ({
@@ -40,7 +48,7 @@ const LayoutSectionFlex = ({
 }: RenderCategoryProps) => {
   const batchUpdate = createBatchUpdate();
   return (
-    <Grid css={CSSLayoutSectionFlex}>
+    <Grid css={layoutSectionFlexStyle}>
       {styleConfigsByCategory}
       <Lock
         name="lock"

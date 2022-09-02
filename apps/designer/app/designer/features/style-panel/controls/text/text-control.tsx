@@ -25,46 +25,62 @@ const commonUnitsSubset = units
       : 1
   );
 
-const CSSGridLeft = {
+const gridTemplateStyle = {
+  gridTemplateColumns: "$sizes$6 auto $sizes$6",
+  gridTemplateRows: "repeat(1, 1fr)",
+};
+
+const gridLeftStyle = {
   "& ~ input": {
-    paddingLeft: "calc($sizes$6 + 6px)",
+    paddingLeft: "calc($sizes$6 + $nudge$3)",
   },
   gridArea: "1 / 1 / 2 / 2",
 };
 
-const CSSGridRight = {
+const gridRightStyle = {
   gridArea: "-1 / -1 / -2 / -2",
   "& ~ input": {
-    paddingRight: "calc($sizes$5 + 6px)",
+    paddingRight: "calc($sizes$5 + $nudge$3)",
   },
 };
 
-const CSSIconButton = {
+const iconButtonStyle = {
   zIndex: 1,
   borderRadius: 2,
-  height: "calc($sizes$6 - 6px)",
-  width: "calc($sizes$6 - 6px)",
+  height: "calc($sizes$6 - $nudge$3)",
+  width: "calc($sizes$6 - $nudge$3)",
   transform: "translate(3px, 3px)",
   "&:focus": {
     boxShadow: "none",
   },
 };
 
-const CSSTextUnit = {
-  fontSize: "$1",
-  cursor: "default",
+const iconButtonActiveStyle = {
+  bc: "$colors$blue4",
+  "&:not(:hover)": {
+    color: "$colors$blue11",
+  },
 };
 
-const CSSTextField = {
+const iconButtonGridLeftStyle = {
+  ...gridLeftStyle,
+  ...iconButtonStyle,
+};
+
+const iconButtonGridRightStyle = {
+  ...gridRightStyle,
+  "& button": { ...iconButtonStyle },
+};
+
+const textFieldStyle = {
   height: "$6",
   fontWeight: "500",
-  paddingLeft: "calc($sizes$1 + 6px)",
+  paddingLeft: "calc($sizes$1 + $nudge$3)",
   gridArea: "1 / 1 / -1 / -1",
   cursor: "default",
 };
 
 export const TextControl = ({
-  category,
   currentStyle,
   inheritedStyle,
   setProperty,
@@ -82,32 +98,14 @@ export const TextControl = ({
 
   if (value === undefined) return null;
 
-  // @todo setValue has a latency issue when updating a value fast(i.e keyboard arrows/scrub control)
   const setValue = setProperty(styleConfig.property);
 
-  let Icon;
+  const Icon = iconConfigs[styleConfig.property]?.normal;
 
-  const { label, property } = styleConfig;
-
-  // @todo this silo's the flex section
-  let multiColumn = true;
-  if (
-    category === "layout" &&
-    property.includes("Gap") &&
-    (currentStyle.display?.value as string).includes("flex")
-  ) {
-    Icon = iconConfigs[styleConfig.property]?.normal;
-    multiColumn = false;
-  }
   return (
-    <Grid columns={multiColumn ? 2 : 1}>
-      {multiColumn && <PropertyName property={property} label={label} />}
-      <Grid
-        css={{
-          gridTemplateColumns: "$sizes$6 auto $sizes$6",
-          gridTemplateRows: "repeat(1, 1fr)",
-        }}
-      >
+    <Grid columns={2}>
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <Grid css={gridTemplateStyle}>
         {Icon && (
           <Tooltip
             content={styleConfig.label}
@@ -140,14 +138,8 @@ export const TextControl = ({
               variant="ghost"
               size="1"
               css={{
-                ...CSSGridLeft,
-                ...CSSIconButton,
-                ...(isCurrentBreakpoint && {
-                  bc: "$colors$blue4",
-                  "&:not(:hover)": {
-                    color: "$colors$blue11",
-                  },
-                }),
+                ...iconButtonGridLeftStyle,
+                ...(isCurrentBreakpoint && iconButtonActiveStyle),
               }}
             >
               {Icon && <Icon />}
@@ -172,7 +164,7 @@ export const TextControl = ({
         )}
         <TextField
           ref={textFieldRef}
-          css={CSSTextField}
+          css={textFieldStyle}
           spellCheck={false}
           defaultValue={value.value}
           onFocus={(event: FocusEvent<HTMLInputElement>) =>
@@ -224,18 +216,17 @@ const Units = ({
   onChange?: (value: string) => void;
 }) => {
   return (
-    <Box
-      css={{
-        ...CSSGridRight,
-        button: { ...CSSIconButton },
-      }}
-    >
+    <Box css={iconButtonGridRightStyle}>
       <IconButtonWithMenu
-        icon={<Text css={CSSTextUnit}>{value === "number" ? "—" : value}</Text>}
+        icon={
+          <Text css={{ cursor: "default" }}>
+            {value === "number" ? "—" : value}
+          </Text>
+        }
         items={items}
         value={String(value)}
         onChange={onChange}
-      ></IconButtonWithMenu>
+      />
     </Box>
   );
 };
@@ -251,12 +242,7 @@ const Items = ({
 }) => {
   if (!items?.length) return null;
   return (
-    <Box
-      css={{
-        ...CSSGridRight,
-        button: { ...CSSIconButton },
-      }}
-    >
+    <Box css={iconButtonGridRightStyle}>
       <IconButtonWithMenu
         icon={<ChevronDownIcon />}
         items={items}

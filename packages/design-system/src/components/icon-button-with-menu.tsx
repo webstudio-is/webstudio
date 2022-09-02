@@ -2,6 +2,7 @@ import { CheckIcon, IconComponent } from "@webstudio-is/icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { styled } from "../stitches.config";
 import { Tooltip } from "./tooltip";
+import { IconButton } from "./icon-button";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   width: 192,
@@ -55,21 +56,23 @@ const StyledArrow = styled(DropdownMenuPrimitive.Arrow, {
   },
 });
 
-const IconButton = styled("button", {
-  all: "unset",
-  fontFamily: "inherit",
-  borderRadius: "calc($radii$1 / 2)",
+const iconButtonStyle = {
   width: "$6",
   height: "$6",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
   color: "$colors$gray12",
   backgroundColor: "$colors$loContrast",
   "&:hover": {
     backgroundColor: "$colors$gray3",
   },
-});
+};
+
+const iconButtonActiveStyle = {
+  color: "$colors$blue11",
+  backgroundColor: "$colors$blue4",
+  "&:hover": {
+    backgroundColor: "$colors$blue4",
+  },
+};
 
 export const IconButtonWithMenu = ({
   icon: Icon,
@@ -99,17 +102,12 @@ export const IconButtonWithMenu = ({
       >
         <DropdownMenuPrimitive.Trigger asChild>
           <IconButton
-            css={
-              isActive
-                ? {
-                    color: "$colors$blue11",
-                    backgroundColor: "$colors$blue4",
-                    "&:hover": {
-                      backgroundColor: "$colors$blue4",
-                    },
-                  }
-                : {}
-            }
+            css={{
+              ...iconButtonStyle,
+              ...(isActive && {
+                iconButtonActiveStyle,
+              }),
+            }}
           >
             {Icon}
           </IconButton>

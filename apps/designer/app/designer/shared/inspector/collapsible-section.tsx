@@ -1,10 +1,5 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import {
-  Box,
-  Flex,
-  __DEPRECATED__Text,
-  Collapsible,
-} from "@webstudio-is/design-system";
+import { Box, Flex, Text, Collapsible } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ChevronRightIcon } from "@webstudio-is/icons";
 
 type CollapsibleSectionProps = {
@@ -58,16 +53,11 @@ export const CollapsibleSection = ({
               cursor: "default",
             }}
           >
-            <__DEPRECATED__Text
-              size="1"
-              css={{ fontWeight: "500", flexGrow: 1 }}
-            >
-              {label}
-            </__DEPRECATED__Text>
+            <Text css={{ fontWeight: "500", flexGrow: 1 }}>{label}</Text>
             <Flex
               align="center"
               justify="center"
-              css={{ marginRight: -5, opacity: ".4" }}
+              css={{ marginRight: "-$space$1", opacity: "$opacity$1" }}
             >
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </Flex>

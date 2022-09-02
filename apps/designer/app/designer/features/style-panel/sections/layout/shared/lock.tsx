@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { IconButton, Tooltip } from "@webstudio-is/design-system";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/react-sdk";
-import type { CreateBatchUpdate } from "./use-style-data";
+import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 
 export const Lock = ({
   name,
