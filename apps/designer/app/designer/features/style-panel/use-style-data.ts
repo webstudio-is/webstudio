@@ -3,12 +3,20 @@ import type {
   SelectedInstanceData,
   StyleUpdates,
 } from "~/shared/canvas-components";
-import { type StyleProperty, type Publish } from "@webstudio-is/react-sdk";
+import { Instance, type StyleProperty } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle } from "./get-inherited-style";
 import { getCssRuleForBreakpoint } from "./lib/utils/get-css-rule-for-breakpoint";
 import { useRootInstance } from "~/shared/nano-states";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    updateStyle: StyleUpdates;
+    [key: `previewStyle:${Instance["id"]}`]: StyleUpdates;
+  }
+}
 
 type UseStyleData = {
   publish: Publish;
@@ -73,11 +81,11 @@ export const useStyleData = ({
     ) {
       return;
     }
-    publish<string, StyleUpdates>({
+    publish({
       type:
         type === "update"
           ? "updateStyle"
-          : `previewStyle:${selectedInstanceData.id}`,
+          : (`previewStyle:${selectedInstanceData.id}` as const),
       payload: {
         id: selectedInstanceData.id,
         updates,

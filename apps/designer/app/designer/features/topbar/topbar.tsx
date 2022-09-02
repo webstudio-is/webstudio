@@ -1,4 +1,4 @@
-import type { Publish } from "@webstudio-is/react-sdk";
+import type { Publish } from "~/shared/pubsub";
 import type { Project } from "@webstudio-is/prisma-client";
 import { darkTheme, Flex, type CSS } from "@webstudio-is/design-system";
 import type { Config } from "~/config";
@@ -8,11 +8,12 @@ import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
+import * as db from "~/shared/db";
 
 type TopbarProps = {
   config: Config;
   css: CSS;
-  project: Project;
+  project: db.project.Project;
   publish: Publish;
 };
 export const Topbar = ({ config, css, project, publish }: TopbarProps) => {

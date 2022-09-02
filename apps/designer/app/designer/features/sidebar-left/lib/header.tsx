@@ -34,7 +34,7 @@ export const Header = ({ title, isClosable = true, onClose }: HeaderProps) => {
           </IconButton>
         )}
       </Flex>
-      <Separator />
+      <Separator css={{ height: 2 }} />
     </>
   );
 };

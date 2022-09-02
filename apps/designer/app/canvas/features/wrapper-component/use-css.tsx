@@ -3,9 +3,9 @@ import {
   type Instance,
   css as createCss,
   type CSS,
-  useSubscribe,
   toValue,
 } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { type StyleUpdates } from "~/shared/canvas-components";
 
 type UseCssProps = {
@@ -23,12 +23,9 @@ const usePreviewCss = ({ instance, css }: UseCssProps) => {
     StyleUpdates["updates"] | UpdatesReset
   >([]);
 
-  useSubscribe<string, StyleUpdates>(
-    `previewStyle:${instance.id}`,
-    ({ updates }) => {
-      setPreviewCss(updates);
-    }
-  );
+  useSubscribe(`previewStyle:${instance.id}`, ({ updates }) => {
+    setPreviewCss(updates);
+  });
 
   // We are building a map for unsetting the ephemeral values we previously set for the preview
   useEffect(() => {
