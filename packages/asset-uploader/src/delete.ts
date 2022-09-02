@@ -4,7 +4,7 @@ import { unlink } from "fs/promises";
 import path from "path";
 import { deleteAssetInDb } from "./db";
 import { imageFsDirectory } from "./utils/image-fs-path";
-import { s3EnvVariables } from "./schema";
+import { S3EnvVariables } from "./schema";
 import { getS3Client } from "./targets/s3/client";
 import { Asset } from "./types";
 
@@ -21,7 +21,7 @@ export const deleteAsset = async ({
   if (!currentAsset) throw new Error("Asset does not exist");
 
   if (currentAsset.location === "REMOTE") {
-    const s3Envs = s3EnvVariables.parse(process.env);
+    const s3Envs = S3EnvVariables.parse(process.env);
     await getS3Client().send(
       new DeleteObjectCommand({
         Bucket: s3Envs.S3_BUCKET,

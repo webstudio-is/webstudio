@@ -5,12 +5,12 @@ import {
 import { s3UploadHandler } from "./targets/s3/handler";
 import { uploadToS3 } from "./targets/s3/uploader";
 import { uploadToDisk } from "./targets/disk/upload";
-import { assetEnvVariables, s3EnvVariables } from "./schema";
+import { AssetEnvVariables, S3EnvVariables } from "./schema";
 import { imageFsDirectory } from "./utils/image-fs-path";
 
-const isS3Upload = s3EnvVariables.safeParse(process.env).success;
+const isS3Upload = S3EnvVariables.safeParse(process.env).success;
 
-const commonUploadVars = assetEnvVariables.parse(process.env);
+const commonUploadVars = AssetEnvVariables.parse(process.env);
 
 // user inputs the max value in mb and we transform it to bytes
 export const MAX_UPLOAD_SIZE = parseInt(commonUploadVars.MAX_UPLOAD_SIZE) * 1e6;
