@@ -4,7 +4,7 @@ on:
     paths:
       - "packages/eslint-config-custom/**/*"
       - ".github/workflows/eslint-config-custom.yml"
-      - ".github/actions/publish-test/action.yaml"
+      - ".github/actions/publish/action.yaml"
     branches:    
       - main
 jobs:
