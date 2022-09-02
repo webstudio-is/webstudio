@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "checks": "turbo run build && turbo run checks",
+    "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
