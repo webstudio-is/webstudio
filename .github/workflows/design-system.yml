@@ -4,7 +4,7 @@ on:
     paths:
       - "packages/design-system/**/*"
       - ".github/workflows/design-system.yml"
-      - ".github/actions/publish-test/action.yaml"
+      - ".github/actions/publish/action.yaml"
     branches:    
       - main
 jobs:
