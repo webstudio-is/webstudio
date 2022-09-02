@@ -31,8 +31,3 @@ export const FsEnvVariables = z.object({
 export const AssetEnvVariables = z.object({
   MAX_UPLOAD_SIZE: z.string().optional().default("10"),
 });
-
-export const ImageMeta = z.object({
-  width: z.number().optional(),
-  height: z.number().optional(),
-});
