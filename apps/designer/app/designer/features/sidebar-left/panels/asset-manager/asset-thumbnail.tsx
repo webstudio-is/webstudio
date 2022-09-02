@@ -4,7 +4,7 @@ import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { AssetTooltip } from "./asset-tooltip";
-import { Asset, UploadingAsset } from "@webstudio-is/asset-uploader";
+import { BaseAsset } from "./types";
 
 const useImageWithFallback = ({
   path = placeholderImage,
@@ -25,7 +25,7 @@ const useImageWithFallback = ({
 
 type ThumbnailProps = {
   path?: string;
-  status: Asset["status"];
+  status: BaseAsset["status"];
 };
 
 export const Thumbnail = ({ path, status }: ThumbnailProps) => {
@@ -51,15 +51,15 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
   );
 };
 
-export const AssetThumbnail = (asset: Asset | UploadingAsset) => {
-  const { path, alt, status, name } = asset;
+export const AssetThumbnail = (asset: BaseAsset) => {
+  const { path, description, status, name } = asset;
   const [isDeleting, setIsDeleting] = useState(false);
   const isUploading = status === "uploading";
   const isUploadedAsset = isUploading === false && "size" in asset;
 
   return (
     <Box
-      title={alt || name}
+      title={description || name}
       css={{
         aspectRatio: "1/1",
         display: "flex",

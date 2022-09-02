@@ -4,13 +4,13 @@ import { GearIcon } from "@webstudio-is/icons";
 
 import { AssetInfo } from "./asset-info";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
-import { Asset } from "@webstudio-is/asset-uploader";
+import { BaseAsset } from "./types";
 
 export const AssetTooltip = ({
   asset,
   onDelete,
 }: {
-  asset: Asset;
+  asset: BaseAsset;
   onDelete: () => void;
 }) => {
   const [isTooltipOpen, setTooltipOpen] = useState(false);

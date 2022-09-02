@@ -9,7 +9,7 @@ import {
 import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
 import { Header } from "../../lib/header";
-import { Asset } from "@webstudio-is/asset-uploader";
+import { BaseAsset } from "./types";
 
 const Filename = ({ name }: { name: string }) => {
   const splitName = name.split(".");
@@ -46,15 +46,14 @@ const Filename = ({ name }: { name: string }) => {
   );
 };
 
-type AssetInfoProps = Asset & {
+type AssetInfoProps = BaseAsset & {
   onClose: () => void;
   onDelete: () => void;
 };
 
 export const AssetInfo = ({
   size,
-  width,
-  height,
+  meta,
   id,
   name,
   onClose,
@@ -89,14 +88,12 @@ export const AssetInfo = ({
           <Flex align="center" css={{ gap: "$1" }}>
             <SizeIcon />
             <Text variant="label">
-              {width} x {height}
+              {meta.width} x {meta.height}
             </Text>
           </Flex>{" "}
           <Flex align="center" css={{ gap: "$1" }}>
             <AspectRatioIcon />
-            <Text variant="label">
-              {getFormattedAspectRatio(width, height)}
-            </Text>
+            <Text variant="label">{getFormattedAspectRatio(meta)}</Text>
           </Flex>
         </Grid>
       </Box>

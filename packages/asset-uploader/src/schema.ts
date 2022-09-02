@@ -14,7 +14,7 @@ export const ImagesUploadedSuccess = z.object({
 });
 export type ImagesUploadedSuccess = z.infer<typeof ImagesUploadedSuccess>;
 
-export const s3EnvVariables = z.object({
+export const S3EnvVariables = z.object({
   S3_ENDPOINT: z.string(),
   S3_REGION: z.string(),
   S3_ACCESS_KEY_ID: z.string(),
@@ -24,10 +24,15 @@ export const s3EnvVariables = z.object({
   ASSET_CDN_URL: z.string().optional(),
 });
 
-export const fsEnvVariables = z.object({
+export const FsEnvVariables = z.object({
   FILE_UPLOAD_PATH: z.string().optional().default(DEFAULT_UPLOAD_PATH),
 });
 
-export const assetEnvVariables = z.object({
+export const AssetEnvVariables = z.object({
   MAX_UPLOAD_SIZE: z.string().optional().default("10"),
+});
+
+export const ImageMeta = z.object({
+  width: z.number().optional(),
+  height: z.number().optional(),
 });
