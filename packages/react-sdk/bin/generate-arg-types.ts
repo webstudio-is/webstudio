@@ -1,5 +1,5 @@
 import path from "path";
-import docgen from "react-docgen-typescript";
+import { withCustomConfig } from "react-docgen-typescript";
 import fg from "fast-glob";
 import fs from "fs-extra";
 import { propsToArgTypes } from "../src/arg-types/utils";
@@ -31,7 +31,7 @@ if (componentFiles.length === 0) {
 }
 
 // Create a parser with using your typescript config
-const tsConfigParser = docgen.withCustomConfig(tsConfigPath, options);
+const tsConfigParser = withCustomConfig(tsConfigPath, options);
 
 // For each component file generate argTypes based on the propTypes
 componentFiles.forEach((filePath) => {
