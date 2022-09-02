@@ -41,7 +41,6 @@
     "css-tree": "^2.1.0",
     "esbuild": "^0.14.25",
     "esbuild-node-externals": "^1.4.1",
-    "esbuild-node-loader": "^0.8.0",
     "mdn-data": "2.0.23",
     "react": "^17.0.2",
     "react-docgen-typescript": "^2.2.2",
