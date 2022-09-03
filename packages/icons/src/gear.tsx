@@ -1,8 +1,11 @@
+import { cssVars } from "@webstudio-is/css-vars";
 import * as React from "react";
 import { IconProps } from "./types";
 
+const fillVar = cssVars.define("fill");
+
 export const gearIconCssVars = ({ fill }: { fill: string }) => ({
-  "--gear-icon-fill": fill,
+  [fillVar]: fill,
 });
 
 export const GearIcon = React.forwardRef<SVGSVGElement, IconProps>(
@@ -23,7 +26,7 @@ export const GearIcon = React.forwardRef<SVGSVGElement, IconProps>(
           strokeWidth={1.25}
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{ fill: "var(--gear-icon-fill, none)" }}
+          style={{ fill: cssVars.use(fillVar, "none") }}
         />
         <circle
           cx={8}

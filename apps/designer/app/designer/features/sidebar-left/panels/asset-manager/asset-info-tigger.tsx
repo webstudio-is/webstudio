@@ -5,9 +5,12 @@ import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import { AssetInfo } from "./asset-info";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
+import { cssVars } from "@webstudio-is/css-vars";
+
+const triggerVisibilityVar = cssVars.define("trigger-visibility");
 
 export const assetInfoTriggerCssVars = ({ show }: { show: boolean }) => ({
-  "--asset-info-trigger-visibility": show ? "visible" : "hidden",
+  [triggerVisibilityVar]: show ? "visible" : "hidden",
 });
 
 export const AssetInfoTrigger = ({
@@ -44,7 +47,7 @@ export const AssetInfoTrigger = ({
         title="Options"
         onClick={() => setTooltipOpen(true)}
         css={{
-          visibility: "var(--asset-info-trigger-visibility, hidden)",
+          visibility: cssVars.use(triggerVisibilityVar, "hidden"),
           position: "absolute",
           color: "$slate11",
           top: "$1",
