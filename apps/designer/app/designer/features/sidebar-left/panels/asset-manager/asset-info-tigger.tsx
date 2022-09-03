@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Button, theme, Tooltip } from "@webstudio-is/design-system";
-import { GearIcon } from "@webstudio-is/icons";
+import { Button, Tooltip } from "@webstudio-is/design-system";
+import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 
 import { AssetInfo } from "./asset-info";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
+
+export const assetInfoTriggerCssVars = ({ show }: { show: boolean }) => ({
+  "--asset-info-trigger-visibility": show ? "visible" : "hidden",
+});
 
 export const AssetInfoTrigger = ({
   asset,
@@ -40,7 +44,7 @@ export const AssetInfoTrigger = ({
         title="Options"
         onClick={() => setTooltipOpen(true)}
         css={{
-          visibility: "var(--info-trigger-visibility)",
+          visibility: "var(--asset-info-trigger-visibility, hidden)",
           position: "absolute",
           color: "$slate11",
           top: "$1",
@@ -50,9 +54,10 @@ export const AssetInfoTrigger = ({
           "&:hover": {
             color: "$hiContrast",
           },
+          ...gearIconCssVars({ fill: "$colors$loContrast" }),
         }}
       >
-        <GearIcon fill={String(theme.colors.loContrast)} />
+        <GearIcon />
       </Button>
     </Tooltip>
   );

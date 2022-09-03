@@ -15,4 +15,4 @@ export * from "./cloud";
 export { TrashIcon } from "./trash";
 export { SizeIcon } from "./size";
 export { UploadIcon } from "./upload";
-export { GearIcon } from "./gear";
+export { GearIcon, gearIconCssVars } from "./gear";
