@@ -21,13 +21,12 @@ export const SelectControl = ({
   const setValue = setProperty(styleConfig.property);
 
   return (
-    <Flex align="center">
+    <Flex align="center" css={{ gap: "var(--space-gap)" }}>
       <PropertyName
         property={styleConfig.property}
         label={styleConfig.label}
         css={{
-          fontWeight: "500",
-          marginRight: "$sizes$1",
+          flexBasis: "var(--label-inline, 50%)",
         }}
       />
       <Select
@@ -36,10 +35,13 @@ export const SelectControl = ({
         onChange={setValue}
         ghost
         css={{
+          flexGrow: "var(--select-inline, 1)",
           gap: "calc($sizes$1 / 2)",
-          px: "$sizes$1",
-          fontWeight: "500",
+          px: "calc($sizes$1 + $nudge$3)",
+          height: "$sizes$6",
+          boxShadow: "inset 0 0 0 1px $colors$slate7",
           textTransform: "capitalize",
+          fontWeight: "var(--label-weight)",
           "&:hover": { background: "none" },
         }}
       />

@@ -21,7 +21,6 @@ const contentStyle = {
   display: "flex",
   flexDirection: "column",
   overflow: "auto",
-  // boxShadow: "0 -1px 0 $colors$panelOutline",
 };
 
 export const Inspector = ({ publish }: InspectorProps) => {

@@ -39,6 +39,13 @@ const layoutSectionFlexStyle = {
       },
     },
   },
+  "& [data-property=display]": {
+    "--space-gap": "$space$2",
+    "--label-weight": "500",
+    "--label-inline": "auto",
+    "--select-inline": "0",
+    "--select-outline": "none",
+  },
 };
 
 const LayoutSectionFlex = ({

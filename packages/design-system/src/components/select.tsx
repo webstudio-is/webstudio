@@ -1,12 +1,7 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
 import noop from "lodash.noop";
 import React, { ReactNode, Ref } from "react";
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  CaretDownIcon,
-} from "@webstudio-is/icons";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
@@ -177,7 +172,7 @@ const SelectBase = (
           {value ? getLabel(value) : placeholder}
         </SelectPrimitive.Value>
         <StyledIcon>
-          <CaretDownIcon />
+          <ChevronDownIcon />
         </StyledIcon>
       </StyledTrigger>
 
