@@ -1,12 +1,8 @@
-import { DbAsset } from "@webstudio-is/prisma-client";
+import { Asset as DbAsset } from "@webstudio-is/prisma-client";
 
 export type Asset = Omit<DbAsset, "width" | "height"> & {
   path?: string;
   status?: "uploading" | "uploaded";
-  width: number | null;
-  height: number | null;
+  width?: number;
+  height?: number;
 };
-export type UploadingAsset = Pick<
-  Asset,
-  "id" | "status" | "name" | "path" | "alt"
->;

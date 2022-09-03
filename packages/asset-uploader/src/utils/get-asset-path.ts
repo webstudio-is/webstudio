@@ -1,9 +1,9 @@
-import { DbAsset, Location } from "@webstudio-is/prisma-client";
-import { fsEnvVariables, s3EnvVariables } from "../schema";
+import { Asset as DbAsset, Location } from "@webstudio-is/prisma-client";
+import { FsEnvVariables, S3EnvVariables } from "../schema";
 import path from "path";
 
-const s3Envs = s3EnvVariables.safeParse(process.env);
-const fsEnvs = fsEnvVariables.parse(process.env);
+const s3Envs = S3EnvVariables.safeParse(process.env);
+const fsEnvs = FsEnvVariables.parse(process.env);
 
 export const getAssetPath = (asset: DbAsset) => {
   if (asset.location === Location.FS) {

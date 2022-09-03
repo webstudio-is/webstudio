@@ -4,8 +4,8 @@ import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 
 import { AssetInfo } from "./asset-info";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
-import { Asset } from "@webstudio-is/asset-uploader";
 import { cssVars } from "@webstudio-is/css-vars";
+import { BaseAsset } from "./types";
 
 const triggerVisibilityVar = cssVars.define("trigger-visibility");
 
@@ -17,7 +17,7 @@ export const AssetInfoTrigger = ({
   asset,
   onDelete,
 }: {
-  asset: Asset;
+  asset: BaseAsset;
   onDelete: () => void;
 }) => {
   const [isTooltipOpen, setTooltipOpen] = useState(false);

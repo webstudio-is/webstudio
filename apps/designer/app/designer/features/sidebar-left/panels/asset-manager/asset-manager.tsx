@@ -6,12 +6,12 @@ import { TabName } from "../../types";
 import { Header } from "../../lib/header";
 import { AddAnAssetForm } from "./add-an-asset-form";
 import { AssetThumbnail } from "./asset-thumbnail";
-import { Asset, UploadingAsset } from "@webstudio-is/asset-uploader/src";
+import { BaseAsset } from "./types";
 
-export const useAssetsState = (baseAssets: Array<Asset>) => {
+export const useAssetsState = (baseAssets: Array<BaseAsset>) => {
   const imageChanges = useActionData();
 
-  const [assets, setAssets] = useState<Asset[] | UploadingAsset[]>(baseAssets);
+  const [assets, setAssets] = useState<BaseAsset[]>(baseAssets);
 
   useEffect(() => {
     if (imageChanges?.errors) {
@@ -34,7 +34,7 @@ export const useAssetsState = (baseAssets: Array<Asset>) => {
     }
   }, [imageChanges]);
 
-  const onUploadAsset = (uploadedAssets: Array<UploadingAsset>) =>
+  const onUploadAsset = (uploadedAssets: Array<BaseAsset>) =>
     setAssets((assets) => [...uploadedAssets, ...assets]);
 
   return { assets, onUploadAsset };
@@ -45,7 +45,7 @@ export const TabContent = ({
   onSetActiveTab,
 }: {
   onSetActiveTab: (tabName: TabName) => void;
-  assets: Array<Asset>;
+  assets: Array<BaseAsset>;
 }) => {
   const { assets, onUploadAsset } = useAssetsState(baseAssets);
   return (
