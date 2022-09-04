@@ -16,7 +16,7 @@ export const PropertyName = ({ property, label, css }: PropertyProps) => {
       <Label
         css={{
           gridColumn: "1",
-          fontWeight: "var(--label-weight, 400)",
+          fontWeight: "inherit",
           ...(isCurrentBreakpoint
             ? {
                 color: propertyNameColorForSelectedBreakpoint,

@@ -13,6 +13,19 @@ const layoutSectionStyle = {
     alignItems: "center",
     height: "100%",
   },
+  "& [data-property=display]": {
+    "& > :first-child": {
+      gridTemplateColumns: "auto 1fr",
+      gap: "$space$2",
+      fontWeight: "500",
+      "& > :first-child": {
+        flexBasis: "auto",
+      },
+      "& > :last-child": {
+        width: "fit-content",
+      },
+    },
+  },
 };
 
 const layoutSectionFlexStyle = {
@@ -38,13 +51,6 @@ const layoutSectionFlexStyle = {
         display: "none",
       },
     },
-  },
-  "& [data-property=display]": {
-    "--space-gap": "$space$2",
-    "--label-weight": "500",
-    "--label-inline": "auto",
-    "--select-inline": "0",
-    "--select-outline": "none",
   },
 };
 
