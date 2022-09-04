@@ -65,8 +65,9 @@ export const MenuControl = ({
       label={styleConfig.label}
       items={items}
       value={String(currentValue)}
-      onChange={setValue}
       isActive={isFromCurrentBreakpoint}
-    ></IconButtonWithMenu>
+      onChange={setValue}
+      onHover={(value) => setValue(value, { isEphemeral: true })}
+    />
   );
 };

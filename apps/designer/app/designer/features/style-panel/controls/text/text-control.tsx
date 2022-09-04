@@ -154,12 +154,16 @@ export const TextControl = ({
               label: unit,
             }))}
             onChange={(unit) => setValue(value.value + unit)}
+            onHover={(unit) =>
+              setValue(value.value + unit, { isEphemeral: true })
+            }
           />
         ) : (
           <Items
             value={value.value}
             items={styleConfig.items}
             onChange={(item) => setValue(item)}
+            onHover={(item) => setValue(item, { isEphemeral: true })}
           />
         )}
         <TextField
@@ -210,10 +214,12 @@ const Units = ({
   value,
   items,
   onChange,
+  onHover,
 }: {
   value: Unit;
   items: StyleConfig["items"];
   onChange?: (value: string) => void;
+  onHover?: (value: string) => void;
 }) => {
   return (
     <Box css={iconButtonGridRightStyle}>
@@ -226,6 +232,7 @@ const Units = ({
         items={items}
         value={String(value)}
         onChange={onChange}
+        onHover={onHover}
       />
     </Box>
   );
@@ -235,10 +242,12 @@ const Items = ({
   value,
   items,
   onChange,
+  onHover,
 }: {
   value: StyleValue["value"];
   items: StyleConfig["items"];
   onChange?: (value: string) => void;
+  onHover?: (value: string) => void;
 }) => {
   if (!items?.length) return null;
   return (
@@ -248,6 +257,7 @@ const Items = ({
         items={items}
         value={String(value)}
         onChange={onChange}
+        onHover={onHover}
       />
     </Box>
   );

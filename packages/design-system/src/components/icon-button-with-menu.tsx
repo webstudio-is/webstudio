@@ -30,31 +30,22 @@ const itemStyles = {
   paddingRight: "$space$5",
   userSelect: "none",
   gap: "$space$2",
-  "&:hover": {
+  // @todo should be "&[data-highlighted]" don't know why radix isn't activating the attribute though
+  "&[tabindex='0']": {
     background: "$colors$blue10",
     color: "$colors$blue1",
     "& *": { fill: "$colors$blue1" },
   },
 };
 
-const StyledRadioItem = styled(DropdownMenuPrimitive.RadioItem, {
-  ...itemStyles,
-});
-const StyledItemIndicator = styled(DropdownMenuPrimitive.ItemIndicator, {
+const itemIndicatorStyle = {
   position: "absolute",
   left: 0,
   width: 25,
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-});
-
-const StyledArrow = styled(DropdownMenuPrimitive.Arrow, {
-  "& *": {
-    fill: "$colors$gray4",
-    stroke: "$colors$gray8",
-  },
-});
+};
 
 const iconButtonStyle = {
   width: "$6",
@@ -72,7 +63,26 @@ const iconButtonActiveStyle = {
   "&:hover": {
     backgroundColor: "$colors$blue4",
   },
+  "&:focus": {
+    boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
+  },
 };
+
+const arrowStyle = {
+  "& *": {
+    fill: "$colors$gray4",
+    stroke: "$colors$gray8",
+  },
+};
+
+const StyledRadioItem = styled(DropdownMenuPrimitive.RadioItem, itemStyles);
+
+const StyledItemIndicator = styled(
+  DropdownMenuPrimitive.ItemIndicator,
+  itemIndicatorStyle
+);
+
+const StyledArrow = styled(DropdownMenuPrimitive.Arrow, arrowStyle);
 
 export const IconButtonWithMenu = ({
   icon: Icon,
@@ -81,6 +91,7 @@ export const IconButtonWithMenu = ({
   items,
   isActive,
   onChange,
+  onHover,
 }: {
   icon?: JSX.Element;
   label?: string;
@@ -92,6 +103,7 @@ export const IconButtonWithMenu = ({
   }>;
   isActive?: boolean;
   onChange?: (value: string) => void;
+  onHover?: (value: string) => void;
 }) => {
   return (
     <DropdownMenuPrimitive.Root modal={false}>
@@ -104,9 +116,7 @@ export const IconButtonWithMenu = ({
           <IconButton
             css={{
               ...iconButtonStyle,
-              ...(isActive && {
-                iconButtonActiveStyle,
-              }),
+              ...(isActive && iconButtonActiveStyle),
             }}
           >
             {Icon}
@@ -121,7 +131,12 @@ export const IconButtonWithMenu = ({
         >
           {items.map(({ name, label, icon }) => {
             return (
-              <StyledRadioItem key={name} value={label}>
+              <StyledRadioItem
+                key={name}
+                value={label}
+                onFocus={() => onHover?.(name)}
+                onBlur={() => onHover?.(value)}
+              >
                 <StyledItemIndicator>
                   <CheckIcon />
                 </StyledItemIndicator>
