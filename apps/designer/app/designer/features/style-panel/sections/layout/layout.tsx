@@ -18,9 +18,6 @@ const layoutSectionStyle = {
       gridTemplateColumns: "auto 1fr",
       gap: "$space$2",
       fontWeight: "500",
-      "& > :first-child": {
-        flexBasis: "auto",
-      },
       "& > :last-child": {
         width: "fit-content",
       },
