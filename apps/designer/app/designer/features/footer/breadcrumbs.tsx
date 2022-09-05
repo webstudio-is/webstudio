@@ -1,7 +1,7 @@
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
+import { type Publish } from "~/shared/pubsub";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
-import { type Publish, type Instance } from "@webstudio-is/react-sdk";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type BreadcrumbProps = {
@@ -41,14 +41,14 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
     <Flex align="center" css={{ height: "100%" }}>
       {selectedInstancePath.length === 0 ? (
         <Breadcrumb>
-          <Text size="1">No instance selected</Text>
+          <Text>No instance selected</Text>
         </Breadcrumb>
       ) : (
         selectedInstancePath.map((instance) => (
           <Breadcrumb
             key={instance.id}
             onClick={() => {
-              publish<"selectInstanceById", Instance["id"]>({
+              publish({
                 type: "selectInstanceById",
                 payload: instance.id,
               });
