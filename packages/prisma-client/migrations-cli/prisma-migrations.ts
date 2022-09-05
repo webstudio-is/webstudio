@@ -253,3 +253,26 @@ export const cliExecute = (filePath: string) => {
     schemaFilePath,
   ]);
 };
+
+export const generateMigrationClient = (migrationName: string) => {
+  const migrationDir = path.join(migrationsDir, migrationName);
+
+  const schemaPath = path.join(migrationDir, "schema.prisma");
+  const clientPath = path.join(migrationDir, "client");
+
+  if (fs.existsSync(schemaPath) === false) {
+    const tsFilePath = getMigrationFilePath(migrationName, "ts");
+    if (fs.existsSync(tsFilePath)) {
+      throw new Error(
+        `Can't generate client for ${migrationName} because ${migrationName}/schema.prisma is missing`
+      );
+    }
+    return;
+  }
+
+  if (fs.existsSync(clientPath)) {
+    fs.rmSync(clientPath, { recursive: true });
+  }
+
+  cliGenerate(schemaPath);
+};
