@@ -33,7 +33,6 @@ export const SelectControl = ({
 
   return (
     <Grid
-      columns={2}
       css={{
         gridTemplateColumns: cssVars.use(
           gridTemplateColumnsVar,
