@@ -1,7 +1,18 @@
+import { cssVars } from "@webstudio-is/css-vars";
 import { Grid, Select } from "@webstudio-is/design-system";
 import { getFinalValue } from "../../shared/get-final-value";
 import { PropertyName } from "../../shared/property-name";
 import type { ControlProps } from "../../style-sections";
+
+const gridTemplateColumnsVar = cssVars.define("grid-template-columns");
+
+export const selectControlCssVars = ({
+  gridTemplateColumns,
+}: {
+  gridTemplateColumns: string;
+}) => ({
+  [gridTemplateColumnsVar]: gridTemplateColumns,
+});
 
 export const SelectControl = ({
   currentStyle,
@@ -21,7 +32,15 @@ export const SelectControl = ({
   const setValue = setProperty(styleConfig.property);
 
   return (
-    <Grid columns={2}>
+    <Grid
+      columns={2}
+      css={{
+        gridTemplateColumns: cssVars.use(
+          gridTemplateColumnsVar,
+          "repeat(2, 1fr)"
+        ),
+      }}
+    >
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Select
         options={styleConfig.items.map(({ label }) => label)}

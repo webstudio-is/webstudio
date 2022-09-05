@@ -3,6 +3,7 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { Lock } from "./shared/lock";
 import { ShowMore } from "../../shared/show-more";
+import { selectControlCssVars } from "../../controls";
 
 const layoutSectionStyle = {
   alignItems: "center",
@@ -15,7 +16,6 @@ const layoutSectionStyle = {
   },
   "& [data-property=display]": {
     "& > :first-child": {
-      gridTemplateColumns: "auto 1fr",
       gap: "$space$2",
       fontWeight: "500",
       "& > :last-child": {
@@ -49,6 +49,7 @@ const layoutSectionFlexStyle = {
       },
     },
   },
+  ...selectControlCssVars({ gridTemplateColumns: "auto 1fr" }),
 };
 
 const LayoutSectionFlex = ({
