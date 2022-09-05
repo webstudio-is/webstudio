@@ -190,7 +190,8 @@ export const setRolledBack = async (migrationName: string) => {
     );
   }
 
-  await prisma.$executeRaw`update _prisma_migrations set rolled_back_at = now()`;
+  await prisma.$executeRaw`update _prisma_migrations set rolled_back_at = now() 
+                            where migration_name = ${migrationName}`;
 };
 
 // https://github.com/prisma/prisma-engines/blob/88f6ab88e559ef52ab26bc98f1da15200e0c25b4/migration-engine/core/src/commands/diagnose_migration_history.rs#L109-L111

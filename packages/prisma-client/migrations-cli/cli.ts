@@ -19,7 +19,7 @@ Commands:
   migrate              — Apply all pending migrations
   reset                — Clear the database and apply all migrations
   status               — Information about the state of the migrations
-  resolve              — Mark a failed migration as applied or rolled-back
+  resolve <applied|rolled-back> <name> — Mark a failed migration as applied or rolled-back
 
 Arguments
   --dev                — Lets the CLI know that it's running in a development environment
@@ -69,6 +69,38 @@ const main = async () => {
   if (command === "status") {
     await commands.status();
     return;
+  }
+
+  if (command === "resolve") {
+    // @todo: confirmation prompt
+
+    const type = args._[1];
+
+    if (type === undefined || (type !== "applied" && type !== "rolled-back")) {
+      failWith(
+        "Missing type of resolve.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
+      );
+      return;
+    }
+
+    const name = args._[2];
+    if (name === undefined) {
+      failWith(
+        "Missing name of migration.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
+      );
+      return;
+    }
+
+    await commands.resolve({ migrationName: name, resolveAs: type });
+    return;
+  }
+
+  if (command === "reset") {
+    // @todo: confirmation prompt
+    // @todo: allow only in dev mode
+
+    // @todo
+    throw new Error("Not implemented");
   }
 
   failWith(`Unknown command: ${command}`);

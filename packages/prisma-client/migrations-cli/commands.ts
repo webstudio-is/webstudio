@@ -284,3 +284,37 @@ export const status = async () => {
 
   logger.info("");
 };
+
+// Silimar to https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-resolve
+export const resolve = async ({
+  migrationName,
+  resolveAs,
+}: {
+  migrationName: string;
+  resolveAs: "applied" | "rolled-back";
+}) => {
+  const status = await getStatus();
+
+  const failed = status.started.filter((m) => m.state === "failed");
+
+  if (
+    failed.some(
+      ({ migration }) => migration.migration_name === migrationName
+    ) === false
+  ) {
+    failWith(
+      `Migration ${migrationName} is not failed. You can resolve only a failed migration.`
+    );
+  }
+
+  if (resolveAs === "applied") {
+    await prismaMigrations.setApplied(migrationName);
+    logger.info(`Resolved ${migrationName} as applied`);
+    logger.info("");
+    return;
+  }
+
+  await prismaMigrations.setRolledBack(migrationName);
+  logger.info(`Resolved ${migrationName} as rolled back`);
+  logger.info("");
+};
