@@ -33,7 +33,6 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-import { Asset } from "@webstudio-is/asset-uploader";
 
 export const links = () => {
   return [
