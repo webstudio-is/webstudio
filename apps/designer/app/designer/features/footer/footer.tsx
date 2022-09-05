@@ -1,5 +1,5 @@
 import { Box, Flex, darkTheme } from "@webstudio-is/design-system";
-import { type Publish } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { Breadcrumbs } from "./breadcrumbs";
 
 export const Footer = ({ publish }: { publish: Publish }) => {
