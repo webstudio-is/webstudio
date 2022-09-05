@@ -49,64 +49,54 @@ const generateClient = (migrationName: string) => {
 
 export const migrator = new Umzug({
   migrations: {
-    glob: ["./*/*.{ts,sql}", { cwd: prismaMigrations.migrationsDir }],
+    glob: [
+      `./${"[0-9]".repeat(14)}_*`,
+      { cwd: prismaMigrations.migrationsDir },
+    ],
     resolve(params) {
-      const filePath = params.path;
+      const sqlFilePath = prismaMigrations.getMigrationFilePath(
+        params.name,
+        "sql"
+      );
+      const tsFilePath = prismaMigrations.getMigrationFilePath(
+        params.name,
+        "ts"
+      );
 
-      // for TypeScript
-      if (filePath === undefined) {
-        throw new Error("Path is required");
-      }
-
-      const migrationName = path
-        .dirname(filePath)
-        .split(path.sep)
-        .pop() as string;
-
-      // a simple validation just in case
-      if (/^\d{14}_/.test(migrationName) === false) {
-        throw new Error(`Invalid migration name: ${migrationName}`);
-      }
-
-      if (path.basename(filePath) === "migration.sql") {
+      if (fs.existsSync(sqlFilePath)) {
         return {
-          name: migrationName,
-          path: filePath,
+          ...params,
           up: async () => {
-            await prismaMigrations.setStarted(migrationName, filePath);
-            prismaMigrations.cliExecute(filePath);
+            await prismaMigrations.setStarted(params.name, sqlFilePath);
+            prismaMigrations.cliExecute(sqlFilePath);
           },
         };
       }
 
-      if (path.basename(filePath) === "migration.ts") {
+      if (fs.existsSync(tsFilePath)) {
         return {
-          name: migrationName,
-          path: filePath,
+          ...params,
           up: async () => {
-            generateClient(migrationName);
+            generateClient(params.name);
 
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const migration = require(filePath);
+            const migration = require(tsFilePath);
 
             if (typeof migration.default !== "function") {
               throw new Error(
-                `Migration file's ${filePath} default export must be a function`
+                `Migration file's ${tsFilePath} default export must be a function`
               );
             }
 
-            await prismaMigrations.setStarted(migrationName, filePath);
-
-            // @todo:
-            //  in DEV_MODE check that the migration didn't change the schema using `prisma migrate diff`
-            //  probably need the same check before applying as well
-
+            await prismaMigrations.setStarted(params.name, tsFilePath);
             await migration.default();
           },
         };
       }
 
-      throw new Error(`Invalid migration file: ${filePath}`);
+      throw new Error(
+        `Couldn't find a migration.ts or migration.sql file in migrations/${params.name}`
+      );
     },
   },
   context: {},
@@ -124,14 +114,6 @@ export const migrator = new Umzug({
         .filter(prismaMigrations.isAppliedMigration)
         .map((row) => row.migration_name);
     },
-  },
-  create: {
-    template: (filepath) => [
-      [
-        prismaMigrations.getMigrationFilePath(path.basename(filepath), "ts"),
-        fs.readFileSync(templateFilePath).toString(),
-      ],
-    ],
   },
   logger: {
     info: (event) => {
@@ -295,6 +277,17 @@ const ensureNoPending = (status: Status) => {
   }
 };
 
+const ensureLastPending = async (migrationsName: string) => {
+  const pending = await migrator.pending();
+  const last = pending[pending.length - 1];
+
+  if (last === undefined || last.name !== migrationsName) {
+    failWith(
+      "The migrations you've created did not appear as the last pending migration. This isn't supposed to happen. Please investigate / report this issue."
+    );
+  }
+};
+
 const commands = {
   async createSchema({ name, status }: { name: string; status: Status }) {
     ensureNoFailed(status);
@@ -318,29 +311,31 @@ const commands = {
       process.exit(0);
     }
 
+    const migrationName = prismaMigrations.generateMigrationName(name);
+
     const filePath = prismaMigrations.getMigrationFilePath(
-      prismaMigrations.generateMigrationName(name),
+      migrationName,
       "sql"
     );
 
     writeFile(filePath, sqlScript);
-
     console.info(`Created: ${filePath}`);
-    console.info("You can now apply it to a database.");
+
+    console.info("");
+
+    await ensureLastPending(migrationName);
+
+    console.info("The migration is ready. You can now apply it to a database.");
     console.info("");
   },
   async createData({ name, status }: { name: string; status: Status }) {
     ensureNoFailed(status);
 
-    const finalName = prismaMigrations.generateMigrationName(name);
+    const migrationName = prismaMigrations.generateMigrationName(name);
 
-    // creates the migration.ts file and does some integrity checks
-    await migrator.create({
-      name: finalName,
-      prefix: "NONE",
-      // https://github.com/sequelize/umzug/issues/574
-      allowConfusingOrdering: true,
-    });
+    const filePath = prismaMigrations.getMigrationFilePath(migrationName, "ts");
+    writeFile(filePath, fs.readFileSync(templateFilePath, "utf8"));
+    console.info(`Created: ${filePath}`);
 
     let schemaContent = fs.readFileSync(
       prismaMigrations.schemaFilePath,
@@ -359,15 +354,29 @@ ${schemaContent}`;
       `output = "client"`
     );
 
-    fs.writeFileSync(
-      path.join(prismaMigrations.migrationsDir, finalName, "schema.prisma"),
-      schemaContent
+    const schemaFilePath = path.join(
+      prismaMigrations.migrationsDir,
+      migrationName,
+      "schema.prisma"
+    );
+    writeFile(schemaFilePath, schemaContent);
+    console.info(`Created: ${schemaFilePath}`);
+
+    generateClient(migrationName);
+    console.info(
+      `Created: ${path.join(
+        prismaMigrations.migrationsDir,
+        migrationName,
+        "client"
+      )}`
     );
 
-    generateClient(finalName);
+    console.info("");
+
+    await ensureLastPending(migrationName);
 
     console.info(
-      "You can now edit it, and after you finish apply it to a database."
+      "The migrations templete is ready. You can now edit the migration.ts file and apply it to a database."
     );
     console.info("");
   },
