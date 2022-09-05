@@ -5,14 +5,14 @@ import ObjectID from "bson-objectid";
 
 import sharp from "sharp";
 import {
-  assetEnvVariables,
+  AssetEnvVariables,
   ImagesUploadedSuccess,
-  s3EnvVariables,
+  S3EnvVariables,
 } from "../../schema";
 import {
   getArrayBufferFromIterable,
   getFilenameAndExtension,
-} from "../../helpers/array-buffer-helpers";
+} from "../../utils/array-buffer-helpers";
 import { Location } from "@webstudio-is/prisma-client";
 import { getS3Client } from "./client";
 
@@ -28,8 +28,8 @@ export const s3UploadHandler: S3UploadHandler = async ({
   file: { data, filename: baseFileName, contentType },
   maxPartSize,
 }) => {
-  const s3Envs = s3EnvVariables.parse(process.env);
-  const { MAX_UPLOAD_SIZE } = assetEnvVariables.parse(process.env);
+  const s3Envs = S3EnvVariables.parse(process.env);
+  const { MAX_UPLOAD_SIZE } = AssetEnvVariables.parse(process.env);
   if (!data) {
     throw new Error("Your asset seems to be empty");
   }

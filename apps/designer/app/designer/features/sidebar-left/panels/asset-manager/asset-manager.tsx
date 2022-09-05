@@ -2,16 +2,16 @@ import { ImageIcon } from "@webstudio-is/icons";
 import { Flex, Grid } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
-
-import { Asset, TabName } from "../../types";
+import { TabName } from "../../types";
 import { Header } from "../../lib/header";
 import { AddAnAssetForm } from "./add-an-asset-form";
-import { AssetManagerThumbnail } from "./thumbnail";
+import { AssetThumbnail } from "./asset-thumbnail";
+import { BaseAsset } from "./types";
 
-export const useAssetsState = (baseAssets: Array<Asset>) => {
+export const useAssetsState = (baseAssets: Array<BaseAsset>) => {
   const imageChanges = useActionData();
 
-  const [assets, setAssets] = useState<Asset[]>(baseAssets);
+  const [assets, setAssets] = useState<BaseAsset[]>(baseAssets);
 
   useEffect(() => {
     if (imageChanges?.errors) {
@@ -34,7 +34,7 @@ export const useAssetsState = (baseAssets: Array<Asset>) => {
     }
   }, [imageChanges]);
 
-  const onUploadAsset = (uploadedAssets: Array<Asset>) =>
+  const onUploadAsset = (uploadedAssets: Array<BaseAsset>) =>
     setAssets((assets) => [...uploadedAssets, ...assets]);
 
   return { assets, onUploadAsset };
@@ -45,7 +45,7 @@ export const TabContent = ({
   onSetActiveTab,
 }: {
   onSetActiveTab: (tabName: TabName) => void;
-  assets: Array<Asset>;
+  assets: Array<BaseAsset>;
 }) => {
   const { assets, onUploadAsset } = useAssetsState(baseAssets);
   return (
@@ -62,7 +62,7 @@ export const TabContent = ({
         </Flex>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (
-            <AssetManagerThumbnail key={asset.id} {...asset} />
+            <AssetThumbnail key={asset.id} {...asset} />
           ))}
         </Grid>
       </Flex>

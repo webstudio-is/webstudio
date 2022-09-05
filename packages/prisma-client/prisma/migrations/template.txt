@@ -1,0 +1,25 @@
+import { PrismaClient } from "./client";
+
+export default () => {
+  const client = new PrismaClient();
+  return client.$transaction(async (prisma) => {
+    // This is the body of your migration.
+    // Use the `prisma` client to perform database operations.
+    //
+    // Example:
+    //
+    // await prisma.user.updateMany({
+    //   where: { username: null },
+    //   data: { username: "Anonymous" },
+    // });
+    //
+    // If data models' API is not enough, consider using a raw query:
+    //
+    // await prisma.$executeRaw`UPDATE "User" SET "username" = "email" WHERE "username" IS NULL`;
+    //
+    //
+    // NOTE:
+    //   Don't do any schema modifications here like adding a column to a table!
+    //   If you need to change schema, edit schema.prisma and create a schema migration.
+  });
+};

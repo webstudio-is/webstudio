@@ -1,5 +1,11 @@
-import { publish } from "@webstudio-is/react-sdk";
 import { useEffect } from "react";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    canvasWidth: number;
+  }
+}
 
 export const ErrorMessage = ({ message }: { message: string }) => {
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { type Location, prisma, Project } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
-import { getAssetPath } from "../helpers/get-asset-path";
+import { formatAsset } from "../utils/format-asset";
 
 export const create = async (
   projectId: Project["id"],
@@ -13,7 +13,7 @@ export const create = async (
 ) => {
   const size = values.size || values.metadata.size || 0;
   const { metadata, name, location } = values;
-  const newAsset = await prisma.asset.create({
+  const asset = await prisma.asset.create({
     data: {
       location,
       name,
@@ -25,8 +25,5 @@ export const create = async (
     },
   });
 
-  return {
-    ...newAsset,
-    path: getAssetPath(newAsset),
-  };
+  return formatAsset(asset);
 };

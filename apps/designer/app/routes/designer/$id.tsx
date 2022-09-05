@@ -71,7 +71,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         projectId: params.id,
       });
       return {
-        uploadedAssets: assets.map((asset: Asset) => ({
+        uploadedAssets: assets.map((asset) => ({
           ...asset,
           status: "uploaded",
         })),

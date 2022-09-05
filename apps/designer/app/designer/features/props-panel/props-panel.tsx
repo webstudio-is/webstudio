@@ -1,9 +1,9 @@
 import {
   componentsMeta,
   type Instance,
-  type Publish,
   type UserProp,
 } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import type { SelectedInstanceData } from "~/shared/canvas-components";

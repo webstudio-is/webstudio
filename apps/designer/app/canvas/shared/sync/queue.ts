@@ -1,5 +1,11 @@
 import { type SyncStatus } from "~/shared/sync";
-import { publish } from "@webstudio-is/react-sdk";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    syncStatus: SyncStatus;
+  }
+}
 
 // @todo because of limitation with nested models and saving tree as a Json type
 // we load that entire Json to manipulate and if a second request happens before the first one has written
@@ -22,13 +28,13 @@ const dequeue = () => {
   const job = queue.shift();
   if (job) {
     isInProgress = true;
-    publish<"syncStatus", SyncStatus>({
+    publish({
       type: "syncStatus",
       payload: "syncing",
     });
     job().finally(() => {
       isInProgress = false;
-      publish<"syncStatus", SyncStatus>({
+      publish({
         type: "syncStatus",
         payload: "idle",
       });
