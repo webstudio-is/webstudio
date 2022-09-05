@@ -14,6 +14,7 @@ import {
   TextControl,
   SelectControl,
   MenuControl,
+  FontFamilyControl,
 } from "./controls";
 import { ShowMore } from "./shared/show-more";
 import { LayoutSection } from "./sections";
@@ -126,6 +127,7 @@ const sections: {
 } = {
   layout: LayoutSection,
 };
+
 const controls: {
   [key: string]: (props: ControlProps) => JSX.Element | null;
 } = {
@@ -134,4 +136,5 @@ const controls: {
   Color: ColorControl,
   Select: SelectControl,
   Spacing: SpacingControl,
+  FontFamily: FontFamilyControl,
 };

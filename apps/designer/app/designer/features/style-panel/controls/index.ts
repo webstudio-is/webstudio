@@ -3,3 +3,4 @@ export * from "./color/color-control";
 export * from "./select/select-control";
 export * from "./menu/menu-control";
 export * from "./spacing/spacing-control";
+export * from "./font-family/font-family-control";
