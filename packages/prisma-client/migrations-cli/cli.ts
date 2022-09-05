@@ -1,3 +1,5 @@
+#!/usr/bin/env tsx
+
 /* eslint-disable no-console */
 
 import { Umzug, FileLocker, MigrationMeta } from "umzug";
@@ -469,3 +471,5 @@ Commands:
 Arguments
   --dev                — Lets the CLI know that it's running in a development environment
 `;
+
+runCLI();

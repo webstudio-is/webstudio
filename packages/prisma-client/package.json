@@ -11,7 +11,7 @@
     "build": "prisma format && prisma generate"
   },
   "bin": {
-    "migrations": "./migrations-cli/bin.js"
+    "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
     "prisma": "^4.1.0"
@@ -24,10 +24,9 @@
     "@prisma/client": "^4.1.0",
     "@types/minimist": "^1.2.2",
     "dotenv": "^16.0.0",
-    "esbuild": "^0.14.25",
-    "esbuild-register": "^3.3.3",
     "execa": "^6.1.0",
     "minimist": "^1.2.6",
+    "tsx": "^3.9.0",
     "umzug": "^3.2.1"
   }
 }
