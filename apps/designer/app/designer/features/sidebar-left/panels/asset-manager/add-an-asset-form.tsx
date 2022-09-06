@@ -1,8 +1,9 @@
 import { Form, useSubmit } from "@remix-run/react";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
-import { Button } from "@webstudio-is/design-system";
+import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { BaseAsset } from "./types";
+import { UploadIcon } from "@webstudio-is/icons";
 
 const readImages = async (fileList: FileList): Promise<BaseAsset[]> => {
   const images = [];
@@ -61,8 +62,12 @@ export const AddAnAssetForm = ({
         variant="blue"
         type="button"
         onClick={() => inputRef?.current?.click()}
+        size={2}
       >
-        Upload Image
+        <Flex align="center" gap={1}>
+          <UploadIcon />
+          <Text>Upload</Text>
+        </Flex>
       </Button>
     </Form>
   );

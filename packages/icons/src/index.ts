@@ -14,3 +14,5 @@ export { AspectRatioIcon } from "./aspect-ratio";
 export * from "./cloud";
 export { TrashIcon } from "./trash";
 export { SizeIcon } from "./size";
+export { UploadIcon } from "./upload";
+export { GearIcon, gearIconCssVars } from "./gear";
