@@ -13,7 +13,9 @@
     "watch:sdk": "relative-deps && relative-deps watch",
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
     "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:build": "build-storybook",
+    "migrations": "migrations --dev",
+    "migrations:deploy": "migrations migrate"
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",

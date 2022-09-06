@@ -10,6 +10,9 @@
     "checks": "yarn typecheck && yarn lint",
     "build": "prisma format && prisma generate"
   },
+  "bin": {
+    "migrations": "./migrations-cli/cli.ts"
+  },
   "devDependencies": {
     "prisma": "^4.1.0"
   },
@@ -18,6 +21,12 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "@prisma/client": "^4.1.0"
+    "@prisma/client": "^4.1.0",
+    "@types/minimist": "^1.2.2",
+    "dotenv": "^16.0.0",
+    "execa": "^6.1.0",
+    "minimist": "^1.2.6",
+    "tsx": "^3.9.0",
+    "umzug": "^3.2.1"
   }
 }
