@@ -2,35 +2,34 @@ import { Form, useSubmit } from "@remix-run/react";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
-import { BaseAsset } from "./types";
+import { BaseAsset } from "../../features/sidebar-left/panels/asset-manager/types";
 import { UploadIcon } from "@webstudio-is/icons";
 
-const readImages = async (fileList: FileList): Promise<BaseAsset[]> => {
-  const images = [];
-  for (const file of fileList) {
-    const path: string | undefined = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.addEventListener("load", (event) => {
-        const dataUri = event?.target?.result;
-        resolve(dataUri ? String(dataUri) : undefined);
-      });
-      reader.readAsDataURL(file);
-    });
+const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
+  const assets: Array<Promise<BaseAsset>> = Array.from(fileList).map(
+    (file) =>
+      new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", (event) => {
+          const dataUri = event?.target?.result;
+          const path = dataUri ? String(dataUri) : undefined;
+          resolve({
+            path,
+            name: file.name,
+            id: ObjectID().toString(),
+            status: "uploading" as BaseAsset["status"],
+            alt: file.name,
+            size: file.size,
+          });
+        });
+        reader.readAsDataURL(file);
+      })
+  );
 
-    images.push({
-      path,
-      name: file.name,
-      id: ObjectID().toString(),
-      status: "uploading" as BaseAsset["status"],
-      alt: file.name,
-      size: file.size,
-    });
-  }
-
-  return images;
+  return Promise.all(assets);
 };
 
-export const AddAnAssetForm = ({
+export const AssetUpload = ({
   onSubmit,
 }: {
   onSubmit: (uploadedAssets: Array<BaseAsset>) => void;
@@ -38,12 +37,11 @@ export const AddAnAssetForm = ({
   const submit = useSubmit();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const onFormChange = async (event: ChangeEvent<HTMLFormElement>) => {
+  const onFormChange = (event: ChangeEvent<HTMLFormElement>) => {
     const newFiles = inputRef?.current?.files;
     if (newFiles) {
       submit(event.currentTarget);
-      const parsedFiles = await readImages(newFiles);
-      onSubmit(parsedFiles);
+      readAssets(newFiles).then(onSubmit);
       event.currentTarget.reset();
     }
   };

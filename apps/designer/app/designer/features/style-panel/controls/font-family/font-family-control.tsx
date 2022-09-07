@@ -11,7 +11,8 @@ import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
 import { PropertyName } from "../../shared/property-name";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
-import { MutableRefObject, Ref, RefObject, useRef, useState } from "react";
+import { MutableRefObject, useRef, useState } from "react";
+import { FontsManager } from "~/designer/shared/fonts-manager";
 
 const textFieldStyle = {
   height: "$6",
@@ -70,7 +71,8 @@ export const FontFamilyControl = ({
         </PopoverTrigger>
         <PopoverPortal>
           <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
-            <PopoverHeader title="Assets" />
+            <PopoverHeader title="Fonts" />
+            <FontsManager />
           </PopoverContent>
         </PopoverPortal>
       </Popover>
