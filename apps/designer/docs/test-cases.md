@@ -138,3 +138,14 @@
      - check that moving the cursor horizontally allows you to change the depth of the placement indicator line
      - check that after you drop, the dragged item moves to the correct depth
    - Check that after a drag&drop the dragged item is the selected item
+
+1. Flex panel
+
+   - Select an instance
+   - Select "flexbox" as the selected display option.
+   - Check if clicking a flex property icon opens a dropdown.
+   - Check if all flexbox states are computable through the icons seletables.
+   - Check if all flexbox states are computable through the grid.
+   - Check if gap inputs work.
+   - Check if tooltips are present on all icons(including gap input icons).
+   - Check that tooltips have a first time interaction delay.
