@@ -286,14 +286,15 @@ export const migrate = async () => {
     process.exit(0);
   }
 
-  logger.info("You're about to apply the following migration(s):");
-  logger.info("");
-  for (const migration of status.pending) {
-    logger.info(`  - ${migration.name}`);
+  if (args.dev) {
+    logger.info("You're about to apply the following migration(s):");
+    logger.info("");
+    for (const migration of status.pending) {
+      logger.info(`  - ${migration.name}`);
+    }
+    logger.info("");
+    await ensureUserWantiToContinue(true);
   }
-  logger.info("");
-
-  await ensureUserWantiToContinue(true);
 
   await up();
 };

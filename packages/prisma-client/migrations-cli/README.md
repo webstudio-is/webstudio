@@ -6,6 +6,7 @@ This flag can be added to any command. It informs the CLI that it’s used in a 
 
 - automatically loads variables from `.env` files,
 - uses a lockfile,
+- asks for confirmation before applying migrations,
 - allows resetting the database using the `reset` command.
 
 ### `create-schema <name>`
