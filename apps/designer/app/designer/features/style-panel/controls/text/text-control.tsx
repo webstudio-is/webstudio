@@ -45,7 +45,6 @@ const gridRightStyle = {
 };
 
 const iconButtonStyle = {
-  zIndex: 1,
   borderRadius: 2,
   height: "calc($sizes$6 - $nudge$3)",
   width: "calc($sizes$6 - $nudge$3)",

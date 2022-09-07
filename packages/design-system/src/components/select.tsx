@@ -175,22 +175,23 @@ const SelectBase = (
           <ChevronDownIcon />
         </StyledIcon>
       </StyledTrigger>
-
-      <StyledContent>
-        <SelectScrollUpButton>
-          <ChevronUpIcon />
-        </SelectScrollUpButton>
-        <StyledViewport>
-          {options.map((option) => (
-            <SelectItem key={option} value={option} textValue={option}>
-              {getLabel(option)}
-            </SelectItem>
-          ))}
-        </StyledViewport>
-        <SelectScrollDownButton>
-          <ChevronDownIcon />
-        </SelectScrollDownButton>
-      </StyledContent>
+      <SelectPrimitive.Portal>
+        <StyledContent>
+          <SelectScrollUpButton>
+            <ChevronUpIcon />
+          </SelectScrollUpButton>
+          <StyledViewport>
+            {options.map((option) => (
+              <SelectItem key={option} value={option} textValue={option}>
+                {getLabel(option)}
+              </SelectItem>
+            ))}
+          </StyledViewport>
+          <SelectScrollDownButton>
+            <ChevronDownIcon />
+          </SelectScrollDownButton>
+        </StyledContent>
+      </SelectPrimitive.Portal>
     </SelectPrimitive.Root>
   );
 };

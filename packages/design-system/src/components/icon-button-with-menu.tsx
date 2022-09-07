@@ -123,31 +123,32 @@ export const IconButtonWithMenu = ({
           </IconButton>
         </DropdownMenuPrimitive.Trigger>
       </Tooltip>
-
-      <StyledContent sideOffset={4} alignOffset={-4}>
-        <DropdownMenuPrimitive.RadioGroup
-          value={value}
-          onValueChange={onChange}
-        >
-          {items.map(({ name, label, icon }) => {
-            return (
-              <StyledRadioItem
-                key={name}
-                value={label}
-                onFocus={() => onHover?.(name)}
-                onBlur={() => onHover?.(value)}
-              >
-                <StyledItemIndicator>
-                  <CheckIcon />
-                </StyledItemIndicator>
-                {icon}
-                {label}
-              </StyledRadioItem>
-            );
-          })}
-        </DropdownMenuPrimitive.RadioGroup>
-        <StyledArrow offset={12} />
-      </StyledContent>
+      <DropdownMenuPrimitive.Portal>
+        <StyledContent sideOffset={4} alignOffset={-4}>
+          <DropdownMenuPrimitive.RadioGroup
+            value={value}
+            onValueChange={onChange}
+          >
+            {items.map(({ name, label, icon }) => {
+              return (
+                <StyledRadioItem
+                  key={name}
+                  value={label}
+                  onFocus={() => onHover?.(name)}
+                  onBlur={() => onHover?.(value)}
+                >
+                  <StyledItemIndicator>
+                    <CheckIcon />
+                  </StyledItemIndicator>
+                  {icon}
+                  {label}
+                </StyledRadioItem>
+              );
+            })}
+          </DropdownMenuPrimitive.RadioGroup>
+          <StyledArrow offset={12} />
+        </StyledContent>
+      </DropdownMenuPrimitive.Portal>
     </DropdownMenuPrimitive.Root>
   );
 };

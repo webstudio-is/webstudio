@@ -25,6 +25,12 @@ export const DropdownMenuContent = styled(
   menuCss,
   panelStyles
 );
+
+export const DropdownMenuSubContent = styled(
+  DropdownMenuPrimitive.SubContent,
+  menuCss,
+  panelStyles
+);
 export const DropdownMenuSeparator = styled(
   DropdownMenuPrimitive.Separator,
   separatorCss
@@ -109,3 +115,4 @@ export const DropdownMenuRadioGroup = styled(
   {}
 );
 export const DropdownMenuGroup = styled(DropdownMenuPrimitive.Group, {});
+export const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
