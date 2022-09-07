@@ -6,6 +6,7 @@ import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
 import * as logger from "./logger";
 import args from "./args";
+import { CliError } from "./cli-error";
 
 const templateFilePath = path.join(
   prismaMigrations.migrationsDir,
@@ -38,10 +39,12 @@ const confirm = async (
   });
 };
 
-const failWith = (message: string) => {
-  logger.error(message);
-  logger.error("");
-  process.exit(1);
+const ensureUserWantiToContinue = async (defaultResult = false) => {
+  const result = await confirm("Continue?", defaultResult);
+  if (result === false) {
+    logger.info("Aborted.");
+    process.exit(0);
+  }
 };
 
 const writeFile = (filePath: string, content: string) => {
@@ -103,7 +106,7 @@ const ensureNoFailed = (status: Status) => {
     (migration) => migration.state === "failed"
   );
   if (failed.length > 0) {
-    failWith(
+    throw new CliError(
       `There are failed migrations:\n${failed
         .map((item) => {
           let text = `  - ${item.migration.migration_name}`;
@@ -122,7 +125,7 @@ const ensureNoFailed = (status: Status) => {
 
 const ensureNoPending = (status: Status) => {
   if (status.pending.length > 0) {
-    failWith(
+    throw new CliError(
       `There are pending migrations:\n${status.pending
         .map((migration) => `  - ${migration.name}`)
         .join(
@@ -137,7 +140,7 @@ const ensureLastPending = async (migrationsName: string) => {
   const last = pending[pending.length - 1];
 
   if (last === undefined || last.name !== migrationsName) {
-    failWith(
+    throw new CliError(
       "The migrations you've created did not appear as the last pending migration. This isn't supposed to happen. Please investigate / report this issue."
     );
   }
@@ -234,29 +237,7 @@ ${schemaContent}`;
   logger.info("");
 };
 
-export const migrate = async () => {
-  const status = await getStatus();
-
-  ensureNoFailed(status);
-
-  if (status.pending.length === 0) {
-    logger.info("No pending migrations\n");
-    process.exit(0);
-  }
-
-  logger.info("You're about to apply the following migration(s):");
-  logger.info("");
-
-  for (const migration of status.pending) {
-    logger.info(`  - ${migration.name}`);
-  }
-
-  logger.info("");
-
-  if ((await confirm("Continue?", true)) === false) {
-    process.exit(0);
-  }
-
+const up = async () => {
   let locker: FileLocker | undefined;
   if (args.dev) {
     locker = new FileLocker({ path: lockfilePath });
@@ -266,11 +247,11 @@ export const migrate = async () => {
     try {
       await locker.getLock();
     } catch (e) {
-      failWith(
+      throw new CliError(
         `Could not acquire lock!
 This means that another process is already running migrations. 
 If you're sure no other process is running, please delete the lockfile:
-  ${lockfilePath}`
+  $ rm ${lockfilePath}`
       );
     }
   }
@@ -293,6 +274,28 @@ If you're sure no other process is running, please delete the lockfile:
       await locker.releaseLock();
     }
   }
+};
+
+export const migrate = async () => {
+  const status = await getStatus();
+
+  ensureNoFailed(status);
+
+  if (status.pending.length === 0) {
+    logger.info("No pending migrations\n");
+    process.exit(0);
+  }
+
+  logger.info("You're about to apply the following migration(s):");
+  logger.info("");
+  for (const migration of status.pending) {
+    logger.info(`  - ${migration.name}`);
+  }
+  logger.info("");
+
+  await ensureUserWantiToContinue(true);
+
+  await up();
 };
 
 export const status = async () => {
@@ -341,7 +344,7 @@ export const resolve = async ({
       ({ migration }) => migration.migration_name === migrationName
     ) === false
   ) {
-    failWith(
+    throw new CliError(
       `Migration ${migrationName} is not failed. You can resolve only a failed migration.`
     );
   }
@@ -354,9 +357,7 @@ export const resolve = async ({
   );
   logger.info("");
 
-  if ((await confirm(`Continue?`)) === false) {
-    process.exit(0);
-  }
+  await ensureUserWantiToContinue();
 
   if (resolveAs === "applied") {
     await prismaMigrations.setApplied(migrationName);
@@ -368,4 +369,25 @@ export const resolve = async ({
   await prismaMigrations.setRolledBack(migrationName);
   logger.info(`Resolved ${migrationName} as rolled back`);
   logger.info("");
+};
+
+export const reset = async () => {
+  // just to make it read the migrations folder
+  // and fail early if something is wrong with the migration files
+  await getStatus();
+
+  if (args.dev === false) {
+    throw new CliError(
+      "This command is only available in dev mode. Try again with --dev."
+    );
+  }
+
+  logger.info("You're about to DELETE ALL INFORMATION from the database,");
+  logger.info("and run all migrations from scratch!");
+  logger.info("");
+
+  await ensureUserWantiToContinue();
+
+  await prismaMigrations.resetDatabase();
+  await up();
 };

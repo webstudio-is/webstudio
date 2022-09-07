@@ -7,22 +7,42 @@ import path from "node:path";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { prisma } from "../src";
+import { CliError } from "./cli-error";
 
 export const prismaDir = path.resolve(__dirname, "..", "prisma");
 export const schemaFilePath = path.join(prismaDir, "schema.prisma");
 export const migrationsDir = path.join(prismaDir, "migrations");
+
+const getDatabaseSchemaName = () => {
+  // This should return something like prisma.datasource.schema.
+  // Unfortunately, Prisma doesn't expose this information.
+  //
+  // To do this properly manually we'd need to:
+  //   1. Parse the schema file to read `datasource` definition
+  //   2. Extract the connection url from the datasource
+  //   3. Read `?schema` parameter from the connection url as defined here:
+  //        https://www.prisma.io/docs/concepts/database-connectors/postgresql#connection-url
+  //
+  // 1 and 2 is not trivial, so we assume that DATABASE_URL env variable is used, and jump to 3.
+  // But we'll need to find a better way if this becomes a library.
+
+  const defaultSchemaName = "public";
+
+  const urlString = process.env.DATABASE_URL;
+  if (urlString === undefined || urlString.trim() === "") {
+    return defaultSchemaName;
+  }
+
+  const url = new URL(urlString);
+  return url.searchParams.get("schema") || defaultSchemaName;
+};
 
 export const getMigrationFilePath = (
   migrationName: string,
   type: "ts" | "sql"
 ) => path.join(migrationsDir, migrationName, `migration.${type}`);
 
-let tableExists = false;
 export const ensureMigrationTable = async () => {
-  if (tableExists) {
-    return;
-  }
-
   // https://github.com/prisma/prisma-engines/blob/4.3.0/migration-engine/ARCHITECTURE.md#the-_prisma_migrations-table
   // https://github.com/prisma/prisma-engines/blob/88f6ab88e559ef52ab26bc98f1da15200e0c25b4/migration-engine/connectors/sql-migration-connector/src/flavour/postgres.rs#L211-L226
   await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS _prisma_migrations (
@@ -35,8 +55,6 @@ export const ensureMigrationTable = async () => {
     started_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
     applied_steps_count     INTEGER NOT NULL DEFAULT 0
   )`;
-
-  tableExists = true;
 };
 
 // Fields' descriptions are quoted from ARCHITECTURE.md
@@ -225,6 +243,15 @@ export const generateMigrationName = (baseName: string) => {
   return `${prefix}_${baseName}`.slice(0, 254);
 };
 
+export const resetDatabase = async () => {
+  const schemaName = getDatabaseSchemaName();
+
+  // https://github.com/prisma/prisma-engines/blob/b92d74444c1c0298714e9b140a85dd714b8dc7c4/migration-engine/connectors/sql-migration-connector/src/flavour/postgres.rs#L267-L278
+  // @todo: need to use something like pg-escape for schemaName, not super urgent as this is only used in development
+  await prisma.$executeRawUnsafe(`DROP SCHEMA "${schemaName}" CASCADE`);
+  await prisma.$executeRawUnsafe(`CREATE SCHEMA "${schemaName}"`);
+};
+
 // https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-diff
 export const cliDiff = () => {
   return execaSync("prisma", [
@@ -264,7 +291,7 @@ export const generateMigrationClient = (migrationName: string) => {
   if (fs.existsSync(schemaPath) === false) {
     const tsFilePath = getMigrationFilePath(migrationName, "ts");
     if (fs.existsSync(tsFilePath)) {
-      throw new Error(
+      throw new CliError(
         `Can't generate client for ${migrationName} because ${migrationName}/schema.prisma is missing`
       );
     }
