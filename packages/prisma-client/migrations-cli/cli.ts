@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 import * as commands from "./commands";
 import * as logger from "./logger";
 import args from "./args";
-import { UserError } from "./cli-error";
+import { UserError } from "./errors";
 
 const USAGE = `Usage: migrations <command> [--dev]
 
