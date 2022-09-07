@@ -2,7 +2,7 @@ import { Umzug } from "umzug";
 import fs from "node:fs";
 import * as prismaMigrations from "./prisma-migrations";
 import * as logger from "./logger";
-import { CliError } from "./cli-error";
+import { UserError } from "./errors";
 
 export const umzug = new Umzug({
   migrations: {
@@ -40,7 +40,7 @@ export const umzug = new Umzug({
             const migration = require(tsFilePath);
 
             if (typeof migration.default !== "function") {
-              throw new CliError(
+              throw new UserError(
                 `Migration file's ${tsFilePath} default export must be a function`
               );
             }
@@ -51,7 +51,7 @@ export const umzug = new Umzug({
         };
       }
 
-      throw new CliError(
+      throw new UserError(
         `Couldn't find a migration.ts or migration.sql file in migrations/${params.name}`
       );
     },

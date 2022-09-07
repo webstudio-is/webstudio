@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 import * as commands from "./commands";
 import * as logger from "./logger";
 import args from "./args";
-import { CliError } from "./cli-error";
+import { UserError } from "./cli-error";
 
 const USAGE = `Usage: migrations <command> [--dev]
 
@@ -36,7 +36,7 @@ const main = async () => {
     if (command === "create-schema") {
       const name = args._[1];
       if (name === undefined) {
-        throw new CliError(
+        throw new UserError(
           "Missing name for migration.\nUsage: migrations create-schema <name>"
         );
       }
@@ -47,7 +47,7 @@ const main = async () => {
     if (command === "create-data") {
       const name = args._[1];
       if (name === undefined) {
-        throw new CliError(
+        throw new UserError(
           "Missing name for migration.\nUsage: migrations create-data <name>"
         );
       }
@@ -72,14 +72,14 @@ const main = async () => {
         type === undefined ||
         (type !== "applied" && type !== "rolled-back")
       ) {
-        throw new CliError(
+        throw new UserError(
           "Missing type of resolve.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
         );
       }
 
       const name = args._[2];
       if (name === undefined) {
-        throw new CliError(
+        throw new UserError(
           "Missing name of migration.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
         );
       }
@@ -93,9 +93,9 @@ const main = async () => {
       return;
     }
 
-    throw new CliError(`Unknown command: ${command}`);
+    throw new UserError(`Unknown command: ${command}`);
   } catch (error) {
-    if (error instanceof CliError) {
+    if (error instanceof UserError) {
       logger.error(error.message);
       logger.error("");
       process.exit(1);

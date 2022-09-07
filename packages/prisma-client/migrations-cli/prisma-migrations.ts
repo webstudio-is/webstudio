@@ -7,7 +7,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { prisma } from "../src";
-import { CliError } from "./cli-error";
+import { UserError } from "./errors";
 
 export const prismaDir = path.resolve(__dirname, "..", "prisma");
 export const schemaFilePath = path.join(prismaDir, "schema.prisma");
@@ -291,7 +291,7 @@ export const generateMigrationClient = (migrationName: string) => {
   if (fs.existsSync(schemaPath) === false) {
     const tsFilePath = getMigrationFilePath(migrationName, "ts");
     if (fs.existsSync(tsFilePath)) {
-      throw new CliError(
+      throw new UserError(
         `Can't generate client for ${migrationName} because ${migrationName}/schema.prisma is missing`
       );
     }

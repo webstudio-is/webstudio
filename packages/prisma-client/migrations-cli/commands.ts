@@ -6,7 +6,7 @@ import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
 import * as logger from "./logger";
 import args from "./args";
-import { CliError } from "./cli-error";
+import { UserError } from "./errors";
 
 const templateFilePath = path.join(
   prismaMigrations.migrationsDir,
@@ -106,7 +106,7 @@ const ensureNoFailed = (status: Status) => {
     (migration) => migration.state === "failed"
   );
   if (failed.length > 0) {
-    throw new CliError(
+    throw new UserError(
       `There are failed migrations:\n${failed
         .map((item) => {
           let text = `  - ${item.migration.migration_name}`;
@@ -125,7 +125,7 @@ const ensureNoFailed = (status: Status) => {
 
 const ensureNoPending = (status: Status) => {
   if (status.pending.length > 0) {
-    throw new CliError(
+    throw new UserError(
       `There are pending migrations:\n${status.pending
         .map((migration) => `  - ${migration.name}`)
         .join(
@@ -140,7 +140,7 @@ const ensureLastPending = async (migrationsName: string) => {
   const last = pending[pending.length - 1];
 
   if (last === undefined || last.name !== migrationsName) {
-    throw new CliError(
+    throw new UserError(
       "The migrations you've created did not appear as the last pending migration. This isn't supposed to happen. Please investigate / report this issue."
     );
   }
@@ -247,7 +247,7 @@ const up = async () => {
     try {
       await locker.getLock();
     } catch (e) {
-      throw new CliError(
+      throw new UserError(
         `Could not acquire lock!
 This means that another process is already running migrations. 
 If you're sure no other process is running, please delete the lockfile:
@@ -344,7 +344,7 @@ export const resolve = async ({
       ({ migration }) => migration.migration_name === migrationName
     ) === false
   ) {
-    throw new CliError(
+    throw new UserError(
       `Migration ${migrationName} is not failed. You can resolve only a failed migration.`
     );
   }
@@ -377,7 +377,7 @@ export const reset = async () => {
   await getStatus();
 
   if (args.dev === false) {
-    throw new CliError(
+    throw new UserError(
       "This command is only available in dev mode. Try again with --dev."
     );
   }
