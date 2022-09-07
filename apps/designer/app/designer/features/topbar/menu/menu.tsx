@@ -131,7 +131,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
         </Box>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent>
+        <DropdownMenuContent css={{ zIndex: "$1" }}>
           <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
