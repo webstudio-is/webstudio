@@ -7,16 +7,15 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  PopoverPortal,
   TextField,
   Tooltip,
+  css,
 } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 import { StyleConfig } from "../../shared/configs";
-import { PopoverPortal } from "@webstudio-is/design-system";
-import { css } from "@webstudio-is/design-system";
-import { styled } from "@webstudio-is/design-system";
 
 const stringifyRGBA = (color: RGBColor) => {
   const { r, g, b, a = 1 } = color;
@@ -24,7 +23,7 @@ const stringifyRGBA = (color: RGBColor) => {
   return `rgba(${r},${g},${b},${a})`;
 };
 
-const StyledPicker = styled(SketchPicker, {
+const pickerStyle = css({
   padding: "$2",
   background: "$panel",
   // @todo this lib doesn't have another way to define styles for inputs
@@ -34,6 +33,13 @@ const StyledPicker = styled(SketchPicker, {
     background: "$loContrast",
   },
 });
+
+const defaultPickerStyles = {
+  default: {
+    // Workaround to allow overrides using className
+    picker: { padding: "", background: "" },
+  },
+};
 
 type ColorPickerProps = {
   onChange: (value: string) => void;
@@ -98,7 +104,7 @@ const ColorPicker = ({
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent>
-          <StyledPicker
+          <SketchPicker
             color={value}
             onChange={(color: ColorResult) =>
               onChange(stringifyRGBA(color.rgb))
@@ -108,12 +114,8 @@ const ColorPicker = ({
             }}
             // @todo to remove both when we have preset colors
             presetColors={[]}
-            styles={{
-              default: {
-                // Workaround to allow overrides over styled()
-                picker: { padding: null, background: null },
-              },
-            }}
+            className={pickerStyle()}
+            styles={defaultPickerStyles}
           />
         </PopoverContent>
       </PopoverPortal>

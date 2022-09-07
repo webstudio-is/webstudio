@@ -20,7 +20,7 @@ const textFieldStyle = {
 export const FontFamilyControl = ({
   currentStyle,
   inheritedStyle,
-  setProperty,
+  //setProperty,
   styleConfig,
 }: ControlProps) => {
   // @todo show which instance we inherited the value from
@@ -32,7 +32,7 @@ export const FontFamilyControl = ({
 
   if (value === undefined) return null;
 
-  const setValue = setProperty(styleConfig.property);
+  //const setValue = setProperty(styleConfig.property);
 
   return (
     <Grid columns={2}>
@@ -41,17 +41,16 @@ export const FontFamilyControl = ({
       <Popover>
         <PopoverTrigger asChild aria-label="Share project">
           <TextField
-            ref={(element) => {
-              if (element) console.log(element.offsetLeft);
-            }}
             css={textFieldStyle}
             spellCheck={false}
             readOnly
             defaultValue={value.value}
-            onClick={() => {}}
+            onClick={() => {
+              // @todo show font picker
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                console.log("show font picker");
+                // @todo show font picker
               }
             }}
           />

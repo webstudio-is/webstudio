@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-
 import {
-  Box,
   SidebarTabs,
   SidebarTabsContent,
   SidebarTabsList,

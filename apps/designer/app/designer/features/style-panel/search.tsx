@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { css, IconButton, TextField } from "@webstudio-is/design-system";
+import { KeyboardEvent, useState } from "react";
+import { IconButton, TextField } from "@webstudio-is/design-system";
 import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { components } from "@webstudio-is/react-sdk";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
@@ -32,7 +32,7 @@ export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
       onReset={() => {
         setSearch("");
       }}
-      onKeyDown={(event) => {
+      onKeyDown={(event: KeyboardEvent<HTMLFormElement>) => {
         if (event.key === "Escape") {
           event.currentTarget.reset();
         }

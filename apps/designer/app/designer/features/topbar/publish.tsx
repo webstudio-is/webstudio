@@ -10,6 +10,7 @@ import {
   PopoverPortal,
   TextField,
   Text,
+  __DEPRECATED__Text,
   Label,
   Link,
   useId,
