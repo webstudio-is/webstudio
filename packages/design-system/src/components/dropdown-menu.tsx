@@ -13,8 +13,10 @@ export const DropdownMenuArrow = styled(DropdownMenuPrimitive.Arrow, {
 });
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
-export const DropdownMenuTriggerItem = styled(
-  DropdownMenuPrimitive.TriggerItem,
+export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
+
+export const DropdownMenuSubTrigger = styled(
+  DropdownMenuPrimitive.SubTrigger,
   itemCss
 );
 

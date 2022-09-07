@@ -4,8 +4,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
   DropdownMenuTrigger,
-  DropdownMenuTriggerItem,
+  DropdownMenuSubTrigger,
   DropdownMenuCheckboxItem,
   DropdownMenuArrow,
   DropdownMenuSeparator,
@@ -45,11 +46,11 @@ const ThemeMenuItem = () => {
   const settings = Object.keys(labels) as Array<ThemeSetting>;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTriggerItem>
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
         Theme
         <ChevronRightIcon />
-      </DropdownMenuTriggerItem>
+      </DropdownMenuSubTrigger>
       <DropdownMenuContent>
         {settings.map((setting) => (
           <DropdownMenuCheckboxItem
@@ -64,7 +65,7 @@ const ThemeMenuItem = () => {
           </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenuSub>
   );
 };
 
@@ -72,11 +73,11 @@ const ViewMenuItem = () => {
   const [clientSettings, setClientSetting] = useClientSettings();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTriggerItem>
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
         View
         <ChevronRightIcon />
-      </DropdownMenuTriggerItem>
+      </DropdownMenuSubTrigger>
       <DropdownMenuContent>
         <DropdownMenuCheckboxItem
           checked={clientSettings.navigatorLayout === "undocked"}
@@ -92,7 +93,7 @@ const ViewMenuItem = () => {
           Undock navigator
         </DropdownMenuCheckboxItem>
       </DropdownMenuContent>
-    </DropdownMenu>
+    </DropdownMenuSub>
   );
 };
 

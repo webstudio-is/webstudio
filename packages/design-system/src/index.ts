@@ -41,12 +41,7 @@ export { Button } from "./components/button";
 export { IconButton } from "./components/icon-button";
 export { Box } from "./components/box";
 export { ProgressBar } from "./components/progress-bar";
-export {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  PopoverClose,
-} from "./components/popover";
+export * from "./components/popover";
 export { Heading } from "./components/heading";
 export { MenuContent, MenuItem, Menu, MenuAnchor } from "./components/menu";
 export { Paragraph } from "./components/paragraph";
@@ -67,3 +62,4 @@ export * from "./components/separator";
 export * from "./components/tree";
 export * from "./components/__DEPRECATED__/text";
 export * from "./components/text";
+export * from "./components/dialog";

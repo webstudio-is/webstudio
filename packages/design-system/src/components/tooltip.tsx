@@ -3,7 +3,7 @@ import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
 import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
-import type { CSS } from "@webstudio-is/react-sdk";
+import type { CSS } from "../stitches.config";
 
 type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
   React.ComponentProps<typeof TooltipPrimitive.Content> & {
