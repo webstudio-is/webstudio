@@ -1,7 +1,16 @@
-import { Grid, TextField } from "@webstudio-is/design-system";
+import {
+  Grid,
+  TextField,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverPortal,
+} from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
 import { PropertyName } from "../../shared/property-name";
+import { PANEL_WIDTH } from "~/designer/shared/constants";
 
 const textFieldStyle = {
   height: "$6",
@@ -28,20 +37,36 @@ export const FontFamilyControl = ({
   return (
     <Grid columns={2}>
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
-      <TextField
-        css={textFieldStyle}
-        spellCheck={false}
-        readOnly
-        defaultValue={value.value}
-        onClick={() => {
-          console.log("show font picker");
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            console.log("show font picker");
-          }
-        }}
-      />
+
+      <Popover>
+        <PopoverTrigger asChild aria-label="Share project">
+          <TextField
+            ref={(element) => {
+              if (element) console.log(element.offsetLeft);
+            }}
+            css={textFieldStyle}
+            spellCheck={false}
+            readOnly
+            defaultValue={value.value}
+            onClick={() => {}}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                console.log("show font picker");
+              }
+            }}
+          />
+        </PopoverTrigger>
+        <PopoverPortal>
+          <PopoverContent
+            //alignOffset={PANEL_WIDTH}
+            sideOffset={PANEL_WIDTH}
+            side="right"
+            hideArrow
+          >
+            <PopoverHeader title="Assets" />
+          </PopoverContent>
+        </PopoverPortal>
+      </Popover>
     </Grid>
   );
 };
