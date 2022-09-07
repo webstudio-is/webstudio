@@ -62,7 +62,6 @@ const styles = {
     display: "block",
     background: "transparent",
     color: "$hiContrast",
-    zIndex: 99,
     margin: "auto",
     // @todo need to fit more chars
     width: 40,

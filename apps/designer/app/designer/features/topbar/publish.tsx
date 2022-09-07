@@ -7,7 +7,9 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverPortal,
   TextField,
+  Text,
   __DEPRECATED__Text,
   Label,
   Link,
@@ -58,15 +60,7 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: "$0",
               }}
             >
-              <__DEPRECATED__Text
-                css={{
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {`${domain}.${getHost()}`}{" "}
-              </__DEPRECATED__Text>
+              <Text truncate>{`${domain}.${getHost()}`} </Text>
               <ExternalLinkIcon />
             </Link>
           )}
@@ -100,10 +94,12 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
       <PopoverTrigger asChild aria-label="Publish">
         <Button ghost css={{ display: "flex", gap: "$1" }}>
           <RocketIcon />
-          <__DEPRECATED__Text size="1">Publish</__DEPRECATED__Text>
+          <Text>Publish</Text>
         </Button>
       </PopoverTrigger>
-      <Content project={project} />
+      <PopoverPortal>
+        <Content project={project} />
+      </PopoverPortal>
     </Popover>
   );
 };

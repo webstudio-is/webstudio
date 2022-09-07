@@ -1,12 +1,9 @@
-import { useState } from "react";
-import { css, IconButton, TextField } from "@webstudio-is/design-system";
+import { KeyboardEvent, useState } from "react";
+import { IconButton, TextField } from "@webstudio-is/design-system";
 import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { components } from "@webstudio-is/react-sdk";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-
-const formStyle = css({
-  position: "relative",
-});
+import { Box } from "@webstudio-is/design-system";
 
 type OnSearch = (search: string) => void;
 
@@ -29,12 +26,13 @@ type SearchProps = {
 export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
   const [search, setSearch] = useSearch(onSearch);
   return (
-    <form
-      className={formStyle()}
+    <Box
+      as="form"
+      css={{ position: "relative" }}
       onReset={() => {
         setSearch("");
       }}
-      onKeyDown={(event) => {
+      onKeyDown={(event: KeyboardEvent<HTMLFormElement>) => {
         if (event.key === "Escape") {
           event.currentTarget.reset();
         }
@@ -76,6 +74,6 @@ export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
       >
         {search.length === 0 ? <MagnifyingGlassIcon /> : <Cross2Icon />}
       </IconButton>
-    </form>
+    </Box>
   );
 };

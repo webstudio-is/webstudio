@@ -7,8 +7,10 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  PopoverPortal,
   TextField,
   Tooltip,
+  css,
 } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import { getFinalValue } from "../../shared/get-final-value";
@@ -19,6 +21,24 @@ const stringifyRGBA = (color: RGBColor) => {
   const { r, g, b, a = 1 } = color;
 
   return `rgba(${r},${g},${b},${a})`;
+};
+
+const pickerStyle = css({
+  padding: "$2",
+  background: "$panel",
+  // @todo this lib doesn't have another way to define styles for inputs
+  // we should either submit a PR or replace it
+  "& input": {
+    color: "$hiContrast",
+    background: "$loContrast",
+  },
+});
+
+const defaultPickerStyles = {
+  default: {
+    // Workaround to allow overrides using className
+    picker: { padding: "", background: "" },
+  },
 };
 
 type ColorPickerProps = {
@@ -61,7 +81,6 @@ const ColorPicker = ({
             <Box
               css={{
                 gridArea: "1 / 1 / 2 / 2",
-                zIndex: 1,
                 width: "calc($sizes$6 - 6px)",
                 height: "calc($sizes$6 - 6px)",
                 margin: 3,
@@ -83,25 +102,23 @@ const ColorPicker = ({
           />
         </Grid>
       </PopoverTrigger>
-
-      <PopoverContent>
-        <SketchPicker
-          color={value}
-          onChange={(color: ColorResult) => onChange(stringifyRGBA(color.rgb))}
-          onChangeComplete={(color: ColorResult) => {
-            onChangeComplete(stringifyRGBA(color.rgb));
-          }}
-          // @todo to remove both when we have preset colors
-          presetColors={[]}
-          styles={{
-            default: {
-              picker: {
-                padding: 10,
-              },
-            },
-          }}
-        />
-      </PopoverContent>
+      <PopoverPortal>
+        <PopoverContent>
+          <SketchPicker
+            color={value}
+            onChange={(color: ColorResult) =>
+              onChange(stringifyRGBA(color.rgb))
+            }
+            onChangeComplete={(color: ColorResult) => {
+              onChangeComplete(stringifyRGBA(color.rgb));
+            }}
+            // @todo to remove both when we have preset colors
+            presetColors={[]}
+            className={pickerStyle()}
+            styles={defaultPickerStyles}
+          />
+        </PopoverContent>
+      </PopoverPortal>
     </Popover>
   );
 };

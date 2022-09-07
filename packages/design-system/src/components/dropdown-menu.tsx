@@ -13,13 +13,21 @@ export const DropdownMenuArrow = styled(DropdownMenuPrimitive.Arrow, {
 });
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
-export const DropdownMenuTriggerItem = styled(
-  DropdownMenuPrimitive.TriggerItem,
+export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
+
+export const DropdownMenuSubTrigger = styled(
+  DropdownMenuPrimitive.SubTrigger,
   itemCss
 );
 
 export const DropdownMenuContent = styled(
   DropdownMenuPrimitive.Content,
+  menuCss,
+  panelStyles
+);
+
+export const DropdownMenuSubContent = styled(
+  DropdownMenuPrimitive.SubContent,
   menuCss,
   panelStyles
 );
@@ -107,3 +115,4 @@ export const DropdownMenuRadioGroup = styled(
   {}
 );
 export const DropdownMenuGroup = styled(DropdownMenuPrimitive.Group, {});
+export const DropdownMenuPortal = DropdownMenuPrimitive.Portal;

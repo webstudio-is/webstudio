@@ -23,7 +23,6 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   alignItems: "center",
   justifyContent: "center",
   border: "none",
-  zIndex: "10",
   backgroundColor: "transparent",
   ["&:first-child"]: {
     paddingLeft: "$3",

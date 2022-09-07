@@ -45,13 +45,15 @@ type BaseStyleConfig = {
   appliesTo: AppliesTo;
 };
 
+// @todo make it use actual list of controls
 export type Control =
   | "Spacing"
   | "Text"
   | "Color"
   | "Menu"
   | "Select"
-  | "Empty";
+  | "Empty"
+  | "FontFamily";
 
 export type StyleConfig = BaseStyleConfig & {
   control: Control;
@@ -88,6 +90,9 @@ const getControl = (property: StyleProperty): Control => {
     case "placeContent": {
       return "Empty";
     }
+    //case "fontFamily": {
+    //  return "FontFamily";
+    //}
   }
 
   return "Text";

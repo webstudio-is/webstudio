@@ -7,6 +7,7 @@ export const SidebarTabs = styled(TabsPrimitive.Root, {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
+  position: "relative",
 });
 
 export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
@@ -20,7 +21,6 @@ export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
   justifyContent: "center",
   color: "$slate11",
   border: "1px solid transparent",
-  zIndex: "10",
   backgroundColor: "transparent",
 
   "@hover": {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import ObjectId from "bson-objectid";
 import {
   type Instance,
+  type InstanceProps,
   type Tree,
   components,
   allUserPropsContainer,
@@ -48,6 +49,12 @@ declare module "~/shared/pubsub" {
     selectedInstanceRect: DOMRect;
     selectInstance?: SelectedInstanceData;
     textEditingInstanceId?: Instance["id"];
+    insertInstance: {
+      instance: Instance;
+      dropTarget?: { parentId: Instance["id"]; position: number };
+      props?: InstanceProps;
+    };
+    unselectInstance: undefined;
   }
 }
 

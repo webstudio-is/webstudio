@@ -24,7 +24,6 @@
     "@remix-run/serve": "^1.6.4",
     "@remix-run/vercel": "^1.6.4",
     "@sentry/remix": "^7.5.0",
-    "@stitches/react": "^1.2.7",
     "@vercel/node": "^2.4.1",
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/design-system": "*",

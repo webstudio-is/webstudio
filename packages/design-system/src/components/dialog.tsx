@@ -16,6 +16,7 @@ const StyledOverlay = styled(DialogPrimitive.Overlay, overlayStyles, {
   right: 0,
   bottom: 0,
   left: 0,
+  zIndex: "$1",
 });
 
 export const Dialog = ({ children, ...props }: DialogProps) => {
@@ -29,6 +30,7 @@ export const Dialog = ({ children, ...props }: DialogProps) => {
 
 const StyledContent = styled(DialogPrimitive.Content, panelStyles, {
   position: "fixed",
+  zIndex: "$1",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
@@ -77,3 +79,4 @@ export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 export const DialogTitle = DialogPrimitive.Title;
 export const DialogDescription = DialogPrimitive.Description;
+export const DialogPortal = DialogPrimitive.Portal;
