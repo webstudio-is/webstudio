@@ -56,7 +56,11 @@ export const TabContent = ({
           onSetActiveTab("none");
         }}
       />
-      <Flex gap="3" direction="column" css={{ padding: "$1" }}>
+      <Flex
+        gap="3"
+        direction="column"
+        css={{ padding: "$1", paddingTop: "$2" }}
+      >
         <Flex justify="end">
           <AddAnAssetForm onSubmit={onUploadAsset} />
         </Flex>
