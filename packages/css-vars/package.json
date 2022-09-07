@@ -1,27 +1,21 @@
 {
-  "name": "@webstudio-is/icons",
-  "version": "0.1.1",
-  "description": "Webstudio Icons",
+  "name": "@webstudio-is/css-vars",
+  "version": "0.1.0",
+  "description": "CSS vars utility",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
+    "typecheck": "tsc --noEmit",
+    "checks": "yarn typecheck && yarn lint",
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
     "build": "rm -fr lib && tsc",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "yarn typecheck && yarn lint"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
+  "dependencies": {},
   "devDependencies": {
+    "@webstudio-is/jest-config": "*",
     "tsup": "^6.1.3",
     "typescript": "^4.6.2"
-  },
-  "peerDependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
-  },
-  "dependencies": {
-    "@radix-ui/react-icons": "^1.1.0",
-    "@webstudio-is/css-vars": "*"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

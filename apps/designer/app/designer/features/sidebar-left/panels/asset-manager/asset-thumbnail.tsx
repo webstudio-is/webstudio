@@ -3,7 +3,7 @@ import { Box } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
-import { AssetTooltip } from "./asset-tooltip";
+import { AssetInfoTrigger, assetInfoTriggerCssVars } from "./asset-info-tigger";
 import { BaseAsset } from "./types";
 
 const useImageWithFallback = ({
@@ -67,15 +67,12 @@ export const AssetThumbnail = (asset: BaseAsset) => {
         alignItems: "center",
         padding: "0 $2",
         position: "relative",
-
-        "&:hover button": {
-          opacity: 1,
-        },
+        "&:hover": assetInfoTriggerCssVars({ show: true }),
       }}
     >
       <Thumbnail path={path} status={status} />
       {isUploadedAsset && (
-        <AssetTooltip asset={asset} onDelete={() => setIsDeleting(true)} />
+        <AssetInfoTrigger asset={asset} onDelete={() => setIsDeleting(true)} />
       )}
       {(isUploading || isDeleting) && <UploadingAnimation />}
     </Box>

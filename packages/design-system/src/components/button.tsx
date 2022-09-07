@@ -7,6 +7,7 @@ export const Button = styled("button", {
   boxSizing: "border-box",
   border: "none",
   userSelect: "none",
+  transition: "all 200ms ease-out",
   "&::before": {
     boxSizing: "border-box",
   },
@@ -83,24 +84,24 @@ export const Button = styled("button", {
         },
       },
       blue: {
-        backgroundColor: "$blue2",
-        boxShadow: "inset 0 0 0 1px $colors$blue7",
-        color: "$blue11",
+        backgroundColor: "$blue10",
+        color: "$loContrast",
         "@hover": {
           "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$blue8",
+            backgroundColor: "$loContrast",
+            color: "$blue10",
+            boxShadow: "inset 0 0 0 1.5px $colors$blue10",
           },
         },
         "&:active": {
-          backgroundColor: "$blue3",
-          boxShadow: "inset 0 0 0 1px $colors$blue8",
+          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$blue8, 0 0 0 1px $colors$blue8",
+          boxShadow:
+            "inset 0 0 0 1.5px $colors$blue8, 0 0 0 1.5px $colors$blue8",
         },
         '&[data-state="open"]': {
-          backgroundColor: "$blue4",
-          boxShadow: "inset 0 0 0 1px $colors$blue8",
+          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
         },
       },
       green: {
