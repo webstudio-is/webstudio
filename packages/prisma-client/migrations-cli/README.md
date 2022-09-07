@@ -6,8 +6,11 @@ This flag can be added to any command. It informs the CLI that it’s used in a 
 
 - automatically loads variables from `.env` files,
 - uses a lockfile,
-- asks for confirmation before applying migrations,
 - allows resetting the database using the `reset` command.
+
+### `--skip-confirmation`
+
+This flag can be added to any command. It prevents the CLI from asking for confirmation before executing the command.
 
 ### `create-schema <name>`
 

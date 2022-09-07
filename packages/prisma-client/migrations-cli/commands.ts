@@ -18,6 +18,10 @@ const confirm = async (
   message: string,
   defaultResult = false
 ): Promise<boolean> => {
+  if (args["skip-confirmation"]) {
+    return true;
+  }
+
   // Not using `node:readline/promises` because it's experimental.
   return new Promise((resolve) => {
     const rl = readline.createInterface({
@@ -39,7 +43,7 @@ const confirm = async (
   });
 };
 
-const ensureUserWantiToContinue = async (defaultResult = false) => {
+const ensureUserWantsToContinue = async (defaultResult = false) => {
   const result = await confirm("Continue?", defaultResult);
   if (result === false) {
     logger.info("Aborted.");
@@ -293,7 +297,7 @@ export const migrate = async () => {
       logger.info(`  - ${migration.name}`);
     }
     logger.info("");
-    await ensureUserWantiToContinue(true);
+    await ensureUserWantsToContinue(true);
   }
 
   await up();
@@ -358,7 +362,7 @@ export const resolve = async ({
   );
   logger.info("");
 
-  await ensureUserWantiToContinue();
+  await ensureUserWantsToContinue();
 
   if (resolveAs === "applied") {
     await prismaMigrations.setApplied(migrationName);
@@ -387,7 +391,7 @@ export const reset = async () => {
   logger.info("and run all migrations from scratch!");
   logger.info("");
 
-  await ensureUserWantiToContinue();
+  await ensureUserWantsToContinue();
 
   await prismaMigrations.resetDatabase();
   await up();

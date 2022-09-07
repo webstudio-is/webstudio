@@ -4,7 +4,7 @@
   "description": "Webstudio Designer UI as a service",
   "scripts": {
     "build": "remix build",
-    "dev": "remix dev",
+    "dev": "migrations --dev migrate && remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
@@ -15,7 +15,8 @@
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
     "migrations": "migrations --dev",
-    "migrations:deploy": "migrations migrate"
+    "migrate": "migrations migrate --dev --skip-confirmation",
+    "migrations:deploy": "migrations migrate --skip-confirmation"
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",
