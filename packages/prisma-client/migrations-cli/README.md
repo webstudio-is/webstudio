@@ -41,9 +41,9 @@ In a TypeScript migration file, you can use a Prisma client generated specifical
 
 ### I've pulled in migrations created by someone else. How do I apply them?
 
-Run `migrations migrate --dev`
+- Run `migrations migrate --dev`
 
-### I've changed models in `schema.prisma`, how do I update the database?
+### I've changed models in `schema.prisma`. How do I update the database?
 
 - Create a schema migration by running `migrations create-schema <name>`.
 - Apply the migration by running `migrations migrate --dev`.
@@ -51,14 +51,11 @@ Run `migrations migrate --dev`
 ### I need to change schema in a way that involves moving data to a new location.
 
 - Make changes to `schema.prisma` in a way that both the old and the new locations for the data are defined.
-- Create a schema migration by running `migrations create-schema <name>`.
-- Apply the migration by running `migrations migrate --dev`.
+- Create a schema migration by running `migrations create-schema <name>`, and apply it by running `migrations migrate --dev`.
 - Create a data migration by running `migrations create-data <name>`.
-- Edit the data migration file to move the data to the new location.
-- Apply the migration by running `migrations migrate --dev`.
+- Edit the data migration file to move the data to the new location, and apply the migration.
 - Make changes to `schema.prisma` to remove the old models or fields that are no longer needed.
-- Create a schema migration by running `migrations create-schema <name>`.
-- Apply the migration by running `migrations migrate --dev`.
+- Create a schema migration by running `migrations create-schema <name>`, and apply it.
 
 ### A migration has failed. What do I do?
 
@@ -76,22 +73,6 @@ You have several options:
 
 - Make sure your `schema.prisma` file points to the correct database.
 - Add `migrations migrate --skip-confirmation` to your deploy script.
-
-## Comparison to Prisma (v4.x)
-
-<!-- prettier-ignore-start -->
-| Action | Prisma command | Our command | Notable differences |
-| -- | -- | -- | -- |
-| Creating a schema migration | `prisma migrate dev --create-only` | `migrations create-schema` | If there are pending migrations, Prisma will apply them. We will ask the user to apply. |
-| Creating a data migration | N/a | `migrations create-data`  | |
-| Applying migrations in dev | `prisma migrate dev` | `migrations migrate --dev` | We don't do [schema drift detection](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#detecting-schema-drift) |
-| Applying migrations in prod | `prisma migrate deploy` | `migrations migrate`  | |
-| Resolving failed migrations | `prisma migrate resolve --<applied\|rolled-back> <name>` | `migrations resolve <applied\|rolled-back> <name>` | |
-| Status of migrations | `prisma migrate status` | `migrations status` | |
-| Reseting database | `prisma migrate reset` | `migrations reset --dev` | |
-<!-- prettier-ignore-end -->
-
-Also, if a migration file of an applied migration is missing or have been modified, Prisma may treats this as a fatal issue. We also detect these issues and they appear in the `status` output, but we don't do anything beyond that.
 
 ## CLI Reference
 
@@ -146,3 +127,19 @@ Example: `$ migrations resolve applied 20220905153337_move_projects_to_new_table
 Marks a failed migration as applied or rolled back. You can see information about failed migrations using the `status` command.
 
 Note: this does not fix any issues that might have been caused by the failed run of the migration. You need to investigate and fix them manually before running the `resolve` command.
+
+## Comparison to Prisma (v4.x)
+
+<!-- prettier-ignore-start -->
+| Action | Prisma command | Our command | Notable differences |
+| -- | -- | -- | -- |
+| Creating a schema migration | `prisma migrate dev --create-only` | `migrations create-schema` | If there are pending migrations, Prisma will apply them. We will ask the user to apply. |
+| Creating a data migration | N/a | `migrations create-data`  | |
+| Applying migrations in dev | `prisma migrate dev` | `migrations migrate --dev` | We don't do [schema drift detection](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#detecting-schema-drift) |
+| Applying migrations in prod | `prisma migrate deploy` | `migrations migrate`  | |
+| Resolving failed migrations | `prisma migrate resolve --<applied\|rolled-back> <name>` | `migrations resolve <applied\|rolled-back> <name>` | |
+| Status of migrations | `prisma migrate status` | `migrations status` | |
+| Reseting database | `prisma migrate reset` | `migrations reset --dev` | |
+<!-- prettier-ignore-end -->
+
+Also, if a migration file of an applied migration is missing or have been modified, Prisma may treats this as a fatal issue. We also detect these issues and they appear in the `status` output, but we don't do anything beyond that.
