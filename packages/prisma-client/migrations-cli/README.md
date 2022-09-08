@@ -1,7 +1,85 @@
+## Intro
+
+This is a drop-in replacement for Prisma's migration engine. It adds:
+
+- an ability to write a migration in TypeScript,
+- an ability to write a rollback for a migration (\* to be implemented).
+
+A regular Prisma's migrations directory looks like this:
+
+```
+migrations/
+  20220601192603_start/migration.sql
+  20220608130959_adduser/migration.sql
+```
+
+With the new engine it will look something like this:
+
+```
+migrations/
+  20220601192603_start/
+    migration.sql
+  20220608130959_adduser/
+    migration.sql
+    rollback.sql
+  20220608130959_movedata/
+    client/
+      ...
+    migration.ts
+    rollback.ts
+```
+
+In a TypeScript migration file, you can use a Prisma client generated specifically for this migration. This client is frozen in time at the moment when you create a migration. So if at a later point a model will be removed from the main Prisma schema, in the migration you'll still have access to the old model. In other words, the Client in a migration corresponds to a state of the database where the preceding migrations have been applied, but the succeeding haven't.
+
+## Use cases
+
+### How do I setup a new database for development?
+
+- Install Postgres and create a new database.
+- Make sure your `schema.prisma` file points to the correct database.
+- Apply migrations by running `migrations migrate --dev`.
+
+### I've pulled in migrations created by someone else. How do I apply them?
+
+Run `migrations migrate --dev`
+
+### I've changed models in `schema.prisma`, how do I update the database?
+
+- Create a schema migration by running `migrations create-schema <name>`.
+- Apply the migration by running `migrations migrate --dev`.
+
+### I need to change schema in a way that involves moving data to a new location.
+
+- Make changes to `schema.prisma` in a way that both the old and the new locations for the data are defined.
+- Create a schema migration by running `migrations create-schema <name>`.
+- Apply the migration by running `migrations migrate --dev`.
+- Create a data migration by running `migrations create-data <name>`.
+- Edit the data migration file to move the data to the new location.
+- Apply the migration by running `migrations migrate --dev`.
+- Make changes to `schema.prisma` to remove the old models or fields that are no longer needed.
+- Create a schema migration by running `migrations create-schema <name>`.
+- Apply the migration by running `migrations migrate --dev`.
+
+### A migration has failed. What do I do?
+
+You have several options:
+
+1. If you have a backup of your database, you can restore it.
+1. If you're in a dev environment, and you don't care about the data in the database, you can reset the database by running `migrations reset --dev`.
+1. Fix the issues manually.
+   - Figure out what changes the migration managed to make to the database.
+   - Revert the changes manually by any means you like. E.g. using a Postgres client.
+   - Alternatively, manually perform the remaining steps of the migration.
+   - Run `migrations resolve applied <name>` or `migrations resolve rolled-back <name>` to mark the migration as applied or rolled-back.
+
+### How do I apply migrations in a deployment environment?
+
+- Make sure your `schema.prisma` file points to the correct database.
+- Add `migrations migrate --skip-confirmation` to your deploy script.
+
 ## Comparison to Prisma (v4.x)
 
 <!-- prettier-ignore-start -->
-
 | Action | Prisma command | Our command | Notable differences |
 | -- | -- | -- | -- |
 | Creating a schema migration | `prisma migrate dev --create-only` | `migrations create-schema` | If there are pending migrations, Prisma will apply them. We will ask the user to apply. |
@@ -12,6 +90,8 @@
 | Status of migrations | `prisma migrate status` | `migrations status` | |
 | Reseting database | `prisma migrate reset` | `migrations reset --dev` | |
 <!-- prettier-ignore-end -->
+
+Also, if a migration file of an applied migration is missing or have been modified, Prisma may treats this as a fatal issue. We also detect these issues and they appear in the `status` output, but we don't do anything beyond that.
 
 ## CLI Reference
 
