@@ -5,7 +5,7 @@
 This flag can be added to any command. It informs the CLI that it’s used in a development environment, which slightly changes its behaviour:
 
 - automatically loads variables from `.env` files,
-- uses a lockfile,
+- uses a lockfile to avoid running more than one migration process at the same time,
 - allows resetting the database using the `reset` command.
 
 ### `--skip-confirmation`
