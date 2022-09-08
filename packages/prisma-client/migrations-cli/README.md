@@ -33,6 +33,13 @@ In a TypeScript migration file, you can use a Prisma client generated specifical
 
 ## Use cases
 
+### How do I start using the new engine?
+
+- Stop using `prisma migrate *` commands
+- Start using `migrations *` commands instead
+
+NOTE: If this becomes a library there should be more istructions here.
+
 ### How do I setup a new database for development?
 
 - Install Postgres and create a new database.
@@ -61,8 +68,8 @@ In a TypeScript migration file, you can use a Prisma client generated specifical
 
 You have several options:
 
-1. If you have a backup of your database, you can restore it.
-1. If you're in a dev environment, and you don't care about the data in the database, you can reset the database by running `migrations reset --dev`.
+1. If you have a backup, you can restore it.
+1. If you don't care about the data in the database, you can reset the database by running `migrations reset [--dev]`.
 1. Fix the issues manually.
    - Figure out what changes the migration managed to make to the database.
    - Revert the changes manually by any means you like. E.g. using a Postgres client.
@@ -81,8 +88,7 @@ You have several options:
 This flag can be added to any command. It informs the CLI that it’s used in a development environment, which slightly changes its behaviour:
 
 - automatically loads variables from `.env` files,
-- uses a lockfile to avoid running more than one migration process at the same time,
-- allows resetting the database using the `reset` command.
+- uses a lockfile to avoid running more than one migration process at the same time.
 
 ### `--skip-confirmation`
 
@@ -112,7 +118,7 @@ Applies all pending migrations. Looks for migrations in the migrations directory
 
 Example: `$ migrations reset`
 
-Deletes all data from the database, and applies all migrations again. Works only with the `--dev` flag.
+Deletes all data from the database, and applies all migrations again.
 
 ### `status`
 

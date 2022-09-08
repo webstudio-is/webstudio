@@ -357,14 +357,8 @@ export const resolve = async ({
 
 export const reset = async () => {
   // just to make it read the migrations folder
-  // and fail early if something is wrong with the migration files
+  // and fail early if something is wrong with it.
   await getStatus();
-
-  if (args.dev === false) {
-    throw new UserError(
-      "This command is only available in dev mode. Try again with --dev."
-    );
-  }
 
   logger.info("You're about to DELETE ALL INFORMATION from the database,");
   logger.info("and run all migrations from scratch!");
