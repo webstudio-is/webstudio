@@ -1,14 +1,17 @@
 ## Comparison to Prisma (v4.x)
 
-| Action                      | Prisma command                                             | Our command                                        | Notable differences                                                                                                                        |
-| --------------------------- | ---------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Creating a schema migration | `prisma migrate dev --create-only`                         | `migrations create-schema`                         | If there are pending migrations, Prisma will apply them. We will ask the user to apply.                                                    |
-| Creating a data migration   | N/a                                                        | `migrations create-data`                           |                                                                                                                                            |
-| Applying migrations in dev  | `prisma migrate dev`                                       | `migrations migrate --dev`                         | We don't do [schema drift detection](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#detecting-schema-drift) |
-| Applying migrations in prod | `prisma migrate deploy`                                    | `migrations migrate`                               |                                                                                                                                            |
-| Resolving failed migrations | `prisma migrate resolve <--applied\|--rolled-back> <name>` | `migrations resolve <applied\|rolled-back> <name>` |                                                                                                                                            |
-| Status of migrations        | `prisma migrate status`                                    | `migrations status`                                |                                                                                                                                            |
-| Reseting database           | `prisma migrate reset`                                     | `migrations reset --dev`                           |                                                                                                                                            |
+<!-- prettier-ignore-start -->
+
+| Action | Prisma command | Our command | Notable differences |
+| -- | -- | -- | -- |
+| Creating a schema migration | `prisma migrate dev --create-only` | `migrations create-schema` | If there are pending migrations, Prisma will apply them. We will ask the user to apply. |
+| Creating a data migration | N/a | `migrations create-data`  | |
+| Applying migrations in dev | `prisma migrate dev` | `migrations migrate --dev` | We don't do [schema drift detection](https://www.prisma.io/docs/concepts/components/prisma-migrate/shadow-database#detecting-schema-drift) |
+| Applying migrations in prod | `prisma migrate deploy` | `migrations migrate`  | |
+| Resolving failed migrations | `prisma migrate resolve --<applied\|rolled-back> <name>` | `migrations resolve <applied\|rolled-back> <name>` | |
+| Status of migrations | `prisma migrate status` | `migrations status` | |
+| Reseting database | `prisma migrate reset` | `migrations reset --dev` | |
+<!-- prettier-ignore-end -->
 
 ## CLI Reference
 
