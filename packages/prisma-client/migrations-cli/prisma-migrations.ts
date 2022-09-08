@@ -13,30 +13,6 @@ export const prismaDir = path.resolve(__dirname, "..", "prisma");
 export const schemaFilePath = path.join(prismaDir, "schema.prisma");
 export const migrationsDir = path.join(prismaDir, "migrations");
 
-const getDatabaseSchemaName = () => {
-  // This should return something like prisma.datasource.schema.
-  // Unfortunately, Prisma doesn't expose this information.
-  //
-  // To do this properly manually we'd need to:
-  //   1. Parse the schema file to read `datasource` definition
-  //   2. Extract the connection url from the datasource
-  //   3. Read `?schema` parameter from the connection url as defined here:
-  //        https://www.prisma.io/docs/concepts/database-connectors/postgresql#connection-url
-  //
-  // 1 and 2 is not trivial, so we assume that DATABASE_URL env variable is used, and jump to 3.
-  // But we'll need to find a better way if this becomes a library.
-
-  const defaultSchemaName = "public";
-
-  const urlString = process.env.DATABASE_URL;
-  if (urlString === undefined || urlString.trim() === "") {
-    return defaultSchemaName;
-  }
-
-  const url = new URL(urlString);
-  return url.searchParams.get("schema") || defaultSchemaName;
-};
-
 export const getMigrationFilePath = (
   migrationName: string,
   type: "ts" | "sql"
@@ -244,12 +220,22 @@ export const generateMigrationName = (baseName: string) => {
 };
 
 export const resetDatabase = async () => {
-  const schemaName = getDatabaseSchemaName();
+  const sqlToDeleteEverything = execaSync("prisma", [
+    "migrate",
+    "diff",
+    "--from-schema-datasource",
+    schemaFilePath,
+    "--to-empty",
+    "--script",
+  ]).stdout;
 
-  // https://github.com/prisma/prisma-engines/blob/b92d74444c1c0298714e9b140a85dd714b8dc7c4/migration-engine/connectors/sql-migration-connector/src/flavour/postgres.rs#L267-L278
-  // @todo: need to use something like pg-escape for schemaName, not super urgent as this is only used in development
-  await prisma.$executeRawUnsafe(`DROP SCHEMA "${schemaName}" CASCADE`);
-  await prisma.$executeRawUnsafe(`CREATE SCHEMA "${schemaName}"`);
+  execaSync(
+    "prisma",
+    ["db", "execute", "--stdin", "--schema", schemaFilePath],
+    { input: sqlToDeleteEverything }
+  );
+
+  await prisma.$executeRaw`delete from _prisma_migrations`;
 };
 
 // https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-diff

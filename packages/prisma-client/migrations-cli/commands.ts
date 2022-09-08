@@ -356,7 +356,7 @@ export const resolve = async ({
 };
 
 export const reset = async () => {
-  // just to make it read the migrations folder
+  // Just to make it read the migrations folder
   // and fail early if something is wrong with it.
   await getStatus();
 
