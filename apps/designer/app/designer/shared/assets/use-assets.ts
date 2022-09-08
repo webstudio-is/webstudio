@@ -27,8 +27,6 @@ export const useAssets = (initialAssets: Array<BaseAsset>) => {
     }
   }, [changes]);
 
-  console.log("changes", changes);
-
   const onUploadAsset = (uploadedAssets: Array<BaseAsset>) =>
     setAssets((assets) => [...uploadedAssets, ...assets]);
 

@@ -17,7 +17,7 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
             path,
             name: file.name,
             id: ObjectID().toString(),
-            status: "uploading" as BaseAsset["status"],
+            status: "uploading",
             alt: file.name,
             size: file.size,
           });
@@ -29,11 +29,12 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
   return Promise.all(assets);
 };
 
-export const AssetUpload = ({
-  onSubmit,
-}: {
-  onSubmit: (uploadedAssets: Array<BaseAsset>) => void;
-}) => {
+type AssetUploadProps = {
+  onSubmit: (assets: Array<BaseAsset>) => void;
+  accept: string;
+};
+
+export const AssetUpload = ({ onSubmit, accept }: AssetUploadProps) => {
   const submit = useSubmit();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -49,7 +50,7 @@ export const AssetUpload = ({
   return (
     <Form method="post" encType="multipart/form-data" onChange={onFormChange}>
       <input
-        accept="image/*"
+        accept={accept}
         type="file"
         name="image"
         multiple

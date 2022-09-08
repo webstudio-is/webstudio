@@ -17,7 +17,6 @@ export const TabContent = ({
   assets: Array<BaseAsset>;
 }) => {
   const { assets, onUploadAsset } = useAssets(loadedAssets);
-  //console.log(loadedAssets);
   return (
     <>
       <Header
