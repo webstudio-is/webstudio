@@ -235,7 +235,7 @@ export const resetDatabase = async () => {
     { input: sqlToDeleteEverything }
   );
 
-  await prisma.$executeRaw`delete from _prisma_migrations`;
+  await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations`;
 };
 
 // https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-diff
