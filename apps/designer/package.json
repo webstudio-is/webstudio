@@ -4,7 +4,7 @@
   "description": "Webstudio Designer UI as a service",
   "scripts": {
     "build": "remix build",
-    "dev": "migrations --dev migrate && remix dev",
+    "dev": "remix dev",
     "start": "remix-serve build",
     "typecheck": "tsc -b",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
