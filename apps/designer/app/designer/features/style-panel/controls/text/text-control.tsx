@@ -134,8 +134,6 @@ export const TextControl = ({
               onPointerUp={(event) => {
                 setValue((event.target as HTMLInputElement).value);
               }}
-              variant="ghost"
-              size="1"
               css={{
                 ...iconButtonGridLeftStyle,
                 ...(isCurrentBreakpoint && iconButtonActiveStyle),
