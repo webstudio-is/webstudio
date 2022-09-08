@@ -1,7 +1,7 @@
-import { FileLocker, MigrationMeta } from "umzug";
 import fs from "node:fs";
 import path from "node:path";
-import * as readline from "node:readline";
+import { FileLocker, MigrationMeta } from "umzug";
+import confirm from "@inquirer/confirm";
 import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
 import * as logger from "./logger";
@@ -14,37 +14,16 @@ const templateFilePath = path.join(
 );
 const lockfilePath = path.join(prismaMigrations.migrationsDir, "lockfile");
 
-const confirm = async (
-  message: string,
-  defaultResult = false
-): Promise<boolean> => {
+const ensureUserWantsToContinue = async (defaultResult = false) => {
   if (args["skip-confirmation"]) {
-    return true;
+    return;
   }
 
-  // Not using `node:readline/promises` because it's experimental.
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    rl.question(
-      `${message} ${defaultResult === true ? "(Y/n)" : "(y/N)"} `,
-      (answer) => {
-        rl.close();
-        const normalised = answer.toLowerCase().trim();
-        if (normalised === "") {
-          resolve(defaultResult);
-          return;
-        }
-        resolve(normalised === "y" || normalised === "yes");
-      }
-    );
+  const result = await confirm({
+    message: "Continue?",
+    default: defaultResult,
   });
-};
 
-const ensureUserWantsToContinue = async (defaultResult = false) => {
-  const result = await confirm("Continue?", defaultResult);
   if (result === false) {
     logger.info("Aborted.");
     process.exit(0);
