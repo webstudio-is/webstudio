@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
 import { BaseAsset } from "./types";
 
-export const useAssets = (baseAssets: Array<BaseAsset>) => {
+export const useAssets = (initialAssets: Array<BaseAsset>) => {
   const changes = useActionData();
-
-  const [assets, setAssets] = useState<BaseAsset[]>(baseAssets);
+  const [assets, setAssets] = useState<BaseAsset[]>(initialAssets);
 
   useEffect(() => {
     if (changes?.errors) {
@@ -27,6 +26,8 @@ export const useAssets = (baseAssets: Array<BaseAsset>) => {
       ]);
     }
   }, [changes]);
+
+  console.log("changes", changes);
 
   const onUploadAsset = (uploadedAssets: Array<BaseAsset>) =>
     setAssets((assets) => [...uploadedAssets, ...assets]);

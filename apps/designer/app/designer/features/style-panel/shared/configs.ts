@@ -90,9 +90,9 @@ const getControl = (property: StyleProperty): Control => {
     case "placeContent": {
       return "Empty";
     }
-    //case "fontFamily": {
-    //  return "FontFamily";
-    //}
+    case "fontFamily": {
+      return "FontFamily";
+    }
   }
 
   return "Text";

@@ -50,7 +50,6 @@ export const FontFamilyControl = ({
   return (
     <Grid columns={2}>
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
-
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <TextField
@@ -59,13 +58,8 @@ export const FontFamilyControl = ({
             spellCheck={false}
             readOnly
             defaultValue={value.value}
-            onClick={(event) => {
+            onClick={() => {
               setIsOpen(true);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                // @todo show font picker
-              }
             }}
           />
         </PopoverTrigger>

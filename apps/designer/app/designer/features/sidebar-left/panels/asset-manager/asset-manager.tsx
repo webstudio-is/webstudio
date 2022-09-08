@@ -10,13 +10,14 @@ import { Header } from "../../lib/header";
 import { AssetThumbnail } from "./asset-thumbnail";
 
 export const TabContent = ({
-  assets: baseAssets,
+  assets: loadedAssets,
   onSetActiveTab,
 }: {
   onSetActiveTab: (tabName: TabName) => void;
   assets: Array<BaseAsset>;
 }) => {
-  const { assets, onUploadAsset } = useAssets(baseAssets);
+  const { assets, onUploadAsset } = useAssets(loadedAssets);
+  //console.log(loadedAssets);
   return (
     <>
       <Header
@@ -31,7 +32,7 @@ export const TabContent = ({
         css={{ padding: "$1", paddingTop: "$2" }}
       >
         <Flex justify="end">
-          <AssetUpload onSubmit={onUploadAsset} />
+          <AssetUpload onSubmit={onUploadAsset} accept="image/*" />
         </Flex>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (
