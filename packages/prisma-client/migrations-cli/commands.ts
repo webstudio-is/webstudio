@@ -15,7 +15,7 @@ const templateFilePath = path.join(
 const lockfilePath = path.join(prismaMigrations.migrationsDir, "lockfile");
 
 const ensureUserWantsToContinue = async (defaultResult = false) => {
-  if (args["skip-confirmation"]) {
+  if (args.force) {
     return;
   }
 

@@ -79,7 +79,7 @@ You have several options:
 ### How do I apply migrations in a deployment environment?
 
 - Make sure your `schema.prisma` file points to the correct database.
-- Add `migrations migrate --skip-confirmation` to your deploy script.
+- Add `migrations migrate --force` to your deploy script.
 
 ## CLI Reference
 
@@ -90,7 +90,7 @@ This flag can be added to any command. It informs the CLI that it’s used in a 
 - automatically loads variables from `.env` files,
 - uses a lockfile to avoid running more than one migration process at the same time.
 
-### `--skip-confirmation`
+### `--force`
 
 This flag can be added to any command. It prevents the CLI from asking for confirmation before executing the command.
 
