@@ -51,6 +51,9 @@ export const Text = styled("div", {
       loContrast: {
         color: "$loContrast",
       },
+      hint: {
+        color: "$hint",
+      },
     },
     truncate: {
       true: {
