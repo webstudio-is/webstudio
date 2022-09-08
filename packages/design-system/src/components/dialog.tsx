@@ -67,7 +67,7 @@ export const DialogContent = React.forwardRef<
   <StyledContent {...props} ref={forwardedRef}>
     {children}
     <StyledCloseButton asChild>
-      <IconButton variant="ghost">
+      <IconButton>
         <Cross1Icon />
       </IconButton>
     </StyledCloseButton>
