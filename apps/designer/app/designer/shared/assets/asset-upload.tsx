@@ -29,12 +29,17 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
   return Promise.all(assets);
 };
 
-type AssetUploadProps = {
-  onSubmit: (assets: Array<BaseAsset>) => void;
-  accept: string;
+const acceptMap = {
+  image: "image/*",
+  font: ".woff2,.woff,.ttf",
 };
 
-export const AssetUpload = ({ onSubmit, accept }: AssetUploadProps) => {
+type AssetUploadProps = {
+  onSubmit: (assets: Array<BaseAsset>) => void;
+  type: "image" | "font";
+};
+
+export const AssetUpload = ({ onSubmit, type }: AssetUploadProps) => {
   const submit = useSubmit();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -50,9 +55,9 @@ export const AssetUpload = ({ onSubmit, accept }: AssetUploadProps) => {
   return (
     <Form method="post" encType="multipart/form-data" onChange={onFormChange}>
       <input
-        accept={accept}
+        accept={acceptMap[type]}
         type="file"
-        name="image"
+        name={type}
         multiple
         ref={inputRef}
         style={{ display: "none" }}

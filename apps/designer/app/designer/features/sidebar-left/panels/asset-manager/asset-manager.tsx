@@ -31,7 +31,7 @@ export const TabContent = ({
         css={{ padding: "$1", paddingTop: "$2" }}
       >
         <Flex justify="end">
-          <AssetUpload onSubmit={onUploadAsset} accept="image/*" />
+          <AssetUpload onSubmit={onUploadAsset} type="image" />
         </Flex>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (

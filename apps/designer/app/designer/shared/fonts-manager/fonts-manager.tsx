@@ -6,7 +6,7 @@ export const FontsManager = () => {
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1", paddingTop: "$2" }}>
       <Flex justify="end">
-        <AssetUpload onSubmit={onUploadAsset} accept=".woff2,.woff,.ttf" />
+        <AssetUpload onSubmit={onUploadAsset} type="font" />
       </Flex>
       {assets.map((asset) => asset.name)}
     </Flex>
