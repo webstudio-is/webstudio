@@ -11,13 +11,17 @@ import {
 import { toast } from "@webstudio-is/design-system";
 import { useEffect } from "react";
 import { zfd } from "zod-form-data";
+import type { ActionData } from "~/designer/shared/assets";
 
 const deleteAssetSchema = zfd.formData({
   assetId: zfd.text(),
   assetName: zfd.text(),
 });
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({
+  request,
+  params,
+}): Promise<ActionData | undefined> => {
   if (params.id === undefined) throw new Error("Project id undefined");
   try {
     if (request.method === "DELETE") {
@@ -53,10 +57,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const useAction = () => {
-  const actionData = useActionData();
+  const actionData: ActionData | undefined = useActionData();
 
   useEffect(() => {
-    if (actionData && "errors" in actionData) {
+    if (actionData?.errors) {
       toast.error(actionData.errors);
     }
   }, [actionData]);
