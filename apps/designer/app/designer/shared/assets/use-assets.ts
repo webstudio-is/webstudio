@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
 import { BaseAsset } from "./types";
 
-export const useAssets = (initialAssets: Array<BaseAsset>) => {
+export const useAssets = (initialAssets: Array<BaseAsset> = []) => {
   const changes = useActionData();
   const [assets, setAssets] = useState<BaseAsset[]>(initialAssets);
 
