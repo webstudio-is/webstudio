@@ -14,6 +14,7 @@
     "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
+    "@types/uuid": "^8.3.4",
     "prisma": "^4.1.0"
   },
   "main": "src/index.ts",
@@ -27,6 +28,7 @@
     "execa": "^6.1.0",
     "minimist": "^1.2.6",
     "tsx": "^3.9.0",
-    "umzug": "^3.2.1"
+    "umzug": "^3.2.1",
+    "uuid": "^9.0.0"
   }
 }
