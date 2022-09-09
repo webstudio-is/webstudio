@@ -9,8 +9,8 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import { useIsShareDialogOpen } from "../../shared/nano-states";
 import * as db from "~/shared/db";
+import { useIsShareDialogOpen } from "../../shared/nano-states";
 
 type ShareButtonProps = { path: string; project: db.project.Project };
 

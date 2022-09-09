@@ -1,14 +1,6 @@
 import { useCallback } from "react";
-
-import {
-  useSubscribe,
-  usePublish,
-  type Publish,
-} from "@webstudio-is/react-sdk";
-
 import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
 import * as db from "~/shared/db";
-
 import type { Config } from "~/config";
 import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
@@ -41,10 +33,6 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-import * as db from "~/shared/db";
-import { Asset } from "@webstudio-is/asset-uploader";
-
-
 
 export const links = () => {
   return [

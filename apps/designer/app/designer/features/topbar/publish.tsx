@@ -18,7 +18,6 @@ import {
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
 import * as db from "~/shared/db";
-
 type PublishButtonProps = { project: db.project.Project };
 
 const getHost = () => {
