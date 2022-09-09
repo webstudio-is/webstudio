@@ -31,7 +31,9 @@ export default () => {
         (project) =>
           project.devTreeId === tree.id ||
           project.prodTreeId === tree.id ||
-          TreeHistorySchema.parse(project.prodTreeIdHistory).includes(tree.id)
+          TreeHistorySchema.parse(
+            JSON.parse(project.prodTreeIdHistory)
+          ).includes(tree.id)
       );
 
       if (project === undefined) {

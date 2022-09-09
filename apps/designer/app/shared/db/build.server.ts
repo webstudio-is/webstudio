@@ -1,7 +1,7 @@
 import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
 import { z } from "zod";
 
-const Page = z.object({
+const PageSchema = z.object({
   id: z.string(),
   name: z.string(),
   path: z.string(),
@@ -10,14 +10,16 @@ const Page = z.object({
   treeId: z.string(),
 });
 
-type Page = z.infer<typeof Page>;
+type Page = z.infer<typeof PageSchema>;
 
-const Pages: z.ZodType<{ homePage: Page; pages: Array<Page> }> = z.object({
-  homePage: Page,
-  pages: z.array(Page),
-});
+const PagesSchema: z.ZodType<{ homePage: Page; pages: Array<Page> }> = z.object(
+  {
+    homePage: PageSchema,
+    pages: z.array(PageSchema),
+  }
+);
 
-type Pages = z.infer<typeof Pages>;
+type Pages = z.infer<typeof PagesSchema>;
 
 type Build = {
   id: DbBuild["id"];
