@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from "./client";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuid } from "uuid";
 
 export default () => {
   const client = new PrismaClient();
@@ -24,7 +24,7 @@ export default () => {
       builds.push({
         pages: JSON.stringify({
           homePage: {
-            id: uuidv4(),
+            id: uuid(),
             name: "Home",
             path: "",
             title: "Home",
