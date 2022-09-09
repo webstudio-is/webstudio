@@ -21,7 +21,7 @@ import {
 } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { Breadcrumbs } from "./features/breadcrumbs";
+import { Footer } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
 import {
   useUpdateCanvasWidth,
@@ -41,10 +41,9 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-
 import * as db from "~/shared/db";
-
 import { Asset } from "@webstudio-is/asset-uploader";
+
 
 
 export const links = () => {
@@ -109,11 +108,9 @@ const SidePanel = ({
         height: "100%",
         ...css,
         "&:first-of-type": {
-          boxShadow: "inset -1px 0 0 0 $colors$gray7",
+          boxShadow: "inset -1px 0 0 0 $colors$panelOutline",
         },
-        "&:last-of-type": {
-          boxShadow: "inset 1px 0 0 0 $colors$gray7",
-        },
+        "&:last-of-type": { boxShadow: "inset 1px 0 0 0 $colors$panelOutline" },
       }}
     >
       {children}
@@ -292,7 +289,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
           <Inspector publish={publish} />
         )}
       </SidePanel>
-      <Breadcrumbs publish={publish} />
+      <Footer publish={publish} />
     </ChromeWrapper>
   );
 };

@@ -116,6 +116,7 @@ export const ComboboxPopperContent = PopperContent;
 
 type ComboboxProps<Item> = {
   name: string;
+  label?: string;
   items: Array<Item>;
   value?: Item;
   onItemSelect?: (value: Item) => void;
@@ -135,7 +136,9 @@ export const Combobox = <Item extends BaseItem>({
   value,
   name,
   itemToString = (item) =>
-    item !== null && "label" in item ? item.label : item ?? "",
+    typeof item === "object" && item !== null && "label" in item
+      ? item.label
+      : item ?? "",
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,

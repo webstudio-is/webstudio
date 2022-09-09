@@ -5,6 +5,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverPortal,
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
@@ -61,7 +62,9 @@ export const ShareButton = ({ path, project }: ShareButtonProps) => {
           <Share1Icon />
         </IconButton>
       </PopoverTrigger>
-      <Content path={path} project={project} />
+      <PopoverPortal>
+        <Content path={path} project={project} />
+      </PopoverPortal>
     </Popover>
   );
 };

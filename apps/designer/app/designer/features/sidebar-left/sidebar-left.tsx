@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-
 import {
-  Box,
   SidebarTabs,
   SidebarTabsContent,
   SidebarTabsList,
@@ -15,6 +13,7 @@ import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
+import { Flex } from "@webstudio-is/design-system";
 
 const none = { TabContent: () => null };
 
@@ -49,7 +48,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
   );
 
   return (
-    <Box css={{ position: "relative", zIndex: 1 }}>
+    <Flex>
       <SidebarTabs activationMode="manual" value={activeTab}>
         <SidebarTabsList>
           {enabledPanels.map((tabName: TabName) => (
@@ -68,6 +67,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
+            zIndex: "$1",
             width: PANEL_WIDTH,
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
@@ -85,6 +85,6 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
           />
         </SidebarTabsContent>
       </SidebarTabs>
-    </Box>
+    </Flex>
   );
 };

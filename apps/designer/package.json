@@ -14,7 +14,8 @@
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
-    "migrations": "migrations --dev"
+    "migrations": "migrations --dev",
+    "migrations:deploy": "migrations migrate"
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",
@@ -23,13 +24,13 @@
     "@remix-run/serve": "^1.6.4",
     "@remix-run/vercel": "^1.6.4",
     "@sentry/remix": "^7.5.0",
-    "@stitches/react": "^1.2.7",
     "@vercel/node": "^2.4.1",
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/design-system": "*",
     "@webstudio-is/icons": "*",
     "@webstudio-is/prisma-client": "*",
     "@webstudio-is/react-sdk": "*",
+    "@webstudio-is/css-vars": "*",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "debug": "^4.3.4",

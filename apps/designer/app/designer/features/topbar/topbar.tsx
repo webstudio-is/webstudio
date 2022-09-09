@@ -1,5 +1,4 @@
 import type { Publish } from "~/shared/pubsub";
-import type { Project } from "@webstudio-is/prisma-client";
 import { darkTheme, Flex, type CSS } from "@webstudio-is/design-system";
 import type { Config } from "~/config";
 import { PreviewButton } from "./preview";
@@ -27,7 +26,7 @@ export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
         bc: "$loContrast",
         height: "$sizes$7",
         "[data-theme=dark] &": {
-          boxShadow: "inset 0 -1px 0 0 $colors$gray7",
+          boxShadow: "inset 0 -1px 0 0 $colors$panelOutline",
         },
         // @todo: uhh, setting this on any focused child element? lets see what's the use case and why its necessary to override vs. not having it in the first place
         "& :focus": {
