@@ -8,7 +8,6 @@ import {
 } from "@webstudio-is/icons";
 import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
-import { Header } from "../../lib/header";
 import { BaseAsset } from "./types";
 
 const Filename = ({ name }: { name: string }) => {
@@ -72,7 +71,6 @@ export const AssetInfo = ({
 
   return (
     <>
-      <Header title="Asset Details" onClose={onClose} />
       <Box css={{ p: "$2 $3" }}>
         <Grid columns={2} align="center" gap={2}>
           <Box css={{ width: 100 }}>

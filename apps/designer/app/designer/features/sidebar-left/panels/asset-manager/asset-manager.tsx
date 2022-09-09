@@ -1,53 +1,22 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import { Flex, Grid } from "@webstudio-is/design-system";
-import { useEffect, useState } from "react";
-import { useActionData } from "@remix-run/react";
+import { Box, Flex, Grid } from "@webstudio-is/design-system";
+import {
+  AssetUpload,
+  useAssets,
+  type BaseAsset,
+} from "~/designer/shared/assets";
 import { TabName } from "../../types";
 import { Header } from "../../lib/header";
-import { AddAnAssetForm } from "./add-an-asset-form";
 import { AssetThumbnail } from "./asset-thumbnail";
-import { BaseAsset } from "./types";
-
-export const useAssetsState = (baseAssets: Array<BaseAsset>) => {
-  const imageChanges = useActionData();
-
-  const [assets, setAssets] = useState<BaseAsset[]>(baseAssets);
-
-  useEffect(() => {
-    if (imageChanges?.errors) {
-      setAssets((currentAssets) =>
-        currentAssets.filter((asset) => asset.status !== "uploading")
-      );
-    }
-    if (imageChanges?.uploadedAssets?.length) {
-      setAssets((currentAssets) => [
-        ...imageChanges.uploadedAssets,
-        ...currentAssets.filter((asset) => asset.status !== "uploading"),
-      ]);
-    }
-    if (imageChanges?.deletedAsset?.id) {
-      setAssets((currentAssets) => [
-        ...currentAssets.filter(
-          (asset) => asset.id !== imageChanges.deletedAsset.id
-        ),
-      ]);
-    }
-  }, [imageChanges]);
-
-  const onUploadAsset = (uploadedAssets: Array<BaseAsset>) =>
-    setAssets((assets) => [...uploadedAssets, ...assets]);
-
-  return { assets, onUploadAsset };
-};
 
 export const TabContent = ({
-  assets: baseAssets,
+  assets: loadedAssets,
   onSetActiveTab,
 }: {
   onSetActiveTab: (tabName: TabName) => void;
   assets: Array<BaseAsset>;
 }) => {
-  const { assets, onUploadAsset } = useAssetsState(baseAssets);
+  const { assets, onUploadAsset } = useAssets(loadedAssets);
   return (
     <>
       <Header
@@ -61,9 +30,9 @@ export const TabContent = ({
         direction="column"
         css={{ padding: "$1", paddingTop: "$2" }}
       >
-        <Flex justify="end">
-          <AddAnAssetForm onSubmit={onUploadAsset} />
-        </Flex>
+        <Box css={{ padding: "$2" }}>
+          <AssetUpload onSubmit={onUploadAsset} type="image" />
+        </Box>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (
             <AssetThumbnail key={asset.id} {...asset} />

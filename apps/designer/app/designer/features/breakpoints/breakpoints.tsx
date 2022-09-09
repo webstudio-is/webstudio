@@ -128,7 +128,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         <TriggerButton />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent>
+        <DropdownMenuContent css={{ zIndex: "$1" }}>
           {view === "confirmation" && (
             <ConfirmationDialog
               breakpoint={selectedBreakpoint}

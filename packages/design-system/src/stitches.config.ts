@@ -195,6 +195,7 @@ export const {
       // Semantic colors
       hiContrast: "$slate12",
       loContrast: "$slate1",
+      hint: "$slate10",
       muted: "$slate6",
       primary: "$blue12",
       canvas: "hsl(0 0% 93%)",
@@ -474,6 +475,7 @@ export const darkTheme = createTheme({
     ...goldDarkA,
 
     // Semantic colors
+    hint: "$slate10",
     muted: "$slate8",
     primary: "$blue9",
     hiContrast: "$slate12",

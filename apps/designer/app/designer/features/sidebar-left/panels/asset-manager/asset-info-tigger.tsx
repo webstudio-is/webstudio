@@ -1,9 +1,15 @@
 import { useState } from "react";
-import { Button, Tooltip } from "@webstudio-is/design-system";
+import {
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverPortal,
+  PopoverTrigger,
+  PopoverHeader,
+} from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 
 import { AssetInfo } from "./asset-info";
-import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { cssVars } from "@webstudio-is/css-vars";
 import { BaseAsset } from "./types";
 
@@ -20,48 +26,41 @@ export const AssetInfoTrigger = ({
   asset: BaseAsset;
   onDelete: () => void;
 }) => {
-  const [isTooltipOpen, setTooltipOpen] = useState(false);
-  const closeTooltip = () => setTooltipOpen(false);
+  const [isInfoOpen, setInfoOpen] = useState(false);
   return (
-    <Tooltip
-      open={isTooltipOpen}
-      multiline
-      onEscapeKeyDown={closeTooltip}
-      onPointerDownOutside={closeTooltip}
-      css={{
-        width: PANEL_WIDTH,
-        maxWidth: PANEL_WIDTH,
-        padding: 0,
-        paddingBottom: "$2",
-      }}
-      content={
-        <AssetInfo
-          onDelete={onDelete}
-          onClose={() => setTooltipOpen(false)}
-          {...asset}
-        />
-      }
-    >
-      <Button
-        variant="raw"
-        title="Options"
-        onClick={() => setTooltipOpen(true)}
-        css={{
-          visibility: cssVars.use(triggerVisibilityVar, "hidden"),
-          position: "absolute",
-          color: "$slate11",
-          top: "$1",
-          right: "$1",
-          cursor: "pointer",
-          transition: "opacity 100ms ease",
-          "&:hover": {
-            color: "$hiContrast",
-          },
-          ...gearIconCssVars({ fill: "$colors$loContrast" }),
-        }}
-      >
-        <GearIcon />
-      </Button>
-    </Tooltip>
+    <Popover open={isInfoOpen} onOpenChange={setInfoOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="raw"
+          title="Options"
+          onClick={() => setInfoOpen(true)}
+          css={{
+            visibility: cssVars.use(triggerVisibilityVar, "hidden"),
+            position: "absolute",
+            color: "$slate11",
+            top: "$1",
+            right: "$1",
+            cursor: "pointer",
+            transition: "opacity 100ms ease",
+            "&:hover": {
+              color: "$hiContrast",
+            },
+            ...gearIconCssVars({ fill: "$colors$loContrast" }),
+          }}
+        >
+          <GearIcon />
+        </Button>
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent css={{ zIndex: "$1" }}>
+          <PopoverHeader title="Asset Details" />
+          <AssetInfo
+            onDelete={onDelete}
+            onClose={() => setInfoOpen(false)}
+            {...asset}
+          />
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
   );
 };

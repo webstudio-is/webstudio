@@ -86,6 +86,7 @@ const ColorPicker = ({
                 margin: 3,
                 borderRadius: 2,
                 background: value,
+                zIndex: 0,
               }}
             />
           </Tooltip>
