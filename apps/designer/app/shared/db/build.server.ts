@@ -1,5 +1,7 @@
 import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
 import { z } from "zod";
+import { v4 as uuid } from "uuid";
+import * as db from ".";
 
 const PageSchema = z.object({
   id: z.string(),
@@ -21,12 +23,15 @@ const PagesSchema: z.ZodType<{ homePage: Page; pages: Array<Page> }> = z.object(
 
 type Pages = z.infer<typeof PagesSchema>;
 
-type Build = {
-  id: DbBuild["id"];
-  pages: Pages;
+type Build = Omit<DbBuild, "pages"> & { pages: Pages };
+
+export const parseBuild = (build: DbBuild): Build => {
+  const pages = PagesSchema.parse(JSON.parse(build.pages));
+
+  return { ...build, pages };
 };
 
-export const load = async (id: Build["id"]): Promise<Build> => {
+export const loadById = async (id: Build["id"]): Promise<Build> => {
   if (typeof id !== "string") {
     throw new Error("Build ID required");
   }
@@ -39,6 +44,34 @@ export const load = async (id: Build["id"]): Promise<Build> => {
     throw new Error("Build not found");
   }
 
-  const pages = Pages.parse(JSON.parse(build.pages));
-  return { id, pages };
+  return parseBuild(build);
+};
+
+export const create = async (projectId: string) => {
+  const breakpoints = db.breakpoints.getBreakpointsWithId();
+  const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
+  await db.breakpoints.create(tree.id, breakpoints);
+
+  const pages = PagesSchema.parse({
+    homePage: {
+      id: uuid(),
+      name: "Home",
+      path: "",
+      title: "Home",
+      meta: {},
+      treeId: tree.id,
+    },
+    pages: [],
+  });
+
+  const build = await prisma.build.create({
+    data: {
+      pages: JSON.stringify(pages),
+      isDev: true,
+      isProd: false,
+      projectId,
+    },
+  });
+
+  return parseBuild(build);
 };

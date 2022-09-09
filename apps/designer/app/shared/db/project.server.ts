@@ -1,6 +1,5 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import { z } from "zod";
 import {
   User,
   prisma,
@@ -11,18 +10,13 @@ import * as db from ".";
 import { formatAsset } from "@webstudio-is/asset-uploader";
 import type { Asset } from "@webstudio-is/asset-uploader";
 
-const TreeHistorySchema = z.array(z.string());
-
-export type Project = Omit<BaseProject, "prodTreeIdHistory" | "assets"> & {
-  prodTreeIdHistory: z.infer<typeof TreeHistorySchema>;
+export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
 };
 
 const parseProject = (project: BaseProject): Project => {
-  const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   return {
     ...project,
-    prodTreeIdHistory: TreeHistorySchema.parse(prodTreeIdHistory),
     assets: project?.assets?.map(formatAsset),
   };
 };
@@ -104,18 +98,16 @@ export const create = async ({
   }
 
   const domain = generateDomain(title);
-  const breakpoints = db.breakpoints.getBreakpointsWithId();
-  const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
+
   const project = await prisma.project.create({
     data: {
       userId,
       title,
       domain,
-      devTreeId: tree.id,
     },
   });
 
-  await db.breakpoints.create(tree.id, breakpoints);
+  await db.build.create(project.id);
 
   return parseProject(project);
 };
