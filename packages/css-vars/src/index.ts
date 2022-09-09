@@ -4,14 +4,20 @@ const define = <Name extends string>(name: Name) => {
   return `--${name}-${++counter}` as const;
 };
 
-type Cast<T1, T2> = T1 extends T2 ? T1 : T2;
+type AppendString<
+  TResult extends string,
+  TDelimiter extends string,
+  TNextPart extends string
+> = TResult extends "" ? TNextPart : `${TResult}${TDelimiter}${TNextPart}`;
 
-type Join<T extends readonly string[], D extends string> = T extends []
-  ? ""
-  : T extends [string]
-  ? T[0]
-  : T extends [string, ...infer Rest]
-  ? `${T[0]}${D}${Join<Cast<Rest, string[]>, D>}`
+type Join<
+  TInput extends readonly string[],
+  TDelimiter extends string,
+  TResult extends string = ""
+> = TInput extends []
+  ? TResult
+  : TInput extends [string, ...infer Rest extends string[]]
+  ? Join<Rest, TDelimiter, AppendString<TResult, TDelimiter, TInput[0]>>
   : never;
 
 const use = <Args extends string[]>(...args: Args) => {
