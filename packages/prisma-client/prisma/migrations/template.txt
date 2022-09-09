@@ -2,16 +2,12 @@ import { PrismaClient } from "./client";
 
 // NOTE ON IMPORTS:
 //
-//   You shouldn't import any code that can change as the project evolves!
-//
-//   It should be safe to import a library like `uuid` as its API is unlikely to change.
-//   For application code, it's better to copy it to the migration directory.
-//
-//   If you have to import something that may change,
-//   be prepared to keep the migration code up to date as well.
-//
-//   This is necessary because we want to be able to run old migrations at any point.
+//   We want to be able to run old migrations at any point.
 //   For example, when we setting up a fresh database or making a reset.
+//
+//   You shouldn't import code that may change later 
+//   and become incompatible with the migration.
+//   It's better to copy it to the migration directory.
 
 export default () => {
   const client = new PrismaClient();
