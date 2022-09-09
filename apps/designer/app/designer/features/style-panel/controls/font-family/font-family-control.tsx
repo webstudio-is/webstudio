@@ -15,6 +15,8 @@ import { MutableRefObject, useRef, useState } from "react";
 import { FontsManager } from "~/designer/shared/fonts-manager";
 
 const textFieldStyle = {
+  paddingLeft: "calc($sizes$1 + $nudge$3)",
+  textAlign: "left",
   height: "$6",
   fontWeight: "500",
 };

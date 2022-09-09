@@ -1,5 +1,5 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import { Flex, Grid } from "@webstudio-is/design-system";
+import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import {
   AssetUpload,
   useAssets,
@@ -30,9 +30,9 @@ export const TabContent = ({
         direction="column"
         css={{ padding: "$1", paddingTop: "$2" }}
       >
-        <Flex justify="end">
+        <Box css={{ padding: "$2" }}>
           <AssetUpload onSubmit={onUploadAsset} type="image" />
-        </Flex>
+        </Box>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (
             <AssetThumbnail key={asset.id} {...asset} />

@@ -53,7 +53,13 @@ export const AssetUpload = ({ onSubmit, type }: AssetUploadProps) => {
   };
 
   return (
-    <Form method="post" encType="multipart/form-data" onChange={onFormChange}>
+    <Flex
+      as={Form}
+      css={{ flexGrow: 1 }}
+      method="post"
+      encType="multipart/form-data"
+      onChange={onFormChange}
+    >
       <input
         accept={acceptMap[type]}
         type="file"
@@ -67,12 +73,13 @@ export const AssetUpload = ({ onSubmit, type }: AssetUploadProps) => {
         type="button"
         onClick={() => inputRef?.current?.click()}
         size={2}
+        css={{ flexGrow: 1 }}
       >
         <Flex align="center" gap={1}>
           <UploadIcon />
           <Text>Upload</Text>
         </Flex>
       </Button>
-    </Form>
+    </Flex>
   );
 };

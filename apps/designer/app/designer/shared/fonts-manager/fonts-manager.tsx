@@ -1,13 +1,13 @@
-import { Flex } from "@webstudio-is/design-system";
+import { Flex, Box } from "@webstudio-is/design-system";
 import { AssetUpload, useAssets } from "~/designer/shared/assets";
 
 export const FontsManager = () => {
   const { assets, onUploadAsset } = useAssets([]);
   return (
     <Flex gap="3" direction="column" css={{ padding: "$1", paddingTop: "$2" }}>
-      <Flex justify="end">
+      <Box css={{ padding: "$2" }}>
         <AssetUpload onSubmit={onUploadAsset} type="font" />
-      </Flex>
+      </Box>
       {assets.map((asset) => asset.name)}
     </Flex>
   );
