@@ -27,14 +27,14 @@ type Error = {
   errors: "string";
 };
 
-export const DesignerRoute = (props: { view?: "assets" }) => {
+export const DesignerRoute = () => {
   const data = useLoaderData<Data | Error>();
   useAction();
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
 
-  return <Designer {...data} {...props} />;
+  return <Designer {...data} />;
 };
 
 export default DesignerRoute;
