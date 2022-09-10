@@ -1,22 +1,23 @@
 import {
-  unstable_createFileUploadHandler,
   unstable_parseMultipartFormData,
   type UploadHandlerPart,
 } from "@remix-run/node";
 import { s3UploadHandler } from "./targets/s3/handler";
-import { uploadToS3 } from "./targets/s3/uploader";
+import { uploadToS3 } from "./targets/s3/upload";
 import { uploadToDisk } from "./targets/disk/upload";
+import { diskUploadHandler } from "./targets/disk/handler";
 import { AssetEnvVariables, S3EnvVariables } from "./schema";
-import { imageFsDirectory } from "./utils/image-fs-path";
+import { FILE_DIRECTORY } from "./targets/disk/file-path";
 
 const isS3Upload = S3EnvVariables.safeParse(process.env).success;
 
 const commonUploadVars = AssetEnvVariables.parse(process.env);
 
 // user inputs the max value in mb and we transform it to bytes
-export const MAX_UPLOAD_SIZE = parseInt(commonUploadVars.MAX_UPLOAD_SIZE) * 1e6;
+export const MAX_UPLOAD_SIZE =
+  parseFloat(commonUploadVars.MAX_UPLOAD_SIZE) * 1e6;
 
-const uploadHandler = async () => {
+const uploadHandler = () => {
   if (isS3Upload) {
     return (file: UploadHandlerPart) =>
       s3UploadHandler({
@@ -25,10 +26,9 @@ const uploadHandler = async () => {
       });
   }
 
-  const directory = await imageFsDirectory();
-  return unstable_createFileUploadHandler({
+  return diskUploadHandler({
     maxPartSize: MAX_UPLOAD_SIZE,
-    directory,
+    directory: FILE_DIRECTORY,
     file: ({ filename }) => filename,
   });
 };
@@ -51,7 +51,7 @@ export const uploadAssets = async ({
   try {
     const formData = await unstable_parseMultipartFormData(
       request,
-      await uploadHandler()
+      uploadHandler()
     );
     return await upload({ projectId, formData });
   } catch (error) {

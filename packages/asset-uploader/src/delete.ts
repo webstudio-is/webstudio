@@ -3,7 +3,7 @@ import { prisma } from "@webstudio-is/prisma-client";
 import { unlink } from "fs/promises";
 import path from "path";
 import { deleteAssetInDb } from "./db";
-import { imageFsDirectory } from "./utils/image-fs-path";
+import { FILE_DIRECTORY } from "./targets/disk/file-path";
 import { S3EnvVariables } from "./schema";
 import { getS3Client } from "./targets/s3/client";
 import { Asset } from "./types";
@@ -31,8 +31,7 @@ export const deleteAsset = async ({
 
     return await deleteAssetInDb(id);
   } else {
-    const directory = await imageFsDirectory();
-    await unlink(path.join(directory, name));
+    await unlink(path.join(FILE_DIRECTORY, name));
 
     return await deleteAssetInDb(id);
   }
