@@ -52,18 +52,36 @@ export const ComboboxTextField = forwardRef(ComboboxTextFieldBase);
 
 ComboboxTextField.displayName = "ComboboxTextField";
 
-const Listbox = styled("ul", panelStyles, {
-  padding: 0,
+const Listbox = styled("ul", {
   margin: 0,
+  padding: 0,
   overflow: "auto",
-  // @todo need some non-hardcoded value
-  maxHeight: 400,
-  minWidth: 230,
+  minWidth: 124,
+  maxHeight: 190,
+  py: "$1",
+  backgroundColor: "$colors$slate4",
+  borderRadius: "$1",
+  boxShadow:
+    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
+  "&:empty": {
+    display: "none",
+  },
 });
 
-const ListboxItem = styled("li", itemCss, {
-  padding: 0,
-  margin: 0,
+const ListboxItem = styled("li", {
+  all: "unset",
+  fontSize: "$2",
+  lineHeight: 1,
+  color: "$hiContrast",
+  display: "flex",
+  alignItems: "center",
+  height: "$5",
+  padding: "0 $2",
+  position: "relative",
+  "&[aria-selected=true]": {
+    backgroundColor: "$blue10",
+    color: "white",
+  },
 });
 
 type ListProps<Item> = {
@@ -119,6 +137,7 @@ type ComboboxProps<Item> = {
   label?: string;
   items: Array<Item>;
   value?: Item;
+  selected?: Item;
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value?: Item) => void;
   itemToString?: (item: Item | null) => string;
@@ -134,6 +153,7 @@ type ComboboxProps<Item> = {
 export const Combobox = <Item extends BaseItem>({
   items,
   value,
+  selected = value,
   name,
   itemToString = (item) =>
     typeof item === "object" && item !== null && "label" in item
@@ -156,7 +176,6 @@ export const Combobox = <Item extends BaseItem>({
     getComboboxProps,
     highlightedIndex,
     getItemProps,
-    selectedItem,
   } = useCombobox({
     onInputValueChange({ inputValue }) {
       if (inputValue) {
@@ -203,12 +222,14 @@ export const Combobox = <Item extends BaseItem>({
         </PopperAnchor>
         {renderPopperContent({
           style: { zIndex: 1 },
+          align: "end",
+          sideOffset: 8,
           children: renderList({
             containerProps: menuProps,
             items: isOpen ? foundItems : [],
             getItemProps,
             highlightedIndex,
-            selectedItem,
+            selectedItem: selected as Item,
             itemToString,
           }),
         })}

@@ -1,39 +1,98 @@
-import { Flex, Label } from "@webstudio-is/design-system";
+import {
+  Flex,
+  Label,
+  Tooltip,
+  IconButton,
+  TextField,
+} from "@webstudio-is/design-system";
 import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./constants";
 import type { PropertyProps } from "../style-sections";
+import { iconConfigs } from "./configs";
+import { forwardRef, PointerEventHandler } from "react";
 
 export const PropertyName = ({ property, label, css }: PropertyProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   return (
-    <Flex
-      css={{
-        ...css,
-        alignItems: "center",
-      }}
-    >
-      <Label
+    <Tooltip content={label} delayDuration={600} disableHoverableContent={true}>
+      <Flex
         css={{
-          gridColumn: "1",
-          fontWeight: "inherit",
-          ...(isCurrentBreakpoint
-            ? {
-                color: propertyNameColorForSelectedBreakpoint,
-                backgroundColor: "$colors$blue4",
-                padding: "calc($radii$1 / 2) $radii$1",
-                borderRadius: "$radii$1",
-              }
-            : {
-                color: "$hiContrast",
-              }),
+          ...css,
+          alignItems: "center",
         }}
-        variant="contrast"
-        size="1"
-        htmlFor={property}
       >
-        {label}
-      </Label>
-    </Flex>
+        <Label
+          css={{
+            gridColumn: "1",
+            fontWeight: "inherit",
+            ...(isCurrentBreakpoint
+              ? {
+                  color: propertyNameColorForSelectedBreakpoint,
+                  backgroundColor: "$colors$blue4",
+                  padding: "calc($radii$1 / 2) $radii$1",
+                  borderRadius: "$radii$1",
+                }
+              : {
+                  color: "$hiContrast",
+                }),
+          }}
+          variant="contrast"
+          size="1"
+          htmlFor={property}
+        >
+          {label}
+        </Label>
+      </Flex>
+    </Tooltip>
   );
 };
+PropertyName.displayName = "PropertyName";
+
+export const PropertyIcon = forwardRef<
+  HTMLButtonElement,
+  PropertyProps & { [key: `on${string}`]: PointerEventHandler }
+>(({ property, label, ...props }, forwardRef) => {
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const IconType = iconConfigs[property]?.normal;
+  if (!IconType) return null;
+
+  return (
+    <Tooltip content={label} delayDuration={600} disableHoverableContent={true}>
+      <IconButton
+        {...props}
+        ref={forwardRef}
+        variant="ghost"
+        size="1"
+        css={{
+          position: "absolute",
+          left: "1px",
+          top: "1px",
+          width: "$5",
+          height: "calc(100% - 2px)",
+          borderRadius: "$1",
+          border: "2px solid $colors$loContrast",
+          "&:hover,&:active,&:focus": {
+            bc: "$colors$slate4",
+            outline: "none",
+          },
+          ...(isCurrentBreakpoint && {
+            bc: "$colors$blue4",
+            color: "$colors$blue11",
+            outline: "none",
+            "&:hover,&:active,&:focus": {
+              bc: "$colors$blue4",
+              color: "$colors$blue11",
+            },
+          }),
+          [`& ~ ${TextField}`]: {
+            paddingLeft: "calc($sizes$5 + $sizes$1)",
+          },
+        }}
+      >
+        <IconType />
+      </IconButton>
+    </Tooltip>
+  );
+});
+PropertyIcon.displayName = "PropertyIcon";

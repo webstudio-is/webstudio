@@ -23,7 +23,7 @@ export const IconButton = styled("button", {
   "&::before, &::after": {
     boxSizing: "border-box",
   },
-  "&:hover, &:active": {
+  "&:focus, &:hover, &:active": {
     backgroundColor: "$slate5",
   },
   "&:focus": {

@@ -96,7 +96,14 @@ export const FlexGrid = ({
               width: "100%",
               height: "100%",
               color: "$colors$gray8",
-              "&:focus": { boxShadow: "none" },
+              "&:hover": {
+                bc: "$colors$slate4",
+              },
+              "&:focus": {
+                background: "none",
+                boxShadow: "none",
+                outline: "none",
+              },
             }}
             onClick={() => {
               const [alignItems, justifyContent] = cells[index]

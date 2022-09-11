@@ -1,6 +1,8 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
 import noop from "lodash.noop";
 import React, { ReactNode, Ref } from "react";
+import { Grid } from "./grid";
+import { Box } from "./box";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 
@@ -49,6 +51,9 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
 const StyledIcon = styled(SelectPrimitive.Icon, {
   display: "inline-flex",
   alignItems: "center",
+  justifyContent: "center",
+  height: "100%",
+  padding: "calc($space$1 / 2)",
 });
 
 const StyledContent = styled(SelectPrimitive.Content, {
@@ -71,7 +76,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
   display: "flex",
   alignItems: "center",
   height: "$5",
-  padding: "0 $6 0 $5",
+  padding: "0 $2",
   position: "relative",
   userSelect: "none",
 
@@ -81,18 +86,9 @@ const StyledItem = styled(SelectPrimitive.Item, {
   },
 
   "&:focus": {
-    backgroundColor: "$blue9",
+    backgroundColor: "$blue10",
     color: "white",
   },
-});
-
-const StyledItemIndicator = styled(SelectPrimitive.ItemIndicator, {
-  position: "absolute",
-  left: 0,
-  width: 25,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
 });
 
 const scrollButtonStyles = {
@@ -120,10 +116,14 @@ const SelectItemBase = (
 ) => {
   return (
     <StyledItem {...props} ref={forwardedRef}>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-      <StyledItemIndicator>
-        <CheckIcon />
-      </StyledItemIndicator>
+      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+        <SelectPrimitive.ItemIndicator>
+          <CheckIcon />
+        </SelectPrimitive.ItemIndicator>
+        <Box css={{ gridColumn: 2 }}>
+          <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+        </Box>
+      </Grid>
     </StyledItem>
   );
 };

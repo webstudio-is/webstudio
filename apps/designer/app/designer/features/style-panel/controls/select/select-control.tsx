@@ -21,7 +21,7 @@ export const SelectControl = ({
   const setValue = setProperty(styleConfig.property);
 
   return (
-    <Grid columns={2}>
+    <Grid css={{ gridTemplateColumns: "$columns$1" }}>
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Select
         options={styleConfig.items.map(({ label }) => label)}
@@ -30,8 +30,8 @@ export const SelectControl = ({
         ghost
         css={{
           gap: "calc($sizes$1 / 2)",
-          px: "calc($sizes$1 + $nudge$3)",
-          height: "$sizes$6",
+          paddingLeft: "calc($sizes$4 / 2)",
+          height: "calc($sizes$5 + $sizes$1)",
           boxShadow: "inset 0 0 0 1px $colors$slate7",
           textTransform: "capitalize",
           fontWeight: "inherit",

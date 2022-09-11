@@ -30,8 +30,7 @@ const itemStyles = {
   paddingRight: "$space$5",
   userSelect: "none",
   gap: "$space$2",
-  // @todo should be "&[data-highlighted]" don't know why radix isn't activating the attribute though
-  "&[tabindex='0']": {
+  "&[data-highlighted]": {
     background: "$colors$blue10",
     color: "$colors$blue1",
     "& *": { fill: "$colors$blue1" },
@@ -52,7 +51,11 @@ const iconButtonStyle = {
   height: "$6",
   color: "$colors$gray12",
   backgroundColor: "$colors$loContrast",
-  "&:hover": {
+  "&:focus": {
+    outline: "none",
+    boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
+  },
+  "&:hover,&:focus": {
     backgroundColor: "$colors$gray3",
   },
 };
@@ -60,10 +63,11 @@ const iconButtonStyle = {
 const iconButtonActiveStyle = {
   color: "$colors$blue11",
   backgroundColor: "$colors$blue4",
-  "&:hover": {
+  "&:hover,&:focus": {
     backgroundColor: "$colors$blue4",
   },
   "&:focus": {
+    outline: "none",
     boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
   },
 };
@@ -124,7 +128,7 @@ export const IconButtonWithMenu = ({
         </DropdownMenuPrimitive.Trigger>
       </Tooltip>
       <DropdownMenuPrimitive.Portal>
-        <StyledContent sideOffset={4} alignOffset={-4}>
+        <StyledContent sideOffset={4} collisionPadding={16} side="bottom">
           <DropdownMenuPrimitive.RadioGroup
             value={value}
             onValueChange={onChange}

@@ -271,6 +271,9 @@ export const {
       4: "400",
       max: "999",
     },
+    columns: {
+      1: "40% 60%",
+    },
   },
   media: {
     bp1: "(min-width: 520px)",

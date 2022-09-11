@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { IconButton, Tooltip } from "@webstudio-is/design-system";
+import { Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/react-sdk";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
@@ -39,13 +39,25 @@ export const Lock = ({
       delayDuration={400}
       disableHoverableContent={true}
     >
-      <IconButton
+      <Flex
         data-property={name}
-        css={{ width: "100%", gridArea: name }}
-        onClick={() => setIsPaired((value) => !value)}
+        css={{
+          width: "100%",
+          justifyContent: "center",
+          gridArea: name,
+        }}
       >
-        {isPaired ? <LockCloseIcon /> : <LockOpenIcon />}
-      </IconButton>
+        <IconButton
+          css={{
+            "&:focus": {
+              outline: "none",
+            },
+          }}
+          onClick={() => setIsPaired((value) => !value)}
+        >
+          {isPaired ? <LockCloseIcon /> : <LockOpenIcon />}
+        </IconButton>
+      </Flex>
     </Tooltip>
   );
 };

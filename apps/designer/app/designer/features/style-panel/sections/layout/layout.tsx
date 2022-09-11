@@ -37,10 +37,6 @@ const layoutSectionFlexStyle = {
 	  "grid grid grid grid grid . . . . . . ."
 	  "columnGap columnGap columnGap columnGap columnGap lock lock rowGap rowGap rowGap rowGap rowGap"
 	`,
-  // @todo justifyItems icons are using justifycontent icons atm
-  "& > [data-property=justifyItems]": {
-    display: "none",
-  },
   "& [data-control=text]": {
     "& > :first-child": {
       gridTemplateColumns: "repeat(1, 1fr)",
@@ -48,6 +44,18 @@ const layoutSectionFlexStyle = {
         display: "none",
       },
     },
+  },
+  // @todo justifyItems icons are using justifycontent icons atm
+  "& [data-property=justifyItems]": {
+    display: "none",
+  },
+  "& [data-property=columnGap]": {
+    gridArea: "6 / 1 / -1 / 7",
+    paddingRight: "10px",
+  },
+  "& [data-property=rowGap]": {
+    gridArea: "6 / 7 / -1 / -1",
+    paddingLeft: "10px",
   },
 };
 
