@@ -129,7 +129,6 @@ export const TextControl = ({
                 }}
                 onKeyDown={(event) => {
                   const target = event.target as HTMLInputElement;
-                  if (isExpanded(target)) return inputProps?.onKeyDown?.(event);
                   if (
                     event.code === "Enter" &&
                     String(value.value) !== target.value
@@ -138,6 +137,7 @@ export const TextControl = ({
                     const number = parseFloat(target.value);
                     if (!isNaN(number)) target.value = String(number);
                   }
+                  if (isExpanded(target)) return inputProps?.onKeyDown?.(event);
                   if (value.type !== "unit")
                     return inputProps?.onKeyDown?.(event);
                   if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
