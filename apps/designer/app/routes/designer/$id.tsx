@@ -3,7 +3,6 @@ import { LoaderFunction } from "@remix-run/node";
 import { Designer, links } from "~/designer";
 import * as db from "~/shared/db";
 import config from "~/config";
-import env, { type Env } from "~/env.server";
 import { ErrorMessage } from "~/shared/error";
 import { action, useAction } from "./_assets";
 
@@ -18,13 +17,12 @@ export const loader: LoaderFunction = async ({
   if (project === null) {
     return { errors: `Project "${params.id}" not found` };
   }
-  return { config, project, env };
+  return { config, project };
 };
 
 type Data = {
   config: typeof config;
   project: db.project.Project;
-  env: Env;
 };
 
 type Error = {

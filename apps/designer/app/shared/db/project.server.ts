@@ -107,7 +107,7 @@ export const create = async ({
     },
   });
 
-  await db.build.create(project.id);
+  await db.build.createDev(project.id);
 
   return parseProject(project);
 };
@@ -173,14 +173,9 @@ export const update = async ({
     }
   }
 
-  TreeHistorySchema.parse(data.prodTreeIdHistory);
-
   try {
     const project = await prisma.project.update({
-      data: {
-        ...data,
-        prodTreeIdHistory: JSON.stringify(data.prodTreeIdHistory),
-      },
+      data,
       where: { id },
       include: {
         assets: {

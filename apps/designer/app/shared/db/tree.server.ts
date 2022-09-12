@@ -44,22 +44,22 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
   };
 };
 
-export const loadByProject = async (
-  project: Project | null,
-  env: "production" | "development" = "development"
-) => {
-  if (project === null) {
-    throw new Error("Project required");
-  }
+// export const loadByProject = async (
+//   project: Project | null,
+//   env: "production" | "development" = "development"
+// ) => {
+//   if (project === null) {
+//     throw new Error("Project required");
+//   }
 
-  const treeId = env === "production" ? project.prodTreeId : project.devTreeId;
+//   const treeId = env === "production" ? project.prodTreeId : project.devTreeId;
 
-  if (treeId === null) {
-    throw new Error("Site needs to be published, production tree ID is null.");
-  }
+//   if (treeId === null) {
+//     throw new Error("Site needs to be published, production tree ID is null.");
+//   }
 
-  return await loadById(treeId);
-};
+//   return await loadById(treeId);
+// };
 
 export const clone = async (treeId: string) => {
   const tree = await loadById(treeId);
