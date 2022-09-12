@@ -68,7 +68,7 @@ const uploadHandler = async ({
     throw new Error(`Asset cannot be bigger than ${maxSize}MB`);
   }
 
-  const uniqueFilename = getUniqueFilename(file.filename);
+  const uniqueFilename = encodeURIComponent(getUniqueFilename(file.filename));
 
   const s3Envs = S3EnvVariables.parse(process.env);
 
