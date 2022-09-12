@@ -3,7 +3,7 @@ import type { Includes, Project } from "./index.d";
 
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
 
-const fetch = async (url: string, options?: any) => {
+const fetch = async (url: string, options?: RequestInit) => {
   const response = await isoMorphicFetch(url, options);
   if (response.ok) {
     const contentType = response.headers.get("content-type");
