@@ -2,7 +2,7 @@
 
 This is a drop-in replacement for Prisma's migration engine. It adds:
 
-- an ability to write a migration in TypeScript,
+- an ability to write a data migration in TypeScript,
 - an ability to write a rollback for a migration (\* to be implemented).
 
 A regular Prisma's migrations directory looks like this:
