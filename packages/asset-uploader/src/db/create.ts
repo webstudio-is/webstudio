@@ -18,8 +18,7 @@ const create = (projectId: Project["id"], options: Options) => {
       name,
       size,
       format: metadata.format,
-      ...(metadata.width ? { width: metadata.width } : {}),
-      ...(metadata.height ? { height: metadata.height } : {}),
+      meta: JSON.stringify({ width: metadata.width, height: metadata.height }),
       projectId,
     },
   });
@@ -32,6 +31,5 @@ export const createMany = async (
 ) => {
   const promisedData = values.map((options) => create(projectId, options));
   const data = await Promise.all(promisedData);
-  console.log(111, data);
   return data.map(formatAsset);
 };
