@@ -2,17 +2,12 @@ import { z } from "zod";
 import { NodeOnDiskFile } from "@remix-run/node";
 import { DEFAULT_UPLOAD_PATH } from "./constants";
 
-const SingleImageInUpload = z.instanceof(NodeOnDiskFile);
+export const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
+export const AssetsFromRemote = z.array(z.string());
 
-export const ImagesUpload = z.array(SingleImageInUpload);
-
-export type ImagesUpload = z.infer<typeof ImagesUpload>;
-export type SingleImageInUpload = z.infer<typeof SingleImageInUpload>;
-
-export const ImagesUploadedSuccess = z.object({
+export const AssetsUploadedSuccess = z.object({
   Location: z.string(),
 });
-export type ImagesUploadedSuccess = z.infer<typeof ImagesUploadedSuccess>;
 
 export const S3EnvVariables = z.object({
   S3_ENDPOINT: z.string(),
