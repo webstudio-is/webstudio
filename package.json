@@ -12,7 +12,6 @@
     "build": "turbo run build",
     "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
-    "migrate": "turbo run migrate",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
     "storybook": "turbo run storybook:run",
