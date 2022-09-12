@@ -68,7 +68,7 @@ const uploadHandler = async ({
     throw new Error(`Asset cannot be bigger than ${maxSize}MB`);
   }
 
-  const uniqueFilename = encodeURIComponent(getUniqueFilename(file.filename));
+  const uniqueFilename = getUniqueFilename(file.filename);
 
   const s3Envs = S3EnvVariables.parse(process.env);
 
@@ -78,7 +78,7 @@ const uploadHandler = async ({
   const params: PutObjectCommandInput = {
     ...ACL,
     Bucket: s3Envs.S3_BUCKET,
-    Key: uniqueFilename,
+    Key: encodeURIComponent(uniqueFilename),
     Body: buffer,
     ContentType: file.contentType,
     Metadata: {
