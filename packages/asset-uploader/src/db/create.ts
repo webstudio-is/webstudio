@@ -1,17 +1,17 @@
 import { type Location, prisma, Project } from "@webstudio-is/prisma-client";
-import sharp from "sharp";
+import { type Metadata } from "sharp";
 import { formatAsset } from "../utils/format-asset";
 
-type Value = {
+type Options = {
   name: string;
   size: number;
-  metadata: sharp.Metadata;
+  metadata: Metadata;
   location: Location;
 };
 
-const create = async (projectId: Project["id"], value: Value) => {
-  const size = value.size || value.metadata.size || 0;
-  const { metadata, name, location } = value;
+const create = async (projectId: Project["id"], options: Options) => {
+  const size = options.size || options.metadata.size || 0;
+  const { metadata, name, location } = options;
   const asset = await prisma.asset.create({
     data: {
       location,
@@ -30,7 +30,7 @@ const create = async (projectId: Project["id"], value: Value) => {
 // @todo this could be one aggregated query for perf.
 export const createMany = async (
   projectId: Project["id"],
-  values: Array<Value>
+  values: Array<Options>
 ) => {
   const data = values.map((value) => {
     return create(projectId, value);

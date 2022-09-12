@@ -14,8 +14,6 @@ import { Asset } from "../../types";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
 
-const location = Location.REMOTE;
-
 const AssetsUploadedSuccess = z.object({
   Location: z.string(),
 });
@@ -96,7 +94,7 @@ const uploadHandler = async ({
     name: uniqueFilename,
     size: buffer.byteLength,
     buffer,
-    location,
+    location: Location.REMOTE,
   };
 
   const assetData = await getAssetData(assetOptions);

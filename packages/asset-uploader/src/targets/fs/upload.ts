@@ -13,8 +13,6 @@ import { getUniqueFilename } from "../../utils/get-unique-filename";
 
 const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
 
-const location = Location.FS;
-
 export const uploadToFs = async ({
   request,
   projectId,
@@ -43,7 +41,7 @@ export const uploadToFs = async ({
       name: asset.name,
       size: asset.size,
       buffer: (await asset.arrayBuffer()) as Uint8Array,
-      location,
+      location: Location.FS,
     })
   );
 
