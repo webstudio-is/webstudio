@@ -1,10 +1,12 @@
-name: HTTP Client Publish
+name: HTTP Client
 on:
   push:
     paths:
       - "packages/http-client/**/*"
       - ".github/workflows/http-client.yml"
       - ".github/actions/publish/action.yaml"
+    branches:    
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -12,5 +14,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/http-client/package.json"
+          workdir: ./packages/http-client
+          filter: "@webstudio-is/http-client"
           token: ${{ secrets.NPM_TOKEN }}
