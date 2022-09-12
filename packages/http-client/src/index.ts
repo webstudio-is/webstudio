@@ -1,14 +1,19 @@
-import isoMorphicFetch from "isomorphic-fetch";
+import isoMorphicFetch from "isomorphic-unfetch";
 import type { Includes, Project } from "./index.d";
 
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+
 const fetch = async (url: string, options?: any) => {
   const response = await isoMorphicFetch(url, options);
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.indexOf("application/json") !== -1) {
-    return response.json();
+  if (response.ok) {
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      return response.json();
+    } else {
+      return response.text();
+    }
   } else {
-    return response.text();
+    throw new Error(response.statusText);
   }
 };
 
