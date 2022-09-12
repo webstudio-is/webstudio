@@ -9,10 +9,10 @@ type Options = {
   location: Location;
 };
 
-const create = async (projectId: Project["id"], options: Options) => {
+const create = (projectId: Project["id"], options: Options) => {
   const size = options.size || options.metadata.size || 0;
   const { metadata, name, location } = options;
-  const asset = await prisma.asset.create({
+  return prisma.asset.create({
     data: {
       location,
       name,
@@ -23,8 +23,6 @@ const create = async (projectId: Project["id"], options: Options) => {
       projectId,
     },
   });
-
-  return formatAsset(asset);
 };
 
 // @todo this could be one aggregated query for perf.
@@ -32,8 +30,8 @@ export const createMany = async (
   projectId: Project["id"],
   values: Array<Options>
 ) => {
-  const data = values.map((value) => {
-    return create(projectId, value);
-  });
-  return await Promise.all(data);
+  const promisedData = values.map((options) => create(projectId, options));
+  const data = await Promise.all(promisedData);
+  console.log(111, data);
+  return data.map(formatAsset);
 };
