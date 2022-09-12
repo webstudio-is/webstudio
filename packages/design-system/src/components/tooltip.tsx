@@ -2,7 +2,7 @@ import React, { Ref } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
-import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
+import { Paragraph } from "./paragraph";
 import type { CSS } from "../stitches.config";
 
 type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
@@ -20,7 +20,7 @@ const Content = styled(TooltipPrimitive.Content, {
   color: "$loContrast",
   borderRadius: "$1",
   padding: "$1 $2",
-  zIndex: "$max",
+  zIndex: "$1",
   position: "relative",
 
   variants: {
@@ -64,29 +64,21 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
       disableHoverableContent={disableHoverableContent}
     >
       <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
-
-      <Content
-        ref={ref}
-        side="top"
-        align="center"
-        sideOffset={5}
-        {...props}
-        multiline={multiline}
-      >
-        <__DEPRECATED__Text
-          size="1"
-          as="p"
-          css={{
-            color: "currentColor",
-            lineHeight: multiline ? "$5" : undefined,
-          }}
+      <TooltipPrimitive.Portal>
+        <Content
+          ref={ref}
+          side="top"
+          align="center"
+          sideOffset={5}
+          {...props}
+          multiline={multiline}
         >
-          {content}
-        </__DEPRECATED__Text>
-        <Box css={{ color: "$transparentExtreme" }}>
-          <Arrow offset={5} width={11} height={5} />
-        </Box>
-      </Content>
+          <Paragraph>{content}</Paragraph>
+          <Box css={{ color: "$transparentExtreme" }}>
+            <Arrow offset={5} width={11} height={5} />
+          </Box>
+        </Content>
+      </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>
   );
 });
