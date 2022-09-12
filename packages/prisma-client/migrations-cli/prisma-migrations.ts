@@ -7,6 +7,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { prisma } from "../src";
+import { UserError } from "./errors";
 
 export const prismaDir = path.resolve(__dirname, "..", "prisma");
 export const schemaFilePath = path.join(prismaDir, "schema.prisma");
@@ -17,12 +18,7 @@ export const getMigrationFilePath = (
   type: "ts" | "sql"
 ) => path.join(migrationsDir, migrationName, `migration.${type}`);
 
-let tableExists = false;
 export const ensureMigrationTable = async () => {
-  if (tableExists) {
-    return;
-  }
-
   // https://github.com/prisma/prisma-engines/blob/4.3.0/migration-engine/ARCHITECTURE.md#the-_prisma_migrations-table
   // https://github.com/prisma/prisma-engines/blob/88f6ab88e559ef52ab26bc98f1da15200e0c25b4/migration-engine/connectors/sql-migration-connector/src/flavour/postgres.rs#L211-L226
   await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS _prisma_migrations (
@@ -35,8 +31,6 @@ export const ensureMigrationTable = async () => {
     started_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
     applied_steps_count     INTEGER NOT NULL DEFAULT 0
   )`;
-
-  tableExists = true;
 };
 
 // Fields' descriptions are quoted from ARCHITECTURE.md
@@ -225,6 +219,25 @@ export const generateMigrationName = (baseName: string) => {
   return `${prefix}_${baseName}`.slice(0, 254);
 };
 
+export const resetDatabase = async () => {
+  const sqlToDeleteEverything = execaSync("prisma", [
+    "migrate",
+    "diff",
+    "--from-schema-datasource",
+    schemaFilePath,
+    "--to-empty",
+    "--script",
+  ]).stdout;
+
+  execaSync(
+    "prisma",
+    ["db", "execute", "--stdin", "--schema", schemaFilePath],
+    { input: sqlToDeleteEverything }
+  );
+
+  await prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations`;
+};
+
 // https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-diff
 export const cliDiff = () => {
   return execaSync("prisma", [
@@ -264,7 +277,7 @@ export const generateMigrationClient = (migrationName: string) => {
   if (fs.existsSync(schemaPath) === false) {
     const tsFilePath = getMigrationFilePath(migrationName, "ts");
     if (fs.existsSync(tsFilePath)) {
-      throw new Error(
+      throw new UserError(
         `Can't generate client for ${migrationName} because ${migrationName}/schema.prisma is missing`
       );
     }
