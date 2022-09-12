@@ -1,5 +1,14 @@
 import { PrismaClient } from "./client";
 
+// NOTE ON IMPORTS:
+//
+//   We want to be able to run old migrations at any point.
+//   For example, when we setting up a fresh database or making a reset.
+//
+//   You shouldn't import code that may change later 
+//   and become incompatible with the migration.
+//   It's better to copy it to the migration directory.
+
 export default () => {
   const client = new PrismaClient();
   return client.$transaction(async (prisma) => {

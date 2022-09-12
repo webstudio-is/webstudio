@@ -4,12 +4,7 @@ import * as dotenv from "dotenv";
 import * as commands from "./commands";
 import * as logger from "./logger";
 import args from "./args";
-
-const failWith = (message: string) => {
-  logger.error(message);
-  logger.error("");
-  process.exit(1);
-};
+import { UserError } from "./errors";
 
 const USAGE = `Usage: migrations <command> [--dev]
 
@@ -23,6 +18,7 @@ Commands:
 
 Arguments
   --dev                — Lets the CLI know that it's running in a development environment
+  --force  — Skips the confirmation prompt when running a dangerous command
 `;
 
 const main = async () => {
@@ -40,10 +36,9 @@ const main = async () => {
   if (command === "create-schema") {
     const name = args._[1];
     if (name === undefined) {
-      failWith(
+      throw new UserError(
         "Missing name for migration.\nUsage: migrations create-schema <name>"
       );
-      return;
     }
     await commands.createSchema({ name });
     return;
@@ -52,10 +47,9 @@ const main = async () => {
   if (command === "create-data") {
     const name = args._[1];
     if (name === undefined) {
-      failWith(
+      throw new UserError(
         "Missing name for migration.\nUsage: migrations create-data <name>"
       );
-      return;
     }
     await commands.createData({ name });
     return;
@@ -72,23 +66,19 @@ const main = async () => {
   }
 
   if (command === "resolve") {
-    // @todo: confirmation prompt
-
     const type = args._[1];
 
     if (type === undefined || (type !== "applied" && type !== "rolled-back")) {
-      failWith(
+      throw new UserError(
         "Missing type of resolve.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
       );
-      return;
     }
 
     const name = args._[2];
     if (name === undefined) {
-      failWith(
+      throw new UserError(
         "Missing name of migration.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
       );
-      return;
     }
 
     await commands.resolve({ migrationName: name, resolveAs: type });
@@ -96,14 +86,25 @@ const main = async () => {
   }
 
   if (command === "reset") {
-    // @todo: confirmation prompt
-    // @todo: allow only in dev mode
-
-    // @todo
-    throw new Error("Not implemented");
+    await commands.reset();
+    return;
   }
 
-  failWith(`Unknown command: ${command}`);
+  throw new UserError(`Unknown command: ${command}`);
 };
 
-main();
+const runMain = async () => {
+  try {
+    await main();
+  } catch (error) {
+    if (error instanceof UserError) {
+      logger.error(error.message);
+      logger.error("");
+      process.exit(1);
+    } else {
+      throw error;
+    }
+  }
+};
+
+runMain();

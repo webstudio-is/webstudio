@@ -15,7 +15,8 @@
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
     "migrations": "migrations --dev",
-    "migrations:deploy": "migrations migrate"
+    "migrate": "migrations migrate --force --dev",
+    "ci:migrate": "migrations migrate --force"
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",
