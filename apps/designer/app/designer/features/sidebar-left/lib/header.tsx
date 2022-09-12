@@ -16,9 +16,7 @@ export const Header = ({ title, isClosable = true, onClose }: HeaderProps) => {
         align="center"
         justify="between"
       >
-        <Text size="1" css={{ fontWeight: "bold" }}>
-          {title}
-        </Text>
+        <Text variant="title">{title}</Text>
         {isClosable && (
           <IconButton
             onClick={() => onClose?.()}
@@ -30,7 +28,7 @@ export const Header = ({ title, isClosable = true, onClose }: HeaderProps) => {
           </IconButton>
         )}
       </Flex>
-      <Separator />
+      <Separator css={{ height: 2 }} />
     </>
   );
 };

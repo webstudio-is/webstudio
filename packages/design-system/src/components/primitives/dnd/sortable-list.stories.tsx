@@ -91,19 +91,21 @@ export const SortableList = ({
 
   const autoScrollHandlers = useAutoScroll();
 
-  const useDragHandlers = useDrag<true>({
+  const useDragHandlers = useDrag<string>({
     elementToData(element) {
-      return element instanceof HTMLLIElement;
+      const id = element instanceof HTMLLIElement && element.dataset.id;
+      return id || false;
     },
-    onStart(event) {
-      setDragItemId(event.target.dataset.id);
+    onStart({ data }) {
+      setDragItemId(data);
       autoScrollHandlers.setEnabled(true);
+      useDropHandlers.handleStart();
     },
     onMove: (point) => {
       useDropHandlers.handleMove(point);
       autoScrollHandlers.handleMove(point);
     },
-    onEnd() {
+    onEnd({ isCanceled }) {
       if (dropTarget !== undefined && dragItemId !== undefined) {
         const oldIndex = data.findIndex((item) => item.id === dragItemId);
         if (oldIndex !== -1) {
@@ -124,7 +126,7 @@ export const SortableList = ({
         }
       }
 
-      useDropHandlers.handleEnd();
+      useDropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
       setDragItemId(undefined);
       setDropTarget(undefined);

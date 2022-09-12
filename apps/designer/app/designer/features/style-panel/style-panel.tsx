@@ -1,16 +1,15 @@
-import type { Publish } from "@webstudio-is/react-sdk";
+import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { useStyleData } from "./use-style-data";
-import { VisualSettings } from "./settings";
+import { useStyleData } from "./shared/use-style-data";
+import { StyleSettings } from "./style-settings";
 import { Search } from "./search";
 import { useState } from "react";
 import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
-import { ComponentInfo } from "~/designer/shared/inspector";
 
 type StylePanelProps = {
   publish: Publish;
@@ -21,10 +20,11 @@ export const StylePanel = ({
   selectedInstanceData,
   publish,
 }: StylePanelProps) => {
-  const { currentStyle, inheritedStyle, setProperty } = useStyleData({
-    selectedInstanceData,
-    publish,
-  });
+  const { currentStyle, inheritedStyle, setProperty, createBatchUpdate } =
+    useStyleData({
+      selectedInstanceData,
+      publish,
+    });
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth] = useCanvasWidth();
   const [search, setSearch] = useState("");
@@ -55,21 +55,20 @@ export const StylePanel = ({
 
   return (
     <>
-      {
-        <Box css={{ p: "$3" }}>
-          <ComponentInfo selectedInstanceData={selectedInstanceData} />
-        </Box>
-      }
       <Box css={{ overflow: "auto" }}>
-        <Box css={{ p: "$3" }}>
-          <Search onSearch={setSearch} />
+        <Box css={{ px: "$3", paddingBottom: "$1" }}>
+          <Search
+            onSearch={setSearch}
+            selectedInstanceData={selectedInstanceData}
+          />
         </Box>
-        <VisualSettings
+        <StyleSettings
           search={search}
           selectedInstanceData={selectedInstanceData}
           currentStyle={currentStyle}
           inheritedStyle={inheritedStyle}
           setProperty={setProperty}
+          createBatchUpdate={createBatchUpdate}
         />
       </Box>
     </>

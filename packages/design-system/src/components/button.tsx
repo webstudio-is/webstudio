@@ -5,7 +5,9 @@ export const Button = styled("button", {
   all: "unset",
   alignItems: "center",
   boxSizing: "border-box",
+  border: "none",
   userSelect: "none",
+  transition: "all 200ms ease-out",
   "&::before": {
     boxSizing: "border-box",
   },
@@ -82,24 +84,24 @@ export const Button = styled("button", {
         },
       },
       blue: {
-        backgroundColor: "$blue2",
-        boxShadow: "inset 0 0 0 1px $colors$blue7",
-        color: "$blue11",
+        backgroundColor: "$blue10",
+        color: "$loContrast",
         "@hover": {
           "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$blue8",
+            backgroundColor: "$loContrast",
+            color: "$blue10",
+            boxShadow: "inset 0 0 0 1.5px $colors$blue10",
           },
         },
         "&:active": {
-          backgroundColor: "$blue3",
-          boxShadow: "inset 0 0 0 1px $colors$blue8",
+          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$blue8, 0 0 0 1px $colors$blue8",
+          boxShadow:
+            "inset 0 0 0 1.5px $colors$blue8, 0 0 0 1.5px $colors$blue8",
         },
         '&[data-state="open"]': {
-          backgroundColor: "$blue4",
-          boxShadow: "inset 0 0 0 1px $colors$blue8",
+          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
         },
       },
       green: {
@@ -125,16 +127,17 @@ export const Button = styled("button", {
       },
       red: {
         backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$slate7",
-        color: "$red11",
+        boxShadow: "inset 0 0 0 1px $colors$red10",
+        color: "$red10",
         "@hover": {
           "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$slate8",
+            background: "$red10",
+            color: "$loContrast",
           },
         },
         "&:active": {
-          backgroundColor: "$red3",
-          boxShadow: "inset 0 0 0 1px $colors$red8",
+          backgroundColor: "$red11",
+          color: "$loContrast",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$red8, 0 0 0 1px $colors$red8",

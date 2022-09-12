@@ -1,17 +1,17 @@
 {
   "name": "@webstudio-is/eslint-config-custom",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.15.0",
-    "@typescript-eslint/parser": "^5.15.0",
-    "eslint": "^8.11.0",
-    "eslint-plugin-react": "^7.29.4",
-    "eslint-plugin-react-hooks": "^4.3.0",
+    "@typescript-eslint/eslint-plugin": "^5.36.2",
+    "@typescript-eslint/parser": "^5.36.2",
+    "eslint": "^8.23.0",
+    "eslint-plugin-react": "^7.31.8",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-storybook": "^0.5.12",
-    "eslint-plugin-unicorn": "^43.0.0",
-    "typescript": "4.6.4"
+    "eslint-plugin-unicorn": "^43.0.2",
+    "typescript": "4.7.4"
   },
   "publishConfig": {
     "access": "public"

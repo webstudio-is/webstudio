@@ -195,19 +195,30 @@ export const {
       // Semantic colors
       hiContrast: "$slate12",
       loContrast: "$slate1",
+      hint: "$slate10",
       muted: "$slate6",
       primary: "$blue12",
       canvas: "hsl(0 0% 93%)",
       panel: "white",
+      panelOutline: "hsl(0deg 0% 0% / 10%)",
       transparentPanel: "hsl(0 0% 0% / 97%)",
       shadowLight: "hsl(206 22% 7% / 35%)",
       shadowDark: "hsl(206 22% 7% / 20%)",
       background: "$slate1",
       text: "$slate12",
+      dropPlacement: "$blue9",
     },
     fonts: {
       sans: "Inter, -apple-system, system-ui, sans-serif",
-      mono: "Söhne Mono, menlo, monospace",
+      mono: "Roboto, menlo, monospace",
+    },
+    opacity: {
+      1: "0.4",
+    },
+    nudge: {
+      1: "1px",
+      2: "3px",
+      3: "6px",
     },
     space: {
       1: "4px",
@@ -219,6 +230,7 @@ export const {
       7: "48px",
       8: "64px",
       9: "80px",
+      styleSection: "8px",
     },
     sizes: {
       1: "4px",
@@ -230,6 +242,8 @@ export const {
       7: "48px",
       8: "64px",
       9: "80px",
+      sidebarLeft: "45px",
+      sidebarRight: "240px",
     },
     fontSizes: {
       1: "12px",
@@ -461,6 +475,7 @@ export const darkTheme = createTheme({
     ...goldDarkA,
 
     // Semantic colors
+    hint: "$slate10",
     muted: "$slate8",
     primary: "$blue9",
     hiContrast: "$slate12",
@@ -468,11 +483,12 @@ export const darkTheme = createTheme({
     loContrast: "hsl(0 0% 17%)",
     canvas: "hsl(0 0% 15%)",
     panel: "$slate3",
+    panelOutline: "hsl(0deg 0% 100% / 10%)",
     transparentPanel: "hsl(0 100% 100% / 97%)",
     shadowLight: "hsl(206 22% 7% / 35%)",
     shadowDark: "hsl(206 22% 7% / 20%)",
-
     background: "$slate12",
     text: "$slate1",
+    dropPlacement: "$blue9",
   },
 });

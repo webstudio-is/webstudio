@@ -5,6 +5,7 @@ export const shortcuts = {
   preview: "cmd+shift+p, ctrl+shift+p",
   copy: "cmd+c, ctrl+c",
   paste: "cmd+v, ctrl+v",
+  delete: "backspace, delete",
   breakpointsMenu: "cmd+b, ctrl+b",
   breakpoint: Array.from(new Array(9))
     .map((_, index) => `cmd+${index + 1}, ctrl+${index + 1}`)

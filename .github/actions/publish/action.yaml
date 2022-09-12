@@ -1,9 +1,16 @@
 name: 'Release NPM package'
 description: 'Release NPM package'
 inputs:
-  package: 
-    description: 'Package.json location (relative)'
-    default: 'package.json'
+  skip-build:
+    description: 'Skip build phase (useful for only configuration files)'
+    default: ''
+  filter:
+    description: 'Filter build phase by turbo'
+    default: ''
+    required: true
+  workdir: 
+    description: 'Work directory for NPM publish'
+    default: '.'
     required: true
   token:
     description: 'NPM Token'
@@ -16,16 +23,16 @@ runs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-      - name: Install Dependencies
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install dependencies and build 🔧
         run: yarn install
         shell: bash
-      - name: Build Dependencies
-        run: yarn build
+      - name: Build 🔧
+        if: ${{ inputs.skip-build == '' }}
+        run: yarn build --filter ${{ inputs.filter }}
         shell: bash
-      - uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ inputs.token }}
-          dry-run: false
-          check-version: true
-          access: 'public'
-          package: ${{ inputs.package }}
+      - name: Publish package on NPM 📦
+        run: npm publish -w ${{ inputs.workdir }} --access public
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ inputs.token }}

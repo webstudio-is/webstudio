@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import ObjectId from "bson-objectid";
 import {
-  type InstanceProps,
   type Instance,
+  type InstanceProps,
   type Tree,
   components,
   allUserPropsContainer,
   getBrowserStyle,
   useAllUserProps,
-  useSubscribe,
-  publish,
 } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import {
   deleteInstanceMutable,
   populateInstance,
@@ -40,6 +39,24 @@ import {
 } from "~/shared/nano-states";
 import { useMeasure } from "~/shared/dom-hooks";
 import { findInstanceByElement } from "~/shared/dom-utils";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    hoveredInstanceRect: DOMRect;
+    hoverInstance?: HoveredInstanceData;
+    loadRootInstance?: Instance;
+    selectedInstanceRect: DOMRect;
+    selectInstance?: SelectedInstanceData;
+    textEditingInstanceId?: Instance["id"];
+    insertInstance: {
+      instance: Instance;
+      dropTarget?: { parentId: Instance["id"]; position: number };
+      props?: InstanceProps;
+    };
+    unselectInstance: undefined;
+  }
+}
 
 export const usePopulateRootInstance = (tree: Tree) => {
   // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
@@ -62,8 +79,8 @@ export const findInsertLocation = (
   const path = getInstancePathWithPositions(rootInstance, selectedInstanceId);
   path.reverse();
 
-  const parentIndex = path.findIndex(({ instance }) =>
-    components[instance.component].canAcceptChild()
+  const parentIndex = path.findIndex(
+    ({ item }) => components[item.component].canAcceptChildren
   );
 
   // Just in case selected Instance is not in the tree for some reason.
@@ -72,7 +89,7 @@ export const findInsertLocation = (
   }
 
   return {
-    parentId: path[parentIndex].instance.id,
+    parentId: path[parentIndex].item.id,
     position: parentIndex === 0 ? "end" : path[parentIndex - 1].position + 1,
   };
 };
@@ -80,14 +97,7 @@ export const findInsertLocation = (
 export const useInsertInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
 
-  useSubscribe<
-    "insertInstance",
-    {
-      instance: Instance;
-      dropTarget?: { parentId: Instance["id"]; position: number };
-      props?: InstanceProps;
-    }
-  >("insertInstance", ({ instance, dropTarget, props }) => {
+  useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
@@ -110,13 +120,9 @@ export const useInsertInstance = () => {
 };
 
 export const useReparentInstance = () => {
-  useSubscribe<
-    "reparentInstance",
-    {
-      instanceId: Instance["id"];
-      dropTarget: { instanceId: Instance["id"]; position: number };
-    }
-  >("reparentInstance", ({ instanceId, dropTarget }) => {
+  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+
+  useSubscribe("reparentInstance", ({ instanceId, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
       if (rootInstance === undefined) return;
       reparentInstanceMutable(
@@ -126,41 +132,50 @@ export const useReparentInstance = () => {
         dropTarget.position
       );
     });
+
+    // Make the drag item the selected instance
+    if (
+      selectedInstance?.id !== instanceId &&
+      rootInstanceContainer.value !== undefined
+    ) {
+      setSelectedInstance(
+        findInstanceById(rootInstanceContainer.value, instanceId)
+      );
+    }
   });
 };
 
 export const useDeleteInstance = () => {
   const [rootInstance] = useRootInstance();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-  useSubscribe<"deleteInstance", { id: Instance["id"] }>(
-    "deleteInstance",
-    ({ id }) => {
-      if (rootInstance !== undefined && selectedInstance !== undefined) {
-        const parentInstance = findParentInstance(rootInstance, id);
-        if (parentInstance !== undefined) {
-          const siblingInstance = findClosestSiblingInstance(
-            parentInstance,
-            id
-          );
-          setSelectedInstance(siblingInstance || parentInstance);
-        }
+  useSubscribe("deleteInstance", ({ id }) => {
+    if (rootInstance !== undefined && selectedInstance !== undefined) {
+      // @todo tell user they can't delete root
+      if (id === rootInstance.id) {
+        return;
       }
-      // @todo deleting instance should involve also deleting it's props
-      // If we don't delete them - they just live both on client and db
-      // Pros:
-      //   - if we undo the deletion we don't need to undo the props deletion
-      //   - in a multiplayer environment, some other user could have changed a prop while we have deleted the instance
-      // and then if we restore the instance, we would be restoring it with our props, potentially overwriting other users changes
-      // The way it is now it will actually still enable parallel deletion props editing and restoration.
-      // Contra: we are piling them up.
-      // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
-      store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance !== undefined) {
-          deleteInstanceMutable(rootInstance, id);
-        }
-      });
+
+      const parentInstance = findParentInstance(rootInstance, id);
+      if (parentInstance !== undefined) {
+        const siblingInstance = findClosestSiblingInstance(parentInstance, id);
+        setSelectedInstance(siblingInstance || parentInstance);
+      }
     }
-  );
+    // @todo deleting instance should involve also deleting it's props
+    // If we don't delete them - they just live both on client and db
+    // Pros:
+    //   - if we undo the deletion we don't need to undo the props deletion
+    //   - in a multiplayer environment, some other user could have changed a prop while we have deleted the instance
+    // and then if we restore the instance, we would be restoring it with our props, potentially overwriting other users changes
+    // The way it is now it will actually still enable parallel deletion props editing and restoration.
+    // Contra: we are piling them up.
+    // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
+    store.createTransaction([rootInstanceContainer], (rootInstance) => {
+      if (rootInstance !== undefined) {
+        deleteInstanceMutable(rootInstance, id);
+      }
+    });
+  });
 };
 
 export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
@@ -193,7 +208,7 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
         props,
       };
     }
-    publish<"selectInstance", SelectedInstanceData>({
+    publish({
       type: "selectInstance",
       payload,
     });
@@ -210,7 +225,7 @@ export const usePublishHoveredInstanceData = () => {
           component: instance.component,
         }
       : undefined;
-    publish<"hoverInstance", HoveredInstanceData | undefined>({
+    publish({
       type: "hoverInstance",
       payload,
     });
@@ -220,7 +235,7 @@ export const usePublishHoveredInstanceData = () => {
 export const usePublishRootInstance = () => {
   const [rootInstance] = useRootInstance();
   useEffect(() => {
-    publish<"loadRootInstance", Instance>({
+    publish({
       type: "loadRootInstance",
       payload: rootInstance,
     });
@@ -228,7 +243,7 @@ export const usePublishRootInstance = () => {
 };
 
 const publishRect = (rect: DOMRect) => {
-  publish<"selectedInstanceRect", DOMRect>({
+  publish({
     type: "selectedInstanceRect",
     payload: rect,
   });
@@ -252,7 +267,7 @@ export const usePublishHoveredInstanceRect = () => {
   const [element] = useHoveredElement();
   const publishRect = useCallback(() => {
     if (element === undefined) return;
-    publish<"hoveredInstanceRect", DOMRect>({
+    publish({
       type: "hoveredInstanceRect",
       payload: element.getBoundingClientRect(),
     });
@@ -304,7 +319,7 @@ export const useUnselectInstance = () => {
 export const usePublishTextEditingInstanceId = () => {
   const [editingInstanceId] = useTextEditingInstanceId();
   useEffect(() => {
-    publish<"textEditingInstanceId", Instance["id"] | undefined>({
+    publish({
       type: "textEditingInstanceId",
       payload: editingInstanceId,
     });

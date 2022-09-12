@@ -1,7 +1,7 @@
 import { Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { type Publish } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 
 const workspaceStyle = {
   flexGrow: 1,
@@ -39,7 +39,7 @@ export const Workspace = ({
   const [canvasWidth] = useCanvasWidth();
 
   const handleWorkspaceClick = () => {
-    publish<"unselectInstance">({ type: "unselectInstance" });
+    publish({ type: "unselectInstance" });
   };
 
   return (

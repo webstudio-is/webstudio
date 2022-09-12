@@ -1,6 +1,6 @@
 import { createValueContainer, useValue } from "react-nano-state";
 import { Box, Flex, Text, Collapsible } from "@webstudio-is/design-system";
-import { ChevronDownIcon, ChevronRightIcon } from "@webstudio-is/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@webstudio-is/icons";
 
 type CollapsibleSectionProps = {
   label: string;
@@ -38,7 +38,7 @@ export const CollapsibleSection = ({
     <Collapsible.Root open={isOpenFinal} onOpenChange={setIsOpenByUser}>
       <Box
         css={{
-          boxShadow: "0px 1px 0 $colors$gray6",
+          boxShadow: "0px 1px 0 $colors$panelOutline",
         }}
       >
         <Collapsible.Trigger asChild>
@@ -53,10 +53,14 @@ export const CollapsibleSection = ({
               cursor: "default",
             }}
           >
-            {isOpenFinal ? <ChevronDownIcon /> : <ChevronRightIcon />}
-            <Text size="1" css={{ fontWeight: "500", flexGrow: 1 }}>
-              {label}
-            </Text>
+            <Text css={{ fontWeight: "500", flexGrow: 1 }}>{label}</Text>
+            <Flex
+              align="center"
+              justify="center"
+              css={{ marginRight: "-$space$1", opacity: "$opacity$1" }}
+            >
+              {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            </Flex>
             {rightSlot}
           </Flex>
         </Collapsible.Trigger>
@@ -66,6 +70,7 @@ export const CollapsibleSection = ({
             direction="column"
             css={{
               p: "$3",
+              paddingTop: 0,
               "&:empty": {
                 display: "none",
               },

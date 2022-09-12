@@ -1,20 +1,26 @@
 import { useCallback, useEffect, useRef } from "react";
-import {
-  type Instance,
-  publish,
-  useSubscribe,
-  components,
-} from "@webstudio-is/react-sdk";
+import { type Instance, components } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { findInstanceById } from "~/shared/tree-utils";
+import {
+  findClosestNonInlineParent,
+  findInstanceById,
+} from "~/shared/tree-utils";
 import {
   getInstanceElementById,
   getInstanceIdFromElement,
 } from "~/shared/dom-utils";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    clickCanvas: undefined;
+  }
+}
 
 const eventOptions = {
   passive: true,
@@ -36,10 +42,7 @@ export const useTrackSelectedElement = () => {
     [setSelectedInstance, rootInstance]
   );
 
-  useSubscribe<"selectInstanceById", Instance["id"]>(
-    "selectInstanceById",
-    selectInstance
-  );
+  useSubscribe("selectInstanceById", selectInstance);
 
   // Focus and select the element when selected instance changes
   useEffect(() => {
@@ -50,7 +53,6 @@ export const useTrackSelectedElement = () => {
     ) {
       const element = getInstanceElementById(selectedInstance.id);
       if (element === null) return;
-      element.focus();
       setSelectedElement(element);
     }
   }, [selectedInstance, selectedElement, setSelectedElement]);
@@ -68,7 +70,7 @@ export const useTrackSelectedElement = () => {
     const handleClick = (event: MouseEvent) => {
       // Notify in general that document was clicked
       // e.g. to hide the side panel
-      publish<"clickCanvas">({ type: "clickCanvas" });
+      publish({ type: "clickCanvas" });
       let element = event.target as HTMLElement;
 
       // If we click on an element that is not a component, we search for a parent component.
@@ -96,22 +98,21 @@ export const useTrackSelectedElement = () => {
         }
         const { isInlineOnly, isContentEditable } = components[component];
 
-        if (isContentEditable === false) {
+        // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
+        // Inline instances are not editable directly, only through parent instance.
+        if (isInlineOnly) {
+          const parent =
+            rootInstance && findClosestNonInlineParent(rootInstance, id);
+          if (parent && components[parent.component].isContentEditable) {
+            selectInstance(parent.id);
+            setEditingInstanceId(parent.id);
+          }
           return;
         }
 
-        // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
-        // Inline instances are not directly, only through parent instance.
-        if (isInlineOnly) {
-          const parentId =
-            element.parentElement &&
-            getInstanceIdFromElement(element.parentElement);
-          if (parentId) {
-            selectInstance(parentId);
-            setEditingInstanceId(parentId);
-          }
-        } else setEditingInstanceId(id);
-        return;
+        if (isContentEditable) {
+          setEditingInstanceId(id);
+        }
       }
 
       selectInstance(id);
@@ -122,5 +123,5 @@ export const useTrackSelectedElement = () => {
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [selectInstance, setEditingInstanceId]);
+  }, [selectInstance, setEditingInstanceId, rootInstance]);
 };

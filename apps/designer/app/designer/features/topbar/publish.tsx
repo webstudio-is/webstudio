@@ -1,23 +1,24 @@
 import { useState, useEffect } from "react";
 import { useFetcher } from "@remix-run/react";
 import { RocketIcon, ExternalLinkIcon } from "@webstudio-is/icons";
-import { type Project } from "@webstudio-is/prisma-client";
 import {
   Button,
   Flex,
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverPortal,
   TextField,
   Text,
+  __DEPRECATED__Text,
   Label,
   Link,
   useId,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
-
-type PublishButtonProps = { project: Project };
+import * as db from "~/shared/db";
+type PublishButtonProps = { project: db.project.Project };
 
 const getHost = () => {
   if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST) {
@@ -59,15 +60,7 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: "$0",
               }}
             >
-              <Text
-                css={{
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {`${domain}.${getHost()}`}{" "}
-              </Text>
+              <Text truncate>{`${domain}.${getHost()}`} </Text>
               <ExternalLinkIcon />
             </Link>
           )}
@@ -77,7 +70,9 @@ const Content = ({ project }: PublishButtonProps) => {
             <TextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
-            <Text variant="red">{fetcher.data?.errors}</Text>
+            <__DEPRECATED__Text variant="red">
+              {fetcher.data?.errors}
+            </__DEPRECATED__Text>
           )}
           {fetcher.state === "idle" ? (
             <Button variant="blue" type="submit">
@@ -99,10 +94,12 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
       <PopoverTrigger asChild aria-label="Publish">
         <Button ghost css={{ display: "flex", gap: "$1" }}>
           <RocketIcon />
-          <Text size="1">Publish</Text>
+          <Text>Publish</Text>
         </Button>
       </PopoverTrigger>
-      <Content project={project} />
+      <PopoverPortal>
+        <Content project={project} />
+      </PopoverPortal>
     </Popover>
   );
 };

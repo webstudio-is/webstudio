@@ -18,7 +18,7 @@ export const populateInstance = (
   if (componentMeta !== undefined && "defaultStyle" in componentMeta) {
     const cssRule = {
       breakpoint,
-      style: componentMeta.defaultStyle,
+      style: componentMeta.defaultStyle ?? {},
     };
     populatedInstance.cssRules.push(cssRule);
   }

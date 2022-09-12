@@ -12,15 +12,17 @@ const defaultStyle = {
     type: "keyword",
     value: "border-box",
   },
-};
+} as const;
 
-export default {
+const meta: WsComponentMeta<typeof Form> = {
   Icon: FormIcon,
   Component: Form,
   defaultStyle,
-  canAcceptChild: () => true,
+  canAcceptChildren: true,
   isContentEditable: false,
   isInlineOnly: false,
   isListed: true,
   label: "Form",
-} as WsComponentMeta<typeof Form>;
+};
+
+export default meta;

@@ -33,7 +33,6 @@ export {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "./components/sidebar-tabs";
-export { Text } from "./components/text";
 export { Card } from "./components/card";
 export { SimpleToggle } from "./components/simple-toggle";
 export { ScrollArea } from "./components/scrollbar";
@@ -42,12 +41,7 @@ export { Button } from "./components/button";
 export { IconButton } from "./components/icon-button";
 export { Box } from "./components/box";
 export { ProgressBar } from "./components/progress-bar";
-export {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  PopoverClose,
-} from "./components/popover";
+export * from "./components/popover";
 export { Heading } from "./components/heading";
 export { MenuContent, MenuItem, Menu, MenuAnchor } from "./components/menu";
 export { Paragraph } from "./components/paragraph";
@@ -62,4 +56,10 @@ export * from "./components/combobox";
 export * from "./components/checkbox";
 export * from "./components/avatar";
 export * from "./components/primitives/dnd";
+export * from "./components/icon-button-with-menu";
+export * from "./components/primitives/numeric-gesture-control";
 export * from "./components/separator";
+export * from "./components/tree";
+export * from "./components/__DEPRECATED__/text";
+export * from "./components/text";
+export * from "./components/dialog";

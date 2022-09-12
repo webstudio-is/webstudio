@@ -3,7 +3,11 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { getInstancePath, createInstance } from "~/shared/tree-utils";
+import {
+  getInstancePath,
+  createInstance,
+  findClosestNonInlineParent,
+} from "~/shared/tree-utils";
 import {
   findInstanceByElement,
   getInstanceElementById,
@@ -17,13 +21,21 @@ import {
   useDrop,
 } from "@webstudio-is/design-system";
 import {
-  publish,
-  useSubscribe,
   type Instance,
   components,
   BaseInstance,
   toBaseInstance,
 } from "@webstudio-is/react-sdk";
+import { publish, useSubscribe } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    dragEnd: DragEndPayload;
+    dragMove: DragMovePayload;
+    dragStart: DragStartPayload;
+    dropTargetChange: DropTargetChangePayload;
+  }
+}
 
 export type DropTargetChangePayload = {
   rect: DropTarget<null>["rect"];
@@ -44,9 +56,12 @@ export type DragEndPayload = {
 
 export type DragMovePayload = { canvasCoordinates: Point };
 
-const initialState = {
-  dropTarget: undefined as DropTarget<Instance> | undefined,
-  dragItem: undefined as BaseInstance | undefined,
+const initialState: {
+  dropTarget: DropTarget<Instance> | undefined;
+  dragItem: BaseInstance | undefined;
+} = {
+  dropTarget: undefined,
+  dragItem: undefined,
 };
 
 export const useDragAndDrop = () => {
@@ -92,7 +107,7 @@ export const useDragAndDrop = () => {
       const path = getInstancePath(rootInstance, dropTarget.data.id);
       path.reverse();
 
-      if (dropTarget.nearEdge) {
+      if (dropTarget.area !== "center") {
         path.shift();
       }
 
@@ -104,11 +119,11 @@ export const useDragAndDrop = () => {
         path.splice(0, dragItemIndex + 1);
       }
 
-      const data = path.find((instance) =>
-        components[instance.component].canAcceptChild()
+      const data = path.find(
+        (instance) => components[instance.component].canAcceptChildren
       );
 
-      if (!data) {
+      if (data === undefined) {
         return getDefaultDropTarget();
       }
 
@@ -116,7 +131,7 @@ export const useDragAndDrop = () => {
         return dropTarget;
       }
 
-      const element = data && getInstanceElementById(data.id);
+      const element = getInstanceElementById(data.id);
 
       if (element === null) {
         return getDefaultDropTarget();
@@ -127,7 +142,7 @@ export const useDragAndDrop = () => {
 
     onDropTargetChange(dropTarget) {
       state.current.dropTarget = dropTarget;
-      publish<"dropTargetChange", DropTargetChangePayload>({
+      publish({
         type: "dropTargetChange",
         payload: {
           rect: dropTarget.rect,
@@ -167,14 +182,30 @@ export const useDragAndDrop = () => {
         return false;
       }
 
+      // When trying to drag an inline instance, drag its parent instead
+      if (components[instance.component].isInlineOnly) {
+        const nonInlineParent = findClosestNonInlineParent(
+          rootInstance,
+          instance.id
+        );
+        if (
+          nonInlineParent !== undefined &&
+          rootInstance.id !== nonInlineParent.id
+        ) {
+          return nonInlineParent;
+        }
+        return false;
+      }
+
       return instance;
     },
     onStart({ data: instance }) {
       state.current.dragItem = instance;
 
       autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
 
-      publish<"dragStart", DragStartPayload>({
+      publish({
         type: "dragStart",
         payload: {
           origin: "canvas",
@@ -187,10 +218,10 @@ export const useDragAndDrop = () => {
       autoScrollHandlers.handleMove(point);
     },
     onEnd({ isCanceled }) {
-      dropHandlers.handleEnd();
+      dropHandlers.handleEnd({ isCanceled });
       autoScrollHandlers.setEnabled(false);
 
-      publish<"dragEnd", DragEndPayload>({
+      publish({
         type: "dragEnd",
         payload: { origin: "canvas", isCanceled },
       });
@@ -198,13 +229,7 @@ export const useDragAndDrop = () => {
       const { dropTarget, dragItem } = state.current;
 
       if (dropTarget && dragItem && isCanceled === false) {
-        publish<
-          "reparentInstance",
-          {
-            instanceId: Instance["id"];
-            dropTarget: { instanceId: Instance["id"]; position: number };
-          }
-        >({
+        publish({
           type: "reparentInstance",
           payload: {
             instanceId: dragItem.id,
@@ -225,8 +250,8 @@ export const useDragAndDrop = () => {
   // We prefer useLayoutEffect over useEffect
   // because it's closer in the life cycle to when React noramlly calls the "ref" callbacks.
   useLayoutEffect(() => {
-    dropHandlers.rootRef(document.body);
-    dragHandlers.rootRef(document.body);
+    dropHandlers.rootRef(document.documentElement);
+    dragHandlers.rootRef(document.documentElement);
     window.addEventListener("scroll", dropHandlers.handleScroll);
 
     return () => {
@@ -243,54 +268,40 @@ export const useDragAndDrop = () => {
   // Handle drag from the panel
   // ================================================================
 
-  useSubscribe<"dragStart", DragStartPayload>(
-    "dragStart",
-    ({ origin, dragItem }) => {
-      if (origin === "panel") {
-        state.current.dragItem = dragItem;
-        autoScrollHandlers.setEnabled(true);
-      }
+  useSubscribe("dragStart", ({ origin, dragItem }) => {
+    if (origin === "panel") {
+      state.current.dragItem = dragItem;
+      autoScrollHandlers.setEnabled(true);
+      dropHandlers.handleStart();
     }
-  );
+  });
 
-  useSubscribe<"dragMove", DragMovePayload>(
-    "dragMove",
-    ({ canvasCoordinates }) => {
-      dropHandlers.handleMove(canvasCoordinates);
-      autoScrollHandlers.handleMove(canvasCoordinates);
-    }
-  );
+  useSubscribe("dragMove", ({ canvasCoordinates }) => {
+    dropHandlers.handleMove(canvasCoordinates);
+    autoScrollHandlers.handleMove(canvasCoordinates);
+  });
 
-  useSubscribe<"dragEnd", DragEndPayload>(
-    "dragEnd",
-    ({ origin, isCanceled }) => {
-      if (origin === "panel") {
-        dropHandlers.handleEnd();
-        autoScrollHandlers.setEnabled(false);
+  useSubscribe("dragEnd", ({ origin, isCanceled }) => {
+    if (origin === "panel") {
+      dropHandlers.handleEnd({ isCanceled });
+      autoScrollHandlers.setEnabled(false);
 
-        const { dropTarget, dragItem } = state.current;
+      const { dropTarget, dragItem } = state.current;
 
-        if (dropTarget && dragItem && isCanceled === false) {
-          publish<
-            "insertInstance",
-            {
-              instance: Instance;
-              dropTarget: { parentId: Instance["id"]; position: number };
-            }
-          >({
-            type: "insertInstance",
-            payload: {
-              instance: createInstance({ component: dragItem.component }),
-              dropTarget: {
-                parentId: dropTarget.data.id,
-                position: dropTarget.indexWithinChildren,
-              },
+      if (dropTarget && dragItem && isCanceled === false) {
+        publish({
+          type: "insertInstance",
+          payload: {
+            instance: createInstance({ component: dragItem.component }),
+            dropTarget: {
+              parentId: dropTarget.data.id,
+              position: dropTarget.indexWithinChildren,
             },
-          });
-        }
-
-        state.current = { ...initialState };
+          },
+        });
       }
+
+      state.current = { ...initialState };
     }
-  );
+  });
 };

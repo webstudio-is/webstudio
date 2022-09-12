@@ -1,15 +1,7 @@
 import { useCallback } from "react";
-import {
-  useSubscribe,
-  usePublish,
-  type Publish,
-} from "@webstudio-is/react-sdk";
-import { type Project } from "@webstudio-is/prisma-client";
+import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
+import * as db from "~/shared/db";
 import type { Config } from "~/config";
-import type {
-  HoveredInstanceData,
-  SelectedInstanceData,
-} from "~/shared/canvas-components";
 import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
@@ -21,7 +13,7 @@ import {
 } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { Breadcrumbs } from "./features/breadcrumbs";
+import { Footer } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
 import {
   useUpdateCanvasWidth,
@@ -33,7 +25,6 @@ import {
   CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import { type SyncStatus } from "~/shared/sync";
 import {
   useIsPreviewMode,
   useRootInstance,
@@ -52,25 +43,22 @@ export const links = () => {
 
 const useSubscribeRootInstance = () => {
   const [, setValue] = useRootInstance();
-  useSubscribe<"loadRootInstance">("loadRootInstance", setValue);
+  useSubscribe("loadRootInstance", setValue);
 };
 
 const useSubscribeSelectedInstanceData = () => {
   const [, setValue] = useSelectedInstanceData();
-  useSubscribe<"selectInstance", SelectedInstanceData>(
-    "selectInstance",
-    setValue
-  );
+  useSubscribe("selectInstance", setValue);
 };
 
 const useSubscribeHoveredInstanceData = () => {
   const [, setValue] = useHoveredInstanceData();
-  useSubscribe<"hoverInstance", HoveredInstanceData>("hoverInstance", setValue);
+  useSubscribe("hoverInstance", setValue);
 };
 
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
-  useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
+  useSubscribe("syncStatus", setValue);
 };
 
 const useNavigatorLayout = () => {
@@ -108,11 +96,9 @@ const SidePanel = ({
         height: "100%",
         ...css,
         "&:first-of-type": {
-          boxShadow: "inset -1px 0 0 0 $colors$gray7",
+          boxShadow: "inset -1px 0 0 0 $colors$panelOutline",
         },
-        "&:last-of-type": {
-          boxShadow: "inset 1px 0 0 0 $colors$gray7",
-        },
+        "&:last-of-type": { boxShadow: "inset 1px 0 0 0 $colors$panelOutline" },
       }}
     >
       {children}
@@ -210,7 +196,13 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
   return (
     <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
-      <Box css={{ borderRight: "1px solid $slate7", width: PANEL_WIDTH }}>
+      <Box
+        css={{
+          borderRight: "1px solid $slate7",
+          width: PANEL_WIDTH,
+          height: "100%",
+        }}
+      >
         <Navigator publish={publish} isClosable={false} />
       </Box>
     </SidePanel>
@@ -219,7 +211,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: Project;
+  project: db.project.Project;
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {
@@ -285,7 +277,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
           <Inspector publish={publish} />
         )}
       </SidePanel>
-      <Breadcrumbs publish={publish} />
+      <Footer publish={publish} />
     </ChromeWrapper>
   );
 };

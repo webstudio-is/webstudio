@@ -5,13 +5,14 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverPortal,
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import { type Project } from "@webstudio-is/prisma-client";
+import * as db from "~/shared/db";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
-type ShareButtonProps = { path: string; project: Project };
+type ShareButtonProps = { path: string; project: db.project.Project };
 
 const Content = ({ path, project }: ShareButtonProps) => {
   if (typeof location === "undefined") {
@@ -61,7 +62,9 @@ export const ShareButton = ({ path, project }: ShareButtonProps) => {
           <Share1Icon />
         </IconButton>
       </PopoverTrigger>
-      <Content path={path} project={project} />
+      <PopoverPortal>
+        <Content path={path} project={project} />
+      </PopoverPortal>
     </Popover>
   );
 };

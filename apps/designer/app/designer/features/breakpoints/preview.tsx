@@ -1,5 +1,9 @@
 import { type Breakpoint } from "@webstudio-is/react-sdk";
-import { Paragraph, Flex, Text } from "@webstudio-is/design-system";
+import {
+  Paragraph,
+  Flex,
+  __DEPRECATED__Text,
+} from "@webstudio-is/design-system";
 
 type PreviewProps = {
   breakpoint?: Breakpoint;
@@ -8,8 +12,8 @@ type PreviewProps = {
 export const Preview = ({ breakpoint }: PreviewProps) => {
   return (
     <Flex css={{ px: "$5", py: "$1" }} gap="1" direction="column">
-      <Text size="1">CSS Preview</Text>
-      <Paragraph css={{ fontSize: "$1" }} variant="gray">
+      <__DEPRECATED__Text size="1">CSS Preview</__DEPRECATED__Text>
+      <Paragraph color="hint">
         {breakpoint === undefined
           ? "No breakpoint selected"
           : `@media (min-width: ${breakpoint.minWidth}px)`}

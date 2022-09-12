@@ -1,1 +1,1 @@
-export { StylePanel } from "./style-panel";
+export * from "./style-panel";
