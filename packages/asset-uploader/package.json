@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/app-root-path": "^1.2.4",
-    "@types/node": "^17.0.21",
+    "@types/node": "^18.7.16",
     "@types/sharp": "^0.30.4",
     "@webstudio-is/jest-config": "*",
     "tsup": "^6.1.3",

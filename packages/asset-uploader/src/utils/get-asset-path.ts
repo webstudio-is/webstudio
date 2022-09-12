@@ -12,15 +12,14 @@ export const getAssetPath = (asset: DbAsset) => {
   }
 
   if (asset.location === Location.REMOTE && s3Envs.success) {
-    const s3Url = new URL(s3Envs.data.S3_ENDPOINT);
-
     if (s3Envs.data.ASSET_CDN_URL) {
       const cndUrl = new URL(s3Envs.data.ASSET_CDN_URL);
-      cndUrl.pathname = asset.name;
+      cndUrl.pathname = encodeURIComponent(asset.name);
       return cndUrl.toString();
     }
+    const s3Url = new URL(s3Envs.data.S3_ENDPOINT);
     s3Url.hostname = `${s3Envs.data.S3_BUCKET}.${s3Url.hostname}`;
-    s3Url.pathname = asset.name;
+    s3Url.pathname = encodeURIComponent(asset.name);
     return s3Url.toString();
   }
 
