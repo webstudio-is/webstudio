@@ -17,7 +17,7 @@ const fetch = async (url: string, options?: RequestInit) => {
   }
 };
 
-const loadProjectFromRest = async ({
+const loadProject = async ({
   projectId,
   host = process.env.DESIGNER_HOST || "localhost:3000",
   include = { tree: true, props: true, breakpoints: true },
@@ -39,4 +39,4 @@ const loadProjectFromRest = async ({
   };
 };
 
-export { loadProjectFromRest };
+export { loadProject };
