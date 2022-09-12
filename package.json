@@ -15,7 +15,8 @@
     "migrate": "turbo run migrate",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
-    "storybook": "turbo run storybook:run"
+    "storybook": "turbo run storybook:run",
+    "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {
     "@webstudio-is/eslint-config-custom": "*",
