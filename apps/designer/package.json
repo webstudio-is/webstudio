@@ -14,8 +14,6 @@
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
-    "migrations": "migrations --dev",
-    "migrate": "migrations migrate --force --dev",
     "ci:migrate": "migrations migrate --force"
   },
   "dependencies": {
