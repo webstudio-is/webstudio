@@ -32,6 +32,5 @@ export const createMany = async (
 ) => {
   const promisedData = values.map((options) => create(projectId, options));
   const data = await Promise.all(promisedData);
-  console.log(111, data);
   return data.map(formatAsset);
 };
