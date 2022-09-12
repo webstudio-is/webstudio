@@ -1,21 +1,7 @@
-import isoMorphicFetch from "isomorphic-unfetch";
+import "./fetch-polyfill";
 import type { Includes, Project } from "./index.d";
 
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-
-const fetch = async (url: string, options?: RequestInit) => {
-  const response = await isoMorphicFetch(url, options);
-  if (response.ok) {
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.indexOf("application/json") !== -1) {
-      return response.json();
-    } else {
-      return response.text();
-    }
-  } else {
-    throw new Error(response.statusText);
-  }
-};
 
 const loadProject = async ({
   projectId,
@@ -26,11 +12,15 @@ const loadProject = async ({
   host?: string;
   include?: Includes<boolean>;
 }): Promise<Project> => {
-  const domain = `${protocol}://${host}`;
+  const baseUrl = new URL("/", `${protocol}://${host}`);
+  const treeUrl = new URL(`/rest/tree/${projectId}`, baseUrl);
+  const propsUrl = new URL(`/rest/props/${projectId}`, baseUrl);
+  const breakpointsUrl = new URL(`/rest/breakpoints/${projectId}`, baseUrl);
+
   const [tree, props, breakpoints] = await Promise.all([
-    include.tree && fetch(`${domain}/rest/tree/${projectId}`),
-    include.props && fetch(`${domain}/rest/props/${projectId}`),
-    include.breakpoints && fetch(`${domain}/rest/breakpoints/${projectId}`),
+    include.tree && (await fetch(treeUrl)).json(),
+    include.props && (await fetch(propsUrl)).json(),
+    include.breakpoints && (await fetch(breakpointsUrl)).json(),
   ]);
   return {
     tree,

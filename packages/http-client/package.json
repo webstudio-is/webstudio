@@ -21,7 +21,7 @@
   },
   "peerDependencies": {},
   "dependencies": {
-    "isomorphic-unfetch": "^3.1.0"
+    "node-fetch": "^3.2.10"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
