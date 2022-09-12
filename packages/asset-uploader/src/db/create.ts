@@ -1,4 +1,8 @@
-import { type Location, prisma, Project } from "@webstudio-is/prisma-client";
+import {
+  prisma,
+  type Location,
+  type Project,
+} from "@webstudio-is/prisma-client";
 import { type Metadata } from "sharp";
 import { formatAsset } from "../utils/format-asset";
 
@@ -18,8 +22,7 @@ const create = (projectId: Project["id"], options: Options) => {
       name,
       size,
       format: metadata.format,
-      ...(metadata.width ? { width: metadata.width } : {}),
-      ...(metadata.height ? { height: metadata.height } : {}),
+      meta: JSON.stringify({ width: metadata.width, height: metadata.height }),
       projectId,
     },
   });

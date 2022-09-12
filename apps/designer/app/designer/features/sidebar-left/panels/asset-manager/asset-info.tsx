@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/icons";
 import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
-import { BaseAsset } from "./types";
+import type { BaseAsset } from "~/designer/shared/assets";
 
 const Filename = ({ name }: { name: string }) => {
   const splitName = name.split(".");
@@ -52,8 +52,7 @@ type AssetInfoProps = BaseAsset & {
 
 export const AssetInfo = ({
   size,
-  width,
-  height,
+  meta,
   id,
   name,
   onClose,
@@ -87,14 +86,12 @@ export const AssetInfo = ({
           <Flex align="center" css={{ gap: "$1" }}>
             <SizeIcon />
             <Text variant="label">
-              {width} x {height}
+              {meta.width} x {meta.height}
             </Text>
           </Flex>{" "}
           <Flex align="center" css={{ gap: "$1" }}>
             <AspectRatioIcon />
-            <Text variant="label">
-              {getFormattedAspectRatio({ width, height })}
-            </Text>
+            <Text variant="label">{getFormattedAspectRatio(meta)}</Text>
           </Flex>
         </Grid>
       </Box>
