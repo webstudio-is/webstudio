@@ -22,79 +22,80 @@ Arguments
 `;
 
 const main = async () => {
+  if (args.dev) {
+    dotenv.config();
+  }
+
+  const command = args._[0];
+
+  if (command === undefined) {
+    logger.info(USAGE);
+    return;
+  }
+
+  if (command === "create-schema") {
+    const name = args._[1];
+    if (name === undefined) {
+      throw new UserError(
+        "Missing name for migration.\nUsage: migrations create-schema <name>"
+      );
+    }
+    await commands.createSchema({ name });
+    return;
+  }
+
+  if (command === "create-data") {
+    const name = args._[1];
+    if (name === undefined) {
+      throw new UserError(
+        "Missing name for migration.\nUsage: migrations create-data <name>"
+      );
+    }
+    await commands.createData({ name });
+    return;
+  }
+
+  if (command === "migrate") {
+    await commands.migrate();
+    return;
+  }
+
+  if (command === "status") {
+    await commands.status();
+    return;
+  }
+
+  if (command === "resolve") {
+    const type = args._[1];
+
+    if (type === undefined || (type !== "applied" && type !== "rolled-back")) {
+      throw new UserError(
+        "Missing type of resolve.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
+      );
+    }
+
+    const name = args._[2];
+    if (name === undefined) {
+      throw new UserError(
+        "Missing name of migration.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
+      );
+    }
+
+    await commands.resolve({ migrationName: name, resolveAs: type });
+    return;
+  }
+
+  if (command === "reset") {
+    await commands.reset();
+    return;
+  }
+
+  throw new UserError(`Unknown command: ${command}`);
+};
+
+const runMain = async () => {
   try {
-    if (args.dev) {
-      dotenv.config();
-    }
-
-    const command = args._[0];
-
-    if (command === undefined) {
-      logger.info(USAGE);
-      return;
-    }
-
-    if (command === "create-schema") {
-      const name = args._[1];
-      if (name === undefined) {
-        throw new UserError(
-          "Missing name for migration.\nUsage: migrations create-schema <name>"
-        );
-      }
-      await commands.createSchema({ name });
-      return;
-    }
-
-    if (command === "create-data") {
-      const name = args._[1];
-      if (name === undefined) {
-        throw new UserError(
-          "Missing name for migration.\nUsage: migrations create-data <name>"
-        );
-      }
-      await commands.createData({ name });
-      return;
-    }
-
-    if (command === "migrate") {
-      await commands.migrate();
-      return;
-    }
-
-    if (command === "status") {
-      await commands.status();
-      return;
-    }
-
-    if (command === "resolve") {
-      const type = args._[1];
-
-      if (
-        type === undefined ||
-        (type !== "applied" && type !== "rolled-back")
-      ) {
-        throw new UserError(
-          "Missing type of resolve.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
-        );
-      }
-
-      const name = args._[2];
-      if (name === undefined) {
-        throw new UserError(
-          "Missing name of migration.\nUsage: migrations resolve <applied|rolled-back> <migration-name>"
-        );
-      }
-
-      await commands.resolve({ migrationName: name, resolveAs: type });
-      return;
-    }
-
-    if (command === "reset") {
-      await commands.reset();
-      return;
-    }
-
-    throw new UserError(`Unknown command: ${command}`);
+    await main();
   } catch (error) {
     if (error instanceof UserError) {
       logger.error(error.message);
@@ -106,4 +107,4 @@ const main = async () => {
   }
 };
 
-main();
+runMain();
