@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   type UploadHandlerPart,
   unstable_parseMultipartFormData,
@@ -5,15 +6,19 @@ import {
 import { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { Location } from "@webstudio-is/prisma-client";
-import { AssetsUploadedSuccess, S3EnvVariables } from "../../schema";
+import { S3EnvVariables } from "../../schema";
 import { toBuffer } from "../../utils/to-buffer";
 import { getAssetData } from "../../utils/get-asset-data";
-import { create } from "../../db";
+import { createMany } from "../../db";
 import { Asset } from "../../types";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
 
 const location = Location.REMOTE;
+
+const AssetsUploadedSuccess = z.object({
+  Location: z.string(),
+});
 
 export const uploadToS3 = async ({
   request,
@@ -34,17 +39,12 @@ export const uploadToS3 = async ({
   );
 
   const imagesFormData = formData.getAll("image") as Array<string>;
-  // @todo this could be one aggregated query for perf.
   const assetsData = imagesFormData.map((dataString) => {
     // @todo validate with zod
-    const data = JSON.parse(dataString);
-    return create(projectId, {
-      ...data,
-      location,
-    });
+    return JSON.parse(dataString);
   });
 
-  return await Promise.all(assetsData);
+  return await createMany(projectId, assetsData);
 };
 
 const uploadHandler = async ({
@@ -96,6 +96,7 @@ const uploadHandler = async ({
     name: uniqueFilename,
     size: buffer.byteLength,
     buffer,
+    location,
   };
 
   const assetData = await getAssetData(assetOptions);

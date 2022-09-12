@@ -1,6 +1,11 @@
-import { AssetEnvVariables, S3EnvVariables } from "./schema";
+import { z } from "zod";
+import { S3EnvVariables } from "./schema";
 import { uploadToFs } from "./targets/fs/upload";
 import { uploadToS3 } from "./targets/s3/upload";
+
+const AssetEnvVariables = z.object({
+  MAX_UPLOAD_SIZE: z.string().optional().default("10"),
+});
 
 const isS3Upload = S3EnvVariables.safeParse(process.env).success;
 const commonUploadVars = AssetEnvVariables.parse(process.env);

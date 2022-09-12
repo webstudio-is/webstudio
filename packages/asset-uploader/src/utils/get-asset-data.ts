@@ -1,3 +1,4 @@
+import { Location } from "@webstudio-is/prisma-client";
 import sharp, { type Metadata } from "sharp";
 
 //type FontData = any;
@@ -6,6 +7,7 @@ type ImageData = {
   name: string;
   size: number;
   metadata: Metadata;
+  location: Location;
 };
 
 export type AssetData = ImageData; // | FontData;
@@ -15,6 +17,7 @@ type AssetOptions = {
   name: string;
   size: number;
   buffer: Buffer | Uint8Array;
+  location: Location;
 };
 
 export const getAssetData = async (
@@ -34,6 +37,7 @@ export const getAssetData = async (
   return {
     name: options.name,
     size: options.size,
+    location: options.location,
     metadata,
   };
 };

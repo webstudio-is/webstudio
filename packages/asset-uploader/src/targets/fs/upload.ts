@@ -1,14 +1,17 @@
+import { z } from "zod";
 import {
   unstable_parseMultipartFormData,
   unstable_createFileUploadHandler,
+  NodeOnDiskFile,
 } from "@remix-run/node";
 import { Location } from "@webstudio-is/prisma-client";
-import { AssetsFromFs } from "../../schema";
 import { getAssetData } from "../../utils/get-asset-data";
-import { create } from "../../db";
+import { createMany } from "../../db";
 import { FILE_DIRECTORY } from "./file-path";
 import { Asset } from "../../types";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
+
+const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
 
 const location = Location.FS;
 
@@ -40,18 +43,11 @@ export const uploadToFs = async ({
       name: asset.name,
       size: asset.size,
       buffer: (await asset.arrayBuffer()) as Uint8Array,
+      location,
     })
   );
 
   const assetsData = await Promise.all(assets);
 
-  // @todo this could be one aggregated query for perf.
-  const savedAssetsData = assetsData.map((data) => {
-    return create(projectId, {
-      ...data,
-      location,
-    });
-  });
-
-  return await Promise.all(savedAssetsData);
+  return await createMany(projectId, assetsData);
 };
