@@ -2,8 +2,8 @@ import { Form, useSubmit } from "@remix-run/react";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
-import { BaseAsset } from "../../features/sidebar-left/panels/asset-manager/types";
 import { UploadIcon } from "@webstudio-is/icons";
+import type { BaseAsset } from "./types";
 
 const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
   const assets: Array<Promise<BaseAsset>> = Array.from(fileList).map(
@@ -18,8 +18,9 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
             name: file.name,
             id: ObjectID().toString(),
             status: "uploading",
-            alt: file.name,
+            description: file.name,
             size: file.size,
+            meta: {},
           });
         });
         reader.readAsDataURL(file);
