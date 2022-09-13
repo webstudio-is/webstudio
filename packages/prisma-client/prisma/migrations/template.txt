@@ -10,7 +10,10 @@ import { PrismaClient } from "./client";
 //   It's better to copy it to the migration directory.
 
 export default () => {
-  const client = new PrismaClient();
+  const client = new PrismaClient({
+    // Uncomment to see the queries in console as the migration runs
+    // log: ["query", "info", "warn", "error"],
+  });
   return client.$transaction(async (prisma) => {
     // This is the body of your migration.
     // Use the `prisma` client to perform database operations.

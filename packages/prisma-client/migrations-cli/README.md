@@ -57,7 +57,9 @@ NOTE: If this becomes a library there should be more istructions here.
 
 ### I want to change the data, without schema changes. How do I migrate data only?
 
-TODO
+- Create a data migration by running `migrations create-data <name>`.
+- Edit the data migration file.
+- Apply the migration using `migrations migrate --dev`.
 
 ### I need to change the schema and migrate the data.
 
@@ -65,7 +67,7 @@ TODO
 - Create a schema migration by running `migrations create-schema <name>`.
 - And the new schema by running `migrations migrate --dev`.
 - Create a data migration by running `migrations create-data <name>`.
-- Edit the data migration file to move the data to the new location
+- Edit the data migration file to move the data to the new location.
 - Apply the migration for data using the same command `migrations migrate --dev`.
 - Make changes to `schema.prisma` to remove the old models or fields that are no longer needed.
 - Create a schema migration by running `migrations create-schema <name>`.
