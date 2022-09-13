@@ -54,17 +54,28 @@ model Project {
   user   User?   @relation(fields: [userId], references: [id])
   userId String?
   assets Asset[]
-  build  Build[]
+
+  // Mutable dev build 
+  devBuild   Build  @relation(name: "devBuild", fields: [devBuildId], references: [id])
+  devBuildId String
+
+  // History of immutable published builds
+  // one of which has isCurrentProd=true
+  buildsHistory Build[] @relation(name: "buildsHistory")
 }
 
 model Build {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   pages     String
-  isDev     Boolean // exctly one is true per project
-  isProd    Boolean // at most one is true per project (none if not published)
-  project   Project  @relation(fields: [projectId], references: [id])
-  projectId String
+
+  // Used only for immutable published builds
+  project       Project? @relation(name: "buildsHistory", fields: [projectId], references: [id])
+  projectId     String?
+  isCurrentProd Boolean
+
+  // This is not used. Prisma requires all relations to be defined on both sides.
+  devProject__ Project[] @relation(name: "devBuild")
 }
 
 model Tree {
