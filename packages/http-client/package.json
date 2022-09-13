@@ -31,5 +31,5 @@
     "!*.test.*"
   ],
   "license": "MIT",
-  "private": true
+  "private": false
 }
