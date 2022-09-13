@@ -10,6 +10,7 @@ import { createInstance, populateInstance } from "~/shared/tree-utils";
 import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
 import { Project } from "./project.server";
+import * as build from "./build.server";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -44,22 +45,29 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
   };
 };
 
-// export const loadByProject = async (
-//   project: Project | null,
-//   env: "production" | "development" = "development"
-// ) => {
-//   if (project === null) {
-//     throw new Error("Project required");
-//   }
+export const loadByProject = async (
+  project: Project | null,
+  env: "production" | "development" = "development"
+) => {
+  if (project === null) {
+    throw new Error("Project required");
+  }
 
-//   const treeId = env === "production" ? project.prodTreeId : project.devTreeId;
+  let treeId;
 
-//   if (treeId === null) {
-//     throw new Error("Site needs to be published, production tree ID is null.");
-//   }
+  if (env === "production") {
+    const prodBuild = await build.loadProdByProjectId(project.id);
+    treeId = prodBuild?.pages.homePage.treeId;
+  } else {
+    treeId = project.devBuild?.pages.homePage.treeId;
+  }
 
-//   return await loadById(treeId);
-// };
+  if (treeId == null) {
+    throw new Error("Site needs to be published, production tree ID is null.");
+  }
+
+  return await loadById(treeId);
+};
 
 export const clone = async (treeId: string) => {
   const tree = await loadById(treeId);

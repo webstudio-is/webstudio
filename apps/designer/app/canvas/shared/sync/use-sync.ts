@@ -17,7 +17,7 @@ export const useSync = ({ project }: { project: db.project.Project }) => {
         method: "post",
         body: JSON.stringify({
           transactions: entries,
-          treeId: project.devTreeId,
+          treeId: project.devBuild?.pages.homePage.treeId,
           projectId: project.id,
         }),
       })

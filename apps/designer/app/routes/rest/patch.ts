@@ -2,7 +2,6 @@ import { type ActionFunction } from "@remix-run/node";
 import * as db from "~/shared/db";
 import { type SyncItem } from "immerhin";
 import { type Tree } from "@webstudio-is/react-sdk";
-import { type Project } from "@webstudio-is/prisma-client";
 
 const updaters = {
   root: db.tree.patchRoot,
@@ -15,13 +14,11 @@ type UpdaterKey = keyof typeof updaters;
 type PatchData = {
   transactions: Array<SyncItem>;
   treeId: Tree["id"];
-  projectId: Project["id"];
 };
 
 export const action: ActionFunction = async ({ request }) => {
-  const { treeId, projectId, transactions }: PatchData = await request.json();
+  const { treeId, transactions }: PatchData = await request.json();
   if (treeId === undefined) return { errors: "Tree id required" };
-  if (projectId === undefined) return { errors: "Project id required" };
   // @todo parallelize the updates
   // currently not possible because we fetch the entire tree
   // and parallelized updates will cause unpredictable side effects
@@ -31,7 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (namespace in updaters === false) {
         return { errors: `Unknown namespace "${namespace}"` };
       }
-      await updaters[namespace as UpdaterKey]({ treeId, projectId }, patches);
+      await updaters[namespace as UpdaterKey]({ treeId }, patches);
     }
   }
   return { status: "ok" };

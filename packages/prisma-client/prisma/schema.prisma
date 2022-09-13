@@ -72,7 +72,7 @@ model Build {
   // Used only for immutable published builds
   project       Project? @relation(name: "buildsHistory", fields: [projectId], references: [id])
   projectId     String?
-  isCurrentProd Boolean
+  isCurrentProd Boolean  @default(false)
 
   // This is not used. Prisma requires all relations to be defined on both sides.
   devProject__ Project[] @relation(name: "devBuild")

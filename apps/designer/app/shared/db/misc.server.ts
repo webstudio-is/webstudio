@@ -22,24 +22,16 @@ export const publish = async ({
     throw new Error(`Project "${projectId}" not found`);
   }
 
-  const tree = await db.tree.clone(project.devTreeId);
-  await db.props.clone({
-    previousTreeId: project.devTreeId,
-    nextTreeId: tree.id,
-  });
-  await db.breakpoints.clone({
-    previousTreeId: project.devTreeId,
-    nextTreeId: tree.id,
-  });
-  const prodTreeIdHistory = project.prodTreeIdHistory;
-  if (project.prodTreeId) {
-    prodTreeIdHistory.push(project.prodTreeId);
+  // should not happen
+  if (project.devBuild == undefined) {
+    throw new Error(`project.devBuild is not loaded`);
   }
+
+  await db.build.createProd(project.devBuild, project.id);
+
   const updatedProject = await db.project.update({
     id: projectId,
     domain,
-    prodTreeId: tree.id,
-    prodTreeIdHistory,
   });
   return updatedProject;
 };

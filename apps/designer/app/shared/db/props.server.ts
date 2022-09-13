@@ -6,6 +6,7 @@ import {
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { Project } from "./project.server";
+import * as build from "./build.server";
 
 export const loadByProject = async (
   project: Project | null,
@@ -15,9 +16,16 @@ export const loadByProject = async (
     throw new Error("Project required");
   }
 
-  const treeId = env === "production" ? project.prodTreeId : project.devTreeId;
+  let treeId;
 
-  if (treeId === null) {
+  if (env === "production") {
+    const prodBuild = await build.loadProdByProjectId(project.id);
+    treeId = prodBuild?.pages.homePage.treeId;
+  } else {
+    treeId = project.devBuild?.pages.homePage.treeId;
+  }
+
+  if (treeId == null) {
     throw new Error("Site needs to be published, production tree ID is null.");
   }
 
@@ -65,7 +73,7 @@ export const clone = async ({
 };
 
 export const patch = async (
-  { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
 ) => {
   const allProps = await loadByTreeId(treeId);

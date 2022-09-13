@@ -16,13 +16,11 @@ const loadData = async (projectId: Project["id"]) => {
   const [tree, props, breakpoints] = await Promise.all([
     db.tree.loadByProject(project, "development"),
     db.props.loadByProject(project, "development"),
-    db.breakpoints.load(project.devTreeId),
+    db.breakpoints.load(project.devBuild?.pages.homePage.treeId),
   ]);
 
   if (tree === null) {
-    throw new Error(
-      `Tree ${project.devTreeId} not found for project ${projectId}`
-    );
+    throw new Error(`Tree not found for project ${projectId}`);
   }
 
   if (breakpoints === null) {

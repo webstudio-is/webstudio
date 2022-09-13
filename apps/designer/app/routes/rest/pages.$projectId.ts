@@ -14,15 +14,18 @@ export const loader: LoaderFunction = async ({
     if (project === null) {
       throw new Error(`Project ${params.projectId} not found`);
     }
-    if (project.prodTreeId === null) {
+
+    const prodBuild = await db.build.loadProdByProjectId(project.id);
+
+    if (prodBuild === undefined) {
       throw new Error(
         `Project ${params.projectId} needs to be published first`
       );
     }
-    const data = await db.breakpoints.load(project.prodTreeId);
+    const data = await db.breakpoints.load(prodBuild.pages.homePage.treeId);
     if (data === null) {
       throw new Error(
-        `Breakpoints not found for project ${params.projectId} and tree ID ${project.prodTreeId}`
+        `Breakpoints not found for project ${params.projectId} and tree ID ${prodBuild.pages.homePage.treeId}`
       );
     }
     return data.values;

@@ -66,7 +66,7 @@ export const clone = async ({
 };
 
 export const patch = async (
-  { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
 ) => {
   const breakpoints = await load(treeId);

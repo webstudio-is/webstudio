@@ -23,7 +23,7 @@ const PagesSchema: z.ZodType<{ homePage: Page; pages: Array<Page> }> = z.object(
 
 type Pages = z.infer<typeof PagesSchema>;
 
-type Build = Omit<DbBuild, "pages"> & { pages: Pages };
+export type Build = Omit<DbBuild, "pages"> & { pages: Pages };
 
 export const parseBuild = (build: DbBuild): Build => {
   const pages = PagesSchema.parse(JSON.parse(build.pages));
@@ -47,24 +47,6 @@ export const loadById = async (id: Build["id"]): Promise<Build> => {
   return parseBuild(build);
 };
 
-export const loadDevByProjectId = async (
-  projectId: Build["projectId"]
-): Promise<Build> => {
-  if (typeof projectId !== "string") {
-    throw new Error("Project ID required");
-  }
-
-  const build = await prisma.build.findFirst({
-    where: { projectId, isDev: true },
-  });
-
-  if (build === null) {
-    throw new Error("Build not found");
-  }
-
-  return parseBuild(build);
-};
-
 export const loadProdByProjectId = async (
   projectId: Build["projectId"]
 ): Promise<Build | undefined> => {
@@ -73,7 +55,7 @@ export const loadProdByProjectId = async (
   }
 
   const build = await prisma.build.findFirst({
-    where: { projectId, isProd: true },
+    where: { projectId, isCurrentProd: true },
   });
 
   if (build === null) {
@@ -83,15 +65,11 @@ export const loadProdByProjectId = async (
   return parseBuild(build);
 };
 
-// Each project has a mutable dev build.
-// When user edits a project we update the dev build and other objects it references.
-// (As opposed to cloning a build, which we do for production builds)
-export const createDev = async (projectId: Build["projectId"]) => {
+const createPages = async () => {
   const breakpoints = db.breakpoints.getBreakpointsWithId();
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
   await db.breakpoints.create(tree.id, breakpoints);
-
-  const pages = PagesSchema.parse({
+  return PagesSchema.parse({
     homePage: {
       id: uuid(),
       name: "Home",
@@ -102,67 +80,62 @@ export const createDev = async (projectId: Build["projectId"]) => {
     },
     pages: [],
   });
-
-  const build = await prisma.build.create({
-    data: {
-      pages: JSON.stringify(pages),
-      isDev: true,
-      isProd: false,
-      projectId,
-    },
-  });
-
-  return parseBuild(build);
 };
 
-export const clone = async (build: Build) => {
+const clonePages = async (source: Pages) => {
   // @todo: clone pages other than home page
 
-  const treeId = build.pages.homePage.treeId;
+  const treeId = source.homePage.treeId;
 
   const tree = await db.tree.clone(treeId);
   await db.props.clone({ previousTreeId: treeId, nextTreeId: tree.id });
   await db.breakpoints.clone({ previousTreeId: treeId, nextTreeId: tree.id });
 
-  const pages = PagesSchema.parse({
+  return PagesSchema.parse({
     homePage: {
-      ...build.pages.homePage,
+      ...source.homePage,
       id: uuid(),
       treeId: tree.id,
     },
     pages: [],
   });
+};
+
+export const createDev = async (baseBuild?: Build) => {
+  if (baseBuild === undefined) {
+    const pages = await createPages();
+    return prisma.build.create({
+      data: { pages: JSON.stringify(pages) },
+    });
+  } else {
+    const pages = await clonePages(baseBuild.pages);
+    return prisma.build.create({
+      data: { pages: JSON.stringify(pages) },
+    });
+  }
+};
+
+export const createProd = async (
+  sourceBuild: Build,
+  projectId: Build["projectId"]
+) => {
+  const pages = await clonePages(sourceBuild.pages);
 
   const cloneBuild = await prisma.build.create({
     data: {
       pages: JSON.stringify(pages),
-      isDev: false,
-      isProd: false,
-      projectId: build.projectId,
+      projectId: projectId,
     },
   });
 
-  return parseBuild(cloneBuild);
-};
-
-export const setAsProd = async (buildId: Build["id"]) => {
-  await prisma.$transaction(async (transaction) => {
-    const build = await transaction.build.findUnique({
-      where: { id: buildId },
-    });
-
-    if (build === null) {
-      throw new Error("Build not found");
-    }
-
-    await transaction.build.updateMany({
-      where: { projectId: build.projectId, isProd: true },
-      data: { isProd: false },
-    });
-
-    await transaction.build.update({
-      where: { id: build.id },
-      data: { isProd: true },
-    });
-  });
+  await prisma.$transaction([
+    prisma.build.updateMany({
+      where: { projectId: projectId, isCurrentProd: true },
+      data: { isCurrentProd: false },
+    }),
+    prisma.build.update({
+      where: { id: cloneBuild.id },
+      data: { isCurrentProd: true },
+    }),
+  ]);
 };
