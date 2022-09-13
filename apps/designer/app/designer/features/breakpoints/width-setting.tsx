@@ -4,8 +4,8 @@ import {
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
 import { Slider, __DEPRECATED__Text, Flex } from "@webstudio-is/design-system";
-import { sort } from "~/shared/breakpoints";
 import { useBreakpoints, useIsPreviewMode } from "~/shared/nano-states";
+import { sort } from "@webstudio-is/project";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 50;

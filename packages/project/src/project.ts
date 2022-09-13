@@ -7,10 +7,9 @@ import {
   Prisma,
   Project as BaseProject,
 } from "@webstudio-is/prisma-client";
-import * as db from ".";
 import { formatAsset } from "@webstudio-is/asset-uploader";
 import type { Asset } from "@webstudio-is/asset-uploader";
-
+import * as db from "./index";
 const TreeHistorySchema = z.array(z.string());
 
 export type Project = Omit<BaseProject, "prodTreeIdHistory" | "assets"> & {

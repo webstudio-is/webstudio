@@ -13,7 +13,6 @@ import {
   __DEPRECATED__Text,
   Flex,
 } from "@webstudio-is/design-system";
-import { sort } from "~/shared/breakpoints";
 import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { Preview } from "./preview";
@@ -26,6 +25,7 @@ import {
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useBreakpoints } from "~/shared/nano-states";
+import { sort } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

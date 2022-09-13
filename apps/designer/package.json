@@ -32,6 +32,7 @@
     "@webstudio-is/prisma-client": "*",
     "@webstudio-is/react-sdk": "*",
     "@webstudio-is/css-vars": "*",
+    "@webstudio-is/project": "*",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "debug": "^4.3.4",

@@ -5,7 +5,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
-import { Project } from "./project.server";
+import { Project } from "./project";
 
 export const loadByProject = async (
   project: Project | null,

@@ -1,4 +1,4 @@
-import * as db from "./";
+import * as db from "@webstudio-is/project";
 /**
  * Conceptually publishing is cloning all data that affects user site
  * and referencing it under a new tree id.

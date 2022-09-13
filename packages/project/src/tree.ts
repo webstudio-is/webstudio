@@ -6,10 +6,10 @@ import {
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
-import { createInstance, populateInstance } from "~/shared/tree-utils";
-import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
-import { Project } from "./project.server";
+import { Project } from "./project";
+import { sort } from "./shared/breakpoints";
+import { createInstance, populateInstance } from "./shared/tree-utils";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
