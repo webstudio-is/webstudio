@@ -10,12 +10,11 @@ export const loader: LoaderFunction = async ({
   params,
 }): Promise<Array<Breakpoint> | ErrorData> => {
   try {
-    const project = await db.project.loadById(params.projectId);
-    if (project === null) {
-      throw new Error(`Project ${params.projectId} not found`);
+    if (params.projectId === undefined) {
+      throw new Error(`Project ID required`);
     }
 
-    const prodBuild = await db.build.loadProdByProjectId(project.id);
+    const prodBuild = await db.build.loadProdByProjectId(params.projectId);
 
     if (prodBuild === undefined) {
       throw new Error(
