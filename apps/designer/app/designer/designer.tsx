@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
-import * as db from "~/shared/db";
+import * as db from "@webstudio-is/project";
 import type { Config } from "~/config";
 import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";

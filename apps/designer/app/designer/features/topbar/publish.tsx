@@ -17,7 +17,7 @@ import {
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
-import * as db from "~/shared/db";
+import * as db from "@webstudio-is/project";
 type PublishButtonProps = { project: db.project.Project };
 
 const getHost = () => {

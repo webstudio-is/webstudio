@@ -7,7 +7,7 @@ import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
-import * as db from "~/shared/db";
+import * as db from "@webstudio-is/project";
 
 type TopbarProps = {
   config: Config;

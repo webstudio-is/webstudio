@@ -1,7 +1,7 @@
 import { useLoaderData } from "@remix-run/react";
 import { LoaderFunction } from "@remix-run/node";
 import { Designer, links } from "~/designer";
-import * as db from "~/shared/db";
+import * as db from "@webstudio-is/project";
 import config from "~/config";
 import env from "~/env.server";
 import { ErrorMessage } from "~/shared/error";

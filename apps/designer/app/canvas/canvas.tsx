@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
-import * as db from "~/shared/db";
+import * as db from "@webstudio-is/project";
 import {
   type OnChangeChildren,
   type Data,

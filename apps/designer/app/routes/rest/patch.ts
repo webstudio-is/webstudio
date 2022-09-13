@@ -1,5 +1,5 @@
 import { type ActionFunction } from "@remix-run/node";
-import * as db from "~/shared/db";
+import * as db from "@webstudio-is/project";
 import { type SyncItem } from "immerhin";
 import { type Tree } from "@webstudio-is/react-sdk";
 import { type Project } from "@webstudio-is/prisma-client";
