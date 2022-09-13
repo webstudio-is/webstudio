@@ -1,6 +1,7 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
 import type { User } from "@webstudio-is/prisma-client";
 import * as db from "@webstudio-is/project";
+import * as dba from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
 import config from "~/config";
 import { authenticator } from "~/services/auth.server";
@@ -31,7 +32,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const user = await authenticator.isAuthenticated(request);
   const { headers, userId: generatedUserId } = await ensureUserCookie(request);
   try {
-    const userId = await db.user.ensureUser({
+    const userId = await dba.user.ensureUser({
       userId: user ? user.id : generatedUserId,
     });
     const project = await ensureProject({
