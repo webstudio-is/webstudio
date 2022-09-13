@@ -13,10 +13,16 @@ const loadData = async (projectId: Project["id"]) => {
 
   if (project === null) throw new Error(`Project "${projectId}" not found`);
 
+  const { devBuild } = project;
+
+  if (devBuild === undefined) {
+    throw new Error(`project.devBuild is not loaded`);
+  }
+
   const [tree, props, breakpoints] = await Promise.all([
-    db.tree.loadByProject(project, "development"),
-    db.props.loadByProject(project, "development"),
-    db.breakpoints.load(project.devBuild?.pages.homePage.treeId),
+    db.tree.loadById(devBuild.pages.homePage.treeId),
+    db.props.loadByTreeId(devBuild.pages.homePage.treeId),
+    db.breakpoints.load(devBuild.pages.homePage.treeId),
   ]);
 
   if (tree === null) {

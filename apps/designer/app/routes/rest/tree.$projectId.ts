@@ -10,8 +10,19 @@ export const loader: LoaderFunction = async ({
   params,
 }): Promise<Tree | null | ErrorData> => {
   try {
-    const project = await db.project.loadById(params.projectId);
-    return await db.tree.loadByProject(project, "production");
+    if (params.projectId === undefined) {
+      throw new Error(`Project ID required`);
+    }
+
+    const prodBuild = await db.build.loadProdByProjectId(params.projectId);
+
+    if (prodBuild === undefined) {
+      throw new Error(
+        `Project ${params.projectId} needs to be published first`
+      );
+    }
+
+    return await db.tree.loadById(prodBuild.pages.homePage.treeId);
   } catch (error) {
     if (error instanceof Error) {
       return {

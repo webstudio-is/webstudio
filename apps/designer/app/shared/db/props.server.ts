@@ -5,32 +5,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
-import { Project } from "./project.server";
-import * as build from "./build.server";
-
-export const loadByProject = async (
-  project: Project | null,
-  env: "production" | "development" = "development"
-) => {
-  if (project === null) {
-    throw new Error("Project required");
-  }
-
-  let treeId;
-
-  if (env === "production") {
-    const prodBuild = await build.loadProdByProjectId(project.id);
-    treeId = prodBuild?.pages.homePage.treeId;
-  } else {
-    treeId = project.devBuild?.pages.homePage.treeId;
-  }
-
-  if (treeId == null) {
-    throw new Error("Site needs to be published, production tree ID is null.");
-  }
-
-  return loadByTreeId(treeId);
-};
 
 export const loadByTreeId = async (treeId: Tree["id"]) => {
   const instancePropsEntries = await prisma.instanceProps.findMany({
