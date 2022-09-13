@@ -1,30 +1,30 @@
 import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
-import * as db from "~/shared/db";
+import type { Project } from "@webstudio-is/project";
 import {
-  type OnChangeChildren,
+  createElementsTree,
   type Data,
+  globalStyles,
+  type OnChangeChildren,
   type Tree,
   useAllUserProps,
-  globalStyles,
-  createElementsTree,
 } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
-  usePopulateRootInstance,
-  useInsertInstance,
   useDeleteInstance,
-  useReparentInstance,
-  usePublishSelectedInstanceData,
-  usePublishRootInstance,
-  useUpdateSelectedInstance,
-  usePublishSelectedInstanceDataRect,
-  usePublishHoveredInstanceRect,
+  useInsertInstance,
+  usePopulateRootInstance,
   usePublishHoveredInstanceData,
+  usePublishHoveredInstanceRect,
+  usePublishRootInstance,
+  usePublishSelectedInstanceData,
+  usePublishSelectedInstanceDataRect,
+  usePublishTextEditingInstanceId,
+  useReparentInstance,
   useSetHoveredInstance,
   useUnselectInstance,
-  usePublishTextEditingInstanceId,
+  useUpdateSelectedInstance,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
@@ -83,7 +83,7 @@ const useSubscribePreviewMode = () => {
 
 type DesignModeProps = {
   treeId: Tree["id"];
-  project: db.project.Project;
+  project: Project;
 };
 
 const DesignMode = ({ treeId, project }: DesignModeProps) => {
@@ -112,7 +112,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
 };
 
 type CanvasProps = {
-  data: Data & { project: db.project.Project };
+  data: Data & { project: Project };
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {

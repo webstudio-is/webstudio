@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Reparent instance new parent 1`] = `
+Object {
+  "children": Array [
+    Object {
+      "children": Array [
+        Object {
+          "children": Array [],
+          "component": "Box",
+          "cssRules": Array [],
+          "id": "4",
+        },
+      ],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "2",
+    },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "3",
+    },
+  ],
+  "component": "Box",
+  "cssRules": Array [],
+  "id": "1",
+}
+`;
+
+exports[`Reparent instance same parent different position 1`] = `
+Object {
+  "children": Array [
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "3",
+    },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "2",
+    },
+    Object {
+      "children": Array [],
+      "component": "Box",
+      "cssRules": Array [],
+      "id": "4",
+    },
+  ],
+  "component": "Box",
+  "cssRules": Array [],
+  "id": "1",
+}
+`;

@@ -1,13 +1,14 @@
 import { useLoaderData } from "@remix-run/react";
 import { LoaderFunction } from "@remix-run/node";
 import { Designer, links } from "~/designer";
-import * as db from "~/shared/db";
+import { db } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 import config from "~/config";
 import env from "~/env.server";
 import { ErrorMessage } from "~/shared/error";
 import { action, useAction } from "./_assets";
 
-export { links, action };
+export { action, links };
 
 export const loader: LoaderFunction = async ({ params }) => {
   if (params.id === undefined) throw new Error("Project id undefined");
@@ -20,7 +21,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 type Data = {
   config: typeof config;
-  project: db.project.Project;
+  project: Project;
 };
 
 type Error = {
