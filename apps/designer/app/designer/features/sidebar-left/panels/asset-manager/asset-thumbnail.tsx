@@ -4,7 +4,7 @@ import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { AssetInfoTrigger, assetInfoTriggerCssVars } from "./asset-info-tigger";
-import { BaseAsset } from "./types";
+import type { BaseAsset } from "~/designer/shared/assets";
 
 const useImageWithFallback = ({
   path = placeholderImage,
@@ -52,14 +52,14 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
 };
 
 export const AssetThumbnail = (asset: BaseAsset) => {
-  const { path, alt, status, name } = asset;
+  const { path, description, status, name } = asset;
   const [isDeleting, setIsDeleting] = useState(false);
   const isUploading = status === "uploading";
   const isUploadedAsset = isUploading === false && "size" in asset;
 
   return (
     <Box
-      title={alt || name}
+      title={description || name}
       css={{
         aspectRatio: "1/1",
         display: "flex",

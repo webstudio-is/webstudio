@@ -11,7 +11,7 @@ import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 
 import { AssetInfo } from "./asset-info";
 import { cssVars } from "@webstudio-is/css-vars";
-import { BaseAsset } from "./types";
+import { BaseAsset } from "~/designer/shared/assets";
 
 const triggerVisibilityVar = cssVars.define("trigger-visibility");
 

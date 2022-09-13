@@ -50,19 +50,26 @@ NOTE: If this becomes a library there should be more istructions here.
 
 - Run `migrations migrate --dev`
 
-### I've changed models in `schema.prisma`. How do I update the database?
+### I've changed schema only, no data changes. How do I migrate database schema?
 
 - Create a schema migration by running `migrations create-schema <name>`.
 - Apply the migration by running `migrations migrate --dev`.
 
-### I need to change schema in a way that involves moving data to a new location.
+### I want to change the data, without schema changes. How do I migrate data only?
 
-- Make changes to `schema.prisma` in a way that both the old and the new locations for the data are defined.
-- Create a schema migration by running `migrations create-schema <name>`, and apply it by running `migrations migrate --dev`.
+TODO
+
+### I need to change the schema and migrate the data.
+
+- Make changes to `schema.prisma` in a way that **both** the old and the new locations for the data are defined.
+- Create a schema migration by running `migrations create-schema <name>`.
+- And the new schema by running `migrations migrate --dev`.
 - Create a data migration by running `migrations create-data <name>`.
-- Edit the data migration file to move the data to the new location, and apply the migration.
+- Edit the data migration file to move the data to the new location
+- Apply the migration for data using the same command `migrations migrate --dev`.
 - Make changes to `schema.prisma` to remove the old models or fields that are no longer needed.
-- Create a schema migration by running `migrations create-schema <name>`, and apply it.
+- Create a schema migration by running `migrations create-schema <name>`.
+- Apply schema migration `migrations migrate --dev`.
 
 ### A migration has failed. What do I do?
 
