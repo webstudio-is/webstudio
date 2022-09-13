@@ -1,0 +1,35 @@
+{
+  "name": "@webstudio-is/http-client",
+  "version": "0.0.1",
+  "description": "Webstudio HTTP Client",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "scripts": {
+    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
+    "test": "jest",
+    "build": "rm -fr lib && tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "checks": "yarn typecheck && yarn lint"
+  },
+  "devDependencies": {
+    "@webstudio-is/jest-config": "*",
+    "@webstudio-is/react-sdk": "*",
+    "@webstudio-is/prisma-client": "*",
+    "tsup": "^6.1.3",
+    "typescript": "^4.6.2"
+  },
+  "peerDependencies": {},
+  "dependencies": {
+    "node-fetch": "^3.2.10"
+  },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*",
+    "README.md",
+    "!*.test.*"
+  ],
+  "license": "MIT",
+  "private": true
+}
