@@ -16,6 +16,7 @@
   "devDependencies": {
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/prisma-client": "*",
+    "@webstudio-is/react-sdk": "*",
     "nanoid": "^4.0.0",
     "slugify": "^1.6.5",
     "zod": "^3.19.1",
