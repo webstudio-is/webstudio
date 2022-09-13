@@ -3,7 +3,7 @@ import type { Includes, Project } from "./index.d";
 
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
 
-const loadProject = async ({
+export const loadProject = async ({
   projectId,
   host = process.env.DESIGNER_HOST || "localhost:3000",
   include = { tree: true, props: true, breakpoints: true },
@@ -29,4 +29,3 @@ const loadProject = async ({
   };
 };
 
-export { loadProject };
