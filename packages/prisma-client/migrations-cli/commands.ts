@@ -129,6 +129,26 @@ const ensureLastPending = async (migrationsName: string) => {
   }
 };
 
+const isNoopSql = (sqlScript: string) => {
+  return (
+    sqlScript
+      .split("\n")
+      // When there are no changes, prisma generates "-- This is an empty migration"
+      .filter((line) => line.startsWith("--") === false)
+      .join("\n")
+      .trim() === ""
+  );
+};
+
+const ensureNoChangesInPrismaSchema = () => {
+  const sqlScript = prismaMigrations.cliDiff();
+  if (isNoopSql(sqlScript ?? "") === false) {
+    throw new UserError(
+      "There are changes in schema.prisma. Please create a schema migration first."
+    );
+  }
+};
+
 export const createSchema = async ({ name }: { name: string }) => {
   const status = await getStatus();
 
@@ -140,15 +160,7 @@ export const createSchema = async ({ name }: { name: string }) => {
 
   const sqlScript = prismaMigrations.cliDiff();
 
-  if (
-    sqlScript === undefined ||
-    sqlScript
-      .split("\n")
-      // When there are no changes, prisma generates "-- This is an empty migration"
-      .filter((line) => line.startsWith("--") === false)
-      .join("\n")
-      .trim().length === 0
-  ) {
+  if (isNoopSql(sqlScript ?? "")) {
     logger.info("No changes to apply");
     process.exit(0);
   }
@@ -172,6 +184,8 @@ export const createData = async ({ name }: { name: string }) => {
   const status = await getStatus();
 
   ensureNoFailed(status);
+  ensureNoPending(status);
+  ensureNoChangesInPrismaSchema();
 
   const migrationName = prismaMigrations.generateMigrationName(name);
 
