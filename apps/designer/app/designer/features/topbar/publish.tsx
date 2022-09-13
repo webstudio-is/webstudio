@@ -1,24 +1,24 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
-import { RocketIcon, ExternalLinkIcon } from "@webstudio-is/icons";
+import { ExternalLinkIcon, RocketIcon } from "@webstudio-is/icons";
 import {
+  __DEPRECATED__Text,
   Button,
   Flex,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  PopoverPortal,
-  TextField,
-  Text,
-  __DEPRECATED__Text,
   Label,
   Link,
+  Popover,
+  PopoverContent,
+  PopoverPortal,
+  PopoverTrigger,
+  Text,
+  TextField,
   useId,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
-import * as db from "@webstudio-is/project";
-type PublishButtonProps = { project: db.project.Project };
+import type { Project } from "@webstudio-is/project";
+type PublishButtonProps = { project: Project };
 
 const getHost = () => {
   if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST) {
@@ -60,7 +60,7 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: "$0",
               }}
             >
-              <Text truncate>{`${domain}.${getHost()}`} </Text>
+              <Text truncate>{`${domain}.${getHost()}`}</Text>
               <ExternalLinkIcon />
             </Link>
           )}

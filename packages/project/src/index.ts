@@ -1,9 +1,8 @@
-import * as project from "./project";
-import * as breakpoints from "./breakpoints";
-import * as tree from "./tree";
-import * as props from "./props";
+import * as dbFunctions from "./db";
+import * as breakpointsUtils from "./shared/breakpoints";
+import * as treeUtils from "./shared/tree-utils";
 
-export const db = {project, breakpoints, tree, props}
+export const utils = { breakpoints: breakpointsUtils, tree: treeUtils };
+export const db = dbFunctions;
 
-export breakpoints from "./shared/breakpoints";
-export tree from "./shared/tree-utils";
+export * from "./db/types";

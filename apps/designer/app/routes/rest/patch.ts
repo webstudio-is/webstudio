@@ -1,13 +1,13 @@
 import { type ActionFunction } from "@remix-run/node";
-import * as projectdomain from "@webstudio-is/project";
+import { db } from "@webstudio-is/project";
 import { type SyncItem } from "immerhin";
 import { type Tree } from "@webstudio-is/react-sdk";
 import { type Project } from "@webstudio-is/prisma-client";
 
 const updaters = {
-  root: projectdomain.tree.patchRoot,
-  props: projectdomain.props.patch,
-  breakpoints: projectdomain.breakpoints.patch,
+  root: db.tree.patchRoot,
+  props: db.props.patch,
+  breakpoints: db.breakpoints.patch,
 };
 
 type UpdaterKey = keyof typeof updaters;

@@ -1,8 +1,8 @@
 import { useCallback } from "react";
-import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
-import * as db from "@webstudio-is/project";
+import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
+import type { Project } from "@webstudio-is/project";
 import type { Config } from "~/config";
-import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
+import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -16,19 +16,19 @@ import designerStyles from "./designer.css";
 import { Footer } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
 import {
-  useUpdateCanvasWidth,
   useSubscribeBreakpoints,
+  useUpdateCanvasWidth,
 } from "./features/breakpoints";
 import {
+  CanvasIframe,
   useReadCanvasRect,
   Workspace,
-  CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  useDragAndDropState,
   useIsPreviewMode,
   useRootInstance,
-  useDragAndDropState,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
@@ -211,7 +211,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: db.project.Project;
+  project: Project;
 };
 
 export const Designer = ({ config, project }: DesignerProps) => {

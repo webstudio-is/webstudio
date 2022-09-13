@@ -1,17 +1,17 @@
 import { useLoaderData } from "@remix-run/react";
 import {
-  redirect,
-  type LoaderFunction,
   type ActionFunction,
   json,
+  type LoaderFunction,
+  redirect,
 } from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
-import * as db from "@webstudio-is/project";
+import { db } from "@webstudio-is/project";
 import config, { type Config } from "~/config";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
 import { zfd } from "zod-form-data";
-import { User, type Project } from "@webstudio-is/prisma-client";
+import { type Project, User } from "@webstudio-is/prisma-client";
 
 export { links };
 const schema = zfd.formData({

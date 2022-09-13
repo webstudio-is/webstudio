@@ -1,6 +1,7 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
 import type { User } from "@webstudio-is/prisma-client";
-import * as projectdomain from "@webstudio-is/project";
+import { db as database } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 import * as db from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
 import config from "~/config";
@@ -12,11 +13,11 @@ const ensureProject = async ({
 }: {
   userId: User["id"];
   domain: string;
-}): Promise<projectdomain.project.Project> => {
-  const projects = await projectdomain.project.loadManyByUserId(userId);
+}): Promise<Project> => {
+  const projects = await database.project.loadManyByUserId(userId);
   if (projects.length !== 0) return projects[0];
 
-  return await projectdomain.project.clone(domain, userId);
+  return await database.project.clone(domain, userId);
 };
 
 /**

@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { type Breakpoint } from "@webstudio-is/react-sdk";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
+import { type Publish, useSubscribe } from "~/shared/pubsub";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuPortal,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuArrow,
-  DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
   __DEPRECATED__Text,
+  DropdownMenu,
+  DropdownMenuArrow,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Flex,
 } from "@webstudio-is/design-system";
 import { useSelectedBreakpoint } from "../../shared/nano-states";
@@ -20,12 +20,12 @@ import { ZoomSetting } from "./zoom-setting";
 import { TriggerButton } from "./trigger-button";
 import { WidthSetting } from "./width-setting";
 import {
-  useSubscribeZoomFromShortcut,
   useSubscribeSelectBreakpointFromShortcut,
+  useSubscribeZoomFromShortcut,
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useBreakpoints } from "~/shared/nano-states";
-import { sort } from "@webstudio-is/project";
+import { utils } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -105,7 +105,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
     nextBreakpoints.splice(index, 1);
     setBreakpoints(nextBreakpoints);
     if (breakpointToDelete === selectedBreakpoint) {
-      setSelectedBreakpoint(sort(nextBreakpoints)[0]);
+      setSelectedBreakpoint(utils.breakpoints.sort(nextBreakpoints)[0]);
     }
     publish({
       type: "breakpointDelete",
@@ -163,7 +163,7 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
           )}
           {view === "selector" && (
             <>
-              {sort(breakpoints).map((breakpoint) => {
+              {utils.breakpoints.sort(breakpoints).map((breakpoint) => {
                 return (
                   <DropdownMenuCheckboxItem
                     checked={breakpoint === selectedBreakpoint}

@@ -1,4 +1,4 @@
-import * as projectdomain from "@webstudio-is/project";
+import { db } from "@webstudio-is/project";
 
 /**
  * Conceptually publishing is cloning all data that affects user site
@@ -18,17 +18,17 @@ export const publish = async ({
     throw new Error("Domain required");
   }
 
-  const project = await projectdomain.project.loadById(projectId);
+  const project = await db.project.loadById(projectId);
   if (project === null) {
     throw new Error(`Project "${projectId}" not found`);
   }
 
-  const tree = await projectdomain.tree.clone(project.devTreeId);
-  await projectdomain.props.clone({
+  const tree = await db.tree.clone(project.devTreeId);
+  await db.props.clone({
     previousTreeId: project.devTreeId,
     nextTreeId: tree.id,
   });
-  await projectdomain.breakpoints.clone({
+  await db.breakpoints.clone({
     previousTreeId: project.devTreeId,
     nextTreeId: tree.id,
   });
@@ -36,7 +36,7 @@ export const publish = async ({
   if (project.prodTreeId) {
     prodTreeIdHistory.push(project.prodTreeId);
   }
-  const updatedProject = await projectdomain.project.update({
+  const updatedProject = await db.project.update({
     id: projectId,
     domain,
     prodTreeId: tree.id,
