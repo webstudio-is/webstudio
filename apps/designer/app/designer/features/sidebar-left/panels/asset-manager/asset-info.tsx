@@ -81,20 +81,22 @@ export const AssetInfo = ({
           </Flex>
         </Grid>
       </Box>
-      <Box css={{ p: "$2 $3" }}>
-        <Grid columns={2} gap={2} align="center">
-          <Flex align="center" css={{ gap: "$1" }}>
-            <SizeIcon />
-            <Text variant="label">
-              {meta.width} x {meta.height}
-            </Text>
-          </Flex>{" "}
-          <Flex align="center" css={{ gap: "$1" }}>
-            <AspectRatioIcon />
-            <Text variant="label">{getFormattedAspectRatio(meta)}</Text>
-          </Flex>
-        </Grid>
-      </Box>
+      {"width" in meta && "height" in meta ? (
+        <Box css={{ p: "$2 $3" }}>
+          <Grid columns={2} gap={2} align="center">
+            <Flex align="center" css={{ gap: "$1" }}>
+              <SizeIcon />
+              <Text variant="label">
+                {meta.width} x {meta.height}
+              </Text>
+            </Flex>{" "}
+            <Flex align="center" css={{ gap: "$1" }}>
+              <AspectRatioIcon />
+              <Text variant="label">{getFormattedAspectRatio(meta)}</Text>
+            </Flex>
+          </Grid>
+        </Box>
+      ) : null}
       <Box css={{ p: "$2 $3" }}>
         <Button variant="red" size="2" onClick={handleDeleteAsset}>
           <Flex align="center" css={{ gap: "$1" }}>

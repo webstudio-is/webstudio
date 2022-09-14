@@ -36,24 +36,15 @@ type AssetOptions =
 export const getAssetData = async (
   options: AssetOptions
 ): Promise<AssetData> => {
-  let metadata;
-  if (options.type === "image") {
-    const sharpImage = sharp(options.buffer);
-    metadata = await sharpImage.metadata();
-  } else {
-    metadata = {};
-  }
-
-  if (metadata === undefined) {
-    throw new Error("Could not get metadata for asset");
-  }
-
-  // @todo fonts
-  return {
-    type: options.type,
+  const baseData = {
     name: options.name,
     size: options.size,
     location: options.location,
-    metadata,
   };
+  if (options.type === "image") {
+    const sharpImage = sharp(options.buffer);
+    const metadata = await sharpImage.metadata();
+    return { ...baseData, type: "image", metadata };
+  }
+  return { ...baseData, type: "font", metadata: {} };
 };
