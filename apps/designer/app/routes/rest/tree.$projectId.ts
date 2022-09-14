@@ -1,7 +1,6 @@
 import { type LoaderFunction } from "@remix-run/node";
 import type { Tree } from "@webstudio-is/react-sdk";
-import * as db from "~/shared/db";
-
+import { db } from "@webstudio-is/project";
 export type ErrorData = {
   errors: string;
 };

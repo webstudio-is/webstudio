@@ -6,19 +6,18 @@ import {
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
-import { createInstance, populateInstance } from "~/shared/tree-utils";
-import { sort } from "~/shared/breakpoints";
 import { Tree as DbTree } from "@prisma/client";
-import { Project } from "./project.server";
+import type { Project } from "../index";
+import { utils } from "../index";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
-  const defaultBreakpoint = sort(breakpoints)[0];
+  const defaultBreakpoint = utils.breakpoints.sort(breakpoints)[0];
   if (defaultBreakpoint === undefined) {
     throw new Error("A breakpoint with minWidth 0 is required");
   }
-  const instance = createInstance({ component: "Body" });
-  return populateInstance(instance, defaultBreakpoint.id);
+  const instance = utils.tree.createInstance({ component: "Body" });
+  return utils.tree.populateInstance(instance, defaultBreakpoint.id);
 };
 
 export const create = async (root: Instance): Promise<DbTree> => {
