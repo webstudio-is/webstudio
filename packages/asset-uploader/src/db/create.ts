@@ -3,49 +3,42 @@ import {
   type Location,
   type Project,
 } from "@webstudio-is/prisma-client";
-import { type Metadata } from "sharp";
-import { formatAsset } from "../utils/format-asset";
+import {
+  formatAsset,
+  type FontMeta,
+  type ImageMeta,
+} from "../utils/format-asset";
 
 type BaseOptions = {
   name: string;
   size: number;
-  metadata: Metadata;
   location: Location;
+  format?: string;
 };
 
 type Options =
   | ({
       type: "image";
+      meta: ImageMeta;
     } & BaseOptions)
-  | ({ type: "font" } & BaseOptions);
+  | ({ type: "font"; meta: FontMeta } & BaseOptions);
 
 const create = (projectId: Project["id"], options: Options) => {
-  const size = options.size || options.metadata.size || 0;
-  const { metadata, name, location } = options;
+  const size = options.size || 0;
+  const { meta, format, name, location } = options;
 
-  if (options.type === "image") {
-    return prisma.asset.create({
-      data: {
-        location,
-        name,
-        size,
-        format: metadata.format,
-        meta: JSON.stringify({
-          width: metadata.width,
-          height: metadata.height,
-        }),
-        projectId,
-      },
-    });
-  }
+  const baseData = {
+    location,
+    name,
+    size,
+    format,
+    projectId,
+  };
 
   return prisma.asset.create({
     data: {
-      location,
-      name,
-      size,
-      format: metadata.format,
-      projectId,
+      ...baseData,
+      meta: JSON.stringify(meta),
     },
   });
 };

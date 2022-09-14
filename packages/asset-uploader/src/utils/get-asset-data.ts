@@ -1,21 +1,23 @@
 import { Location } from "@webstudio-is/prisma-client";
-import sharp, { type Metadata } from "sharp";
+import sharp from "sharp";
+import type { FontMeta, ImageMeta } from "./format-asset";
 
 type BaseData = {
   name: string;
   size: number;
   location: Location;
+  format?: string;
 };
 
 type ImageData = BaseData & {
   type: "image";
-  metadata: Metadata;
+  meta: ImageMeta;
 };
 
 type FontData = BaseData & {
   type: "font";
   // @todo fonts meta
-  metadata: {};
+  meta: FontMeta;
 };
 
 export type AssetData = ImageData | FontData;
@@ -43,8 +45,13 @@ export const getAssetData = async (
   };
   if (options.type === "image") {
     const sharpImage = sharp(options.buffer);
-    const metadata = await sharpImage.metadata();
-    return { ...baseData, type: "image", metadata };
+    const { width, height, format } = await sharpImage.metadata();
+    return {
+      ...baseData,
+      type: options.type,
+      format,
+      meta: { width, height },
+    };
   }
-  return { ...baseData, type: "font", metadata: {} };
+  return { type: options.type, ...baseData, meta: {} };
 };

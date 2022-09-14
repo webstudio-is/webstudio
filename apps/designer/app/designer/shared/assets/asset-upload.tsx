@@ -3,6 +3,7 @@ import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 import type { BaseAsset } from "./types";
 
 const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
@@ -37,7 +38,7 @@ const acceptMap = {
 
 type AssetUploadProps = {
   onSubmit: (assets: Array<BaseAsset>) => void;
-  type: "image" | "font";
+  type: AssetType;
 };
 
 export const AssetUpload = ({ onSubmit, type }: AssetUploadProps) => {

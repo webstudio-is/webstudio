@@ -10,7 +10,7 @@ import { S3EnvVariables } from "../../schema";
 import { toBuffer } from "../../utils/to-buffer";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createMany } from "../../db";
-import { Asset } from "../../types";
+import type { Asset } from "../../types";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
 
@@ -36,6 +36,7 @@ export const uploadToS3 = async ({
       })
   );
 
+  // @todo fonts
   const imagesFormData = formData.getAll("image") as Array<string>;
   const assetsData = imagesFormData.map((dataString) => {
     // @todo validate with zod
@@ -88,14 +89,33 @@ const uploadHandler = async ({
 
   AssetsUploadedSuccess.parse(await upload.done());
 
-  // @todo fonts
-  const assetOptions = {
-    type: "image" as const,
+  const type = file.contentType.startsWith("image")
+    ? ("image" as const)
+    : ("font" as const);
+
+  const baseAssetOptions = {
     name: uniqueFilename,
     size: buffer.byteLength,
     buffer,
     location: Location.REMOTE,
   };
+  let assetOptions;
+
+  if (type === "image") {
+    assetOptions = {
+      type,
+      ...baseAssetOptions,
+    };
+  } else if (type === "font") {
+    assetOptions = {
+      type,
+      ...baseAssetOptions,
+    };
+  }
+
+  if (assetOptions === undefined) {
+    throw new Error("Asset type not supported");
+  }
 
   const assetData = await getAssetData(assetOptions);
 

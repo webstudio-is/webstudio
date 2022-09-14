@@ -6,3 +6,5 @@ export type Asset = Omit<DbAsset, "meta"> & {
   status?: "uploading" | "uploaded";
   meta: ImageMeta | FontMeta;
 };
+
+export type AssetType = "image" | "font";
