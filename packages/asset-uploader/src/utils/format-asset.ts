@@ -3,22 +3,24 @@ import { Asset as DbAsset } from "@webstudio-is/prisma-client";
 import { Asset } from "../types";
 import { getAssetPath } from "./get-asset-path";
 
-// @todo to use to distinguish between images and fonts
-//const formatTypeMap = {
-//  woff: "font",
-//  woff2: "font",
-//  ttf: "font",
-//  otf: "font",
-//  eot: "font",
-//} as const;
+const fontExtensions = ["ttf", "otf", "woff", "woff2", "eot"];
 
 const ImageMeta = z.object({
   width: z.number().optional(),
   height: z.number().optional(),
 });
+export type ImageMeta = z.infer<typeof ImageMeta>;
+
+// @todo fonts meta
+const FontMeta = z.object({});
+export type FontMeta = z.infer<typeof FontMeta>;
 
 export const formatAsset = (asset: DbAsset): Asset => {
-  const meta = ImageMeta.parse(JSON.parse(asset.meta));
+  const Schema =
+    asset.format && fontExtensions.includes(asset.format)
+      ? FontMeta
+      : ImageMeta;
+  const meta = Schema.parse(JSON.parse(asset.meta));
   return {
     ...asset,
     meta,
