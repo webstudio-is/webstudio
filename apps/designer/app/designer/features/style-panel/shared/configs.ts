@@ -38,6 +38,7 @@ import {
   RowGapIcon,
   ColumnGapIcon,
 } from "@webstudio-is/icons";
+import { isFeatureEnabled } from "~/shared/feature-flags";
 
 type BaseStyleConfig = {
   label: string;
@@ -90,9 +91,9 @@ const getControl = (property: StyleProperty): Control => {
     case "placeContent": {
       return "Empty";
     }
-    //case "fontFamily": {
-    //  return "FontFamily";
-    //}
+    case "fontFamily": {
+      return isFeatureEnabled("assets") ? "FontFamily" : "Text";
+    }
   }
 
   return "Text";
