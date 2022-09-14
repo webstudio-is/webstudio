@@ -1,29 +1,7 @@
 import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
-import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import * as db from ".";
-
-const PageSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  path: z.string(),
-  title: z.string(),
-  meta: z.record(z.string(), z.string()),
-  treeId: z.string(),
-});
-
-type Page = z.infer<typeof PageSchema>;
-
-const PagesSchema: z.ZodType<{ homePage: Page; pages: Array<Page> }> = z.object(
-  {
-    homePage: PageSchema,
-    pages: z.array(PageSchema),
-  }
-);
-
-type Pages = z.infer<typeof PagesSchema>;
-
-export type Build = Omit<DbBuild, "pages"> & { pages: Pages };
+import { Build, Pages, PagesSchema } from "./types";
 
 export const parseBuild = (build: DbBuild): Build => {
   const pages = PagesSchema.parse(JSON.parse(build.pages));

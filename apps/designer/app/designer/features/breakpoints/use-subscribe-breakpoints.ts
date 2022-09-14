@@ -1,9 +1,8 @@
 import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import { sort } from "~/shared/breakpoints";
 import { useBreakpoints } from "~/shared/nano-states";
-
+import { utils } from "@webstudio-is/project";
 export const useSubscribeBreakpoints = () => {
   const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
@@ -13,7 +12,7 @@ export const useSubscribeBreakpoints = () => {
   useEffect(() => {
     // Set the initial selected breakpoint
     if (selectedBreakpoint === undefined && breakpoints.length !== 0) {
-      setSelectedBreakpoint(sort(breakpoints)[0]);
+      setSelectedBreakpoint(utils.breakpoints.sort(breakpoints)[0]);
     }
 
     // Breakpoints must have changed, lets update the selected breakpoint

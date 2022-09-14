@@ -1,7 +1,6 @@
 import { type Data } from "@webstudio-is/react-sdk";
-import * as db from ".";
-import { Project } from "./project.server";
-
+import { db } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 export type CanvasData = Data & { project: Project };
 
 export type ErrorData = {

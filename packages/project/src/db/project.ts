@@ -6,13 +6,14 @@ import {
   Prisma,
   Project as BaseProject,
 } from "@webstudio-is/prisma-client";
-import * as db from ".";
 import { formatAsset } from "@webstudio-is/asset-uploader";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import { Build } from "./types";
+import * as db from "./index";
 
 export type Project = Omit<BaseProject, "assets" | "devBuild"> & {
   assets?: Array<Asset>;
-  devBuild?: db.build.Build;
+  devBuild?: Build;
 };
 
 const parseProject = (project: BaseProject): Project => {
@@ -97,7 +98,7 @@ export const create = async ({
 }: {
   userId: string;
   title: string;
-  devBuildId?: db.build.Build["id"];
+  devBuildId?: Build["id"];
 }) => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);

@@ -28,4 +28,3 @@ export const loadProject = async ({
     breakpoints,
   };
 };
-

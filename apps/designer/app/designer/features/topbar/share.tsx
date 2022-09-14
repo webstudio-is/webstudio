@@ -4,15 +4,15 @@ import {
   IconButton,
   Popover,
   PopoverContent,
-  PopoverTrigger,
   PopoverPortal,
+  PopoverTrigger,
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import * as db from "~/shared/db";
+import type { Project } from "@webstudio-is/project";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
-type ShareButtonProps = { path: string; project: db.project.Project };
+type ShareButtonProps = { path: string; project: Project };
 
 const Content = ({ path, project }: ShareButtonProps) => {
   if (typeof location === "undefined") {
