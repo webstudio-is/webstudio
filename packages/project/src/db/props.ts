@@ -5,24 +5,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
-import type { Project } from "./types";
-
-export const loadByProject = async (
-  project: Project | null,
-  env: "production" | "development" = "development"
-) => {
-  if (project === null) {
-    throw new Error("Project required");
-  }
-
-  const treeId = env === "production" ? project.prodTreeId : project.devTreeId;
-
-  if (treeId === null) {
-    throw new Error("Site needs to be published, production tree ID is null.");
-  }
-
-  return loadByTreeId(treeId);
-};
 
 export const loadByTreeId = async (treeId: Tree["id"]) => {
   const instancePropsEntries = await prisma.instanceProps.findMany({
@@ -65,7 +47,7 @@ export const clone = async ({
 };
 
 export const patch = async (
-  { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
 ) => {
   const allProps = await loadByTreeId(treeId);

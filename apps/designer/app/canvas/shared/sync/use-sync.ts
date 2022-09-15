@@ -1,9 +1,16 @@
 import useInterval from "react-use/lib/useInterval";
 import { sync } from "immerhin";
 import { enqueue } from "./queue";
-import type { Project } from "@webstudio-is/project";
+import type { Build } from "@webstudio-is/project";
+import { Tree } from "@webstudio-is/react-sdk";
 
-export const useSync = ({ project }: { project: Project }) => {
+export const useSync = ({
+  treeId,
+  buildId,
+}: {
+  buildId: Build["id"];
+  treeId: Tree["id"];
+}) => {
   useInterval(() => {
     const entries = sync();
     if (entries.length === 0) return;
@@ -17,8 +24,8 @@ export const useSync = ({ project }: { project: Project }) => {
         method: "post",
         body: JSON.stringify({
           transactions: entries,
-          treeId: project.devTreeId,
-          projectId: project.id,
+          treeId: treeId,
+          buildId: buildId,
         }),
       })
     );

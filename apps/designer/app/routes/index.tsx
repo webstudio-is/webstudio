@@ -31,19 +31,27 @@ export const loader: LoaderFunction = async ({
       if (project === null) {
         throw new Error(`Unknown domain "${userDomain}"`);
       }
-      if (project.prodTreeId === null) {
+
+      const prodBuild = await db.build.loadByProjectId(project.id, "prod");
+
+      if (prodBuild === undefined) {
         throw new Error(`Site is not published`);
       }
+
+      // @todo: use a correct page rather than homePage
+
       const [tree, props, breakpoints] = await Promise.all([
-        db.tree.loadByProject(project, "production"),
-        db.props.loadByTreeId(project.prodTreeId),
-        db.breakpoints.load(project.prodTreeId),
+        db.tree.loadById(prodBuild.pages.homePage.treeId),
+        db.props.loadByTreeId(prodBuild.pages.homePage.treeId),
+        db.breakpoints.load(prodBuild.id),
       ]);
       if (tree === null) {
-        throw new Error(`Tree ${project.prodTreeId} not found`);
+        throw new Error(`Tree ${prodBuild.pages.homePage.treeId} not found`);
       }
       if (breakpoints === null) {
-        throw new Error(`Breakpoints for tree ${project.prodTreeId} not found`);
+        throw new Error(
+          `Breakpoints for tree ${prodBuild.pages.homePage.treeId} not found`
+        );
       }
       return { tree, props, breakpoints: breakpoints.values, env };
     } catch (error) {

@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
-import type { Project } from "@webstudio-is/project";
+import type { Build } from "@webstudio-is/project";
 import {
   createElementsTree,
-  type Data,
   globalStyles,
   type OnChangeChildren,
   type Tree,
@@ -45,8 +44,8 @@ import { registerContainers } from "./shared/immerhin";
 import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-
 import { setInstanceChildrenMutable } from "~/shared/tree-utils";
+import { CanvasData } from "~/shared/db";
 
 registerContainers();
 
@@ -83,10 +82,10 @@ const useSubscribePreviewMode = () => {
 
 type DesignModeProps = {
   treeId: Tree["id"];
-  project: Project;
+  buildId: Build["id"];
 };
 
-const DesignMode = ({ treeId, project }: DesignModeProps) => {
+const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
@@ -99,7 +98,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
   useTrackSelectedElement();
   useTrackHoveredElement();
   useSetHoveredInstance();
-  useSync({ project });
+  useSync({ buildId, treeId });
   useUpdateSelectedInstance();
   usePublishSelectedInstanceDataRect();
   usePublishHoveredInstanceRect();
@@ -112,7 +111,7 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
 };
 
 type CanvasProps = {
-  data: Data & { project: Project };
+  data: CanvasData;
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
@@ -136,7 +135,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
 
   return (
     <>
-      <DesignMode treeId={data.tree.id} project={data.project} />
+      <DesignMode treeId={data.tree.id} buildId={data.buildId} />
       {elements}
     </>
   );

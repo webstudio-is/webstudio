@@ -7,7 +7,6 @@ import {
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { Tree as DbTree } from "@prisma/client";
-import type { Project } from "../index";
 import { utils } from "../index";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
@@ -41,23 +40,6 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
     ...tree,
     root,
   };
-};
-
-export const loadByProject = async (
-  project: Project | null,
-  env: "production" | "development" = "development"
-) => {
-  if (project === null) {
-    throw new Error("Project required");
-  }
-
-  const treeId = env === "production" ? project.prodTreeId : project.devTreeId;
-
-  if (treeId === null) {
-    throw new Error("Site needs to be published, production tree ID is null.");
-  }
-
-  return await loadById(treeId);
 };
 
 export const clone = async (treeId: string) => {

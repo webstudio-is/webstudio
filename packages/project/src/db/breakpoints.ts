@@ -1,82 +1,64 @@
 import {
   initialBreakpoints,
-  type Tree,
   type Breakpoint,
   BreakpointsSchema,
 } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
-import { prisma, Project } from "@webstudio-is/prisma-client";
+import { type Breakpoints, prisma } from "@webstudio-is/prisma-client";
 
-export const load = async (treeId?: Tree["id"]) => {
-  if (typeof treeId !== "string") {
-    throw new Error("Tree ID required");
-  }
-
-  const breakpoint = await prisma.breakpoints.findUnique({
-    where: { treeId },
+export const load = async (buildId: Breakpoints["buildId"]) => {
+  const breakpoints = await prisma.breakpoints.findUnique({
+    where: { buildId },
   });
 
-  if (breakpoint === null) {
-    throw new Error("Breakpoint not found");
+  if (breakpoints === null) {
+    throw new Error("Breakpoints not found");
   }
-  const values: Array<Breakpoint> = JSON.parse(breakpoint.values);
+  const values: Array<Breakpoint> = JSON.parse(breakpoints.values);
   BreakpointsSchema.parse(values);
   return {
-    ...breakpoint,
+    ...breakpoints,
     values,
   };
 };
 
-export const getBreakpointsWithId = () =>
-  initialBreakpoints.map((breakpoint) => ({
-    ...breakpoint,
-    id: ObjectId().toString(),
-  }));
+export const createValues = () =>
+  BreakpointsSchema.parse(
+    initialBreakpoints.map((breakpoint) => ({
+      ...breakpoint,
+      id: ObjectId().toString(),
+    }))
+  );
 
 export const create = async (
-  treeId: Project["id"],
+  buildId: Breakpoints["buildId"],
   values: Array<Breakpoint>
 ) => {
-  BreakpointsSchema.parse(values);
+  const breakpoints = await prisma.breakpoints.create({
+    data: {
+      values: JSON.stringify(values),
+      buildId,
+    },
+  });
 
-  const data = {
-    treeId,
-    values: JSON.stringify(values),
-  };
-  await prisma.breakpoints.create({ data });
   return {
-    ...data,
-    breakpoints: values,
+    ...breakpoints,
+    values,
   };
-};
-
-export const clone = async ({
-  previousTreeId,
-  nextTreeId,
-}: {
-  previousTreeId: Tree["id"];
-  nextTreeId: Tree["id"];
-}) => {
-  const breakpoints = await load(previousTreeId);
-  if (breakpoints === null) {
-    throw new Error(`Didn't find breakpoints with tree id "${previousTreeId}"`);
-  }
-  await create(nextTreeId, breakpoints.values);
 };
 
 export const patch = async (
-  { treeId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  buildId: Breakpoints["buildId"],
   patches: Array<Patch>
 ) => {
-  const breakpoints = await load(treeId);
-  if (breakpoints === null) return;
+  const breakpoints = await load(buildId);
   const nextValues = applyPatches(breakpoints.values, patches);
 
   BreakpointsSchema.parse(nextValues);
 
   await prisma.breakpoints.update({
-    where: { treeId },
+    where: { buildId: breakpoints.buildId },
     data: { values: JSON.stringify(nextValues) },
   });
 };

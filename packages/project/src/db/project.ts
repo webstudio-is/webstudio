@@ -1,22 +1,22 @@
 import slugify from "slugify";
 import { nanoid } from "nanoid";
-import { z } from "zod";
 import {
   User,
   prisma,
   Prisma,
   Project as BaseProject,
 } from "@webstudio-is/prisma-client";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/index.server";
 import * as db from "./index";
-import type { Project } from "../index";
-const TreeHistorySchema = z.array(z.string());
+
+export type Project = Omit<BaseProject, "assets"> & {
+  assets?: Array<Asset>;
+};
 
 const parseProject = (project: BaseProject): Project => {
-  const prodTreeIdHistory = JSON.parse(project.prodTreeIdHistory);
   return {
     ...project,
-    prodTreeIdHistory: TreeHistorySchema.parse(prodTreeIdHistory),
     assets: project?.assets?.map(formatAsset),
   };
 };
@@ -97,19 +97,15 @@ export const create = async ({
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
 
-  const domain = generateDomain(title);
-  const breakpoints = db.breakpoints.getBreakpointsWithId();
-  const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
   const project = await prisma.project.create({
     data: {
       userId,
       title,
-      domain,
-      devTreeId: tree.id,
+      domain: generateDomain(title),
     },
   });
 
-  await db.breakpoints.create(tree.id, breakpoints);
+  await db.build.create(project.id, "dev");
 
   return parseProject(project);
 };
@@ -119,43 +115,21 @@ export const clone = async (clonableDomain: string, userId: string) => {
   if (clonableProject === null) {
     throw new Error(`Not found project "${clonableDomain}"`);
   }
-  if (clonableProject.prodTreeId === null) {
+
+  const prodBuild = await db.build.loadByProjectId(clonableProject.id, "prod");
+
+  if (prodBuild === undefined) {
     throw new Error("Expected project to be published first");
   }
 
-  const tree = await db.tree.clone(clonableProject.prodTreeId);
-  const domain = generateDomain(clonableProject.title);
-  const [project] = await Promise.all([
-    prisma.project.create({
-      data: {
-        userId: userId,
-        title: clonableProject.title,
-        domain,
-        devTreeId: tree.id,
-      },
-      include: {
-        assets: {
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-      },
-    }),
-    db.props.clone({
-      previousTreeId: clonableProject.prodTreeId,
-      nextTreeId: tree.id,
-    }),
-    db.breakpoints.clone({
-      previousTreeId: clonableProject.prodTreeId,
-      nextTreeId: tree.id,
-    }),
-  ]);
+  const project = await create({
+    userId: userId,
+    title: clonableProject.title,
+  });
 
-  const parsedProject = parseProject(project);
-  if (parsedProject === null) {
-    throw new Error(`Not found project "${clonableDomain}"`);
-  }
-  return parsedProject;
+  await db.build.create(project.id, "dev", prodBuild);
+
+  return project;
 };
 
 export const update = async ({
@@ -164,9 +138,6 @@ export const update = async ({
 }: {
   id: string;
   domain?: string;
-  prodTreeId?: string;
-  devTreeId?: string;
-  prodTreeIdHistory: Array<string>;
 }) => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
@@ -175,22 +146,10 @@ export const update = async ({
     }
   }
 
-  TreeHistorySchema.parse(data.prodTreeIdHistory);
-
   try {
     const project = await prisma.project.update({
-      data: {
-        ...data,
-        prodTreeIdHistory: JSON.stringify(data.prodTreeIdHistory),
-      },
+      data,
       where: { id },
-      include: {
-        assets: {
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-      },
     });
     return project;
   } catch (error) {

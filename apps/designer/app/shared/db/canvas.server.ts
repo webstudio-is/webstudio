@@ -1,7 +1,8 @@
 import { type Data } from "@webstudio-is/react-sdk";
+import type { Project, Build } from "@webstudio-is/project";
 import { db } from "@webstudio-is/project/index.server";
-import type { Project } from "@webstudio-is/project";
-export type CanvasData = Data & { project: Project };
+
+export type CanvasData = Data & { buildId: Build["id"] };
 
 export type ErrorData = {
   errors: string;
@@ -12,16 +13,17 @@ const loadData = async (projectId: Project["id"]) => {
 
   if (project === null) throw new Error(`Project "${projectId}" not found`);
 
+  const devBuild = await db.build.loadByProjectId(projectId, "dev");
+
+  // @todo: use a correct page rather than homePage
   const [tree, props, breakpoints] = await Promise.all([
-    db.tree.loadByProject(project, "development"),
-    db.props.loadByProject(project, "development"),
-    db.breakpoints.load(project.devTreeId),
+    db.tree.loadById(devBuild.pages.homePage.treeId),
+    db.props.loadByTreeId(devBuild.pages.homePage.treeId),
+    db.breakpoints.load(devBuild.id),
   ]);
 
   if (tree === null) {
-    throw new Error(
-      `Tree ${project.devTreeId} not found for project ${projectId}`
-    );
+    throw new Error(`Tree not found for project ${projectId}`);
   }
 
   if (breakpoints === null) {
@@ -31,7 +33,7 @@ const loadData = async (projectId: Project["id"]) => {
   return {
     tree,
     props,
-    project,
+    buildId: devBuild.id,
     breakpoints: breakpoints.values,
   };
 };
