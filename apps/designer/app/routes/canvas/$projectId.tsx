@@ -5,7 +5,7 @@ import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
 import env, { Env } from "~/env.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
-import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
+import { Canvas as CanvasDocument } from "@webstudio-is/react-sdk";
 
 type Data = (CanvasData | ErrorData) & { env: Env };
 

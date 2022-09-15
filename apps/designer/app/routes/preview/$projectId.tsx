@@ -2,7 +2,7 @@ import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Root } from "@webstudio-is/react-sdk";
 import { loadPreviewData, type PreviewData, type ErrorData } from "~/shared/db";
-import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
+import { Canvas as CanvasDocument } from "@webstudio-is/react-sdk";
 import env, { Env } from "~/env.server";
 
 export const meta: MetaFunction = () => {

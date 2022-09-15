@@ -1,9 +1,12 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { type Data, Root } from "@webstudio-is/react-sdk";
+import {
+  type Data,
+  Root,
+  Canvas as CanvasDocument,
+} from "@webstudio-is/react-sdk";
 import config from "~/config";
 import { db } from "@webstudio-is/project";
-import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
 import env, { Env } from "~/env.server";
 
 // @todo all this subdomain logic is very hacky
