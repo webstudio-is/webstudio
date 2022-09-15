@@ -12,19 +12,22 @@
 
 ## Transacation failed with a error "Transaction API error: Transaction already closed: Could not perform operation."
 
-Most likely reason Prisma has thrown this error is because transaction has timed out. If that's the case you have following options:
+Most likely reason Prisma has thrown this error is because transaction has timed out. If that's the case, you have following options:
 
 1. Increase the timeout:
 
 ```js
-prisma.$transaction(
-  async (tx) => {
-    // Code running in a transaction...
-  },
-  {
-    timeout: 1000 * 60 * 2, // in milliseconds, default 5000
-  }
-);
+export default () => {
+  const client = new PrismaClient();
+  return client.$transaction(
+    async (prisma) => {
+      // migration code...
+    },
+    {
+      timeout: 1000 * 60 * 2, // in milliseconds, default 5000
+    }
+  );
+};
 ```
 
 2. Do not wrap the migration body into a transaction:
