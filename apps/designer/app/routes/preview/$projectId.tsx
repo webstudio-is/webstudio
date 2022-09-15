@@ -1,8 +1,7 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { Root } from "@webstudio-is/react-sdk";
-import { loadPreviewData, type PreviewData, type ErrorData } from "~/shared/db";
-import { Canvas as CanvasDocument } from "@webstudio-is/react-sdk";
+import { type ErrorData, loadPreviewData, type PreviewData } from "~/shared/db";
+import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import env, { Env } from "~/env.server";
 
 export const meta: MetaFunction = () => {
@@ -36,7 +35,7 @@ export const loader: LoaderFunction = async ({ params }): LoaderReturnType => {
 
 const Outlet = () => {
   const data = useLoaderData<PreviewData>();
-  return <Root data={data} />;
+  return <InstanceRoot data={data} />;
 };
 
 const PreviewRoute = () => {
@@ -44,7 +43,7 @@ const PreviewRoute = () => {
   if ("errors" in data) {
     return <p>{data.errors}</p>;
   }
-  return <CanvasDocument Outlet={Outlet} />;
+  return <Root Outlet={Outlet} />;
 };
 
 export default PreviewRoute;
