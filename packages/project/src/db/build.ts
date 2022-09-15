@@ -144,20 +144,18 @@ export async function create(
 
   const pages = await clonePages(sourceBuild.pages);
 
-  const build = await prisma.build.create({
-    data: {
-      projectId,
-      pages: JSON.stringify(pages),
-      isDev: false,
-      isProd: false,
-    },
-  });
-
   await prisma.$transaction([
     prisma.build.updateMany({
       where: { projectId: projectId, isProd: true },
       data: { isProd: false },
     }),
-    prisma.build.update({ where: { id: build.id }, data: { isProd: true } }),
+    prisma.build.create({
+      data: {
+        projectId,
+        pages: JSON.stringify(pages),
+        isDev: false,
+        isProd: true,
+      },
+    }),
   ]);
 }
