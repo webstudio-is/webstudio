@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { useBreakpoints } from "~/shared/nano-states";
-import { utils } from "@webstudio-is/project";
+import { utils } from "@webstudio-is/project/index.server";
 export const useSubscribeBreakpoints = () => {
   const [breakpoints, setBreakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
