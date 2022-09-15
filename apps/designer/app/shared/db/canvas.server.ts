@@ -18,7 +18,7 @@ const loadData = async (projectId: Project["id"]) => {
   const [tree, props, breakpoints] = await Promise.all([
     db.tree.loadById(devBuild.pages.homePage.treeId),
     db.props.loadByTreeId(devBuild.pages.homePage.treeId),
-    db.breakpoints.load(devBuild.pages.homePage.treeId),
+    db.breakpoints.load(devBuild.id),
   ]);
 
   if (tree === null) {

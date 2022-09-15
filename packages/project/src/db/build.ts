@@ -1,4 +1,5 @@
 import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
+import { type Breakpoint } from "@webstudio-is/react-sdk";
 import { v4 as uuid } from "uuid";
 import * as db from ".";
 import { Build, Pages, PagesSchema } from "./types";
@@ -60,10 +61,10 @@ export async function loadByProjectId(
   return parseBuild(build);
 }
 
-const createPages = async () => {
-  const breakpoints = db.breakpoints.getBreakpointsWithId();
+const createPages = async (breakpoints: Array<Breakpoint>) => {
+  // const breakpoints = db.breakpoints.getBreakpointsWithId();
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
-  await db.breakpoints.create(tree.id, breakpoints);
+  // await db.breakpoints.create(tree.id, breakpoints);
   return PagesSchema.parse({
     homePage: {
       id: uuid(),
@@ -84,7 +85,6 @@ const clonePages = async (source: Pages) => {
 
   const tree = await db.tree.clone(treeId);
   await db.props.clone({ previousTreeId: treeId, nextTreeId: tree.id });
-  await db.breakpoints.clone({ previousTreeId: treeId, nextTreeId: tree.id });
 
   return PagesSchema.parse({
     homePage: {
@@ -121,12 +121,16 @@ export async function create(
       throw new Error("Dev build already exists");
     }
 
+    const breakpointsValues = sourceBuild
+      ? (await db.breakpoints.load(sourceBuild.id)).values
+      : db.breakpoints.createValues();
+
     const pages =
       sourceBuild === undefined
-        ? await createPages()
+        ? await createPages(breakpointsValues)
         : await clonePages(sourceBuild.pages);
 
-    await prisma.build.create({
+    const build = await prisma.build.create({
       data: {
         projectId,
         pages: JSON.stringify(pages),
@@ -135,6 +139,8 @@ export async function create(
       },
     });
 
+    await db.breakpoints.create(build.id, breakpointsValues);
+
     return;
   }
 
@@ -142,9 +148,11 @@ export async function create(
     throw new Error("Source build required");
   }
 
+  const breakpointsValues = (await db.breakpoints.load(sourceBuild.id)).values;
+
   const pages = await clonePages(sourceBuild.pages);
 
-  await prisma.$transaction([
+  const [, build] = await prisma.$transaction([
     prisma.build.updateMany({
       where: { projectId: projectId, isProd: true },
       data: { isProd: false },
@@ -158,4 +166,6 @@ export async function create(
       },
     }),
   ]);
+
+  await db.breakpoints.create(build.id, breakpointsValues);
 }

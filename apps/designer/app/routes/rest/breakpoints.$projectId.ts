@@ -21,10 +21,10 @@ export const loader: LoaderFunction = async ({
         `Project ${params.projectId} needs to be published first`
       );
     }
-    const data = await db.breakpoints.load(prodBuild.pages.homePage.treeId);
+    const data = await db.breakpoints.load(prodBuild.id);
     if (data === null) {
       throw new Error(
-        `Breakpoints not found for project ${params.projectId} and tree ID ${prodBuild.pages.homePage.treeId}`
+        `Breakpoints not found for project ${params.projectId} and build ID ${prodBuild.id}`
       );
     }
     return data.values;

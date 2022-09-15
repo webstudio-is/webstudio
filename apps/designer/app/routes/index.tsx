@@ -40,7 +40,7 @@ export const loader: LoaderFunction = async ({
       const [tree, props, breakpoints] = await Promise.all([
         db.tree.loadById(prodBuild.pages.homePage.treeId),
         db.props.loadByTreeId(prodBuild.pages.homePage.treeId),
-        db.breakpoints.load(prodBuild.pages.homePage.treeId),
+        db.breakpoints.load(prodBuild.id),
       ]);
       if (tree === null) {
         throw new Error(`Tree ${prodBuild.pages.homePage.treeId} not found`);
