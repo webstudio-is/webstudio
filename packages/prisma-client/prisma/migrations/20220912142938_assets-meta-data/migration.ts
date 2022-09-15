@@ -1,5 +1,4 @@
 import { PrismaClient } from "./client";
-import { inspect } from "util";
 
 // NOTE ON IMPORTS:
 //
@@ -11,32 +10,24 @@ import { inspect } from "util";
 //   It's better to copy it to the migration directory.
 
 export default () => {
-  try {
-    const client = new PrismaClient();
+  const client = new PrismaClient();
 
-    return client.$transaction(async (prisma) => {
-      const previousAssets = await prisma.asset.findMany();
-      const update = previousAssets.map((asset) => {
-        return {
-          id: asset.id,
-          description: asset.alt,
-          meta: JSON.stringify({
-            width: Number(asset.width),
-            height: Number(asset.height),
-          }),
-        };
-      });
-      await Promise.all(
-        update.map(({ id, ...data }) =>
-          prisma.asset.update({ where: { id }, data })
-        )
-      );
+  return client.$transaction(async (prisma) => {
+    const previousAssets = await prisma.asset.findMany();
+    const update = previousAssets.map((asset) => {
+      return {
+        id: asset.id,
+        description: asset.alt,
+        meta: JSON.stringify({
+          width: Number(asset.width),
+          height: Number(asset.height),
+        }),
+      };
     });
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    } else {
-      throw new Error(inspect(error));
-    }
-  }
+    await Promise.all(
+      update.map(({ id, ...data }) =>
+        prisma.asset.update({ where: { id }, data })
+      )
+    );
+  });
 };
