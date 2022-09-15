@@ -23,12 +23,8 @@ export const publish = async ({
     throw new Error(`Project "${projectId}" not found`);
   }
 
-  // should not happen
-  if (project.devBuild == undefined) {
-    throw new Error(`project.devBuild is not loaded`);
-  }
-
-  await db.build.createProd(project.devBuild, project.id);
+  const devBuild = await db.build.loadByProjectId(projectId, "dev");
+  await db.build.create(project.id, "prod", devBuild);
 
   const updatedProject = await db.project.update({
     id: projectId,

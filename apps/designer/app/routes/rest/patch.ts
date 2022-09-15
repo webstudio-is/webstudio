@@ -1,5 +1,5 @@
 import { type ActionFunction } from "@remix-run/node";
-import { db } from "@webstudio-is/project";
+import { type Build, db } from "@webstudio-is/project";
 import { type SyncItem } from "immerhin";
 import { type Tree } from "@webstudio-is/react-sdk";
 
@@ -14,6 +14,7 @@ type UpdaterKey = keyof typeof updaters;
 type PatchData = {
   transactions: Array<SyncItem>;
   treeId: Tree["id"];
+  buildId: Build["id"]; // @todo use this to update breakpoints
 };
 
 export const action: ActionFunction = async ({ request }) => {

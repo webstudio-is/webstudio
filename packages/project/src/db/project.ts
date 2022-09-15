@@ -8,19 +8,16 @@ import {
 } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { Build } from "./types";
 import * as db from "./index";
 
-export type Project = Omit<BaseProject, "assets" | "devBuild"> & {
+export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
-  devBuild?: Build;
 };
 
 const parseProject = (project: BaseProject): Project => {
   return {
     ...project,
     assets: project?.assets?.map(formatAsset),
-    devBuild: project?.devBuild && db.build.parseBuild(project.devBuild),
   };
 };
 
@@ -37,7 +34,6 @@ export const loadById = async (projectId?: Project["id"]) => {
           createdAt: "desc",
         },
       },
-      devBuild: true,
     },
   });
 
@@ -54,7 +50,6 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
           createdAt: "desc",
         },
       },
-      devBuild: true,
     },
   });
   if (!project) return null;
@@ -94,11 +89,9 @@ const generateDomain = (title: string) => {
 export const create = async ({
   userId,
   title,
-  devBuildId,
 }: {
   userId: string;
   title: string;
-  devBuildId?: Build["id"];
 }) => {
   if (title.length < MIN_TITLE_LENGTH) {
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
@@ -109,9 +102,10 @@ export const create = async ({
       userId,
       title,
       domain: generateDomain(title),
-      devBuildId: devBuildId ?? (await db.build.createDev()).id,
     },
   });
+
+  await db.build.create(project.id, "dev");
 
   return parseProject(project);
 };
@@ -122,19 +116,20 @@ export const clone = async (clonableDomain: string, userId: string) => {
     throw new Error(`Not found project "${clonableDomain}"`);
   }
 
-  const prodBuild = await db.build.loadProdByProjectId(clonableProject.id);
+  const prodBuild = await db.build.loadByProjectId(clonableProject.id, "prod");
 
   if (prodBuild === undefined) {
     throw new Error("Expected project to be published first");
   }
 
-  const devBuild = await db.build.createDev(prodBuild);
-
-  return create({
+  const project = await create({
     userId: userId,
     title: clonableProject.title,
-    devBuildId: devBuild.id,
   });
+
+  await db.build.create(project.id, "dev", prodBuild);
+
+  return project;
 };
 
 export const update = async ({

@@ -1,7 +1,7 @@
 import { type Data } from "@webstudio-is/react-sdk";
 import { db } from "@webstudio-is/project";
-import type { Project } from "@webstudio-is/project";
-export type CanvasData = Data & { project: Project };
+import type { Project, Build } from "@webstudio-is/project";
+export type CanvasData = Data & { buildId: Build["id"] };
 
 export type ErrorData = {
   errors: string;
@@ -12,11 +12,7 @@ const loadData = async (projectId: Project["id"]) => {
 
   if (project === null) throw new Error(`Project "${projectId}" not found`);
 
-  const { devBuild } = project;
-
-  if (devBuild === undefined) {
-    throw new Error(`project.devBuild is not loaded`);
-  }
+  const devBuild = await db.build.loadByProjectId(projectId, "dev");
 
   const [tree, props, breakpoints] = await Promise.all([
     db.tree.loadById(devBuild.pages.homePage.treeId),
@@ -35,7 +31,7 @@ const loadData = async (projectId: Project["id"]) => {
   return {
     tree,
     props,
-    project,
+    buildId: devBuild.id,
     breakpoints: breakpoints.values,
   };
 };

@@ -33,7 +33,7 @@ export const loader: LoaderFunction = async ({
         throw new Error(`Unknown domain "${userDomain}"`);
       }
 
-      const prodBuild = await db.build.loadProdByProjectId(project.id);
+      const prodBuild = await db.build.loadByProjectId(project.id, "prod");
 
       if (prodBuild === undefined) {
         throw new Error(`Site is not published`);

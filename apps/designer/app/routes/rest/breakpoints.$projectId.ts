@@ -14,7 +14,7 @@ export const loader: LoaderFunction = async ({
       throw new Error(`Project ID required`);
     }
 
-    const prodBuild = await db.build.loadProdByProjectId(params.projectId);
+    const prodBuild = await db.build.loadByProjectId(params.projectId, "prod");
 
     if (prodBuild === undefined) {
       throw new Error(

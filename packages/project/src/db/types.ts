@@ -6,9 +6,8 @@ import {
 import type { Asset } from "@webstudio-is/asset-uploader";
 
 // Project
-export type Project = Omit<BaseProject, "assets" | "devBuild"> & {
+export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
-  devBuild?: Build;
 };
 
 // Build
