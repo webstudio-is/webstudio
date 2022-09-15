@@ -1,6 +1,6 @@
 import { type LoaderFunction } from "@remix-run/node";
 import { type InstanceProps } from "@webstudio-is/react-sdk";
-import { db } from "@webstudio-is/project";
+import { db } from "@webstudio-is/project/index.server";
 type ErrorData = {
   errors: string;
 };
