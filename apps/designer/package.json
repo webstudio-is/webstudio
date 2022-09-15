@@ -14,7 +14,7 @@
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
-    "ci:migrate": "migrations resolve rolled-back 20220915144008_breakpoints-build_data --force && migrations migrate --force"
+    "ci:migrate": "migrations migrate --force"
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",
