@@ -61,7 +61,6 @@
     "remix-auth-form": "^1.1.2",
     "remix-auth-github": "^1.1.1",
     "remix-auth-google": "^1.1.0",
-    "sharp": "^0.30.7",
     "slugify": "^1.6.5",
     "zod-form-data": "^1.2.1"
   },

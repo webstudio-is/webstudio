@@ -49,6 +49,10 @@ export const getAssetData = async (
     if (format === undefined) {
       throw new Error("Unknown image format");
     }
+    if (width === undefined || height === undefined) {
+      throw new Error("Unknown image dimensions");
+    }
+
     return {
       ...baseData,
       type: options.type,
