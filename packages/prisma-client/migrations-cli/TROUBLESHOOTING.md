@@ -22,7 +22,7 @@ prisma.$transaction(
     // Code running in a transaction...
   },
   {
-    timeout: 1000 * 60, // in milliseconds, default 5000
+    timeout: 1000 * 60 * 2, // in milliseconds, default 5000
   }
 );
 ```
