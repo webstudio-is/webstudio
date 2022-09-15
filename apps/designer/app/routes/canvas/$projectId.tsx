@@ -5,7 +5,7 @@ import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
 import env, { Env } from "~/env.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
-import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
+import { Root } from "@webstudio-is/react-sdk";
 
 type Data = (CanvasData | ErrorData) & { env: Env };
 
@@ -47,7 +47,7 @@ const CanvasRoute = () => {
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
-  return <CanvasDocument Outlet={Outlet} />;
+  return <Root Outlet={Outlet} />;
 };
 
 export default CanvasRoute;

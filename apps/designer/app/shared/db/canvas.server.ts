@@ -1,6 +1,7 @@
 import { type Data } from "@webstudio-is/react-sdk";
-import { db } from "@webstudio-is/project";
 import type { Project, Build } from "@webstudio-is/project";
+import { db } from "@webstudio-is/project/index.server";
+
 export type CanvasData = Data & { buildId: Build["id"] };
 
 export type ErrorData = {

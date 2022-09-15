@@ -1,6 +1,6 @@
 import type { LoaderFunction } from "@remix-run/node";
 import { Breakpoint } from "@webstudio-is/react-sdk";
-import { db } from "@webstudio-is/project";
+import { db } from "@webstudio-is/project/index.server";
 
 export type ErrorData = {
   errors: string;

@@ -6,8 +6,8 @@ import {
   Prisma,
   Project as BaseProject,
 } from "@webstudio-is/prisma-client";
-import { formatAsset } from "@webstudio-is/asset-uploader";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import { formatAsset } from "@webstudio-is/asset-uploader/index.server";
 import * as db from "./index";
 
 export type Project = Omit<BaseProject, "assets"> & {

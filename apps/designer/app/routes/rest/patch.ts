@@ -1,5 +1,6 @@
 import { type ActionFunction } from "@remix-run/node";
-import { type Build, db } from "@webstudio-is/project";
+import { type Build } from "@webstudio-is/project";
+import { db } from "@webstudio-is/project/index.server";
 import { type SyncItem } from "immerhin";
 import { type Tree } from "@webstudio-is/react-sdk";
 
