@@ -4,7 +4,8 @@
 1. Go to https://vercel.com/webstudio-is/webstudio-designer/settings/environment-variables
 1. Set APPLY_MIGRATIONS to "true" for you PR's branch
 1. Fix the failed migration code
-1. Temporarily change `ci:migrate` script to run `resolve` before applying migrations: `"ci:migrate": "migrations resolve rolled-back <name> --force && migrations migrate --force"`
+1. Fix the database mannually if the migration have been applied half-way
+1. Temporarily change `ci:migrate` script to run `resolve` before applying migrations: `"ci:migrate": "migrations resolve rolled-back <name> --force && migrations migrate --force"`. Use `applied` instead of `rolled-back` if you manually applied the migration at previous step.
 1. Commit the changes and check Vercel logs to see if the migration is applied
 1. Change `ci:migrate` script back to normal
 1. Merge the PR
@@ -12,7 +13,8 @@
 
 ## Transacation failed with a error "Transaction API error: Transaction already closed: Could not perform operation."
 
-Most likely reason Prisma has thrown this error is because transaction has timed out. If that's the case, you have following options:
+Most likely reason Prisma has thrown this error is because transaction has timed out.
+If that's the case, you have the following options:
 
 1. Increase the timeout:
 
