@@ -33,5 +33,5 @@ export default () => {
     // NOTE:
     //   Don't do any schema modifications here like adding a column to a table!
     //   If you need to change schema, edit schema.prisma and create a schema migration.
-  });
+  }, { timeout: 1000 * 60 });
 };

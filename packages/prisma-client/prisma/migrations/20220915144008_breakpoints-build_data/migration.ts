@@ -20,34 +20,37 @@ export default () => {
     // Uncomment to see the queries in console as the migration runs
     // log: ["query", "info", "warn", "error"],
   });
-  return client.$transaction(async (prisma) => {
-    const builds = await prisma.build.findMany();
-    const breakpoints = await prisma.breakpoints.findMany();
+  return client.$transaction(
+    async (prisma) => {
+      const builds = await prisma.build.findMany();
+      const breakpoints = await prisma.breakpoints.findMany();
 
-    const buildsParsed = builds.map((build) => ({
-      id: build.id,
-      pages: PagesSchema.parse(JSON.parse(build.pages)),
-    }));
+      const buildsParsed = builds.map((build) => ({
+        id: build.id,
+        pages: PagesSchema.parse(JSON.parse(build.pages)),
+      }));
 
-    await Promise.all(
-      breakpoints.map((breakpoint) => {
-        const build = buildsParsed.find(
-          (build) => build.pages.homePage.treeId === breakpoint.treeId
-        );
-
-        if (build === undefined) {
-          throw new Error(
-            `Build not found for breakpoint ${breakpoint.treeId}`
+      await Promise.all(
+        breakpoints.map((breakpoint) => {
+          const build = buildsParsed.find(
+            (build) => build.pages.homePage.treeId === breakpoint.treeId
           );
-        }
 
-        return prisma.breakpoints.update({
-          where: { treeId: breakpoint.treeId },
-          data: {
-            buildId: build.id,
-          },
-        });
-      })
-    );
-  });
+          if (build === undefined) {
+            throw new Error(
+              `Build not found for breakpoint ${breakpoint.treeId}`
+            );
+          }
+
+          return prisma.breakpoints.update({
+            where: { treeId: breakpoint.treeId },
+            data: {
+              buildId: build.id,
+            },
+          });
+        })
+      );
+    },
+    { timeout: 1000 * 60 }
+  );
 };
