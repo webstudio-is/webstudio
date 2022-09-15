@@ -2,8 +2,7 @@ import { z } from "zod";
 import { Asset as DbAsset } from "@webstudio-is/prisma-client";
 import { Asset } from "../types";
 import { getAssetPath } from "./get-asset-path";
-
-const fontFormats = ["ttf", "otf", "woff", "woff2", "eot"];
+import { FONT_FORMATS } from "../constants";
 
 const ImageMeta = z.object({
   width: z.number(),
@@ -16,7 +15,7 @@ const FontMeta = z.object({});
 export type FontMeta = z.infer<typeof FontMeta>;
 
 export const formatAsset = (asset: DbAsset): Asset => {
-  const Schema = fontFormats.includes(asset.format) ? FontMeta : ImageMeta;
+  const Schema = FONT_FORMATS.includes(asset.format) ? FontMeta : ImageMeta;
   const meta = Schema.parse(JSON.parse(asset.meta));
   return {
     ...asset,
