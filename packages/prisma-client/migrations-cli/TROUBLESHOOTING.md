@@ -2,7 +2,7 @@
 
 1. Open a new PR where you'll do the fix
 1. Go to https://vercel.com/webstudio-is/webstudio-designer/settings/environment-variables
-1. Set APPLY_MIGRATIONS to "true" for you PR's branch
+1. Set APPLY_MIGRATIONS to "true" for your PR's branch
 1. Fix the failed migration code
 1. Fix the database mannually if the migration have been applied half-way
 1. Temporarily change `ci:migrate` script to run `resolve` before applying migrations: `"ci:migrate": "migrations resolve rolled-back <name> --force && migrations migrate --force"`. Use `applied` instead of `rolled-back` if you manually applied the migration at previous step.
@@ -16,7 +16,8 @@
 Most likely reason Prisma has thrown this error is because transaction has timed out.
 If that's the case, you have the following options:
 
-1. Increase the timeout:
+1. Optimize your migration to make it faster
+2. Increase the timeout:
 
 ```js
 export default () => {
@@ -32,7 +33,7 @@ export default () => {
 };
 ```
 
-2. Do not wrap the migration body into a transaction:
+3. Do not wrap the migration body into a transaction:
 
 ```js
 export default async () => {
