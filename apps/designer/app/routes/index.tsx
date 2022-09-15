@@ -1,9 +1,8 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { type Data, Root } from "@webstudio-is/react-sdk";
+import { type Data, InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import config from "~/config";
 import { db } from "@webstudio-is/project";
-import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
 import env, { Env } from "~/env.server";
 
 // @todo all this subdomain logic is very hacky
@@ -65,13 +64,13 @@ const Index = () => {
 
   // We render the site from a subdomain
   if (data.tree && data.props) {
-    const Outlet = () => <Root data={data} />;
+    const Outlet = () => <InstanceRoot data={data} />;
 
     // @todo This is non-standard for Remix, is there a better way?
     // We need to render essentially the preview route but from the index,
     // so we have to know the layout and the outlet from here.
     // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
-    return <CanvasDocument Outlet={Outlet} />;
+    return <Root Outlet={Outlet} />;
   }
 
   return null;
