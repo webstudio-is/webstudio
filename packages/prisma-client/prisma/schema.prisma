@@ -26,7 +26,7 @@ model Asset {
   id          String   @id @default(uuid())
   project     Project  @relation(fields: [projectId], references: [id])
   projectId   String
-  format      String?
+  format      String
   size        Int
   name        String
   description String?

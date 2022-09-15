@@ -6,7 +6,7 @@ type BaseData = {
   name: string;
   size: number;
   location: Location;
-  format?: string;
+  format: string;
 };
 
 type ImageData = BaseData & {
@@ -46,6 +46,9 @@ export const getAssetData = async (
   if (options.type === "image") {
     const sharpImage = sharp(options.buffer);
     const { width, height, format } = await sharpImage.metadata();
+    if (format === undefined) {
+      throw new Error("Unknown image format");
+    }
     return {
       ...baseData,
       type: options.type,
@@ -53,5 +56,6 @@ export const getAssetData = async (
       meta: { width, height },
     };
   }
-  return { type: options.type, ...baseData, meta: {} };
+  // @todo meta for fonts
+  return { type: options.type, ...baseData, format: "todo", meta: {} };
 };

@@ -16,10 +16,7 @@ const FontMeta = z.object({});
 export type FontMeta = z.infer<typeof FontMeta>;
 
 export const formatAsset = (asset: DbAsset): Asset => {
-  const Schema =
-    asset.format && fontExtensions.includes(asset.format)
-      ? FontMeta
-      : ImageMeta;
+  const Schema = fontExtensions.includes(asset.format) ? FontMeta : ImageMeta;
   const meta = Schema.parse(JSON.parse(asset.meta));
   return {
     ...asset,

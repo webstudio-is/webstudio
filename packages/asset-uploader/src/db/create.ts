@@ -13,7 +13,7 @@ type BaseOptions = {
   name: string;
   size: number;
   location: Location;
-  format?: string;
+  format: string;
 };
 
 type Options =
