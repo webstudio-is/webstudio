@@ -20,6 +20,8 @@ export const loader: LoaderFunction = async ({
         `Project ${params.projectId} needs to be published first`
       );
     }
+
+    // @todo: use a correct page rather than homePage
     return await db.props.loadByTreeId(prodBuild.pages.homePage.treeId);
   } catch (error) {
     if (error instanceof Error) {

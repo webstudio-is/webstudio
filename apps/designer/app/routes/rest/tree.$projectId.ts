@@ -21,6 +21,7 @@ export const loader: LoaderFunction = async ({
       );
     }
 
+    // @todo: use a correct page rather than homePage
     return await db.tree.loadById(prodBuild.pages.homePage.treeId);
   } catch (error) {
     if (error instanceof Error) {

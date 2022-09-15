@@ -15,6 +15,7 @@ const loadData = async (projectId: Project["id"]) => {
 
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
 
+  // @todo: use a correct page rather than homePage
   const [tree, props, breakpoints] = await Promise.all([
     db.tree.loadById(devBuild.pages.homePage.treeId),
     db.props.loadByTreeId(devBuild.pages.homePage.treeId),

@@ -37,6 +37,9 @@ export const loader: LoaderFunction = async ({
       if (prodBuild === undefined) {
         throw new Error(`Site is not published`);
       }
+
+      // @todo: use a correct page rather than homePage
+
       const [tree, props, breakpoints] = await Promise.all([
         db.tree.loadById(prodBuild.pages.homePage.treeId),
         db.props.loadByTreeId(prodBuild.pages.homePage.treeId),
