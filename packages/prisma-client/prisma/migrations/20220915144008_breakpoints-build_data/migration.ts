@@ -18,7 +18,7 @@ const PagesSchema = z.object({
 export default () => {
   const client = new PrismaClient({
     // Uncomment to see the queries in console as the migration runs
-    log: ["query", "info", "warn", "error"],
+    // log: ["query", "info", "warn", "error"],
   });
   return client.$transaction(async (prisma) => {
     const builds = await prisma.build.findMany();
