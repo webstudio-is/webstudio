@@ -25,7 +25,7 @@ import {
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useBreakpoints } from "~/shared/nano-states";
-import { utils } from "@webstudio-is/project/index.server";
+import { utils } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

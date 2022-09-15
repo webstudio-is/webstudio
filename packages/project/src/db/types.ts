@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Project as BaseProject } from "@webstudio-is/prisma-client";
+import { type Project as BaseProject } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 const TreeHistorySchema = z.array(z.string());
 

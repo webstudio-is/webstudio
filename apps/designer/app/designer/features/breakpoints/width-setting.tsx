@@ -5,7 +5,7 @@ import {
 } from "~/designer/shared/nano-states";
 import { __DEPRECATED__Text, Flex, Slider } from "@webstudio-is/design-system";
 import { useBreakpoints, useIsPreviewMode } from "~/shared/nano-states";
-import { utils } from "@webstudio-is/project/index.server";
+import { utils } from "@webstudio-is/project";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 50;
