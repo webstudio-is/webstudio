@@ -1,4 +1,4 @@
-import { PrismaClient, type Project, type Tree } from "./client";
+import { PrismaClient, Prisma } from "./client";
 import { v4 as uuid } from "uuid";
 import { z } from "zod";
 
@@ -18,11 +18,6 @@ const PagesSchema = z.object({
   pages: z.array(PageSchema),
 });
 
-const isInHistory = (project: Project, tree: Tree) =>
-  TreeHistorySchema.parse(JSON.parse(project.prodTreeIdHistory)).includes(
-    tree.id
-  );
-
 export default () => {
   const client = new PrismaClient({
     // Uncomment to see the queries in console as the migration runs
@@ -32,12 +27,16 @@ export default () => {
     const trees = await prisma.tree.findMany();
     const projects = await prisma.project.findMany();
 
+    const builds: Prisma.BuildCreateManyInput[] = [];
+
     for (const tree of trees) {
       const project = projects.find(
         (project) =>
           project.devTreeId === tree.id ||
           project.prodTreeId === tree.id ||
-          isInHistory(project, tree)
+          TreeHistorySchema.parse(
+            JSON.parse(project.prodTreeIdHistory)
+          ).includes(tree.id)
       );
 
       if (project === undefined) {
@@ -56,20 +55,14 @@ export default () => {
         pages: [],
       });
 
-      const build = await prisma.build.create({
-        data: {
-          pages: JSON.stringify(pages),
-          isCurrentProd: project.prodTreeId === tree.id,
-          projectId: isInHistory(project, tree) ? project.id : undefined,
-        },
+      builds.push({
+        pages: JSON.stringify(pages),
+        isDev: project.devTreeId === tree.id,
+        isProd: project.prodTreeId === tree.id,
+        projectId: project.id,
       });
-
-      if (project.devTreeId === tree.id) {
-        await prisma.project.update({
-          where: { id: project.id },
-          data: { devBuildId: build.id },
-        });
-      }
     }
+
+    await prisma.build.createMany({ data: builds });
   });
 };
