@@ -1,4 +1,3 @@
-import { assert } from "console";
 import { PrismaClient } from "./client";
 
 // NOTE ON IMPORTS:
