@@ -232,8 +232,11 @@ export const Designer = ({ config, project }: DesignerProps) => {
       publishRef.current = ref;
       onRefReadCanvasWidth(ref);
       onRefReadCanvas(ref);
+      // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
+      // we can miss the events and designer will just not connect to the canvas.
+      publish({ type: "designerReady" });
     },
-    [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
+    [publishRef, onRefReadCanvasWidth, onRefReadCanvas, publish]
   );
 
   return (
