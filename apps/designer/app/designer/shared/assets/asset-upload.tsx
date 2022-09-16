@@ -3,6 +3,7 @@ import ObjectID from "bson-objectid";
 import { ChangeEvent, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
+import { type AssetType, FONT_FORMATS } from "@webstudio-is/asset-uploader";
 import type { BaseAsset } from "./types";
 
 const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
@@ -21,6 +22,7 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
             description: file.name,
             size: file.size,
             meta: {},
+            format: "unknown",
           });
         });
         reader.readAsDataURL(file);
@@ -32,12 +34,12 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
 
 const acceptMap = {
   image: "image/*",
-  font: ".woff2,.woff,.ttf",
+  font: FONT_FORMATS.map((format: string) => `.${format}`).join(", "),
 };
 
 type AssetUploadProps = {
   onSubmit: (assets: Array<BaseAsset>) => void;
-  type: "image" | "font";
+  type: AssetType;
 };
 
 export const AssetUpload = ({ onSubmit, type }: AssetUploadProps) => {
