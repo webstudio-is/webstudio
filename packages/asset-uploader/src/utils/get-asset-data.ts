@@ -61,5 +61,5 @@ export const getAssetData = async (
     };
   }
   // @todo meta for fonts
-  return { type: options.type, ...baseData, format: "todo", meta: {} };
+  return { type: options.type, ...baseData, format: "ttf", meta: {} };
 };

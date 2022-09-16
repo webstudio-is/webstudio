@@ -22,6 +22,7 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
             description: file.name,
             size: file.size,
             meta: {},
+            format: "unknown",
           });
         });
         reader.readAsDataURL(file);

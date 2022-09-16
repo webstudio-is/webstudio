@@ -16,7 +16,7 @@ export const TabContent = ({
   onSetActiveTab: (tabName: TabName) => void;
   assets: Array<BaseAsset>;
 }) => {
-  const { assets, onUploadAsset } = useAssets(loadedAssets);
+  const { assets, onUploadAsset } = useAssets(loadedAssets, "image");
   return (
     <>
       <Header

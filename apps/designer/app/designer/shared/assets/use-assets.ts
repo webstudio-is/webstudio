@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { useActionData } from "@remix-run/react";
 import type { BaseAsset, ActionData } from "./types";
+import { type AssetType, filterByType } from "@webstudio-is/asset-uploader";
 
-export const useAssets = (initialAssets: Array<BaseAsset> = []) => {
+export const useAssets = (
+  initialAssets: Array<BaseAsset> = [],
+  type: AssetType
+) => {
   const actionData: ActionData | undefined = useActionData();
   const [assets, setAssets] = useState<BaseAsset[]>(initialAssets);
 
@@ -33,5 +37,8 @@ export const useAssets = (initialAssets: Array<BaseAsset> = []) => {
   const onUploadAsset = (uploadedAssets: Array<BaseAsset>) =>
     setAssets((assets) => [...uploadedAssets, ...assets]);
 
-  return { assets, onUploadAsset };
+  return {
+    assets: filterByType<BaseAsset>(assets, type),
+    onUploadAsset,
+  };
 };
