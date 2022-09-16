@@ -232,8 +232,9 @@ export const Designer = ({ config, project }: DesignerProps) => {
       publishRef.current = ref;
       onRefReadCanvasWidth(ref);
       onRefReadCanvas(ref);
+      publish({ type: "designerReady" });
     },
-    [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
+    [publishRef, onRefReadCanvasWidth, onRefReadCanvas, publish]
   );
 
   return (
