@@ -1,4 +1,4 @@
-import type { Asset, AssetType } from "../types";
+import type { AssetType } from "../types";
 import { FONT_FORMATS } from "../constants";
 
 export const filterByType = <PartialAsset extends { format: string }>(
