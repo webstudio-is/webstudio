@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { FileLocker, MigrationMeta } from "umzug";
 import confirm from "@inquirer/confirm";
+import { inspect } from "node:util";
 import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
 import * as logger from "./logger";
@@ -256,13 +257,18 @@ If you're sure no other process is running, please delete the lockfile:
   try {
     await umzug.up();
   } catch (err) {
+    const originalError: unknown = err.cause || err;
+    const originalErrorString =
+      (originalError instanceof Error && originalError.stack) ||
+      inspect(originalError);
+
     logger.error("");
-    logger.error(err.stack);
+    logger.error(originalErrorString);
     logger.error("");
 
     const migrationName = (err.migration || undefined)?.name;
     if (typeof migrationName === "string") {
-      prismaMigrations.setFailed(migrationName, err.stack);
+      prismaMigrations.setFailed(migrationName, originalErrorString);
     }
 
     process.exitCode = 1;
