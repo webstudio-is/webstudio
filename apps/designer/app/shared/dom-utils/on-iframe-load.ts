@@ -6,7 +6,8 @@ export const onLoad = (iframe: HTMLIFrameElement) =>
   new Promise((resolve) => {
     if (iframe === null) return;
     const check = () => {
-      if (document.readyState === "complete") {
+      const document = iframe.contentDocument || iframe.contentWindow?.document;
+      if (document?.readyState === "complete") {
         clearInterval(intervalId);
         resolve("complete");
       }
