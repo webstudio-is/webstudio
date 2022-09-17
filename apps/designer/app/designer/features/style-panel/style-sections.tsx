@@ -37,9 +37,10 @@ export type RenderCategoryProps = {
   setProperty: SetProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
+  sectionStyle: Style;
   category: Category;
-  styleConfigsByCategory: Array<JSX.Element | null>;
-  moreStyleConfigsByCategory: Array<JSX.Element | null>;
+  styleConfigsByCategory: Array<RenderPropertyProps>;
+  moreStyleConfigsByCategory: Array<RenderPropertyProps>;
 };
 
 export type RenderPropertyProps = {
@@ -82,6 +83,7 @@ export const renderCategory = ({
   setProperty,
   createBatchUpdate,
   currentStyle,
+  sectionStyle,
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
@@ -90,8 +92,12 @@ export const renderCategory = ({
   if (!Category) {
     return (
       <>
-        {styleConfigsByCategory}
-        <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+        {styleConfigsByCategory.map((entry) => renderProperty(entry))}
+        <ShowMore
+          styleConfigs={moreStyleConfigsByCategory.map((entry) =>
+            renderProperty(entry)
+          )}
+        />
       </>
     );
   }
@@ -101,6 +107,7 @@ export const renderCategory = ({
       setProperty={setProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
+      sectionStyle={sectionStyle}
       category={category}
       styleConfigsByCategory={styleConfigsByCategory}
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}
@@ -126,6 +133,7 @@ const sections: {
   [key: string]: (props: RenderCategoryProps) => JSX.Element | null;
 } = {
   layout: LayoutSection,
+  // spacing: SpacingSection,
 };
 
 const controls: {

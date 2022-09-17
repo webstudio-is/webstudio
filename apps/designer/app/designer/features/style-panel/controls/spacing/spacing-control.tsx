@@ -242,6 +242,7 @@ const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
   );
 };
 
+// @todo convert to section, they way it does atm is a "hack"
 export const SpacingControl = ({
   currentStyle,
   inheritedStyle,

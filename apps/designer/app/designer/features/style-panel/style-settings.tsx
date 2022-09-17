@@ -20,6 +20,7 @@ import {
   type CreateBatchUpdate,
 } from "./shared/use-style-data";
 import { type SelectedInstanceData } from "~/shared/canvas-components";
+import { type RenderPropertyProps } from "./style-sections";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (properties: Array<string>, search: string) => {
@@ -98,8 +99,9 @@ export const StyleSettings = ({
       search
     );
     const { moreFrom } = categories[category];
-    const styleConfigsByCategory: Array<JSX.Element | null> = [];
-    const moreStyleConfigsByCategory: Array<JSX.Element | null> = [];
+    const sectionStyle: Style = {};
+    const styleConfigsByCategory: Array<RenderPropertyProps> = [];
+    const moreStyleConfigsByCategory: Array<RenderPropertyProps> = [];
 
     for (const styleConfig of styleConfigs) {
       const isInCategory = categoryProperties.includes(styleConfig.property);
@@ -109,14 +111,17 @@ export const StyleSettings = ({
         : appliesTo(styleConfig, currentStyle);
       const isRendered = didRender(category, styleConfig);
 
+      // @todo remove isRendered once spacing section is converted to a section
       if (isInCategory && isApplicable && isRendered === false) {
-        const element = renderProperty({
+        const element = {
           ...rest,
           setProperty,
           currentStyle,
           styleConfig,
           category,
-        });
+        };
+
+        sectionStyle[styleConfig.property] = element;
 
         // We are making a separate array of properties which come after the "moreFrom"
         // so we can make them collapsable
@@ -139,6 +144,7 @@ export const StyleSettings = ({
       createBatchUpdate,
       currentStyle,
       category,
+      sectionStyle,
       styleConfigsByCategory,
       moreStyleConfigsByCategory,
     };

@@ -3,6 +3,7 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { Lock } from "./shared/lock";
 import { ShowMore } from "../../shared/show-more";
+import { renderProperty } from "../../style-sections";
 
 const layoutSectionStyle = {
   alignItems: "center",
@@ -61,13 +62,15 @@ const layoutSectionFlexStyle = {
 
 const LayoutSectionFlex = ({
   currentStyle,
+  sectionStyle,
   createBatchUpdate,
   styleConfigsByCategory,
 }: RenderCategoryProps) => {
+  console.log(sectionStyle);
   const batchUpdate = createBatchUpdate();
   return (
     <Grid css={layoutSectionFlexStyle}>
-      {styleConfigsByCategory}
+      {styleConfigsByCategory.map((entry) => renderProperty(entry))}
       <Lock
         name="lock"
         pairedKeys={["columnGap", "rowGap"]}
@@ -90,6 +93,7 @@ export const LayoutSection = ({
   setProperty,
   createBatchUpdate,
   currentStyle,
+  sectionStyle,
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
@@ -103,6 +107,7 @@ export const LayoutSection = ({
         createBatchUpdate={createBatchUpdate}
         currentStyle={currentStyle}
         category={category}
+        sectionStyle={sectionStyle}
         styleConfigsByCategory={styleConfigsByCategory}
         moreStyleConfigsByCategory={moreStyleConfigsByCategory}
       />
@@ -111,8 +116,12 @@ export const LayoutSection = ({
 
   return (
     <>
-      <ShowMore styleConfigs={moreStyleConfigsByCategory} />
-      {styleConfigsByCategory}
+      <ShowMore
+        styleConfigs={moreStyleConfigsByCategory.map((entry) =>
+          renderProperty(entry)
+        )}
+      />
+      {styleConfigsByCategory.map((entry) => renderProperty(entry))}
     </>
   );
 };
