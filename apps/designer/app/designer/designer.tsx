@@ -33,7 +33,7 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-import { onLoad } from "~/shared/dom-utils";
+import { onIframeLoad } from "~/shared/dom-utils";
 
 export const links = () => {
   return [
@@ -75,7 +75,7 @@ const usePublishDesignerReady = (publish: Publish) => {
   useEffect(() => {
     if (ref === null) return;
 
-    onLoad(ref).then(() => {
+    onIframeLoad(ref).then(() => {
       // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
       // we can miss the events and designer will just not connect to the canvas.
       publish({ type: "designerReady" });
