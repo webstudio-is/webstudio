@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import type { Project } from "@webstudio-is/project";
 import type { Config } from "~/config";
@@ -33,6 +33,7 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
+import { onLoad } from "~/shared/dom-utils";
 
 export const links = () => {
   return [
@@ -66,6 +67,22 @@ const useNavigatorLayout = () => {
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
   return isLoaded ? clientSettings.navigatorLayout : "docked";
+};
+
+const usePublishDesignerReady = (publish: Publish) => {
+  const [ref, setRef] = useState(null);
+
+  useEffect(() => {
+    if (ref === null) return;
+
+    onLoad(ref).then(() => {
+      // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
+      // we can miss the events and designer will just not connect to the canvas.
+      publish({ type: "designerReady" });
+    });
+  }, [ref, publish]);
+
+  return setRef;
 };
 
 type SidePanelProps = {
@@ -226,17 +243,16 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
+  const onRefIframeReady = usePublishDesignerReady(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
       publishRef.current = ref;
       onRefReadCanvasWidth(ref);
       onRefReadCanvas(ref);
-      // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
-      // we can miss the events and designer will just not connect to the canvas.
-      publish({ type: "designerReady" });
+      onRefIframeReady(ref);
     },
-    [publishRef, onRefReadCanvasWidth, onRefReadCanvas, publish]
+    [publishRef, onRefReadCanvasWidth, onRefReadCanvas, onRefIframeReady]
   );
 
   return (

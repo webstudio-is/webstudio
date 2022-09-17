@@ -7,7 +7,7 @@ declare module "~/shared/pubsub" {
   }
 }
 
-export const useDesignerReady = () => {
+export const useSubscribeDesignerReady = () => {
   const [isReady, setIsReady] = useState<boolean>(false);
   useSubscribe("designerReady", () => {
     setIsReady(true);
