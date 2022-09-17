@@ -2,7 +2,7 @@
  * Resolve a promise when an iframe has readyState complete.
  * Checks periodically for the readyState to be complete, because somttimes the load event may simply not fire for various reasons.
  */
-export const onLoad = (iframe: HTMLIFrameElement) =>
+export const onLoad = (iframe: HTMLIFrameElement | null) =>
   new Promise((resolve) => {
     if (iframe === null) return;
     const check = () => {
