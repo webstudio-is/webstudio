@@ -4,25 +4,25 @@ import { ChangeEvent, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType, FONT_FORMATS } from "@webstudio-is/asset-uploader";
-import type { BaseAsset } from "./types";
+import type { PreviewAsset } from "./types";
 
-const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
-  const assets: Array<Promise<BaseAsset>> = Array.from(fileList).map(
+const readAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
+  const assets: Array<Promise<PreviewAsset>> = Array.from(fileList).map(
     (file) =>
-      new Promise((resolve) => {
+      new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.addEventListener("load", (event) => {
           const dataUri = event?.target?.result;
-          const path = dataUri ? String(dataUri) : undefined;
+          if (dataUri === undefined) {
+            return reject(new Error("Could not read file"));
+          }
+
           resolve({
-            path,
+            format: file.type.split("/")[1],
+            path: String(dataUri),
             name: file.name,
             id: ObjectID().toString(),
             status: "uploading",
-            description: file.name,
-            size: file.size,
-            meta: {} as any,
-            format: "unknown",
           });
         });
         reader.readAsDataURL(file);
@@ -34,11 +34,11 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
 
 const acceptMap = {
   image: "image/*",
-  font: FONT_FORMATS.map((format: string) => `.${format}`).join(", "),
+  font: FONT_FORMATS.map((format) => `.${format}`).join(", "),
 };
 
 type AssetUploadProps = {
-  onSubmit: (assets: Array<BaseAsset>) => void;
+  onSubmit: (assets: Array<PreviewAsset>) => void;
   type: AssetType;
 };
 

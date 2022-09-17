@@ -5,6 +5,11 @@ export type BaseAsset = Pick<
   "id" | "status" | "name" | "path" | "description" | "size" | "meta" | "format"
 >;
 
+export type PreviewAsset = Pick<
+  BaseAsset,
+  "path" | "name" | "id" | "status" | "format"
+>;
+
 export type ActionData = {
   uploadedAssets?: Array<Asset>;
   deletedAsset?: Asset;
