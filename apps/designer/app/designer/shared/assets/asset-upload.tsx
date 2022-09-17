@@ -21,7 +21,7 @@ const readAssets = (fileList: FileList): Promise<BaseAsset[]> => {
             status: "uploading",
             description: file.name,
             size: file.size,
-            meta: {},
+            meta: {} as any,
             format: "unknown",
           });
         });

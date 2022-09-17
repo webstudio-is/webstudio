@@ -1,6 +1,7 @@
 import { Location } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
-import type { FontMeta, ImageMeta } from "./format-asset";
+import { FontMeta, ImageMeta } from "./format-asset";
+import { getFontData } from "./get-font-data";
 
 type BaseData = {
   name: string;
@@ -16,7 +17,6 @@ type ImageData = BaseData & {
 
 type FontData = BaseData & {
   type: "font";
-  // @todo fonts meta
   meta: FontMeta;
 };
 
@@ -25,7 +25,7 @@ export type AssetData = ImageData | FontData;
 type BaseAssetOptions = {
   name: string;
   size: number;
-  buffer: Buffer | Uint8Array;
+  data: Uint8Array;
   location: Location;
 };
 
@@ -44,7 +44,7 @@ export const getAssetData = async (
     location: options.location,
   };
   if (options.type === "image") {
-    const sharpImage = sharp(options.buffer);
+    const sharpImage = sharp(options.data);
     const { width, height, format } = await sharpImage.metadata();
     if (format === undefined) {
       throw new Error("Unknown image format");
@@ -60,6 +60,13 @@ export const getAssetData = async (
       meta: { width, height },
     };
   }
-  // @todo meta for fonts
-  return { type: options.type, ...baseData, format: "ttf", meta: {} };
+
+  const { format, ...meta } = getFontData(options.data);
+
+  return {
+    type: options.type,
+    ...baseData,
+    format,
+    meta,
+  };
 };

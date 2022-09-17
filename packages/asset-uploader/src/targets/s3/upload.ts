@@ -7,7 +7,7 @@ import { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { Location } from "@webstudio-is/prisma-client";
 import { S3EnvVariables } from "../../schema";
-import { toBuffer } from "../../utils/to-buffer";
+import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createMany } from "../../db";
 import type { Asset } from "../../types";
@@ -36,9 +36,9 @@ export const uploadToS3 = async ({
       })
   );
 
-  // @todo fonts
   const imagesFormData = formData.getAll("image") as Array<string>;
-  const assetsData = imagesFormData.map((dataString) => {
+  const fontsFormData = formData.getAll("font") as Array<string>;
+  const assetsData = [...imagesFormData, ...fontsFormData].map((dataString) => {
     // @todo validate with zod
     return JSON.parse(dataString);
   });
@@ -61,10 +61,14 @@ const uploadHandler = async ({
   // this has to be a stream that goes directly to s3
   // Size check has to happen as you stream and interrupted when size is too big
   // Also check if S3 client has an option to check the size limit
-  const buffer = await toBuffer(file.data);
+  const data = await toUint8Array(file.data);
 
-  if (buffer.byteLength > maxSize) {
+  if (data.byteLength > maxSize) {
     throw new Error(`Asset cannot be bigger than ${maxSize}MB`);
+  }
+
+  if (file.filename === undefined) {
+    throw new Error("Filename is required");
   }
 
   const uniqueFilename = getUniqueFilename(file.filename);
@@ -78,7 +82,7 @@ const uploadHandler = async ({
     ...ACL,
     Bucket: s3Envs.S3_BUCKET,
     Key: encodeURIComponent(uniqueFilename),
-    Body: buffer,
+    Body: data,
     ContentType: file.contentType,
     Metadata: {
       filename: file.filename || "unnamed",
@@ -95,8 +99,8 @@ const uploadHandler = async ({
 
   const baseAssetOptions = {
     name: uniqueFilename,
-    size: buffer.byteLength,
-    buffer,
+    size: data.byteLength,
+    data,
     location: Location.REMOTE,
   };
   let assetOptions;
