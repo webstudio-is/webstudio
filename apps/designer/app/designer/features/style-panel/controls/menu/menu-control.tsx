@@ -10,7 +10,6 @@ export const MenuControl = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-  category,
 }: ControlProps) => {
   const value = getFinalValue({
     currentStyle,
@@ -25,19 +24,6 @@ export const MenuControl = ({
 
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;
-
-  // @todo stop-gap measure until work on grid section is done
-  if (String(currentStyle.display?.value).includes("flex") !== true) {
-    return (
-      <TextControl
-        currentStyle={currentStyle}
-        inheritedStyle={inheritedStyle}
-        setProperty={setProperty}
-        styleConfig={styleConfig}
-        category={category}
-      />
-    );
-  }
 
   const iconProps = iconConfigs[styleConfig.property];
   const iconStyle =

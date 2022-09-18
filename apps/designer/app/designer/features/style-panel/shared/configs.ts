@@ -75,24 +75,27 @@ const getControl = (property: StyleProperty): Control => {
     return "Spacing";
   }
 
-  switch (property) {
-    case "display": {
-      return "Select";
-    }
-    case "flexDirection":
-    case "flexWrap":
-    case "alignItems":
-    case "justifyItems":
-    case "justifyContent":
-    case "alignContent": {
-      return "Menu";
-    }
-    case "placeContent": {
-      return "Empty";
-    }
+  // @todo remove once all sections are done
+  switch (
+    property
+    // case "display": {
+    //   return "Select";
+    // }
+    // case "flexDirection":
+    // case "flexWrap":
+    // case "alignItems":
+    // case "justifyItems":
+    // case "justifyContent":
+    // case "alignContent": {
+    //   return "Menu";
+    // }
+    // case "placeContent": {
+    //   return "Empty";
+    // }
     //case "fontFamily": {
     //  return "FontFamily";
     //}
+  ) {
   }
 
   return "Text";

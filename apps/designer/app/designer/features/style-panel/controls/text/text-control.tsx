@@ -86,116 +86,113 @@ export const TextControl = ({
   };
 
   return (
-    <Grid css={{ gridTemplateColumns: "$columns$1" }}>
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
-      <Combobox
-        name={styleConfig.property}
-        items={items.map((item) => item.label)}
-        value={String(value.value)}
-        selected={String(value.type === "unit" ? value.unit : value.value)}
-        onItemSelect={(item) => {
-          handleChange(value.type, item, false);
-        }}
-        onItemHighlight={(item) => {
-          handleChange(value.type, item, true);
-        }}
-        renderTextField={({ inputProps, toggleProps }) => {
-          return (
-            <Box css={{ position: "relative" }}>
-              <PropertyIcon
-                property={styleConfig.property}
-                label={styleConfig.label}
-                {...(value.type === "unit" && {
-                  onPointerUp: (event: PointerEvent<HTMLInputElement>) => {
-                    setValue(String(getInputNode(event.target).value));
-                  },
-                  ref: numericScrubRefCallback,
-                })}
-              />
-              <TextField
-                {...inputProps}
-                css={{
-                  cursor: "default",
-                  height: "calc($sizes$5 + $sizes$1)",
-                  fontWeight: "500",
-                  paddingLeft: "calc($sizes$4 / 2)",
-                }}
-                onFocus={(event: FocusEvent<HTMLInputElement>) => {
-                  event.target.select();
-                }}
-                onBlur={(event) => {
-                  if (event.target.value !== event.target.getAttribute("value"))
-                    setValue(event.target.value);
-                }}
-                onKeyDown={(event) => {
-                  const target = event.target as HTMLInputElement;
-                  if (
-                    event.code === "Enter" &&
-                    String(value.value) !== target.value
-                  ) {
-                    setValue(target.value);
-                    const number = parseFloat(target.value);
-                    if (!isNaN(number)) target.value = String(number);
-                  }
-                  if (isExpanded(target)) return inputProps?.onKeyDown?.(event);
-                  if (value.type !== "unit")
-                    return inputProps?.onKeyDown?.(event);
-                  if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
-                  event.preventDefault();
-                  let currentValue = parseFloat(target.value);
-                  let currentDelta = 1;
-                  if (event.shiftKey) currentDelta = 10;
-                  if (event.altKey) currentDelta = 0.1;
-                  if (event.code === "ArrowUp")
-                    currentValue = currentValue + currentDelta;
-                  if (event.code === "ArrowDown")
-                    currentValue = currentValue - currentDelta;
-                  const currentValueAsString =
-                    currentValue % 1
-                      ? currentValue.toPrecision(
-                          Math.abs(currentValue).toString().indexOf(".") + 2
-                        )
-                      : String(currentValue);
-                  target.value = currentValueAsString;
-                  setValue(currentValueAsString, { isEphemeral: true });
-                }}
-              />
-              <IconButton
-                {...toggleProps}
-                css={{
-                  visibility: items.length ? "visible" : "hidden",
-                  position: "absolute",
-                  right: "1px",
-                  top: "1px",
-                  width: "auto",
-                  height: "calc(100% - 2px)",
-                  px: "calc($1 / 2)",
-                  borderRadius: "$1",
-                  border: "2px solid $colors$loContrast",
-                  "&:focus": {
-                    outline: "none",
-                  },
-                }}
-              >
-                {value.type === "unit" ? (
-                  <Text
-                    css={{
-                      cursor: "default",
-                      minWidth: "calc($sizes$3 - $nudge$1)",
-                      textAlign: "center",
-                      fontSize: "calc($fontSizes$1 - $nudge$1)",
-                    }}
-                  >
-                    {value.unit === "number" ? "—" : value.unit}
-                  </Text>
-                ) : (
-                  <ChevronDownIcon />
-                )}
-              </IconButton>
-            </Box>
-          );
-        }}
-      />
-    </Grid>
+    <Combobox
+      name={styleConfig.property}
+      items={items.map((item) => item.label)}
+      value={String(value.value)}
+      selected={String(value.type === "unit" ? value.unit : value.value)}
+      onItemSelect={(item) => {
+        handleChange(value.type, item, false);
+      }}
+      onItemHighlight={(item) => {
+        handleChange(value.type, item, true);
+      }}
+      renderTextField={({ inputProps, toggleProps }) => {
+        return (
+          <Box css={{ position: "relative" }}>
+            <PropertyIcon
+              property={styleConfig.property}
+              label={styleConfig.label}
+              {...(value.type === "unit" && {
+                onPointerUp: (event: PointerEvent<HTMLInputElement>) => {
+                  setValue(String(getInputNode(event.target).value));
+                },
+                ref: numericScrubRefCallback,
+              })}
+            />
+            <TextField
+              {...inputProps}
+              css={{
+                cursor: "default",
+                height: "calc($sizes$5 + $sizes$1)",
+                fontWeight: "500",
+                paddingLeft: "calc($sizes$4 / 2)",
+              }}
+              onFocus={(event: FocusEvent<HTMLInputElement>) => {
+                event.target.select();
+              }}
+              onBlur={(event) => {
+                if (event.target.value !== event.target.getAttribute("value"))
+                  setValue(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                const target = event.target as HTMLInputElement;
+                if (
+                  event.code === "Enter" &&
+                  String(value.value) !== target.value
+                ) {
+                  setValue(target.value);
+                  const number = parseFloat(target.value);
+                  if (!isNaN(number)) target.value = String(number);
+                }
+                if (isExpanded(target)) return inputProps?.onKeyDown?.(event);
+                if (value.type !== "unit")
+                  return inputProps?.onKeyDown?.(event);
+                if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
+                event.preventDefault();
+                let currentValue = parseFloat(target.value);
+                let currentDelta = 1;
+                if (event.shiftKey) currentDelta = 10;
+                if (event.altKey) currentDelta = 0.1;
+                if (event.code === "ArrowUp")
+                  currentValue = currentValue + currentDelta;
+                if (event.code === "ArrowDown")
+                  currentValue = currentValue - currentDelta;
+                const currentValueAsString =
+                  currentValue % 1
+                    ? currentValue.toPrecision(
+                        Math.abs(currentValue).toString().indexOf(".") + 2
+                      )
+                    : String(currentValue);
+                target.value = currentValueAsString;
+                setValue(currentValueAsString, { isEphemeral: true });
+              }}
+            />
+            <IconButton
+              {...toggleProps}
+              css={{
+                visibility: items.length ? "visible" : "hidden",
+                position: "absolute",
+                right: "1px",
+                top: "1px",
+                width: "auto",
+                height: "calc(100% - 2px)",
+                px: "calc($1 / 2)",
+                borderRadius: "$1",
+                border: "2px solid $colors$loContrast",
+                "&:focus": {
+                  outline: "none",
+                },
+              }}
+            >
+              {value.type === "unit" ? (
+                <Text
+                  css={{
+                    cursor: "default",
+                    minWidth: "calc($sizes$3 - $nudge$1)",
+                    textAlign: "center",
+                    fontSize: "calc($fontSizes$1 - $nudge$1)",
+                  }}
+                >
+                  {value.unit === "number" ? "—" : value.unit}
+                </Text>
+              ) : (
+                <ChevronDownIcon />
+              )}
+            </IconButton>
+          </Box>
+        );
+      }}
+    />
   );
 };

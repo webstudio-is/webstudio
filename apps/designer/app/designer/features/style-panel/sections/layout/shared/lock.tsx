@@ -5,12 +5,10 @@ import type { Style } from "@webstudio-is/react-sdk";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 
 export const Lock = ({
-  name,
   pairedKeys,
   currentStyle,
   batchUpdate,
 }: {
-  name: string;
   pairedKeys: Array<keyof Style>;
   currentStyle: Style;
   batchUpdate: ReturnType<CreateBatchUpdate>;
@@ -40,11 +38,9 @@ export const Lock = ({
       disableHoverableContent={true}
     >
       <Flex
-        data-property={name}
         css={{
           width: "100%",
           justifyContent: "center",
-          gridArea: name,
         }}
       >
         <IconButton

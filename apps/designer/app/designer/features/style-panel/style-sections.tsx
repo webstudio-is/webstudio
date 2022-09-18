@@ -1,4 +1,4 @@
-import { Box } from "@webstudio-is/design-system";
+import { Box, Grid } from "@webstudio-is/design-system";
 import type { StyleConfig } from "./shared/configs";
 import {
   type Style,
@@ -18,6 +18,7 @@ import {
 } from "./controls";
 import { ShowMore } from "./shared/show-more";
 import { LayoutSection } from "./sections";
+import { PropertyName } from "./shared/property-name";
 
 export type PropertyProps = {
   property: StyleProperty;
@@ -61,13 +62,10 @@ export const renderProperty = ({
   const Control = controls[styleConfig.control];
   const { property } = styleConfig;
   if (!Control) return null;
+
   return (
-    <Box
-      key={category + property}
-      data-control={styleConfig.control.toLowerCase()}
-      data-property={property}
-      css={{ gridArea: property }}
-    >
+    <Grid key={category + property} css={{ gridTemplateColumns: "40% 60%" }}>
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Control
         currentStyle={currentStyle}
         inheritedStyle={inheritedStyle}
@@ -75,7 +73,7 @@ export const renderProperty = ({
         styleConfig={styleConfig}
         category={category}
       />
-    </Box>
+    </Grid>
   );
 };
 
