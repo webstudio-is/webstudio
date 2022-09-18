@@ -12,17 +12,15 @@ import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
-import { Asset } from "@webstudio-is/asset-uploader";
 import { Flex } from "@webstudio-is/design-system";
 
 const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
   publish: Publish;
-  assets?: Array<Asset>;
 };
 
-export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
+export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [dragAndDropState] = useDragAndDropState();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
@@ -38,7 +36,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
   const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
     (panel) => {
       switch (panel) {
-        case "assetManager":
+        case "assets":
           return isFeatureEnabled("assets");
         case "navigator":
           return clientSettings.navigatorLayout === "docked";
@@ -78,11 +76,7 @@ export const SidebarLeft = ({ publish, assets }: SidebarLeftProps) => {
             overflow: "auto",
           }}
         >
-          <TabContent
-            assets={assets || []}
-            publish={publish}
-            onSetActiveTab={setActiveTab}
-          />
+          <TabContent publish={publish} onSetActiveTab={setActiveTab} />
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>

@@ -7,6 +7,7 @@ import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
+  useAssets,
   useHoveredInstanceData,
   useSelectedInstanceData,
   useSyncStatus,
@@ -34,6 +35,7 @@ import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
 import { onIframeLoad } from "~/shared/dom-utils";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 export const links = () => {
   return [
@@ -60,6 +62,15 @@ const useSubscribeHoveredInstanceData = () => {
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
   useSubscribe("syncStatus", setValue);
+};
+
+const useSetAssets = (assets?: Array<Asset>) => {
+  const [, setAssets] = useAssets();
+  useEffect(() => {
+    if (assets) {
+      setAssets(assets);
+    }
+  }, [assets, setAssets]);
 };
 
 const useNavigatorLayout = () => {
@@ -237,6 +248,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
+  useSetAssets(project.assets);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -282,7 +294,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft assets={project.assets} publish={publish} />
+        <SidebarLeft publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel
