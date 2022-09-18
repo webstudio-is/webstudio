@@ -10,14 +10,13 @@ import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
 import {
   ColorControl,
-  SpacingControl,
   TextControl,
   SelectControl,
   MenuControl,
   FontFamilyControl,
 } from "./controls";
 import { ShowMore } from "./shared/show-more";
-import { LayoutSection } from "./sections";
+import { LayoutSection, SpacingSection } from "./sections";
 import { PropertyName } from "./shared/property-name";
 
 export type PropertyProps = {
@@ -39,6 +38,7 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   sectionStyle: Style;
+  inheritedStyle: InheritedStyle;
   category: Category;
   styleConfigsByCategory: Array<RenderPropertyProps>;
   moreStyleConfigsByCategory: Array<RenderPropertyProps>;
@@ -82,6 +82,7 @@ export const renderCategory = ({
   createBatchUpdate,
   currentStyle,
   sectionStyle,
+  inheritedStyle,
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
@@ -106,6 +107,7 @@ export const renderCategory = ({
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       sectionStyle={sectionStyle}
+      inheritedStyle={inheritedStyle}
       category={category}
       styleConfigsByCategory={styleConfigsByCategory}
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}
@@ -131,7 +133,7 @@ const sections: {
   [key: string]: (props: RenderCategoryProps) => JSX.Element | null;
 } = {
   layout: LayoutSection,
-  // spacing: SpacingSection,
+  spacing: SpacingSection,
 };
 
 const controls: {
@@ -141,6 +143,5 @@ const controls: {
   Text: TextControl,
   Color: ColorControl,
   Select: SelectControl,
-  Spacing: SpacingControl,
   FontFamily: FontFamilyControl,
 };

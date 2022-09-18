@@ -140,6 +140,7 @@ export const StyleSettings = ({
 
     if (styleConfigsByCategory.length === 0) continue;
     const categoryProps = {
+      ...rest,
       setProperty,
       createBatchUpdate,
       currentStyle,

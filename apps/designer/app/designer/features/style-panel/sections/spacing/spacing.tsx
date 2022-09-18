@@ -10,7 +10,7 @@ import { SetProperty } from "../../shared/use-style-data";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "../../shared/constants";
 import { getFinalValue } from "../../shared/get-final-value";
-import type { ControlProps } from "../../style-sections";
+import type { RenderCategoryProps } from "../../style-sections";
 
 type SpacingSingularStyle = { [property in SpacingProperty]?: StyleValue };
 
@@ -62,6 +62,7 @@ const styles = {
     display: "block",
     background: "transparent",
     color: "$hiContrast",
+    zIndex: 99,
     margin: "auto",
     // @todo need to fit more chars
     width: 40,
@@ -242,15 +243,11 @@ const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
   );
 };
 
-// @todo convert to section, they way it does atm is a "hack"
-export const SpacingControl = ({
+export const SpacingSection = ({
   currentStyle,
   inheritedStyle,
   setProperty,
-  styleConfig,
-}: ControlProps) => {
-  if (styleConfig.control !== "Spacing") return null;
-
+}: RenderCategoryProps) => {
   const styles = categories.spacing.properties.reduce(
     (acc: SpacingStyles, property: SpacingProperty): SpacingStyles => {
       const value = getFinalValue({

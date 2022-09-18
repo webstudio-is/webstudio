@@ -135,6 +135,7 @@ export const LayoutSection = ({
   createBatchUpdate,
   currentStyle,
   sectionStyle,
+  inheritedStyle,
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
@@ -147,8 +148,9 @@ export const LayoutSection = ({
         setProperty={setProperty}
         createBatchUpdate={createBatchUpdate}
         currentStyle={currentStyle}
-        category={category}
         sectionStyle={sectionStyle}
+        inheritedStyle={inheritedStyle}
+        category={category}
         styleConfigsByCategory={styleConfigsByCategory}
         moreStyleConfigsByCategory={moreStyleConfigsByCategory}
       />
