@@ -114,10 +114,10 @@ const LayoutSectionFlex = ({
         </Box>
       )}
       <Box css={columnGapStyle}>
-        <TextControl {...columnGap} hideLabel={true} />
+        <TextControl {...columnGap} />
       </Box>
       <Box css={rowGapStyle}>
-        <TextControl {...rowGap} hideLabel={true} />
+        <TextControl {...rowGap} />
       </Box>
       <Box css={lockStyle}>
         <Lock
