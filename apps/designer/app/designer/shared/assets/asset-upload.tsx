@@ -1,10 +1,10 @@
-import { Form, useSubmit } from "@remix-run/react";
+import { Form, useActionData, useSubmit } from "@remix-run/react";
 import ObjectID from "bson-objectid";
-import { ChangeEvent, useRef } from "react";
+import { ChangeEvent, useEffect, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType, FONT_FORMATS } from "@webstudio-is/asset-uploader";
-import type { PreviewAsset } from "./types";
+import type { ActionData, PreviewAsset } from "./types";
 
 const readAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
   const assets: Array<Promise<PreviewAsset>> = Array.from(fileList).map(
@@ -38,13 +38,19 @@ const acceptMap = {
 };
 
 type AssetUploadProps = {
+  onActionData: (data: ActionData) => void;
   onSubmit: (assets: Array<PreviewAsset>) => void;
   type: AssetType;
 };
 
-export const AssetUpload = ({ onSubmit, type }: AssetUploadProps) => {
+export const AssetUpload = ({
+  onSubmit,
+  onActionData,
+  type,
+}: AssetUploadProps) => {
   const submit = useSubmit();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const actionData: ActionData | undefined = useActionData();
 
   const onFormChange = (event: ChangeEvent<HTMLFormElement>) => {
     const newFiles = inputRef?.current?.files;
@@ -54,6 +60,12 @@ export const AssetUpload = ({ onSubmit, type }: AssetUploadProps) => {
       event.currentTarget.reset();
     }
   };
+
+  useEffect(() => {
+    if (actionData !== undefined) {
+      onActionData(actionData);
+    }
+  }, [actionData, onActionData]);
 
   return (
     <Flex

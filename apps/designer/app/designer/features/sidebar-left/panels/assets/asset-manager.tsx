@@ -10,7 +10,7 @@ export const TabContent = ({
 }: {
   onSetActiveTab: (tabName: TabName) => void;
 }) => {
-  const { assets, onUploadAsset } = useAssets("image");
+  const { assets, onSubmitAssets, onActionData } = useAssets("image");
   return (
     <>
       <Header
@@ -25,7 +25,11 @@ export const TabContent = ({
         css={{ padding: "$1", paddingTop: "$2" }}
       >
         <Box css={{ padding: "$2" }}>
-          <AssetUpload onSubmit={onUploadAsset} type="image" />
+          <AssetUpload
+            onSubmit={onSubmitAssets}
+            onActionData={onActionData}
+            type="image"
+          />
         </Box>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useActionData } from "@remix-run/react";
 import type { PreviewAsset, ActionData } from "./types";
 import {
   type AssetType,
@@ -10,7 +9,7 @@ import { useAssets as useAllAssets } from "../nano-states";
 
 export const useAssets = (type: AssetType) => {
   const [allAssets] = useAllAssets();
-  const actionData: ActionData | undefined = useActionData();
+  const [actionData, setActionData] = useState<ActionData>({});
   const [uploadingAssets, setUploadingAssets] = useState<Array<PreviewAsset>>(
     []
   );
@@ -48,6 +47,7 @@ export const useAssets = (type: AssetType) => {
 
   return {
     assets,
-    onUploadAsset: setUploadingAssets,
+    onSubmitAssets: setUploadingAssets,
+    onActionData: setActionData,
   };
 };
