@@ -1,5 +1,4 @@
 import { IconButtonWithMenu } from "@webstudio-is/design-system";
-import { TextControl } from "../text/text-control";
 import { getFinalValue } from "../../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { ControlProps } from "../../style-sections";

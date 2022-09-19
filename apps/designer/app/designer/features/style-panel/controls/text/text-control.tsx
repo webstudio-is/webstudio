@@ -2,7 +2,6 @@ import { FocusEvent, PointerEvent, useCallback } from "react";
 import {
   Box,
   Text,
-  Grid,
   IconButton,
   TextField,
   Combobox,
@@ -12,7 +11,7 @@ import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import { units } from "@webstudio-is/react-sdk";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import { PropertyName, PropertyIcon } from "../../shared/property-name";
+import { PropertyIcon } from "../../shared/property-name";
 
 const sortedUnits = units
   .slice(0)

@@ -1,6 +1,5 @@
-import { Grid, Select } from "@webstudio-is/design-system";
+import { Select } from "@webstudio-is/design-system";
 import { getFinalValue } from "../../shared/get-final-value";
-import { PropertyName } from "../../shared/property-name";
 import type { ControlProps } from "../../style-sections";
 
 export const SelectControl = ({

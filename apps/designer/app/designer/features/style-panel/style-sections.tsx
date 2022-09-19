@@ -1,4 +1,4 @@
-import { Box, Grid } from "@webstudio-is/design-system";
+import { Grid } from "@webstudio-is/design-system";
 import type { StyleConfig } from "./shared/configs";
 import {
   type Style,
