@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/icons";
 import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
-import type { BaseAsset } from "~/designer/shared/assets";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const Filename = ({ name }: { name: string }) => {
   const splitName = name.split(".");
@@ -45,7 +45,7 @@ const Filename = ({ name }: { name: string }) => {
   );
 };
 
-type AssetInfoProps = BaseAsset & {
+type AssetInfoProps = Asset & {
   onClose: () => void;
   onDelete: () => void;
 };

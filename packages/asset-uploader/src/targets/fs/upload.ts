@@ -41,7 +41,7 @@ export const uploadToFs = async ({
       type: formDataFonts.includes(asset) ? "font" : "image",
       name: asset.name,
       size: asset.size,
-      buffer: (await asset.arrayBuffer()) as Uint8Array,
+      data: new Uint8Array(await asset.arrayBuffer()),
       location: Location.FS,
     })
   );

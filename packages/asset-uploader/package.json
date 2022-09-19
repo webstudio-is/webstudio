@@ -17,10 +17,12 @@
     "@aws-sdk/lib-storage": "^3.131.0",
     "@webstudio-is/prisma-client": "*",
     "app-root-path": "^3.0.0",
+    "fontkit": "^2.0.2",
     "sharp": "^0.30.7"
   },
   "devDependencies": {
     "@types/app-root-path": "^1.2.4",
+    "@types/fontkit": "^1.8.0",
     "@types/node": "^18.7.16",
     "@types/sharp": "^0.30.4",
     "@webstudio-is/jest-config": "*",

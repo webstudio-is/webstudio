@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { useSubscribe } from "~/shared/pubsub";
+import { publish, useSubscribe } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     designerReady: undefined;
+    designerReadyAck: undefined;
   }
 }
 
-export const useDesignerReady = () => {
+export const useSubscribeDesignerReady = () => {
   const [isReady, setIsReady] = useState<boolean>(false);
   useSubscribe("designerReady", () => {
     setIsReady(true);
+    publish({ type: "designerReadyAck" });
   });
   return isReady;
 };
