@@ -5,7 +5,7 @@ import {
   type HoveredInstanceData,
 } from "~/shared/canvas-components";
 import { type SyncStatus } from "~/shared/sync";
-import { BaseAsset } from "../assets";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const selectedInstanceDataContainer = createValueContainer<
   SelectedInstanceData | undefined
@@ -47,5 +47,5 @@ export const useSyncStatus = () => useValue(syncStatusContainer);
 const selectionRectContainer = createValueContainer<DOMRect | undefined>();
 export const useSelectionRect = () => useValue(selectionRectContainer);
 
-const assetsContainer = createValueContainer<Array<BaseAsset>>([]);
+const assetsContainer = createValueContainer<Array<Asset>>([]);
 export const useAssets = () => useValue(assetsContainer);

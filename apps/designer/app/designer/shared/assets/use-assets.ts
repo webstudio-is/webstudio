@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import { useActionData } from "@remix-run/react";
-import type { BaseAsset, PreviewAsset, ActionData } from "./types";
-import { type AssetType, filterByType } from "@webstudio-is/asset-uploader";
+import type { PreviewAsset, ActionData } from "./types";
+import {
+  type AssetType,
+  type Asset,
+  filterByType,
+} from "@webstudio-is/asset-uploader";
 import { useAssets as useAllAssets } from "../nano-states";
 
 export const useAssets = (type: AssetType) => {
@@ -13,7 +17,7 @@ export const useAssets = (type: AssetType) => {
 
   const assets = useMemo(() => {
     const { errors, uploadedAssets = [], deletedAsset } = actionData ?? {};
-    let assets: Array<BaseAsset | PreviewAsset> = [];
+    let assets: Array<Asset | PreviewAsset> = [];
 
     // Once we have uploaded or deleted assets in action data, current upload was finished.
     if (

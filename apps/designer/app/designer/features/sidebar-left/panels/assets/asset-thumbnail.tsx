@@ -4,7 +4,8 @@ import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { AssetInfoTrigger, assetInfoTriggerCssVars } from "./asset-info-tigger";
-import type { BaseAsset, PreviewAsset } from "~/designer/shared/assets";
+import type { PreviewAsset } from "~/designer/shared/assets";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const useImageWithFallback = ({
   path = placeholderImage,
@@ -25,7 +26,7 @@ const useImageWithFallback = ({
 
 type ThumbnailProps = {
   path?: string;
-  status: BaseAsset["status"];
+  status: Asset["status"];
 };
 
 export const Thumbnail = ({ path, status }: ThumbnailProps) => {
@@ -51,7 +52,7 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
   );
 };
 
-export const AssetThumbnail = (asset: BaseAsset | PreviewAsset) => {
+export const AssetThumbnail = (asset: Asset | PreviewAsset) => {
   const { path, status, name } = asset;
   const description =
     "description" in asset && asset.description ? asset.description : name;

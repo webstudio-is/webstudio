@@ -1,12 +1,7 @@
 import { Asset } from "@webstudio-is/asset-uploader";
 
-export type BaseAsset = Pick<
-  Asset,
-  "id" | "status" | "name" | "path" | "description" | "size" | "meta" | "format"
->;
-
 export type PreviewAsset = Pick<
-  BaseAsset,
+  Asset,
   "path" | "name" | "id" | "status" | "format"
 >;
 
