@@ -34,8 +34,8 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-import { onIframeLoad } from "~/shared/dom-utils";
 import { Asset } from "@webstudio-is/asset-uploader";
+import { useInterval } from "react-use";
 
 export const links = () => {
   return [
@@ -81,19 +81,20 @@ const useNavigatorLayout = () => {
 };
 
 const usePublishDesignerReady = (publish: Publish) => {
-  const [ref, setRef] = useState(null);
+  const [isAcknowledged, setIsAcknowledged] = useState(false);
 
-  useEffect(() => {
-    if (ref === null) return;
-
-    onIframeLoad(ref).then(() => {
+  useInterval(
+    () => {
       // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
       // we can miss the events and designer will just not connect to the canvas.
       publish({ type: "designerReady" });
-    });
-  }, [ref, publish]);
+    },
+    isAcknowledged ? null : 100
+  );
 
-  return setRef;
+  useSubscribe("designerReadyAck", () => {
+    setIsAcknowledged(true);
+  });
 };
 
 type SidePanelProps = {
@@ -255,16 +256,15 @@ export const Designer = ({ config, project }: DesignerProps) => {
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
-  const onRefIframeReady = usePublishDesignerReady(publish);
+  usePublishDesignerReady(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
       publishRef.current = ref;
       onRefReadCanvasWidth(ref);
       onRefReadCanvas(ref);
-      onRefIframeReady(ref);
     },
-    [publishRef, onRefReadCanvasWidth, onRefReadCanvas, onRefIframeReady]
+    [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
 
   return (
