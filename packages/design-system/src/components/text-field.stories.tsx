@@ -1,7 +1,6 @@
+import React from "react";
 import { ComponentStory } from "@storybook/react";
 import { BrushIcon, ChevronDownIcon } from "@webstudio-is/icons";
-import React from "react";
-import { Box } from "./box";
 import { Flex } from "./flex";
 import { IconButton } from "./icon-button";
 import { TextField } from "./text-field";
