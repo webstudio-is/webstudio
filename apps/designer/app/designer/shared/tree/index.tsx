@@ -23,9 +23,14 @@ const instanceRelatedProps = {
     return components[item.component].canAcceptChildren;
   },
   getItemChildren(item: Instance) {
-    // Only content editable components can have `string` children
-    // and this cab be a hot path for performance.
-    if (components[item.component].isContentEditable === false) {
+    const component = components[item.component];
+
+    // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
+    // We rely on the fact that only content editable or inline components may have `string` children.
+    if (
+      component.isContentEditable === false &&
+      component.isInlineOnly === false
+    ) {
       return item.children as Instance[];
     }
 
