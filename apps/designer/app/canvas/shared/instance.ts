@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ObjectId from "bson-objectid";
 import {
   type Instance,
@@ -29,7 +29,6 @@ import {
 import {
   useSelectedInstance,
   useSelectedElement,
-  useHoveredElement,
   useHoveredInstance,
 } from "./nano-states";
 import {
@@ -38,8 +37,12 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useMeasure } from "~/shared/dom-hooks";
-import { findInstanceByElement } from "~/shared/dom-utils";
+import {
+  findInstanceByElement,
+  getInstanceElementById,
+} from "~/shared/dom-utils";
 import { publish } from "~/shared/pubsub";
+import { useTrackHoveredElement } from "./use-track-hovered-element";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -263,22 +266,32 @@ export const usePublishSelectedInstanceDataRect = () => {
   }, [rect]);
 };
 
-export const usePublishHoveredInstanceRect = () => {
-  const [element] = useHoveredElement();
-  const publishRect = useCallback(() => {
-    if (element === undefined) return;
-    publish({
-      type: "hoveredInstanceRect",
-      payload: element.getBoundingClientRect(),
-    });
-  }, [element]);
-  useEffect(publishRect, [publishRect]);
-};
-
 export const useSetHoveredInstance = () => {
   const [rootInstance] = useRootInstance();
-  const [hoveredElement] = useHoveredElement();
   const [, setHoveredInstance] = useHoveredInstance();
+
+  const [hoveredElement, setHoveredElement] = useState<HTMLElement | undefined>(
+    undefined
+  );
+
+  useTrackHoveredElement(setHoveredElement);
+
+  useSubscribe(
+    "navigatorHoveredInstance",
+    useCallback((instance) => {
+      setHoveredElement(
+        instance && (getInstanceElementById(instance.id) || undefined)
+      );
+    }, [])
+  );
+
+  useEffect(() => {
+    if (hoveredElement === undefined) return;
+    publish({
+      type: "hoveredInstanceRect",
+      payload: hoveredElement.getBoundingClientRect(),
+    });
+  }, [hoveredElement]);
 
   useEffect(() => {
     let instance;

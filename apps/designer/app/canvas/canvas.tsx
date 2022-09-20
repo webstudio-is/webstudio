@@ -14,14 +14,13 @@ import {
   useDeleteInstance,
   useInsertInstance,
   usePopulateRootInstance,
-  usePublishHoveredInstanceData,
-  usePublishHoveredInstanceRect,
   usePublishRootInstance,
   usePublishSelectedInstanceData,
   usePublishSelectedInstanceDataRect,
   usePublishTextEditingInstanceId,
   useReparentInstance,
   useSetHoveredInstance,
+  usePublishHoveredInstanceData,
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
@@ -41,7 +40,6 @@ import {
   useSubscribeScrollState,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
-import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { setInstanceChildrenMutable } from "~/shared/tree-utils";
@@ -90,19 +88,17 @@ const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
-  usePublishHoveredInstanceData();
   useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
   useTrackSelectedElement();
-  useTrackHoveredElement();
   useSetHoveredInstance();
+  usePublishHoveredInstanceData();
   useSync({ buildId, treeId });
   useUpdateSelectedInstance();
   usePublishSelectedInstanceDataRect();
-  usePublishHoveredInstanceRect();
   useUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();
