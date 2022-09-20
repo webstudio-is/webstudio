@@ -6,7 +6,7 @@ import { type Tree } from "@webstudio-is/react-sdk";
 
 type PatchData = {
   transactions: Array<SyncItem>;
-  treeId: Tree["id"];
+  treeId: Tree["id"]; // @todo: it would be more correct to pass Page["id"] here
   buildId: Build["id"];
 };
 

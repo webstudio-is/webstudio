@@ -1,16 +1,21 @@
 import { type LoaderFunction } from "@remix-run/node";
-import { type InstanceProps } from "@webstudio-is/react-sdk";
+import type { Tree } from "@webstudio-is/react-sdk";
 import { db } from "@webstudio-is/project/index.server";
-type ErrorData = {
+import { utils } from "@webstudio-is/project";
+
+export type ErrorData = {
   errors: string;
 };
 
 export const loader: LoaderFunction = async ({
   params,
-}): Promise<Array<InstanceProps> | ErrorData> => {
+}): Promise<Tree | null | ErrorData> => {
   try {
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);
+    }
+    if (params.pageId === undefined) {
+      throw new Error(`Page ID required`);
     }
 
     const prodBuild = await db.build.loadByProjectId(params.projectId, "prod");
@@ -21,7 +26,13 @@ export const loader: LoaderFunction = async ({
       );
     }
 
-    return await db.props.loadByTreeId(prodBuild.pages.homePage.treeId);
+    const page = utils.pages.findById(prodBuild.pages, params.pageId);
+
+    if (page === undefined) {
+      throw new Error(`Page ${params.pageId} not found`);
+    }
+
+    return await db.tree.loadById(page.treeId);
   } catch (error) {
     if (error instanceof Error) {
       return {
