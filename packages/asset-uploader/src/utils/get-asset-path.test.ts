@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Decimal } from "@prisma/client/runtime";
-import { Location } from "@webstudio-is/prisma-client";
+import { Asset, Location } from "@webstudio-is/prisma-client";
 
-const commonAsset = {
+const commonAsset: Asset = {
   id: "sa-546",
-  width: new Decimal(200),
-  height: new Decimal(200),
+  name: "test",
+  location: Location.FS,
   projectId: "id",
   size: 2135,
   format: "png",
   createdAt: new Date(),
-  alt: "",
+  description: "",
+  meta: JSON.stringify({ width: 200, height: 200 }),
 };
 
 describe("getAssetPath", () => {

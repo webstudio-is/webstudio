@@ -1,5 +1,5 @@
 import * as components from "./components";
 import * as navigator from "./navigator";
-import * as assetManager from "./asset-manager";
+import * as assets from "./assets";
 
-export const panels = { components, navigator, assetManager } as const;
+export const panels = { components, navigator, assets } as const;

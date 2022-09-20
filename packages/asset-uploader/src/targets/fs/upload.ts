@@ -33,14 +33,15 @@ export const uploadToFs = async ({
     uploadHandler
   );
   const formDataImages = AssetsFromFs.parse(formData.getAll("image"));
+  const formDataFonts = AssetsFromFs.parse(formData.getAll("font"));
+  const formDataAll = [...formDataImages, ...formDataFonts];
 
-  // @todo fonts
-  const assets = formDataImages.map(async (asset) =>
+  const assets = formDataAll.map(async (asset) =>
     getAssetData({
-      type: "image" as const,
+      type: formDataFonts.includes(asset) ? "font" : "image",
       name: asset.name,
       size: asset.size,
-      buffer: (await asset.arrayBuffer()) as Uint8Array,
+      data: new Uint8Array(await asset.arrayBuffer()),
       location: Location.FS,
     })
   );

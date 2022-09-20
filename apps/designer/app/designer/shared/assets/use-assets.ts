@@ -1,37 +1,53 @@
-import { useEffect, useState } from "react";
-import { useActionData } from "@remix-run/react";
-import type { BaseAsset, ActionData } from "./types";
+import { useMemo, useState } from "react";
+import type { PreviewAsset, ActionData } from "./types";
+import {
+  type AssetType,
+  type Asset,
+  filterByType,
+} from "@webstudio-is/asset-uploader";
+import { useAssets as useAllAssets } from "../nano-states";
 
-export const useAssets = (initialAssets: Array<BaseAsset> = []) => {
-  const actionData: ActionData | undefined = useActionData();
-  const [assets, setAssets] = useState<BaseAsset[]>(initialAssets);
+export const useAssets = (type: AssetType) => {
+  const [allAssets] = useAllAssets();
+  const [actionData, setActionData] = useState<ActionData>({});
+  const [uploadingAssets, setUploadingAssets] = useState<Array<PreviewAsset>>(
+    []
+  );
 
-  useEffect(() => {
-    const { errors, uploadedAssets, deletedAsset } = actionData ?? {};
-    if (errors) {
-      setAssets((currentAssets) =>
-        currentAssets.filter((asset) => asset.status !== "uploading")
+  const assets = useMemo(() => {
+    const { errors, uploadedAssets = [], deletedAsset } = actionData ?? {};
+    let assets: Array<Asset | PreviewAsset> = [];
+
+    // Once we have uploaded or deleted assets in action data, current upload was finished.
+    if (
+      uploadedAssets.length === 0 &&
+      deletedAsset === undefined &&
+      errors === undefined
+    ) {
+      assets = [...uploadingAssets];
+    }
+
+    for (const uploadedAsset of uploadedAssets) {
+      const isInAllAssets = allAssets.some(
+        (asset) => asset.id === uploadedAsset.id
       );
+      if (isInAllAssets === false) {
+        assets.unshift(uploadedAsset);
+      }
     }
-    if (uploadedAssets?.length) {
-      setAssets((currentAssets) => [
-        ...uploadedAssets.filter((uploadedAsset) =>
-          currentAssets.every(
-            (currentAsset) => currentAsset.id !== uploadedAsset.id
-          )
-        ),
-        ...currentAssets.filter((asset) => asset.status !== "uploading"),
-      ]);
-    }
-    if (deletedAsset?.id) {
-      setAssets((currentAssets) => [
-        ...currentAssets.filter((asset) => asset.id !== deletedAsset.id),
-      ]);
-    }
-  }, [actionData]);
 
-  const onUploadAsset = (uploadedAssets: Array<BaseAsset>) =>
-    setAssets((assets) => [...uploadedAssets, ...assets]);
+    for (const asset of allAssets) {
+      if (asset.id !== deletedAsset?.id) {
+        assets.push(asset);
+      }
+    }
 
-  return { assets, onUploadAsset };
+    return filterByType(assets, type);
+  }, [actionData, uploadingAssets, type, allAssets]);
+
+  return {
+    assets,
+    onSubmitAssets: setUploadingAssets,
+    onActionData: setActionData,
+  };
 };

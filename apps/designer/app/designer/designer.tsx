@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import type { Project } from "@webstudio-is/project";
 import type { Config } from "~/config";
@@ -7,6 +7,7 @@ import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
+  useAssets,
   useHoveredInstanceData,
   useSelectedInstanceData,
   useSyncStatus,
@@ -33,6 +34,8 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
+import { Asset } from "@webstudio-is/asset-uploader";
+import { useInterval } from "react-use";
 
 export const links = () => {
   return [
@@ -61,11 +64,37 @@ const useSubscribeSyncStatus = () => {
   useSubscribe("syncStatus", setValue);
 };
 
+const useSetAssets = (assets?: Array<Asset>) => {
+  const [, setAssets] = useAssets();
+  useEffect(() => {
+    if (assets) {
+      setAssets(assets);
+    }
+  }, [assets, setAssets]);
+};
+
 const useNavigatorLayout = () => {
   // We need to render the detached state only once the setting was actually loaded from local storage.
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
   return isLoaded ? clientSettings.navigatorLayout : "docked";
+};
+
+const usePublishDesignerReady = (publish: Publish) => {
+  const [isAcknowledged, setIsAcknowledged] = useState(false);
+
+  useInterval(
+    () => {
+      // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
+      // we can miss the events and designer will just not connect to the canvas.
+      publish({ type: "designerReady" });
+    },
+    isAcknowledged ? null : 100
+  );
+
+  useSubscribe("designerReadyAck", () => {
+    setIsAcknowledged(true);
+  });
 };
 
 type SidePanelProps = {
@@ -220,12 +249,14 @@ export const Designer = ({ config, project }: DesignerProps) => {
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
+  useSetAssets(project.assets);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
+  usePublishDesignerReady(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -263,7 +294,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft assets={project.assets} publish={publish} />
+        <SidebarLeft publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

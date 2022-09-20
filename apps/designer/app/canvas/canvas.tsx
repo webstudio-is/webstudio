@@ -46,6 +46,7 @@ import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { setInstanceChildrenMutable } from "~/shared/tree-utils";
 import { CanvasData } from "~/shared/db";
+import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 
 registerContainers();
 
@@ -118,6 +119,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   if (data.tree === null) {
     throw new Error("Tree is null");
   }
+  const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
   globalStyles();
   useAllUserProps(data.props);
@@ -129,7 +131,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
 
   if (elements === undefined) return null;
 
-  if (isPreviewMode) {
+  if (isPreviewMode || isDesignerReady === false) {
     return elements;
   }
 
