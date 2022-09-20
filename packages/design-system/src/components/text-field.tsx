@@ -192,6 +192,7 @@ export const TextField = React.forwardRef<
         </Flex>
       )}
 
+      {/* @ts-expect-error - It seems like stitches provide a wrong type for the input element.*/}
       <InputBase ref={inputRef} disabled={disabled} {...textFieldProps} />
 
       {suffix && (
