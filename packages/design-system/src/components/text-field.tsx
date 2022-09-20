@@ -147,7 +147,11 @@ const TextFieldBase = styled("div", {
 });
 
 type TextFieldProps = Omit<
-  React.ComponentProps<typeof TextFieldBase> & React.ComponentProps<"input">,
+  Omit<
+    React.ComponentProps<typeof TextFieldBase>,
+    "onChange" | "onFocus" | "onBlur"
+  > &
+    React.ComponentProps<"input">,
   "prefix"
 > & {
   inputRef?: React.Ref<HTMLInputElement>;
