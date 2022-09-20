@@ -32,19 +32,15 @@ const ComboboxTextFieldBase: ForwardRefRenderFunction<
   ComboboxTextFieldProps<BaseItem>
 > = ({ inputProps, toggleProps }, ref) => {
   return (
-    <Box ref={ref} css={{ position: "relative" }}>
-      <TextField css={{ paddingRight: "$4" }} {...inputProps} />
-      <IconButton
-        {...toggleProps}
-        css={{
-          position: "absolute",
-          transform: "translateX(-100%)",
-          width: "$4",
-        }}
-      >
-        <ChevronDownIcon />
-      </IconButton>
-    </Box>
+    <TextField
+      ref={ref}
+      suffix={
+        <IconButton {...toggleProps}>
+          <ChevronDownIcon />
+        </IconButton>
+      }
+      {...inputProps}
+    />
   );
 };
 
@@ -198,7 +194,7 @@ export const Combobox = <Item extends BaseItem>({
   return (
     <Popper>
       <Box {...comboboxProps}>
-        <PopperAnchor asChild>
+        <PopperAnchor>
           {renderTextField({ inputProps, toggleProps, highlightedItem })}
         </PopperAnchor>
         {renderPopperContent({

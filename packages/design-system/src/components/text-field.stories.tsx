@@ -1,7 +1,10 @@
-import React from "react";
 import { ComponentStory } from "@storybook/react";
-import { TextField } from "./text-field";
+import { BrushIcon, ChevronDownIcon } from "@webstudio-is/icons";
+import React from "react";
+import { Box } from "./box";
 import { Flex } from "./flex";
+import { IconButton } from "./icon-button";
+import { TextField } from "./text-field";
 
 export default {
   component: TextField,
@@ -11,8 +14,16 @@ export const Default: ComponentStory<typeof TextField> = () => {
   return <TextField />;
 };
 
-export const Type: ComponentStory<typeof TextField> = () => {
-  return <TextField type="number" />;
+export const NativeProps: ComponentStory<typeof TextField> = () => {
+  return (
+    <Flex direction="column" gap={3}>
+      <TextField placeholder="This is a placeholder" />
+      <TextField disabled placeholder="This is a disabled placeholder" />
+      <TextField type="number" value={25} />
+      <TextField readOnly value="Read-only" />
+      <TextField disabled value="Disabled" />
+    </Flex>
+  );
 };
 
 export const Sizes: ComponentStory<typeof TextField> = () => {
@@ -43,11 +54,44 @@ export const State: ComponentStory<typeof TextField> = () => {
   );
 };
 
-export const Cursor: ComponentStory<typeof TextField> = () => {
+export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
   return (
     <Flex direction="column" gap={3}>
-      <TextField cursor="default" />
-      <TextField cursor="text" />
+      <TextField
+        prefix={<BrushIcon />}
+        suffix={
+          <IconButton size={1}>
+            <ChevronDownIcon />
+          </IconButton>
+        }
+      />
+      <TextField
+        state="invalid"
+        prefix={<BrushIcon />}
+        suffix={
+          <IconButton>
+            <ChevronDownIcon />
+          </IconButton>
+        }
+      />
+      <TextField
+        size={2}
+        prefix={<BrushIcon />}
+        suffix={
+          <IconButton size={2}>
+            <ChevronDownIcon />
+          </IconButton>
+        }
+      />
+      <TextField
+        disabled
+        prefix={<BrushIcon />}
+        suffix={
+          <IconButton>
+            <ChevronDownIcon />
+          </IconButton>
+        }
+      />
     </Flex>
   );
 };

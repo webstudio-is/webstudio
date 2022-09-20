@@ -1,29 +1,32 @@
+import React from "react";
 import { styled } from "../stitches.config";
+import { Flex } from "./flex";
 
-export const TextField = styled("input", {
+const InputBase = styled("input", {
   // Reset
   appearance: "none",
   borderWidth: "0",
+  backgroundColor: "transparent",
   boxSizing: "border-box",
   fontFamily: "inherit",
+  fontSize: "inherit",
   margin: "0",
-  outline: "none",
   padding: "0",
-  width: "100%",
+  flexGrow: 1,
+  flexShrink: 1,
+  outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
+
+  // Focus should start on the input element then move to prefix and suffix elements.
+  // DOM order reflects focus path and visually we use order to put them into the correct visual order.
+  order: 1,
+
   "&::before": {
     boxSizing: "border-box",
   },
   "&::after": {
     boxSizing: "border-box",
   },
-
-  // Custom
-  backgroundColor: "$loContrast",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
-  color: "$hiContrast",
-  fontVariantNumeric: "tabular-nums",
-
   "&:-webkit-autofill": {
     boxShadow: "inset 0 0 0 1px $colors$blue6, inset 0 0 0 100px $colors$blue3",
   },
@@ -32,8 +35,30 @@ export const TextField = styled("input", {
     fontFamily: "$untitled",
     color: "$hiContrast",
   },
+  "&::placeholder": {
+    color: "$slate9",
+  },
 
-  "&:focus": {
+  "&:disabled": {
+    color: "$slate8",
+    // @todo: This is not working now bue to cursor variant. Is it needed?
+    cursor: "not-allowed",
+    "&::placeholder": {
+      color: "$slate7",
+    },
+  },
+});
+
+const TextFieldBase = styled("div", {
+  // Custom
+  display: "flex",
+  gap: "$1",
+  backgroundColor: "$loContrast",
+  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  color: "$hiContrast",
+  fontVariantNumeric: "tabular-nums",
+
+  "&:focus-within": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
     "&:-webkit-autofill": {
@@ -41,19 +66,12 @@ export const TextField = styled("input", {
         "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8, inset 0 0 0 100px $colors$blue3",
     },
   },
-  "&::placeholder": {
-    color: "$slate9",
-  },
-  "&:disabled": {
+
+  "&[aria-disabled=true]": {
     pointerEvents: "none",
     backgroundColor: "$slate2",
-    color: "$slate8",
-    cursor: "not-allowed",
-    "&::placeholder": {
-      color: "$slate7",
-    },
   },
-  "&:read-only": {
+  "&:has(input:read-only)": {
     backgroundColor: "$slate2",
     "&:focus": {
       boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
@@ -71,24 +89,18 @@ export const TextField = styled("input", {
   variants: {
     size: {
       "1": {
-        borderRadius: "$1",
-        height: "$5",
-        fontSize: "$1",
         px: "$1",
+        borderRadius: "$1",
+        fontSize: "$1",
+        height: "$5",
         lineHeight: "$sizes$5",
-        "&:-webkit-autofill::first-line": {
-          fontSize: "$1",
-        },
       },
       "2": {
-        borderRadius: "$2",
-        height: "$6",
-        fontSize: "$3",
         px: "$2",
+        borderRadius: "$2",
+        fontSize: "$3",
+        height: "$6",
         lineHeight: "$sizes$6",
-        "&:-webkit-autofill::first-line": {
-          fontSize: "$3",
-        },
       },
     },
     variant: {
@@ -129,19 +141,72 @@ export const TextField = styled("input", {
         },
       },
     },
-    cursor: {
-      default: {
-        cursor: "default",
-        "&:focus": {
-          cursor: "text",
-        },
-      },
-      text: {
-        cursor: "text",
-      },
-    },
   },
   defaultVariants: {
     size: "1",
   },
 });
+
+type TextFieldProps = Omit<
+  React.ComponentProps<typeof TextFieldBase> & React.ComponentProps<"input">,
+  "prefix"
+> & {
+  inputRef?: React.Ref<HTMLInputElement>;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+};
+
+export const TextField = React.forwardRef<
+  React.ElementRef<typeof TextFieldBase>,
+  TextFieldProps
+>((props, forwardedRef) => {
+  const {
+    prefix,
+    suffix,
+    css,
+    disabled,
+    inputRef,
+    size,
+    state,
+    variant,
+    ...textFieldProps
+  } = props;
+  return (
+    <TextFieldBase
+      aria-disabled={disabled}
+      ref={forwardedRef}
+      size={size}
+      state={state}
+      variant={variant}
+      css={css}
+    >
+      {prefix && (
+        <Flex
+          css={{
+            alignItems: "center",
+            flexShrink: 0,
+            order: 0,
+          }}
+        >
+          {prefix}
+        </Flex>
+      )}
+
+      <InputBase ref={inputRef} disabled={disabled} {...textFieldProps} />
+
+      {suffix && (
+        <Flex
+          css={{
+            alignItems: "center",
+            flexShrink: 0,
+            order: 2,
+          }}
+        >
+          {suffix}
+        </Flex>
+      )}
+    </TextFieldBase>
+  );
+});
+
+TextField.displayName = "TextField";
