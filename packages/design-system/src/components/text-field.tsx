@@ -148,7 +148,7 @@ const TextFieldBase = styled("div", {
 
 type TextFieldProps = Omit<
   React.ComponentProps<typeof TextFieldBase> & React.ComponentProps<"input">,
-  "prefix"
+  "prefix" | "ref"
 > & {
   inputRef?: React.Ref<HTMLInputElement>;
   prefix?: React.ReactNode;
@@ -191,7 +191,7 @@ export const TextField = React.forwardRef<
         </Flex>
       )}
 
-      <InputBase disabled={disabled} {...textFieldProps} ref={inputRef} />
+      <InputBase ref={inputRef} disabled={disabled} {...textFieldProps} />
 
       {suffix && (
         <Flex
