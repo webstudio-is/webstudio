@@ -41,7 +41,6 @@ const InputBase = styled("input", {
 
   "&:disabled": {
     color: "$slate8",
-    // @todo: This is not working now bue to cursor variant. Is it needed?
     cursor: "not-allowed",
     "&::placeholder": {
       color: "$slate7",
