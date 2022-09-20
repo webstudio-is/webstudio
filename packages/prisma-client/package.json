@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@types/uuid": "^8.3.4",
-    "prisma": "^4.1.0"
+    "prisma": "^4.3.1"
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -23,7 +23,7 @@
   "private": false,
   "dependencies": {
     "@inquirer/confirm": "^0.0.25-alpha.0",
-    "@prisma/client": "^4.1.0",
+    "@prisma/client": "^4.3.1",
     "@types/minimist": "^1.2.2",
     "dotenv": "^16.0.0",
     "execa": "^6.1.0",
