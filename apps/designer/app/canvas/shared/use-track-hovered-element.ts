@@ -1,14 +1,15 @@
 import { useEffect } from "react";
-import { useSelectedElement, useHoveredElement } from "./nano-states";
+import { useSelectedElement } from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
 
 const eventOptions = {
   passive: true,
 };
 
-export const useTrackHoveredElement = () => {
+export const useTrackHoveredElement = (
+  onChange: (element: HTMLElement | undefined) => void
+) => {
   const [rootInstance] = useRootInstance();
-  const [, setHoveredElement] = useHoveredElement();
   const [selectedElement] = useSelectedElement();
 
   useEffect(() => {
@@ -21,12 +22,12 @@ export const useTrackHoveredElement = () => {
       ) {
         return;
       }
-      setHoveredElement(element);
+      onChange(element);
     };
 
     const handleMouseOut = () => {
       if (rootInstance === undefined) return;
-      setHoveredElement(undefined);
+      onChange(undefined);
     };
 
     window.addEventListener("mouseover", handleMouseOver, eventOptions);
@@ -36,5 +37,5 @@ export const useTrackHoveredElement = () => {
       window.removeEventListener("mouseover", handleMouseOver);
       window.removeEventListener("mouseout", handleMouseOut);
     };
-  }, [rootInstance, selectedElement, setHoveredElement]);
+  }, [rootInstance, selectedElement, onChange]);
 };
