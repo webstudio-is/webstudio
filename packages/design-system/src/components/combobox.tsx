@@ -4,12 +4,13 @@ import {
   useEffect,
   type ComponentProps,
   type ForwardRefRenderFunction,
+  ForwardedRef,
 } from "react";
 import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox, type UseComboboxGetItemPropsOptions } from "downshift";
 import { matchSorter } from "match-sorter";
-import { styled } from "../stitches.config";
+import { CSS, styled } from "../stitches.config";
 import { IconButton } from "./icon-button";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
@@ -19,7 +20,7 @@ import { Grid } from "./grid";
 
 type Label = string;
 
-type BaseItem = { label: Label; disabled?: boolean } | Label;
+export type ComboboxBaseItem = { label: Label; disabled?: boolean } | Label;
 
 type ComboboxTextFieldProps<Item> = {
   inputProps: ComponentProps<typeof TextField>;
@@ -29,7 +30,7 @@ type ComboboxTextFieldProps<Item> = {
 
 const ComboboxTextFieldBase: ForwardRefRenderFunction<
   HTMLDivElement,
-  ComboboxTextFieldProps<BaseItem>
+  ComboboxTextFieldProps<ComboboxBaseItem>
 > = ({ inputProps, toggleProps }, ref) => {
   return (
     <Box ref={ref} css={{ position: "relative" }}>
@@ -61,34 +62,63 @@ const Listbox = styled("ul", panelStyles, {
   minWidth: 230,
 });
 
-const ListboxItem = styled("li", itemCss, {
-  padding: 0,
-  margin: 0,
-});
+type ListboxItemProps<Item> = {
+  selected: boolean;
+  item: Item;
+  itemToString: (item: Item | null) => string;
+  itemProps: ComponentProps<"li">;
+};
+
+const ListboxItemBase = <Item extends ComboboxBaseItem>(
+  { selected, item, itemToString, itemProps }: ListboxItemProps<Item>,
+  ref: ForwardedRef<HTMLLIElement>
+) => {
+  return (
+    <li
+      className={itemCss({
+        padding: 0,
+        margin: 0,
+      })}
+      {...itemProps}
+      ref={ref}
+    >
+      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+        {selected === true ? <CheckIcon /> : null}
+        <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
+      </Grid>
+    </li>
+  );
+};
+
+export const ComboboxListboxItem = forwardRef(ListboxItemBase);
+
+ComboboxListboxItem.displayName = "ComboboxListboxItem";
 
 type ListProps<Item> = {
   containerProps: ComponentProps<typeof Listbox>;
   items: Array<Item>;
   getItemProps: (
     options: UseComboboxGetItemPropsOptions<Item>
-  ) => ComponentProps<typeof ListboxItem>;
+  ) => ComponentProps<typeof ComboboxListboxItem>;
   highlightedIndex: number;
   selectedItem: Item | null;
   itemToString: (item: Item | null) => string;
+  renderItem: (props: ListboxItemProps<Item>) => JSX.Element;
 };
 
-export const List = <Item extends BaseItem>({
+export const ComboboxList = <Item extends ComboboxBaseItem>({
   containerProps,
   items,
   getItemProps,
   highlightedIndex,
   selectedItem,
   itemToString,
+  renderItem,
 }: ListProps<Item>) => {
   return (
     <Listbox {...containerProps}>
       {items.map((item, index) => {
-        const itemProps: Record<string, unknown> = getItemProps({
+        const itemProps = getItemProps({
           item,
           index,
           key: index,
@@ -97,16 +127,12 @@ export const List = <Item extends BaseItem>({
             : {}),
           ...(highlightedIndex === index ? { "data-found": true } : {}),
         });
-
-        return (
-          // eslint-disable-next-line react/jsx-key
-          <ListboxItem {...itemProps}>
-            <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
-              {selectedItem === item && <CheckIcon />}
-              <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
-            </Grid>
-          </ListboxItem>
-        );
+        return renderItem({
+          itemProps,
+          selected: selectedItem === item,
+          item,
+          itemToString,
+        });
       })}
     </Listbox>
   );
@@ -119,6 +145,8 @@ type ComboboxProps<Item> = {
   label?: string;
   items: Array<Item>;
   value?: Item;
+  selectedItem?: Item;
+  open?: boolean;
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value?: Item) => void;
   itemToString?: (item: Item | null) => string;
@@ -129,12 +157,14 @@ type ComboboxProps<Item> = {
   renderPopperContent?: (
     props: ComponentProps<typeof ComboboxPopperContent>
   ) => JSX.Element;
+  renderItem: (props: ListboxItemProps<Item>) => JSX.Element;
 };
 
-export const Combobox = <Item extends BaseItem>({
+export const Combobox = <Item extends ComboboxBaseItem>({
   items,
   value,
   name,
+  open,
   itemToString = (item) =>
     typeof item === "object" && item !== null && "label" in item
       ? item.label
@@ -142,9 +172,10 @@ export const Combobox = <Item extends BaseItem>({
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,
-  // IMPORTANT! Without Item passed to list <List<Item> typescript is 10x slower!
-  renderList = (props) => <List<Item> {...props} />,
+  // IMPORTANT! Without Item passed to list <ComboboxList<Item> typescript is 10x slower!
+  renderList = (props) => <ComboboxList<Item> {...props} />,
   renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
+  renderItem = (props) => <ComboboxListboxItem {...props} />,
 }: ComboboxProps<Item>) => {
   const [foundItems, setFoundItems] = useState(items);
   const {
@@ -158,6 +189,7 @@ export const Combobox = <Item extends BaseItem>({
     getItemProps,
     selectedItem,
   } = useCombobox({
+    isOpen: open,
     onInputValueChange({ inputValue }) {
       if (inputValue) {
         const options =
@@ -194,7 +226,6 @@ export const Combobox = <Item extends BaseItem>({
   const comboboxProps: Record<string, unknown> = getComboboxProps();
   const menuProps: Record<string, unknown> = getMenuProps();
   const highlightedItem = foundItems[highlightedIndex];
-
   return (
     <Popper>
       <Box {...comboboxProps}>
@@ -210,6 +241,7 @@ export const Combobox = <Item extends BaseItem>({
             highlightedIndex,
             selectedItem,
             itemToString,
+            renderItem,
           }),
         })}
       </Box>

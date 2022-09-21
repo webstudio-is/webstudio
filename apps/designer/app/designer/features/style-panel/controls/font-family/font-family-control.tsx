@@ -68,7 +68,7 @@ export const FontFamilyControl = ({
         <PopoverPortal>
           <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
             <PopoverHeader title="Fonts" />
-            <FontsManager />
+            <FontsManager value={String(value.value)} />
           </PopoverContent>
         </PopoverPortal>
       </Popover>
