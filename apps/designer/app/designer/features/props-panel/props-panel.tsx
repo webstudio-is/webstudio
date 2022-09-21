@@ -9,7 +9,6 @@ import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 import {
   Box,
-  Flex,
   Button,
   Combobox,
   ComboboxTextField,
