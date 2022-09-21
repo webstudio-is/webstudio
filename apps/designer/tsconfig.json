@@ -2,9 +2,20 @@
   "extends": "../../node_modules/@webstudio-is/tsconfig/remix.json",
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
+    "composite": true,
     "paths": {
       "~/*": ["app/*"]
     },
-    "baseUrl": "."
-  }
+    "baseUrl": ".",
+    "rootDir": "./app"
+  },
+  "references": [
+    { "path": "../../packages/asset-uploader" },
+    { "path": "../../packages/css-vars" },
+    { "path": "../../packages/design-system" },
+    { "path": "../../packages/icons" },
+    { "path": "../../packages/prisma-client" },
+    { "path": "../../packages/project" },
+    { "path": "../../packages/react-sdk" }
+  ]
 }

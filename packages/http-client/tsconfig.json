@@ -12,6 +12,8 @@
     "paths": {
       "~/*": ["./src/*"]
     },
-    "outDir": "./lib"
-  }
+    "outDir": "./lib",
+    "rootDir": "./src"
+  },
+  "references": [{ "path": "../prisma-client" }, { "path": "../react-sdk" }]
 }

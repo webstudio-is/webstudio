@@ -3,9 +3,12 @@
   "extends": "../../node_modules/@webstudio-is/tsconfig/base.json",
   "include": ["./src/**/*.ts"],
   "compilerOptions": {
+    "composite": true,
     "module": "commonjs",
     "target": "ES2019",
     "strict": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "rootDir": "./src",
+    "outDir": "./lib"
   }
 }

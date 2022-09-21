@@ -3,6 +3,7 @@
   "extends": "../../node_modules/@webstudio-is/tsconfig/base.json",
   "include": ["./src/**/*.ts", "./src/**/*.tsx"],
   "compilerOptions": {
+    "composite": true,
     "lib": ["DOM", "DOM.Iterable", "ES2020"],
     "module": "commonjs",
     "jsx": "react-jsx",
@@ -12,6 +13,8 @@
     "paths": {
       "~/*": ["./src/*"]
     },
-    "outDir": "./lib"
-  }
+    "outDir": "./lib",
+    "rootDir": "./src"
+  },
+  "references": [{ "path": "../css-vars" }]
 }
