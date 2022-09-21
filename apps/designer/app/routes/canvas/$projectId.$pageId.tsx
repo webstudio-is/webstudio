@@ -8,8 +8,12 @@ import { Root } from "@webstudio-is/react-sdk";
 
 type Data = CanvasData | { errors: string };
 
-export const meta: MetaFunction = () => {
-  return { title: "Webstudio canvas" };
+export const meta: MetaFunction = ({ data }: { data: Data }) => {
+  if ("errors" in data) {
+    return { title: "Error" };
+  }
+  const { page } = data;
+  return { title: page.title, ...page.meta };
 };
 
 export const loader: LoaderFunction = async ({ params }): Promise<Data> => {

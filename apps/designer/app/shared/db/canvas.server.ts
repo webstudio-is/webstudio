@@ -3,7 +3,7 @@ import type { Project, Build, Page } from "@webstudio-is/project";
 import { db } from "@webstudio-is/project/index.server";
 import { utils } from "@webstudio-is/project";
 
-export type CanvasData = Data & { buildId: Build["id"] };
+export type CanvasData = Data & { buildId: Build["id"]; page: Page };
 
 export const loadCanvasData = async (
   projectId: Project["id"],
@@ -41,7 +41,8 @@ export const loadCanvasData = async (
   return {
     tree,
     props,
-    buildId: devBuild.id,
     breakpoints: breakpoints.values,
+    buildId: devBuild.id,
+    page,
   };
 };

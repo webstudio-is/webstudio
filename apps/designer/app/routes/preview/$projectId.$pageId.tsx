@@ -4,11 +4,15 @@ import { loadCanvasData, type CanvasData } from "~/shared/db";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { sentryException } from "~/shared/sentry";
 
-export const meta: MetaFunction = () => {
-  return { title: "Webstudio site preview" };
-};
-
 type Data = CanvasData | { errors: string };
+
+export const meta: MetaFunction = ({ data }: { data: Data }) => {
+  if ("errors" in data) {
+    return { title: "Error" };
+  }
+  const { page } = data;
+  return { title: page.title, ...page.meta };
+};
 
 export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
   try {
