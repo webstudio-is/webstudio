@@ -17,6 +17,7 @@ export const Simple: ComponentStory<typeof Combobox> = () => {
   return (
     <Combobox
       name="fruit"
+      placeholder="Select a fruit"
       items={items}
       value={value}
       onItemSelect={setValue}
@@ -37,6 +38,7 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
   return (
     <Combobox
       name="fruit"
+      placeholder="Select a fruit"
       items={items}
       value={value}
       onItemSelect={setValue}

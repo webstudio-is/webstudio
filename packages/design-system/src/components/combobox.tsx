@@ -113,6 +113,7 @@ export const ComboboxPopperContent = PopperContent;
 type ComboboxProps<Item> = {
   name: string;
   label?: string;
+  placeholder?: string;
   items: ReadonlyArray<Item>;
   value?: Item;
   onItemSelect?: (value?: Item) => void;
@@ -131,6 +132,7 @@ export const Combobox = <Item extends BaseItem>({
   items,
   value,
   name,
+  placeholder,
   itemToString = (item) =>
     item != null && "label" in item ? item.label : item ?? "",
   onItemSelect,
@@ -209,6 +211,8 @@ export const Combobox = <Item extends BaseItem>({
 
   const inputProps: Record<string, unknown> = getInputProps({
     name,
+    placeholder: selectedItem ? "" : placeholder, // Placeholder should not be visible when we have selected item
+    prefix: itemToString?.(selectedItem ?? undefined),
     onKeyDown: (event) => {
       // When we press Backspace and the input is empty,
       // we should to clear the selection
@@ -217,7 +221,6 @@ export const Combobox = <Item extends BaseItem>({
         onItemSelect?.(undefined);
       }
     },
-    prefix: itemToString?.(selectedItem ?? undefined),
   });
   const toggleProps: Record<string, unknown> = getToggleButtonProps();
   const comboboxProps: Record<string, unknown> = getComboboxProps();
