@@ -14,9 +14,6 @@ export const loader: LoaderFunction = async ({
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);
     }
-    if (params.pageId === undefined) {
-      throw new Error(`Page ID required`);
-    }
 
     const prodBuild = await db.build.loadByProjectId(params.projectId, "prod");
 
@@ -26,7 +23,10 @@ export const loader: LoaderFunction = async ({
       );
     }
 
-    const page = utils.pages.findById(prodBuild.pages, params.pageId);
+    const page =
+      params.pageId === undefined
+        ? prodBuild.pages.homePage
+        : utils.pages.findById(prodBuild.pages, params.pageId);
 
     if (page === undefined) {
       throw new Error(`Page ${params.pageId} not found`);
