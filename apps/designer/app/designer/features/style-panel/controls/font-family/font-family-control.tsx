@@ -33,7 +33,7 @@ const usePickerSideOffset = (
 export const FontFamilyControl = ({
   currentStyle,
   inheritedStyle,
-  //setProperty,
+  setProperty,
   styleConfig,
 }: ControlProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,7 +47,7 @@ export const FontFamilyControl = ({
 
   if (value === undefined) return null;
 
-  //const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(styleConfig.property);
 
   return (
     <Grid columns={2}>
@@ -68,7 +68,7 @@ export const FontFamilyControl = ({
         <PopoverPortal>
           <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
             <PopoverHeader title="Fonts" />
-            <FontsManager value={String(value.value)} />
+            <FontsManager value={String(value.value)} onChange={setValue} />
           </PopoverContent>
         </PopoverPortal>
       </Popover>

@@ -18,9 +18,10 @@ const getItems = (assets: Array<Asset | PreviewAsset>) =>
 
 type FontsManagerProps = {
   value: string;
+  onChange: (value: string) => void;
 };
 
-export const FontsManager = ({ value }: FontsManagerProps) => {
+export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const { assets, onSubmitAssets, onActionData } = useAssets("font");
   const items = getItems(assets);
 
@@ -43,10 +44,8 @@ export const FontsManager = ({ value }: FontsManagerProps) => {
         name="prop"
         items={items}
         selectedItem={{ label: value }}
-        //itemToString={(item) => item ?? ""}
         onItemSelect={(value) => {
-          console.log("onItemSelect", value);
-          //onChange(id, "prop", value);
+          onChange(value.label);
         }}
         renderTextField={({ inputProps: { value, ...inputProps } }) => (
           <TextField {...inputProps} placeholder="Search" />
