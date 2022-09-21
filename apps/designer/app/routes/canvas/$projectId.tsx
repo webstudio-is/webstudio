@@ -25,7 +25,7 @@ export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
     return loadCanvasData(params.projectId, params.pageId);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    sentryException({ message });
+    sentryException({ error });
     return { errors: message };
   }
 };

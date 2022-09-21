@@ -38,7 +38,7 @@ export const loader: LoaderFunction = async ({
     return { config, project, page };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    sentryException({ message });
+    sentryException({ error });
     return { errors: message };
   }
 };
