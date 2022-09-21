@@ -20,7 +20,8 @@ export const NativeProps: ComponentStory<typeof TextField> = () => {
     <Flex direction="column" gap={3}>
       <TextField placeholder="This is a placeholder" />
       <TextField disabled placeholder="This is a disabled placeholder" />
-      <TextField type="number" value={25} />
+      <TextField type="number" defaultValue={25} />
+      <TextField type="search" placeholder="This is a search input" />
       <TextField readOnly value="Read-only" />
       <TextField disabled value="Disabled" />
     </Flex>

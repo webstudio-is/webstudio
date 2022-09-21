@@ -31,6 +31,22 @@ const InputBase = styled("input", {
     boxShadow: "inset 0 0 0 1px $colors$blue6, inset 0 0 0 100px $colors$blue3",
   },
 
+  '&[type="search"]': {
+    "&::-webkit-search-decoration, &::-webkit-search-cancel-button, &::-webkit-search-results-button, &::-webkit-search-results-decoration":
+      {
+        display: "none",
+      },
+  },
+
+  '&[type="number"]': {
+    "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+      WebkitAppearance: "none",
+      MozAppearance: "textfield",
+      margin: 0,
+      display: "none",
+    },
+  },
+
   "&:-webkit-autofill::first-line": {
     fontFamily: "$untitled",
     color: "$hiContrast",
@@ -74,14 +90,6 @@ const TextFieldBase = styled("div", {
     backgroundColor: "$slate2",
     "&:focus": {
       boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
-    },
-  },
-  '&[type="number"]': {
-    "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
-      WebkitAppearance: "none",
-      MozAppearance: "textfield",
-      margin: 0,
-      display: "none",
     },
   },
 
