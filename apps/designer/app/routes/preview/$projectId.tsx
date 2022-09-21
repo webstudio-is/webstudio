@@ -1,45 +1,39 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { type ErrorData, loadPreviewData, type PreviewData } from "~/shared/db";
+import { loadCanvasData, type CanvasData } from "~/shared/db";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
-import env, { Env } from "~/env.server";
+import { sentryException } from "~/shared/sentry";
 
-export const meta: MetaFunction = () => {
-  return { title: "Webstudio site preview" };
+type Data = CanvasData | { errors: string };
+
+export const meta: MetaFunction = ({ data }: { data: Data }) => {
+  if ("errors" in data) {
+    return { title: "Error" };
+  }
+  const { page } = data;
+  return { title: page.title, ...page.meta };
 };
 
-type LoaderReturnType = Promise<
-  (PreviewData & { env: Env }) | (ErrorData & { env: Env })
->;
-
-export const loader: LoaderFunction = async ({ params }): LoaderReturnType => {
-  if (params.projectId === undefined) {
-    return { errors: "Missing projectId", env };
-  }
+export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
   try {
-    const previewData = await loadPreviewData({ projectId: params.projectId });
-    return {
-      ...previewData,
-      env,
-    };
-  } catch (error) {
-    if (error instanceof Error) {
-      return {
-        errors: error.message,
-        env,
-      };
+    if (params.projectId === undefined) {
+      throw new Error("Missing projectId");
     }
+
+    return loadCanvasData(params.projectId, params.pageId);
+  } catch (error) {
+    sentryException({ error });
+    return { errors: error instanceof Error ? error.message : String(error) };
   }
-  return { errors: "Unexpected error", env };
 };
 
 const Outlet = () => {
-  const data = useLoaderData<PreviewData>();
+  const data = useLoaderData<CanvasData>();
   return <InstanceRoot data={data} />;
 };
 
 const PreviewRoute = () => {
-  const data = useLoaderData<PreviewData | ErrorData>();
+  const data = useLoaderData<Data>();
   if ("errors" in data) {
     return <p>{data.errors}</p>;
   }

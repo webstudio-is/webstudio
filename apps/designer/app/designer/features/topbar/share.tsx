@@ -9,17 +9,21 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import type { Project } from "@webstudio-is/project";
+import type { Project, Page } from "@webstudio-is/project";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
-type ShareButtonProps = { path: string; project: Project };
+type ShareButtonProps = {
+  path: string;
+  projectId: Project["id"];
+  pageId: Page["id"];
+};
 
-const Content = ({ path, project }: ShareButtonProps) => {
+const Content = ({ path, projectId, pageId }: ShareButtonProps) => {
   if (typeof location === "undefined") {
     return null;
   }
   const url = new URL(
-    `${location.protocol}//${location.host}${path}/${project.id}`
+    `${location.protocol}//${location.host}${path}/${projectId}/${pageId}`
   );
   return (
     <PopoverContent
@@ -53,7 +57,7 @@ const Content = ({ path, project }: ShareButtonProps) => {
   );
 };
 
-export const ShareButton = ({ path, project }: ShareButtonProps) => {
+export const ShareButton = (props: ShareButtonProps) => {
   const [isOpen, setIsOpen] = useIsShareDialogOpen();
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -63,7 +67,7 @@ export const ShareButton = ({ path, project }: ShareButtonProps) => {
         </IconButton>
       </PopoverTrigger>
       <PopoverPortal>
-        <Content path={path} project={project} />
+        <Content {...props} />
       </PopoverPortal>
     </Popover>
   );
