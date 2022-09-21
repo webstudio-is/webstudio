@@ -6,6 +6,8 @@ import { Flex } from "./flex";
 import { IconButton } from "./icon-button";
 import { TextField } from "./text-field";
 import { Box } from "./box";
+import { Grid } from "./grid";
+import { Text } from "./text";
 
 export default {
   component: TextField,
@@ -100,26 +102,59 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
 
 export const Layout: ComponentStory<typeof TextField> = () => {
   return (
-    <Flex direction="row" gap={2} css={{ justifyContent: "space-between" }}>
-      <TextField
-        value="Long content comes here and it doesn't wrap"
-        prefix={<BrushIcon />}
-        suffix={
-          <IconButton>
-            <ChevronDownIcon />
-          </IconButton>
-        }
+    <>
+      <Flex direction="row" gap={2} css={{ justifyContent: "space-between" }}>
+        <TextField
+          value="Long content comes here and it doesn't wrap"
+          prefix={<BrushIcon />}
+          suffix={
+            <IconButton>
+              <ChevronDownIcon />
+            </IconButton>
+          }
+          css={{
+            flexGrow: 1,
+            maxWidth: "25%",
+          }}
+        />
+        <Box css={{ background: "$muted" }}>Content</Box>
+        <TextField
+          state="invalid"
+          value="Long content comes here and it doesn't wrap"
+        />
+      </Flex>
+
+      <Grid
+        gap={2}
         css={{
-          flexGrow: 1,
-          maxWidth: "25%",
+          gridTemplateColumns: "100px 1fr",
+          width: 250,
+          border: "1px solid",
         }}
-      />
-      <Box css={{ background: "$muted" }}>Content</Box>
-      <TextField
-        state="invalid"
-        value="Long content comes here and it doesn't wrap"
-      />
-    </Flex>
+      >
+        <Box css={{ background: "$muted" }}>
+          <Text as="label" htmlFor="field">
+            This is a label
+          </Text>
+        </Box>
+        <Box css={{ background: "$muted" }}>
+          <TextField
+            id="field"
+            value="Long content comes here and it doesn't wrap"
+            prefix={<BrushIcon />}
+          />
+        </Box>
+        <Box css={{ background: "$muted" }}>
+          <Text as="label" htmlFor="field2">
+            This is a label
+          </Text>
+        </Box>
+        <TextField
+          id="field2"
+          value="Long content comes here and it doesn't wrap"
+        />
+      </Grid>
+    </>
   );
 };
 

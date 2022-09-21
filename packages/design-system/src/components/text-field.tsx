@@ -14,6 +14,9 @@ const InputBase = styled("input", {
   padding: "0",
   flexGrow: 1,
   flexShrink: 1,
+  minWidth: 0,
+  width: "100%",
+  textOverflow: "ellipsis",
   outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
@@ -21,12 +24,6 @@ const InputBase = styled("input", {
   // DOM order reflects focus path and visually we use order to put them into the correct visual order.
   order: 1,
 
-  "&::before": {
-    boxSizing: "border-box",
-  },
-  "&::after": {
-    boxSizing: "border-box",
-  },
   "&:-webkit-autofill": {
     boxShadow: "inset 0 0 0 1px $colors$blue6, inset 0 0 0 100px $colors$blue3",
   },
@@ -51,6 +48,7 @@ const InputBase = styled("input", {
     fontFamily: "$untitled",
     color: "$hiContrast",
   },
+
   "&::placeholder": {
     color: "$slate9",
   },
