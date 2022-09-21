@@ -7,15 +7,22 @@ import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
-import type { Project } from "@webstudio-is/project";
+import type { Project, Page } from "@webstudio-is/project";
 
 type TopbarProps = {
   config: Config;
   css: CSS;
   project: Project;
+  page: Page;
   publish: Publish;
 };
-export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
+export const Topbar = ({
+  config,
+  css,
+  project,
+  page,
+  publish,
+}: TopbarProps) => {
   return (
     <Flex
       className={darkTheme}
@@ -55,7 +62,11 @@ export const Topbar = ({ config, css, project, publish }: TopbarProps) => {
       >
         <SyncStatus />
         <PreviewButton publish={publish} />
-        <ShareButton path={config.previewPath} project={project} />
+        <ShareButton
+          path={config.previewPath}
+          projectId={project.id}
+          pageId={page.id}
+        />
         <PublishButton project={project} />
       </Flex>
     </Flex>
