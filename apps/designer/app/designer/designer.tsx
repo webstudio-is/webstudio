@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import type { Project } from "@webstudio-is/project";
+import type { Page, Project } from "@webstudio-is/project";
 import type { Config } from "~/config";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
@@ -241,9 +241,10 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 type DesignerProps = {
   config: Config;
   project: Project;
+  page: Page;
 };
 
-export const Designer = ({ config, project }: DesignerProps) => {
+export const Designer = ({ config, project, page }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -272,6 +273,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
       <Topbar
         css={{ gridArea: "header" }}
         config={config}
+        page={page}
         project={project}
         publish={publish}
       />
@@ -279,7 +281,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
           <CanvasIframe
             ref={iframeRefCallback}
-            src={`${config.canvasPath}/${project.id}`}
+            src={`${config.canvasPath}/${project.id}/${page.id}`}
             pointerEvents={
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"

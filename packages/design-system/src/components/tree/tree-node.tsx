@@ -143,6 +143,8 @@ export type TreeNodeProps<Data extends { id: string }> = {
   selectedItemId?: string;
   parentIsSelected?: boolean;
   onSelect?: (itemId: string) => void;
+  onMouseEnter?: (item: Data) => void;
+  onMouseLeave?: (item: Data) => void;
 
   level?: number;
   animate?: boolean;
@@ -161,6 +163,8 @@ export const TreeNode = <Data extends { id: string }>({
     setIsExpanded,
     selectedItemId,
     onSelect,
+    onMouseEnter,
+    onMouseLeave,
     onExpandTransitionEnd,
     forceHoverStateAtItem,
     renderItem,
@@ -213,6 +217,8 @@ export const TreeNode = <Data extends { id: string }>({
       data-drop-target-id={itemData.id}
     >
       <ItemWrapper
+        onMouseEnter={() => onMouseEnter?.(itemData)}
+        onMouseLeave={() => onMouseLeave?.(itemData)}
         isSelected={isSelected}
         parentIsSelected={parentIsSelected}
         enableHoverState={forceHoverStateAtItem === undefined}
