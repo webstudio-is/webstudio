@@ -5,6 +5,7 @@ import { Button } from "./button";
 import { Flex } from "./flex";
 import { IconButton } from "./icon-button";
 import { TextField } from "./text-field";
+import { Box } from "./box";
 
 export default {
   component: TextField,
@@ -60,7 +61,7 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
       <TextField
         prefix={<BrushIcon />}
         suffix={
-          <IconButton size={1}>
+          <IconButton>
             <ChevronDownIcon />
           </IconButton>
         }
@@ -91,6 +92,31 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
             <ChevronDownIcon />
           </IconButton>
         }
+      />
+    </Flex>
+  );
+};
+
+export const Layout: ComponentStory<typeof TextField> = () => {
+  return (
+    <Flex direction="row" gap={2} css={{ justifyContent: "space-between" }}>
+      <TextField
+        value="Long content comes here and it doesn't wrap"
+        prefix={<BrushIcon />}
+        suffix={
+          <IconButton>
+            <ChevronDownIcon />
+          </IconButton>
+        }
+        css={{
+          flexGrow: 1,
+          maxWidth: "25%",
+        }}
+      />
+      <Box css={{ background: "$muted" }}>Content</Box>
+      <TextField
+        state="invalid"
+        value="Long content comes here and it doesn't wrap"
       />
     </Flex>
   );
