@@ -1,6 +1,7 @@
 import React from "react";
 import { ComponentStory } from "@storybook/react";
 import { BrushIcon, ChevronDownIcon } from "@webstudio-is/icons";
+import { Button } from "./button";
 import { Flex } from "./flex";
 import { IconButton } from "./icon-button";
 import { TextField } from "./text-field";
@@ -91,6 +92,33 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
           </IconButton>
         }
       />
+    </Flex>
+  );
+};
+
+export const Interactive: ComponentStory<typeof TextField> = () => {
+  const [value, setValue] = React.useState("");
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  return (
+    <Flex direction="column" gap={3}>
+      <TextField ref={wrapperRef} inputRef={inputRef} value={value} readOnly />
+      <Button
+        onClick={() => {
+          // eslint-disable-next-line no-console
+          setValue(JSON.stringify(wrapperRef.current?.getBoundingClientRect()));
+        }}
+      >
+        Measure TextField
+      </Button>
+      <Button
+        onClick={() => {
+          inputRef.current?.focus();
+        }}
+      >
+        Focus TextField
+      </Button>
     </Flex>
   );
 };

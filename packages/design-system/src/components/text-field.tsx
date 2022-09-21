@@ -146,67 +146,68 @@ const TextFieldBase = styled("div", {
   },
 });
 
-type TextFieldProps = Omit<
+type TextFieldProps = Pick<
   React.ComponentProps<typeof TextFieldBase>,
-  "onChange" | "onFocus" | "onBlur" | "prefix"
+  "size" | "variant" | "state" | "css"
 > &
-  React.ComponentProps<"input"> & {
+  Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
   };
 
-export const TextField = React.forwardRef<
-  React.ElementRef<typeof TextFieldBase>,
-  TextFieldProps
->((props, forwardedRef) => {
-  const {
-    prefix,
-    suffix,
-    css,
-    disabled,
-    inputRef,
-    size,
-    state,
-    variant,
-    ...textFieldProps
-  } = props;
-  return (
-    <TextFieldBase
-      aria-disabled={disabled}
-      ref={forwardedRef}
-      size={size}
-      state={state}
-      variant={variant}
-      css={css}
-    >
-      {prefix && (
-        <Flex
-          css={{
-            alignItems: "center",
-            flexShrink: 0,
-            order: 0,
-          }}
-        >
-          {prefix}
-        </Flex>
-      )}
+export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
+  (props, forwardedRef) => {
+    const {
+      prefix,
+      suffix,
+      css,
+      disabled,
+      inputRef,
+      size,
+      state,
+      variant,
+      ...textFieldProps
+    } = props;
 
-      <InputBase disabled={disabled} {...textFieldProps} ref={inputRef} />
+    return (
+      <TextFieldBase
+        aria-disabled={disabled}
+        ref={forwardedRef}
+        size={size}
+        state={state}
+        variant={variant}
+        css={css}
+      >
+        {/* We want input to be the first element in DOM so it receives the focus first */}
+        <InputBase disabled={disabled} {...textFieldProps} ref={inputRef} />
 
-      {suffix && (
-        <Flex
-          css={{
-            alignItems: "center",
-            flexShrink: 0,
-            order: 2,
-          }}
-        >
-          {suffix}
-        </Flex>
-      )}
-    </TextFieldBase>
-  );
-});
+        {prefix && (
+          <Flex
+            css={{
+              alignItems: "center",
+              flexShrink: 0,
+              order: 0,
+            }}
+          >
+            {prefix}
+          </Flex>
+        )}
+
+        {suffix && (
+          <Flex
+            css={{
+              alignItems: "center",
+              flexShrink: 0,
+              order: 2,
+            }}
+          >
+            {suffix}
+          </Flex>
+        )}
+      </TextFieldBase>
+    );
+  }
+);
 
 TextField.displayName = "TextField";
