@@ -24,10 +24,6 @@ const InputBase = styled("input", {
   // DOM order reflects focus path and visually we use order to put them into the correct visual order.
   order: 1,
 
-  "&:-webkit-autofill": {
-    boxShadow: "inset 0 0 0 1px $colors$blue6, inset 0 0 0 100px $colors$blue3",
-  },
-
   '&[type="search"]': {
     "&::-webkit-search-decoration, &::-webkit-search-cancel-button, &::-webkit-search-results-button, &::-webkit-search-results-decoration":
       {
@@ -74,10 +70,6 @@ const TextFieldBase = styled("div", {
   "&:focus-within": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
-    "&:-webkit-autofill": {
-      boxShadow:
-        "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8, inset 0 0 0 100px $colors$blue3",
-    },
   },
 
   "&[aria-disabled=true]": {
