@@ -55,13 +55,13 @@ export const StylePanel = ({
 
   return (
     <>
+      <Box css={{ px: "$3", py: "$1" }}>
+        <Search
+          onSearch={setSearch}
+          selectedInstanceData={selectedInstanceData}
+        />
+      </Box>
       <Box css={{ overflow: "auto" }}>
-        <Box css={{ px: "$3", paddingBottom: "$1" }}>
-          <Search
-            onSearch={setSearch}
-            selectedInstanceData={selectedInstanceData}
-          />
-        </Box>
         <StyleSettings
           search={search}
           selectedInstanceData={selectedInstanceData}
