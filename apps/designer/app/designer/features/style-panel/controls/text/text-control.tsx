@@ -1,5 +1,6 @@
 import { FocusEvent, PointerEvent, useCallback } from "react";
 import {
+  Box,
   Text,
   IconButton,
   TextField,
@@ -82,7 +83,6 @@ export const TextControl = ({
       isEphemeral,
     });
   };
-
   return (
     <Combobox
       name={styleConfig.property}
@@ -98,24 +98,8 @@ export const TextControl = ({
       renderTextField={({ inputProps, toggleProps }) => {
         return (
           <Box css={{ position: "relative" }}>
-            <PropertyIcon
-              property={styleConfig.property}
-              label={styleConfig.label}
-              {...(value.type === "unit" && {
-                onPointerUp: (event: PointerEvent<HTMLInputElement>) => {
-                  setValue(String(getInputNode(event.target).value));
-                },
-                ref: numericScrubRefCallback,
-              })}
-            />
             <TextField
               {...inputProps}
-              css={{
-                cursor: "default",
-                height: "calc($sizes$5 + $sizes$1)",
-                fontWeight: "500",
-                paddingLeft: "calc($sizes$4 / 2)",
-              }}
               onFocus={(event: FocusEvent<HTMLInputElement>) => {
                 event.target.select();
               }}
@@ -155,39 +139,53 @@ export const TextControl = ({
                 target.value = currentValueAsString;
                 setValue(currentValueAsString, { isEphemeral: true });
               }}
-            />
-            <IconButton
-              {...toggleProps}
-              css={{
-                visibility: items.length ? "visible" : "hidden",
-                position: "absolute",
-                right: "1px",
-                top: "1px",
-                width: "auto",
-                height: "calc(100% - 2px)",
-                px: "calc($1 / 2)",
-                borderRadius: "$1",
-                border: "2px solid $colors$loContrast",
-                "&:focus": {
-                  outline: "none",
-                },
-              }}
-            >
-              {value.type === "unit" ? (
-                <Text
+              prefix={
+                <PropertyIcon
+                  property={styleConfig.property}
+                  label={styleConfig.label}
+                  {...(value.type === "unit" && {
+                    onPointerUp: (event: PointerEvent<HTMLInputElement>) => {
+                      setValue(String(getInputNode(event.target).value));
+                    },
+                    ref: numericScrubRefCallback,
+                  })}
+                />
+              }
+              suffix={
+                <IconButton
+                  {...toggleProps}
                   css={{
-                    cursor: "default",
-                    minWidth: "calc($sizes$3 - $nudge$1)",
-                    textAlign: "center",
-                    fontSize: "calc($fontSizes$1 - $nudge$1)",
+                    visibility: items.length ? "visible" : "hidden",
+                    position: "absolute",
+                    right: "1px",
+                    top: "1px",
+                    width: "auto",
+                    height: "calc(100% - 2px)",
+                    px: "calc($1 / 2)",
+                    borderRadius: "$1",
+                    border: "2px solid $colors$loContrast",
+                    "&:focus": {
+                      outline: "none",
+                    },
                   }}
                 >
-                  {value.unit === "number" ? "—" : value.unit}
-                </Text>
-              ) : (
-                <ChevronDownIcon />
-              )}
-            </IconButton>
+                  {value.type === "unit" ? (
+                    <Text
+                      css={{
+                        cursor: "default",
+                        minWidth: "calc($sizes$3 - $nudge$1)",
+                        textAlign: "center",
+                        fontSize: "calc($fontSizes$1 - $nudge$1)",
+                      }}
+                    >
+                      {value.unit === "number" ? "—" : value.unit}
+                    </Text>
+                  ) : (
+                    <ChevronDownIcon />
+                  )}
+                </IconButton>
+              }
+            />
           </Box>
         );
       }}

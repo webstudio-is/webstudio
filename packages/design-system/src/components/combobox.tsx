@@ -154,7 +154,9 @@ export const Combobox = <Item extends BaseItem>({
   name,
   placeholder,
   itemToString = (item) =>
-    item != null && "label" in item ? item.label : item ?? "",
+    item != null && typeof item == "object" && "label" in item
+      ? item.label
+      : item ?? "",
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,
@@ -205,6 +207,7 @@ export const Combobox = <Item extends BaseItem>({
     getComboboxProps,
     highlightedIndex,
     getItemProps,
+    selectedItem,
   } = useCombobox({
     items: foundItems as Item[],
     selectedItem: value ?? null, // Avoid downshift warning about switching controlled mode
