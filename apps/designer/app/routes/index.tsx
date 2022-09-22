@@ -1,9 +1,8 @@
-import { redirect, type LoaderFunction } from "@remix-run/node";
+import { type LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Root, type Data } from "@webstudio-is/react-sdk";
+import { type Data, InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import config from "~/config";
-import * as db from "~/shared/db";
-import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
+import { db } from "@webstudio-is/project/index.server";
 import env, { Env } from "~/env.server";
 
 // @todo all this subdomain logic is very hacky
@@ -32,19 +31,27 @@ export const loader: LoaderFunction = async ({
       if (project === null) {
         throw new Error(`Unknown domain "${userDomain}"`);
       }
-      if (project.prodTreeId === null) {
+
+      const prodBuild = await db.build.loadByProjectId(project.id, "prod");
+
+      if (prodBuild === undefined) {
         throw new Error(`Site is not published`);
       }
+
+      // @todo: use a correct page rather than homePage
+
       const [tree, props, breakpoints] = await Promise.all([
-        db.tree.loadByProject(project, "production"),
-        db.props.loadByTreeId(project.prodTreeId),
-        db.breakpoints.load(project.prodTreeId),
+        db.tree.loadById(prodBuild.pages.homePage.treeId),
+        db.props.loadByTreeId(prodBuild.pages.homePage.treeId),
+        db.breakpoints.load(prodBuild.id),
       ]);
       if (tree === null) {
-        throw new Error(`Tree ${project.prodTreeId} not found`);
+        throw new Error(`Tree ${prodBuild.pages.homePage.treeId} not found`);
       }
       if (breakpoints === null) {
-        throw new Error(`Breakpoints for tree ${project.prodTreeId} not found`);
+        throw new Error(
+          `Breakpoints for tree ${prodBuild.pages.homePage.treeId} not found`
+        );
       }
       return { tree, props, breakpoints: breakpoints.values, env };
     } catch (error) {
@@ -65,13 +72,13 @@ const Index = () => {
 
   // We render the site from a subdomain
   if (data.tree && data.props) {
-    const Outlet = () => <Root data={data} />;
+    const Outlet = () => <InstanceRoot data={data} />;
 
     // @todo This is non-standard for Remix, is there a better way?
     // We need to render essentially the preview route but from the index,
     // so we have to know the layout and the outlet from here.
     // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
-    return <CanvasDocument Outlet={Outlet} />;
+    return <Root Outlet={Outlet} />;
   }
 
   return null;

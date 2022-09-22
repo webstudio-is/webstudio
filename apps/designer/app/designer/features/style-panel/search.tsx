@@ -1,9 +1,8 @@
-import { KeyboardEvent, useState } from "react";
+import { useRef, useState } from "react";
 import { IconButton, TextField } from "@webstudio-is/design-system";
 import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { components } from "@webstudio-is/react-sdk";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
-import { Box } from "@webstudio-is/design-system";
 
 type OnSearch = (search: string) => void;
 
@@ -25,55 +24,31 @@ type SearchProps = {
 
 export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
   const [search, setSearch] = useSearch(onSearch);
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <Box
-      as="form"
-      css={{ position: "relative" }}
-      onReset={() => {
-        setSearch("");
+    <TextField
+      type="search"
+      value={search}
+      inputRef={inputRef}
+      prefix={<MagnifyingGlassIcon />}
+      suffix={
+        search.length > 0 && (
+          <IconButton
+            aria-label="Reset search"
+            onClick={() => {
+              setSearch("");
+              inputRef.current?.focus();
+            }}
+          >
+            <Cross2Icon />
+          </IconButton>
+        )
+      }
+      placeholder={components[selectedInstanceData.component].label}
+      onChange={(event) => {
+        const { value } = event.target;
+        setSearch(value.toLowerCase());
       }}
-      onKeyDown={(event: KeyboardEvent<HTMLFormElement>) => {
-        if (event.key === "Escape") {
-          event.currentTarget.reset();
-        }
-      }}
-    >
-      <TextField
-        value={search}
-        css={{
-          fontSize: "$2",
-          height: "$sizes$6",
-          padding: "$3 calc($2 + $1)",
-          border: "2px solid $colors$slate7",
-          bc: "$colors$slate3",
-          borderRadius: "$2",
-          boxShadow: "none",
-          "&:focus": {
-            bc: "$colors$slate1",
-            borderWidth: 2,
-            borderColor: "$colors$blue10",
-            boxShadow: "none",
-          },
-        }}
-        placeholder={components[selectedInstanceData.component].label}
-        onChange={(event) => {
-          const { value } = event.target;
-          setSearch(value.toLowerCase());
-        }}
-      />
-      <IconButton
-        type="reset"
-        aria-label="Reset search"
-        css={{
-          color: "$slate9",
-          position: "absolute",
-          top: "50%",
-          right: 0,
-          transform: "translate(-25%,-50%)",
-        }}
-      >
-        {search.length === 0 ? <MagnifyingGlassIcon /> : <Cross2Icon />}
-      </IconButton>
-    </Box>
+    />
   );
 };

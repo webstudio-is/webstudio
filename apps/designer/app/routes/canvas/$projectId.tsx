@@ -1,40 +1,32 @@
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Canvas } from "~/canvas";
-import { loadCanvasData, type ErrorData, type CanvasData } from "~/shared/db";
-import env, { Env } from "~/env.server";
+import { loadCanvasData, type CanvasData } from "~/shared/db";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
-import { Canvas as CanvasDocument } from "~/shared/documents/canvas";
+import { Root } from "@webstudio-is/react-sdk";
 
-type Data = (CanvasData | ErrorData) & { env: Env };
+type Data = CanvasData | { errors: string };
 
-export const meta: MetaFunction = () => {
-  return { title: "Webstudio canvas" };
+export const meta: MetaFunction = ({ data }: { data: Data }) => {
+  if ("errors" in data) {
+    return { title: "Error" };
+  }
+  const { page } = data;
+  return { title: page.title, ...page.meta };
 };
 
 export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
-  if (params.projectId === undefined) {
-    return { errors: "Missing projectId", env };
-  }
   try {
-    const canvasData = await loadCanvasData({ projectId: params.projectId });
-    return {
-      ...canvasData,
-      env,
-    };
-  } catch (error) {
-    if (error instanceof Error) {
-      const message = `Bad canvas data: \n ${error.message}`;
-      sentryException({ message });
-      return {
-        errors: message,
-        env,
-      };
+    if (params.projectId === undefined) {
+      throw new Error("Missing projectId");
     }
-  }
 
-  return { errors: "Unexpected error", env };
+    return loadCanvasData(params.projectId, params.pageId);
+  } catch (error) {
+    sentryException({ error });
+    return { errors: error instanceof Error ? error.message : String(error) };
+  }
 };
 
 const Outlet = () => {
@@ -47,7 +39,7 @@ const CanvasRoute = () => {
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
-  return <CanvasDocument Outlet={Outlet} />;
+  return <Root Outlet={Outlet} />;
 };
 
 export default CanvasRoute;

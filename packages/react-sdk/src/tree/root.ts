@@ -25,7 +25,10 @@ type RootProps = {
   Component?: (props: WrapperComponentProps) => JSX.Element;
 };
 
-export const Root = ({ data, Component }: RootProps): JSX.Element | null => {
+export const InstanceRoot = ({
+  data,
+  Component,
+}: RootProps): JSX.Element | null => {
   if (data.tree === null) {
     throw new Error("Tree is null");
   }

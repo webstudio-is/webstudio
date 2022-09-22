@@ -28,5 +28,5 @@ export const units = [
   "vmin",
   "vw",
   "x",
-  "%"
+  "%",
 ] as const;

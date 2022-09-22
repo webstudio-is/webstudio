@@ -23,17 +23,16 @@ enum Location {
 }
 
 model Asset {
-  id        String   @id @default(uuid())
-  project   Project  @relation(fields: [projectId], references: [id])
-  projectId String
-  format    String?
-  size      Int
-  width     Decimal?
-  height    Decimal?
-  name      String
-  alt       String?
-  location  Location
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  project     Project  @relation(fields: [projectId], references: [id])
+  projectId   String
+  format      String
+  size        Int
+  name        String
+  description String?
+  location    Location
+  createdAt   DateTime @default(now())
+  meta        String   @default("{}")
 }
 
 model User {
@@ -49,15 +48,27 @@ model User {
 }
 
 model Project {
-  id                String  @id @default(uuid())
-  title             String
-  domain            String  @unique
-  prodTreeId        String? // exists when published
-  devTreeId         String
-  prodTreeIdHistory String  @default("[]")
-  user              User?   @relation(fields: [userId], references: [id])
-  userId            String?
-  assets            Asset[]
+  id     String  @id @default(uuid())
+  title  String
+  domain String  @unique
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+  assets Asset[]
+  build  Build[]
+}
+
+model Build {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  pages     String
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  isDev  Boolean // exctly one is true per project
+  isProd Boolean // at most one is true per project (none if not published)
+
+  breakpoints Breakpoints?
 }
 
 model Tree {
@@ -73,6 +84,7 @@ model InstanceProps {
 }
 
 model Breakpoints {
-  treeId String @id @default(uuid())
-  values String @default("[]")
+  build   Build  @relation(fields: [buildId], references: [id])
+  buildId String @id
+  values  String @default("[]")
 }

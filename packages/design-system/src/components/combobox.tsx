@@ -1,7 +1,7 @@
 import {
   useState,
   forwardRef,
-  useEffect,
+  useCallback,
   type ComponentProps,
   type ForwardRefRenderFunction,
 } from "react";
@@ -32,19 +32,15 @@ const ComboboxTextFieldBase: ForwardRefRenderFunction<
   ComboboxTextFieldProps<BaseItem>
 > = ({ inputProps, toggleProps }, ref) => {
   return (
-    <Box ref={ref} css={{ position: "relative" }}>
-      <TextField css={{ paddingRight: "$4" }} {...inputProps} />
-      <IconButton
-        {...toggleProps}
-        css={{
-          position: "absolute",
-          transform: "translateX(-100%)",
-          width: "$4",
-        }}
-      >
-        <ChevronDownIcon />
-      </IconButton>
-    </Box>
+    <TextField
+      ref={ref}
+      suffix={
+        <IconButton {...toggleProps}>
+          <ChevronDownIcon />
+        </IconButton>
+      }
+      {...inputProps}
+    />
   );
 };
 
@@ -86,7 +82,7 @@ const ListboxItem = styled("li", {
 
 type ListProps<Item> = {
   containerProps: ComponentProps<typeof Listbox>;
-  items: Array<Item>;
+  items: ReadonlyArray<Item>;
   getItemProps: (
     options: UseComboboxGetItemPropsOptions<Item>
   ) => ComponentProps<typeof ListboxItem>;
@@ -135,12 +131,13 @@ export const ComboboxPopperContent = PopperContent;
 type ComboboxProps<Item> = {
   name: string;
   label?: string;
-  items: Array<Item>;
+  placeholder?: string;
+  items: ReadonlyArray<Item>;
   value?: Item;
+  onItemSelect?: (value?: Item) => void;
   selected?: Item;
-  onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value?: Item) => void;
-  itemToString?: (item: Item | null) => string;
+  itemToString?: (item?: Item | null) => string;
   renderTextField?: (
     props: ComponentProps<typeof ComboboxTextField>
   ) => JSX.Element;
@@ -155,10 +152,9 @@ export const Combobox = <Item extends BaseItem>({
   value,
   selected = value,
   name,
+  placeholder,
   itemToString = (item) =>
-    typeof item === "object" && item !== null && "label" in item
-      ? item.label
-      : item ?? "",
+    item != null && "label" in item ? item.label : item ?? "",
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,
@@ -167,6 +163,39 @@ export const Combobox = <Item extends BaseItem>({
   renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
 }: ComboboxProps<Item>) => {
   const [foundItems, setFoundItems] = useState(items);
+  const stateReducer = useCallback((state, actionAndChanges) => {
+    const { type, changes } = actionAndChanges;
+    switch (type) {
+      // on item selection.
+      case useCombobox.stateChangeTypes.ItemClick:
+      case useCombobox.stateChangeTypes.InputKeyDownEnter:
+      case useCombobox.stateChangeTypes.InputBlur:
+      case useCombobox.stateChangeTypes.ControlledPropUpdatedSelectedItem:
+        return {
+          ...changes,
+          // if we had an item selected.
+          ...(changes.selectedItem && {
+            // we will set the input value to be empty since we display it using prefix
+            inputValue: "",
+          }),
+        };
+      // Clear input value on escape
+      case useCombobox.stateChangeTypes.InputKeyDownEscape:
+        return {
+          ...changes,
+          inputValue: "",
+          selectedItem: null,
+        };
+      // Reset selectedItem when there is selection and we type something
+      case useCombobox.stateChangeTypes.InputChange:
+        return {
+          ...changes,
+          selectedItem: null,
+        };
+      default:
+        return changes; // otherwise business as usual.
+    }
+  }, []);
   const {
     isOpen,
     getToggleButtonProps,
@@ -177,23 +206,20 @@ export const Combobox = <Item extends BaseItem>({
     highlightedIndex,
     getItemProps,
   } = useCombobox({
-    onInputValueChange({ inputValue }) {
-      if (inputValue) {
-        const options =
-          typeof items[0] === "object" && "label" in items[0]
-            ? { keys: ["label"] }
-            : undefined;
-        const foundItems = matchSorter(items, inputValue, options);
-        setFoundItems(foundItems);
-      }
-    },
-    items: foundItems,
-    selectedItem: value,
+    items: foundItems as Item[],
+    selectedItem: value ?? null, // Avoid downshift warning about switching controlled mode
+    stateReducer,
     itemToString,
+    onInputValueChange({ inputValue }) {
+      const options =
+        typeof items[0] === "object" && "label" in items[0]
+          ? { keys: ["label"] }
+          : undefined;
+      const foundItems = matchSorter(items, inputValue ?? "", options);
+      setFoundItems(foundItems);
+    },
     onSelectedItemChange({ selectedItem }) {
-      if (selectedItem) {
-        onItemSelect?.(selectedItem);
-      }
+      onItemSelect?.(selectedItem ?? undefined);
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
@@ -202,13 +228,19 @@ export const Combobox = <Item extends BaseItem>({
     },
   });
 
-  useEffect(() => {
-    if (isOpen === false) {
-      setFoundItems(items);
-    }
-  }, [isOpen, items]);
-
-  const inputProps: Record<string, unknown> = getInputProps({ name });
+  const inputProps: Record<string, unknown> = getInputProps({
+    name,
+    placeholder: selectedItem ? "" : placeholder, // Placeholder should not be visible when we have selected item
+    prefix: itemToString?.(selectedItem ?? undefined),
+    onKeyDown: (event) => {
+      // When we press Backspace and the input is empty,
+      // we should to clear the selection
+      // @todo: it would be much better to handle this in reducer but downshift doesn't handle this event
+      if (event.key === "Backspace" && selectedItem !== null) {
+        onItemSelect?.(undefined);
+      }
+    },
+  });
   const toggleProps: Record<string, unknown> = getToggleButtonProps();
   const comboboxProps: Record<string, unknown> = getComboboxProps();
   const menuProps: Record<string, unknown> = getMenuProps();
@@ -217,8 +249,12 @@ export const Combobox = <Item extends BaseItem>({
   return (
     <Popper>
       <Box {...comboboxProps}>
-        <PopperAnchor asChild>
-          {renderTextField({ inputProps, toggleProps, highlightedItem })}
+        <PopperAnchor>
+          {renderTextField({
+            inputProps,
+            toggleProps,
+            highlightedItem,
+          })}
         </PopperAnchor>
         {renderPopperContent({
           style: { zIndex: 1 },

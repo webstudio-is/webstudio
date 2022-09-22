@@ -41,6 +41,7 @@ const Property = ({
   const meta = componentsMeta[component];
   const argType = meta.argTypes?.[prop as keyof typeof meta.argTypes];
   const isInvalidProp =
+    prop != null &&
     prop.length > 0 &&
     typeof argType === "undefined" &&
     !prop.match(/^data-(.)+/);
@@ -51,11 +52,12 @@ const Property = ({
 
   return (
     <Grid
-      gap="1"
+      gap={1}
       css={{ gridTemplateColumns: "1fr 1fr auto", alignItems: "center" }}
     >
       <Combobox
         name="prop"
+        placeholder="Property"
         items={allProps}
         value={prop}
         itemToString={(item) => item ?? ""}
@@ -68,7 +70,7 @@ const Property = ({
             inputProps={{
               ...inputProps,
               readOnly: required,
-              placeholder: "Property",
+              state: isInvalidProp ? "invalid" : undefined,
             }}
           />
         )}
@@ -76,6 +78,7 @@ const Property = ({
           <ComboboxPopperContent {...props} align="start" sideOffset={5} />
         )}
       />
+
       {isInvalidProp ? (
         <Tooltip content={`Invalid property name: ${prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />

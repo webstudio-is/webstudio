@@ -1,5 +1,5 @@
 import { Flex } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/react-sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
 import { useCallback } from "react";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
@@ -15,6 +15,7 @@ declare module "~/shared/pubsub" {
       dropTarget: { instanceId: Instance["id"]; position: number | "end" };
     };
     deleteInstance: { id: Instance["id"] };
+    navigatorHoveredInstance: { id: Instance["id"] } | undefined;
   }
 }
 
@@ -67,6 +68,16 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
     [publish]
   );
 
+  const handleHover = useCallback(
+    (instance: Instance | undefined) => {
+      publish({
+        type: "navigatorHoveredInstance",
+        payload: instance && { id: instance.id },
+      });
+    },
+    [publish]
+  );
+
   if (rootInstance === undefined) return null;
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
@@ -76,6 +87,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
           root={rootInstance}
           selectedItemId={selectedInstanceData?.id}
           onSelect={handleSelect}
+          onHover={handleHover}
           onDragEnd={handleDragEnd}
           onDelete={handleDelete}
         />

@@ -8,11 +8,16 @@ export default {
 };
 
 export const Simple: ComponentStory<typeof Combobox> = () => {
-  const items = [{ label: "Apple" }, { label: "Banana" }, { label: "Orange" }];
-  const [value, setValue] = React.useState(items[0]);
+  const items = [
+    { label: "Apple" },
+    { label: "Banana" },
+    { label: "Orange" },
+  ] as const;
+  const [value, setValue] = React.useState<typeof items[number] | undefined>();
   return (
     <Combobox
       name="fruit"
+      placeholder="Select a fruit"
       items={items}
       value={value}
       onItemSelect={setValue}
@@ -26,11 +31,14 @@ export const CustomInput: ComponentStory<typeof Combobox> = () => {
     { label: "Banana", value: "banana" },
     { label: "Orange", value: "orange" },
   ];
-  const [value, setValue] = React.useState(items[0]);
+  const [value, setValue] = React.useState<typeof items[0] | undefined>(
+    items[0]
+  );
 
   return (
     <Combobox
       name="fruit"
+      placeholder="Select a fruit"
       items={items}
       value={value}
       onItemSelect={setValue}

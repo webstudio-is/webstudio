@@ -1,8 +1,10 @@
 import { Asset as DbAsset } from "@webstudio-is/prisma-client";
+import type { FontMeta, ImageMeta } from "./utils/format-asset";
 
-export type Asset = Omit<DbAsset, "width" | "height"> & {
-  path?: string;
+export type Asset = Omit<DbAsset, "meta"> & {
+  path: string;
   status?: "uploading" | "uploaded";
-  width?: number;
-  height?: number;
+  meta: ImageMeta | FontMeta;
 };
+
+export type AssetType = "image" | "font";

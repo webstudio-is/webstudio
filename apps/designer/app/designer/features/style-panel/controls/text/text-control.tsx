@@ -1,6 +1,5 @@
 import { FocusEvent, PointerEvent, useCallback } from "react";
 import {
-  Box,
   Text,
   IconButton,
   TextField,

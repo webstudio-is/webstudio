@@ -69,6 +69,8 @@ const styles = {
     border: "none",
     textAlign: "center",
     outline: "none",
+    // No idea why it's hidden otherwise
+    zIndex: 0,
   },
   inputFromCurrentBreakpoint: {
     color: propertyNameColorForSelectedBreakpoint,

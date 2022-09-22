@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createValueContainer, useValue } from "react-nano-state";
-import { sentryException } from "~/shared/sentry";
+import { sentryMessage } from "~/shared/sentry";
 import * as config from "./config";
 
 type Name = keyof typeof config;
@@ -32,7 +32,7 @@ const read = (): Settings => {
     return JSON.parse(settingsString);
   } catch (error) {
     if (error instanceof Error) {
-      sentryException({
+      sentryMessage({
         message: "Bad user settings in local storage",
         extras: {
           error: error.message,

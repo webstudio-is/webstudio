@@ -1,12 +1,13 @@
-import { useCallback } from "react";
-import { useSubscribe, usePublish, type Publish } from "~/shared/pubsub";
-import * as db from "~/shared/db";
+import { useCallback, useEffect, useState } from "react";
+import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
+import type { Page, Project } from "@webstudio-is/project";
 import type { Config } from "~/config";
-import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
+import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
+  useAssets,
   useHoveredInstanceData,
   useSelectedInstanceData,
   useSyncStatus,
@@ -16,23 +17,25 @@ import designerStyles from "./designer.css";
 import { Footer } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
 import {
-  useUpdateCanvasWidth,
   useSubscribeBreakpoints,
+  useUpdateCanvasWidth,
 } from "./features/breakpoints";
 import {
+  CanvasIframe,
   useReadCanvasRect,
   Workspace,
-  CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  useDragAndDropState,
   useIsPreviewMode,
   useRootInstance,
-  useDragAndDropState,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
+import { Asset } from "@webstudio-is/asset-uploader";
+import { useInterval } from "react-use";
 
 export const links = () => {
   return [
@@ -61,11 +64,37 @@ const useSubscribeSyncStatus = () => {
   useSubscribe("syncStatus", setValue);
 };
 
+const useSetAssets = (assets?: Array<Asset>) => {
+  const [, setAssets] = useAssets();
+  useEffect(() => {
+    if (assets) {
+      setAssets(assets);
+    }
+  }, [assets, setAssets]);
+};
+
 const useNavigatorLayout = () => {
   // We need to render the detached state only once the setting was actually loaded from local storage.
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
   return isLoaded ? clientSettings.navigatorLayout : "docked";
+};
+
+const usePublishDesignerReady = (publish: Publish) => {
+  const [isAcknowledged, setIsAcknowledged] = useState(false);
+
+  useInterval(
+    () => {
+      // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
+      // we can miss the events and designer will just not connect to the canvas.
+      publish({ type: "designerReady" });
+    },
+    isAcknowledged ? null : 100
+  );
+
+  useSubscribe("designerReadyAck", () => {
+    setIsAcknowledged(true);
+  });
 };
 
 type SidePanelProps = {
@@ -211,21 +240,24 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 
 type DesignerProps = {
   config: Config;
-  project: db.project.Project;
+  project: Project;
+  page: Page;
 };
 
-export const Designer = ({ config, project }: DesignerProps) => {
+export const Designer = ({ config, project, page }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
+  useSetAssets(project.assets);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
+  usePublishDesignerReady(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -241,6 +273,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
       <Topbar
         css={{ gridArea: "header" }}
         config={config}
+        page={page}
         project={project}
         publish={publish}
       />
@@ -248,7 +281,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
           <CanvasIframe
             ref={iframeRefCallback}
-            src={`${config.canvasPath}/${project.id}`}
+            src={`${config.canvasPath}/${project.id}/${page.id}`}
             pointerEvents={
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"
@@ -263,7 +296,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft assets={project.assets} publish={publish} />
+        <SidebarLeft publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

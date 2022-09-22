@@ -62,7 +62,7 @@ if (process.env.DEV_LOGIN === "true") {
         } catch (error: unknown) {
           if (error instanceof Error) {
             sentryException({
-              message: error.message,
+              error,
               extras: {
                 loginMethod: AUTH_PROVIDERS.LOGIN_DEV,
               },

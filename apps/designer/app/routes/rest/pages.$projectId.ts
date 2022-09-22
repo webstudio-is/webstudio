@@ -1,6 +1,6 @@
 import type { LoaderFunction } from "@remix-run/node";
-import type { Breakpoint } from "@webstudio-is/react-sdk";
-import * as db from "~/shared/db";
+import { db } from "@webstudio-is/project/index.server";
+import { Pages } from "@webstudio-is/project";
 
 export type ErrorData = {
   errors: string;
@@ -8,24 +8,21 @@ export type ErrorData = {
 
 export const loader: LoaderFunction = async ({
   params,
-}): Promise<Array<Breakpoint> | ErrorData> => {
+}): Promise<Pages | ErrorData> => {
   try {
-    const project = await db.project.loadById(params.projectId);
-    if (project === null) {
-      throw new Error(`Project ${params.projectId} not found`);
+    if (params.projectId === undefined) {
+      throw new Error(`Project ID required`);
     }
-    if (project.prodTreeId === null) {
+
+    const prodBuild = await db.build.loadByProjectId(params.projectId, "prod");
+
+    if (prodBuild === undefined) {
       throw new Error(
         `Project ${params.projectId} needs to be published first`
       );
     }
-    const data = await db.breakpoints.load(project.prodTreeId);
-    if (data === null) {
-      throw new Error(
-        `Breakpoints not found for project ${params.projectId} and tree ID ${project.prodTreeId}`
-      );
-    }
-    return data.values;
+
+    return prodBuild.pages;
   } catch (error) {
     if (error instanceof Error) {
       return {

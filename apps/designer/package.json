@@ -14,8 +14,7 @@
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
-    "migrations": "migrations --dev",
-    "migrations:deploy": "migrations migrate"
+    "ci:migrate": "migrations migrate --force"
   },
   "dependencies": {
     "@lexical/react": "^0.3.5",
@@ -31,6 +30,7 @@
     "@webstudio-is/prisma-client": "*",
     "@webstudio-is/react-sdk": "*",
     "@webstudio-is/css-vars": "*",
+    "@webstudio-is/project": "*",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
     "debug": "^4.3.4",
@@ -61,7 +61,6 @@
     "remix-auth-form": "^1.1.2",
     "remix-auth-github": "^1.1.1",
     "remix-auth-google": "^1.1.0",
-    "sharp": "^0.30.7",
     "slugify": "^1.6.5",
     "zod-form-data": "^1.2.1"
   },
