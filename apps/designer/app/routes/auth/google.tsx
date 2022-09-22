@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (error instanceof Response) return error;
     if (error instanceof Error) {
       sentryException({
-        message: error.message,
+        error,
         extras: {
           loginMethod: AUTH_PROVIDERS.LOGIN_GOOGLE,
         },

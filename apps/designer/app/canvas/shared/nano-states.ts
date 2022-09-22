@@ -15,6 +15,3 @@ const selectedElementContainer = createValueContainer<
   HTMLElement | undefined
 >();
 export const useSelectedElement = () => useValue(selectedElementContainer);
-
-const hoveredElementContainer = createValueContainer<HTMLElement | undefined>();
-export const useHoveredElement = () => useValue(hoveredElementContainer);

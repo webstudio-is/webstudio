@@ -30,6 +30,7 @@ export type TreeProps<Data extends { id: string }> = {
 
   selectedItemId?: string;
   onSelect?: (itemId: string) => void;
+  onHover?: (item: Data | undefined) => void;
   animate?: boolean;
   onDragEnd: (event: {
     itemId: string;
@@ -49,6 +50,7 @@ export const Tree = <Data extends { id: string }>({
   renderItem,
   selectedItemId,
   onSelect,
+  onHover,
   animate,
   onDragEnd,
   onDelete,
@@ -238,6 +240,13 @@ export const Tree = <Data extends { id: string }>({
     onEsc: dragHandlers.cancelCurrentDrag,
   });
 
+  const [onMouseEnter, onMouseLeave] = useMemo(() => {
+    if (onHover === undefined) {
+      return [undefined, undefined];
+    }
+    return [(item: Data) => onHover(item), () => onHover(undefined)] as const;
+  }, [onHover]);
+
   return (
     <Box
       css={{
@@ -265,6 +274,8 @@ export const Tree = <Data extends { id: string }>({
           getItemChildren={getItemChildren}
           animate={animate}
           onSelect={onSelect}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
           selectedItemId={selectedItemId}
           itemData={root}
           level={0}
