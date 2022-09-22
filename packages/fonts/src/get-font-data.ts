@@ -1,4 +1,4 @@
-import type { FontFormat } from "@webstudio-is/fonts";
+import type { FontFormat } from "./types";
 import fontkit from "fontkit";
 
 // @todo sumbit this to definitely typed, they are not up to date

@@ -7,8 +7,9 @@ import {
   WrapperComponent,
   type WrapperComponentProps,
 } from "./wrapper-component";
-import { getFontFaces } from "@webstudio-is/fonts";
-import { Asset } from "@webstudio-is/asset-uploader";
+import { FONT_FORMATS, getFontFaces } from "@webstudio-is/fonts";
+import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
+import { useMemo } from "react";
 
 export type Data = {
   tree: Tree | null;
@@ -37,8 +38,13 @@ export const InstanceRoot = ({
   }
   setBreakpoints(data.breakpoints);
   globalStyles();
+  const assets = useMemo(() => {
+    return data.assets.filter(
+      (asset) => asset.format in FONT_FORMATS
+    ) as Array<FontAsset>;
+  }, [data.assets]);
   globalCss({
-    "@font-face": getFontFaces(data.assets),
+    "@font-face": getFontFaces(assets),
   })();
   useAllUserProps(data.props);
   return createElementsTree({

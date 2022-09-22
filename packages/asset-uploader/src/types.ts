@@ -1,6 +1,6 @@
-import type { FontFormat } from "@webstudio-is/fonts";
+import type { FontFormat, FontMeta } from "@webstudio-is/fonts";
 import { Asset as DbAsset } from "@webstudio-is/prisma-client";
-import type { FontMeta, ImageMeta } from "./utils/format-asset";
+import type { ImageMeta } from "./utils/format-asset";
 
 type BaseAsset = Omit<DbAsset, "meta"> & {
   path: string;

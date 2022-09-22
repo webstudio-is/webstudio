@@ -1,13 +1,10 @@
+import type { FontMeta } from "@webstudio-is/fonts";
 import {
   prisma,
   type Location,
   type Project,
 } from "@webstudio-is/prisma-client";
-import {
-  formatAsset,
-  type FontMeta,
-  type ImageMeta,
-} from "../utils/format-asset";
+import { formatAsset, type ImageMeta } from "../utils/format-asset";
 
 type BaseOptions = {
   name: string;
