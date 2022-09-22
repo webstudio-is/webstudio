@@ -7,10 +7,10 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
-import { systemFonts } from "@webstudio-is/fonts";
+import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 
 const getItems = (assets: Array<Asset | PreviewAsset>) => {
-  const system = systemFonts.map((item) => ({ label: item.family }));
+  const system = SYSTEM_FONTS.map((item) => ({ label: item.family }));
 
   const uploaded = assets.map((asset) => ({
     label:

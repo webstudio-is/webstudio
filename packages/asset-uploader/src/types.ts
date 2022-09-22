@@ -1,3 +1,4 @@
+import type { FontFormat } from "@webstudio-is/fonts";
 import { Asset as DbAsset } from "@webstudio-is/prisma-client";
 import type { FontMeta, ImageMeta } from "./utils/format-asset";
 
@@ -6,7 +7,8 @@ type BaseAsset = Omit<DbAsset, "meta"> & {
   status?: "uploading" | "uploaded";
 };
 
-export type FontAsset = BaseAsset & {
+export type FontAsset = Omit<BaseAsset, "format"> & {
+  format: FontFormat;
   meta: FontMeta;
 };
 

@@ -3,8 +3,9 @@ import ObjectID from "bson-objectid";
 import { ChangeEvent, useEffect, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import { type AssetType, FONT_FORMATS } from "@webstudio-is/asset-uploader";
+import { type AssetType } from "@webstudio-is/asset-uploader";
 import type { ActionData, PreviewAsset } from "./types";
+import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 
 const readAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
   const assets: Array<Promise<PreviewAsset>> = Array.from(fileList).map(
@@ -34,7 +35,7 @@ const readAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
 
 const acceptMap = {
   image: "image/*",
-  font: FONT_FORMATS.map((format) => `.${format}`).join(", "),
+  font: FONT_MIME_TYPES,
 };
 
 type AssetUploadProps = {

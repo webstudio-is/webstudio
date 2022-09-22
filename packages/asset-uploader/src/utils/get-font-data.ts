@@ -1,5 +1,5 @@
+import type { FontFormat } from "@webstudio-is/fonts";
 import fontkit from "fontkit";
-import { FONT_FORMATS } from "../constants";
 
 // @todo sumbit this to definitely typed, they are not up to date
 declare module "fontkit" {
@@ -53,7 +53,7 @@ export const parseSubfamily = (subfamily: string) => {
 };
 
 export type FontData = {
-  format: typeof FONT_FORMATS[number];
+  format: FontFormat;
   family: string;
   style: Style;
   weight: WeightValue;
