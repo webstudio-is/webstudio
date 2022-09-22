@@ -52,7 +52,7 @@ export const FontFamilyControl = ({
   return (
     <Grid columns={2}>
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={setIsOpen} modal>
         <PopoverTrigger asChild>
           <TextField
             ref={textFieldRef}

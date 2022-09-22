@@ -10,7 +10,7 @@ import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import { useCombobox, type UseComboboxGetItemPropsOptions } from "downshift";
 import { matchSorter } from "match-sorter";
-import { CSS, styled } from "../stitches.config";
+import { styled } from "../stitches.config";
 import { IconButton } from "./icon-button";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
@@ -157,7 +157,7 @@ type ComboboxProps<Item> = {
   renderPopperContent?: (
     props: ComponentProps<typeof ComboboxPopperContent>
   ) => JSX.Element;
-  renderItem: (props: ListboxItemProps<Item>) => JSX.Element;
+  renderItem?: (props: ListboxItemProps<Item>) => JSX.Element;
 };
 
 export const Combobox = <Item extends ComboboxBaseItem>({
@@ -175,7 +175,8 @@ export const Combobox = <Item extends ComboboxBaseItem>({
   // IMPORTANT! Without Item passed to list <ComboboxList<Item> typescript is 10x slower!
   renderList = (props) => <ComboboxList<Item> {...props} />,
   renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
-  renderItem = (props) => <ComboboxListboxItem {...props} />,
+  // @ts-expect-error need help
+  renderItem = (props) => <ComboboxListboxItem<Item> {...props} />,
 }: ComboboxProps<Item>) => {
   const [foundItems, setFoundItems] = useState(items);
   const {

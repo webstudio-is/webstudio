@@ -7,11 +7,14 @@ import {
   WrapperComponent,
   type WrapperComponentProps,
 } from "./wrapper-component";
+import { getFontFaces } from "@webstudio-is/fonts";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 export type Data = {
   tree: Tree | null;
   breakpoints: Array<Breakpoint>;
   props: Array<InstanceProps>;
+  assets: Array<Asset>;
 };
 
 export const globalStyles = globalCss({
@@ -34,6 +37,9 @@ export const InstanceRoot = ({
   }
   setBreakpoints(data.breakpoints);
   globalStyles();
+  globalCss({
+    "@font-face": getFontFaces(data.assets),
+  })();
   useAllUserProps(data.props);
   return createElementsTree({
     instance: data.tree.root,

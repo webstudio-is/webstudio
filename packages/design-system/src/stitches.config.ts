@@ -115,7 +115,7 @@ import {
   yellowDark,
   yellowDarkA,
 } from "@radix-ui/colors";
-import type * as Stitches from "@stitches/react";
+import * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
 export const {

@@ -10,7 +10,7 @@ import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { systemFonts } from "@webstudio-is/fonts";
 
 const getItems = (assets: Array<Asset | PreviewAsset>) => {
-  const system = systemFonts.map((item) => ({ label: item.font }));
+  const system = systemFonts.map((item) => ({ label: item.family }));
 
   const uploaded = assets.map((asset) => ({
     label:
@@ -57,6 +57,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           <TextField {...inputProps} placeholder="Search" />
         )}
         renderPopperContent={(props) => <>{props.children}</>}
+        // @ts-expect-error need help
         renderItem={(props) => <ComboboxListboxItem {...props} />}
       />
     </Flex>

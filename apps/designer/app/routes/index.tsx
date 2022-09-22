@@ -53,7 +53,13 @@ export const loader: LoaderFunction = async ({
           `Breakpoints for tree ${prodBuild.pages.homePage.treeId} not found`
         );
       }
-      return { tree, props, breakpoints: breakpoints.values, env };
+      return {
+        tree,
+        props,
+        breakpoints: breakpoints.values,
+        env,
+        assets: project.assets ?? [],
+      };
     } catch (error) {
       if (error instanceof Error) {
         return { errors: error.message, env };

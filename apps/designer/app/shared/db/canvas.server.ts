@@ -35,6 +35,7 @@ const loadData = async (projectId: Project["id"]) => {
     props,
     buildId: devBuild.id,
     breakpoints: breakpoints.values,
+    assets: project.assets ?? [],
   };
 };
 
@@ -53,6 +54,6 @@ export const loadPreviewData = async ({
 }: {
   projectId: Project["id"];
 }): Promise<PreviewData | ErrorData> => {
-  const { tree, props, breakpoints } = await loadData(projectId);
-  return { tree, props, breakpoints };
+  const { tree, props, breakpoints, assets } = await loadData(projectId);
+  return { tree, props, breakpoints, assets };
 };

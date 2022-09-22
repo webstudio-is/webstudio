@@ -19,15 +19,21 @@ export const FontMeta = z.object({
 export type FontMeta = z.infer<typeof FontMeta>;
 
 export const formatAsset = (asset: DbAsset): Asset => {
-  const Schema = FONT_FORMATS.includes(
+  const base = { ...asset, path: getAssetPath(asset) };
+
+  const isFont = FONT_FORMATS.includes(
     asset.format as typeof FONT_FORMATS[number]
-  )
-    ? FontMeta
-    : ImageMeta;
-  const meta = Schema.parse(JSON.parse(asset.meta));
+  );
+
+  if (isFont) {
+    return {
+      ...base,
+      meta: FontMeta.parse(JSON.parse(asset.meta)),
+    };
+  }
+
   return {
-    ...asset,
-    meta,
-    path: getAssetPath(asset),
+    ...base,
+    meta: ImageMeta.parse(JSON.parse(asset.meta)),
   };
 };
