@@ -52,7 +52,7 @@ export const parseSubfamily = (subfamily: string) => {
   return { style, weight };
 };
 
-export type FontData = {
+type FontData = {
   format: FontFormat;
   family: string;
   style: Style;

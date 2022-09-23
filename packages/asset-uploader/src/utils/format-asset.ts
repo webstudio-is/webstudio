@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Asset as DbAsset } from "@webstudio-is/prisma-client";
-import { type FontFormat, FONT_FORMATS, FontMeta } from "@webstudio-is/fonts";
+import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
+import { FontMeta } from "@webstudio-is/fonts/index.server";
 import { Asset } from "../types";
 import { getAssetPath } from "./get-asset-path";
 

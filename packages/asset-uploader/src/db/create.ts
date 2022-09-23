@@ -1,4 +1,4 @@
-import type { FontMeta } from "@webstudio-is/fonts";
+import { type FontMeta } from "@webstudio-is/fonts/index.server";
 import {
   prisma,
   type Location,
