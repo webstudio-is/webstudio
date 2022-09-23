@@ -3,7 +3,7 @@ import * as process from "process";
 
 export const config: CustomProjectConfig = {
   storybookShots: {
-    storybookUrl: "storybook-static",
+    storybookUrl: "packages/design-system/storybook-static",
   },
   lostPixelProjectId: "cl8a8xmx714904901m9oce4vhqc",
   s3: {
