@@ -15,6 +15,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
     "storybook": "turbo run storybook:run",
+    "storybook:build": "turbo run storybook:build",
     "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {

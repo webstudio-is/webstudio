@@ -12,6 +12,9 @@
     },
     "storybook:run": {
       "cache": false
+    },
+    "storybook:build": {
+      "cache": false
     }
   }
 }
