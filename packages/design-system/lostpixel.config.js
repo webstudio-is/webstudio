@@ -1,7 +1,8 @@
-import type { CustomProjectConfig } from "lost-pixel";
-import * as process from "process";
-
-export const config: CustomProjectConfig = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.config = void 0;
+var process = require("process");
+exports.config = {
   storybookShots: {
     storybookUrl: "storybook-static",
   },
