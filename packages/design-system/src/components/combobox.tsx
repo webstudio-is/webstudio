@@ -211,7 +211,9 @@ export const Combobox = <Item extends BaseItem>({
   } = useCombobox({
     items: foundItems as Item[],
     selectedItem: value ?? null, // Avoid downshift warning about switching controlled mode
+    /* @todo breaks input
     stateReducer,
+    */
     itemToString,
     onInputValueChange({ inputValue }) {
       const options =
@@ -235,6 +237,7 @@ export const Combobox = <Item extends BaseItem>({
     name,
     placeholder: selectedItem ? "" : placeholder, // Placeholder should not be visible when we have selected item
     prefix: itemToString?.(selectedItem ?? undefined),
+    /* @todo breaks input
     onKeyDown: (event) => {
       // When we press Backspace and the input is empty,
       // we should to clear the selection
@@ -243,6 +246,7 @@ export const Combobox = <Item extends BaseItem>({
         onItemSelect?.(undefined);
       }
     },
+    */
   });
   const toggleProps: Record<string, unknown> = getToggleButtonProps();
   const comboboxProps: Record<string, unknown> = getComboboxProps();
