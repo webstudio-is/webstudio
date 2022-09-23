@@ -21,6 +21,9 @@ jobs:
       - name: Build Storybook for Design System
         run: yarn storybook:ds:build
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v2.20.0
         env:
