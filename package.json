@@ -16,7 +16,7 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
-    "storybook:ds:build": "npm run build && turbo run storybook:build --filter=design-system",
+    "storybook:ds:build": "turbo run build --filter=@webstudio-is/icons && turbo run storybook:build --filter=@webstudio-is/design-system ",
     "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {
