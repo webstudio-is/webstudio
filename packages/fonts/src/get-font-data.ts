@@ -63,7 +63,9 @@ export const getFontData = (data: Uint8Array): FontData => {
   const font = fontkit.create(data as Buffer);
   const format = font.type.toLowerCase() as FontData["format"];
   const family = font.getName("fontFamily");
-  const parsedSubfamily = parseSubfamily(font.getName("preferredSubfamily"));
+  const subfamily =
+    font.getName("preferredSubfamily") ?? font.getName("fontSubfamily");
+  const parsedSubfamily = parseSubfamily(subfamily);
 
   return {
     format,
