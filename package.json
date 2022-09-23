@@ -16,6 +16,7 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook:run",
     "storybook:build": "turbo run storybook:build",
+    "storybook:ds:build": "turbo run storybook:build --filter=design-system",
     "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {

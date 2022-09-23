@@ -19,7 +19,7 @@ jobs:
         run: yarn install --frozen-lockfile --ignore-scripts
 
       - name: Build Storybook for Design System
-        run: turbo run storybook:build --filter=design-system
+        run: yarn storybook:ds:build
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v2.20.0
