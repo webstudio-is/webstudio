@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "scripts": {
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
-    "build": "yarn build:mdn-data && yarn build:args && yarn build:lib",
+    "build": "yarn build:lib",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/css",
     "build:args": "tsx ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx'",
     "typecheck": "tsc --noEmit",
