@@ -4,6 +4,7 @@
 
 import { ActionFunction } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
+import { captureException } from "@sentry/remix";
 import {
   deleteAsset,
   uploadAssets,
@@ -12,6 +13,7 @@ import { toast } from "@webstudio-is/design-system";
 import { useEffect } from "react";
 import { zfd } from "zod-form-data";
 import type { ActionData } from "~/designer/shared/assets";
+import { sentryException } from "~/shared/sentry";
 
 const deleteAssetSchema = zfd.formData({
   assetId: zfd.text(),
@@ -22,7 +24,7 @@ export const action: ActionFunction = async ({
   request,
   params,
 }): Promise<ActionData | undefined> => {
-  if (params.id === undefined) throw new Error("Project id undefined");
+  if (params.projectId === undefined) throw new Error("Project id undefined");
   try {
     if (request.method === "DELETE") {
       const { assetId, assetName } = deleteAssetSchema.parse(
@@ -38,7 +40,7 @@ export const action: ActionFunction = async ({
     if (request.method === "POST") {
       const assets = await uploadAssets({
         request,
-        projectId: params.id,
+        projectId: params.projectId,
       });
       return {
         uploadedAssets: assets.map((asset) => ({
@@ -49,6 +51,7 @@ export const action: ActionFunction = async ({
     }
   } catch (error) {
     if (error instanceof Error) {
+      sentryException({ error });
       return {
         errors: error.message,
       };
