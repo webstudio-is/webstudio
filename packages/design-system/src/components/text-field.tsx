@@ -61,7 +61,6 @@ const InputBase = styled("input", {
 const TextFieldBase = styled("div", {
   // Custom
   display: "flex",
-  gap: "$1",
   backgroundColor: "$loContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",

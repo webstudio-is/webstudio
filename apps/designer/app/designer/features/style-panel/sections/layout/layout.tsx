@@ -49,8 +49,8 @@ const alignContentStyle = {
   gridArea: "alignContent",
   ...layoutSectionChildStyle,
 };
-const lockStyle = { gridArea: "lock", ...layoutSectionChildStyle };
-const gridStyle = { gridArea: "grid", ...layoutSectionChildStyle };
+const lockStyle = { gridArea: "lock" };
+const gridStyle = { gridArea: "grid" };
 const displayStyle = {
   gridArea: "display",
   gridTemplateColumns: "auto 1fr",

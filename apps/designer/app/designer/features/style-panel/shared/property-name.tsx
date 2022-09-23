@@ -65,10 +65,9 @@ export const PropertyIcon = forwardRef<
         variant="ghost"
         size="1"
         css={{
-          position: "absolute",
-          left: "1px",
-          top: "1px",
-          width: "$5",
+          position: "relative",
+          marginLeft: "calc(-$space$1 + 1px)",
+          width: "calc(100% - 2px)",
           height: "calc(100% - 2px)",
           borderRadius: "$1",
           border: "2px solid $colors$loContrast",
