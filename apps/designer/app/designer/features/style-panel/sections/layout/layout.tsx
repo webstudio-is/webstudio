@@ -7,25 +7,6 @@ import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 
-const layoutSectionStyle = {
-  alignItems: "center",
-  gap: "$space$styleSection",
-};
-
-const layoutSectionFlexStyle = {
-  ...layoutSectionStyle,
-  gridTemplateColumns: "repeat(12, 1fr)",
-  gridTemplateRows: "auto 0px auto auto 0px auto",
-  gridTemplateAreas: `
-	  "display display display display display display display display display display display display"
-	  "grid grid grid grid grid . . . . . . ."
-	  "grid grid grid grid grid flexDirection flexDirection flexWrap flexWrap justifyItems justifyItems ."
-	  "grid grid grid grid grid alignItems alignItems justifyContent justifyContent alignContent alignContent ."
-	  "grid grid grid grid grid . . . . . . ."
-	  "columnGap columnGap columnGap columnGap columnGap lock lock rowGap rowGap rowGap rowGap rowGap"
-	`,
-};
-
 const LayoutSectionFlex = ({
   currentStyle,
   sectionStyle,

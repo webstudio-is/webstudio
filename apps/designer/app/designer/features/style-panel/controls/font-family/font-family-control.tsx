@@ -1,5 +1,4 @@
 import {
-  Grid,
   TextField,
   Popover,
   PopoverTrigger,
@@ -9,7 +8,6 @@ import {
 } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
-import { PropertyName } from "../../shared/property-name";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { MutableRefObject, useRef, useState } from "react";
 import { FontsManager } from "~/designer/shared/fonts-manager";

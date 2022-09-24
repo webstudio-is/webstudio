@@ -1,10 +1,4 @@
-import {
-  Flex,
-  Label,
-  Tooltip,
-  IconButton,
-  TextField,
-} from "@webstudio-is/design-system";
+import { Flex, Label, Tooltip, IconButton } from "@webstudio-is/design-system";
 import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./constants";
 import type { PropertyProps } from "../style-sections";

@@ -3,7 +3,6 @@ import { ColorResult, RGBColor, SketchPicker } from "react-color";
 import {
   Box,
   Flex,
-  Grid,
   Popover,
   PopoverTrigger,
   PopoverContent,

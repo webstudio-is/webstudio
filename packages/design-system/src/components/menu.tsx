@@ -3,7 +3,6 @@ import * as MenuPrimitive from "@radix-ui/react-menu";
 import { CheckIcon } from "@webstudio-is/icons";
 import { styled, css, CSS } from "../stitches.config";
 import { Box } from "./box";
-import { Flex } from "./flex";
 import { panelStyles } from "./panel";
 
 export const baseItemCss = css({

@@ -3,7 +3,6 @@ import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 
 import {
-  Box,
   Card,
   Flex,
   Heading,

@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSubTrigger,
   DropdownMenuCheckboxItem,
-  DropdownMenuArrow,
   DropdownMenuSeparator,
   DropdownMenuPortal,
   IconButton,

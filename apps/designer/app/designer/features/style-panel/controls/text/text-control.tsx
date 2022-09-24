@@ -1,10 +1,4 @@
-import {
-  FocusEvent,
-  KeyboardEvent,
-  PointerEvent,
-  useRef,
-  useCallback,
-} from "react";
+import { FocusEvent, KeyboardEvent, useRef, useCallback } from "react";
 import {
   Box,
   Text,
@@ -15,7 +9,6 @@ import {
   DropdownMenuContent,
   DropdownMenuRadioItem,
   DropdownMenuRadioGroup,
-  Select,
   TextField,
   Combobox,
   numericScrubControl,
@@ -155,7 +148,7 @@ export const TextControl = ({
                   property={styleConfig.property}
                   label={styleConfig.label}
                   {...(value.type === "unit" && {
-                    onPointerUp: (event: PointerEvent<HTMLInputElement>) => {
+                    onPointerUp: () => {
                       setValue(String(inputRef.current?.value));
                     },
                     ref: numericScrubRefCallback,
