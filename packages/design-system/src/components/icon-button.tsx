@@ -23,11 +23,13 @@ export const IconButton = styled("button", {
   "&::before, &::after": {
     boxSizing: "border-box",
   },
-  "&:focus, &:hover, &:active": {
+  "&:hover, &:active": {
     backgroundColor: "$slate5",
+    outline: "none",
   },
   "&:focus": {
-    outlineColor: "$blue10",
+    backgroundColor: "$slate5",
+    outline: "none",
   },
   "&:disabled": {
     pointerEvents: "none",
@@ -40,22 +42,22 @@ export const IconButton = styled("button", {
       "1": {
         borderRadius: 2,
         height: "$5",
-        width: "$5",
+        width: "min($5, 100%)",
       },
       "2": {
         borderRadius: "$1",
         height: "$6",
-        width: "$6",
+        width: "min($6, 100%)",
       },
       "3": {
         borderRadius: "$1",
         height: "$7",
-        width: "$7",
+        width: "min($7, 100%)",
       },
       "4": {
         borderRadius: "$2",
         height: "$8",
-        width: "$8",
+        width: "min($8, 100%)",
       },
     },
     state: {

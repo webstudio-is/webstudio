@@ -65,28 +65,19 @@ export const PropertyIcon = forwardRef<
         variant="ghost"
         size="1"
         css={{
-          position: "relative",
           marginLeft: "calc(-$space$1 + 1px)",
           width: "calc(100% - 2px)",
           height: "calc(100% - 2px)",
           borderRadius: "$1",
           border: "2px solid $colors$loContrast",
-          "&:hover,&:active,&:focus": {
-            bc: "$colors$slate4",
-            outline: "none",
-          },
           ...(isCurrentBreakpoint && {
             bc: "$colors$blue4",
             color: "$colors$blue11",
-            outline: "none",
             "&:hover,&:active,&:focus": {
               bc: "$colors$blue4",
               color: "$colors$blue11",
             },
           }),
-          [`& ~ ${TextField}`]: {
-            paddingLeft: "calc($sizes$5 + $sizes$1)",
-          },
         }}
       >
         <IconType />

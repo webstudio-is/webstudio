@@ -1,4 +1,4 @@
-import { Box, Grid } from "@webstudio-is/design-system";
+import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { Lock } from "./shared/lock";
@@ -10,12 +10,6 @@ import { PropertyName } from "../../shared/property-name";
 const layoutSectionStyle = {
   alignItems: "center",
   gap: "$space$styleSection",
-  // "& > [data-type=iconbuttonwithmenu]": {
-  //   display: "flex",
-  //   justifyContent: "center",
-  //   alignItems: "center",
-  //   height: "100%",
-  // },
 };
 
 const layoutSectionFlexStyle = {
@@ -30,41 +24,6 @@ const layoutSectionFlexStyle = {
 	  "grid grid grid grid grid . . . . . . ."
 	  "columnGap columnGap columnGap columnGap columnGap lock lock rowGap rowGap rowGap rowGap rowGap"
 	`,
-};
-
-// @todo shouldn't need this
-const layoutSectionChildStyle = { width: "fit-content" };
-
-const flexDirectionStyle = {
-  gridArea: "flexDirection",
-  ...layoutSectionChildStyle,
-};
-const flexWrapStyle = { gridArea: "flexWrap", ...layoutSectionChildStyle };
-const alignItemsStyle = { gridArea: "alignItems", ...layoutSectionChildStyle };
-const justifyContentStyle = {
-  gridArea: "justifyContent",
-  ...layoutSectionChildStyle,
-};
-const alignContentStyle = {
-  gridArea: "alignContent",
-  ...layoutSectionChildStyle,
-};
-const lockStyle = { gridArea: "lock" };
-const gridStyle = { gridArea: "grid" };
-const displayStyle = {
-  gridArea: "display",
-  gridTemplateColumns: "auto 1fr",
-  gap: "$space$2",
-  width: "fit-content",
-  fontWeight: "500",
-};
-const columnGapStyle = {
-  gridArea: "6 / 1 / -1 / 7",
-  paddingRight: "10px",
-};
-const rowGapStyle = {
-  gridArea: "6 / 7 / -1 / -1",
-  paddingLeft: "10px",
 };
 
 const LayoutSectionFlex = ({
@@ -84,49 +43,78 @@ const LayoutSectionFlex = ({
   } = sectionStyle;
   const batchUpdate = createBatchUpdate();
   return (
-    <Grid css={layoutSectionFlexStyle}>
-      <Box css={gridStyle}>
-        {" "}
-        <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
-      </Box>
-      <Grid css={displayStyle}>
+    <Flex css={{ flexDirection: "column", gap: "$2" }}>
+      <Grid
+        css={{
+          gridArea: "display",
+          gridTemplateColumns: "auto 1fr",
+          gap: "$space$2",
+          width: "fit-content",
+          fontWeight: "500",
+        }}
+      >
         <PropertyName
           property={display.styleConfig.property}
           label={display.styleConfig.label}
         />
         <SelectControl {...display} />
       </Grid>
-      <Box css={flexDirectionStyle}>
-        <MenuControl {...flexDirection} />
-      </Box>
-      <Box css={flexWrapStyle}>
-        <MenuControl {...flexWrap} />
-      </Box>
-      <Box css={alignItemsStyle}>
-        <MenuControl {...alignItems} />
-      </Box>
-      <Box css={justifyContentStyle}>
-        <MenuControl {...justifyContent} />
-      </Box>
-      {alignContent && (
-        <Box css={alignContentStyle}>
-          <MenuControl {...alignContent} />
+      <Grid
+        css={{
+          gap: "$2",
+          gridTemplateColumns: "repeat(2, $6) repeat(3, $6)",
+          gridTemplateRows: "repeat(2, $6)",
+          gridTemplateAreas: `
+            "grid grid flexDirection flexWrap ."
+            "grid grid alignItems justifyContent alignContent"
+          `,
+        }}
+      >
+        <Box css={{ gridArea: "grid" }}>
+          <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
         </Box>
-      )}
-      <Box css={columnGapStyle}>
-        <TextControl {...columnGap} />
-      </Box>
-      <Box css={rowGapStyle}>
-        <TextControl {...rowGap} />
-      </Box>
-      <Box css={lockStyle}>
-        <Lock
-          pairedKeys={["columnGap", "rowGap"]}
-          currentStyle={currentStyle}
-          batchUpdate={batchUpdate}
-        />
-      </Box>
-    </Grid>
+        <Box css={{ gridArea: "flexDirection" }}>
+          <MenuControl {...flexDirection} />
+        </Box>
+        <Box css={{ gridArea: "flexWrap" }}>
+          <MenuControl {...flexWrap} />
+        </Box>
+        <Box css={{ gridArea: "alignItems" }}>
+          <MenuControl {...alignItems} />
+        </Box>
+        <Box css={{ gridArea: "justifyContent" }}>
+          <MenuControl {...justifyContent} />
+        </Box>
+        {alignContent && (
+          <Box css={{ gridArea: "alignContent" }}>
+            <MenuControl {...alignContent} />
+          </Box>
+        )}
+      </Grid>
+      <Grid
+        css={{
+          gridTemplateColumns: "4fr 1fr 4fr",
+          gridTemplateRows: "auto",
+          gridTemplateAreas: `
+            "columnGap lock rowGap"
+          `,
+        }}
+      >
+        <Box css={{ gridArea: "columnGap" }}>
+          <TextControl {...columnGap} />
+        </Box>
+        <Box css={{ gridArea: "lock", px: "$1" }}>
+          <Lock
+            pairedKeys={["columnGap", "rowGap"]}
+            currentStyle={currentStyle}
+            batchUpdate={batchUpdate}
+          />
+        </Box>
+        <Box css={{ gridArea: "rowGap" }}>
+          <TextControl {...rowGap} />
+        </Box>
+      </Grid>
+    </Flex>
   );
 };
 

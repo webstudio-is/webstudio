@@ -1,4 +1,4 @@
-import { FocusEvent, PointerEvent, useCallback } from "react";
+import { FocusEvent, KeyboardEvent, PointerEvent, useCallback } from "react";
 import {
   Box,
   Text,
@@ -83,6 +83,41 @@ export const TextControl = ({
       isEphemeral,
     });
   };
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    handleKeyDownEnter(event, event.target);
+    if (isExpanded(event.target)) {
+      inputProps?.onKeyDown?.(event);
+      return false;
+    }
+    if (value.type !== "unit") return true;
+    if (!["ArrowUp", "ArrowDown"].includes(event.code)) return false;
+    event.preventDefault();
+    handleKeyDownArrowUpDown(event);
+  };
+  const handleKeyDownEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.code === "Enter" && String(value.value) !== event.target.value) {
+      setValue(event.target.value);
+      const number = parseFloat(event.target.value);
+      if (!isNaN(number)) event.target.value = String(number);
+    }
+  };
+  const handleKeyDownArrowUpDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    let currentValue = parseFloat(event.target.value);
+    let currentDelta = 1;
+    if (event.shiftKey) currentDelta = 10;
+    if (event.altKey) currentDelta = 0.1;
+    if (event.code === "ArrowUp") currentValue = currentValue + currentDelta;
+    if (event.code === "ArrowDown") currentValue = currentValue - currentDelta;
+    const currentValueAsString =
+      currentValue % 1
+        ? currentValue.toPrecision(
+            Math.abs(currentValue).toString().indexOf(".") + 2
+          )
+        : String(currentValue);
+    event.target.value = currentValueAsString;
+    setValue(currentValueAsString, { isEphemeral: true });
+  };
+
   return (
     <Combobox
       name={styleConfig.property}
@@ -107,37 +142,8 @@ export const TextControl = ({
                 if (event.target.value !== event.target.getAttribute("value"))
                   setValue(event.target.value);
               }}
-              onKeyDown={(event) => {
-                const target = event.target as HTMLInputElement;
-                if (
-                  event.code === "Enter" &&
-                  String(value.value) !== target.value
-                ) {
-                  setValue(target.value);
-                  const number = parseFloat(target.value);
-                  if (!isNaN(number)) target.value = String(number);
-                }
-                if (isExpanded(target)) return inputProps?.onKeyDown?.(event);
-                if (value.type !== "unit")
-                  return inputProps?.onKeyDown?.(event);
-                if (!["ArrowUp", "ArrowDown"].includes(event.code)) return;
-                event.preventDefault();
-                let currentValue = parseFloat(target.value);
-                let currentDelta = 1;
-                if (event.shiftKey) currentDelta = 10;
-                if (event.altKey) currentDelta = 0.1;
-                if (event.code === "ArrowUp")
-                  currentValue = currentValue + currentDelta;
-                if (event.code === "ArrowDown")
-                  currentValue = currentValue - currentDelta;
-                const currentValueAsString =
-                  currentValue % 1
-                    ? currentValue.toPrecision(
-                        Math.abs(currentValue).toString().indexOf(".") + 2
-                      )
-                    : String(currentValue);
-                target.value = currentValueAsString;
-                setValue(currentValueAsString, { isEphemeral: true });
+              onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+                if (handleKeyDown(event)) inputProps?.onKeyDown?.(event);
               }}
               prefix={
                 <PropertyIcon

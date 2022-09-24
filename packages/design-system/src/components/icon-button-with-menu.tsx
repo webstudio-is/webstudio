@@ -55,9 +55,6 @@ const iconButtonStyle = {
     outline: "none",
     boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
   },
-  "&:hover,&:focus": {
-    backgroundColor: "$colors$gray3",
-  },
 };
 
 const iconButtonActiveStyle = {
