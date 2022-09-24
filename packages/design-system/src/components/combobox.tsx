@@ -135,7 +135,6 @@ type ComboboxProps<Item> = {
   items: ReadonlyArray<Item>;
   value?: Item;
   onItemSelect?: (value?: Item) => void;
-  selected?: Item;
   onItemHighlight?: (value?: Item) => void;
   itemToString?: (item?: Item | null) => string;
   renderTextField?: (
@@ -150,7 +149,6 @@ type ComboboxProps<Item> = {
 export const Combobox = <Item extends BaseItem>({
   items,
   value,
-  selected = value,
   name,
   placeholder,
   itemToString = (item) =>
@@ -272,7 +270,7 @@ export const Combobox = <Item extends BaseItem>({
             items: isOpen ? foundItems : [],
             getItemProps,
             highlightedIndex,
-            selectedItem: selected as Item,
+            selectedItem,
             itemToString,
           }),
         })}

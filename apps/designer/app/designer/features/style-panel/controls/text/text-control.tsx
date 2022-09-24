@@ -1,8 +1,21 @@
-import { FocusEvent, KeyboardEvent, PointerEvent, useCallback } from "react";
+import {
+  FocusEvent,
+  KeyboardEvent,
+  PointerEvent,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Box,
   Text,
   IconButton,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuRadioItem,
+  DropdownMenuRadioGroup,
+  Select,
   TextField,
   Combobox,
   numericScrubControl,
@@ -33,16 +46,7 @@ export const TextControl = ({
     property: styleConfig.property,
   });
 
-  const getInputNode = (node: HTMLElement): HTMLInputElement => {
-    return node
-      .closest("[data-control]")
-      ?.querySelector("input") as HTMLInputElement;
-  };
-  const isExpanded = (node: HTMLElement) => {
-    return node
-      .closest("[data-control]")
-      ?.querySelector("[aria-expanded=true]");
-  };
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const numericScrubRefCallback = useCallback(
     (node: HTMLButtonElement) => {
@@ -54,7 +58,7 @@ export const TextControl = ({
       Object(node)[id] = numericScrubControl(node, {
         initialValue: value.value,
         onValueChange: (event) => {
-          getInputNode(node).value = String(event.value);
+          if (inputRef.current) inputRef.current.value = String(event.value);
           handleChange("unit", event.value, true);
         },
       });
@@ -67,10 +71,8 @@ export const TextControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const items =
-    value.type === "unit"
-      ? sortedUnits.map((unit) => ({ name: unit, label: unit }))
-      : styleConfig.items;
+  const items = styleConfig.items.map(({ label }) => label);
+  const units = sortedUnits.map((unit) => unit);
   const handleChange = (
     type: string,
     item: string | number | undefined,
@@ -84,21 +86,21 @@ export const TextControl = ({
     });
   };
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    handleKeyDownEnter(event, event.target);
-    if (isExpanded(event.target)) {
-      inputProps?.onKeyDown?.(event);
-      return false;
-    }
+    handleKeyDownEnter(event);
+    if (event.currentTarget.matches("[aria-activedescendant]")) return true;
     if (value.type !== "unit") return true;
     if (!["ArrowUp", "ArrowDown"].includes(event.code)) return false;
     event.preventDefault();
     handleKeyDownArrowUpDown(event);
   };
   const handleKeyDownEnter = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.code === "Enter" && String(value.value) !== event.target.value) {
-      setValue(event.target.value);
-      const number = parseFloat(event.target.value);
-      if (!isNaN(number)) event.target.value = String(number);
+    if (
+      event.code === "Enter" &&
+      String(value.value) !== event.currentTarget.value
+    ) {
+      setValue(event.currentTarget.value);
+      const number = parseFloat(event.currentTarget.value);
+      if (!isNaN(number)) event.currentTarget.value = String(number);
     }
   };
   const handleKeyDownArrowUpDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -121,9 +123,8 @@ export const TextControl = ({
   return (
     <Combobox
       name={styleConfig.property}
-      items={items.map((item) => item.label)}
+      items={items}
       value={String(value.value)}
-      selected={String(value.type === "unit" ? value.unit : value.value)}
       onItemSelect={(item) => {
         handleChange(value.type, item, false);
       }}
@@ -135,12 +136,16 @@ export const TextControl = ({
           <Box css={{ position: "relative" }}>
             <TextField
               {...inputProps}
+              inputRef={inputRef}
               onFocus={(event: FocusEvent<HTMLInputElement>) => {
-                event.target.select();
+                event.currentTarget.select();
               }}
               onBlur={(event) => {
-                if (event.target.value !== event.target.getAttribute("value"))
-                  setValue(event.target.value);
+                if (
+                  event.currentTarget.value !==
+                  event.currentTarget.getAttribute("value")
+                )
+                  setValue(event.currentTarget.value);
               }}
               onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
                 if (handleKeyDown(event)) inputProps?.onKeyDown?.(event);
@@ -151,7 +156,7 @@ export const TextControl = ({
                   label={styleConfig.label}
                   {...(value.type === "unit" && {
                     onPointerUp: (event: PointerEvent<HTMLInputElement>) => {
-                      setValue(String(getInputNode(event.target).value));
+                      setValue(String(inputRef.current?.value));
                     },
                     ref: numericScrubRefCallback,
                   })}
@@ -159,7 +164,7 @@ export const TextControl = ({
               }
               suffix={
                 <IconButton
-                  {...toggleProps}
+                  {...(value.type !== "unit" && toggleProps)}
                   css={{
                     visibility: items.length ? "visible" : "hidden",
                     position: "absolute",
@@ -175,19 +180,49 @@ export const TextControl = ({
                     },
                   }}
                 >
-                  {value.type === "unit" ? (
-                    <Text
-                      css={{
-                        cursor: "default",
-                        minWidth: "calc($sizes$3 - $nudge$1)",
-                        textAlign: "center",
-                        fontSize: "calc($fontSizes$1 - $nudge$1)",
-                      }}
-                    >
-                      {value.unit === "number" ? "—" : value.unit}
-                    </Text>
-                  ) : (
+                  {value.type !== "unit" ? (
                     <ChevronDownIcon />
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Text
+                          css={{
+                            cursor: "default",
+                            minWidth: "calc($sizes$3 - $nudge$1)",
+                            textAlign: "center",
+                            fontSize: "calc($fontSizes$1 - $nudge$1)",
+                          }}
+                        >
+                          {value.unit === "number" ? "—" : value.unit}
+                        </Text>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuContent
+                          sideOffset={14}
+                          collisionPadding={16}
+                          side="bottom"
+                          css={{
+                            minWidth: 124,
+                            maxHeight: 190,
+                          }}
+                        >
+                          <DropdownMenuRadioGroup
+                            value={String(value.unit)}
+                            onValueChange={(unit) =>
+                              handleChange("unit", unit, false)
+                            }
+                          >
+                            {units.map((unit) => {
+                              return (
+                                <DropdownMenuRadioItem key={unit} value={unit}>
+                                  {unit}
+                                </DropdownMenuRadioItem>
+                              );
+                            })}
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenu>
                   )}
                 </IconButton>
               }

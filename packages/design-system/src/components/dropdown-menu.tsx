@@ -9,7 +9,8 @@ import { panelStyles } from "./panel";
 
 export const DropdownMenu = DropdownMenuPrimitive.Root;
 export const DropdownMenuArrow = styled(DropdownMenuPrimitive.Arrow, {
-  fill: "$panel",
+  fill: "$colors$slate4",
+  stroke: "$colors$slate1",
 });
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
@@ -56,23 +57,7 @@ export const DropdownMenuRadioItem = React.forwardRef<
   <StyledDropdownMenuRadioItem {...props} ref={forwardedRef}>
     <Box as="span" css={{ position: "absolute", left: "$1" }}>
       <DropdownMenuPrimitive.ItemIndicator>
-        <Flex
-          css={{
-            width: "$3",
-            height: "$3",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Box
-            css={{
-              width: "$1",
-              height: "$1",
-              backgroundColor: "currentColor",
-              borderRadius: "$round",
-            }}
-          />
-        </Flex>
+        <CheckIcon />
       </DropdownMenuPrimitive.ItemIndicator>
     </Box>
     {children}

@@ -26,7 +26,7 @@ export const itemCss = css(baseItemCss, {
   color: "$hiContrast",
   "&:focus, &[data-found]": {
     outline: "none",
-    backgroundColor: "$blue9",
+    backgroundColor: "$blue10",
     color: "white",
   },
   "&[data-disabled]": {
@@ -71,23 +71,7 @@ export const MenuRadioItem = React.forwardRef<
   <StyledMenuRadioItem {...props} ref={forwardedRef}>
     <Box as="span" css={{ position: "absolute", left: "$1" }}>
       <MenuPrimitive.ItemIndicator>
-        <Flex
-          css={{
-            width: "$3",
-            height: "$3",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Box
-            css={{
-              width: "$1",
-              height: "$1",
-              backgroundColor: "currentColor",
-              borderRadius: "$round",
-            }}
-          ></Box>
-        </Flex>
+        <CheckIcon />
       </MenuPrimitive.ItemIndicator>
     </Box>
     {children}

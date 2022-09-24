@@ -62,6 +62,7 @@ const TextFieldBase = styled("div", {
   // Custom
   display: "flex",
   backgroundColor: "$loContrast",
+  py: 1, // value of insert boxShadow
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",

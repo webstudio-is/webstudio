@@ -128,7 +128,11 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         <TriggerButton />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent css={{ zIndex: "$1" }}>
+        <DropdownMenuContent
+          css={{ zIndex: "$1" }}
+          sideOffset={4}
+          collisionPadding={4}
+        >
           {view === "confirmation" && (
             <ConfirmationDialog
               breakpoint={selectedBreakpoint}
@@ -202,7 +206,6 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
               </DropdownMenuItem>
             </>
           )}
-          <DropdownMenuArrow offset={10} />
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
