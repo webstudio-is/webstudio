@@ -4,7 +4,6 @@
 
 import { ActionFunction } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
-import { captureException } from "@sentry/remix";
 import {
   deleteAsset,
   uploadAssets,

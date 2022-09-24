@@ -11,15 +11,14 @@ import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 
 const getItems = (assets: Array<Asset | PreviewAsset>) => {
   const system = SYSTEM_FONTS.map((item) => ({ label: item.family }));
-
-  const uploaded = assets.map((asset) => ({
-    label:
-      "meta" in asset && "family" in asset.meta
-        ? asset.meta.family
-        : asset.name,
-  }));
-
-  return [...system, ...uploaded];
+  // We can have 2+ assets with the same family name, so we use a map to dedupe.
+  const uploaded = new Map();
+  for (const asset of assets) {
+    if ("meta" in asset && "family" in asset.meta) {
+      uploaded.set(asset.meta.family, { label: asset.meta.family });
+    }
+  }
+  return [...system, ...uploaded.values()];
 };
 
 type FontsManagerProps = {
