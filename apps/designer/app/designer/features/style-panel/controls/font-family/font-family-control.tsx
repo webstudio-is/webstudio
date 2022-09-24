@@ -50,28 +50,25 @@ export const FontFamilyControl = ({
   //const setValue = setProperty(styleConfig.property);
 
   return (
-    <Grid columns={2}>
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <TextField
-            ref={textFieldRef}
-            css={textFieldStyle}
-            spellCheck={false}
-            readOnly
-            defaultValue={value.value}
-            onClick={() => {
-              setIsOpen(true);
-            }}
-          />
-        </PopoverTrigger>
-        <PopoverPortal>
-          <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
-            <PopoverHeader title="Fonts" />
-            <FontsManager />
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
-    </Grid>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <TextField
+          ref={textFieldRef}
+          css={textFieldStyle}
+          spellCheck={false}
+          readOnly
+          defaultValue={value.value}
+          onClick={() => {
+            setIsOpen(true);
+          }}
+        />
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
+          <PopoverHeader title="Fonts" />
+          <FontsManager />
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
   );
 };
