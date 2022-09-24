@@ -5,9 +5,17 @@ import {
   Combobox,
   ComboboxListboxItem,
   TextField,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  IconButton,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  Text,
+  DropdownMenuPortal,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
+import { DotsHorizontalIcon } from "@webstudio-is/icons";
 
 const getItems = (assets: Array<Asset | PreviewAsset>) => {
   const system = SYSTEM_FONTS.map((item) => ({ label: item.family }));
@@ -19,6 +27,29 @@ const getItems = (assets: Array<Asset | PreviewAsset>) => {
     }
   }
   return [...system, ...uploaded.values()];
+};
+
+const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <IconButton aria-label="Font menu button">
+          <DotsHorizontalIcon />
+        </IconButton>
+      </DropdownMenuTrigger>
+      <DropdownMenuPortal>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onSelect={() => {
+              onDelete();
+            }}
+          >
+            <Text>Delete font</Text>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
+    </DropdownMenu>
+  );
 };
 
 type FontsManagerProps = {
@@ -56,7 +87,18 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           <TextField {...inputProps} placeholder="Search" />
         )}
         renderPopperContent={(props) => <>{props.children}</>}
-        renderItem={(props) => <ComboboxListboxItem {...props} />}
+        renderItem={(props) => (
+          <ComboboxListboxItem
+            {...props}
+            suffix={
+              <ItemMenu
+                onDelete={() => {
+                  // @todo handle delete props.item
+                }}
+              />
+            }
+          />
+        )}
       />
     </Flex>
   );

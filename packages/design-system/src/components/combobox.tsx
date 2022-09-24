@@ -16,7 +16,7 @@ import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
 import { TextField } from "./text-field";
 import { Box } from "./box";
-import { Grid } from "./grid";
+import { Flex } from "./flex";
 
 type Label = string;
 
@@ -62,15 +62,16 @@ const Listbox = styled("ul", panelStyles, {
   minWidth: 230,
 });
 
-type ListboxItemProps<Item> = {
+export type ListboxItemProps<Item> = {
   selected: boolean;
   item: Item;
   itemToString: (item: Item | null) => string;
   itemProps: ComponentProps<"li">;
+  suffix?: JSX.Element;
 };
 
 const ListboxItemBase = <Item extends ComboboxBaseItem>(
-  { selected, item, itemToString, itemProps }: ListboxItemProps<Item>,
+  { selected, item, itemToString, itemProps, suffix }: ListboxItemProps<Item>,
   ref: ForwardedRef<HTMLLIElement>
 ) => {
   return (
@@ -82,10 +83,11 @@ const ListboxItemBase = <Item extends ComboboxBaseItem>(
       {...itemProps}
       ref={ref}
     >
-      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+      <Flex align="center" css={{ flexGrow: 1 }}>
         {selected === true ? <CheckIcon /> : null}
-        <Box css={{ gridColumn: 2 }}>{itemToString(item)}</Box>
-      </Grid>
+        <Box css={{ flexGrow: 1 }}>{itemToString(item)}</Box>
+        {suffix}
+      </Flex>
     </li>
   );
 };
