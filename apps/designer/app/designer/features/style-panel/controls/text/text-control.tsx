@@ -1,4 +1,4 @@
-import { FocusEvent, KeyboardEvent, useRef, useCallback } from "react";
+import { FocusEvent, KeyboardEvent, useRef, PointerEvent } from "react";
 import {
   Box,
   Text,
@@ -41,25 +41,6 @@ export const TextControl = ({
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const numericScrubRefCallback = useCallback(
-    (node: HTMLButtonElement) => {
-      if (!value) return;
-      const id = Symbol.for("numericScrubControl");
-      if (!node) return Object(node)[id]?.disconnectedCallback();
-      if (value.type !== "unit") return;
-      if (Object(node)[id]) return;
-      Object(node)[id] = numericScrubControl(node, {
-        initialValue: value.value,
-        onValueChange: (event) => {
-          if (inputRef.current) inputRef.current.value = String(event.value);
-          handleChange("unit", event.value, true);
-        },
-      });
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
   if (value === undefined) return null;
 
   const setValue = setProperty(styleConfig.property);
@@ -97,7 +78,7 @@ export const TextControl = ({
     }
   };
   const handleKeyDownArrowUpDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    let currentValue = parseFloat(event.target.value);
+    let currentValue = parseFloat(event.currentTarget.value);
     let currentDelta = 1;
     if (event.shiftKey) currentDelta = 10;
     if (event.altKey) currentDelta = 0.1;
@@ -109,7 +90,7 @@ export const TextControl = ({
             Math.abs(currentValue).toString().indexOf(".") + 2
           )
         : String(currentValue);
-    event.target.value = currentValueAsString;
+    event.currentTarget.value = currentValueAsString;
     setValue(currentValueAsString, { isEphemeral: true });
   };
 
@@ -148,10 +129,20 @@ export const TextControl = ({
                   property={styleConfig.property}
                   label={styleConfig.label}
                   {...(value.type === "unit" && {
-                    onPointerUp: () => {
-                      setValue(String(inputRef.current?.value));
+                    onPointerEnter: (event: PointerEvent<HTMLElement>) => {
+                      Object(event.currentTarget)[Symbol.for("scrub")] ??=
+                        numericScrubControl(event.currentTarget, {
+                          initialValue: value.value,
+                          onValueInput: (event) => {
+                            if (inputRef.current)
+                              inputRef.current.value = String(event.value);
+                            handleChange("unit", event.value, true);
+                          },
+                          onValueChange: (event) => {
+                            setValue(String(event.value));
+                          },
+                        });
                     },
-                    ref: numericScrubRefCallback,
                   })}
                 />
               }

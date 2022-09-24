@@ -18,16 +18,19 @@ export type NumericScrubDirection = "horizontal" | "vertical";
 
 export type NumericScrubValue = number;
 
+export type NumericScrubCallback = (event: {
+  target: HTMLElement;
+  value: NumericScrubValue;
+  preventDefault: () => void;
+}) => void;
+
 export type NumericScrubOptions = {
   minValue?: NumericScrubValue;
   maxValue?: NumericScrubValue;
   initialValue?: NumericScrubValue;
   direction?: NumericScrubDirection;
-  onValueChange?: (event: {
-    target: HTMLElement;
-    value: NumericScrubValue;
-    preventDefault: () => void;
-  }) => void;
+  onValueInput?: NumericScrubCallback;
+  onValueChange?: NumericScrubCallback;
 };
 
 type NumericScrubState = {
@@ -45,6 +48,7 @@ export const numericScrubControl = (
     maxValue = Number.MAX_SAFE_INTEGER,
     initialValue = 0,
     direction = "horizontal",
+    onValueInput = () => null,
     onValueChange = () => null,
   }: NumericScrubOptions
 ) => {
@@ -78,6 +82,11 @@ export const numericScrubControl = (
         state.offset = 0;
         handleCursor(targetNode.ownerDocument.documentElement, false);
         exitPointerLock(state, event, targetNode);
+        onValueChange({
+          target: targetNode,
+          value: state.value,
+          preventDefault: () => event.preventDefault(),
+        });
         break;
       }
       case "pointerdown": {
@@ -94,7 +103,7 @@ export const numericScrubControl = (
           if (state.value < minValue) state.value = minValue;
           else if (state.value > maxValue) state.value = maxValue;
           state.offset += movement * state.velocity;
-          onValueChange({
+          onValueInput({
             target: targetNode,
             value: state.value,
             preventDefault: () => event.preventDefault(),
