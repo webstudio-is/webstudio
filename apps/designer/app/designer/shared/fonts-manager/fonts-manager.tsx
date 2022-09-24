@@ -56,7 +56,6 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           <TextField {...inputProps} placeholder="Search" />
         )}
         renderPopperContent={(props) => <>{props.children}</>}
-        // @ts-expect-error need help
         renderItem={(props) => <ComboboxListboxItem {...props} />}
       />
     </Flex>

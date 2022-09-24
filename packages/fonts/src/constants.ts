@@ -1,4 +1,4 @@
-import { FontFormat } from "./types";
+import type { FontFormat } from "./types";
 
 export const SYSTEM_FONTS = [
   {

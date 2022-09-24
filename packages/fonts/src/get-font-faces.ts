@@ -2,9 +2,13 @@ import { FONT_FORMATS } from "./constants";
 import type { FontMeta } from "./schema";
 import type { FontFormat } from "./types";
 
-export const getFontFaces = (
-  assets: Array<{ format: string; meta: FontMeta; path: string }>
-) => {
+export type PartialFontAsset = {
+  format: FontFormat;
+  meta: FontMeta;
+  path: string;
+};
+
+export const getFontFaces = (assets: Array<PartialFontAsset>) => {
   const faces = new Map();
   for (const asset of assets) {
     const face = faces.get(asset.meta.family);
