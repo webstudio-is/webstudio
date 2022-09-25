@@ -9,7 +9,7 @@ import {
 } from "./wrapper-component";
 import { FONT_FORMATS, getFontFaces } from "@webstudio-is/fonts";
 import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
-import { useCallback } from "react";
+import { useRef } from "react";
 
 export type Data = {
   tree: Tree | null;
@@ -19,18 +19,24 @@ export type Data = {
 };
 
 export const useGlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
-  return useCallback(() => {
-    const fontAssets = assets.filter(
-      (asset) => asset.format in FONT_FORMATS
-    ) as Array<FontAsset>;
+  const ref = useRef<Array<Asset>>();
 
-    return globalCss({
-      "@font-face": getFontFaces(fontAssets),
-      html: {
-        height: "100%",
-      },
-    })();
-  }, [assets]);
+  // This may look weird, but globalCss API doesn't allow us creating global styles with data,
+  // so we have to manually ensure calling it only once
+  if (ref.current === assets) return;
+
+  const fontAssets = assets.filter(
+    (asset) => asset.format in FONT_FORMATS
+  ) as Array<FontAsset>;
+
+  globalCss({
+    "@font-face": getFontFaces(fontAssets),
+    html: {
+      height: "100%",
+    },
+  })();
+
+  ref.current = assets;
 };
 
 type RootProps = {
@@ -46,7 +52,7 @@ export const InstanceRoot = ({
     throw new Error("Tree is null");
   }
   setBreakpoints(data.breakpoints);
-  useGlobalStyles({ assets: data.assets })();
+  useGlobalStyles({ assets: data.assets });
   useAllUserProps(data.props);
   return createElementsTree({
     instance: data.tree.root,

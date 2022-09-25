@@ -117,7 +117,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   }
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
-  useGlobalStyles({ assets: data.assets })();
+  useGlobalStyles({ assets: data.assets });
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
   // e.g. toggling preview is still needed in both modes
