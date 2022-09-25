@@ -4,7 +4,6 @@ import { styled, CSS } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { menuCss, separatorCss, itemCss, labelCss } from "./menu";
 import { Box } from "./box";
-import { Flex } from "./flex";
 import { panelStyles } from "./panel";
 
 export const DropdownMenu = DropdownMenuPrimitive.Root;
