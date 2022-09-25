@@ -8,7 +8,11 @@ import {
 
 import { type StyleConfig, styleConfigs } from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
-import { renderCategory, shouldRenderCategory } from "./style-sections";
+import {
+  renderCategory,
+  RenderCategoryProps,
+  shouldRenderCategory,
+} from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import { type InheritedStyle } from "./shared/get-inherited-style";
 import {
@@ -68,7 +72,7 @@ const didRender = (category: Category, { property }: StyleConfig): boolean => {
   return false;
 };
 
-type StyleSettingsProps = {
+export type StyleSettingsProps = {
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   cssRule?: CssRule;
@@ -95,7 +99,7 @@ export const StyleSettings = ({
       search
     );
     const { moreFrom } = categories[category];
-    const sectionStyle: Style = {};
+    const sectionStyle = {} as RenderCategoryProps["sectionStyle"];
     const styleConfigsByCategory: Array<RenderPropertyProps> = [];
     const moreStyleConfigsByCategory: Array<RenderPropertyProps> = [];
 
