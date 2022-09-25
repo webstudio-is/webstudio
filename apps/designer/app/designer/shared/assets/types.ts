@@ -7,6 +7,6 @@ export type PreviewAsset = Pick<
 
 export type ActionData = {
   uploadedAssets?: Array<Asset>;
-  deletedAsset?: Asset;
+  deletedAssets?: Array<Asset>;
   errors?: string;
 };

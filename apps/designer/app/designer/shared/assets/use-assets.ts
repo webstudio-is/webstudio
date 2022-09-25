@@ -6,8 +6,17 @@ import {
   filterByType,
 } from "@webstudio-is/asset-uploader";
 import { useAssets as useAllAssets } from "../nano-states";
+import { useSubmit } from "@remix-run/react";
 
-export const useAssets = (type: AssetType) => {
+type UseAssetsApi = {
+  assets: Array<Asset | PreviewAsset>;
+  onSubmitAssets: (assets: Array<PreviewAsset>) => void;
+  onActionData: (data: ActionData) => void;
+  onDelete: (ids: Array<string>) => void;
+};
+
+export const useAssets = (type: AssetType): UseAssetsApi => {
+  const submit = useSubmit();
   const [allAssets] = useAllAssets();
   const [actionData, setActionData] = useState<ActionData>({});
   const [uploadingAssets, setUploadingAssets] = useState<Array<PreviewAsset>>(
@@ -15,13 +24,17 @@ export const useAssets = (type: AssetType) => {
   );
 
   const assets = useMemo(() => {
-    const { errors, uploadedAssets = [], deletedAsset } = actionData ?? {};
+    const {
+      errors,
+      uploadedAssets = [],
+      deletedAssets = [],
+    } = actionData ?? {};
     let assets: Array<Asset | PreviewAsset> = [];
 
     // Once we have uploaded or deleted assets in action data, current upload was finished.
     if (
       uploadedAssets.length === 0 &&
-      deletedAsset === undefined &&
+      deletedAssets.length === 0 &&
       errors === undefined
     ) {
       assets = [...uploadingAssets];
@@ -37,7 +50,10 @@ export const useAssets = (type: AssetType) => {
     }
 
     for (const asset of allAssets) {
-      if (asset.id !== deletedAsset?.id) {
+      const isDeleted = deletedAssets.some(
+        (deletedAsset) => deletedAsset.id === asset.id
+      );
+      if (isDeleted === false) {
         assets.push(asset);
       }
     }
@@ -45,9 +61,18 @@ export const useAssets = (type: AssetType) => {
     return filterByType(assets, type);
   }, [actionData, uploadingAssets, type, allAssets]);
 
+  const handleDelete = (ids: Array<string>) => {
+    const formData = new FormData();
+    for (const id of ids) {
+      formData.append("assetId", id);
+    }
+    submit(formData, { method: "delete" });
+  };
+
   return {
     assets,
     onSubmitAssets: setUploadingAssets,
     onActionData: setActionData,
+    onDelete: handleDelete,
   };
 };

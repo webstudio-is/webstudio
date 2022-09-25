@@ -1,4 +1,4 @@
-import { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
   Box,
@@ -17,11 +17,14 @@ import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { DotsHorizontalIcon } from "@webstudio-is/icons";
 
-const getItems = (assets: Array<Asset | PreviewAsset>) => {
+const getItems = (
+  assets: Array<Asset | PreviewAsset>
+): Array<{ label: string }> => {
   const system = SYSTEM_FONTS.map((item) => ({ label: item.family }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
   for (const asset of assets) {
+    // @todo need to teach ts the right type from useAssets
     if ("meta" in asset && "family" in asset.meta) {
       uploaded.set(asset.meta.family, { label: asset.meta.family });
     }
@@ -58,8 +61,22 @@ type FontsManagerProps = {
 };
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
-  const { assets, onSubmitAssets, onActionData } = useAssets("font");
+  const { assets, onSubmitAssets, onActionData, onDelete } = useAssets("font");
   const items = getItems(assets);
+
+  const handleDelete = (family: string) => {
+    // One family may have multiple assets for different formats, so we need to delete them all.
+    const ids = assets
+      .filter(
+        (asset) =>
+          // @todo need to teach ts the right type from useAssets
+          "meta" in asset &&
+          "family" in asset.meta &&
+          asset.meta.family === family
+      )
+      .map((asset) => asset.id);
+    onDelete(ids);
+  };
 
   return (
     <Flex
@@ -88,12 +105,13 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         )}
         renderPopperContent={(props) => <>{props.children}</>}
         renderItem={(props) => (
+          // @ts-ignore temp
           <ComboboxListboxItem
             {...props}
             suffix={
               <ItemMenu
                 onDelete={() => {
-                  // @todo handle delete props.item
+                  handleDelete(props.item.label);
                 }}
               />
             }

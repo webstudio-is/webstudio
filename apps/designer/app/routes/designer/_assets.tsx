@@ -5,7 +5,7 @@
 import { ActionFunction } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
 import {
-  deleteAsset,
+  deleteAssets,
   uploadAssets,
 } from "@webstudio-is/asset-uploader/index.server";
 import { toast } from "@webstudio-is/design-system";
@@ -14,9 +14,8 @@ import { zfd } from "zod-form-data";
 import type { ActionData } from "~/designer/shared/assets";
 import { sentryException } from "~/shared/sentry";
 
-const deleteAssetSchema = zfd.formData({
-  assetId: zfd.text(),
-  assetName: zfd.text(),
+const DeleteAssets = zfd.formData({
+  assetId: zfd.repeatableOfType(zfd.text()),
 });
 
 export const action: ActionFunction = async ({
@@ -26,14 +25,9 @@ export const action: ActionFunction = async ({
   if (params.projectId === undefined) throw new Error("Project id undefined");
   try {
     if (request.method === "DELETE") {
-      const { assetId, assetName } = deleteAssetSchema.parse(
-        await request.formData()
-      );
-      const deletedAsset = await deleteAsset({
-        id: assetId,
-        name: assetName,
-      });
-      return { deletedAsset };
+      const { assetId: ids } = DeleteAssets.parse(await request.formData());
+      const deletedAssets = await deleteAssets(ids);
+      return { deletedAssets };
     }
 
     if (request.method === "POST") {

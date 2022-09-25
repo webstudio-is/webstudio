@@ -10,7 +10,7 @@ export const TabContent = ({
 }: {
   onSetActiveTab: (tabName: TabName) => void;
 }) => {
-  const { assets, onSubmitAssets, onActionData } = useAssets("image");
+  const { assets, onSubmitAssets, onActionData, onDelete } = useAssets("image");
   return (
     <>
       <Header
@@ -33,7 +33,7 @@ export const TabContent = ({
         </Box>
         <Grid columns={2} gap={2}>
           {assets.map((asset) => (
-            <AssetThumbnail key={asset.id} {...asset} />
+            <AssetThumbnail key={asset.id} asset={asset} onDelete={onDelete} />
           ))}
         </Grid>
       </Flex>

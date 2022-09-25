@@ -52,7 +52,13 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
   );
 };
 
-export const AssetThumbnail = (asset: Asset | PreviewAsset) => {
+export const AssetThumbnail = ({
+  asset,
+  onDelete,
+}: {
+  asset: Asset | PreviewAsset;
+  onDelete: (ids: Array<string>) => void;
+}) => {
   const { path, status, name } = asset;
   const description =
     "description" in asset && asset.description ? asset.description : name;
@@ -75,7 +81,13 @@ export const AssetThumbnail = (asset: Asset | PreviewAsset) => {
     >
       <Thumbnail path={path} status={status} />
       {isUploadedAsset && (
-        <AssetInfoTrigger asset={asset} onDelete={() => setIsDeleting(true)} />
+        <AssetInfoTrigger
+          asset={asset}
+          onDelete={(ids) => {
+            setIsDeleting(true);
+            onDelete(ids);
+          }}
+        />
       )}
       {(isUploading || isDeleting) && <UploadingAnimation />}
     </Box>

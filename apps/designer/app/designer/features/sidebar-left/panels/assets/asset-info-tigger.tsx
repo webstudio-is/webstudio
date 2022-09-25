@@ -23,7 +23,7 @@ export const AssetInfoTrigger = ({
   onDelete,
 }: {
   asset: Asset;
-  onDelete: () => void;
+  onDelete: (ids: Array<string>) => void;
 }) => {
   const [isInfoOpen, setInfoOpen] = useState(false);
   return (
@@ -54,9 +54,11 @@ export const AssetInfoTrigger = ({
         <PopoverContent css={{ zIndex: "$1" }}>
           <PopoverHeader title="Asset Details" />
           <AssetInfo
-            onDelete={onDelete}
-            onClose={() => setInfoOpen(false)}
-            {...asset}
+            onDelete={(ids) => {
+              setInfoOpen(false);
+              onDelete(ids);
+            }}
+            asset={asset}
           />
         </PopoverContent>
       </PopoverPortal>
