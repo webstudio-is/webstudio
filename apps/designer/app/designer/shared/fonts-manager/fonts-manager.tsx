@@ -20,7 +20,7 @@ import { DotsHorizontalIcon } from "@webstudio-is/icons";
 const getItems = (
   assets: Array<Asset | PreviewAsset>
 ): Array<{ label: string }> => {
-  const system = SYSTEM_FONTS.map((item) => ({ label: item.family }));
+  const system = Object.keys(SYSTEM_FONTS).map((label) => ({ label }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
   for (const asset of assets) {
@@ -105,7 +105,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         )}
         renderPopperContent={(props) => <>{props.children}</>}
         renderItem={(props) => (
-          // @ts-ignore temp
+          // @ts-expect-error temp
           <ComboboxListboxItem
             {...props}
             suffix={

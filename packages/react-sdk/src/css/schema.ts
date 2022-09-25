@@ -15,6 +15,11 @@ const KeywordValueSchema = z.object({
   value: z.string(),
 });
 
+const FontFamilyValueSchema = z.object({
+  type: z.literal("fontFamily"),
+  value: z.array(z.string()),
+});
+
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
 const InvalidValueSchema = z.object({
@@ -26,6 +31,7 @@ export const StyleValueSchema = z.union([
   UnitValueSchema,
   KeywordValueSchema,
   InvalidValueSchema,
+  FontFamilyValueSchema,
 ]);
 
 export const StyleSchema = z.record(z.string(), StyleValueSchema);

@@ -10,7 +10,7 @@ const breakpoints: Array<Breakpoint> = initialBreakpoints.map(
 );
 
 describe("Convert WS CSS rules to stitches", () => {
-  test("basic", () => {
+  test("keyword", () => {
     const cssRules: Array<CssRule> = [
       {
         style: {
@@ -26,6 +26,26 @@ describe("Convert WS CSS rules to stitches", () => {
     expect(stitchesCss).toEqual({
       "@0": {
         color: "red",
+      },
+    });
+  });
+
+  test("fontFamily", () => {
+    const cssRules: Array<CssRule> = [
+      {
+        style: {
+          fontFamily: {
+            type: "fontFamily",
+            value: ["Courier New"],
+          },
+        },
+        breakpoint: "0",
+      },
+    ];
+    const stitchesCss = toCss(cssRules, breakpoints);
+    expect(stitchesCss).toEqual({
+      "@0": {
+        fontFamily: "Courier New, monospace",
       },
     });
   });

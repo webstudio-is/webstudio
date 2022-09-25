@@ -1,23 +1,11 @@
 import type { FontFormat } from "./types";
 
-export const SYSTEM_FONTS = [
-  {
-    family: "Arial",
-    fallbacks: ["sans-serif"],
-  },
-  {
-    family: "Times New Roman",
-    fallbacks: ["serif"],
-  },
-  {
-    family: "Courier New",
-    fallbacks: ["monospace"],
-  },
-  {
-    family: "system-ui",
-    fallbacks: ["system-ui"],
-  },
-] as const;
+export const SYSTEM_FONTS: Record<string, Array<string>> = {
+  Arial: ["sans-serif"],
+  "Times New Roman": ["serif"],
+  "Courier New": ["monospace"],
+  "system-ui": [],
+};
 
 export const DEFAULT_FONT_FALLBACK = "sans-serif";
 
