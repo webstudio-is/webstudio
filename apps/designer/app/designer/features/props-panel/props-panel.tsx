@@ -62,7 +62,7 @@ const Property = ({
         value={prop}
         itemToString={(item) => item ?? ""}
         onItemSelect={(value) => {
-          onChange(id, "prop", value);
+          onChange(id, "prop", value as string);
         }}
         renderTextField={({ inputProps, toggleProps }) => (
           <ComboboxTextField

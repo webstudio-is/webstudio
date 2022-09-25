@@ -43,17 +43,8 @@ const BreakpointSelectorItem = ({
 }: BreakpointSelectorItemProps) => {
   return (
     <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
-      <Text size="1" css={{ flexGrow: 1, color: "inherit" }}>
-        {breakpoint.label}
-      </Text>
-      <Text
-        size="1"
-        css={{
-          color: "inherit",
-        }}
-      >
-        {breakpoint.minWidth}
-      </Text>
+      <Text>{breakpoint.label}</Text>
+      <Text>{breakpoint.minWidth}</Text>
     </Flex>
   );
 };

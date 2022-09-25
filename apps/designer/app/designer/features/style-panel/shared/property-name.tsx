@@ -56,7 +56,6 @@ export const PropertyIcon = forwardRef<
       <IconButton
         {...props}
         ref={forwardRef}
-        variant="ghost"
         size="1"
         css={{
           marginLeft: "calc(-$space$1 + 1px)",

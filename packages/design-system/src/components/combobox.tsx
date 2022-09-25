@@ -1,7 +1,9 @@
 import {
   useState,
   forwardRef,
+  /* 
   useCallback,
+*/
   type ComponentProps,
   type ForwardRefRenderFunction,
 } from "react";
@@ -11,8 +13,6 @@ import { useCombobox, type UseComboboxGetItemPropsOptions } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled } from "../stitches.config";
 import { IconButton } from "./icon-button";
-import { itemCss } from "./menu";
-import { panelStyles } from "./panel";
 import { TextField } from "./text-field";
 import { Box } from "./box";
 import { Grid } from "./grid";
@@ -163,6 +163,7 @@ export const Combobox = <Item extends BaseItem>({
   renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
 }: ComboboxProps<Item>) => {
   const [foundItems, setFoundItems] = useState(items);
+  /*
   const stateReducer = useCallback((state, actionAndChanges) => {
     const { type, changes } = actionAndChanges;
     switch (type) {
@@ -196,6 +197,7 @@ export const Combobox = <Item extends BaseItem>({
         return changes; // otherwise business as usual.
     }
   }, []);
+*/
   const {
     isOpen,
     getToggleButtonProps,
