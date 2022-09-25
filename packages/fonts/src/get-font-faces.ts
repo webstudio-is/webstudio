@@ -12,7 +12,7 @@ export const getFontFaces = (assets: Array<PartialFontAsset>) => {
   const faces = new Map();
   for (const asset of assets) {
     const face = faces.get(asset.meta.family);
-    const format = FONT_FORMATS[asset.format as FontFormat];
+    const format = FONT_FORMATS.get(asset.format);
 
     if (face === undefined) {
       faces.set(asset.meta.family, {

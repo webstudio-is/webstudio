@@ -20,7 +20,7 @@ import { DotsHorizontalIcon } from "@webstudio-is/icons";
 const getItems = (
   assets: Array<Asset | PreviewAsset>
 ): Array<{ label: string }> => {
-  const system = Object.keys(SYSTEM_FONTS).map((label) => ({ label }));
+  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({ label }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
   for (const asset of assets) {

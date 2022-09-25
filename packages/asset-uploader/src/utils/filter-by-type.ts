@@ -1,4 +1,4 @@
-import { FONT_FORMATS } from "@webstudio-is/fonts";
+import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
 import type { AssetType } from "../types";
 
 export const filterByType = <PartialAsset extends { format: string }>(
@@ -6,7 +6,7 @@ export const filterByType = <PartialAsset extends { format: string }>(
   type: AssetType
 ) => {
   return assets.filter(({ format }: PartialAsset) => {
-    const isFont = format in FONT_FORMATS;
+    const isFont = FONT_FORMATS.has(format as FontFormat);
     if (type === "font") {
       return isFont;
     }

@@ -14,7 +14,7 @@ export type ImageMeta = z.infer<typeof ImageMeta>;
 export const formatAsset = (asset: DbAsset): Asset => {
   const base = { ...asset, path: getAssetPath(asset) };
 
-  const isFont = asset.format in FONT_FORMATS;
+  const isFont = FONT_FORMATS.has(asset.format as FontFormat);
 
   if (isFont) {
     return {

@@ -7,7 +7,11 @@ import {
   WrapperComponent,
   type WrapperComponentProps,
 } from "./wrapper-component";
-import { FONT_FORMATS, getFontFaces } from "@webstudio-is/fonts";
+import {
+  type FontFormat,
+  FONT_FORMATS,
+  getFontFaces,
+} from "@webstudio-is/fonts";
 import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
 import { useRef } from "react";
 
@@ -25,8 +29,8 @@ export const useGlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   // so we have to manually ensure calling it only once
   if (ref.current === assets) return;
 
-  const fontAssets = assets.filter(
-    (asset) => asset.format in FONT_FORMATS
+  const fontAssets = assets.filter((asset) =>
+    FONT_FORMATS.has(asset.format as FontFormat)
   ) as Array<FontAsset>;
 
   globalCss({

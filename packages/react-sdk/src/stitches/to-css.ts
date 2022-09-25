@@ -8,8 +8,9 @@ export const toValue = (value: StyleValue): string => {
   }
   if (value.type === "fontFamily") {
     const family = value.value[0];
-    if (family in SYSTEM_FONTS) {
-      return [...value.value, ...SYSTEM_FONTS[family]].join(", ");
+    const fallbacks = SYSTEM_FONTS.get(family);
+    if (Array.isArray(fallbacks)) {
+      return [...value.value, ...fallbacks].join(", ");
     }
     return [...value.value, DEFAULT_FONT_FALLBACK].join(", ");
   }
