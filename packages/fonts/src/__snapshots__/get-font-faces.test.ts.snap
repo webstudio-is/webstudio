@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getFontFaces() same family, but different formats 1`] = `
+Array [
+  Object {
+    "fontDisplay": "swap",
+    "fontFamily": "Roboto, sans-serif",
+    "fontStyle": "normal",
+    "fontWeight": 400,
+    "src": "url('/fonts/roboto.woff') format('woff'), url('/fonts/roboto.ttf') format('truetype')",
+  },
+]
+`;

@@ -22,16 +22,6 @@ describe("getFontFaces()", () => {
         path: "/fonts/roboto.ttf",
       },
     ];
-    expect(getFontFaces(assets)).toMatchInlineSnapshot(`
-[
-  {
-    "fontDisplay": "swap",
-    "fontFamily": "Roboto",
-    "fontStyle": "normal",
-    "fontWeight": 400,
-    "src": "url('/fonts/roboto.woff') format('woff'), url('/fonts/roboto.ttf') format('truetype')",
-  },
-]
-`);
+    expect(getFontFaces(assets)).toMatchSnapshot();
   });
 });
