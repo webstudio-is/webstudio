@@ -1,6 +1,6 @@
 import {
   createStitches,
-  globalCss,
+  globalCss as globalCssImport,
   type CSS,
   css as createCss,
 } from "@stitches/core";
@@ -11,6 +11,8 @@ let media = {};
 // @todo needs fixing
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let stitches: any;
+
+export { type CSS };
 
 export const getCachedConfig = () => {
   if (stitches === undefined) {
@@ -23,11 +25,16 @@ export const css: typeof createCss = (...args) => {
   return getCachedConfig().css(...args);
 };
 
-export { globalCss };
-export { type CSS };
+export const globalCss: typeof globalCssImport = (...args) => {
+  return getCachedConfig().globalCss(...args);
+};
 
 export const getCssText = (): string => {
   return getCachedConfig().getCssText();
+};
+
+export const resetCss = () => {
+  getCachedConfig().reset();
 };
 
 export const setBreakpoints = (breakpoints: Array<Breakpoint>) => {
