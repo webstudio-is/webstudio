@@ -92,7 +92,7 @@ const getControl = (property: StyleProperty): Control => {
       return "Empty";
     }
     case "fontFamily": {
-      return isFeatureEnabled("assets") ? "FontFamily" : "Text";
+      return isFeatureEnabled("fonts") ? "FontFamily" : "Text";
     }
   }
 
