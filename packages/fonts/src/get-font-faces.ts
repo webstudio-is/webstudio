@@ -1,4 +1,4 @@
-import { FONT_FORMATS, DEFAULT_FONT_FALLBACK } from "./constants";
+import { FONT_FORMATS } from "./constants";
 import type { FontMeta } from "./schema";
 import type { FontFormat } from "./types";
 
@@ -16,7 +16,7 @@ export const getFontFaces = (assets: Array<PartialFontAsset>) => {
 
     if (face === undefined) {
       faces.set(asset.meta.family, {
-        fontFamily: `${asset.meta.family}, ${DEFAULT_FONT_FALLBACK}`,
+        fontFamily: asset.meta.family,
         fontStyle: asset.meta.style,
         fontWeight: asset.meta.weight,
         fontDisplay: "swap" as const,
