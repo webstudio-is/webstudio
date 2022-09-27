@@ -1,24 +1,40 @@
 import {
   insertCriticalCss as insert,
   getCssText as getCanvasCssText,
+  resetCss as resetCanvasCss,
 } from "@webstudio-is/react-sdk";
-import { getCssText as getDesignerCssText } from "@webstudio-is/design-system";
+import {
+  getCssText as getDesignerCssText,
+  reset as resetDesignerCss,
+} from "@webstudio-is/design-system";
 import config from "./config";
 
-const getCssTextFunctions = {
-  [config.previewPath]: getCanvasCssText,
-  [config.canvasPath]: getCanvasCssText,
-  [config.designerPath]: getDesignerCssText,
-  [config.dashboardPath]: getDesignerCssText,
-  [config.loginPath]: getDesignerCssText,
+const flushCanvas = () => {
+  const css = getCanvasCssText();
+  resetCanvasCss();
+  return css;
 };
 
-const getCssTextFunction = (url: string) => {
+const flushDesigner = () => {
+  const css = getDesignerCssText();
+  resetDesignerCss();
+  return css;
+};
+
+const flushFunctions = {
+  [config.previewPath]: flushCanvas,
+  [config.canvasPath]: flushCanvas,
+  [config.designerPath]: flushDesigner,
+  [config.dashboardPath]: flushDesigner,
+  [config.loginPath]: flushDesigner,
+};
+
+const getFlushFunction = (url: string) => {
   const { pathname } = new URL(url);
-  let path: keyof typeof getCssTextFunctions;
-  for (path in getCssTextFunctions) {
+  let path: keyof typeof flushFunctions;
+  for (path in flushFunctions) {
     if (pathname.indexOf(path) === 0) {
-      return getCssTextFunctions[path];
+      return flushFunctions[path];
     }
   }
   return getCanvasCssText;
@@ -30,5 +46,5 @@ const getCssTextFunction = (url: string) => {
  * @todo find a better way
  */
 export const insertCriticalCss = (markup: string, url: string): string => {
-  return insert(markup, getCssTextFunction(url));
+  return insert(markup, getFlushFunction(url));
 };
