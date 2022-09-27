@@ -1,5 +1,5 @@
 import React from "react";
-import { getCssText as getCssTextDefault } from "./css";
+import { flushCss as flushCssDefault } from "./css";
 
 const criticalCssMarker = "__critical-css__";
 
@@ -8,7 +8,7 @@ export const CriticalCss = (): JSX.Element | null =>
 
 export const insertCriticalCss = (
   markup: string,
-  getCssText: typeof getCssTextDefault = getCssTextDefault
+  flushCss: typeof flushCssDefault = flushCssDefault
 ): string => {
-  return markup.replace(criticalCssMarker, `<style>${getCssText()}</style>`);
+  return markup.replace(criticalCssMarker, `<style>${flushCss()}</style>`);
 };

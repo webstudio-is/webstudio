@@ -1,32 +1,16 @@
 import {
   insertCriticalCss as insert,
-  getCssText as getCanvasCssText,
-  resetCss as resetCanvasCss,
+  flushCss as flushCanvasCss,
 } from "@webstudio-is/react-sdk";
-import {
-  getCssText as getDesignerCssText,
-  reset as resetDesignerCss,
-} from "@webstudio-is/design-system";
+import { flushCss as flushDesignerCss } from "@webstudio-is/design-system";
 import config from "./config";
 
-const flushCanvas = () => {
-  const css = getCanvasCssText();
-  resetCanvasCss();
-  return css;
-};
-
-const flushDesigner = () => {
-  const css = getDesignerCssText();
-  resetDesignerCss();
-  return css;
-};
-
 const flushFunctions = {
-  [config.previewPath]: flushCanvas,
-  [config.canvasPath]: flushCanvas,
-  [config.designerPath]: flushDesigner,
-  [config.dashboardPath]: flushDesigner,
-  [config.loginPath]: flushDesigner,
+  [config.previewPath]: flushCanvasCss,
+  [config.canvasPath]: flushCanvasCss,
+  [config.designerPath]: flushDesignerCss,
+  [config.dashboardPath]: flushDesignerCss,
+  [config.loginPath]: flushDesignerCss,
 };
 
 const getFlushFunction = (url: string) => {
@@ -37,7 +21,7 @@ const getFlushFunction = (url: string) => {
       return flushFunctions[path];
     }
   }
-  return getCanvasCssText;
+  return flushCanvasCss;
 };
 
 /**

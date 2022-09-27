@@ -29,12 +29,11 @@ export const globalCss: typeof globalCssImport = (...args) => {
   return getCachedConfig().globalCss(...args);
 };
 
-export const getCssText = (): string => {
-  return getCachedConfig().getCssText();
-};
-
-export const resetCss = () => {
-  getCachedConfig().reset();
+export const flushCss = () => {
+  const config = getCachedConfig();
+  const css = config.getCssText();
+  config.reset();
+  return css;
 };
 
 export const setBreakpoints = (breakpoints: Array<Breakpoint>) => {
