@@ -14,7 +14,7 @@ let stitches: any;
 
 export { type CSS };
 
-export const getCachedConfig = () => {
+const getCachedConfig = () => {
   if (stitches === undefined) {
     stitches = createStitches({ media });
   }
