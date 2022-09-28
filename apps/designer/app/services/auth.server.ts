@@ -45,8 +45,8 @@ export const authenticator = new Authenticator<User>(sessionStorage, {
 if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   const github = new GitHubStrategy(
     {
-      clientID: process.env.GH_CLIENT_ID as string,
-      clientSecret: process.env.GH_CLIENT_SECRET as string,
+      clientID: process.env.GH_CLIENT_ID,
+      clientSecret: process.env.GH_CLIENT_SECRET,
       callbackURL: `${url}${config.githubCallbackPath}`,
     },
     strategyCallback
@@ -57,8 +57,8 @@ if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const google = new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${url}${config.googleCallbackPath}`,
     },
     strategyCallback
