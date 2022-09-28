@@ -2,18 +2,18 @@ import fetch from "isomorphic-fetch";
 import type { Includes, Project } from "./index.d";
 
 export const loadProject = async ({
-  webstudioAPIUrl = null,
+  apiUrl,
   projectId,
   include = { tree: true, props: true, breakpoints: true },
 }: {
-  webstudioAPIUrl: string | null;
+  apiUrl: string;
   projectId: string;
   include?: Includes<boolean>;
 }): Promise<Project> => {
-  if (!webstudioAPIUrl) {
+  if (apiUrl === undefined) {
     throw new Error("Webstudio API URL is required.");
   }
-  const baseUrl = new URL("/", `${webstudioAPIUrl}`);
+  const baseUrl = new URL(`${apiUrl}`);
   const treeUrl = new URL(`/rest/tree/${projectId}`, baseUrl);
   const propsUrl = new URL(`/rest/props/${projectId}`, baseUrl);
   const breakpointsUrl = new URL(`/rest/breakpoints/${projectId}`, baseUrl);
