@@ -1,4 +1,4 @@
-import "./fetch-polyfill";
+import fetch from "isomorphic-fetch";
 import type { Includes, Project } from "./index.d";
 
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
