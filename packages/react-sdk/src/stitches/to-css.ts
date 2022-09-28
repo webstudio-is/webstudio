@@ -1,4 +1,4 @@
-import type { CSS } from "./css";
+import type { CSS } from "./stitches";
 import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 

@@ -118,7 +118,7 @@ import {
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
-export const {
+const {
   styled,
   css,
   theme,
@@ -413,6 +413,14 @@ export const {
 });
 
 export type CSS = Stitches.CSS<typeof config>;
+
+export { styled, css, theme, globalCss, keyframes, config };
+
+export const flushCss = () => {
+  const css = getCssText();
+  reset();
+  return css;
+};
 
 export const darkTheme = createTheme({
   colors: {

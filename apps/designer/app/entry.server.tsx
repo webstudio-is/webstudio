@@ -1,10 +1,10 @@
-import { renderToString } from "react-dom/server";
-import { RemixServer } from "@remix-run/react";
-import { insertCriticalCss } from "./critical-css";
 import type { EntryContext } from "@remix-run/node";
 import * as Sentry from "@sentry/remix";
 import { initSentry } from "./shared/sentry";
 import { prisma } from "@webstudio-is/prisma-client";
+import { handleRequest as handleRequestDesigner } from "./shared/remix";
+import { handleRequest as handleRequestCanvas } from "@webstudio-is/react-sdk";
+import config from "./config";
 
 initSentry({
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
@@ -16,17 +16,15 @@ export default function handleRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  let markup = renderToString(
-    <RemixServer context={remixContext} url={request.url} />
-  );
+  const { pathname } = new URL(request.url);
+  let handle = handleRequestDesigner;
 
-  markup = insertCriticalCss(markup, request.url);
+  if (
+    pathname.indexOf(config.previewPath) === 0 ||
+    pathname.indexOf(config.canvasPath) === 0
+  ) {
+    handle = handleRequestCanvas;
+  }
 
-  responseHeaders.set("Content-Type", "text/html");
-  responseHeaders.set("Accept-CH", "Sec-CH-Prefers-Color-Scheme");
-
-  return new Response("<!DOCTYPE html>" + markup, {
-    status: responseStatusCode,
-    headers: responseHeaders,
-  });
+  return handle(request, responseStatusCode, responseHeaders, remixContext);
 }
