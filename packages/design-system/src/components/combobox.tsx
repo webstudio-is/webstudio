@@ -216,11 +216,9 @@ export const Combobox = <Item extends BaseItem>({
     */
     itemToString,
     onInputValueChange({ inputValue }) {
-      const options =
-        typeof items[0] === "object" && "label" in items[0]
-          ? { keys: ["label"] }
-          : undefined;
-      const foundItems = matchSorter(items, inputValue ?? "", options);
+      const foundItems = matchSorter(items, inputValue ?? "", {
+        keys: [itemToString],
+      });
       setFoundItems(foundItems);
     },
     onSelectedItemChange({ selectedItem }) {
