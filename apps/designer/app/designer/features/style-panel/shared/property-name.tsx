@@ -58,9 +58,6 @@ export const PropertyIcon = forwardRef<
         ref={forwardRef}
         size="1"
         css={{
-          marginLeft: "calc(-$space$1 + 1px)",
-          width: "calc(100% - 2px)",
-          height: "calc(100% - 2px)",
           borderRadius: "$1",
           border: "2px solid $colors$loContrast",
           ...(isCurrentBreakpoint && {
