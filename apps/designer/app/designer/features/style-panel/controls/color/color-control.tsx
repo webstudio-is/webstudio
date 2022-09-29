@@ -12,7 +12,6 @@ import {
 } from "@webstudio-is/design-system";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
-import { StyleConfig } from "../../shared/configs";
 
 const stringifyRGBA = (color: RGBColor) => {
   const { r, g, b, a = 1 } = color;
@@ -43,7 +42,6 @@ type ColorPickerProps = {
   onChangeComplete: (value: string) => void;
   value: string;
   id: string;
-  styleConfig: StyleConfig;
 };
 
 const ColorPicker = ({
@@ -123,7 +121,6 @@ export const ColorControl = ({
       <ColorPicker
         id={styleConfig.property}
         value={String(value.value)}
-        styleConfig={styleConfig}
         onChange={(value) => {
           setValue(value, { isEphemeral: true });
         }}
