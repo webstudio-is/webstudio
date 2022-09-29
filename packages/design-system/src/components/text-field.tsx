@@ -144,7 +144,7 @@ const TextFieldBase = styled("div", {
   },
 });
 
-type TextFieldProps = Pick<
+export type TextFieldProps = Pick<
   React.ComponentProps<typeof TextFieldBase>,
   "size" | "variant" | "state" | "css"
 > &
