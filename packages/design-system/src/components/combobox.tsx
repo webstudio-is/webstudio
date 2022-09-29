@@ -228,7 +228,7 @@ export const Combobox = <Item extends BaseItem>({
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(items[highlightedIndex]);
+        onItemHighlight?.(foundItems[highlightedIndex]);
       }
     },
   });
