@@ -1,4 +1,5 @@
-import React from "react";
+import * as React from "react";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { darkTheme, globalCss } from "@webstudio-is/design-system";
 
 export const parameters = {
@@ -15,6 +16,7 @@ const globalStyles = globalCss({
   body: {
     backgroundColor: "$background",
     color: "$text",
+    fontFamily: "$sans",
   },
 });
 
@@ -22,6 +24,10 @@ export const decorators = [
   (StoryFn: any) => {
     document.body.classList.add(darkTheme);
     globalStyles();
-    return <StoryFn />;
+    return (
+      <TooltipProvider>
+        <StoryFn />
+      </TooltipProvider>
+    );
   },
 ];
