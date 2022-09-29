@@ -1,25 +1,32 @@
-import {
-  useState,
-  forwardRef,
-  /* 
-  useCallback,
-*/
-  type ComponentProps,
-  type ForwardRefRenderFunction,
-} from "react";
+import { Popper, PopperAnchor, PopperContent } from "@radix-ui/react-popper";
 import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
-import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
-import { useCombobox, type UseComboboxGetItemPropsOptions } from "downshift";
+import {
+  DownshiftState,
+  StateChangeOptions,
+  useCombobox,
+  type UseComboboxGetItemPropsOptions,
+} from "downshift";
 import { matchSorter } from "match-sorter";
+import * as React from "react";
+import {
+  type ComponentProps,
+  forwardRef,
+  type ForwardRefRenderFunction,
+  useCallback,
+  useState,
+} from "react";
 import { styled } from "../stitches.config";
-import { IconButton } from "./icon-button";
-import { TextField } from "./text-field";
 import { Box } from "./box";
 import { Grid } from "./grid";
+import { Text } from "./text";
+import { IconButton } from "./icon-button";
+import { TextField } from "./text-field";
 
-type Label = string;
+type Value = string | number;
 
-type BaseItem = { label: Label; disabled?: boolean } | Label;
+type BaseItem =
+  | { label?: string; disabled?: boolean; [x: string]: unknown }
+  | Value;
 
 type ComboboxTextFieldProps<Item> = {
   inputProps: ComponentProps<typeof TextField>;
@@ -144,27 +151,37 @@ type ComboboxProps<Item> = {
   renderPopperContent?: (
     props: ComponentProps<typeof ComboboxPopperContent>
   ) => JSX.Element;
+  stateReducer?: (
+    state: DownshiftState<Item>,
+    changes: StateChangeOptions<Item>
+  ) => Partial<StateChangeOptions<Item>>;
 };
 
-export const Combobox = <Item extends BaseItem>({
+// eslint-disable-next-line func-style
+export function Combobox<Item extends BaseItem>({
   items,
   value,
   name,
   placeholder,
   itemToString = (item) =>
     item != null && typeof item == "object" && "label" in item
-      ? item.label
-      : item ?? "",
+      ? item.label ?? ""
+      : String(item) ?? "",
   onItemSelect,
   onItemHighlight,
   renderTextField = (props) => <ComboboxTextField {...props} />,
   // IMPORTANT! Without Item passed to list <List<Item> typescript is 10x slower!
   renderList = (props) => <List<Item> {...props} />,
   renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
-}: ComboboxProps<Item>) => {
+  stateReducer,
+}: ComboboxProps<Item>) {
   const [foundItems, setFoundItems] = useState(items);
-  /*
-  const stateReducer = useCallback((state, actionAndChanges) => {
+
+  const finalStateReducer = useCallback((state, actionAndChanges) => {
+    if (typeof stateReducer === "function") {
+      return stateReducer(state, actionAndChanges);
+    }
+
     const { type, changes } = actionAndChanges;
     switch (type) {
       // on item selection.
@@ -197,7 +214,7 @@ export const Combobox = <Item extends BaseItem>({
         return changes; // otherwise business as usual.
     }
   }, []);
-*/
+
   const {
     isOpen,
     getToggleButtonProps,
@@ -211,9 +228,7 @@ export const Combobox = <Item extends BaseItem>({
   } = useCombobox({
     items: foundItems as Item[],
     selectedItem: value ?? null, // Avoid downshift warning about switching controlled mode
-    /* @todo breaks input
-    stateReducer,
-    */
+    stateReducer: finalStateReducer,
     itemToString,
     onInputValueChange({ inputValue }) {
       const foundItems = matchSorter(items, inputValue ?? "", {
@@ -231,11 +246,16 @@ export const Combobox = <Item extends BaseItem>({
     },
   });
 
-  const inputProps: Record<string, unknown> = getInputProps({
+  const inputProps = getInputProps({
     name,
     placeholder: selectedItem ? "" : placeholder, // Placeholder should not be visible when we have selected item
-    prefix: itemToString?.(selectedItem ?? undefined),
-    /* @todo breaks input
+    // @todo: Support for custom rendering for items
+    // @ts-expect-error This is the wrong "prefix" from HTML element. Not sure how to make it accept our TextFieldProps
+    prefix: selectedItem ? (
+      <Text css={{ whiteSpace: "nowrap" }}>
+        {itemToString?.(selectedItem ?? undefined)}
+      </Text>
+    ) : null,
     onKeyDown: (event) => {
       // When we press Backspace and the input is empty,
       // we should to clear the selection
@@ -244,7 +264,6 @@ export const Combobox = <Item extends BaseItem>({
         onItemSelect?.(undefined);
       }
     },
-    */
   });
   const toggleProps: Record<string, unknown> = getToggleButtonProps();
   const comboboxProps: Record<string, unknown> = getComboboxProps();
@@ -277,6 +296,6 @@ export const Combobox = <Item extends BaseItem>({
       </Box>
     </Popper>
   );
-};
+}
 
 Combobox.displayName = "Combobox";
