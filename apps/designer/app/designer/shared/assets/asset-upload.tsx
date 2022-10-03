@@ -1,4 +1,4 @@
-import { Form, useActionData, useSubmit } from "@remix-run/react";
+import { Form, useActionData } from "@remix-run/react";
 import ObjectID from "bson-objectid";
 import { ChangeEvent, useEffect, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
@@ -6,8 +6,9 @@ import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType } from "@webstudio-is/asset-uploader";
 import type { ActionData, PreviewAsset } from "./types";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
+import { useSerialSubmit } from "./use-serial-submit";
 
-const readPreviews = (fileList: FileList): Promise<PreviewAsset[]> => {
+const toPreviewAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
   const assets: Array<Promise<PreviewAsset>> = Array.from(fileList).map(
     (file) =>
       new Promise((resolve, reject) => {
@@ -40,15 +41,15 @@ const useUpload = ({
   onActionData: (data: ActionData) => void;
   onSubmit: (assets: Array<PreviewAsset>) => void;
 }) => {
-  const submit = useSubmit();
+  const submit = useSerialSubmit();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const actionData: ActionData | undefined = useActionData();
 
-  const onFormChange = (event: ChangeEvent<HTMLFormElement>) => {
+  const onChange = (event: ChangeEvent<HTMLFormElement>) => {
     const files = inputRef?.current?.files;
-    if (files) {
+    if (files && files.length !== 0) {
       submit(event.currentTarget);
-      readPreviews(files).then(onSubmit);
+      toPreviewAssets(files).then(onSubmit);
       event.currentTarget.reset();
     }
   };
@@ -59,7 +60,7 @@ const useUpload = ({
     }
   }, [actionData, onActionData]);
 
-  return { inputRef, onChange: onFormChange };
+  return { inputRef, onChange };
 };
 
 const acceptMap = {
