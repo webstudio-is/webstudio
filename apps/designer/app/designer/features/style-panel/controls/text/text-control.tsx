@@ -111,13 +111,44 @@ export const TextControl = ({
             <TextField
               {...inputProps}
               inputRef={inputRef}
+              {...(value.type === "unit" && {
+                onPointerDown: (event: PointerEvent<HTMLElement>) => {
+                  event.preventDefault();
+                },
+                onPointerUp: () => {
+                  if (Object(inputRef.current)["preventFocus"])
+                    Object(inputRef.current)["preventFocus"] = undefined;
+                  else inputRef.current?.focus();
+                },
+                onPointerEnter: (event: PointerEvent<HTMLElement>) => {
+                  if (
+                    inputRef.current?.ownerDocument.activeElement ===
+                    inputRef.current
+                  )
+                    return;
+                  Object(inputRef.current)["scrubObject"] ??=
+                    numericScrubControl(event.currentTarget, {
+                      initialValue: value.value,
+                      onValueInput: (event) => {
+                        Object(inputRef.current).value = String(event.value);
+                        Object(inputRef.current)["preventFocus"] = true;
+                        handleChange("value", event.value, true);
+                      },
+                      onValueChange: (event) => {
+                        setValue(String(event.value));
+                      },
+                    });
+                },
+              })}
               onFocus={(event: FocusEvent<HTMLInputElement>) => {
                 event.currentTarget.select();
+                Object(inputRef.current)["scrubObject"]?.disconnectedCallback();
+                Object(inputRef.current)["scrubObject"] = undefined;
               }}
               onBlur={(event) => {
                 if (
-                  event.currentTarget.value !==
-                  event.currentTarget.getAttribute("value")
+                  inputRef.current?.value !==
+                  inputRef.current?.getAttribute("value")
                 )
                   setValue(event.currentTarget.value);
               }}
@@ -128,22 +159,6 @@ export const TextControl = ({
                 <PropertyIcon
                   property={styleConfig.property}
                   label={styleConfig.label}
-                  {...(value.type === "unit" && {
-                    onPointerEnter: (event: PointerEvent<HTMLElement>) => {
-                      Object(event.currentTarget)[Symbol.for("scrub")] ??=
-                        numericScrubControl(event.currentTarget, {
-                          initialValue: value.value,
-                          onValueInput: (event) => {
-                            if (inputRef.current)
-                              inputRef.current.value = String(event.value);
-                            handleChange("unit", event.value, true);
-                          },
-                          onValueChange: (event) => {
-                            setValue(String(event.value));
-                          },
-                        });
-                    },
-                  })}
                 />
               }
               suffix={

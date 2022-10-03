@@ -90,6 +90,8 @@ export const numericScrubControl = (
         break;
       }
       case "pointerdown": {
+        // light touches don't register corresponding pointerup
+        if (event.pressure === 0) break;
         state.offset = offset;
         handleCursor(targetNode.ownerDocument.documentElement, true);
         requestPointerLock(state, event, targetNode);
