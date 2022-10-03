@@ -1,5 +1,4 @@
-import type { FormEncType, FormMethod, SubmitOptions } from "@remix-run/react";
-import { useActionData, useSubmit } from "@remix-run/react";
+import { useActionData, useSubmit, type SubmitOptions } from "@remix-run/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const initialSubmission: {
@@ -35,14 +34,8 @@ export const useSerialSubmit = () => {
     }
   }, [actionData, submission, submit]);
 
-  return useCallback((form: HTMLFormElement) => {
-    const formData = new FormData(form);
+  return useCallback((formData: FormData, options: SubmitOptions) => {
     const data = Array.from(formData.entries());
-    const options = {
-      method: form.method as FormMethod,
-      action: form.action,
-      encType: form.enctype as FormEncType,
-    };
     setSubmission({ data, options });
   }, []);
 };
