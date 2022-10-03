@@ -15,6 +15,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
     "storybook": "turbo run storybook:run",
+    "storybook:run": "wait-on http://localhost:6006 http://localhost:6007 http://localhost:6008 && start-storybook -p 6010",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
     "migrations": "cd apps/designer && migrations --dev"
@@ -25,7 +26,8 @@
     "lint-staged": "^13.0.2",
     "prettier": "latest",
     "turbo": "latest",
-    "typescript": "4.7.4"
+    "typescript": "4.7.4",
+    "wait-on": "^6.0.1"
   },
   "engines": {
     "npm": ">=7.0.0",

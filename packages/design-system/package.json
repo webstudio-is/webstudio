@@ -11,7 +11,7 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
-    "storybook:run": "start-storybook -p 6006",
+    "storybook:run": "start-storybook -p 6007",
     "storybook:build": "build-storybook"
   },
   "devDependencies": {
