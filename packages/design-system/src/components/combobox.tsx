@@ -228,7 +228,9 @@ export function Combobox<Item extends BaseItem>({
   } = useCombobox({
     items: foundItems as Item[],
     selectedItem: value ?? null, // Avoid downshift warning about switching controlled mode
+    /* @todo still breaks input
     stateReducer: finalStateReducer,
+    */
     itemToString,
     onInputValueChange({ inputValue }) {
       const foundItems = matchSorter(items, inputValue ?? "", {
@@ -250,12 +252,14 @@ export function Combobox<Item extends BaseItem>({
     name,
     placeholder: selectedItem ? "" : placeholder, // Placeholder should not be visible when we have selected item
     // @todo: Support for custom rendering for items
-    // @ts-expect-error This is the wrong "prefix" from HTML element. Not sure how to make it accept our TextFieldProps
+    /* @todo remove?
     prefix: selectedItem ? (
       <Text css={{ whiteSpace: "nowrap" }}>
         {itemToString?.(selectedItem ?? undefined)}
       </Text>
     ) : null,
+    */
+    /* @todo still breaks input
     onKeyDown: (event) => {
       // When we press Backspace and the input is empty,
       // we should to clear the selection
@@ -264,6 +268,7 @@ export function Combobox<Item extends BaseItem>({
         onItemSelect?.(undefined);
       }
     },
+    */
   });
   const toggleProps: Record<string, unknown> = getToggleButtonProps();
   const comboboxProps: Record<string, unknown> = getComboboxProps();
