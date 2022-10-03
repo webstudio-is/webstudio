@@ -7,7 +7,7 @@ import { type AssetType } from "@webstudio-is/asset-uploader";
 import type { ActionData, PreviewAsset } from "./types";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 
-const readAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
+const readPreviews = (fileList: FileList): Promise<PreviewAsset[]> => {
   const assets: Array<Promise<PreviewAsset>> = Array.from(fileList).map(
     (file) =>
       new Promise((resolve, reject) => {
@@ -33,6 +33,35 @@ const readAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
   return Promise.all(assets);
 };
 
+const useUpload = ({
+  onSubmit,
+  onActionData,
+}: {
+  onActionData: (data: ActionData) => void;
+  onSubmit: (assets: Array<PreviewAsset>) => void;
+}) => {
+  const submit = useSubmit();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const actionData: ActionData | undefined = useActionData();
+
+  const onFormChange = (event: ChangeEvent<HTMLFormElement>) => {
+    const files = inputRef?.current?.files;
+    if (files) {
+      submit(event.currentTarget);
+      readPreviews(files).then(onSubmit);
+      event.currentTarget.reset();
+    }
+  };
+
+  useEffect(() => {
+    if (actionData !== undefined) {
+      onActionData(actionData);
+    }
+  }, [actionData, onActionData]);
+
+  return { inputRef, onChange: onFormChange };
+};
+
 const acceptMap = {
   image: "image/*",
   font: FONT_MIME_TYPES,
@@ -49,32 +78,14 @@ export const AssetUpload = ({
   onActionData,
   type,
 }: AssetUploadProps) => {
-  const submit = useSubmit();
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const actionData: ActionData | undefined = useActionData();
-
-  const onFormChange = (event: ChangeEvent<HTMLFormElement>) => {
-    const newFiles = inputRef?.current?.files;
-    if (newFiles) {
-      submit(event.currentTarget);
-      readAssets(newFiles).then(onSubmit);
-      event.currentTarget.reset();
-    }
-  };
-
-  useEffect(() => {
-    if (actionData !== undefined) {
-      onActionData(actionData);
-    }
-  }, [actionData, onActionData]);
-
+  const { inputRef, onChange } = useUpload({ onSubmit, onActionData });
   return (
     <Flex
       as={Form}
       css={{ flexGrow: 1 }}
       method="post"
       encType="multipart/form-data"
-      onChange={onFormChange}
+      onChange={onChange}
     >
       <input
         accept={acceptMap[type]}
