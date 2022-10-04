@@ -1,3 +1,5 @@
+import { expect } from "@storybook/jest";
+import { userEvent, waitFor, within } from "@storybook/testing-library";
 import React from "react";
 import { ComponentStory } from "@storybook/react";
 import { BrushIcon, ChevronDownIcon } from "@webstudio-is/icons";
@@ -11,6 +13,10 @@ import { Text } from "./text";
 
 export default {
   component: TextField,
+  argTypes: {
+    onFocus: { action: true },
+    onBlur: { action: true },
+  },
 };
 
 export const Default: ComponentStory<typeof TextField> = () => {
@@ -183,4 +189,28 @@ export const Interactive: ComponentStory<typeof TextField> = () => {
       </Button>
     </Flex>
   );
+};
+
+export const FocusEvents: ComponentStory<typeof TextField> = (args) => {
+  return (
+    <label>
+      Focus and blur:
+      <TextField name="focus" suffix={<Button>test</Button>} {...args} />
+    </label>
+  );
+};
+FocusEvents.play = async ({ args, canvasElement }) => {
+  const canvas = within(canvasElement);
+
+  const el = canvas.getByLabelText("Focus and blur:");
+
+  await userEvent.tab();
+  await waitFor(() => expect(el).toHaveFocus());
+  await userEvent.tab();
+  await waitFor(() => expect(args.onBlur).not.toHaveBeenCalled());
+  await userEvent.tab();
+  await waitFor(() => expect(args.onBlur).toHaveBeenCalled());
+
+  await waitFor(() => expect(args.onFocus).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(args.onBlur).toHaveBeenCalledTimes(1));
 };

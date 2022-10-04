@@ -1,4 +1,5 @@
 import React from "react";
+import { useFocusWithin } from "@react-aria/interactions";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 
@@ -165,8 +166,22 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       size,
       state,
       variant,
+      onFocus,
+      onBlur,
       ...textFieldProps
     } = props;
+
+    const { focusWithinProps } = useFocusWithin({
+      isDisabled: disabled,
+      onFocusWithin: (event) => {
+        // @ts-expect-error Type mismatch from react-aria
+        onFocus?.(event);
+      },
+      onBlurWithin: (event) => {
+        // @ts-expect-error Type mismatch from react-aria
+        onBlur?.(event);
+      },
+    });
 
     return (
       <TextFieldBase
@@ -176,6 +191,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
         state={state}
         variant={variant}
         css={css}
+        {...focusWithinProps}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <InputBase disabled={disabled} {...textFieldProps} ref={inputRef} />
