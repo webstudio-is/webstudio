@@ -1,18 +1,9 @@
-import {
-  Grid,
-  TextField,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverPortal,
-} from "@webstudio-is/design-system";
+import { Grid, TextField } from "@webstudio-is/design-system";
+import { FontsManager } from "~/designer/shared/fonts-manager";
 import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
 import { PropertyName } from "../../shared/property-name";
-import { PANEL_WIDTH } from "~/designer/shared/constants";
-import { MutableRefObject, useRef, useState } from "react";
-import { FontsManager } from "~/designer/shared/fonts-manager";
+import { ValuePickerPopover } from "../../shared/value-picker-popover";
 
 const textFieldStyle = {
   paddingLeft: "calc($sizes$1 + $nudge$3)",
@@ -21,23 +12,12 @@ const textFieldStyle = {
   fontWeight: "500",
 };
 
-const usePickerSideOffset = (
-  isOpen: boolean
-): [MutableRefObject<HTMLInputElement | null>, number] => {
-  const ref = useRef<HTMLInputElement | null>(null);
-  const sideOffset =
-    isOpen && ref.current !== null ? PANEL_WIDTH - ref.current.offsetWidth : 0;
-  return [ref, sideOffset];
-};
-
 export const FontFamilyControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [textFieldRef, sideOffset] = usePickerSideOffset(isOpen);
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
@@ -52,26 +32,19 @@ export const FontFamilyControl = ({
   return (
     <Grid columns={2}>
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
-      <Popover open={isOpen} onOpenChange={setIsOpen} modal>
-        <PopoverTrigger asChild>
-          <TextField
-            ref={textFieldRef}
-            css={textFieldStyle}
-            spellCheck={false}
-            readOnly
-            defaultValue={value.value}
-            onClick={() => {
-              setIsOpen(true);
-            }}
-          />
-        </PopoverTrigger>
-        <PopoverPortal>
-          <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
-            <PopoverHeader title="Fonts" />
-            <FontsManager value={String(value.value)} onChange={setValue} />
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
+      <ValuePickerPopover
+        title="Fonts"
+        content={
+          <FontsManager value={String(value.value)} onChange={setValue} />
+        }
+      >
+        <TextField
+          css={textFieldStyle}
+          spellCheck={false}
+          readOnly
+          defaultValue={value.value}
+        />
+      </ValuePickerPopover>
     </Grid>
   );
 };
