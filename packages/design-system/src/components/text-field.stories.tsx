@@ -214,3 +214,31 @@ FocusEvents.play = async ({ args, canvasElement }) => {
   await waitFor(() => expect(args.onFocus).toHaveBeenCalledTimes(1));
   await waitFor(() => expect(args.onBlur).toHaveBeenCalledTimes(1));
 };
+
+export const ClickCapture: ComponentStory<typeof TextField> = (args) => {
+  return (
+    <TextField
+      name="click"
+      placeholder="Click on the icon to focus input"
+      prefix={
+        <Flex title="icon">
+          <BrushIcon />
+        </Flex>
+      }
+      suffix={
+        <IconButton>
+          <ChevronDownIcon />
+        </IconButton>
+      }
+      {...args}
+    />
+  );
+};
+ClickCapture.play = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const input = canvas.getByPlaceholderText("Click on the icon to focus input");
+  await userEvent.click(canvas.getByTitle("icon"));
+  await waitFor(() => expect(input).toHaveFocus());
+  await userEvent.click(canvas.getByRole("button"));
+  await waitFor(() => expect(input).toHaveFocus());
+};

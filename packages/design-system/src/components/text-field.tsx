@@ -1,3 +1,4 @@
+import { mergeRefs } from "@react-aria/utils";
 import React from "react";
 import { useFocusWithin } from "@react-aria/interactions";
 import { styled } from "../stitches.config";
@@ -171,6 +172,12 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       ...textFieldProps
     } = props;
 
+    const internalInputRef = React.useRef<HTMLInputElement>(null);
+
+    const focusInnerInput = React.useCallback(() => {
+      internalInputRef.current?.focus();
+    }, [internalInputRef]);
+
     const { focusWithinProps } = useFocusWithin({
       isDisabled: disabled,
       onFocusWithin: (event) => {
@@ -192,9 +199,14 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
         variant={variant}
         css={css}
         {...focusWithinProps}
+        onClickCapture={focusInnerInput}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
-        <InputBase disabled={disabled} {...textFieldProps} ref={inputRef} />
+        <InputBase
+          disabled={disabled}
+          {...textFieldProps}
+          ref={mergeRefs(internalInputRef, inputRef ?? null)}
+        />
 
         {prefix && (
           <Flex

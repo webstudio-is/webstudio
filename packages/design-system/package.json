@@ -63,6 +63,7 @@
     "@radix-ui/react-tooltip": "^1.0.0",
     "@radix-ui/react-use-layout-effect": "^1.0.0",
     "@react-aria/interactions": "^3.11.0",
+    "@react-aria/utils": "^3.13.3",
     "@stitches/react": "^1.2.8",
     "@webstudio-is/icons": "*",
     "react-hot-toast": "^2.3.0"
