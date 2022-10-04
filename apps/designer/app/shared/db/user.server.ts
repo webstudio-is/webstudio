@@ -1,5 +1,5 @@
-import { GitHubProfile } from "remix-auth-github";
-import { GoogleProfile } from "remix-auth-google";
+import type { GitHubProfile } from "remix-auth-github";
+import type { GoogleProfile } from "remix-auth-google";
 import { prisma, User } from "@webstudio-is/prisma-client";
 
 export const createDemoUser = async (userId: string) => {
@@ -73,26 +73,13 @@ const genericCreateAccount = async (userData: {
   return newTeam.users[0];
 };
 
-export const createOrLoginWithGithub = async (
-  profile: GitHubProfile
+export const createOrLoginWithOAuth = async (
+  profile: GoogleProfile | GitHubProfile
 ): Promise<User> => {
   const userData = {
-    email: profile._json.email,
+    email: (profile.emails ?? [])[0]?.value,
     username: profile.displayName,
-    image: profile._json.avatar_url,
-    provider: profile.provider,
-  };
-  const newUser = await genericCreateAccount(userData);
-  return newUser;
-};
-
-export const createOrLoginWithGoogle = async (
-  profile: GoogleProfile
-): Promise<User> => {
-  const userData = {
-    email: profile._json.email,
-    username: profile.displayName,
-    image: profile._json.picture,
+    image: (profile.photos ?? [])[0]?.value,
     provider: profile.provider,
   };
   const newUser = await genericCreateAccount(userData);

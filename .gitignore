@@ -48,3 +48,4 @@ yarn-error.log*
 # builds
 packages/**/lib
 generated
+storybook-static

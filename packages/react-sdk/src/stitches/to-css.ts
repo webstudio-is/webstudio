@@ -1,4 +1,4 @@
-import type { CSS } from "./css";
+import type { CSS } from "./stitches";
 import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
 
 export const toValue = (value: StyleValue): string => {
