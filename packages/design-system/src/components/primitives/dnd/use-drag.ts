@@ -67,7 +67,7 @@ export const useDrag = <DragItemData>(
     };
 
     const handleDragStart = (event: Event) => {
-      // Prevent default drag behavior, for example dragging a link.
+      // Prevent default drag behavior. For example, dragging a link.
       event.preventDefault();
     };
 
