@@ -66,7 +66,9 @@
     }
   },
   "alt": {
-    "defaultValue": null,
+    "defaultValue": {
+      "value": ""
+    },
     "description": "",
     "name": "alt",
     "parent": {
@@ -158,7 +160,9 @@
     "options": ["async", "auto", "sync"]
   },
   "height": {
-    "defaultValue": null,
+    "defaultValue": {
+      "value": "auto"
+    },
     "description": "",
     "name": "height",
     "parent": {
@@ -180,7 +184,9 @@
     }
   },
   "loading": {
-    "defaultValue": null,
+    "defaultValue": {
+      "value": "lazy"
+    },
     "description": "",
     "name": "loading",
     "parent": {
@@ -298,7 +304,7 @@
   },
   "src": {
     "defaultValue": {
-      "value": "placeholder.webp"
+      "value": ""
     },
     "description": "",
     "name": "src",
@@ -365,7 +371,9 @@
     }
   },
   "width": {
-    "defaultValue": null,
+    "defaultValue": {
+      "value": "auto"
+    },
     "description": "",
     "name": "width",
     "parent": {
