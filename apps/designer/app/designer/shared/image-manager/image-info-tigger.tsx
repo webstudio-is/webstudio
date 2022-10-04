@@ -8,17 +8,17 @@ import {
   PopoverHeader,
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
-import { AssetInfo } from "./asset-info";
+import { ImageInfo } from "./image-info";
 import { cssVars } from "@webstudio-is/css-vars";
 import { Asset } from "@webstudio-is/asset-uploader";
 
 const triggerVisibilityVar = cssVars.define("trigger-visibility");
 
-export const assetInfoTriggerCssVars = ({ show }: { show: boolean }) => ({
+export const imageInfoTriggerCssVars = ({ show }: { show: boolean }) => ({
   [triggerVisibilityVar]: show ? "visible" : "hidden",
 });
 
-export const AssetInfoTrigger = ({
+export const ImageInfoTrigger = ({
   asset,
   onDelete,
 }: {
@@ -53,7 +53,7 @@ export const AssetInfoTrigger = ({
       <PopoverPortal>
         <PopoverContent css={{ zIndex: "$1" }}>
           <PopoverHeader title="Asset Details" />
-          <AssetInfo
+          <ImageInfo
             onDelete={(ids) => {
               setInfoOpen(false);
               onDelete(ids);

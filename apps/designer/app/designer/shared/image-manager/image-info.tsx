@@ -44,12 +44,12 @@ const Filename = ({ name }: { name: string }) => {
   );
 };
 
-type AssetInfoProps = {
+type ImageInfoProps = {
   asset: Asset;
   onDelete: (ids: Array<string>) => void;
 };
 
-export const AssetInfo = ({ asset, onDelete }: AssetInfoProps) => {
+export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
   const { size, meta, id, name } = asset;
   return (
     <>

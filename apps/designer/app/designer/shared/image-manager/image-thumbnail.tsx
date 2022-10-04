@@ -3,7 +3,7 @@ import { Box } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
-import { AssetInfoTrigger, assetInfoTriggerCssVars } from "./asset-info-tigger";
+import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { PreviewAsset } from "~/designer/shared/assets";
 import { Asset } from "@webstudio-is/asset-uploader";
 
@@ -52,7 +52,7 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
   );
 };
 
-export const AssetThumbnail = ({
+export const ImageThumbnail = ({
   asset,
   onDelete,
 }: {
@@ -76,12 +76,12 @@ export const AssetThumbnail = ({
         alignItems: "center",
         padding: "0 $2",
         position: "relative",
-        "&:hover": assetInfoTriggerCssVars({ show: true }),
+        "&:hover": imageInfoTriggerCssVars({ show: true }),
       }}
     >
       <Thumbnail path={path} status={status} />
       {isUploadedAsset && (
-        <AssetInfoTrigger
+        <ImageInfoTrigger
           asset={asset}
           onDelete={(ids) => {
             setIsDeleting(true);

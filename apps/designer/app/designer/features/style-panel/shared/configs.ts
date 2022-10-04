@@ -54,7 +54,8 @@ export type Control =
   | "Menu"
   | "Select"
   | "Empty"
-  | "FontFamily";
+  | "FontFamily"
+  | "Image";
 
 export type StyleConfig = BaseStyleConfig & {
   control: Control;
@@ -93,6 +94,9 @@ const getControl = (property: StyleProperty): Control => {
     }
     case "fontFamily": {
       return isFeatureEnabled("fonts") ? "FontFamily" : "Text";
+    }
+    case "backgroundImage": {
+      return isFeatureEnabled("assets") ? "Image" : "Text";
     }
   }
 
