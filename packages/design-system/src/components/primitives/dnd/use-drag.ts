@@ -66,6 +66,11 @@ export const useDrag = <DragItemData>(
       }
     };
 
+    const handleDragStart = (event: Event) => {
+      // Prevent default drag behavior. For example, dragging a link.
+      event.preventDefault();
+    };
+
     const handlePointerDown = (event: PointerEvent) => {
       if (event.button !== 0 || state.current.status !== "idle") {
         return;
@@ -89,6 +94,7 @@ export const useDrag = <DragItemData>(
       window.addEventListener("pointermove", handlePointerMove);
       window.addEventListener("pointerup", handlePointerUp);
       window.addEventListener("pointercancel", handlePointerCancel);
+      window.addEventListener("dragstart", handleDragStart);
     };
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -154,6 +160,7 @@ export const useDrag = <DragItemData>(
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerCancel);
+      window.removeEventListener("dragstart", handleDragStart);
     };
 
     const handlePointerUp = (event: PointerEvent) => {
