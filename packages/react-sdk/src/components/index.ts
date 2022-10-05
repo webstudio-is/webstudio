@@ -9,3 +9,4 @@ export { default as Italic } from "./italic.ws";
 export { default as Button } from "./button.ws";
 export { default as Input } from "./input.ws";
 export { default as Form } from "./form.ws";
+export { default as Image } from "./image.ws";

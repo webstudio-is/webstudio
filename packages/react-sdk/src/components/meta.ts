@@ -9,3 +9,4 @@ export { default as Italic } from "./italic.stories";
 export { default as Link } from "./link.stories";
 export { default as Paragraph } from "./paragraph.stories";
 export { default as TextBlock } from "./text-block.stories";
+export { default as Image } from "./image.stories";
