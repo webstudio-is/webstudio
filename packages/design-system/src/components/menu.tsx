@@ -24,12 +24,12 @@ export const baseItemCss = css({
 export const itemCss = css(baseItemCss, {
   position: "relative",
   color: "$hiContrast",
-  "&:focus, &[data-found]": {
+  "&:focus, &[data-found], &[aria-selected=true]": {
     outline: "none",
     backgroundColor: "$blue9",
     color: "white",
   },
-  "&[data-disabled]": {
+  "&[data-disabled], &[aria-disabled]": {
     color: "$slate9",
   },
 });

@@ -1,7 +1,10 @@
-import { action } from "@storybook/addon-actions";
 import { ComponentStory } from "@storybook/react";
-import React from "react";
-import { Combobox, ComboboxTextField } from "./combobox";
+import { MagnifyingGlassIcon } from "@webstudio-is/icons";
+import { useCombobox as useDownshiftCombobox } from "downshift";
+import React, { useCallback } from "react";
+import { TextField } from "./text-field";
+import { Combobox, ComboboxListboxItem, useCombobox } from "./combobox";
+import { Flex } from "./flex";
 
 export default {
   component: Combobox,
@@ -13,59 +16,90 @@ export const Simple: ComponentStory<typeof Combobox> = () => {
     { label: "Banana" },
     { label: "Orange" },
   ] as const;
-  const [value, setValue] = React.useState<typeof items[number] | undefined>();
+  const [value, setValue] = React.useState<typeof items[number] | null>(null);
   return (
     <Combobox
       name="fruit"
       placeholder="Select a fruit"
       items={items}
       value={value}
-      onItemSelect={setValue}
+      onItemSelect={(value) => {
+        // If the value is cleared, we revert to previous state
+        if (value !== null) {
+          setValue(value);
+        }
+      }}
+      itemToString={(item) => item?.label ?? ""}
     />
   );
 };
 
-export const CustomInput: ComponentStory<typeof Combobox> = () => {
-  const items = [
-    { label: "Apple", value: "apple", disabled: true },
-    { label: "Banana", value: "banana" },
-    { label: "Orange", value: "orange" },
-  ];
-  const [value, setValue] = React.useState<typeof items[0] | undefined>(
-    items[0]
-  );
+export const Complex: ComponentStory<typeof Combobox> = () => {
+  const [value, setValue] = React.useState<string | null>(null);
+
+  const stateReducer = useCallback((state, actionAndChanges) => {
+    const { type, changes } = actionAndChanges;
+    switch (type) {
+      // on item selection.
+      case useDownshiftCombobox.stateChangeTypes.ItemClick:
+      case useDownshiftCombobox.stateChangeTypes.InputKeyDownEnter:
+      case useDownshiftCombobox.stateChangeTypes.InputBlur:
+      case useDownshiftCombobox.stateChangeTypes
+        .ControlledPropUpdatedSelectedItem:
+        return {
+          ...changes,
+          // if we have a selected item.
+          ...(changes.selectedItem && {
+            // we will set the input value to "" (empty string).
+            inputValue: "",
+          }),
+        };
+
+      // Remove "reset" action
+      case useDownshiftCombobox.stateChangeTypes.InputKeyDownEscape: {
+        return {
+          ...state,
+        };
+      }
+
+      default:
+        return changes; // otherwise business as usual.
+    }
+  }, []);
+
+  const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
+    useCombobox({
+      items: ["Apple", "Banana", "Orange"],
+      value,
+      itemToString: (item) => item ?? "",
+      stateReducer,
+      onItemSelect: (value) => {
+        setValue(value);
+      },
+    });
 
   return (
-    <Combobox
-      name="fruit"
-      placeholder="Select a fruit"
-      items={items}
-      value={value}
-      onItemSelect={setValue}
-      onItemHighlight={(item) => {
-        action("Highlight")(item);
-      }}
-      renderTextField={({ inputProps, toggleProps }) => (
-        <ComboboxTextField
-          toggleProps={toggleProps}
-          inputProps={{
-            ...inputProps,
-            onKeyDown: (event) => {
-              inputProps.onKeyDown?.(event);
-              switch (event.key) {
-                case "Enter": {
-                  action("Enter")(inputProps.value);
-                  break;
-                }
-              }
-            },
-            onBlur: (event) => {
-              inputProps.onBlur?.(event);
-              action("Blur")(inputProps.value);
-            },
-          }}
-        />
-      )}
-    />
+    <Flex {...getComboboxProps()} css={{ flexDirection: "column", gap: "$3" }}>
+      <TextField
+        type="search"
+        prefix={<MagnifyingGlassIcon />}
+        {...getInputProps({})}
+      />
+      <fieldset>
+        <legend>Choose an item</legend>
+        <Flex {...getMenuProps()} css={{ flexDirection: "column" }}>
+          {items.map((item, index) => {
+            return (
+              <ComboboxListboxItem
+                key={index}
+                {...getItemProps({ item, index })}
+              >
+                {item}
+              </ComboboxListboxItem>
+            );
+          })}
+        </Flex>
+      </fieldset>
+    </Flex>
   );
 };
