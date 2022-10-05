@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import type { Page, Project } from "@webstudio-is/project";
+import {
+  type Pages,
+  type Project,
+  utils as projectUtils,
+} from "@webstudio-is/project";
 import type { Config } from "~/config";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
@@ -9,6 +13,7 @@ import { Inspector } from "./features/inspector";
 import {
   useAssets,
   useHoveredInstanceData,
+  usePages,
   useSelectedInstanceData,
   useSyncStatus,
 } from "./shared/nano-states";
@@ -71,6 +76,13 @@ const useSetAssets = (assets?: Array<Asset>) => {
       setAssets(assets);
     }
   }, [assets, setAssets]);
+};
+
+const useSetPages = (pages: Pages) => {
+  const [, setPages] = usePages();
+  useEffect(() => {
+    setPages(pages);
+  }, [pages, setPages]);
 };
 
 const useNavigatorLayout = () => {
@@ -241,16 +253,18 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 type DesignerProps = {
   config: Config;
   project: Project;
-  page: Page;
+  pages: Pages;
+  pageId: string;
 };
 
-export const Designer = ({ config, project, page }: DesignerProps) => {
+export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSetAssets(project.assets);
+  useSetPages(pages);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -267,6 +281,14 @@ export const Designer = ({ config, project, page }: DesignerProps) => {
     },
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
+
+  const page = useMemo(() => {
+    const page = projectUtils.pages.findById(pages, pageId);
+    if (page === undefined) {
+      throw new Error(`Page with id ${pageId} not found`);
+    }
+    return page;
+  }, [pages, pageId]);
 
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>
