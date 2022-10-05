@@ -13,6 +13,8 @@ export { action, links };
 export const loader: LoaderFunction = async ({
   params,
 }): Promise<Data | Error> => {
+  console.log("params", params);
+
   try {
     if (params.projectId === undefined) {
       throw new Error("Project id undefined");
@@ -52,6 +54,13 @@ type Error = {
 export const DesignerRoute = () => {
   const data = useLoaderData<Data | Error>();
   useAction();
+
+  console.log("data", data);
+
+  if (data === undefined) {
+    return <ErrorMessage message="No data" />;
+  }
+
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }

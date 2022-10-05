@@ -78,11 +78,11 @@ const useSetAssets = (assets?: Array<Asset>) => {
   }, [assets, setAssets]);
 };
 
-const useSetPages = (pages: Pages) => {
+const useSetPages = (pages: Pages, currentPageId: string) => {
   const [, setPages] = usePages();
   useEffect(() => {
-    setPages(pages);
-  }, [pages, setPages]);
+    setPages({ pages, currentPageId });
+  }, [pages, setPages, currentPageId]);
 };
 
 const useNavigatorLayout = () => {
@@ -264,7 +264,7 @@ export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSetAssets(project.assets);
-  useSetPages(pages);
+  useSetPages(pages, pageId);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);

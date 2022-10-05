@@ -51,5 +51,7 @@ export const useSelectionRect = () => useValue(selectionRectContainer);
 const assetsContainer = createValueContainer<Array<Asset>>([]);
 export const useAssets = () => useValue(assetsContainer);
 
-const pagesContainer = createValueContainer<Pages | undefined>();
+const pagesContainer = createValueContainer<
+  { pages: Pages; currentPageId: string } | undefined
+>();
 export const usePages = () => useValue(pagesContainer);
