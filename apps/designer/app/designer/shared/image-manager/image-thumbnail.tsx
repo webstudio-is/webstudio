@@ -27,9 +27,10 @@ const useImageWithFallback = ({
 type ThumbnailProps = {
   path?: string;
   status: Asset["status"];
+  onClick: () => void;
 };
 
-export const Thumbnail = ({ path, status }: ThumbnailProps) => {
+const Thumbnail = ({ path, status, onClick }: ThumbnailProps) => {
   const src = useImageWithFallback({ path });
 
   return (
@@ -48,6 +49,7 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
           ? { filter: "blur(1px)", opacity: 0.7 }
           : {}),
       }}
+      onClick={onClick}
     ></Box>
   );
 };
@@ -55,9 +57,11 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
 export const ImageThumbnail = ({
   asset,
   onDelete,
+  onSelect,
 }: {
   asset: Asset | PreviewAsset;
   onDelete: (ids: Array<string>) => void;
+  onSelect?: (asset: Asset) => void;
 }) => {
   const { path, status, name } = asset;
   const description =
@@ -79,7 +83,13 @@ export const ImageThumbnail = ({
         "&:hover": imageInfoTriggerCssVars({ show: true }),
       }}
     >
-      <Thumbnail path={path} status={status} />
+      <Thumbnail
+        path={path}
+        status={status}
+        onClick={() => {
+          if (isUploadedAsset) onSelect?.(asset);
+        }}
+      />
       {isUploadedAsset && (
         <ImageInfoTrigger
           asset={asset}

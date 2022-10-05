@@ -18,7 +18,7 @@ import {
 } from "./controls";
 import { ShowMore } from "./shared/show-more";
 import { LayoutSection } from "./sections";
-import { ImageControl } from "./controls/image/image-control";
+import { BackgroundImageControl } from "./controls/background-image/background-image-control";
 
 export type PropertyProps = {
   property: StyleProperty;
@@ -138,5 +138,5 @@ const controls: {
   Select: SelectControl,
   Spacing: SpacingControl,
   FontFamily: FontFamilyControl,
-  Image: ImageControl,
+  Image: BackgroundImageControl,
 };

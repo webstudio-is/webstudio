@@ -5,6 +5,7 @@ import { getFinalValue } from "../../shared/get-final-value";
 import { PropertyName } from "../../shared/property-name";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
 
+// @todo get rid of this custom styling, it should be part of the design system and/or reused across style panel
 const textFieldStyle = {
   paddingLeft: "calc($sizes$1 + $nudge$3)",
   textAlign: "left",
