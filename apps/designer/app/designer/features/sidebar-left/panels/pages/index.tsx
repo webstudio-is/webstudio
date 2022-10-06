@@ -5,14 +5,18 @@ import { type Publish } from "~/shared/pubsub";
 import { StackIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { Header } from "../../lib/header";
-import { usePages } from "~/designer/shared/nano-states";
-import { type Page, type Pages } from "@webstudio-is/project";
+import { type Page, type Pages, type Project } from "@webstudio-is/project";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { type Config } from "~/config";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
   publish: Publish;
+  project: Project;
+  pages: Pages;
+  currentPageId: string;
+  config: Config;
 };
 
 type PagesTreeNode =
@@ -64,22 +68,23 @@ const staticTreeProps = {
   },
 };
 
-const TabBody = ({
+export const TabContent = ({
+  onSetActiveTab,
+  project,
   pages,
   currentPageId,
-}: {
-  pages: Pages;
-  currentPageId: string;
-}) => {
+  config,
+}: TabContentProps) => {
   const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
 
   const navigate = useNavigate();
   const handleSelect = (pageId: string) => {
-    navigate(`/todo/${pageId}`);
+    navigate(`${config.designerPath}/${project.id}?pageId=${pageId}`);
   };
 
   return (
     <>
+      <Header title="Pages" onClose={() => onSetActiveTab("none")} />
       <TreeNode
         hideRoot
         selectedItemId={currentPageId}
@@ -87,21 +92,6 @@ const TabBody = ({
         itemData={pagesTree}
         {...staticTreeProps}
       />
-    </>
-  );
-};
-
-export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
-  const [pagesData] = usePages();
-  return (
-    <>
-      <Header title="Pages" onClose={() => onSetActiveTab("none")} />
-      {pagesData && (
-        <TabBody
-          pages={pagesData.pages}
-          currentPageId={pagesData.currentPageId}
-        />
-      )}
     </>
   );
 };
