@@ -169,14 +169,6 @@ export function Combobox<Item>({
   onItemSelect,
   onItemHighlight,
 }: ComboboxProps<Item>) {
-  const stateReducer = useCallback((state, actionAndChanges) => {
-    const { type, changes } = actionAndChanges;
-    switch (type) {
-      default:
-        return changes; // otherwise business as usual.
-    }
-  }, []);
-
   const {
     items: foundItems,
     getInputProps,
@@ -191,7 +183,6 @@ export function Combobox<Item>({
     itemToString,
     onItemSelect,
     onItemHighlight,
-    stateReducer,
   });
   return (
     <Popper>
