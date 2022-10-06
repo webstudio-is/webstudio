@@ -57,10 +57,6 @@ export const DesignerRoute = () => {
   const data = useLoaderData<Data | Error>();
   useAction();
 
-  if (data === undefined) {
-    return <ErrorMessage message="No data" />;
-  }
-
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }
