@@ -13,6 +13,9 @@ import { Inspector } from "./features/inspector";
 import {
   useAssets,
   useHoveredInstanceData,
+  usePages,
+  useProject,
+  useCurrentPageId,
   useSelectedInstanceData,
   useSyncStatus,
 } from "./shared/nano-states";
@@ -75,6 +78,27 @@ const useSetAssets = (assets?: Array<Asset>) => {
       setAssets(assets);
     }
   }, [assets, setAssets]);
+};
+
+const useSetProject = (project: Project) => {
+  const [, setProject] = useProject();
+  useEffect(() => {
+    setProject(project);
+  }, [project, setProject]);
+};
+
+const useSetPages = (pages: Pages) => {
+  const [, setPages] = usePages();
+  useEffect(() => {
+    setPages(pages);
+  }, [pages, setPages]);
+};
+
+const useSetCurrentPageId = (pageId: string) => {
+  const [, setCurrentPageId] = useCurrentPageId();
+  useEffect(() => {
+    setCurrentPageId(pageId);
+  }, [pageId, setCurrentPageId]);
 };
 
 const useNavigatorLayout = () => {
@@ -256,6 +280,9 @@ export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSetAssets(project.assets);
+  useSetProject(project);
+  useSetPages(pages);
+  useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -309,13 +336,7 @@ export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft
-          publish={publish}
-          project={project}
-          pages={pages}
-          currentPageId={pageId}
-          config={config}
-        />
+        <SidebarLeft publish={publish} config={config} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

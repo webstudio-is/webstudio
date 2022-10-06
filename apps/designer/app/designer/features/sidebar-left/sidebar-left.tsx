@@ -13,26 +13,16 @@ import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { Flex } from "@webstudio-is/design-system";
-import { type Project, type Pages } from "@webstudio-is/project";
 import { Config } from "~/config";
 
 const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
   publish: Publish;
-  project: Project;
-  pages: Pages;
-  currentPageId: string;
   config: Config;
 };
 
-export const SidebarLeft = ({
-  publish,
-  project,
-  pages,
-  currentPageId,
-  config,
-}: SidebarLeftProps) => {
+export const SidebarLeft = ({ publish, config }: SidebarLeftProps) => {
   const [dragAndDropState] = useDragAndDropState();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
@@ -93,9 +83,6 @@ export const SidebarLeft = ({
           <TabContent
             publish={publish}
             onSetActiveTab={setActiveTab}
-            project={project}
-            pages={pages}
-            currentPageId={currentPageId}
             config={config}
           />
         </SidebarTabsContent>

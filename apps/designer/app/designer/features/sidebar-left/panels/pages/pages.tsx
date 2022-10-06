@@ -7,13 +7,15 @@ import { type Page, type Pages, type Project } from "@webstudio-is/project";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Config } from "~/config";
+import {
+  useCurrentPageId,
+  usePages,
+  useProject,
+} from "~/designer/shared/nano-states";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
   publish: Publish;
-  project: Project;
-  pages: Pages;
-  currentPageId: string;
   config: Config;
 };
 
@@ -66,14 +68,18 @@ const staticTreeProps = {
   },
 };
 
-export const TabContent = ({
+export const TabContentWithData = ({
   onSetActiveTab,
-  project,
+  config,
   pages,
   currentPageId,
-  config,
-}: TabContentProps) => {
-  const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
+  project,
+}: TabContentProps & {
+  pages: Pages;
+  currentPageId: string;
+  project: Project;
+}) => {
+  const pagesTree = useMemo(() => toTreeData(pages), [pages]);
 
   const navigate = useNavigate();
   const handleSelect = (pageId: string) => {
@@ -91,6 +97,29 @@ export const TabContent = ({
         {...staticTreeProps}
       />
     </>
+  );
+};
+
+export const TabContent = (props: TabContentProps) => {
+  const [pages] = usePages();
+  const [currentPageId] = useCurrentPageId();
+  const [project] = useProject();
+
+  if (
+    pages === undefined ||
+    currentPageId === undefined ||
+    project === undefined
+  ) {
+    return null;
+  }
+
+  return (
+    <TabContentWithData
+      {...props}
+      pages={pages}
+      currentPageId={currentPageId}
+      project={project}
+    />
   );
 };
 
