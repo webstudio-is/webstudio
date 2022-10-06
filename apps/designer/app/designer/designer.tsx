@@ -303,7 +303,7 @@ export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
         <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
           <CanvasIframe
             ref={iframeRefCallback}
-            src={`${config.canvasPath}/${project.id}/${page.id}`}
+            src={`${config.canvasPath}/${project.id}?pageId=${page.id}`}
             pointerEvents={
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"

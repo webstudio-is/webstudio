@@ -12,13 +12,15 @@ export { action, links };
 
 export const loader: LoaderFunction = async ({
   params,
+  request,
 }): Promise<Data | Error> => {
-  console.log("params", params);
-
   try {
     if (params.projectId === undefined) {
       throw new Error("Project id undefined");
     }
+
+    const url = new URL(request.url);
+    const pageIdParam = url.searchParams.get("pageId");
 
     const project = await db.project.loadById(params.projectId);
 
@@ -32,7 +34,7 @@ export const loader: LoaderFunction = async ({
       config,
       project,
       pages: devBuild.pages,
-      pageId: params.pageId || devBuild.pages.homePage.id,
+      pageId: pageIdParam || devBuild.pages.homePage.id,
     };
   } catch (error) {
     sentryException({ error });
@@ -54,8 +56,6 @@ type Error = {
 export const DesignerRoute = () => {
   const data = useLoaderData<Data | Error>();
   useAction();
-
-  console.log("data", data);
 
   if (data === undefined) {
     return <ErrorMessage message="No data" />;
