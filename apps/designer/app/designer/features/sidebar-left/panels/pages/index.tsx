@@ -2,7 +2,7 @@
 
 import { TreeNodeLabel, TreeNode } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
-import { StackIcon } from "@webstudio-is/icons";
+import { PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { Header } from "../../lib/header";
 import { type Page, type Pages, type Project } from "@webstudio-is/project";
@@ -97,4 +97,4 @@ export const TabContent = ({
 };
 
 // @todo: proper icon
-export const icon = <StackIcon />;
+export const icon = <PageIcon />;
