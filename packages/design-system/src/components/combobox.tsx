@@ -65,11 +65,11 @@ export const ComboboxListbox = Listbox;
 
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
-export const ComboboxPrimitive = Popper;
+export const ComboboxPopper = Popper;
 
-export const ComboboxContent = PopperContent;
+export const ComboboxPopperContent = PopperContent;
 
-export const ComboboxAnchor = PopperAnchor;
+export const ComboboxPopperAnchor = PopperAnchor;
 
 type useComboboxProps<Item> = {
   items: ReadonlyArray<Item>;

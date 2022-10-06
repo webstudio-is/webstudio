@@ -14,9 +14,9 @@ import {
   TextField,
   Tooltip,
   useCombobox,
-  ComboboxPrimitive,
-  ComboboxContent,
-  ComboboxAnchor,
+  ComboboxPopper,
+  ComboboxPopperContent,
+  ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
   IconButton,
@@ -62,9 +62,9 @@ export const Combobox = ({
   });
 
   return (
-    <ComboboxPrimitive>
+    <ComboboxPopper>
       <Box {...getComboboxProps()}>
-        <ComboboxAnchor>
+        <ComboboxPopperAnchor>
           <TextField
             {...getInputProps()}
             name="prop"
@@ -82,8 +82,8 @@ export const Combobox = ({
               }
             }}
           />
-        </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={5}>
+        </ComboboxPopperAnchor>
+        <ComboboxPopperContent align="start" sideOffset={5}>
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => {
@@ -97,9 +97,9 @@ export const Combobox = ({
                 );
               })}
           </ComboboxListbox>
-        </ComboboxContent>
+        </ComboboxPopperContent>
       </Box>
-    </ComboboxPrimitive>
+    </ComboboxPopper>
   );
 };
 
