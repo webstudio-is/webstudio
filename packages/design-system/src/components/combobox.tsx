@@ -83,15 +83,14 @@ type useComboboxProps<Item> = {
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
 };
 
-// eslint-disable-next-line func-style
-export function useCombobox<Item>({
+export const useCombobox = <Item extends unknown>({
   items,
   value,
   itemToString,
   onItemSelect,
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
-}: useComboboxProps<Item>) {
+}: useComboboxProps<Item>) => {
   const [filteredItems, setFilteredItems] = useState(items);
   const cachedItems = useRef(items);
 
@@ -151,7 +150,7 @@ export function useCombobox<Item>({
     items: filteredItems, // Return filtered items
     getItemProps: enhancedGetItemProps,
   };
-}
+};
 
 type ComboboxProps<Item> = useComboboxProps<Item> & {
   name: string;
@@ -159,8 +158,7 @@ type ComboboxProps<Item> = useComboboxProps<Item> & {
   placeholder?: string;
 };
 
-// eslint-disable-next-line func-style
-export function Combobox<Item>({
+export const Combobox = <Item extends unknown>({
   items,
   value = null,
   name,
@@ -168,7 +166,7 @@ export function Combobox<Item>({
   itemToString,
   onItemSelect,
   onItemHighlight,
-}: ComboboxProps<Item>) {
+}: ComboboxProps<Item>) => {
   const {
     items: foundItems,
     getInputProps,
@@ -219,6 +217,6 @@ export function Combobox<Item>({
       </Box>
     </Popper>
   );
-}
+};
 
 Combobox.displayName = "Combobox";
