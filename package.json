@@ -29,7 +29,7 @@
   },
   "engines": {
     "npm": ">=7.0.0",
-    "node": ">=14 <=16"
+    "node": "16"
   },
   "dependencies": {},
   "packageManager": "yarn@1.22.19",
