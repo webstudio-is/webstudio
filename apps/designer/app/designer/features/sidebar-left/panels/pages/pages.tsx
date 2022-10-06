@@ -1,5 +1,3 @@
-// @todo: consider moving code from index.tsx to separate files similar to other panels
-
 import { TreeNodeLabel, TreeNode } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import { PageIcon } from "@webstudio-is/icons";
@@ -96,5 +94,4 @@ export const TabContent = ({
   );
 };
 
-// @todo: proper icon
 export const icon = <PageIcon />;
