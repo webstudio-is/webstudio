@@ -38,7 +38,7 @@ type ComboboxProps = {
   onSubmit: (value: string) => void;
 };
 
-export const Combobox = ({
+const Combobox = ({
   isReadonly,
   isInvalid,
   items: itemsProp,
