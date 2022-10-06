@@ -61,9 +61,15 @@ export const ListboxItemBase: ForwardRefRenderFunction<
   );
 };
 
+export const ComboboxListbox = Listbox;
+
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
-export const ComboboxPopperContent = PopperContent;
+export const ComboboxPrimitive = Popper;
+
+export const ComboboxContent = PopperContent;
+
+export const ComboboxAnchor = PopperAnchor;
 
 type useComboboxProps<Item> = {
   items: ReadonlyArray<Item>;
@@ -84,7 +90,7 @@ export function useCombobox<Item>({
   itemToString,
   onItemSelect,
   onItemHighlight,
-  stateReducer,
+  stateReducer = (state, { changes }) => changes,
 }: useComboboxProps<Item>) {
   const [filteredItems, setFilteredItems] = useState(items);
   const cachedItems = useRef(items);
