@@ -83,7 +83,7 @@ type useComboboxProps<Item> = {
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
 };
 
-export const useCombobox = <Item extends unknown>({
+export const useCombobox = <Item,>({
   items,
   value,
   itemToString,
@@ -158,7 +158,7 @@ type ComboboxProps<Item> = useComboboxProps<Item> & {
   placeholder?: string;
 };
 
-export const Combobox = <Item extends unknown>({
+export const Combobox = <Item,>({
   items,
   value = null,
   name,
