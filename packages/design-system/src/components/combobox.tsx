@@ -71,8 +71,43 @@ export const ComboboxPopperContent = PopperContent;
 
 export const ComboboxPopperAnchor = PopperAnchor;
 
+const useFilter = <Item,>({
+  items,
+  itemToString,
+}: {
+  items: Array<Item>;
+  itemToString: (item: Item | null) => string;
+}) => {
+  const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
+  const cachedItems = useRef(items);
+
+  useEffect(() => {
+    cachedItems.current = items;
+  }, [items]);
+
+  const filter = useCallback(
+    (search?: string) => {
+      const foundItems: Array<Item> = matchSorter(items, search ?? "", {
+        keys: [(item) => itemToString(item)],
+      });
+      setFilteredItems(foundItems);
+    },
+    [itemToString, items]
+  );
+
+  const reset = useCallback(() => {
+    setFilteredItems(cachedItems.current);
+  }, []);
+
+  return {
+    filteredItems,
+    filter,
+    reset,
+  };
+};
+
 type useComboboxProps<Item> = {
-  items: ReadonlyArray<Item>;
+  items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
   onItemSelect?: (value: Item | null) => void;
@@ -91,23 +126,18 @@ export const useCombobox = <Item,>({
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
 }: useComboboxProps<Item>) => {
-  const [filteredItems, setFilteredItems] = useState(items);
-  const cachedItems = useRef(items);
+  const { filteredItems, filter, reset } = useFilter<Item>({
+    items,
+    itemToString,
+  });
 
   const downshiftProps = useDownshiftCombobox({
-    items: filteredItems as Item[],
-    selectedItem: value, // Avoid downshift warning about switching controlled mode
+    items: filteredItems,
+    selectedItem: value, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
     onInputValueChange({ inputValue }) {
-      const foundItems: ReadonlyArray<Item> = matchSorter(
-        items,
-        inputValue ?? "",
-        {
-          keys: [(item) => itemToString(item)],
-        }
-      );
-      setFilteredItems(foundItems);
+      filter(inputValue);
     },
     onSelectedItemChange({ selectedItem }) {
       onItemSelect?.(selectedItem ?? null);
@@ -123,14 +153,10 @@ export const useCombobox = <Item,>({
     downshiftProps;
 
   useEffect(() => {
-    cachedItems.current = items;
-  }, [items]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setFilteredItems(cachedItems.current);
+    if (isOpen === false) {
+      reset();
     }
-  }, [isOpen]);
+  }, [isOpen, reset]);
 
   const enhancedGetItemProps = useCallback(
     (options) => {
@@ -147,7 +173,7 @@ export const useCombobox = <Item,>({
 
   return {
     ...downshiftProps,
-    items: filteredItems, // Return filtered items
+    items: filteredItems,
     getItemProps: enhancedGetItemProps,
   };
 };
