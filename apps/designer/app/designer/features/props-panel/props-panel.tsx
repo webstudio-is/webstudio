@@ -66,7 +66,13 @@ export const Combobox = ({
       <Box {...getComboboxProps()}>
         <ComboboxPopperAnchor>
           <TextField
-            {...getInputProps()}
+            {...getInputProps({
+              onKeyPress: (event) => {
+                if (event.key === "Enter") {
+                  onSubmit(event.currentTarget.value);
+                }
+              },
+            })}
             name="prop"
             placeholder="Property"
             readOnly={isReadonly}
@@ -76,11 +82,6 @@ export const Combobox = ({
                 <ChevronDownIcon />
               </IconButton>
             }
-            onKeyPress={(event) => {
-              if (event.key === "Enter") {
-                onSubmit(event.currentTarget.value);
-              }
-            }}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>
