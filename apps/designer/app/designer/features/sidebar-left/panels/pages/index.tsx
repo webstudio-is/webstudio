@@ -98,23 +98,3 @@ export const TabContent = ({
 
 // @todo: proper icon
 export const icon = <StackIcon />;
-
-// export type TreeNodeProps<Data extends { id: string }> = {
-//   itemData: Data;
-//   getItemChildren: (item: Data) => Data[];
-//   renderItem: (props: { data: Data; isSelected: boolean }) => React.ReactNode;
-
-//   getIsExpanded: (item: Data) => boolean;
-//   setIsExpanded?: (item: Data, expanded: boolean) => void;
-//   onExpandTransitionEnd?: () => void;
-
-//   selectedItemId?: string;
-//   parentIsSelected?: boolean;
-//   onSelect?: (itemId: string) => void;
-//   onMouseEnter?: (item: Data) => void;
-//   onMouseLeave?: (item: Data) => void;
-
-//   level?: number;
-//   animate?: boolean;
-//   forceHoverStateAtItem?: string;
-// };
