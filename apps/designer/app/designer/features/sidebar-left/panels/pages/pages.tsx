@@ -3,7 +3,7 @@ import { type Publish } from "~/shared/pubsub";
 import { PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { Header } from "../../lib/header";
-import { type Page, type Pages, type Project } from "@webstudio-is/project";
+import { type Page, type Pages } from "@webstudio-is/project";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Config } from "~/config";
@@ -68,31 +68,29 @@ const staticTreeProps = {
   },
 };
 
-export const TabContentWithData = ({
-  onSetActiveTab,
-  config,
-  pages,
-  currentPageId,
-  project,
-}: TabContentProps & {
-  pages: Pages;
-  currentPageId: string;
-  project: Project;
+const Pages = ({
+  onClose,
+  onSelect,
+  selectedPageId,
+}: {
+  onClose: () => void;
+  onSelect: (pageId: string) => void;
+  selectedPageId: string;
 }) => {
-  const pagesTree = useMemo(() => toTreeData(pages), [pages]);
+  const [pages] = usePages();
+  const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
 
-  const navigate = useNavigate();
-  const handleSelect = (pageId: string) => {
-    navigate(`${config.designerPath}/${project.id}?pageId=${pageId}`);
-  };
+  if (pagesTree === undefined) {
+    return null;
+  }
 
   return (
     <>
-      <Header title="Pages" onClose={() => onSetActiveTab("none")} />
+      <Header title="Pages" onClose={onClose} />
       <TreeNode
         hideRoot
-        selectedItemId={currentPageId}
-        onSelect={handleSelect}
+        selectedItemId={selectedPageId}
+        onSelect={onSelect}
         itemData={pagesTree}
         {...staticTreeProps}
       />
@@ -101,24 +99,26 @@ export const TabContentWithData = ({
 };
 
 export const TabContent = (props: TabContentProps) => {
-  const [pages] = usePages();
   const [currentPageId] = useCurrentPageId();
   const [project] = useProject();
 
-  if (
-    pages === undefined ||
-    currentPageId === undefined ||
-    project === undefined
-  ) {
+  const navigate = useNavigate();
+  const handleSelect = (pageId: string) => {
+    if (project === undefined) {
+      return;
+    }
+    navigate(`${props.config.designerPath}/${project.id}?pageId=${pageId}`);
+  };
+
+  if (currentPageId === undefined) {
     return null;
   }
 
   return (
-    <TabContentWithData
-      {...props}
-      pages={pages}
-      currentPageId={currentPageId}
-      project={project}
+    <Pages
+      onClose={() => props.onSetActiveTab("none")}
+      onSelect={handleSelect}
+      selectedPageId={currentPageId}
     />
   );
 };
