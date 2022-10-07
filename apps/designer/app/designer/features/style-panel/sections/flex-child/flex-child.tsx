@@ -1,7 +1,19 @@
-import { Flex, Grid } from "@webstudio-is/design-system";
+import { useState } from "react";
+import {
+  Text,
+  Flex,
+  Grid,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverPortal,
+  IconButton,
+} from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
+import { TextControl } from "../../controls";
 import {
   CrossSmallIcon,
   AlignSelfStartIcon,
@@ -15,6 +27,38 @@ import {
   OrderLastIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
+
+// @todo abstract to design-system component
+export const MorePopover = ({
+  title,
+  content,
+  children,
+}: {
+  title: string;
+  content: JSX.Element;
+  children: JSX.Element;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal>
+      <PopoverTrigger
+        asChild
+        onClick={() => {
+          setIsOpen(true);
+        }}
+      >
+        {children}
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent sideOffset={220} side="right" hideArrow>
+          <PopoverHeader title={title} />
+          {content}
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
+  );
+};
 
 export const FlexChildSection = ({
   setProperty,
@@ -96,9 +140,6 @@ export const FlexChildSection = ({
                 setSizing.publish();
                 break;
               }
-              default: {
-                alert("@todo render sizing popup");
-              }
             }
           }}
           value={(() => {
@@ -137,7 +178,19 @@ export const FlexChildSection = ({
               value: "shrink",
             },
             {
-              child: <EllipsesIcon />,
+              child: (
+                <MorePopover
+                  title="Sizing"
+                  content={
+                    <>
+                      <TextControl {...sectionStyle.flexGrow} />
+                      <TextControl {...sectionStyle.flexShrink} />
+                    </>
+                  }
+                >
+                  <EllipsesIcon />
+                </MorePopover>
+              ),
               label: "More sizing options",
               value: "",
             },
@@ -157,9 +210,6 @@ export const FlexChildSection = ({
               case "-1": {
                 setOrder(value);
                 break;
-              }
-              default: {
-                alert("@todo render order popup");
               }
             }
           }}
@@ -181,7 +231,18 @@ export const FlexChildSection = ({
               value: "-1",
             },
             {
-              child: <EllipsesIcon />,
+              child: (
+                <MorePopover
+                  title="Order"
+                  content={
+                    <>
+                      <TextControl {...sectionStyle.order} />
+                    </>
+                  }
+                >
+                  <EllipsesIcon />
+                </MorePopover>
+              ),
               label: "Customize order",
               value: "",
             },
