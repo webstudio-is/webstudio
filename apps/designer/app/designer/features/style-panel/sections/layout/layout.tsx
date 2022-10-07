@@ -2,12 +2,7 @@ import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { Lock } from "./shared/lock";
-import {
-  MenuControl,
-  SelectControl,
-  TextControl,
-  ToggleGroupControl,
-} from "../../controls";
+import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 
 const LayoutSectionFlex = ({

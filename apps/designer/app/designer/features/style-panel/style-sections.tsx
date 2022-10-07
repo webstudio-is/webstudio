@@ -15,7 +15,6 @@ import {
   MenuControl,
   FontFamilyControl,
 } from "./controls";
-import { ShowMore } from "./shared/show-more";
 import {
   LayoutSection,
   FlexChildSection,

@@ -1,24 +1,30 @@
-import { ToggleGroup } from "@webstudio-is/design-system";
-import {
-  TextAlignLeftIcon,
-  TextAlignCenterIcon,
-  TextAlignRightIcon,
-} from "@webstudio-is/icons";
+import { ToggleGroup, Tooltip } from "@webstudio-is/design-system";
 
-export const ToggleGroupControl = () => (
+export type ToggleGroupControlProps = {
+  value: string;
+  items: { child: JSX.Element; label: string; value: string }[];
+  onValueChange?: (value: string) => void;
+};
+
+export const ToggleGroupControl = ({
+  value = "",
+  items = [],
+  onValueChange,
+}: ToggleGroupControlProps) => (
   <ToggleGroup.Root
     type="single"
-    defaultValue="center"
-    aria-label="Text alignment"
+    value={value}
+    onValueChange={onValueChange}
+    css={{ width: "fit-content" }}
   >
-    <ToggleGroup.Item value="left" aria-label="Left aligned">
-      <TextAlignLeftIcon />
-    </ToggleGroup.Item>
-    <ToggleGroup.Item value="center" aria-label="Center aligned">
-      <TextAlignCenterIcon />
-    </ToggleGroup.Item>
-    <ToggleGroup.Item value="right" aria-label="Right aligned">
-      <TextAlignRightIcon />
-    </ToggleGroup.Item>
+    {items.map(({ child, label, value }, index) => {
+      return (
+        <ToggleGroup.Item key={index} value={value}>
+          <Tooltip content={label} delayDuration={0}>
+            {child}
+          </Tooltip>
+        </ToggleGroup.Item>
+      );
+    })}
   </ToggleGroup.Root>
 );
