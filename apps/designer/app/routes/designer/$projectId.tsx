@@ -2,7 +2,7 @@ import { useLoaderData } from "@remix-run/react";
 import { LoaderFunction } from "@remix-run/node";
 import { Designer, links } from "~/designer";
 import { db } from "@webstudio-is/project/index.server";
-import { type Project, type Page, utils } from "@webstudio-is/project";
+import { type Project, type Pages } from "@webstudio-is/project";
 import config from "~/config";
 import { ErrorMessage } from "~/shared/error";
 import { action, useAction } from "./_assets";
@@ -12,11 +12,15 @@ export { action, links };
 
 export const loader: LoaderFunction = async ({
   params,
+  request,
 }): Promise<Data | Error> => {
   try {
     if (params.projectId === undefined) {
       throw new Error("Project id undefined");
     }
+
+    const url = new URL(request.url);
+    const pageIdParam = url.searchParams.get("pageId");
 
     const project = await db.project.loadById(params.projectId);
 
@@ -26,16 +30,12 @@ export const loader: LoaderFunction = async ({
 
     const devBuild = await db.build.loadByProjectId(project.id, "dev");
 
-    const page =
-      params.pageId === undefined
-        ? devBuild.pages.homePage
-        : utils.pages.findById(devBuild.pages, params.pageId);
-
-    if (page === undefined) {
-      throw new Error(`Page "${params.pageId}" not found`);
-    }
-
-    return { config, project, page };
+    return {
+      config,
+      project,
+      pages: devBuild.pages,
+      pageId: pageIdParam || devBuild.pages.homePage.id,
+    };
   } catch (error) {
     sentryException({ error });
     return { errors: error instanceof Error ? error.message : String(error) };
@@ -45,7 +45,8 @@ export const loader: LoaderFunction = async ({
 type Data = {
   config: typeof config;
   project: Project;
-  page: Page;
+  pages: Pages;
+  pageId: string;
 };
 
 type Error = {
@@ -55,6 +56,7 @@ type Error = {
 export const DesignerRoute = () => {
   const data = useLoaderData<Data | Error>();
   useAction();
+
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
   }

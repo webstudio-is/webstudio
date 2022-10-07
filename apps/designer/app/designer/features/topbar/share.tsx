@@ -23,7 +23,7 @@ const Content = ({ path, projectId, pageId }: ShareButtonProps) => {
     return null;
   }
   const url = new URL(
-    `${location.protocol}//${location.host}${path}/${projectId}/${pageId}`
+    `${location.protocol}//${location.host}${path}/${projectId}?pageId=${pageId}`
   );
   return (
     <PopoverContent
