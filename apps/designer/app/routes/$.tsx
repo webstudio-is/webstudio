@@ -11,6 +11,8 @@ import { ErrorMessage } from "~/shared/error";
 
 type Mode = "edit" | "preview" | "published";
 
+const modes = ["edit", "preview", "published"] as Mode[];
+
 type Data =
   | (CanvasData & { env: Env; mode: Mode })
   | { errors: string; env: Env };
@@ -54,16 +56,13 @@ export const getCanvasRequestParams = (
   }
 
   const modeParam = url.searchParams.get("mode");
-
-  if (modeParam === "edit") {
-    return { projectIdObject, mode: "edit", pathname };
+  const mode =
+    modeParam === null ? "published" : modes.find((mode) => mode === modeParam);
+  if (mode === undefined) {
+    throw new Error(`Invalid mode "${modeParam}"`);
   }
 
-  if (modeParam === "preview") {
-    return { projectIdObject, mode: "preview", pathname };
-  }
-
-  return { projectIdObject, mode: "published", pathname };
+  return { projectIdObject, mode, pathname };
 };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
@@ -84,12 +83,12 @@ export const loader: LoaderFunction = async ({
       return redirect(config.dashboardPath);
     }
 
-    const { projectId, mode, pathname } = canvasRequest;
+    const { projectIdObject, mode, pathname } = canvasRequest;
 
     const project =
-      projectId.type === "id"
-        ? await db.project.loadById(projectId.value)
-        : await db.project.loadByDomain(projectId.value);
+      projectIdObject.type === "id"
+        ? await db.project.loadById(projectIdObject.value)
+        : await db.project.loadByDomain(projectIdObject.value);
 
     if (project === null) {
       throw new Error("Project not found");
