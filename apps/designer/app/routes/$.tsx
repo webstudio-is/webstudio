@@ -17,15 +17,17 @@ type Data =
 
 type ProjectIdentifier = { type: "id" | "domain"; value: string };
 
-export const isCanvasRequest = (
+export const getCanvasRequestParams = (
   request: Request
-): false | { projectId: ProjectIdentifier; mode: Mode; pathname: string } => {
+):
+  | { projectId: ProjectIdentifier; mode: Mode; pathname: string }
+  | undefined => {
   const url = new URL(request.url);
 
   const pathname = url.pathname;
 
   if (Object.values(config).some((path) => pathname.startsWith(path))) {
-    return false;
+    return undefined;
   }
 
   let projectId: ProjectIdentifier | undefined = undefined;
@@ -48,7 +50,7 @@ export const isCanvasRequest = (
   }
 
   if (projectId === undefined) {
-    return false;
+    return undefined;
   }
 
   const modeParam = url.searchParams.get("mode");
@@ -76,9 +78,9 @@ export const loader: LoaderFunction = async ({
   request,
 }): Promise<Data | Response> => {
   try {
-    const canvasRequest = isCanvasRequest(request);
+    const canvasRequest = getCanvasRequestParams(request);
 
-    if (canvasRequest === false) {
+    if (canvasRequest === undefined) {
       return redirect(config.dashboardPath);
     }
 
