@@ -121,8 +121,6 @@ const Content = () => {
       : () => <InstanceRoot data={data} />;
 
   // @todo This is non-standard for Remix, is there a better way?
-  // We need to render essentially the preview route but from the index,
-  // so we have to know the layout and the outlet from here.
   // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
   return <Root Outlet={Outlet} />;
 };
