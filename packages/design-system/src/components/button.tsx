@@ -25,7 +25,7 @@ export const Button = styled("button", {
   // Custom
   height: "$5",
   px: "$2",
-  fontFamily: "$untitled",
+  fontFamily: "$sans",
   fontSize: "$2",
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",

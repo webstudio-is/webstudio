@@ -43,7 +43,7 @@ const InputBase = styled("input", {
   },
 
   "&:-webkit-autofill::first-line": {
-    fontFamily: "$untitled",
+    fontFamily: "$sans",
     color: "$hiContrast",
   },
 
