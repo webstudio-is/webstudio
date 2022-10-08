@@ -27,15 +27,10 @@ export const getCanvasRequestParams = (request: {
     return undefined;
   }
 
+  const projectId = url.searchParams.get("projectId");
+
   let projectDomain = undefined;
-  let projectId = undefined;
-
-  const projectIdParam = url.searchParams.get("projectId");
-  if (projectIdParam !== null) {
-    projectId = projectIdParam;
-  }
-
-  if (projectId === undefined) {
+  if (projectId === null) {
     // @todo all this subdomain logic is very hacky
     const host =
       request.headers.get("x-forwarded-host") ||
@@ -54,7 +49,7 @@ export const getCanvasRequestParams = (request: {
     throw new Error(`Invalid mode "${modeParam}"`);
   }
 
-  if (projectId !== undefined) {
+  if (projectId !== null) {
     return {
       projectId,
       mode,
@@ -70,5 +65,5 @@ export const getCanvasRequestParams = (request: {
     };
   }
 
-  return undefined;
+  return;
 };
