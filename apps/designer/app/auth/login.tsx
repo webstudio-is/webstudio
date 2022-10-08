@@ -84,7 +84,6 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                     }}
                   >
                     <TextField
-                      size={2}
                       name="secret"
                       type="text"
                       minLength={2}
