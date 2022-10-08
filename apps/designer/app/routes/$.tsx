@@ -8,62 +8,14 @@ import env, { Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-
-type Mode = "edit" | "preview" | "published";
-
-const modes = ["edit", "preview", "published"] as Mode[];
+import {
+  type CanvasRouteMode,
+  getCanvasRequestParams,
+} from "~/shared/router-utils";
 
 type Data =
-  | (CanvasData & { env: Env; mode: Mode })
+  | (CanvasData & { env: Env; mode: CanvasRouteMode })
   | { errors: string; env: Env };
-
-type ProjectIdentifier = { type: "id" | "domain"; value: string };
-
-export const getCanvasRequestParams = (
-  request: Request
-):
-  | { projectIdObject: ProjectIdentifier; mode: Mode; pathname: string }
-  | undefined => {
-  const url = new URL(request.url);
-
-  const pathname = url.pathname;
-
-  if (Object.values(config).some((path) => pathname.startsWith(path))) {
-    return undefined;
-  }
-
-  let projectIdObject: ProjectIdentifier | undefined = undefined;
-
-  // @todo all this subdomain logic is very hacky
-  const host =
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host") ||
-    "";
-  const [userDomain, wstdDomain] = host.split(".");
-  if (wstdDomain === "wstd" || wstdDomain?.includes("localhost")) {
-    projectIdObject = { type: "domain", value: userDomain };
-  }
-
-  if (projectIdObject === undefined) {
-    const projectIdParam = url.searchParams.get("projectId");
-    if (projectIdParam !== null) {
-      projectIdObject = { type: "id", value: projectIdParam };
-    }
-  }
-
-  if (projectIdObject === undefined) {
-    return undefined;
-  }
-
-  const modeParam = url.searchParams.get("mode");
-  const mode =
-    modeParam === null ? "published" : modes.find((mode) => mode === modeParam);
-  if (mode === undefined) {
-    throw new Error(`Invalid mode "${modeParam}"`);
-  }
-
-  return { projectIdObject, mode, pathname };
-};
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
   if ("errors" in data) {

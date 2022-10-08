@@ -4,7 +4,7 @@ import { initSentry } from "./shared/sentry";
 import { prisma } from "@webstudio-is/prisma-client";
 import { handleRequest as handleRequestDesigner } from "./shared/remix";
 import { handleRequest as handleRequestCanvas } from "@webstudio-is/react-sdk";
-import { getCanvasRequestParams } from "./routes/$";
+import { getCanvasRequestParams } from "./shared/router-utils";
 
 initSentry({
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
