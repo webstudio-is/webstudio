@@ -20,7 +20,7 @@ type ProjectIdentifier = { type: "id" | "domain"; value: string };
 export const getCanvasRequestParams = (
   request: Request
 ):
-  | { projectId: ProjectIdentifier; mode: Mode; pathname: string }
+  | { projectIdObject: ProjectIdentifier; mode: Mode; pathname: string }
   | undefined => {
   const url = new URL(request.url);
 
@@ -30,7 +30,7 @@ export const getCanvasRequestParams = (
     return undefined;
   }
 
-  let projectId: ProjectIdentifier | undefined = undefined;
+  let projectIdObject: ProjectIdentifier | undefined = undefined;
 
   // @todo all this subdomain logic is very hacky
   const host =
@@ -39,31 +39,31 @@ export const getCanvasRequestParams = (
     "";
   const [userDomain, wstdDomain] = host.split(".");
   if (wstdDomain === "wstd" || wstdDomain?.includes("localhost")) {
-    projectId = { type: "domain", value: userDomain };
+    projectIdObject = { type: "domain", value: userDomain };
   }
 
-  if (projectId === undefined) {
+  if (projectIdObject === undefined) {
     const projectIdParam = url.searchParams.get("projectId");
     if (projectIdParam !== null) {
-      projectId = { type: "id", value: projectIdParam };
+      projectIdObject = { type: "id", value: projectIdParam };
     }
   }
 
-  if (projectId === undefined) {
+  if (projectIdObject === undefined) {
     return undefined;
   }
 
   const modeParam = url.searchParams.get("mode");
 
   if (modeParam === "edit") {
-    return { projectId, mode: "edit", pathname };
+    return { projectIdObject, mode: "edit", pathname };
   }
 
   if (modeParam === "preview") {
-    return { projectId, mode: "preview", pathname };
+    return { projectIdObject, mode: "preview", pathname };
   }
 
-  return { projectId, mode: "published", pathname };
+  return { projectIdObject, mode: "published", pathname };
 };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
