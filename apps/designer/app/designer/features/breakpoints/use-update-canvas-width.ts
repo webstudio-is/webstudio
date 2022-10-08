@@ -1,4 +1,3 @@
-import { useSubscribe } from "~/shared/pubsub";
 import { useCallback, useEffect } from "react";
 import {
   useSelectedBreakpoint,
@@ -32,7 +31,16 @@ export const useUpdateCanvasWidth = () => {
     setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
   }, [selectedBreakpoint, setCanvasWidth]);
 
-  useSubscribe("canvasWidth", setCanvasWidth);
+  // Handle the case when canvas loads with a error
+  // And doesn't send any messages that it's supposed to send
+  useEffect(() => {
+    if (canvasWidth === 0) {
+      const timeout = setTimeout(() => {
+        setCanvasWidth(600);
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [canvasWidth, setCanvasWidth]);
 
   // Set the initial canvas width based on the selected breakpoint upper bound, which starts where the next breakpoint begins.
   return useCallback(

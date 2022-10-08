@@ -7,6 +7,7 @@ import { db } from "@webstudio-is/project/index.server";
 import env, { Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
+import { ErrorMessage } from "~/shared/error";
 
 type Mode = "edit" | "preview" | "published";
 
@@ -112,7 +113,7 @@ const Content = () => {
   const data = useLoaderData<Data>();
 
   if ("errors" in data) {
-    return <p>{data.errors}</p>;
+    return <ErrorMessage message={data.errors} />;
   }
 
   const Outlet =
