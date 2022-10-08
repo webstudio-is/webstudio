@@ -4,14 +4,17 @@ export type CanvasRouteMode = "edit" | "preview" | "published";
 
 const modes = ["edit", "preview", "published"] as CanvasRouteMode[];
 
-type ProjectIdentifier = { type: "id" | "domain"; value: string };
-
 export const getCanvasRequestParams = (request: {
   url: string;
   headers: { get: (name: string) => string | null };
 }):
   | {
-      projectIdObject: ProjectIdentifier;
+      projectId: string;
+      mode: CanvasRouteMode;
+      pathname: string;
+    }
+  | {
+      projectDomain: string;
       mode: CanvasRouteMode;
       pathname: string;
     }
@@ -24,27 +27,24 @@ export const getCanvasRequestParams = (request: {
     return undefined;
   }
 
-  let projectIdObject: ProjectIdentifier | undefined = undefined;
+  let projectDomain = undefined;
+  let projectId = undefined;
 
-  // @todo all this subdomain logic is very hacky
-  const host =
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host") ||
-    "";
-  const [userDomain, wstdDomain] = host.split(".");
-  if (wstdDomain === "wstd" || wstdDomain?.includes("localhost")) {
-    projectIdObject = { type: "domain", value: userDomain };
+  const projectIdParam = url.searchParams.get("projectId");
+  if (projectIdParam !== null) {
+    projectId = projectIdParam;
   }
 
-  if (projectIdObject === undefined) {
-    const projectIdParam = url.searchParams.get("projectId");
-    if (projectIdParam !== null) {
-      projectIdObject = { type: "id", value: projectIdParam };
+  if (projectId === undefined) {
+    // @todo all this subdomain logic is very hacky
+    const host =
+      request.headers.get("x-forwarded-host") ||
+      request.headers.get("host") ||
+      "";
+    const [userDomain, wstdDomain] = host.split(".");
+    if (wstdDomain === "wstd" || wstdDomain?.includes("localhost")) {
+      projectDomain = userDomain;
     }
-  }
-
-  if (projectIdObject === undefined) {
-    return undefined;
   }
 
   const modeParam = url.searchParams.get("mode");
@@ -54,5 +54,21 @@ export const getCanvasRequestParams = (request: {
     throw new Error(`Invalid mode "${modeParam}"`);
   }
 
-  return { projectIdObject, mode, pathname };
+  if (projectId !== undefined) {
+    return {
+      projectId,
+      mode,
+      pathname,
+    };
+  }
+
+  if (projectDomain !== undefined) {
+    return {
+      projectDomain,
+      mode,
+      pathname,
+    };
+  }
+
+  return undefined;
 };

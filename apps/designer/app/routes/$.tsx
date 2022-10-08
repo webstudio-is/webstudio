@@ -35,12 +35,12 @@ export const loader: LoaderFunction = async ({
       return redirect(config.dashboardPath);
     }
 
-    const { projectIdObject, mode, pathname } = canvasRequest;
+    const { mode, pathname } = canvasRequest;
 
     const project =
-      projectIdObject.type === "id"
-        ? await db.project.loadById(projectIdObject.value)
-        : await db.project.loadByDomain(projectIdObject.value);
+      "projectId" in canvasRequest
+        ? await db.project.loadById(canvasRequest.projectId)
+        : await db.project.loadByDomain(canvasRequest.projectDomain);
 
     if (project === null) {
       throw new Error("Project not found");

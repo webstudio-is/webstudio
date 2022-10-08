@@ -20,11 +20,12 @@ describe("getCanvasRequestParams", () => {
         makeRequest("https://foo.localhost", {
           "x-forwarded-host": "foo.localhost",
         })
-      )?.projectIdObject
+      )
     ).toMatchInlineSnapshot(`
       Object {
-        "type": "domain",
-        "value": "foo",
+        "mode": "published",
+        "pathname": "/",
+        "projectDomain": "foo",
       }
     `);
   });
@@ -33,11 +34,12 @@ describe("getCanvasRequestParams", () => {
     expect(
       getCanvasRequestParams(
         makeRequest("https://foo.localhost", { host: "foo.localhost" })
-      )?.projectIdObject
+      )
     ).toMatchInlineSnapshot(`
       Object {
-        "type": "domain",
-        "value": "foo",
+        "mode": "published",
+        "pathname": "/",
+        "projectDomain": "foo",
       }
     `);
   });
@@ -46,11 +48,12 @@ describe("getCanvasRequestParams", () => {
     expect(
       getCanvasRequestParams(
         makeRequest("https://foo.localhost?projectId=bar", {})
-      )?.projectIdObject
+      )
     ).toMatchInlineSnapshot(`
       Object {
-        "type": "id",
-        "value": "bar",
+        "mode": "published",
+        "pathname": "/",
+        "projectId": "bar",
       }
     `);
   });
