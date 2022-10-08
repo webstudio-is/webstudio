@@ -31,13 +31,16 @@ export const useUpdateCanvasWidth = () => {
     setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
   }, [selectedBreakpoint, setCanvasWidth]);
 
-  // Handle the case when canvas loads with a error
-  // And doesn't send any messages that it's supposed to send
+  // This fallback is needed for cases when something unexpected loads in the iframe.
+  // In that case the width remains 0, and user is unable to see what has loaded,
+  // in particular any error messages.
+  // The delay is used to make sure we don't set the fallback width too early,
+  // because when canvas loads normally this will cause a jump in the width.
   useEffect(() => {
     if (canvasWidth === 0) {
       const timeout = setTimeout(() => {
         setCanvasWidth(600);
-      }, 1000);
+      }, 3000);
       return () => clearTimeout(timeout);
     }
   }, [canvasWidth, setCanvasWidth]);
