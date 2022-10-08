@@ -1,5 +1,3 @@
-import config from "~/config";
-
 export type CanvasRouteMode = "edit" | "preview" | "published";
 
 const modes = ["edit", "preview", "published"] as CanvasRouteMode[];
@@ -22,10 +20,6 @@ export const getCanvasRequestParams = (request: {
   const url = new URL(request.url);
 
   const pathname = url.pathname;
-
-  if (Object.values(config).some((path) => pathname.startsWith(path))) {
-    return undefined;
-  }
 
   const projectId = url.searchParams.get("projectId");
 

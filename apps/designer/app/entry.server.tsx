@@ -18,7 +18,13 @@ export default function handleRequest(
 ) {
   let handle = handleRequestDesigner;
 
-  if (getCanvasRequestParams(request) !== undefined) {
+  if (
+    remixContext.matches.some(
+      (match) =>
+        match.route.id === "routes/$" || match.route.id === "routes/index"
+    ) &&
+    getCanvasRequestParams(request) !== undefined
+  ) {
     handle = handleRequestCanvas;
   }
 
