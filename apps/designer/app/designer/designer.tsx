@@ -42,7 +42,6 @@ import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
-import { useInterval } from "react-use";
 
 export const links = () => {
   return [
@@ -108,20 +107,9 @@ const useNavigatorLayout = () => {
   return isLoaded ? clientSettings.navigatorLayout : "docked";
 };
 
-const usePublishDesignerReady = (publish: Publish) => {
-  const [isAcknowledged, setIsAcknowledged] = useState(false);
-
-  useInterval(
-    () => {
-      // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
-      // we can miss the events and designer will just not connect to the canvas.
-      publish({ type: "designerReady" });
-    },
-    isAcknowledged ? null : 100
-  );
-
-  useSubscribe("designerReadyAck", () => {
-    setIsAcknowledged(true);
+export const useSubscribeCanvasReady = (publish: Publish) => {
+  useSubscribe("canvasReady", () => {
+    publish({ type: "canvasReadyAck" });
   });
 };
 
@@ -289,7 +277,7 @@ export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
-  usePublishDesignerReady(publish);
+  useSubscribeCanvasReady(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
