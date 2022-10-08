@@ -95,14 +95,14 @@ const useFilter = <Item,>({
     [itemToString, items]
   );
 
-  const reset = useCallback(() => {
+  const resetFilter = useCallback(() => {
     setFilteredItems(cachedItems.current);
   }, []);
 
   return {
     filteredItems,
     filter,
-    reset,
+    resetFilter,
   };
 };
 
@@ -126,7 +126,7 @@ export const useCombobox = <Item,>({
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
 }: useComboboxProps<Item>) => {
-  const { filteredItems, filter, reset } = useFilter<Item>({
+  const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
     itemToString,
   });
@@ -154,9 +154,9 @@ export const useCombobox = <Item,>({
 
   useEffect(() => {
     if (isOpen === false) {
-      reset();
+      resetFilter();
     }
-  }, [isOpen, reset]);
+  }, [isOpen, resetFilter]);
 
   const enhancedGetItemProps = useCallback(
     (options) => {
