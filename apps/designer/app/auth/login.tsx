@@ -1,16 +1,15 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-
 import {
   Card,
   Flex,
   Heading,
+  Button,
   __DEPRECATED__Text,
   TextField,
 } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
-
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./components/login-button";
 import loginStyles from "./login.css";
@@ -44,59 +43,72 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
       justify="center"
     >
       <Card size={2}>
-        <Flex direction="column" gap="4" align="center">
+        <Flex direction="column" align="center" gap="3">
           <Heading size="2">Login</Heading>
-          {errorMessage.length ? (
-            <__DEPRECATED__Text css={{ textAlign: "center" }} variant="red">
-              {errorMessage}
-            </__DEPRECATED__Text>
-          ) : null}
-          <Flex gap="2" direction="column" align="center">
-            <Form action="/auth/github" method="post">
-              <LoginButton enabled={data.isGithubEnabled}>
-                <Flex gap="1">
-                  <GithubIcon width="20" />
-                  Login with GitHub
-                </Flex>
-              </LoginButton>
-            </Form>
-            <Form action="/auth/google" method="post">
-              <LoginButton enabled={data.isGoogleEnabled}>
-                <Flex gap="1">
-                  <GoogleIcon width="20" />
-                  Login with Google
-                </Flex>
-              </LoginButton>
-            </Form>
-            {data.isDevLogin && (
-              <>
-                {isDevLoginOpen ? (
-                  <Form action="/auth/dev" method="post">
+          <Flex direction="column" gap="4" css={{ width: 300 }}>
+            {errorMessage.length ? (
+              <__DEPRECATED__Text css={{ textAlign: "center" }} variant="red">
+                {errorMessage}
+              </__DEPRECATED__Text>
+            ) : null}
+            <Flex gap="2" direction="column">
+              <Form action="/auth/github" method="post">
+                <LoginButton enabled={data.isGithubEnabled}>
+                  <Flex gap="2" align="center">
+                    <Flex css={{ width: 20, height: 20 }}>
+                      <GithubIcon />
+                    </Flex>
+                    Login with GitHub
+                  </Flex>
+                </LoginButton>
+              </Form>
+              <Form action="/auth/google" method="post">
+                <LoginButton enabled={data.isGoogleEnabled}>
+                  <Flex gap="2" align="center">
+                    <Flex css={{ width: 20, height: 20 }}>
+                      <GoogleIcon />
+                    </Flex>
+                    Login with Google
+                  </Flex>
+                </LoginButton>
+              </Form>
+              {data.isDevLogin &&
+                (isDevLoginOpen ? (
+                  <Flex
+                    as="form"
+                    action="/auth/dev"
+                    method="post"
+                    css={{
+                      flexDirection: "row",
+                      gap: "$2",
+                    }}
+                  >
                     <TextField
-                      size={2}
-                      css={{ width: "100%", flexGrow: 1 }}
                       name="secret"
                       type="text"
                       minLength={2}
                       required
                       autoFocus
-                      placeholder="Place your auth secret here"
+                      placeholder="Auth secret"
+                      css={{ flexGrow: 1 }}
                     />
-                  </Form>
+                    <Button size={2}>Login</Button>
+                  </Flex>
                 ) : (
                   <LoginButton
                     enabled={data.isDevLogin}
                     isDevLogin
                     onClick={() => openDevLogin(true)}
                   >
-                    <Flex gap="1" align="center">
-                      <CommitIcon width="20" />
+                    <Flex gap="2" align="center">
+                      <Flex css={{ width: 20, height: 20 }}>
+                        <CommitIcon />
+                      </Flex>
                       Dev Login
                     </Flex>
                   </LoginButton>
-                )}
-              </>
-            )}
+                ))}
+            </Flex>
           </Flex>
         </Flex>
       </Card>
