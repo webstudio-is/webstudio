@@ -11,11 +11,7 @@ export default {
 };
 
 export const Simple: ComponentStory<typeof Combobox> = () => {
-  const items = [
-    { label: "Apple" },
-    { label: "Banana" },
-    { label: "Orange" },
-  ] as const;
+  const items = [{ label: "Apple" }, { label: "Banana" }, { label: "Orange" }];
   const [value, setValue] = React.useState<typeof items[number] | null>(null);
   return (
     <Combobox

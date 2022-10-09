@@ -61,12 +61,53 @@ export const ListboxItemBase: ForwardRefRenderFunction<
   );
 };
 
+export const ComboboxListbox = Listbox;
+
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
+
+export const ComboboxPopper = Popper;
 
 export const ComboboxPopperContent = PopperContent;
 
+export const ComboboxPopperAnchor = PopperAnchor;
+
+const useFilter = <Item,>({
+  items,
+  itemToString,
+}: {
+  items: Array<Item>;
+  itemToString: (item: Item | null) => string;
+}) => {
+  const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
+  const cachedItems = useRef(items);
+
+  useEffect(() => {
+    cachedItems.current = items;
+  }, [items]);
+
+  const filter = useCallback(
+    (search?: string) => {
+      const foundItems: Array<Item> = matchSorter(items, search ?? "", {
+        keys: [(item) => itemToString(item)],
+      });
+      setFilteredItems(foundItems);
+    },
+    [itemToString, items]
+  );
+
+  const resetFilter = useCallback(() => {
+    setFilteredItems(cachedItems.current);
+  }, []);
+
+  return {
+    filteredItems,
+    filter,
+    resetFilter,
+  };
+};
+
 type useComboboxProps<Item> = {
-  items: ReadonlyArray<Item>;
+  items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
   onItemSelect?: (value: Item | null) => void;
@@ -77,32 +118,26 @@ type useComboboxProps<Item> = {
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
 };
 
-// eslint-disable-next-line func-style
-export function useCombobox<Item>({
+export const useCombobox = <Item,>({
   items,
   value,
   itemToString,
   onItemSelect,
   onItemHighlight,
-  stateReducer,
-}: useComboboxProps<Item>) {
-  const [filteredItems, setFilteredItems] = useState(items);
-  const cachedItems = useRef(items);
+  stateReducer = (state, { changes }) => changes,
+}: useComboboxProps<Item>) => {
+  const { filteredItems, filter, resetFilter } = useFilter<Item>({
+    items,
+    itemToString,
+  });
 
   const downshiftProps = useDownshiftCombobox({
-    items: filteredItems as Item[],
-    selectedItem: value, // Avoid downshift warning about switching controlled mode
+    items: filteredItems,
+    selectedItem: value, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
     onInputValueChange({ inputValue }) {
-      const foundItems: ReadonlyArray<Item> = matchSorter(
-        items,
-        inputValue ?? "",
-        {
-          keys: [(item) => itemToString(item)],
-        }
-      );
-      setFilteredItems(foundItems);
+      filter(inputValue);
     },
     onSelectedItemChange({ selectedItem }) {
       onItemSelect?.(selectedItem ?? null);
@@ -118,14 +153,10 @@ export function useCombobox<Item>({
     downshiftProps;
 
   useEffect(() => {
-    cachedItems.current = items;
-  }, [items]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setFilteredItems(cachedItems.current);
+    if (isOpen === false) {
+      resetFilter();
     }
-  }, [isOpen]);
+  }, [isOpen, resetFilter]);
 
   const enhancedGetItemProps = useCallback(
     (options) => {
@@ -142,10 +173,10 @@ export function useCombobox<Item>({
 
   return {
     ...downshiftProps,
-    items: filteredItems, // Return filtered items
+    items: filteredItems,
     getItemProps: enhancedGetItemProps,
   };
-}
+};
 
 type ComboboxProps<Item> = useComboboxProps<Item> & {
   name: string;
@@ -153,8 +184,7 @@ type ComboboxProps<Item> = useComboboxProps<Item> & {
   placeholder?: string;
 };
 
-// eslint-disable-next-line func-style
-export function Combobox<Item>({
+export const Combobox = <Item,>({
   items,
   value = null,
   name,
@@ -162,15 +192,7 @@ export function Combobox<Item>({
   itemToString,
   onItemSelect,
   onItemHighlight,
-}: ComboboxProps<Item>) {
-  const stateReducer = useCallback((state, actionAndChanges) => {
-    const { type, changes } = actionAndChanges;
-    switch (type) {
-      default:
-        return changes; // otherwise business as usual.
-    }
-  }, []);
-
+}: ComboboxProps<Item>) => {
   const {
     items: foundItems,
     getInputProps,
@@ -185,7 +207,6 @@ export function Combobox<Item>({
     itemToString,
     onItemSelect,
     onItemHighlight,
-    stateReducer,
   });
   return (
     <Popper>
@@ -222,6 +243,6 @@ export function Combobox<Item>({
       </Box>
     </Popper>
   );
-}
+};
 
 Combobox.displayName = "Combobox";

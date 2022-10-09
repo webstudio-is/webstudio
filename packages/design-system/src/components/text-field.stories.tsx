@@ -2,7 +2,7 @@ import { expect } from "@storybook/jest";
 import { userEvent, waitFor, within } from "@storybook/testing-library";
 import React from "react";
 import { ComponentStory } from "@storybook/react";
-import { BrushIcon, ChevronDownIcon } from "@webstudio-is/icons";
+import { RowGapIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Button } from "./button";
 import { Flex } from "./flex";
 import { IconButton } from "./icon-button";
@@ -36,15 +36,6 @@ export const NativeProps: ComponentStory<typeof TextField> = () => {
   );
 };
 
-export const Sizes: ComponentStory<typeof TextField> = () => {
-  return (
-    <Flex direction="column" gap={3}>
-      <TextField size={1} />
-      <TextField size={2} />
-    </Flex>
-  );
-};
-
 export const Variants: ComponentStory<typeof TextField> = () => {
   return (
     <Flex direction="column" gap={3}>
@@ -68,7 +59,7 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
   return (
     <Flex direction="column" gap={3}>
       <TextField
-        prefix={<BrushIcon />}
+        prefix={<RowGapIcon />}
         suffix={
           <IconButton>
             <ChevronDownIcon />
@@ -77,7 +68,7 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
       />
       <TextField
         state="invalid"
-        prefix={<BrushIcon />}
+        prefix={<RowGapIcon />}
         suffix={
           <IconButton>
             <ChevronDownIcon />
@@ -85,17 +76,8 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
         }
       />
       <TextField
-        size={2}
-        prefix={<BrushIcon />}
-        suffix={
-          <IconButton size={2}>
-            <ChevronDownIcon />
-          </IconButton>
-        }
-      />
-      <TextField
         disabled
-        prefix={<BrushIcon />}
+        prefix={<RowGapIcon />}
         suffix={
           <IconButton>
             <ChevronDownIcon />
@@ -112,7 +94,7 @@ export const Layout: ComponentStory<typeof TextField> = () => {
       <Flex direction="row" gap={2} css={{ justifyContent: "space-between" }}>
         <TextField
           value="Long content comes here and it doesn't wrap"
-          prefix={<BrushIcon />}
+          prefix={<RowGapIcon />}
           suffix={
             <IconButton>
               <ChevronDownIcon />
@@ -147,7 +129,7 @@ export const Layout: ComponentStory<typeof TextField> = () => {
           <TextField
             id="field"
             value="Long content comes here and it doesn't wrap"
-            prefix={<BrushIcon />}
+            prefix={<RowGapIcon />}
           />
         </Box>
         <Box css={{ background: "$muted" }}>
@@ -222,7 +204,7 @@ export const ClickCapture: ComponentStory<typeof TextField> = (args) => {
       placeholder="Click on the icon to focus input"
       prefix={
         <Flex title="icon">
-          <BrushIcon />
+          <RowGapIcon />
         </Flex>
       }
       suffix={
