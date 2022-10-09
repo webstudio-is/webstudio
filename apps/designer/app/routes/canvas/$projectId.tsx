@@ -16,13 +16,19 @@ export const meta: MetaFunction = ({ data }: { data: Data }) => {
   return { title: page.title, ...page.meta };
 };
 
-export const loader: LoaderFunction = async ({ params }): Promise<Data> => {
+export const loader: LoaderFunction = async ({
+  params,
+  request,
+}): Promise<Data> => {
   try {
     if (params.projectId === undefined) {
       throw new Error("Missing projectId");
     }
 
-    return loadCanvasData(params.projectId, params.pageId);
+    const url = new URL(request.url);
+    const pageIdParam = url.searchParams.get("pageId");
+
+    return loadCanvasData(params.projectId, pageIdParam || undefined);
   } catch (error) {
     sentryException({ error });
     return { errors: error instanceof Error ? error.message : String(error) };
