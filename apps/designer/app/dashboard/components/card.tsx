@@ -55,7 +55,6 @@ export const SelectProjectCard = ({
           <Form method="post">
             <Flex gap="1">
               <TextField
-                size={2}
                 state={errors ? "invalid" : undefined}
                 name="project"
                 defaultValue={newProject}

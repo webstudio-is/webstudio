@@ -31,7 +31,6 @@ const TextControl = ({
 }: TextControlProps) => (
   <TextField
     type={type}
-    variant="ghost"
     placeholder="Value"
     name="value"
     value={String(value || defaultValue || "")}

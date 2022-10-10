@@ -9,7 +9,6 @@ import {
   PopoverContent,
   PopoverPortal,
   TextField,
-  Tooltip,
   css,
 } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
@@ -54,73 +53,56 @@ const ColorPicker = ({
   onChange,
   onChangeComplete,
   id,
-  styleConfig,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   // Color picker will use 0 as alpha value, which will force user to set alpha every time they have to change from transparent
   if (value === "transparent") value = "";
 
   return (
-    <Popover
-      modal
-      open={displayColorPicker}
-      onOpenChange={setDisplayColorPicker}
-    >
-      <PopoverTrigger asChild aria-label="Open color picker">
-        <Grid
-          css={{
-            gridTemplateColumns: "$sizes$6 auto",
-            gridTemplateRows: "repeat(1, 1fr)",
-          }}
+    <TextField
+      onChange={(e) => onChange(e.target.value)}
+      value={value}
+      id={id}
+      prefix={
+        <Popover
+          modal
+          open={displayColorPicker}
+          onOpenChange={setDisplayColorPicker}
         >
-          <Tooltip
-            content={styleConfig.label}
-            delayDuration={700 / 4}
-            disableHoverableContent={true}
+          <PopoverTrigger
+            asChild
+            aria-label="Open color picker"
+            onClick={() => setDisplayColorPicker((shown) => !shown)}
           >
             <Box
               css={{
-                gridArea: "1 / 1 / 2 / 2",
-                width: "calc($sizes$6 - 6px)",
-                height: "calc($sizes$6 - 6px)",
-                margin: 3,
+                width: "$sizes$3",
+                height: "$sizes$3",
                 borderRadius: 2,
                 background: value,
-                zIndex: 0,
               }}
             />
-          </Tooltip>
-          <TextField
-            css={{
-              height: "$6",
-              gridArea: "1 / 1 / -1 / -1",
-              paddingLeft: "calc($sizes$6 + 6px)",
-            }}
-            onChange={(e) => onChange(e.target.value)}
-            onClick={() => setDisplayColorPicker((shown) => !shown)}
-            value={value}
-            id={id}
-          />
-        </Grid>
-      </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent>
-          <SketchPicker
-            color={value}
-            onChange={(color: ColorResult) =>
-              onChange(stringifyRGBA(color.rgb))
-            }
-            onChangeComplete={(color: ColorResult) => {
-              onChangeComplete(stringifyRGBA(color.rgb));
-            }}
-            // @todo to remove both when we have preset colors
-            presetColors={[]}
-            className={pickerStyle()}
-            styles={defaultPickerStyles}
-          />
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
+          </PopoverTrigger>
+          <PopoverPortal>
+            <PopoverContent>
+              <SketchPicker
+                color={value}
+                onChange={(color: ColorResult) =>
+                  onChange(stringifyRGBA(color.rgb))
+                }
+                onChangeComplete={(color: ColorResult) => {
+                  onChangeComplete(stringifyRGBA(color.rgb));
+                }}
+                // @todo to remove both when we have preset colors
+                presetColors={[]}
+                className={pickerStyle()}
+                styles={defaultPickerStyles}
+              />
+            </PopoverContent>
+          </PopoverPortal>
+        </Popover>
+      }
+    />
   );
 };
 
