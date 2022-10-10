@@ -1,4 +1,4 @@
-import { CssPropertyControl } from "~/designer/features/style-panel/controls/css-property/css-property";
+import { CssValueInput } from "~/designer/features/style-panel/controls/css-property/css-property";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import { StyleValue } from "@webstudio-is/react-sdk";
@@ -32,7 +32,7 @@ export const TextControl = ({
   };
 
   return (
-    <CssPropertyControl
+    <CssValueInput
       property={styleConfig.property}
       value={value}
       allowedValues={styleConfig.items.map((item) => ({

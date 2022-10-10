@@ -139,7 +139,6 @@ const Property = ({
       <Combobox
         items={allProps}
         value={prop}
-        itemToString={(item) => item ?? ""}
         onItemSelect={(value: PropertyProps["value"] | null) => {
           if (value !== null) {
             onChange(id, "prop", value);

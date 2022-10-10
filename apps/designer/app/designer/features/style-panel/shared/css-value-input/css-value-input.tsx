@@ -32,7 +32,7 @@ const sortedUnits = units
       : 1
   );
 
-type CssPropertyControlProps = {
+type CssValueInputProps = {
   property: StyleProperty;
   value?: StyleValue;
   allowedValues?: Array<KeywordValue>;
@@ -40,13 +40,13 @@ type CssPropertyControlProps = {
   onChangeComplete?: (value?: StyleValue) => void;
 };
 
-export const CssPropertyControl = ({
+export const CssValueInput = ({
   property,
   value,
   allowedValues = [],
   onChange,
   onChangeComplete,
-}: CssPropertyControlProps) => {
+}: CssValueInputProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleArrowUpDown = (event: KeyboardEvent<HTMLInputElement>) => {

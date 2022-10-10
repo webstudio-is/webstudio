@@ -1,10 +1,10 @@
 import React from "react";
 import { Flex, TextField } from "@webstudio-is/design-system";
 import { StyleValue } from "@webstudio-is/react-sdk";
-import { CssPropertyControl } from "./css-property";
+import { CssValueInput } from "./css-property";
 
 export default {
-  component: CssPropertyControl,
+  component: CssValueInput,
 };
 
 export const WithKeywords = () => {
@@ -14,7 +14,7 @@ export const WithKeywords = () => {
   });
 
   return (
-    <CssPropertyControl
+    <CssValueInput
       property="width"
       value={value}
       allowedValues={[
@@ -43,7 +43,7 @@ export const WithIcons = () => {
   });
 
   return (
-    <CssPropertyControl
+    <CssValueInput
       property="alignItems"
       value={value}
       allowedValues={[
@@ -78,7 +78,7 @@ export const WithUnits = () => {
 
   return (
     <Flex css={{ gap: "$3" }}>
-      <CssPropertyControl
+      <CssValueInput
         property="rowGap"
         value={value}
         allowedValues={[
