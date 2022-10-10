@@ -48,3 +48,4 @@ export { TrashIcon } from "./trash";
 export { SizeIcon } from "./size";
 export { UploadIcon } from "./upload";
 export { GearIcon, gearIconCssVars } from "./gear";
+export * from "./page";

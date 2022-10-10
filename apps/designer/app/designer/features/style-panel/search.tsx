@@ -30,7 +30,11 @@ export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
       type="search"
       value={search}
       inputRef={inputRef}
-      prefix={<MagnifyingGlassIcon />}
+      prefix={
+        <IconButton aria-label="Search">
+          <MagnifyingGlassIcon />
+        </IconButton>
+      }
       suffix={
         search.length > 0 && (
           <IconButton

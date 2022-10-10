@@ -1,16 +1,4 @@
-export {
-  config,
-  createTheme,
-  css,
-  darkTheme,
-  getCssText,
-  globalCss,
-  keyframes,
-  reset,
-  styled,
-  theme,
-  type CSS,
-} from "./stitches.config";
+export * from "./stitches.config";
 export * from "./components/toast";
 
 export * as Collapsible from "@radix-ui/react-collapsible";

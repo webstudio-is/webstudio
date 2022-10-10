@@ -1,6 +1,4 @@
 const config = {
-  previewPath: "/preview",
-  canvasPath: "/canvas",
   designerPath: "/designer",
   dashboardPath: "/dashboard",
   loginPath: "/login",
