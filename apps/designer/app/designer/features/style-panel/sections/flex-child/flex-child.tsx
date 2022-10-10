@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, Flex, Grid, ModalPopover } from "@webstudio-is/design-system";
+import { Text, Flex, Grid, FloatingPopover } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
@@ -137,7 +137,7 @@ export const FlexChildSection = ({
             },
             {
               child: (
-                <ModalPopover
+                <FloatingPopover
                   title="Sizing"
                   content={
                     <Grid
@@ -176,7 +176,7 @@ export const FlexChildSection = ({
                   }
                 >
                   <EllipsesIcon />
-                </ModalPopover>
+                </FloatingPopover>
               ),
               label: "More sizing options",
               value: "",
@@ -219,7 +219,7 @@ export const FlexChildSection = ({
             },
             {
               child: (
-                <ModalPopover
+                <FloatingPopover
                   title="Order"
                   content={
                     <Grid css={{ padding: "$3" }}>
@@ -234,7 +234,7 @@ export const FlexChildSection = ({
                   }
                 >
                   <EllipsesIcon />
-                </ModalPopover>
+                </FloatingPopover>
               ),
               label: "Customize order",
               value: "",

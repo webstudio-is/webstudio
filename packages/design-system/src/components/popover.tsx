@@ -96,7 +96,7 @@ export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverClose = PopoverPrimitive.Close;
 export const PopoverPortal = PopoverPrimitive.Portal;
 
-export const ModalPopover = ({
+export const FloatingPopover = ({
   title,
   content,
   children,
