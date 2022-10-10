@@ -62,11 +62,7 @@ export const Topbar = ({
       >
         <SyncStatus />
         <PreviewButton publish={publish} />
-        <ShareButton
-          path={config.previewPath}
-          projectId={project.id}
-          pageId={page.id}
-        />
+        <ShareButton projectId={project.id} pagePath={page.path} />
         <PublishButton project={project} />
       </Flex>
     </Flex>

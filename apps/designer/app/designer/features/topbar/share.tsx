@@ -9,21 +9,22 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import type { Project, Page } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
 type ShareButtonProps = {
-  path: string;
   projectId: Project["id"];
-  pageId: Page["id"];
+  pagePath: string;
 };
 
-const Content = ({ path, projectId, pageId }: ShareButtonProps) => {
+const Content = ({ projectId, pagePath }: ShareButtonProps) => {
   if (typeof location === "undefined") {
     return null;
   }
   const url = new URL(
-    `${location.protocol}//${location.host}${path}/${projectId}?pageId=${pageId}`
+    `${location.protocol}//${location.host}${
+      pagePath || "/"
+    }?projectId=${projectId}&mode=preview`
   );
   return (
     <PopoverContent
