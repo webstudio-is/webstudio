@@ -1,15 +1,5 @@
 import { useState } from "react";
-import {
-  Text,
-  Flex,
-  Grid,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverPortal,
-  IconButton,
-} from "@webstudio-is/design-system";
+import { Text, Flex, Grid, ModalPopover } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
@@ -27,38 +17,6 @@ import {
   OrderLastIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
-
-// @todo abstract to design-system component
-export const MorePopover = ({
-  title,
-  content,
-  children,
-}: {
-  title: string;
-  content: JSX.Element;
-  children: JSX.Element;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <Popover open={isOpen} onOpenChange={setIsOpen} modal>
-      <PopoverTrigger
-        asChild
-        onClick={() => {
-          setIsOpen(true);
-        }}
-      >
-        {children}
-      </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent sideOffset={220} side="right" hideArrow>
-          <PopoverHeader title={title} />
-          {content}
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
-  );
-};
 
 export const FlexChildSection = ({
   setProperty,
@@ -179,17 +137,46 @@ export const FlexChildSection = ({
             },
             {
               child: (
-                <MorePopover
+                <ModalPopover
                   title="Sizing"
                   content={
-                    <>
-                      <TextControl {...sectionStyle.flexGrow} />
-                      <TextControl {...sectionStyle.flexShrink} />
-                    </>
+                    <Grid
+                      css={{
+                        gridTemplateColumns: "1.5fr 1fr 1fr",
+                        gap: "$3",
+                        padding: "$3",
+                      }}
+                    >
+                      <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+                        <PropertyName
+                          property={
+                            sectionStyle.flexBasis?.styleConfig.property
+                          }
+                          label="Basis"
+                        />
+                        <TextControl {...sectionStyle.flexBasis} />
+                      </Grid>
+                      <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+                        <PropertyName
+                          property={sectionStyle.flexGrow?.styleConfig.property}
+                          label="Grow"
+                        />
+                        <TextControl {...sectionStyle.flexGrow} />
+                      </Grid>
+                      <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+                        <PropertyName
+                          property={
+                            sectionStyle.flexShrink?.styleConfig.property
+                          }
+                          label="Shrink"
+                        />
+                        <TextControl {...sectionStyle.flexShrink} />
+                      </Grid>
+                    </Grid>
                   }
                 >
                   <EllipsesIcon />
-                </MorePopover>
+                </ModalPopover>
               ),
               label: "More sizing options",
               value: "",
@@ -232,16 +219,22 @@ export const FlexChildSection = ({
             },
             {
               child: (
-                <MorePopover
+                <ModalPopover
                   title="Order"
                   content={
-                    <>
-                      <TextControl {...sectionStyle.order} />
-                    </>
+                    <Grid css={{ padding: "$3" }}>
+                      <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+                        <PropertyName
+                          property={sectionStyle.order?.styleConfig.property}
+                          label="Order"
+                        />
+                        <TextControl {...sectionStyle.order} />
+                      </Grid>
+                    </Grid>
                   }
                 >
                   <EllipsesIcon />
-                </MorePopover>
+                </ModalPopover>
               ),
               label: "Customize order",
               value: "",

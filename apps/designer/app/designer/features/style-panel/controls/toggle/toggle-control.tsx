@@ -1,4 +1,4 @@
-import { ToggleGroup, Tooltip } from "@webstudio-is/design-system";
+import { Flex, ToggleGroup, Tooltip } from "@webstudio-is/design-system";
 
 export type ToggleGroupControlProps = {
   value: string;
@@ -20,8 +20,8 @@ export const ToggleGroupControl = ({
     {items.map(({ child, label, value }, index) => {
       return (
         <ToggleGroup.Item key={index} value={value}>
-          <Tooltip content={label} delayDuration={0}>
-            {child}
+          <Tooltip content={"label"} delayDuration={0}>
+            <Flex>{child}</Flex>
           </Tooltip>
         </ToggleGroup.Item>
       );

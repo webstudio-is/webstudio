@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Cross1Icon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
@@ -74,7 +74,15 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
       >
         <Text variant="title">{title}</Text>
         <PopoverClose asChild>
-          <IconButton size="1" css={{ marginRight: "$2" }} aria-label="Close">
+          <IconButton
+            size="1"
+            css={{
+              marginRight: "$2",
+              "&:not(:hover):focus": { background: "none" },
+            }}
+            aria-label="Close"
+            autoFocus={false}
+          >
             <Cross1Icon />
           </IconButton>
         </PopoverClose>
@@ -87,3 +95,39 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverClose = PopoverPrimitive.Close;
 export const PopoverPortal = PopoverPrimitive.Portal;
+
+export const ModalPopover = ({
+  title,
+  content,
+  children,
+}: {
+  title: string;
+  content: JSX.Element;
+  children: JSX.Element;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal>
+      <PopoverTrigger
+        asChild
+        onClick={() => {
+          setIsOpen(true);
+        }}
+      >
+        {children}
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent
+          sideOffset={220}
+          side="right"
+          hideArrow
+          css={{ backgroundColor: "$loContrast" }}
+        >
+          <PopoverHeader title={title} />
+          {content}
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
+  );
+};
