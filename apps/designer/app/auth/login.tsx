@@ -1,7 +1,6 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-
 import {
   Card,
   Flex,
@@ -11,7 +10,6 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
-
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./components/login-button";
 import loginStyles from "./login.css";
@@ -86,7 +84,6 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                     }}
                   >
                     <TextField
-                      size={2}
                       name="secret"
                       type="text"
                       minLength={2}

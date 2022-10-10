@@ -1,5 +1,5 @@
 import { type ChildrenUpdates } from "@webstudio-is/react-sdk";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDebounce } from "react-use";
 import {
   OnChangePlugin as LexicalOnChangePlugin,
@@ -14,17 +14,18 @@ export const OnChangePlugin = ({
 }) => {
   const [editorState, setEditorState] = useState<EditorState>();
 
-  useDebounce(
-    () => {
-      if (editorState === undefined) return;
-      editorState.read(() => {
-        const updates = toUpdates(editorState.toJSON().root);
-        onChange(updates);
-      });
-    },
-    500,
-    [editorState]
-  );
+  const handleChange = useCallback(() => {
+    if (editorState === undefined) return;
+    editorState.read(() => {
+      const updates = toUpdates(editorState.toJSON().root);
+      onChange(updates);
+    });
+  }, [editorState, onChange]);
+
+  // When we quit editing mode, we need to safe again otherwise it can happen before debounce calls.
+  useEffect(() => handleChange);
+
+  useDebounce(handleChange, 1000, [handleChange]);
 
   return <LexicalOnChangePlugin onChange={setEditorState} />;
 };

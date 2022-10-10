@@ -149,12 +149,15 @@ export type TreeNodeProps<Data extends { id: string }> = {
   level?: number;
   animate?: boolean;
   forceHoverStateAtItem?: string;
+
+  hideRoot?: boolean;
 };
 
 export const TreeNode = <Data extends { id: string }>({
   itemData,
   level = 0,
   parentIsSelected,
+  hideRoot,
   ...commonProps
 }: TreeNodeProps<Data>) => {
   const {
@@ -216,42 +219,44 @@ export const TreeNode = <Data extends { id: string }>({
       onOpenChange={(isOpen) => setIsExpanded?.(itemData, isOpen)}
       data-drop-target-id={itemData.id}
     >
-      <ItemWrapper
-        onMouseEnter={() => onMouseEnter?.(itemData)}
-        onMouseLeave={() => onMouseLeave?.(itemData)}
-        isSelected={isSelected}
-        parentIsSelected={parentIsSelected}
-        enableHoverState={forceHoverStateAtItem === undefined}
-        forceHoverState={forceHoverStateAtItem === itemData.id}
-      >
-        {/* We want the main ItemButton to take the entire space,
-         * and then position the collapsible trigger on top of it using absolute positionning.
-         * When user clicks anywhere on a tree item, they should either hit the main button or the trigger.
-         */}
-
-        <ItemButton
-          type="button"
-          data-drag-item-id={itemData.id}
-          data-item-button-id={itemData.id}
-          onFocus={makeSelected}
+      {hideRoot !== true && (
+        <ItemWrapper
+          onMouseEnter={() => onMouseEnter?.(itemData)}
+          onMouseLeave={() => onMouseLeave?.(itemData)}
+          isSelected={isSelected}
+          parentIsSelected={parentIsSelected}
+          enableHoverState={forceHoverStateAtItem === undefined}
+          forceHoverState={forceHoverStateAtItem === itemData.id}
         >
-          <NestingLines isSelected={isSelected} level={level} />
-          {isAlwaysExpanded === false && <TriggerPlaceholder />}
-          {renderItem({ data: itemData, isSelected })}
-        </ItemButton>
+          {/* We want the main ItemButton to take the entire space,
+           * and then position the collapsible trigger on top of it using absolute positionning.
+           * When user clicks anywhere on a tree item, they should either hit the main button or the trigger.
+           */}
 
-        {shouldRenderExpandButton && (
-          <CollapsibleTrigger
-            style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
-            // We don't want a separate focusable control inside a tree item.
-            // tabIndex makes it skipped over when tabbing.
-            // It still can be focused using mouse, but we handle this elsewhere.
-            tabIndex={-1}
+          <ItemButton
+            type="button"
+            data-drag-item-id={itemData.id}
+            data-item-button-id={itemData.id}
+            onFocus={makeSelected}
           >
-            {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
-          </CollapsibleTrigger>
-        )}
-      </ItemWrapper>
+            <NestingLines isSelected={isSelected} level={level} />
+            {isAlwaysExpanded === false && <TriggerPlaceholder />}
+            {renderItem({ data: itemData, isSelected })}
+          </ItemButton>
+
+          {shouldRenderExpandButton && (
+            <CollapsibleTrigger
+              style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
+              // We don't want a separate focusable control inside a tree item.
+              // tabIndex makes it skipped over when tabbing.
+              // It still can be focused using mouse, but we handle this elsewhere.
+              tabIndex={-1}
+            >
+              {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
+            </CollapsibleTrigger>
+          )}
+        </ItemWrapper>
+      )}
       {isExpandable && (
         <CollapsibleContent
           onAnimationEnd={handleAnimationEnd}
@@ -264,7 +269,7 @@ export const TreeNode = <Data extends { id: string }>({
               <TreeNode
                 key={child.id}
                 itemData={child}
-                level={level + 1}
+                level={hideRoot ? level : level + 1}
                 parentIsSelected={isSelected || parentIsSelected}
                 {...commonProps}
               />
