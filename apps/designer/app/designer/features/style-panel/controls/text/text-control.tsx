@@ -1,4 +1,4 @@
-import { CssValueInput } from "~/designer/features/style-panel/controls/css-property/css-property";
+import { CssValueInput } from "~/designer/features/style-panel/shared/css-value-input/css-value-input";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import { StyleValue } from "@webstudio-is/react-sdk";
@@ -40,11 +40,9 @@ export const TextControl = ({
         value: item.name,
       }))}
       onChange={(value) => {
-        console.log("change", value);
         handleChange(value, true);
       }}
       onChangeComplete={(value) => {
-        console.log("change complete", value);
         handleChange(value, false);
       }}
     />
