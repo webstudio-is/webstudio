@@ -42,6 +42,7 @@ import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
+import env from "~/shared/env";
 
 export const links = () => {
   return [
@@ -254,14 +255,21 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
   );
 };
 
-type DesignerProps = {
+export type DesignerProps = {
   config: Config;
   project: Project;
   pages: Pages;
   pageId: string;
+  userContentBaseUrl: string;
 };
 
-export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
+export const Designer = ({
+  config,
+  project,
+  pages,
+  pageId,
+  userContentBaseUrl,
+}: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -296,20 +304,34 @@ export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
     return page;
   }, [pages, pageId]);
 
+  const userContentUrl = new URL(userContentBaseUrl);
+  userContentUrl.pathname = page.path;
+  if (env.USER_CONTENT_REQUIRE_SUBDOMAIN) {
+    userContentUrl.host = `${project.domain}.${userContentUrl.host}`;
+  } else {
+    userContentUrl.searchParams.set("projectId", project.id);
+  }
+
+  userContentUrl.searchParams.set("mode", "edit");
+  const canvasUrl = userContentUrl.toString();
+
+  userContentUrl.searchParams.set("mode", "preview");
+  const previewUrl = userContentUrl.toString();
+
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>
       <Topbar
         css={{ gridArea: "header" }}
         config={config}
-        page={page}
         project={project}
         publish={publish}
+        previewUrl={previewUrl}
       />
       <Main>
         <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
           <CanvasIframe
             ref={iframeRefCallback}
-            src={`${page.path || "/"}?projectId=${project.id}&mode=edit`}
+            src={canvasUrl}
             pointerEvents={
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"

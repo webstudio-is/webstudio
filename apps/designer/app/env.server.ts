@@ -8,6 +8,8 @@ const env = {
   DESIGNER_HOST: process.env.DESIGNER_HOST,
   PUBLISHER_ENDPOINT: process.env.PUBLISHER_ENDPOINT || null,
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
+  USER_CONTENT_REQUIRE_SUBDOMAIN:
+    process.env.USER_CONTENT_REQUIRE_SUBDOMAIN === "true",
 } as const;
 
 export default env;

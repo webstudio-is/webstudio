@@ -19,10 +19,10 @@ type MinimalRequest = {
 const getRequestHost = (request: MinimalRequest): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
-export const getUserContentHost = (request: MinimalRequest): string => {
-  const { USER_CONTENT_HOST } = process.env;
-  if (USER_CONTENT_HOST !== undefined && USER_CONTENT_HOST !== "") {
-    return USER_CONTENT_HOST;
+export const getUserContentBaseUrl = (request: MinimalRequest): string => {
+  const { USER_CONTENT_BASE_URL } = process.env;
+  if (USER_CONTENT_BASE_URL !== undefined && USER_CONTENT_BASE_URL !== "") {
+    return USER_CONTENT_BASE_URL;
   }
 
   // Local development special case
@@ -31,7 +31,7 @@ export const getUserContentHost = (request: MinimalRequest): string => {
     process.env.NODE_ENV === "development" &&
     /^(.*\.)?localhost(:\d+)?$/.test(host)
   ) {
-    return host.split(".").pop() as string;
+    return `http://${host.split(".").pop()}`;
   }
 
   // Vercel preview special case
@@ -40,7 +40,7 @@ export const getUserContentHost = (request: MinimalRequest): string => {
       process.env.VERCEL_ENV === "development") &&
     typeof process.env.VERCEL_URL === "string"
   ) {
-    return process.env.VERCEL_URL;
+    return `https://${process.env.VERCEL_URL}`;
   }
 
   throw new Error("Could not determine user content host");
@@ -63,7 +63,7 @@ export const getUserContentParams = (
   const url = new URL(request.url);
 
   const requestHost = getRequestHost(request);
-  const userContentHost = getUserContentHost(request);
+  const userContentHost = new URL(getUserContentBaseUrl(request)).host;
 
   if (process.env.USER_CONTENT_REQUIRE_SUBDOMAIN !== "true") {
     const projectId = url.searchParams.get("projectId");

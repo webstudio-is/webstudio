@@ -1,6 +1,6 @@
 import {
   getUserContentParams,
-  getUserContentHost,
+  getUserContentBaseUrl,
 } from "./user-content-params";
 
 const makeRequest = (url: string, headers: { [key: string]: string } = {}) => ({
@@ -21,7 +21,7 @@ const makeRequest = (url: string, headers: { [key: string]: string } = {}) => ({
 const originalEnv = { ...process.env };
 afterEach(() => {
   for (const name of [
-    "USER_CONTENT_HOST",
+    "USER_CONTENT_BASE_URL",
     "USER_CONTENT_REQUIRE_SUBDOMAIN",
     "VERCEL_ENV",
     "VERCEL_URL",
@@ -37,37 +37,39 @@ afterEach(() => {
   }
 });
 
-describe("getUserContentHost", () => {
+describe("getUserContentBaseUrl", () => {
   test("Normal operation", () => {
-    process.env.USER_CONTENT_HOST = "foo.com";
-    expect(getUserContentHost(makeRequest("https://bar.com"))).toBe("foo.com");
+    process.env.USER_CONTENT_BASE_URL = "https://foo.com";
+    expect(getUserContentBaseUrl(makeRequest("https://bar.com"))).toBe(
+      "https://foo.com"
+    );
   });
 
   test("Local development", () => {
     process.env.NODE_ENV = "development";
-    expect(getUserContentHost(makeRequest("https://localhost"))).toBe(
-      "localhost"
+    expect(getUserContentBaseUrl(makeRequest("http://localhost"))).toBe(
+      "http://localhost"
     );
-    expect(getUserContentHost(makeRequest("https://localhost:1234"))).toBe(
-      "localhost:1234"
+    expect(getUserContentBaseUrl(makeRequest("http://localhost:1234"))).toBe(
+      "http://localhost:1234"
     );
-    expect(getUserContentHost(makeRequest("https://foo.localhost:1234"))).toBe(
-      "localhost:1234"
-    );
+    expect(
+      getUserContentBaseUrl(makeRequest("http://foo.localhost:1234"))
+    ).toBe("http://localhost:1234");
   });
 
   test("Vercel preview", () => {
     process.env.VERCEL_ENV = "preview";
     process.env.VERCEL_URL = "bar.foo.com";
-    expect(getUserContentHost(makeRequest("https://bar.com"))).toBe(
-      "bar.foo.com"
+    expect(getUserContentBaseUrl(makeRequest("https://baz.com"))).toBe(
+      "https://bar.foo.com"
     );
   });
 });
 
 describe("getCanvasRequestParams", () => {
   beforeEach(() => {
-    process.env.USER_CONTENT_HOST = "foo.com";
+    process.env.USER_CONTENT_BASE_URL = "https://foo.com";
   });
 
   test("detects project domain", () => {

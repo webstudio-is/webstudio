@@ -40,9 +40,9 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production DESIGNER_HOST is required for website functionality. Please set it to your production URL of the designer."
     );
   }
-  if (!process.env.USER_CONTENT_HOST) {
+  if (!process.env.USER_CONTENT_BASE_URL) {
     errors.push(
-      "👉 In production USER_CONTENT_HOST is required for security reasons. Please set it to a value distinct from DESIGNER_HOST / DEPLOYMENT_URL."
+      "👉 In production USER_CONTENT_BASE_URL is required for security reasons."
     );
   }
   if (process.env.USER_CONTENT_REQUIRE_SUBDOMAIN !== "true") {
