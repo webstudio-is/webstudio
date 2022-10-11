@@ -35,7 +35,7 @@ export const TextControl = ({
     <CssValueInput
       property={styleConfig.property}
       value={value}
-      allowedValues={styleConfig.items.map((item) => ({
+      items={styleConfig.items.map((item) => ({
         type: "keyword",
         value: item.name,
       }))}

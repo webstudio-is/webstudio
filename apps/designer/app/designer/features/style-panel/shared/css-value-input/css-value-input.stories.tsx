@@ -1,14 +1,14 @@
 import React from "react";
 import { Flex, TextField } from "@webstudio-is/design-system";
 import { StyleValue } from "@webstudio-is/react-sdk";
-import { CssValueInput } from "./css-property";
+import { CssValueInput } from "./css-value-input";
 
 export default {
   component: CssValueInput,
 };
 
 export const WithKeywords = () => {
-  const [value, setValue] = React.useState<StyleValue | undefined>({
+  const [value, setValue] = React.useState<StyleValue>({
     type: "keyword",
     value: "auto",
   });
@@ -17,16 +17,15 @@ export const WithKeywords = () => {
     <CssValueInput
       property="width"
       value={value}
-      allowedValues={[
+      items={[
         { type: "keyword", value: "auto" },
         { type: "keyword", value: "min-content" },
         { type: "keyword", value: "max-content" },
         { type: "keyword", value: "fit-content" },
       ]}
       onChange={(value) => {
-        // every time we change the input
-        // eslint-disable-next-line no-console
-        console.log(value);
+        console.log("onChange", value);
+        setValue(value);
       }}
       onChangeComplete={(newValue) => {
         // on blur, select, enter etc.
@@ -46,7 +45,7 @@ export const WithIcons = () => {
     <CssValueInput
       property="alignItems"
       value={value}
-      allowedValues={[
+      items={[
         { type: "keyword", value: "normal" },
         { type: "keyword", value: "start" },
         { type: "keyword", value: "end" },
@@ -81,7 +80,7 @@ export const WithUnits = () => {
       <CssValueInput
         property="rowGap"
         value={value}
-        allowedValues={[
+        items={[
           { type: "keyword", value: "auto" },
           { type: "keyword", value: "min-content" },
           { type: "keyword", value: "max-content" },

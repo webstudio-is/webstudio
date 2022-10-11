@@ -1,4 +1,4 @@
-import {
+import React, {
   useState,
   forwardRef,
   useCallback,
@@ -30,6 +30,9 @@ const Listbox = styled("ul", panelStyles, {
   // @todo need some non-hardcoded value
   maxHeight: 400,
   minWidth: 230,
+  '&[data-state="closed"], &[data-empty="true"]': {
+    display: "none",
+  },
 });
 
 const ListboxItem = styled("li", itemCss, {
@@ -106,7 +109,7 @@ const useFilter = <Item,>({
   };
 };
 
-type useComboboxProps<Item> = {
+type UseComboboxProps<Item> = {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
@@ -118,6 +121,8 @@ type useComboboxProps<Item> = {
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
 };
 
+export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
+
 export const useCombobox = <Item,>({
   items,
   value,
@@ -125,7 +130,7 @@ export const useCombobox = <Item,>({
   onItemSelect,
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
-}: useComboboxProps<Item>) => {
+}: UseComboboxProps<Item>) => {
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
     itemToString,
@@ -149,7 +154,7 @@ export const useCombobox = <Item,>({
     },
   });
 
-  const { isOpen, getItemProps, highlightedIndex, selectedItem } =
+  const { isOpen, getItemProps, highlightedIndex, selectedItem, getMenuProps } =
     downshiftProps;
 
   useEffect(() => {
@@ -171,10 +176,22 @@ export const useCombobox = <Item,>({
     [getItemProps, highlightedIndex, itemToString, selectedItem]
   );
 
+  const enhancedGetMenuProps = useCallback(
+    (options) => {
+      return getMenuProps({
+        ...options,
+        "data-state": isOpen ? "open" : "closed",
+        ...{ "data-empty": filteredItems.length === 0 },
+      });
+    },
+    [getMenuProps, isOpen, filteredItems.length]
+  );
+
   return {
     ...downshiftProps,
     items: filteredItems,
     getItemProps: enhancedGetItemProps,
+    getMenuProps: enhancedGetMenuProps,
   };
 };
 
