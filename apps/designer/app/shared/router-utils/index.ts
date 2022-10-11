@@ -1,1 +1,1 @@
-export * from "./canvas-request-params";
+export * from "./user-content-params";

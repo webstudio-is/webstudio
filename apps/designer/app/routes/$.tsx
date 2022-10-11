@@ -1,4 +1,9 @@
-import { type LoaderFunction, redirect, MetaFunction } from "@remix-run/node";
+import {
+  type LoaderFunction,
+  redirect,
+  MetaFunction,
+  json,
+} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData, type CanvasData } from "~/shared/db";
@@ -10,7 +15,7 @@ import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import {
   type CanvasRouteMode,
-  getCanvasRequestParams,
+  getUserContentParams,
 } from "~/shared/router-utils";
 
 type Data =
@@ -29,7 +34,7 @@ export const loader: LoaderFunction = async ({
   request,
 }): Promise<Data | Response> => {
   try {
-    const canvasRequest = getCanvasRequestParams(request);
+    const canvasRequest = getUserContentParams(request);
 
     if (canvasRequest === undefined) {
       return redirect(config.dashboardPath);
@@ -43,7 +48,7 @@ export const loader: LoaderFunction = async ({
         : await db.project.loadByDomain(canvasRequest.projectDomain);
 
     if (project === null) {
-      throw new Error("Project not found");
+      throw json("Project not found", { status: 404 });
     }
 
     const canvasData = await loadCanvasData(
@@ -52,8 +57,18 @@ export const loader: LoaderFunction = async ({
       pathname
     );
 
+    if (canvasData === undefined) {
+      throw json("Page not found", { status: 404 });
+    }
+
     return { ...canvasData, env, mode };
   } catch (error) {
+    // If a Response is thrown, we're rethrowing it for Remix to handle.
+    // https://remix.run/docs/en/v1/api/conventions#throwing-responses-in-loaders
+    if (error instanceof Response) {
+      throw error;
+    }
+
     sentryException({ error });
     return {
       errors: error instanceof Error ? error.message : String(error),
