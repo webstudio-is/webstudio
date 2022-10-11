@@ -34,18 +34,18 @@ export const loader: LoaderFunction = async ({
   request,
 }): Promise<Data | Response> => {
   try {
-    const canvasRequest = getUserContentParams(request);
+    const userContentParams = getUserContentParams(request);
 
-    if (canvasRequest === undefined) {
+    if (userContentParams === undefined) {
       return redirect(config.dashboardPath);
     }
 
-    const { mode, pathname } = canvasRequest;
+    const { mode, pathname } = userContentParams;
 
     const project =
-      "projectId" in canvasRequest
-        ? await db.project.loadById(canvasRequest.projectId)
-        : await db.project.loadByDomain(canvasRequest.projectDomain);
+      "projectId" in userContentParams
+        ? await db.project.loadById(userContentParams.projectId)
+        : await db.project.loadByDomain(userContentParams.projectDomain);
 
     if (project === null) {
       throw json("Project not found", { status: 404 });
