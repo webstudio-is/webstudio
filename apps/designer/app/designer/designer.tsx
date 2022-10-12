@@ -260,7 +260,7 @@ export type DesignerProps = {
   project: Project;
   pages: Pages;
   pageId: string;
-  userContentBaseUrl: string;
+  buildOrigin: string;
 };
 
 export const Designer = ({
@@ -268,7 +268,7 @@ export const Designer = ({
   project,
   pages,
   pageId,
-  userContentBaseUrl,
+  buildOrigin,
 }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
@@ -304,19 +304,19 @@ export const Designer = ({
     return page;
   }, [pages, pageId]);
 
-  const userContentUrl = new URL(userContentBaseUrl);
-  userContentUrl.pathname = page.path;
-  if (env.USER_CONTENT_REQUIRE_SUBDOMAIN) {
-    userContentUrl.host = `${project.domain}.${userContentUrl.host}`;
+  const buildUrl = new URL(buildOrigin);
+  buildUrl.pathname = page.path;
+  if (env.BUILD_REQUIRE_SUBDOMAIN) {
+    buildUrl.host = `${project.domain}.${buildUrl.host}`;
   } else {
-    userContentUrl.searchParams.set("projectId", project.id);
+    buildUrl.searchParams.set("projectId", project.id);
   }
 
-  userContentUrl.searchParams.set("mode", "edit");
-  const canvasUrl = userContentUrl.toString();
+  buildUrl.searchParams.set("mode", "edit");
+  const canvasUrl = buildUrl.toString();
 
-  userContentUrl.searchParams.set("mode", "preview");
-  const previewUrl = userContentUrl.toString();
+  buildUrl.searchParams.set("mode", "preview");
+  const previewUrl = buildUrl.toString();
 
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>

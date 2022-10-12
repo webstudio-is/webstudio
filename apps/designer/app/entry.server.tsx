@@ -4,7 +4,7 @@ import { initSentry } from "./shared/sentry";
 import { prisma } from "@webstudio-is/prisma-client";
 import { handleRequest as handleRequestDesigner } from "./shared/remix";
 import { handleRequest as handleRequestCanvas } from "@webstudio-is/react-sdk";
-import { getUserContentParams } from "./shared/router-utils";
+import { getBuildParams } from "./shared/router-utils";
 
 initSentry({
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
@@ -23,7 +23,7 @@ export default function handleRequest(
       (match) =>
         match.route.id === "routes/$" || match.route.id === "routes/index"
     ) &&
-    getUserContentParams(request) !== undefined
+    getBuildParams(request) !== undefined
   ) {
     handle = handleRequestCanvas;
   }

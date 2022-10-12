@@ -40,14 +40,14 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production DESIGNER_HOST is required for website functionality. Please set it to your production URL of the designer."
     );
   }
-  if (!process.env.USER_CONTENT_BASE_URL) {
+  if (!process.env.BUILD_ORIGIN) {
     errors.push(
-      "👉 In production USER_CONTENT_BASE_URL is required for security reasons."
+      "👉 In production BUILD_ORIGIN is required for security reasons."
     );
   }
-  if (process.env.USER_CONTENT_REQUIRE_SUBDOMAIN !== "true") {
+  if (process.env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
     errors.push(
-      "👉 In production USER_CONTENT_REQUIRE_SUBDOMAIN must be set to 'true' for security reasons."
+      "👉 In production BUILD_REQUIRE_SUBDOMAIN must be set to 'true' for security reasons."
     );
   }
 }

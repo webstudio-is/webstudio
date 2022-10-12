@@ -6,7 +6,7 @@ import config from "~/config";
 import { ErrorMessage } from "~/shared/error";
 import { action, useAction } from "./_assets";
 import { sentryException } from "~/shared/sentry";
-import { getUserContentBaseUrl } from "~/shared/router-utils";
+import { getBuildOrigin } from "~/shared/router-utils";
 
 export { action, links };
 
@@ -35,7 +35,7 @@ export const loader: LoaderFunction = async ({
       project,
       pages: devBuild.pages,
       pageId: pageIdParam || devBuild.pages.homePage.id,
-      userContentBaseUrl: getUserContentBaseUrl(request),
+      buildOrigin: getBuildOrigin(request),
     };
   } catch (error) {
     sentryException({ error });

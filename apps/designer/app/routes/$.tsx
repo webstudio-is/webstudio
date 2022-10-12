@@ -13,13 +13,10 @@ import env, { Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-import {
-  type CanvasRouteMode,
-  getUserContentParams,
-} from "~/shared/router-utils";
+import { type BuildMode, getBuildParams } from "~/shared/router-utils";
 
 type Data =
-  | (CanvasData & { env: Env; mode: CanvasRouteMode })
+  | (CanvasData & { env: Env; mode: BuildMode })
   | { errors: string; env: Env };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
@@ -34,18 +31,18 @@ export const loader: LoaderFunction = async ({
   request,
 }): Promise<Data | Response> => {
   try {
-    const userContentParams = getUserContentParams(request);
+    const buildParams = getBuildParams(request);
 
-    if (userContentParams === undefined) {
+    if (buildParams === undefined) {
       return redirect(config.dashboardPath);
     }
 
-    const { mode, pathname } = userContentParams;
+    const { mode, pathname } = buildParams;
 
     const project =
-      "projectId" in userContentParams
-        ? await db.project.loadById(userContentParams.projectId)
-        : await db.project.loadByDomain(userContentParams.projectDomain);
+      "projectId" in buildParams
+        ? await db.project.loadById(buildParams.projectId)
+        : await db.project.loadByDomain(buildParams.projectDomain);
 
     if (project === null) {
       throw json("Project not found", { status: 404 });
