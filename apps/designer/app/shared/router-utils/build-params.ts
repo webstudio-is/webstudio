@@ -52,7 +52,8 @@ export const getBuildOrigin = (
 };
 
 export const getBuildParams = (
-  request: MinimalRequest
+  request: MinimalRequest,
+  env = process.env
 ):
   | {
       projectId: string;
@@ -68,9 +69,9 @@ export const getBuildParams = (
   const url = new URL(request.url);
 
   const requestHost = getRequestHost(request);
-  const buildHost = new URL(getBuildOrigin(request)).host;
+  const buildHost = new URL(getBuildOrigin(request, env)).host;
 
-  if (process.env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
+  if (env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
     const projectId = url.searchParams.get("projectId");
     if (projectId !== null && buildHost === requestHost) {
       return {
