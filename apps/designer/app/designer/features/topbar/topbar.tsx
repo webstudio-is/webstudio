@@ -7,21 +7,21 @@ import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
-import type { Project, Page } from "@webstudio-is/project";
+import type { Project } from "@webstudio-is/project";
 
 type TopbarProps = {
   config: Config;
   css: CSS;
   project: Project;
-  page: Page;
   publish: Publish;
+  previewUrl: string;
 };
 export const Topbar = ({
   config,
   css,
   project,
-  page,
   publish,
+  previewUrl,
 }: TopbarProps) => {
   return (
     <Flex
@@ -62,7 +62,7 @@ export const Topbar = ({
       >
         <SyncStatus />
         <PreviewButton publish={publish} />
-        <ShareButton projectId={project.id} pagePath={page.path} />
+        <ShareButton url={previewUrl} />
         <PublishButton project={project} />
       </Flex>
     </Flex>
