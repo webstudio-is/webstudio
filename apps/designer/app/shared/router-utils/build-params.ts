@@ -19,6 +19,12 @@ type MinimalRequest = {
 const getRequestHost = (request: MinimalRequest): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
+const isLocalhost = (host: string) => {
+  // remove port if present
+  const [domain] = host.split(":");
+  return domain === "localhost" || domain.endsWith(".localhost");
+};
+
 export const getBuildOrigin = (
   request: MinimalRequest,
   env = process.env
@@ -30,10 +36,7 @@ export const getBuildOrigin = (
 
   // Local development special case
   const host = getRequestHost(request);
-  if (
-    env.NODE_ENV === "development" &&
-    /^(.*\.)?localhost(:\d+)?$/.test(host)
-  ) {
+  if (env.NODE_ENV === "development" && isLocalhost(host)) {
     return `http://${host.split(".").pop()}`;
   }
 
@@ -87,6 +90,4 @@ export const getBuildParams = (
       pathname: url.pathname,
     };
   }
-
-  return;
 };
