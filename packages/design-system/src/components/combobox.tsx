@@ -171,7 +171,7 @@ export const useCombobox = <Item,>({
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(items[highlightedIndex]);
+        onItemHighlight?.(items[highlightedIndex] ?? null);
       }
     },
   });

@@ -32,6 +32,9 @@ export const WithKeywords = () => {
         setValue(newValue);
         action("onChangeComplete")(newValue);
       }}
+      onItemHighlight={(value) => {
+        action("onItemHighlight")(value);
+      }}
     />
   );
 };
@@ -63,6 +66,9 @@ export const WithIcons = () => {
         setValue(newValue);
         action("onChangeComplete")(newValue);
       }}
+      onItemHighlight={(value) => {
+        action("onItemHighlight")(value);
+      }}
     />
   );
 };
@@ -92,6 +98,9 @@ export const WithUnits = () => {
           // on blur, select, enter etc.
           setValue(newValue);
           action("onChangeComplete")(newValue);
+        }}
+        onItemHighlight={(value) => {
+          action("onItemHighlight")(value);
         }}
       />
       <TextField

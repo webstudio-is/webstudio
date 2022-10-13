@@ -100,14 +100,14 @@ type CssValueInputProps = {
   units?: Array<Unit>;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
+  onItemHighlight?: (value: StyleValue | null) => void;
 };
 
 /**
  * Common:
  * - Free text editing
- * - Filterable keywords list (click on chevron or arrow down)
  * - When text is a number - unit mode
- * - Enter or blur submits the value
+ * - Enter or blur calls onChangeComplete
  * - After submission, when value is an invalid CSS value - invalid mode
  * - When hovering over keywords and units list, onItemHighlight is called
  *
@@ -120,9 +120,10 @@ type CssValueInputProps = {
  * - Typing a unit in unit mode will change the selected unit
  * - During typing the unit until unit is matched, input is in invalid mode
  * - Math expression: "2px + 3em" (like CSS calc())
+ * - Handle scrubbing
  *
  * Keywords mode:
- * - Filter by typing
+ * - Filterable keywords list (click on chevron or arrow down to show the list)
  * - Arrow keys are used to navigate keyword items
  * - Enter key or click is used to select item when list is open
  * - Escape key is used to close list
@@ -135,6 +136,7 @@ export const CssValueInput = ({
   units,
   onChange,
   onChangeComplete,
+  onItemHighlight,
 }: CssValueInputProps) => {
   const {
     items,
@@ -152,6 +154,7 @@ export const CssValueInput = ({
     onItemSelect: (value) => {
       onChangeComplete(value ?? defaultValue);
     },
+    onItemHighlight,
   });
 
   const inputProps = getInputProps();
