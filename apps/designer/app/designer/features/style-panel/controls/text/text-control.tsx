@@ -1,7 +1,8 @@
 import { CssValueInput } from "~/designer/features/style-panel/shared/css-value-input/css-value-input";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
-import { toValue } from "@webstudio-is/react-sdk";
+import { type StyleValue, toValue } from "@webstudio-is/react-sdk";
+import { useState } from "react";
 
 export const TextControl = ({
   currentStyle,
@@ -17,18 +18,22 @@ export const TextControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
+  const [tempValue, setTempValue] = useState<StyleValue>();
+
   return (
     <CssValueInput
       property={styleConfig.property}
-      value={value}
+      value={tempValue ?? value}
       keywords={styleConfig.items.map((item) => ({
         type: "keyword",
         value: item.name,
       }))}
       onChange={(styleValue) => {
+        setTempValue(styleValue);
         setValue(toValue(styleValue), { isEphemeral: true });
       }}
       onChangeComplete={(styleValue) => {
+        setTempValue(undefined);
         setValue(toValue(styleValue));
       }}
     />

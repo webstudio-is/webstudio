@@ -47,7 +47,7 @@ const useOnChange = (
     if (input === valueRef.current.value) return;
 
     // We want to switch to unit mode if entire input is a number.
-    if (/^\d+$/.test(input)) {
+    if (input.trim().length !== 0 && isNaN(Number(input)) === false) {
       onChange?.({
         type: "unit",
         // Use previously known unit or fallback to px.
