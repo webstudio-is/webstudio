@@ -28,10 +28,41 @@ export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
     ? -1
     : 1
 );
-
 const defaultKeywords: [] = [];
-
 const defaultValue: UnsetValue = { type: "unset", value: "" };
+
+const useOnChange = (
+  value: StyleValue,
+  input: string,
+  onChange: (value: StyleValue) => void
+) => {
+  // Used to decouple onChange effect from value ref change
+  const valueRef = useRef<StyleValue>(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    if (input === valueRef.current.value) return;
+
+    // We want to switch to unit mode if entire input is a number.
+    if (/^\d+$/.test(input)) {
+      onChange?.({
+        type: "unit",
+        // Use previously known unit or fallback to px.
+        unit: valueRef.current.type === "unit" ? valueRef.current.unit : "px",
+        value: Number(input),
+      });
+      return;
+    }
+
+    onChange?.({
+      type: "keyword",
+      value: input,
+    });
+  }, [input, onChange]);
+};
 
 type UnitSelectType = {
   value: UnitValue;
@@ -78,6 +109,7 @@ type CssValueInputProps = {
  * - When text is a number - unit mode
  * - Enter or blur submits the value
  * - After submission, when value is an invalid CSS value - invalid mode
+ * - When hovering over keywords and units list, onItemHighlight is called
  *
  * Unit mode:
  * - Unit selection on unit button click
@@ -123,34 +155,8 @@ export const CssValueInput = ({
   });
 
   const inputProps = getInputProps();
-  // Used to decouple onChange effect from value ref change
-  const valueRef = useRef<StyleValue>(value);
 
-  useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-
-  useEffect(() => {
-    const input = inputProps.value;
-
-    if (input === valueRef.current.value) return;
-
-    // We want to switch to unit mode if entire input is a number.
-    if (/^\d+$/.test(input)) {
-      onChange?.({
-        type: "unit",
-        // Use previously known unit or fallback to px.
-        unit: valueRef.current.type === "unit" ? valueRef.current.unit : "px",
-        value: Number(input),
-      });
-      return;
-    }
-
-    onChange?.({
-      type: "keyword",
-      value: input,
-    });
-  }, [inputProps.value, onChange]);
+  useOnChange(value, inputProps.value, onChange);
 
   const suffix =
     value.type === "keyword" ? (
@@ -170,6 +176,16 @@ export const CssValueInput = ({
             name={property}
             state={value.type === "invalid" ? "invalid" : undefined}
             suffix={suffix}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                onChangeComplete(value);
+              }
+              inputProps.onKeyDown(event);
+            }}
+            onBlur={(event) => {
+              onChangeComplete(value);
+              inputProps.onBlur(event);
+            }}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>
