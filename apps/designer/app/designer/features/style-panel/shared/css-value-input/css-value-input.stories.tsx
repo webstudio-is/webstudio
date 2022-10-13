@@ -2,6 +2,7 @@ import React from "react";
 import { Flex, TextField } from "@webstudio-is/design-system";
 import { StyleValue } from "@webstudio-is/react-sdk";
 import { CssValueInput } from "./css-value-input";
+import { action } from "@storybook/addon-actions";
 
 export default {
   component: CssValueInput,
@@ -17,26 +18,26 @@ export const WithKeywords = () => {
     <CssValueInput
       property="width"
       value={value}
-      items={[
+      keywords={[
         { type: "keyword", value: "auto" },
         { type: "keyword", value: "min-content" },
         { type: "keyword", value: "max-content" },
         { type: "keyword", value: "fit-content" },
       ]}
       onChange={(value) => {
-        console.log("onChange", value);
         setValue(value);
       }}
       onChangeComplete={(newValue) => {
         // on blur, select, enter etc.
         setValue(newValue);
+        action("onChangeComplete")(newValue);
       }}
     />
   );
 };
 
 export const WithIcons = () => {
-  const [value, setValue] = React.useState<StyleValue | undefined>({
+  const [value, setValue] = React.useState<StyleValue>({
     type: "keyword",
     value: "space-around",
   });
@@ -45,7 +46,7 @@ export const WithIcons = () => {
     <CssValueInput
       property="alignItems"
       value={value}
-      items={[
+      keywords={[
         { type: "keyword", value: "normal" },
         { type: "keyword", value: "start" },
         { type: "keyword", value: "end" },
@@ -55,21 +56,19 @@ export const WithIcons = () => {
         { type: "keyword", value: "space-between" },
       ]}
       onChange={(newValue) => {
-        // every time we change the input with units
-        if (newValue?.type === "unit") {
-          setValue(newValue);
-        }
+        setValue(newValue);
       }}
       onChangeComplete={(newValue) => {
         // on blur, select, enter etc.
         setValue(newValue);
+        action("onChangeComplete")(newValue);
       }}
     />
   );
 };
 
 export const WithUnits = () => {
-  const [value, setValue] = React.useState<StyleValue | undefined>({
+  const [value, setValue] = React.useState<StyleValue>({
     type: "unit",
     value: 100,
     unit: "px",
@@ -80,21 +79,19 @@ export const WithUnits = () => {
       <CssValueInput
         property="rowGap"
         value={value}
-        items={[
+        keywords={[
           { type: "keyword", value: "auto" },
           { type: "keyword", value: "min-content" },
           { type: "keyword", value: "max-content" },
           { type: "keyword", value: "fit-content" },
         ]}
         onChange={(newValue) => {
-          // every time we change the input with units
-          if (newValue === undefined || newValue?.type === "unit") {
-            setValue(newValue);
-          }
+          setValue(newValue);
         }}
         onChangeComplete={(newValue) => {
           // on blur, select, enter etc.
           setValue(newValue);
+          action("onChangeComplete")(newValue);
         }}
       />
       <TextField

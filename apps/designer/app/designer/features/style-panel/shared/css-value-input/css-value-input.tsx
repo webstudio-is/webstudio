@@ -2,60 +2,108 @@ import {
   Box,
   TextField,
   useCombobox,
-  comboboxStateChangeTypes,
   ComboboxPopper,
   ComboboxPopperContent,
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
   IconButton,
+  Select,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
-  KeywordValue,
-  StyleProperty,
+  type KeywordValue,
+  type StyleProperty,
+  type Unit,
+  type UnitValue,
+  type UnsetValue,
   StyleValue,
-  Unit,
-  units,
+  units as unsortedUnits,
 } from "@webstudio-is/react-sdk";
-import { useCallback, useEffect, useState } from "react";
-import { parseCssValue } from "../parse-css-value";
+import { useEffect, useRef } from "react";
 
-const sortedUnits = units
-  .slice(0)
-  .sort((v) =>
-    ["%", "px", "rem", "em", "ch", "vh", "vw", "hv", "vmin", "vmax"].includes(v)
-      ? -1
-      : 1
+// @todo sorting doesn't work
+export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
+  ["px", "%", "em", "rem", "ch", "vw", "vh", "vmin", "vmax"].includes(unit)
+    ? -1
+    : 1
+);
+
+const defaultKeywords: [] = [];
+
+const defaultValue: UnsetValue = { type: "unset", value: "" };
+
+type UnitSelectType = {
+  value: UnitValue;
+  onChange: (value: StyleValue) => void;
+  units?: Array<Unit>;
+};
+
+const UnitSelect = ({
+  onChange,
+  value,
+  units = defaultUnits,
+  ...props
+}: UnitSelectType) => {
+  return (
+    <Select
+      {...props}
+      value={value.unit}
+      options={units}
+      suffix={null}
+      ghost
+      onChange={(unit) => {
+        onChange?.({
+          ...value,
+          unit,
+        } as UnitValue);
+      }}
+    />
   );
+};
 
 type CssValueInputProps = {
   property: StyleProperty;
-  value: StyleValue;
-  items?: Array<KeywordValue>;
+  value?: StyleValue;
+  keywords?: Array<KeywordValue>;
+  units?: Array<Unit>;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
 };
 
+/**
+ * Common:
+ * - Free text editing
+ * - Filterable keywords list (click on chevron or arrow down)
+ * - When text is a number - unit mode
+ * - Enter or blur submits the value
+ * - After submission, when value is an invalid CSS value - invalid mode
+ *
+ * Unit mode:
+ * - Unit selection on unit button click
+ * - When selecting unit arrow keys are used to navigate unit items
+ * - When selecting unit Enter key or click is used to select item
+ * - When selecting unit Escape key is used to close list
+ * - Key up and down on focused input increment/decrement the value
+ * - Typing a unit in unit mode will change the selected unit
+ * - During typing the unit until unit is matched, input is in invalid mode
+ * - Math expression: "2px + 3em" (like CSS calc())
+ *
+ * Keywords mode:
+ * - Filter by typing
+ * - Arrow keys are used to navigate keyword items
+ * - Enter key or click is used to select item when list is open
+ * - Escape key is used to close list
+ */
+
 export const CssValueInput = ({
   property,
-  value,
-  items: itemsProp = [],
+  value = defaultValue,
+  keywords = defaultKeywords,
+  units,
   onChange,
   onChangeComplete,
 }: CssValueInputProps) => {
-  const isInvalid = false;
-  const onItemSelect = () => {};
-
-  const stateReducer = useCallback((state, action) => {
-    switch (action.type) {
-      case comboboxStateChangeTypes.InputChange: {
-      }
-    }
-
-    return action.changes;
-  }, []);
-
   const {
     items,
     getInputProps,
@@ -64,28 +112,54 @@ export const CssValueInput = ({
     getMenuProps,
     getItemProps,
     isOpen,
-  } = useCombobox({
-    items: itemsProp,
+  } = useCombobox<StyleValue>({
+    items: value.type === "keyword" ? keywords : defaultKeywords,
     value,
-    itemToString: (item) => item?.value ?? "",
-    onItemSelect,
-    stateReducer,
+    // @todo if we String() the value, it leads to an infinite loop
+    itemToString: (item) => (item?.value as string) ?? "",
+    onItemSelect: (value) => {
+      onChangeComplete(value ?? defaultValue);
+    },
   });
 
   const inputProps = getInputProps();
-
-  console.log({ value, inputProps });
+  // Used to decouple onChange effect from value ref change
+  const valueRef = useRef<StyleValue>(value);
 
   useEffect(() => {
-    if (inputProps.value === value.value) return;
-    // @todo parseCssValue was done in setValue in useStyleData, now we need to move it to controls, otherwise we are going to do it twice with this one.
-    const nextValue = parseCssValue(
-      property,
-      inputProps.value,
-      "unit" in value ? value.unit : undefined
-    );
-    onChange?.(nextValue);
-  }, [inputProps.value, value]);
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    const input = inputProps.value;
+
+    if (input === valueRef.current.value) return;
+
+    // We want to switch to unit mode if entire input is a number.
+    if (/^\d+$/.test(input)) {
+      onChange?.({
+        type: "unit",
+        // Use previously known unit or fallback to px.
+        unit: valueRef.current.type === "unit" ? valueRef.current.unit : "px",
+        value: Number(input),
+      });
+      return;
+    }
+
+    onChange?.({
+      type: "keyword",
+      value: input,
+    });
+  }, [inputProps.value, onChange]);
+
+  const suffix =
+    value.type === "keyword" ? (
+      <IconButton {...getToggleButtonProps()}>
+        <ChevronDownIcon />
+      </IconButton>
+    ) : value.type === "unit" ? (
+      <UnitSelect value={value} onChange={onChange} units={units} />
+    ) : null;
 
   return (
     <ComboboxPopper>
@@ -94,12 +168,8 @@ export const CssValueInput = ({
           <TextField
             {...inputProps}
             name={property}
-            state={isInvalid ? "invalid" : undefined}
-            suffix={
-              <IconButton {...getToggleButtonProps()}>
-                <ChevronDownIcon />
-              </IconButton>
-            }
+            state={value.type === "invalid" ? "invalid" : undefined}
+            suffix={suffix}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>

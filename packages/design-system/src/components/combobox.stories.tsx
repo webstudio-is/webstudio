@@ -1,4 +1,4 @@
-import { ComponentStory } from "@storybook/react";
+import type { ComponentStory } from "@storybook/react";
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { useCombobox as useDownshiftCombobox } from "downshift";
 import React, { useCallback } from "react";

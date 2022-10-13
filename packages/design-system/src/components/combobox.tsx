@@ -30,8 +30,18 @@ const Listbox = styled("ul", panelStyles, {
   // @todo need some non-hardcoded value
   maxHeight: 400,
   minWidth: 230,
-  '&[data-state="closed"], &[data-empty="true"]': {
-    display: "none",
+  variants: {
+    state: {
+      open: {},
+      closed: {
+        display: "none",
+      },
+    },
+    isEmpty: {
+      true: {
+        display: "none",
+      },
+    },
   },
 });
 
@@ -74,33 +84,42 @@ export const ComboboxPopperContent = PopperContent;
 
 export const ComboboxPopperAnchor = PopperAnchor;
 
+const defaultMatch = <Item,>(
+  search: string,
+  items: Array<Item>,
+  itemToString: (item: Item | null) => string
+) =>
+  matchSorter(items, search, {
+    keys: [(item) => itemToString(item)],
+  });
+
 const useFilter = <Item,>({
   items,
   itemToString,
+  match = defaultMatch,
 }: {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
+  match?: typeof defaultMatch;
 }) => {
   const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
   const cachedItems = useRef(items);
 
-  useEffect(() => {
-    cachedItems.current = items;
-  }, [items]);
-
   const filter = useCallback(
     (search?: string) => {
-      const foundItems: Array<Item> = matchSorter(items, search ?? "", {
-        keys: [(item) => itemToString(item)],
-      });
+      const foundItems = match(search ?? "", items, itemToString);
       setFilteredItems(foundItems);
     },
-    [itemToString, items]
+    [itemToString, items, match]
   );
 
   const resetFilter = useCallback(() => {
     setFilteredItems(cachedItems.current);
   }, []);
+
+  useEffect(() => {
+    cachedItems.current = items;
+  }, [items]);
 
   return {
     filteredItems,
@@ -119,6 +138,7 @@ type UseComboboxProps<Item> = {
     state: DownshiftState<Item>,
     changes: UseComboboxStateChangeOptions<Item>
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
+  match?: typeof defaultMatch;
 };
 
 export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
@@ -130,10 +150,12 @@ export const useCombobox = <Item,>({
   onItemSelect,
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
+  match,
 }: UseComboboxProps<Item>) => {
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
     itemToString,
+    match,
   });
 
   const downshiftProps = useDownshiftCombobox({
@@ -177,12 +199,12 @@ export const useCombobox = <Item,>({
   );
 
   const enhancedGetMenuProps = useCallback(
-    (options) => {
-      return getMenuProps({
-        ...options,
-        "data-state": isOpen ? "open" : "closed",
-        ...{ "data-empty": filteredItems.length === 0 },
-      });
+    (options?: Parameters<typeof getMenuProps>[0]) => {
+      return {
+        ...getMenuProps(options),
+        state: isOpen ? "open" : "closed",
+        isEmpty: filteredItems.length === 0,
+      };
     },
     [getMenuProps, isOpen, filteredItems.length]
   );
@@ -195,7 +217,7 @@ export const useCombobox = <Item,>({
   };
 };
 
-type ComboboxProps<Item> = useComboboxProps<Item> & {
+type ComboboxProps<Item> = UseComboboxProps<Item> & {
   name: string;
   label?: string;
   placeholder?: string;

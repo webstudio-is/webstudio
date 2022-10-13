@@ -18,6 +18,9 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   backgroundColor: "$loContrast",
   color: "$hiContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
+  height: 28, // @todo waiting for the sizing scale
+  px: "$2",
+  fontSize: "$1",
   "&:hover": {
     backgroundColor: "$slateA3",
   },
@@ -27,10 +30,6 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   },
 
   variants: {
-    size: {
-      1: { padding: "0 $1 0 $2", fontSize: "$1", height: "$5" },
-      2: { padding: "0 $2 0 $3", height: "$6", fontSize: "$3" },
-    },
     ghost: {
       true: {
         backgroundColor: "transparent",
@@ -42,9 +41,14 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
         width: "100%",
       },
     },
+    withSuffix: {
+      true: {
+        paddingRight: "$1",
+      },
+    },
   },
   defaultVariants: {
-    size: 1,
+    withSuffix: true,
   },
 });
 
@@ -96,7 +100,7 @@ const scrollButtonStyles = {
   alignItems: "center",
   justifyContent: "center",
   height: 25,
-  color: "$text",
+  color: "$hiContrast",
   cursor: "default",
 };
 
@@ -133,18 +137,25 @@ type SelectItemProps = SelectPrimitive.SelectItemProps & {
 };
 const SelectItem = React.forwardRef(SelectItemBase);
 
+const defaultSuffix = (
+  <StyledIcon>
+    <ChevronDownIcon />
+  </StyledIcon>
+);
+
 export type SelectOption = string;
 
-export type SelectProps<T = SelectOption> = Omit<
+export type SelectProps<Option = SelectOption> = Omit<
   React.ComponentProps<typeof StyledTrigger>,
   "onChange" | "value" | "defaultValue"
 > & {
-  options: T[];
-  defaultValue?: T;
-  value?: T;
-  onChange?: (option: T) => void;
+  options: Option[];
+  defaultValue?: Option;
+  value?: Option;
+  onChange?: (option: Option) => void;
   placeholder?: string;
-  getLabel?: (option: T) => string | undefined;
+  getLabel?: (option: Option) => string | undefined;
+  suffix?: JSX.Element | null;
 };
 
 const SelectBase = (
@@ -156,6 +167,7 @@ const SelectBase = (
     onChange = noop,
     getLabel = (option) => option,
     name,
+    suffix = defaultSuffix,
     ...props
   }: SelectProps,
   forwardedRef: Ref<HTMLButtonElement>
@@ -167,13 +179,11 @@ const SelectBase = (
       defaultValue={defaultValue}
       onValueChange={onChange}
     >
-      <StyledTrigger ref={forwardedRef} {...props}>
+      <StyledTrigger ref={forwardedRef} withSuffix={Boolean(suffix)} {...props}>
         <SelectPrimitive.Value>
           {value ? getLabel(value) : placeholder}
         </SelectPrimitive.Value>
-        <StyledIcon>
-          <ChevronDownIcon />
-        </StyledIcon>
+        {suffix}
       </StyledTrigger>
       <SelectPrimitive.Portal>
         <StyledContent>

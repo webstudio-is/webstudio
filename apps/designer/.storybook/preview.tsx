@@ -15,7 +15,7 @@ export const parameters = {
 const globalStyles = globalCss({
   body: {
     backgroundColor: "$background",
-    color: "$text",
+    color: "$hiContrast",
     fontFamily: "$sans",
   },
 });

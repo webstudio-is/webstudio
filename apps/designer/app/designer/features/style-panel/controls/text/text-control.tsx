@@ -1,7 +1,7 @@
 import { CssValueInput } from "~/designer/features/style-panel/shared/css-value-input/css-value-input";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
-import { StyleValue } from "@webstudio-is/react-sdk";
+import { toValue } from "@webstudio-is/react-sdk";
 
 export const TextControl = ({
   currentStyle,
@@ -17,33 +17,19 @@ export const TextControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const handleChange = (
-    styleValue: StyleValue | undefined,
-    isEphemeral: boolean
-  ) => {
-    if (styleValue === undefined) {
-      setValue("");
-      return;
-    }
-    const { value, type } = styleValue;
-    const newValue =
-      type === "unit" ? `${value}${styleValue.unit}` : `${value}`;
-    setValue(newValue, { isEphemeral });
-  };
-
   return (
     <CssValueInput
       property={styleConfig.property}
       value={value}
-      items={styleConfig.items.map((item) => ({
+      keywords={styleConfig.items.map((item) => ({
         type: "keyword",
         value: item.name,
       }))}
-      onChange={(value) => {
-        handleChange(value, true);
+      onChange={(styleValue) => {
+        setValue(toValue(styleValue), { isEphemeral: true });
       }}
-      onChangeComplete={(value) => {
-        handleChange(value, false);
+      onChangeComplete={(styleValue) => {
+        setValue(toValue(styleValue));
       }}
     />
   );

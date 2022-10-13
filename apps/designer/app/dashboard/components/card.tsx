@@ -40,7 +40,6 @@ export const SelectProjectCard = ({
           Select a project
         </Heading>
         <Select
-          size={2}
           name="project"
           options={options}
           onChange={setSelectedProject}
