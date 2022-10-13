@@ -20,7 +20,7 @@ import {
   StyleValue,
   units as unsortedUnits,
 } from "@webstudio-is/react-sdk";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // @todo sorting doesn't work
 export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
@@ -64,25 +64,29 @@ const useOnChange = (
   }, [input, onChange]);
 };
 
-type UnitSelectType = {
-  value: UnitValue;
+type UseUnitSelectType = {
+  value?: UnitValue;
   onChange: (value: StyleValue) => void;
   units?: Array<Unit>;
 };
 
-const UnitSelect = ({
+const useUnitSelect = ({
   onChange,
   value,
   units = defaultUnits,
   ...props
-}: UnitSelectType) => {
-  return (
+}: UseUnitSelectType) => {
+  const [isUnitsOpen, setIsUnitsOpen] = useState(false);
+  if (value === undefined) return [isUnitsOpen, null];
+  const element = (
     <Select
       {...props}
       value={value.unit}
       options={units}
       suffix={null}
       ghost
+      open={isUnitsOpen}
+      onOpenChange={setIsUnitsOpen}
       onChange={(unit) => {
         onChange?.({
           ...value,
@@ -91,13 +95,14 @@ const UnitSelect = ({
       }}
     />
   );
+
+  return [isUnitsOpen, element];
 };
 
 type CssValueInputProps = {
   property: StyleProperty;
   value?: StyleValue;
   keywords?: Array<KeywordValue>;
-  units?: Array<Unit>;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   onItemHighlight?: (value: StyleValue | null) => void;
@@ -109,7 +114,6 @@ type CssValueInputProps = {
  * - When text is a number - unit mode
  * - Enter or blur calls onChangeComplete
  * - After submission, when value is an invalid CSS value - invalid mode
- * - When hovering over keywords and units list, onItemHighlight is called
  *
  * Unit mode:
  * - Unit selection on unit button click
@@ -127,13 +131,13 @@ type CssValueInputProps = {
  * - Arrow keys are used to navigate keyword items
  * - Enter key or click is used to select item when list is open
  * - Escape key is used to close list
+ * - When hovering over keywords list, onItemHighlight is called
  */
 
 export const CssValueInput = ({
   property,
   value = defaultValue,
   keywords = defaultKeywords,
-  units,
   onChange,
   onChangeComplete,
   onItemHighlight,
@@ -161,13 +165,18 @@ export const CssValueInput = ({
 
   useOnChange(value, inputProps.value, onChange);
 
+  const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    value: value.type === "unit" ? value : undefined,
+    onChange: onChangeComplete,
+  });
+
   const suffix =
     value.type === "keyword" ? (
       <IconButton {...getToggleButtonProps()}>
         <ChevronDownIcon />
       </IconButton>
     ) : value.type === "unit" ? (
-      <UnitSelect value={value} onChange={onChange} units={units} />
+      unitSelectElement
     ) : null;
 
   return (
@@ -186,6 +195,8 @@ export const CssValueInput = ({
               inputProps.onKeyDown(event);
             }}
             onBlur={(event) => {
+              // When units select is open, onBlur is triggered,though we don't want a change event in this case.
+              if (isUnitsOpen) return;
               onChangeComplete(value);
               inputProps.onBlur(event);
             }}

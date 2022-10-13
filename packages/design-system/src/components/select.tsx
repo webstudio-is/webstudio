@@ -1,5 +1,4 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import noop from "lodash.noop";
 import React, { ReactNode, Ref } from "react";
 import { Grid } from "./grid";
 import { Box } from "./box";
@@ -153,6 +152,8 @@ export type SelectProps<Option = SelectOption> = Omit<
   defaultValue?: Option;
   value?: Option;
   onChange?: (option: Option) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
   suffix?: JSX.Element | null;
@@ -164,7 +165,9 @@ const SelectBase = (
     value,
     defaultValue,
     placeholder = "Select an option",
-    onChange = noop,
+    onChange,
+    onOpenChange,
+    open,
     getLabel = (option) => option,
     name,
     suffix = defaultSuffix,
@@ -178,6 +181,8 @@ const SelectBase = (
       value={value}
       defaultValue={defaultValue}
       onValueChange={onChange}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <StyledTrigger ref={forwardedRef} withSuffix={Boolean(suffix)} {...props}>
         <SelectPrimitive.Value>
