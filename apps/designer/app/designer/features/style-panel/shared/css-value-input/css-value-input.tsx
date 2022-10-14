@@ -182,7 +182,6 @@ export const CssValueInput = ({
   } = useCombobox<StyleValue>({
     items: keywords,
     value,
-    // @todo if we String() the value, it leads to an infinite loop
     itemToString: (item) => (item === null ? "" : String(item.value)),
     onItemSelect: (value) => {
       onChangeComplete(value ?? defaultValue);
