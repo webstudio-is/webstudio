@@ -176,7 +176,7 @@ export const CssValueInput = ({
     getItemProps,
     isOpen,
   } = useCombobox<StyleValue>({
-    items: value.type === "keyword" ? keywords : defaultKeywords,
+    items: keywords,
     value,
     // @todo if we String() the value, it leads to an infinite loop
     itemToString: (item) => (item === null ? "" : String(item.value)),
