@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
 import { ExternalLinkIcon, RocketIcon } from "@webstudio-is/icons";
 import {
-  __DEPRECATED__Text,
+  Text,
   Button,
   Flex,
   Label,
@@ -71,9 +71,7 @@ const Content = ({ project }: PublishButtonProps) => {
             <TextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
-            <__DEPRECATED__Text variant="red">
-              {fetcher.data?.errors}
-            </__DEPRECATED__Text>
+            <Text color="error">{fetcher.data?.errors}</Text>
           )}
           {fetcher.state === "idle" ? (
             <Button variant="blue" type="submit">

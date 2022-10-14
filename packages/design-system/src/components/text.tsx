@@ -54,6 +54,20 @@ export const Text = styled("div", {
       hint: {
         color: "$hint",
       },
+      error: {
+        color: "$red10",
+      },
+    },
+    align: {
+      left: {
+        textAlign: "left",
+      },
+      center: {
+        textAlign: "center",
+      },
+      right: {
+        textAlign: "right",
+      },
     },
     truncate: {
       true: {

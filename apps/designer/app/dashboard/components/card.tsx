@@ -8,7 +8,7 @@ import {
   TextField,
   Button,
   Heading,
-  __DEPRECATED__Text,
+  Text,
 } from "@webstudio-is/design-system";
 
 type SelectProjectProjectCardProps = {
@@ -75,9 +75,9 @@ export const SelectProjectCard = ({
               </Button>
             </Flex>
             {errors ? (
-              <__DEPRECATED__Text variant="red" css={{ marginTop: "$1" }}>
+              <Text color="error" css={{ marginTop: "$1" }}>
                 {errors}
-              </__DEPRECATED__Text>
+              </Text>
             ) : null}
           </Form>
         ) : (

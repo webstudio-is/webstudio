@@ -47,7 +47,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
           <Heading size="2">Login</Heading>
           <Flex direction="column" gap="4" css={{ width: 300 }}>
             {errorMessage.length ? (
-              <Text css={{ textAlign: "center", color: "$red10" }}>
+              <Text align="center" color="error">
                 {errorMessage}
               </Text>
             ) : null}

@@ -8,7 +8,7 @@ import {
   Select,
   Slider,
   Switch,
-  __DEPRECATED__Text,
+  Text,
   TextField,
 } from "@webstudio-is/design-system";
 import { Checkbox } from "@webstudio-is/design-system";
@@ -137,8 +137,8 @@ const RangeControl = ({
       step={step}
     />
     <Flex direction="row" justify="between">
-      <__DEPRECATED__Text size={1}>{min}</__DEPRECATED__Text>
-      <__DEPRECATED__Text size={1}>{max}</__DEPRECATED__Text>
+      <Text>{min}</Text>
+      <Text>{max}</Text>
     </Flex>
   </Flex>
 );
