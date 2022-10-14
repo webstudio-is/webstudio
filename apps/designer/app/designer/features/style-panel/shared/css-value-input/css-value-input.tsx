@@ -20,12 +20,7 @@ import {
   StyleValue,
   units as unsortedUnits,
 } from "@webstudio-is/react-sdk";
-import React, {
-  type KeyboardEventHandler,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type KeyboardEventHandler, useEffect, useRef, useState } from "react";
 
 // @todo sorting doesn't work
 export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
@@ -36,11 +31,8 @@ export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
 const defaultKeywords: [] = [];
 const defaultValue: UnsetValue = { type: "unset", value: "" };
 
-const isNumberString = (input: string) =>
+const isNumericString = (input: string) =>
   String(input).trim().length !== 0 && isNaN(Number(input)) === false;
-
-//const isSameStyleValue = (value1: StyleValue, value2: StyleValue) =>
-//  value1.type === value2.type && value1.value === value2.value;
 
 // We incrment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by by 1 otherwise.
 const calcNumberChange = (
@@ -66,7 +58,7 @@ const useOnChange = (
     }
 
     // We want to switch to unit mode if entire input is a number.
-    if (isNumberString(input)) {
+    if (isNumericString(input)) {
       onChange?.({
         type: "unit",
         // Use previously known unit or fallback to px.
@@ -110,11 +102,13 @@ const useUnitSelect = ({
       ghost
       open={isUnitsOpen}
       onOpenChange={setIsUnitsOpen}
-      onChange={(unit) => {
+      onChange={(item) => {
+        // @todo Select should support generics
+        const unit = item as Unit;
         onChange?.({
           ...value,
           unit,
-        } as UnitValue);
+        });
       }}
     />
   );
@@ -147,7 +141,6 @@ type CssValueInputProps = {
  *   - shift key modifier increases/decreases value by 10
  *   - option/alt key modifier increases/decreases value by 0.1
  *   - no modifier increases/decreases value by 1
- * - During typing the number + unit (e.g. "12px"), input is in keyword mode, but then after blur/enter unit entered is taken as a unit value
  * - Scrub interaction
  *
  * Keywords mode:
@@ -159,7 +152,7 @@ type CssValueInputProps = {
  * - When hovering over keywords list, onItemHighlight is called
  *
  * Features outside of this input (non standard):
- * - Typing a unit in unit mode will change the selected unit on blur/enter
+ * - Typing number + unit (e.g. "12px") in unit mode will change the selected unit on blur/enter
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 
