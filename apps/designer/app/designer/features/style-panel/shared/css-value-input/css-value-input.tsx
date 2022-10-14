@@ -140,6 +140,10 @@ const useScrub = (options: {
   };
 
   useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+
+  useEffect(() => {
     const { value, onChange, onChangeComplete } = optionsRef.current;
     if (value.type !== "unit" || inputRef.current === null) return;
 
@@ -164,10 +168,6 @@ const useScrub = (options: {
       scrub.disconnectedCallback();
     };
   }, [options.value.type]);
-
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
 
   return {
     handlePointerUp,
