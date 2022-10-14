@@ -22,6 +22,7 @@ const InputBase = styled("input", {
   textOverflow: "ellipsis",
   outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
+  cursor: "inherit",
 
   // Focus should start on the input element then move to prefix and suffix elements.
   // DOM order reflects focus path and visually we use order to put them into the correct visual order.

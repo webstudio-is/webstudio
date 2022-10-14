@@ -9,6 +9,7 @@ import {
   ComboboxListboxItem,
   IconButton,
   Select,
+  numericScrubControl,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -20,7 +21,13 @@ import {
   StyleValue,
   units as unsortedUnits,
 } from "@webstudio-is/react-sdk";
-import { type KeyboardEventHandler, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEventHandler,
+  type KeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 // @todo sorting doesn't work
 export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
@@ -116,6 +123,87 @@ const useUnitSelect = ({
   return [isUnitsOpen, element];
 };
 
+const useScrub = (options: {
+  value: StyleValue;
+  onChange: (value: StyleValue) => void;
+  onChangeComplete: (value: StyleValue) => void;
+}) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const optionsRef = useRef(options);
+  const hasScrubbed = useRef(false);
+
+  const handlePointerUp = () => {
+    if (hasScrubbed.current === false) {
+      inputRef.current?.select();
+    }
+    hasScrubbed.current = false;
+  };
+
+  useEffect(() => {
+    const { value, onChange, onChangeComplete } = optionsRef.current;
+    if (value.type !== "unit" || inputRef.current === null) return;
+
+    const scrub = numericScrubControl(inputRef.current, {
+      initialValue: value.value,
+      onValueInput(event) {
+        hasScrubbed.current = true;
+        onChange({
+          ...value,
+          value: event.value,
+        });
+      },
+      onValueChange(event) {
+        onChangeComplete({
+          ...value,
+          value: event.value,
+        });
+      },
+    });
+
+    return () => {
+      scrub.disconnectedCallback();
+    };
+  }, [options.value.type]);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+
+  return {
+    handlePointerUp,
+    inputRef,
+  };
+};
+
+const useKeyDown =
+  ({
+    value,
+    onChange,
+    onChangeComplete,
+    onKeyDown,
+  }: {
+    value: StyleValue;
+    onChange: (value: StyleValue) => void;
+    onChangeComplete: (value: StyleValue) => void;
+    onKeyDown: KeyboardEventHandler<HTMLInputElement>;
+  }) =>
+  (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      onChangeComplete(value);
+    }
+    if (
+      value.type === "unit" &&
+      (event.key === "ArrowUp" || event.key === "ArrowDown")
+    ) {
+      onChange({
+        ...value,
+        value: calcNumberChange(value.value, event),
+      });
+    }
+
+    onKeyDown(event);
+  };
+
 type CssValueInputProps = {
   property: StyleProperty;
   value?: StyleValue;
@@ -191,6 +279,12 @@ export const CssValueInput = ({
     onChange: onChangeComplete,
   });
 
+  const { handlePointerUp, inputRef } = useScrub({
+    value,
+    onChange,
+    onChangeComplete,
+  });
+
   const handleOnBlur: KeyboardEventHandler = (event) => {
     // When units select is open, onBlur is triggered,though we don't want a change event in this case.
     if (isUnitsOpen) return;
@@ -198,22 +292,12 @@ export const CssValueInput = ({
     inputProps.onBlur(event);
   };
 
-  const handleKeyDown: KeyboardEventHandler = (event) => {
-    if (event.key === "Enter") {
-      onChangeComplete(value);
-    }
-    if (
-      value.type === "unit" &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown")
-    ) {
-      onChange({
-        ...value,
-        value: calcNumberChange(value.value, event),
-      });
-    }
-
-    inputProps.onKeyDown(event);
-  };
+  const handleKeyDown = useKeyDown({
+    value,
+    onChange,
+    onChangeComplete,
+    onKeyDown: inputProps.onKeyDown,
+  });
 
   const suffix =
     value.type === "keyword" ? (
@@ -230,11 +314,14 @@ export const CssValueInput = ({
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
+            onPointerUp={handlePointerUp}
+            onBlur={handleOnBlur}
+            onKeyDown={handleKeyDown}
+            inputRef={inputRef}
             name={property}
             state={value.type === "invalid" ? "invalid" : undefined}
             suffix={suffix}
-            onKeyDown={handleKeyDown}
-            onBlur={handleOnBlur}
+            css={{ cursor: "default" }}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>

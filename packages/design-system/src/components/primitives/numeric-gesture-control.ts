@@ -113,7 +113,8 @@ export const numericScrubControl = (
       }
     }
   };
-  handleCursor(targetNode, true);
+  // We want the default cursor before the pointer is down
+  //handleCursor(targetNode, true);
   eventNames.forEach((eventName) =>
     targetNode.addEventListener(eventName, handleEvent)
   );

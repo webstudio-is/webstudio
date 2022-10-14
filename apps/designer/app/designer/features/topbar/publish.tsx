@@ -11,7 +11,6 @@ import {
   PopoverContent,
   PopoverPortal,
   PopoverTrigger,
-  Text,
   TextField,
   useId,
 } from "@webstudio-is/design-system";
