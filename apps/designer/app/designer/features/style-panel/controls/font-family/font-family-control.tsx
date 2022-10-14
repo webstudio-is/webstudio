@@ -12,13 +12,6 @@ import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { MutableRefObject, useRef, useState } from "react";
 import { FontsManager } from "~/designer/shared/fonts-manager";
 
-const textFieldStyle = {
-  paddingLeft: "calc($sizes$1 + $nudge$3)",
-  textAlign: "left",
-  height: "$6",
-  fontWeight: "500",
-};
-
 const usePickerSideOffset = (
   isOpen: boolean
 ): [MutableRefObject<HTMLInputElement | null>, number] => {
@@ -52,9 +45,7 @@ export const FontFamilyControl = ({
       <PopoverTrigger asChild>
         <TextField
           ref={textFieldRef}
-          css={textFieldStyle}
           spellCheck={false}
-          readOnly
           defaultValue={value.value}
           onClick={() => {
             setIsOpen(true);

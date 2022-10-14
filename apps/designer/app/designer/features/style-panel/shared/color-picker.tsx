@@ -51,50 +51,53 @@ export const ColorPicker = ({
   // Color picker will use 0 as alpha value, which will force user to set alpha every time they have to change from transparent
   if (value === "transparent") value = "";
 
+  const prefix = (
+    <Popover
+      modal
+      open={displayColorPicker}
+      onOpenChange={setDisplayColorPicker}
+    >
+      <PopoverTrigger
+        asChild
+        aria-label="Open color picker"
+        onClick={() => setDisplayColorPicker((shown) => !shown)}
+      >
+        <Box
+          css={{
+            margin: "$sizes$1",
+            width: "$sizes$4",
+            height: "$sizes$4",
+            borderRadius: 2,
+            background: value,
+          }}
+        />
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent>
+          <SketchPicker
+            color={value}
+            onChange={(color: ColorResult) =>
+              onChange(stringifyRGBA(color.rgb))
+            }
+            onChangeComplete={(color: ColorResult) => {
+              onChangeComplete(stringifyRGBA(color.rgb));
+            }}
+            // @todo to remove both when we have preset colors
+            presetColors={[]}
+            className={pickerStyle()}
+            styles={defaultPickerStyles}
+          />
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
+  );
+
   return (
     <TextField
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(event) => onChange(event.target.value)}
       value={value}
       id={id}
-      prefix={
-        <Popover
-          modal
-          open={displayColorPicker}
-          onOpenChange={setDisplayColorPicker}
-        >
-          <PopoverTrigger
-            asChild
-            aria-label="Open color picker"
-            onClick={() => setDisplayColorPicker((shown) => !shown)}
-          >
-            <Box
-              css={{
-                width: "$sizes$3",
-                height: "$sizes$3",
-                borderRadius: 2,
-                background: value,
-              }}
-            />
-          </PopoverTrigger>
-          <PopoverPortal>
-            <PopoverContent>
-              <SketchPicker
-                color={value}
-                onChange={(color: ColorResult) =>
-                  onChange(stringifyRGBA(color.rgb))
-                }
-                onChangeComplete={(color: ColorResult) => {
-                  onChangeComplete(stringifyRGBA(color.rgb));
-                }}
-                // @todo to remove both when we have preset colors
-                presetColors={[]}
-                className={pickerStyle()}
-                styles={defaultPickerStyles}
-              />
-            </PopoverContent>
-          </PopoverPortal>
-        </Popover>
-      }
+      prefix={prefix}
     />
   );
 };

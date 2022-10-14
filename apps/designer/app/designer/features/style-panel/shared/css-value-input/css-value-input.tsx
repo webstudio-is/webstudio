@@ -139,14 +139,15 @@ type CssValueInputProps = {
  *
  * Unit mode:
  * - When entire text is a number we automatically switch to unit mode on keydown
- * - Unit selection on unit button click
+ * - Unit selection on unit button click or focus+enter
  * - When selecting unit arrow keys are used to navigate unit items
  * - When selecting unit Enter key or click is used to select item
  * - When selecting unit Escape key is used to close list
  * - Key up and down on focused input increment/decrement the value
  *   - shift key modifier increases/decreases value by 10
  *   - option/alt key modifier increases/decreases value by 0.1
- * - During typing the unit until unit is matched, input is in invalid mode
+ *   - no modifier increases/decreases value by 1
+ * - During typing the number + unit (e.g. "12px"), input is in keyword mode, but then after blur/enter unit entered is taken as a unit value
  * - Scrub interaction
  *
  * Keywords mode:

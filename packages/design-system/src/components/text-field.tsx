@@ -26,7 +26,9 @@ const InputBase = styled("input", {
   // Focus should start on the input element then move to prefix and suffix elements.
   // DOM order reflects focus path and visually we use order to put them into the correct visual order.
   order: 1,
-
+  "&[type='button']": {
+    textAlign: "left",
+  },
   '&[type="search"]': {
     "&::-webkit-search-decoration, &::-webkit-search-cancel-button, &::-webkit-search-results-button, &::-webkit-search-results-decoration":
       {
@@ -69,7 +71,7 @@ const TextFieldBase = styled("div", {
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
-
+  gap: "$1",
   px: "$2",
   borderRadius: "$1",
   fontFamily: "$sans",
