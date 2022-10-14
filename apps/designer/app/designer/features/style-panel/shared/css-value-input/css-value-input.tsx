@@ -134,11 +134,11 @@ type CssValueInputProps = {
 /**
  * Common:
  * - Free text editing
- * - When entire text is a number we automatically switch to unit mode on keydown
  * - Enter or blur calls onChangeComplete
  * - Value prop can be of type "invalid" and render invalid mode of the input (red outline)
  *
  * Unit mode:
+ * - When entire text is a number we automatically switch to unit mode on keydown
  * - Unit selection on unit button click
  * - When selecting unit arrow keys are used to navigate unit items
  * - When selecting unit Enter key or click is used to select item
@@ -146,17 +146,20 @@ type CssValueInputProps = {
  * - Key up and down on focused input increment/decrement the value
  *   - shift key modifier increases/decreases value by 10
  *   - option/alt key modifier increases/decreases value by 0.1
- * - Typing a unit in unit mode will change the selected unit
  * - During typing the unit until unit is matched, input is in invalid mode
- * - Math expression: "2px + 3em" (like CSS calc())
- * - Handle scrubbing
+ * - Scrub interaction
  *
  * Keywords mode:
+ * - When any character in the input is not a number we automatically switch to keywords mode on keydown
  * - Filterable keywords list (click on chevron or arrow down to show the list)
  * - Arrow keys are used to navigate keyword items
  * - Enter key or click is used to select item when list is open
  * - Escape key is used to close list
  * - When hovering over keywords list, onItemHighlight is called
+ *
+ * Features outside of this input (non standard):
+ * - Typing a unit in unit mode will change the selected unit on blur/enter
+ * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 
 export const CssValueInput = ({

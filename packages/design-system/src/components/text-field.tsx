@@ -125,15 +125,15 @@ const TextFieldBase = styled("div", {
     },
     state: {
       invalid: {
-        boxShadow: "inset 0 0 0 1px $colors$red7",
-        "&:focus": {
+        boxShadow: "inset 0 0 0 1px $colors$red8",
+        "&:focus-within": {
           boxShadow:
             "inset 0px 0px 0px 1px $colors$red8, 0px 0px 0px 1px $colors$red8",
         },
       },
       valid: {
         boxShadow: "inset 0 0 0 1px $colors$green7",
-        "&:focus": {
+        "&:focus-within": {
           boxShadow:
             "inset 0px 0px 0px 1px $colors$green8, 0px 0px 0px 1px $colors$green8",
         },
