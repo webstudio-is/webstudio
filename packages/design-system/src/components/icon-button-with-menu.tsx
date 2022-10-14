@@ -47,8 +47,8 @@ const itemIndicatorStyle = {
 };
 
 const iconButtonStyle = {
-  width: "$6",
-  height: "$6",
+  width: "$5",
+  height: "$5",
   color: "$colors$gray12",
   backgroundColor: "$colors$loContrast",
   "&:focus": {
