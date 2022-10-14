@@ -20,7 +20,12 @@ import {
   StyleValue,
   units as unsortedUnits,
 } from "@webstudio-is/react-sdk";
-import { useEffect, useRef, useState } from "react";
+import React, {
+  type KeyboardEventHandler,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 // @todo sorting doesn't work
 export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
@@ -31,6 +36,22 @@ export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
 const defaultKeywords: [] = [];
 const defaultValue: UnsetValue = { type: "unset", value: "" };
 
+const isNumberString = (input: string) =>
+  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
+
+//const isSameStyleValue = (value1: StyleValue, value2: StyleValue) =>
+//  value1.type === value2.type && value1.value === value2.value;
+
+// We incrment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by by 1 otherwise.
+const calcNumberChange = (
+  value: number,
+  { altKey, shiftKey, key }: { altKey: boolean; shiftKey: boolean; key: string }
+) => {
+  const delta = shiftKey ? 10 : altKey ? 0.1 : 1;
+  const multiplier = key === "ArrowUp" ? 1 : -1;
+  return Number((value + delta * multiplier).toFixed(1));
+};
+
 const useOnChange = (
   value: StyleValue,
   input: string,
@@ -40,14 +61,12 @@ const useOnChange = (
   const valueRef = useRef<StyleValue>(value);
 
   useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-
-  useEffect(() => {
-    if (input === valueRef.current.value) return;
+    if (input === String(valueRef.current.value)) {
+      return;
+    }
 
     // We want to switch to unit mode if entire input is a number.
-    if (input.trim().length !== 0 && isNaN(Number(input)) === false) {
+    if (isNumberString(input)) {
       onChange?.({
         type: "unit",
         // Use previously known unit or fallback to px.
@@ -62,6 +81,10 @@ const useOnChange = (
       value: input,
     });
   }, [input, onChange]);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 };
 
 type UseUnitSelectType = {
@@ -111,9 +134,9 @@ type CssValueInputProps = {
 /**
  * Common:
  * - Free text editing
- * - When text is a number - unit mode
+ * - When entire text is a number we automatically switch to unit mode on keydown
  * - Enter or blur calls onChangeComplete
- * - After submission, when value is an invalid CSS value - invalid mode
+ * - Value prop can be of type "invalid" and render invalid mode of the input (red outline)
  *
  * Unit mode:
  * - Unit selection on unit button click
@@ -121,6 +144,8 @@ type CssValueInputProps = {
  * - When selecting unit Enter key or click is used to select item
  * - When selecting unit Escape key is used to close list
  * - Key up and down on focused input increment/decrement the value
+ *   - shift key modifier increases/decreases value by 10
+ *   - option/alt key modifier increases/decreases value by 0.1
  * - Typing a unit in unit mode will change the selected unit
  * - During typing the unit until unit is matched, input is in invalid mode
  * - Math expression: "2px + 3em" (like CSS calc())
@@ -154,7 +179,7 @@ export const CssValueInput = ({
     items: value.type === "keyword" ? keywords : defaultKeywords,
     value,
     // @todo if we String() the value, it leads to an infinite loop
-    itemToString: (item) => (item?.value as string) ?? "",
+    itemToString: (item) => (item === null ? "" : String(item.value)),
     onItemSelect: (value) => {
       onChangeComplete(value ?? defaultValue);
     },
@@ -169,6 +194,30 @@ export const CssValueInput = ({
     value: value.type === "unit" ? value : undefined,
     onChange: onChangeComplete,
   });
+
+  const handleOnBlur: KeyboardEventHandler = (event) => {
+    // When units select is open, onBlur is triggered,though we don't want a change event in this case.
+    if (isUnitsOpen) return;
+    onChangeComplete(value);
+    inputProps.onBlur(event);
+  };
+
+  const handleKeyDown: KeyboardEventHandler = (event) => {
+    if (event.key === "Enter") {
+      onChangeComplete(value);
+    }
+    if (
+      value.type === "unit" &&
+      (event.key === "ArrowUp" || event.key === "ArrowDown")
+    ) {
+      onChange({
+        ...value,
+        value: calcNumberChange(value.value, event),
+      });
+    }
+
+    inputProps.onKeyDown(event);
+  };
 
   const suffix =
     value.type === "keyword" ? (
@@ -188,18 +237,8 @@ export const CssValueInput = ({
             name={property}
             state={value.type === "invalid" ? "invalid" : undefined}
             suffix={suffix}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                onChangeComplete(value);
-              }
-              inputProps.onKeyDown(event);
-            }}
-            onBlur={(event) => {
-              // When units select is open, onBlur is triggered,though we don't want a change event in this case.
-              if (isUnitsOpen) return;
-              onChangeComplete(value);
-              inputProps.onBlur(event);
-            }}
+            onKeyDown={handleKeyDown}
+            onBlur={handleOnBlur}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>
