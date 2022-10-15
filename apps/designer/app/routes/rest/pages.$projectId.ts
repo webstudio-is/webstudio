@@ -6,23 +6,27 @@ import { z } from "zod";
 import { PutPageData } from "~/designer/features/sidebar-left/panels/pages/settings";
 import { sentryException } from "~/shared/sentry";
 
-const nonEmptyString = (fieldName: string) => {
-  const message = `${fieldName} can't be empty`;
-  return z
-    .string({ invalid_type_error: message, required_error: message })
-    .transform((v) => v.trim())
-    .refine((val) => val !== "", message);
-};
+const nonEmptyString = z
+  .string({
+    invalid_type_error: "Can't be empty",
+    required_error: "Can't be empty",
+  })
+  .transform((v) => v.trim())
+  .refine((val) => val !== "", "Can't be empty");
 
 const CreatePageInput = zfd.formData({
-  name: nonEmptyString("Page Name"),
-  path: nonEmptyString("Path")
-    .refine((path) => path !== "/", "Path can't be /")
+  name: nonEmptyString,
+  path: nonEmptyString
+    .refine((path) => path !== "/", "Can't be just a /")
     .transform((path) => (path.endsWith("/") ? path.slice(0, -1) : path))
     .transform((path) => path.replace(/\/\//g, "/"))
     .refine(
       (path) => path === "" || path.startsWith("/"),
-      "Path must start with a /"
+      "Must start with a /"
+    )
+    .refine(
+      (path) => /^[-_a-z0-9\\/]*$/.test(path),
+      "Only a-z, 0-9, -, _ and / are allowed"
     ),
 });
 
@@ -44,9 +48,7 @@ const handlePUT = async (
       errors: {
         formErrors: [],
         fieldErrors: {
-          path: [
-            `The path ${data.path} is already used for another page "${existingPage.name}"`,
-          ],
+          path: [`Already used for "${existingPage.name}"`],
         },
       },
     };
