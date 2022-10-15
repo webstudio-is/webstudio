@@ -188,14 +188,18 @@ const useKeyDown =
     onChange,
     onChangeComplete,
     onKeyDown,
+    closeMenu,
   }: {
     value: StyleValue;
     onChange: (value: StyleValue) => void;
     onChangeComplete: (value: StyleValue) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
+    closeMenu: () => void;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
+    onKeyDown(event);
     if (event.key === "Enter") {
+      closeMenu();
       onChangeComplete(value);
     }
     if (
@@ -207,8 +211,6 @@ const useKeyDown =
         value: calcNumberChange(value.value, event),
       });
     }
-
-    onKeyDown(event);
   };
 
 type CssValueInputProps = {
@@ -268,6 +270,7 @@ export const CssValueInput = ({
     getMenuProps,
     getItemProps,
     isOpen,
+    closeMenu,
   } = useCombobox<StyleValue>({
     items: keywords,
     value,
@@ -305,6 +308,7 @@ export const CssValueInput = ({
     onChange,
     onChangeComplete,
     onKeyDown: inputProps.onKeyDown,
+    closeMenu,
   });
 
   const suffix =
