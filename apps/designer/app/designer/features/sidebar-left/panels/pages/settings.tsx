@@ -45,7 +45,7 @@ const ErrorsTooltip = ({
     // where it renders {children} directly if content is empty.
     // If this optimization accur, the <TextField> will remount which will cause focus loss
     // and current value loss.
-    <Tooltip content={content || " "} open={errors !== undefined}>
+    <Tooltip content={content || " "} open={errors !== undefined} side="right">
       {children}
     </Tooltip>
   );
