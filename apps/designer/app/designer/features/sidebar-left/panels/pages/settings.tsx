@@ -7,12 +7,14 @@ import {
   useId,
   styled,
   Flex,
+  toast,
+  Tooltip,
 } from "@webstudio-is/design-system";
-import { type FetcherWithComponents } from "@remix-run/react";
+import { useFetcher, type FetcherWithComponents } from "@remix-run/react";
 import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
 import type { ZodError } from "zod";
 import { BaseHeader } from "../../lib/header";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type Page } from "@webstudio-is/project";
 
 const Group = styled(Flex, {
@@ -25,48 +27,73 @@ export type PutPageData =
   | { ok: true; page: Page }
   | { errors: string | ZodError["formErrors"] };
 
-const getErrors = (
-  fetcher: FetcherWithComponents<PutPageData>
-): ZodError["formErrors"] | undefined => {
-  if (fetcher.data === undefined || !("errors" in fetcher.data)) {
-    return undefined;
-  }
-  if (typeof fetcher.data.errors === "string") {
-    return { formErrors: [fetcher.data.errors], fieldErrors: {} };
-  }
-  return fetcher.data.errors;
+const ErrorsTooltip = ({
+  errors,
+  children,
+}: {
+  errors: string[] | undefined;
+  children: React.ComponentProps<typeof Tooltip>["children"];
+}) => {
+  const content = errors?.map((error, i) => <div key={i}>{error}</div>);
+  return (
+    // We intentionally always pass non empty content to avoid optimization inside Tooltip
+    // where it renders {children} directly if content is empty.
+    // If this optimization accur, the <TextField> will remount which will cause focus loss
+    // and current value loss.
+    <Tooltip content={content || " "} open={errors !== undefined}>
+      {children}
+    </Tooltip>
+  );
 };
 
 export const NewPageSettings = ({
   onClose,
   onSuccess,
-  fetcher,
+  onFetcherStateChange,
   projectId,
 }: {
   onClose?: () => void;
   onSuccess?: (page: Page) => void;
-  fetcher: FetcherWithComponents<PutPageData>;
+  onFetcherStateChange?: (
+    state: FetcherWithComponents<unknown>["state"]
+  ) => void;
   projectId: string;
 }) => {
   const nameFieldId = useId();
   const pathFieldId = useId();
 
-  const errors = getErrors(fetcher);
+  const fetcher = useFetcher<PutPageData>();
+
+  const [fieldErrors, setFieldErrors] = useState<
+    ZodError["formErrors"]["fieldErrors"]
+  >({});
 
   const isSubmitting = fetcher.state !== "idle";
 
   const prevFetcher = useRef(fetcher);
   useEffect(() => {
-    if (
-      prevFetcher.current.state !== "idle" &&
-      fetcher.state === "idle" &&
-      fetcher.data !== undefined &&
-      "ok" in fetcher.data
-    ) {
-      onSuccess?.(fetcher.data.page);
+    if (prevFetcher.current.state !== fetcher.state) {
+      onFetcherStateChange?.(fetcher.state);
+      if (fetcher.state === "idle" && fetcher.data !== undefined) {
+        if ("ok" in fetcher.data) {
+          onSuccess?.(fetcher.data.page);
+        } else {
+          const errors =
+            typeof fetcher.data.errors === "string"
+              ? { formErrors: [fetcher.data.errors], fieldErrors: {} }
+              : fetcher.data.errors;
+
+          if (errors.formErrors.length > 0) {
+            for (const message of errors.formErrors) {
+              toast.error(message);
+            }
+          }
+          setFieldErrors(errors.fieldErrors);
+        }
+      }
     }
     prevFetcher.current = fetcher;
-  }, [fetcher, onSuccess]);
+  }, [fetcher, onSuccess, onFetcherStateChange]);
 
   return (
     <>
@@ -84,30 +111,37 @@ export const NewPageSettings = ({
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>
         <fetcher.Form method="put" action={`/rest/pages/${projectId}`}>
-          {/* @todo: banner? toast? */}
-          {errors !== undefined &&
-            errors.formErrors.length > 0 &&
-            JSON.stringify(errors.formErrors)}
-
           <Group>
             <Label htmlFor={nameFieldId} size={2}>
               Page Name
             </Label>
-            <TextField id={nameFieldId} name="name" disabled={isSubmitting} />
-            {/* @todo: tooltip */}
-            {errors !== undefined &&
-              errors.fieldErrors.name !== undefined &&
-              JSON.stringify(errors.fieldErrors.name)}
+            <ErrorsTooltip errors={fieldErrors.name}>
+              <TextField
+                state={fieldErrors.name && "invalid"}
+                id={nameFieldId}
+                name="name"
+                disabled={isSubmitting}
+                onChange={() => {
+                  setFieldErrors(({ name, ...rest }) => rest);
+                }}
+              />
+            </ErrorsTooltip>
           </Group>
           <Group>
             <Label htmlFor={pathFieldId} size={2}>
               Path
             </Label>
-            <TextField id={pathFieldId} name="path" disabled={isSubmitting} />
-            {/* @todo: tooltip */}
-            {errors !== undefined &&
-              errors.fieldErrors.path !== undefined &&
-              JSON.stringify(errors.fieldErrors.path)}
+            <ErrorsTooltip errors={fieldErrors.path}>
+              <TextField
+                state={fieldErrors.path && "invalid"}
+                id={pathFieldId}
+                name="path"
+                disabled={isSubmitting}
+                onChange={() => {
+                  setFieldErrors(({ path, ...rest }) => rest);
+                }}
+              />
+            </ErrorsTooltip>
           </Group>
           <Group css={{ alignItems: "end" }}>
             <Button type="submit" variant="green" disabled={isSubmitting}>
