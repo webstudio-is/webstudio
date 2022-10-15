@@ -130,28 +130,6 @@ const useUnitSelect = ({
   return [isOpen, element];
 };
 
-const useSelect = (
-  inputRef: React.MutableRefObject<HTMLInputElement | null>
-) => {
-  const shouldSelect = useRef(true);
-
-  const onPointerUp = () => {
-    if (shouldSelect.current) {
-      inputRef.current?.select();
-    }
-  };
-
-  const onPointerDown = () => {
-    const isFocused = document.activeElement === inputRef.current;
-    shouldSelect.current = isFocused === false;
-  };
-
-  return {
-    onPointerUp,
-    onPointerDown,
-  };
-};
-
 const useScrub = (options: {
   value: StyleValue;
   onChange: (value: StyleValue) => void;
@@ -306,8 +284,6 @@ export const CssValueInput = ({
     onChangeComplete,
   });
 
-  const inputPointerProps = useSelect(inputRef);
-
   const handleOnBlur: KeyboardEventHandler = (event) => {
     // When units select is open, onBlur is triggered,though we don't want a change event in this case.
     if (isUnitsOpen) return;
@@ -338,7 +314,9 @@ export const CssValueInput = ({
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
-            {...inputPointerProps}
+            onFocus={() => {
+              inputRef.current?.select();
+            }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             inputRef={inputRef}
