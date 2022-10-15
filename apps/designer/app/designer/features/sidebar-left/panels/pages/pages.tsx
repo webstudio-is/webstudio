@@ -1,10 +1,15 @@
-import { TreeNodeLabel, TreeNode } from "@webstudio-is/design-system";
+import { useFetcher } from "@remix-run/react";
+import {
+  TreeNodeLabel,
+  TreeNode,
+  IconButton,
+} from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
-import { PageIcon } from "@webstudio-is/icons";
+import { Cross1Icon, NewPageIcon, PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
-import { Header } from "../../lib/header";
+import { BaseHeader } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Config } from "~/config";
 import {
@@ -12,6 +17,8 @@ import {
   usePages,
   useProject,
 } from "~/designer/shared/nano-states";
+import { SettingsPanel } from "./settings-panel";
+import { NewPageSettings } from "./settings";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -60,20 +67,24 @@ const staticTreeProps = {
     }
 
     return (
-      <TreeNodeLabel
-        isSelected={props.isSelected}
-        text={props.data.data.name}
-      />
+      <>
+        <TreeNodeLabel
+          isSelected={props.isSelected}
+          text={props.data.data.name}
+        />
+      </>
     );
   },
 };
 
 const Pages = ({
   onClose,
+  onNewPage,
   onSelect,
   selectedPageId,
 }: {
-  onClose: () => void;
+  onClose?: () => void;
+  onNewPage?: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
 }) => {
@@ -86,7 +97,23 @@ const Pages = ({
 
   return (
     <>
-      <Header title="Pages" onClose={onClose} />
+      <BaseHeader
+        title="Pages"
+        actions={
+          <>
+            {onNewPage && (
+              <IconButton size="2" onClick={onNewPage} aria-label="Close">
+                <NewPageIcon />
+              </IconButton>
+            )}
+            {onClose && (
+              <IconButton size="2" onClick={onClose} aria-label="Close">
+                <Cross1Icon />
+              </IconButton>
+            )}
+          </>
+        }
+      />
       <TreeNode
         hideRoot
         selectedItemId={selectedPageId}
@@ -110,16 +137,33 @@ export const TabContent = (props: TabContentProps) => {
     navigate(`${props.config.designerPath}/${project.id}?pageId=${pageId}`);
   };
 
-  if (currentPageId === undefined) {
+  const [newPageOpen, setNewPageOpen] = useState(false);
+  const newPageFetcher = useFetcher();
+
+  if (currentPageId === undefined || project === undefined) {
     return null;
   }
 
   return (
-    <Pages
-      onClose={() => props.onSetActiveTab("none")}
-      onSelect={handleSelect}
-      selectedPageId={currentPageId}
-    />
+    <>
+      <Pages
+        onClose={() => props.onSetActiveTab("none")}
+        onNewPage={() => setNewPageOpen((value) => !value)}
+        onSelect={handleSelect}
+        selectedPageId={currentPageId}
+      />
+      <SettingsPanel isOpen={newPageOpen}>
+        <NewPageSettings
+          fetcher={newPageFetcher}
+          projectId={project.id}
+          onClose={() => setNewPageOpen(false)}
+          onSuccess={(page) => {
+            setNewPageOpen(false);
+            handleSelect(page.id);
+          }}
+        />
+      </SettingsPanel>
+    </>
   );
 };
 

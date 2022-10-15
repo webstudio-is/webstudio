@@ -9,7 +9,7 @@ export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
 };
 
-const PageSchema = z.object({
+export const PageSchema = z.object({
   id: z.string(),
   name: z.string(),
   path: z.string(),
