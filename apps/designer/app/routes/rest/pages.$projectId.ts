@@ -20,7 +20,10 @@ const CreatePageInput = zfd.formData({
     .refine((path) => path !== "/", "Path can't be /")
     .transform((path) => (path.endsWith("/") ? path.slice(0, -1) : path))
     .transform((path) => path.replace(/\/\//g, "/"))
-    .refine((path) => path.startsWith("/"), "Path must start with a /"),
+    .refine(
+      (path) => path === "" || path.startsWith("/"),
+      "Path must start with a /"
+    ),
 });
 
 const handlePUT = async (
