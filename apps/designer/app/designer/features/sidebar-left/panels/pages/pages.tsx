@@ -148,7 +148,14 @@ export const TabContent = (props: TabContentProps) => {
     <>
       <Pages
         onClose={() => props.onSetActiveTab("none")}
-        onNewPage={() => setNewPageOpen(true)}
+        onNewPage={() => {
+          if (newPageOpen === false) {
+            setNewPageOpen(true);
+          }
+          if (newPageOpen && newPageState === "idle") {
+            setNewPageOpen(false);
+          }
+        }}
         onSelect={handleSelect}
         selectedPageId={currentPageId}
       />
