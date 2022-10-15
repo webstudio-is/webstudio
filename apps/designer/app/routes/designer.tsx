@@ -1,5 +1,5 @@
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { Designer } from "~/shared/documents/designer";
+import { Root } from "~/shared/remix";
 import env from "~/env.server";
 import { getThemeData } from "~/shared/theme";
 
@@ -14,4 +14,4 @@ export const meta: MetaFunction = () => {
   return { title: "Webstudio" };
 };
 
-export default Designer;
+export default Root;

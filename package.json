@@ -15,6 +15,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
     "storybook": "turbo run storybook:run",
+    "storybook:build": "npm run build && turbo run storybook:build",
+    "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
     "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {
@@ -27,7 +29,7 @@
   },
   "engines": {
     "npm": ">=7.0.0",
-    "node": ">=14 <=16"
+    "node": "16"
   },
   "dependencies": {},
   "packageManager": "yarn@1.22.19",

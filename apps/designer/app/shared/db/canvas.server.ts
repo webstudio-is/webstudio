@@ -7,27 +7,28 @@ export type CanvasData = Data & { buildId: Build["id"]; page: Page };
 
 export const loadCanvasData = async (
   projectId: Project["id"],
-  pageId?: Page["id"]
-): Promise<CanvasData> => {
-  const project = await db.project.loadById(projectId);
+  env: "dev" | "prod",
+  pagePath = ""
+): Promise<CanvasData | undefined> => {
+  const build =
+    env === "dev"
+      ? await db.build.loadByProjectId(projectId, "dev")
+      : await db.build.loadByProjectId(projectId, "prod");
 
-  if (project === null) throw new Error(`Project "${projectId}" not found`);
+  if (build === undefined) {
+    throw new Error("The project is not published");
+  }
 
-  const devBuild = await db.build.loadByProjectId(projectId, "dev");
-
-  const page =
-    pageId === undefined
-      ? devBuild.pages.homePage
-      : utils.pages.findById(devBuild.pages, pageId);
+  const page = utils.pages.findByPath(build.pages, pagePath);
 
   if (page === undefined) {
-    throw new Error(`Page "${pageId}" not found`);
+    return;
   }
 
   const [tree, props, breakpoints] = await Promise.all([
     db.tree.loadById(page.treeId),
     db.props.loadByTreeId(page.treeId),
-    db.breakpoints.load(devBuild.id),
+    db.breakpoints.load(build.id),
   ]);
 
   if (tree === null) {
@@ -42,7 +43,7 @@ export const loadCanvasData = async (
     tree,
     props,
     breakpoints: breakpoints.values,
-    buildId: devBuild.id,
+    buildId: build.id,
     page,
   };
 };

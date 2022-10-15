@@ -1,4 +1,6 @@
+import { mergeRefs } from "@react-aria/utils";
 import React from "react";
+import { useFocusWithin } from "@react-aria/interactions";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 
@@ -10,6 +12,7 @@ const InputBase = styled("input", {
   boxSizing: "border-box",
   fontFamily: "inherit",
   fontSize: "inherit",
+  color: "inherit",
   margin: "0",
   padding: "0",
   flexGrow: 1,
@@ -19,11 +22,14 @@ const InputBase = styled("input", {
   textOverflow: "ellipsis",
   outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
+  cursor: "inherit",
 
   // Focus should start on the input element then move to prefix and suffix elements.
   // DOM order reflects focus path and visually we use order to put them into the correct visual order.
   order: 1,
-
+  "&[type='button']": {
+    textAlign: "left",
+  },
   '&[type="search"]': {
     "&::-webkit-search-decoration, &::-webkit-search-cancel-button, &::-webkit-search-results-button, &::-webkit-search-results-decoration":
       {
@@ -41,7 +47,7 @@ const InputBase = styled("input", {
   },
 
   "&:-webkit-autofill::first-line": {
-    fontFamily: "$untitled",
+    fontFamily: "$sans",
     color: "$hiContrast",
   },
 
@@ -66,10 +72,24 @@ const TextFieldBase = styled("div", {
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
+  gap: "$1",
+  px: "$2",
+  borderRadius: "$1",
+  fontFamily: "$sans",
+  fontSize: "$1",
+  height: 28, // @todo waiting for the sizing scale
+  lineHeight: 1,
+  "&[data-has-prefix]": {
+    paddingLeft: 2,
+  },
+
+  "&[data-has-suffix]": {
+    paddingRight: 2,
+  },
 
   "&:focus-within": {
     boxShadow:
-      "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
+      "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
   },
 
   "&[aria-disabled=true]": {
@@ -84,22 +104,6 @@ const TextFieldBase = styled("div", {
   },
 
   variants: {
-    size: {
-      "1": {
-        px: "$1",
-        borderRadius: "$1",
-        fontSize: "$1",
-        height: "$5",
-        lineHeight: "$sizes$5",
-      },
-      "2": {
-        px: "$2",
-        borderRadius: "$2",
-        fontSize: "$3",
-        height: "$6",
-        lineHeight: "$sizes$6",
-      },
-    },
     variant: {
       ghost: {
         boxShadow: "none",
@@ -112,7 +116,7 @@ const TextFieldBase = styled("div", {
         "&:focus": {
           backgroundColor: "$loContrast",
           boxShadow:
-            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
+            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue10",
         },
         "&:disabled": {
           backgroundColor: "transparent",
@@ -124,29 +128,26 @@ const TextFieldBase = styled("div", {
     },
     state: {
       invalid: {
-        boxShadow: "inset 0 0 0 1px $colors$red7",
-        "&:focus": {
+        boxShadow: "inset 0 0 0 1px $colors$red8",
+        "&:focus-within": {
           boxShadow:
             "inset 0px 0px 0px 1px $colors$red8, 0px 0px 0px 1px $colors$red8",
         },
       },
       valid: {
         boxShadow: "inset 0 0 0 1px $colors$green7",
-        "&:focus": {
+        "&:focus-within": {
           boxShadow:
             "inset 0px 0px 0px 1px $colors$green8, 0px 0px 0px 1px $colors$green8",
         },
       },
     },
   },
-  defaultVariants: {
-    size: "1",
-  },
 });
 
-type TextFieldProps = Pick<
+export type TextFieldProps = Pick<
   React.ComponentProps<typeof TextFieldBase>,
-  "size" | "variant" | "state" | "css"
+  "variant" | "state" | "css"
 > &
   Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
     inputRef?: React.Ref<HTMLInputElement>;
@@ -162,23 +163,49 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       css,
       disabled,
       inputRef,
-      size,
       state,
       variant,
+      onFocus,
+      onBlur,
       ...textFieldProps
     } = props;
+
+    const internalInputRef = React.useRef<HTMLInputElement>(null);
+
+    const focusInnerInput = React.useCallback(() => {
+      internalInputRef.current?.focus();
+    }, [internalInputRef]);
+
+    const { focusWithinProps } = useFocusWithin({
+      isDisabled: disabled,
+      onFocusWithin: (event) => {
+        // @ts-expect-error Type mismatch from react-aria
+        onFocus?.(event);
+      },
+      onBlurWithin: (event) => {
+        // @ts-expect-error Type mismatch from react-aria
+        onBlur?.(event);
+      },
+    });
 
     return (
       <TextFieldBase
         aria-disabled={disabled}
         ref={forwardedRef}
-        size={size}
         state={state}
         variant={variant}
         css={css}
+        {...focusWithinProps}
+        {...(prefix && { "data-has-prefix": true })}
+        {...(suffix && { "data-has-suffix": true })}
+        onClickCapture={focusInnerInput}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
-        <InputBase disabled={disabled} {...textFieldProps} ref={inputRef} />
+        <InputBase
+          disabled={disabled}
+          {...textFieldProps}
+          ref={mergeRefs(internalInputRef, inputRef ?? null)}
+        />
 
         {prefix && (
           <Flex

@@ -54,7 +54,7 @@ export const CollapsibleSection = ({
               userSelect: "none",
             }}
           >
-            <Text css={{ fontWeight: "500", flexGrow: 1 }}>{label}</Text>
+            <Text variant="label">{label}</Text>
             <Flex
               align="center"
               justify="center"

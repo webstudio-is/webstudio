@@ -48,6 +48,7 @@ export { TrashIcon } from "./trash";
 export { SizeIcon } from "./size";
 export { UploadIcon } from "./upload";
 export { GearIcon, gearIconCssVars } from "./gear";
+export * from "./page";
 export * from "./align-self-start";
 export * from "./align-self-end";
 export * from "./align-self-center";

@@ -22,6 +22,7 @@ const LayoutSectionFlex = ({
             "grid grid flexDirection flexWrap ."
             "grid grid alignItems justifyContent alignContent"
           `,
+          alignItems: "center",
         }}
       >
         <Box css={{ gridArea: "grid" }}>
@@ -51,6 +52,7 @@ const LayoutSectionFlex = ({
           gridTemplateAreas: `
             "columnGap lock rowGap"
           `,
+          alignItems: "center",
         }}
       >
         <Box css={{ gridArea: "columnGap" }}>

@@ -9,7 +9,7 @@ export const baseItemCss = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  fontFamily: "$untitled",
+  fontFamily: "$sans",
   fontSize: "$1",
   fontVariantNumeric: "tabular-nums",
   lineHeight: "1",
@@ -23,12 +23,12 @@ export const baseItemCss = css({
 export const itemCss = css(baseItemCss, {
   position: "relative",
   color: "$hiContrast",
-  "&:focus, &[data-found]": {
+  "&:focus, &[data-found], &[aria-selected=true]": {
     outline: "none",
     backgroundColor: "$blue10",
     color: "white",
   },
-  "&[data-disabled]": {
+  "&[data-disabled], &[aria-disabled]": {
     color: "$slate9",
   },
 });

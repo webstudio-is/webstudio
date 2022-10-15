@@ -10,18 +10,99 @@ import type { SelectedInstanceData } from "~/shared/canvas-components";
 import {
   Box,
   Button,
-  Combobox,
-  ComboboxTextField,
-  ComboboxPopperContent,
   Grid,
+  TextField,
   Tooltip,
+  useCombobox,
+  ComboboxPopper,
+  ComboboxPopperContent,
+  ComboboxPopperAnchor,
+  ComboboxListbox,
+  ComboboxListboxItem,
+  IconButton,
 } from "@webstudio-is/design-system";
 import {
   PlusIcon,
   TrashIcon,
   ExclamationTriangleIcon,
+  ChevronDownIcon,
 } from "@webstudio-is/icons";
 import { handleChangePropType, usePropsLogic } from "./use-props-logic";
+
+type ComboboxProps = {
+  isReadonly: boolean;
+  isInvalid: boolean;
+  items: Array<string>;
+  value: string;
+  onItemSelect: (value: string | null) => void;
+  onSubmit: (value: string) => void;
+};
+
+const Combobox = ({
+  isReadonly,
+  isInvalid,
+  items: itemsProp,
+  value,
+  onItemSelect,
+  onSubmit,
+}: ComboboxProps) => {
+  const {
+    items,
+    getInputProps,
+    getComboboxProps,
+    getToggleButtonProps,
+    getMenuProps,
+    getItemProps,
+    isOpen,
+  } = useCombobox({
+    items: itemsProp,
+    value,
+    itemToString: (item) => item ?? "",
+    onItemSelect,
+  });
+
+  return (
+    <ComboboxPopper>
+      <Box {...getComboboxProps()}>
+        <ComboboxPopperAnchor>
+          <TextField
+            {...getInputProps({
+              onKeyPress: (event) => {
+                if (event.key === "Enter") {
+                  onSubmit(event.currentTarget.value);
+                }
+              },
+            })}
+            name="prop"
+            placeholder="Property"
+            readOnly={isReadonly}
+            state={isInvalid ? "invalid" : undefined}
+            suffix={
+              <IconButton {...getToggleButtonProps()}>
+                <ChevronDownIcon />
+              </IconButton>
+            }
+          />
+        </ComboboxPopperAnchor>
+        <ComboboxPopperContent align="start" sideOffset={5}>
+          <ComboboxListbox {...getMenuProps()}>
+            {isOpen &&
+              items.map((item, index) => {
+                return (
+                  <ComboboxListboxItem
+                    {...getItemProps({ item, index })}
+                    key={index}
+                  >
+                    {item}
+                  </ComboboxListboxItem>
+                );
+              })}
+          </ComboboxListbox>
+        </ComboboxPopperContent>
+      </Box>
+    </ComboboxPopper>
+  );
+};
 
 type PropertyProps = UserProp & {
   component: Instance["component"];
@@ -33,14 +114,14 @@ const Property = ({
   id,
   prop,
   value,
-  required,
+  required = false,
   component,
   onChange,
   onDelete,
 }: PropertyProps) => {
   const meta = componentsMeta[component];
   const argType = meta.argTypes?.[prop as keyof typeof meta.argTypes];
-  const isInvalidProp =
+  const isInvalid =
     prop != null &&
     prop.length > 0 &&
     typeof argType === "undefined" &&
@@ -56,30 +137,20 @@ const Property = ({
       css={{ gridTemplateColumns: "1fr 1fr auto", alignItems: "center" }}
     >
       <Combobox
-        name="prop"
-        placeholder="Property"
         items={allProps}
         value={prop}
-        itemToString={(item) => item ?? ""}
-        onItemSelect={(value) => {
-          onChange(id, "prop", value as string);
+        onItemSelect={(value: PropertyProps["value"] | null) => {
+          if (value !== null) {
+            onChange(id, "prop", value);
+          }
         }}
-        renderTextField={({ inputProps, toggleProps }) => (
-          <ComboboxTextField
-            toggleProps={toggleProps}
-            inputProps={{
-              ...inputProps,
-              readOnly: required,
-              state: isInvalidProp ? "invalid" : undefined,
-            }}
-          />
-        )}
-        renderPopperContent={(props) => (
-          <ComboboxPopperContent {...props} align="start" sideOffset={5} />
-        )}
+        onSubmit={(value) => {
+          onChange(id, "prop", value);
+        }}
+        isInvalid={isInvalid}
+        isReadonly={required}
       />
-
-      {isInvalidProp ? (
+      {isInvalid ? (
         <Tooltip content={`Invalid property name: ${prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>

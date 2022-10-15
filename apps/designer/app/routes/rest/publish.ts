@@ -15,10 +15,12 @@ export const action: ActionFunction = async ({ request }) => {
       const headers = new Headers();
       headers.append("X-AUTH-WEBSTUDIO", process.env.PUBLISHER_TOKEN || "");
       headers.append("Content-Type", "text/plain");
+      const url = new URL(request.url);
       const response = await fetch(process.env.PUBLISHER_ENDPOINT, {
         method: "PUT",
         headers,
         body: JSON.stringify({
+          origin: url.origin,
           projectId,
           domain,
         }),

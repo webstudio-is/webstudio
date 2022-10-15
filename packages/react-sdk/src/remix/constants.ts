@@ -1,0 +1,1 @@
+export const CRITICAL_CSS_MARKER = "__CRITICAL_CSS__";
