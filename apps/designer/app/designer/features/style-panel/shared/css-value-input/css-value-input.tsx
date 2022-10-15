@@ -19,7 +19,6 @@ import {
   type UnitValue,
   type UnsetValue,
   StyleValue,
-  units as unsortedUnits,
 } from "@webstudio-is/react-sdk";
 import {
   type KeyboardEventHandler,
@@ -29,12 +28,16 @@ import {
   useState,
 } from "react";
 
-// @todo sorting doesn't work
-export const defaultUnits: Array<Unit> = [...unsortedUnits].sort((unit) =>
-  ["px", "%", "em", "rem", "ch", "vw", "vh", "vmin", "vmax"].includes(unit)
-    ? -1
-    : 1
-);
+export const defaultUnits: Array<Unit> = [
+  "px",
+  "em",
+  "rem",
+  "ch",
+  "vw",
+  "vh",
+  "%",
+  "number",
+];
 const defaultKeywords: [] = [];
 const defaultValue: UnsetValue = { type: "unset", value: "" };
 
