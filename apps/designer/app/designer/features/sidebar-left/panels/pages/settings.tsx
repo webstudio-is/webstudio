@@ -14,7 +14,7 @@ import { useFetcher, type FetcherWithComponents } from "@remix-run/react";
 import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
 import type { ZodError } from "zod";
 import { BaseHeader } from "../../lib/header";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { type Page } from "@webstudio-is/project";
 
 const Group = styled(Flex, {
@@ -34,7 +34,12 @@ const ErrorsTooltip = ({
   errors: string[] | undefined;
   children: React.ComponentProps<typeof Tooltip>["children"];
 }) => {
-  const content = errors?.map((error, i) => <div key={i}>{error}</div>);
+  const content = errors?.map((error, i) => (
+    <React.Fragment key={i}>
+      {i > 0 && <br />}
+      {error}
+    </React.Fragment>
+  ));
   return (
     // We intentionally always pass non empty content to avoid optimization inside Tooltip
     // where it renders {children} directly if content is empty.
