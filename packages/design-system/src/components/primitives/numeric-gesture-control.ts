@@ -48,8 +48,8 @@ export const numericScrubControl = (
     maxValue = Number.MAX_SAFE_INTEGER,
     initialValue = 0,
     direction = "horizontal",
-    onValueInput = () => null,
-    onValueChange = () => null,
+    onValueInput,
+    onValueChange,
   }: NumericScrubOptions
 ) => {
   const eventNames = ["pointerup", "pointerdown", "pointermove"] as const;
@@ -82,7 +82,7 @@ export const numericScrubControl = (
         state.offset = 0;
         handleCursor(targetNode.ownerDocument.documentElement, false);
         exitPointerLock(state, event, targetNode);
-        onValueChange({
+        onValueChange?.({
           target: targetNode,
           value: state.value,
           preventDefault: () => event.preventDefault(),
@@ -90,6 +90,8 @@ export const numericScrubControl = (
         break;
       }
       case "pointerdown": {
+        // light touches don't register corresponding pointerup
+        if (event.pressure === 0) break;
         state.offset = offset;
         handleCursor(targetNode.ownerDocument.documentElement, true);
         requestPointerLock(state, event, targetNode);
@@ -103,7 +105,7 @@ export const numericScrubControl = (
           if (state.value < minValue) state.value = minValue;
           else if (state.value > maxValue) state.value = maxValue;
           state.offset += movement * state.velocity;
-          onValueInput({
+          onValueInput?.({
             target: targetNode,
             value: state.value,
             preventDefault: () => event.preventDefault(),
@@ -113,8 +115,7 @@ export const numericScrubControl = (
       }
     }
   };
-  // We want the default cursor before the pointer is down
-  //handleCursor(targetNode, true);
+  handleCursor(targetNode, true);
   eventNames.forEach((eventName) =>
     targetNode.addEventListener(eventName, handleEvent)
   );
@@ -153,9 +154,11 @@ const requestPointerLock = (
     cursorNode.style.filter = `drop-shadow(${
       state.direction === "horizontal" ? "0 1px" : "1px 0"
     } 1.1px rgba(0,0,0,.4))`;
+    // avoid obscuring anything that could be behind the cursor by offseting it after the target
+    const { top, height } = targetNode.getBoundingClientRect();
     cursorNode.style.position = "absolute";
     cursorNode.style.left = `${event.clientX}px`;
-    cursorNode.style.top = `${event.clientY}px`;
+    cursorNode.style.top = `${top + height}px`;
     cursorNode.style.transform = `translate(-50%, -50%) ${
       state.direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)"
     }`;
