@@ -11,7 +11,7 @@ export const BaseHeader = ({ title, actions }: BaseHeaderProps) => {
   return (
     <>
       <Flex
-        css={{ height: 40, paddingLeft: "$3" }}
+        css={{ height: 40, paddingLeft: "$3", flexShrink: 0 }}
         align="center"
         justify="between"
       >

@@ -77,9 +77,6 @@ export const SidebarLeft = ({ publish, config }: SidebarLeftProps) => {
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "hidden"
                 : "visible",
-
-            // @todo: is it ok to remove? (need to fix the "components" panel at min)
-            // overflow: "auto",
           }}
         >
           <TabContent

@@ -132,7 +132,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <>
+    <Flex css={{ height: "100%", flexDirection: "column" }}>
       <Header
         title="Add"
         onClose={() => {
@@ -142,7 +142,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       <Flex
         gap="1"
         wrap="wrap"
-        css={{ padding: "$1" }}
+        css={{ padding: "$1", overflow: "auto" }}
         ref={useDragHandlers.rootRef}
       >
         {componentNames.map((component: Instance["component"]) => (
@@ -160,7 +160,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         ))}
         {dragComponent && <DragLayer component={dragComponent} point={point} />}
       </Flex>
-    </>
+    </Flex>
   );
 };
 
