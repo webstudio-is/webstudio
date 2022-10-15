@@ -54,7 +54,7 @@ const calcNumberChange = (
   return Number((value + delta * multiplier).toFixed(1));
 };
 
-const useOnChange = (
+const useHandleOnChange = (
   value: StyleValue,
   input: string,
   onChange: (value: StyleValue) => void
@@ -101,8 +101,8 @@ const useUnitSelect = ({
   units = defaultUnits,
   ...props
 }: UseUnitSelectType) => {
-  const [isUnitsOpen, setIsUnitsOpen] = useState(false);
-  if (value === undefined) return [isUnitsOpen, null];
+  const [isOpen, setIsOpen] = useState(false);
+  if (value === undefined) return [isOpen, null];
   const element = (
     <Select
       {...props}
@@ -110,8 +110,8 @@ const useUnitSelect = ({
       options={units}
       suffix={null}
       ghost
-      open={isUnitsOpen}
-      onOpenChange={setIsUnitsOpen}
+      open={isOpen}
+      onOpenChange={setIsOpen}
       onChange={(item) => {
         // @todo Select should support generics
         const unit = item as Unit;
@@ -127,7 +127,7 @@ const useUnitSelect = ({
     />
   );
 
-  return [isUnitsOpen, element];
+  return [isOpen, element];
 };
 
 const useSelect = (
@@ -192,7 +192,7 @@ const useScrub = (options: {
   return inputRef;
 };
 
-const useKeyDown =
+const useHandleKeyDown =
   ({
     value,
     onChange,
@@ -293,7 +293,7 @@ export const CssValueInput = ({
 
   const inputProps = getInputProps();
 
-  useOnChange(value, inputProps.value, onChange);
+  useHandleOnChange(value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     value: value.type === "unit" ? value : undefined,
@@ -315,7 +315,7 @@ export const CssValueInput = ({
     inputProps.onBlur(event);
   };
 
-  const handleKeyDown = useKeyDown({
+  const handleKeyDown = useHandleKeyDown({
     value,
     onChange,
     onChangeComplete,
