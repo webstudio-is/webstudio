@@ -42,6 +42,7 @@ import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
+import env from "~/shared/env";
 
 export const links = () => {
   return [
@@ -254,14 +255,21 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
   );
 };
 
-type DesignerProps = {
+export type DesignerProps = {
   config: Config;
   project: Project;
   pages: Pages;
   pageId: string;
+  buildOrigin: string;
 };
 
-export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
+export const Designer = ({
+  config,
+  project,
+  pages,
+  pageId,
+  buildOrigin,
+}: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -296,20 +304,34 @@ export const Designer = ({ config, project, pages, pageId }: DesignerProps) => {
     return page;
   }, [pages, pageId]);
 
+  const buildUrl = new URL(buildOrigin);
+  buildUrl.pathname = page.path;
+  if (env.BUILD_REQUIRE_SUBDOMAIN) {
+    buildUrl.host = `${project.domain}.${buildUrl.host}`;
+  } else {
+    buildUrl.searchParams.set("projectId", project.id);
+  }
+
+  buildUrl.searchParams.set("mode", "edit");
+  const canvasUrl = buildUrl.toString();
+
+  buildUrl.searchParams.set("mode", "preview");
+  const previewUrl = buildUrl.toString();
+
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>
       <Topbar
         css={{ gridArea: "header" }}
         config={config}
-        page={page}
         project={project}
         publish={publish}
+        previewUrl={previewUrl}
       />
       <Main>
         <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
           <CanvasIframe
             ref={iframeRefCallback}
-            src={`${page.path || "/"}?projectId=${project.id}&mode=edit`}
+            src={canvasUrl}
             pointerEvents={
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"

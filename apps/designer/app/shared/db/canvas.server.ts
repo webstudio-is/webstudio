@@ -9,7 +9,7 @@ export const loadCanvasData = async (
   projectId: Project["id"],
   env: "dev" | "prod",
   pagePath = ""
-): Promise<CanvasData> => {
+): Promise<CanvasData | undefined> => {
   const build =
     env === "dev"
       ? await db.build.loadByProjectId(projectId, "dev")
@@ -22,7 +22,7 @@ export const loadCanvasData = async (
   const page = utils.pages.findByPath(build.pages, pagePath);
 
   if (page === undefined) {
-    throw new Error(`Page "${pagePath}" not found`);
+    return;
   }
 
   const [tree, props, breakpoints] = await Promise.all([

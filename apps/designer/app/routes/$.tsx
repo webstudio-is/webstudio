@@ -1,4 +1,9 @@
-import { type LoaderFunction, redirect, MetaFunction } from "@remix-run/node";
+import {
+  type LoaderFunction,
+  redirect,
+  MetaFunction,
+  json,
+} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData, type CanvasData } from "~/shared/db";
@@ -8,13 +13,10 @@ import env, { Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-import {
-  type CanvasRouteMode,
-  getCanvasRequestParams,
-} from "~/shared/router-utils";
+import { type BuildMode, getBuildParams } from "~/shared/router-utils";
 
 type Data =
-  | (CanvasData & { env: Env; mode: CanvasRouteMode })
+  | (CanvasData & { env: Env; mode: BuildMode })
   | { errors: string; env: Env };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
@@ -29,21 +31,21 @@ export const loader: LoaderFunction = async ({
   request,
 }): Promise<Data | Response> => {
   try {
-    const canvasRequest = getCanvasRequestParams(request);
+    const buildParams = getBuildParams(request);
 
-    if (canvasRequest === undefined) {
+    if (buildParams === undefined) {
       return redirect(config.dashboardPath);
     }
 
-    const { mode, pathname } = canvasRequest;
+    const { mode, pathname } = buildParams;
 
     const project =
-      "projectId" in canvasRequest
-        ? await db.project.loadById(canvasRequest.projectId)
-        : await db.project.loadByDomain(canvasRequest.projectDomain);
+      "projectId" in buildParams
+        ? await db.project.loadById(buildParams.projectId)
+        : await db.project.loadByDomain(buildParams.projectDomain);
 
     if (project === null) {
-      throw new Error("Project not found");
+      throw json("Project not found", { status: 404 });
     }
 
     const canvasData = await loadCanvasData(
@@ -52,8 +54,18 @@ export const loader: LoaderFunction = async ({
       pathname
     );
 
+    if (canvasData === undefined) {
+      throw json("Page not found", { status: 404 });
+    }
+
     return { ...canvasData, env, mode };
   } catch (error) {
+    // If a Response is thrown, we're rethrowing it for Remix to handle.
+    // https://remix.run/docs/en/v1/api/conventions#throwing-responses-in-loaders
+    if (error instanceof Response) {
+      throw error;
+    }
+
     sentryException({ error });
     return {
       errors: error instanceof Error ? error.message : String(error),

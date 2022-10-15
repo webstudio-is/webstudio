@@ -40,6 +40,16 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production DESIGNER_HOST is required for website functionality. Please set it to your production URL of the designer."
     );
   }
+  if (!process.env.BUILD_ORIGIN) {
+    errors.push(
+      "👉 In production BUILD_ORIGIN is required for security reasons."
+    );
+  }
+  if (process.env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
+    errors.push(
+      "👉 In production BUILD_REQUIRE_SUBDOMAIN must be set to 'true' for security reasons."
+    );
+  }
 }
 
 // check for when user has some S3 env variables but not all required

@@ -1,19 +1,19 @@
 import { useLoaderData } from "@remix-run/react";
 import { LoaderFunction } from "@remix-run/node";
-import { Designer, links } from "~/designer";
+import { type DesignerProps, Designer, links } from "~/designer";
 import { db } from "@webstudio-is/project/index.server";
-import { type Project, type Pages } from "@webstudio-is/project";
 import config from "~/config";
 import { ErrorMessage } from "~/shared/error";
 import { action, useAction } from "./_assets";
 import { sentryException } from "~/shared/sentry";
+import { getBuildOrigin } from "~/shared/router-utils";
 
 export { action, links };
 
 export const loader: LoaderFunction = async ({
   params,
   request,
-}): Promise<Data | Error> => {
+}): Promise<DesignerProps | Error> => {
   try {
     if (params.projectId === undefined) {
       throw new Error("Project id undefined");
@@ -35,6 +35,7 @@ export const loader: LoaderFunction = async ({
       project,
       pages: devBuild.pages,
       pageId: pageIdParam || devBuild.pages.homePage.id,
+      buildOrigin: getBuildOrigin(request),
     };
   } catch (error) {
     sentryException({ error });
@@ -42,19 +43,12 @@ export const loader: LoaderFunction = async ({
   }
 };
 
-type Data = {
-  config: typeof config;
-  project: Project;
-  pages: Pages;
-  pageId: string;
-};
-
 type Error = {
   errors: string;
 };
 
 export const DesignerRoute = () => {
-  const data = useLoaderData<Data | Error>();
+  const data = useLoaderData<DesignerProps | Error>();
   useAction();
 
   if ("errors" in data) {

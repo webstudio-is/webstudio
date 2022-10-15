@@ -9,23 +9,16 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import type { Project } from "@webstudio-is/project";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
 type ShareButtonProps = {
-  projectId: Project["id"];
-  pagePath: string;
+  url: string;
 };
 
-const Content = ({ projectId, pagePath }: ShareButtonProps) => {
+const Content = ({ url }: ShareButtonProps) => {
   if (typeof location === "undefined") {
     return null;
   }
-  const url = new URL(
-    `${location.protocol}//${location.host}${
-      pagePath || "/"
-    }?projectId=${projectId}&mode=preview`
-  );
   return (
     <PopoverContent
       css={{ padding: "$3" }}
@@ -38,14 +31,14 @@ const Content = ({ projectId, pagePath }: ShareButtonProps) => {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          window.open(url.toString(), "_blank");
+          window.open(url, "_blank");
         }}
       >
         <Flex gap="2">
           <TextField
             variant="ghost"
             readOnly
-            defaultValue={url.toString()}
+            defaultValue={url}
             onFocus={(event) => {
               event?.target.select();
             }}
