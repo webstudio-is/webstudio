@@ -117,6 +117,10 @@ const useUnitSelect = ({
           unit,
         });
       }}
+      onCloseAutoFocus={(event) => {
+        // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
+        event.preventDefault();
+      }}
     />
   );
 
@@ -230,6 +234,7 @@ type CssValueInputProps = {
  *   - option/alt key modifier increases/decreases value by 0.1
  *   - no modifier increases/decreases value by 1
  * - Scrub interaction
+ * - Click outside, unit selection or escape when list is open should unfocus the unit select trigger
  *
  * Keywords mode:
  * - When any character in the input is not a number we automatically switch to keywords mode on keydown

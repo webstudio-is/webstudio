@@ -154,6 +154,7 @@ export type SelectProps<Option = SelectOption> = Omit<
   onChange?: (option: Option) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onCloseAutoFocus?: (event: Event) => void;
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
   suffix?: JSX.Element | null;
@@ -167,6 +168,7 @@ const SelectBase = (
     placeholder = "Select an option",
     onChange,
     onOpenChange,
+    onCloseAutoFocus,
     open,
     getLabel = (option) => option,
     name,
@@ -191,7 +193,7 @@ const SelectBase = (
         {suffix}
       </StyledTrigger>
       <SelectPrimitive.Portal>
-        <StyledContent>
+        <StyledContent onCloseAutoFocus={onCloseAutoFocus}>
           <SelectScrollUpButton>
             <ChevronUpIcon />
           </SelectScrollUpButton>
