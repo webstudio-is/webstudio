@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, MutableRefObject } from "react";
 import { Cross1Icon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
@@ -96,6 +96,15 @@ export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverClose = PopoverPrimitive.Close;
 export const PopoverPortal = PopoverPrimitive.Portal;
 
+const useSideOffset = (
+  isOpen: boolean
+): [MutableRefObject<HTMLButtonElement | null>, number] => {
+  const ref = useRef<HTMLButtonElement | null>(null);
+  const sideOffset =
+    isOpen && ref.current !== null ? 240 - ref.current.offsetWidth : 0;
+  return [ref, sideOffset];
+};
+
 export const FloatingPopover = ({
   title,
   content,
@@ -106,20 +115,22 @@ export const FloatingPopover = ({
   children: JSX.Element;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [ref, sideOffset] = useSideOffset(isOpen);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen} modal>
       <PopoverTrigger
+        ref={ref}
         asChild
         onClick={() => {
           setIsOpen(true);
         }}
       >
-        {children}
+        <Flex>{children}</Flex>
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent
-          sideOffset={220}
+          sideOffset={sideOffset}
           side="right"
           hideArrow
           css={{ backgroundColor: "$loContrast" }}

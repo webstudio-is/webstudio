@@ -20,7 +20,13 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   justifyContent: "center",
   "&:hover": { backgroundColor: "$slate5" },
   "&:focus": { boxShadow: "0 0 0 2px $colors$blue10", zIndex: 1 },
-  "&[data-state=on]": { backgroundColor: "$slate5" },
+  "&[data-state=on]": {
+    backgroundColor: "$slate5",
+    "&[data-breakpoint=true]": {
+      color: "$colors$blue11",
+      backgroundColor: "$colors$blue4",
+    },
+  },
   // whiteSpace: "nowrap",
   // fontSize: 15,
   // lineHeight: 1,

@@ -2,7 +2,6 @@ import { Flex, Label, Tooltip, IconButton } from "@webstudio-is/design-system";
 import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "./constants";
 import type { PropertyProps } from "../style-sections";
-import { iconConfigs } from "./configs";
 import { forwardRef, PointerEventHandler } from "react";
 
 export const PropertyName = ({ property, label, css }: PropertyProps) => {
@@ -33,7 +32,6 @@ export const PropertyName = ({ property, label, css }: PropertyProps) => {
           }}
           variant="contrast"
           size="1"
-          htmlFor={property}
         >
           {label}
         </Label>
@@ -45,12 +43,12 @@ PropertyName.displayName = "PropertyName";
 
 export const PropertyIcon = forwardRef<
   HTMLButtonElement,
-  PropertyProps & { [key: `on${string}`]: PointerEventHandler }
->(({ property, label, ...props }, forwardRef) => {
+  PropertyProps & {
+    children?: JSX.Element;
+    [key: `on${string}`]: PointerEventHandler;
+  }
+>(({ property, label, children, ...props }, forwardRef) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
-  const IconType = iconConfigs[property]?.normal;
-  if (!IconType) return null;
-
   return (
     <Tooltip content={label} delayDuration={600} disableHoverableContent={true}>
       <IconButton
@@ -73,7 +71,7 @@ export const PropertyIcon = forwardRef<
           }),
         }}
       >
-        <IconType />
+        {children}
       </IconButton>
     </Tooltip>
   );

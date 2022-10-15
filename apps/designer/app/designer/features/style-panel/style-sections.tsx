@@ -31,7 +31,7 @@ import {
 import { PropertyName } from "./shared/property-name";
 
 export type PropertyProps = {
-  property: StyleProperty;
+  property: StyleProperty | StyleProperty[];
   label: string;
   css?: CSS;
 };

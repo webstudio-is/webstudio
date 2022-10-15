@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Text, Flex, Grid, FloatingPopover } from "@webstudio-is/design-system";
+import { Flex, Grid, FloatingPopover } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
@@ -27,6 +26,25 @@ export const FlexChildSection = ({
   const setAlignSelf = setProperty("alignSelf");
   const setOrder = setProperty("order");
   const setSizing = createBatchUpdate();
+  const getSizingValue = () => {
+    switch (
+      String(currentStyle.flexGrow?.value) +
+      String(currentStyle.flexShrink?.value)
+    ) {
+      case "00": {
+        return "none";
+      }
+      case "10": {
+        return "grow";
+      }
+      case "01": {
+        return "shrink";
+      }
+      default: {
+        return "";
+      }
+    }
+  };
 
   return (
     <Flex css={{ flexDirection: "column", gap: "$2" }}>
@@ -36,6 +54,7 @@ export const FlexChildSection = ({
           label="Align"
         />
         <ToggleGroupControl
+          property={sectionStyle.alignSelf?.styleConfig.property}
           onValueChange={(value) => setAlignSelf(value)}
           value={String(currentStyle.alignSelf?.value)}
           items={[
@@ -74,10 +93,17 @@ export const FlexChildSection = ({
       </Grid>
       <Grid css={{ gridTemplateColumns: "4fr auto" }}>
         <PropertyName
-          property={sectionStyle.flexGrow?.styleConfig.property}
+          property={[
+            sectionStyle.flexGrow?.styleConfig.property,
+            sectionStyle.flexShrink?.styleConfig.property,
+          ]}
           label="Sizing"
         />
         <ToggleGroupControl
+          property={[
+            sectionStyle.flexGrow?.styleConfig.property,
+            sectionStyle.flexShrink?.styleConfig.property,
+          ]}
           onValueChange={(value) => {
             switch (value) {
               case "none": {
@@ -100,25 +126,7 @@ export const FlexChildSection = ({
               }
             }
           }}
-          value={(() => {
-            switch (
-              String(currentStyle.flexGrow?.value) +
-              String(currentStyle.flexShrink?.value)
-            ) {
-              case "00": {
-                return "none";
-              }
-              case "10": {
-                return "grow";
-              }
-              case "01": {
-                return "shrink";
-              }
-              default: {
-                return "";
-              }
-            }
-          })()}
+          value={getSizingValue()}
           items={[
             {
               child: <CrossSmallIcon />,
@@ -190,6 +198,7 @@ export const FlexChildSection = ({
           label="Order"
         />
         <ToggleGroupControl
+          property={sectionStyle.order?.styleConfig.property}
           onValueChange={(value) => {
             switch (value) {
               case "0":
