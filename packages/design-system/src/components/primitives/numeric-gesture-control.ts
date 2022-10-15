@@ -48,8 +48,8 @@ export const numericScrubControl = (
     maxValue = Number.MAX_SAFE_INTEGER,
     initialValue = 0,
     direction = "horizontal",
-    onValueInput = () => null,
-    onValueChange = () => null,
+    onValueInput,
+    onValueChange,
   }: NumericScrubOptions
 ) => {
   const eventNames = ["pointerup", "pointerdown", "pointermove"] as const;
@@ -82,7 +82,7 @@ export const numericScrubControl = (
         state.offset = 0;
         handleCursor(targetNode.ownerDocument.documentElement, false);
         exitPointerLock(state, event, targetNode);
-        onValueChange({
+        onValueChange?.({
           target: targetNode,
           value: state.value,
           preventDefault: () => event.preventDefault(),
@@ -105,7 +105,7 @@ export const numericScrubControl = (
           if (state.value < minValue) state.value = minValue;
           else if (state.value > maxValue) state.value = maxValue;
           state.offset += movement * state.velocity;
-          onValueInput({
+          onValueInput?.({
             target: targetNode,
             value: state.value,
             preventDefault: () => event.preventDefault(),
