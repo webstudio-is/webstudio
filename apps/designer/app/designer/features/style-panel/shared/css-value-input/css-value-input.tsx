@@ -130,6 +130,28 @@ const useUnitSelect = ({
   return [isUnitsOpen, element];
 };
 
+const useSelect = (
+  inputRef: React.MutableRefObject<HTMLInputElement | null>
+) => {
+  const shouldSelect = useRef(true);
+
+  const onPointerUp = () => {
+    if (shouldSelect.current) {
+      inputRef.current?.select();
+    }
+  };
+
+  const onPointerDown = () => {
+    const isFocused = document.activeElement === inputRef.current;
+    shouldSelect.current = isFocused === false;
+  };
+
+  return {
+    onPointerUp,
+    onPointerDown,
+  };
+};
+
 const useScrub = (options: {
   value: StyleValue;
   onChange: (value: StyleValue) => void;
@@ -137,14 +159,6 @@ const useScrub = (options: {
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const optionsRef = useRef(options);
-  const shouldSelect = useRef(true);
-
-  const handlePointerUp = () => {
-    if (shouldSelect.current) {
-      inputRef.current?.select();
-    }
-    shouldSelect.current = true;
-  };
 
   useEffect(() => {
     optionsRef.current = options;
@@ -157,7 +171,6 @@ const useScrub = (options: {
     const scrub = numericScrubControl(inputRef.current, {
       initialValue: value.value,
       onValueInput(event) {
-        shouldSelect.current = false;
         onChange({
           ...value,
           value: event.value,
@@ -176,10 +189,7 @@ const useScrub = (options: {
     };
   }, [options.value.type]);
 
-  return {
-    handlePointerUp,
-    inputRef,
-  };
+  return inputRef;
 };
 
 const useKeyDown =
@@ -290,11 +300,13 @@ export const CssValueInput = ({
     onChange: onChangeComplete,
   });
 
-  const { handlePointerUp, inputRef } = useScrub({
+  const inputRef = useScrub({
     value,
     onChange,
     onChangeComplete,
   });
+
+  const inputPointerProps = useSelect(inputRef);
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
     // When units select is open, onBlur is triggered,though we don't want a change event in this case.
@@ -326,7 +338,7 @@ export const CssValueInput = ({
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
-            onPointerUp={handlePointerUp}
+            {...inputPointerProps}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             inputRef={inputRef}
