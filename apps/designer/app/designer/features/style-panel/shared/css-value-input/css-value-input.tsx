@@ -130,13 +130,13 @@ const useScrub = (options: {
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const optionsRef = useRef(options);
-  const hasScrubbed = useRef(false);
+  const shouldSelect = useRef(true);
 
   const handlePointerUp = () => {
-    if (hasScrubbed.current === false) {
+    if (shouldSelect.current) {
       inputRef.current?.select();
     }
-    hasScrubbed.current = false;
+    shouldSelect.current = true;
   };
 
   useEffect(() => {
@@ -150,7 +150,7 @@ const useScrub = (options: {
     const scrub = numericScrubControl(inputRef.current, {
       initialValue: value.value,
       onValueInput(event) {
-        hasScrubbed.current = true;
+        shouldSelect.current = false;
         onChange({
           ...value,
           value: event.value,
