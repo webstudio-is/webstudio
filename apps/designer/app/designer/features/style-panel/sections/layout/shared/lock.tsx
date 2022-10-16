@@ -43,7 +43,10 @@ export const Lock = ({
           justifyContent: "center",
         }}
       >
-        <IconButton onClick={() => setIsPaired((value) => !value)}>
+        <IconButton
+          onClick={() => setIsPaired((value) => !value)}
+          css={{ width: "100%" }}
+        >
           {isPaired ? <LockCloseIcon /> : <LockOpenIcon />}
         </IconButton>
       </Flex>
