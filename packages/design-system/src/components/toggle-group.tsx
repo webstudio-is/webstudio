@@ -27,18 +27,4 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
       backgroundColor: "$colors$blue4",
     },
   },
-  // whiteSpace: "nowrap",
-  // fontSize: 15,
-  // lineHeight: 1,
-  // marginLeft: 1,
-  // "&": {
-  //   px: "$2",
-  //   py: "$1",
-  // },
-  // "&:first-child": {
-  //   marginLeft: 0,
-  //   borderTopLeftRadius: 4,
-  //   borderBottomLeftRadius: 4,
-  // },
-  // "&:last-child": { borderTopRightRadius: 4, borderBottomRightRadius: 4 },
 });
