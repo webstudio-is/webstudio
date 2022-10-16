@@ -154,11 +154,9 @@ const requestPointerLock = (
     cursorNode.style.filter = `drop-shadow(${
       state.direction === "horizontal" ? "0 1px" : "1px 0"
     } 1.1px rgba(0,0,0,.4))`;
-    // avoid obscuring anything that could be behind the cursor by offseting it after the target
-    const { top, height } = targetNode.getBoundingClientRect();
     cursorNode.style.position = "absolute";
     cursorNode.style.left = `${event.clientX}px`;
-    cursorNode.style.top = `${top + height}px`;
+    cursorNode.style.top = `${event.clientY}px`;
     cursorNode.style.transform = `translate(-50%, -50%) ${
       state.direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)"
     }`;
