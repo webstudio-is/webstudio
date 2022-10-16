@@ -133,7 +133,7 @@ export const FloatingPopover = ({
           sideOffset={sideOffset}
           side="right"
           hideArrow
-          css={{ backgroundColor: "$loContrast" }}
+          css={{ backgroundColor: "$loContrast", minWidth: 240 }}
         >
           <PopoverHeader title={title} />
           {content}

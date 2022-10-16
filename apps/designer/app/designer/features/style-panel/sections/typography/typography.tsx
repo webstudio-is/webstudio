@@ -1,5 +1,5 @@
 import type { RenderCategoryProps } from "../../style-sections";
-import { Grid, IconButton } from "@webstudio-is/design-system";
+import { FloatingPopover, Grid, IconButton } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -15,10 +15,23 @@ export const TypographySection = ({
   currentStyle,
   sectionStyle,
 }: RenderCategoryProps) => {
+  const getTextAlign = (value: string) => {
+    switch (value) {
+      case "left":
+        return "start";
+      case "right":
+        return "end";
+      default:
+        return value;
+    }
+  };
   const setTextAlign = setProperty("textAlign");
   const setTextDecorationLine = setProperty("textDecorationLine");
   const setTextTransform = setProperty("textTransform");
   const setFontStyle = setProperty("fontStyle");
+  const setDirection = setProperty("direction");
+  const setTextOverflow = setProperty("textOverflow");
+  const setHyphens = setProperty("hyphens");
 
   return (
     <>
@@ -85,12 +98,12 @@ export const TypographySection = ({
           <ToggleGroupControl
             property={sectionStyle.textAlign?.styleConfig.property}
             onValueChange={(value) => setTextAlign(value)}
-            value={String(currentStyle.alignSelf?.value)}
+            value={String(getTextAlign(String(currentStyle.textAlign?.value)))}
             items={[
               {
                 child: <CrossSmallIcon />,
                 label: "align: left",
-                value: "left",
+                value: "start",
               },
               {
                 child: <CrossSmallIcon />,
@@ -100,7 +113,7 @@ export const TypographySection = ({
               {
                 child: <CrossSmallIcon />,
                 label: "align: right",
-                value: "right",
+                value: "end",
               },
               {
                 child: <CrossSmallIcon />,
@@ -183,9 +196,93 @@ export const TypographySection = ({
               },
             ]}
           />
-          <IconButton>
-            <EllipsesIcon />
-          </IconButton>
+          <FloatingPopover
+            title="Advanced Typography"
+            content={
+              <Grid css={{ padding: "$3", gap: "$3" }}>
+                <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+                  <PropertyName
+                    property={sectionStyle.whiteSpace?.styleConfig.property}
+                    label="White Space"
+                  />
+                  <SelectControl {...sectionStyle.whiteSpace} />
+                </Grid>
+                <Grid css={{ gridTemplateColumns: "4fr auto" }}>
+                  <PropertyName
+                    property={sectionStyle.whiteSpace?.styleConfig.property}
+                    label="Direction"
+                  />
+                  <ToggleGroupControl
+                    property={sectionStyle.direction?.styleConfig.property}
+                    onValueChange={(value) => setDirection(value)}
+                    value={String(currentStyle.direction?.value)}
+                    items={[
+                      {
+                        child: <CrossSmallIcon />,
+                        label: "Left to Right",
+                        value: "ltr",
+                      },
+                      {
+                        child: <CrossSmallIcon />,
+                        label: "Right to Left",
+                        value: "rtl",
+                      },
+                    ]}
+                  />
+                </Grid>
+                <Grid css={{ gridTemplateColumns: "4fr auto" }}>
+                  <PropertyName
+                    property={sectionStyle.hyphens?.styleConfig.property}
+                    label="Hyphens"
+                  />
+                  <ToggleGroupControl
+                    property={sectionStyle.hyphens?.styleConfig.property}
+                    onValueChange={(value) => setHyphens(value)}
+                    value={String(currentStyle.hyphens?.value)}
+                    items={[
+                      {
+                        child: <CrossSmallIcon />,
+                        label: "None",
+                        value: "manual",
+                      },
+                      {
+                        child: <CrossSmallIcon />,
+                        label: "Auto",
+                        value: "auto",
+                      },
+                    ]}
+                  />
+                </Grid>
+                <Grid css={{ gridTemplateColumns: "4fr auto" }}>
+                  <PropertyName
+                    property={sectionStyle.textOverflow?.styleConfig.property}
+                    label="Text Overflow"
+                  />
+                  <ToggleGroupControl
+                    property={sectionStyle.textOverflow?.styleConfig.property}
+                    onValueChange={(value) => setTextOverflow(value)}
+                    value={String(currentStyle.textOverflow?.value)}
+                    items={[
+                      {
+                        child: <CrossSmallIcon />,
+                        label: "None",
+                        value: "clip",
+                      },
+                      {
+                        child: <CrossSmallIcon />,
+                        label: "Ellipsis",
+                        value: "ellipsis",
+                      },
+                    ]}
+                  />
+                </Grid>
+              </Grid>
+            }
+          >
+            <IconButton>
+              <EllipsesIcon />
+            </IconButton>
+          </FloatingPopover>
         </Grid>
       </Grid>
     </>
