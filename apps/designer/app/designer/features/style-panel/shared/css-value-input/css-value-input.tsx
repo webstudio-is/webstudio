@@ -8,15 +8,12 @@ import {
   ComboboxListbox,
   ComboboxListboxItem,
   IconButton,
-  Select,
   numericScrubControl,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
   type KeywordValue,
   type StyleProperty,
-  type Unit,
-  type UnitValue,
   type UnsetValue,
   StyleValue,
 } from "@webstudio-is/react-sdk";
@@ -25,19 +22,9 @@ import {
   type KeyboardEvent,
   useEffect,
   useRef,
-  useState,
 } from "react";
+import { useUnitSelect } from "./unit-select";
 
-export const defaultUnits: Array<Unit | "-"> = [
-  "px",
-  "em",
-  "rem",
-  "ch",
-  "vw",
-  "vh",
-  "%",
-  "-",
-];
 const defaultKeywords: [] = [];
 const defaultValue: UnsetValue = { type: "unset", value: "" };
 
@@ -87,47 +74,6 @@ const useHandleOnChange = (
   useEffect(() => {
     valueRef.current = value;
   }, [value]);
-};
-
-type UseUnitSelectType = {
-  value?: UnitValue;
-  onChange: (value: StyleValue) => void;
-  units?: Array<Unit | "-">;
-};
-
-const useUnitSelect = ({
-  onChange,
-  value,
-  units = defaultUnits,
-  ...props
-}: UseUnitSelectType) => {
-  const [isOpen, setIsOpen] = useState(false);
-  if (value === undefined) return [isOpen, null];
-  const element = (
-    <Select
-      {...props}
-      value={value.unit === "number" ? "-" : value.unit}
-      options={units}
-      suffix={null}
-      ghost
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      onChange={(item) => {
-        // @todo Select should support generics
-        const unit = item === "-" ? "number" : (item as Unit);
-        onChange?.({
-          ...value,
-          unit,
-        });
-      }}
-      onCloseAutoFocus={(event) => {
-        // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
-        event.preventDefault();
-      }}
-    />
-  );
-
-  return [isOpen, element];
 };
 
 const useScrub = (options: {
