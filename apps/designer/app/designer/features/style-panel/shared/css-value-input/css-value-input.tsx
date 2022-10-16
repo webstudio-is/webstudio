@@ -162,9 +162,7 @@ const useScrub = (options: {
       },
     });
 
-    return () => {
-      scrub.disconnectedCallback();
-    };
+    return scrub.disconnectedCallback;
   }, [options.value.type]);
 
   return inputRef;
@@ -315,7 +313,8 @@ export const CssValueInput = ({
           <TextField
             {...inputProps}
             onFocus={() => {
-              inputRef.current?.select();
+              const isFocused = document.activeElement === inputRef.current;
+              if (isFocused) inputRef.current?.select();
             }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
