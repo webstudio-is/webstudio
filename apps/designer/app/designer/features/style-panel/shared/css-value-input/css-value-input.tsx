@@ -28,7 +28,7 @@ import {
   useState,
 } from "react";
 
-export const defaultUnits: Array<Unit> = [
+export const defaultUnits: Array<Unit | "-"> = [
   "px",
   "em",
   "rem",
@@ -36,7 +36,7 @@ export const defaultUnits: Array<Unit> = [
   "vw",
   "vh",
   "%",
-  "number",
+  "-",
 ];
 const defaultKeywords: [] = [];
 const defaultValue: UnsetValue = { type: "unset", value: "" };
@@ -92,7 +92,7 @@ const useHandleOnChange = (
 type UseUnitSelectType = {
   value?: UnitValue;
   onChange: (value: StyleValue) => void;
-  units?: Array<Unit>;
+  units?: Array<Unit | "-">;
 };
 
 const useUnitSelect = ({
@@ -106,7 +106,7 @@ const useUnitSelect = ({
   const element = (
     <Select
       {...props}
-      value={value.unit}
+      value={value.unit === "number" ? "-" : value.unit}
       options={units}
       suffix={null}
       ghost
@@ -114,7 +114,7 @@ const useUnitSelect = ({
       onOpenChange={setIsOpen}
       onChange={(item) => {
         // @todo Select should support generics
-        const unit = item as Unit;
+        const unit = item === "-" ? "number" : (item as Unit);
         onChange?.({
           ...value,
           unit,
