@@ -1,4 +1,4 @@
-import { CssValueInput } from "~/designer/features/style-panel/shared/css-value-input/css-value-input";
+import { CssValueInput } from "../../shared/css-value-input";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import { type StyleValue, toValue } from "@webstudio-is/react-sdk";
