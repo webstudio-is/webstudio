@@ -17,7 +17,7 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   backgroundColor: "$loContrast",
   color: "$hiContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
-  height: 28, // @todo waiting for the sizing scale
+  height: "$5",
   px: "$2",
   fontSize: "$1",
   "&:hover": {
