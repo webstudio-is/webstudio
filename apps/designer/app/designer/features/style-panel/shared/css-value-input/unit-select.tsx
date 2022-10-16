@@ -24,6 +24,7 @@ type UseUnitSelectType = {
   value?: UnitValue;
   onChange: (value: StyleValue) => void;
   units?: Array<Unit>;
+  onCloseAutoFocus: (event: Event) => void;
 };
 
 export const useUnitSelect = ({
@@ -38,6 +39,7 @@ export const useUnitSelect = ({
     [units]
   );
   if (value === undefined) return [isOpen, null];
+
   const element = (
     <Select
       {...props}
@@ -54,10 +56,6 @@ export const useUnitSelect = ({
           ...value,
           unit,
         });
-      }}
-      onCloseAutoFocus={(event) => {
-        // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
-        event.preventDefault();
       }}
     />
   );

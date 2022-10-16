@@ -220,6 +220,12 @@ export const CssValueInput = ({
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     value: value.type === "unit" ? value : undefined,
     onChange: onChangeComplete,
+    onCloseAutoFocus(event) {
+      // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
+      event.preventDefault();
+      // Instead we want to focus the input
+      inputRef.current?.focus();
+    },
   });
 
   const inputRef = useScrub({
