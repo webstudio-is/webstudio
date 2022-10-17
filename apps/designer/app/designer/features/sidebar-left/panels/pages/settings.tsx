@@ -8,13 +8,13 @@ import {
   styled,
   Flex,
   toast,
-  Tooltip,
+  InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { useFetcher, type FetcherWithComponents } from "@remix-run/react";
 import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
 import type { ZodError } from "zod";
 import { BaseHeader } from "../../lib/header";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type Page } from "@webstudio-is/project";
 
 const Group = styled(Flex, {
@@ -26,30 +26,6 @@ const Group = styled(Flex, {
 export type CreatePageData =
   | { ok: true; page: Page }
   | { errors: string | ZodError["formErrors"] };
-
-const ErrorsTooltip = ({
-  errors,
-  children,
-}: {
-  errors: string[] | undefined;
-  children: React.ComponentProps<typeof Tooltip>["children"];
-}) => {
-  const content = errors?.map((error, i) => (
-    <React.Fragment key={i}>
-      {i > 0 && <br />}
-      {error}
-    </React.Fragment>
-  ));
-  return (
-    // We intentionally always pass non empty content to avoid optimization inside Tooltip
-    // where it renders {children} directly if content is empty.
-    // If this optimization accur, the <TextField> will remount which will cause focus loss
-    // and current value loss.
-    <Tooltip content={content || " "} open={errors !== undefined} side="right">
-      {children}
-    </Tooltip>
-  );
-};
 
 export const NewPageSettings = ({
   onClose,
@@ -120,7 +96,7 @@ export const NewPageSettings = ({
             <Label htmlFor={nameFieldId} size={2}>
               Page Name
             </Label>
-            <ErrorsTooltip errors={fieldErrors.name}>
+            <InputErrorsTooltip errors={fieldErrors.name}>
               <TextField
                 state={fieldErrors.name && "invalid"}
                 id={nameFieldId}
@@ -130,13 +106,13 @@ export const NewPageSettings = ({
                   setFieldErrors(({ name, ...rest }) => rest);
                 }}
               />
-            </ErrorsTooltip>
+            </InputErrorsTooltip>
           </Group>
           <Group>
             <Label htmlFor={pathFieldId} size={2}>
               Path
             </Label>
-            <ErrorsTooltip errors={fieldErrors.path}>
+            <InputErrorsTooltip errors={fieldErrors.path}>
               <TextField
                 state={fieldErrors.path && "invalid"}
                 id={pathFieldId}
@@ -146,7 +122,7 @@ export const NewPageSettings = ({
                   setFieldErrors(({ path, ...rest }) => rest);
                 }}
               />
-            </ErrorsTooltip>
+            </InputErrorsTooltip>
           </Group>
           <Group css={{ alignItems: "end" }}>
             <Button type="submit" variant="green" disabled={isSubmitting}>

@@ -82,3 +82,31 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
     </TooltipPrimitive.Root>
   );
 });
+
+export const InputErrorsTooltip = ({
+  errors,
+  children,
+}: {
+  errors: string[] | undefined;
+  children: React.ComponentProps<typeof Tooltip>["children"];
+}) => {
+  const content = errors?.map((error, i) => (
+    <React.Fragment key={i}>
+      {i > 0 && <br />}
+      {error}
+    </React.Fragment>
+  ));
+  return (
+    // We intentionally always pass non empty content to avoid optimization inside Tooltip
+    // where it renders {children} directly if content is empty.
+    // If this optimization accur, the input will remount which will cause focus loss
+    // and current value loss.
+    <Tooltip
+      content={content || " "}
+      open={errors !== undefined && errors.length !== 0}
+      side="right"
+    >
+      {children}
+    </Tooltip>
+  );
+};
