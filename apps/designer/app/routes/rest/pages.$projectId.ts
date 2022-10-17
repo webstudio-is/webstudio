@@ -72,7 +72,8 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
 
     if (request.method.toLowerCase() === "put") {
-      await handlePUT(params.projectId, request);
+      const result = await handlePUT(params.projectId, request);
+      return result;
     }
 
     throw new Error(`Method ${request.method} is not supported`);
