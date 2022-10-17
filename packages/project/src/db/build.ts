@@ -2,10 +2,10 @@ import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
 import { type Breakpoint } from "@webstudio-is/react-sdk";
 import { v4 as uuid } from "uuid";
 import * as db from ".";
-import { Build, Page, Pages, PagesSchema } from "./types";
+import { Build, Page, Pages } from "./types";
 
 export const parseBuild = (build: DbBuild): Build => {
-  const pages = PagesSchema.parse(JSON.parse(build.pages));
+  const pages = Pages.parse(JSON.parse(build.pages));
   return { ...build, pages };
 };
 
@@ -97,7 +97,7 @@ export const addPage = async (
 
 const createPages = async (breakpoints: Array<Breakpoint>) => {
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
-  return PagesSchema.parse({
+  return Pages.parse({
     homePage: {
       id: uuid(),
       name: "Home",
@@ -124,7 +124,7 @@ const clonePages = async (source: Pages) => {
   for (const page of source.pages) {
     clones.push(await clonePage(page));
   }
-  return PagesSchema.parse({
+  return Pages.parse({
     homePage: await clonePage(source.homePage),
     pages: clones,
   });

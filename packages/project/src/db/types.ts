@@ -17,14 +17,14 @@ const commonPageFields = {
   treeId: z.string(),
 } as const;
 
-const HomePageSchema = z.object({
+const HomePage = z.object({
   ...commonPageFields,
   path: z
     .string()
     .refine((path) => path === "", "Home page path must be empty"),
 });
 
-const PageSchema = z.object({
+const Page = z.object({
   ...commonPageFields,
   path: z
     .string()
@@ -41,19 +41,19 @@ const PageSchema = z.object({
     ),
 });
 
-export type Page = z.infer<typeof PageSchema>;
+export type Page = z.infer<typeof Page>;
 
-export const PagesSchema: z.ZodType<{ homePage: Page; pages: Array<Page> }> =
+export const Pages: z.ZodType<{ homePage: Page; pages: Array<Page> }> =
   z.object({
-    homePage: HomePageSchema,
+    homePage: HomePage,
     pages: z
-      .array(PageSchema)
+      .array(Page)
       .refine(
         (array) =>
           new Set(array.map((page) => page.path)).size === array.length,
         "All paths must be unique"
       ),
   });
-export type Pages = z.infer<typeof PagesSchema>;
+export type Pages = z.infer<typeof Pages>;
 
 export type Build = Omit<DbBuild, "pages"> & { pages: Pages };

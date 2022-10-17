@@ -1,50 +1,69 @@
 import { z } from "zod";
 import { units } from "./units";
+import { StyleProperty } from "./types";
 
-export const UnitSchema = z.union([z.enum(units), z.literal("number")]);
+export const Unit = z.union([z.enum(units), z.literal("number")]);
 
-export const UnitValueSchema = z.object({
+export type Unit = z.infer<typeof Unit>;
+
+export const UnitValue = z.object({
   type: z.literal("unit"),
-  unit: UnitSchema,
+  unit: Unit,
   value: z.number(),
 });
 
-export const KeywordValueSchema = z.object({
+export type UnitValue = z.infer<typeof UnitValue>;
+
+export const KeywordValue = z.object({
   type: z.literal("keyword"),
   // @todo use exact type
   value: z.string(),
 });
 
+export type KeywordValue = z.infer<typeof KeywordValue>;
+
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
-export const InvalidValueSchema = z.object({
+export const InvalidValue = z.object({
   type: z.literal("invalid"),
   value: z.string(),
 });
 
-export const UnsetValueSchema = z.object({
+export const UnsetValue = z.object({
   type: z.literal("unset"),
   value: z.literal(""),
 });
 
-export const StyleValueSchema = z.union([
-  UnitValueSchema,
-  KeywordValueSchema,
-  InvalidValueSchema,
-  UnsetValueSchema,
+export type UnsetValue = z.infer<typeof UnsetValue>;
+
+export const StyleValue = z.union([
+  UnitValue,
+  KeywordValue,
+  InvalidValue,
+  UnsetValue,
 ]);
 
-export const StyleSchema = z.record(z.string(), StyleValueSchema);
+export type StyleValue = z.infer<typeof StyleValue>;
 
-export const CssRuleSchema = z.object({
-  style: StyleSchema,
+export const Style = z.record(z.string(), StyleValue);
+
+export type Style = {
+  [property in StyleProperty]?: StyleValue;
+};
+
+export const CssRule = z.object({
+  style: Style,
   breakpoint: z.string(),
 });
 
-export const BreakpointSchema = z.object({
+export type CssRule = z.infer<typeof CssRule>;
+
+export const Breakpoint = z.object({
   id: z.string(),
   label: z.string(),
   minWidth: z.number(),
 });
 
-export const BreakpointsSchema = z.array(BreakpointSchema);
+export const Breakpoints = z.array(Breakpoint);
+
+export type Breakpoint = z.infer<typeof Breakpoint>;
