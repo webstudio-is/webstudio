@@ -72,7 +72,7 @@ export const addPage = async (
     db.tree.createRootInstance(breakpoints.values)
   );
 
-  const nextPages = PagesSchema.parse({
+  const nextPages = Pages.parse({
     homePage: build.pages.homePage,
     pages: [
       ...build.pages.pages,
