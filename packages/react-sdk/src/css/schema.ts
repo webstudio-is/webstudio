@@ -12,11 +12,15 @@ export const UnitValue = z.object({
   value: z.number(),
 });
 
+export type UnitValue = z.infer<typeof UnitValue>;
+
 export const KeywordValue = z.object({
   type: z.literal("keyword"),
   // @todo use exact type
   value: z.string(),
 });
+
+export type KeywordValue = z.infer<typeof KeywordValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
@@ -32,7 +36,12 @@ export const UnsetValue = z.object({
 
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
-export const StyleValue = z.union([UnitValue, KeywordValue, InvalidValue, UnsetValue]);
+export const StyleValue = z.union([
+  UnitValue,
+  KeywordValue,
+  InvalidValue,
+  UnsetValue,
+]);
 
 export type StyleValue = z.infer<typeof StyleValue>;
 
