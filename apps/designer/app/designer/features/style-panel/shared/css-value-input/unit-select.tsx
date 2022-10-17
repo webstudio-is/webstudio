@@ -78,7 +78,7 @@ export const useUnitSelect = ({
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   all: "unset",
   height: "$5",
-  px: 3,
+  px: "$1",
   borderRadius: 2,
   display: "inline-flex",
   alignItems: "center",
@@ -88,7 +88,7 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
     color: "$loContrast",
   },
   "&:hover": {
-    backgroundColor: "$slate5",
+    backgroundColor: "$slate6",
   },
 });
 

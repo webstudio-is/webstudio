@@ -21,7 +21,7 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   px: "$2",
   fontSize: "$1",
   "&:hover": {
-    backgroundColor: "$slate5",
+    backgroundColor: "$slate6",
   },
   "&:focus": {
     boxShadow:

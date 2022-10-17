@@ -24,11 +24,11 @@ export const IconButton = styled("button", {
     boxSizing: "border-box",
   },
   "&:hover, &:active": {
-    backgroundColor: "$slate5",
+    backgroundColor: "$slate6",
     outline: "none",
   },
   "&:focus": {
-    backgroundColor: "$slate5",
+    backgroundColor: "$slate6",
     outline: "none",
   },
   "&:disabled": {
