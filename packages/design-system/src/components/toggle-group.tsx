@@ -3,7 +3,7 @@ import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 
 export const Root = styled(ToggleGroupPrimitive.Root, {
   display: "inline-flex",
-  backgroundColor: "$slate5",
+  backgroundColor: "$slate6",
   borderRadius: 4,
   boxShadow: `0 2px 10px $blackA7`,
 });
