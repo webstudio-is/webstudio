@@ -1,8 +1,16 @@
 import { z } from "zod";
 import type { InstanceProps, Instance } from "../db";
-import { UserPropSchema } from "./schema";
 
-export type UserProp = z.infer<typeof UserPropSchema>;
+export const UserProp = z.object({
+  id: z.string(),
+  prop: z.string(),
+  value: z.union([z.string(), z.boolean()]),
+  required: z.optional(z.boolean()),
+});
+
+export const UserProps = z.array(UserProp);
+
+export type UserProp = z.infer<typeof UserProp>;
 
 export type UserPropsUpdates = {
   treeId: InstanceProps["treeId"];

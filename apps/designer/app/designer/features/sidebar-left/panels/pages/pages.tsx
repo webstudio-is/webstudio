@@ -3,7 +3,7 @@ import { type Publish } from "~/shared/pubsub";
 import { PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { Header } from "../../lib/header";
-import { type Page, type Pages } from "@webstudio-is/project";
+import { type Page, type Pages as PagesType } from "@webstudio-is/project";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Config } from "~/config";
@@ -32,7 +32,7 @@ type PagesTreeNode =
       data: Page;
     };
 
-const toTreeData = (pages: Pages): PagesTreeNode => {
+const toTreeData = (pages: PagesType): PagesTreeNode => {
   return {
     type: "folder",
     id: "root",
