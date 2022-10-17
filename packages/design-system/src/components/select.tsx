@@ -1,6 +1,7 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import noop from "lodash.noop";
 import React, { ReactNode, Ref } from "react";
+import { Grid } from "./grid";
+import { Box } from "./box";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 
@@ -16,19 +17,19 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   backgroundColor: "$loContrast",
   color: "$hiContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
+  height: "$5",
+  px: "$2",
+  fontSize: "$1",
   "&:hover": {
-    backgroundColor: "$slateA3",
+    backgroundColor: "$slate6",
   },
   "&:focus": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
   },
+  paddingRight: "$1",
 
   variants: {
-    size: {
-      1: { padding: "0 $1 0 $2", fontSize: "$1", height: "$5" },
-      2: { padding: "0 $2 0 $3", height: "$6", fontSize: "$3" },
-    },
     ghost: {
       true: {
         backgroundColor: "transparent",
@@ -41,17 +42,17 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
       },
     },
   },
-  defaultVariants: {
-    size: 1,
-  },
 });
 
 const StyledIcon = styled(SelectPrimitive.Icon, {
   display: "inline-flex",
   alignItems: "center",
+  justifyContent: "center",
+  height: "100%",
+  padding: "calc($space$1 / 2)",
 });
 
-const StyledContent = styled(SelectPrimitive.Content, {
+export const SelectContent = styled(SelectPrimitive.Content, {
   overflow: "hidden",
   backgroundColor: "$colors$slate4",
   borderRadius: "$1",
@@ -59,7 +60,7 @@ const StyledContent = styled(SelectPrimitive.Content, {
     "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
 });
 
-const StyledViewport = styled(SelectPrimitive.Viewport, {
+export const SelectViewport = styled(SelectPrimitive.Viewport, {
   py: "$1",
 });
 
@@ -71,7 +72,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
   display: "flex",
   alignItems: "center",
   height: "$5",
-  padding: "0 $6 0 $5",
+  padding: "0 $2",
   position: "relative",
   userSelect: "none",
 
@@ -81,18 +82,9 @@ const StyledItem = styled(SelectPrimitive.Item, {
   },
 
   "&:focus": {
-    backgroundColor: "$blue9",
+    backgroundColor: "$blue10",
     color: "white",
   },
-});
-
-const StyledItemIndicator = styled(SelectPrimitive.ItemIndicator, {
-  position: "absolute",
-  left: 0,
-  width: 25,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
 });
 
 const scrollButtonStyles = {
@@ -100,16 +92,16 @@ const scrollButtonStyles = {
   alignItems: "center",
   justifyContent: "center",
   height: 25,
-  color: "$text",
+  color: "$hiContrast",
   cursor: "default",
 };
 
-const SelectScrollUpButton = styled(
+export const SelectScrollUpButton = styled(
   SelectPrimitive.ScrollUpButton,
   scrollButtonStyles
 );
 
-const SelectScrollDownButton = styled(
+export const SelectScrollDownButton = styled(
   SelectPrimitive.ScrollDownButton,
   scrollButtonStyles
 );
@@ -120,10 +112,14 @@ const SelectItemBase = (
 ) => {
   return (
     <StyledItem {...props} ref={forwardedRef}>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-      <StyledItemIndicator>
-        <CheckIcon />
-      </StyledItemIndicator>
+      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+        <SelectPrimitive.ItemIndicator>
+          <CheckIcon />
+        </SelectPrimitive.ItemIndicator>
+        <Box css={{ gridColumn: 2 }}>
+          <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+        </Box>
+      </Grid>
     </StyledItem>
   );
 };
@@ -131,20 +127,22 @@ const SelectItemBase = (
 type SelectItemProps = SelectPrimitive.SelectItemProps & {
   children: ReactNode;
 };
-const SelectItem = React.forwardRef(SelectItemBase);
+export const SelectItem = React.forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
-export type SelectProps<T = SelectOption> = Omit<
+export type SelectProps<Option = SelectOption> = Omit<
   React.ComponentProps<typeof StyledTrigger>,
   "onChange" | "value" | "defaultValue"
 > & {
-  options: T[];
-  defaultValue?: T;
-  value?: T;
-  onChange?: (option: T) => void;
+  options: Option[];
+  defaultValue?: Option;
+  value?: Option;
+  onChange?: (option: Option) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   placeholder?: string;
-  getLabel?: (option: T) => string | undefined;
+  getLabel?: (option: Option) => string | undefined;
 };
 
 const SelectBase = (
@@ -153,7 +151,9 @@ const SelectBase = (
     value,
     defaultValue,
     placeholder = "Select an option",
-    onChange = noop,
+    onChange,
+    onOpenChange,
+    open,
     getLabel = (option) => option,
     name,
     ...props
@@ -166,6 +166,8 @@ const SelectBase = (
       value={value}
       defaultValue={defaultValue}
       onValueChange={onChange}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <StyledTrigger ref={forwardedRef} {...props}>
         <SelectPrimitive.Value>
@@ -176,21 +178,21 @@ const SelectBase = (
         </StyledIcon>
       </StyledTrigger>
       <SelectPrimitive.Portal>
-        <StyledContent>
+        <SelectContent>
           <SelectScrollUpButton>
             <ChevronUpIcon />
           </SelectScrollUpButton>
-          <StyledViewport>
+          <SelectViewport>
             {options.map((option) => (
               <SelectItem key={option} value={option} textValue={option}>
                 {getLabel(option)}
               </SelectItem>
             ))}
-          </StyledViewport>
+          </SelectViewport>
           <SelectScrollDownButton>
             <ChevronDownIcon />
           </SelectScrollDownButton>
-        </StyledContent>
+        </SelectContent>
       </SelectPrimitive.Portal>
     </SelectPrimitive.Root>
   );

@@ -1,6 +1,6 @@
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { Flex, __DEPRECATED__Text, styled } from "@webstudio-is/design-system";
+import { Flex, Text, styled } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
   px: "$1",
@@ -41,7 +41,7 @@ export const ComponentThumb = forwardRef<
       {...rest}
     >
       <Icon width={30} height={30} />
-      <__DEPRECATED__Text size="1">{label}</__DEPRECATED__Text>
+      <Text>{label}</Text>
     </Thumb>
   );
 });

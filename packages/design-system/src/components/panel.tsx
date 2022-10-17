@@ -1,10 +1,11 @@
 import { css, styled } from "../stitches.config";
 
 export const panelStyles = css({
-  backgroundColor: "$panel",
-  borderRadius: "$3",
+  overflow: "auto",
+  backgroundColor: "$colors$slate4",
+  borderRadius: "$1",
   boxShadow:
-    "$colors$shadowLight 0px 10px 38px -10px, $colors$shadowDark 0px 10px 20px -15px",
+    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
 });
 
 export const Panel = styled("div", panelStyles);

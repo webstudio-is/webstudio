@@ -1,4 +1,4 @@
-import {
+import React, {
   useState,
   forwardRef,
   useCallback,
@@ -30,6 +30,19 @@ const Listbox = styled("ul", panelStyles, {
   // @todo need some non-hardcoded value
   maxHeight: 400,
   minWidth: 230,
+  variants: {
+    state: {
+      open: {},
+      closed: {
+        display: "none",
+      },
+    },
+    isEmpty: {
+      true: {
+        display: "none",
+      },
+    },
+  },
 });
 
 const ListboxItem = styled("li", itemCss, {
@@ -71,33 +84,42 @@ export const ComboboxPopperContent = PopperContent;
 
 export const ComboboxPopperAnchor = PopperAnchor;
 
+const defaultMatch = <Item,>(
+  search: string,
+  items: Array<Item>,
+  itemToString: (item: Item | null) => string
+) =>
+  matchSorter(items, search, {
+    keys: [(item) => itemToString(item)],
+  });
+
 const useFilter = <Item,>({
   items,
   itemToString,
+  match = defaultMatch,
 }: {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
+  match?: typeof defaultMatch;
 }) => {
   const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
   const cachedItems = useRef(items);
 
-  useEffect(() => {
-    cachedItems.current = items;
-  }, [items]);
-
   const filter = useCallback(
     (search?: string) => {
-      const foundItems: Array<Item> = matchSorter(items, search ?? "", {
-        keys: [(item) => itemToString(item)],
-      });
+      const foundItems = match(search ?? "", items, itemToString);
       setFilteredItems(foundItems);
     },
-    [itemToString, items]
+    [itemToString, items, match]
   );
 
   const resetFilter = useCallback(() => {
     setFilteredItems(cachedItems.current);
   }, []);
+
+  useEffect(() => {
+    cachedItems.current = items;
+  }, [items]);
 
   return {
     filteredItems,
@@ -106,7 +128,7 @@ const useFilter = <Item,>({
   };
 };
 
-type useComboboxProps<Item> = {
+type UseComboboxProps<Item> = {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
@@ -116,7 +138,10 @@ type useComboboxProps<Item> = {
     state: DownshiftState<Item>,
     changes: UseComboboxStateChangeOptions<Item>
   ) => Partial<UseComboboxStateChangeOptions<Item>>;
+  match?: typeof defaultMatch;
 };
+
+export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
 
 export const useCombobox = <Item,>({
   items,
@@ -125,10 +150,12 @@ export const useCombobox = <Item,>({
   onItemSelect,
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
-}: useComboboxProps<Item>) => {
+  match,
+}: UseComboboxProps<Item>) => {
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
     itemToString,
+    match,
   });
 
   const downshiftProps = useDownshiftCombobox({
@@ -144,12 +171,12 @@ export const useCombobox = <Item,>({
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(items[highlightedIndex]);
+        onItemHighlight?.(items[highlightedIndex] ?? null);
       }
     },
   });
 
-  const { isOpen, getItemProps, highlightedIndex, selectedItem } =
+  const { isOpen, getItemProps, highlightedIndex, selectedItem, getMenuProps } =
     downshiftProps;
 
   useEffect(() => {
@@ -171,14 +198,26 @@ export const useCombobox = <Item,>({
     [getItemProps, highlightedIndex, itemToString, selectedItem]
   );
 
+  const enhancedGetMenuProps = useCallback(
+    (options?: Parameters<typeof getMenuProps>[0]) => {
+      return {
+        ...getMenuProps(options),
+        state: isOpen ? "open" : "closed",
+        isEmpty: filteredItems.length === 0,
+      };
+    },
+    [getMenuProps, isOpen, filteredItems.length]
+  );
+
   return {
     ...downshiftProps,
     items: filteredItems,
     getItemProps: enhancedGetItemProps,
+    getMenuProps: enhancedGetMenuProps,
   };
 };
 
-type ComboboxProps<Item> = useComboboxProps<Item> & {
+type ComboboxProps<Item> = UseComboboxProps<Item> & {
   name: string;
   label?: string;
   placeholder?: string;
