@@ -78,13 +78,6 @@ const TextFieldBase = styled("div", {
   fontSize: "$1",
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
-  "&[data-has-prefix]": {
-    paddingLeft: 2,
-  },
-
-  "&[data-has-suffix]": {
-    paddingRight: 2,
-  },
 
   "&:focus-within": {
     boxShadow:
@@ -141,6 +134,16 @@ const TextFieldBase = styled("div", {
         },
       },
     },
+    withPrefix: {
+      true: {
+        paddingLeft: 2,
+      },
+    },
+    withSuffix: {
+      true: {
+        paddingRight: 2,
+      },
+    },
   },
 });
 
@@ -189,14 +192,14 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
 
     return (
       <TextFieldBase
+        {...focusWithinProps}
         aria-disabled={disabled}
         ref={forwardedRef}
         state={state}
         variant={variant}
         css={css}
-        {...focusWithinProps}
-        {...(prefix && { "data-has-prefix": true })}
-        {...(suffix && { "data-has-suffix": true })}
+        withPrefix={Boolean(prefix)}
+        withSuffix={Boolean(suffix)}
         onClickCapture={focusInnerInput}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
