@@ -1,5 +1,4 @@
 import {
-  Grid,
   TextField,
   Popover,
   PopoverTrigger,
@@ -9,17 +8,9 @@ import {
 } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
-import { PropertyName } from "../../shared/property-name";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { MutableRefObject, useRef, useState } from "react";
 import { FontsManager } from "~/designer/shared/fonts-manager";
-
-const textFieldStyle = {
-  paddingLeft: "calc($sizes$1 + $nudge$3)",
-  textAlign: "left",
-  height: "$6",
-  fontWeight: "500",
-};
 
 const usePickerSideOffset = (
   isOpen: boolean
@@ -50,28 +41,23 @@ export const FontFamilyControl = ({
   //const setValue = setProperty(styleConfig.property);
 
   return (
-    <Grid columns={2}>
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <TextField
-            ref={textFieldRef}
-            css={textFieldStyle}
-            spellCheck={false}
-            readOnly
-            defaultValue={value.value}
-            onClick={() => {
-              setIsOpen(true);
-            }}
-          />
-        </PopoverTrigger>
-        <PopoverPortal>
-          <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
-            <PopoverHeader title="Fonts" />
-            <FontsManager />
-          </PopoverContent>
-        </PopoverPortal>
-      </Popover>
-    </Grid>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <TextField
+          ref={textFieldRef}
+          spellCheck={false}
+          defaultValue={value.value}
+          onClick={() => {
+            setIsOpen(true);
+          }}
+        />
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
+          <PopoverHeader title="Fonts" />
+          <FontsManager />
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
   );
 };

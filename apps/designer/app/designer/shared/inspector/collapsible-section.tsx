@@ -51,9 +51,10 @@ export const CollapsibleSection = ({
               px: "$3",
               color: "$hiContrast",
               cursor: "default",
+              userSelect: "none",
             }}
           >
-            <Text css={{ fontWeight: "500", flexGrow: 1 }}>{label}</Text>
+            <Text variant="label">{label}</Text>
             <Flex
               align="center"
               justify="center"

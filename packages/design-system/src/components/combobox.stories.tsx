@@ -1,9 +1,13 @@
-import { ComponentStory } from "@storybook/react";
+import type { ComponentStory } from "@storybook/react";
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { useCombobox as useDownshiftCombobox } from "downshift";
 import React, { useCallback } from "react";
 import { TextField } from "./text-field";
-import { Combobox, ComboboxListboxItem, useCombobox } from "./combobox";
+import {
+  Combobox,
+  ComboboxListboxItem,
+  useCombobox,
+  comboboxStateChangeTypes,
+} from "./combobox";
 import { Flex } from "./flex";
 
 export default {
@@ -37,11 +41,10 @@ export const Complex: ComponentStory<typeof Combobox> = () => {
     const { type, changes } = actionAndChanges;
     switch (type) {
       // on item selection.
-      case useDownshiftCombobox.stateChangeTypes.ItemClick:
-      case useDownshiftCombobox.stateChangeTypes.InputKeyDownEnter:
-      case useDownshiftCombobox.stateChangeTypes.InputBlur:
-      case useDownshiftCombobox.stateChangeTypes
-        .ControlledPropUpdatedSelectedItem:
+      case comboboxStateChangeTypes.ItemClick:
+      case comboboxStateChangeTypes.InputKeyDownEnter:
+      case comboboxStateChangeTypes.InputBlur:
+      case comboboxStateChangeTypes.ControlledPropUpdatedSelectedItem:
         return {
           ...changes,
           // if we have a selected item.
@@ -52,7 +55,7 @@ export const Complex: ComponentStory<typeof Combobox> = () => {
         };
 
       // Remove "reset" action
-      case useDownshiftCombobox.stateChangeTypes.InputKeyDownEscape: {
+      case comboboxStateChangeTypes.InputKeyDownEscape: {
         return {
           ...state,
         };

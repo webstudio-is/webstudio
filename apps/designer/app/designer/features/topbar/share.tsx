@@ -22,6 +22,7 @@ const Content = ({ url }: ShareButtonProps) => {
   return (
     <PopoverContent
       css={{ padding: "$3" }}
+      hideArrow={true}
       onFocusOutside={(event) => {
         // Used to prevent closing when opened from the main dropdown menu
         event.preventDefault();

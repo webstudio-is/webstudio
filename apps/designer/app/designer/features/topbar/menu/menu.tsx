@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSubTrigger,
   DropdownMenuCheckboxItem,
-  DropdownMenuArrow,
   DropdownMenuSeparator,
   DropdownMenuPortal,
   IconButton,
@@ -131,7 +130,11 @@ export const Menu = ({ config, publish }: MenuProps) => {
         </Box>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent css={{ zIndex: "$1" }}>
+        <DropdownMenuContent
+          css={{ zIndex: "$1" }}
+          sideOffset={4}
+          collisionPadding={4}
+        >
           <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
@@ -266,7 +269,6 @@ export const Menu = ({ config, publish }: MenuProps) => {
           >
             Publish
           </DropdownMenuItem>
-          <DropdownMenuArrow offset={10} />
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>

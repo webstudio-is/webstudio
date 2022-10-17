@@ -6,7 +6,7 @@ import {
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
 import { willRender } from "~/designer/shared/breakpoints";
-import { Button, __DEPRECATED__Text } from "@webstudio-is/design-system";
+import { Button, Text } from "@webstudio-is/design-system";
 import {
   DesktopIcon,
   LaptopIcon,
@@ -16,8 +16,8 @@ import {
 
 type TriggerButtonProps = ComponentProps<typeof Button>;
 
-const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "gray") => {
-  const color = variant === "contrast" ? "white" : "gray";
+const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "hint") => {
+  const color = variant === "contrast" ? "white" : "hint";
   if (breakpoint.minWidth >= 1280) {
     return <DesktopIcon color={color} />;
   }
@@ -38,7 +38,7 @@ export const TriggerButton = forwardRef<
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth] = useCanvasWidth();
   if (breakpoint === undefined) return null;
-  const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "gray";
+  const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "hint";
 
   return (
     <Button
@@ -49,9 +49,9 @@ export const TriggerButton = forwardRef<
       aria-label="Show breakpoints"
     >
       {renderIcon(breakpoint, variant)}
-      <__DEPRECATED__Text size="1" variant={variant}>
+      <Text color={variant}>
         {`${breakpoint.label} ${canvasWidth}px / ${zoom}%`}
-      </__DEPRECATED__Text>
+      </Text>
     </Button>
   );
 });
