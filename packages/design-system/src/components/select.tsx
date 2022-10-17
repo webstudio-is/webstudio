@@ -27,6 +27,7 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
   },
+  paddingRight: "$1",
 
   variants: {
     ghost: {
@@ -40,14 +41,6 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
         width: "100%",
       },
     },
-    withSuffix: {
-      true: {
-        paddingRight: "$1",
-      },
-    },
-  },
-  defaultVariants: {
-    withSuffix: true,
   },
 });
 
@@ -59,7 +52,7 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
   padding: "calc($space$1 / 2)",
 });
 
-const StyledContent = styled(SelectPrimitive.Content, {
+export const SelectContent = styled(SelectPrimitive.Content, {
   overflow: "hidden",
   backgroundColor: "$colors$slate4",
   borderRadius: "$1",
@@ -67,7 +60,7 @@ const StyledContent = styled(SelectPrimitive.Content, {
     "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
 });
 
-const StyledViewport = styled(SelectPrimitive.Viewport, {
+export const SelectViewport = styled(SelectPrimitive.Viewport, {
   py: "$1",
 });
 
@@ -103,12 +96,12 @@ const scrollButtonStyles = {
   cursor: "default",
 };
 
-const SelectScrollUpButton = styled(
+export const SelectScrollUpButton = styled(
   SelectPrimitive.ScrollUpButton,
   scrollButtonStyles
 );
 
-const SelectScrollDownButton = styled(
+export const SelectScrollDownButton = styled(
   SelectPrimitive.ScrollDownButton,
   scrollButtonStyles
 );
@@ -134,13 +127,7 @@ const SelectItemBase = (
 type SelectItemProps = SelectPrimitive.SelectItemProps & {
   children: ReactNode;
 };
-const SelectItem = React.forwardRef(SelectItemBase);
-
-const defaultSuffix = (
-  <StyledIcon>
-    <ChevronDownIcon />
-  </StyledIcon>
-);
+export const SelectItem = React.forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
@@ -154,10 +141,8 @@ export type SelectProps<Option = SelectOption> = Omit<
   onChange?: (option: Option) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onCloseAutoFocus?: (event: Event) => void;
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
-  suffix?: JSX.Element | null;
 };
 
 const SelectBase = (
@@ -168,11 +153,9 @@ const SelectBase = (
     placeholder = "Select an option",
     onChange,
     onOpenChange,
-    onCloseAutoFocus,
     open,
     getLabel = (option) => option,
     name,
-    suffix = defaultSuffix,
     ...props
   }: SelectProps,
   forwardedRef: Ref<HTMLButtonElement>
@@ -186,28 +169,30 @@ const SelectBase = (
       open={open}
       onOpenChange={onOpenChange}
     >
-      <StyledTrigger ref={forwardedRef} withSuffix={Boolean(suffix)} {...props}>
+      <StyledTrigger ref={forwardedRef} {...props}>
         <SelectPrimitive.Value>
           {value ? getLabel(value) : placeholder}
         </SelectPrimitive.Value>
-        {suffix}
+        <StyledIcon>
+          <ChevronDownIcon />
+        </StyledIcon>
       </StyledTrigger>
       <SelectPrimitive.Portal>
-        <StyledContent onCloseAutoFocus={onCloseAutoFocus}>
+        <SelectContent>
           <SelectScrollUpButton>
             <ChevronUpIcon />
           </SelectScrollUpButton>
-          <StyledViewport>
+          <SelectViewport>
             {options.map((option) => (
               <SelectItem key={option} value={option} textValue={option}>
                 {getLabel(option)}
               </SelectItem>
             ))}
-          </StyledViewport>
+          </SelectViewport>
           <SelectScrollDownButton>
             <ChevronDownIcon />
           </SelectScrollDownButton>
-        </StyledContent>
+        </SelectContent>
       </SelectPrimitive.Portal>
     </SelectPrimitive.Root>
   );

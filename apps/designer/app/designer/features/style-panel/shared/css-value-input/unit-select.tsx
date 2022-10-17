@@ -1,6 +1,15 @@
-import { Select } from "@webstudio-is/design-system";
-import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
 import { useState, useMemo } from "react";
+import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import {
+  styled,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+  SelectViewport,
+  SelectItem,
+  SelectContent,
+} from "@webstudio-is/design-system";
+import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
 const unitRenderMap: Map<Unit, string> = new Map([
   ["px", "PX"],
@@ -38,19 +47,22 @@ export const useUnitSelect = ({
     () => units.map((unit) => unitRenderMap.get(unit) ?? unit),
     [units]
   );
-  if (value === undefined) return [isOpen, null];
 
-  const element = (
-    <Select
+  const renderValue = value && unitRenderMap.get(value.unit);
+
+  if (value == undefined || renderValue === undefined) {
+    return [isOpen, null];
+  }
+
+  const select = (
+    <UnitSelect
       {...props}
-      value={unitRenderMap.get(value.unit)}
+      value={renderValue}
       options={renderUnits}
-      suffix={null}
-      ghost
       open={isOpen}
       onOpenChange={setIsOpen}
-      onChange={(item) => {
-        const unit = renderUnitMap.get(item);
+      onChange={(option) => {
+        const unit = renderUnitMap.get(option);
         if (unit === undefined) return;
         onChange?.({
           ...value,
@@ -60,5 +72,70 @@ export const useUnitSelect = ({
     />
   );
 
-  return [isOpen, element];
+  return [isOpen, select];
+};
+
+const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
+  all: "unset",
+  height: "$5",
+  px: 3,
+  borderRadius: 2,
+  display: "inline-flex",
+  alignItems: "center",
+  color: "$hiContrast",
+  "&:focus": {
+    backgroundColor: "$blue10",
+    color: "$loContrast",
+  },
+  "&:hover": {
+    backgroundColor: "$slate5",
+  },
+});
+
+type UnitSelectProps = {
+  options: Array<string>;
+  value: string;
+  onChange: (value: string) => void;
+  onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus: (event: Event) => void;
+  open: boolean;
+};
+
+const UnitSelect = ({
+  options,
+  value,
+  onChange,
+  onOpenChange,
+  onCloseAutoFocus,
+  open,
+}: UnitSelectProps) => {
+  return (
+    <SelectPrimitive.Root
+      value={value}
+      onValueChange={onChange}
+      onOpenChange={onOpenChange}
+      open={open}
+    >
+      <StyledTrigger>
+        <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
+      </StyledTrigger>
+      <SelectPrimitive.Portal>
+        <SelectContent onCloseAutoFocus={onCloseAutoFocus}>
+          <SelectScrollUpButton>
+            <ChevronUpIcon />
+          </SelectScrollUpButton>
+          <SelectViewport>
+            {options.map((option) => (
+              <SelectItem key={option} value={option} textValue={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectViewport>
+          <SelectScrollDownButton>
+            <ChevronDownIcon />
+          </SelectScrollDownButton>
+        </SelectContent>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  );
 };
