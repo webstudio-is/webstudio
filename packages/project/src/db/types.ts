@@ -9,7 +9,7 @@ export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
 };
 
-const PageSchema = z.object({
+const Page = z.object({
   id: z.string(),
   name: z.string(),
   path: z.string(),
@@ -18,13 +18,13 @@ const PageSchema = z.object({
   treeId: z.string(),
 });
 
-export type Page = z.infer<typeof PageSchema>;
+export type Page = z.infer<typeof Page>;
 
-export const PagesSchema: z.ZodType<{ homePage: Page; pages: Array<Page> }> =
+export const Pages: z.ZodType<{ homePage: Page; pages: Array<Page> }> =
   z.object({
-    homePage: PageSchema,
-    pages: z.array(PageSchema),
+    homePage: Page,
+    pages: z.array(Page),
   });
-export type Pages = z.infer<typeof PagesSchema>;
+export type Pages = z.infer<typeof Pages>;
 
 export type Build = Omit<DbBuild, "pages"> & { pages: Pages };

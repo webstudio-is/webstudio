@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { type Instance } from "../db";
-import { type UserProp } from "./types";
+import { type UserProp } from "./schema";
 import { useAllUserProps } from "./all-user-props";
 
 type UserProps = { [prop: UserProp["prop"]]: UserProp["value"] };
