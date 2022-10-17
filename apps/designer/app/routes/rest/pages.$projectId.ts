@@ -3,7 +3,7 @@ import { db } from "@webstudio-is/project/index.server";
 import { type Pages, utils } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
-import { PutPageData } from "~/designer/features/sidebar-left/panels/pages/settings";
+import { CreatePageData } from "~/designer/features/sidebar-left/panels/pages/settings";
 import { sentryException } from "~/shared/sentry";
 
 const nonEmptyString = z
@@ -33,7 +33,7 @@ const CreatePageInput = zfd.formData({
 const handlePUT = async (
   projectId: string,
   request: Request
-): Promise<PutPageData> => {
+): Promise<CreatePageData> => {
   const result = CreatePageInput.safeParse(await request.formData());
   if (result.success === false) {
     return { errors: result.error.formErrors };
@@ -72,7 +72,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
 
     if (request.method.toLowerCase() === "put") {
-      return handlePUT(params.projectId, request);
+      await handlePUT(params.projectId, request);
     }
 
     throw new Error(`Method ${request.method} is not supported`);

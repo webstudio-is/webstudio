@@ -102,7 +102,7 @@ const Pages = ({
         actions={
           <>
             {onNewPage && (
-              <IconButton size="2" onClick={onNewPage} aria-label="Close">
+              <IconButton size="2" onClick={onNewPage} aria-label="New Page">
                 <NewPageIcon />
               </IconButton>
             )}

@@ -23,7 +23,7 @@ const Group = styled(Flex, {
   defaultVariants: { direction: "column" },
 });
 
-export type PutPageData =
+export type CreatePageData =
   | { ok: true; page: Page }
   | { errors: string | ZodError["formErrors"] };
 
@@ -67,7 +67,7 @@ export const NewPageSettings = ({
   const nameFieldId = useId();
   const pathFieldId = useId();
 
-  const fetcher = useFetcher<PutPageData>();
+  const fetcher = useFetcher<CreatePageData>();
 
   const [fieldErrors, setFieldErrors] = useState<
     ZodError["formErrors"]["fieldErrors"]
@@ -107,7 +107,7 @@ export const NewPageSettings = ({
         actions={
           <>
             {onClose && (
-              <IconButton size="2" onClick={onClose} aria-label="Close">
+              <IconButton size="2" onClick={onClose} aria-label="Cancel">
                 <ChevronDoubleLeftIcon />
               </IconButton>
             )}
