@@ -2,7 +2,6 @@ import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
   Box,
-  Combobox,
   ComboboxListboxItem,
   TextField,
   DropdownMenu,
@@ -13,12 +12,11 @@ import {
   Text,
   DropdownMenuPortal,
   useCombobox,
-  comboboxStateChangeTypes,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { useCallback, useState } from "react";
+import { useMemo } from "react";
 
 const getItems = (
   assets: Array<Asset | PreviewAsset>
@@ -80,47 +78,23 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     onDelete(ids);
   };
 
-  const stateReducer = useCallback((state, actionAndChanges) => {
-    const { type, changes } = actionAndChanges;
-    switch (type) {
-      // on item selection.
-      case comboboxStateChangeTypes.ItemClick:
-      case comboboxStateChangeTypes.InputKeyDownEnter:
-      case comboboxStateChangeTypes.InputBlur:
-      case comboboxStateChangeTypes.ControlledPropUpdatedSelectedItem:
-        return {
-          ...changes,
-          // if we have a selected item.
-          ...(changes.selectedItem && {
-            // we will set the input value to "" (empty string).
-            inputValue: "",
-          }),
-        };
-
-      // Remove "reset" action
-      case comboboxStateChangeTypes.InputKeyDownEscape: {
-        return {
-          ...state,
-        };
-      }
-
-      default:
-        return changes; // otherwise business as usual.
-    }
-  }, []);
+  const fontItems = useMemo(() => getItems(assets), [assets]);
+  const selectedItem =
+    fontItems.find((item) => item.label === value) ?? fontItems[0];
 
   const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
     useCombobox({
-      items: getItems(assets),
-      value: { label: value },
+      items: fontItems,
+      value: selectedItem,
       itemToString: (item) => item?.label ?? "",
-      stateReducer,
       onItemSelect: (value) => {
         if (value !== null) {
           onChange(value.label);
         }
       },
     });
+
+  const { isEmpty, ...menuProps } = getMenuProps();
 
   return (
     <Flex
@@ -143,18 +117,23 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         <TextField
           type="search"
           prefix={<MagnifyingGlassIcon />}
-          {...getInputProps({})}
+          {...getInputProps()}
         />
         <fieldset>
           <legend>Choose an item</legend>
-          <Flex {...getMenuProps()} css={{ flexDirection: "column" }}>
+          <Flex {...menuProps} css={{ flexDirection: "column" }}>
             {items.map((item, index) => {
               return (
                 <ComboboxListboxItem
-                  key={index}
                   {...getItemProps({ item, index })}
+                  key={index}
                 >
                   {item.label}
+                  <ItemMenu
+                    onDelete={() => {
+                      handleDelete(item.label);
+                    }}
+                  />
                 </ComboboxListboxItem>
               );
             })}

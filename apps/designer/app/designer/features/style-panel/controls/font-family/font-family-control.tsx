@@ -1,8 +1,7 @@
-import { Grid, TextField } from "@webstudio-is/design-system";
+import { TextField } from "@webstudio-is/design-system";
 import { FontsManager } from "~/designer/shared/fonts-manager";
 import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
-import { PropertyName } from "../../shared/property-name";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
 
 export const FontFamilyControl = ({
