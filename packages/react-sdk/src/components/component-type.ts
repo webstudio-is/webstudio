@@ -19,7 +19,7 @@ export type WsComponentMeta<ComponentType> = {
   children?: Array<string>;
 };
 
-export const WsComponentMetaSchema = z.lazy(() =>
+export const WsComponentMeta = z.lazy(() =>
   z
     .object({
       Component: z.any(),

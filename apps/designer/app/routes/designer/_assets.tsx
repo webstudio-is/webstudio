@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { zfd } from "zod-form-data";
 import type { ActionData } from "~/designer/shared/assets";
 
-const deleteAssetSchema = zfd.formData({
+const DeleteAssetInput = zfd.formData({
   assetId: zfd.text(),
   assetName: zfd.text(),
 });
@@ -25,7 +25,7 @@ export const action: ActionFunction = async ({
   if (params.id === undefined) throw new Error("Project id undefined");
   try {
     if (request.method === "DELETE") {
-      const { assetId, assetName } = deleteAssetSchema.parse(
+      const { assetId, assetName } = DeleteAssetInput.parse(
         await request.formData()
       );
       const deletedAsset = await deleteAsset({

@@ -68,7 +68,7 @@ const staticTreeProps = {
   },
 };
 
-const Pages = ({
+const PagesPanel = ({
   onClose,
   onSelect,
   selectedPageId,
@@ -115,7 +115,7 @@ export const TabContent = (props: TabContentProps) => {
   }
 
   return (
-    <Pages
+    <PagesPanel
       onClose={() => props.onSetActiveTab("none")}
       onSelect={handleSelect}
       selectedPageId={currentPageId}
