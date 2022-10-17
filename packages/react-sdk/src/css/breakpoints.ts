@@ -1,4 +1,4 @@
-import { type Breakpoint } from "./types";
+import { type Breakpoint } from "./schema";
 
 export type BaseBreakpoint = Pick<Breakpoint, "label" | "minWidth">;
 
