@@ -5,11 +5,9 @@ import type { Style } from "@webstudio-is/react-sdk";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 
 export const FlexGrid = ({
-  name,
   currentStyle,
   batchUpdate,
 }: {
-  name: string;
   currentStyle: Style;
   batchUpdate: ReturnType<CreateBatchUpdate>;
 }) => {
@@ -56,7 +54,6 @@ export const FlexGrid = ({
   const setJustifyContent = batchUpdate.setProperty("justifyContent");
   return (
     <Grid
-      data-property={name}
       css={{
         width: "100%",
         aspectRatio: "1 / 1",
@@ -66,7 +63,6 @@ export const FlexGrid = ({
         border: "2px solid currentColor",
         alignItems: "center",
         gap: "1px",
-        gridArea: name,
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         gridTemplateAreas: `
@@ -96,7 +92,14 @@ export const FlexGrid = ({
               width: "100%",
               height: "100%",
               color: "$colors$gray8",
-              "&:focus": { boxShadow: "none" },
+              "&:hover": {
+                bc: "$colors$slate4",
+              },
+              "&:focus": {
+                background: "none",
+                boxShadow: "none",
+                outline: "none",
+              },
             }}
             onClick={() => {
               const [alignItems, justifyContent] = cells[index]

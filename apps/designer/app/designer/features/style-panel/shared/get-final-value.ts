@@ -10,7 +10,7 @@ export const getFinalValue = ({
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   property: StyleProperty;
-}): StyleValue | void => {
+}): StyleValue | undefined => {
   const currentValue = currentStyle[property];
   const inheritedValue =
     property in inheritedStyle ? inheritedStyle[property].value : undefined;

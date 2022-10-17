@@ -3,13 +3,13 @@ import { units } from "./units";
 
 export const UnitSchema = z.union([z.enum(units), z.literal("number")]);
 
-const UnitValueSchema = z.object({
+export const UnitValueSchema = z.object({
   type: z.literal("unit"),
   unit: UnitSchema,
   value: z.number(),
 });
 
-const KeywordValueSchema = z.object({
+export const KeywordValueSchema = z.object({
   type: z.literal("keyword"),
   // @todo use exact type
   value: z.string(),
@@ -17,15 +17,21 @@ const KeywordValueSchema = z.object({
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
-const InvalidValueSchema = z.object({
+export const InvalidValueSchema = z.object({
   type: z.literal("invalid"),
   value: z.string(),
+});
+
+export const UnsetValueSchema = z.object({
+  type: z.literal("unset"),
+  value: z.literal(""),
 });
 
 export const StyleValueSchema = z.union([
   UnitValueSchema,
   KeywordValueSchema,
   InvalidValueSchema,
+  UnsetValueSchema,
 ]);
 
 export const StyleSchema = z.record(z.string(), StyleValueSchema);

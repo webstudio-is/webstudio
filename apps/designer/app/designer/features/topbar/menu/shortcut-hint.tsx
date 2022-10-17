@@ -1,4 +1,4 @@
-import { __DEPRECATED__Text } from "@webstudio-is/design-system";
+import { Text } from "@webstudio-is/design-system";
 
 const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
@@ -31,9 +31,5 @@ const format = (value: ShortcutDefinition) => {
 };
 
 export const ShortcutHint = ({ value }: { value: ShortcutDefinition }) => {
-  return (
-    <__DEPRECATED__Text size="1" css={{ letterSpacing: 1.5, color: "inherit" }}>
-      {format(value)}
-    </__DEPRECATED__Text>
-  );
+  return <Text css={{ letterSpacing: 1.5 }}>{format(value)}</Text>;
 };

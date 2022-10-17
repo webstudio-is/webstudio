@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { type Breakpoint } from "@webstudio-is/react-sdk";
 import { type Publish, useSubscribe } from "~/shared/pubsub";
 import {
-  __DEPRECATED__Text,
+  Text,
   DropdownMenu,
-  DropdownMenuArrow,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -44,17 +43,8 @@ const BreakpointSelectorItem = ({
 }: BreakpointSelectorItemProps) => {
   return (
     <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
-      <__DEPRECATED__Text size="1" css={{ flexGrow: 1, color: "inherit" }}>
-        {breakpoint.label}
-      </__DEPRECATED__Text>
-      <__DEPRECATED__Text
-        size="1"
-        css={{
-          color: "inherit",
-        }}
-      >
-        {breakpoint.minWidth}
-      </__DEPRECATED__Text>
+      <Text>{breakpoint.label}</Text>
+      <Text>{breakpoint.minWidth}</Text>
     </Flex>
   );
 };
@@ -128,7 +118,11 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
         <TriggerButton />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent css={{ zIndex: "$1" }}>
+        <DropdownMenuContent
+          css={{ zIndex: "$1" }}
+          sideOffset={4}
+          collisionPadding={4}
+        >
           {view === "confirmation" && (
             <ConfirmationDialog
               breakpoint={selectedBreakpoint}
@@ -202,7 +196,6 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
               </DropdownMenuItem>
             </>
           )}
-          <DropdownMenuArrow offset={10} />
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>

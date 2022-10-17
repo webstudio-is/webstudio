@@ -22,11 +22,14 @@ const InputBase = styled("input", {
   textOverflow: "ellipsis",
   outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
+  cursor: "inherit",
 
   // Focus should start on the input element then move to prefix and suffix elements.
   // DOM order reflects focus path and visually we use order to put them into the correct visual order.
   order: 1,
-
+  "&[type='button']": {
+    textAlign: "left",
+  },
   '&[type="search"]': {
     "&::-webkit-search-decoration, &::-webkit-search-cancel-button, &::-webkit-search-results-button, &::-webkit-search-results-decoration":
       {
@@ -64,25 +67,17 @@ const InputBase = styled("input", {
 const TextFieldBase = styled("div", {
   // Custom
   display: "flex",
-  gap: "$1",
   backgroundColor: "$loContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
-
+  gap: "$1",
   px: "$2",
   borderRadius: "$1",
   fontFamily: "$sans",
   fontSize: "$1",
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
-  "&[data-has-prefix]": {
-    paddingLeft: 2,
-  },
-
-  "&[data-has-suffix]": {
-    paddingRight: 2,
-  },
 
   "&:focus-within": {
     boxShadow:
@@ -125,24 +120,34 @@ const TextFieldBase = styled("div", {
     },
     state: {
       invalid: {
-        boxShadow: "inset 0 0 0 1px $colors$red7",
-        "&:focus": {
+        boxShadow: "inset 0 0 0 1px $colors$red8",
+        "&:focus-within": {
           boxShadow:
             "inset 0px 0px 0px 1px $colors$red8, 0px 0px 0px 1px $colors$red8",
         },
       },
       valid: {
         boxShadow: "inset 0 0 0 1px $colors$green7",
-        "&:focus": {
+        "&:focus-within": {
           boxShadow:
             "inset 0px 0px 0px 1px $colors$green8, 0px 0px 0px 1px $colors$green8",
         },
       },
     },
+    withPrefix: {
+      true: {
+        paddingLeft: 2,
+      },
+    },
+    withSuffix: {
+      true: {
+        paddingRight: 2,
+      },
+    },
   },
 });
 
-type TextFieldProps = Pick<
+export type TextFieldProps = Pick<
   React.ComponentProps<typeof TextFieldBase>,
   "variant" | "state" | "css"
 > &
@@ -187,14 +192,14 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
 
     return (
       <TextFieldBase
+        {...focusWithinProps}
         aria-disabled={disabled}
         ref={forwardedRef}
         state={state}
         variant={variant}
         css={css}
-        {...focusWithinProps}
-        {...(prefix && { "data-has-prefix": true })}
-        {...(suffix && { "data-has-suffix": true })}
+        withPrefix={Boolean(prefix)}
+        withSuffix={Boolean(suffix)}
         onClickCapture={focusInnerInput}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
