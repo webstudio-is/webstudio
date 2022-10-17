@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
-import type { Page, Project } from "@webstudio-is/project";
+import {
+  type Pages,
+  type Project,
+  utils as projectUtils,
+} from "@webstudio-is/project";
 import type { Config } from "~/config";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
@@ -9,6 +13,9 @@ import { Inspector } from "./features/inspector";
 import {
   useAssets,
   useHoveredInstanceData,
+  usePages,
+  useProject,
+  useCurrentPageId,
   useSelectedInstanceData,
   useSyncStatus,
 } from "./shared/nano-states";
@@ -35,7 +42,7 @@ import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
 import { Asset } from "@webstudio-is/asset-uploader";
-import { useInterval } from "react-use";
+import env from "~/shared/env";
 
 export const links = () => {
   return [
@@ -73,6 +80,27 @@ const useSetAssets = (assets?: Array<Asset>) => {
   }, [assets, setAssets]);
 };
 
+const useSetProject = (project: Project) => {
+  const [, setProject] = useProject();
+  useEffect(() => {
+    setProject(project);
+  }, [project, setProject]);
+};
+
+const useSetPages = (pages: Pages) => {
+  const [, setPages] = usePages();
+  useEffect(() => {
+    setPages(pages);
+  }, [pages, setPages]);
+};
+
+const useSetCurrentPageId = (pageId: string) => {
+  const [, setCurrentPageId] = useCurrentPageId();
+  useEffect(() => {
+    setCurrentPageId(pageId);
+  }, [pageId, setCurrentPageId]);
+};
+
 const useNavigatorLayout = () => {
   // We need to render the detached state only once the setting was actually loaded from local storage.
   // Otherwise we may show the detached state because its the default and then hide it immediately.
@@ -80,20 +108,9 @@ const useNavigatorLayout = () => {
   return isLoaded ? clientSettings.navigatorLayout : "docked";
 };
 
-const usePublishDesignerReady = (publish: Publish) => {
-  const [isAcknowledged, setIsAcknowledged] = useState(false);
-
-  useInterval(
-    () => {
-      // We publish this even to let canvas know that we are now listening to the events, otherwise if canvas loads faster than designer, which is possible with SSR,
-      // we can miss the events and designer will just not connect to the canvas.
-      publish({ type: "designerReady" });
-    },
-    isAcknowledged ? null : 100
-  );
-
-  useSubscribe("designerReadyAck", () => {
-    setIsAcknowledged(true);
+export const useSubscribeCanvasReady = (publish: Publish) => {
+  useSubscribe("canvasReady", () => {
+    publish({ type: "canvasReadyAck" });
   });
 };
 
@@ -238,26 +255,37 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
   );
 };
 
-type DesignerProps = {
+export type DesignerProps = {
   config: Config;
   project: Project;
-  page: Page;
+  pages: Pages;
+  pageId: string;
+  buildOrigin: string;
 };
 
-export const Designer = ({ config, project, page }: DesignerProps) => {
+export const Designer = ({
+  config,
+  project,
+  pages,
+  pageId,
+  buildOrigin,
+}: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSetAssets(project.assets);
+  useSetProject(project);
+  useSetPages(pages);
+  useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
-  usePublishDesignerReady(publish);
+  useSubscribeCanvasReady(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -268,20 +296,42 @@ export const Designer = ({ config, project, page }: DesignerProps) => {
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
 
+  const page = useMemo(() => {
+    const page = projectUtils.pages.findById(pages, pageId);
+    if (page === undefined) {
+      throw new Error(`Page with id ${pageId} not found`);
+    }
+    return page;
+  }, [pages, pageId]);
+
+  const buildUrl = new URL(buildOrigin);
+  buildUrl.pathname = page.path;
+  if (env.BUILD_REQUIRE_SUBDOMAIN) {
+    buildUrl.host = `${project.domain}.${buildUrl.host}`;
+  } else {
+    buildUrl.searchParams.set("projectId", project.id);
+  }
+
+  buildUrl.searchParams.set("mode", "edit");
+  const canvasUrl = buildUrl.toString();
+
+  buildUrl.searchParams.set("mode", "preview");
+  const previewUrl = buildUrl.toString();
+
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>
       <Topbar
         css={{ gridArea: "header" }}
         config={config}
-        page={page}
         project={project}
         publish={publish}
+        previewUrl={previewUrl}
       />
       <Main>
         <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
           <CanvasIframe
             ref={iframeRefCallback}
-            src={`${config.canvasPath}/${project.id}/${page.id}`}
+            src={canvasUrl}
             pointerEvents={
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"
@@ -296,7 +346,7 @@ export const Designer = ({ config, project, page }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft publish={publish} />
+        <SidebarLeft publish={publish} config={config} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

@@ -9,25 +9,20 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import type { Project, Page } from "@webstudio-is/project";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
 type ShareButtonProps = {
-  path: string;
-  projectId: Project["id"];
-  pageId: Page["id"];
+  url: string;
 };
 
-const Content = ({ path, projectId, pageId }: ShareButtonProps) => {
+const Content = ({ url }: ShareButtonProps) => {
   if (typeof location === "undefined") {
     return null;
   }
-  const url = new URL(
-    `${location.protocol}//${location.host}${path}/${projectId}/${pageId}`
-  );
   return (
     <PopoverContent
       css={{ padding: "$3" }}
+      hideArrow={true}
       onFocusOutside={(event) => {
         // Used to prevent closing when opened from the main dropdown menu
         event.preventDefault();
@@ -36,14 +31,14 @@ const Content = ({ path, projectId, pageId }: ShareButtonProps) => {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          window.open(url.toString(), "_blank");
+          window.open(url, "_blank");
         }}
       >
         <Flex gap="2">
           <TextField
             variant="ghost"
             readOnly
-            defaultValue={url.toString()}
+            defaultValue={url}
             onFocus={(event) => {
               event?.target.select();
             }}

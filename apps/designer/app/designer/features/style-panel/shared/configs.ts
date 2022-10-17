@@ -48,12 +48,10 @@ type BaseStyleConfig = {
 
 // @todo make it use actual list of controls
 export type Control =
-  | "Spacing"
   | "Text"
   | "Color"
   | "Menu"
   | "Select"
-  | "Empty"
   | "FontFamily"
   | "Image";
 
@@ -68,30 +66,8 @@ const getControl = (property: StyleProperty): Control => {
   if (property.toLocaleLowerCase().includes("color")) {
     return "Color";
   }
-  // Spacing properties is more narrow than StyleProperty,
-  // so we have to widen it to be able to run .includes.
-  // @todo do better
-  const spacing = categories.spacing
-    .properties as unknown as Array<StyleProperty>;
-  if (spacing.includes(property)) {
-    return "Spacing";
-  }
 
   switch (property) {
-    case "display": {
-      return "Select";
-    }
-    case "flexDirection":
-    case "flexWrap":
-    case "alignItems":
-    case "justifyItems":
-    case "justifyContent":
-    case "alignContent": {
-      return "Menu";
-    }
-    case "placeContent": {
-      return "Empty";
-    }
     case "fontFamily": {
       return isFeatureEnabled("fonts") ? "FontFamily" : "Text";
     }

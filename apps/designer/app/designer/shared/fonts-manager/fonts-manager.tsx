@@ -12,10 +12,13 @@ import {
   DropdownMenuItem,
   Text,
   DropdownMenuPortal,
+  useCombobox,
+  comboboxStateChangeTypes,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import { DotsHorizontalIcon } from "@webstudio-is/icons";
+import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@webstudio-is/icons";
+import { useCallback, useState } from "react";
 
 const getItems = (
   assets: Array<Asset | PreviewAsset>
@@ -62,7 +65,6 @@ type FontsManagerProps = {
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const { assets, onSubmitAssets, onActionData, onDelete } = useAssets("font");
-  const items = getItems(assets);
 
   const handleDelete = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
@@ -78,6 +80,48 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     onDelete(ids);
   };
 
+  const stateReducer = useCallback((state, actionAndChanges) => {
+    const { type, changes } = actionAndChanges;
+    switch (type) {
+      // on item selection.
+      case comboboxStateChangeTypes.ItemClick:
+      case comboboxStateChangeTypes.InputKeyDownEnter:
+      case comboboxStateChangeTypes.InputBlur:
+      case comboboxStateChangeTypes.ControlledPropUpdatedSelectedItem:
+        return {
+          ...changes,
+          // if we have a selected item.
+          ...(changes.selectedItem && {
+            // we will set the input value to "" (empty string).
+            inputValue: "",
+          }),
+        };
+
+      // Remove "reset" action
+      case comboboxStateChangeTypes.InputKeyDownEscape: {
+        return {
+          ...state,
+        };
+      }
+
+      default:
+        return changes; // otherwise business as usual.
+    }
+  }, []);
+
+  const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
+    useCombobox({
+      items: getItems(assets),
+      value: { label: value },
+      itemToString: (item) => item?.label ?? "",
+      stateReducer,
+      onItemSelect: (value) => {
+        if (value !== null) {
+          onChange(value.label);
+        }
+      },
+    });
+
   return (
     <Flex
       gap="3"
@@ -92,32 +136,31 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         />
       </Box>
 
-      <Combobox
-        open
-        name="prop"
-        items={items}
-        selectedItem={{ label: value }}
-        onItemSelect={(value) => {
-          onChange(value.label);
-        }}
-        renderTextField={({ inputProps: { value, ...inputProps } }) => (
-          <TextField {...inputProps} placeholder="Search" />
-        )}
-        renderPopperContent={(props) => <>{props.children}</>}
-        renderItem={(props) => (
-          // @ts-expect-error temp
-          <ComboboxListboxItem
-            {...props}
-            suffix={
-              <ItemMenu
-                onDelete={() => {
-                  handleDelete(props.item.label);
-                }}
-              />
-            }
-          />
-        )}
-      />
+      <Flex
+        {...getComboboxProps()}
+        css={{ flexDirection: "column", gap: "$3" }}
+      >
+        <TextField
+          type="search"
+          prefix={<MagnifyingGlassIcon />}
+          {...getInputProps({})}
+        />
+        <fieldset>
+          <legend>Choose an item</legend>
+          <Flex {...getMenuProps()} css={{ flexDirection: "column" }}>
+            {items.map((item, index) => {
+              return (
+                <ComboboxListboxItem
+                  key={index}
+                  {...getItemProps({ item, index })}
+                >
+                  {item.label}
+                </ComboboxListboxItem>
+              );
+            })}
+          </Flex>
+        </fieldset>
+      </Flex>
     </Flex>
   );
 };

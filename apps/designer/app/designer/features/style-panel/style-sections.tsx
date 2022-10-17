@@ -1,4 +1,4 @@
-import { Box } from "@webstudio-is/design-system";
+import { Grid } from "@webstudio-is/design-system";
 import type { StyleConfig } from "./shared/configs";
 import {
   type Style,
@@ -10,15 +10,15 @@ import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
 import {
   ColorControl,
-  SpacingControl,
   TextControl,
   SelectControl,
   MenuControl,
   FontFamilyControl,
 } from "./controls";
 import { ShowMore } from "./shared/show-more";
-import { LayoutSection } from "./sections";
+import { LayoutSection, SpacingSection } from "./sections";
 import { BackgroundImageControl } from "./controls/background-image/background-image-control";
+import { PropertyName } from "./shared/property-name";
 
 export type PropertyProps = {
   property: StyleProperty;
@@ -38,9 +38,13 @@ export type RenderCategoryProps = {
   setProperty: SetProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
+  sectionStyle: {
+    [Property in keyof Style]-?: RenderPropertyProps;
+  };
+  inheritedStyle: InheritedStyle;
   category: Category;
-  styleConfigsByCategory: Array<JSX.Element | null>;
-  moreStyleConfigsByCategory: Array<JSX.Element | null>;
+  styleConfigsByCategory: Array<RenderPropertyProps>;
+  moreStyleConfigsByCategory: Array<RenderPropertyProps>;
 };
 
 export type RenderPropertyProps = {
@@ -61,13 +65,10 @@ export const renderProperty = ({
   const Control = controls[styleConfig.control];
   const { property } = styleConfig;
   if (!Control) return null;
+
   return (
-    <Box
-      key={category + property}
-      data-control={styleConfig.control.toLowerCase()}
-      data-property={property}
-      css={{ gridArea: property }}
-    >
+    <Grid key={category + property} css={{ gridTemplateColumns: "40% 60%" }}>
+      <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Control
         currentStyle={currentStyle}
         inheritedStyle={inheritedStyle}
@@ -75,7 +76,7 @@ export const renderProperty = ({
         styleConfig={styleConfig}
         category={category}
       />
-    </Box>
+    </Grid>
   );
 };
 
@@ -83,6 +84,8 @@ export const renderCategory = ({
   setProperty,
   createBatchUpdate,
   currentStyle,
+  sectionStyle,
+  inheritedStyle,
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
@@ -91,8 +94,12 @@ export const renderCategory = ({
   if (!Category) {
     return (
       <>
-        {styleConfigsByCategory}
-        <ShowMore styleConfigs={moreStyleConfigsByCategory} />
+        {styleConfigsByCategory.map((entry) => renderProperty(entry))}
+        <ShowMore
+          styleConfigs={moreStyleConfigsByCategory.map((entry) =>
+            renderProperty(entry)
+          )}
+        />
       </>
     );
   }
@@ -102,6 +109,8 @@ export const renderCategory = ({
       setProperty={setProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
+      sectionStyle={sectionStyle}
+      inheritedStyle={inheritedStyle}
       category={category}
       styleConfigsByCategory={styleConfigsByCategory}
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}
@@ -127,6 +136,7 @@ const sections: {
   [key: string]: (props: RenderCategoryProps) => JSX.Element | null;
 } = {
   layout: LayoutSection,
+  spacing: SpacingSection,
 };
 
 const controls: {
@@ -136,7 +146,6 @@ const controls: {
   Text: TextControl,
   Color: ColorControl,
   Select: SelectControl,
-  Spacing: SpacingControl,
   FontFamily: FontFamilyControl,
   Image: BackgroundImageControl,
 };

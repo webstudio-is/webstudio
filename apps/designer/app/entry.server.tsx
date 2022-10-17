@@ -4,7 +4,7 @@ import { initSentry } from "./shared/sentry";
 import { prisma } from "@webstudio-is/prisma-client";
 import { handleRequest as handleRequestDesigner } from "./shared/remix";
 import { handleRequest as handleRequestCanvas } from "@webstudio-is/react-sdk";
-import config from "./config";
+import { getBuildParams } from "./shared/router-utils";
 
 initSentry({
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
@@ -16,12 +16,14 @@ export default function handleRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  const { pathname } = new URL(request.url);
   let handle = handleRequestDesigner;
 
   if (
-    pathname.indexOf(config.previewPath) === 0 ||
-    pathname.indexOf(config.canvasPath) === 0
+    remixContext.matches.some(
+      (match) =>
+        match.route.id === "routes/$" || match.route.id === "routes/index"
+    ) &&
+    getBuildParams(request) !== undefined
   ) {
     handle = handleRequestCanvas;
   }

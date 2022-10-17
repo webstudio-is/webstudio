@@ -6,6 +6,7 @@ import {
 } from "~/shared/canvas-components";
 import { type SyncStatus } from "~/shared/sync";
 import { Asset } from "@webstudio-is/asset-uploader";
+import { type Pages, type Project } from "@webstudio-is/project";
 
 const selectedInstanceDataContainer = createValueContainer<
   SelectedInstanceData | undefined
@@ -49,3 +50,12 @@ export const useSelectionRect = () => useValue(selectionRectContainer);
 
 const assetsContainer = createValueContainer<Array<Asset>>([]);
 export const useAssets = () => useValue(assetsContainer);
+
+const pagesContainer = createValueContainer<Pages | undefined>();
+export const usePages = () => useValue(pagesContainer);
+
+const currentPageIdContainer = createValueContainer<string | undefined>();
+export const useCurrentPageId = () => useValue(currentPageIdContainer);
+
+const projectContainer = createValueContainer<Project | undefined>();
+export const useProject = () => useValue(projectContainer);

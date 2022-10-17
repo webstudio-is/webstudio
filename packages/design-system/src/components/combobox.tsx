@@ -1,14 +1,19 @@
-import {
+import React, {
   useState,
   forwardRef,
-  useEffect,
+  useCallback,
   type ComponentProps,
   type ForwardRefRenderFunction,
-  ForwardedRef,
+  useEffect,
+  useRef,
 } from "react";
 import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
-import { useCombobox, type UseComboboxGetItemPropsOptions } from "downshift";
+import {
+  DownshiftState,
+  UseComboboxStateChangeOptions,
+  useCombobox as useDownshiftCombobox,
+} from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled } from "../stitches.config";
 import { IconButton } from "./icon-button";
@@ -16,42 +21,7 @@ import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
 import { TextField } from "./text-field";
 import { Box } from "./box";
-import { Flex } from "./flex";
-
-type Label = string;
-
-export type ComboboxBaseItem = { label: Label; disabled?: boolean } | Label;
-
-type ComboboxTextFieldProps<Item> = {
-  inputProps: ComponentProps<typeof TextField>;
-  toggleProps: ComponentProps<typeof IconButton>;
-  highlightedItem?: Item;
-};
-
-const ComboboxTextFieldBase: ForwardRefRenderFunction<
-  HTMLDivElement,
-  ComboboxTextFieldProps<ComboboxBaseItem>
-> = ({ inputProps, toggleProps }, ref) => {
-  return (
-    <Box ref={ref} css={{ position: "relative" }}>
-      <TextField css={{ paddingRight: "$4" }} {...inputProps} />
-      <IconButton
-        {...toggleProps}
-        css={{
-          position: "absolute",
-          transform: "translateX(-100%)",
-          width: "$4",
-        }}
-      >
-        <ChevronDownIcon />
-      </IconButton>
-    </Box>
-  );
-};
-
-export const ComboboxTextField = forwardRef(ComboboxTextFieldBase);
-
-ComboboxTextField.displayName = "ComboboxTextField";
+import { Grid } from "./grid";
 
 const Listbox = styled("ul", panelStyles, {
   padding: 0,
@@ -60,193 +30,255 @@ const Listbox = styled("ul", panelStyles, {
   // @todo need some non-hardcoded value
   maxHeight: 400,
   minWidth: 230,
+  variants: {
+    state: {
+      open: {},
+      closed: {
+        display: "none",
+      },
+    },
+    isEmpty: {
+      true: {
+        display: "none",
+      },
+    },
+  },
 });
 
-export type ListboxItemProps<Item> = {
-  selected: boolean;
-  item: Item;
-  itemToString: (item: Item | null) => string;
-  itemProps: ComponentProps<"li">;
-  suffix?: JSX.Element;
-};
+const ListboxItem = styled("li", itemCss, {
+  padding: 0,
+  margin: 0,
+});
 
-const ListboxItemBase = <Item extends ComboboxBaseItem>(
-  { selected, item, itemToString, itemProps, suffix }: ListboxItemProps<Item>,
-  ref: ForwardedRef<HTMLLIElement>
-) => {
+export const ListboxItemBase: ForwardRefRenderFunction<
+  HTMLLIElement,
+  ComponentProps<typeof ListboxItem> & {
+    disabled?: boolean;
+    selected?: boolean;
+    highlighted?: boolean;
+  }
+> = (props, ref) => {
+  const { disabled, selected, highlighted, children, ...rest } = props;
   return (
-    <li
-      className={itemCss({
-        padding: 0,
-        margin: 0,
-      })}
-      {...itemProps}
+    <ListboxItem
       ref={ref}
+      {...(disabled ? { "aria-disabled": true, disabled: true } : {})}
+      {...(selected ? { "aria-current": true } : {})}
+      {...rest}
     >
-      <Flex align="center" css={{ flexGrow: 1 }}>
-        {selected === true ? <CheckIcon /> : null}
-        <Box css={{ flexGrow: 1 }}>{itemToString(item)}</Box>
-        {suffix}
-      </Flex>
-    </li>
+      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+        {selected && <CheckIcon />}
+        <Box css={{ gridColumn: 2 }}>{children}</Box>
+      </Grid>
+    </ListboxItem>
   );
 };
+
+export const ComboboxListbox = Listbox;
 
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
-ComboboxListboxItem.displayName = "ComboboxListboxItem";
-
-type ListProps<Item> = {
-  containerProps: ComponentProps<typeof Listbox>;
-  items: Array<Item>;
-  getItemProps: (
-    options: UseComboboxGetItemPropsOptions<Item>
-  ) => ComponentProps<typeof ComboboxListboxItem>;
-  highlightedIndex: number;
-  selectedItem: Item | null;
-  itemToString: (item: Item | null) => string;
-  renderItem: (props: ListboxItemProps<Item>) => JSX.Element;
-};
-
-export const ComboboxList = <Item extends ComboboxBaseItem>({
-  containerProps,
-  items,
-  getItemProps,
-  highlightedIndex,
-  selectedItem,
-  itemToString,
-  renderItem,
-}: ListProps<Item>) => {
-  return (
-    <Listbox {...containerProps}>
-      {items.map((item, index) => {
-        const itemProps = getItemProps({
-          item,
-          index,
-          key: index,
-          ...(typeof item === "object" && item.disabled
-            ? { "data-disabled": true, disabled: true }
-            : {}),
-          ...(highlightedIndex === index ? { "data-found": true } : {}),
-        });
-        return renderItem({
-          itemProps,
-          selected: selectedItem === item,
-          item,
-          itemToString,
-        });
-      })}
-    </Listbox>
-  );
-};
+export const ComboboxPopper = Popper;
 
 export const ComboboxPopperContent = PopperContent;
 
-type ComboboxProps<Item> = {
-  name: string;
-  label?: string;
+export const ComboboxPopperAnchor = PopperAnchor;
+
+const defaultMatch = <Item,>(
+  search: string,
+  items: Array<Item>,
+  itemToString: (item: Item | null) => string
+) =>
+  matchSorter(items, search, {
+    keys: [(item) => itemToString(item)],
+  });
+
+const useFilter = <Item,>({
+  items,
+  itemToString,
+  match = defaultMatch,
+}: {
   items: Array<Item>;
-  value?: Item;
-  selectedItem?: Item;
-  open?: boolean;
-  onItemSelect?: (value: Item) => void;
-  onItemHighlight?: (value?: Item) => void;
-  itemToString?: (item: Item | null) => string;
-  renderTextField?: (
-    props: ComponentProps<typeof ComboboxTextField>
-  ) => JSX.Element;
-  renderList?: (props: ListProps<Item>) => JSX.Element;
-  renderPopperContent?: (
-    props: ComponentProps<typeof ComboboxPopperContent>
-  ) => JSX.Element;
-  renderItem?: (props: ListboxItemProps<Item>) => JSX.Element;
+  itemToString: (item: Item | null) => string;
+  match?: typeof defaultMatch;
+}) => {
+  const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
+  const cachedItems = useRef(items);
+
+  const filter = useCallback(
+    (search?: string) => {
+      const foundItems = match(search ?? "", items, itemToString);
+      setFilteredItems(foundItems);
+    },
+    [itemToString, items, match]
+  );
+
+  const resetFilter = useCallback(() => {
+    setFilteredItems(cachedItems.current);
+  }, []);
+
+  useEffect(() => {
+    cachedItems.current = items;
+  }, [items]);
+
+  return {
+    filteredItems,
+    filter,
+    resetFilter,
+  };
 };
 
-export const Combobox = <Item extends ComboboxBaseItem>({
+type UseComboboxProps<Item> = {
+  items: Array<Item>;
+  itemToString: (item: Item | null) => string;
+  value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
+  onItemSelect?: (value: Item | null) => void;
+  onItemHighlight?: (value: Item | null) => void;
+  stateReducer?: (
+    state: DownshiftState<Item>,
+    changes: UseComboboxStateChangeOptions<Item>
+  ) => Partial<UseComboboxStateChangeOptions<Item>>;
+  match?: typeof defaultMatch;
+};
+
+export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
+
+export const useCombobox = <Item,>({
   items,
   value,
-  name,
-  open,
-  itemToString = (item) =>
-    typeof item === "object" && item !== null && "label" in item
-      ? item.label
-      : item ?? "",
+  itemToString,
   onItemSelect,
   onItemHighlight,
-  renderTextField = (props) => <ComboboxTextField {...props} />,
-  // IMPORTANT! Without Item passed to list <ComboboxList<Item> typescript is 10x slower!
-  renderList = (props) => <ComboboxList<Item> {...props} />,
-  renderPopperContent = (props) => <ComboboxPopperContent {...props} />,
-  // @ts-expect-error need help
-  renderItem = (props) => <ComboboxListboxItem<Item> {...props} />,
-}: ComboboxProps<Item>) => {
-  const [foundItems, setFoundItems] = useState(items);
-  const {
-    isOpen,
-    getToggleButtonProps,
-    // getLabelProps,
-    getMenuProps,
-    getInputProps,
-    getComboboxProps,
-    highlightedIndex,
-    getItemProps,
-    selectedItem,
-  } = useCombobox({
-    isOpen: open,
-    onInputValueChange({ inputValue }) {
-      if (inputValue) {
-        const options =
-          typeof items[0] === "object" && "label" in items[0]
-            ? { keys: ["label"] }
-            : undefined;
-        const foundItems = matchSorter(items, inputValue, options);
-        setFoundItems(foundItems);
-      }
-    },
-    items: foundItems,
-    selectedItem: value,
+  stateReducer = (state, { changes }) => changes,
+  match,
+}: UseComboboxProps<Item>) => {
+  const { filteredItems, filter, resetFilter } = useFilter<Item>({
+    items,
     itemToString,
+    match,
+  });
+
+  const downshiftProps = useDownshiftCombobox({
+    items: filteredItems,
+    selectedItem: value, // Prevent downshift warning about switching controlled mode
+    stateReducer,
+    itemToString,
+    onInputValueChange({ inputValue }) {
+      filter(inputValue);
+    },
     onSelectedItemChange({ selectedItem }) {
-      if (selectedItem) {
-        onItemSelect?.(selectedItem);
-      }
+      onItemSelect?.(selectedItem ?? null);
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(items[highlightedIndex]);
+        onItemHighlight?.(items[highlightedIndex] ?? null);
       }
     },
   });
 
+  const { isOpen, getItemProps, highlightedIndex, selectedItem, getMenuProps } =
+    downshiftProps;
+
   useEffect(() => {
     if (isOpen === false) {
-      setFoundItems(items);
+      resetFilter();
     }
-  }, [isOpen, items]);
+  }, [isOpen, resetFilter]);
 
-  const inputProps: Record<string, unknown> = getInputProps({ name });
-  const toggleProps: Record<string, unknown> = getToggleButtonProps();
-  const comboboxProps: Record<string, unknown> = getComboboxProps();
-  const menuProps: Record<string, unknown> = getMenuProps();
-  const highlightedItem = foundItems[highlightedIndex];
+  const enhancedGetItemProps = useCallback(
+    (options) => {
+      return getItemProps({
+        highlighted: highlightedIndex === options.index,
+        // We need to either deep compare objects here or use itemToString to get primitive types
+        selected: itemToString(selectedItem) === itemToString(options.item),
+        key: options.id,
+        ...options,
+      });
+    },
+    [getItemProps, highlightedIndex, itemToString, selectedItem]
+  );
+
+  const enhancedGetMenuProps = useCallback(
+    (options?: Parameters<typeof getMenuProps>[0]) => {
+      return {
+        ...getMenuProps(options),
+        state: isOpen ? "open" : "closed",
+        isEmpty: filteredItems.length === 0,
+      };
+    },
+    [getMenuProps, isOpen, filteredItems.length]
+  );
+
+  return {
+    ...downshiftProps,
+    items: filteredItems,
+    getItemProps: enhancedGetItemProps,
+    getMenuProps: enhancedGetMenuProps,
+  };
+};
+
+type ComboboxProps<Item> = UseComboboxProps<Item> & {
+  name: string;
+  label?: string;
+  placeholder?: string;
+};
+
+export const Combobox = <Item,>({
+  items,
+  value = null,
+  name,
+  placeholder,
+  itemToString,
+  onItemSelect,
+  onItemHighlight,
+}: ComboboxProps<Item>) => {
+  const {
+    items: foundItems,
+    getInputProps,
+    getComboboxProps,
+    getToggleButtonProps,
+    getMenuProps,
+    getItemProps,
+    isOpen,
+  } = useCombobox({
+    items,
+    value,
+    itemToString,
+    onItemSelect,
+    onItemHighlight,
+  });
   return (
     <Popper>
-      <Box {...comboboxProps}>
-        <PopperAnchor asChild>
-          {renderTextField({ inputProps, toggleProps, highlightedItem })}
+      <Box {...getComboboxProps()}>
+        <PopperAnchor>
+          <TextField
+            {...getInputProps({
+              name,
+              placeholder,
+            })}
+            suffix={
+              <IconButton {...getToggleButtonProps()}>
+                <ChevronDownIcon />
+              </IconButton>
+            }
+          />
         </PopperAnchor>
-        {renderPopperContent({
-          style: { zIndex: 1 },
-          children: renderList({
-            containerProps: menuProps,
-            items: isOpen ? foundItems : [],
-            getItemProps,
-            highlightedIndex,
-            selectedItem,
-            itemToString,
-            renderItem,
-          }),
-        })}
+        <PopperContent>
+          <Listbox {...getMenuProps()}>
+            {isOpen &&
+              foundItems.map((item, index) => {
+                return (
+                  // eslint-disable-next-line react/jsx-key
+                  <ComboboxListboxItem
+                    key={index}
+                    {...getItemProps({ item, index })}
+                  >
+                    {itemToString(item)}
+                  </ComboboxListboxItem>
+                );
+              })}
+          </Listbox>
+        </PopperContent>
       </Box>
     </Popper>
   );
