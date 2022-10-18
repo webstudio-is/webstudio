@@ -23,18 +23,13 @@ type Options =
 const create = (projectId: Project["id"], options: Options) => {
   const size = options.size || 0;
   const { meta, format, name, location } = options;
-
-  const baseData = {
-    location,
-    name,
-    size,
-    format,
-    projectId,
-  };
-
   return prisma.asset.create({
     data: {
-      ...baseData,
+      location,
+      name,
+      size,
+      format,
+      projectId,
       meta: JSON.stringify(meta),
     },
   });
