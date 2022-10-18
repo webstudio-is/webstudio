@@ -3,7 +3,7 @@ import { Box } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
-import { AssetInfoTrigger, assetInfoTriggerCssVars } from "./asset-info-tigger";
+import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { PreviewAsset } from "~/designer/shared/assets";
 import { Asset } from "@webstudio-is/asset-uploader";
 
@@ -27,9 +27,10 @@ const useImageWithFallback = ({
 type ThumbnailProps = {
   path?: string;
   status: Asset["status"];
+  onClick: () => void;
 };
 
-export const Thumbnail = ({ path, status }: ThumbnailProps) => {
+const Thumbnail = ({ path, status, onClick }: ThumbnailProps) => {
   const src = useImageWithFallback({ path });
 
   return (
@@ -48,11 +49,20 @@ export const Thumbnail = ({ path, status }: ThumbnailProps) => {
           ? { filter: "blur(1px)", opacity: 0.7 }
           : {}),
       }}
+      onClick={onClick}
     ></Box>
   );
 };
 
-export const AssetThumbnail = (asset: Asset | PreviewAsset) => {
+export const ImageThumbnail = ({
+  asset,
+  onDelete,
+  onSelect,
+}: {
+  asset: Asset | PreviewAsset;
+  onDelete: (ids: Array<string>) => void;
+  onSelect?: (asset: Asset) => void;
+}) => {
   const { path, status, name } = asset;
   const description =
     "description" in asset && asset.description ? asset.description : name;
@@ -70,12 +80,24 @@ export const AssetThumbnail = (asset: Asset | PreviewAsset) => {
         alignItems: "center",
         padding: "0 $2",
         position: "relative",
-        "&:hover": assetInfoTriggerCssVars({ show: true }),
+        "&:hover": imageInfoTriggerCssVars({ show: true }),
       }}
     >
-      <Thumbnail path={path} status={status} />
+      <Thumbnail
+        path={path}
+        status={status}
+        onClick={() => {
+          if (isUploadedAsset) onSelect?.(asset);
+        }}
+      />
       {isUploadedAsset && (
-        <AssetInfoTrigger asset={asset} onDelete={() => setIsDeleting(true)} />
+        <ImageInfoTrigger
+          asset={asset}
+          onDelete={(ids) => {
+            setIsDeleting(true);
+            onDelete(ids);
+          }}
+        />
       )}
       {(isUploading || isDeleting) && <UploadingAnimation />}
     </Box>

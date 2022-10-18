@@ -7,6 +7,7 @@ import {
 import { type SyncStatus } from "~/shared/sync";
 import { Asset } from "@webstudio-is/asset-uploader";
 import { type Pages, type Project } from "@webstudio-is/project";
+import type { PreviewAsset } from "../assets";
 
 const selectedInstanceDataContainer = createValueContainer<
   SelectedInstanceData | undefined
@@ -48,7 +49,7 @@ export const useSyncStatus = () => useValue(syncStatusContainer);
 const selectionRectContainer = createValueContainer<DOMRect | undefined>();
 export const useSelectionRect = () => useValue(selectionRectContainer);
 
-const assetsContainer = createValueContainer<Array<Asset>>([]);
+const assetsContainer = createValueContainer<Array<Asset | PreviewAsset>>([]);
 export const useAssets = () => useValue(assetsContainer);
 
 const pagesContainer = createValueContainer<Pages | undefined>();

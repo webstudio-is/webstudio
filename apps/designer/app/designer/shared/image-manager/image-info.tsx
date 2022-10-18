@@ -6,7 +6,6 @@ import {
   SizeIcon,
   TrashIcon,
 } from "@webstudio-is/icons";
-import { useSubmit } from "@remix-run/react";
 import prettyBytes from "pretty-bytes";
 import { Asset } from "@webstudio-is/asset-uploader";
 
@@ -45,29 +44,13 @@ const Filename = ({ name }: { name: string }) => {
   );
 };
 
-type AssetInfoProps = Asset & {
-  onClose: () => void;
-  onDelete: () => void;
+type ImageInfoProps = {
+  asset: Asset;
+  onDelete: (ids: Array<string>) => void;
 };
 
-export const AssetInfo = ({
-  size,
-  meta,
-  id,
-  name,
-  onClose,
-  onDelete,
-}: AssetInfoProps) => {
-  const submit = useSubmit();
-  const handleDeleteAsset = () => {
-    const formData = new FormData();
-    formData.append("assetId", id);
-    formData.append("assetName", name);
-    onClose();
-    onDelete();
-    submit(formData, { method: "delete" });
-  };
-
+export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
+  const { size, meta, id, name } = asset;
   return (
     <>
       <Box css={{ p: "$2 $3" }}>
@@ -98,7 +81,7 @@ export const AssetInfo = ({
         </Box>
       ) : null}
       <Box css={{ p: "$2 $3" }}>
-        <Button variant="red" size="2" onClick={handleDeleteAsset}>
+        <Button variant="red" size="2" onClick={() => onDelete([id])}>
           <Flex align="center" css={{ gap: "$1" }}>
             <TrashIcon />
             Delete

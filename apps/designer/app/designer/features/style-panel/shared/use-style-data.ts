@@ -104,6 +104,9 @@ export const useStyleData = ({
     const currentValue = currentStyle[property];
     const defaultUnit =
       currentValue?.type === "unit" ? currentValue?.unit : undefined;
+    if (property === "fontFamily") {
+      return { type: "fontFamily" as const, value: [value] };
+    }
     return parseCssValue(property, value, defaultUnit);
   };
 

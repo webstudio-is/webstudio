@@ -58,8 +58,10 @@
   },
   "dependencies": {
     "@stitches/core": "^1.2.7",
+    "@webstudio-is/asset-uploader": "^*",
     "@webstudio-is/icons": "*",
     "@webstudio-is/jest-config": "*",
+    "@webstudio-is/fonts": "*",
     "immer": "^9.0.12",
     "mitt": "^3.0.0",
     "react-nano-state": "^0.4.0",

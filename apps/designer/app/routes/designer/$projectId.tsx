@@ -4,11 +4,10 @@ import { type DesignerProps, Designer, links } from "~/designer";
 import { db } from "@webstudio-is/project/index.server";
 import config from "~/config";
 import { ErrorMessage } from "~/shared/error";
-import { action, useAction } from "./_assets";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
 
-export { action, links };
+export { links };
 
 export const loader: LoaderFunction = async ({
   params,
@@ -49,7 +48,6 @@ type Error = {
 
 export const DesignerRoute = () => {
   const data = useLoaderData<DesignerProps | Error>();
-  useAction();
 
   if ("errors" in data) {
     return <ErrorMessage message={data.errors} />;
