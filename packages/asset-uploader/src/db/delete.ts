@@ -7,6 +7,6 @@ export const deleteFromDb = async (ids: Array<Asset["id"]>) => {
   }
 
   return await prisma.asset.deleteMany({
-    where: { OR: ids.map((id) => ({ id })) },
+    where: { id: { in: ids } },
   });
 };

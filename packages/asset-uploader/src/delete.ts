@@ -9,7 +9,7 @@ export const deleteAssets = async (
   ids: Array<string>
 ): Promise<Array<Asset>> => {
   const assets = await prisma.asset.findMany({
-    where: { OR: ids.map((id) => ({ id })) },
+    where: { id: { in: ids } },
   });
   if (assets.length === 0) throw new Error("Assets not found");
 
