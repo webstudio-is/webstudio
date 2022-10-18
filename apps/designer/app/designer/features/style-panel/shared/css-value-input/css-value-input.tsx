@@ -83,15 +83,11 @@ const useScrub = (options: {
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const optionsRef = useRef(options);
-
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
+  optionsRef.current = options;
 
   useEffect(() => {
     const { value, onChange, onChangeComplete } = optionsRef.current;
     if (value.type !== "unit" || inputRef.current === null) return;
-
     const scrub = numericScrubControl(inputRef.current, {
       initialValue: value.value,
       onValueInput(event) {
@@ -109,7 +105,7 @@ const useScrub = (options: {
     });
 
     return scrub.disconnectedCallback;
-  }, [options.value.type]);
+  }, [options.value.type, options.value?.unit]);
 
   return inputRef;
 };
