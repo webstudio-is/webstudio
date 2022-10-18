@@ -1,7 +1,3 @@
-// @todo this file structure is WIP
-// What we actually need is load assets panel based on a route and only load
-// data, js etc for assets when we are on that route
-
 import { ActionFunction } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
 import {

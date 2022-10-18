@@ -1,4 +1,4 @@
-import { FormEncType, FormMethod, useFetcher } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
 import {
   AssetType,
   filterByType,
@@ -8,7 +8,7 @@ import {
 import { toast } from "@webstudio-is/design-system";
 import ObjectID from "bson-objectid";
 import { useMemo } from "react";
-import { useAssets as useAssetsState } from "../nano-states";
+import { useAssets as useAssetsState, useProject } from "../nano-states";
 import { PreviewAsset } from "./types";
 
 const toPreviewAssets = (formData: FormData): Promise<PreviewAsset[]> => {
@@ -61,27 +61,23 @@ const toFormData = (type: AssetType, input: HTMLInputElement) => {
 export const useAssets = (type: AssetType) => {
   const { submit, Form } = useFetcher();
   const [assets, setAssets] = useAssetsState();
+  const [project] = useProject();
+  const action = `/rest/assets/${project?.id}`;
 
   const handleDelete = (ids: Array<string>) => {
     const formData = new FormData();
     for (const id of ids) {
       formData.append("assetId", id);
     }
-    submit(formData, { method: "delete" });
+    submit(formData, { method: "delete", action });
   };
 
-  const handleSubmit = ({
-    form,
-    input,
-  }: {
-    form: HTMLFormElement;
-    input: HTMLInputElement;
-  }) => {
+  const handleSubmit = (input: HTMLInputElement) => {
     const formData = toFormData(type, input);
     submit(formData, {
-      method: form.method as FormMethod,
-      action: form.action,
-      encType: form.enctype as FormEncType,
+      method: "post",
+      action,
+      encType: "multipart/form-data",
     });
     toPreviewAssets(formData)
       .then((previewAssets) => {

@@ -4,7 +4,6 @@ import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { useAssets } from "./use-assets";
-import { useProject } from "../nano-states";
 
 const useUpload = (type: AssetType) => {
   const { handleSubmit, Form } = useAssets(type);
@@ -14,7 +13,7 @@ const useUpload = (type: AssetType) => {
     const form = event.currentTarget;
     const input = inputRef.current;
     if (input === null) return;
-    handleSubmit({ form, input });
+    handleSubmit(input);
     form.reset();
   };
 
@@ -32,16 +31,8 @@ type AssetUploadProps = {
 
 export const AssetUpload = ({ type }: AssetUploadProps) => {
   const { inputRef, onChange, Form } = useUpload(type);
-  const [project] = useProject();
   return (
-    <Flex
-      as={Form}
-      css={{ flexGrow: 1 }}
-      action={`/rest/assets/${project?.id}`}
-      method="post"
-      encType="multipart/form-data"
-      onChange={onChange}
-    >
+    <Flex as={Form} css={{ flexGrow: 1 }} onChange={onChange}>
       <input
         accept={acceptMap[type]}
         type="file"
