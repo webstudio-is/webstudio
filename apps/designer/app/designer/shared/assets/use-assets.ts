@@ -1,65 +1,66 @@
-import { useMemo, useState } from "react";
-import type { PreviewAsset, ActionData } from "./types";
+import { FormEncType, FormMethod, useFetcher } from "@remix-run/react";
 import {
-  type AssetType,
-  type Asset,
+  AssetType,
   filterByType,
+  MAX_UPLOAD_SIZE,
+  toBytes,
 } from "@webstudio-is/asset-uploader";
-import { useAssets as useAllAssets } from "../nano-states";
-import { useSubmit } from "@remix-run/react";
+import { toast } from "@webstudio-is/design-system";
+import ObjectID from "bson-objectid";
+import { useMemo } from "react";
+import { useAssets as useAssetsState } from "../nano-states";
+import { PreviewAsset } from "./types";
 
-type UseAssetsApi = {
-  assets: Array<Asset | PreviewAsset>;
-  onSubmitAssets: (assets: Array<PreviewAsset>) => void;
-  onActionData: (data: ActionData) => void;
-  onDelete: (ids: Array<string>) => void;
+const toPreviewAssets = (formData: FormData): Promise<PreviewAsset[]> => {
+  const assets: Array<Promise<PreviewAsset>> = [];
+
+  for (const entry of formData) {
+    const file = entry[1] as File;
+    const promise: Promise<PreviewAsset> = new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.addEventListener("load", (event) => {
+        const dataUri = event?.target?.result;
+        if (dataUri === undefined) {
+          return reject(new Error(`Could not read file "${file.name}"`));
+        }
+
+        resolve({
+          format: file.type.split("/")[1],
+          path: String(dataUri),
+          name: file.name,
+          id: ObjectID().toString(),
+          status: "uploading",
+        });
+      });
+      reader.readAsDataURL(file);
+    });
+    assets.push(promise);
+  }
+
+  return Promise.all(assets);
 };
 
-export const useAssets = (type: AssetType): UseAssetsApi => {
-  const submit = useSubmit();
-  const [allAssets] = useAllAssets();
-  const [actionData, setActionData] = useState<ActionData>({});
-  const [uploadingAssets, setUploadingAssets] = useState<Array<PreviewAsset>>(
-    []
-  );
+const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
-  const assets = useMemo(() => {
-    const {
-      errors,
-      uploadedAssets = [],
-      deletedAssets = [],
-    } = actionData ?? {};
-    let assets: Array<Asset | PreviewAsset> = [];
-
-    // Once we have uploaded or deleted assets in action data, current upload was finished.
-    if (
-      uploadedAssets.length === 0 &&
-      deletedAssets.length === 0 &&
-      errors === undefined
-    ) {
-      assets = [...uploadingAssets];
-    }
-
-    for (const uploadedAsset of uploadedAssets) {
-      const isInAllAssets = allAssets.some(
-        (asset) => asset.id === uploadedAsset.id
+const toFormData = (type: AssetType, input: HTMLInputElement) => {
+  const files = Array.from(input?.files ?? []);
+  const formData = new FormData();
+  if (files.length === 0) return formData;
+  for (const file of files) {
+    if (file.size > maxSize) {
+      toast.error(
+        `Asset "${file.name}" cannot be bigger than ${MAX_UPLOAD_SIZE}MB`
       );
-      if (isInAllAssets === false) {
-        assets.unshift(uploadedAsset);
-      }
+      continue;
     }
+    formData.append(type, file, file.name);
+  }
+  return formData;
+};
 
-    for (const asset of allAssets) {
-      const isDeleted = deletedAssets.some(
-        (deletedAsset) => deletedAsset.id === asset.id
-      );
-      if (isDeleted === false) {
-        assets.push(asset);
-      }
-    }
-
-    return filterByType(assets, type);
-  }, [actionData, uploadingAssets, type, allAssets]);
+export const useAssets = (type: AssetType) => {
+  const { submit, Form } = useFetcher();
+  const [assets, setAssets] = useAssetsState();
 
   const handleDelete = (ids: Array<string>) => {
     const formData = new FormData();
@@ -69,10 +70,34 @@ export const useAssets = (type: AssetType): UseAssetsApi => {
     submit(formData, { method: "delete" });
   };
 
-  return {
-    assets,
-    onSubmitAssets: setUploadingAssets,
-    onActionData: setActionData,
-    onDelete: handleDelete,
+  const handleSubmit = ({
+    form,
+    input,
+  }: {
+    form: HTMLFormElement;
+    input: HTMLInputElement;
+  }) => {
+    const formData = toFormData(type, input);
+    submit(formData, {
+      method: form.method as FormMethod,
+      action: form.action,
+      encType: form.enctype as FormEncType,
+    });
+    toPreviewAssets(formData)
+      .then((previewAssets) => {
+        setAssets([...previewAssets, ...assets]);
+      })
+      .catch((error) => {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        }
+      });
   };
+
+  const assetsByType = useMemo(
+    () => filterByType(assets, type),
+    [assets, type]
+  );
+
+  return { handleSubmit, Form, assets: assetsByType, handleDelete };
 };

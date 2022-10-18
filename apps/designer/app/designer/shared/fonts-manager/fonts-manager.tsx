@@ -63,9 +63,9 @@ type FontsManagerProps = {
 };
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
-  const { assets, onSubmitAssets, onActionData, onDelete } = useAssets("font");
+  const { assets, handleDelete } = useAssets("font");
 
-  const handleDelete = (family: string) => {
+  const handleDeleteByLabel = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
     const ids = assets
       .filter(
@@ -76,7 +76,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           asset.meta.family === family
       )
       .map((asset) => asset.id);
-    onDelete(ids);
+    handleDelete(ids);
   };
 
   const fontItems = useMemo(() => getItems(assets), [assets]);
@@ -104,11 +104,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       css={{ padding: "$1", paddingTop: "$2", height: 460, overflow: "hidden" }}
     >
       <Box css={{ padding: "$2" }}>
-        <AssetUpload
-          onSubmit={onSubmitAssets}
-          onActionData={onActionData}
-          type="font"
-        />
+        <AssetUpload type="font" />
       </Box>
 
       <Flex
@@ -132,7 +128,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                   {item.label}
                   <ItemMenu
                     onDelete={() => {
-                      handleDelete(item.label);
+                      handleDeleteByLabel(item.label);
                     }}
                   />
                 </ComboboxListboxItem>
