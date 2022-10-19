@@ -1,7 +1,7 @@
 import { ImageIcon } from "@webstudio-is/icons";
 import { ImageManager } from "~/designer/shared/image-manager";
 import { TabName } from "../../types";
-import { Header } from "../../lib/header";
+import { Header, CloseButton } from "../../lib/header";
 
 export const TabContent = ({
   onSetActiveTab,
@@ -12,9 +12,7 @@ export const TabContent = ({
     <>
       <Header
         title="Assets"
-        onClose={() => {
-          onSetActiveTab("none");
-        }}
+        suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
       <ImageManager />
     </>

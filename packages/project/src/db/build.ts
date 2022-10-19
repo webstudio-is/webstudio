@@ -61,10 +61,42 @@ export async function loadByProjectId(
   return parseBuild(build);
 }
 
+export const addPage = async (
+  buildId: Build["id"],
+  data: { name: string; path: string }
+) => {
+  const build = await loadById(buildId);
+
+  const breakpoints = await db.breakpoints.load(buildId);
+  const tree = await db.tree.create(
+    db.tree.createRootInstance(breakpoints.values)
+  );
+
+  const nextPages = Pages.parse({
+    homePage: build.pages.homePage,
+    pages: [
+      ...build.pages.pages,
+      {
+        id: uuid(),
+        name: data.name,
+        path: data.path,
+        title: data.name,
+        meta: {},
+        treeId: tree.id,
+      },
+    ],
+  });
+
+  const newBuild = await prisma.build.update({
+    where: { id: buildId },
+    data: { pages: JSON.stringify(nextPages) },
+  });
+
+  return parseBuild(newBuild);
+};
+
 const createPages = async (breakpoints: Array<Breakpoint>) => {
-  // const breakpoints = db.breakpoints.getBreakpointsWithId();
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
-  // await db.breakpoints.create(tree.id, breakpoints);
   return Pages.parse({
     homePage: {
       id: uuid(),

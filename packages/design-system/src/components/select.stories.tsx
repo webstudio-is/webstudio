@@ -64,7 +64,7 @@ export const WithComplexItems: ComponentStory<typeof Select> = () => {
 export const Boundaries: ComponentStory<typeof Select> = () => {
   const items = Array(100)
     .fill(0)
-    .map((_, i) => `Item ${i}`);
+    .map((_, index) => `Item ${index}`);
   const [value, setValue] = React.useState(items[0]);
   return (
     <Select name="fruit" options={items} value={value} onChange={setValue} />

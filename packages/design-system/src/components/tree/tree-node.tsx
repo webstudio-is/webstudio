@@ -53,8 +53,8 @@ const NestingLines = ({
 }) =>
   level > 1 ? (
     <>
-      {Array.from({ length: level - 1 }, (_, i) => (
-        <NestingLine key={i} isSelected={isSelected} />
+      {Array.from({ length: level - 1 }, (_, index) => (
+        <NestingLine key={index} isSelected={isSelected} />
       ))}
     </>
   ) : null;
