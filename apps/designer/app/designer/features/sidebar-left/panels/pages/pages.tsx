@@ -101,7 +101,11 @@ const PagesPanel = ({
         suffix={
           <>
             {onNewPage && (
-              <IconButton size="2" onClick={onNewPage} aria-label="New Page">
+              <IconButton
+                size="2"
+                onClick={() => onNewPage()}
+                aria-label="New Page"
+              >
                 <NewPageIcon />
               </IconButton>
             )}
