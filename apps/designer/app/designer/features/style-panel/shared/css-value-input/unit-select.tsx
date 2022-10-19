@@ -83,12 +83,12 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   display: "inline-flex",
   alignItems: "center",
   color: "$hiContrast",
+  "&:hover": {
+    backgroundColor: "$slate6",
+  },
   "&:focus": {
     backgroundColor: "$blue10",
     color: "$loContrast",
-  },
-  "&:hover": {
-    backgroundColor: "$slate6",
   },
 });
 

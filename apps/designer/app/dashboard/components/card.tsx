@@ -65,7 +65,6 @@ export const SelectProjectCard = ({
                 }}
               />
               <Button
-                size={2}
                 disabled={
                   newProject.length === 0 || transition.state === "submitting"
                 }
@@ -81,9 +80,7 @@ export const SelectProjectCard = ({
             ) : null}
           </Form>
         ) : (
-          <Button onClick={handleOpen} size={2}>
-            Open
-          </Button>
+          <Button onClick={handleOpen}>Open</Button>
         )}
       </Flex>
     </Card>
