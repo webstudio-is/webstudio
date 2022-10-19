@@ -37,9 +37,14 @@ export default () => {
           );
 
           if (build === undefined) {
-            throw new Error(
-              `Build not found for breakpoint ${breakpoint.treeId}`
+            // eslint-disable-next-line no-console
+            console.warn(
+              `Build not found for breakpoint ${breakpoint.treeId}. Deleting!`
             );
+
+            return prisma.breakpoints.delete({
+              where: { treeId: breakpoint.treeId },
+            });
           }
 
           return prisma.breakpoints.update({
