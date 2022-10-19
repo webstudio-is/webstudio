@@ -1,10 +1,14 @@
-import { TreeNodeLabel, TreeNode } from "@webstudio-is/design-system";
+import {
+  TreeNodeLabel,
+  TreeNode,
+  IconButton,
+} from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
-import { PageIcon } from "@webstudio-is/icons";
+import { NewPageIcon, PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
-import { Header } from "../../lib/header";
+import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Config } from "~/config";
 import {
@@ -12,6 +16,8 @@ import {
   usePages,
   useProject,
 } from "~/designer/shared/nano-states";
+import { SettingsPanel } from "./settings-panel";
+import { NewPageSettings } from "./settings";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -60,20 +66,24 @@ const staticTreeProps = {
     }
 
     return (
-      <TreeNodeLabel
-        isSelected={props.isSelected}
-        text={props.data.data.name}
-      />
+      <>
+        <TreeNodeLabel
+          isSelected={props.isSelected}
+          text={props.data.data.name}
+        />
+      </>
     );
   },
 };
 
 const PagesPanel = ({
   onClose,
+  onNewPage,
   onSelect,
   selectedPageId,
 }: {
-  onClose: () => void;
+  onClose?: () => void;
+  onNewPage?: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
 }) => {
@@ -86,7 +96,23 @@ const PagesPanel = ({
 
   return (
     <>
-      <Header title="Pages" onClose={onClose} />
+      <Header
+        title="Pages"
+        suffix={
+          <>
+            {onNewPage && (
+              <IconButton
+                size="2"
+                onClick={() => onNewPage()}
+                aria-label="New Page"
+              >
+                <NewPageIcon />
+              </IconButton>
+            )}
+            {onClose && <CloseButton onClick={onClose} />}
+          </>
+        }
+      />
       <TreeNode
         hideRoot
         selectedItemId={selectedPageId}
@@ -110,16 +136,31 @@ export const TabContent = (props: TabContentProps) => {
     navigate(`${props.config.designerPath}/${project.id}?pageId=${pageId}`);
   };
 
-  if (currentPageId === undefined) {
+  const [newPageOpen, setNewPageOpen] = useState(false);
+
+  if (currentPageId === undefined || project === undefined) {
     return null;
   }
 
   return (
-    <PagesPanel
-      onClose={() => props.onSetActiveTab("none")}
-      onSelect={handleSelect}
-      selectedPageId={currentPageId}
-    />
+    <>
+      <PagesPanel
+        onClose={() => props.onSetActiveTab("none")}
+        onNewPage={() => setNewPageOpen((current) => !current)}
+        onSelect={handleSelect}
+        selectedPageId={currentPageId}
+      />
+      <SettingsPanel isOpen={newPageOpen}>
+        <NewPageSettings
+          projectId={project.id}
+          onClose={() => setNewPageOpen(false)}
+          onSuccess={(page) => {
+            setNewPageOpen(false);
+            handleSelect(page.id);
+          }}
+        />
+      </SettingsPanel>
+    </>
   );
 };
 

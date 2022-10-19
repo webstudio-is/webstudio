@@ -24,7 +24,7 @@ export {
 export { Card } from "./components/card";
 export { SimpleToggle } from "./components/simple-toggle";
 export { ScrollArea } from "./components/scrollbar";
-export { Tooltip } from "./components/tooltip";
+export { Tooltip, InputErrorsTooltip } from "./components/tooltip";
 export { Button } from "./components/button";
 export { IconButton } from "./components/icon-button";
 export { Box } from "./components/box";
