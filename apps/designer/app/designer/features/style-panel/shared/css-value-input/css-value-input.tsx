@@ -25,13 +25,12 @@ import {
 } from "react";
 import { useUnitSelect } from "./unit-select";
 
-const defaultKeywords: [] = [];
-const defaultValue: UnsetValue = { type: "unset", value: "" };
+const unsetValue: UnsetValue = { type: "unset", value: "" };
 
 const isNumericString = (input: string) =>
   String(input).trim().length !== 0 && isNaN(Number(input)) === false;
 
-// We incrment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by by 1 otherwise.
+// We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
   value: number,
   { altKey, shiftKey, key }: { altKey: boolean; shiftKey: boolean; key: string }
@@ -87,10 +86,11 @@ const useScrub = ({
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
   const onChangeCompleteRef = useRef(onChangeComplete);
-  onChangeCompleteRef.current = onChangeComplete;
   const valueRef = useRef(value);
+
+  onChangeCompleteRef.current = onChangeComplete;
+  onChangeRef.current = onChange;
   valueRef.current = value;
 
   const type = valueRef.current.type;
@@ -200,8 +200,8 @@ type CssValueInputProps = {
 
 export const CssValueInput = ({
   property,
-  value = defaultValue,
-  keywords = defaultKeywords,
+  value = unsetValue,
+  keywords = [],
   onChange,
   onChangeComplete,
   onItemHighlight,
@@ -220,7 +220,7 @@ export const CssValueInput = ({
     value,
     itemToString: (item) => (item === null ? "" : String(item.value)),
     onItemSelect: (value) => {
-      onChangeComplete(value ?? defaultValue);
+      onChangeComplete(value ?? unsetValue);
     },
     onItemHighlight,
   });
