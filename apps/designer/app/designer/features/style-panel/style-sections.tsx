@@ -17,6 +17,7 @@ import {
 } from "./controls";
 import { ShowMore } from "./shared/show-more";
 import { LayoutSection, SpacingSection } from "./sections";
+import { BackgroundImageControl } from "./controls/background-image/background-image-control";
 import { PropertyName } from "./shared/property-name";
 
 export type PropertyProps = {
@@ -146,4 +147,5 @@ const controls: {
   Color: ColorControl,
   Select: SelectControl,
   FontFamily: FontFamilyControl,
+  Image: BackgroundImageControl,
 };

@@ -194,12 +194,12 @@ export const Button = styled("button", {
         color: "$slate11",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slate5",
+            backgroundColor: "$slate6",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$slate5",
+          backgroundColor: "$slate6",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
@@ -212,12 +212,12 @@ export const Button = styled("button", {
         pointerEvents: "none",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slate5",
+            backgroundColor: "$slate6",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$slate5",
+          backgroundColor: "$slate6",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8",

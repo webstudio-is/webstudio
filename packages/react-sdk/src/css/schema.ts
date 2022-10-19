@@ -19,8 +19,13 @@ export const KeywordValue = z.object({
   // @todo use exact type
   value: z.string(),
 });
-
 export type KeywordValue = z.infer<typeof KeywordValue>;
+
+export const FontFamilyValue = z.object({
+  type: z.literal("fontFamily"),
+  value: z.array(z.string()),
+});
+export type FontFamilyValue = z.infer<typeof FontFamilyValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
@@ -28,12 +33,12 @@ export const InvalidValue = z.object({
   type: z.literal("invalid"),
   value: z.string(),
 });
+export type InvalidValue = z.infer<typeof InvalidValue>;
 
 export const UnsetValue = z.object({
   type: z.literal("unset"),
   value: z.literal(""),
 });
-
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
 export const StyleValue = z.union([
@@ -41,6 +46,7 @@ export const StyleValue = z.union([
   KeywordValue,
   InvalidValue,
   UnsetValue,
+  FontFamilyValue,
 ]);
 
 export type StyleValue = z.infer<typeof StyleValue>;

@@ -49,7 +49,7 @@ export const loader: LoaderFunction = async ({
     }
 
     const canvasData = await loadCanvasData(
-      project.id,
+      project,
       mode === "published" ? "prod" : "dev",
       pathname
     );

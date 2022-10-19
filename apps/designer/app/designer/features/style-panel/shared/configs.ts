@@ -47,7 +47,13 @@ type BaseStyleConfig = {
 };
 
 // @todo make it use actual list of controls
-export type Control = "Text" | "Color" | "Menu" | "Select" | "FontFamily";
+export type Control =
+  | "Text"
+  | "Color"
+  | "Menu"
+  | "Select"
+  | "FontFamily"
+  | "Image";
 
 export type StyleConfig = BaseStyleConfig & {
   control: Control;
@@ -63,7 +69,10 @@ const getControl = (property: StyleProperty): Control => {
 
   switch (property) {
     case "fontFamily": {
-      return isFeatureEnabled("assets") ? "FontFamily" : "Text";
+      return isFeatureEnabled("fonts") ? "FontFamily" : "Text";
+    }
+    case "backgroundImage": {
+      return isFeatureEnabled("assets") ? "Image" : "Text";
     }
   }
 

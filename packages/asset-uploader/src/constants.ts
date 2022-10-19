@@ -1,2 +1,3 @@
 export const DEFAULT_UPLOAD_PATH = "public/uploads";
-export const FONT_FORMATS = ["ttf", "woff", "woff2", "otf"] as const;
+// By default using Vercel's limit https://vercel.com/docs/concepts/limits/overview#serverless-function-payload-size-limit
+export const MAX_UPLOAD_SIZE = "4.5";

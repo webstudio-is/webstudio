@@ -2,11 +2,12 @@ import { z } from "zod";
 import {
   type UploadHandlerPart,
   unstable_parseMultipartFormData,
+  MaxPartSizeExceededError,
 } from "@remix-run/node";
 import { PutObjectCommandInput } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { Location } from "@webstudio-is/prisma-client";
-import { S3EnvVariables } from "../../schema";
+import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createMany } from "../../db";
@@ -64,7 +65,7 @@ const uploadHandler = async ({
   const data = await toUint8Array(file.data);
 
   if (data.byteLength > maxSize) {
-    throw new Error(`Asset cannot be bigger than ${maxSize}MB`);
+    throw new MaxPartSizeExceededError(file.name, maxSize);
   }
 
   if (file.filename === undefined) {
@@ -73,14 +74,14 @@ const uploadHandler = async ({
 
   const uniqueFilename = getUniqueFilename(file.filename);
 
-  const s3Envs = S3EnvVariables.parse(process.env);
+  const s3Env = S3Env.parse(process.env);
 
   // if there is no ACL passed we do not default since some providers do not support it
-  const ACL = s3Envs.S3_ACL ? { ACL: s3Envs.S3_ACL } : {};
+  const ACL = s3Env.S3_ACL ? { ACL: s3Env.S3_ACL } : {};
 
   const params: PutObjectCommandInput = {
     ...ACL,
-    Bucket: s3Envs.S3_BUCKET,
+    Bucket: s3Env.S3_BUCKET,
     Key: encodeURIComponent(uniqueFilename),
     Body: data,
     ContentType: file.contentType,

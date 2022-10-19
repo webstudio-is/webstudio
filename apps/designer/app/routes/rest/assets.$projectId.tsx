@@ -1,44 +1,35 @@
-// @todo this file structure is WIP
-// What we actually need is load assets panel based on a route and only load
-// data, js etc for assets when we are on that route
-
 import { ActionFunction } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
 import {
-  deleteAsset,
+  deleteAssets,
   uploadAssets,
 } from "@webstudio-is/asset-uploader/index.server";
 import { toast } from "@webstudio-is/design-system";
 import { useEffect } from "react";
 import { zfd } from "zod-form-data";
 import type { ActionData } from "~/designer/shared/assets";
+import { sentryException } from "~/shared/sentry";
 
-const DeleteAssetInput = zfd.formData({
-  assetId: zfd.text(),
-  assetName: zfd.text(),
+const DeleteAssets = zfd.formData({
+  assetId: zfd.repeatableOfType(zfd.text()),
 });
 
 export const action: ActionFunction = async ({
   request,
   params,
 }): Promise<ActionData | undefined> => {
-  if (params.id === undefined) throw new Error("Project id undefined");
+  if (params.projectId === undefined) throw new Error("Project id undefined");
   try {
     if (request.method === "DELETE") {
-      const { assetId, assetName } = DeleteAssetInput.parse(
-        await request.formData()
-      );
-      const deletedAsset = await deleteAsset({
-        id: assetId,
-        name: assetName,
-      });
-      return { deletedAsset };
+      const { assetId: ids } = DeleteAssets.parse(await request.formData());
+      const deletedAssets = await deleteAssets(ids);
+      return { deletedAssets };
     }
 
     if (request.method === "POST") {
       const assets = await uploadAssets({
         request,
-        projectId: params.id,
+        projectId: params.projectId,
       });
       return {
         uploadedAssets: assets.map((asset) => ({
@@ -49,6 +40,7 @@ export const action: ActionFunction = async ({
     }
   } catch (error) {
     if (error instanceof Error) {
+      sentryException({ error });
       return {
         errors: error.message,
       };
