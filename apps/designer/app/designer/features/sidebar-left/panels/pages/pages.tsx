@@ -4,7 +4,7 @@ import {
   IconButton,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
-import { Cross1Icon, NewPageIcon, PageIcon } from "@webstudio-is/icons";
+import { NewPageIcon, PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
