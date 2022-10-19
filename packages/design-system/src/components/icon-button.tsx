@@ -42,22 +42,22 @@ export const IconButton = styled("button", {
       "1": {
         borderRadius: 2,
         height: "$5",
-        width: "min($5, 100%)",
+        width: "$5",
       },
       "2": {
         borderRadius: "$1",
         height: "$6",
-        width: "min($6, 100%)",
+        width: "$6",
       },
       "3": {
         borderRadius: "$1",
         height: "$7",
-        width: "min($7, 100%)",
+        width: "$7",
       },
       "4": {
         borderRadius: "$2",
         height: "$8",
-        width: "min($8, 100%)",
+        width: "$8",
       },
     },
     state: {
