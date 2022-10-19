@@ -1,22 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
-import { RocketIcon, ExternalLinkIcon } from "@webstudio-is/icons";
-import { type Project } from "@webstudio-is/prisma-client";
+import { ExternalLinkIcon, RocketIcon } from "@webstudio-is/icons";
 import {
+  Text,
   Button,
   Flex,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  TextField,
-  __DEPRECATED__Text,
   Label,
   Link,
+  Popover,
+  PopoverContent,
+  PopoverPortal,
+  PopoverTrigger,
+  TextField,
   useId,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
-
+import type { Project } from "@webstudio-is/project";
 type PublishButtonProps = { project: Project };
 
 const getHost = () => {
@@ -43,6 +43,7 @@ const Content = ({ project }: PublishButtonProps) => {
   return (
     <PopoverContent
       css={{ padding: "$3" }}
+      hideArrow={true}
       onFocusOutside={(event) => {
         // Used to prevent closing when opened from the main dropdown menu
         event.preventDefault();
@@ -59,15 +60,7 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: "$0",
               }}
             >
-              <__DEPRECATED__Text
-                css={{
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {`${domain}.${getHost()}`}{" "}
-              </__DEPRECATED__Text>
+              <Text truncate>{`${domain}.${getHost()}`}</Text>
               <ExternalLinkIcon />
             </Link>
           )}
@@ -77,9 +70,7 @@ const Content = ({ project }: PublishButtonProps) => {
             <TextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
-            <__DEPRECATED__Text variant="red">
-              {fetcher.data?.errors}
-            </__DEPRECATED__Text>
+            <Text color="error">{fetcher.data?.errors}</Text>
           )}
           {fetcher.state === "idle" ? (
             <Button variant="blue" type="submit">
@@ -101,10 +92,12 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
       <PopoverTrigger asChild aria-label="Publish">
         <Button ghost css={{ display: "flex", gap: "$1" }}>
           <RocketIcon />
-          <__DEPRECATED__Text size="1">Publish</__DEPRECATED__Text>
+          <Text>Publish</Text>
         </Button>
       </PopoverTrigger>
-      <Content project={project} />
+      <PopoverPortal>
+        <Content project={project} />
+      </PopoverPortal>
     </Popover>
   );
 };

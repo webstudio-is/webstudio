@@ -1,47 +1,48 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import {
-  useSubscribe,
-  usePublish,
-  type Publish,
-} from "@webstudio-is/react-sdk";
-import { type Project } from "@webstudio-is/prisma-client";
+  type Pages,
+  type Project,
+  utils as projectUtils,
+} from "@webstudio-is/project";
 import type { Config } from "~/config";
-import type {
-  HoveredInstanceData,
-  SelectedInstanceData,
-} from "~/shared/canvas-components";
-import { Box, Flex, Grid, type CSS } from "@webstudio-is/design-system";
+import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
+  useAssets,
   useHoveredInstanceData,
+  usePages,
+  useProject,
+  useCurrentPageId,
   useSelectedInstanceData,
   useSyncStatus,
 } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
-import { Breadcrumbs } from "./features/breadcrumbs";
+import { Footer } from "./features/footer";
 import { TreePrevew } from "./features/tree-preview";
 import {
-  useUpdateCanvasWidth,
   useSubscribeBreakpoints,
+  useUpdateCanvasWidth,
 } from "./features/breakpoints";
 import {
+  CanvasIframe,
   useReadCanvasRect,
   Workspace,
-  CanvasIframe,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import { type SyncStatus } from "~/shared/sync";
 import {
+  useDragAndDropState,
   useIsPreviewMode,
   useRootInstance,
-  useDragAndDropState,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
+import { Asset } from "@webstudio-is/asset-uploader";
+import env from "~/shared/env";
 
 export const links = () => {
   return [
@@ -52,25 +53,52 @@ export const links = () => {
 
 const useSubscribeRootInstance = () => {
   const [, setValue] = useRootInstance();
-  useSubscribe<"loadRootInstance">("loadRootInstance", setValue);
+  useSubscribe("loadRootInstance", setValue);
 };
 
 const useSubscribeSelectedInstanceData = () => {
   const [, setValue] = useSelectedInstanceData();
-  useSubscribe<"selectInstance", SelectedInstanceData>(
-    "selectInstance",
-    setValue
-  );
+  useSubscribe("selectInstance", setValue);
 };
 
 const useSubscribeHoveredInstanceData = () => {
   const [, setValue] = useHoveredInstanceData();
-  useSubscribe<"hoverInstance", HoveredInstanceData>("hoverInstance", setValue);
+  useSubscribe("hoverInstance", setValue);
 };
 
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
-  useSubscribe<"syncStatus", SyncStatus>("syncStatus", setValue);
+  useSubscribe("syncStatus", setValue);
+};
+
+const useSetAssets = (assets?: Array<Asset>) => {
+  const [, setAssets] = useAssets();
+  useEffect(() => {
+    if (assets) {
+      setAssets(assets);
+    }
+  }, [assets, setAssets]);
+};
+
+const useSetProject = (project: Project) => {
+  const [, setProject] = useProject();
+  useEffect(() => {
+    setProject(project);
+  }, [project, setProject]);
+};
+
+const useSetPages = (pages: Pages) => {
+  const [, setPages] = usePages();
+  useEffect(() => {
+    setPages(pages);
+  }, [pages, setPages]);
+};
+
+const useSetCurrentPageId = (pageId: string) => {
+  const [, setCurrentPageId] = useCurrentPageId();
+  useEffect(() => {
+    setCurrentPageId(pageId);
+  }, [pageId, setCurrentPageId]);
 };
 
 const useNavigatorLayout = () => {
@@ -78,6 +106,12 @@ const useNavigatorLayout = () => {
   // Otherwise we may show the detached state because its the default and then hide it immediately.
   const [clientSettings, _, isLoaded] = useClientSettings();
   return isLoaded ? clientSettings.navigatorLayout : "docked";
+};
+
+export const useSubscribeCanvasReady = (publish: Publish) => {
+  useSubscribe("canvasReady", () => {
+    publish({ type: "canvasReadyAck" });
+  });
 };
 
 type SidePanelProps = {
@@ -108,11 +142,9 @@ const SidePanel = ({
         height: "100%",
         ...css,
         "&:first-of-type": {
-          boxShadow: "inset -1px 0 0 0 $colors$gray7",
+          boxShadow: "inset -1px 0 0 0 $colors$panelOutline",
         },
-        "&:last-of-type": {
-          boxShadow: "inset 1px 0 0 0 $colors$gray7",
-        },
+        "&:last-of-type": { boxShadow: "inset 1px 0 0 0 $colors$panelOutline" },
       }}
     >
       {children}
@@ -223,23 +255,37 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
   );
 };
 
-type DesignerProps = {
+export type DesignerProps = {
   config: Config;
   project: Project;
+  pages: Pages;
+  pageId: string;
+  buildOrigin: string;
 };
 
-export const Designer = ({ config, project }: DesignerProps) => {
+export const Designer = ({
+  config,
+  project,
+  pages,
+  pageId,
+  buildOrigin,
+}: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
+  useSetAssets(project.assets);
+  useSetProject(project);
+  useSetPages(pages);
+  useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
+  useSubscribeCanvasReady(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -250,6 +296,28 @@ export const Designer = ({ config, project }: DesignerProps) => {
     [publishRef, onRefReadCanvasWidth, onRefReadCanvas]
   );
 
+  const page = useMemo(() => {
+    const page = projectUtils.pages.findById(pages, pageId);
+    if (page === undefined) {
+      throw new Error(`Page with id ${pageId} not found`);
+    }
+    return page;
+  }, [pages, pageId]);
+
+  const buildUrl = new URL(buildOrigin);
+  buildUrl.pathname = page.path;
+  if (env.BUILD_REQUIRE_SUBDOMAIN) {
+    buildUrl.host = `${project.domain}.${buildUrl.host}`;
+  } else {
+    buildUrl.searchParams.set("projectId", project.id);
+  }
+
+  buildUrl.searchParams.set("mode", "edit");
+  const canvasUrl = buildUrl.toString();
+
+  buildUrl.searchParams.set("mode", "preview");
+  const previewUrl = buildUrl.toString();
+
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>
       <Topbar
@@ -257,12 +325,13 @@ export const Designer = ({ config, project }: DesignerProps) => {
         config={config}
         project={project}
         publish={publish}
+        previewUrl={previewUrl}
       />
       <Main>
         <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
           <CanvasIframe
             ref={iframeRefCallback}
-            src={`${config.canvasPath}/${project.id}`}
+            src={canvasUrl}
             pointerEvents={
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "none"
@@ -277,7 +346,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft assets={project.assets} publish={publish} />
+        <SidebarLeft publish={publish} config={config} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel
@@ -291,7 +360,7 @@ export const Designer = ({ config, project }: DesignerProps) => {
           <Inspector publish={publish} />
         )}
       </SidePanel>
-      <Breadcrumbs publish={publish} />
+      <Footer publish={publish} />
     </ChromeWrapper>
   );
 };

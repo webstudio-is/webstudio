@@ -1,6 +1,5 @@
 import {
   type ChildrenUpdates,
-  publish,
   useAllUserProps,
   type Instance,
 } from "@webstudio-is/react-sdk";
@@ -10,6 +9,13 @@ import { LexicalComposer, ContentEditable } from "./lexical";
 import { TreeViewPlugin } from "./plugins/tree-view-plugin";
 import { config } from "./config";
 import Editor from "./editor";
+import { publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    insertInlineInstance: Instance;
+  }
+}
 
 type ExampleTextEditorProps = {
   onChange: (state: ChildrenUpdates) => void;

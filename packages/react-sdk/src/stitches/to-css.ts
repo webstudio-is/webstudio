@@ -1,9 +1,18 @@
-import type { CSS } from "./css";
+import type { CSS } from "./stitches";
 import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
+import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 
 export const toValue = (value: StyleValue): string => {
   if (value.type === "unit") {
     return value.value + (value.unit === "number" ? "" : value.unit);
+  }
+  if (value.type === "fontFamily") {
+    const family = value.value[0];
+    const fallbacks = SYSTEM_FONTS.get(family);
+    if (Array.isArray(fallbacks)) {
+      return [...value.value, ...fallbacks].join(", ");
+    }
+    return [...value.value, DEFAULT_FONT_FALLBACK].join(", ");
   }
   return value.value;
 };

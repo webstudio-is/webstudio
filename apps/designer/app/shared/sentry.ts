@@ -15,7 +15,6 @@ export const initSentry = ({
     : () => null;
 
 type SentryHelperProps = {
-  message: string;
   extras?: Extras;
   skipLogging?: boolean;
 };
@@ -24,7 +23,7 @@ export const sentryMessage = ({
   message,
   extras,
   skipLogging = false,
-}: SentryHelperProps) => {
+}: SentryHelperProps & { message: string }) => {
   if (env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
       if (extras) scope.setExtras(extras);
@@ -39,18 +38,18 @@ export const sentryMessage = ({
 };
 
 export const sentryException = ({
-  message,
+  error,
   extras,
   skipLogging = false,
-}: SentryHelperProps) => {
+}: SentryHelperProps & { error: unknown }) => {
   if (env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
       if (extras) scope.setExtras(extras);
-      Sentry.captureException(message);
+      Sentry.captureException(error);
     });
   }
   if (skipLogging !== true) {
     // eslint-disable-next-line no-console
-    console.error(message);
+    console.error(error);
   }
 };

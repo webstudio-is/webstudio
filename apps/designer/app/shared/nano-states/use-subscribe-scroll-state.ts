@@ -1,7 +1,7 @@
-import { useSubscribe } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { useIsScrolling } from "./nano-states";
 
 export const useSubscribeScrollState = () => {
   const [, setIsScrolling] = useIsScrolling();
-  useSubscribe<"scrollState", boolean>("scrollState", setIsScrolling);
+  useSubscribe("scrollState", setIsScrolling);
 };

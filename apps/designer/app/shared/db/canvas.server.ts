@@ -1,57 +1,50 @@
 import { type Data } from "@webstudio-is/react-sdk";
-import * as db from ".";
-import { Project } from "./project.server";
+import type { Project, Build, Page } from "@webstudio-is/project";
+import { db } from "@webstudio-is/project/index.server";
+import { utils } from "@webstudio-is/project";
 
-export type CanvasData = Data & { project: Project };
+export type CanvasData = Data & { buildId: Build["id"]; page: Page };
 
-export type ErrorData = {
-  errors: string;
-};
+export const loadCanvasData = async (
+  project: Project,
+  env: "dev" | "prod",
+  pagePath = ""
+): Promise<CanvasData | undefined> => {
+  const build =
+    env === "dev"
+      ? await db.build.loadByProjectId(project.id, "dev")
+      : await db.build.loadByProjectId(project.id, "prod");
 
-const loadData = async (projectId: Project["id"]) => {
-  const project = await db.project.loadById(projectId);
+  if (build === undefined) {
+    throw new Error("The project is not published");
+  }
 
-  if (project === null) throw new Error(`Project "${projectId}" not found`);
+  const page = utils.pages.findByPath(build.pages, pagePath);
+
+  if (page === undefined) {
+    return;
+  }
 
   const [tree, props, breakpoints] = await Promise.all([
-    db.tree.loadByProject(project, "development"),
-    db.props.loadByProject(project, "development"),
-    db.breakpoints.load(project.devTreeId),
+    db.tree.loadById(page.treeId),
+    db.props.loadByTreeId(page.treeId),
+    db.breakpoints.load(build.id),
   ]);
 
   if (tree === null) {
-    throw new Error(
-      `Tree ${project.devTreeId} not found for project ${projectId}`
-    );
+    throw new Error(`Tree not found for project ${project.id}`);
   }
 
   if (breakpoints === null) {
-    throw new Error(`Breakpoints not found for project ${projectId}`);
+    throw new Error(`Breakpoints not found for project ${project.id}`);
   }
 
   return {
     tree,
     props,
-    project,
     breakpoints: breakpoints.values,
+    buildId: build.id,
+    page,
+    assets: project.assets ?? [],
   };
-};
-
-export const loadCanvasData = async ({
-  projectId,
-}: {
-  projectId: Project["id"];
-}): Promise<CanvasData | ErrorData> => {
-  return await loadData(projectId);
-};
-
-export type PreviewData = Data;
-
-export const loadPreviewData = async ({
-  projectId,
-}: {
-  projectId: Project["id"];
-}): Promise<PreviewData | ErrorData> => {
-  const { tree, props, breakpoints } = await loadData(projectId);
-  return { tree, props, breakpoints };
 };

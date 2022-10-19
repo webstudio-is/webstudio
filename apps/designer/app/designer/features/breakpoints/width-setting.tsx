@@ -3,9 +3,9 @@ import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
-import { Slider, __DEPRECATED__Text, Flex } from "@webstudio-is/design-system";
-import { sort } from "~/shared/breakpoints";
+import { Text, Flex, Slider } from "@webstudio-is/design-system";
 import { useBreakpoints, useIsPreviewMode } from "~/shared/nano-states";
+import { utils } from "@webstudio-is/project";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 50;
@@ -18,7 +18,10 @@ const useNextBreakpoint = () => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const [breakpoints] = useBreakpoints();
 
-  const sortedBreakpoints = useMemo(() => sort(breakpoints), [breakpoints]);
+  const sortedBreakpoints = useMemo(
+    () => utils.breakpoints.sort(breakpoints),
+    [breakpoints]
+  );
 
   return useMemo(() => {
     if (selectedBreakpoint === undefined) return;
@@ -51,7 +54,7 @@ export const WidthSetting = () => {
 
   return (
     <Flex css={{ px: "$5", py: "$1" }} gap="1" direction="column">
-      <__DEPRECATED__Text size="1">Canvas width</__DEPRECATED__Text>
+      <Text>Canvas width</Text>
       <Flex gap="3" align="center">
         <Slider
           min={min}
@@ -61,7 +64,7 @@ export const WidthSetting = () => {
             setValue(value);
           }}
         />
-        <__DEPRECATED__Text size="1">{`${value}px`}</__DEPRECATED__Text>
+        <Text>{`${value}px`}</Text>
       </Flex>
     </Flex>
   );

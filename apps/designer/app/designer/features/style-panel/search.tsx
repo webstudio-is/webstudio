@@ -1,15 +1,8 @@
-import { useState } from "react";
-import { css, IconButton, TextField } from "@webstudio-is/design-system";
-import { Cross1Icon } from "@webstudio-is/icons";
-
-const formStyle = css({
-  position: "relative",
-});
-
-const resetStyle = css({
-  position: "absolute",
-  right: 0,
-});
+import { useRef, useState } from "react";
+import { IconButton, TextField } from "@webstudio-is/design-system";
+import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
+import { components } from "@webstudio-is/react-sdk";
+import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 type OnSearch = (search: string) => void;
 
@@ -26,52 +19,40 @@ const useSearch = (onSearch: OnSearch): [string, OnSearch] => {
 
 type SearchProps = {
   onSearch: OnSearch;
+  selectedInstanceData: SelectedInstanceData;
 };
 
-export const Search = ({ onSearch }: SearchProps) => {
+export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
   const [search, setSearch] = useSearch(onSearch);
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <form
-      className={formStyle()}
-      onReset={() => {
-        setSearch("");
+    <TextField
+      type="search"
+      value={search}
+      inputRef={inputRef}
+      prefix={
+        <IconButton aria-label="Search">
+          <MagnifyingGlassIcon />
+        </IconButton>
+      }
+      suffix={
+        search.length > 0 && (
+          <IconButton
+            aria-label="Reset search"
+            onClick={() => {
+              setSearch("");
+              inputRef.current?.focus();
+            }}
+          >
+            <Cross2Icon />
+          </IconButton>
+        )
+      }
+      placeholder={components[selectedInstanceData.component].label}
+      onChange={(event) => {
+        const { value } = event.target;
+        setSearch(value.toLowerCase());
       }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.currentTarget.reset();
-        }
-      }}
-    >
-      <TextField
-        value={search}
-        css={{
-          padding: "$2",
-          boxShadow: "0 0 0 1px $colors$slate7",
-          bc: "$colors$slate3",
-          "&:focus": {
-            bc: "$colors$slate1",
-            boxShadow: "0 0 0 2px $colors$blue10",
-          },
-        }}
-        placeholder="Search property or value"
-        onChange={(event) => {
-          const { value } = event.target;
-          setSearch(value.toLowerCase());
-        }}
-      />
-      <IconButton
-        disabled={search.length === 0}
-        type="reset"
-        aria-label="Reset search"
-        className={resetStyle()}
-        css={{
-          // @todo: feels wrong to use transform for this, would setting width/height on the icon directly be a better approach?
-          transform: "scale(.75)",
-          "&:disabled path": { fill: "none" },
-        }}
-      >
-        <Cross1Icon />
-      </IconButton>
-    </form>
+    />
   );
 };

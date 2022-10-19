@@ -1,10 +1,23 @@
 import { Flex } from "@webstudio-is/design-system";
-import { type Instance, type Publish } from "@webstudio-is/react-sdk";
+import { type Instance } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { useCallback } from "react";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { useRootInstance } from "~/shared/nano-states";
-import { Header } from "../header";
+import { Header, CloseButton } from "../header";
 import { InstanceTree } from "~/designer/shared/tree";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    selectInstanceById: Instance["id"];
+    reparentInstance: {
+      instanceId: Instance["id"];
+      dropTarget: { instanceId: Instance["id"]; position: number | "end" };
+    };
+    deleteInstance: { id: Instance["id"] };
+    navigatorHoveredInstance: { id: Instance["id"] } | undefined;
+  }
+}
 
 type NavigatorProps = {
   publish: Publish;
@@ -18,7 +31,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
 
   const handleSelect = useCallback(
     (instanceId: Instance["id"]) => {
-      publish<"selectInstanceById", Instance["id"]>({
+      publish({
         type: "selectInstanceById",
         payload: instanceId,
       });
@@ -26,16 +39,12 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
     [publish]
   );
 
-  type ReparentInstancePayload = {
-    instanceId: Instance["id"];
-    dropTarget: { instanceId: Instance["id"]; position: number | "end" };
-  };
   const handleDragEnd = useCallback(
     (payload: {
       itemId: string;
       dropTarget: { itemId: string; position: number | "end" };
     }) => {
-      publish<"reparentInstance", ReparentInstancePayload>({
+      publish({
         type: "reparentInstance",
         payload: {
           instanceId: payload.itemId,
@@ -51,9 +60,19 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
 
   const handleDelete = useCallback(
     (instanceId: Instance["id"]) => {
-      publish<"deleteInstance", { id: Instance["id"] }>({
+      publish({
         type: "deleteInstance",
         payload: { id: instanceId },
+      });
+    },
+    [publish]
+  );
+
+  const handleHover = useCallback(
+    (instance: Instance | undefined) => {
+      publish({
+        type: "navigatorHoveredInstance",
+        payload: instance && { id: instance.id },
       });
     },
     [publish]
@@ -62,12 +81,16 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
   if (rootInstance === undefined) return null;
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
-      <Header title="Navigator" onClose={onClose} isClosable={isClosable} />
+      <Header
+        title="Navigator"
+        suffix={isClosable && <CloseButton onClick={() => onClose?.()} />}
+      />
       <Flex css={{ flexGrow: 1, flexDirection: "column" }}>
         <InstanceTree
           root={rootInstance}
           selectedItemId={selectedInstanceData?.id}
           onSelect={handleSelect}
+          onHover={handleHover}
           onDragEnd={handleDragEnd}
           onDelete={handleDelete}
         />

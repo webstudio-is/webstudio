@@ -1,4 +1,5 @@
-import type { Style, StyleProperty, StyleValue, Unit } from "./types";
+import type { StyleProperty } from "./types";
+import type { Style, StyleValue, Unit } from "./schema";
 import { properties } from "./properties";
 import { units } from "./units";
 

@@ -1,9 +1,9 @@
 import type {
   DeleteProp,
-  Publish,
   UserProp,
   UserPropsUpdates,
 } from "@webstudio-is/react-sdk";
+import { type Publish } from "~/shared/pubsub";
 import { componentsMeta } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
@@ -11,6 +11,13 @@ import uniqBy from "lodash/uniqBy";
 import debounce from "lodash/debounce";
 import { useRef, useState } from "react";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    deleteProp: DeleteProp;
+    updateProps: UserPropsUpdates;
+  }
+}
 
 export type handleChangePropType = (
   id: UserProp["id"],
@@ -87,7 +94,7 @@ export const usePropsLogic = ({
   // @todo this may call the last callback after unmount
   // @todo we don't need to debounce change events on select for instance, so debounce is only needed on text inputs
   const updateProps = debounce((updates: UserPropsUpdates["updates"]) => {
-    publish<"updateProps", UserPropsUpdates>({
+    publish({
       type: "updateProps",
       payload: {
         treeId: selectedInstanceData.props.treeId,
@@ -102,7 +109,7 @@ export const usePropsLogic = ({
   }, 100);
 
   const deleteProp = (id: UserProp["id"]) => {
-    publish<"deleteProp", DeleteProp>({
+    publish({
       type: "deleteProp",
       payload: {
         instanceId: selectedInstanceData.id,

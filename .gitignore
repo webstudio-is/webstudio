@@ -41,7 +41,11 @@ yarn-error.log*
 *.db
 *.db-journal
 
+# migrations
+**/prisma/migrations/lockfile
+**/prisma/migrations/*/client
 
 # builds
 packages/**/lib
 generated
+storybook-static

@@ -23,12 +23,12 @@ export const Separator = styled(SeparatorPrimitive.Root, {
       },
       "2": {
         '&[data-orientation="horizontal"]': {
-          height: "1px",
+          height: "2px",
           width: "$7",
         },
 
         '&[data-orientation="vertical"]': {
-          width: "1px",
+          width: "2px",
           height: "$7",
         },
       },

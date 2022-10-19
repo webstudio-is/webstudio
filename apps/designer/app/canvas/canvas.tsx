@@ -1,30 +1,28 @@
 import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
-import * as db from "~/shared/db";
+import type { Build } from "@webstudio-is/project";
 import {
+  createElementsTree,
+  useGlobalStyles,
   type OnChangeChildren,
-  type Data,
   type Tree,
   useAllUserProps,
-  globalStyles,
-  useSubscribe,
-  createElementsTree,
 } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
-  usePopulateRootInstance,
-  useInsertInstance,
   useDeleteInstance,
-  useReparentInstance,
-  usePublishSelectedInstanceData,
+  useInsertInstance,
+  usePopulateRootInstance,
   usePublishRootInstance,
-  useUpdateSelectedInstance,
+  usePublishSelectedInstanceData,
   usePublishSelectedInstanceDataRect,
-  usePublishHoveredInstanceRect,
-  usePublishHoveredInstanceData,
-  useSetHoveredInstance,
-  useUnselectInstance,
   usePublishTextEditingInstanceId,
+  useReparentInstance,
+  useSetHoveredInstance,
+  usePublishHoveredInstanceData,
+  useUnselectInstance,
+  useUpdateSelectedInstance,
 } from "./shared/instance";
 import { useUpdateStyle } from "./shared/style";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
@@ -42,11 +40,11 @@ import {
   useSubscribeScrollState,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
-import { useTrackHoveredElement } from "./shared/use-track-hovered-element";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-
 import { setInstanceChildrenMutable } from "~/shared/tree-utils";
+import { CanvasData } from "~/shared/db";
+import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 
 registerContainers();
 
@@ -77,32 +75,30 @@ const useElementsTree = () => {
 
 const useSubscribePreviewMode = () => {
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
-  useSubscribe<"previewMode", boolean>("previewMode", setIsPreviewMode);
+  useSubscribe("previewMode", setIsPreviewMode);
   return isPreviewMode;
 };
 
 type DesignModeProps = {
   treeId: Tree["id"];
-  project: db.project.Project;
+  buildId: Build["id"];
 };
 
-const DesignMode = ({ treeId, project }: DesignModeProps) => {
+const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useUpdateStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
-  usePublishHoveredInstanceData();
   useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
   useTrackSelectedElement();
-  useTrackHoveredElement();
   useSetHoveredInstance();
-  useSync({ project });
+  usePublishHoveredInstanceData();
+  useSync({ buildId, treeId });
   useUpdateSelectedInstance();
   usePublishSelectedInstanceDataRect();
-  usePublishHoveredInstanceRect();
   useUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();
@@ -112,15 +108,16 @@ const DesignMode = ({ treeId, project }: DesignModeProps) => {
 };
 
 type CanvasProps = {
-  data: Data & { project: db.project.Project };
+  data: CanvasData;
 };
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   if (data.tree === null) {
     throw new Error("Tree is null");
   }
+  const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
-  globalStyles();
+  useGlobalStyles({ assets: data.assets });
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
   // e.g. toggling preview is still needed in both modes
@@ -130,13 +127,13 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
 
   if (elements === undefined) return null;
 
-  if (isPreviewMode) {
+  if (isPreviewMode || isDesignerReady === false) {
     return elements;
   }
 
   return (
     <>
-      <DesignMode treeId={data.tree.id} project={data.project} />
+      <DesignMode treeId={data.tree.id} buildId={data.buildId} />
       {elements}
     </>
   );

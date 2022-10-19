@@ -4,25 +4,25 @@ import {
   IconButton,
   Popover,
   PopoverContent,
+  PopoverPortal,
   PopoverTrigger,
   TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
-import { type Project } from "@webstudio-is/prisma-client";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 
-type ShareButtonProps = { path: string; project: Project };
+type ShareButtonProps = {
+  url: string;
+};
 
-const Content = ({ path, project }: ShareButtonProps) => {
+const Content = ({ url }: ShareButtonProps) => {
   if (typeof location === "undefined") {
     return null;
   }
-  const url = new URL(
-    `${location.protocol}//${location.host}${path}/${project.id}`
-  );
   return (
     <PopoverContent
       css={{ padding: "$3" }}
+      hideArrow={true}
       onFocusOutside={(event) => {
         // Used to prevent closing when opened from the main dropdown menu
         event.preventDefault();
@@ -31,14 +31,14 @@ const Content = ({ path, project }: ShareButtonProps) => {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          window.open(url.toString(), "_blank");
+          window.open(url, "_blank");
         }}
       >
         <Flex gap="2">
           <TextField
             variant="ghost"
             readOnly
-            defaultValue={url.toString()}
+            defaultValue={url}
             onFocus={(event) => {
               event?.target.select();
             }}
@@ -52,7 +52,7 @@ const Content = ({ path, project }: ShareButtonProps) => {
   );
 };
 
-export const ShareButton = ({ path, project }: ShareButtonProps) => {
+export const ShareButton = (props: ShareButtonProps) => {
   const [isOpen, setIsOpen] = useIsShareDialogOpen();
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -61,7 +61,9 @@ export const ShareButton = ({ path, project }: ShareButtonProps) => {
           <Share1Icon />
         </IconButton>
       </PopoverTrigger>
-      <Content path={path} project={project} />
+      <PopoverPortal>
+        <Content {...props} />
+      </PopoverPortal>
     </Popover>
   );
 };

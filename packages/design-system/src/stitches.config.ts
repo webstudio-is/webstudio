@@ -118,7 +118,7 @@ import {
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
-export const {
+const {
   styled,
   css,
   theme,
@@ -195,10 +195,12 @@ export const {
       // Semantic colors
       hiContrast: "$slate12",
       loContrast: "$slate1",
+      hint: "$slate10",
       muted: "$slate6",
       primary: "$blue12",
       canvas: "hsl(0 0% 93%)",
       panel: "white",
+      panelOutline: "hsl(0deg 0% 0% / 10%)",
       transparentPanel: "hsl(0 0% 0% / 97%)",
       shadowLight: "hsl(206 22% 7% / 35%)",
       shadowDark: "hsl(206 22% 7% / 20%)",
@@ -210,6 +212,9 @@ export const {
       sans: "Inter, -apple-system, system-ui, sans-serif",
       mono: "Roboto, menlo, monospace",
     },
+    opacity: {
+      1: "0.4",
+    },
     space: {
       1: "4px",
       2: "8px",
@@ -220,6 +225,7 @@ export const {
       7: "48px",
       8: "64px",
       9: "80px",
+      styleSection: "8px",
     },
     sizes: {
       1: "4px",
@@ -231,6 +237,8 @@ export const {
       7: "48px",
       8: "64px",
       9: "80px",
+      sidebarLeft: "45px",
+      sidebarRight: "240px",
     },
     fontSizes: {
       1: "12px",
@@ -401,6 +409,14 @@ export const {
 
 export type CSS = Stitches.CSS<typeof config>;
 
+export { styled, css, theme, globalCss, keyframes, config };
+
+export const flushCss = () => {
+  const css = getCssText();
+  reset();
+  return css;
+};
+
 export const darkTheme = createTheme({
   colors: {
     ...grayDark,
@@ -462,6 +478,7 @@ export const darkTheme = createTheme({
     ...goldDarkA,
 
     // Semantic colors
+    hint: "$slate10",
     muted: "$slate8",
     primary: "$blue9",
     hiContrast: "$slate12",
@@ -469,10 +486,10 @@ export const darkTheme = createTheme({
     loContrast: "hsl(0 0% 17%)",
     canvas: "hsl(0 0% 15%)",
     panel: "$slate3",
+    panelOutline: "hsl(0deg 0% 100% / 10%)",
     transparentPanel: "hsl(0 100% 100% / 97%)",
     shadowLight: "hsl(206 22% 7% / 35%)",
     shadowDark: "hsl(206 22% 7% / 20%)",
-
     background: "$slate12",
     text: "$slate1",
     dropPlacement: "$blue9",

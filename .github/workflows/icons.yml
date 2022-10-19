@@ -1,10 +1,12 @@
-name: Icons Publish
+name: Icons
 on:
   push:
     paths:
       - "packages/icons/**/*"
-      - ".github/workflows/icons-publish.yml"
+      - ".github/workflows/icons.yml"
       - ".github/actions/publish/action.yaml"
+    branches:    
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -12,5 +14,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/publish
         with:
-          package: "./packages/icons/package.json"
+          workdir: ./packages/icons
+          filter: "@webstudio-is/icons"
           token: ${{ secrets.NPM_TOKEN }}

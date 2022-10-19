@@ -12,6 +12,10 @@
     },
     "storybook:run": {
       "cache": false
+    },
+    "storybook:build": {
+      "dependsOn": ["@webstudio-is/icons#build"],
+      "cache": false
     }
   }
 }

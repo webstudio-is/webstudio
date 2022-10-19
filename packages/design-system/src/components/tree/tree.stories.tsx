@@ -20,31 +20,39 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
       canAcceptChildren: true,
       children: Array.from(
         { length: 100 },
-        (_, i): Item => ({
-          id: `box-${i}`,
+        (_, index): Item => ({
+          id: `box-${index}`,
           canAcceptChildren: true,
           children: [
-            { id: `heading-${i}.0`, canAcceptChildren: false, children: [] },
-            { id: `paragraph-${i}.0`, canAcceptChildren: false, children: [] },
             {
-              id: `box-${i}.0`,
+              id: `heading-${index}.0`,
+              canAcceptChildren: false,
+              children: [],
+            },
+            {
+              id: `paragraph-${index}.0`,
+              canAcceptChildren: false,
+              children: [],
+            },
+            {
+              id: `box-${index}.0`,
               canAcceptChildren: true,
               children: [
                 {
-                  id: `box-${i}.0.0`,
+                  id: `box-${index}.0.0`,
                   canAcceptChildren: true,
                   children: [
                     {
-                      id: `box-${i}.0.0.0`,
+                      id: `box-${index}.0.0.0`,
                       canAcceptChildren: true,
                       children: [
                         {
-                          id: `heading-${i}.1`,
+                          id: `heading-${index}.1`,
                           canAcceptChildren: false,
                           children: [],
                         },
                         {
-                          id: `paragraph-${i}.1`,
+                          id: `paragraph-${index}.1`,
                           canAcceptChildren: false,
                           children: [],
                         },
@@ -52,7 +60,11 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
                     },
                   ],
                 },
-                { id: `box-${i}.0.1`, canAcceptChildren: true, children: [] },
+                {
+                  id: `box-${index}.0.1`,
+                  canAcceptChildren: true,
+                  children: [],
+                },
               ],
             },
           ],

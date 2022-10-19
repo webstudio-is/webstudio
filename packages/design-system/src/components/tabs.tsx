@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
+import { Text } from "./text";
 
 export const Tabs = styled(TabsPrimitive.Root, {
   display: "flex",
@@ -23,15 +23,14 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   alignItems: "center",
   justifyContent: "center",
   border: "none",
-  zIndex: "10",
   backgroundColor: "transparent",
   ["&:first-child"]: {
     paddingLeft: "$3",
   },
-  [`& > ${__DEPRECATED__Text}`]: {
+  [`& > ${Text}`]: {
     color: "$gray9",
-    fontSize: "11px",
-    fontWeight: "600",
+    fontSize: "$fontSizes$1",
+    fontWeight: "500",
   },
   "@hover": {
     "&:hover": {
@@ -40,7 +39,7 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   },
 
   '&[data-state="active"]': {
-    [`& > ${__DEPRECATED__Text}`]: {
+    [`& > ${Text}`]: {
       color: "$hiContrast",
     },
   },
@@ -53,14 +52,11 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
 const StyledTabsList = styled(TabsPrimitive.List, {
   flexShrink: 0,
   display: "flex",
-  borderBottom: "1px solid $colors$gray6",
   "&:focus": {
     outline: "none",
-    boxShadow: "inset 0 0 0 1px $gray8, 0 0 0 1px $gray8",
   },
   '&[data-orientation="vertical"]': {
     flexDirection: "column",
-    boxShadow: "inset -1px 0 0 $gray6",
   },
 });
 
@@ -82,7 +78,6 @@ export const TabsContent = styled(TabsPrimitive.Content, {
   flexGrow: 1,
   "&:focus": {
     outline: "none",
-    boxShadow: "inset 0 0 0 1px $gray8, 0 0 0 1px $gray8",
   },
   '&[data-state="inactive"]': {
     display: "none",

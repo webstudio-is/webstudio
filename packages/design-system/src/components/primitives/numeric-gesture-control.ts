@@ -5,7 +5,7 @@
  * - dispatches {onValueChange} method while pointermove and pointerdown are active
  * - dispatched {onValueChange} recieves a new value: old value + accumulation of the pointer move axis
  * @example
- * numericGestureControl(document.querySelector('input'), {
+ * numericScrubControl(document.querySelector('input'), {
  *   onValueChange: (event) => {
  *     event.preventDefault();
  *     event.target.value = event.value;
@@ -14,21 +14,26 @@
  * });
  */
 
-export type Direction = "horizontal" | "vertical";
+export type NumericScrubDirection = "horizontal" | "vertical";
 
-export type Value = number;
+export type NumericScrubValue = number;
 
-type Options = {
-  initialValue: Value;
-  direction: Direction;
-  onValueChange: (event: {
-    target: HTMLInputElement;
-    value: Value;
-    preventDefault: () => void;
-  }) => void;
+export type NumericScrubCallback = (event: {
+  target: HTMLElement;
+  value: NumericScrubValue;
+  preventDefault: () => void;
+}) => void;
+
+export type NumericScrubOptions = {
+  minValue?: NumericScrubValue;
+  maxValue?: NumericScrubValue;
+  initialValue?: NumericScrubValue;
+  direction?: NumericScrubDirection;
+  onValueInput?: NumericScrubCallback;
+  onValueChange?: NumericScrubCallback;
 };
 
-type State = {
+type NumericScrubState = {
   value: number;
   cursor?: SVGElement;
   offset: number;
@@ -36,16 +41,19 @@ type State = {
   direction: string;
 };
 
-export const numericGestureControl = (
-  targetNode: HTMLInputElement,
+export const numericScrubControl = (
+  targetNode: HTMLElement,
   {
+    minValue = Number.MIN_SAFE_INTEGER,
+    maxValue = Number.MAX_SAFE_INTEGER,
     initialValue = 0,
     direction = "horizontal",
-    onValueChange = () => null,
-  }: Options
+    onValueInput,
+    onValueChange,
+  }: NumericScrubOptions
 ) => {
   const eventNames = ["pointerup", "pointerdown", "pointermove"] as const;
-  const state: State = {
+  const state: NumericScrubState = {
     value: initialValue,
     cursor: undefined,
     offset: 0,
@@ -66,17 +74,24 @@ export const numericGestureControl = (
     }
   };
   const handleEvent = (event: PointerEvent) => {
-    const { type, offsetX, offsetY, movementY, movementX } = event;
-    const offset = direction === "horizontal" ? offsetX : offsetY;
+    const { type, clientX, clientY, movementY, movementX } = event;
+    const offset = direction === "horizontal" ? clientX : clientY;
     const movement = direction === "horizontal" ? movementX : -movementY;
     switch (type) {
       case "pointerup": {
         state.offset = 0;
         handleCursor(targetNode.ownerDocument.documentElement, false);
         exitPointerLock(state, event, targetNode);
+        onValueChange?.({
+          target: targetNode,
+          value: state.value,
+          preventDefault: () => event.preventDefault(),
+        });
         break;
       }
       case "pointerdown": {
+        // light touches don't register corresponding pointerup
+        if (event.pressure === 0) break;
         state.offset = offset;
         handleCursor(targetNode.ownerDocument.documentElement, true);
         requestPointerLock(state, event, targetNode);
@@ -87,8 +102,10 @@ export const numericGestureControl = (
           if (state.offset < 0) state.offset = globalThis.innerWidth + 1;
           else if (state.offset > globalThis.innerWidth) state.offset = 1;
           state.value += movement;
+          if (state.value < minValue) state.value = minValue;
+          else if (state.value > maxValue) state.value = maxValue;
           state.offset += movement * state.velocity;
-          onValueChange({
+          onValueInput?.({
             target: targetNode,
             value: state.value,
             preventDefault: () => event.preventDefault(),
@@ -98,7 +115,6 @@ export const numericGestureControl = (
       }
     }
   };
-
   handleCursor(targetNode, true);
   eventNames.forEach((eventName) =>
     targetNode.addEventListener(eventName, handleEvent)
@@ -114,7 +130,7 @@ export const numericGestureControl = (
 };
 
 const requestPointerLock = (
-  state: State,
+  state: NumericScrubState,
   event: PointerEvent,
   targetNode: HTMLElement
 ) => {
@@ -127,20 +143,23 @@ const requestPointerLock = (
   // albeit without an infinite cursor ux.
   if (shouldUsePointerLock) {
     targetNode.requestPointerLock();
-    const cursorNode = new Range().createContextualFragment(`
-      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15" style="filter:drop-shadow(${
-        state.direction === "horizontal" ? "0 1px" : "1px 0"
-      } 1.1px rgba(0,0,0,.4))">
+    const cursorNode = (targetNode.ownerDocument.querySelector("#cursor") ||
+      new Range().createContextualFragment(`
+      <svg id="cursor" version="1.1" xmlns="http://www.w3.org/2000/svg" width="46" height="15">
        <g transform="translate(2 3)">
          <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd" stroke="#FFF" stroke-width="2"></path>
           <path d="M 15 4.5L 15 2L 11.5 5.5L 15 9L 15 6.5L 31 6.5L 31 9L 34.5 5.5L 31 2L 31 4.5Z" fill="#111" fill-rule="evenodd"></path>
         </g>
-      </svg>`).firstElementChild as SVGElement;
+      </svg>`).firstElementChild) as SVGElement;
+    cursorNode.style.filter = `drop-shadow(${
+      state.direction === "horizontal" ? "0 1px" : "1px 0"
+    } 1.1px rgba(0,0,0,.4))`;
     cursorNode.style.position = "absolute";
-    cursorNode.style.left = `${event.offsetX}px`;
-    cursorNode.style.top = `${event.offsetY}px`;
-    cursorNode.style.transform =
-      state.direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)";
+    cursorNode.style.left = `${event.clientX}px`;
+    cursorNode.style.top = `${event.clientY}px`;
+    cursorNode.style.transform = `translate(-50%, -50%) ${
+      state.direction === "horizontal" ? "rotate(0deg)" : "rotate(90deg)"
+    }`;
     state.cursor = cursorNode;
     if (state.cursor) {
       targetNode.ownerDocument.documentElement.append(state.cursor);
@@ -158,7 +177,7 @@ const requestPointerLock = (
 };
 
 const exitPointerLock = (
-  state: State,
+  state: NumericScrubState,
   event: PointerEvent,
   targetNode: HTMLElement
 ) => {

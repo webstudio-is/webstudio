@@ -1,6 +1,6 @@
-import type { Publish } from "@webstudio-is/react-sdk";
+import type { Publish } from "~/shared/pubsub";
 import {
-  __DEPRECATED__Text,
+  Text,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -42,14 +42,14 @@ export const Inspector = ({ publish }: InspectorProps) => {
     <Tabs defaultValue="style" css={{ width: "100%" }}>
       <TabsList>
         <TabsTrigger value="style">
-          <__DEPRECATED__Text>Style</__DEPRECATED__Text>
+          <Text>Style</Text>
         </TabsTrigger>
         {/* @note: events would be part of props */}
         <TabsTrigger value="props">
-          <__DEPRECATED__Text>Props</__DEPRECATED__Text>
+          <Text>Props</Text>
         </TabsTrigger>
         <TabsTrigger value="inspect">
-          <__DEPRECATED__Text>Inspect</__DEPRECATED__Text>
+          <Text>Inspect</Text>
         </TabsTrigger>
       </TabsList>
       <TabsContent value="style" css={contentStyle}>

@@ -1,4 +1,4 @@
-import { useSubscribe } from "@webstudio-is/react-sdk";
+import { useSubscribe } from "~/shared/pubsub";
 import {
   useSelectedInstanceRect,
   useHoveredInstanceRect,
@@ -6,13 +6,7 @@ import {
 
 export const useSubscribeInstanceRect = () => {
   const [, setSelectedRect] = useSelectedInstanceRect();
-  useSubscribe<"selectedInstanceRect", DOMRect>(
-    "selectedInstanceRect",
-    setSelectedRect
-  );
+  useSubscribe("selectedInstanceRect", setSelectedRect);
   const [, setHoveredRect] = useHoveredInstanceRect();
-  useSubscribe<"hoveredInstanceRect", DOMRect>(
-    "hoveredInstanceRect",
-    setHoveredRect
-  );
+  useSubscribe("hoveredInstanceRect", setHoveredRect);
 };

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import * as components from "../components";
-import { type CssRule, CssRuleSchema } from "../css";
+import { CssRule } from "../css";
 
 // This should be used when passing a lot of data is potentially costly.
 // For example, when passing data from an iframe.
@@ -22,13 +22,13 @@ export const toBaseInstance = (instance: Instance): BaseInstance => {
   };
 };
 
-export const InstanceSchema = z.lazy(
+export const Instance = z.lazy(
   () =>
     z.object({
       id: z.string(),
       component: z.string(),
-      children: z.array(z.union([InstanceSchema, z.string()])),
-      cssRules: z.array(CssRuleSchema),
+      children: z.array(z.union([Instance, z.string()])),
+      cssRules: z.array(CssRule),
     })
   // @todo can't figure out how to make component to be z.enum(Object.keys(components))
 ) as z.ZodType<Instance>;

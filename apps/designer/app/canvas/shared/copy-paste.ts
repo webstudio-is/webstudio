@@ -2,11 +2,11 @@ import {
   type InstanceProps,
   type Instance,
   allUserPropsContainer,
-  publish,
 } from "@webstudio-is/react-sdk";
 import { selectedInstanceContainer } from "./nano-states";
 import { cloneInstance } from "~/shared/tree-utils";
 import { cloneProps } from "~/shared/props-utils";
+import { publish } from "~/shared/pubsub";
 
 let currentInstance: Instance | undefined;
 let currentProps: InstanceProps | undefined;
@@ -23,7 +23,7 @@ export const paste = () => {
   const props = currentProps
     ? cloneProps(currentProps, { instanceId: instance.id })
     : undefined;
-  publish<"insertInstance", { instance: Instance; props?: InstanceProps }>({
+  publish({
     type: "insertInstance",
     payload: {
       instance,

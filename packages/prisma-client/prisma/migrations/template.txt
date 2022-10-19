@@ -1,0 +1,37 @@
+import { PrismaClient } from "./client";
+
+// NOTE ON IMPORTS:
+//
+//   We want to be able to run old migrations at any point.
+//   For example, when we setting up a fresh database or making a reset.
+//
+//   You shouldn't import code that may change later 
+//   and become incompatible with the migration.
+//   It's better to copy it to the migration directory.
+
+export default () => {
+  const client = new PrismaClient({
+    // Uncomment to see the queries in console as the migration runs
+    // log: ["query", "info", "warn", "error"],
+  });
+  return client.$transaction(async (prisma) => {
+    // This is the body of your migration.
+    // Use the `prisma` client to perform database operations.
+    //
+    // Example:
+    //
+    // await prisma.user.updateMany({
+    //   where: { username: null },
+    //   data: { username: "Anonymous" },
+    // });
+    //
+    // If data models' API is not enough, consider using a raw query:
+    //
+    // await prisma.$executeRaw`UPDATE "User" SET "username" = "email" WHERE "username" IS NULL`;
+    //
+    //
+    // NOTE:
+    //   Don't do any schema modifications here like adding a column to a table!
+    //   If you need to change schema, edit schema.prisma and create a schema migration.
+  }, { timeout: 1000 * 60 });
+};
