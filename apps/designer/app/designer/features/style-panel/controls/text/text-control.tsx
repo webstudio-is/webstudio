@@ -18,12 +18,12 @@ export const TextControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const [currerntValue, setCurrentValue] = useState<StyleValue>();
+  const [currentValue, setCurrentValue] = useState<StyleValue>();
 
   return (
     <CssValueInput
       property={styleConfig.property}
-      value={currerntValue ?? value}
+      value={currentValue ?? value}
       keywords={styleConfig.items.map((item) => ({
         type: "keyword",
         value: item.name,
@@ -33,7 +33,7 @@ export const TextControl = ({
         setValue(toValue(styleValue), { isEphemeral: true });
       }}
       onItemHighlight={(styleValue) => {
-        const nextValue = styleValue ?? currerntValue ?? value;
+        const nextValue = styleValue ?? currentValue ?? value;
         if (nextValue) {
           setValue(toValue(nextValue), {
             isEphemeral: true,
