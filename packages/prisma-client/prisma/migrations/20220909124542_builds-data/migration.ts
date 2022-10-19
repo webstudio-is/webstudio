@@ -66,6 +66,6 @@ export default () => {
 
       await prisma.build.createMany({ data: builds });
     },
-    { timeout: 1000 * 60 * 15 }
+    { timeout: 1000 * 60 }
   );
 };
