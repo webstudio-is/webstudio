@@ -92,7 +92,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                       placeholder="Auth secret"
                       css={{ flexGrow: 1 }}
                     />
-                    <Button>Login</Button>
+                    <Button size={2}>Login</Button>
                   </Flex>
                 ) : (
                   <LoginButton
