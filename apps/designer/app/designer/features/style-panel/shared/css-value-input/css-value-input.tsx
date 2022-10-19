@@ -76,36 +76,52 @@ const useHandleOnChange = (
   }, [value]);
 };
 
-const useScrub = (options: {
+const useScrub = ({
+  value,
+  onChange,
+  onChangeComplete,
+}: {
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const optionsRef = useRef(options);
-  optionsRef.current = options;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const onChangeCompleteRef = useRef(onChangeComplete);
+  onChangeCompleteRef.current = onChangeComplete;
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
+  const type = valueRef.current.type;
+  const unit = type === "unit" ? valueRef.current.unit : undefined;
+
+  // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
+  // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
-    const { value, onChange, onChangeComplete } = optionsRef.current;
-    if (value.type !== "unit" || inputRef.current === null) return;
+    if (type !== "unit" || unit === undefined || inputRef.current === null) {
+      return;
+    }
     const scrub = numericScrubControl(inputRef.current, {
-      initialValue: value.value,
+      initialValue: valueRef.current.value,
       onValueInput(event) {
-        onChange({
-          ...value,
+        onChangeRef.current({
+          type,
+          unit,
           value: event.value,
         });
       },
       onValueChange(event) {
-        onChangeComplete({
-          ...value,
+        onChangeCompleteRef.current({
+          type,
+          unit,
           value: event.value,
         });
       },
     });
 
     return scrub.disconnectedCallback;
-  }, [options.value.type, options.value?.unit]);
+  }, [type, unit]);
 
   return inputRef;
 };
