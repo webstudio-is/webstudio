@@ -1,12 +1,12 @@
-import React, { Ref } from "react";
+import React, { Ref, ComponentProps, Fragment } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
 import { Paragraph } from "./paragraph";
 import type { CSS } from "../stitches.config";
 
-type TooltipProps = React.ComponentProps<typeof TooltipPrimitive.Root> &
-  React.ComponentProps<typeof TooltipPrimitive.Content> & {
+type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
+  ComponentProps<typeof TooltipPrimitive.Content> & {
     children: React.ReactElement;
     content: React.ReactNode;
     multiline?: boolean;
@@ -87,14 +87,14 @@ export const InputErrorsTooltip = ({
   errors,
   children,
 }: {
-  errors: string[] | undefined;
-  children: React.ComponentProps<typeof Tooltip>["children"];
+  errors?: string[];
+  children: ComponentProps<typeof Tooltip>["children"];
 }) => {
   const content = errors?.map((error, index) => (
-    <React.Fragment key={index}>
+    <Fragment key={index}>
       {index > 0 && <br />}
       {error}
-    </React.Fragment>
+    </Fragment>
   ));
   return (
     // We intentionally always pass non empty content to avoid optimization inside Tooltip
