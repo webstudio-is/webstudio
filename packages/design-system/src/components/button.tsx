@@ -19,7 +19,7 @@ export const Button = styled("button", {
   display: "inline-flex",
   flexShrink: 0,
   justifyContent: "center",
-  lineHeight: "1",
+  lineHeight: 1,
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
   // Custom
@@ -40,25 +40,22 @@ export const Button = styled("button", {
   variants: {
     size: {
       "1": {
-        borderRadius: "$1",
+        borderRadius: 2,
         height: "$5",
         px: "$3",
         fontSize: "$1",
-        lineHeight: "$sizes$5",
       },
       "2": {
-        borderRadius: "$2",
-        height: "$6",
+        borderRadius: "$1",
+        height: 28, // @todo waiting for the sizing scale
         px: "$3",
         fontSize: "$3",
-        lineHeight: "$sizes$6",
       },
       "3": {
         borderRadius: "$2",
         height: "$7",
         px: "$4",
         fontSize: "$4",
-        lineHeight: "$sizes$7",
       },
     },
     variant: {

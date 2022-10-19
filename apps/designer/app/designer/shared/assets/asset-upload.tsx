@@ -45,7 +45,6 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
         variant="blue"
         type="button"
         onClick={() => inputRef?.current?.click()}
-        size={2}
         css={{ flexGrow: 1 }}
       >
         <Flex align="center" gap={1}>
