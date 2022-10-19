@@ -46,7 +46,7 @@ export const Button = styled("button", {
         fontSize: "$1",
       },
       "2": {
-        borderRadius: "$1",
+        borderRadius: "$2",
         height: 28, // @todo waiting for the sizing scale
         px: "$3",
         fontSize: "$3",
