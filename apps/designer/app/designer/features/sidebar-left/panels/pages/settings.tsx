@@ -10,7 +10,7 @@ import {
   toast,
   InputErrorsTooltip,
 } from "@webstudio-is/design-system";
-import { useFetcher, type FetcherWithComponents } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
 import type { ZodError } from "zod";
 import { BaseHeader } from "../../lib/header";
@@ -30,14 +30,10 @@ export type CreatePageData =
 export const NewPageSettings = ({
   onClose,
   onSuccess,
-  onFetcherStateChange,
   projectId,
 }: {
   onClose?: () => void;
   onSuccess?: (page: Page) => void;
-  onFetcherStateChange?: (
-    state: FetcherWithComponents<unknown>["state"]
-  ) => void;
   projectId: string;
 }) => {
   const nameFieldId = useId();
@@ -54,7 +50,6 @@ export const NewPageSettings = ({
   const prevFetcher = useRef(fetcher);
   useEffect(() => {
     if (prevFetcher.current.state !== fetcher.state) {
-      onFetcherStateChange?.(fetcher.state);
       if (fetcher.state === "idle" && fetcher.data !== undefined) {
         if ("ok" in fetcher.data) {
           onSuccess?.(fetcher.data.page);
@@ -74,7 +69,7 @@ export const NewPageSettings = ({
       }
     }
     prevFetcher.current = fetcher;
-  }, [fetcher, onSuccess, onFetcherStateChange]);
+  }, [fetcher, onSuccess]);
 
   return (
     <>
@@ -126,7 +121,7 @@ export const NewPageSettings = ({
           </Group>
           <Group css={{ alignItems: "end" }}>
             <Button type="submit" variant="green" disabled={isSubmitting}>
-              Create
+              {isSubmitting ? "Creating..." : "Create"}
             </Button>
           </Group>
         </fetcher.Form>

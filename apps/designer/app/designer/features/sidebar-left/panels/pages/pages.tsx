@@ -18,7 +18,6 @@ import {
 } from "~/designer/shared/nano-states";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings } from "./settings";
-import { Fetcher } from "@remix-run/react";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -138,7 +137,6 @@ export const TabContent = (props: TabContentProps) => {
   };
 
   const [newPageOpen, setNewPageOpen] = useState(false);
-  const [newPageState, setNewPageState] = useState<Fetcher["state"]>("idle");
 
   if (currentPageId === undefined || project === undefined) {
     return null;
@@ -148,26 +146,14 @@ export const TabContent = (props: TabContentProps) => {
     <>
       <PagesPanel
         onClose={() => props.onSetActiveTab("none")}
-        onNewPage={() => {
-          if (newPageOpen === false) {
-            setNewPageOpen(true);
-          }
-          if (newPageOpen && newPageState === "idle") {
-            setNewPageOpen(false);
-          }
-        }}
+        onNewPage={() => setNewPageOpen((current) => !current)}
         onSelect={handleSelect}
         selectedPageId={currentPageId}
       />
       <SettingsPanel isOpen={newPageOpen}>
         <NewPageSettings
           projectId={project.id}
-          onClose={() => {
-            if (newPageState === "idle") {
-              setNewPageOpen(false);
-            }
-          }}
-          onFetcherStateChange={setNewPageState}
+          onClose={() => setNewPageOpen(false)}
           onSuccess={(page) => {
             setNewPageOpen(false);
             handleSelect(page.id);

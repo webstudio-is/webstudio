@@ -90,9 +90,9 @@ export const InputErrorsTooltip = ({
   errors: string[] | undefined;
   children: React.ComponentProps<typeof Tooltip>["children"];
 }) => {
-  const content = errors?.map((error, i) => (
-    <React.Fragment key={i}>
-      {i > 0 && <br />}
+  const content = errors?.map((error, index) => (
+    <React.Fragment key={index}>
+      {index > 0 && <br />}
       {error}
     </React.Fragment>
   ));

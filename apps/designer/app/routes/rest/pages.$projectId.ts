@@ -11,8 +11,8 @@ const nonEmptyString = z
     invalid_type_error: "Can't be empty",
     required_error: "Can't be empty",
   })
-  .transform((v) => v.trim())
-  .refine((val) => val !== "", "Can't be empty");
+  .transform((value) => value.trim())
+  .refine((value) => value !== "", "Can't be empty");
 
 const CreatePageInput = zfd.formData({
   name: nonEmptyString,
@@ -30,7 +30,7 @@ const CreatePageInput = zfd.formData({
     ),
 });
 
-const handlePUT = async (
+const handlePut = async (
   projectId: string,
   request: Request
 ): Promise<CreatePageData> => {
@@ -71,8 +71,8 @@ export const action: ActionFunction = async ({ request, params }) => {
       throw new Error(`Project ID required`);
     }
 
-    if (request.method.toLowerCase() === "put") {
-      const result = await handlePUT(params.projectId, request);
+    if (request.method === "PUT") {
+      const result = await handlePut(params.projectId, request);
       return result;
     }
 
