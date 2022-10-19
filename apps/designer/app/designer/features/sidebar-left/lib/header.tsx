@@ -2,12 +2,12 @@ import { Flex, IconButton, Text } from "@webstudio-is/design-system";
 import { Separator } from "@webstudio-is/design-system";
 import { Cross1Icon } from "@webstudio-is/icons";
 
-type BaseHeaderProps = {
+type HeaderProps = {
   title: string;
-  actions: React.ReactNode;
+  suffix: React.ReactNode;
 };
 
-export const BaseHeader = ({ title, actions }: BaseHeaderProps) => {
+export const Header = ({ title, suffix }: HeaderProps) => {
   return (
     <>
       <Flex
@@ -16,30 +16,15 @@ export const BaseHeader = ({ title, actions }: BaseHeaderProps) => {
         justify="between"
       >
         <Text variant="title">{title}</Text>
-        {actions && <Flex css={{ marginRight: "$1" }}>{actions}</Flex>}
+        {suffix && <Flex css={{ marginRight: "$1" }}>{suffix}</Flex>}
       </Flex>
       <Separator css={{ height: 2 }} />
     </>
   );
 };
 
-type HeaderProps = {
-  title: string;
-  isClosable?: boolean;
-  onClose?: () => void;
-};
-
-export const Header = ({ title, isClosable = true, onClose }: HeaderProps) => {
-  return (
-    <BaseHeader
-      title={title}
-      actions={
-        isClosable ? (
-          <IconButton onClick={() => onClose?.()} size="2" aria-label="Close">
-            <Cross1Icon />
-          </IconButton>
-        ) : null
-      }
-    />
-  );
-};
+export const CloseButton = ({ onClick }: { onClick: () => void }) => (
+  <IconButton onClick={onClick} size="2" aria-label="Close">
+    <Cross1Icon />
+  </IconButton>
+);

@@ -6,7 +6,7 @@ import {
 import { type Publish } from "~/shared/pubsub";
 import { Cross1Icon, NewPageIcon, PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
-import { BaseHeader } from "../../lib/header";
+import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -96,20 +96,16 @@ const PagesPanel = ({
 
   return (
     <>
-      <BaseHeader
+      <Header
         title="Pages"
-        actions={
+        suffix={
           <>
             {onNewPage && (
               <IconButton size="2" onClick={onNewPage} aria-label="New Page">
                 <NewPageIcon />
               </IconButton>
             )}
-            {onClose && (
-              <IconButton size="2" onClick={onClose} aria-label="Close">
-                <Cross1Icon />
-              </IconButton>
-            )}
+            {onClose && <CloseButton onClick={onClose} />}
           </>
         }
       />

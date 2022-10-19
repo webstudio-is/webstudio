@@ -13,7 +13,7 @@ import {
 import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
 import type { ZodError } from "zod";
-import { BaseHeader } from "../../lib/header";
+import { Header } from "../../lib/header";
 import { useEffect, useRef, useState } from "react";
 import { type Page } from "@webstudio-is/project";
 
@@ -73,16 +73,14 @@ export const NewPageSettings = ({
 
   return (
     <>
-      <BaseHeader
+      <Header
         title="New Page Settings"
-        actions={
-          <>
-            {onClose && (
-              <IconButton size="2" onClick={onClose} aria-label="Cancel">
-                <ChevronDoubleLeftIcon />
-              </IconButton>
-            )}
-          </>
+        suffix={
+          onClose && (
+            <IconButton size="2" onClick={onClose} aria-label="Cancel">
+              <ChevronDoubleLeftIcon />
+            </IconButton>
+          )
         }
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>

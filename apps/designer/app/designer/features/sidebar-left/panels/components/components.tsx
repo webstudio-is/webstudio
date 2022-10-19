@@ -9,7 +9,7 @@ import { createInstance } from "~/shared/tree-utils";
 import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
-import { Header } from "../../lib/header";
+import { Header, CloseButton } from "../../lib/header";
 
 const componentNames = (
   Object.keys(components) as Array<Instance["component"]>
@@ -135,9 +135,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     <Flex css={{ height: "100%", flexDirection: "column" }}>
       <Header
         title="Add"
-        onClose={() => {
-          onSetActiveTab("none");
-        }}
+        suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
       <Flex
         gap="1"
