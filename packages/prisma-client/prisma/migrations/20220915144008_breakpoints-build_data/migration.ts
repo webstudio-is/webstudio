@@ -1,5 +1,6 @@
 import { PrismaClient } from "./client";
 import { z } from "zod";
+import { devNull } from "node:os";
 
 const PageSchema = z.object({
   id: z.string(),
@@ -59,37 +60,43 @@ export default () => {
       //   })
       // );
 
-      for (const breakpoint of breakpoints) {
-        const build = buildsParsed.find(
-          (build) => build.pages.homePage.treeId === breakpoint.treeId
-        );
-
-        if (build === undefined) {
-          // eslint-disable-next-line no-console
-          console.warn(
-            `Build not found for breakpoint ${breakpoint.treeId}. Deleting!`
-          );
-
-          await prisma.breakpoints.delete({
-            where: { treeId: breakpoint.treeId },
-          });
-        } else {
-          const start = new Date();
-          await prisma.breakpoints.update({
-            where: { treeId: breakpoint.treeId },
-            data: {
-              buildId: build.id,
-            },
-          });
-
-          // eslint-disable-next-line no-console
-          console.log(
-            `Updated breakpoint ${breakpoint.treeId} ${
-              new Date().getTime() - start.getTime()
-            }ms`
-          );
-        }
+      const start = new Date();
+      for (let i = 0; i < 100; i++) {
+        await prisma.$executeRawUnsafe("SELECT 1");
       }
+      throw new Error(`Took ${new Date().getTime() - start.getTime()}ms`);
+
+      // for (const breakpoint of breakpoints) {
+      //   const build = buildsParsed.find(
+      //     (build) => build.pages.homePage.treeId === breakpoint.treeId
+      //   );
+
+      //   if (build === undefined) {
+      //     // eslint-disable-next-line no-console
+      //     console.warn(
+      //       `Build not found for breakpoint ${breakpoint.treeId}. Deleting!`
+      //     );
+
+      //     await prisma.breakpoints.delete({
+      //       where: { treeId: breakpoint.treeId },
+      //     });
+      //   } else {
+      //     const start = new Date();
+      //     await prisma.breakpoints.update({
+      //       where: { treeId: breakpoint.treeId },
+      //       data: {
+      //         buildId: build.id,
+      //       },
+      //     });
+
+      //     // eslint-disable-next-line no-console
+      //     console.log(
+      //       `Updated breakpoint ${breakpoint.treeId} ${
+      //         new Date().getTime() - start.getTime()
+      //       }ms`
+      //     );
+      //   }
+      // }
     },
     { timeout: 1000 * 60 * 15 }
   );
