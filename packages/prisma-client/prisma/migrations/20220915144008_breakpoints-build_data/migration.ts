@@ -16,6 +16,9 @@ const PagesSchema = z.object({
 });
 
 export default () => {
+  // eslint-disable-next-line no-console
+  console.log({ NODE_ENV: process.env.NODE_ENV });
+
   const client = new PrismaClient({
     // Uncomment to see the queries in console as the migration runs
     // log: ["query", "info", "warn", "error"],
@@ -71,14 +74,20 @@ export default () => {
             where: { treeId: breakpoint.treeId },
           });
         } else {
-          // eslint-disable-next-line no-console
-          console.log(`Updating breakpoint ${breakpoint.treeId}`);
+          const start = new Date();
           await prisma.breakpoints.update({
             where: { treeId: breakpoint.treeId },
             data: {
               buildId: build.id,
             },
           });
+
+          // eslint-disable-next-line no-console
+          console.log(
+            `Updated breakpoint ${breakpoint.treeId} ${
+              new Date().getTime() - start.getTime()
+            }ms`
+          );
         }
       }
     },
