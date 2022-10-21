@@ -1,5 +1,5 @@
 import slugify from "slugify";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
 import {
   User,
   prisma,
@@ -9,6 +9,8 @@ import {
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/index.server";
 import * as db from "./index";
+
+const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
 export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
