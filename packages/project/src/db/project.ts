@@ -122,14 +122,17 @@ export const clone = async (clonableDomain: string, userId: string) => {
     throw new Error("Expected project to be published first");
   }
 
-  const project = await create({
-    userId: userId,
-    title: clonableProject.title,
+  const project = await prisma.project.create({
+    data: {
+      userId,
+      title: clonableProject.title,
+      domain: generateDomain(clonableProject.title),
+    },
   });
 
   await db.build.create(project.id, "dev", prodBuild);
 
-  return project;
+  return parseProject(project);
 };
 
 export const update = async ({
