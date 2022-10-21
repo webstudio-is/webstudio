@@ -20,6 +20,8 @@
     "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {
+    "@changesets/get-dependents-graph": "^1.3.4",
+    "@manypkg/get-packages": "^1.1.3",
     "@webstudio-is/eslint-config-custom": "*",
     "husky": ">=6",
     "lint-staged": "^13.0.2",
