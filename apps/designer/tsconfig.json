@@ -3,9 +3,7 @@
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "composite": true,
-    "paths": {
-      "~/*": ["app/*"]
-    },
+    "paths": { "~/*": ["app/*"] },
     "baseUrl": ".",
     "rootDir": "./app"
   },
