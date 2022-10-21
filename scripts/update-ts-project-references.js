@@ -67,65 +67,87 @@ const getDependencyGraph = (getPackagesResult) => {
   return graph;
 };
 
+/**
+ * @param {string} filePath
+ * @param {string} content
+ */
+const updateFile = async (filePath, content) => {
+  await fsP.writeFile(filePath, format(filePath, content));
+  await spawn("git", ["add", filePath]);
+};
+
+/**
+ * @param {string} dependentDir
+ * @param {Packages[]} dependencies
+ */
+const updateTSConfig = async (dependentDir, dependencies) => {
+  const tsConfigPath = path.join(dependentDir, "tsconfig.json");
+  const tsConfigContent = await fsP.readFile(tsConfigPath, "utf8");
+  /** @type TSConfig */
+  const tsConfig = JSON.parse(tsConfigContent);
+
+  const dependencyPaths = [...dependencies.values()]
+    .filter((dependency) =>
+      fs.existsSync(path.join(dependency.dir, "tsconfig.json"))
+    )
+    .map((dependency) => path.relative(dependentDir, dependency.dir))
+    .sort();
+
+  if (
+    stringArrayEquals(
+      dependencyPaths,
+      (tsConfig.references || []).map((reference) => reference.path)
+    )
+  ) {
+    return;
+  }
+
+  await updateFile(
+    tsConfigPath,
+    JSON.stringify({
+      ...tsConfig,
+      references: dependencyPaths.map((path) => ({ path })),
+    })
+  );
+};
+
 (async () => {
-  const getPackagesResult = await getPackages(path.join(__dirname, ".."));
+  const rootDir = path.join(__dirname, "..");
+  const getPackagesResult = await getPackages(rootDir);
   const indexedPackages = new Map(
     getPackagesResult.packages.map((pkg) => [pkg.packageJson.name, pkg])
   );
   const dependencyGraph = getDependencyGraph(getPackagesResult);
 
-  const tasks = [...dependencyGraph].map(async ([pkgName, dependencies]) => {
-    const dependent = indexedPackages.get(pkgName);
-    if (!dependent) {
-      throw new Error(
-        "Data consistency problem. Dependent package should always be available in the indexed packages"
+  const packageTasks = [...dependencyGraph].map(
+    async ([pkgName, dependencies]) => {
+      const dependent = indexedPackages.get(pkgName);
+      if (!dependent) {
+        throw new Error(
+          "Data consistency problem. Dependent package should always be available in the indexed packages"
+        );
+      }
+
+      await updateTSConfig(
+        dependent.dir,
+        [...dependencies.values()].map((dependencyName) => {
+          const dependency = indexedPackages.get(dependencyName);
+          if (!dependency) {
+            throw new Error(
+              "Data consistency problem. Dependency package should always be available in the indexed packages"
+            );
+          }
+          return dependency;
+        }),
+        indexedPackages
       );
     }
+  );
 
-    const tsConfigPath = path.join(dependent.dir, "tsconfig.json");
-    const tsConfigContent = await fsP.readFile(tsConfigPath, "utf8");
-    /** @type TSConfig */
-    const tsConfig = JSON.parse(tsConfigContent);
-
-    const dependencyPaths = [...dependencies.values()]
-      .map((dependencyName) => {
-        const dependency = indexedPackages.get(dependencyName);
-        if (!dependency) {
-          throw new Error(
-            "Data consistency problem. Dependency package should always be available in the indexed packages"
-          );
-        }
-        return dependency;
-      })
-      .filter((dependency) =>
-        fs.existsSync(path.join(dependency.dir, "tsconfig.json"))
-      )
-      .map((dependency) => path.relative(dependent.dir, dependency.dir))
-      .sort();
-
-    if (
-      stringArrayEquals(
-        dependencyPaths,
-        (tsConfig.references || []).map((reference) => reference.path)
-      )
-    ) {
-      return;
-    }
-
-    await fsP.writeFile(
-      tsConfigPath,
-      format(
-        tsConfigPath,
-        JSON.stringify({
-          ...tsConfig,
-          references: dependencyPaths.map((path) => ({ path })),
-        })
-      )
-    );
-    await spawn("git", ["add", tsConfigPath]);
-  });
-
-  await Promise.all(tasks);
+  await Promise.all([
+    ...packageTasks,
+    updateTSConfig(rootDir, getPackagesResult.packages),
+  ]);
 })().catch((err) => {
   // eslint-disable-next-line no-console
   console.error(err);
