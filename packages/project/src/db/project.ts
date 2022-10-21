@@ -45,7 +45,7 @@ export const loadById = async (projectId?: Project["id"]) => {
 
 export const loadByDomain = async (domain: string): Promise<Project | null> => {
   const project = await prisma.project.findUnique({
-    where: { domain },
+    where: { domain: domain.toLowerCase() },
     include: {
       assets: {
         orderBy: {
