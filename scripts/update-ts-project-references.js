@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
+const { spawn } = require("child_process");
 const path = require("path");
-const fs = require("fs/promises");
+const fs = require("fs");
+const fsP = require("fs/promises");
 const { getDependentsGraph } = require("@changesets/get-dependents-graph");
 const { getPackages } = require("@manypkg/get-packages");
 /**
@@ -81,7 +83,7 @@ const getDependencyGraph = (getPackagesResult) => {
     }
 
     const tsConfigPath = path.join(dependent.dir, "tsconfig.json");
-    const tsConfigContent = await fs.readFile(tsConfigPath, "utf8");
+    const tsConfigContent = await fsP.readFile(tsConfigPath, "utf8");
     /** @type TSConfig */
     const tsConfig = JSON.parse(tsConfigContent);
 
@@ -93,8 +95,12 @@ const getDependencyGraph = (getPackagesResult) => {
             "Data consistency problem. Dependency package should always be available in the indexed packages"
           );
         }
-        return path.relative(dependent.dir, dependency.dir);
+        return dependency;
       })
+      .filter((dependency) =>
+        fs.existsSync(path.join(dependency.dir, "tsconfig.json"))
+      )
+      .map((dependency) => path.relative(dependent.dir, dependency.dir))
       .sort();
 
     if (
@@ -106,7 +112,7 @@ const getDependencyGraph = (getPackagesResult) => {
       return;
     }
 
-    await fs.writeFile(
+    await fsP.writeFile(
       tsConfigPath,
       format(
         tsConfigPath,
@@ -116,6 +122,7 @@ const getDependencyGraph = (getPackagesResult) => {
         })
       )
     );
+    await spawn("git", ["add", tsConfigPath]);
   });
 
   await Promise.all(tasks);
