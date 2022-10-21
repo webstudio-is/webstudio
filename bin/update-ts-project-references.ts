@@ -1,40 +1,28 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const { spawn } = require("child_process");
-const path = require("path");
-const fs = require("fs");
-const fsP = require("fs/promises");
-const { getDependentsGraph } = require("@changesets/get-dependents-graph");
-const { getPackages } = require("@manypkg/get-packages");
-/**
- * @typedef {Awaited<ReturnType<typeof getPackages>>} GetPackagesResult
- * @typedef {GetPackagesResult["packages"][number]} Package
- * @typedef {Map<string, Set<string>} DependencyGraph
- * @typedef {{ references?: { path: string }[] }} TSConfig
- */
+import cp from "child_process";
+import fs from "fs";
+import fsP from "fs/promises";
+import path from "path";
+import { getDependentsGraph } from "@changesets/get-dependents-graph";
+import { getPackages } from "@manypkg/get-packages";
 
-/**
- * @param {string[]} arrA
- * @param {string[]} arrB
- * @returns boolean
- */
-const stringArrayEquals = (arrA, arrB) => {
+type GetPackagesResult = Awaited<ReturnType<typeof getPackages>>;
+type Package = GetPackagesResult["packages"][number];
+type DependencyGraph = Map<string, Set<string>>;
+type TSConfig = { references?: { path: string }[] };
+
+const stringArrayEquals = (arrA: string[], arrB: string[]): boolean => {
   return (
     arrA.length === arrB.length && arrA.every((itemA, i) => itemA === arrB[i])
   );
 };
 
-/** @type {import('prettier') | undefined} */
-let prettier;
+let prettier: typeof import("prettier") | undefined;
 
-/**
- * @param {string} filePath
- * @param {string} content
- * @returns string
- */
-const format = (filePath, content) => {
+const format = (filePath: string, content: string): string => {
   if (!prettier) {
-    prettier = require("prettier");
+    prettier = require("prettier") as typeof import("prettier");
   }
   const config = prettier.resolveConfig(filePath);
   return prettier.format(content, {
@@ -43,13 +31,10 @@ const format = (filePath, content) => {
   });
 };
 
-/**
- * @param getPackagesResult {GetPackagesResult}
- * @return {DependencyGraph}
- */
-const getDependencyGraph = (getPackagesResult) => {
-  /** @type DependencyGraph */
-  const graph = new Map();
+const getDependencyGraph = (
+  getPackagesResult: GetPackagesResult
+): DependencyGraph => {
+  const graph: DependencyGraph = new Map();
 
   for (const [dependency, dependents] of getDependentsGraph(
     getPackagesResult
@@ -67,24 +52,18 @@ const getDependencyGraph = (getPackagesResult) => {
   return graph;
 };
 
-/**
- * @param {string} filePath
- * @param {string} content
- */
-const updateFile = async (filePath, content) => {
+const updateFile = async (filePath: string, content: string) => {
   await fsP.writeFile(filePath, format(filePath, content));
-  await spawn("git", ["add", filePath]);
+  cp.spawnSync("git", ["add", filePath]);
 };
 
-/**
- * @param {string} dependentDir
- * @param {Packages[]} dependencies
- */
-const updateTSConfig = async (dependentDir, dependencies) => {
+const updateTSConfig = async (
+  dependentDir: string,
+  dependencies: Package[]
+) => {
   const tsConfigPath = path.join(dependentDir, "tsconfig.json");
   const tsConfigContent = await fsP.readFile(tsConfigPath, "utf8");
-  /** @type TSConfig */
-  const tsConfig = JSON.parse(tsConfigContent);
+  const tsConfig: TSConfig = JSON.parse(tsConfigContent);
 
   const dependencyPaths = [...dependencies.values()]
     .filter((dependency) =>
@@ -138,8 +117,7 @@ const updateTSConfig = async (dependentDir, dependencies) => {
             );
           }
           return dependency;
-        }),
-        indexedPackages
+        })
       );
     }
   );
