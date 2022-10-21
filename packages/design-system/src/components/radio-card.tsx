@@ -13,7 +13,7 @@ const StyledRadioButton = styled("div", {
   borderRadius: "$round",
   width: 25,
   height: 25,
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  boxShadow: "inset 0 0 0 1px $colors$muted",
   flexShrink: 0,
   mr: "$3",
 });
@@ -39,7 +39,7 @@ const StyledRadio = styled(RadioGroupPrimitive.Item, {
   display: "flex",
   alignItems: "center",
   borderRadius: "$2",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  boxShadow: "inset 0 0 0 1px $colors$muted",
   p: "$3",
   "@hover": {
     "&:hover": {

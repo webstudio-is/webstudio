@@ -43,12 +43,7 @@ export const ValuePickerPopover = ({
         {children}
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent
-          sideOffset={sideOffset}
-          side="right"
-          hideArrow
-          css={{ minHeight: 500 }}
-        >
+        <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
           <PopoverHeader title={title} />
           {content}
         </PopoverContent>

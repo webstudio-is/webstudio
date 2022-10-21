@@ -31,7 +31,7 @@ export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
       value={search}
       inputRef={inputRef}
       prefix={
-        <IconButton aria-label="Search">
+        <IconButton aria-label="Search" css={{ color: "$hint" }} tabIndex={-1}>
           <MagnifyingGlassIcon />
         </IconButton>
       }
@@ -48,7 +48,7 @@ export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
           </IconButton>
         )
       }
-      placeholder={components[selectedInstanceData.component].label}
+      placeholder="Search"
       onChange={(event) => {
         const { value } = event.target;
         setSearch(value.toLowerCase());

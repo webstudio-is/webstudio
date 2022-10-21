@@ -56,9 +56,10 @@ export const ListboxItemBase: ForwardRefRenderFunction<
     disabled?: boolean;
     selected?: boolean;
     highlighted?: boolean;
+    suffix?: JSX.Element;
   }
 > = (props, ref) => {
-  const { disabled, selected, highlighted, children, ...rest } = props;
+  const { disabled, selected, highlighted, children, suffix, ...rest } = props;
   return (
     <ListboxItem
       ref={ref}
@@ -70,6 +71,7 @@ export const ListboxItemBase: ForwardRefRenderFunction<
         {selected && <CheckIcon />}
         <Box css={{ gridColumn: 2 }}>{children}</Box>
       </Grid>
+      {suffix}
     </ListboxItem>
   );
 };

@@ -52,14 +52,14 @@ const InputBase = styled("input", {
   },
 
   "&::placeholder": {
-    color: "$slate9",
+    color: "$hint",
   },
 
   "&:disabled": {
     color: "$slate8",
     cursor: "not-allowed",
     "&::placeholder": {
-      color: "$slate7",
+      color: "$muted",
     },
   },
 });
@@ -68,7 +68,7 @@ const TextFieldBase = styled("div", {
   // Custom
   display: "flex",
   backgroundColor: "$loContrast",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  boxShadow: "inset 0 0 0 1px $colors$muted",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
   gap: "$1",
@@ -91,7 +91,7 @@ const TextFieldBase = styled("div", {
   "&:has(input:read-only)": {
     backgroundColor: "$slate2",
     "&:focus": {
-      boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
+      boxShadow: "inset 0px 0px 0px 1px $colors$muted",
     },
   },
 

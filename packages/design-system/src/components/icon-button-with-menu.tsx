@@ -19,7 +19,7 @@ const itemStyles = {
   all: "unset",
   fontSize: "$2",
   lineHeight: 1,
-  color: "$colors$slate12",
+  color: "$hiContrast",
   borderRadius: "$radii$1",
   display: "flex",
   alignItems: "center",

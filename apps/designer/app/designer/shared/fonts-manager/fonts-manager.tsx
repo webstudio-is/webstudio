@@ -13,34 +13,61 @@ import {
   Text,
   DropdownMenuPortal,
   useCombobox,
+  Separator,
+  styled,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { useMemo } from "react";
+import { cssVars } from "@webstudio-is/css-vars";
 
 const getItems = (
   assets: Array<Asset | PreviewAsset>
-): Array<{ label: string }> => {
-  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({ label }));
+): Array<{ label: string; type: "uploaded" | "system" | "separator" }> => {
+  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
+    label,
+    type: "system",
+  }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
   for (const asset of assets) {
     // @todo need to teach ts the right type from useAssets
     if ("meta" in asset && "family" in asset.meta) {
-      uploaded.set(asset.meta.family, { label: asset.meta.family });
+      uploaded.set(asset.meta.family, {
+        label: asset.meta.family,
+        type: "uploaded",
+      });
     }
   }
-  return [...system, ...uploaded.values()];
+  return [
+    { label: "Uploaded", type: "separator" },
+    ...uploaded.values(),
+    { label: "System", type: "separator" },
+    ...system,
+  ];
 };
+
+const vars = {
+  menuButtonVisibility: cssVars.define("menuButton"),
+};
+
+const MenuButton = styled(IconButton, {
+  visibility: cssVars.use(vars.menuButtonVisibility, "hidden"),
+  color: "$hint",
+  "&:hover": {
+    color: "$hiContrast",
+    backgroundColor: "transparent",
+  },
+});
 
 const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <IconButton aria-label="Font menu button">
+        <MenuButton aria-label="Font menu">
           <DotsHorizontalIcon />
-        </IconButton>
+        </MenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent>
@@ -56,6 +83,30 @@ const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
     </DropdownMenu>
   );
 };
+
+const ListboxCategoryItem = styled(Text, {
+  mx: "$4",
+  my: "$2",
+  listStyle: "none",
+});
+
+const ListboxItem = styled(ComboboxListboxItem, {
+  backgroundColor: "transparent",
+  borderRadius: "$1",
+  //borderWidth: 2,
+  //borderStyle: "solid",
+  //borderColor: "transparent",
+  "&:hover, &[aria-selected=true]": {
+    color: "$hiContrast",
+    backgroundColor: "transparent",
+    //borderStyle: "solid",
+    //borderColor: "$blue10",
+
+    boxShadow:
+      "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+    [vars.menuButtonVisibility]: "visible",
+  },
+});
 
 type FontsManagerProps = {
   value: string;
@@ -101,7 +152,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     <Flex
       gap="3"
       direction="column"
-      css={{ padding: "$1", paddingTop: "$2", height: 460, overflow: "hidden" }}
+      css={{ padding: "$2", overflow: "hidden" }}
     >
       <Box css={{ padding: "$2" }}>
         <AssetUpload type="font" />
@@ -113,29 +164,62 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       >
         <TextField
           type="search"
-          prefix={<MagnifyingGlassIcon />}
+          autoFocus
+          placeholder="Search"
+          prefix={
+            <IconButton
+              aria-label="Search"
+              css={{ color: "$hint" }}
+              tabIndex={-1}
+            >
+              <MagnifyingGlassIcon />
+            </IconButton>
+          }
           {...getInputProps()}
         />
-        <fieldset>
-          <legend>Choose an item</legend>
-          <Flex {...menuProps} css={{ flexDirection: "column" }}>
-            {items.map((item, index) => {
+        <Flex
+          {...menuProps}
+          css={{
+            flexDirection: "column",
+          }}
+        >
+          {items.map((item, index) => {
+            if (item.type === "separator") {
               return (
-                <ComboboxListboxItem
-                  {...getItemProps({ item, index })}
-                  key={index}
-                >
-                  {item.label}
-                  <ItemMenu
-                    onDelete={() => {
-                      handleDeleteByLabel(item.label);
-                    }}
-                  />
-                </ComboboxListboxItem>
+                <>
+                  {index !== 0 && <Separator />}
+                  <ListboxCategoryItem
+                    {...getItemProps({ item, index })}
+                    as="li"
+                    variant="label"
+                    color="hint"
+                    key={index}
+                    disabled
+                  >
+                    {item.label}
+                  </ListboxCategoryItem>
+                </>
               );
-            })}
-          </Flex>
-        </fieldset>
+            }
+            return (
+              <ListboxItem
+                {...getItemProps({ item, index })}
+                key={index}
+                suffix={
+                  item.type === "uploaded" && (
+                    <ItemMenu
+                      onDelete={() => {
+                        handleDeleteByLabel(item.label);
+                      }}
+                    />
+                  )
+                }
+              >
+                {item.label}
+              </ListboxItem>
+            );
+          })}
+        </Flex>
       </Flex>
     </Flex>
   );

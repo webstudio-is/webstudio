@@ -49,7 +49,7 @@ export const SettingsPanel = ({
             flexGrow: 1,
             width: 424,
             background: "$loContrast",
-            borderRight: "1px solid $slate7",
+            borderRight: "1px solid $muted",
             position: "relative",
           }}
         >

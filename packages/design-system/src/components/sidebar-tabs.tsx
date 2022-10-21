@@ -33,7 +33,7 @@ export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
   '&[data-state="active"]': {
     color: "$hiContrast",
     backgroundColor: "$slateA4",
-    borderColor: "$slate6",
+    borderColor: "$muted",
   },
 });
 
@@ -44,7 +44,7 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   alignItems: "center",
   outline: "none",
   '&[data-state="active"]': {
-    borderRight: "1px solid $slate7",
+    borderRight: "1px solid $muted",
   },
 });
 
@@ -71,6 +71,6 @@ export const SidebarTabsContent = styled(TabsPrimitive.Content, {
   bc: "$loContrast",
   outline: "none",
   '&[data-state="active"]': {
-    borderRight: "1px solid $slate7",
+    borderRight: "1px solid $muted",
   },
 });

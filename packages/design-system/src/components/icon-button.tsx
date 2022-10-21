@@ -24,17 +24,17 @@ export const IconButton = styled("button", {
     boxSizing: "border-box",
   },
   "&:hover, &:active": {
-    backgroundColor: "$slate6",
+    backgroundColor: "$muted",
     outline: "none",
   },
   "&:focus": {
-    backgroundColor: "$slate6",
+    backgroundColor: "$muted",
     outline: "none",
   },
   "&:disabled": {
     pointerEvents: "none",
     backgroundColor: "transparent",
-    color: "$slate6",
+    color: "$muted",
   },
 
   variants: {

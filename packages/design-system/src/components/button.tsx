@@ -7,7 +7,7 @@ export const Button = styled("button", {
   boxSizing: "border-box",
   border: "none",
   userSelect: "none",
-  transition: "all 200ms ease-out",
+  transition: "all 150ms ease-out",
   "&::before": {
     boxSizing: "border-box",
   },
@@ -32,7 +32,7 @@ export const Button = styled("button", {
 
   "&:disabled": {
     backgroundColor: "$slate2",
-    boxShadow: "inset 0 0 0 1px $colors$slate7",
+    boxShadow: "inset 0 0 0 1px $colors$muted",
     color: "$slate8",
     pointerEvents: "none",
   },
@@ -40,7 +40,7 @@ export const Button = styled("button", {
   variants: {
     size: {
       "1": {
-        borderRadius: 2,
+        borderRadius: "$1",
         height: "$5",
         px: "$3",
         fontSize: "$1",
@@ -61,7 +61,7 @@ export const Button = styled("button", {
     variant: {
       gray: {
         backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$slate7",
+        boxShadow: "inset 0 0 0 1px $colors$muted",
         color: "$hiContrast",
         "@hover": {
           "&:hover": {
@@ -82,7 +82,7 @@ export const Button = styled("button", {
       },
       blue: {
         backgroundColor: "$blue10",
-        color: "$loContrast",
+        color: "white",
         "@hover": {
           "&:hover": {
             backgroundColor: "$loContrast",
@@ -191,12 +191,12 @@ export const Button = styled("button", {
         color: "$slate11",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slate6",
+            backgroundColor: "$muted",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$slate6",
+          backgroundColor: "$muted",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
@@ -209,12 +209,12 @@ export const Button = styled("button", {
         pointerEvents: "none",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slate6",
+            backgroundColor: "$muted",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$slate6",
+          backgroundColor: "$muted",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8",

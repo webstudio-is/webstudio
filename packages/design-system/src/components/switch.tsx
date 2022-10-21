@@ -40,7 +40,7 @@ const StyledSwitch = styled(SwitchPrimitive.Root, {
   outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
-  backgroundColor: "$slate6",
+  backgroundColor: "$muted",
   borderRadius: "$pill",
   position: "relative",
   "&:focus": {

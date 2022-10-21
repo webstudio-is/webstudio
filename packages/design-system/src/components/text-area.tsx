@@ -11,7 +11,7 @@ export const TextArea = styled("textarea", {
   width: "100%",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
   backgroundColor: "$loContrast",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  boxShadow: "inset 0 0 0 1px $colors$muted",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
   position: "relative",
@@ -24,7 +24,7 @@ export const TextArea = styled("textarea", {
     zIndex: "1",
   },
   "&::placeholder": {
-    color: "$slate9",
+    color: "$hint",
   },
   "&:disabled": {
     pointerEvents: "none",
@@ -33,13 +33,13 @@ export const TextArea = styled("textarea", {
     cursor: "not-allowed",
     resize: "none",
     "&::placeholder": {
-      color: "$slate7",
+      color: "$muted",
     },
   },
   "&:read-only": {
     backgroundColor: "$slate2",
     "&:focus": {
-      boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
+      boxShadow: "inset 0px 0px 0px 1px $colors$muted",
     },
   },
 

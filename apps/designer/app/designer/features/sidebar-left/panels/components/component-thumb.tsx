@@ -6,7 +6,7 @@ const Thumb = styled(Flex, {
   px: "$1",
   width: 72,
   height: 72,
-  border: "1px solid $slate6",
+  border: "1px solid $muted",
   userSelect: "none",
   color: "$hiContrast",
   cursor: "grab",

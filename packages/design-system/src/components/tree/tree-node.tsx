@@ -38,7 +38,7 @@ const NestingLine = styled(Box, {
   height: ITEM_HEIGHT,
   borderRight: "solid",
   borderRightWidth: 1,
-  borderColor: "$slate9",
+  borderColor: "$hint",
   variants: {
     isSelected: { true: { borderColor: "$blue7" } },
   },
