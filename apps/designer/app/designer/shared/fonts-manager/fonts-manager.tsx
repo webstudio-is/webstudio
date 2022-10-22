@@ -66,7 +66,7 @@ const groupItems = (items: Array<Item>) => {
 const NotFound = () => {
   return (
     <Flex align="center" justify="center" css={{ height: 100 }}>
-      Not Found
+      Font not found
     </Flex>
   );
 };
@@ -122,7 +122,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <TextField
-          {...getInputProps()}
+          {...getInputProps({ value: undefined, onBlur: undefined })}
           type="search"
           autoFocus
           placeholder="Search"
