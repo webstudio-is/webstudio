@@ -48,6 +48,9 @@ export const ValuePickerPopover = ({
           side="right"
           hideArrow
           align="start"
+          onEscapeKeyDown={() => {
+            setIsOpen(false);
+          }}
         >
           <PopoverHeader title={title} />
           {content}
