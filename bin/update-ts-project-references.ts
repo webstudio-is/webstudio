@@ -10,7 +10,7 @@ import { getPackages } from "@manypkg/get-packages";
 type GetPackagesResult = Awaited<ReturnType<typeof getPackages>>;
 type Package = GetPackagesResult["packages"][number];
 type DependencyGraph = Map<string, Set<string>>;
-type TSConfig = { references?: { path: string }[] };
+type TsConfig = { references?: { path: string }[] };
 
 const stringArrayEquals = (arrA: string[], arrB: string[]): boolean => {
   return (
@@ -57,13 +57,13 @@ const updateFile = async (filePath: string, content: string) => {
   cp.spawnSync("git", ["add", filePath]);
 };
 
-const updateTSConfig = async (
+const updateTsConfig = async (
   dependentDir: string,
   dependencies: Package[]
 ) => {
   const tsConfigPath = path.join(dependentDir, "tsconfig.json");
   const tsConfigContent = await fsP.readFile(tsConfigPath, "utf8");
-  const tsConfig: TSConfig = JSON.parse(tsConfigContent);
+  const tsConfig: TsConfig = JSON.parse(tsConfigContent);
 
   const dependencyPaths = [...dependencies.values()]
     .filter((dependency) =>
@@ -107,7 +107,7 @@ const updateTSConfig = async (
         );
       }
 
-      await updateTSConfig(
+      await updateTsConfig(
         dependent.dir,
         [...dependencies.values()].map((dependencyName) => {
           const dependency = indexedPackages.get(dependencyName);
@@ -124,7 +124,7 @@ const updateTSConfig = async (
 
   await Promise.all([
     ...packageTasks,
-    updateTSConfig(rootDir, getPackagesResult.packages),
+    updateTsConfig(rootDir, getPackagesResult.packages),
   ]);
 })().catch((err) => {
   // eslint-disable-next-line no-console
