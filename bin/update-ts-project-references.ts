@@ -4,6 +4,7 @@ import fsP from "fs/promises";
 import path from "path";
 import { getDependentsGraph } from "@changesets/get-dependents-graph";
 import { getPackages } from "@manypkg/get-packages";
+import * as fleece from "golden-fleece";
 
 type GetPackagesResult = Awaited<ReturnType<typeof getPackages>>;
 type Package = GetPackagesResult["packages"][number];
@@ -58,7 +59,7 @@ const updateTsConfig = async (
 ) => {
   const tsConfigPath = path.join(dependentDir, "tsconfig.json");
   const tsConfigContent = await fsP.readFile(tsConfigPath, "utf8");
-  const tsConfig: TsConfig = JSON.parse(tsConfigContent);
+  const tsConfig: TsConfig = fleece.evaluate(tsConfigContent);
 
   const dependencyPaths = [...dependencies.values()]
     .filter((dependency) =>
@@ -78,7 +79,7 @@ const updateTsConfig = async (
 
   await updateFile(
     tsConfigPath,
-    JSON.stringify({
+    fleece.patch(tsConfigContent, {
       ...tsConfig,
       references: dependencyPaths.map((path) => ({ path })),
     })

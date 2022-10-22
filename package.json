@@ -34,7 +34,9 @@
     "npm": ">=7.0.0",
     "node": "16"
   },
-  "dependencies": {},
+  "dependencies": {
+    "golden-fleece": "^1.0.9"
+  },
   "packageManager": "yarn@1.22.19",
   "lint-staged": {
     "*.{ts,tsx,js,json,css,md}": "prettier --write"
