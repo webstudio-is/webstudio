@@ -149,32 +149,27 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       >
         <Listbox {...getMenuProps()}>
           {items.map((item, index) => {
-            if (item.type === "category") {
-              return (
-                <Fragment key={index}>
-                  {index !== 0 && <Separator css={{ my: "$1" }} />}
-                  <ListboxItem {...getItemProps({ item, index })} disabled>
-                    {item.label}
-                  </ListboxItem>
-                </Fragment>
-              );
-            }
             return (
-              <ListboxItem
-                {...getItemProps({ item, index })}
-                key={index}
-                suffix={
-                  item.type === "uploaded" && (
-                    <ItemMenu
-                      onDelete={() => {
-                        handleDeleteByLabel(item.label);
-                      }}
-                    />
-                  )
-                }
-              >
-                {item.label}
-              </ListboxItem>
+              <Fragment key={index}>
+                {item.type === "category" && index !== 0 && (
+                  <Separator css={{ my: "$1" }} />
+                )}
+                <ListboxItem
+                  {...getItemProps({ item, index })}
+                  disabled={item.type === "category"}
+                  suffix={
+                    item.type === "uploaded" && (
+                      <ItemMenu
+                        onDelete={() => {
+                          handleDeleteByLabel(item.label);
+                        }}
+                      />
+                    )
+                  }
+                >
+                  {item.label}
+                </ListboxItem>
+              </Fragment>
             );
           })}
         </Listbox>
