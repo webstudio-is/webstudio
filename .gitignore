@@ -49,3 +49,4 @@ yarn-error.log*
 packages/**/lib
 generated
 storybook-static
+tsconfig.tsbuildinfo
