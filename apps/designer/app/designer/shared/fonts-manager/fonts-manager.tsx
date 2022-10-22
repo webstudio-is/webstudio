@@ -71,14 +71,8 @@ const NotFound = () => {
   );
 };
 
-type FontsManagerProps = {
-  value: string;
-  onChange: (value: string) => void;
-};
-
-export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
+const useFontItems = () => {
   const { assets, handleDelete } = useAssets("font");
-  const [openMenuItem, setOpenMenuItem] = useState<Item>();
   const handleDeleteByLabel = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
     const ids = assets
@@ -94,6 +88,18 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   };
 
   const fontItems = useMemo(() => getItems(assets), [assets]);
+  return { fontItems, handleDelete: handleDeleteByLabel };
+};
+
+type FontsManagerProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
+
+export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
+  const { handleDelete, fontItems } = useFontItems();
+  const [openMenuItem, setOpenMenuItem] = useState<Item>();
+
   const selectedItem =
     // After deletion the selected item may not be in the list anymore.
     fontItems.find((item) => item.label === value) ??
@@ -173,7 +179,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                           setOpenMenuItem(item);
                         }}
                         onDelete={() => {
-                          handleDeleteByLabel(item.label);
+                          handleDelete(item.label);
                         }}
                       />
                     )
