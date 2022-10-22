@@ -17,7 +17,7 @@ import {
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { useMemo } from "react";
+import { ComponentProps, forwardRef, Fragment, useMemo } from "react";
 import { cssVars } from "@webstudio-is/css-vars";
 
 const getItems = (
@@ -87,9 +87,16 @@ const Listbox = styled("ul", {
   flexDirection: "column",
   margin: 0,
   padding: 0,
+  variants: {
+    isEmpty: {
+      true: {
+        display: "none",
+      },
+    },
+  },
 });
 
-const ListboxItem = styled("li", {
+const ListboxItemBase = styled("li", {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -97,7 +104,7 @@ const ListboxItem = styled("li", {
   paddingLeft: "$4",
   listStyle: "none",
   borderRadius: "$1",
-  "&:hover, &[aria-selected=true]": {
+  "&[data-highlighted], &[aria-selected=true]": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
     [vars.menuButtonVisibility]: "visible",
@@ -107,6 +114,24 @@ const ListboxItem = styled("li", {
     color: "$hint",
   },
 });
+
+const ListboxItem = forwardRef<
+  HTMLLIElement,
+  ComponentProps<typeof ListboxItemBase> & {
+    highlighted: boolean;
+    disabled?: boolean;
+  }
+>(({ highlighted, disabled, ...props }, ref) => {
+  return (
+    <ListboxItemBase
+      {...props}
+      ref={ref}
+      {...(highlighted ? { ["data-highlighted"]: true } : {})}
+      {...(disabled ? { ["aria-disabled"]: true, disabled: true } : {})}
+    />
+  );
+});
+ListboxItem.displayName = "ListboxItem";
 
 type FontsManagerProps = {
   value: string;
@@ -177,19 +202,14 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           {items.map((item, index) => {
             if (item.type === "separator") {
               return (
-                <>
+                <Fragment key={index}>
                   {index !== 0 && <Separator css={{ my: "$1" }} />}
-                  <ListboxItem
-                    {...getItemProps({ item, index })}
-                    key={index}
-                    aria-disabled
-                    disabled
-                  >
+                  <ListboxItem {...getItemProps({ item, index })} disabled>
                     <Text variant="label" truncate>
                       {item.label}
                     </Text>
                   </ListboxItem>
-                </>
+                </Fragment>
               );
             }
             return (
