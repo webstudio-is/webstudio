@@ -5,7 +5,7 @@ import { ValuePickerPopover } from "../../shared/value-picker-popover";
 import { ImageManager } from "~/designer/shared/image-manager";
 import { useAssets } from "~/designer/shared/assets";
 
-export const BackgroundImageControl = ({
+export const ImageControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,

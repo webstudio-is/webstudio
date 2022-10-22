@@ -8,16 +8,9 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
-import {
-  ColorControl,
-  TextControl,
-  SelectControl,
-  MenuControl,
-  FontFamilyControl,
-} from "./controls";
+import * as controls from "./controls";
 import { ShowMore } from "./shared/show-more";
 import { LayoutSection, SpacingSection } from "./sections";
-import { BackgroundImageControl } from "./controls/background-image/background-image-control";
 import { PropertyName } from "./shared/property-name";
 
 export type PropertyProps = {
@@ -137,15 +130,4 @@ const sections: {
 } = {
   layout: LayoutSection,
   spacing: SpacingSection,
-};
-
-const controls: {
-  [key: string]: (props: ControlProps) => JSX.Element | null;
-} = {
-  Menu: MenuControl,
-  Text: TextControl,
-  Color: ColorControl,
-  Select: SelectControl,
-  FontFamily: FontFamilyControl,
-  Image: BackgroundImageControl,
 };
