@@ -2,7 +2,6 @@
   "extends": "../../node_modules/@webstudio-is/tsconfig/remix.json",
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "composite": true,
     "paths": { "~/*": ["app/*"] },
     "baseUrl": ".",
     "rootDir": "./app"

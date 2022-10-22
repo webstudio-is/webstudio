@@ -2,7 +2,6 @@
   "extends": "../../node_modules/@webstudio-is/tsconfig/base.json",
   "include": ["./src/**/*.ts", "./src/**/*.tsx", "./src/**/*.json"],
   "compilerOptions": {
-    "composite": true,
     "lib": ["DOM", "DOM.Iterable", "ES2020"],
     "module": "commonjs",
     "jsx": "react-jsx",
