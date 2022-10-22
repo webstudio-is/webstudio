@@ -19,6 +19,11 @@ type Item = {
   type: "uploaded" | "system" | "category";
 };
 
+const categoryItems = {
+  uploaded: { label: "Uploaded", type: "category" },
+  system: { label: "System", type: "category" },
+};
+
 const getItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
@@ -35,7 +40,12 @@ const getItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
       });
     }
   }
-  return [...uploaded.values(), ...system];
+  return [
+    categoryItems.uploaded,
+    ...uploaded.values(),
+    categoryItems.system,
+    ...system,
+  ];
 };
 
 const groupItems = (items: Array<Item>) => {
@@ -44,11 +54,11 @@ const groupItems = (items: Array<Item>) => {
   const result = [];
 
   if (uploaded.length !== 0) {
-    result.push({ label: "Uploaded", type: "category" }, ...uploaded);
+    result.push(categoryItems.uploaded, ...uploaded);
   }
 
   if (system.length !== 0) {
-    result.push({ label: "System", type: "category" }, ...system);
+    result.push(categoryItems.system, ...system);
   }
 
   return result;
