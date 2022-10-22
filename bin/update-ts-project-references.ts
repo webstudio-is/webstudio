@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-
 import cp from "child_process";
 import fs from "fs";
 import fsP from "fs/promises";
