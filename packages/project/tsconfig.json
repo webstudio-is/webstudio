@@ -11,8 +11,16 @@
     "rootDir": "./src"
   },
   "references": [
-    { "path": "../asset-uploader" },
-    { "path": "../prisma-client" },
-    { "path": "../react-sdk" }
+    {
+      "path": "../asset-uploader"
+    },
+
+    {
+      "path": "../prisma-client"
+    },
+
+    {
+      "path": "../react-sdk"
+    }
   ]
 }

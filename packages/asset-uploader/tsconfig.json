@@ -10,5 +10,13 @@
     "outDir": "./lib",
     "rootDir": "./src"
   },
-  "references": [{ "path": "../fonts" }, { "path": "../prisma-client" }]
+  "references": [
+    {
+      "path": "../fonts"
+    },
+
+    {
+      "path": "../prisma-client"
+    }
+  ]
 }

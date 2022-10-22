@@ -13,5 +13,9 @@
     "outDir": "./lib",
     "rootDir": "./src"
   },
-  "references": [{ "path": "../css-vars" }]
+  "references": [
+    {
+      "path": "../css-vars"
+    }
+  ]
 }

@@ -14,9 +14,20 @@
     "rootDir": "./src"
   },
   "references": [
-    { "path": "../asset-uploader" },
-    { "path": "../fonts" },
-    { "path": "../icons" },
-    { "path": "../prisma-client" }
+    {
+      "path": "../asset-uploader"
+    },
+
+    {
+      "path": "../fonts"
+    },
+
+    {
+      "path": "../icons"
+    },
+
+    {
+      "path": "../prisma-client"
+    }
   ]
 }

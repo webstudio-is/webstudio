@@ -13,5 +13,9 @@
     "rootDir": "./src",
     "outDir": "./lib"
   },
-  "references": [{ "path": "../icons" }]
+  "references": [
+    {
+      "path": "../icons"
+    }
+  ]
 }

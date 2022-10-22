@@ -8,12 +8,32 @@
     "rootDir": "./app"
   },
   "references": [
-    { "path": "../../packages/asset-uploader" },
-    { "path": "../../packages/css-vars" },
-    { "path": "../../packages/design-system" },
-    { "path": "../../packages/icons" },
-    { "path": "../../packages/prisma-client" },
-    { "path": "../../packages/project" },
-    { "path": "../../packages/react-sdk" }
+    {
+      "path": "../../packages/asset-uploader"
+    },
+
+    {
+      "path": "../../packages/css-vars"
+    },
+
+    {
+      "path": "../../packages/design-system"
+    },
+
+    {
+      "path": "../../packages/icons"
+    },
+
+    {
+      "path": "../../packages/prisma-client"
+    },
+
+    {
+      "path": "../../packages/project"
+    },
+
+    {
+      "path": "../../packages/react-sdk"
+    }
   ]
 }

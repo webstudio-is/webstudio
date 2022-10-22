@@ -10,5 +10,9 @@
     "rootDir": "./src",
     "outDir": "./lib"
   },
-  "references": [{ "path": "../design-system" }]
+  "references": [
+    {
+      "path": "../design-system"
+    }
+  ]
 }
