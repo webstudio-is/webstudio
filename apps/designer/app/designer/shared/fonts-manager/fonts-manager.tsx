@@ -2,8 +2,6 @@
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
-  Box,
-  ComboboxListboxItem,
   TextField,
   DropdownMenu,
   DropdownMenuTrigger,
@@ -84,27 +82,29 @@ const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
   );
 };
 
-const ListboxCategoryItem = styled(Text, {
-  mx: "$4",
-  my: "$2",
-  listStyle: "none",
+const Listbox = styled("ul", {
+  display: "flex",
+  flexDirection: "column",
+  margin: 0,
+  padding: 0,
 });
 
-const ListboxItem = styled(ComboboxListboxItem, {
-  backgroundColor: "transparent",
+const ListboxItem = styled("li", {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  height: "$5",
+  paddingLeft: "$4",
+  listStyle: "none",
   borderRadius: "$1",
-  //borderWidth: 2,
-  //borderStyle: "solid",
-  //borderColor: "transparent",
   "&:hover, &[aria-selected=true]": {
-    color: "$hiContrast",
-    backgroundColor: "transparent",
-    //borderStyle: "solid",
-    //borderColor: "$blue10",
-
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
     [vars.menuButtonVisibility]: "visible",
+  },
+  "&[disabled]": {
+    pointerEvents: "none",
+    color: "$hint",
   },
 });
 
@@ -146,22 +146,10 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       },
     });
 
-  const { isEmpty, ...menuProps } = getMenuProps();
-
   return (
-    <Flex
-      gap="3"
-      direction="column"
-      css={{ padding: "$2", overflow: "hidden" }}
-    >
-      <Box css={{ padding: "$2" }}>
+    <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
+      <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
-      </Box>
-
-      <Flex
-        {...getComboboxProps()}
-        css={{ flexDirection: "column", gap: "$3" }}
-      >
         <TextField
           type="search"
           autoFocus
@@ -177,49 +165,49 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           }
           {...getInputProps()}
         />
-        <Flex
-          {...menuProps}
-          css={{
-            flexDirection: "column",
-          }}
-        >
+      </Flex>
+
+      <Separator css={{ my: "$1" }} />
+
+      <Flex
+        {...getComboboxProps()}
+        css={{ flexDirection: "column", gap: "$3", px: "$3" }}
+      >
+        <Listbox {...getMenuProps()}>
           {items.map((item, index) => {
             if (item.type === "separator") {
               return (
                 <>
-                  {index !== 0 && <Separator />}
-                  <ListboxCategoryItem
+                  {index !== 0 && <Separator css={{ my: "$1" }} />}
+                  <ListboxItem
                     {...getItemProps({ item, index })}
-                    as="li"
-                    variant="label"
-                    color="hint"
                     key={index}
+                    aria-disabled
                     disabled
                   >
-                    {item.label}
-                  </ListboxCategoryItem>
+                    <Text variant="label" truncate>
+                      {item.label}
+                    </Text>
+                  </ListboxItem>
                 </>
               );
             }
             return (
-              <ListboxItem
-                {...getItemProps({ item, index })}
-                key={index}
-                suffix={
-                  item.type === "uploaded" && (
-                    <ItemMenu
-                      onDelete={() => {
-                        handleDeleteByLabel(item.label);
-                      }}
-                    />
-                  )
-                }
-              >
-                {item.label}
+              <ListboxItem {...getItemProps({ item, index })} key={index}>
+                <Text variant="label" color="contrast" truncate>
+                  {item.label}
+                </Text>
+                {item.type === "uploaded" && (
+                  <ItemMenu
+                    onDelete={() => {
+                      handleDeleteByLabel(item.label);
+                    }}
+                  />
+                )}
               </ListboxItem>
             );
           })}
-        </Flex>
+        </Listbox>
       </Flex>
     </Flex>
   );

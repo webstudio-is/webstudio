@@ -1,8 +1,6 @@
 import { useRef, useState } from "react";
 import { IconButton, TextField } from "@webstudio-is/design-system";
 import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { components } from "@webstudio-is/react-sdk";
-import type { SelectedInstanceData } from "~/shared/canvas-components";
 
 type OnSearch = (search: string) => void;
 
@@ -19,10 +17,9 @@ const useSearch = (onSearch: OnSearch): [string, OnSearch] => {
 
 type SearchProps = {
   onSearch: OnSearch;
-  selectedInstanceData: SelectedInstanceData;
 };
 
-export const Search = ({ onSearch, selectedInstanceData }: SearchProps) => {
+export const Search = ({ onSearch }: SearchProps) => {
   const [search, setSearch] = useSearch(onSearch);
   const inputRef = useRef<HTMLInputElement>(null);
   return (
