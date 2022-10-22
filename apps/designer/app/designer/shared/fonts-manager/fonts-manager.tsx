@@ -9,7 +9,7 @@ import {
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { ItemMenu } from "./item-menu";
 import { Listbox, ListboxItem } from "./list";
 
@@ -71,7 +71,13 @@ const NotFound = () => {
   );
 };
 
-const useFontItems = () => {
+const useLogic = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) => {
   const { assets, handleDelete } = useAssets("font");
   const handleDeleteByLabel = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
@@ -88,16 +94,7 @@ const useFontItems = () => {
   };
 
   const fontItems = useMemo(() => getItems(assets), [assets]);
-  return { fontItems, handleDelete: handleDeleteByLabel };
-};
 
-type FontsManagerProps = {
-  value: string;
-  onChange: (value: string) => void;
-};
-
-export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
-  const { handleDelete, fontItems } = useFontItems();
   const [openMenuItem, setOpenMenuItem] = useState<Item>();
 
   const selectedItem =
@@ -108,10 +105,8 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
 
   const {
     items: filteredItems,
-    getComboboxProps,
-    getMenuProps,
-    getItemProps,
-    getInputProps,
+    resetFilter,
+    ...comboboxProps
   } = useCombobox({
     items: fontItems,
     value: selectedItem,
@@ -126,6 +121,34 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   });
 
   const items = groupItems(filteredItems);
+
+  useEffect(resetFilter, [fontItems.length, resetFilter]);
+
+  return {
+    items,
+    openMenuItem,
+    setOpenMenuItem,
+    handleDelete: handleDeleteByLabel,
+    ...comboboxProps,
+  };
+};
+
+type FontsManagerProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
+
+export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
+  const {
+    items,
+    getInputProps,
+    handleDelete,
+    getComboboxProps,
+    getMenuProps,
+    getItemProps,
+    openMenuItem,
+    setOpenMenuItem,
+  } = useLogic({ value, onChange });
 
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
@@ -175,8 +198,8 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                   suffix={
                     item.type === "uploaded" && (
                       <ItemMenu
-                        onOpen={() => {
-                          setOpenMenuItem(item);
+                        onOpenChange={(isOpen) => {
+                          if (isOpen) setOpenMenuItem(item);
                         }}
                         onDelete={() => {
                           handleDelete(item.label);

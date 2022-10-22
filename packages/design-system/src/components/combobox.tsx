@@ -214,6 +214,7 @@ export const useCombobox = <Item,>({
     items: filteredItems,
     getItemProps: enhancedGetItemProps,
     getMenuProps: enhancedGetMenuProps,
+    resetFilter,
   };
 };
 
