@@ -1,4 +1,5 @@
-import { styled } from "@webstudio-is/design-system";
+import { Flex, styled, Text } from "@webstudio-is/design-system";
+import { CheckIcon } from "@webstudio-is/icons";
 import { ComponentProps, forwardRef } from "react";
 import { itemMenuVars } from "./item-menu";
 
@@ -17,11 +18,11 @@ export const Listbox = styled("ul", {
 });
 
 const ListboxItemBase = styled("li", {
-  display: "flex",
+  display: "grid",
+  gridTemplateColumns: "$4 1fr",
   alignItems: "center",
   justifyContent: "space-between",
   height: "$5",
-  paddingLeft: "$4",
   listStyle: "none",
   borderRadius: "$1",
   "&[data-highlighted], &[aria-selected=true]": {
@@ -31,7 +32,6 @@ const ListboxItemBase = styled("li", {
   },
   "&[disabled]": {
     pointerEvents: "none",
-    color: "$hint",
   },
 });
 
@@ -39,16 +39,38 @@ export const ListboxItem = forwardRef<
   HTMLLIElement,
   ComponentProps<typeof ListboxItemBase> & {
     highlighted?: boolean;
-    disabled?: boolean;
+    disabled: boolean;
+    selected: boolean;
+    suffix?: JSX.Element;
   }
->(({ highlighted, disabled, ...props }, ref) => {
-  return (
-    <ListboxItemBase
-      {...props}
-      ref={ref}
-      {...(highlighted ? { ["data-highlighted"]: true } : {})}
-      {...(disabled ? { ["aria-disabled"]: true, disabled: true } : {})}
-    />
-  );
-});
+>(
+  (
+    {
+      highlighted,
+      disabled = false,
+      selected = false,
+      children,
+      suffix,
+      ...props
+    },
+    ref
+  ) => {
+    return (
+      <ListboxItemBase
+        {...props}
+        ref={ref}
+        {...(highlighted ? { ["data-highlighted"]: true } : {})}
+        {...(disabled ? { ["aria-disabled"]: true, disabled: true } : {})}
+      >
+        {selected && <CheckIcon />}
+        <Flex css={{ gridColumn: 2 }} align="center">
+          <Text variant="label" truncate color={disabled ? "hint" : "contrast"}>
+            {children}
+          </Text>
+          {suffix}
+        </Flex>
+      </ListboxItemBase>
+    );
+  }
+);
 ListboxItem.displayName = "ListboxItem";

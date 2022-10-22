@@ -3,7 +3,6 @@ import {
   Flex,
   TextField,
   IconButton,
-  Text,
   useCombobox,
   Separator,
 } from "@webstudio-is/design-system";
@@ -123,6 +122,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <TextField
+          {...getInputProps()}
           type="search"
           autoFocus
           placeholder="Search"
@@ -135,7 +135,6 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
               <MagnifyingGlassIcon />
             </IconButton>
           }
-          {...getInputProps()}
         />
       </Flex>
       <Separator css={{ my: "$1" }} />
@@ -155,25 +154,26 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                 <Fragment key={index}>
                   {index !== 0 && <Separator css={{ my: "$1" }} />}
                   <ListboxItem {...getItemProps({ item, index })} disabled>
-                    <Text variant="label" truncate>
-                      {item.label}
-                    </Text>
+                    {item.label}
                   </ListboxItem>
                 </Fragment>
               );
             }
             return (
-              <ListboxItem {...getItemProps({ item, index })} key={index}>
-                <Text variant="label" color="contrast" truncate>
-                  {item.label}
-                </Text>
-                {item.type === "uploaded" && (
-                  <ItemMenu
-                    onDelete={() => {
-                      handleDeleteByLabel(item.label);
-                    }}
-                  />
-                )}
+              <ListboxItem
+                {...getItemProps({ item, index })}
+                key={index}
+                suffix={
+                  item.type === "uploaded" && (
+                    <ItemMenu
+                      onDelete={() => {
+                        handleDeleteByLabel(item.label);
+                      }}
+                    />
+                  )
+                }
+              >
+                {item.label}
               </ListboxItem>
             );
           })}
