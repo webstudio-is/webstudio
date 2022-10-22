@@ -9,7 +9,7 @@ import {
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ItemMenu } from "./item-menu";
 import { Listbox, ListboxItem } from "./list";
 
@@ -18,7 +18,7 @@ type Item = {
   type: "uploaded" | "system" | "category";
 };
 
-const categoryItems = {
+const categoryItems: { [type: string]: Item } = {
   uploaded: { label: "Uploaded", type: "category" },
   system: { label: "System", type: "category" },
 };
@@ -50,7 +50,7 @@ const getItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
 const groupItems = (items: Array<Item>) => {
   const uploaded = items.filter((item) => item.type === "uploaded");
   const system = items.filter((item) => item.type === "system");
-  const result = [];
+  const result: Array<Item> = [];
 
   if (uploaded.length !== 0) {
     result.push(categoryItems.uploaded, ...uploaded);
@@ -78,7 +78,7 @@ type FontsManagerProps = {
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const { assets, handleDelete } = useAssets("font");
-
+  const [openMenuItem, setOpenMenuItem] = useState<Item>();
   const handleDeleteByLabel = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
     const ids = assets
@@ -95,7 +95,10 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
 
   const fontItems = useMemo(() => getItems(assets), [assets]);
   const selectedItem =
-    fontItems.find((item) => item.label === value) ?? fontItems[0];
+    // After deletion the selected item may not be in the list anymore.
+    fontItems.find((item) => item.label === value) ??
+    fontItems.find((item) => item.type !== "category") ??
+    null;
 
   const {
     items: filteredItems,
@@ -106,9 +109,10 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   } = useCombobox({
     items: fontItems,
     value: selectedItem,
-    itemToString: (item) =>
-      item?.type === "category" ? "" : item?.label ?? "",
-    onItemSelect: (value) => {
+    itemToString(item) {
+      return item?.type === "category" ? "" : item?.label ?? "";
+    },
+    onItemSelect(value) {
       if (value !== null) {
         onChange(value.label);
       }
@@ -122,10 +126,11 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <TextField
-          {...getInputProps({ value: undefined, onBlur: undefined })}
+          {...getInputProps({ value: undefined })}
           type="search"
           autoFocus
           placeholder="Search"
+          onBlur={undefined}
           prefix={
             <IconButton
               aria-label="Search"
@@ -155,11 +160,18 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                   <Separator css={{ my: "$1" }} />
                 )}
                 <ListboxItem
-                  {...getItemProps({ item, index })}
+                  {...getItemProps({
+                    item,
+                    index,
+                    highlighted: item === openMenuItem ? true : undefined,
+                  })}
                   disabled={item.type === "category"}
                   suffix={
                     item.type === "uploaded" && (
                       <ItemMenu
+                        onOpen={() => {
+                          setOpenMenuItem(item);
+                        }}
                         onDelete={() => {
                           handleDeleteByLabel(item.label);
                         }}

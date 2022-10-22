@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/design-system";
 import { DotsHorizontalIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
+import { useState } from "react";
 
 export const itemMenuVars = {
   visibility: cssVars.define("visibility"),
@@ -24,9 +25,21 @@ const MenuButton = styled(IconButton, {
   },
 });
 
-export const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
+type ItemMenuProps = {
+  onDelete: () => void;
+  onOpen: () => void;
+};
+
+export const ItemMenu = ({ onDelete, onOpen }: ItemMenuProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      onOpenChange={(state) => {
+        setIsOpen(state);
+        if (state === true) onOpen();
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <MenuButton aria-label="Font menu">
           <DotsHorizontalIcon />
