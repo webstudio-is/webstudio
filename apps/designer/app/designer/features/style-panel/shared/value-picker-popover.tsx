@@ -43,7 +43,12 @@ export const ValuePickerPopover = ({
         {children}
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent sideOffset={sideOffset} side="right" hideArrow>
+        <PopoverContent
+          sideOffset={sideOffset}
+          side="right"
+          hideArrow
+          align="start"
+        >
           <PopoverHeader title={title} />
           {content}
         </PopoverContent>
