@@ -18,12 +18,9 @@ const stringArrayEquals = (arrA: string[], arrB: string[]): boolean => {
   );
 };
 
-let prettier: typeof import("prettier") | undefined;
-
-const format = (filePath: string, content: string): string => {
-  if (!prettier) {
-    prettier = require("prettier") as typeof import("prettier");
-  }
+const format = async (filePath: string, content: string): Promise<string> => {
+  // lazy load prettier to avoid loading it when not needed
+  const prettier = (await import("prettier")).default;
   const config = prettier.resolveConfig(filePath);
   return prettier.format(content, {
     ...config,
@@ -53,7 +50,7 @@ const getDependencyGraph = (
 };
 
 const updateFile = async (filePath: string, content: string) => {
-  await fsP.writeFile(filePath, format(filePath, content));
+  await fsP.writeFile(filePath, await format(filePath, content));
   cp.spawnSync("git", ["add", filePath]);
 };
 
