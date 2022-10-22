@@ -1,28 +1,22 @@
-/* This entire module is WIP */
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
   TextField,
-  DropdownMenu,
-  DropdownMenuTrigger,
   IconButton,
-  DropdownMenuContent,
-  DropdownMenuItem,
   Text,
-  DropdownMenuPortal,
   useCombobox,
   Separator,
-  styled,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { ComponentProps, forwardRef, Fragment, useMemo } from "react";
-import { cssVars } from "@webstudio-is/css-vars";
+import { MagnifyingGlassIcon } from "@webstudio-is/icons";
+import { Fragment, useMemo } from "react";
+import { ItemMenu } from "./item-menu";
+import { Listbox, ListboxItem } from "./list";
 
 const getItems = (
   assets: Array<Asset | PreviewAsset>
-): Array<{ label: string; type: "uploaded" | "system" | "separator" }> => {
+): Array<{ label: string; type: "uploaded" | "system" | "category" }> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
@@ -39,99 +33,12 @@ const getItems = (
     }
   }
   return [
-    { label: "Uploaded", type: "separator" },
+    { label: "Uploaded", type: "category" },
     ...uploaded.values(),
-    { label: "System", type: "separator" },
+    { label: "System", type: "category" },
     ...system,
   ];
 };
-
-const vars = {
-  menuButtonVisibility: cssVars.define("menuButton"),
-};
-
-const MenuButton = styled(IconButton, {
-  visibility: cssVars.use(vars.menuButtonVisibility, "hidden"),
-  color: "$hint",
-  "&:hover": {
-    color: "$hiContrast",
-    backgroundColor: "transparent",
-  },
-});
-
-const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <MenuButton aria-label="Font menu">
-          <DotsHorizontalIcon />
-        </MenuButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onSelect={() => {
-              onDelete();
-            }}
-          >
-            <Text>Delete font</Text>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenu>
-  );
-};
-
-const Listbox = styled("ul", {
-  display: "flex",
-  flexDirection: "column",
-  margin: 0,
-  padding: 0,
-  variants: {
-    isEmpty: {
-      true: {
-        display: "none",
-      },
-    },
-  },
-});
-
-const ListboxItemBase = styled("li", {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  height: "$5",
-  paddingLeft: "$4",
-  listStyle: "none",
-  borderRadius: "$1",
-  "&[data-highlighted], &[aria-selected=true]": {
-    boxShadow:
-      "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
-    [vars.menuButtonVisibility]: "visible",
-  },
-  "&[disabled]": {
-    pointerEvents: "none",
-    color: "$hint",
-  },
-});
-
-const ListboxItem = forwardRef<
-  HTMLLIElement,
-  ComponentProps<typeof ListboxItemBase> & {
-    highlighted: boolean;
-    disabled?: boolean;
-  }
->(({ highlighted, disabled, ...props }, ref) => {
-  return (
-    <ListboxItemBase
-      {...props}
-      ref={ref}
-      {...(highlighted ? { ["data-highlighted"]: true } : {})}
-      {...(disabled ? { ["aria-disabled"]: true, disabled: true } : {})}
-    />
-  );
-});
-ListboxItem.displayName = "ListboxItem";
 
 type FontsManagerProps = {
   value: string;
@@ -191,16 +98,14 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           {...getInputProps()}
         />
       </Flex>
-
       <Separator css={{ my: "$1" }} />
-
       <Flex
         {...getComboboxProps()}
         css={{ flexDirection: "column", gap: "$3", px: "$3" }}
       >
         <Listbox {...getMenuProps()}>
           {items.map((item, index) => {
-            if (item.type === "separator") {
+            if (item.type === "category") {
               return (
                 <Fragment key={index}>
                   {index !== 0 && <Separator css={{ my: "$1" }} />}
