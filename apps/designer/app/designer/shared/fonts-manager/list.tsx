@@ -38,7 +38,7 @@ const ListboxItemBase = styled("li", {
 export const ListboxItem = forwardRef<
   HTMLLIElement,
   ComponentProps<typeof ListboxItemBase> & {
-    highlighted: boolean;
+    highlighted?: boolean;
     disabled?: boolean;
   }
 >(({ highlighted, disabled, ...props }, ref) => {

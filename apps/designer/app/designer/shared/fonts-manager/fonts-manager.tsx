@@ -14,9 +14,12 @@ import { Fragment, useMemo } from "react";
 import { ItemMenu } from "./item-menu";
 import { Listbox, ListboxItem } from "./list";
 
-const getItems = (
-  assets: Array<Asset | PreviewAsset>
-): Array<{ label: string; type: "uploaded" | "system" | "category" }> => {
+type Item = {
+  label: string;
+  type: "uploaded" | "system" | "category";
+};
+
+const getItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
@@ -32,12 +35,31 @@ const getItems = (
       });
     }
   }
-  return [
-    { label: "Uploaded", type: "category" },
-    ...uploaded.values(),
-    { label: "System", type: "category" },
-    ...system,
-  ];
+  return [...uploaded.values(), ...system];
+};
+
+const groupItems = (items: Array<Item>) => {
+  const uploaded = items.filter((item) => item.type === "uploaded");
+  const system = items.filter((item) => item.type === "system");
+  const result = [];
+
+  if (uploaded.length !== 0) {
+    result.push({ label: "Uploaded", type: "category" }, ...uploaded);
+  }
+
+  if (system.length !== 0) {
+    result.push({ label: "System", type: "category" }, ...system);
+  }
+
+  return result;
+};
+
+const NotFound = () => {
+  return (
+    <Flex align="center" justify="center" css={{ height: 100 }}>
+      Not Found
+    </Flex>
+  );
 };
 
 type FontsManagerProps = {
@@ -66,17 +88,25 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const selectedItem =
     fontItems.find((item) => item.label === value) ?? fontItems[0];
 
-  const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
-    useCombobox({
-      items: fontItems,
-      value: selectedItem,
-      itemToString: (item) => item?.label ?? "",
-      onItemSelect: (value) => {
-        if (value !== null) {
-          onChange(value.label);
-        }
-      },
-    });
+  const {
+    items: filteredItems,
+    getComboboxProps,
+    getMenuProps,
+    getItemProps,
+    getInputProps,
+  } = useCombobox({
+    items: fontItems,
+    value: selectedItem,
+    itemToString: (item) =>
+      item?.type === "category" ? "" : item?.label ?? "",
+    onItemSelect: (value) => {
+      if (value !== null) {
+        onChange(value.label);
+      }
+    },
+  });
+
+  const items = groupItems(filteredItems);
 
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
@@ -99,9 +129,14 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         />
       </Flex>
       <Separator css={{ my: "$1" }} />
+      {items.length === 0 && <NotFound />}
       <Flex
         {...getComboboxProps()}
-        css={{ flexDirection: "column", gap: "$3", px: "$3" }}
+        css={{
+          flexDirection: "column",
+          gap: "$3",
+          px: "$3",
+        }}
       >
         <Listbox {...getMenuProps()}>
           {items.map((item, index) => {
