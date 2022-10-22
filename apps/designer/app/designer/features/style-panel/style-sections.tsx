@@ -32,7 +32,7 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   sectionStyle: {
-    [Property in keyof Style]-?: RenderPropertyProps;
+    [Property in keyof Style]: RenderPropertyProps;
   };
   inheritedStyle: InheritedStyle;
   category: Category;
