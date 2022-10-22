@@ -269,7 +269,8 @@ export const Button = styled("button", {
           backgroundColor: "$blueA4",
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$blueA8, 0 0 0 1px $colors$blueA8",
+          boxShadow:
+            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
         },
         '&[data-state="open"]': {
           backgroundColor: "$blueA4",

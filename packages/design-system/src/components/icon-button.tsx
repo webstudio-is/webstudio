@@ -30,6 +30,8 @@ export const IconButton = styled("button", {
   "&:focus": {
     backgroundColor: "$muted",
     outline: "none",
+    border: "2px solid white",
+    boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
   },
   "&:disabled": {
     pointerEvents: "none",
