@@ -17,9 +17,12 @@
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
-    "migrations": "cd apps/designer && migrations --dev"
+    "migrations": "cd apps/designer && migrations --dev",
+    "update:ts-references": "tsx ./bin/update-ts-project-references.ts"
   },
   "devDependencies": {
+    "@changesets/get-dependents-graph": "^1.3.4",
+    "@manypkg/get-packages": "^1.1.3",
     "@webstudio-is/eslint-config-custom": "*",
     "husky": ">=6",
     "lint-staged": "^13.0.2",
@@ -31,7 +34,9 @@
     "npm": ">=7.0.0",
     "node": "16"
   },
-  "dependencies": {},
+  "dependencies": {
+    "golden-fleece": "^1.0.9"
+  },
   "packageManager": "yarn@1.22.19",
   "lint-staged": {
     "*.{ts,tsx,js,json,css,md}": "prettier --write"
