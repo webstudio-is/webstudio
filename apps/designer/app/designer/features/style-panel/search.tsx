@@ -21,30 +21,13 @@ type SearchProps = {
 
 export const Search = ({ onSearch }: SearchProps) => {
   const [search, setSearch] = useSearch(onSearch);
-  const inputRef = useRef<HTMLInputElement>(null);
   return (
     <TextField
       type="search"
       value={search}
-      inputRef={inputRef}
-      prefix={
-        <IconButton aria-label="Search" css={{ color: "$hint" }} tabIndex={-1}>
-          <MagnifyingGlassIcon />
-        </IconButton>
-      }
-      suffix={
-        search.length > 0 && (
-          <IconButton
-            aria-label="Reset search"
-            onClick={() => {
-              setSearch("");
-              inputRef.current?.focus();
-            }}
-          >
-            <Cross2Icon />
-          </IconButton>
-        )
-      }
+      onCancel={() => {
+        setSearch("");
+      }}
       placeholder="Search"
       onChange={(event) => {
         const { value } = event.target;
