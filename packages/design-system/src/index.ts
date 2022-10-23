@@ -11,6 +11,7 @@ export * as ToggleGroup from "./components/toggle-group";
 export * from "./components/progress-radial";
 export * from "./components/select";
 export { TextField } from "./components/text-field";
+export { SearchField } from "./components/search-field";
 export { Flex } from "./components/flex";
 export { Image } from "./components/image";
 export { Grid } from "./components/grid";

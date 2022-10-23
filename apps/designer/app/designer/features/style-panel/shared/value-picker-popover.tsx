@@ -51,6 +51,7 @@ export const ValuePickerPopover = ({
           onEscapeKeyDown={() => {
             setIsOpen(false);
           }}
+          css={{ width: PANEL_WIDTH }}
         >
           <PopoverHeader title={title} />
           {content}

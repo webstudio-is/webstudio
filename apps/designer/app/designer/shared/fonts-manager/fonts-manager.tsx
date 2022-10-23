@@ -1,14 +1,12 @@
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
-  TextField,
-  IconButton,
   useCombobox,
   Separator,
+  SearchField,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import { MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { ItemMenu } from "./item-menu";
 import { Listbox, ListboxItem } from "./list";
@@ -154,21 +152,11 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
-        <TextField
+        <SearchField
           {...getInputProps({ value: undefined })}
-          type="search"
           autoFocus
           placeholder="Search"
           onBlur={undefined}
-          prefix={
-            <IconButton
-              aria-label="Search"
-              css={{ color: "$hint" }}
-              tabIndex={-1}
-            >
-              <MagnifyingGlassIcon />
-            </IconButton>
-          }
         />
       </Flex>
       <Separator css={{ my: "$1" }} />

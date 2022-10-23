@@ -1,10 +1,9 @@
 import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
-import { Box, Card, Paragraph } from "@webstudio-is/design-system";
+import { Box, Card, Paragraph, SearchField } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "~/shared/canvas-components";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
-import { Search } from "./search";
 import { useState } from "react";
 import {
   useCanvasWidth,
@@ -56,7 +55,15 @@ export const StylePanel = ({
   return (
     <>
       <Box css={{ px: "$3", py: "$1" }}>
-        <Search onSearch={setSearch} />
+        <SearchField
+          placeholder="Search"
+          onChange={(event) => {
+            setSearch(event.target.value);
+          }}
+          onCancel={() => {
+            setSearch("");
+          }}
+        />
       </Box>
       <Box css={{ overflow: "auto" }}>
         <StyleSettings
