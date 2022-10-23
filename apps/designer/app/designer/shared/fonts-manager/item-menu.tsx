@@ -23,6 +23,11 @@ const MenuButton = styled(IconButton, {
     color: "$hiContrast",
     backgroundColor: "transparent",
   },
+  "&:focus": {
+    color: "$hiContrast",
+    border: "none",
+    boxShadow: "none",
+  },
 });
 
 type ItemMenuProps = {

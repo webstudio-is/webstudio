@@ -23,11 +23,11 @@ const ListboxItemBase = styled("li", {
   alignItems: "center",
   justifyContent: "space-between",
   height: "$5",
+  overflow: "hidden",
   listStyle: "none",
   borderRadius: "$1",
   "&[data-highlighted], &[aria-selected=true]": {
-    boxShadow:
-      "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+    boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
     [itemMenuVars.visibility]: "visible",
   },
   "&[disabled]": {
