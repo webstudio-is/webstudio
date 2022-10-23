@@ -3,8 +3,6 @@ import React from "react";
 import { useFocusWithin } from "@react-aria/interactions";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
-import { IconButton } from "./icon-button";
-import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 
 const InputBase = styled("input", {
   // Reset
@@ -157,7 +155,6 @@ export type TextFieldProps = Pick<
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
-    onCancel?: () => void;
   };
 
 export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
@@ -172,9 +169,6 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       variant,
       onFocus,
       onBlur,
-      onCancel,
-      type,
-      value,
       ...textFieldProps
     } = props;
 
@@ -196,33 +190,6 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       },
     });
 
-    const prefixOrSearch =
-      type === "search" ? (
-        <IconButton aria-label="Search" css={{ color: "$hint" }} tabIndex={-1}>
-          <MagnifyingGlassIcon />
-        </IconButton>
-      ) : (
-        prefix
-      );
-
-    const inActiveSearch =
-      type === "search" && value !== undefined && String(value).length !== 0;
-
-    const suffixOrCancel = inActiveSearch ? (
-      <IconButton
-        aria-label="Reset search"
-        tabIndex={-1}
-        onClick={() => {
-          internalInputRef.current?.focus();
-          onCancel?.();
-        }}
-      >
-        <Cross2Icon />
-      </IconButton>
-    ) : (
-      suffix
-    );
-
     return (
       <TextFieldBase
         {...focusWithinProps}
@@ -231,20 +198,18 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
         state={state}
         variant={variant}
         css={css}
-        withPrefix={Boolean(prefixOrSearch)}
-        withSuffix={Boolean(suffixOrCancel)}
+        withPrefix={Boolean(prefix)}
+        withSuffix={Boolean(suffix)}
         onClickCapture={focusInnerInput}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <InputBase
-          {...textFieldProps}
           disabled={disabled}
-          type={type}
-          value={value}
+          {...textFieldProps}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
         />
 
-        {prefixOrSearch && (
+        {prefix && (
           <Flex
             css={{
               alignItems: "center",
@@ -252,11 +217,11 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
               order: 0,
             }}
           >
-            {prefixOrSearch}
+            {prefix}
           </Flex>
         )}
 
-        {suffixOrCancel && (
+        {suffix && (
           <Flex
             css={{
               alignItems: "center",
@@ -264,7 +229,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
               order: 2,
             }}
           >
-            {suffixOrCancel}
+            {suffix}
           </Flex>
         )}
       </TextFieldBase>
