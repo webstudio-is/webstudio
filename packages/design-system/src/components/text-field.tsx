@@ -4,6 +4,31 @@ import { useFocusWithin } from "@react-aria/interactions";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
+import { cssVars } from "@webstudio-is/css-vars";
+
+const backgroundColorVar = cssVars.define("background-color");
+const colorVar = cssVars.define("color");
+
+const getButtonSuffixCssVars = (state: "focus" | "hover") => {
+  if (state === "focus") {
+    return {
+      [backgroundColorVar]: "$colors$primary",
+      [colorVar]: "white",
+    };
+  }
+
+  return {
+    [backgroundColorVar]: "$colors$muted",
+    [colorVar]: "$colors$hiContrast",
+  };
+};
+
+const ButtonSuffix = styled(ChevronLeftIcon, {
+  borderRadius: 2, // @todo shold come from theme
+  height: "$5",
+  backgroundColor: cssVars.use(backgroundColorVar),
+  color: cssVars.use(colorVar),
+});
 
 const InputBase = styled("input", {
   // Reset
@@ -80,9 +105,12 @@ const TextFieldBase = styled("div", {
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
 
+  "&:hover": getButtonSuffixCssVars("hover"),
+
   "&:focus-within": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$primary, 0px 0px 0px 1px $colors$primary",
+    ...getButtonSuffixCssVars("focus"),
   },
 
   "&[aria-disabled=true]": {
@@ -145,19 +173,6 @@ const TextFieldBase = styled("div", {
         paddingRight: 2,
       },
     },
-  },
-});
-
-const ButtonSuffix = styled(ChevronLeftIcon, {
-  borderRadius: 2, // @todo shold come from theme
-  height: "$5",
-  [`${TextFieldBase}:hover &`]: {
-    backgroundColor: "$muted",
-    color: "$hiContrast",
-  },
-  [`${TextFieldBase}:focus-within &`]: {
-    backgroundColor: "$primary",
-    color: "white",
   },
 });
 
