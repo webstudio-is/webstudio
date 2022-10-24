@@ -197,7 +197,7 @@ const {
       loContrast: "$slate1",
       hint: "$slate9",
       muted: "$slate6",
-      primary: "$blue12",
+      primary: "$blue10",
       canvas: "hsl(0 0% 93%)",
       panel: "white",
       panelOutline: "hsl(0deg 0% 0% / 10%)",
@@ -206,7 +206,6 @@ const {
       shadowDark: "hsl(206 22% 7% / 20%)",
       background: "$slate1",
       text: "$slate12",
-      dropPlacement: "$blue9",
     },
     fonts: {
       sans: "Inter, -apple-system, system-ui, sans-serif",
@@ -482,7 +481,7 @@ export const darkTheme = createTheme({
     loContrast: "hsl(0 0% 17%)",
     hint: "$slate9",
     muted: "$slate8",
-    primary: "$blue9",
+    primary: "$blue10",
     canvas: "hsl(0 0% 15%)",
     panel: "$slate3",
     panelOutline: "hsl(0deg 0% 100% / 10%)",
@@ -491,6 +490,5 @@ export const darkTheme = createTheme({
     shadowDark: "hsl(206 22% 7% / 20%)",
     background: "$slate12",
     text: "$slate1",
-    dropPlacement: "$blue9",
   },
 });

@@ -31,7 +31,8 @@ export const IconButton = styled("button", {
     backgroundColor: "$muted",
     outline: "none",
     border: "2px solid white",
-    boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
+    boxShadow:
+      "0px 0px 0px 2px $colors$primary, 0px 0px 0px 2px $colors$primary",
   },
   "&:disabled": {
     pointerEvents: "none",
@@ -65,7 +66,7 @@ export const IconButton = styled("button", {
     state: {
       active: {
         color: "$loContrast",
-        backgroundColor: "$blue10",
+        backgroundColor: "$primary",
       },
     },
   },

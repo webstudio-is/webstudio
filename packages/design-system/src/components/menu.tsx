@@ -25,7 +25,7 @@ export const itemCss = css(baseItemCss, {
   color: "$hiContrast",
   "&:focus, &[data-found], &[aria-selected=true]": {
     outline: "none",
-    backgroundColor: "$blue10",
+    backgroundColor: "$primary",
     color: "white",
   },
   "&[data-disabled], &[aria-disabled]": {

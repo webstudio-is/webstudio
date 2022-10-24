@@ -87,7 +87,7 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
     backgroundColor: "$muted",
   },
   "&:focus": {
-    backgroundColor: "$blue10",
+    backgroundColor: "$primary",
     color: "$loContrast",
   },
 });

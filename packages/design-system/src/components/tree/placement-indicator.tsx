@@ -23,7 +23,7 @@ const Circle = styled(Box, {
   width: CIRCLE_SIZE,
   height: CIRCLE_SIZE,
   position: "absolute",
-  border: "solid $dropPlacement",
+  border: "solid $primary",
   borderWidth: 2,
   borderRadius: "50%",
   pointerEvents: "none",
@@ -32,7 +32,7 @@ const Circle = styled(Box, {
 const Line = styled(Box, {
   boxSizing: "content-box",
   position: "absolute",
-  background: "$dropPlacement",
+  background: "$primary",
   pointerEvents: "none",
   outline: "solid $loContrast",
   outlineWidth: OUTLINE_WIDTH,

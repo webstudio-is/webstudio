@@ -81,13 +81,13 @@ export const Button = styled("button", {
         },
       },
       blue: {
-        backgroundColor: "$blue10",
+        backgroundColor: "$primary",
         color: "white",
         "@hover": {
           "&:hover": {
             backgroundColor: "$loContrast",
-            color: "$blue10",
-            boxShadow: "inset 0 0 0 1.5px $colors$blue10",
+            color: "$primary",
+            boxShadow: "inset 0 0 0 1.5px $colors$primary",
           },
         },
         "&:active": {
@@ -270,7 +270,7 @@ export const Button = styled("button", {
         },
         "&:focus": {
           boxShadow:
-            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
+            "0px 0px 0px 2px $colors$primary, 0px 0px 0px 2px $colors$primary",
         },
         '&[data-state="open"]': {
           backgroundColor: "$blueA4",

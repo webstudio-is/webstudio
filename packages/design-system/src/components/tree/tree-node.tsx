@@ -104,7 +104,7 @@ const hoverStyle = {
   left: 2,
   right: 2,
   height: ITEM_HEIGHT,
-  border: "solid $blue10",
+  border: "solid $primary",
   borderWidth: 2,
   borderRadius: "$2",
   pointerEvents: "none",
@@ -117,7 +117,7 @@ const ItemWrapper = styled(Flex, {
   position: "relative",
   variants: {
     isSelected: {
-      true: { color: "$loContrast", bc: "$blue10" },
+      true: { color: "$loContrast", bc: "$primary" },
     },
     parentIsSelected: {
       true: { bc: "$blue4" },

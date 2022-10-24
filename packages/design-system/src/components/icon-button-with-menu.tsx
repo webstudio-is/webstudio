@@ -31,7 +31,7 @@ const itemStyles = {
   userSelect: "none",
   gap: "$space$2",
   "&[data-highlighted]": {
-    background: "$colors$blue10",
+    background: "$colors$primary",
     color: "$colors$blue1",
     "& *": { fill: "$colors$blue1" },
   },

@@ -82,7 +82,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
   },
 
   "&:focus": {
-    backgroundColor: "$blue10",
+    backgroundColor: "$primary",
     color: "white",
   },
 });
