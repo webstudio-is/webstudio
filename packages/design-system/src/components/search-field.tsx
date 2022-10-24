@@ -4,6 +4,7 @@ import {
   forwardRef,
   useRef,
   useState,
+  useEffect,
 } from "react";
 import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { TextField } from "./text-field";
@@ -11,11 +12,14 @@ import { IconButton } from "./icon-button";
 
 const SearchFieldBase: ForwardRefRenderFunction<
   HTMLInputElement,
-  ComponentProps<typeof TextField> & { onCancel: () => void }
+  ComponentProps<typeof TextField> & { onCancel?: () => void }
 > = (props, ref) => {
-  const { onChange, onCancel, ...rest } = props;
-  const [value, setValue] = useState("");
+  const { onChange, onCancel, value: propsValue = "", ...rest } = props;
+  const [value, setValue] = useState(String(propsValue));
   const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    setValue(String(propsValue));
+  }, [propsValue]);
   return (
     <TextField
       {...rest}
@@ -32,6 +36,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
         value.length > 0 && (
           <IconButton
             aria-label="Reset search"
+            title="Reset search"
             tabIndex={-1}
             onClick={() => {
               inputRef.current?.focus();
