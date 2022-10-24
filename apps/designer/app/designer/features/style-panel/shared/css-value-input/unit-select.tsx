@@ -50,7 +50,10 @@ export const useUnitSelect = ({
     () =>
       units
         .filter((unit) => {
-          return isValid(property, value?.value + String(unit));
+          return isValid(
+            property,
+            value?.value + String(unit).replace("number", "")
+          );
         })
         .map((unit) => unitRenderMap.get(unit) ?? unit),
     [units]
