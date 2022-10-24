@@ -74,7 +74,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
       >
         <Text variant="title">{title}</Text>
         <PopoverClose asChild>
-          <IconButton size="1" css={{ marginRight: "$2" }} aria-label="Close">
+          <IconButton size="2" css={{ marginRight: "$2" }} aria-label="Close">
             <Cross1Icon />
           </IconButton>
         </PopoverClose>
