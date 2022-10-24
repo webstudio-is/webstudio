@@ -23,14 +23,8 @@ export const getItemMenuVars = (state: "visible" | "hidden") => {
 const MenuButton = styled(IconButton, {
   visibility: cssVars.use(visibilityVar, "hidden"),
   color: "$hint",
-  "&:hover": {
+  "&:hover, &:focus": {
     color: "$hiContrast",
-    backgroundColor: "transparent",
-  },
-  "&:focus": {
-    color: "$hiContrast",
-    border: "none",
-    boxShadow: "none",
   },
 });
 
@@ -59,6 +53,7 @@ export const ItemMenu = ({ onDelete, onOpenChange }: ItemMenuProps) => {
           align="start"
           onEscapeKeyDown={() => {
             setIsOpen(false);
+            onOpenChange(false);
           }}
         >
           <DropdownMenuItem

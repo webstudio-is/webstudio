@@ -44,8 +44,11 @@ export const IconButton = styled("button", {
     size: {
       "1": {
         borderRadius: 2,
-        height: "$5",
-        width: "$5",
+        height: "$3",
+        width: "$3",
+        "&:hover, &:focus": {
+          background: "none",
+        },
       },
       "2": {
         borderRadius: "$1",

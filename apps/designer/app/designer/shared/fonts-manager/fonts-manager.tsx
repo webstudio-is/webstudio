@@ -187,7 +187,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                     item.type === "uploaded" && (
                       <ItemMenu
                         onOpenChange={(isOpen) => {
-                          if (isOpen) setOpenMenuItem(item);
+                          setOpenMenuItem(isOpen ? item : undefined);
                         }}
                         onDelete={() => {
                           handleDelete(item.label);

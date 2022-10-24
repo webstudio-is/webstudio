@@ -23,7 +23,7 @@ const ListboxItemBase = styled("li", {
   alignItems: "center",
   justifyContent: "space-between",
   height: "$5",
-  overflow: "hidden",
+  px: "$1",
   listStyle: "none",
   borderRadius: "$1",
   "&[data-highlighted], &[aria-selected=true]": {
@@ -33,6 +33,9 @@ const ListboxItemBase = styled("li", {
   },
   "&[disabled]": {
     pointerEvents: "none",
+  },
+  "&:focus-within": {
+    boxShadow: "none",
   },
 });
 
