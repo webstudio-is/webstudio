@@ -33,7 +33,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
         </IconButton>
       }
       suffix={
-        value.length > 0 && (
+        value.length > 0 ? (
           <IconButton
             aria-label="Reset search"
             title="Reset search"
@@ -46,7 +46,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
           >
             <Cross2Icon />
           </IconButton>
-        )
+        ) : null
       }
       onChange={(event) => {
         setValue(event.target.value);
