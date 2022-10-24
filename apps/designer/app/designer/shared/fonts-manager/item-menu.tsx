@@ -12,12 +12,16 @@ import { DotsHorizontalIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
 import { useState } from "react";
 
-export const itemMenuVars = {
-  visibility: cssVars.define("visibility"),
+const visibilityVar = cssVars.define("visibility");
+
+export const getItemMenuVars = (state: "visible" | "hidden") => {
+  return {
+    [visibilityVar]: state,
+  };
 };
 
 const MenuButton = styled(IconButton, {
-  visibility: cssVars.use(itemMenuVars.visibility, "hidden"),
+  visibility: cssVars.use(visibilityVar, "hidden"),
   color: "$hint",
   "&:hover": {
     color: "$hiContrast",

@@ -1,7 +1,7 @@
 import { Flex, styled, Text } from "@webstudio-is/design-system";
 import { CheckIcon } from "@webstudio-is/icons";
 import { ComponentProps, forwardRef } from "react";
-import { itemMenuVars } from "./item-menu";
+import { getItemMenuVars } from "./item-menu";
 
 export const Listbox = styled("ul", {
   display: "flex",
@@ -29,7 +29,7 @@ const ListboxItemBase = styled("li", {
   "&[data-highlighted], &[aria-selected=true]": {
     boxShadow:
       "0px 0px 0px 2px $colors$primary, 0px 0px 0px 2px $colors$primary",
-    [itemMenuVars.visibility]: "visible",
+    ...getItemMenuVars("visible"),
   },
   "&[disabled]": {
     pointerEvents: "none",
