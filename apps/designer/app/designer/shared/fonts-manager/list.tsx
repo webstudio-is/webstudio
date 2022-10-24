@@ -65,6 +65,7 @@ export const ListboxItem = forwardRef<
         ref={ref}
         {...(highlighted ? { ["data-highlighted"]: true } : {})}
         {...(disabled ? { ["aria-disabled"]: true, disabled: true } : {})}
+        tabIndex={disabled ? -1 : 0}
       >
         {selected && <CheckIcon />}
         <Flex css={{ gridColumn: 2 }} align="center">
