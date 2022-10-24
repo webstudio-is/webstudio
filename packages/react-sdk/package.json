@@ -10,7 +10,7 @@
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/css",
     "build:args": "tsx ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx'",
     "typecheck": "tsc --noEmit",
-    "build:lib": "rm -fr lib && tsc",
+    "build:lib": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "test": "jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint && yarn test",

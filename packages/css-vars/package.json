@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint",
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
-    "build": "rm -fr lib && tsc",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {},
