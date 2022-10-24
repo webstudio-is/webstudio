@@ -4,6 +4,7 @@ import type { Instance } from "../db";
 import type { Breakpoint } from "../css";
 import { type WrapperComponentProps } from "./wrapper-component";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
+import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<
   | string
@@ -46,6 +47,7 @@ export const createElementsTree = ({
     children: [
       <Fragment key="children">
         {children}
+        <SessionStoragePolyfill />
         <ScrollRestoration />
         <Scripts />
       </Fragment>,
