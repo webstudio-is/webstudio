@@ -10,6 +10,7 @@ import {
   SelectContent,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import { isValid } from "../parse-css-value";
 
 const unitRenderMap: Map<Unit, string> = new Map([
   ["px", "PX"],
@@ -19,7 +20,7 @@ const unitRenderMap: Map<Unit, string> = new Map([
   ["ch", "CH"],
   ["vw", "VW"],
   ["vh", "VH"],
-  ["number", "-"],
+  ["number", "—"],
 ]);
 
 const renderUnitMap: Map<string, Unit> = new Map();
@@ -30,6 +31,7 @@ for (const [key, value] of unitRenderMap.entries()) {
 const defaultUnits = Array.from(unitRenderMap.keys());
 
 type UseUnitSelectType = {
+  property: string;
   value?: UnitValue;
   onChange: (value: StyleValue) => void;
   units?: Array<Unit>;
@@ -37,6 +39,7 @@ type UseUnitSelectType = {
 };
 
 export const useUnitSelect = ({
+  property,
   onChange,
   value,
   units = defaultUnits,
@@ -44,7 +47,12 @@ export const useUnitSelect = ({
 }: UseUnitSelectType) => {
   const [isOpen, setIsOpen] = useState(false);
   const renderUnits = useMemo(
-    () => units.map((unit) => unitRenderMap.get(unit) ?? unit),
+    () =>
+      units
+        .filter((unit) => {
+          return isValid(property, value?.value + String(unit));
+        })
+        .map((unit) => unitRenderMap.get(unit) ?? unit),
     [units]
   );
 
@@ -78,11 +86,13 @@ export const useUnitSelect = ({
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   all: "unset",
   height: "$5",
+  width: "auto",
   px: "$1",
   borderRadius: 2,
   display: "inline-flex",
   alignItems: "center",
   color: "$hiContrast",
+  justifyContent: "center",
   "&:hover": {
     backgroundColor: "$slate6",
   },

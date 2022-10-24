@@ -49,7 +49,7 @@ const useHandleOnChange = (
   const valueRef = useRef<StyleValue>(value);
 
   useEffect(() => {
-    if (input === String(valueRef.current.value)) {
+    if (input === "" || input === String(valueRef.current.value)) {
       return;
     }
 
@@ -110,6 +110,8 @@ const useScrub = ({
           unit,
           value: event.value,
         });
+        inputRef.current?.blur();
+        inputRef.current?.parentElement?.setAttribute("data-state", "focus");
       },
       onValueChange(event) {
         onChangeCompleteRef.current({
@@ -117,6 +119,9 @@ const useScrub = ({
           unit,
           value: event.value,
         });
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        inputRef.current?.parentElement?.removeAttribute("data-state");
       },
     });
 
@@ -148,7 +153,8 @@ const useHandleKeyDown =
     }
     if (
       value.type === "unit" &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown")
+      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
+      event.currentTarget.value
     ) {
       onChange({
         ...value,
@@ -230,6 +236,7 @@ export const CssValueInput = ({
   useHandleOnChange(value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    property,
     value: value.type === "unit" ? value : undefined,
     onChange: onChangeComplete,
     onCloseAutoFocus(event) {
@@ -263,7 +270,7 @@ export const CssValueInput = ({
 
   const suffix =
     value.type === "keyword" ? (
-      <IconButton {...getToggleButtonProps()}>
+      <IconButton css={{ width: "auto" }} {...getToggleButtonProps()}>
         <ChevronDownIcon />
       </IconButton>
     ) : value.type === "unit" ? (
@@ -289,7 +296,11 @@ export const CssValueInput = ({
             css={{ cursor: "default" }}
           />
         </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="start" sideOffset={5}>
+        <ComboboxPopperContent
+          align="start"
+          sideOffset={8}
+          collisionPadding={10}
+        >
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => (

@@ -24,12 +24,12 @@ import { Box } from "./box";
 import { Grid } from "./grid";
 
 const Listbox = styled("ul", panelStyles, {
-  padding: 0,
+  padding: "$1 0",
   margin: 0,
   overflow: "auto",
   // @todo need some non-hardcoded value
   maxHeight: 400,
-  minWidth: 230,
+  minWidth: 214,
   variants: {
     state: {
       open: {},
@@ -46,7 +46,7 @@ const Listbox = styled("ul", panelStyles, {
 });
 
 const ListboxItem = styled("li", itemCss, {
-  padding: 0,
+  padding: "0 $2",
   margin: 0,
 });
 

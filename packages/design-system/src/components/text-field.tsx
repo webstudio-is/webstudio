@@ -79,7 +79,7 @@ const TextFieldBase = styled("div", {
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
 
-  "&:focus-within": {
+  "&:focus-within, &[data-state=focus]": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
   },
