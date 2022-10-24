@@ -3,6 +3,7 @@ import React from "react";
 import { useFocusWithin } from "@react-aria/interactions";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
+import { ChevronLeftIcon } from "@webstudio-is/icons";
 
 const InputBase = styled("input", {
   // Reset
@@ -67,7 +68,7 @@ const InputBase = styled("input", {
 const TextFieldBase = styled("div", {
   // Custom
   display: "flex",
-  backgroundColor: "$loContrast",
+  backgroundColor: "white",
   boxShadow: "inset 0 0 0 1px $colors$muted",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
@@ -81,14 +82,14 @@ const TextFieldBase = styled("div", {
 
   "&:focus-within": {
     boxShadow:
-      "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+      "inset 0px 0px 0px 1px $colors$primary, 0px 0px 0px 1px $colors$primary",
   },
 
   "&[aria-disabled=true]": {
     pointerEvents: "none",
     backgroundColor: "$slate2",
   },
-  "&:has(input:read-only)": {
+  "&:is(input:read-only)": {
     backgroundColor: "$slate2",
     "&:focus": {
       boxShadow: "inset 0px 0px 0px 1px $colors$muted",
@@ -108,7 +109,7 @@ const TextFieldBase = styled("div", {
         "&:focus": {
           backgroundColor: "$loContrast",
           boxShadow:
-            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue10",
+            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$primary",
         },
         "&:disabled": {
           backgroundColor: "transparent",
@@ -147,6 +148,19 @@ const TextFieldBase = styled("div", {
   },
 });
 
+const ButtonSuffix = styled(ChevronLeftIcon, {
+  borderRadius: 2, // @todo shold come from theme
+  height: "$5",
+  [`${TextFieldBase}:hover &`]: {
+    backgroundColor: "$muted",
+    color: "$hiContrast",
+  },
+  [`${TextFieldBase}:focus-within &`]: {
+    backgroundColor: "$primary",
+    color: "white",
+  },
+});
+
 export type TextFieldProps = Pick<
   React.ComponentProps<typeof TextFieldBase>,
   "variant" | "state" | "css"
@@ -161,7 +175,6 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
   (props, forwardedRef) => {
     const {
       prefix,
-      suffix,
       css,
       disabled,
       inputRef,
@@ -169,8 +182,11 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       variant,
       onFocus,
       onBlur,
+      onClick,
+      type,
       ...textFieldProps
     } = props;
+    let { suffix } = props;
 
     const internalInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -180,15 +196,21 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
 
     const { focusWithinProps } = useFocusWithin({
       isDisabled: disabled,
-      onFocusWithin: (event) => {
-        // @ts-expect-error Type mismatch from react-aria
-        onFocus?.(event);
-      },
-      onBlurWithin: (event) => {
-        // @ts-expect-error Type mismatch from react-aria
-        onBlur?.(event);
-      },
+      // @ts-expect-error Type mismatch from react-aria
+      onFocusWithin: onFocus,
+      // @ts-expect-error Type mismatch from react-aria
+      onBlurWithin: onBlur,
     });
+
+    if (type === "button" && suffix === undefined) {
+      suffix = (
+        <ButtonSuffix
+          onClick={() => {
+            internalInputRef.current?.click();
+          }}
+        />
+      );
+    }
 
     return (
       <TextFieldBase
@@ -204,8 +226,10 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <InputBase
-          disabled={disabled}
           {...textFieldProps}
+          type={type}
+          disabled={disabled}
+          onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
         />
 

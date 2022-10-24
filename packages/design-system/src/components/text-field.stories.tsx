@@ -30,6 +30,7 @@ export const NativeProps: ComponentStory<typeof TextField> = () => {
       <TextField disabled placeholder="This is a disabled placeholder" />
       <TextField type="number" defaultValue={25} />
       <TextField type="search" placeholder="This is a search input" />
+      <TextField type="button" defaultValue={"Arial"} />
       <TextField readOnly value="Read-only" />
       <TextField disabled value="Disabled" />
     </Flex>
