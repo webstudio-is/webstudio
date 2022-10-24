@@ -56,6 +56,7 @@ export const ItemMenu = ({ onDelete, onOpenChange }: ItemMenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent
+          align="start"
           onEscapeKeyDown={() => {
             setIsOpen(false);
           }}
