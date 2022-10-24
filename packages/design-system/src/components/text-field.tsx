@@ -173,6 +173,13 @@ const TextFieldBase = styled("div", {
         paddingRight: 2,
       },
     },
+    active: {
+      true: {
+        boxShadow:
+          "inset 0px 0px 0px 1px $colors$primary, 0px 0px 0px 1px $colors$primary",
+        ...getButtonSuffixCssVars("focus"),
+      },
+    },
   },
 });
 
@@ -184,6 +191,7 @@ export type TextFieldProps = Pick<
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
+    active?: boolean;
   };
 
 export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
@@ -199,6 +207,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       onBlur,
       onClick,
       type,
+      active = false,
       ...textFieldProps
     } = props;
     let { suffix } = props;
@@ -238,6 +247,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
         withPrefix={Boolean(prefix)}
         withSuffix={Boolean(suffix)}
         onClickCapture={focusInnerInput}
+        active={active}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <InputBase
