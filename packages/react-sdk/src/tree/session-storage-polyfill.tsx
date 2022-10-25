@@ -23,6 +23,12 @@ const polyfill = function () {
           data.set(key, String(val));
         },
         getItem: (key: string) => {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `Session storage is unavailable due to Error "${
+              (error as Error).message
+            }". A polyfill is used to get value of "${key}". The value will be undefined if the page was reloaded after it was set.`
+          );
           return data.get(key);
         },
         removeItem: (key: string) => {
