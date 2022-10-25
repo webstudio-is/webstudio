@@ -208,6 +208,8 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       onClick,
       type,
       active = false,
+      // prevent spreading it into the dom
+      suffix: _suffix,
       ...textFieldProps
     } = props;
     let { suffix } = props;
