@@ -43,5 +43,8 @@ const polyfill = function () {
 }.toString();
 
 export const SessionStoragePolyfill = () => (
-  <script dangerouslySetInnerHTML={{ __html: `(${polyfill})()` }} />
+  <script
+    dangerouslySetInnerHTML={{ __html: `(${polyfill})()` }}
+    suppressHydrationWarning
+  />
 );
