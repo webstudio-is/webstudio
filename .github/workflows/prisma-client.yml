@@ -1,0 +1,19 @@
+name: Prisma Client
+on:
+  push:
+    paths:
+      - "packages/prisma-client/**/*"
+      - ".github/workflows/prisma-client.yml"
+      - ".github/actions/publish/action.yaml"
+    branches:    
+      - main
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/publish
+        with:
+          workdir: ./packages/prisma-client
+          filter: "@webstudio-is/prisma-client"
+          token: ${{ secrets.NPM_TOKEN }}
