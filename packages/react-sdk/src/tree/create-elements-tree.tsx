@@ -25,13 +25,13 @@ export type OnChangeChildren = (change: {
 }) => void;
 
 export const createElementsTree = ({
-  embeded,
+  sandbox,
   instance,
   breakpoints,
   Component,
   onChangeChildren,
 }: {
-  embeded?: boolean;
+  sandbox?: boolean;
   instance: Instance;
   breakpoints: Array<Breakpoint>;
   Component: (props: WrapperComponentProps) => JSX.Element;
@@ -49,7 +49,7 @@ export const createElementsTree = ({
     children: [
       <Fragment key="children">
         {children}
-        {embeded && <SessionStoragePolyfill />}
+        {sandbox && <SessionStoragePolyfill />}
         <ScrollRestoration />
         <Scripts />
       </Fragment>,
