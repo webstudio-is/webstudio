@@ -65,6 +65,7 @@ const useElementsTree = () => {
     if (rootInstance === undefined) return;
 
     return createElementsTree({
+      sandbox: true,
       instance: rootInstance,
       breakpoints,
       Component: WrapperComponentDev,
