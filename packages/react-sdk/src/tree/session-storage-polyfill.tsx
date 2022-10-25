@@ -2,11 +2,6 @@
 
 // The code is based on this discussion https://bugs.chromium.org/p/chromium/issues/detail?id=357625
 const polyfill = function () {
-  // run only if we're in an iframe
-  if (window.location === window.parent.location) {
-    return;
-  }
-
   try {
     const key = "__session_storage_availability_test__";
     sessionStorage.setItem(key, "test"); // test
