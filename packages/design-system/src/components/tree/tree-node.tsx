@@ -38,7 +38,7 @@ const NestingLine = styled(Box, {
   height: ITEM_HEIGHT,
   borderRight: "solid",
   borderRightWidth: 1,
-  borderColor: "$hint",
+  borderColor: "$slate9",
   variants: {
     isSelected: { true: { borderColor: "$blue7" } },
   },
@@ -104,7 +104,7 @@ const hoverStyle = {
   left: 2,
   right: 2,
   height: ITEM_HEIGHT,
-  border: "solid $primary",
+  border: "solid $blue10",
   borderWidth: 2,
   borderRadius: "$2",
   pointerEvents: "none",
@@ -117,7 +117,7 @@ const ItemWrapper = styled(Flex, {
   position: "relative",
   variants: {
     isSelected: {
-      true: { color: "$loContrast", bc: "$primary" },
+      true: { color: "$loContrast", bc: "$blue10" },
     },
     parentIsSelected: {
       true: { bc: "$blue4" },

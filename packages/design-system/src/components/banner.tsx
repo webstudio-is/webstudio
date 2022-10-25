@@ -55,7 +55,7 @@ export const Banner = styled("div", {
       border: "true",
       variant: "gray",
       css: {
-        borderColor: "$muted",
+        borderColor: "$slate6",
       },
     },
     {
@@ -69,7 +69,7 @@ export const Banner = styled("div", {
       border: "true",
       variant: "loContrast",
       css: {
-        borderColor: "$muted",
+        borderColor: "$slate6",
       },
     },
   ],

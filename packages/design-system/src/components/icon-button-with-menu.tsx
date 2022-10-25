@@ -19,7 +19,7 @@ const itemStyles = {
   all: "unset",
   fontSize: "$2",
   lineHeight: 1,
-  color: "$hiContrast",
+  color: "$colors$slate12",
   borderRadius: "$radii$1",
   display: "flex",
   alignItems: "center",
@@ -31,7 +31,7 @@ const itemStyles = {
   userSelect: "none",
   gap: "$space$2",
   "&[data-highlighted]": {
-    background: "$colors$primary",
+    background: "$colors$blue10",
     color: "$colors$blue1",
     "& *": { fill: "$colors$blue1" },
   },

@@ -32,7 +32,7 @@ export const Button = styled("button", {
 
   "&:disabled": {
     backgroundColor: "$slate2",
-    boxShadow: "inset 0 0 0 1px $colors$muted",
+    boxShadow: "inset 0 0 0 1px $colors$slate7",
     color: "$slate8",
     pointerEvents: "none",
   },
@@ -61,7 +61,7 @@ export const Button = styled("button", {
     variant: {
       gray: {
         backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$muted",
+        boxShadow: "inset 0 0 0 1px $colors$slate7",
         color: "$hiContrast",
         "@hover": {
           "&:hover": {
@@ -81,13 +81,13 @@ export const Button = styled("button", {
         },
       },
       blue: {
-        backgroundColor: "$primary",
+        backgroundColor: "$blue10",
         color: "white",
         "@hover": {
           "&:hover": {
             backgroundColor: "$loContrast",
-            color: "$primary",
-            boxShadow: "inset 0 0 0 1.5px $colors$primary",
+            color: "$blue10",
+            boxShadow: "inset 0 0 0 1.5px $colors$blue10",
           },
         },
         "&:active": {
@@ -191,12 +191,12 @@ export const Button = styled("button", {
         color: "$slate11",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$muted",
+            backgroundColor: "$slate6",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$muted",
+          backgroundColor: "$slate6",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
@@ -209,12 +209,12 @@ export const Button = styled("button", {
         pointerEvents: "none",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$muted",
+            backgroundColor: "$slate6",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$muted",
+          backgroundColor: "$slate6",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8",
@@ -270,7 +270,7 @@ export const Button = styled("button", {
         },
         "&:focus": {
           boxShadow:
-            "0px 0px 0px 2px $colors$primary, 0px 0px 0px 2px $colors$primary",
+            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
         },
         '&[data-state="open"]': {
           backgroundColor: "$blueA4",

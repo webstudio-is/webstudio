@@ -13,7 +13,7 @@ export const ControlGroup = styled("div", {
   [`& ${Button}`]: {
     borderRadius: 0,
     boxShadow:
-      "inset 0 1px $colors$muted, inset -1px 0 $colors$muted, inset 0 -1px $colors$muted",
+      "inset 0 1px $colors$slate7, inset -1px 0 $colors$slate7, inset 0 -1px $colors$slate7",
     "&:hover": {
       boxShadow:
         "-1px 0 $colors$slate8, inset 0 1px $colors$slate8, inset -1px 0 $colors$slate8, inset 0 -1px $colors$slate8",
@@ -25,7 +25,7 @@ export const ControlGroup = styled("div", {
     "&:first-child": {
       borderTopLeftRadius: "$1",
       borderBottomLeftRadius: "$1",
-      boxShadow: "inset 0 0 0 1px $colors$muted",
+      boxShadow: "inset 0 0 0 1px $colors$slate7",
       "&:hover": {
         boxShadow: "inset 0 0 0 1px $colors$slate8",
       },
@@ -37,7 +37,7 @@ export const ControlGroup = styled("div", {
       borderTopRightRadius: "$1",
       borderBottomRightRadius: "$1",
       boxShadow:
-        "inset 0 1px $colors$muted, inset -1px 0 $colors$muted, inset 0 -1px $colors$muted",
+        "inset 0 1px $colors$slate7, inset -1px 0 $colors$slate7, inset 0 -1px $colors$slate7",
       "&:focus": {
         boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
       },
@@ -46,7 +46,7 @@ export const ControlGroup = styled("div", {
   [`& ${TextField}`]: {
     borderRadius: 0,
     boxShadow:
-      "inset 0 1px $colors$muted, inset -1px 0 $colors$muted, inset 0 -1px $colors$muted",
+      "inset 0 1px $colors$slate7, inset -1px 0 $colors$slate7, inset 0 -1px $colors$slate7",
     "&:focus": {
       zIndex: 1,
       boxShadow:
@@ -55,7 +55,7 @@ export const ControlGroup = styled("div", {
     "&:first-child": {
       borderTopLeftRadius: "$1",
       borderBottomLeftRadius: "$1",
-      boxShadow: "inset 0 0 0 1px $colors$muted",
+      boxShadow: "inset 0 0 0 1px $colors$slate7",
       "&:focus": {
         boxShadow:
           "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
@@ -65,7 +65,7 @@ export const ControlGroup = styled("div", {
       borderTopRightRadius: "$1",
       borderBottomRightRadius: "$1",
       boxShadow:
-        "inset 0 1px $colors$muted, inset -1px 0 $colors$muted, inset 0 -1px $colors$muted",
+        "inset 0 1px $colors$slate7, inset -1px 0 $colors$slate7, inset 0 -1px $colors$slate7",
       "&:focus": {
         boxShadow:
           "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
@@ -75,7 +75,7 @@ export const ControlGroup = styled("div", {
   [`& ${Select}`]: {
     borderRadius: 0,
     boxShadow:
-      "inset 0 1px $colors$muted, inset -1px 0 $colors$muted, inset 0 -1px $colors$muted",
+      "inset 0 1px $colors$slate7, inset -1px 0 $colors$slate7, inset 0 -1px $colors$slate7",
     "&:focus-within": {
       boxShadow:
         "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
@@ -83,7 +83,7 @@ export const ControlGroup = styled("div", {
     "&:first-child": {
       borderTopLeftRadius: "$1",
       borderBottomLeftRadius: "$1",
-      boxShadow: "inset 0 0 0 1px $colors$muted",
+      boxShadow: "inset 0 0 0 1px $colors$slate7",
       "&:focus-within": {
         boxShadow:
           "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
@@ -93,7 +93,7 @@ export const ControlGroup = styled("div", {
       borderTopRightRadius: "$1",
       borderBottomRightRadius: "$1",
       boxShadow:
-        "inset 0 1px $colors$muted, inset -1px 0 $colors$muted, inset 0 -1px $colors$muted",
+        "inset 0 1px $colors$slate7, inset -1px 0 $colors$slate7, inset 0 -1px $colors$slate7",
       "&:focus-within": {
         boxShadow:
           "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",

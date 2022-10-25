@@ -31,7 +31,7 @@ const StyledProgressBar = styled(ProgressPrimitive.Root, {
       animationDuration: "1500ms",
       animationIterationCount: "infinite",
       animationTimingFunction: "cubic-bezier(0.65, 0, 0.35, 1)",
-      backgroundColor: "$muted",
+      backgroundColor: "$slate7",
       boxSizing: "border-box",
       borderRadius: "$pill",
       content: '""',

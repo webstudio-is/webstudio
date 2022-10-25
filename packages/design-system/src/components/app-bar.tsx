@@ -72,7 +72,7 @@ export const AppBar = styled("div", {
       border: "true",
       color: "plain",
       css: {
-        borderColor: "$muted",
+        borderColor: "$slate6",
       },
     },
     {
@@ -86,7 +86,7 @@ export const AppBar = styled("div", {
       border: "true",
       color: "loContrast",
       css: {
-        borderColor: "$muted",
+        borderColor: "$slate6",
       },
     },
   ],

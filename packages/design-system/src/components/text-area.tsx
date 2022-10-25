@@ -24,7 +24,7 @@ export const TextArea = styled("textarea", {
     zIndex: "1",
   },
   "&::placeholder": {
-    color: "$hint",
+    color: "$slate9",
   },
   "&:disabled": {
     pointerEvents: "none",
@@ -33,13 +33,13 @@ export const TextArea = styled("textarea", {
     cursor: "not-allowed",
     resize: "none",
     "&::placeholder": {
-      color: "$muted",
+      color: "$slate7",
     },
   },
   "&:read-only": {
     backgroundColor: "$slate2",
     "&:focus": {
-      boxShadow: "inset 0px 0px 0px 1px $colors$muted",
+      boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
     },
   },
 

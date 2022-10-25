@@ -9,6 +9,12 @@ import {
 import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { TextField } from "./text-field";
 import { IconButton } from "./icon-button";
+import { styled } from "..";
+
+const SearchIcon = styled(MagnifyingGlassIcon, {
+  color: "$hint",
+  padding: "$1",
+});
 
 const SearchFieldBase: ForwardRefRenderFunction<
   HTMLInputElement,
@@ -27,11 +33,7 @@ const SearchFieldBase: ForwardRefRenderFunction<
       type="search"
       value={value}
       inputRef={inputRef}
-      prefix={
-        <IconButton aria-label="Search" css={{ color: "$hint" }} tabIndex={-1}>
-          <MagnifyingGlassIcon />
-        </IconButton>
-      }
+      prefix={<SearchIcon />}
       suffix={
         value.length > 0 ? (
           <IconButton

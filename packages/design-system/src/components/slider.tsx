@@ -5,7 +5,7 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 const SliderTrack = styled(SliderPrimitive.Track, {
   position: "relative",
   flexGrow: 1,
-  backgroundColor: "$muted",
+  backgroundColor: "$slate7",
   borderRadius: "$pill",
   '&[data-orientation="horizontal"]': {
     height: 2,

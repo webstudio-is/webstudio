@@ -12,13 +12,13 @@ const colorVar = cssVars.define("color");
 const getButtonSuffixCssVars = (state: "focus" | "hover") => {
   if (state === "focus") {
     return {
-      [backgroundColorVar]: "$colors$primary",
+      [backgroundColorVar]: "$colors$blue10",
       [colorVar]: "white",
     };
   }
 
   return {
-    [backgroundColorVar]: "$colors$muted",
+    [backgroundColorVar]: "$colors$slate7",
     [colorVar]: "$colors$hiContrast",
   };
 };
@@ -85,7 +85,7 @@ const InputBase = styled("input", {
     color: "$slate8",
     cursor: "not-allowed",
     "&::placeholder": {
-      color: "$muted",
+      color: "$slate7",
     },
   },
 });
@@ -93,8 +93,8 @@ const InputBase = styled("input", {
 const TextFieldBase = styled("div", {
   // Custom
   display: "flex",
-  backgroundColor: "white",
-  boxShadow: "inset 0 0 0 1px $colors$muted",
+  backgroundColor: "$loContrast",
+  boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
   gap: "$1",
@@ -109,7 +109,7 @@ const TextFieldBase = styled("div", {
 
   "&:focus-within": {
     boxShadow:
-      "inset 0px 0px 0px 1px $colors$primary, 0px 0px 0px 1px $colors$primary",
+      "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
     ...getButtonSuffixCssVars("focus"),
   },
 
@@ -120,7 +120,7 @@ const TextFieldBase = styled("div", {
   "&:is(input:read-only)": {
     backgroundColor: "$slate2",
     "&:focus": {
-      boxShadow: "inset 0px 0px 0px 1px $colors$muted",
+      boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
     },
   },
 
@@ -137,7 +137,7 @@ const TextFieldBase = styled("div", {
         "&:focus": {
           backgroundColor: "$loContrast",
           boxShadow:
-            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$primary",
+            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue10",
         },
         "&:disabled": {
           backgroundColor: "transparent",
@@ -148,7 +148,7 @@ const TextFieldBase = styled("div", {
       },
       active: {
         boxShadow:
-          "inset 0px 0px 0px 1px $colors$primary, 0px 0px 0px 1px $colors$primary",
+          "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
         ...getButtonSuffixCssVars("focus"),
       },
     },

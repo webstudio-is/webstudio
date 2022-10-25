@@ -25,10 +25,10 @@ export const Accordion = React.forwardRef<
 Accordion.displayName = "Accordion";
 
 const StyledItem = styled(AccordionPrimitive.Item, {
-  borderTop: "1px solid $colors$muted",
+  borderTop: "1px solid $colors$slate6",
 
   "&:last-of-type": {
-    borderBottom: "1px solid $colors$muted",
+    borderBottom: "1px solid $colors$slate6",
   },
 });
 

@@ -47,7 +47,7 @@ export const Link = styled("a", {
         textDecorationColor: "$slate4",
         "@hover": {
           "&:hover": {
-            textDecorationColor: "$muted",
+            textDecorationColor: "$slate7",
           },
         },
         "&:focus": {

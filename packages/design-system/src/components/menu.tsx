@@ -25,11 +25,11 @@ export const itemCss = css(baseItemCss, {
   color: "$hiContrast",
   "&:focus, &[data-found], &[aria-selected=true]": {
     outline: "none",
-    backgroundColor: "$primary",
+    backgroundColor: "$blue10",
     color: "white",
   },
   "&[data-disabled], &[aria-disabled]": {
-    color: "$hint",
+    color: "$slate9",
   },
 });
 
@@ -46,7 +46,7 @@ export const menuCss = css({
 export const separatorCss = css({
   height: 1,
   my: "$1",
-  backgroundColor: "$muted",
+  backgroundColor: "$slate6",
 });
 
 export const Menu = styled(MenuPrimitive.Root, menuCss);

@@ -16,7 +16,7 @@ export const Skeleton = styled("div", {
     animationDirection: "alternate",
     animationIterationCount: "infinite",
     animationTimingFunction: "ease-in-out",
-    backgroundColor: "$muted",
+    backgroundColor: "$slate6",
     borderRadius: "inherit",
     bottom: 0,
     content: '""',

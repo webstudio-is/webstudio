@@ -27,8 +27,7 @@ const ListboxItemBase = styled("li", {
   listStyle: "none",
   borderRadius: "$1",
   "&[data-highlighted], &[aria-selected=true]": {
-    boxShadow:
-      "0px 0px 0px 2px $colors$primary, 0px 0px 0px 2px $colors$primary",
+    boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
     ...getItemMenuVars("visible"),
   },
   "&[disabled]": {

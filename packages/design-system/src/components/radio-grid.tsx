@@ -19,7 +19,7 @@ export const RadioGrid = styled(RadioGroupPrimitive.Item, {
     boxSizing: "border-box",
   },
   borderRadius: "$2",
-  boxShadow: "inset 0 0 0 1px $colors$muted",
+  boxShadow: "inset 0 0 0 1px $colors$slate7",
   px: "$1",
   height: "$6",
   lineHeight: "$sizes$6",

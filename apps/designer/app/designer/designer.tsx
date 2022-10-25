@@ -244,7 +244,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
     <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
       <Box
         css={{
-          borderRight: "1px solid $muted",
+          borderRight: "1px solid $slate7",
           width: PANEL_WIDTH,
           height: "100%",
         }}

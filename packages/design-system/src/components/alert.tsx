@@ -22,11 +22,11 @@ export const Alert = styled("div", {
     variant: {
       loContrast: {
         backgroundColor: "$loContrast",
-        borderColor: "$muted",
+        borderColor: "$slate6",
       },
       gray: {
         backgroundColor: "$slate2",
-        borderColor: "$muted",
+        borderColor: "$slate6",
       },
       blue: {
         backgroundColor: "$blue2",
