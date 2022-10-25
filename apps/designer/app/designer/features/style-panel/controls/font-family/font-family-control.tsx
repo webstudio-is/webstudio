@@ -30,7 +30,10 @@ export const FontFamilyControl = ({
       onOpenChange={setIsOpen}
     >
       {/* @todo this should be part of the design system, probably a varian="button" */}
-      <TextField defaultValue={value.value} active={isOpen} />
+      <TextField
+        defaultValue={value.value}
+        variant={isOpen ? "active" : undefined}
+      />
     </ValuePickerPopover>
   );
 };
