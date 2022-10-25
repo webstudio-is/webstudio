@@ -2,10 +2,10 @@ import type { CSS } from "./stitches";
 import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 
-export const toValue = (value: StyleValue | undefined): string => {
+export const toValue = (value?: StyleValue): string => {
   if (value === undefined) return "";
   if (value.type === "unit") {
-    return value.value + value.unit;
+    return value.value + (value.unit === "number" ? "" : value.unit);
   }
   if (value.type === "fontFamily") {
     const family = value.value[0];

@@ -29,5 +29,4 @@ export const units = [
   "vw",
   "x",
   "%",
-  "number",
 ] as const;

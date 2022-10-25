@@ -24,7 +24,8 @@ import { Box } from "./box";
 import { Grid } from "./grid";
 
 const Listbox = styled("ul", panelStyles, {
-  padding: "$1 0",
+  py: "$1",
+  px: 0,
   margin: 0,
   overflow: "auto",
   // @todo need some non-hardcoded value

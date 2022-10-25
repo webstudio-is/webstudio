@@ -1,5 +1,10 @@
 import { useState, useMemo } from "react";
-import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
+import {
+  type Unit,
+  type UnitValue,
+  StyleValue,
+  toValue,
+} from "@webstudio-is/react-sdk";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   styled,
@@ -50,10 +55,7 @@ export const useUnitSelect = ({
     () =>
       units
         .filter((unit) => {
-          return isValid(
-            property,
-            value?.value + String(unit).replace("number", "")
-          );
+          return isValid(property, toValue({ ...value, unit } as typeof value));
         })
         .map((unit) => unitRenderMap.get(unit) ?? unit),
     [units]
