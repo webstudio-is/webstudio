@@ -58,13 +58,13 @@ jobs:
           workdir: ./packages/tsconfig
           filter: "@webstudio-is/tsconfig"
           token: ${{ secrets.NPM_TOKEN }}
-      - uses: ./.github/actions/fonts
+      - uses: ./.github/actions/publish-test
         if: always()
         with:
           workdir: ./packages/fonts
           filter: "@webstudio-is/fonts"
           token: ${{ secrets.NPM_TOKEN }}
-      - uses: ./.github/actions/prisma-client
+      - uses: ./.github/actions/publish-test
         if: always()
         with:
           workdir: ./packages/prisma-client
