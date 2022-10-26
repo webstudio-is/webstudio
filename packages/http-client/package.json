@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
     "test": "jest",
-    "build": "rm -fr lib && tsc",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint"
