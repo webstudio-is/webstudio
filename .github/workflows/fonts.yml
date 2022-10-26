@@ -1,0 +1,19 @@
+name: Fonts
+on:
+  push:
+    paths:
+      - "packages/fonts/**/*"
+      - ".github/workflows/fonts.yml"
+      - ".github/actions/publish/action.yaml"
+    branches:    
+      - main
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/publish
+        with:
+          workdir: ./packages/fonts
+          filter: "@webstudio-is/fonts"
+          token: ${{ secrets.NPM_TOKEN }}

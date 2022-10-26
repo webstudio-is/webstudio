@@ -4,6 +4,7 @@ import type { Instance } from "../db";
 import type { Breakpoint } from "../css";
 import { type WrapperComponentProps } from "./wrapper-component";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
+import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<
   | string
@@ -24,11 +25,13 @@ export type OnChangeChildren = (change: {
 }) => void;
 
 export const createElementsTree = ({
+  sandbox,
   instance,
   breakpoints,
   Component,
   onChangeChildren,
 }: {
+  sandbox?: boolean;
   instance: Instance;
   breakpoints: Array<Breakpoint>;
   Component: (props: WrapperComponentProps) => JSX.Element;
@@ -46,6 +49,7 @@ export const createElementsTree = ({
     children: [
       <Fragment key="children">
         {children}
+        {sandbox && <SessionStoragePolyfill />}
         <ScrollRestoration />
         <Scripts />
       </Fragment>,
