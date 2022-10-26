@@ -32,7 +32,7 @@ export const FontFamilyControl = ({
       {/* @todo this should be part of the design system, probably a varian="button" */}
       <TextField
         defaultValue={value.value}
-        variant={isOpen ? "active" : undefined}
+        state={isOpen ? "active" : undefined}
       />
     </ValuePickerPopover>
   );

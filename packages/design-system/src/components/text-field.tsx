@@ -1,7 +1,7 @@
 import { mergeRefs } from "@react-aria/utils";
 import React from "react";
 import { useFocusWithin } from "@react-aria/interactions";
-import { styled } from "../stitches.config";
+import { css, styled } from "../stitches.config";
 import { Flex } from "./flex";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
@@ -9,7 +9,7 @@ import { cssVars } from "@webstudio-is/css-vars";
 const backgroundColorVar = cssVars.define("background-color");
 const colorVar = cssVars.define("color");
 
-const getButtonSuffixCssVars = (state: "focus" | "hover") => {
+const getTextFieldSuffixCssVars = (state: "focus" | "hover") => {
   if (state === "focus") {
     return {
       [backgroundColorVar]: "$colors$blue10",
@@ -23,9 +23,47 @@ const getButtonSuffixCssVars = (state: "focus" | "hover") => {
   };
 };
 
-const ButtonSuffix = styled(ChevronLeftIcon, {
-  borderRadius: 2, // @todo shold come from theme
+const textFieldIconBaseStyle = css({
   height: "$5",
+  minWidth: "$2",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 2,
+});
+
+// Trigger can be used as a button, which is focusable/hoverable itself or as an icon,
+// which has the same states but activated over the parent component element.
+export const TextFieldIconButton = styled(
+  "button",
+  {
+    all: "unset",
+    "&:hover": {
+      backgroundColor: "$slate7",
+      color: "$hiContrast",
+    },
+    "&:focus": {
+      backgroundColor: "$blue10",
+      color: "white",
+    },
+    variants: {
+      state: {
+        active: {
+          backgroundColor: "$blue10",
+          color: "white",
+          "&:hover": {
+            backgroundColor: "$blue10",
+            color: "white",
+          },
+        },
+      },
+    },
+  },
+  textFieldIconBaseStyle
+);
+
+export const TextFieldIcon = styled("span", textFieldIconBaseStyle, {
+  // Icon receives colors from parent.
   backgroundColor: cssVars.use(backgroundColorVar),
   color: cssVars.use(colorVar),
 });
@@ -104,26 +142,20 @@ const TextFieldBase = styled("div", {
   fontSize: "$1",
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
-
-  "&:hover": getButtonSuffixCssVars("hover"),
-
   "&:focus-within": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
-    ...getButtonSuffixCssVars("focus"),
   },
-
   "&[aria-disabled=true]": {
     pointerEvents: "none",
     backgroundColor: "$slate2",
   },
-  "&:is(input:read-only)": {
+  "&:has(input:read-only)": {
     backgroundColor: "$slate2",
     "&:focus": {
       boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
     },
   },
-
   variants: {
     variant: {
       ghost: {
@@ -137,7 +169,7 @@ const TextFieldBase = styled("div", {
         "&:focus": {
           backgroundColor: "$loContrast",
           boxShadow:
-            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue10",
+            "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
         },
         "&:disabled": {
           backgroundColor: "transparent",
@@ -146,10 +178,9 @@ const TextFieldBase = styled("div", {
           backgroundColor: "transparent",
         },
       },
-      active: {
-        boxShadow:
-          "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
-        ...getButtonSuffixCssVars("focus"),
+      button: {
+        "&:hover": getTextFieldSuffixCssVars("hover"),
+        "&:focus-within": getTextFieldSuffixCssVars("focus"),
       },
     },
     state: {
@@ -167,18 +198,42 @@ const TextFieldBase = styled("div", {
             "inset 0px 0px 0px 1px $colors$green8, 0px 0px 0px 1px $colors$green8",
         },
       },
+      active: {
+        boxShadow:
+          "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+        ...getTextFieldSuffixCssVars("focus"),
+      },
     },
+    // Preffix and suffix are responsible for their spacing
     withPrefix: {
       true: {
-        paddingLeft: 2,
+        paddingLeft: 0,
       },
     },
     withSuffix: {
       true: {
-        paddingRight: 2,
+        paddingRight: 0,
       },
     },
   },
+});
+
+const PrefixSlot = styled(Flex, {
+  alignItems: "center",
+  flexShrink: 0,
+  order: 0,
+  padding: 2,
+  paddingRight: 0,
+  borderRadius: 2,
+});
+
+const SuffixSlot = styled(Flex, {
+  alignItems: "center",
+  flexShrink: 0,
+  order: 2,
+  padding: 2,
+  paddingLeft: 0,
+  borderRadius: 2,
 });
 
 export type TextFieldProps = Pick<
@@ -199,16 +254,18 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       disabled,
       inputRef,
       state,
-      variant,
+      variant: variantProp,
       onFocus,
       onBlur,
       onClick,
       type,
       // prevent spreading it into the dom
-      suffix: _suffix,
+      suffix: suffixProp,
       ...textFieldProps
     } = props;
-    let { suffix } = props;
+    let suffix = suffixProp;
+    const variant =
+      type === "button" && variantProp === undefined ? "button" : variantProp;
 
     const internalInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -226,7 +283,8 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
 
     if (type === "button" && suffix === undefined) {
       suffix = (
-        <ButtonSuffix
+        <TextFieldIcon
+          as={ChevronLeftIcon}
           onClick={() => {
             internalInputRef.current?.click();
           }}
@@ -255,29 +313,8 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
         />
 
-        {prefix && (
-          <Flex
-            css={{
-              alignItems: "center",
-              flexShrink: 0,
-              order: 0,
-            }}
-          >
-            {prefix}
-          </Flex>
-        )}
-
-        {suffix && (
-          <Flex
-            css={{
-              alignItems: "center",
-              flexShrink: 0,
-              order: 2,
-            }}
-          >
-            {suffix}
-          </Flex>
-        )}
+        {prefix && <PrefixSlot>{prefix}</PrefixSlot>}
+        {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
       </TextFieldBase>
     );
   }

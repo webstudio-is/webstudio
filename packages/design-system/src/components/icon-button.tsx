@@ -65,12 +65,6 @@ export const IconButton = styled("button", {
         width: "$8",
       },
     },
-    state: {
-      active: {
-        color: "$loContrast",
-        backgroundColor: "$blue10",
-      },
-    },
   },
   defaultVariants: {
     size: "1",

@@ -42,8 +42,8 @@ export const Variants: ComponentStory<typeof TextField> = () => {
     <Flex direction="column" gap={3}>
       <TextField />
       <TextField variant="ghost" />
-      <TextField variant="active" />
-      <TextField type="button" variant="active" />
+      <TextField type="button" />
+      <TextField type="button" state="active" />
     </Flex>
   );
 };

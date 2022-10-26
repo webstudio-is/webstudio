@@ -8,6 +8,7 @@ import {
   SelectViewport,
   SelectItem,
   SelectContent,
+  TextFieldIconButton,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
@@ -75,21 +76,8 @@ export const useUnitSelect = ({
   return [isOpen, select];
 };
 
-const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
-  all: "unset",
-  height: "$5",
-  px: "$1",
-  borderRadius: 2,
-  display: "inline-flex",
-  alignItems: "center",
-  color: "$hiContrast",
-  "&:hover": {
-    backgroundColor: "$slate6",
-  },
-  "&:focus": {
-    backgroundColor: "$blue10",
-    color: "$loContrast",
-  },
+const StyledTrigger = styled(TextFieldIconButton, {
+  px: 3,
 });
 
 type UnitSelectProps = {
@@ -116,9 +104,11 @@ const UnitSelect = ({
       onOpenChange={onOpenChange}
       open={open}
     >
-      <StyledTrigger>
-        <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
-      </StyledTrigger>
+      <SelectPrimitive.SelectTrigger asChild>
+        <StyledTrigger>
+          <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
+        </StyledTrigger>
+      </SelectPrimitive.SelectTrigger>
       <SelectPrimitive.Portal>
         <SelectContent onCloseAutoFocus={onCloseAutoFocus}>
           <SelectScrollUpButton>
