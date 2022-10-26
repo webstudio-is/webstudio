@@ -1,7 +1,7 @@
 To run:
 
 ```
-$ k6 run -u {max_concurent_request} -i {total_request} {script}.js
+$ k6 run -u {max_concurrent_requests} -i {total_request} {script}.js
 ```
 
 Example:
