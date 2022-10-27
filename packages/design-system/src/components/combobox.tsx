@@ -10,8 +10,9 @@ import React, {
 import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import {
-  DownshiftState,
-  UseComboboxStateChangeOptions,
+  type DownshiftState,
+  type UseComboboxStateChangeOptions,
+  type UseComboboxProps as UseDownshiftComboboxProps,
   useCombobox as useDownshiftCombobox,
 } from "downshift";
 import { matchSorter } from "match-sorter";
@@ -37,7 +38,7 @@ const Listbox = styled("ul", panelStyles, {
         display: "none",
       },
     },
-    isEmpty: {
+    empty: {
       true: {
         display: "none",
       },
@@ -128,7 +129,7 @@ const useFilter = <Item,>({
   };
 };
 
-type UseComboboxProps<Item> = {
+type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
@@ -151,6 +152,7 @@ export const useCombobox = <Item,>({
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
   match,
+  ...rest
 }: UseComboboxProps<Item>) => {
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
@@ -159,7 +161,9 @@ export const useCombobox = <Item,>({
   });
 
   const downshiftProps = useDownshiftCombobox({
+    ...rest,
     items: filteredItems,
+    defaultHighlightedIndex: -1,
     selectedItem: value, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
@@ -203,7 +207,7 @@ export const useCombobox = <Item,>({
       return {
         ...getMenuProps(options),
         state: isOpen ? "open" : "closed",
-        isEmpty: filteredItems.length === 0,
+        empty: filteredItems.length === 0,
       };
     },
     [getMenuProps, isOpen, filteredItems.length]

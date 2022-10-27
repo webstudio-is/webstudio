@@ -13,10 +13,10 @@ import { Listbox, ListboxItem } from "./listbox";
 
 type Item = {
   label: string;
-  type: "uploaded" | "system" | "category";
+  type: "uploaded" | "system";
 };
 
-const getItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
+const toItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
@@ -65,25 +65,23 @@ const useLogic = ({
     handleDelete(ids);
   };
 
-  const fontItems = useMemo(() => getItems(assets), [assets]);
-
-  const [openMenuItem, setOpenMenuItem] = useState<Item>();
+  const fontItems = useMemo(() => toItems(assets), [assets]);
 
   const selectedItem =
     // After deletion the selected item may not be in the list anymore.
-    fontItems.find((item) => item.label === value) ??
-    fontItems.find((item) => item.type !== "category") ??
-    null;
+    fontItems.find((item) => item.label === value) ?? null;
 
   const {
     items: filteredItems,
     resetFilter,
+    highlightedIndex,
     ...comboboxProps
   } = useCombobox({
+    isOpen: true,
     items: fontItems,
     value: selectedItem,
     itemToString(item) {
-      return item?.type === "category" ? "" : item?.label ?? "";
+      return item?.label ?? "";
     },
     onItemSelect(value) {
       if (value !== null) {
@@ -106,8 +104,6 @@ const useLogic = ({
     filteredItems,
     uploadedItems,
     systemItems,
-    openMenuItem,
-    setOpenMenuItem,
     handleDelete: handleDeleteByLabel,
     ...comboboxProps,
   };
@@ -128,8 +124,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     getComboboxProps,
     getMenuProps,
     getItemProps,
-    openMenuItem,
-    setOpenMenuItem,
+    setHighlightedIndex,
   } = useLogic({ value, onChange });
 
   return (
@@ -141,6 +136,9 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           autoFocus
           placeholder="Search"
           onBlur={undefined}
+          onFocus={() => {
+            setHighlightedIndex(-1);
+          }}
         />
       </Flex>
       <Separator css={{ my: "$1" }} />
@@ -163,19 +161,27 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                 {...getItemProps({
                   item,
                   index,
-                  highlighted: item === openMenuItem ? true : undefined,
                 })}
                 key={index}
                 suffix={
                   <ItemMenu
-                    onOpenChange={(isOpen) => {
-                      setOpenMenuItem(isOpen ? item : undefined);
+                    onOpenChange={() => {
+                      setHighlightedIndex(index);
                     }}
                     onDelete={() => {
                       handleDelete(item.label);
                     }}
+                    onFocusTrigger={() => {
+                      setHighlightedIndex(-1);
+                    }}
                   />
                 }
+                onFocus={(event) => {
+                  // We need to ignore focus on a menu button inside
+                  if (event.target === event.currentTarget) {
+                    setHighlightedIndex(index);
+                  }
+                }}
               >
                 {item.label}
               </ListboxItem>
@@ -188,13 +194,17 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
             </>
           )}
           {systemItems.map((item, index) => {
+            const globalIndex = uploadedItems.length + index;
             return (
               <ListboxItem
                 {...getItemProps({
                   item,
-                  index: uploadedItems.length + index,
+                  index: globalIndex,
                 })}
                 key={index}
+                onFocus={() => {
+                  setHighlightedIndex(globalIndex);
+                }}
               >
                 {item.label}
               </ListboxItem>

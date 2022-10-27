@@ -9,7 +9,7 @@ export const Listbox = styled("ul", {
   margin: 0,
   padding: 0,
   variants: {
-    isEmpty: {
+    empty: {
       true: {
         display: "none",
       },
@@ -27,10 +27,11 @@ const ListboxItemBase = styled("li", {
   listStyle: "none",
   borderRadius: "$1",
   outline: 0,
-  "&:focus-within, &[data-highlighted], &[aria-selected=true]": {
+  "&[data-highlighted]": {
     boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
     ...getItemMenuVars("visible"),
   },
+  "&:focus-within": getItemMenuVars("visible"),
   "&[disabled]": {
     pointerEvents: "none",
   },

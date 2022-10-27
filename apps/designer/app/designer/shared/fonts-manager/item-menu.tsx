@@ -10,7 +10,7 @@ import {
 } from "@webstudio-is/design-system";
 import { DotsHorizontalIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
-import { useState } from "react";
+import { type FocusEventHandler, useState } from "react";
 
 const visibilityVar = cssVars.define("visibility");
 
@@ -31,9 +31,14 @@ const MenuButton = styled(IconButton, {
 type ItemMenuProps = {
   onDelete: () => void;
   onOpenChange: (open: boolean) => void;
+  onFocusTrigger?: FocusEventHandler;
 };
 
-export const ItemMenu = ({ onDelete, onOpenChange }: ItemMenuProps) => {
+export const ItemMenu = ({
+  onDelete,
+  onOpenChange,
+  onFocusTrigger,
+}: ItemMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <DropdownMenu
@@ -44,7 +49,11 @@ export const ItemMenu = ({ onDelete, onOpenChange }: ItemMenuProps) => {
       }}
     >
       <DropdownMenuTrigger asChild>
-        <MenuButton aria-label="Font menu">
+        <MenuButton
+          aria-label="Font menu"
+          onFocus={onFocusTrigger}
+          tabIndex={0}
+        >
           <DotsHorizontalIcon />
         </MenuButton>
       </DropdownMenuTrigger>
