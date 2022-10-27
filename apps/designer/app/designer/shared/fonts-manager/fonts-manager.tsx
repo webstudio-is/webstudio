@@ -7,7 +7,7 @@ import {
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ItemMenu } from "./item-menu";
 import { Listbox, ListboxItem } from "./listbox";
 
@@ -50,6 +50,7 @@ const useLogic = ({
   value: string;
   onChange: (value: string) => void;
 }) => {
+  const [search, setSearch] = useState("");
   const { assets, handleDelete } = useAssets("font");
   const handleDeleteByLabel = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
@@ -68,15 +69,17 @@ const useLogic = ({
   const fontItems = useMemo(() => toItems(assets), [assets]);
 
   const selectedItem =
-    // After deletion the selected item may not be in the list anymore.
-    fontItems.find((item) => item.label === value) ?? null;
+    fontItems.find((item) => item.label === value) ?? fontItems[0];
 
   const {
     items: filteredItems,
     resetFilter,
     highlightedIndex,
+    isOpen,
+    inputValue,
     ...comboboxProps
   } = useCombobox({
+    // Makes sure first keydown selectsthe item instead of opening the list first otherwise.
     isOpen: true,
     items: fontItems,
     value: selectedItem,
@@ -86,6 +89,7 @@ const useLogic = ({
     onItemSelect(value) {
       if (value !== null) {
         onChange(value.label);
+        handleCancelSearch();
       }
     },
   });
@@ -98,13 +102,24 @@ const useLogic = ({
     return { uploadedItems, systemItems };
   }, [filteredItems]);
 
-  useEffect(resetFilter, [fontItems.length, resetFilter]);
+  useEffect(() => {
+    setSearch(inputValue);
+  }, [inputValue]);
+
+  const handleCancelSearch = useCallback(() => {
+    resetFilter();
+    setSearch("");
+  }, [resetFilter]);
+
+  useEffect(handleCancelSearch, [fontItems, selectedItem, handleCancelSearch]);
 
   return {
     filteredItems,
     uploadedItems,
     systemItems,
     handleDelete: handleDeleteByLabel,
+    handleCancelSearch,
+    search,
     ...comboboxProps,
   };
 };
@@ -121,10 +136,12 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     systemItems,
     getInputProps,
     handleDelete,
+    handleCancelSearch,
     getComboboxProps,
     getMenuProps,
     getItemProps,
     setHighlightedIndex,
+    search,
   } = useLogic({ value, onChange });
 
   return (
@@ -132,13 +149,14 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <SearchField
-          {...getInputProps({ value: undefined })}
+          {...getInputProps({ value: search })}
           autoFocus
           placeholder="Search"
           onBlur={undefined}
           onFocus={() => {
             setHighlightedIndex(-1);
           }}
+          onCancel={handleCancelSearch}
         />
       </Flex>
       <Separator css={{ my: "$1" }} />
