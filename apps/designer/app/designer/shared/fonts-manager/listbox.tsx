@@ -40,8 +40,8 @@ export const ListboxItem = forwardRef<
   HTMLLIElement,
   ComponentProps<typeof ListboxItemBase> & {
     highlighted?: boolean;
-    disabled: boolean;
-    selected: boolean;
+    disabled?: boolean;
+    selected?: boolean;
     suffix?: JSX.Element;
   }
 >(

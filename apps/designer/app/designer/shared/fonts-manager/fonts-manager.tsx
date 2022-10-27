@@ -9,16 +9,11 @@ import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { ItemMenu } from "./item-menu";
-import { Listbox, ListboxItem } from "./list";
+import { Listbox, ListboxItem } from "./listbox";
 
 type Item = {
   label: string;
   type: "uploaded" | "system" | "category";
-};
-
-const categoryItems: { [type: string]: Item } = {
-  uploaded: { label: "Uploaded", type: "category" },
-  system: { label: "System", type: "category" },
 };
 
 const getItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
@@ -37,28 +32,7 @@ const getItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
       });
     }
   }
-  return [
-    categoryItems.uploaded,
-    ...uploaded.values(),
-    categoryItems.system,
-    ...system,
-  ];
-};
-
-const groupItems = (items: Array<Item>) => {
-  const uploaded = items.filter((item) => item.type === "uploaded");
-  const system = items.filter((item) => item.type === "system");
-  const result: Array<Item> = [];
-
-  if (uploaded.length !== 0) {
-    result.push(categoryItems.uploaded, ...uploaded);
-  }
-
-  if (system.length !== 0) {
-    result.push(categoryItems.system, ...system);
-  }
-
-  return result;
+  return [...uploaded.values(), ...system];
 };
 
 const NotFound = () => {
@@ -118,12 +92,20 @@ const useLogic = ({
     },
   });
 
-  const items = groupItems(filteredItems);
+  const { uploadedItems, systemItems } = useMemo(() => {
+    const uploadedItems = filteredItems.filter(
+      (item) => item.type === "uploaded"
+    );
+    const systemItems = filteredItems.filter((item) => item.type === "system");
+    return { uploadedItems, systemItems };
+  }, [filteredItems]);
 
   useEffect(resetFilter, [fontItems.length, resetFilter]);
 
   return {
-    items,
+    filteredItems,
+    uploadedItems,
+    systemItems,
     openMenuItem,
     setOpenMenuItem,
     handleDelete: handleDeleteByLabel,
@@ -138,7 +120,9 @@ type FontsManagerProps = {
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const {
-    items,
+    filteredItems,
+    uploadedItems,
+    systemItems,
     getInputProps,
     handleDelete,
     getComboboxProps,
@@ -160,7 +144,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         />
       </Flex>
       <Separator css={{ my: "$1" }} />
-      {items.length === 0 && <NotFound />}
+      {filteredItems.length === 0 && <NotFound />}
       <Flex
         {...getComboboxProps()}
         css={{
@@ -170,35 +154,50 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         }}
       >
         <Listbox {...getMenuProps()}>
-          {items.map((item, index) => {
+          {uploadedItems.length !== 0 && (
+            <ListboxItem disabled>{"Uploaded"}</ListboxItem>
+          )}
+          {uploadedItems.map((item, index) => {
             return (
-              <Fragment key={index}>
-                {item.type === "category" && index !== 0 && (
-                  <Separator css={{ my: "$1" }} />
-                )}
-                <ListboxItem
-                  {...getItemProps({
-                    item,
-                    index,
-                    highlighted: item === openMenuItem ? true : undefined,
-                  })}
-                  disabled={item.type === "category"}
-                  suffix={
-                    item.type === "uploaded" && (
-                      <ItemMenu
-                        onOpenChange={(isOpen) => {
-                          setOpenMenuItem(isOpen ? item : undefined);
-                        }}
-                        onDelete={() => {
-                          handleDelete(item.label);
-                        }}
-                      />
-                    )
-                  }
-                >
-                  {item.label}
-                </ListboxItem>
-              </Fragment>
+              <ListboxItem
+                {...getItemProps({
+                  item,
+                  index,
+                  highlighted: item === openMenuItem ? true : undefined,
+                })}
+                key={index}
+                suffix={
+                  <ItemMenu
+                    onOpenChange={(isOpen) => {
+                      setOpenMenuItem(isOpen ? item : undefined);
+                    }}
+                    onDelete={() => {
+                      handleDelete(item.label);
+                    }}
+                  />
+                }
+              >
+                {item.label}
+              </ListboxItem>
+            );
+          })}
+          {systemItems.length !== 0 && (
+            <>
+              <Separator css={{ my: "$1" }} />
+              <ListboxItem disabled>{"System"}</ListboxItem>
+            </>
+          )}
+          {systemItems.map((item, index) => {
+            return (
+              <ListboxItem
+                {...getItemProps({
+                  item,
+                  index: uploadedItems.length + index,
+                })}
+                key={index}
+              >
+                {item.label}
+              </ListboxItem>
             );
           })}
         </Listbox>
