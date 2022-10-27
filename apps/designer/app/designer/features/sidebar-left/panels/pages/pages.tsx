@@ -1,10 +1,12 @@
 import {
-  TreeNodeLabel,
-  TreeNode,
   IconButton,
+  TreeItemLabel,
+  TreeItemBody,
+  TreeNode,
+  type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
-import { NewPageIcon, PageIcon } from "@webstudio-is/icons";
+import { MenuIcon, NewPageIcon, PageIcon } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
@@ -60,18 +62,28 @@ const staticTreeProps = {
   getIsExpanded(_node: PagesTreeNode) {
     return true;
   },
-  renderItem(props: { data: PagesTreeNode; isSelected: boolean }) {
-    if (props.data.type === "folder") {
+  renderItem(props: TreeItemRenderProps<PagesTreeNode>) {
+    if (props.itemData.type === "folder") {
       return null;
     }
 
+    const isSelected = props.selectedItemId === props.itemData.id;
+
     return (
-      <>
-        <TreeNodeLabel
-          isSelected={props.isSelected}
-          text={props.data.data.name}
-        />
-      </>
+      <TreeItemBody
+        {...props}
+        suffix={
+          <IconButton
+            variant={isSelected ? "selectedItemAction" : "itemAction"}
+          >
+            <MenuIcon />
+          </IconButton>
+        }
+      >
+        <TreeItemLabel prefix={<PageIcon />}>
+          {props.itemData.data.name}
+        </TreeItemLabel>
+      </TreeItemBody>
     );
   },
 };

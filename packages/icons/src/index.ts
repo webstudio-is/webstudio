@@ -60,3 +60,4 @@ export { ChevronUpIcon } from "./chevron-up";
 export { ChevronDownIcon } from "./chevron-down";
 export { ChevronLeftIcon } from "./chevron-left";
 export { ChevronRightIcon } from "./chevron-right";
+export * from "./menu";

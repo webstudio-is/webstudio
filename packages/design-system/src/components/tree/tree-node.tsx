@@ -1,5 +1,6 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useMemo, useState } from "react";
 import { TriangleRightIcon, TriangleDownIcon } from "@webstudio-is/icons";
+import { cssVars } from "@webstudio-is/css-vars";
 import { Box } from "../box";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Flex } from "../flex";
@@ -98,6 +99,20 @@ const CollapsibleTrigger = styled(Collapsible.Trigger, {
 
 const TriggerPlaceholder = styled(Box, { width: INDENT });
 
+const SuffixContainer = styled(Flex, {
+  position: "absolute",
+  alignItems: "center",
+  right: 6,
+  top: 0,
+  bottom: 0,
+  defaultVariants: { align: "center" },
+
+  // We use opacity to hide the suffix buttons
+  // becuase when `visibility` is used it's ipossible to focus the button.
+  opacity: "0",
+  pointerEvents: "none",
+});
+
 const hoverStyle = {
   content: "''",
   position: "absolute",
@@ -111,10 +126,13 @@ const hoverStyle = {
   boxSizing: "border-box",
 };
 
-const ItemWrapper = styled(Flex, {
+const suffixWidthVar = cssVars.define("suffix-width");
+
+const ItemContainer = styled(Flex, {
   color: "$hiContrast",
   alignItems: "center",
   position: "relative",
+
   variants: {
     isSelected: {
       true: { color: "$loContrast", bc: "$blue10" },
@@ -122,8 +140,32 @@ const ItemWrapper = styled(Flex, {
     parentIsSelected: {
       true: { bc: "$blue4" },
     },
+    suffixVisible: {
+      true: {
+        [`& ${ItemButton}`]: {
+          // We have to use a padding to make space for the suffix
+          // because we can't put it inside ItemButton (see comment below)
+          paddingRight: cssVars.use(suffixWidthVar, "0"),
+        },
+        [`& ${SuffixContainer}`]: {
+          opacity: "1",
+          pointerEvents: "all",
+        },
+      },
+    },
     enableHoverState: {
-      true: { "&:hover:after": hoverStyle },
+      true: {
+        "&:hover:after": hoverStyle,
+
+        // Suffix is also visible on hover, which we don't track using JavaScript
+        [`&:hover ${ItemButton}`]: {
+          paddingRight: cssVars.use(suffixWidthVar, "0"),
+        },
+        [`&:hover ${SuffixContainer}`]: {
+          opacity: "1",
+          pointerEvents: "all",
+        },
+      },
     },
     forceHoverState: {
       true: { "&:after": hoverStyle },
@@ -131,10 +173,146 @@ const ItemWrapper = styled(Flex, {
   },
 });
 
+export type TreeItemRenderProps<Data extends { id: string }> = {
+  dropTargetItemId?: string;
+  onMouseEnter?: (item: Data) => void;
+  onMouseLeave?: (item: Data) => void;
+  itemData: Data;
+  parentIsSelected?: boolean;
+  selectedItemId?: string;
+  onSelect?: (itemId: string) => void;
+  level: number;
+  isAlwaysExpanded: boolean;
+  shouldRenderExpandButton: boolean;
+  isExpanded: boolean;
+};
+
+export const TreeItemBody = <Data extends { id: string }>({
+  isAlwaysExpanded,
+  selectedItemId,
+  onSelect,
+  parentIsSelected,
+  dropTargetItemId,
+  onMouseEnter,
+  onMouseLeave,
+  itemData,
+  level,
+  shouldRenderExpandButton,
+  isExpanded,
+  children,
+  suffix,
+  suffixWidth = suffix ? "32px" : "0",
+  selectionTrigger = "click",
+}: TreeItemRenderProps<Data> & {
+  children: React.ReactNode;
+  suffix?: React.ReactNode;
+  suffixWidth?: string;
+  selectionTrigger?: "click" | "focus";
+}) => {
+  const [focusTarget, setFocusTarget] = useState<
+    "item-button" | "suffix" | undefined
+  >();
+  const itemButtonRef = useRef<HTMLButtonElement>(null);
+  const suffixContainerRef = useRef<HTMLDivElement>(null);
+  const updateFocusTarget = () => {
+    if (document.activeElement === itemButtonRef.current) {
+      setFocusTarget("item-button");
+      return;
+    }
+    if (
+      suffixContainerRef.current !== null &&
+      suffixContainerRef.current.contains(document.activeElement)
+    ) {
+      setFocusTarget("suffix");
+      return;
+    }
+    setFocusTarget(undefined);
+  };
+
+  const { handleFocus, handleClick } = useMemo(() => {
+    if (onSelect === undefined) {
+      return {};
+    }
+    return selectionTrigger === "click"
+      ? { handleClick: () => onSelect(itemData.id) }
+      : { handleFocus: () => onSelect(itemData.id) };
+  }, [selectionTrigger, onSelect, itemData.id]);
+
+  const isSelected = itemData.id === selectedItemId;
+  const isDragging = dropTargetItemId !== undefined;
+  const isDropTarget = dropTargetItemId === itemData.id;
+
+  return (
+    <ItemContainer
+      onMouseEnter={onMouseEnter && (() => onMouseEnter(itemData))}
+      onMouseLeave={onMouseLeave && (() => onMouseLeave(itemData))}
+      isSelected={isSelected}
+      parentIsSelected={parentIsSelected}
+      enableHoverState={isDragging === false}
+      forceHoverState={isDropTarget || focusTarget === "item-button"}
+      suffixVisible={focusTarget !== undefined}
+      onFocus={updateFocusTarget}
+      onBlur={updateFocusTarget}
+      css={{ [suffixWidthVar]: suffixWidth }}
+    >
+      {/* We can't nest the collapsible trigger and suffix inside the ItemButton because:
+       *   1. <button> can't be nested inside <button>
+       *   2. Even if we don't use <button> element,
+       *      click in a nested element will register as a click on ItemButton.
+       *   3. It will be wrong semantically, and can hurt accessibility.
+       */}
+
+      <ItemButton
+        type="button"
+        data-drag-item-id={itemData.id}
+        data-item-button-id={itemData.id}
+        onFocus={handleFocus}
+        onClick={handleClick}
+        ref={itemButtonRef}
+      >
+        <NestingLines isSelected={isSelected} level={level} />
+        {isAlwaysExpanded === false && <TriggerPlaceholder />}
+        {children}
+      </ItemButton>
+
+      {shouldRenderExpandButton && (
+        <CollapsibleTrigger
+          style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
+          // We don't want a separate focusable control inside a tree item.
+          // tabIndex makes it skipped over when tabbing.
+          // It still can be focused using mouse, but we handle this elsewhere.
+          tabIndex={-1}
+        >
+          {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
+        </CollapsibleTrigger>
+      )}
+
+      {suffix && (
+        <SuffixContainer ref={suffixContainerRef}>{suffix}</SuffixContainer>
+      )}
+    </ItemContainer>
+  );
+};
+
+export const TreeItemLabel = ({
+  children,
+  prefix,
+}: {
+  children: React.ReactNode;
+  prefix?: React.ReactNode;
+}) => (
+  <>
+    {prefix}
+    <Text truncate css={{ ml: prefix ? "$1" : 0 }}>
+      {children}
+    </Text>
+  </>
+);
+
 export type TreeNodeProps<Data extends { id: string }> = {
   itemData: Data;
   getItemChildren: (item: Data) => Data[];
-  renderItem: (props: { data: Data; isSelected: boolean }) => React.ReactNode;
+  renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   getIsExpanded: (item: Data) => boolean;
   setIsExpanded?: (item: Data, expanded: boolean) => void;
@@ -148,7 +326,7 @@ export type TreeNodeProps<Data extends { id: string }> = {
 
   level?: number;
   animate?: boolean;
-  forceHoverStateAtItem?: string;
+  dropTargetItemId?: string;
 
   hideRoot?: boolean;
 };
@@ -169,7 +347,7 @@ export const TreeNode = <Data extends { id: string }>({
     onMouseEnter,
     onMouseLeave,
     onExpandTransitionEnd,
-    forceHoverStateAtItem,
+    dropTargetItemId,
     renderItem,
     getItemChildren,
   } = commonProps;
@@ -182,12 +360,6 @@ export const TreeNode = <Data extends { id: string }>({
   const isExpandable = itemChildren.length > 0;
   const isExpanded = getIsExpanded(itemData) || isAlwaysExpanded;
   const isSelected = itemData.id === selectedItemId;
-
-  const makeSelected = () => {
-    if (isSelected === false) {
-      onSelect?.(itemData.id);
-    }
-  };
 
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
@@ -219,44 +391,20 @@ export const TreeNode = <Data extends { id: string }>({
       onOpenChange={(isOpen) => setIsExpanded?.(itemData, isOpen)}
       data-drop-target-id={itemData.id}
     >
-      {hideRoot !== true && (
-        <ItemWrapper
-          onMouseEnter={() => onMouseEnter?.(itemData)}
-          onMouseLeave={() => onMouseLeave?.(itemData)}
-          isSelected={isSelected}
-          parentIsSelected={parentIsSelected}
-          enableHoverState={forceHoverStateAtItem === undefined}
-          forceHoverState={forceHoverStateAtItem === itemData.id}
-        >
-          {/* We want the main ItemButton to take the entire space,
-           * and then position the collapsible trigger on top of it using absolute positionning.
-           * When user clicks anywhere on a tree item, they should either hit the main button or the trigger.
-           */}
-
-          <ItemButton
-            type="button"
-            data-drag-item-id={itemData.id}
-            data-item-button-id={itemData.id}
-            onFocus={makeSelected}
-          >
-            <NestingLines isSelected={isSelected} level={level} />
-            {isAlwaysExpanded === false && <TriggerPlaceholder />}
-            {renderItem({ data: itemData, isSelected })}
-          </ItemButton>
-
-          {shouldRenderExpandButton && (
-            <CollapsibleTrigger
-              style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
-              // We don't want a separate focusable control inside a tree item.
-              // tabIndex makes it skipped over when tabbing.
-              // It still can be focused using mouse, but we handle this elsewhere.
-              tabIndex={-1}
-            >
-              {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
-            </CollapsibleTrigger>
-          )}
-        </ItemWrapper>
-      )}
+      {hideRoot !== true &&
+        renderItem({
+          dropTargetItemId,
+          onMouseEnter,
+          onMouseLeave,
+          itemData,
+          parentIsSelected,
+          selectedItemId,
+          onSelect,
+          level,
+          isAlwaysExpanded,
+          shouldRenderExpandButton,
+          isExpanded,
+        })}
       {isExpandable && (
         <CollapsibleContent
           onAnimationEnd={handleAnimationEnd}
@@ -280,23 +428,3 @@ export const TreeNode = <Data extends { id: string }>({
     </Collapsible.Root>
   );
 };
-
-const Label = styled(Text, { variants: { withIcon: { true: { ml: "$1" } } } });
-
-export const TreeNodeLabel = ({
-  text,
-  isSelected,
-  withIcon = false,
-}: {
-  text: string;
-  isSelected: boolean;
-  withIcon?: boolean;
-}) => (
-  <Label
-    color={isSelected ? "loContrast" : "contrast"}
-    withIcon={withIcon}
-    truncate
-  >
-    {text}
-  </Label>
-);
