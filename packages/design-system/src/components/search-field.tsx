@@ -20,7 +20,13 @@ const SearchFieldBase: ForwardRefRenderFunction<
   HTMLInputElement,
   ComponentProps<typeof TextField> & { onCancel?: () => void }
 > = (props, ref) => {
-  const { onChange, onCancel, value: propsValue = "", ...rest } = props;
+  const {
+    onChange,
+    onCancel,
+    value: propsValue = "",
+    onKeyDown,
+    ...rest
+  } = props;
   const [value, setValue] = useState(String(propsValue));
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -53,6 +59,14 @@ const SearchFieldBase: ForwardRefRenderFunction<
       onChange={(event) => {
         setValue(event.target.value);
         onChange?.(event);
+      }}
+      onKeyDown={(event) => {
+        // Make sure we clear the search on esc and preserve the default browser behavior
+        if (event.key === "Escape" && value.length !== 0) {
+          event.stopPropagation();
+          return;
+        }
+        onKeyDown?.(event);
       }}
     />
   );

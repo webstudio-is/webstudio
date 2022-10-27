@@ -2,7 +2,6 @@ import { mergeRefs } from "@react-aria/utils";
 import React from "react";
 import { useFocusWithin } from "@react-aria/interactions";
 import { css, styled } from "../stitches.config";
-import { Flex } from "./flex";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
 
@@ -218,7 +217,8 @@ const TextFieldBase = styled("div", {
   },
 });
 
-const PrefixSlot = styled(Flex, {
+const PrefixSlot = styled("div", {
+  display: "flex",
   alignItems: "center",
   flexShrink: 0,
   order: 0,
@@ -227,7 +227,8 @@ const PrefixSlot = styled(Flex, {
   borderRadius: 2,
 });
 
-const SuffixSlot = styled(Flex, {
+const SuffixSlot = styled("div", {
+  display: "flex",
   alignItems: "center",
   flexShrink: 0,
   order: 2,
