@@ -9,7 +9,7 @@ import {
 import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { TextField } from "./text-field";
 import { IconButton } from "./icon-button";
-import { styled } from "..";
+import { styled } from "../stitches.config";
 
 const SearchIcon = styled(MagnifyingGlassIcon, {
   color: "$hint",

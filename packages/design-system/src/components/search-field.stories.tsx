@@ -1,7 +1,7 @@
 import { expect } from "@storybook/jest";
 import { type ComponentStory } from "@storybook/react";
 import { userEvent, waitFor, within } from "@storybook/testing-library";
-import React, { useState } from "react";
+import React from "react";
 import { SearchField } from "./search-field";
 
 export default {
@@ -19,7 +19,7 @@ export const WithInitialValue: ComponentStory<typeof SearchField> = () => {
 let updateValue: (value: string) => void;
 
 export const UpdateValue: ComponentStory<typeof SearchField> = () => {
-  const [value, setValue] = useState("something");
+  const [value, setValue] = React.useState("something");
   updateValue = setValue;
   return <SearchField value={value} title="Search" />;
 };
