@@ -16,7 +16,7 @@ export const useSync = ({
     if (entries.length === 0) return;
 
     // @todo this entire queueing logic needs to be gone, it's a workaround,
-    // because prisma can't do atomic updates yet with embeded documents
+    // because prisma can't do atomic updates yet with sandbox documents
     // and backend fetches and updates big objects, so if we send quickly,
     // we end up overwriting things
     enqueue(() =>

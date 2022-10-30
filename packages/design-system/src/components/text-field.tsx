@@ -1,8 +1,71 @@
 import { mergeRefs } from "@react-aria/utils";
 import React from "react";
 import { useFocusWithin } from "@react-aria/interactions";
-import { styled } from "../stitches.config";
-import { Flex } from "./flex";
+import { css, styled } from "../stitches.config";
+import { ChevronLeftIcon } from "@webstudio-is/icons";
+import { cssVars } from "@webstudio-is/css-vars";
+
+const backgroundColorVar = cssVars.define("background-color");
+const colorVar = cssVars.define("color");
+
+const getTextFieldSuffixCssVars = (state: "focus" | "hover") => {
+  if (state === "focus") {
+    return {
+      [backgroundColorVar]: "$colors$blue10",
+      [colorVar]: "white",
+    };
+  }
+
+  return {
+    [backgroundColorVar]: "$colors$slate7",
+    [colorVar]: "$colors$hiContrast",
+  };
+};
+
+const textFieldIconBaseStyle = css({
+  height: "$5",
+  minWidth: "$2",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 2,
+});
+
+// Trigger can be used as a button, which is focusable/hoverable itself or as an icon,
+// which has the same states but activated over the parent component element.
+export const TextFieldIconButton = styled(
+  "button",
+  {
+    all: "unset",
+    "&:hover": {
+      backgroundColor: "$slate7",
+      color: "$hiContrast",
+    },
+    "&:focus": {
+      backgroundColor: "$blue10",
+      color: "white",
+    },
+    variants: {
+      state: {
+        active: {
+          backgroundColor: "$blue10",
+          color: "white",
+          "&:hover": {
+            backgroundColor: "$blue10",
+            color: "white",
+          },
+        },
+      },
+    },
+  },
+  textFieldIconBaseStyle
+);
+
+export const TextFieldIcon = styled("span", textFieldIconBaseStyle, {
+  // Icon receives colors from parent.
+  backgroundColor: cssVars.use(backgroundColorVar),
+  color: cssVars.use(colorVar),
+});
 
 const InputBase = styled("input", {
   // Reset
@@ -52,7 +115,7 @@ const InputBase = styled("input", {
   },
 
   "&::placeholder": {
-    color: "$slate9",
+    color: "$hint",
   },
 
   "&:disabled": {
@@ -78,12 +141,10 @@ const TextFieldBase = styled("div", {
   fontSize: "$1",
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
-
-  "&:focus-within, &[data-state=focus]": {
+  "&:focus-within": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
   },
-
   "&[aria-disabled=true]": {
     pointerEvents: "none",
     backgroundColor: "$slate2",
@@ -94,7 +155,6 @@ const TextFieldBase = styled("div", {
       boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
     },
   },
-
   variants: {
     variant: {
       ghost: {
@@ -108,7 +168,7 @@ const TextFieldBase = styled("div", {
         "&:focus": {
           backgroundColor: "$loContrast",
           boxShadow:
-            "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue10",
+            "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
         },
         "&:disabled": {
           backgroundColor: "transparent",
@@ -116,6 +176,10 @@ const TextFieldBase = styled("div", {
         "&:read-only": {
           backgroundColor: "transparent",
         },
+      },
+      button: {
+        "&:hover": getTextFieldSuffixCssVars("hover"),
+        "&:focus-within": getTextFieldSuffixCssVars("focus"),
       },
     },
     state: {
@@ -133,18 +197,44 @@ const TextFieldBase = styled("div", {
             "inset 0px 0px 0px 1px $colors$green8, 0px 0px 0px 1px $colors$green8",
         },
       },
+      active: {
+        boxShadow:
+          "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+        ...getTextFieldSuffixCssVars("focus"),
+      },
     },
+    // Preffix and suffix are responsible for their spacing
     withPrefix: {
       true: {
-        paddingLeft: 2,
+        paddingLeft: 0,
       },
     },
     withSuffix: {
       true: {
-        paddingRight: 2,
+        paddingRight: 0,
       },
     },
   },
+});
+
+const PrefixSlot = styled("div", {
+  display: "flex",
+  alignItems: "center",
+  flexShrink: 0,
+  order: 0,
+  padding: 2,
+  paddingRight: 0,
+  borderRadius: 2,
+});
+
+const SuffixSlot = styled("div", {
+  display: "flex",
+  alignItems: "center",
+  flexShrink: 0,
+  order: 2,
+  padding: 2,
+  paddingLeft: 0,
+  borderRadius: 2,
 });
 
 export type TextFieldProps = Pick<
@@ -161,16 +251,22 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
   (props, forwardedRef) => {
     const {
       prefix,
-      suffix,
       css,
       disabled,
       inputRef,
       state,
-      variant,
+      variant: variantProp,
       onFocus,
       onBlur,
+      onClick,
+      type,
+      // prevent spreading it into the dom
+      suffix: suffixProp,
       ...textFieldProps
     } = props;
+    let suffix = suffixProp;
+    const variant =
+      type === "button" && variantProp === undefined ? "button" : variantProp;
 
     const internalInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -180,15 +276,22 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
 
     const { focusWithinProps } = useFocusWithin({
       isDisabled: disabled,
-      onFocusWithin: (event) => {
-        // @ts-expect-error Type mismatch from react-aria
-        onFocus?.(event);
-      },
-      onBlurWithin: (event) => {
-        // @ts-expect-error Type mismatch from react-aria
-        onBlur?.(event);
-      },
+      // @ts-expect-error Type mismatch from react-aria
+      onFocusWithin: onFocus,
+      // @ts-expect-error Type mismatch from react-aria
+      onBlurWithin: onBlur,
     });
+
+    if (type === "button" && suffix === undefined) {
+      suffix = (
+        <TextFieldIcon
+          as={ChevronLeftIcon}
+          onClick={() => {
+            internalInputRef.current?.click();
+          }}
+        />
+      );
+    }
 
     return (
       <TextFieldBase
@@ -204,34 +307,15 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <InputBase
-          disabled={disabled}
           {...textFieldProps}
+          type={type}
+          disabled={disabled}
+          onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
         />
 
-        {prefix && (
-          <Flex
-            css={{
-              alignItems: "center",
-              flexShrink: 0,
-              order: 0,
-            }}
-          >
-            {prefix}
-          </Flex>
-        )}
-
-        {suffix && (
-          <Flex
-            css={{
-              alignItems: "center",
-              flexShrink: 0,
-              order: 2,
-            }}
-          >
-            {suffix}
-          </Flex>
-        )}
+        {prefix && <PrefixSlot>{prefix}</PrefixSlot>}
+        {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
       </TextFieldBase>
     );
   }

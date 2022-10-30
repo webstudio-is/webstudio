@@ -7,8 +7,8 @@ import {
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  IconButton,
   numericScrubControl,
+  TextFieldIconButton,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -270,9 +270,12 @@ export const CssValueInput = ({
 
   const suffix =
     value.type === "keyword" ? (
-      <IconButton css={{ width: "auto" }} {...getToggleButtonProps()}>
+      <TextFieldIconButton
+        {...getToggleButtonProps()}
+        state={isOpen ? "active" : undefined}
+      >
         <ChevronDownIcon />
-      </IconButton>
+      </TextFieldIconButton>
     ) : value.type === "unit" ? (
       unitSelectElement
     ) : null;
