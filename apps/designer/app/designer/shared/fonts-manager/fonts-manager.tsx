@@ -221,7 +221,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           })}
           {systemItems.length !== 0 && (
             <>
-              <Separator css={{ my: "$1" }} />
+              {uploadedItems.length !== 0 && <Separator css={{ my: "$1" }} />}
               <ListItem state="disabled">{"System"}</ListItem>
             </>
           )}
