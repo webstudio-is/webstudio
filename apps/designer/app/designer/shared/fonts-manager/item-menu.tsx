@@ -9,19 +9,9 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { DotsHorizontalIcon } from "@webstudio-is/icons";
-import { cssVars } from "@webstudio-is/css-vars";
 import { type FocusEventHandler, useState } from "react";
 
-const visibilityVar = cssVars.define("visibility");
-
-export const getItemMenuVars = (state: "visible" | "hidden") => {
-  return {
-    [visibilityVar]: state,
-  };
-};
-
 const MenuButton = styled(IconButton, {
-  visibility: cssVars.use(visibilityVar, "hidden"),
   color: "$hint",
   "&:hover, &:focus": {
     color: "$hiContrast",

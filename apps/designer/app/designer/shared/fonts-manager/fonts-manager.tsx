@@ -1,15 +1,22 @@
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
-  useCombobox,
   Separator,
   SearchField,
+  List,
+  ListItem,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type KeyboardEventHandler,
+  type ChangeEventHandler,
+  useMemo,
+  useState,
+} from "react";
+import { matchSorter } from "match-sorter";
 import { ItemMenu } from "./item-menu";
-import { Listbox, ListboxItem } from "./listbox";
+import { CheckIcon } from "@webstudio-is/icons";
 
 type Item = {
   label: string;
@@ -43,15 +50,9 @@ const NotFound = () => {
   );
 };
 
-const useLogic = ({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) => {
-  const [search, setSearch] = useState("");
+const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   const { assets, handleDelete } = useAssets("font");
+  const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
   const handleDeleteByLabel = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
     const ids = assets
@@ -67,32 +68,7 @@ const useLogic = ({
   };
 
   const fontItems = useMemo(() => toItems(assets), [assets]);
-
-  const selectedItem =
-    fontItems.find((item) => item.label === value) ?? fontItems[0];
-
-  const {
-    items: filteredItems,
-    resetFilter,
-    highlightedIndex,
-    isOpen,
-    inputValue,
-    ...comboboxProps
-  } = useCombobox({
-    // Makes sure first keydown selectsthe item instead of opening the list first otherwise.
-    isOpen: true,
-    items: fontItems,
-    value: selectedItem,
-    itemToString(item) {
-      return item?.label ?? "";
-    },
-    onItemSelect(value) {
-      if (value !== null) {
-        onChange(value.label);
-        handleCancelSearch();
-      }
-    },
-  });
+  const [filteredItems, setFilteredItems] = useState(fontItems);
 
   const { uploadedItems, systemItems } = useMemo(() => {
     const uploadedItems = filteredItems.filter(
@@ -102,25 +78,63 @@ const useLogic = ({
     return { uploadedItems, systemItems };
   }, [filteredItems]);
 
-  useEffect(() => {
-    setSearch(inputValue);
-  }, [inputValue]);
+  const handleCancelSearch = () => {
+    setFilteredItems(fontItems);
+  };
 
-  const handleCancelSearch = useCallback(() => {
-    resetFilter();
-    setSearch("");
-  }, [resetFilter]);
+  const handleSelectItem = (indexOrDirection: number | "next" | "previous") => {
+    const nextIndex =
+      indexOrDirection === "next"
+        ? selectedItemIndex + 1
+        : indexOrDirection === "previous"
+        ? selectedItemIndex - 1
+        : indexOrDirection;
 
-  useEffect(handleCancelSearch, [fontItems, selectedItem, handleCancelSearch]);
+    if (nextIndex < 0) {
+      setSelectedItemIndex(filteredItems.length - 1);
+      return;
+    }
+    if (nextIndex >= filteredItems.length) {
+      setSelectedItemIndex(0);
+      return;
+    }
+    setSelectedItemIndex(nextIndex);
+  };
+
+  const handleKeyDown: KeyboardEventHandler = (event) => {
+    if (event.code === "ArrowUp") {
+      handleSelectItem("previous");
+      return;
+    }
+    if (event.code === "ArrowDown") {
+      handleSelectItem("next");
+      return;
+    }
+
+    if (event.code === "Enter") {
+      const item = filteredItems[selectedItemIndex];
+      if (item !== undefined) onChange(item.label);
+      return;
+    }
+  };
+
+  const handleSearch: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const items = matchSorter(fontItems, event.currentTarget.value, {
+      keys: [(item) => item.label],
+    });
+    setFilteredItems(items);
+  };
 
   return {
     filteredItems,
     uploadedItems,
     systemItems,
+    selectedItemIndex,
     handleDelete: handleDeleteByLabel,
     handleCancelSearch,
-    search,
-    ...comboboxProps,
+    handleSelectItem,
+    handleKeyDown,
+    handleSearch,
   };
 };
 
@@ -131,104 +145,111 @@ type FontsManagerProps = {
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const {
+    handleSearch,
     filteredItems,
     uploadedItems,
     systemItems,
-    getInputProps,
     handleDelete,
     handleCancelSearch,
-    getComboboxProps,
-    getMenuProps,
-    getItemProps,
-    setHighlightedIndex,
-    search,
-  } = useLogic({ value, onChange });
-
+    handleSelectItem,
+    handleKeyDown,
+    selectedItemIndex,
+  } = useLogic({ onChange });
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <SearchField
-          {...getInputProps({ value: search })}
           autoFocus
           placeholder="Search"
-          onBlur={undefined}
-          onFocus={() => {
-            setHighlightedIndex(-1);
-          }}
           onCancel={handleCancelSearch}
+          onKeyDown={handleKeyDown}
+          onChange={handleSearch}
         />
       </Flex>
       <Separator css={{ my: "$1" }} />
       {filteredItems.length === 0 && <NotFound />}
       <Flex
-        {...getComboboxProps()}
         css={{
           flexDirection: "column",
           gap: "$3",
           px: "$3",
         }}
       >
-        <Listbox {...getMenuProps()}>
+        <List onKeyDown={handleKeyDown}>
           {uploadedItems.length !== 0 && (
-            <ListboxItem disabled>{"Uploaded"}</ListboxItem>
+            <ListItem state="disabled">{"Uploaded"}</ListItem>
           )}
           {uploadedItems.map((item, index) => {
             return (
-              <ListboxItem
-                {...getItemProps({
-                  item,
-                  index,
-                })}
+              <ListItem
                 key={index}
+                state={selectedItemIndex === index ? "selected" : undefined}
+                prefix={item.label === value ? <CheckIcon /> : undefined}
+                current={item.label === value}
                 suffix={
-                  <ItemMenu
-                    onOpenChange={() => {
-                      setHighlightedIndex(index);
-                    }}
-                    onDelete={() => {
-                      handleDelete(item.label);
-                    }}
-                    onFocusTrigger={() => {
-                      setHighlightedIndex(-1);
-                    }}
-                  />
+                  selectedItemIndex === index ? (
+                    <ItemMenu
+                      onOpenChange={() => {
+                        handleSelectItem(index);
+                      }}
+                      onDelete={() => {
+                        handleDelete(item.label);
+                      }}
+                      onFocusTrigger={() => {
+                        handleSelectItem(-1);
+                      }}
+                    />
+                  ) : undefined
                 }
                 onFocus={(event) => {
                   // We need to ignore focus on a menu button inside
                   if (event.target === event.currentTarget) {
-                    setHighlightedIndex(index);
+                    handleSelectItem(index);
                   }
+                }}
+                onMouseEnter={() => {
+                  handleSelectItem(index);
+                }}
+                onClick={() => {
+                  onChange(item.label);
                 }}
               >
                 {item.label}
-              </ListboxItem>
+              </ListItem>
             );
           })}
           {systemItems.length !== 0 && (
             <>
               <Separator css={{ my: "$1" }} />
-              <ListboxItem disabled>{"System"}</ListboxItem>
+              <ListItem state="disabled">{"System"}</ListItem>
             </>
           )}
           {systemItems.map((item, index) => {
             const globalIndex = uploadedItems.length + index;
             return (
-              <ListboxItem
-                {...getItemProps({
-                  item,
-                  index: globalIndex,
-                })}
-                key={index}
+              <ListItem
+                key={globalIndex}
+                state={
+                  selectedItemIndex === globalIndex ? "selected" : undefined
+                }
+                prefix={item.label === value ? <CheckIcon /> : undefined}
+                current={item.label === value}
                 onFocus={() => {
-                  setHighlightedIndex(globalIndex);
+                  handleSelectItem(globalIndex);
+                }}
+                onMouseEnter={() => {
+                  handleSelectItem(globalIndex);
+                }}
+                onClick={() => {
+                  onChange(item.label);
                 }}
               >
                 {item.label}
-              </ListboxItem>
+              </ListItem>
             );
           })}
-        </Listbox>
+        </List>
       </Flex>
     </Flex>
   );

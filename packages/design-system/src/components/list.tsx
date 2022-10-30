@@ -3,7 +3,7 @@ import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 import { Text } from "./text";
 
-export const List = styled("ul", {
+const ListBase = styled("ul", {
   display: "flex",
   flexDirection: "column",
   margin: 0,
@@ -33,20 +33,32 @@ const ListItemBase = styled("li", {
   },
 });
 
+export const List = forwardRef<
+  HTMLUListElement,
+  ComponentProps<typeof ListBase>
+>((props, ref) => {
+  return <ListBase role="listbox" ref={ref} {...props} />;
+});
+List.displayName = "List";
+
 export const ListItem = forwardRef<
   HTMLLIElement,
-  Omit<ComponentProps<typeof ListItemBase>, "prefix" | "suffix"> & {
+  Omit<ComponentProps<typeof ListItemBase>, "prefix" | "suffix" | "current"> & {
     state?: "disabled" | "selected";
     prefix?: JSX.Element;
     suffix?: JSX.Element;
+    current?: boolean;
   }
->(({ children, prefix, suffix, state, ...props }, ref) => {
+>(({ children, prefix, suffix, state, current, ...props }, ref) => {
   return (
     <ListItemBase
-      {...props}
       ref={ref}
       state={state}
       tabIndex={state === "disabled" ? -1 : 0}
+      role="option"
+      {...(state === "selected" ? { "aria-selected": true } : undefined)}
+      {...(current ? { "aria-current": true } : undefined)}
+      {...props}
     >
       {prefix}
       <Flex css={{ gridColumn: 2 }} align="center">

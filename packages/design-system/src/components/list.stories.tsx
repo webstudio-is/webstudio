@@ -18,6 +18,7 @@ export const Simple: ComponentStory<typeof List> = () => {
       <ListItem
         prefix={<CheckIcon />}
         suffix={<DotsHorizontalIcon />}
+        current
         state="selected"
       >
         Orange
