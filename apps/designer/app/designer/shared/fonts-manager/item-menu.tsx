@@ -44,7 +44,7 @@ export const ItemMenu = ({
           onFocus={onFocusTrigger}
           tabIndex={1}
           onClick={(event) => {
-            // Prevent setting the current fon to the item.
+            // Prevent setting the current font to the item.
             event.stopPropagation();
           }}
         >
@@ -54,6 +54,10 @@ export const ItemMenu = ({
       <DropdownMenuPortal>
         <DropdownMenuContent align="start">
           <DropdownMenuItem
+            onClick={(event) => {
+              // Prevent setting the current font to the item.
+              event.stopPropagation();
+            }}
             onSelect={() => {
               onDelete();
             }}
