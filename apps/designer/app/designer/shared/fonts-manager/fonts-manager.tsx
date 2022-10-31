@@ -1,70 +1,57 @@
-/* This entire module is WIP */
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
-  Box,
-  ComboboxListboxItem,
-  TextField,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  IconButton,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  Text,
-  DropdownMenuPortal,
   useCombobox,
+  Separator,
+  SearchField,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { useMemo } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { ItemMenu } from "./item-menu";
+import { Listbox, ListboxItem } from "./listbox";
 
-const getItems = (
-  assets: Array<Asset | PreviewAsset>
-): Array<{ label: string }> => {
-  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({ label }));
+type Item = {
+  label: string;
+  type: "uploaded" | "system";
+};
+
+const toItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
+  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
+    label,
+    type: "system",
+  }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
   for (const asset of assets) {
     // @todo need to teach ts the right type from useAssets
     if ("meta" in asset && "family" in asset.meta) {
-      uploaded.set(asset.meta.family, { label: asset.meta.family });
+      uploaded.set(asset.meta.family, {
+        label: asset.meta.family,
+        type: "uploaded",
+      });
     }
   }
-  return [...system, ...uploaded.values()];
+  return [...uploaded.values(), ...system];
 };
 
-const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
+const NotFound = () => {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <IconButton aria-label="Font menu button">
-          <DotsHorizontalIcon />
-        </IconButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onSelect={() => {
-              onDelete();
-            }}
-          >
-            <Text>Delete font</Text>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenu>
+    <Flex align="center" justify="center" css={{ height: 100 }}>
+      Font not found
+    </Flex>
   );
 };
 
-type FontsManagerProps = {
+const useLogic = ({
+  value,
+  onChange,
+}: {
   value: string;
   onChange: (value: string) => void;
-};
-
-export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
+}) => {
+  const [search, setSearch] = useState("");
   const { assets, handleDelete } = useAssets("font");
-
   const handleDeleteByLabel = (family: string) => {
     // One family may have multiple assets for different formats, so we need to delete them all.
     const ids = assets
@@ -79,63 +66,169 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     handleDelete(ids);
   };
 
-  const fontItems = useMemo(() => getItems(assets), [assets]);
+  const fontItems = useMemo(() => toItems(assets), [assets]);
+
   const selectedItem =
     fontItems.find((item) => item.label === value) ?? fontItems[0];
 
-  const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
-    useCombobox({
-      items: fontItems,
-      value: selectedItem,
-      itemToString: (item) => item?.label ?? "",
-      onItemSelect: (value) => {
-        if (value !== null) {
-          onChange(value.label);
-        }
-      },
-    });
+  const {
+    items: filteredItems,
+    resetFilter,
+    highlightedIndex,
+    isOpen,
+    inputValue,
+    ...comboboxProps
+  } = useCombobox({
+    // Makes sure first keydown selectsthe item instead of opening the list first otherwise.
+    isOpen: true,
+    items: fontItems,
+    value: selectedItem,
+    itemToString(item) {
+      return item?.label ?? "";
+    },
+    onItemSelect(value) {
+      if (value !== null) {
+        onChange(value.label);
+        handleCancelSearch();
+      }
+    },
+  });
 
-  const { isEmpty, ...menuProps } = getMenuProps();
+  const { uploadedItems, systemItems } = useMemo(() => {
+    const uploadedItems = filteredItems.filter(
+      (item) => item.type === "uploaded"
+    );
+    const systemItems = filteredItems.filter((item) => item.type === "system");
+    return { uploadedItems, systemItems };
+  }, [filteredItems]);
+
+  useEffect(() => {
+    setSearch(inputValue);
+  }, [inputValue]);
+
+  const handleCancelSearch = useCallback(() => {
+    resetFilter();
+    setSearch("");
+  }, [resetFilter]);
+
+  useEffect(handleCancelSearch, [fontItems, selectedItem, handleCancelSearch]);
+
+  return {
+    filteredItems,
+    uploadedItems,
+    systemItems,
+    handleDelete: handleDeleteByLabel,
+    handleCancelSearch,
+    search,
+    ...comboboxProps,
+  };
+};
+
+type FontsManagerProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
+
+export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
+  const {
+    filteredItems,
+    uploadedItems,
+    systemItems,
+    getInputProps,
+    handleDelete,
+    handleCancelSearch,
+    getComboboxProps,
+    getMenuProps,
+    getItemProps,
+    setHighlightedIndex,
+    search,
+  } = useLogic({ value, onChange });
 
   return (
-    <Flex
-      gap="3"
-      direction="column"
-      css={{ padding: "$1", paddingTop: "$2", height: 460, overflow: "hidden" }}
-    >
-      <Box css={{ padding: "$2" }}>
+    <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
+      <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
-      </Box>
-
+        <SearchField
+          {...getInputProps({ value: search })}
+          autoFocus
+          placeholder="Search"
+          onBlur={undefined}
+          onFocus={() => {
+            setHighlightedIndex(-1);
+          }}
+          onCancel={handleCancelSearch}
+        />
+      </Flex>
+      <Separator css={{ my: "$1" }} />
+      {filteredItems.length === 0 && <NotFound />}
       <Flex
         {...getComboboxProps()}
-        css={{ flexDirection: "column", gap: "$3" }}
+        css={{
+          flexDirection: "column",
+          gap: "$3",
+          px: "$3",
+        }}
       >
-        <TextField
-          type="search"
-          prefix={<MagnifyingGlassIcon />}
-          {...getInputProps()}
-        />
-        <fieldset>
-          <legend>Choose an item</legend>
-          <Flex {...menuProps} css={{ flexDirection: "column" }}>
-            {items.map((item, index) => {
-              return (
-                <ComboboxListboxItem
-                  {...getItemProps({ item, index })}
-                  key={index}
-                >
-                  {item.label}
+        <Listbox {...getMenuProps()}>
+          {uploadedItems.length !== 0 && (
+            <ListboxItem disabled>{"Uploaded"}</ListboxItem>
+          )}
+          {uploadedItems.map((item, index) => {
+            return (
+              <ListboxItem
+                {...getItemProps({
+                  item,
+                  index,
+                })}
+                key={index}
+                suffix={
                   <ItemMenu
+                    onOpenChange={() => {
+                      setHighlightedIndex(index);
+                    }}
                     onDelete={() => {
-                      handleDeleteByLabel(item.label);
+                      handleDelete(item.label);
+                    }}
+                    onFocusTrigger={() => {
+                      setHighlightedIndex(-1);
                     }}
                   />
-                </ComboboxListboxItem>
-              );
-            })}
-          </Flex>
-        </fieldset>
+                }
+                onFocus={(event) => {
+                  // We need to ignore focus on a menu button inside
+                  if (event.target === event.currentTarget) {
+                    setHighlightedIndex(index);
+                  }
+                }}
+              >
+                {item.label}
+              </ListboxItem>
+            );
+          })}
+          {systemItems.length !== 0 && (
+            <>
+              <Separator css={{ my: "$1" }} />
+              <ListboxItem disabled>{"System"}</ListboxItem>
+            </>
+          )}
+          {systemItems.map((item, index) => {
+            const globalIndex = uploadedItems.length + index;
+            return (
+              <ListboxItem
+                {...getItemProps({
+                  item,
+                  index: globalIndex,
+                })}
+                key={index}
+                onFocus={() => {
+                  setHighlightedIndex(globalIndex);
+                }}
+              >
+                {item.label}
+              </ListboxItem>
+            );
+          })}
+        </Listbox>
       </Flex>
     </Flex>
   );

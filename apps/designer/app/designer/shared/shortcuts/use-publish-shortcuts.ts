@@ -20,7 +20,6 @@ export const usePublishShortcuts = (publish: Publish) => {
     useHotkeys(
       shortcuts[name],
       (event) => {
-        event.preventDefault();
         publish({
           type: "shortcut",
           payload: { name, key: event.key },

@@ -17,27 +17,32 @@ const usePickerSideOffset = (
   return [ref, sideOffset];
 };
 
-type AssetPickerProps = {
+type ValuePickerPopoverProps = {
   title: string;
   content: JSX.Element;
   children: JSX.Element;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 export const ValuePickerPopover = ({
   title,
   content,
   children,
-}: AssetPickerProps) => {
+  onOpenChange,
+}: ValuePickerPopoverProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [ref, sideOffset] = usePickerSideOffset(isOpen);
-
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    onOpenChange?.(open);
+  };
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen} modal>
+    <Popover open={isOpen} onOpenChange={handleOpenChange} modal>
       <PopoverTrigger
         asChild
         ref={ref}
         onClick={() => {
-          setIsOpen(true);
+          handleOpenChange(true);
         }}
       >
         {children}
@@ -47,7 +52,8 @@ export const ValuePickerPopover = ({
           sideOffset={sideOffset}
           side="right"
           hideArrow
-          css={{ minHeight: 500 }}
+          align="start"
+          css={{ width: PANEL_WIDTH }}
         >
           <PopoverHeader title={title} />
           {content}

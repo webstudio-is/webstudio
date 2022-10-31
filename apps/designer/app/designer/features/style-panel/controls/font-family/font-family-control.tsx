@@ -3,6 +3,7 @@ import { FontsManager } from "~/designer/shared/fonts-manager";
 import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
+import { useState } from "react";
 
 export const FontFamilyControl = ({
   currentStyle,
@@ -16,6 +17,7 @@ export const FontFamilyControl = ({
     inheritedStyle,
     property: styleConfig.property,
   });
+  const [isOpen, setIsOpen] = useState(false);
 
   if (value === undefined) return null;
 
@@ -25,9 +27,13 @@ export const FontFamilyControl = ({
     <ValuePickerPopover
       title="Fonts"
       content={<FontsManager value={String(value.value)} onChange={setValue} />}
+      onOpenChange={setIsOpen}
     >
       {/* @todo this should be part of the design system, probably a varian="button" */}
-      <TextField defaultValue={value.value} />
+      <TextField
+        defaultValue={value.value}
+        state={isOpen ? "active" : undefined}
+      />
     </ValuePickerPopover>
   );
 };
