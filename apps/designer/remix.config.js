@@ -18,9 +18,6 @@ module.exports = {
   serverBuildPath: "api/index.js",
   // publicPath: "/build/",
   watchPaths: () => {
-    return [
-      "../../packages/**/lib/**.js",
-      "../../packages/prisma-client/src/**.ts",
-    ];
+    return ["../../packages/**/lib/**.js"];
   },
 };
