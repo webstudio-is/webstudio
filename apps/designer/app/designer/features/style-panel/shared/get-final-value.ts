@@ -27,7 +27,10 @@ export const getFinalValue = ({
   if (
     currentValue &&
     currentValue.type === "unit" &&
-    isValid(property, toValue(currentValue)) === false
+    isValid(
+      property,
+      toValue({ ...currentValue, value: Math.abs(currentValue.value) })
+    ) === false
   ) {
     return { ...(currentValue as unknown as InvalidValue), type: "invalid" };
   }

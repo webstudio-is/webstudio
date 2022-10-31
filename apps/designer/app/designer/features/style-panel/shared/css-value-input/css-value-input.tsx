@@ -22,6 +22,7 @@ import {
   type KeyboardEvent,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 
@@ -83,8 +84,9 @@ const useScrub = ({
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-}) => {
+}): [React.MutableRefObject<HTMLInputElement | null>, boolean] => {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [inputActiveState, setInputActiveState] = useState(false);
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
@@ -110,8 +112,8 @@ const useScrub = ({
           unit,
           value: event.value,
         });
+        setInputActiveState(true);
         inputRef.current?.blur();
-        inputRef.current?.parentElement?.setAttribute("data-state", "focus");
       },
       onValueChange(event) {
         onChangeCompleteRef.current({
@@ -119,16 +121,16 @@ const useScrub = ({
           unit,
           value: event.value,
         });
+        setInputActiveState(false);
         inputRef.current?.focus();
         inputRef.current?.select();
-        inputRef.current?.parentElement?.removeAttribute("data-state");
       },
     });
 
     return scrub.disconnectedCallback;
   }, [type, unit]);
 
-  return inputRef;
+  return [inputRef, inputActiveState];
 };
 
 const useHandleKeyDown =
@@ -247,7 +249,7 @@ export const CssValueInput = ({
     },
   });
 
-  const inputRef = useScrub({
+  const [inputRef, inputActiveState] = useScrub({
     value,
     onChange,
     onChangeComplete,
@@ -294,7 +296,13 @@ export const CssValueInput = ({
             onKeyDown={handleKeyDown}
             inputRef={inputRef}
             name={property}
-            state={value.type === "invalid" ? "invalid" : undefined}
+            state={
+              value.type === "invalid"
+                ? "invalid"
+                : inputActiveState
+                ? "active"
+                : undefined
+            }
             suffix={suffix}
             css={{ cursor: "default" }}
           />
