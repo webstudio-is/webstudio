@@ -6,14 +6,14 @@ import { utils } from "@webstudio-is/project";
 export type CanvasData = Data & { buildId: Build["id"]; page: Page };
 
 export const loadCanvasData = async (
-  projectId: Project["id"],
+  project: Project,
   env: "dev" | "prod",
   pagePath = ""
 ): Promise<CanvasData | undefined> => {
   const build =
     env === "dev"
-      ? await db.build.loadByProjectId(projectId, "dev")
-      : await db.build.loadByProjectId(projectId, "prod");
+      ? await db.build.loadByProjectId(project.id, "dev")
+      : await db.build.loadByProjectId(project.id, "prod");
 
   if (build === undefined) {
     throw new Error("The project is not published");
@@ -32,11 +32,11 @@ export const loadCanvasData = async (
   ]);
 
   if (tree === null) {
-    throw new Error(`Tree not found for project ${projectId}`);
+    throw new Error(`Tree not found for project ${project.id}`);
   }
 
   if (breakpoints === null) {
-    throw new Error(`Breakpoints not found for project ${projectId}`);
+    throw new Error(`Breakpoints not found for project ${project.id}`);
   }
 
   return {
@@ -45,5 +45,6 @@ export const loadCanvasData = async (
     breakpoints: breakpoints.values,
     buildId: build.id,
     page,
+    assets: project.assets ?? [],
   };
 };

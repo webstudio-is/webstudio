@@ -2,9 +2,9 @@ import hyphenate from "hyphenate-style-name";
 import { units } from "@webstudio-is/react-sdk";
 import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/react-sdk";
 
-const unitRegex = new RegExp(`${units.join("|")}`);
+const unitRegex = new RegExp(`${units.concat("number").join("|")}`);
 
-const isValid = (property: string, value: string): boolean => {
+export const isValid = (property: string, value: string): boolean => {
   // Only browsers with houdini api will provide validation for now
   // @todo add a polyfill maybe
   if (

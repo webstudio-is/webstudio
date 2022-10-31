@@ -1,80 +1,38 @@
-import { Form, useActionData, useSubmit } from "@remix-run/react";
-import ObjectID from "bson-objectid";
-import { ChangeEvent, useEffect, useRef } from "react";
+import { ChangeEvent, useRef } from "react";
 import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
-import { type AssetType, FONT_FORMATS } from "@webstudio-is/asset-uploader";
-import type { ActionData, PreviewAsset } from "./types";
+import { type AssetType } from "@webstudio-is/asset-uploader";
+import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
+import { useAssets } from "./use-assets";
 
-const readAssets = (fileList: FileList): Promise<PreviewAsset[]> => {
-  const assets: Array<Promise<PreviewAsset>> = Array.from(fileList).map(
-    (file) =>
-      new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", (event) => {
-          const dataUri = event?.target?.result;
-          if (dataUri === undefined) {
-            return reject(new Error("Could not read file"));
-          }
+const useUpload = (type: AssetType) => {
+  const { handleSubmit, Form } = useAssets(type);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
-          resolve({
-            format: file.type.split("/")[1],
-            path: String(dataUri),
-            name: file.name,
-            id: ObjectID().toString(),
-            status: "uploading",
-          });
-        });
-        reader.readAsDataURL(file);
-      })
-  );
+  const onChange = (event: ChangeEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const input = inputRef.current;
+    if (input === null) return;
+    handleSubmit(input);
+    form.reset();
+  };
 
-  return Promise.all(assets);
+  return { inputRef, onChange, Form };
 };
 
 const acceptMap = {
   image: "image/*",
-  font: FONT_FORMATS.map((format) => `.${format}`).join(", "),
+  font: FONT_MIME_TYPES,
 };
 
 type AssetUploadProps = {
-  onActionData: (data: ActionData) => void;
-  onSubmit: (assets: Array<PreviewAsset>) => void;
   type: AssetType;
 };
 
-export const AssetUpload = ({
-  onSubmit,
-  onActionData,
-  type,
-}: AssetUploadProps) => {
-  const submit = useSubmit();
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const actionData: ActionData | undefined = useActionData();
-
-  const onFormChange = (event: ChangeEvent<HTMLFormElement>) => {
-    const newFiles = inputRef?.current?.files;
-    if (newFiles) {
-      submit(event.currentTarget);
-      readAssets(newFiles).then(onSubmit);
-      event.currentTarget.reset();
-    }
-  };
-
-  useEffect(() => {
-    if (actionData !== undefined) {
-      onActionData(actionData);
-    }
-  }, [actionData, onActionData]);
-
+export const AssetUpload = ({ type }: AssetUploadProps) => {
+  const { inputRef, onChange, Form } = useUpload(type);
   return (
-    <Flex
-      as={Form}
-      css={{ flexGrow: 1 }}
-      method="post"
-      encType="multipart/form-data"
-      onChange={onFormChange}
-    >
+    <Flex as={Form} css={{ flexGrow: 1 }} onChange={onChange}>
       <input
         accept={acceptMap[type]}
         type="file"

@@ -49,7 +49,7 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   sectionStyle: {
-    [Property in keyof Style]-?: RenderPropertyProps;
+    [Property in keyof Style]: RenderPropertyProps;
   };
   inheritedStyle: InheritedStyle;
   category: Category;
@@ -143,14 +143,4 @@ const sections: {
   borders: BordersSection,
   effects: EffectsSection,
   other: OtherSection,
-};
-
-const controls: {
-  [key: string]: (props: ControlProps) => JSX.Element | null;
-} = {
-  Menu: MenuControl,
-  Text: TextControl,
-  Color: ColorControl,
-  Select: SelectControl,
-  FontFamily: FontFamilyControl,
 };

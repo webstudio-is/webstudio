@@ -77,7 +77,6 @@ export const SidebarLeft = ({ publish, config }: SidebarLeftProps) => {
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "hidden"
                 : "visible",
-            overflow: "auto",
           }}
         >
           <TabContent

@@ -7,7 +7,7 @@ export const Button = styled("button", {
   boxSizing: "border-box",
   border: "none",
   userSelect: "none",
-  transition: "all 200ms ease-out",
+  transition: "all 150ms ease-out",
   "&::before": {
     boxSizing: "border-box",
   },
@@ -19,7 +19,7 @@ export const Button = styled("button", {
   display: "inline-flex",
   flexShrink: 0,
   justifyContent: "center",
-  lineHeight: "1",
+  lineHeight: 1,
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
   // Custom
@@ -44,21 +44,18 @@ export const Button = styled("button", {
         height: "$5",
         px: "$3",
         fontSize: "$1",
-        lineHeight: "$sizes$5",
       },
       "2": {
         borderRadius: "$2",
-        height: "$6",
+        height: 28, // @todo waiting for the sizing scale
         px: "$3",
         fontSize: "$3",
-        lineHeight: "$sizes$6",
       },
       "3": {
         borderRadius: "$2",
         height: "$7",
         px: "$4",
         fontSize: "$4",
-        lineHeight: "$sizes$7",
       },
     },
     variant: {
@@ -85,7 +82,7 @@ export const Button = styled("button", {
       },
       blue: {
         backgroundColor: "$blue10",
-        color: "$loContrast",
+        color: "white",
         "@hover": {
           "&:hover": {
             backgroundColor: "$loContrast",
@@ -194,12 +191,12 @@ export const Button = styled("button", {
         color: "$slate11",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slate5",
+            backgroundColor: "$slate6",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$slate5",
+          backgroundColor: "$slate6",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
@@ -212,12 +209,12 @@ export const Button = styled("button", {
         pointerEvents: "none",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slate5",
+            backgroundColor: "$slate6",
             boxShadow: "inset 0 0 0 1px $colors$slate8",
           },
         },
         "&:active": {
-          backgroundColor: "$slate5",
+          backgroundColor: "$slate6",
         },
         "&:focus": {
           boxShadow: "inset 0 0 0 1px $colors$slate8",
@@ -272,7 +269,8 @@ export const Button = styled("button", {
           backgroundColor: "$blueA4",
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$blueA8, 0 0 0 1px $colors$blueA8",
+          boxShadow:
+            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
         },
         '&[data-state="open"]': {
           backgroundColor: "$blueA4",

@@ -10,8 +10,9 @@ import React, {
 import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import {
-  DownshiftState,
-  UseComboboxStateChangeOptions,
+  type DownshiftState,
+  type UseComboboxStateChangeOptions,
+  type UseComboboxProps as UseDownshiftComboboxProps,
   useCombobox as useDownshiftCombobox,
 } from "downshift";
 import { matchSorter } from "match-sorter";
@@ -24,12 +25,13 @@ import { Box } from "./box";
 import { Grid } from "./grid";
 
 const Listbox = styled("ul", panelStyles, {
-  padding: 0,
+  py: "$1",
+  px: 0,
   margin: 0,
   overflow: "auto",
   // @todo need some non-hardcoded value
   maxHeight: 400,
-  minWidth: 230,
+  minWidth: 214,
   variants: {
     state: {
       open: {},
@@ -37,7 +39,7 @@ const Listbox = styled("ul", panelStyles, {
         display: "none",
       },
     },
-    isEmpty: {
+    empty: {
       true: {
         display: "none",
       },
@@ -46,7 +48,7 @@ const Listbox = styled("ul", panelStyles, {
 });
 
 const ListboxItem = styled("li", itemCss, {
-  padding: 0,
+  padding: "0 $2",
   margin: 0,
 });
 
@@ -128,7 +130,7 @@ const useFilter = <Item,>({
   };
 };
 
-type UseComboboxProps<Item> = {
+type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
@@ -151,6 +153,7 @@ export const useCombobox = <Item,>({
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
   match,
+  ...rest
 }: UseComboboxProps<Item>) => {
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
@@ -159,7 +162,9 @@ export const useCombobox = <Item,>({
   });
 
   const downshiftProps = useDownshiftCombobox({
+    ...rest,
     items: filteredItems,
+    defaultHighlightedIndex: -1,
     selectedItem: value, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
@@ -203,7 +208,7 @@ export const useCombobox = <Item,>({
       return {
         ...getMenuProps(options),
         state: isOpen ? "open" : "closed",
-        isEmpty: filteredItems.length === 0,
+        empty: filteredItems.length === 0,
       };
     },
     [getMenuProps, isOpen, filteredItems.length]
@@ -214,6 +219,7 @@ export const useCombobox = <Item,>({
     items: filteredItems,
     getItemProps: enhancedGetItemProps,
     getMenuProps: enhancedGetMenuProps,
+    resetFilter,
   };
 };
 

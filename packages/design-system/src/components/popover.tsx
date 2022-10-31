@@ -87,7 +87,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
           </IconButton>
         </PopoverClose>
       </Flex>
-      <Separator css={{ height: 2 }} />
+      <Separator />
     </>
   );
 };

@@ -47,7 +47,6 @@ export const NumericInput = Object.assign(Input.bind({}), {
 });
 
 export default {
-  title: "numericScrubControl",
   component: Input,
   argTypes: {
     value: {

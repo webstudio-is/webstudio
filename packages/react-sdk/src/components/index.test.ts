@@ -1,5 +1,5 @@
 import * as components from "./index";
-import { WsComponentMetaSchema } from "./component-type";
+import { WsComponentMeta } from "./component-type";
 
 test.each(Object.entries(components))(
   "validating meta definition of %s",
@@ -7,6 +7,6 @@ test.each(Object.entries(components))(
     if (name === "default") {
       return;
     }
-    WsComponentMetaSchema.parse(component);
+    WsComponentMeta.parse(component);
   }
 );

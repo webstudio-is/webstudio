@@ -1,5 +1,5 @@
 import slugify from "slugify";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
 import {
   User,
   prisma,
@@ -9,6 +9,8 @@ import {
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/index.server";
 import * as db from "./index";
+
+const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
 export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
@@ -43,7 +45,7 @@ export const loadById = async (projectId?: Project["id"]) => {
 
 export const loadByDomain = async (domain: string): Promise<Project | null> => {
   const project = await prisma.project.findUnique({
-    where: { domain },
+    where: { domain: domain.toLowerCase() },
     include: {
       assets: {
         orderBy: {
@@ -122,14 +124,17 @@ export const clone = async (clonableDomain: string, userId: string) => {
     throw new Error("Expected project to be published first");
   }
 
-  const project = await create({
-    userId: userId,
-    title: clonableProject.title,
+  const project = await prisma.project.create({
+    data: {
+      userId,
+      title: clonableProject.title,
+      domain: generateDomain(clonableProject.title),
+    },
   });
 
   await db.build.create(project.id, "dev", prodBuild);
 
-  return project;
+  return parseProject(project);
 };
 
 export const update = async ({

@@ -2,10 +2,10 @@ import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
 import { type Breakpoint } from "@webstudio-is/react-sdk";
 import { v4 as uuid } from "uuid";
 import * as db from ".";
-import { Build, Page, Pages, PagesSchema } from "./types";
+import { Build, Page, Pages } from "./types";
 
 export const parseBuild = (build: DbBuild): Build => {
-  const pages = PagesSchema.parse(JSON.parse(build.pages));
+  const pages = Pages.parse(JSON.parse(build.pages));
   return { ...build, pages };
 };
 
@@ -61,11 +61,43 @@ export async function loadByProjectId(
   return parseBuild(build);
 }
 
+export const addPage = async (
+  buildId: Build["id"],
+  data: { name: string; path: string }
+) => {
+  const build = await loadById(buildId);
+
+  const breakpoints = await db.breakpoints.load(buildId);
+  const tree = await db.tree.create(
+    db.tree.createRootInstance(breakpoints.values)
+  );
+
+  const nextPages = Pages.parse({
+    homePage: build.pages.homePage,
+    pages: [
+      ...build.pages.pages,
+      {
+        id: uuid(),
+        name: data.name,
+        path: data.path,
+        title: data.name,
+        meta: {},
+        treeId: tree.id,
+      },
+    ],
+  });
+
+  const newBuild = await prisma.build.update({
+    where: { id: buildId },
+    data: { pages: JSON.stringify(nextPages) },
+  });
+
+  return parseBuild(newBuild);
+};
+
 const createPages = async (breakpoints: Array<Breakpoint>) => {
-  // const breakpoints = db.breakpoints.getBreakpointsWithId();
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
-  // await db.breakpoints.create(tree.id, breakpoints);
-  return PagesSchema.parse({
+  return Pages.parse({
     homePage: {
       id: uuid(),
       name: "Home",
@@ -92,7 +124,7 @@ const clonePages = async (source: Pages) => {
   for (const page of source.pages) {
     clones.push(await clonePage(page));
   }
-  return PagesSchema.parse({
+  return Pages.parse({
     homePage: await clonePage(source.homePage),
     pages: clones,
   });

@@ -3,24 +3,25 @@ import { deleteFromDb } from "./db";
 import { Asset } from "./types";
 import { deleteFromFs } from "./targets/fs/delete";
 import { deleteFromS3 } from "./targets/s3/delete";
+import { formatAsset } from "./utils/format-asset";
 
-export const deleteAsset = async ({
-  id,
-  name,
-}: {
-  id: string;
-  name: string;
-}): Promise<Asset> => {
-  const currentAsset = await prisma.asset.findUnique({
-    where: { id },
+export const deleteAssets = async (
+  ids: Array<string>
+): Promise<Array<Asset>> => {
+  const assets = await prisma.asset.findMany({
+    where: { id: { in: ids } },
   });
-  if (!currentAsset) throw new Error("Asset does not exist");
+  if (assets.length === 0) throw new Error("Assets not found");
 
-  if (currentAsset.location === "REMOTE") {
-    await deleteFromS3(name);
-  } else {
-    await deleteFromFs(name);
+  await deleteFromDb(ids);
+
+  for (const asset of assets) {
+    if (asset.location === "REMOTE") {
+      await deleteFromS3(asset.name);
+    } else {
+      await deleteFromFs(asset.name);
+    }
   }
 
-  return await deleteFromDb(id);
+  return assets.map(formatAsset);
 };

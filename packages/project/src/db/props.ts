@@ -1,7 +1,7 @@
 import {
   type Tree,
   type AllUserProps,
-  UserPropsSchema,
+  UserProps,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
@@ -13,7 +13,7 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
 
   return instancePropsEntries.map((instanceProps) => {
     const props = JSON.parse(instanceProps.props);
-    UserPropsSchema.parse(props);
+    UserProps.parse(props);
     return {
       ...instanceProps,
       props,
@@ -66,7 +66,7 @@ export const patch = async (
 
   await Promise.all(
     Object.values(nextProps).map(({ id, instanceId, treeId, props }) => {
-      UserPropsSchema.parse(props);
+      UserProps.parse(props);
       const propsString = JSON.stringify(props);
       return prisma.instanceProps.upsert({
         where: { id: id },

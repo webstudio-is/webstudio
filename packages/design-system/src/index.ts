@@ -10,7 +10,8 @@ export { Label } from "./components/label";
 export * as ToggleGroup from "./components/toggle-group";
 export * from "./components/progress-radial";
 export * from "./components/select";
-export { TextField } from "./components/text-field";
+export * from "./components/text-field";
+export { SearchField } from "./components/search-field";
 export { Flex } from "./components/flex";
 export { Image } from "./components/image";
 export { Grid } from "./components/grid";
@@ -24,7 +25,7 @@ export {
 export { Card } from "./components/card";
 export { SimpleToggle } from "./components/simple-toggle";
 export { ScrollArea } from "./components/scrollbar";
-export { Tooltip } from "./components/tooltip";
+export { Tooltip, InputErrorsTooltip } from "./components/tooltip";
 export { Button } from "./components/button";
 export { IconButton } from "./components/icon-button";
 export { Box } from "./components/box";
