@@ -39,7 +39,7 @@ type NumericScrubState = {
   offset: number;
   velocity: number;
   direction: string;
-  timeout: unknown;
+  timeout?: ReturnType<typeof window.setTimeout>;
 };
 
 export const numericScrubControl = (
@@ -60,7 +60,7 @@ export const numericScrubControl = (
     offset: 0,
     velocity: direction === "horizontal" ? 1 : -1,
     direction: direction,
-    timeout: 0,
+    timeout: undefined,
   };
   const handleEvent = (event: PointerEvent) => {
     const { type, clientX, clientY, movementY, movementX } = event;
@@ -71,7 +71,7 @@ export const numericScrubControl = (
         const shouldComponentUpdate = Boolean(state.cursor);
         state.offset = 0;
         targetNode.removeEventListener("pointermove", handleEvent);
-        clearTimeout(state.timeout as number);
+        clearTimeout(state.timeout);
         exitPointerLock(state, event, targetNode);
         if (shouldComponentUpdate)
           onValueChange?.({
