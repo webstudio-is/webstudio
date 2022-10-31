@@ -69,7 +69,7 @@ const filterIdsByFamily = (
 const findNextIndex = (
   currentIndex: number,
   total: number,
-  indexOrDirection: number | "next" | "previous"
+  indexOrDirection: "next" | "previous"
 ) => {
   const nextIndex =
     indexOrDirection === "next"
@@ -114,6 +114,10 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   };
 
   const handleSelectItem = (indexOrDirection: number | "next" | "previous") => {
+    if (typeof indexOrDirection === "number") {
+      setSelectedItemIndex(indexOrDirection);
+      return;
+    }
     const nextIndex = findNextIndex(
       selectedItemIndex,
       filteredItems.length,
@@ -197,7 +201,14 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           px: "$3",
         }}
       >
-        <List onKeyDown={handleKeyDown}>
+        <List
+          onKeyDown={handleKeyDown}
+          onBlur={(event) => {
+            if (event.currentTarget.contains(event.relatedTarget) === false) {
+              handleSelectItem(-1);
+            }
+          }}
+        >
           {uploadedItems.length !== 0 && (
             <ListItem state="disabled">{"Uploaded"}</ListItem>
           )}
