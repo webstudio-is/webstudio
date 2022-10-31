@@ -50,54 +50,75 @@ const NotFound = () => {
   );
 };
 
+const filterIdsByFamily = (
+  family: string,
+  assets: Array<Asset | PreviewAsset>
+) => {
+  // One family may have multiple assets for different formats, so we need to find them all.
+  return assets
+    .filter(
+      (asset) =>
+        // @todo need to teach TS the right type from useAssets
+        "meta" in asset &&
+        "family" in asset.meta &&
+        asset.meta.family === family
+    )
+    .map((asset) => asset.id);
+};
+
+const findNextIndex = (
+  currentIndex: number,
+  total: number,
+  indexOrDirection: number | "next" | "previous"
+) => {
+  const nextIndex =
+    indexOrDirection === "next"
+      ? currentIndex + 1
+      : indexOrDirection === "previous"
+      ? currentIndex - 1
+      : indexOrDirection;
+
+  if (nextIndex < 0) {
+    return total - 1;
+  }
+  if (nextIndex >= total) {
+    return 0;
+  }
+  return nextIndex;
+};
+
+const groupItemsByType = (items: Array<Item>) => {
+  const uploadedItems = items.filter((item) => item.type === "uploaded");
+  const systemItems = items.filter((item) => item.type === "system");
+  return { uploadedItems, systemItems };
+};
+
 const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   const { assets, handleDelete } = useAssets("font");
   const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
-  const handleDeleteByLabel = (family: string) => {
-    // One family may have multiple assets for different formats, so we need to delete them all.
-    const ids = assets
-      .filter(
-        (asset) =>
-          // @todo need to teach ts the right type from useAssets
-          "meta" in asset &&
-          "family" in asset.meta &&
-          asset.meta.family === family
-      )
-      .map((asset) => asset.id);
-    handleDelete(ids);
-  };
-
   const fontItems = useMemo(() => toItems(assets), [assets]);
   const [filteredItems, setFilteredItems] = useState(fontItems);
 
-  const { uploadedItems, systemItems } = useMemo(() => {
-    const uploadedItems = filteredItems.filter(
-      (item) => item.type === "uploaded"
-    );
-    const systemItems = filteredItems.filter((item) => item.type === "system");
-    return { uploadedItems, systemItems };
-  }, [filteredItems]);
+  const { uploadedItems, systemItems } = useMemo(
+    () => groupItemsByType(filteredItems),
+    [filteredItems]
+  );
+
+  const handleDeleteByLabel = (family: string) => {
+    const ids = filterIdsByFamily(family, assets);
+    handleDelete(ids);
+  };
 
   const handleCancelSearch = () => {
     setFilteredItems(fontItems);
   };
 
   const handleSelectItem = (indexOrDirection: number | "next" | "previous") => {
-    const nextIndex =
-      indexOrDirection === "next"
-        ? selectedItemIndex + 1
-        : indexOrDirection === "previous"
-        ? selectedItemIndex - 1
-        : indexOrDirection;
-
-    if (nextIndex < 0) {
-      setSelectedItemIndex(filteredItems.length - 1);
-      return;
-    }
-    if (nextIndex >= filteredItems.length) {
-      setSelectedItemIndex(0);
-      return;
-    }
+    const nextIndex = findNextIndex(
+      selectedItemIndex,
+      filteredItems.length,
+      indexOrDirection
+    );
     setSelectedItemIndex(nextIndex);
   };
 
