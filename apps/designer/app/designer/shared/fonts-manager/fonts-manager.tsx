@@ -13,6 +13,7 @@ import {
   type ChangeEventHandler,
   useMemo,
   useState,
+  useRef,
 } from "react";
 import { matchSorter } from "match-sorter";
 import { ItemMenu } from "./item-menu";
@@ -107,6 +108,7 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   const handleDeleteByLabel = (family: string) => {
     const ids = filterIdsByFamily(family, assets);
     handleDelete(ids);
+    setFilteredItems(filteredItems.filter((item) => item.label !== family));
   };
 
   const handleCancelSearch = () => {
@@ -127,19 +129,20 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
-    if (event.code === "ArrowUp") {
-      handleSelectItem("previous");
-      return;
-    }
-    if (event.code === "ArrowDown") {
-      handleSelectItem("next");
-      return;
-    }
-
-    if (event.code === "Enter") {
-      const item = filteredItems[selectedItemIndex];
-      if (item !== undefined) onChange(item.label);
-      return;
+    switch (event.code) {
+      case "ArrowUp": {
+        handleSelectItem("previous");
+        break;
+      }
+      case "ArrowDown": {
+        handleSelectItem("next");
+        break;
+      }
+      case "Enter": {
+        const item = filteredItems[selectedItemIndex];
+        if (item !== undefined) onChange(item.label);
+        break;
+      }
     }
   };
 
@@ -180,6 +183,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     handleKeyDown,
     selectedItemIndex,
   } = useLogic({ onChange });
+  const isMenuOpen = useRef(false);
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
@@ -204,7 +208,10 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         <List
           onKeyDown={handleKeyDown}
           onBlur={(event) => {
-            if (event.currentTarget.contains(event.relatedTarget) === false) {
+            const isFocusWithin = event.currentTarget.contains(
+              event.relatedTarget
+            );
+            if (isFocusWithin === false && isMenuOpen.current === false) {
               handleSelectItem(-1);
             }
           }}
@@ -222,7 +229,8 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                 suffix={
                   selectedItemIndex === index ? (
                     <ItemMenu
-                      onOpenChange={() => {
+                      onOpenChange={(open) => {
+                        isMenuOpen.current = open;
                         handleSelectItem(index);
                       }}
                       onDelete={() => {

@@ -42,7 +42,11 @@ export const ItemMenu = ({
         <MenuButton
           aria-label="Font menu"
           onFocus={onFocusTrigger}
-          tabIndex={0}
+          tabIndex={1}
+          onClick={(event) => {
+            // Prevent setting the current fon to the item.
+            event.stopPropagation();
+          }}
         >
           <DotsHorizontalIcon />
         </MenuButton>
