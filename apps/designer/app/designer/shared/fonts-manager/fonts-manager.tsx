@@ -14,6 +14,7 @@ import {
   useMemo,
   useState,
   useRef,
+  useEffect,
 } from "react";
 import { matchSorter } from "match-sorter";
 import { ItemMenu } from "./item-menu";
@@ -94,11 +95,23 @@ const groupItemsByType = (items: Array<Item>) => {
   return { uploadedItems, systemItems };
 };
 
+const filter = (search: string, items: Array<Item>) => {
+  return matchSorter(items, search, {
+    keys: [(item) => item.label],
+  });
+};
+
 const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   const { assets, handleDelete } = useAssets("font");
   const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assets), [assets]);
   const [filteredItems, setFilteredItems] = useState(fontItems);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const items = filter(search, fontItems);
+    setFilteredItems(items);
+  }, [fontItems]);
 
   const { uploadedItems, systemItems } = useMemo(
     () => groupItemsByType(filteredItems),
@@ -147,13 +160,14 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   };
 
   const handleSearch: ChangeEventHandler<HTMLInputElement> = (event) => {
-    const items = matchSorter(fontItems, event.currentTarget.value, {
-      keys: [(item) => item.label],
-    });
+    const { value } = event.currentTarget;
+    const items = filter(value, fontItems);
     setFilteredItems(items);
+    setSearch(value);
   };
 
   return {
+    search,
     filteredItems,
     uploadedItems,
     systemItems,
@@ -173,10 +187,11 @@ type FontsManagerProps = {
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const {
-    handleSearch,
+    search,
     filteredItems,
     uploadedItems,
     systemItems,
+    handleSearch,
     handleDelete,
     handleCancelSearch,
     handleSelectItem,
@@ -184,11 +199,13 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     selectedItemIndex,
   } = useLogic({ onChange });
   const isMenuOpen = useRef(false);
+
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <SearchField
+          value={search}
           autoFocus
           placeholder="Search"
           onCancel={handleCancelSearch}
