@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -10,7 +10,7 @@
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/css",
     "build:args": "tsx ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx'",
     "typecheck": "tsc --noEmit",
-    "build:lib": "rm -fr lib && tsc",
+    "build:lib": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "test": "jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint && yarn test",
@@ -58,8 +58,10 @@
   },
   "dependencies": {
     "@stitches/core": "^1.2.7",
+    "@webstudio-is/asset-uploader": "^*",
     "@webstudio-is/icons": "*",
     "@webstudio-is/jest-config": "*",
+    "@webstudio-is/fonts": "*",
     "immer": "^9.0.12",
     "mitt": "^3.0.0",
     "react-nano-state": "^0.4.0",

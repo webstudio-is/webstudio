@@ -3,7 +3,7 @@ import store from "immerhin";
 import type { Build } from "@webstudio-is/project";
 import {
   createElementsTree,
-  globalStyles,
+  useGlobalStyles,
   type OnChangeChildren,
   type Tree,
   useAllUserProps,
@@ -65,6 +65,7 @@ const useElementsTree = () => {
     if (rootInstance === undefined) return;
 
     return createElementsTree({
+      sandbox: true,
       instance: rootInstance,
       breakpoints,
       Component: WrapperComponentDev,
@@ -117,7 +118,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   }
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
-  globalStyles();
+  useGlobalStyles({ assets: data.assets });
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
   // e.g. toggling preview is still needed in both modes

@@ -101,10 +101,10 @@ export const useStyleData = ({
 
   const toStyleValue = (property: StyleProperty, value: string) => {
     if (currentStyle === undefined) return;
-    const currentValue = currentStyle[property];
-    const defaultUnit =
-      currentValue?.type === "unit" ? currentValue?.unit : undefined;
-    return parseCssValue(property, value, defaultUnit);
+    if (property === "fontFamily") {
+      return { type: "fontFamily" as const, value: [value] };
+    }
+    return parseCssValue(property, value, "number");
   };
 
   const setProperty: SetProperty = (property) => {

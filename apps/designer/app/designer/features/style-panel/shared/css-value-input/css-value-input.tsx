@@ -7,16 +7,13 @@ import {
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  IconButton,
-  Select,
   numericScrubControl,
+  TextFieldIconButton,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
   type KeywordValue,
   type StyleProperty,
-  type Unit,
-  type UnitValue,
   type UnsetValue,
   StyleValue,
 } from "@webstudio-is/react-sdk";
@@ -27,24 +24,14 @@ import {
   useRef,
   useState,
 } from "react";
+import { useUnitSelect } from "./unit-select";
 
-export const defaultUnits: Array<Unit> = [
-  "px",
-  "em",
-  "rem",
-  "ch",
-  "vw",
-  "vh",
-  "%",
-  "number",
-];
-const defaultKeywords: [] = [];
-const defaultValue: UnsetValue = { type: "unset", value: "" };
+const unsetValue: UnsetValue = { type: "unset", value: "" };
 
 const isNumericString = (input: string) =>
   String(input).trim().length !== 0 && isNaN(Number(input)) === false;
 
-// We incrment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by by 1 otherwise.
+// We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
   value: number,
   { altKey, shiftKey, key }: { altKey: boolean; shiftKey: boolean; key: string }
@@ -63,7 +50,7 @@ const useHandleOnChange = (
   const valueRef = useRef<StyleValue>(value);
 
   useEffect(() => {
-    if (input === String(valueRef.current.value)) {
+    if (input === "" || input === String(valueRef.current.value)) {
       return;
     }
 
@@ -89,107 +76,61 @@ const useHandleOnChange = (
   }, [value]);
 };
 
-type UseUnitSelectType = {
-  value?: UnitValue;
-  onChange: (value: StyleValue) => void;
-  units?: Array<Unit>;
-};
-
-const useUnitSelect = ({
-  onChange,
+const useScrub = ({
   value,
-  units = defaultUnits,
-  ...props
-}: UseUnitSelectType) => {
-  const [isOpen, setIsOpen] = useState(false);
-  if (value === undefined) return [isOpen, null];
-  const element = (
-    <Select
-      {...props}
-      value={value.unit}
-      options={units}
-      suffix={null}
-      ghost
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      onChange={(item) => {
-        // @todo Select should support generics
-        const unit = item as Unit;
-        onChange?.({
-          ...value,
-          unit,
-        });
-      }}
-      onCloseAutoFocus={(event) => {
-        // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
-        event.preventDefault();
-      }}
-    />
-  );
-
-  return [isOpen, element];
-};
-
-const useSelect = (
-  inputRef: React.MutableRefObject<HTMLInputElement | null>
-) => {
-  const shouldSelect = useRef(true);
-
-  const onPointerUp = () => {
-    if (shouldSelect.current) {
-      inputRef.current?.select();
-    }
-  };
-
-  const onPointerDown = () => {
-    const isFocused = document.activeElement === inputRef.current;
-    shouldSelect.current = isFocused === false;
-  };
-
-  return {
-    onPointerUp,
-    onPointerDown,
-  };
-};
-
-const useScrub = (options: {
+  onChange,
+  onChangeComplete,
+}: {
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-}) => {
+}): [React.MutableRefObject<HTMLInputElement | null>, boolean] => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const optionsRef = useRef(options);
+  const [inputActiveState, setInputActiveState] = useState(false);
+  const onChangeRef = useRef(onChange);
+  const onChangeCompleteRef = useRef(onChangeComplete);
+  const valueRef = useRef(value);
 
+  onChangeCompleteRef.current = onChangeComplete;
+  onChangeRef.current = onChange;
+  valueRef.current = value;
+
+  const type = valueRef.current.type;
+  const unit = type === "unit" ? valueRef.current.unit : undefined;
+
+  // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
+  // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
-
-  useEffect(() => {
-    const { value, onChange, onChangeComplete } = optionsRef.current;
-    if (value.type !== "unit" || inputRef.current === null) return;
-
+    if (type !== "unit" || unit === undefined || inputRef.current === null) {
+      return;
+    }
     const scrub = numericScrubControl(inputRef.current, {
-      initialValue: value.value,
+      initialValue: valueRef.current.value,
       onValueInput(event) {
-        onChange({
-          ...value,
+        onChangeRef.current({
+          type,
+          unit,
           value: event.value,
         });
+        setInputActiveState(true);
+        inputRef.current?.blur();
       },
       onValueChange(event) {
-        onChangeComplete({
-          ...value,
+        onChangeCompleteRef.current({
+          type,
+          unit,
           value: event.value,
         });
+        setInputActiveState(false);
+        inputRef.current?.focus();
+        inputRef.current?.select();
       },
     });
 
-    return () => {
-      scrub.disconnectedCallback();
-    };
-  }, [options.value.type]);
+    return scrub.disconnectedCallback;
+  }, [type, unit]);
 
-  return inputRef;
+  return [inputRef, inputActiveState];
 };
 
 const useHandleKeyDown =
@@ -214,7 +155,8 @@ const useHandleKeyDown =
     }
     if (
       value.type === "unit" &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown")
+      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
+      event.currentTarget.value
     ) {
       onChange({
         ...value,
@@ -266,8 +208,8 @@ type CssValueInputProps = {
 
 export const CssValueInput = ({
   property,
-  value = defaultValue,
-  keywords = defaultKeywords,
+  value = unsetValue,
+  keywords = [],
   onChange,
   onChangeComplete,
   onItemHighlight,
@@ -286,7 +228,7 @@ export const CssValueInput = ({
     value,
     itemToString: (item) => (item === null ? "" : String(item.value)),
     onItemSelect: (value) => {
-      onChangeComplete(value ?? defaultValue);
+      onChangeComplete(value ?? unsetValue);
     },
     onItemHighlight,
   });
@@ -296,17 +238,22 @@ export const CssValueInput = ({
   useHandleOnChange(value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    property,
     value: value.type === "unit" ? value : undefined,
     onChange: onChangeComplete,
+    onCloseAutoFocus(event) {
+      // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
+      event.preventDefault();
+      // Instead we want to focus the input
+      inputRef.current?.focus();
+    },
   });
 
-  const inputRef = useScrub({
+  const [inputRef, inputActiveState] = useScrub({
     value,
     onChange,
     onChangeComplete,
   });
-
-  const inputPointerProps = useSelect(inputRef);
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
     // When units select is open, onBlur is triggered,though we don't want a change event in this case.
@@ -325,9 +272,12 @@ export const CssValueInput = ({
 
   const suffix =
     value.type === "keyword" ? (
-      <IconButton {...getToggleButtonProps()}>
+      <TextFieldIconButton
+        {...getToggleButtonProps()}
+        state={isOpen ? "active" : undefined}
+      >
         <ChevronDownIcon />
-      </IconButton>
+      </TextFieldIconButton>
     ) : value.type === "unit" ? (
       unitSelectElement
     ) : null;
@@ -338,17 +288,30 @@ export const CssValueInput = ({
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
-            {...inputPointerProps}
+            onFocus={() => {
+              const isFocused = document.activeElement === inputRef.current;
+              if (isFocused) inputRef.current?.select();
+            }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             inputRef={inputRef}
             name={property}
-            state={value.type === "invalid" ? "invalid" : undefined}
+            state={
+              value.type === "invalid"
+                ? "invalid"
+                : inputActiveState
+                ? "active"
+                : undefined
+            }
             suffix={suffix}
             css={{ cursor: "default" }}
           />
         </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="start" sideOffset={5}>
+        <ComboboxPopperContent
+          align="start"
+          sideOffset={8}
+          collisionPadding={10}
+        >
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => (

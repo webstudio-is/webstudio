@@ -1,8 +1,5 @@
-import { z } from "zod";
 import type { InstanceProps, Instance } from "../db";
-import { UserPropSchema } from "./schema";
-
-export type UserProp = z.infer<typeof UserPropSchema>;
+import { UserProp } from "./schema";
 
 export type UserPropsUpdates = {
   treeId: InstanceProps["treeId"];

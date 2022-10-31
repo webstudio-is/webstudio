@@ -4,7 +4,7 @@ import { type Publish } from "~/shared/pubsub";
 import { useCallback } from "react";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { useRootInstance } from "~/shared/nano-states";
-import { Header } from "../header";
+import { Header, CloseButton } from "../header";
 import { InstanceTree } from "~/designer/shared/tree";
 
 declare module "~/shared/pubsub" {
@@ -81,7 +81,10 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
   if (rootInstance === undefined) return null;
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
-      <Header title="Navigator" onClose={onClose} isClosable={isClosable} />
+      <Header
+        title="Navigator"
+        suffix={isClosable && <CloseButton onClick={() => onClose?.()} />}
+      />
       <Flex css={{ flexGrow: 1, flexDirection: "column" }}>
         <InstanceTree
           root={rootInstance}

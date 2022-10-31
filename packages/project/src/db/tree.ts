@@ -1,9 +1,4 @@
-import {
-  type Instance,
-  type Breakpoint,
-  type Tree,
-  InstanceSchema,
-} from "@webstudio-is/react-sdk";
+import { type Breakpoint, type Tree, Instance } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { Tree as DbTree } from "@prisma/client";
@@ -20,7 +15,7 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
 };
 
 export const create = async (root: Instance): Promise<DbTree> => {
-  InstanceSchema.parse(root);
+  Instance.parse(root);
   const rootString = JSON.stringify(root);
   return await prisma.tree.create({
     data: { root: rootString },
@@ -35,7 +30,7 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
   if (tree === null) return null;
 
   const root = JSON.parse(tree.root);
-  InstanceSchema.parse(root);
+  Instance.parse(root);
   return {
     ...tree,
     root,
@@ -59,7 +54,7 @@ export const patchRoot = async (
     throw new Error(`Tree ${treeId} not found`);
   }
   const root = applyPatches(tree.root, patches);
-  InstanceSchema.parse(root);
+  Instance.parse(root);
   await prisma.tree.update({
     data: { root: JSON.stringify(root) },
     where: { id: treeId },

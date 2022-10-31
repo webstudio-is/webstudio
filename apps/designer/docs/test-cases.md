@@ -149,3 +149,13 @@
    - Check if gap inputs work.
    - Check if tooltips are present on all icons(including gap input icons).
    - Check that tooltips have a first time interaction delay.
+
+1. Creating a new page
+
+   - Open the pages panel
+   - Click on the "New Page" button in the panel header
+   - Enter a page name
+   - Enter a page path
+   - Click on the "Create" button
+   - Check than the page is created and selected as the current page
+   - Repeat the proccess and make sure it doens't allow you to create a page with an empty name or a path that's used for another page

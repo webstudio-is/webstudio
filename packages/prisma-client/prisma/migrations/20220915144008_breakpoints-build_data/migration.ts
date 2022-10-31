@@ -30,27 +30,58 @@ export default () => {
         pages: PagesSchema.parse(JSON.parse(build.pages)),
       }));
 
-      await Promise.all(
-        breakpoints.map((breakpoint) => {
-          const build = buildsParsed.find(
-            (build) => build.pages.homePage.treeId === breakpoint.treeId
+      // await Promise.all(
+      //   breakpoints.map((breakpoint) => {
+      //     const build = buildsParsed.find(
+      //       (build) => build.pages.homePage.treeId === breakpoint.treeId
+      //     );
+
+      //     if (build === undefined) {
+      //       // eslint-disable-next-line no-console
+      //       console.warn(
+      //         `Build not found for breakpoint ${breakpoint.treeId}. Deleting!`
+      //       );
+
+      //       return prisma.breakpoints.delete({
+      //         where: { treeId: breakpoint.treeId },
+      //       });
+      //     }
+
+      //     return prisma.breakpoints.update({
+      //       where: { treeId: breakpoint.treeId },
+      //       data: {
+      //         buildId: build.id,
+      //       },
+      //     });
+      //   })
+      // );
+
+      for (const breakpoint of breakpoints) {
+        const build = buildsParsed.find(
+          (build) => build.pages.homePage.treeId === breakpoint.treeId
+        );
+
+        if (build === undefined) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `Build not found for breakpoint ${breakpoint.treeId}. Deleting!`
           );
 
-          if (build === undefined) {
-            throw new Error(
-              `Build not found for breakpoint ${breakpoint.treeId}`
-            );
-          }
-
-          return prisma.breakpoints.update({
+          await prisma.breakpoints.delete({
+            where: { treeId: breakpoint.treeId },
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.log(`Updating breakpoint ${breakpoint.treeId}`);
+          await prisma.breakpoints.update({
             where: { treeId: breakpoint.treeId },
             data: {
               buildId: build.id,
             },
           });
-        })
-      );
+        }
+      }
     },
-    { timeout: 1000 * 60 }
+    { timeout: 1000 * 60 * 15 }
   );
 };

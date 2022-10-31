@@ -1,4 +1,4 @@
-import { CssValueInput } from "~/designer/features/style-panel/shared/css-value-input/css-value-input";
+import { CssValueInput } from "../../shared/css-value-input";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import { type StyleValue, toValue } from "@webstudio-is/react-sdk";
@@ -18,22 +18,22 @@ export const TextControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const [ephemeralValue, setEphemeralValue] = useState<StyleValue | null>(null);
+  const [currentValue, setCurrentValue] = useState<StyleValue>();
 
   return (
     <CssValueInput
       property={styleConfig.property}
-      value={ephemeralValue ?? value}
+      value={currentValue ?? value}
       keywords={styleConfig.items.map((item) => ({
         type: "keyword",
         value: item.name,
       }))}
       onChange={(styleValue) => {
-        setEphemeralValue(styleValue);
+        setCurrentValue(styleValue);
         setValue(toValue(styleValue), { isEphemeral: true });
       }}
       onItemHighlight={(styleValue) => {
-        const nextValue = styleValue ?? ephemeralValue ?? value;
+        const nextValue = styleValue ?? currentValue ?? value;
         if (nextValue) {
           setValue(toValue(nextValue), {
             isEphemeral: true,
@@ -41,7 +41,10 @@ export const TextControl = ({
         }
       }}
       onChangeComplete={(styleValue) => {
-        setEphemeralValue(null);
+        let prevValue = toValue(value);
+        let nextValue = toValue(styleValue);
+        if (prevValue === nextValue) return;
+        setCurrentValue(undefined);
         setValue(toValue(styleValue));
       }}
     />
