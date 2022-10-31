@@ -22,12 +22,14 @@ type ItemMenuProps = {
   onDelete: () => void;
   onOpenChange: (open: boolean) => void;
   onFocusTrigger?: FocusEventHandler;
+  onBlurTrigger?: FocusEventHandler;
 };
 
 export const ItemMenu = ({
   onDelete,
   onOpenChange,
   onFocusTrigger,
+  onBlurTrigger,
 }: ItemMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -42,7 +44,8 @@ export const ItemMenu = ({
         <MenuButton
           aria-label="Font menu"
           onFocus={onFocusTrigger}
-          tabIndex={1}
+          onBlur={onBlurTrigger}
+          tabIndex={0}
           onClick={(event) => {
             // Prevent setting the current font to the item.
             event.stopPropagation();

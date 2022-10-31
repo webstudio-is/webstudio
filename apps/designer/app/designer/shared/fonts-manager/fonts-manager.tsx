@@ -196,6 +196,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     selectedItemIndex,
   } = useLogic({ onChange });
   const isMenuOpen = useRef(false);
+  const isMenuTriggerFocused = useRef(false);
 
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
@@ -241,7 +242,9 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                 prefix={item.label === value ? <CheckIcon /> : undefined}
                 current={item.label === value}
                 suffix={
-                  selectedItemIndex === index ? (
+                  selectedItemIndex === index ||
+                  isMenuOpen.current ||
+                  isMenuTriggerFocused.current ? (
                     <ItemMenu
                       onOpenChange={(open) => {
                         isMenuOpen.current = open;
@@ -251,14 +254,19 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                         handleDelete(item.label);
                       }}
                       onFocusTrigger={() => {
+                        isMenuTriggerFocused.current = true;
                         handleSelectItem(-1);
+                      }}
+                      onBlurTrigger={() => {
+                        isMenuTriggerFocused.current = false;
                       }}
                     />
                   ) : undefined
                 }
                 onFocus={(event) => {
+                  const isItem = event.target === event.currentTarget;
                   // We need to ignore focus on a menu button inside
-                  if (event.target === event.currentTarget) {
+                  if (isItem) {
                     handleSelectItem(index);
                   }
                 }}
@@ -289,8 +297,12 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
                 }
                 prefix={item.label === value ? <CheckIcon /> : undefined}
                 current={item.label === value}
-                onFocus={() => {
-                  handleSelectItem(globalIndex);
+                onFocus={(event) => {
+                  const isItem = event.target === event.currentTarget;
+                  // We need to ignore focus on a menu button inside
+                  if (isItem) {
+                    handleSelectItem(globalIndex);
+                  }
                 }}
                 onMouseEnter={() => {
                   handleSelectItem(globalIndex);
