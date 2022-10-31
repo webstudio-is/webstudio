@@ -111,7 +111,7 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   useEffect(() => {
     const items = filter(search, fontItems);
     setFilteredItems(items);
-  }, [fontItems]);
+  }, [fontItems, search]);
 
   const { uploadedItems, systemItems } = useMemo(
     () => groupItemsByType(filteredItems),
@@ -160,10 +160,7 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
   };
 
   const handleSearch: ChangeEventHandler<HTMLInputElement> = (event) => {
-    const { value } = event.currentTarget;
-    const items = filter(value, fontItems);
-    setFilteredItems(items);
-    setSearch(value);
+    setSearch(event.currentTarget.value);
   };
 
   return {
