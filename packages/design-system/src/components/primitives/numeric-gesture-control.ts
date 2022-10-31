@@ -68,7 +68,7 @@ export const numericScrubControl = (
     const movement = direction === "horizontal" ? movementX : -movementY;
     switch (type) {
       case "pointerup": {
-        let shouldComponentUpdate = Boolean(state.cursor);
+        const shouldComponentUpdate = Boolean(state.cursor);
         state.offset = 0;
         targetNode.removeEventListener("pointermove", handleEvent);
         clearTimeout(state.timeout as number);

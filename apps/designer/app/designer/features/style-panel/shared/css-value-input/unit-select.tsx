@@ -59,7 +59,7 @@ export const useUnitSelect = ({
           return isValid(property, toValue({ ...value, unit } as typeof value));
         })
         .map((unit) => unitRenderMap.get(unit) ?? unit),
-    [units]
+    [units, property, value]
   );
 
   const renderValue = value && unitRenderMap.get(value.unit);

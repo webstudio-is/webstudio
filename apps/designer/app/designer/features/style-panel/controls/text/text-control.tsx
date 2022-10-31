@@ -41,8 +41,8 @@ export const TextControl = ({
         }
       }}
       onChangeComplete={(styleValue) => {
-        let prevValue = toValue(value);
-        let nextValue = toValue(styleValue);
+        const prevValue = toValue(value);
+        const nextValue = toValue(styleValue);
         if (prevValue === nextValue) return;
         setCurrentValue(undefined);
         setValue(toValue(styleValue));
