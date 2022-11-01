@@ -22,6 +22,7 @@ import {
   type KeyboardEvent,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 
@@ -49,7 +50,7 @@ const useHandleOnChange = (
   const valueRef = useRef<StyleValue>(value);
 
   useEffect(() => {
-    if (input === String(valueRef.current.value)) {
+    if (input === "" || input === String(valueRef.current.value)) {
       return;
     }
 
@@ -83,8 +84,9 @@ const useScrub = ({
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-}) => {
+}): [React.MutableRefObject<HTMLInputElement | null>, boolean] => {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [isInputActive, setIsInputActive] = useState(false);
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
@@ -110,6 +112,8 @@ const useScrub = ({
           unit,
           value: event.value,
         });
+        setIsInputActive(true);
+        inputRef.current?.blur();
       },
       onValueChange(event) {
         onChangeCompleteRef.current({
@@ -117,13 +121,16 @@ const useScrub = ({
           unit,
           value: event.value,
         });
+        setIsInputActive(false);
+        inputRef.current?.focus();
+        inputRef.current?.select();
       },
     });
 
     return scrub.disconnectedCallback;
   }, [type, unit]);
 
-  return inputRef;
+  return [inputRef, isInputActive];
 };
 
 const useHandleKeyDown =
@@ -148,7 +155,8 @@ const useHandleKeyDown =
     }
     if (
       value.type === "unit" &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown")
+      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
+      event.currentTarget.value
     ) {
       onChange({
         ...value,
@@ -230,6 +238,7 @@ export const CssValueInput = ({
   useHandleOnChange(value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    property,
     value: value.type === "unit" ? value : undefined,
     onChange: onChangeComplete,
     onCloseAutoFocus(event) {
@@ -240,7 +249,7 @@ export const CssValueInput = ({
     },
   });
 
-  const inputRef = useScrub({
+  const [inputRef, isInputActive] = useScrub({
     value,
     onChange,
     onChangeComplete,
@@ -287,12 +296,22 @@ export const CssValueInput = ({
             onKeyDown={handleKeyDown}
             inputRef={inputRef}
             name={property}
-            state={value.type === "invalid" ? "invalid" : undefined}
+            state={
+              value.type === "invalid"
+                ? "invalid"
+                : isInputActive
+                ? "active"
+                : undefined
+            }
             suffix={suffix}
             css={{ cursor: "default" }}
           />
         </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="start" sideOffset={5}>
+        <ComboboxPopperContent
+          align="start"
+          sideOffset={8}
+          collisionPadding={10}
+        >
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => (
