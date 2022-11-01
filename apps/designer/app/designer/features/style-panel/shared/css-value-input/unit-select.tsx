@@ -54,9 +54,10 @@ export const useUnitSelect = ({
   const [isOpen, setIsOpen] = useState(false);
   const renderUnits = useMemo(
     () =>
+      value &&
       units
         .filter((unit) => {
-          return isValid(property, toValue({ ...value, unit } as typeof value));
+          return isValid(property, toValue({ ...value, unit }));
         })
         .map((unit) => unitRenderMap.get(unit) ?? unit),
     [units, property, value]
@@ -64,7 +65,11 @@ export const useUnitSelect = ({
 
   const renderValue = value && unitRenderMap.get(value.unit);
 
-  if (value == undefined || renderValue === undefined) {
+  if (
+    value === undefined ||
+    renderUnits == undefined ||
+    renderValue === undefined
+  ) {
     return [isOpen, null];
   }
 
