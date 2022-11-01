@@ -1,4 +1,3 @@
-import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   Flex,
   Separator,
@@ -8,43 +7,18 @@ import {
   useList,
   findNextListIndex,
 } from "@webstudio-is/design-system";
-import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
-import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import {
-  type KeyboardEventHandler,
-  type ChangeEventHandler,
-  useMemo,
-  useState,
-  useRef,
-  useEffect,
-} from "react";
-import { matchSorter } from "match-sorter";
-import { ItemMenu } from "./item-menu";
+import { AssetUpload, useAssets } from "~/designer/shared/assets";
+import { useMemo, useState } from "react";
+import { useMenu } from "./item-menu";
 import { CheckIcon } from "@webstudio-is/icons";
-
-type Item = {
-  label: string;
-  type: "uploaded" | "system";
-};
-
-const toItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
-  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
-    label,
-    type: "system",
-  }));
-  // We can have 2+ assets with the same family name, so we use a map to dedupe.
-  const uploaded = new Map();
-  for (const asset of assets) {
-    // @todo need to teach ts the right type from useAssets
-    if ("meta" in asset && "family" in asset.meta) {
-      uploaded.set(asset.meta.family, {
-        label: asset.meta.family,
-        type: "uploaded",
-      });
-    }
-  }
-  return [...uploaded.values(), ...system];
-};
+import {
+  type Item,
+  filterIdsByFamily,
+  filterItems,
+  groupItemsByType,
+  toItems,
+} from "./item-utils";
+import { useSearch } from "./use-search";
 
 const NotFound = () => {
   return (
@@ -54,35 +28,6 @@ const NotFound = () => {
   );
 };
 
-const filterIdsByFamily = (
-  family: string,
-  assets: Array<Asset | PreviewAsset>
-) => {
-  // One family may have multiple assets for different formats, so we need to find them all.
-  return assets
-    .filter(
-      (asset) =>
-        // @todo need to teach TS the right type from useAssets
-        "meta" in asset &&
-        "family" in asset.meta &&
-        asset.meta.family === family
-    )
-    .map((asset) => asset.id);
-};
-
-const groupItemsByType = (items: Array<Item>) => {
-  const uploadedItems = items.filter((item) => item.type === "uploaded");
-  const systemItems = items.filter((item) => item.type === "system");
-  const groupedItems = [...uploadedItems, ...systemItems];
-  return { uploadedItems, systemItems, groupedItems };
-};
-
-const filter = (search: string, items: Array<Item>) => {
-  return matchSorter(items, search, {
-    keys: [(item) => item.label],
-  });
-};
-
 const useLogic = ({
   onChange,
   value,
@@ -90,86 +35,75 @@ const useLogic = ({
   onChange: (value: string) => void;
   value: string;
 }) => {
-  const { assets, handleDelete } = useAssets("font");
+  const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [currentIndex, setCurrentIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assets), [assets]);
   const [filteredItems, setFilteredItems] = useState(fontItems);
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    const items = filter(search, fontItems);
-    setFilteredItems(items);
-  }, [fontItems, search]);
 
   const { uploadedItems, systemItems, groupedItems } = useMemo(
     () => groupItemsByType(filteredItems),
     [filteredItems]
   );
 
-  useEffect(() => {
-    setCurrentIndex(groupedItems.findIndex((item) => item.label === value));
-  }, []);
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    groupedItems.findIndex((item) => item.label === value)
+  );
 
-  useEffect(() => {
-    const item = groupedItems[currentIndex];
-    if (item !== undefined) onChange(item.label);
-  }, [currentIndex]);
+  const handleChangeCurrent = (nextCurrentIndex: number) => {
+    const item = groupedItems[nextCurrentIndex];
+    if (item !== undefined) {
+      setCurrentIndex(nextCurrentIndex);
+      onChange(item.label);
+    }
+  };
 
   const { getItemProps, getListProps } = useList({
     items: groupedItems,
     selectedIndex,
     currentIndex,
     onSelect: setSelectedIndex,
-    onChangeCurrent: setCurrentIndex,
+    onChangeCurrent: handleChangeCurrent,
   });
 
-  const handleDeleteByLabel = (family: string) => {
+  const handleDelete = (index: number) => {
+    const family = groupedItems[index].label;
     const ids = filterIdsByFamily(family, assets);
-    handleDelete(ids);
+    handleDeleteAssets(ids);
     setFilteredItems(filteredItems.filter((item) => item.label !== family));
   };
 
-  const handleCancelSearch = () => {
-    setFilteredItems(fontItems);
-  };
-
-  const handleKeyDown: KeyboardEventHandler = (event) => {
-    switch (event.code) {
-      case "ArrowUp":
-      case "ArrowDown": {
-        const nextIndex = findNextListIndex(
-          selectedIndex,
-          groupedItems.length,
-          event.code === "ArrowUp" ? "previous" : "next"
-        );
-        setSelectedIndex(nextIndex);
-        break;
+  const getSearchProps = useSearch({
+    onCancel() {
+      setFilteredItems(fontItems);
+    },
+    onSearch(search) {
+      const items = filterItems(search, fontItems);
+      setFilteredItems(items);
+    },
+    onSelect(direction) {
+      if (direction === "current") {
+        handleChangeCurrent(selectedIndex);
+        return;
       }
-      case "Enter": {
-        setCurrentIndex(selectedIndex);
-        break;
-      }
-    }
-  };
-
-  const handleSearch: ChangeEventHandler<HTMLInputElement> = (event) => {
-    setSearch(event.currentTarget.value);
-  };
+      const nextIndex = findNextListIndex(
+        selectedIndex,
+        groupedItems.length,
+        direction
+      );
+      setSelectedIndex(nextIndex);
+    },
+  });
 
   return {
-    search,
     groupedItems,
     uploadedItems,
     systemItems,
     selectedIndex,
-    handleDelete: handleDeleteByLabel,
-    handleCancelSearch,
-    handleSelectItem: setSelectedIndex,
-    handleKeyDown,
-    handleSearch,
+    handleDelete,
+    handleSelect: setSelectedIndex,
     getItemProps,
     getListProps,
+    getSearchProps,
   };
 };
 
@@ -180,36 +114,42 @@ type FontsManagerProps = {
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const {
-    search,
     groupedItems,
     uploadedItems,
     systemItems,
-    handleSearch,
     handleDelete,
-    handleCancelSearch,
-    handleSelectItem,
-    handleKeyDown,
+    handleSelect,
     selectedIndex,
     getListProps,
     getItemProps,
+    getSearchProps,
   } = useLogic({ onChange, value });
-  const openMenu = useRef(-1);
-  const focusedMenuTrigger = useRef(-1);
 
   const listProps = getListProps();
+  const { render: renderMenu, isOpen: isMenuOpen } = useMenu({
+    selectedIndex,
+    onSelect: handleSelect,
+    onDelete: handleDelete,
+  });
+
+  const renderItem = (item: Item, index: number) => {
+    const itemProps = getItemProps({ index });
+    return (
+      <ListItem
+        {...itemProps}
+        prefix={itemProps.current ? <CheckIcon /> : undefined}
+        suffix={item.type === "uploaded" ? renderMenu(index) : undefined}
+      >
+        {item.label}
+      </ListItem>
+    );
+  };
 
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
-        <SearchField
-          value={search}
-          autoFocus
-          placeholder="Search"
-          onCancel={handleCancelSearch}
-          onKeyDown={handleKeyDown}
-          onChange={handleSearch}
-        />
+        <SearchField {...getSearchProps()} autoFocus placeholder="Search" />
       </Flex>
       <Separator css={{ my: "$1" }} />
       {groupedItems.length === 0 && <NotFound />}
@@ -223,7 +163,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         <List
           {...listProps}
           onBlur={(event) => {
-            if (openMenu.current === -1) {
+            if (isMenuOpen === false) {
               listProps.onBlur(event);
             }
           }}
@@ -231,61 +171,16 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           {uploadedItems.length !== 0 && (
             <ListItem state="disabled">{"Uploaded"}</ListItem>
           )}
-          {uploadedItems.map((item, index) => {
-            return (
-              <ListItem
-                {...getItemProps({ index })}
-                key={index}
-                state={selectedIndex === index ? "selected" : undefined}
-                prefix={item.label === value ? <CheckIcon /> : undefined}
-                current={item.label === value}
-                suffix={
-                  selectedIndex === index ||
-                  openMenu.current === index ||
-                  focusedMenuTrigger.current === index ? (
-                    <ItemMenu
-                      onOpenChange={(open) => {
-                        openMenu.current = open === true ? index : -1;
-                        handleSelectItem(index);
-                      }}
-                      onDelete={() => {
-                        handleDelete(item.label);
-                      }}
-                      onFocusTrigger={() => {
-                        focusedMenuTrigger.current = index;
-                        handleSelectItem(-1);
-                      }}
-                      onBlurTrigger={() => {
-                        focusedMenuTrigger.current = -1;
-                      }}
-                    />
-                  ) : undefined
-                }
-              >
-                {item.label}
-              </ListItem>
-            );
-          })}
+          {uploadedItems.map(renderItem)}
           {systemItems.length !== 0 && (
             <>
               {uploadedItems.length !== 0 && <Separator css={{ my: "$1" }} />}
               <ListItem state="disabled">{"System"}</ListItem>
             </>
           )}
-          {systemItems.map((item, index) => {
-            const globalIndex = uploadedItems.length + index;
-            return (
-              <ListItem
-                {...getItemProps({ index: globalIndex })}
-                key={globalIndex}
-                state={selectedIndex === globalIndex ? "selected" : undefined}
-                prefix={item.label === value ? <CheckIcon /> : undefined}
-                current={item.label === value}
-              >
-                {item.label}
-              </ListItem>
-            );
-          })}
+          {systemItems.map((item, index) =>
+            renderItem(item, index + uploadedItems.length)
+          )}
         </List>
       </Flex>
     </Flex>

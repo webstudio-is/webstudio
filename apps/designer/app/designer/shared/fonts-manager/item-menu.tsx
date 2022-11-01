@@ -9,7 +9,7 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { DotsHorizontalIcon } from "@webstudio-is/icons";
-import { type FocusEventHandler, useState } from "react";
+import { type FocusEventHandler, useState, useRef } from "react";
 
 const MenuButton = styled(IconButton, {
   color: "$hint",
@@ -25,7 +25,7 @@ type ItemMenuProps = {
   onBlurTrigger?: FocusEventHandler;
 };
 
-export const ItemMenu = ({
+const ItemMenu = ({
   onDelete,
   onOpenChange,
   onFocusTrigger,
@@ -71,4 +71,47 @@ export const ItemMenu = ({
       </DropdownMenuPortal>
     </DropdownMenu>
   );
+};
+
+type UseMenu = {
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+  onDelete: (index: number) => void;
+};
+
+export const useMenu = ({ selectedIndex, onSelect, onDelete }: UseMenu) => {
+  const openMenu = useRef(-1);
+  const focusedMenuTrigger = useRef(-1);
+
+  const render = (index: number) => {
+    const show =
+      selectedIndex === index ||
+      openMenu.current === index ||
+      focusedMenuTrigger.current === index;
+
+    openMenu.current = show ? index : -1;
+
+    if (show === false) return;
+
+    return (
+      <ItemMenu
+        onOpenChange={(open) => {
+          openMenu.current = open === true ? index : -1;
+          onSelect(index);
+        }}
+        onDelete={() => {
+          onDelete(index);
+        }}
+        onFocusTrigger={() => {
+          focusedMenuTrigger.current = index;
+          onSelect(-1);
+        }}
+        onBlurTrigger={() => {
+          focusedMenuTrigger.current = -1;
+        }}
+      />
+    );
+  };
+
+  return { render, isOpen: openMenu.current !== -1 };
 };

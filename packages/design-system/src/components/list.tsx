@@ -105,20 +105,23 @@ export const findNextListIndex = (
 type UseList<Item = unknown> = {
   items: Array<Item>;
   selectedIndex: number;
-  onSelect: (index: number) => void;
   currentIndex: number;
+  onSelect: (index: number) => void;
   onChangeCurrent: (index: number) => void;
 };
 
 export const useList = ({
   items,
   selectedIndex,
-  onSelect,
   currentIndex,
+  onSelect,
   onChangeCurrent,
 }: UseList) => {
   const getItemProps = ({ index }: { index: number }) => {
     return {
+      state: selectedIndex === index ? ("selected" as const) : undefined,
+      key: index,
+      current: currentIndex === index,
       onFocus(event: FocusEvent) {
         const isItem = event.target === event.currentTarget;
         // We need to ignore focus on anything inside
