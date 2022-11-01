@@ -2,7 +2,8 @@ import type { CSS } from "./stitches";
 import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 
-export const toValue = (value: StyleValue): string => {
+export const toValue = (value?: StyleValue): string => {
+  if (value === undefined) return "";
   if (value.type === "unit") {
     return value.value + (value.unit === "number" ? "" : value.unit);
   }

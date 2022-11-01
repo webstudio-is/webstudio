@@ -1,5 +1,10 @@
 import { useState, useMemo } from "react";
-import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
+import {
+  type Unit,
+  type UnitValue,
+  StyleValue,
+  toValue,
+} from "@webstudio-is/react-sdk";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   styled,
@@ -11,6 +16,7 @@ import {
   TextFieldIconButton,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import { isValid } from "../parse-css-value";
 
 const unitRenderMap: Map<Unit, string> = new Map([
   ["px", "PX"],
@@ -20,7 +26,7 @@ const unitRenderMap: Map<Unit, string> = new Map([
   ["ch", "CH"],
   ["vw", "VW"],
   ["vh", "VH"],
-  ["number", "-"],
+  ["number", "—"],
 ]);
 
 const renderUnitMap: Map<string, Unit> = new Map();
@@ -31,6 +37,7 @@ for (const [key, value] of unitRenderMap.entries()) {
 const defaultUnits = Array.from(unitRenderMap.keys());
 
 type UseUnitSelectType = {
+  property: string;
   value?: UnitValue;
   onChange: (value: StyleValue) => void;
   units?: Array<Unit>;
@@ -38,6 +45,7 @@ type UseUnitSelectType = {
 };
 
 export const useUnitSelect = ({
+  property,
   onChange,
   value,
   units = defaultUnits,
@@ -45,13 +53,23 @@ export const useUnitSelect = ({
 }: UseUnitSelectType) => {
   const [isOpen, setIsOpen] = useState(false);
   const renderUnits = useMemo(
-    () => units.map((unit) => unitRenderMap.get(unit) ?? unit),
-    [units]
+    () =>
+      value &&
+      units
+        .filter((unit) => {
+          return isValid(property, toValue({ ...value, unit }));
+        })
+        .map((unit) => unitRenderMap.get(unit) ?? unit),
+    [units, property, value]
   );
 
   const renderValue = value && unitRenderMap.get(value.unit);
 
-  if (value == undefined || renderValue === undefined) {
+  if (
+    value === undefined ||
+    renderUnits == undefined ||
+    renderValue === undefined
+  ) {
     return [isOpen, null];
   }
 
