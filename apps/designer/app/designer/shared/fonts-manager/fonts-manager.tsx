@@ -100,8 +100,10 @@ const useLogic = ({
   };
 
   const { cancel: cancelSearch, ...searchProps } = useSearch({
-    onCancel: resetFilteredItems,
     onSearch(search) {
+      if (search === "") {
+        return resetFilteredItems();
+      }
       const items = filterItems(search, groupedItems);
       setFilteredItems(items);
     },

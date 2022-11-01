@@ -1,12 +1,11 @@
 import { ChangeEventHandler, KeyboardEventHandler, useState } from "react";
 
 type UseSearch = {
-  onCancel: () => void;
   onSearch: (search: string) => void;
   onSelect: (direction: "next" | "previous" | "current") => void;
 };
 
-export const useSearch = ({ onCancel, onSearch, onSelect }: UseSearch) => {
+export const useSearch = ({ onSearch, onSelect }: UseSearch) => {
   const [search, setSearch] = useState("");
   const handleKeyDown: KeyboardEventHandler = ({ code }) => {
     const keyMap = {
@@ -28,9 +27,14 @@ export const useSearch = ({ onCancel, onSearch, onSelect }: UseSearch) => {
     setSearch("");
   };
 
+  const handleCancel = () => {
+    cancel();
+    onSearch("");
+  };
+
   return {
     value: search,
-    onCancel,
+    onCancel: handleCancel,
     onChange: handleChange,
     onKeyDown: handleKeyDown,
     cancel,
