@@ -9,7 +9,7 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { DotsHorizontalIcon } from "@webstudio-is/icons";
-import { type FocusEventHandler, useState, useRef } from "react";
+import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 
 const MenuButton = styled(IconButton, {
   color: "$hint",
@@ -32,11 +32,24 @@ const ItemMenu = ({
   onBlurTrigger,
 }: ItemMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   return (
     <DropdownMenu
       open={isOpen}
       onOpenChange={(open) => {
-        setIsOpen(open);
+        // Apparently onOpenChange can be called after component was unmounted and results in warning.
+        // Use case: deleting list item removes the item itself while menu is open.
+        if (isMounted.current) {
+          setIsOpen(open);
+        }
         onOpenChange(open);
       }}
     >
@@ -111,5 +124,8 @@ export const useMenu = ({ selectedIndex, onSelect, onDelete }: UseMenu) => {
     );
   };
 
-  return { render, isOpen: openMenu.current !== -1 };
+  return {
+    render,
+    isOpen: openMenu.current !== -1,
+  };
 };
