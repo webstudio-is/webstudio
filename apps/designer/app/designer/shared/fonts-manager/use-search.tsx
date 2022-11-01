@@ -24,12 +24,15 @@ export const useSearch = ({ onCancel, onSearch, onSelect }: UseSearch) => {
     onSearch(value);
   };
 
-  return () => {
-    return {
-      value: search,
-      onCancel,
-      onChange: handleChange,
-      onKeyDown: handleKeyDown,
-    };
+  const cancel = () => {
+    setSearch("");
+  };
+
+  return {
+    value: search,
+    onCancel,
+    onChange: handleChange,
+    onKeyDown: handleKeyDown,
+    cancel,
   };
 };

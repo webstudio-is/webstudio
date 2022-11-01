@@ -8,7 +8,7 @@ import {
   findNextListIndex,
 } from "@webstudio-is/design-system";
 import { AssetUpload, useAssets } from "~/designer/shared/assets";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMenu } from "./item-menu";
 import { CheckIcon } from "@webstudio-is/icons";
 import {
@@ -28,6 +28,29 @@ const NotFound = () => {
   );
 };
 
+const useFilteredItems = ({ onReset }: { onReset: () => void }) => {
+  const { assets } = useAssets("font");
+  const fontItems = useMemo(() => toItems(assets), [assets]);
+  const [filteredItems, setFilteredItems] = useState(fontItems);
+  const onResetRef = useRef(onReset);
+  onResetRef.current = onReset;
+
+  const resetFilteredItems = useCallback(() => {
+    setFilteredItems(fontItems);
+  }, [fontItems]);
+
+  useEffect(() => {
+    setFilteredItems(fontItems);
+    onResetRef.current();
+  }, [fontItems]);
+
+  return {
+    filteredItems,
+    resetFilteredItems,
+    setFilteredItems,
+  };
+};
+
 const useLogic = ({
   onChange,
   value,
@@ -37,14 +60,16 @@ const useLogic = ({
 }) => {
   const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const fontItems = useMemo(() => toItems(assets), [assets]);
-  const [filteredItems, setFilteredItems] = useState(fontItems);
-
+  const { filteredItems, resetFilteredItems, setFilteredItems } =
+    useFilteredItems({
+      onReset() {
+        cancelSearch();
+      },
+    });
   const { uploadedItems, systemItems, groupedItems } = useMemo(
     () => groupItemsByType(filteredItems),
     [filteredItems]
   );
-
   const [currentIndex, setCurrentIndex] = useState(() =>
     groupedItems.findIndex((item) => item.label === value)
   );
@@ -69,15 +94,15 @@ const useLogic = ({
     const family = groupedItems[index].label;
     const ids = filterIdsByFamily(family, assets);
     handleDeleteAssets(ids);
-    setFilteredItems(filteredItems.filter((item) => item.label !== family));
+    if (index === currentIndex) {
+      setCurrentIndex(-1);
+    }
   };
 
-  const getSearchProps = useSearch({
-    onCancel() {
-      setFilteredItems(fontItems);
-    },
+  const { cancel: cancelSearch, ...searchProps } = useSearch({
+    onCancel: resetFilteredItems,
     onSearch(search) {
-      const items = filterItems(search, fontItems);
+      const items = filterItems(search, groupedItems);
       setFilteredItems(items);
     },
     onSelect(direction) {
@@ -103,7 +128,7 @@ const useLogic = ({
     handleSelect: setSelectedIndex,
     getItemProps,
     getListProps,
-    getSearchProps,
+    searchProps,
   };
 };
 
@@ -122,7 +147,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     selectedIndex,
     getListProps,
     getItemProps,
-    getSearchProps,
+    searchProps,
   } = useLogic({ onChange, value });
 
   const listProps = getListProps();
@@ -149,7 +174,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
-        <SearchField {...getSearchProps()} autoFocus placeholder="Search" />
+        <SearchField {...searchProps} autoFocus placeholder="Search" />
       </Flex>
       <Separator css={{ my: "$1" }} />
       {groupedItems.length === 0 && <NotFound />}
