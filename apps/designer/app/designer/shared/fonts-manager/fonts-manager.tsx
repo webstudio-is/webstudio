@@ -5,6 +5,8 @@ import {
   SearchField,
   List,
   ListItem,
+  useList,
+  findNextListIndex,
 } from "@webstudio-is/design-system";
 import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
@@ -68,31 +70,11 @@ const filterIdsByFamily = (
     .map((asset) => asset.id);
 };
 
-const findNextIndex = (
-  currentIndex: number,
-  total: number,
-  indexOrDirection: "next" | "previous"
-) => {
-  const nextIndex =
-    indexOrDirection === "next"
-      ? currentIndex + 1
-      : indexOrDirection === "previous"
-      ? currentIndex - 1
-      : indexOrDirection;
-
-  if (nextIndex < 0) {
-    return total - 1;
-  }
-  if (nextIndex >= total) {
-    return 0;
-  }
-  return nextIndex;
-};
-
 const groupItemsByType = (items: Array<Item>) => {
   const uploadedItems = items.filter((item) => item.type === "uploaded");
   const systemItems = items.filter((item) => item.type === "system");
-  return { uploadedItems, systemItems };
+  const groupedItems = [...uploadedItems, ...systemItems];
+  return { uploadedItems, systemItems, groupedItems };
 };
 
 const filter = (search: string, items: Array<Item>) => {
@@ -101,9 +83,16 @@ const filter = (search: string, items: Array<Item>) => {
   });
 };
 
-const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
+const useLogic = ({
+  onChange,
+  value,
+}: {
+  onChange: (value: string) => void;
+  value: string;
+}) => {
   const { assets, handleDelete } = useAssets("font");
-  const [selectedItemIndex, setSelectedItemIndex] = useState(-1);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [currentIndex, setCurrentIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assets), [assets]);
   const [filteredItems, setFilteredItems] = useState(fontItems);
   const [search, setSearch] = useState("");
@@ -113,10 +102,27 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
     setFilteredItems(items);
   }, [fontItems, search]);
 
-  const { uploadedItems, systemItems } = useMemo(
+  const { uploadedItems, systemItems, groupedItems } = useMemo(
     () => groupItemsByType(filteredItems),
     [filteredItems]
   );
+
+  useEffect(() => {
+    setCurrentIndex(groupedItems.findIndex((item) => item.label === value));
+  }, []);
+
+  useEffect(() => {
+    const item = groupedItems[currentIndex];
+    if (item !== undefined) onChange(item.label);
+  }, [currentIndex]);
+
+  const { getItemProps, getListProps } = useList({
+    items: groupedItems,
+    selectedIndex,
+    currentIndex,
+    onSelect: setSelectedIndex,
+    onChangeCurrent: setCurrentIndex,
+  });
 
   const handleDeleteByLabel = (family: string) => {
     const ids = filterIdsByFamily(family, assets);
@@ -128,32 +134,20 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
     setFilteredItems(fontItems);
   };
 
-  const handleSelectItem = (indexOrDirection: number | "next" | "previous") => {
-    if (typeof indexOrDirection === "number") {
-      setSelectedItemIndex(indexOrDirection);
-      return;
-    }
-    const nextIndex = findNextIndex(
-      selectedItemIndex,
-      filteredItems.length,
-      indexOrDirection
-    );
-    setSelectedItemIndex(nextIndex);
-  };
-
   const handleKeyDown: KeyboardEventHandler = (event) => {
     switch (event.code) {
-      case "ArrowUp": {
-        handleSelectItem("previous");
-        break;
-      }
+      case "ArrowUp":
       case "ArrowDown": {
-        handleSelectItem("next");
+        const nextIndex = findNextListIndex(
+          selectedIndex,
+          groupedItems.length,
+          event.code === "ArrowUp" ? "previous" : "next"
+        );
+        setSelectedIndex(nextIndex);
         break;
       }
       case "Enter": {
-        const item = filteredItems[selectedItemIndex];
-        if (item !== undefined) onChange(item.label);
+        setCurrentIndex(selectedIndex);
         break;
       }
     }
@@ -165,15 +159,17 @@ const useLogic = ({ onChange }: { onChange: (value: string) => void }) => {
 
   return {
     search,
-    filteredItems,
+    groupedItems,
     uploadedItems,
     systemItems,
-    selectedItemIndex,
+    selectedIndex,
     handleDelete: handleDeleteByLabel,
     handleCancelSearch,
-    handleSelectItem,
+    handleSelectItem: setSelectedIndex,
     handleKeyDown,
     handleSearch,
+    getItemProps,
+    getListProps,
   };
 };
 
@@ -185,7 +181,7 @@ type FontsManagerProps = {
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   const {
     search,
-    filteredItems,
+    groupedItems,
     uploadedItems,
     systemItems,
     handleSearch,
@@ -193,10 +189,14 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
     handleCancelSearch,
     handleSelectItem,
     handleKeyDown,
-    selectedItemIndex,
-  } = useLogic({ onChange });
-  const isMenuOpen = useRef(false);
-  const isMenuTriggerFocused = useRef(false);
+    selectedIndex,
+    getListProps,
+    getItemProps,
+  } = useLogic({ onChange, value });
+  const openMenu = useRef(-1);
+  const focusedMenuTrigger = useRef(-1);
+
+  const listProps = getListProps();
 
   return (
     <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
@@ -212,7 +212,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         />
       </Flex>
       <Separator css={{ my: "$1" }} />
-      {filteredItems.length === 0 && <NotFound />}
+      {groupedItems.length === 0 && <NotFound />}
       <Flex
         css={{
           flexDirection: "column",
@@ -221,13 +221,10 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
         }}
       >
         <List
-          onKeyDown={handleKeyDown}
+          {...listProps}
           onBlur={(event) => {
-            const isFocusWithin = event.currentTarget.contains(
-              event.relatedTarget
-            );
-            if (isFocusWithin === false && isMenuOpen.current === false) {
-              handleSelectItem(-1);
+            if (openMenu.current === -1) {
+              listProps.onBlur(event);
             }
           }}
         >
@@ -237,45 +234,33 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           {uploadedItems.map((item, index) => {
             return (
               <ListItem
+                {...getItemProps({ index })}
                 key={index}
-                state={selectedItemIndex === index ? "selected" : undefined}
+                state={selectedIndex === index ? "selected" : undefined}
                 prefix={item.label === value ? <CheckIcon /> : undefined}
                 current={item.label === value}
                 suffix={
-                  selectedItemIndex === index ||
-                  isMenuOpen.current ||
-                  isMenuTriggerFocused.current ? (
+                  selectedIndex === index ||
+                  openMenu.current === index ||
+                  focusedMenuTrigger.current === index ? (
                     <ItemMenu
                       onOpenChange={(open) => {
-                        isMenuOpen.current = open;
+                        openMenu.current = open === true ? index : -1;
                         handleSelectItem(index);
                       }}
                       onDelete={() => {
                         handleDelete(item.label);
                       }}
                       onFocusTrigger={() => {
-                        isMenuTriggerFocused.current = true;
+                        focusedMenuTrigger.current = index;
                         handleSelectItem(-1);
                       }}
                       onBlurTrigger={() => {
-                        isMenuTriggerFocused.current = false;
+                        focusedMenuTrigger.current = -1;
                       }}
                     />
                   ) : undefined
                 }
-                onFocus={(event) => {
-                  const isItem = event.target === event.currentTarget;
-                  // We need to ignore focus on a menu button inside
-                  if (isItem) {
-                    handleSelectItem(index);
-                  }
-                }}
-                onMouseEnter={() => {
-                  handleSelectItem(index);
-                }}
-                onClick={() => {
-                  onChange(item.label);
-                }}
               >
                 {item.label}
               </ListItem>
@@ -291,25 +276,11 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
             const globalIndex = uploadedItems.length + index;
             return (
               <ListItem
+                {...getItemProps({ index: globalIndex })}
                 key={globalIndex}
-                state={
-                  selectedItemIndex === globalIndex ? "selected" : undefined
-                }
+                state={selectedIndex === globalIndex ? "selected" : undefined}
                 prefix={item.label === value ? <CheckIcon /> : undefined}
                 current={item.label === value}
-                onFocus={(event) => {
-                  const isItem = event.target === event.currentTarget;
-                  // We need to ignore focus on a menu button inside
-                  if (isItem) {
-                    handleSelectItem(globalIndex);
-                  }
-                }}
-                onMouseEnter={() => {
-                  handleSelectItem(globalIndex);
-                }}
-                onClick={() => {
-                  onChange(item.label);
-                }}
               >
                 {item.label}
               </ListItem>

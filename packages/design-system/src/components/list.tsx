@@ -1,4 +1,9 @@
-import { ComponentProps, forwardRef } from "react";
+import {
+  type ComponentProps,
+  type FocusEvent,
+  forwardRef,
+  type KeyboardEvent,
+} from "react";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 import { Text } from "./text";
@@ -75,3 +80,89 @@ export const ListItem = forwardRef<
   );
 });
 ListItem.displayName = "ListItem";
+
+export const findNextListIndex = (
+  currentIndex: number,
+  total: number,
+  indexOrDirection: "next" | "previous"
+) => {
+  const nextIndex =
+    indexOrDirection === "next"
+      ? currentIndex + 1
+      : indexOrDirection === "previous"
+      ? currentIndex - 1
+      : indexOrDirection;
+
+  if (nextIndex < 0) {
+    return total - 1;
+  }
+  if (nextIndex >= total) {
+    return 0;
+  }
+  return nextIndex;
+};
+
+type UseList<Item = unknown> = {
+  items: Array<Item>;
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+  currentIndex: number;
+  onChangeCurrent: (index: number) => void;
+};
+
+export const useList = ({
+  items,
+  selectedIndex,
+  onSelect,
+  currentIndex,
+  onChangeCurrent,
+}: UseList) => {
+  const getItemProps = ({ index }: { index: number }) => {
+    return {
+      onFocus(event: FocusEvent) {
+        const isItem = event.target === event.currentTarget;
+        // We need to ignore focus on anything inside
+        if (isItem) {
+          onSelect(index);
+        }
+      },
+      onMouseEnter() {
+        onSelect(index);
+      },
+      onClick() {
+        onChangeCurrent(index);
+      },
+    };
+  };
+
+  const getListProps = () => {
+    return {
+      onKeyDown(event: KeyboardEvent) {
+        switch (event.code) {
+          case "ArrowUp":
+          case "ArrowDown": {
+            const nextIndex = findNextListIndex(
+              selectedIndex,
+              items.length,
+              event.code === "ArrowUp" ? "previous" : "next"
+            );
+            onSelect(nextIndex);
+            break;
+          }
+          case "Enter":
+          case "Space": {
+            onChangeCurrent(selectedIndex);
+          }
+        }
+      },
+      onBlur(event: FocusEvent) {
+        const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
+        if (isFocusWithin === false) {
+          onSelect(-1);
+        }
+      },
+    };
+  };
+
+  return { getItemProps, getListProps };
+};
