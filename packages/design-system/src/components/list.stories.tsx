@@ -46,6 +46,7 @@ export const WithHook: ComponentStory<typeof List> = () => {
         return (
           <ListItem
             {...itemProps}
+            key={index}
             prefix={itemProps.current ? <CheckIcon /> : undefined}
           >
             {item}

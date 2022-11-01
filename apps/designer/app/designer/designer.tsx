@@ -11,7 +11,6 @@ import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
-  useAssets,
   useHoveredInstanceData,
   usePages,
   useProject,
@@ -41,8 +40,8 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-import { Asset } from "@webstudio-is/asset-uploader";
 import env from "~/shared/env";
+import { useSetAssets } from "./shared/assets";
 
 export const links = () => {
   return [
@@ -69,15 +68,6 @@ const useSubscribeHoveredInstanceData = () => {
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
   useSubscribe("syncStatus", setValue);
-};
-
-const useSetAssets = (assets?: Array<Asset>) => {
-  const [, setAssets] = useAssets();
-  useEffect(() => {
-    if (assets) {
-      setAssets(assets);
-    }
-  }, [assets, setAssets]);
 };
 
 const useSetProject = (project: Project) => {
@@ -275,11 +265,11 @@ export const Designer = ({
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
-  useSetAssets(project.assets);
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
+  useSetAssets({ assets: project.assets, publish });
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
