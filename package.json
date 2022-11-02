@@ -1,4 +1,5 @@
 {
+  "packageManager": "yarn@1.22.19",
   "name": "turbo",
   "version": "0.0.0",
   "private": true,
@@ -32,7 +33,7 @@
   },
   "engines": {
     "npm": ">=7.0.0",
-    "node": "16"
+    "node": ">=16.9"
   },
   "dependencies": {
     "golden-fleece": "^1.0.9"
