@@ -18,7 +18,6 @@ export {
   DotFilledIcon,
   TriangleRightIcon,
   TriangleDownIcon,
-  Cross1Icon,
   CommitIcon,
   InputIcon,
   ButtonIcon,
@@ -92,4 +91,5 @@ export * from "./chevron-down";
 export * from "./chevron-left";
 export * from "./chevron-right";
 export * from "./cross-circled-filled";
+export * from "./cross";
 export * from "./magnifying-glass";
