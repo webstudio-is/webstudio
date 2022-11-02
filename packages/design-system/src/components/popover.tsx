@@ -18,6 +18,7 @@ export const Popover = ({ children, ...props }: PopoverProps) => {
 };
 
 const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
+  backgroundColor: "white",
   minWidth: 200,
   minHeight: "$6",
   maxWidth: 265,
