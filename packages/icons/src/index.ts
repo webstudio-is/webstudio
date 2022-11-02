@@ -1,4 +1,35 @@
-export * from "@radix-ui/react-icons";
+export {
+  ImageIcon,
+  FontBoldIcon,
+  FontItalicIcon,
+  Link2Icon,
+  MobileIcon,
+  LaptopIcon,
+  DesktopIcon,
+  PlusIcon,
+  HamburgerMenuIcon,
+  DotsHorizontalIcon,
+  CheckIcon,
+  RocketIcon,
+  ExternalLinkIcon,
+  Share1Icon,
+  EyeOpenIcon,
+  ExclamationTriangleIcon,
+  DotFilledIcon,
+  TriangleRightIcon,
+  TriangleDownIcon,
+  Cross1Icon,
+  CommitIcon,
+  InputIcon,
+  ButtonIcon,
+  TextAlignLeftIcon,
+  HeadingIcon,
+  TextIcon,
+  SquareIcon,
+  InfoCircledIcon,
+  CrossCircledIcon,
+  CheckCircledIcon,
+} from "@radix-ui/react-icons"; // Legacy icons
 export * from "./list-nested";
 export * from "./brush";
 export * from "./form";
@@ -42,21 +73,23 @@ export * from "./gap-row";
 export * from "./gap-column";
 export * from "./lock-open";
 export * from "./lock-close";
-export { AspectRatioIcon } from "./aspect-ratio";
+export * from "./aspect-ratio";
 export * from "./cloud";
-export { TrashIcon } from "./trash";
-export { SizeIcon } from "./size";
-export { UploadIcon } from "./upload";
-export { GearIcon, gearIconCssVars } from "./gear";
+export * from "./trash";
+export * from "./size";
+export * from "./upload";
+export * from "./gear";
 export * from "./page";
-export { CopyIcon } from "./copy";
+export * from "./copy";
 export * from "./new-page";
 export * from "./new-folder";
 export * from "./chevron-double-up";
 export * from "./chevron-double-down";
 export * from "./chevron-double-left";
 export * from "./chevron-double-right";
-export { ChevronUpIcon } from "./chevron-up";
-export { ChevronDownIcon } from "./chevron-down";
-export { ChevronLeftIcon } from "./chevron-left";
-export { ChevronRightIcon } from "./chevron-right";
+export * from "./chevron-up";
+export * from "./chevron-down";
+export * from "./chevron-left";
+export * from "./chevron-right";
+export * from "./cross-circled-filled";
+export * from "./magnifying-glass";
