@@ -33,7 +33,7 @@
   },
   "engines": {
     "npm": ">=7.0.0",
-    "node": ">=16.9"
+    "node": ">=16.9 <17"
   },
   "dependencies": {
     "golden-fleece": "^1.0.9"
