@@ -32,7 +32,6 @@
     "typescript": "4.7.4"
   },
   "engines": {
-    "npm": ">=7.0.0",
     "node": ">=16.9 <17"
   },
   "dependencies": {
