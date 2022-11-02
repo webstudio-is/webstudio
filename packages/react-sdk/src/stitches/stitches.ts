@@ -1,17 +1,14 @@
-import {
-  type CSS,
-  createStitches,
-  globalCss as globalCssImport,
-  css as createCss,
-} from "@stitches/core";
+import { createStitches, type CSS } from "@stitches/core";
 import type { FontFace } from "@webstudio-is/fonts";
 import type { Breakpoint } from "../css";
 
 let media = {};
 
-// @todo needs fixing
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let stitches: any;
+const createStitchesInstance = () => createStitches({ media });
+
+type StitchesInstance = ReturnType<typeof createStitchesInstance>;
+
+let stitches: StitchesInstance | undefined;
 
 let fontsCss = "";
 
@@ -19,16 +16,18 @@ export { type CSS };
 
 const getCachedConfig = () => {
   if (stitches === undefined) {
-    stitches = createStitches({ media });
+    stitches = createStitchesInstance();
   }
   return stitches;
 };
 
-export const css: typeof createCss = (...args) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const css: StitchesInstance["css"] = (...args: any[]) => {
   return getCachedConfig().css(...args);
 };
 
-export const globalCss: typeof globalCssImport = (...args) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const globalCss: StitchesInstance["globalCss"] = (...args: any[]) => {
   return getCachedConfig().globalCss(...args);
 };
 
