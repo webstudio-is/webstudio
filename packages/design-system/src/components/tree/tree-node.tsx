@@ -108,7 +108,7 @@ const SuffixContainer = styled(Flex, {
   defaultVariants: { align: "center" },
 
   // We use opacity to hide the suffix buttons
-  // becuase when `visibility` is used it's ipossible to focus the button.
+  // becuase when `visibility` is used it's impossible to focus the button.
   opacity: "0",
   pointerEvents: "none",
 });
@@ -202,11 +202,15 @@ export const TreeItemBody = <Data extends { id: string }>({
   children,
   suffix,
   suffixWidth = suffix ? "32px" : "0",
+  alwaysShowSuffix = false,
+  forceFocus = false,
   selectionTrigger = "click",
 }: TreeItemRenderProps<Data> & {
   children: React.ReactNode;
   suffix?: React.ReactNode;
   suffixWidth?: string;
+  alwaysShowSuffix?: boolean;
+  forceFocus?: boolean;
   selectionTrigger?: "click" | "focus";
 }) => {
   const [focusTarget, setFocusTarget] = useState<
@@ -249,19 +253,14 @@ export const TreeItemBody = <Data extends { id: string }>({
       isSelected={isSelected}
       parentIsSelected={parentIsSelected}
       enableHoverState={isDragging === false}
-      forceHoverState={isDropTarget || focusTarget === "item-button"}
-      suffixVisible={focusTarget !== undefined}
+      forceHoverState={
+        isDropTarget || focusTarget === "item-button" || forceFocus
+      }
+      suffixVisible={alwaysShowSuffix || focusTarget !== undefined}
       onFocus={updateFocusTarget}
       onBlur={updateFocusTarget}
       css={{ [suffixWidthVar]: suffixWidth }}
     >
-      {/* We can't nest the collapsible trigger and suffix inside the ItemButton because:
-       *   1. <button> can't be nested inside <button>
-       *   2. Even if we don't use <button> element,
-       *      click in a nested element will register as a click on ItemButton.
-       *   3. It will be wrong semantically, and can hurt accessibility.
-       */}
-
       <ItemButton
         type="button"
         data-drag-item-id={itemData.id}
@@ -275,12 +274,15 @@ export const TreeItemBody = <Data extends { id: string }>({
         {children}
       </ItemButton>
 
+      {/* We can't nest the collapsible trigger and suffix inside the ItemButton because 
+          <button> can't be nested inside <button>, 
+          click events will be mixed up, 
+          may hurt accessibility, etc. */}
+
       {shouldRenderExpandButton && (
         <CollapsibleTrigger
           style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
-          // We don't want a separate focusable control inside a tree item.
-          // tabIndex makes it skipped over when tabbing.
-          // It still can be focused using mouse, but we handle this elsewhere.
+          // We don't want a this trigger to be focusable
           tabIndex={-1}
         >
           {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}

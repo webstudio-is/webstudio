@@ -1,5 +1,6 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import toast, { useToaster } from "react-hot-toast/headless";
+import type { ZodError } from "zod";
 import { keyframes, styled } from "../stitches.config";
 import {
   CheckCircledIcon,
@@ -130,3 +131,22 @@ export const Toaster = () => {
 };
 
 export { toast };
+
+export const toastNonFieldErrors = (
+  errors: ZodError["formErrors"],
+  knownFields?: string[]
+) => {
+  for (const message of errors.formErrors) {
+    toast.error(message);
+  }
+
+  if (knownFields !== undefined) {
+    for (const fieldName in errors.fieldErrors) {
+      if (knownFields.includes(fieldName) === false) {
+        for (const message of errors.fieldErrors[fieldName] as string[]) {
+          toast.error(`${fieldName}: ${message}`);
+        }
+      }
+    }
+  }
+};

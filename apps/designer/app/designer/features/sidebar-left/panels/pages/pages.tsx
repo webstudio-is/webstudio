@@ -6,11 +6,16 @@ import {
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
-import { MenuIcon, NewPageIcon, PageIcon } from "@webstudio-is/icons";
+import {
+  ChevronRightIcon,
+  MenuIcon,
+  NewPageIcon,
+  PageIcon,
+} from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Config } from "~/config";
 import {
@@ -19,7 +24,7 @@ import {
   useProject,
 } from "~/designer/shared/nano-states";
 import { SettingsPanel } from "./settings-panel";
-import { NewPageSettings } from "./settings";
+import { NewPageSettings, PageSettings } from "./settings";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -62,30 +67,6 @@ const staticTreeProps = {
   getIsExpanded(_node: PagesTreeNode) {
     return true;
   },
-  renderItem(props: TreeItemRenderProps<PagesTreeNode>) {
-    if (props.itemData.type === "folder") {
-      return null;
-    }
-
-    const isSelected = props.selectedItemId === props.itemData.id;
-
-    return (
-      <TreeItemBody
-        {...props}
-        suffix={
-          <IconButton
-            variant={isSelected ? "selectedItemAction" : "itemAction"}
-          >
-            <MenuIcon />
-          </IconButton>
-        }
-      >
-        <TreeItemLabel prefix={<PageIcon />}>
-          {props.itemData.data.name}
-        </TreeItemLabel>
-      </TreeItemBody>
-    );
-  },
 };
 
 const PagesPanel = ({
@@ -93,14 +74,55 @@ const PagesPanel = ({
   onNewPage,
   onSelect,
   selectedPageId,
+  onEdit,
+  editingPageId,
 }: {
   onClose?: () => void;
   onNewPage?: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
+  onEdit?: (pageId: string) => void;
+  editingPageId?: string;
 }) => {
   const [pages] = usePages();
   const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
+
+  const renderItem = useCallback(
+    (props: TreeItemRenderProps<PagesTreeNode>) => {
+      if (props.itemData.type === "folder") {
+        return null;
+      }
+
+      const isSelected = props.selectedItemId === props.itemData.id;
+      const isEditing = editingPageId === props.itemData.id;
+
+      return (
+        <TreeItemBody
+          {...props}
+          suffix={
+            onEdit &&
+            (isEditing ? (
+              <ChevronRightIcon />
+            ) : (
+              <IconButton
+                variant={isSelected ? "selectedItemAction" : "itemAction"}
+                onClick={() => onEdit(props.itemData.id)}
+              >
+                <MenuIcon />
+              </IconButton>
+            ))
+          }
+          alwaysShowSuffix={isEditing}
+          forceFocus={isEditing}
+        >
+          <TreeItemLabel prefix={<PageIcon />}>
+            {props.itemData.data.name}
+          </TreeItemLabel>
+        </TreeItemBody>
+      );
+    },
+    [editingPageId, onEdit]
+  );
 
   if (pagesTree === undefined) {
     return null;
@@ -130,6 +152,7 @@ const PagesPanel = ({
         selectedItemId={selectedPageId}
         onSelect={onSelect}
         itemData={pagesTree}
+        renderItem={renderItem}
         {...staticTreeProps}
       />
     </>
@@ -148,7 +171,8 @@ export const TabContent = (props: TabContentProps) => {
     navigate(`${props.config.designerPath}/${project.id}?pageId=${pageId}`);
   };
 
-  const [newPageOpen, setNewPageOpen] = useState(false);
+  const NEW_PAGE = "new-page";
+  const [editingPageId, setEditingPageId] = useState<string>();
 
   if (currentPageId === undefined || project === undefined) {
     return null;
@@ -158,19 +182,35 @@ export const TabContent = (props: TabContentProps) => {
     <>
       <PagesPanel
         onClose={() => props.onSetActiveTab("none")}
-        onNewPage={() => setNewPageOpen((current) => !current)}
+        onNewPage={() =>
+          setEditingPageId((current) =>
+            current === NEW_PAGE ? undefined : NEW_PAGE
+          )
+        }
         onSelect={handleSelect}
         selectedPageId={currentPageId}
+        onEdit={setEditingPageId}
+        editingPageId={editingPageId}
       />
-      <SettingsPanel isOpen={newPageOpen}>
-        <NewPageSettings
-          projectId={project.id}
-          onClose={() => setNewPageOpen(false)}
-          onSuccess={(page) => {
-            setNewPageOpen(false);
-            handleSelect(page.id);
-          }}
-        />
+      <SettingsPanel isOpen={editingPageId !== undefined}>
+        {editingPageId === NEW_PAGE && (
+          <NewPageSettings
+            projectId={project.id}
+            onClose={() => setEditingPageId(undefined)}
+            onSuccess={(page) => {
+              setEditingPageId(undefined);
+              handleSelect(page.id);
+            }}
+          />
+        )}
+        {editingPageId !== NEW_PAGE && editingPageId !== undefined && (
+          <PageSettings
+            onClose={() => setEditingPageId(undefined)}
+            pageId={editingPageId}
+            projectId={project.id}
+            key={editingPageId}
+          />
+        )}
       </SettingsPanel>
     </>
   );
