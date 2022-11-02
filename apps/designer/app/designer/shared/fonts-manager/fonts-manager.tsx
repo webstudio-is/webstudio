@@ -63,7 +63,7 @@ const useLogic = ({
   const { filteredItems, resetFilteredItems, setFilteredItems } =
     useFilteredItems({
       onReset() {
-        cancelSearch();
+        searchProps.onCancel();
       },
     });
   const { uploadedItems, systemItems, groupedItems } = useMemo(
@@ -99,7 +99,8 @@ const useLogic = ({
     }
   };
 
-  const { cancel: cancelSearch, ...searchProps } = useSearch({
+  const searchProps = useSearch({
+    onCancel: resetFilteredItems,
     onSearch(search) {
       if (search === "") {
         return resetFilteredItems();

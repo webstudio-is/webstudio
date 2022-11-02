@@ -84,14 +84,14 @@ ListItem.displayName = "ListItem";
 export const findNextListIndex = (
   currentIndex: number,
   total: number,
-  indexOrDirection: "next" | "previous"
+  direction: "next" | "previous"
 ) => {
   const nextIndex =
-    indexOrDirection === "next"
+    direction === "next"
       ? currentIndex + 1
-      : indexOrDirection === "previous"
+      : direction === "previous"
       ? currentIndex - 1
-      : indexOrDirection;
+      : currentIndex;
 
   if (nextIndex < 0) {
     return total - 1;
