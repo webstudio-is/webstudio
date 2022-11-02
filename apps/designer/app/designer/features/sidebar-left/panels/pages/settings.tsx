@@ -15,10 +15,11 @@ import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
 import { Header } from "../../lib/header";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback } from "react";
 import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
 import { useDebounce, useUnmount } from "react-use";
+import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 
 const Group = styled(Flex, {
   marginBottom: "$3",
@@ -29,6 +30,13 @@ const Group = styled(Flex, {
 type FetcherData<Payload> =
   | ({ ok: true } & Payload)
   | { errors: string | ZodError["formErrors"] };
+
+const normalizeErrors = (
+  errors: string | ZodError["formErrors"]
+): ZodError["formErrors"] =>
+  typeof errors === "string"
+    ? { formErrors: [errors], fieldErrors: {} }
+    : errors;
 
 type EditablePage = Omit<Page, "treeId" | "id">;
 
@@ -59,11 +67,7 @@ const FormFields = ({
 
   useOnFetchEnd(fetcher, (data) => {
     if ("errors" in data) {
-      const errors =
-        typeof data.errors === "string"
-          ? { formErrors: [data.errors], fieldErrors: {} }
-          : data.errors;
-
+      const errors = normalizeErrors(data.errors);
       toastNonFieldErrors(errors, fieldNames.current);
       setFieldErrors(errors.fieldErrors);
     }
@@ -189,6 +193,8 @@ export const PageSettings = ({
   pageId: string;
   projectId: string;
 }) => {
+  const submitPersistently = usePersistentFetcher();
+
   const fetcher = useFetcher<EditPageData>();
 
   const [pages] = usePages();
@@ -210,29 +216,44 @@ export const PageSettings = ({
     []
   );
 
-  const submit = () => {
+  useDebounce(
+    () => {
+      if (Object.keys(unsavedValues).length === 0) {
+        return;
+      }
+
+      // We're re-submitting the submittedValues because previous submit is going to be cancelled
+      // (normally, submittedValues are empty at this point)
+      const valuesToSubmit = { ...submittedValues, ...unsavedValues };
+
+      fetcher.submit(toFormData({ id: pageId, ...valuesToSubmit }), {
+        method: "post",
+        action: `/rest/pages/${projectId}`,
+      });
+
+      setSubmittedValues(valuesToSubmit);
+      setUnsavedValues({});
+    },
+    1000,
+    [unsavedValues]
+  );
+
+  useUnmount(() => {
     if (Object.keys(unsavedValues).length === 0) {
       return;
     }
-
-    // We're re-submitting the submittedValues because previous submit is going to be cancelled
-    // (normally, submittedValues are empty at this point)
-    const valuesToSubmit = { ...submittedValues, ...unsavedValues };
-
-    fetcher.submit(toFormData({ id: pageId, ...valuesToSubmit }), {
-      method: "post",
-      action: `/rest/pages/${projectId}`,
-    });
-
-    setSubmittedValues(valuesToSubmit);
-    setUnsavedValues({});
-  };
-
-  useDebounce(submit, 1000, [unsavedValues]);
-
-  // @todo: this works by accident,
-  // we're abusing a bug in Remix where you can submit a fetcher that was already deleted
-  useUnmount(submit);
+    // We use submitPersistently instead of fetcher.submit
+    // because we don't want the request to be canceled when the component unmounts
+    submitPersistently<EditPageData>(
+      toFormData({ id: pageId, ...submittedValues, ...unsavedValues }),
+      { method: "post", action: `/rest/pages/${projectId}` },
+      (data) => {
+        if ("errors" in data) {
+          toastNonFieldErrors(normalizeErrors(data.errors), []);
+        }
+      }
+    );
+  });
 
   useOnFetchEnd(fetcher, (data) => {
     if ("errors" in data) {
@@ -241,13 +262,17 @@ export const PageSettings = ({
     setSubmittedValues({});
   });
 
-  const deleteFetcher = useFetcher<DeletePageData>();
   const hanldeDelete = () => {
-    // @todo: this doesn't work because when component is unmounted,
-    // the fetcher is deleted and the request is cancelled
-    deleteFetcher.submit(
+    // We use submitPersistently instead of fetcher.submit
+    // because we don't want the request to be canceled when the component unmounts
+    submitPersistently<DeletePageData>(
       { id: pageId },
-      { method: "delete", action: `/rest/pages/${projectId}` }
+      { method: "delete", action: `/rest/pages/${projectId}` },
+      (data) => {
+        if ("errors" in data) {
+          toastNonFieldErrors(normalizeErrors(data.errors), []);
+        }
+      }
     );
     onDeleted?.();
   };
@@ -284,24 +309,4 @@ export const PageSettings = ({
       </Box>
     </>
   );
-};
-
-const useOnFetchEnd = <Data,>(
-  fetcher: Fetcher<Data>,
-  handler: (data: Data) => void
-) => {
-  const latestHandler = useRef(handler);
-  latestHandler.current = handler;
-
-  const prevFetcher = useRef(fetcher);
-  useEffect(() => {
-    if (
-      prevFetcher.current.state !== fetcher.state &&
-      fetcher.state === "idle" &&
-      fetcher.data !== undefined
-    ) {
-      latestHandler.current(fetcher.data);
-    }
-    prevFetcher.current = fetcher;
-  }, [fetcher]);
 };

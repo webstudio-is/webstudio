@@ -136,6 +136,7 @@ export const editPage = async (
 };
 
 export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
+  // @todo: delete tree etc.
   return updatePages(buildId, async (currentPages) => {
     if (pageId === currentPages.homePage.id) {
       throw new Error("Cannot delete home page");
