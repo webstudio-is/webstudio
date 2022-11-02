@@ -3,6 +3,7 @@ import {
   RichTextPlugin,
   HistoryPlugin,
   LexicalComposer,
+  LexicalErrorBoundary,
   useLexicalComposerContext,
 } from "./lexical";
 import { InstancePlugin } from "./plugins/plugin-instance";
@@ -37,7 +38,11 @@ const Editor = ({ instance, renderInstance, onChange }: EditorProps) => {
   const editable = renderInstance({ ref, contentEditable: true });
   return (
     <>
-      <RichTextPlugin contentEditable={editable} placeholder="" />
+      <RichTextPlugin
+        ErrorBoundary={LexicalErrorBoundary}
+        contentEditable={editable}
+        placeholder=""
+      />
       <OnChangePlugin onChange={onChange} />
       <HistoryPlugin />
       <InstancePlugin>{instance.children}</InstancePlugin>

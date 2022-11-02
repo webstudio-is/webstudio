@@ -29,6 +29,7 @@ export {
 } from "lexical";
 export { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 export { LexicalComposer } from "@lexical/react/LexicalComposer";
+export { default as LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 export { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 export { ContentEditable } from "@lexical/react/LexicalContentEditable";
 export { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
