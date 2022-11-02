@@ -164,11 +164,15 @@ export const TabContent = (props: TabContentProps) => {
   const [project] = useProject();
 
   const navigate = useNavigate();
-  const handleSelect = (pageId: string) => {
+  const handleSelect = (pageId: "home" | Page["id"]) => {
     if (project === undefined) {
       return;
     }
-    navigate(`${props.config.designerPath}/${project.id}?pageId=${pageId}`);
+    if (pageId === "home") {
+      navigate(`${props.config.designerPath}/${project.id}`);
+    } else {
+      navigate(`${props.config.designerPath}/${project.id}?pageId=${pageId}`);
+    }
   };
 
   const NEW_PAGE = "new-page";
@@ -206,6 +210,12 @@ export const TabContent = (props: TabContentProps) => {
         {editingPageId !== NEW_PAGE && editingPageId !== undefined && (
           <PageSettings
             onClose={() => setEditingPageId(undefined)}
+            onDeleted={() => {
+              setEditingPageId(undefined);
+              if (editingPageId === currentPageId) {
+                handleSelect("home");
+              }
+            }}
             pageId={editingPageId}
             projectId={project.id}
             key={editingPageId}

@@ -11,7 +11,7 @@ import {
   InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { useFetcher, type Fetcher } from "@remix-run/react";
-import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
+import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
 import { Header } from "../../lib/header";
@@ -164,6 +164,9 @@ export const NewPageSettings = ({
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EditPageData = FetcherData<{}>;
 
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type DeletePageData = FetcherData<{}>;
+
 const toFormData = (page: Partial<EditablePage> & { id: string }): FormData => {
   const formData = new FormData();
   for (const [key, value] of Object.entries(page)) {
@@ -177,10 +180,12 @@ const toFormData = (page: Partial<EditablePage> & { id: string }): FormData => {
 
 export const PageSettings = ({
   onClose,
+  onDeleted,
   pageId,
   projectId,
 }: {
   onClose?: () => void;
+  onDeleted?: () => void;
   pageId: string;
   projectId: string;
 }) => {
@@ -188,6 +193,7 @@ export const PageSettings = ({
 
   const [pages] = usePages();
   const page = pages && projectUtils.pages.findById(pages, pageId);
+  const isHomePage = pageId === pages?.homePage.id;
 
   const [unsavedValues, setUnsavedValues] = useState<Partial<EditablePage>>({});
   const [submittedValues, setSubmittedValues] = useState<Partial<EditablePage>>(
@@ -223,6 +229,9 @@ export const PageSettings = ({
   };
 
   useDebounce(submit, 1000, [unsavedValues]);
+
+  // @todo: this works by accident,
+  // we're abusing a bug in Remix where you can submit a fetcher that was already deleted
   useUnmount(submit);
 
   useOnFetchEnd(fetcher, (data) => {
@@ -231,6 +240,17 @@ export const PageSettings = ({
     }
     setSubmittedValues({});
   });
+
+  const deleteFetcher = useFetcher<DeletePageData>();
+  const hanldeDelete = () => {
+    // @todo: this doesn't work because when component is unmounted,
+    // the fetcher is deleted and the request is cancelled
+    deleteFetcher.submit(
+      { id: pageId },
+      { method: "delete", action: `/rest/pages/${projectId}` }
+    );
+    onDeleted?.();
+  };
 
   if (page === undefined) {
     return null;
@@ -241,11 +261,18 @@ export const PageSettings = ({
       <Header
         title="Page Settings"
         suffix={
-          onClose && (
-            <IconButton size="2" onClick={onClose} aria-label="Cancel">
-              <ChevronDoubleLeftIcon />
-            </IconButton>
-          )
+          <>
+            {isHomePage === false && (
+              <IconButton size="2" onClick={hanldeDelete} aria-label="Cancel">
+                <TrashIcon />
+              </IconButton>
+            )}
+            {onClose && (
+              <IconButton size="2" onClick={onClose} aria-label="Cancel">
+                <ChevronDoubleLeftIcon />
+              </IconButton>
+            )}
+          </>
         }
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>

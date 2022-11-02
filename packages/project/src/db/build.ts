@@ -135,6 +135,18 @@ export const editPage = async (
   });
 };
 
+export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
+  return updatePages(buildId, async (currentPages) => {
+    if (pageId === currentPages.homePage.id) {
+      throw new Error("Cannot delete home page");
+    }
+    return {
+      homePage: currentPages.homePage,
+      pages: currentPages.pages.filter((page) => page.id !== pageId),
+    };
+  });
+};
+
 const createPages = async (breakpoints: Array<Breakpoint>) => {
   const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
   return Pages.parse({
