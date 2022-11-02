@@ -1,0 +1,13 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      # postgresql://user:pass@localhost:5432/webstudio
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: webstudio
+      POSTGRES_USER: user
+    ports:
+      - ${PGPORT:-5432}:5432
