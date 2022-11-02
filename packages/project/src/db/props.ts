@@ -21,6 +21,10 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
   });
 };
 
+export const deleteByTreeId = async (treeId: Tree["id"]) => {
+  await prisma.instanceProps.deleteMany({ where: { treeId } });
+};
+
 export const clone = async ({
   previousTreeId,
   nextTreeId,

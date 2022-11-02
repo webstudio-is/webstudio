@@ -3,6 +3,7 @@ import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { Tree as DbTree } from "@prisma/client";
 import { utils } from "../index";
+import { props } from ".";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -20,6 +21,11 @@ export const create = async (root: Instance): Promise<DbTree> => {
   return await prisma.tree.create({
     data: { root: rootString },
   });
+};
+
+export const deleteById = async (treeId: string): Promise<void> => {
+  await props.deleteByTreeId(treeId);
+  await prisma.tree.delete({ where: { id: treeId } });
 };
 
 export const loadById = async (treeId: string): Promise<Tree | null> => {
@@ -42,6 +48,7 @@ export const clone = async (treeId: string) => {
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
+  // @todo: clone props?
   return await create(tree.root);
 };
 

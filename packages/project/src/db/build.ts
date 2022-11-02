@@ -136,11 +136,18 @@ export const editPage = async (
 };
 
 export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
-  // @todo: delete tree etc.
   return updatePages(buildId, async (currentPages) => {
     if (pageId === currentPages.homePage.id) {
       throw new Error("Cannot delete home page");
     }
+
+    const page = pagesUtils.findById(currentPages, pageId);
+    if (page === undefined) {
+      throw new Error(`Page with id "${pageId}" not found`);
+    }
+
+    await db.tree.deleteById(page.treeId);
+
     return {
       homePage: currentPages.homePage,
       pages: currentPages.pages.filter((page) => page.id !== pageId),
