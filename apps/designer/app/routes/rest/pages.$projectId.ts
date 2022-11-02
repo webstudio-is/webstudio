@@ -3,7 +3,10 @@ import { db } from "@webstudio-is/project/index.server";
 import { type Pages, utils } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
-import { CreatePageData } from "~/designer/features/sidebar-left/panels/pages/settings";
+import {
+  CreatePageData,
+  EditPageData,
+} from "~/designer/features/sidebar-left/panels/pages/settings";
 import { sentryException } from "~/shared/sentry";
 
 const nonEmptyString = z
@@ -14,7 +17,7 @@ const nonEmptyString = z
   .transform((value) => value.trim())
   .refine((value) => value !== "", "Can't be empty");
 
-const CreatePageInput = zfd.formData({
+const commonPageInput = {
   name: nonEmptyString,
   path: nonEmptyString
     .refine((path) => path !== "/", "Can't be just a /")
@@ -28,7 +31,9 @@ const CreatePageInput = zfd.formData({
       (path) => /^[-_a-z0-9\\/]*$/.test(path),
       "Only a-z, 0-9, -, _ and / are allowed"
     ),
-});
+} as const;
+
+const CreatePageInput = zfd.formData(commonPageInput);
 
 const handlePut = async (
   projectId: string,
@@ -44,14 +49,7 @@ const handlePut = async (
 
   const existingPage = utils.pages.findByPath(devBuild.pages, data.path);
   if (existingPage !== undefined) {
-    return {
-      errors: {
-        formErrors: [],
-        fieldErrors: {
-          path: [`Already used for "${existingPage.name}"`],
-        },
-      },
-    };
+    return fieldError("path", `Already used for "${existingPage.name}"`);
   }
 
   const updatedBuild = await db.build.addPage(devBuild.id, data);
@@ -65,6 +63,36 @@ const handlePut = async (
   return { ok: true, page: newPage };
 };
 
+const EditPageInput = zfd.formData({
+  id: z.string(),
+  name: z.optional(commonPageInput.name),
+  path: z.optional(commonPageInput.path),
+});
+
+const handlePost = async (
+  projectId: string,
+  request: Request
+): Promise<EditPageData> => {
+  const result = EditPageInput.safeParse(await request.formData());
+  if (result.success === false) {
+    return { errors: result.error.formErrors };
+  }
+  const { id, ...data } = result.data;
+
+  const devBuild = await db.build.loadByProjectId(projectId, "dev");
+
+  if (data.path !== undefined) {
+    const existingPage = utils.pages.findByPath(devBuild.pages, data.path);
+    if (existingPage !== undefined && existingPage.id !== id) {
+      return fieldError("path", `Already used for "${existingPage.name}"`);
+    }
+  }
+
+  await db.build.editPage(devBuild.id, id, data);
+
+  return { ok: true };
+};
+
 export const action: ActionFunction = async ({ request, params }) => {
   try {
     if (params.projectId === undefined) {
@@ -72,8 +100,11 @@ export const action: ActionFunction = async ({ request, params }) => {
     }
 
     if (request.method === "PUT") {
-      const result = await handlePut(params.projectId, request);
-      return result;
+      return await handlePut(params.projectId, request);
+    }
+
+    if (request.method === "POST") {
+      return await handlePost(params.projectId, request);
     }
 
     throw new Error(`Method ${request.method} is not supported`);
@@ -112,4 +143,13 @@ export const loader: LoaderFunction = async ({
       errors: error instanceof Error ? error.message : String(error),
     };
   }
+};
+
+const fieldError = (fieldName: string, error: string) => {
+  return {
+    errors: {
+      formErrors: [],
+      fieldErrors: { [fieldName]: [error] },
+    },
+  };
 };

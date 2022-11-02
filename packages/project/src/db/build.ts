@@ -3,6 +3,7 @@ import { type Breakpoint } from "@webstudio-is/react-sdk";
 import { v4 as uuid } from "uuid";
 import * as db from ".";
 import { Build, Page, Pages } from "./types";
+import * as pagesUtils from "../shared/pages";
 
 export const parseBuild = (build: DbBuild): Build => {
   const pages = Pages.parse(JSON.parse(build.pages));
@@ -61,38 +62,77 @@ export async function loadByProjectId(
   return parseBuild(build);
 }
 
-export const addPage = async (
+const updatePages = async (
   buildId: Build["id"],
-  data: { name: string; path: string }
+  updater: (currentPages: Pages) => Promise<Pages>
 ) => {
   const build = await loadById(buildId);
-
-  const breakpoints = await db.breakpoints.load(buildId);
-  const tree = await db.tree.create(
-    db.tree.createRootInstance(breakpoints.values)
-  );
-
-  const nextPages = Pages.parse({
-    homePage: build.pages.homePage,
-    pages: [
-      ...build.pages.pages,
-      {
-        id: uuid(),
-        name: data.name,
-        path: data.path,
-        title: data.name,
-        meta: {},
-        treeId: tree.id,
-      },
-    ],
-  });
-
-  const newBuild = await prisma.build.update({
+  const updatedPages = Pages.parse(await updater(build.pages));
+  const updatedBuild = await prisma.build.update({
     where: { id: buildId },
-    data: { pages: JSON.stringify(nextPages) },
+    data: { pages: JSON.stringify(updatedPages) },
   });
+  return parseBuild(updatedBuild);
+};
 
-  return parseBuild(newBuild);
+export const addPage = async (
+  buildId: Build["id"],
+  data: Pick<Page, "name" | "path"> &
+    Partial<Omit<Page, "id" | "treeId" | "name" | "path">>
+) => {
+  return updatePages(buildId, async (currentPages) => {
+    const breakpoints = await db.breakpoints.load(buildId);
+    const tree = await db.tree.create(
+      db.tree.createRootInstance(breakpoints.values)
+    );
+
+    return {
+      homePage: currentPages.homePage,
+      pages: [
+        ...currentPages.pages,
+        {
+          id: uuid(),
+          treeId: tree.id,
+          name: data.name,
+          path: data.path,
+          title: data.title ?? data.name,
+          meta: data.meta ?? {},
+        },
+      ],
+    };
+  });
+};
+
+export const editPage = async (
+  buildId: Build["id"],
+  pageId: Page["id"],
+  data: Partial<Omit<Page, "id" | "treeId">>
+) => {
+  return updatePages(buildId, async (currentPages) => {
+    const currentPage = pagesUtils.findById(currentPages, pageId);
+    if (currentPage === undefined) {
+      throw new Error(`Page with id "${pageId}" not found`);
+    }
+
+    const updatedPage: Page = {
+      id: currentPage.id,
+      treeId: currentPage.treeId,
+      name: data.name ?? currentPage.name,
+      path: data.path ?? currentPage.path,
+      title: data.title ?? currentPage.title,
+      meta: data.meta ?? currentPage.meta,
+    };
+
+    return {
+      homePage:
+        updatedPage.id === currentPages.homePage.id
+          ? updatedPage
+          : currentPages.homePage,
+      pages: currentPages.pages.map((page) =>
+        page.id === updatedPage.id ? updatedPage : page
+      ),
+    };
+  });
 };
 
 const createPages = async (breakpoints: Array<Breakpoint>) => {
