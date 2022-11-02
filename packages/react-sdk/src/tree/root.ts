@@ -1,7 +1,7 @@
 import { useAllUserProps } from "../user-props/";
 import type { Tree, InstanceProps } from "../db";
 import type { Breakpoint } from "../css";
-import { globalCss, setBreakpoints } from "../stitches";
+import { globalCss, setBreakpoints, renderFontFaces } from "../stitches";
 import { createElementsTree } from "./create-elements-tree";
 import {
   WrapperComponent,
@@ -33,8 +33,8 @@ export const useGlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
     FONT_FORMATS.has(asset.format as FontFormat)
   ) as Array<FontAsset>;
 
+  renderFontFaces(getFontFaces(fontAssets));
   globalCss({
-    "@font-face": getFontFaces(fontAssets),
     html: {
       height: "100%",
     },

@@ -8,7 +8,17 @@ export type PartialFontAsset = {
   path: string;
 };
 
-export const getFontFaces = (assets: Array<PartialFontAsset>) => {
+export type FontFace = {
+  fontFamily: string;
+  fontStyle: FontMeta["style"];
+  fontWeight: number;
+  fontDisplay: "swap" | "auto" | "block" | "fallback" | "optional";
+  src: string;
+};
+
+export const getFontFaces = (
+  assets: Array<PartialFontAsset>
+): Array<FontFace> => {
   const faces = new Map();
   for (const asset of assets) {
     const face = faces.get(asset.meta.family);
@@ -19,7 +29,7 @@ export const getFontFaces = (assets: Array<PartialFontAsset>) => {
         fontFamily: asset.meta.family,
         fontStyle: asset.meta.style,
         fontWeight: asset.meta.weight,
-        fontDisplay: "swap" as const,
+        fontDisplay: "swap",
         src: `url('${asset.path}') format('${format}')`,
       });
       continue;

@@ -45,6 +45,7 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import { setInstanceChildrenMutable } from "~/shared/tree-utils";
 import { CanvasData } from "~/shared/db";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 registerContainers();
 
@@ -78,6 +79,12 @@ const useSubscribePreviewMode = () => {
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
   useSubscribe("previewMode", setIsPreviewMode);
   return isPreviewMode;
+};
+
+const useAssets = (initialAssets: Array<Asset>) => {
+  const [assets, setAssets] = useState(initialAssets);
+  useSubscribe("updateAssets", setAssets);
+  return assets;
 };
 
 type DesignModeProps = {
@@ -118,7 +125,8 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   }
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
-  useGlobalStyles({ assets: data.assets });
+  const assets = useAssets(data.assets);
+  useGlobalStyles({ assets });
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
   // e.g. toggling preview is still needed in both modes

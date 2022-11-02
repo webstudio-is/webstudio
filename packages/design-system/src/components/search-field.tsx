@@ -47,7 +47,6 @@ const SearchFieldBase: ForwardRefRenderFunction<
             title="Reset search"
             tabIndex={-1}
             onClick={() => {
-              inputRef.current?.focus();
               setValue("");
               onCancel?.();
             }}
