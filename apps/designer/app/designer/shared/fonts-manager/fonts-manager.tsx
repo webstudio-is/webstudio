@@ -180,7 +180,10 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   };
 
   return (
-    <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
+    <Flex
+      direction="column"
+      css={{ overflow: "hidden", paddingTop: "$1", paddingBottom: "$3" }}
+    >
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <SearchField {...searchProps} autoFocus placeholder="Search" />
