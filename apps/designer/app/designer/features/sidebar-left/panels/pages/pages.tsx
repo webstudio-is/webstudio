@@ -4,6 +4,7 @@ import {
   TreeItemBody,
   TreeNode,
   type TreeItemRenderProps,
+  styled,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import {
@@ -69,6 +70,20 @@ const staticTreeProps = {
   },
 };
 
+const MenuButton = styled(IconButton, {
+  mr: "$1",
+  color: "$hint",
+  "&:hover, &:focus": { color: "$hiContrast" },
+  variants: {
+    parentSelected: {
+      true: {
+        color: "$loContrast",
+        "&:hover, &:focus": { color: "$slate7" },
+      },
+    },
+  },
+});
+
 const PagesPanel = ({
   onClose,
   onCreateNewPage,
@@ -104,12 +119,12 @@ const PagesPanel = ({
             (isEditing ? (
               <ChevronRightIcon />
             ) : (
-              <IconButton
-                variant={isSelected ? "selectedItemAction" : "itemAction"}
+              <MenuButton
+                parentSelected={isSelected}
                 onClick={() => onEdit(props.itemData.id)}
               >
                 <MenuIcon />
-              </IconButton>
+              </MenuButton>
             ))
           }
           alwaysShowSuffix={isEditing}

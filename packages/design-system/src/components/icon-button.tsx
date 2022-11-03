@@ -16,11 +16,22 @@ export const IconButton = styled("button", {
   textDecoration: "none",
   userSelect: "none",
   WebkitTapHighlightColor: "transparent",
+  color: "$hiContrast",
   background: "none",
   outline: "2px solid transparent",
   outlineOffset: 2,
   "&::before, &::after": {
     boxSizing: "border-box",
+  },
+  "&:hover, &:active": {
+    backgroundColor: "$slate6",
+    outline: "none",
+  },
+  "&:focus": {
+    backgroundColor: "$slate6",
+    outline: "none",
+    border: "2px solid white",
+    boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
   },
   "&:disabled": {
     pointerEvents: "none",
@@ -36,7 +47,7 @@ export const IconButton = styled("button", {
         width: "$3",
         "&:hover, &:focus": {
           background: "none",
-          borderColor: "transparent",
+          border: "none",
         },
       },
       "2": {
@@ -55,44 +66,8 @@ export const IconButton = styled("button", {
         width: "$8",
       },
     },
-    variant: {
-      regular: {
-        color: "$hiContrast",
-        "&:hover, &:active": {
-          backgroundColor: "$slate6",
-          outline: "none",
-        },
-        "&:focus": {
-          backgroundColor: "$slate6",
-          outline: "none",
-          border: "2px solid white",
-          boxShadow:
-            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
-        },
-      },
-      itemAction: {
-        color: "$slate9",
-        height: "$4",
-        width: "$4",
-        borderRadius: 3,
-        border: "2px solid transparent",
-        "&:hover, &:focus-visible": {
-          color: "$hiContrast",
-        },
-        "&:focus-visible": {
-          borderColor: "$blue10",
-        },
-      },
-      selectedItemAction: {
-        color: "$loContrast",
-        "&:hover, &:focus-visible": {
-          color: "$slate7",
-        },
-      },
-    },
   },
   defaultVariants: {
     size: "1",
-    variant: "regular",
   },
 });
