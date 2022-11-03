@@ -1,11 +1,12 @@
 import {
   Flex,
-  Separator,
+  Separator as SeparatorPrimitive,
   SearchField,
   List,
   ListItem,
   useList,
   findNextListIndex,
+  styled,
 } from "@webstudio-is/design-system";
 import { AssetUpload, useAssets } from "~/designer/shared/assets";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -135,6 +136,11 @@ const useLogic = ({
   };
 };
 
+const Separator = styled(SeparatorPrimitive, {
+  marginTop: "$1",
+  marginBottom: "$2",
+});
+
 type FontsManagerProps = {
   value: string;
   onChange: (value: string) => void;
@@ -174,12 +180,15 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   };
 
   return (
-    <Flex direction="column" css={{ overflow: "hidden", py: "$1" }}>
+    <Flex
+      direction="column"
+      css={{ overflow: "hidden", paddingTop: "$1", paddingBottom: "$3" }}
+    >
       <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
         <AssetUpload type="font" />
         <SearchField {...searchProps} autoFocus placeholder="Search" />
       </Flex>
-      <Separator css={{ my: "$1" }} />
+      <Separator />
       {groupedItems.length === 0 && <NotFound />}
       <Flex
         css={{
@@ -202,7 +211,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
           {uploadedItems.map(renderItem)}
           {systemItems.length !== 0 && (
             <>
-              {uploadedItems.length !== 0 && <Separator css={{ my: "$1" }} />}
+              {uploadedItems.length !== 0 && <Separator />}
               <ListItem state="disabled">{"System"}</ListItem>
             </>
           )}

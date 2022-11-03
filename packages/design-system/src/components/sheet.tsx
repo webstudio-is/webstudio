@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, keyframes, VariantProps, CSS } from "../stitches.config";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Cross1Icon } from "@webstudio-is/icons";
+import { CrossIcon } from "@webstudio-is/icons";
 import { overlayStyles } from "./overlay";
 import { IconButton } from "./icon-button";
 
@@ -129,7 +129,7 @@ export const SheetContent = React.forwardRef<
     {children}
     <StyledCloseButton asChild>
       <IconButton>
-        <Cross1Icon />
+        <CrossIcon />
       </IconButton>
     </StyledCloseButton>
   </StyledContent>

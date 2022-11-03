@@ -12,8 +12,9 @@ const usePickerSideOffset = (
   isOpen: boolean
 ): [MutableRefObject<HTMLButtonElement | null>, number] => {
   const ref = useRef<HTMLButtonElement | null>(null);
+  // Hack - depends on a relative position of a parent container to calculate the offset.
   const sideOffset =
-    isOpen && ref.current !== null ? PANEL_WIDTH - ref.current.offsetWidth : 0;
+    isOpen && ref.current !== null ? ref.current.offsetLeft : 0;
   return [ref, sideOffset];
 };
 
