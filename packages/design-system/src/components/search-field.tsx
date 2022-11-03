@@ -6,7 +6,10 @@ import {
   useState,
   useEffect,
 } from "react";
-import { Cross2Icon, MagnifyingGlassIcon } from "@webstudio-is/icons";
+import {
+  CrossCircledFilledIcon,
+  MagnifyingGlassIcon,
+} from "@webstudio-is/icons";
 import { TextField } from "./text-field";
 import { IconButton } from "./icon-button";
 import { styled } from "../stitches.config";
@@ -14,6 +17,10 @@ import { styled } from "../stitches.config";
 const SearchIcon = styled(MagnifyingGlassIcon, {
   color: "$hint",
   padding: "$1",
+});
+
+const AbortButton = styled(IconButton, {
+  marginRight: "$1",
 });
 
 const SearchFieldBase: ForwardRefRenderFunction<
@@ -42,18 +49,17 @@ const SearchFieldBase: ForwardRefRenderFunction<
       prefix={<SearchIcon />}
       suffix={
         value.length > 0 ? (
-          <IconButton
+          <AbortButton
             aria-label="Reset search"
             title="Reset search"
             tabIndex={-1}
             onClick={() => {
-              inputRef.current?.focus();
               setValue("");
               onCancel?.();
             }}
           >
-            <Cross2Icon />
-          </IconButton>
+            <CrossCircledFilledIcon />
+          </AbortButton>
         ) : null
       }
       onChange={(event) => {

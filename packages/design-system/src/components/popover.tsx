@@ -1,5 +1,5 @@
 import React, { useState, useRef, MutableRefObject } from "react";
-import { Cross1Icon } from "@webstudio-is/icons";
+import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
 import { panelStyles } from "./panel";
@@ -18,6 +18,7 @@ export const Popover = ({ children, ...props }: PopoverProps) => {
 };
 
 const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
+  backgroundColor: "white",
   minWidth: 200,
   minHeight: "$6",
   maxWidth: 265,
@@ -83,7 +84,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
             aria-label="Close"
             autoFocus={false}
           >
-            <Cross1Icon />
+            <CrossLargeIcon />
           </IconButton>
         </PopoverClose>
       </Flex>

@@ -3,7 +3,6 @@ import {
   StyleValue,
   StyleProperty,
   toValue,
-  InvalidValue,
 } from "@webstudio-is/react-sdk";
 import type { InheritedStyle } from "./get-inherited-style";
 import { isValid } from "./parse-css-value";
@@ -32,7 +31,7 @@ export const getFinalValue = ({
       toValue({ ...currentValue, value: Math.abs(currentValue.value) })
     ) === false
   ) {
-    return { ...(currentValue as unknown as InvalidValue), type: "invalid" };
+    return { value: String(currentValue.value), type: "invalid" };
   }
   return currentValue;
 };

@@ -2,6 +2,8 @@ import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { Lock } from "./shared/lock";
+import { ShowMore } from "../../shared/show-more";
+import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 
@@ -10,6 +12,16 @@ const LayoutSectionFlex = ({
   sectionStyle,
   createBatchUpdate,
 }: RenderCategoryProps) => {
+  const {
+    display,
+    flexDirection,
+    flexWrap,
+    alignItems,
+    justifyContent,
+    alignContent,
+    columnGap,
+    rowGap,
+  } = sectionStyle;
   const batchUpdate = createBatchUpdate();
   const hasMenuItems = [
     flexDirection,
@@ -112,7 +124,7 @@ const LayoutSectionFlex = ({
           </Box>
         )}
       </Grid>
-    </>
+    </Flex>
   );
 };
 
@@ -126,26 +138,10 @@ export const LayoutSection = ({
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
 }: RenderCategoryProps) => {
-  const ActiveLayout =
-    layouts.get(String(currentStyle.display?.value)) ?? (() => null);
+  const ActiveLayout = layouts.get(String(currentStyle.display?.value));
 
-  return (
-    <Flex css={{ flexDirection: "column", gap: "$2" }}>
-      <Grid
-        css={{
-          gridArea: "display",
-          gridTemplateColumns: "auto 1fr",
-          gap: "$space$2",
-          width: "fit-content",
-          fontWeight: "500",
-        }}
-      >
-        <PropertyName
-          property={sectionStyle.display.styleConfig.property}
-          label={sectionStyle.display.styleConfig.label}
-        />
-        <SelectControl {...sectionStyle.display} />
-      </Grid>
+  if (ActiveLayout) {
+    return (
       <ActiveLayout
         setProperty={setProperty}
         createBatchUpdate={createBatchUpdate}
@@ -156,7 +152,18 @@ export const LayoutSection = ({
         styleConfigsByCategory={styleConfigsByCategory}
         moreStyleConfigsByCategory={moreStyleConfigsByCategory}
       />
-    </Flex>
+    );
+  }
+
+  return (
+    <>
+      <ShowMore
+        styleConfigs={moreStyleConfigsByCategory.map((entry) =>
+          renderProperty(entry)
+        )}
+      />
+      {styleConfigsByCategory.map((entry) => renderProperty(entry))}
+    </>
   );
 };
 

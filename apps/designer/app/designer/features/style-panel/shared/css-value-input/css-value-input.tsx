@@ -86,7 +86,7 @@ const useScrub = ({
   onChangeComplete: (value: StyleValue) => void;
 }): [React.MutableRefObject<HTMLInputElement | null>, boolean] => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [inputActiveState, setInputActiveState] = useState(false);
+  const [isInputActive, setIsInputActive] = useState(false);
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
@@ -112,7 +112,7 @@ const useScrub = ({
           unit,
           value: event.value,
         });
-        setInputActiveState(true);
+        setIsInputActive(true);
         inputRef.current?.blur();
       },
       onValueChange(event) {
@@ -121,7 +121,7 @@ const useScrub = ({
           unit,
           value: event.value,
         });
-        setInputActiveState(false);
+        setIsInputActive(false);
         inputRef.current?.focus();
         inputRef.current?.select();
       },
@@ -130,7 +130,7 @@ const useScrub = ({
     return scrub.disconnectedCallback;
   }, [type, unit]);
 
-  return [inputRef, inputActiveState];
+  return [inputRef, isInputActive];
 };
 
 const useHandleKeyDown =
@@ -249,7 +249,7 @@ export const CssValueInput = ({
     },
   });
 
-  const [inputRef, inputActiveState] = useScrub({
+  const [inputRef, isInputActive] = useScrub({
     value,
     onChange,
     onChangeComplete,
@@ -299,7 +299,7 @@ export const CssValueInput = ({
             state={
               value.type === "invalid"
                 ? "invalid"
-                : inputActiveState
+                : isInputActive
                 ? "active"
                 : undefined
             }
