@@ -1,5 +1,6 @@
 import type { FontFormat } from "./types";
 import fontkit from "fontkit";
+import { FontWeight, fontWeights } from "./font-weights";
 
 // @todo sumbit this to definitely typed, they are not up to date
 declare module "fontkit" {
@@ -12,26 +13,6 @@ declare module "fontkit" {
 export const styles = ["normal", "italic", "oblique"] as const;
 type Style = typeof styles[number];
 
-const weights = {
-  thin: 100,
-  hairline: 100,
-  "extra light": 200,
-  "ultra light": 200,
-  light: 300,
-  normal: 400,
-  medium: 500,
-  "semi bold": 600,
-  "demi bold": 600,
-  bold: 700,
-  "extra bold": 800,
-  "ultra bold": 800,
-  black: 900,
-  heavy: 900,
-} as const;
-
-type WeightKey = keyof typeof weights;
-type WeightValue = typeof weights[WeightKey];
-
 export const parseSubfamily = (subfamily: string) => {
   const subfamilyLow = subfamily.toLowerCase();
   let style: Style = "normal";
@@ -41,15 +22,16 @@ export const parseSubfamily = (subfamily: string) => {
       break;
     }
   }
-  let weight: WeightValue = weights.normal;
-  let possibleWeight: WeightKey;
-  for (possibleWeight in weights) {
-    if (subfamilyLow.includes(possibleWeight)) {
-      weight = weights[possibleWeight];
+
+  let weight: FontWeight = "400";
+  for (weight in fontWeights) {
+    const { name } = fontWeights[weight];
+    const { alt } = fontWeights[weight];
+    if (subfamilyLow.includes(name) || subfamilyLow.includes(alt)) {
       break;
     }
   }
-  return { style, weight };
+  return { style, weight: Number(weight) };
 };
 
 export const normalizeFamily = (family: string, subfamily: string) => {
@@ -70,7 +52,7 @@ type FontData = {
   format: FontFormat;
   family: string;
   style: Style;
-  weight: WeightValue;
+  weight: number;
 };
 
 export const getFontData = (data: Uint8Array): FontData => {
