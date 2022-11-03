@@ -13,7 +13,7 @@ import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
 import { Header } from "../../lib/header";
-import { useState, useCallback } from "react";
+import { useState, useCallback, ComponentProps } from "react";
 import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
 import { useDebounce, useUnmount } from "react-use";
@@ -37,7 +37,8 @@ const Group = styled(Flex, {
 });
 
 const fieldNames = ["name", "path"] as const;
-type EditablePage = Pick<Page, typeof fieldNames[number]>;
+type FieldName = typeof fieldNames[number];
+type EditablePage = Pick<Page, FieldName>;
 
 const FormFields = ({
   disabled,
@@ -47,9 +48,9 @@ const FormFields = ({
 }: {
   disabled?: boolean;
   values: EditablePage;
-  onChange: <FieldName extends keyof EditablePage>(event: {
-    field: FieldName;
-    value: EditablePage[FieldName];
+  onChange: <Name extends FieldName>(event: {
+    field: Name;
+    value: EditablePage[Name];
   }) => void;
   fieldErrors: ZodError["formErrors"]["fieldErrors"];
 }) => {
@@ -121,6 +122,39 @@ export const NewPageSettings = ({
 
   const [values, setValues] = useState<EditablePage>({ name: "", path: "" });
 
+  const handleSubmit = () => {
+    fetcher.submit(values, {
+      method: "put",
+      action: `/rest/pages/${projectId}`,
+    });
+  };
+
+  return (
+    <NewPageSettingsView
+      onSubmit={handleSubmit}
+      onClose={onClose}
+      isSubmitting={isSubmitting}
+      fieldErrors={fieldErrors}
+      disabled={isSubmitting}
+      values={values}
+      onChange={({ field, value }) => {
+        resetFieldError(field);
+        setValues((values) => ({ ...values, [field]: value }));
+      }}
+    />
+  );
+};
+
+const NewPageSettingsView = ({
+  onSubmit,
+  isSubmitting,
+  onClose,
+  ...formFieldsProps
+}: {
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  onClose?: () => void;
+} & ComponentProps<typeof FormFields>) => {
   return (
     <>
       <Header
@@ -134,22 +168,19 @@ export const NewPageSettings = ({
         }
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>
-        <fetcher.Form method="put" action={`/rest/pages/${projectId}`}>
-          <FormFields
-            fieldErrors={fieldErrors}
-            disabled={isSubmitting}
-            values={values}
-            onChange={({ field, value }) => {
-              resetFieldError(field);
-              setValues((values) => ({ ...values, [field]: value }));
-            }}
-          />
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          <FormFields {...formFieldsProps} />
           <Group css={{ alignItems: "end" }}>
             <Button type="submit" variant="green" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create"}
             </Button>
           </Group>
-        </fetcher.Form>
+        </form>
       </Box>
     </>
   );
@@ -183,7 +214,6 @@ export const PageSettings = ({
 
   const [pages] = usePages();
   const page = pages && projectUtils.pages.findById(pages, pageId);
-  const isHomePage = pageId === pages?.homePage.id;
 
   const [unsavedValues, setUnsavedValues] = useState<Partial<EditablePage>>({});
   const [submittedValues, setSubmittedValues] = useState<Partial<EditablePage>>(
@@ -196,9 +226,9 @@ export const PageSettings = ({
   });
 
   const handleChange = useCallback(
-    <FieldName extends keyof EditablePage>(event: {
-      field: FieldName;
-      value: EditablePage[FieldName];
+    <Name extends FieldName>(event: {
+      field: Name;
+      value: EditablePage[Name];
     }) => {
       resetFieldError(event.field);
       setUnsavedValues((values) => ({ ...values, [event.field]: event.value }));
@@ -272,17 +302,35 @@ export const PageSettings = ({
   }
 
   return (
+    <PageSettingsView
+      isHomePage={pageId === pages?.homePage.id}
+      onClose={onClose}
+      onDelete={hanldeDelete}
+      fieldErrors={fieldErrors}
+      values={{ ...page, ...submittedValues, ...unsavedValues }}
+      onChange={handleChange}
+    />
+  );
+};
+
+const PageSettingsView = ({
+  isHomePage,
+  onDelete,
+  onClose,
+  ...formFieldsProps
+}: {
+  isHomePage: boolean;
+  onDelete: () => void;
+  onClose?: () => void;
+} & ComponentProps<typeof FormFields>) => {
+  return (
     <>
       <Header
         title="Page Settings"
         suffix={
           <>
             {isHomePage === false && (
-              <IconButton
-                size="2"
-                onClick={hanldeDelete}
-                aria-label="Delete page"
-              >
+              <IconButton size="2" onClick={onDelete} aria-label="Delete page">
                 <TrashIcon />
               </IconButton>
             )}
@@ -299,11 +347,7 @@ export const PageSettings = ({
         }
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>
-        <FormFields
-          fieldErrors={fieldErrors}
-          values={{ ...page, ...submittedValues, ...unsavedValues }}
-          onChange={handleChange}
-        />
+        <FormFields {...formFieldsProps} />
       </Box>
     </>
   );
