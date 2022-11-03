@@ -175,7 +175,7 @@ export const TabContent = (props: TabContentProps) => {
     }
   };
 
-  const NEW_PAGE = "new-page";
+  const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
 
   if (currentPageId === undefined || project === undefined) {
@@ -188,7 +188,7 @@ export const TabContent = (props: TabContentProps) => {
         onClose={() => props.onSetActiveTab("none")}
         onNewPage={() =>
           setEditingPageId((current) =>
-            current === NEW_PAGE ? undefined : NEW_PAGE
+            current === newPageId ? undefined : newPageId
           )
         }
         onSelect={handleSelect}
@@ -197,7 +197,7 @@ export const TabContent = (props: TabContentProps) => {
         editingPageId={editingPageId}
       />
       <SettingsPanel isOpen={editingPageId !== undefined}>
-        {editingPageId === NEW_PAGE && (
+        {editingPageId === newPageId && (
           <NewPageSettings
             projectId={project.id}
             onClose={() => setEditingPageId(undefined)}
@@ -207,7 +207,7 @@ export const TabContent = (props: TabContentProps) => {
             }}
           />
         )}
-        {editingPageId !== NEW_PAGE && editingPageId !== undefined && (
+        {editingPageId !== newPageId && editingPageId !== undefined && (
           <PageSettings
             onClose={() => setEditingPageId(undefined)}
             onDeleted={() => {
