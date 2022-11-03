@@ -3,12 +3,12 @@ import { db } from "@webstudio-is/project/index.server";
 import { type Pages, utils } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
-import {
+import { sentryException } from "~/shared/sentry";
+import type {
   CreatePageData,
   DeletePageData,
   EditPageData,
-} from "~/designer/features/sidebar-left/panels/pages/settings";
-import { sentryException } from "~/shared/sentry";
+} from "~/shared/pages";
 
 const nonEmptyString = z
   .string({

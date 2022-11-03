@@ -7,7 +7,6 @@ import {
   useId,
   styled,
   Flex,
-  toastNonFieldErrors,
   InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { useFetcher, type Fetcher } from "@remix-run/react";
@@ -20,23 +19,22 @@ import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
 import { useDebounce, useUnmount } from "react-use";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
+import {
+  type FetcherData,
+  normalizeErrors,
+  toastNonFieldErrors,
+} from "~/shared/form-utils";
+import type {
+  DeletePageData,
+  EditPageData,
+  CreatePageData,
+} from "~/shared/pages";
 
 const Group = styled(Flex, {
   marginBottom: "$3",
   gap: "$2",
   defaultVariants: { direction: "column" },
 });
-
-type FetcherData<Payload> =
-  | ({ ok: true } & Payload)
-  | { errors: string | ZodError["formErrors"] };
-
-const normalizeErrors = (
-  errors: string | ZodError["formErrors"]
-): ZodError["formErrors"] =>
-  typeof errors === "string"
-    ? { formErrors: [errors], fieldErrors: {} }
-    : errors;
 
 type EditablePage = Omit<Page, "treeId" | "id">;
 
@@ -118,8 +116,6 @@ const FormFields = ({
   );
 };
 
-export type CreatePageData = FetcherData<{ page: Page }>;
-
 export const NewPageSettings = ({
   onClose,
   onSuccess,
@@ -164,12 +160,6 @@ export const NewPageSettings = ({
     </>
   );
 };
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type EditPageData = FetcherData<{}>;
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type DeletePageData = FetcherData<{}>;
 
 const toFormData = (page: Partial<EditablePage> & { id: string }): FormData => {
   const formData = new FormData();
