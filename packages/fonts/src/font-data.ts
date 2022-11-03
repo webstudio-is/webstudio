@@ -52,6 +52,20 @@ export const parseSubfamily = (subfamily: string) => {
   return { style, weight };
 };
 
+export const normalizeFamily = (family: string, subfamily: string) => {
+  let simplifiedFamily = family;
+  subfamily
+    .trim()
+    .split(" ")
+    .forEach((word: string) => {
+      simplifiedFamily = simplifiedFamily.replace(
+        new RegExp(word.trim(), "i"),
+        ""
+      );
+    });
+  return simplifiedFamily.trim();
+};
+
 type FontData = {
   format: FontFormat;
   family: string;
@@ -62,11 +76,11 @@ type FontData = {
 export const getFontData = (data: Uint8Array): FontData => {
   const font = fontkit.create(data as Buffer);
   const format = font.type.toLowerCase() as FontData["format"];
-  const family = font.getName("fontFamily");
+  const originalFamily = font.getName("fontFamily");
   const subfamily =
     font.getName("preferredSubfamily") ?? font.getName("fontSubfamily");
   const parsedSubfamily = parseSubfamily(subfamily);
-
+  const family = normalizeFamily(originalFamily, subfamily);
   return {
     format,
     family,

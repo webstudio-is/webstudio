@@ -1,2 +1,2 @@
-export { getFontData } from "./src/get-font-data";
+export { getFontData } from "./src/font-data";
 export * from "./src/schema";
