@@ -65,7 +65,13 @@ export const StylePanel = ({
           }}
         />
       </Box>
-      <Box css={{ overflow: "auto" }}>
+
+      <Box
+        css={{
+          overflow: "auto",
+          position: "relative", // Hack - value picker popover positioning depends on it
+        }}
+      >
         <StyleSettings
           search={search}
           selectedInstanceData={selectedInstanceData}

@@ -1,5 +1,5 @@
 import React from "react";
-import { Cross1Icon } from "@webstudio-is/icons";
+import { CrossIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
 import { panelStyles } from "./panel";
@@ -18,6 +18,7 @@ export const Popover = ({ children, ...props }: PopoverProps) => {
 };
 
 const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
+  backgroundColor: "white",
   minWidth: 200,
   minHeight: "$6",
   maxWidth: 265,
@@ -75,7 +76,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
         <Text variant="title">{title}</Text>
         <PopoverClose asChild>
           <IconButton size="2" css={{ marginRight: "$2" }} aria-label="Close">
-            <Cross1Icon />
+            <CrossIcon />
           </IconButton>
         </PopoverClose>
       </Flex>
