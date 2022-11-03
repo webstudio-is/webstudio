@@ -5,6 +5,7 @@ import {
   TreeNode,
   type TreeItemRenderProps,
   styled,
+  Flex,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import {
@@ -71,7 +72,6 @@ const staticTreeProps = {
 };
 
 const MenuButton = styled(IconButton, {
-  mr: "$2",
   color: "$hint",
   "&:hover, &:focus": { color: "$hiContrast" },
   variants: {
@@ -115,18 +115,21 @@ const PagesPanel = ({
         <TreeItemBody
           {...props}
           suffix={
-            onEdit &&
-            (isEditing ? (
-              <ChevronRightIcon />
-            ) : (
-              <MenuButton
-                aria-label="Page settings"
-                parentSelected={isSelected}
-                onClick={() => onEdit(props.itemData.id)}
-              >
-                <MenuIcon />
-              </MenuButton>
-            ))
+            onEdit && (
+              <Flex css={{ mr: "$2" }} align="center">
+                {isEditing ? (
+                  <ChevronRightIcon />
+                ) : (
+                  <MenuButton
+                    aria-label="Page settings"
+                    parentSelected={isSelected}
+                    onClick={() => onEdit(props.itemData.id)}
+                  >
+                    <MenuIcon />
+                  </MenuButton>
+                )}
+              </Flex>
+            )
           }
           alwaysShowSuffix={isEditing}
           forceFocus={isEditing}
