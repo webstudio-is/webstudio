@@ -120,6 +120,7 @@ const PagesPanel = ({
               <ChevronRightIcon />
             ) : (
               <MenuButton
+                aria-label="Page settings"
                 parentSelected={isSelected}
                 onClick={() => onEdit(props.itemData.id)}
               >

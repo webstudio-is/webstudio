@@ -278,12 +278,20 @@ export const PageSettings = ({
         suffix={
           <>
             {isHomePage === false && (
-              <IconButton size="2" onClick={hanldeDelete} aria-label="Cancel">
+              <IconButton
+                size="2"
+                onClick={hanldeDelete}
+                aria-label="Delete page"
+              >
                 <TrashIcon />
               </IconButton>
             )}
             {onClose && (
-              <IconButton size="2" onClick={onClose} aria-label="Cancel">
+              <IconButton
+                size="2"
+                onClick={onClose}
+                aria-label="Close page settings"
+              >
                 <ChevronDoubleLeftIcon />
               </IconButton>
             )}
