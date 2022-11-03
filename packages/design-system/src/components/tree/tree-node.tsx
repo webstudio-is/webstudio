@@ -16,6 +16,30 @@ export const getPlacementIndicatorAlignment = (depth: number) => {
   return depth * INDENT + ITEM_PADDING;
 };
 
+const suffixWidthVar = cssVars.define("suffix-width");
+
+const itemButtonVars = {
+  paddingRight: cssVars.define("item-button-padding-right"),
+};
+const getItemButtonCssVars = ({
+  suffixVisible,
+}: {
+  suffixVisible: boolean;
+}) => {
+  if (suffixVisible) {
+    return {
+      // We have to use a padding to make space for the suffix
+      // because we can't put it inside ItemButton (see comment in TreeItemBody)
+      [itemButtonVars.paddingRight]: `calc(${ITEM_PADDING}px + ${cssVars.use(
+        suffixWidthVar,
+        "0"
+      )})`,
+    };
+  }
+  return {
+    [itemButtonVars.paddingRight]: `${ITEM_PADDING}px`,
+  };
+};
 const ItemButton = styled("button", {
   all: "unset",
   display: "flex",
@@ -27,7 +51,7 @@ const ItemButton = styled("button", {
   pt: 0,
   pb: 0,
   pl: ITEM_PADDING,
-  pr: ITEM_PADDING,
+  pr: cssVars.use(itemButtonVars.paddingRight),
   flexBasis: 0,
   flexGrow: 1,
   position: "relative",
@@ -99,18 +123,38 @@ const CollapsibleTrigger = styled(Collapsible.Trigger, {
 
 const TriggerPlaceholder = styled(Box, { width: INDENT });
 
+const suffixContainerVars = {
+  opacity: cssVars.define("suffix-opacity"),
+  pointerEvents: cssVars.define("suffix-pointer-events"),
+};
+const getSuffixContainerCssVars = ({
+  suffixVisible,
+}: {
+  suffixVisible: boolean;
+}) => {
+  if (suffixVisible) {
+    return {
+      [suffixContainerVars.opacity]: "1",
+      [suffixContainerVars.pointerEvents]: "all",
+    };
+  }
+  return {
+    [suffixContainerVars.opacity]: "0",
+    [suffixContainerVars.pointerEvents]: "none",
+  };
+};
 const SuffixContainer = styled(Flex, {
   position: "absolute",
   alignItems: "center",
-  right: 6,
+  right: 0,
   top: 0,
   bottom: 0,
   defaultVariants: { align: "center" },
 
   // We use opacity to hide the suffix buttons
   // becuase when `visibility` is used it's impossible to focus the button.
-  opacity: "0",
-  pointerEvents: "none",
+  opacity: cssVars.use(suffixContainerVars.opacity),
+  pointerEvents: cssVars.use(suffixContainerVars.pointerEvents),
 });
 
 const hoverStyle = {
@@ -126,12 +170,12 @@ const hoverStyle = {
   boxSizing: "border-box",
 };
 
-const suffixWidthVar = cssVars.define("suffix-width");
-
 const ItemContainer = styled(Flex, {
   color: "$hiContrast",
   alignItems: "center",
   position: "relative",
+  ...getItemButtonCssVars({ suffixVisible: false }),
+  ...getSuffixContainerCssVars({ suffixVisible: false }),
 
   variants: {
     isSelected: {
@@ -142,15 +186,8 @@ const ItemContainer = styled(Flex, {
     },
     suffixVisible: {
       true: {
-        [`& ${ItemButton}`]: {
-          // We have to use a padding to make space for the suffix
-          // because we can't put it inside ItemButton (see comment below)
-          paddingRight: cssVars.use(suffixWidthVar, "0"),
-        },
-        [`& ${SuffixContainer}`]: {
-          opacity: "1",
-          pointerEvents: "all",
-        },
+        ...getItemButtonCssVars({ suffixVisible: true }),
+        ...getSuffixContainerCssVars({ suffixVisible: true }),
       },
     },
     enableHoverState: {
@@ -158,12 +195,9 @@ const ItemContainer = styled(Flex, {
         "&:hover:after": hoverStyle,
 
         // Suffix is also visible on hover, which we don't track using JavaScript
-        [`&:hover ${ItemButton}`]: {
-          paddingRight: cssVars.use(suffixWidthVar, "0"),
-        },
-        [`&:hover ${SuffixContainer}`]: {
-          opacity: "1",
-          pointerEvents: "all",
+        "&:hover": {
+          ...getItemButtonCssVars({ suffixVisible: true }),
+          ...getSuffixContainerCssVars({ suffixVisible: true }),
         },
       },
     },
@@ -201,7 +235,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   isExpanded,
   children,
   suffix,
-  suffixWidth = suffix ? "32px" : "0",
+  suffixWidth = suffix ? "24px" : "0",
   alwaysShowSuffix = false,
   forceFocus = false,
   selectionTrigger = "click",
@@ -282,7 +316,7 @@ export const TreeItemBody = <Data extends { id: string }>({
       {shouldRenderExpandButton && (
         <CollapsibleTrigger
           style={{ left: (level - 1) * INDENT + ITEM_PADDING }}
-          // We don't want a this trigger to be focusable
+          // We don't want this trigger to be focusable
           tabIndex={-1}
         >
           {isExpanded ? <TriangleDownIcon /> : <TriangleRightIcon />}
