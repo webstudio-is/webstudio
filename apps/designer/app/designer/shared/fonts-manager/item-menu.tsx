@@ -8,7 +8,7 @@ import {
   DropdownMenuPortal,
   styled,
 } from "@webstudio-is/design-system";
-import { DotsHorizontalIcon } from "@webstudio-is/icons";
+import { MenuIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 
 const MenuButton = styled(IconButton, {
@@ -64,7 +64,7 @@ const ItemMenu = ({
             event.stopPropagation();
           }}
         >
-          <DotsHorizontalIcon />
+          <MenuIcon />
         </MenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
