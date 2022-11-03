@@ -48,10 +48,10 @@ const FormFields = ({
 }: {
   disabled?: boolean;
   values?: EditablePage;
-  onChange?: <FieldName extends keyof EditablePage>(
-    field: FieldName,
-    value: EditablePage[FieldName]
-  ) => void;
+  onChange?: <FieldName extends keyof EditablePage>(event: {
+    field: FieldName;
+    value: EditablePage[FieldName];
+  }) => void;
   fetcher: Fetcher<FetcherData<unknown>>;
 }) => {
   const fieldIds = {
@@ -91,7 +91,7 @@ const FormFields = ({
             value={values?.name}
             onChange={(event) => {
               resetErrors("name");
-              onChange?.("name", event.target.value);
+              onChange?.({ field: "name", value: event.target.value });
             }}
           />
         </InputErrorsTooltip>
@@ -109,7 +109,7 @@ const FormFields = ({
             value={values?.path}
             onChange={(event) => {
               resetErrors("path");
-              onChange?.("path", event.target.value);
+              onChange?.({ field: "path", value: event.target.value });
             }}
           />
         </InputErrorsTooltip>
@@ -207,11 +207,11 @@ export const PageSettings = ({
   );
 
   const handleChange = useCallback(
-    <FieldName extends keyof EditablePage>(
-      field: FieldName,
-      value: EditablePage[FieldName]
-    ) => {
-      setUnsavedValues((values) => ({ ...values, [field]: value }));
+    <FieldName extends keyof EditablePage>(event: {
+      field: FieldName;
+      value: EditablePage[FieldName];
+    }) => {
+      setUnsavedValues((values) => ({ ...values, [event.field]: event.value }));
     },
     []
   );
