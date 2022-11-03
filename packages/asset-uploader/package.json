@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
-    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
+    "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
@@ -37,5 +37,13 @@
     "!*.test.*"
   ],
   "license": "MIT",
-  "private": false
+  "private": false,
+  "tsup": {
+    "entry": [
+      "src/index.ts",
+      "src/index.server.ts"
+    ],
+    "format": "cjs",
+    "outDir": "lib"
+  }
 }
