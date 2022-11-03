@@ -8,13 +8,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
-import {
-  ColorControl,
-  TextControl,
-  SelectControl,
-  MenuControl,
-  FontFamilyControl,
-} from "./controls";
+import * as controls from "./controls";
 import {
   LayoutSection,
   FlexChildSection,
