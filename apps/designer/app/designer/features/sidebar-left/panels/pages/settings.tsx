@@ -4,25 +4,25 @@ import {
   Box,
   Label,
   TextField,
-  useId,
   styled,
   Flex,
   InputErrorsTooltip,
 } from "@webstudio-is/design-system";
-import { useFetcher, type Fetcher } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
 import { Header } from "../../lib/header";
-import { useRef, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
 import { useDebounce, useUnmount } from "react-use";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
-  type FetcherData,
   normalizeErrors,
   toastNonFieldErrors,
+  useIds,
+  useFetcherErrors,
 } from "~/shared/form-utils";
 import type {
   DeletePageData,
@@ -36,43 +36,24 @@ const Group = styled(Flex, {
   defaultVariants: { direction: "column" },
 });
 
-type EditablePage = Omit<Page, "treeId" | "id">;
+const fieldNames = ["name", "path"] as const;
+type EditablePage = Pick<Page, typeof fieldNames[number]>;
 
 const FormFields = ({
   disabled,
   values,
   onChange,
-  fetcher,
+  fieldErrors,
 }: {
   disabled?: boolean;
-  values?: EditablePage;
-  onChange?: <FieldName extends keyof EditablePage>(event: {
+  values: EditablePage;
+  onChange: <FieldName extends keyof EditablePage>(event: {
     field: FieldName;
     value: EditablePage[FieldName];
   }) => void;
-  fetcher: Fetcher<FetcherData<unknown>>;
+  fieldErrors: ZodError["formErrors"]["fieldErrors"];
 }) => {
-  const fieldIds = {
-    name: useId(),
-    path: useId(),
-  } as const;
-
-  const fieldNames = useRef(Object.keys(fieldIds));
-
-  const [fieldErrors, setFieldErrors] = useState<
-    ZodError["formErrors"]["fieldErrors"]
-  >({});
-
-  useOnFetchEnd(fetcher, (data) => {
-    if ("errors" in data) {
-      const errors = normalizeErrors(data.errors);
-      toastNonFieldErrors(errors, fieldNames.current);
-      setFieldErrors(errors.fieldErrors);
-    }
-  });
-
-  const resetErrors = (fieldName: keyof typeof fieldIds) =>
-    setFieldErrors(({ [fieldName]: _, ...rest }) => rest);
+  const fieldIds = useIds(fieldNames);
 
   return (
     <>
@@ -88,8 +69,7 @@ const FormFields = ({
             disabled={disabled}
             value={values?.name}
             onChange={(event) => {
-              resetErrors("name");
-              onChange?.({ field: "name", value: event.target.value });
+              onChange({ field: "name", value: event.target.value });
             }}
           />
         </InputErrorsTooltip>
@@ -106,8 +86,7 @@ const FormFields = ({
             disabled={disabled}
             value={values?.path}
             onChange={(event) => {
-              resetErrors("path");
-              onChange?.({ field: "path", value: event.target.value });
+              onChange({ field: "path", value: event.target.value });
             }}
           />
         </InputErrorsTooltip>
@@ -135,6 +114,13 @@ export const NewPageSettings = ({
 
   const isSubmitting = fetcher.state !== "idle";
 
+  const { fieldErrors, resetFieldError } = useFetcherErrors({
+    fetcher,
+    fieldNames,
+  });
+
+  const [values, setValues] = useState<EditablePage>({ name: "", path: "" });
+
   return (
     <>
       <Header
@@ -149,7 +135,15 @@ export const NewPageSettings = ({
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>
         <fetcher.Form method="put" action={`/rest/pages/${projectId}`}>
-          <FormFields fetcher={fetcher} disabled={isSubmitting} />
+          <FormFields
+            fieldErrors={fieldErrors}
+            disabled={isSubmitting}
+            values={values}
+            onChange={({ field, value }) => {
+              resetFieldError(field);
+              setValues((values) => ({ ...values, [field]: value }));
+            }}
+          />
           <Group css={{ alignItems: "end" }}>
             <Button type="submit" variant="green" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create"}
@@ -196,14 +190,20 @@ export const PageSettings = ({
     {}
   );
 
+  const { fieldErrors, resetFieldError } = useFetcherErrors({
+    fetcher,
+    fieldNames,
+  });
+
   const handleChange = useCallback(
     <FieldName extends keyof EditablePage>(event: {
       field: FieldName;
       value: EditablePage[FieldName];
     }) => {
+      resetFieldError(event.field);
       setUnsavedValues((values) => ({ ...values, [event.field]: event.value }));
     },
-    []
+    [resetFieldError]
   );
 
   useDebounce(
@@ -300,7 +300,7 @@ export const PageSettings = ({
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>
         <FormFields
-          fetcher={fetcher}
+          fieldErrors={fieldErrors}
           values={{ ...page, ...submittedValues, ...unsavedValues }}
           onChange={handleChange}
         />

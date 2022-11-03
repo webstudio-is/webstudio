@@ -1,5 +1,8 @@
+import type { Fetcher } from "@remix-run/react";
 import { toast } from "@webstudio-is/design-system";
+import { useCallback, useState } from "react";
 import type { ZodError } from "zod";
+import { useOnFetchEnd } from "~/shared/fetcher";
 
 export type FetcherData<Payload> =
   | ({ ok: true } & Payload)
@@ -12,11 +15,40 @@ export const normalizeErrors = (
     ? { formErrors: [errors], fieldErrors: {} }
     : errors;
 
+export const useFetcherErrors = <FieldName extends string>({
+  fetcher,
+  fieldNames,
+}: {
+  fetcher: Fetcher<FetcherData<unknown>>;
+  fieldNames?: readonly FieldName[];
+}): {
+  fieldErrors: ZodError["formErrors"]["fieldErrors"];
+  resetFieldError: (fieldName: FieldName) => void;
+} => {
+  const [fieldErrors, setFieldErrors] = useState<
+    ZodError["formErrors"]["fieldErrors"]
+  >({});
+
+  useOnFetchEnd(fetcher, (data) => {
+    if ("errors" in data) {
+      const errors = normalizeErrors(data.errors);
+      toastNonFieldErrors(errors, fieldNames);
+      setFieldErrors(errors.fieldErrors);
+    }
+  });
+
+  const resetFieldError = useCallback((fieldName: FieldName) => {
+    setFieldErrors(({ [fieldName]: _, ...rest }) => rest);
+  }, []);
+
+  return { fieldErrors, resetFieldError };
+};
+
 // Show a toast for each of formErrors
 // as well as fieldErrors which we cannot display near a corresponding field
 export const toastNonFieldErrors = (
   errors: ZodError["formErrors"],
-  knownFields?: string[]
+  knownFields?: readonly string[]
 ) => {
   for (const message of errors.formErrors) {
     toast.error(message);
