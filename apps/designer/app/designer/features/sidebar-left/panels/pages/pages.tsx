@@ -71,14 +71,14 @@ const staticTreeProps = {
 
 const PagesPanel = ({
   onClose,
-  onNewPage,
+  onCreateNewPage,
   onSelect,
   selectedPageId,
   onEdit,
   editingPageId,
 }: {
   onClose?: () => void;
-  onNewPage?: () => void;
+  onCreateNewPage?: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
   onEdit?: (pageId: string) => void;
@@ -134,10 +134,10 @@ const PagesPanel = ({
         title="Pages"
         suffix={
           <>
-            {onNewPage && (
+            {onCreateNewPage && (
               <IconButton
                 size="2"
-                onClick={() => onNewPage()}
+                onClick={() => onCreateNewPage()}
                 aria-label="New Page"
               >
                 <NewPageIcon />
@@ -186,7 +186,7 @@ export const TabContent = (props: TabContentProps) => {
     <>
       <PagesPanel
         onClose={() => props.onSetActiveTab("none")}
-        onNewPage={() =>
+        onCreateNewPage={() =>
           setEditingPageId((current) =>
             current === newPageId ? undefined : newPageId
           )
