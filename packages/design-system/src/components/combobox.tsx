@@ -52,7 +52,7 @@ const ListboxItem = styled("li", itemCss, {
   margin: 0,
 });
 
-export const ListboxItemBase: ForwardRefRenderFunction<
+const ListboxItemBase: ForwardRefRenderFunction<
   HTMLLIElement,
   ComponentProps<typeof ListboxItem> & {
     disabled?: boolean;
