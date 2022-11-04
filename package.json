@@ -41,5 +41,8 @@
   "lint-staged": {
     "*.{ts,tsx,js,json,css,md}": "prettier --write"
   },
-  "prettier": {}
+  "prettier": {},
+  "resolutions": {
+    "esbuild": "0.15.13"
+  }
 }
