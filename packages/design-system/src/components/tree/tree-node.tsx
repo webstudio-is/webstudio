@@ -238,14 +238,14 @@ export const TreeItemBody = <Data extends { id: string }>({
   suffixWidth = suffix ? "$sizes$5" : "0",
   alwaysShowSuffix = false,
   forceFocus = false,
-  selectionTrigger = "click",
+  selectionEvent = "click",
 }: TreeItemRenderProps<Data> & {
   children: React.ReactNode;
   suffix?: React.ReactNode;
   suffixWidth?: string;
   alwaysShowSuffix?: boolean;
   forceFocus?: boolean;
-  selectionTrigger?: "click" | "focus";
+  selectionEvent?: "click" | "focus";
 }) => {
   const [focusTarget, setFocusTarget] = useState<
     "item-button" | "suffix" | undefined
@@ -271,10 +271,10 @@ export const TreeItemBody = <Data extends { id: string }>({
     if (onSelect === undefined) {
       return {};
     }
-    return selectionTrigger === "click"
+    return selectionEvent === "click"
       ? { handleClick: () => onSelect(itemData.id) }
       : { handleFocus: () => onSelect(itemData.id) };
-  }, [selectionTrigger, onSelect, itemData.id]);
+  }, [selectionEvent, onSelect, itemData.id]);
 
   const isSelected = itemData.id === selectedItemId;
   const isDragging = dropTargetItemId !== undefined;

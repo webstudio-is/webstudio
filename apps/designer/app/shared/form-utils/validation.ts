@@ -32,7 +32,7 @@ export const useFetcherErrors = <FieldName extends string>({
   useOnFetchEnd(fetcher, (data) => {
     if ("errors" in data) {
       const errors = normalizeErrors(data.errors);
-      toastNonFieldErrors(errors, fieldNames);
+      toastUnknownFieldErrors(errors, fieldNames);
       setFieldErrors(errors.fieldErrors);
     }
   });
@@ -46,7 +46,7 @@ export const useFetcherErrors = <FieldName extends string>({
 
 // Show a toast for each of formErrors
 // as well as fieldErrors which we cannot display near a corresponding field
-export const toastNonFieldErrors = (
+export const toastUnknownFieldErrors = (
   errors: ZodError["formErrors"],
   knownFields?: readonly string[]
 ) => {

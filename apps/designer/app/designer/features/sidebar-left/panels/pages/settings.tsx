@@ -20,7 +20,7 @@ import { useDebounce, useUnmount } from "react-use";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
   normalizeErrors,
-  toastNonFieldErrors,
+  toastUnknownFieldErrors,
   useIds,
   useFetcherErrors,
 } from "~/shared/form-utils";
@@ -199,12 +199,12 @@ const toFormData = (page: Partial<EditablePage> & { id: string }): FormData => {
 
 export const PageSettings = ({
   onClose,
-  onDeleted,
+  onDelete,
   pageId,
   projectId,
 }: {
   onClose?: () => void;
-  onDeleted?: () => void;
+  onDelete?: () => void;
   pageId: string;
   projectId: string;
 }) => {
@@ -269,7 +269,7 @@ export const PageSettings = ({
       { method: "post", action: `/rest/pages/${projectId}` },
       (data) => {
         if ("errors" in data) {
-          toastNonFieldErrors(normalizeErrors(data.errors), []);
+          toastUnknownFieldErrors(normalizeErrors(data.errors), []);
         }
       }
     );
@@ -290,11 +290,11 @@ export const PageSettings = ({
       { method: "delete", action: `/rest/pages/${projectId}` },
       (data) => {
         if ("errors" in data) {
-          toastNonFieldErrors(normalizeErrors(data.errors), []);
+          toastUnknownFieldErrors(normalizeErrors(data.errors), []);
         }
       }
     );
-    onDeleted?.();
+    onDelete?.();
   };
 
   if (page === undefined) {

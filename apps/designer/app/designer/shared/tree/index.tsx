@@ -43,7 +43,7 @@ const instanceRelatedProps = {
   renderItem(props: TreeItemRenderProps<Instance>) {
     const { Icon, label } = components[props.itemData.component];
     return (
-      <TreeItemBody {...props} selectionTrigger="focus">
+      <TreeItemBody {...props} selectionEvent="focus">
         <TreeItemLabel prefix={<Icon />}>{label}</TreeItemLabel>
       </TreeItemBody>
     );

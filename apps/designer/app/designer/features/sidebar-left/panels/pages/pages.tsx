@@ -75,7 +75,7 @@ const MenuButton = styled(IconButton, {
   color: "$hint",
   "&:hover, &:focus": { color: "$hiContrast" },
   variants: {
-    parentSelected: {
+    isParentSelected: {
       true: {
         color: "$loContrast",
         "&:hover, &:focus": { color: "$slate7" },
@@ -122,7 +122,7 @@ const PagesPanel = ({
                 ) : (
                   <MenuButton
                     aria-label="Page settings"
-                    parentSelected={isSelected}
+                    isParentSelected={isSelected}
                     onClick={() => onEdit(props.itemData.id)}
                   >
                     <MenuIcon />
@@ -229,7 +229,7 @@ export const TabContent = (props: TabContentProps) => {
         {editingPageId !== newPageId && editingPageId !== undefined && (
           <PageSettings
             onClose={() => setEditingPageId(undefined)}
-            onDeleted={() => {
+            onDelete={() => {
               setEditingPageId(undefined);
               if (editingPageId === currentPageId) {
                 handleSelect("home");
