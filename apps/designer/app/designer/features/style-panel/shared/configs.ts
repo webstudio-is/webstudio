@@ -39,7 +39,6 @@ import {
   ColumnGapIcon,
 } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import { FontWeight, fontWeights } from "@webstudio-is/fonts";
 
 type BaseStyleConfig = {
   label: string;
@@ -54,7 +53,8 @@ export type Control =
   | "MenuControl"
   | "SelectControl"
   | "FontFamilyControl"
-  | "ImageControl";
+  | "ImageControl"
+  | "FontWeightControl";
 
 export type StyleConfig = BaseStyleConfig & {
   control: Control;
@@ -62,7 +62,6 @@ export type StyleConfig = BaseStyleConfig & {
 };
 
 type Property = keyof typeof keywordValues;
-type Keywords = typeof keywordValues[Property];
 
 const getControl = (property: StyleProperty): Control => {
   if (property.toLocaleLowerCase().includes("color")) {
@@ -77,29 +76,11 @@ const getControl = (property: StyleProperty): Control => {
       return isFeatureEnabled("assets") ? "ImageControl" : "TextControl";
     }
     case "fontWeight": {
-      return "SelectControl";
+      return "FontWeightControl";
     }
   }
 
   return "TextControl";
-};
-
-const fontWeightItems = (Object.keys(fontWeights) as Array<FontWeight>).map(
-  (weight) => ({
-    label: `${weight} - ${fontWeights[weight].label}`,
-    name: weight,
-  })
-);
-
-const getItems = (property: StyleProperty, keywords: Keywords) => {
-  if (property === "fontWeight") {
-    return fontWeightItems;
-  }
-
-  return keywords.map((keyword) => ({
-    label: keyword,
-    name: keyword,
-  }));
 };
 
 const createStyleConfigs = () => {
@@ -122,7 +103,10 @@ const createStyleConfigs = () => {
         property,
         appliesTo: properties[property].appliesTo,
         control: getControl(property),
-        items: getItems(property, keywords),
+        items: keywords.map((keyword) => ({
+          label: keyword,
+          name: keyword,
+        })),
       };
     }
   }

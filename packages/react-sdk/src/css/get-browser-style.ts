@@ -43,7 +43,7 @@ export const getBrowserStyle = (element?: Element): Style => {
   // We need a single font-family that is actually rendered. Computed style will return a list of potential fonts.
   browserStyle.fontFamily = {
     type: "fontFamily",
-    value: detectFont(element),
+    value: [detectFont(element)],
   };
   return browserStyle;
 };
