@@ -57,7 +57,7 @@ export const toastUnknownFieldErrors = (
   if (knownFields !== undefined) {
     for (const fieldName in errors.fieldErrors) {
       if (knownFields.includes(fieldName) === false) {
-        for (const message of errors.fieldErrors[fieldName] as string[]) {
+        for (const message of errors.fieldErrors[fieldName] ?? []) {
           toast.error(`${fieldName}: ${message}`);
         }
       }
