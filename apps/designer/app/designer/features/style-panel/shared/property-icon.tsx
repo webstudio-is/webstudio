@@ -6,7 +6,7 @@ import { forwardRef } from "react";
 export const PropertyIcon = forwardRef<
   HTMLButtonElement,
   PropertyProps & { children: JSX.Element }
->(({ property, children }, forwardRef) => {
+>(({ property, children }) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
   return (
     <TextFieldIconButton state={isCurrentBreakpoint ? "breakpoint" : undefined}>

@@ -85,11 +85,11 @@ const useScrub = ({
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
 }): [
-  React.MutableRefObject<HTMLInputElement | null>,
+  React.MutableRefObject<HTMLDivElement | null>,
   React.MutableRefObject<HTMLInputElement | null>,
   boolean
 ] => {
-  const scrubRef = useRef<HTMLElement | null>(null);
+  const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isInputActive, setIsInputActive] = useState(false);
   const onChangeRef = useRef(onChange);
