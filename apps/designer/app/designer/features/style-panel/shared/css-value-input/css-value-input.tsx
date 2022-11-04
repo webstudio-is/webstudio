@@ -84,7 +84,12 @@ const useScrub = ({
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-}): [React.MutableRefObject<HTMLInputElement | null>, boolean] => {
+}): [
+  React.MutableRefObject<HTMLInputElement | null>,
+  React.MutableRefObject<HTMLInputElement | null>,
+  boolean
+] => {
+  const scrubRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isInputActive, setIsInputActive] = useState(false);
   const onChangeRef = useRef(onChange);
@@ -101,10 +106,15 @@ const useScrub = ({
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
-    if (type !== "unit" || unit === undefined || inputRef.current === null) {
+    if (
+      type !== "unit" ||
+      unit === undefined ||
+      inputRef.current === null ||
+      scrubRef.current === null
+    ) {
       return;
     }
-    const scrub = numericScrubControl(inputRef.current, {
+    const scrub = numericScrubControl(scrubRef.current, {
       initialValue: valueRef.current.value,
       onValueInput(event) {
         onChangeRef.current({
@@ -130,7 +140,7 @@ const useScrub = ({
     return scrub.disconnectedCallback;
   }, [type, unit]);
 
-  return [inputRef, isInputActive];
+  return [scrubRef, inputRef, isInputActive];
 };
 
 const useHandleKeyDown =
@@ -166,6 +176,7 @@ const useHandleKeyDown =
   };
 
 type CssValueInputProps = {
+  prefix?: JSX.Element;
   property: StyleProperty;
   value?: StyleValue;
   keywords?: Array<KeywordValue>;
@@ -207,6 +218,7 @@ type CssValueInputProps = {
  */
 
 export const CssValueInput = ({
+  prefix,
   property,
   value = unsetValue,
   keywords = [],
@@ -249,7 +261,7 @@ export const CssValueInput = ({
     },
   });
 
-  const [inputRef, isInputActive] = useScrub({
+  const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
     onChange,
     onChangeComplete,
@@ -295,6 +307,7 @@ export const CssValueInput = ({
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             inputRef={inputRef}
+            scrubRef={scrubRef}
             name={property}
             state={
               value.type === "invalid"
@@ -303,6 +316,7 @@ export const CssValueInput = ({
                 ? "active"
                 : undefined
             }
+            prefix={prefix}
             suffix={suffix}
             css={{ cursor: "default" }}
           />
