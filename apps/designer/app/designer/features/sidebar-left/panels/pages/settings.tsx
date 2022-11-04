@@ -108,7 +108,7 @@ export const NewPageSettings = ({
   const fetcher = useFetcher<CreatePageData>();
 
   useOnFetchEnd(fetcher, (data) => {
-    if ("ok" in data) {
+    if (data.status === "ok") {
       onSuccess?.(data.page);
     }
   });
@@ -268,7 +268,7 @@ export const PageSettings = ({
       toFormData({ id: pageId, ...submittedValues, ...unsavedValues }),
       { method: "post", action: `/rest/pages/${projectId}` },
       (data) => {
-        if ("errors" in data) {
+        if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);
         }
       }
@@ -276,7 +276,7 @@ export const PageSettings = ({
   });
 
   useOnFetchEnd(fetcher, (data) => {
-    if ("errors" in data) {
+    if (data.status === "error") {
       setUnsavedValues({ ...submittedValues, ...unsavedValues });
     }
     setSubmittedValues({});
@@ -289,7 +289,7 @@ export const PageSettings = ({
       { id: pageId },
       { method: "delete", action: `/rest/pages/${projectId}` },
       (data) => {
-        if ("errors" in data) {
+        if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);
         }
       }

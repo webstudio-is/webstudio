@@ -9,6 +9,7 @@ import type {
   DeletePageData,
   EditPageData,
 } from "~/shared/pages";
+import { type FetcherData, makeFieldError } from "~/shared/form-utils";
 
 const nonEmptyString = z
   .string({
@@ -42,7 +43,7 @@ const handlePut = async (
 ): Promise<CreatePageData> => {
   const result = CreatePageInput.safeParse(await request.formData());
   if (result.success === false) {
-    return { errors: result.error.formErrors };
+    return { status: "error", errors: result.error.formErrors };
   }
   const data = result.data;
 
@@ -50,7 +51,7 @@ const handlePut = async (
 
   const existingPage = utils.pages.findByPath(devBuild.pages, data.path);
   if (existingPage !== undefined) {
-    return fieldError("path", `Already used for "${existingPage.name}"`);
+    return makeFieldError("path", `Already used for "${existingPage.name}"`);
   }
 
   const updatedBuild = await db.build.addPage(devBuild.id, data);
@@ -61,7 +62,7 @@ const handlePut = async (
     throw new Error("New page not found");
   }
 
-  return { ok: true, page: newPage };
+  return { status: "ok", page: newPage };
 };
 
 const EditPageInput = zfd.formData({
@@ -76,7 +77,7 @@ const handlePost = async (
 ): Promise<EditPageData> => {
   const result = EditPageInput.safeParse(await request.formData());
   if (result.success === false) {
-    return { errors: result.error.formErrors };
+    return { status: "error", errors: result.error.formErrors };
   }
   const { id, ...data } = result.data;
 
@@ -85,13 +86,13 @@ const handlePost = async (
   if (data.path !== undefined) {
     const existingPage = utils.pages.findByPath(devBuild.pages, data.path);
     if (existingPage !== undefined && existingPage.id !== id) {
-      return fieldError("path", `Already used for "${existingPage.name}"`);
+      return makeFieldError("path", `Already used for "${existingPage.name}"`);
     }
   }
 
   await db.build.editPage(devBuild.id, id, data);
 
-  return { ok: true };
+  return { status: "ok" };
 };
 
 const DeletePageInput = zfd.formData({ id: z.string() });
@@ -102,22 +103,25 @@ const handleDelete = async (
 ): Promise<DeletePageData> => {
   const result = DeletePageInput.safeParse(await request.formData());
   if (result.success === false) {
-    return { errors: result.error.formErrors };
+    return { status: "error", errors: result.error.formErrors };
   }
   const { id } = result.data;
 
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
 
   if (devBuild.pages.homePage.id === id) {
-    return fieldError("id", `Can't delete the home page`);
+    return makeFieldError("id", `Can't delete the home page`);
   }
 
   await db.build.deletePage(devBuild.id, id);
 
-  return { ok: true };
+  return { status: "ok" };
 };
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({
+  request,
+  params,
+}): Promise<FetcherData<unknown>> => {
   try {
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);
@@ -139,6 +143,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   } catch (error) {
     sentryException({ error });
     return {
+      status: "error",
       errors: error instanceof Error ? error.message : String(error),
     };
   }
@@ -171,13 +176,4 @@ export const loader: LoaderFunction = async ({
       errors: error instanceof Error ? error.message : String(error),
     };
   }
-};
-
-const fieldError = (fieldName: string, error: string) => {
-  return {
-    errors: {
-      formErrors: [],
-      fieldErrors: { [fieldName]: [error] },
-    },
-  };
 };

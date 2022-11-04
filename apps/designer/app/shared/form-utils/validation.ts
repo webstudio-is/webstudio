@@ -5,8 +5,8 @@ import type { ZodError } from "zod";
 import { useOnFetchEnd } from "~/shared/fetcher";
 
 export type FetcherData<Payload> =
-  | ({ ok: true } & Payload)
-  | { errors: string | ZodError["formErrors"] };
+  | ({ status: "ok" } & Payload)
+  | { status: "error"; errors: string | ZodError["formErrors"] };
 
 export const normalizeErrors = (
   errors: string | ZodError["formErrors"]
@@ -30,7 +30,7 @@ export const useFetcherErrors = <FieldName extends string>({
   >({});
 
   useOnFetchEnd(fetcher, (data) => {
-    if ("errors" in data) {
+    if (data.status === "error") {
       const errors = normalizeErrors(data.errors);
       toastUnknownFieldErrors(errors, fieldNames);
       setFieldErrors(errors.fieldErrors);
@@ -63,4 +63,17 @@ export const toastUnknownFieldErrors = (
       }
     }
   }
+};
+
+export const makeFieldError = <Payload>(
+  fieldName: string,
+  error: string
+): FetcherData<Payload> => {
+  return {
+    status: "error",
+    errors: {
+      formErrors: [],
+      fieldErrors: { [fieldName]: [error] },
+    },
+  };
 };
