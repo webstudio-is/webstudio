@@ -8471,6 +8471,13 @@ detab@2.0.4:
   dependencies:
     repeat-string "^1.5.4"
 
+detect-font@^0.1.5:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/detect-font/-/detect-font-0.1.5.tgz#e9612bc2e9f87431b891847c1a5459d6b9a82eff"
+  integrity sha512-Ir0jJlsJ7hkpbqzpr8TB5grZTbhZ2Lk90Z0Yt1LpUd1xTZEl/bLhKypDyLc7jEeuuI8ZA0kmDwxARB4n0/jPTA==
+  dependencies:
+    is-element "^0.1.0"
+
 detect-indent@^6.0.0:
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-6.1.0.tgz#592485ebbbf6b3b1ab2be175c8393d04ca0d57e6"
@@ -11576,6 +11583,11 @@ is-dom@^1.0.0:
   dependencies:
     is-object "^1.0.1"
     is-window "^1.0.2"
+
+is-element@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/is-element/-/is-element-0.1.0.tgz#c43478df14ab02b7c66d7498fb5456600bfef1fb"
+  integrity sha512-qtlzvwm4bPrI6hBRHBhLWgp/fUeDaeCBRcT8eHhI7yP1C2g45AilloSAmbPgeAMm3InTgMy6z3ZImq9byMlYXg==
 
 is-extendable@^0.1.0, is-extendable@^0.1.1:
   version "0.1.1"
