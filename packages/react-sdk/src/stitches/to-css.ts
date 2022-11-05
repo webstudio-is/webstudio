@@ -2,12 +2,26 @@ import type { CSS } from "./stitches";
 import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 
-export const toValue = (value?: StyleValue): string => {
+type Options = {
+  withFallback: boolean;
+};
+
+const defaultOptions = {
+  withFallback: true,
+};
+
+export const toValue = (
+  value?: StyleValue,
+  { withFallback }: Options = defaultOptions
+): string => {
   if (value === undefined) return "";
   if (value.type === "unit") {
     return value.value + (value.unit === "number" ? "" : value.unit);
   }
   if (value.type === "fontFamily") {
+    if (withFallback === false) {
+      return value.value[0];
+    }
     const family = value.value[0];
     const fallbacks = SYSTEM_FONTS.get(family);
     if (Array.isArray(fallbacks)) {
@@ -23,7 +37,8 @@ export const toValue = (value?: StyleValue): string => {
  */
 export const toCss = (
   cssRules: Array<CssRule>,
-  breakpoints: Array<Breakpoint>
+  breakpoints: Array<Breakpoint>,
+  options: Options = defaultOptions
 ): CSS => {
   const css: CSS = {};
 
@@ -45,7 +60,7 @@ export const toCss = (
     for (const property in cssRule.style) {
       const value = cssRule.style[property as StyleProperty];
       if (value === undefined) continue;
-      style[property] = toValue(value);
+      style[property] = toValue(value, options);
     }
 
     if (cssRule.breakpoint in breakpointsMap) {

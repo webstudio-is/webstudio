@@ -67,7 +67,7 @@ export const FontWeightControl = ({
   });
 
   const { labels, selectedLabel, availableFontWeights } = useFontWeights(
-    toValue(fontFamily),
+    toValue(fontFamily, { withFallback: false }),
     toValue(fontWeight)
   );
 
