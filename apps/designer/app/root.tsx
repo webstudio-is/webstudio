@@ -4,12 +4,15 @@ import { Outlet } from "@remix-run/react";
 import { withSentryRouteTracing } from "@sentry/remix";
 import { ErrorBoundary } from "@sentry/remix";
 import { OutletProps } from "react-router-dom";
+import { PersistentFetcherProvider } from "./shared/fetcher";
 
 const RootWithErrorBoundary = (props: OutletProps) => (
   // @ts-expect-error 'ErrorBoundary' cannot be used as a JSX component.
   <ErrorBoundary>
     <TooltipProvider>
-      <Outlet {...props} />
+      <PersistentFetcherProvider>
+        <Outlet {...props} />
+      </PersistentFetcherProvider>
     </TooltipProvider>
   </ErrorBoundary>
 );

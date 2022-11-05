@@ -1,5 +1,5 @@
 import type { ComponentStory } from "@storybook/react";
-import { CheckIcon, DotsHorizontalIcon } from "@webstudio-is/icons";
+import { CheckIcon, MenuIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { List, ListItem, useList } from "./list";
 
@@ -13,12 +13,12 @@ export const Declarative: ComponentStory<typeof List> = () => {
       <ListItem>Apple</ListItem>
       <ListItem state="disabled">Banana</ListItem>
       <ListItem state="selected">Orange</ListItem>
-      <ListItem prefix={<CheckIcon />} suffix={<DotsHorizontalIcon />}>
+      <ListItem prefix={<CheckIcon />} suffix={<MenuIcon />}>
         Strawberry
       </ListItem>
       <ListItem
         prefix={<CheckIcon />}
-        suffix={<DotsHorizontalIcon />}
+        suffix={<MenuIcon />}
         current
         state="selected"
       >

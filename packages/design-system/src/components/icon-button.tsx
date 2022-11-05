@@ -47,7 +47,7 @@ export const IconButton = styled("button", {
         width: "$3",
         "&:hover, &:focus": {
           background: "none",
-          borderColor: "transparent",
+          border: "none",
         },
       },
       "2": {

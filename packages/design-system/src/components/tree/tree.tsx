@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useHotkeys } from "react-hotkeys-hook";
-import { TreeNode, INDENT } from "./tree-node";
+import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
 import { PlacementIndicator } from "./placement-indicator";
 import {
   type DropTarget,
@@ -26,7 +26,7 @@ export type TreeProps<Data extends { id: string }> = {
     id: string
   ) => Array<{ item: Data; position: number }>;
   getItemChildren: (item: Data) => Data[];
-  renderItem: (props: { data: Data; isSelected: boolean }) => React.ReactNode;
+  renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   selectedItemId?: string;
   onSelect?: (itemId: string) => void;
@@ -282,7 +282,7 @@ export const Tree = <Data extends { id: string }>({
           getIsExpanded={getIsExpanded}
           setIsExpanded={setIsExpanded}
           onExpandTransitionEnd={dropHandlers.handleDomMutation}
-          forceHoverStateAtItem={shiftedDropTarget?.item?.id}
+          dropTargetItemId={shiftedDropTarget?.item?.id}
         />
       </Box>
 

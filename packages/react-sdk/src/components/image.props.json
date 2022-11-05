@@ -66,9 +66,7 @@
     }
   },
   "alt": {
-    "defaultValue": {
-      "value": ""
-    },
+    "defaultValue": "",
     "description": "",
     "name": "alt",
     "parent": {
@@ -160,9 +158,7 @@
     "options": ["async", "auto", "sync"]
   },
   "height": {
-    "defaultValue": {
-      "value": "auto"
-    },
+    "defaultValue": null,
     "description": "",
     "name": "height",
     "parent": {
@@ -184,9 +180,7 @@
     }
   },
   "loading": {
-    "defaultValue": {
-      "value": "lazy"
-    },
+    "defaultValue": "lazy",
     "description": "",
     "name": "loading",
     "parent": {
@@ -303,9 +297,7 @@
     }
   },
   "src": {
-    "defaultValue": {
-      "value": ""
-    },
+    "defaultValue": "",
     "description": "",
     "name": "src",
     "parent": {
@@ -371,9 +363,7 @@
     }
   },
   "width": {
-    "defaultValue": {
-      "value": "auto"
-    },
+    "defaultValue": null,
     "description": "",
     "name": "width",
     "parent": {
@@ -1065,6 +1055,7 @@
     }
   },
   "color": {
+    "defaultValue": null,
     "description": "",
     "name": "color",
     "parent": {
@@ -2528,6 +2519,24 @@
     },
     "control": {
       "type": "text"
+    }
+  },
+  "quality": {
+    "defaultValue": 80,
+    "description": "",
+    "name": "quality",
+    "declarations": [
+      {
+        "fileName": "src/components/image.tsx",
+        "name": "TypeLiteral"
+      }
+    ],
+    "required": false,
+    "type": {
+      "name": "number"
+    },
+    "control": {
+      "type": "number"
     }
   }
 }

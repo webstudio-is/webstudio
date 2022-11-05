@@ -4,18 +4,31 @@ import {
   Box,
   Label,
   TextField,
-  useId,
   styled,
   Flex,
-  toast,
   InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { useFetcher } from "@remix-run/react";
-import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
+import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
+import { utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
 import { Header } from "../../lib/header";
-import { useEffect, useRef, useState } from "react";
+import { useState, useCallback, ComponentProps } from "react";
 import { type Page } from "@webstudio-is/project";
+import { usePages } from "~/designer/shared/nano-states";
+import { useDebounce, useUnmount } from "react-use";
+import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
+import {
+  normalizeErrors,
+  toastUnknownFieldErrors,
+  useIds,
+  useFetcherErrors,
+} from "~/shared/form-utils";
+import type {
+  DeletePageData,
+  EditPageData,
+  CreatePageData,
+} from "~/shared/pages";
 
 const Group = styled(Flex, {
   marginBottom: "$3",
@@ -23,9 +36,65 @@ const Group = styled(Flex, {
   defaultVariants: { direction: "column" },
 });
 
-export type CreatePageData =
-  | { ok: true; page: Page }
-  | { errors: string | ZodError["formErrors"] };
+const fieldNames = ["name", "path"] as const;
+type FieldName = typeof fieldNames[number];
+type EditablePage = Pick<Page, FieldName>;
+
+const FormFields = ({
+  disabled,
+  values,
+  onChange,
+  fieldErrors,
+}: {
+  disabled?: boolean;
+  values: EditablePage;
+  onChange: <Name extends FieldName>(event: {
+    field: Name;
+    value: EditablePage[Name];
+  }) => void;
+  fieldErrors: ZodError["formErrors"]["fieldErrors"];
+}) => {
+  const fieldIds = useIds(fieldNames);
+
+  return (
+    <>
+      <Group>
+        <Label htmlFor={fieldIds.name} size={2}>
+          Page Name
+        </Label>
+        <InputErrorsTooltip errors={fieldErrors.name}>
+          <TextField
+            state={fieldErrors.name && "invalid"}
+            id={fieldIds.name}
+            name="name"
+            disabled={disabled}
+            value={values?.name}
+            onChange={(event) => {
+              onChange({ field: "name", value: event.target.value });
+            }}
+          />
+        </InputErrorsTooltip>
+      </Group>
+      <Group>
+        <Label htmlFor={fieldIds.path} size={2}>
+          Path
+        </Label>
+        <InputErrorsTooltip errors={fieldErrors.path}>
+          <TextField
+            state={fieldErrors.path && "invalid"}
+            id={fieldIds.path}
+            name="path"
+            disabled={disabled}
+            value={values?.path}
+            onChange={(event) => {
+              onChange({ field: "path", value: event.target.value });
+            }}
+          />
+        </InputErrorsTooltip>
+      </Group>
+    </>
+  );
+};
 
 export const NewPageSettings = ({
   onClose,
@@ -36,41 +105,56 @@ export const NewPageSettings = ({
   onSuccess?: (page: Page) => void;
   projectId: string;
 }) => {
-  const nameFieldId = useId();
-  const pathFieldId = useId();
-
   const fetcher = useFetcher<CreatePageData>();
 
-  const [fieldErrors, setFieldErrors] = useState<
-    ZodError["formErrors"]["fieldErrors"]
-  >({});
+  useOnFetchEnd(fetcher, (data) => {
+    if (data.status === "ok") {
+      onSuccess?.(data.page);
+    }
+  });
 
   const isSubmitting = fetcher.state !== "idle";
 
-  const prevFetcher = useRef(fetcher);
-  useEffect(() => {
-    if (prevFetcher.current.state !== fetcher.state) {
-      if (fetcher.state === "idle" && fetcher.data !== undefined) {
-        if ("ok" in fetcher.data) {
-          onSuccess?.(fetcher.data.page);
-        } else {
-          const errors =
-            typeof fetcher.data.errors === "string"
-              ? { formErrors: [fetcher.data.errors], fieldErrors: {} }
-              : fetcher.data.errors;
+  const { fieldErrors, resetFieldError } = useFetcherErrors({
+    fetcher,
+    fieldNames,
+  });
 
-          if (errors.formErrors.length > 0) {
-            for (const message of errors.formErrors) {
-              toast.error(message);
-            }
-          }
-          setFieldErrors(errors.fieldErrors);
-        }
-      }
-    }
-    prevFetcher.current = fetcher;
-  }, [fetcher, onSuccess]);
+  const [values, setValues] = useState<EditablePage>({ name: "", path: "" });
 
+  const handleSubmit = () => {
+    fetcher.submit(values, {
+      method: "put",
+      action: `/rest/pages/${projectId}`,
+    });
+  };
+
+  return (
+    <NewPageSettingsView
+      onSubmit={handleSubmit}
+      onClose={onClose}
+      isSubmitting={isSubmitting}
+      fieldErrors={fieldErrors}
+      disabled={isSubmitting}
+      values={values}
+      onChange={({ field, value }) => {
+        resetFieldError(field);
+        setValues((values) => ({ ...values, [field]: value }));
+      }}
+    />
+  );
+};
+
+const NewPageSettingsView = ({
+  onSubmit,
+  isSubmitting,
+  onClose,
+  ...formFieldsProps
+}: {
+  onSubmit: () => void;
+  isSubmitting: boolean;
+  onClose?: () => void;
+} & ComponentProps<typeof FormFields>) => {
   return (
     <>
       <Header
@@ -84,45 +168,186 @@ export const NewPageSettings = ({
         }
       />
       <Box css={{ overflow: "auto", padding: "$2 $3" }}>
-        <fetcher.Form method="put" action={`/rest/pages/${projectId}`}>
-          <Group>
-            <Label htmlFor={nameFieldId} size={2}>
-              Page Name
-            </Label>
-            <InputErrorsTooltip errors={fieldErrors.name}>
-              <TextField
-                state={fieldErrors.name && "invalid"}
-                id={nameFieldId}
-                name="name"
-                disabled={isSubmitting}
-                onChange={() => {
-                  setFieldErrors(({ name, ...rest }) => rest);
-                }}
-              />
-            </InputErrorsTooltip>
-          </Group>
-          <Group>
-            <Label htmlFor={pathFieldId} size={2}>
-              Path
-            </Label>
-            <InputErrorsTooltip errors={fieldErrors.path}>
-              <TextField
-                state={fieldErrors.path && "invalid"}
-                id={pathFieldId}
-                name="path"
-                disabled={isSubmitting}
-                onChange={() => {
-                  setFieldErrors(({ path, ...rest }) => rest);
-                }}
-              />
-            </InputErrorsTooltip>
-          </Group>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          <FormFields {...formFieldsProps} />
           <Group css={{ alignItems: "end" }}>
             <Button type="submit" variant="green" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create"}
             </Button>
           </Group>
-        </fetcher.Form>
+        </form>
+      </Box>
+    </>
+  );
+};
+
+const toFormData = (page: Partial<EditablePage> & { id: string }): FormData => {
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(page)) {
+    // @todo: handle "meta"
+    if (typeof value === "string") {
+      formData.append(key, value);
+    }
+  }
+  return formData;
+};
+
+export const PageSettings = ({
+  onClose,
+  onDelete,
+  pageId,
+  projectId,
+}: {
+  onClose?: () => void;
+  onDelete?: () => void;
+  pageId: string;
+  projectId: string;
+}) => {
+  const submitPersistently = usePersistentFetcher();
+
+  const fetcher = useFetcher<EditPageData>();
+
+  const [pages] = usePages();
+  const page = pages && projectUtils.pages.findById(pages, pageId);
+
+  const [unsavedValues, setUnsavedValues] = useState<Partial<EditablePage>>({});
+  const [submittedValues, setSubmittedValues] = useState<Partial<EditablePage>>(
+    {}
+  );
+
+  const { fieldErrors, resetFieldError } = useFetcherErrors({
+    fetcher,
+    fieldNames,
+  });
+
+  const handleChange = useCallback(
+    <Name extends FieldName>(event: {
+      field: Name;
+      value: EditablePage[Name];
+    }) => {
+      resetFieldError(event.field);
+      setUnsavedValues((values) => ({ ...values, [event.field]: event.value }));
+    },
+    [resetFieldError]
+  );
+
+  useDebounce(
+    () => {
+      if (Object.keys(unsavedValues).length === 0) {
+        return;
+      }
+
+      // We're re-submitting the submittedValues because previous submit is going to be cancelled
+      // (normally, submittedValues are empty at this point)
+      const valuesToSubmit = { ...submittedValues, ...unsavedValues };
+
+      fetcher.submit(toFormData({ id: pageId, ...valuesToSubmit }), {
+        method: "post",
+        action: `/rest/pages/${projectId}`,
+      });
+
+      setSubmittedValues(valuesToSubmit);
+      setUnsavedValues({});
+    },
+    1000,
+    [unsavedValues]
+  );
+
+  useUnmount(() => {
+    if (Object.keys(unsavedValues).length === 0) {
+      return;
+    }
+    // We use submitPersistently instead of fetcher.submit
+    // because we don't want the request to be canceled when the component unmounts
+    submitPersistently<EditPageData>(
+      toFormData({ id: pageId, ...submittedValues, ...unsavedValues }),
+      { method: "post", action: `/rest/pages/${projectId}` },
+      (data) => {
+        if (data.status === "error") {
+          toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+        }
+      }
+    );
+  });
+
+  useOnFetchEnd(fetcher, (data) => {
+    if (data.status === "error") {
+      setUnsavedValues({ ...submittedValues, ...unsavedValues });
+    }
+    setSubmittedValues({});
+  });
+
+  const hanldeDelete = () => {
+    // We use submitPersistently instead of fetcher.submit
+    // because we don't want the request to be canceled when the component unmounts
+    submitPersistently<DeletePageData>(
+      { id: pageId },
+      { method: "delete", action: `/rest/pages/${projectId}` },
+      (data) => {
+        if (data.status === "error") {
+          toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+        }
+      }
+    );
+    onDelete?.();
+  };
+
+  if (page === undefined) {
+    return null;
+  }
+
+  return (
+    <PageSettingsView
+      isHomePage={pageId === pages?.homePage.id}
+      onClose={onClose}
+      onDelete={hanldeDelete}
+      fieldErrors={fieldErrors}
+      values={{ ...page, ...submittedValues, ...unsavedValues }}
+      onChange={handleChange}
+    />
+  );
+};
+
+const PageSettingsView = ({
+  isHomePage,
+  onDelete,
+  onClose,
+  ...formFieldsProps
+}: {
+  isHomePage: boolean;
+  onDelete: () => void;
+  onClose?: () => void;
+} & ComponentProps<typeof FormFields>) => {
+  return (
+    <>
+      <Header
+        title="Page Settings"
+        suffix={
+          <>
+            {isHomePage === false && (
+              <IconButton size="2" onClick={onDelete} aria-label="Delete page">
+                <TrashIcon />
+              </IconButton>
+            )}
+            {onClose && (
+              <IconButton
+                size="2"
+                onClick={onClose}
+                aria-label="Close page settings"
+              >
+                <ChevronDoubleLeftIcon />
+              </IconButton>
+            )}
+          </>
+        }
+      />
+      <Box css={{ overflow: "auto", padding: "$2 $3" }}>
+        <FormFields {...formFieldsProps} />
       </Box>
     </>
   );
