@@ -45,7 +45,6 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
           const instanceNode = $createInstanceNode({
             instance,
             text,
-            isNew: true,
           });
           selection.insertNodes([instanceNode]);
           // Dirty hack. When clicking on toolbar outside of the iframe, we are loosing focus.

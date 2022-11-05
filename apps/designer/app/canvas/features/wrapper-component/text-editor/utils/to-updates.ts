@@ -23,19 +23,11 @@ export const toUpdates = (
   }
 
   if (node.type === "instance" && "instance" in node) {
-    if ("isNew" in node && node.isNew === true) {
-      updates.push({
-        id: node.instance.id,
-        text: node.text,
-        component: node.instance.component,
-        createInstance: true,
-      });
-    } else {
-      updates.push({
-        id: node.instance.id,
-        text: node.text,
-      });
-    }
+    updates.push({
+      id: node.instance.id,
+      text: node.text,
+      component: node.instance.component,
+    });
   }
 
   if ("children" in node) {
