@@ -1,32 +1,49 @@
 import { Select } from "@webstudio-is/design-system";
 import { FontWeight, fontWeights } from "@webstudio-is/fonts";
+import { toValue } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
 import { useAssets } from "~/designer/shared/assets";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 
-const allFontWeightOptions = (
-  Object.keys(fontWeights) as Array<FontWeight>
-).map((weight) => ({
-  label: `${fontWeights[weight].label} (${weight})`,
-  name: weight,
-}));
+const allFontWeights = (Object.keys(fontWeights) as Array<FontWeight>).map(
+  (weight) => ({
+    label: `${fontWeights[weight].label} (${weight})`,
+    weight,
+  })
+);
 
-const useFontWeightOptions = (currentFamily: string) => {
+const useFontWeightOptions = (currentFamily: string, currentWeight: string) => {
   const { assets } = useAssets("font");
 
-  const options = allFontWeightOptions.filter((option) => {
-    return assets.find((asset) => {
-      return (
-        "meta" in asset &&
-        "family" in asset.meta &&
-        asset.meta.family === currentFamily &&
-        String(asset.meta.weight) === option.name
-      );
+  // Find all font weights that are available for the current font family.
+  const availableFontWeights = useMemo(() => {
+    const found = allFontWeights.filter((option) => {
+      return assets.find((asset) => {
+        return (
+          "meta" in asset &&
+          "family" in asset.meta &&
+          asset.meta.family === currentFamily &&
+          String(asset.meta.weight) === option.weight
+        );
+      });
     });
-  });
+    return found.length === 0 ? allFontWeights : found;
+  }, [currentFamily, assets]);
 
-  return options.length === 0 ? allFontWeightOptions : options;
+  const labels = useMemo(
+    () => availableFontWeights.map((option) => option.label),
+    [availableFontWeights]
+  );
+
+  const selectedLabel = useMemo(() => {
+    const selectedOption = availableFontWeights.find(
+      (option) => option.weight == currentWeight
+    );
+    return selectedOption?.label;
+  }, [currentWeight, availableFontWeights]);
+
+  return { labels, selectedLabel, availableFontWeights };
 };
 
 export const FontWeightControl = ({
@@ -36,42 +53,38 @@ export const FontWeightControl = ({
   styleConfig,
 }: ControlProps) => {
   // @todo show which instance we inherited the value from
-  const value = getFinalValue({
+  const fontWeight = getFinalValue({
     currentStyle,
     inheritedStyle,
     property: styleConfig.property,
   });
 
-  const family = getFinalValue({
+  // We need the font family to determine which font weights are available
+  const fontFamily = getFinalValue({
     currentStyle,
     inheritedStyle,
     property: "fontFamily",
   });
 
-  const fontWeightOptions = useFontWeightOptions(String(family?.value));
+  const { labels, selectedLabel, availableFontWeights } = useFontWeightOptions(
+    toValue(fontFamily),
+    toValue(fontWeight)
+  );
 
-  const [options, selectedOptionLabel] = useMemo(() => {
-    const selectedOption = fontWeightOptions.find(
-      (option) => option.name == value?.value
-    );
-    const options = fontWeightOptions.map((option) => option.label);
-    return [options, selectedOption?.label];
-  }, [value?.value, fontWeightOptions]);
-
-  if (value === undefined) return null;
+  if (fontWeight === undefined) return null;
 
   const setValue = setProperty(styleConfig.property);
 
   return (
     <Select
-      options={options}
-      value={selectedOptionLabel}
+      options={labels}
+      value={selectedLabel}
       onChange={(label) => {
-        const option = fontWeightOptions.find(
+        const selected = availableFontWeights.find(
           (option) => option.label == label
         );
-        if (option) {
-          setValue(option.name);
+        if (selected) {
+          setValue(selected.weight);
         }
       }}
       ghost
