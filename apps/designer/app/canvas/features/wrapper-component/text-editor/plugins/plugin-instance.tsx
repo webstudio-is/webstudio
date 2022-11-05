@@ -69,7 +69,10 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
   }, [editor, children]);
 
   useSubscribe("insertInlineInstance", (payload) => {
-    editor.dispatchCommand<Instance>(INSERT_INSTANCE_COMMAND, payload);
+    editor.dispatchCommand<LexicalCommand<Instance>>(
+      INSERT_INSTANCE_COMMAND,
+      payload
+    );
   });
 
   return null;

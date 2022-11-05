@@ -159,3 +159,25 @@
    - Click on the "Create" button
    - Check than the page is created and selected as the current page
    - Repeat the proccess and make sure it doens't allow you to create a page with an empty name or a path that's used for another page
+
+1. Deleting a page
+
+   - Open the pages panel
+   - Make sure you have pages other than the Home page, create one if you don't
+   - Click on the menu icon of a page other than the Home page
+   - Page settings should open
+   - Click on the delete icon in the page settings header
+   - Page settings should close
+   - Page should disappear from the list
+   - If the page was selected, the Home page should become selected instead
+   - In the Home page settings, the delete icon should be absent
+
+1. Editing a page
+
+   - Open the pages panel
+   - Click on the menu icon of a page
+   - Page settings should open
+   - Change the page name
+   - The name should change in the pages list as well (with a small delay)
+   - Change the page path
+   - Reload browser tab and open the page settings again and make sure your changes are persisted

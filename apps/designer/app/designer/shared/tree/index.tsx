@@ -1,9 +1,11 @@
 import {
   Tree,
-  TreeNodeLabel,
+  TreeItemLabel,
+  TreeItemBody,
   TreeNode,
   type TreeNodeProps,
   type TreeProps,
+  type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import { components, Instance } from "@webstudio-is/react-sdk";
 import {
@@ -38,13 +40,12 @@ const instanceRelatedProps = {
       (child) => typeof child !== "string"
     ) as Instance[];
   },
-  renderItem(props: { data: Instance; isSelected: boolean }) {
-    const { Icon, label } = components[props.data.component];
+  renderItem(props: TreeItemRenderProps<Instance>) {
+    const { Icon, label } = components[props.itemData.component];
     return (
-      <>
-        <Icon />
-        <TreeNodeLabel isSelected={props.isSelected} text={label} withIcon />
-      </>
+      <TreeItemBody {...props} selectionEvent="focus">
+        <TreeItemLabel prefix={<Icon />}>{label}</TreeItemLabel>
+      </TreeItemBody>
     );
   },
 } as const;

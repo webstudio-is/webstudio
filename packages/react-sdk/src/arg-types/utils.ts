@@ -31,6 +31,7 @@ export const propsToArgTypes = (
     }
 
     const control = mapControlForType(prop);
+
     result[propName] = { ...prop, ...control };
     return result;
   }, {} as ArgTypes);
@@ -47,6 +48,8 @@ export const mapControlForType = (propItem: PropItem) => {
     return undefined;
   }
 
+  const overrides = { defaultValue: propItem.defaultValue?.value ?? null };
+
   // args that end with background or color e.g. iconColor
   if (matchers.color && matchers.color.test(name)) {
     const controlType = propItem.type.name;
@@ -54,26 +57,35 @@ export const mapControlForType = (propItem: PropItem) => {
     if (controlType === "string") {
       return {
         control: { type: "color" },
-        defaultValue: propItem.defaultValue?.value,
+        ...overrides,
       };
     }
   }
 
   // args that end with date e.g. purchaseDate
   if (matchers.date && matchers.date.test(name)) {
-    return { control: { type: "date" } };
+    return {
+      control: { type: "date" },
+      ...overrides,
+    };
   }
 
   switch (type?.name) {
     case "array":
-      return { control: { type: "object" } };
+      return {
+        control: { type: "object" },
+        ...overrides,
+      };
     case "boolean":
     case "Booleanish":
-      return { control: { type: "boolean" } };
+      return {
+        control: { type: "boolean" },
+        ...overrides,
+      };
     case "string":
-      return { control: { type: "text" } };
+      return { control: { type: "text" }, ...overrides };
     case "number":
-      return { control: { type: "number" } };
+      return { control: { type: "number" }, ...overrides };
     case "enum": {
       const { value } = type;
       // Remove additional quotes from enum values
@@ -82,12 +94,13 @@ export const mapControlForType = (propItem: PropItem) => {
       return {
         control: { type: values?.length <= 5 ? "radio" : "select" },
         options: values,
+        ...overrides,
       };
     }
     case "function":
     case "symbol":
       return null;
     default:
-      return { control: { type: "text" } };
+      return { control: { type: "text" }, ...overrides };
   }
 };

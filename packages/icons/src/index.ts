@@ -1,34 +1,4 @@
-export {
-  ImageIcon,
-  FontBoldIcon,
-  FontItalicIcon,
-  Link2Icon,
-  MobileIcon,
-  LaptopIcon,
-  DesktopIcon,
-  PlusIcon,
-  HamburgerMenuIcon,
-  DotsHorizontalIcon,
-  CheckIcon,
-  RocketIcon,
-  ExternalLinkIcon,
-  Share1Icon,
-  EyeOpenIcon,
-  ExclamationTriangleIcon,
-  DotFilledIcon,
-  TriangleRightIcon,
-  TriangleDownIcon,
-  CommitIcon,
-  InputIcon,
-  ButtonIcon,
-  TextAlignLeftIcon,
-  HeadingIcon,
-  TextIcon,
-  SquareIcon,
-  InfoCircledIcon,
-  CrossCircledIcon,
-  CheckCircledIcon,
-} from "@radix-ui/react-icons"; // Legacy icons
+export * from "./legacy";
 export * from "./list-nested";
 export * from "./brush";
 export * from "./form";
@@ -93,3 +63,4 @@ export * from "./chevron-right";
 export * from "./cross-circled-filled";
 export * from "./cross";
 export * from "./magnifying-glass";
+export * from "./menu";

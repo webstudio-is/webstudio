@@ -447,10 +447,7 @@
     "control": {
       "type": "radio"
     },
-    "options": [
-      "yes",
-      "no"
-    ]
+    "options": ["yes", "no"]
   },
   "radioGroup": {
     "defaultValue": null,
@@ -739,6 +736,7 @@
     }
   },
   "color": {
+    "defaultValue": null,
     "description": "",
     "name": "color",
     "parent": {
@@ -943,10 +941,7 @@
     "control": {
       "type": "radio"
     },
-    "options": [
-      "on",
-      "off"
-    ]
+    "options": ["on", "off"]
   },
   "inputMode": {
     "defaultValue": null,
@@ -1109,12 +1104,7 @@
     "control": {
       "type": "radio"
     },
-    "options": [
-      "list",
-      "none",
-      "inline",
-      "both"
-    ]
+    "options": ["list", "none", "inline", "both"]
   },
   "aria-busy": {
     "defaultValue": null,
@@ -1378,14 +1368,7 @@
     "control": {
       "type": "select"
     },
-    "options": [
-      "link",
-      "none",
-      "copy",
-      "execute",
-      "move",
-      "popup"
-    ]
+    "options": ["link", "none", "copy", "execute", "move", "popup"]
   },
   "aria-errormessage": {
     "defaultValue": null,
@@ -1662,11 +1645,7 @@
     "control": {
       "type": "radio"
     },
-    "options": [
-      "off",
-      "assertive",
-      "polite"
-    ]
+    "options": ["off", "assertive", "polite"]
   },
   "aria-modal": {
     "defaultValue": null,
@@ -1764,10 +1743,7 @@
     "control": {
       "type": "radio"
     },
-    "options": [
-      "horizontal",
-      "vertical"
-    ]
+    "options": ["horizontal", "vertical"]
   },
   "aria-owns": {
     "defaultValue": null,
@@ -2136,12 +2112,7 @@
     "control": {
       "type": "radio"
     },
-    "options": [
-      "none",
-      "ascending",
-      "descending",
-      "other"
-    ]
+    "options": ["none", "ascending", "descending", "other"]
   },
   "aria-valuemax": {
     "defaultValue": null,
@@ -2232,9 +2203,7 @@
     }
   },
   "tag": {
-    "defaultValue": {
-      "value": "div"
-    },
+    "defaultValue": "div",
     "description": "",
     "name": "tag",
     "declarations": [
