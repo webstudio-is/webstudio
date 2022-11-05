@@ -13,7 +13,7 @@ const allFontWeights = (Object.keys(fontWeights) as Array<FontWeight>).map(
   })
 );
 
-const useFontWeightOptions = (currentFamily: string, currentWeight: string) => {
+const useFontWeights = (currentFamily: string, currentWeight: string) => {
   const { assets } = useAssets("font");
 
   // Find all font weights that are available for the current font family.
@@ -66,7 +66,7 @@ export const FontWeightControl = ({
     property: "fontFamily",
   });
 
-  const { labels, selectedLabel, availableFontWeights } = useFontWeightOptions(
+  const { labels, selectedLabel, availableFontWeights } = useFontWeights(
     toValue(fontFamily),
     toValue(fontWeight)
   );
