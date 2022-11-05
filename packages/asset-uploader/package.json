@@ -38,6 +38,7 @@
   ],
   "license": "MIT",
   "private": false,
+  "sideEffects": false,
   "tsup": {
     "entry": [
       "src/index.ts",

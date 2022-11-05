@@ -36,6 +36,7 @@
     "uuid": "^9.0.0",
     "zod": "^3.19.0"
   },
+  "sideEffects": false,
   "tsup": {
     "entry": [
       "src/index.ts"

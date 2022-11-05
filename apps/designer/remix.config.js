@@ -9,7 +9,10 @@ module.exports = {
   // server. This does not understand the vercel lambda module format,
   // so we default back to the standard build output.
   server: process.env.NODE_ENV === "development" ? undefined : "./server.js",
-  serverDependenciesToBundle: ["pretty-bytes"],
+  // This makes sure remix bundles monorepo packages which are always
+  // sym-linked and can't be hoisted. You could also manually name packages
+  // e.g. ["@webstudio-is/ui", ...]
+  serverDependenciesToBundle: [/@webstudio-is\/.*/, "pretty-bytes"],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
   serverBuildPath: "api/index.js",
