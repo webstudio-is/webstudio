@@ -1,7 +1,8 @@
-const last = (arr) => arr[arr.length - 1];
+/* eslint-disable @typescript-eslint/no-var-requires */
+const path = require("path");
 
 module.exports = {
   process(src, filename) {
-    return `module.exports = ${JSON.stringify(last(filename.split("/")))};`;
+    return `module.exports = ${JSON.stringify(path.basename(filename))};`;
   },
 };
