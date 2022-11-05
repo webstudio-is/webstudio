@@ -20,10 +20,12 @@ import {
 import {
   type KeyboardEventHandler,
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
+import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
@@ -80,10 +82,12 @@ const useScrub = ({
   value,
   onChange,
   onChangeComplete,
+  shouldHandleEvent,
 }: {
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
+  shouldHandleEvent?: (node: EventTarget) => boolean;
 }): [
   React.MutableRefObject<HTMLDivElement | null>,
   React.MutableRefObject<HTMLInputElement | null>,
@@ -135,10 +139,11 @@ const useScrub = ({
         inputRef.current?.focus();
         inputRef.current?.select();
       },
+      shouldHandleEvent: shouldHandleEvent,
     });
 
     return scrub.disconnectedCallback;
-  }, [type, unit]);
+  }, [type, unit, shouldHandleEvent]);
 
   return [scrubRef, inputRef, isInputActive];
 };
@@ -176,7 +181,6 @@ const useHandleKeyDown =
   };
 
 type CssValueInputProps = {
-  prefix?: JSX.Element;
   property: StyleProperty;
   value?: StyleValue;
   keywords?: Array<KeywordValue>;
@@ -218,14 +222,14 @@ type CssValueInputProps = {
  */
 
 export const CssValueInput = ({
-  prefix,
+  icon,
   property,
   value = unsetValue,
   keywords = [],
   onChange,
   onChangeComplete,
   onItemHighlight,
-}: CssValueInputProps) => {
+}: CssValueInputProps & { icon?: JSX.Element }) => {
   const {
     items,
     getInputProps,
@@ -261,10 +265,15 @@ export const CssValueInput = ({
     },
   });
 
+  const shouldHandleEvent = useCallback((node) => {
+    if (suffixRef.current?.contains?.(node)) return false;
+    return true;
+  }, []);
   const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
     onChange,
     onChangeComplete,
+    shouldHandleEvent,
   });
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
@@ -282,17 +291,28 @@ export const CssValueInput = ({
     closeMenu,
   });
 
-  const suffix =
-    value.type === "keyword" ? (
-      <TextFieldIconButton
-        {...getToggleButtonProps()}
-        state={isOpen ? "active" : undefined}
-      >
-        <ChevronDownIcon />
-      </TextFieldIconButton>
-    ) : value.type === "unit" ? (
-      unitSelectElement
-    ) : null;
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const prefix = icon && (
+    <TextFieldIconButton state={isCurrentBreakpoint ? "highlight" : undefined}>
+      {icon}
+    </TextFieldIconButton>
+  );
+
+  const suffixRef = useRef<HTMLDivElement | null>(null);
+  const suffix = (
+    <Box ref={suffixRef}>
+      {value.type === "keyword" ? (
+        <TextFieldIconButton
+          {...getToggleButtonProps()}
+          state={isOpen ? "active" : undefined}
+        >
+          <ChevronDownIcon />
+        </TextFieldIconButton>
+      ) : value.type === "unit" ? (
+        unitSelectElement
+      ) : null}
+    </Box>
+  );
 
   return (
     <ComboboxPopper>
@@ -306,8 +326,9 @@ export const CssValueInput = ({
             }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
+            baseRef={scrubRef}
             inputRef={inputRef}
-            scrubRef={scrubRef}
+            suffixRef={suffixRef}
             name={property}
             state={
               value.type === "invalid"

@@ -55,7 +55,7 @@ export const TextFieldIconButton = styled(
             color: "white",
           },
         },
-        breakpoint: {
+        highlight: {
           backgroundColor: "$blue4",
           color: "$blue11",
           "&:hover": {
@@ -250,7 +250,9 @@ export type TextFieldProps = Pick<
   "variant" | "state" | "css"
 > &
   Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
-    scrubRef?: React.Ref<HTMLDivElement>;
+    suffixRef?: React.Ref<HTMLDivElement>;
+    prefixRef?: React.Ref<HTMLDivElement>;
+    baseRef?: React.Ref<HTMLDivElement>;
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
@@ -262,7 +264,9 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       prefix,
       css,
       disabled,
-      scrubRef,
+      prefixRef,
+      suffixRef,
+      baseRef,
       inputRef,
       state,
       variant: variantProp,
@@ -307,7 +311,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       <TextFieldBase
         {...focusWithinProps}
         aria-disabled={disabled}
-        ref={mergeRefs(forwardedRef, scrubRef ?? null)}
+        ref={mergeRefs(forwardedRef, baseRef ?? null)}
         state={state}
         variant={variant}
         css={css}
@@ -324,8 +328,8 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
         />
 
-        {prefix && <PrefixSlot>{prefix}</PrefixSlot>}
-        {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
+        {prefix && <PrefixSlot ref={prefixRef}>{prefix}</PrefixSlot>}
+        {suffix && <SuffixSlot ref={suffixRef}>{suffix}</SuffixSlot>}
       </TextFieldBase>
     );
   }

@@ -107,7 +107,7 @@ const LayoutSectionFlex = ({
       >
         {columnGap?.styleConfig && (
           <Box css={{ gridArea: "columnGap" }}>
-            <TextControl prefix={<ColumnGapIcon />} {...columnGap} />
+            <TextControl icon={<ColumnGapIcon />} {...columnGap} />
           </Box>
         )}
         {rowGap?.styleConfig && columnGap?.styleConfig && (
@@ -121,7 +121,7 @@ const LayoutSectionFlex = ({
         )}
         {rowGap?.styleConfig && (
           <Box css={{ gridArea: "rowGap" }}>
-            <TextControl prefix={<RowGapIcon />} {...rowGap} />
+            <TextControl icon={<RowGapIcon />} {...rowGap} />
           </Box>
         )}
       </Grid>

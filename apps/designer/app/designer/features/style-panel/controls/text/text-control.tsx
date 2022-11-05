@@ -3,7 +3,6 @@ import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import { type StyleValue, toValue } from "@webstudio-is/react-sdk";
 import { useState } from "react";
-import { PropertyIcon } from "../../shared/property-icon";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 
 export const TextControl = ({
@@ -11,8 +10,8 @@ export const TextControl = ({
   inheritedStyle,
   setProperty,
   styleConfig,
-  prefix,
-}: ControlProps & { prefix?: JSX.Element }) => {
+  icon,
+}: ControlProps & { icon?: JSX.Element }) => {
   const value = getFinalValue({
     currentStyle,
     inheritedStyle,
@@ -30,16 +29,7 @@ export const TextControl = ({
     >
       <Box>
         <CssValueInput
-          prefix={
-            prefix && (
-              <PropertyIcon
-                property={styleConfig.property}
-                label={styleConfig.label}
-              >
-                {prefix}
-              </PropertyIcon>
-            )
-          }
+          icon={icon}
           property={styleConfig.property}
           value={currentValue ?? value}
           keywords={styleConfig.items.map((item) => ({
