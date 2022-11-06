@@ -30,7 +30,7 @@ export const ImageControl = ({
       title="Images"
       content={
         <ImageManager
-          onSelect={(asset) => {
+          onChange={(asset) => {
             setValue(asset.id);
           }}
         />

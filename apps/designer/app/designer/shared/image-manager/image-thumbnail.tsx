@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box } from "@webstudio-is/design-system";
+import { Box, styled } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
@@ -24,70 +24,90 @@ const useImageWithFallback = ({
   return src;
 };
 
-type ThumbnailProps = {
-  path?: string;
-  status: Asset["status"];
-  onClick: () => void;
-};
+const ThumbnailContainer = styled("div", {
+  aspectRatio: "1/1",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  padding: "0 $2",
+  position: "relative",
+  "&:hover": imageInfoTriggerCssVars({ show: true }),
+  borderRadius: "$1",
+  outline: 0,
+  variants: {
+    status: {
+      uploading: {
+        filter: "blur(1px)",
+        opacity: 0.7,
+      },
+      uploaded: {},
+    },
+    state: {
+      selected: {
+        boxShadow:
+          "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
+      },
+    },
+  },
+});
 
-const Thumbnail = ({ path, status, onClick }: ThumbnailProps) => {
-  const src = useImageWithFallback({ path });
+const Thumbnail = styled(Box, {
+  width: "100%",
+  height: "100%",
+  backgroundSize: "contain",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+  position: "absolute",
+  left: 0,
+  top: 0,
+});
 
-  return (
-    <Box
-      css={{
-        backgroundImage: `url("${src}")`,
-        width: "100%",
-        height: "100%",
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-        position: "absolute",
-        left: 0,
-        top: 0,
-        ...(status === "uploading"
-          ? { filter: "blur(1px)", opacity: 0.7 }
-          : {}),
-      }}
-      onClick={onClick}
-    ></Box>
-  );
+type ImageThumbnailProps = {
+  asset: Asset | PreviewAsset;
+  onDelete: (ids: Array<string>) => void;
+  onSelect: (asset?: Asset | PreviewAsset) => void;
+  onChange?: (asset: Asset) => void;
+  state?: "selected";
 };
 
 export const ImageThumbnail = ({
   asset,
   onDelete,
   onSelect,
-}: {
-  asset: Asset | PreviewAsset;
-  onDelete: (ids: Array<string>) => void;
-  onSelect?: (asset: Asset) => void;
-}) => {
+  onChange,
+  state,
+}: ImageThumbnailProps) => {
   const { path, status, name } = asset;
   const description =
     "description" in asset && asset.description ? asset.description : name;
-  const [isDeleting, setIsDeleting] = useState(false);
   const isUploading = status === "uploading";
   const isUploadedAsset = isUploading === false && "size" in asset;
+  const [isDeleting, setIsDeleting] = useState(false);
+  const src = useImageWithFallback({ path });
 
   return (
-    <Box
+    <ThumbnailContainer
       title={description}
-      css={{
-        aspectRatio: "1/1",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "0 $2",
-        position: "relative",
-        "&:hover": imageInfoTriggerCssVars({ show: true }),
+      tabIndex={0}
+      status={status}
+      state={state}
+      onFocus={() => onSelect?.(asset)}
+      onBlur={(event: FocusEvent) => {
+        const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
+        if (isFocusWithin === false) {
+          onSelect();
+        }
+      }}
+      onKeyDown={(event: KeyboardEvent) => {
+        if (event.code === "Enter") {
+          onChange?.(asset);
+        }
       }}
     >
       <Thumbnail
-        path={path}
-        status={status}
+        css={{ backgroundImage: `url("${src}")` }}
         onClick={() => {
-          if (isUploadedAsset) onSelect?.(asset);
+          if (isUploadedAsset) onChange?.(asset);
         }}
       />
       {isUploadedAsset && (
@@ -100,6 +120,6 @@ export const ImageThumbnail = ({
         />
       )}
       {(isUploading || isDeleting) && <UploadingAnimation />}
-    </Box>
+    </ThumbnailContainer>
   );
 };

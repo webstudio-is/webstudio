@@ -10,7 +10,7 @@ import {
   useAssets,
   useSearch,
 } from "~/designer/shared/assets";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
 import { CheckIcon } from "@webstudio-is/icons";
 import {
@@ -20,29 +20,7 @@ import {
   groupItemsByType,
   toItems,
 } from "./item-utils";
-
-const useFilteredItems = ({ onReset }: { onReset: () => void }) => {
-  const { assets } = useAssets("font");
-  const fontItems = useMemo(() => toItems(assets), [assets]);
-  const [filteredItems, setFilteredItems] = useState(fontItems);
-  const onResetRef = useRef(onReset);
-  onResetRef.current = onReset;
-
-  const resetFilteredItems = useCallback(() => {
-    setFilteredItems(fontItems);
-  }, [fontItems]);
-
-  useEffect(() => {
-    setFilteredItems(fontItems);
-    onResetRef.current();
-  }, [fontItems]);
-
-  return {
-    filteredItems,
-    resetFilteredItems,
-    setFilteredItems,
-  };
-};
+import { useFilter } from "../assets/use-filter";
 
 const useLogic = ({
   onChange,
@@ -53,12 +31,13 @@ const useLogic = ({
 }) => {
   const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const { filteredItems, resetFilteredItems, setFilteredItems } =
-    useFilteredItems({
-      onReset() {
-        searchProps.onCancel();
-      },
-    });
+  const fontItems = useMemo(() => toItems(assets), [assets]);
+  const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
+    items: fontItems,
+    onReset() {
+      searchProps.onCancel();
+    },
+  });
   const { uploadedItems, systemItems, groupedItems } = useMemo(
     () => groupItemsByType(filteredItems),
     [filteredItems]
