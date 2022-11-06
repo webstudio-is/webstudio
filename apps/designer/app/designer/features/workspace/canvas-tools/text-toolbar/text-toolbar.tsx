@@ -2,11 +2,26 @@ import { type Publish } from "~/shared/pubsub";
 import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,
-  useSelectionRect,
+  type TextToolbarValue,
+  useTextToolbar,
 } from "~/designer/shared/nano-states";
 import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
 import { FontBoldIcon, FontItalicIcon, Link2Icon } from "@webstudio-is/icons";
-import { createInstance } from "~/shared/tree-utils";
+import { useSubscribe } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    textToolbarShow: TextToolbarValue;
+    textToolbarHide: void;
+    textToolbarFormat: "bold" | "italic" | "link";
+  }
+}
+
+export const useSubscribeTextToolbar = () => {
+  const [, setTextToolbar] = useTextToolbar();
+  useSubscribe("textToolbarShow", setTextToolbar);
+  useSubscribe("textToolbarHide", () => setTextToolbar(null));
+};
 
 const getPlacement = ({
   toolbarRect,
@@ -49,16 +64,57 @@ const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
 
 type ToolbarProps = {
   css?: CSS;
-  onValueChange: (value: Value) => void;
   rootRef: React.Ref<HTMLDivElement>;
+  textToolbar: TextToolbarValue;
+  publish: Publish;
 };
 
-const Toolbar = ({ css, onValueChange, rootRef }: ToolbarProps) => {
+const Toolbar = ({ css, rootRef, textToolbar, publish }: ToolbarProps) => {
+  const value: Value[] = [];
+  if (textToolbar.isBold) {
+    value.push("Bold");
+  }
+  if (textToolbar.isItalic) {
+    value.push("Italic");
+  }
+  if (textToolbar.isLink) {
+    value.push("Link");
+  }
   return (
     <ToggleGroup.Root
       ref={rootRef}
-      type="single"
-      onValueChange={onValueChange}
+      type="multiple"
+      value={value}
+      onValueChange={(newValues: Value[]) => {
+        // TODO refactor with per button callback
+        if (
+          textToolbar.isBold === false &&
+          newValues.includes("Bold") === true
+        ) {
+          publish({
+            type: "textToolbarFormat",
+            payload: "bold",
+          });
+        }
+        if (
+          textToolbar.isItalic === false &&
+          newValues.includes("Italic") === true
+        ) {
+          publish({
+            type: "textToolbarFormat",
+            payload: "italic",
+          });
+        }
+        if (
+          textToolbar.isLink === false &&
+          newValues.includes("Link") === true
+        ) {
+          publish({
+            type: "textToolbarFormat",
+            payload: "link",
+          });
+        }
+      }}
       onClick={onClickPreventDefault}
       css={{
         position: "absolute",
@@ -86,16 +142,19 @@ type TextToolbarProps = {
 };
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
-  const [selectionRect] = useSelectionRect();
+  const [textToolbar] = useTextToolbar();
   const [selectedIntsanceData] = useSelectedInstanceData();
   const [element, setElement] = useState<HTMLElement | null>(null);
   const placement = useMemo(() => {
-    if (selectionRect === undefined || element === null) return;
+    if (textToolbar == null || element === null) return;
     const toolbarRect = element.getBoundingClientRect();
-    return getPlacement({ toolbarRect, selectionRect });
-  }, [selectionRect, element]);
+    return getPlacement({
+      toolbarRect,
+      selectionRect: textToolbar.selectionRect,
+    });
+  }, [textToolbar, element]);
 
-  if (selectionRect === undefined || selectedIntsanceData === undefined) {
+  if (textToolbar == null || selectedIntsanceData === undefined) {
     return null;
   }
 
@@ -103,13 +162,8 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
     <Toolbar
       rootRef={setElement}
       css={placement}
-      onValueChange={(component) => {
-        const instance = createInstance({ component });
-        publish({
-          type: "insertInlineInstance",
-          payload: instance,
-        });
-      }}
+      textToolbar={textToolbar}
+      publish={publish}
     />
   );
 };

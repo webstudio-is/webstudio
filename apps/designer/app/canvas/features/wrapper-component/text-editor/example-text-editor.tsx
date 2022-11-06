@@ -11,12 +11,6 @@ import { config } from "./config";
 import Editor from "./editor";
 import { publish } from "~/shared/pubsub";
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    insertInlineInstance: Instance;
-  }
-}
-
 type ExampleTextEditorProps = {
   onChange: (state: ChildrenUpdates) => void;
 };
@@ -34,8 +28,8 @@ const Menu = () => {
       <Button
         onClick={() => {
           publish({
-            type: "insertInlineInstance",
-            payload: createInstance({ component: "Bold" }),
+            type: "textToolbarFormat",
+            payload: "bold",
           });
         }}
       >
@@ -44,8 +38,8 @@ const Menu = () => {
       <Button
         onClick={() => {
           publish({
-            type: "insertInlineInstance",
-            payload: createInstance({ component: "Italic" }),
+            type: "textToolbarFormat",
+            payload: "italic",
           });
         }}
       >
@@ -55,8 +49,8 @@ const Menu = () => {
         onClick={() => {
           const instance = createInstance({ component: "Link" });
           publish({
-            type: "insertInlineInstance",
-            payload: instance,
+            type: "textToolbarFormat",
+            payload: "link",
           });
           const url = prompt("Enter url");
           if (url === null) return;
