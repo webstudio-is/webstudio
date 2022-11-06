@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { findNextListIndex, Grid } from "@webstudio-is/design-system";
-import type { Asset, ImageAsset } from "@webstudio-is/asset-uploader";
+import type { Asset, AssetType } from "@webstudio-is/asset-uploader";
 import { AssetsShell, PreviewAsset, useAssets, useSearch } from "../assets";
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
@@ -67,9 +67,10 @@ const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
 
 type ImageManagerProps = {
   onChange?: (asset: Asset) => void;
+  onChangeType?: (type: AssetType) => void;
 };
 
-export const ImageManager = ({ onChange }: ImageManagerProps) => {
+export const ImageManager = ({ onChange, onChangeType }: ImageManagerProps) => {
   const {
     handleDelete,
     handleSelect,
@@ -82,6 +83,7 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
     <AssetsShell
       searchProps={searchProps}
       isEmpty={filteredItems.length === 0}
+      onChangeType={onChangeType}
       type="image"
     >
       <Grid columns={3} gap={2}>

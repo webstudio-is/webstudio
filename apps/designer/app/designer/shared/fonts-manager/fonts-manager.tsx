@@ -21,13 +21,14 @@ import {
   toItems,
 } from "./item-utils";
 import { useFilter } from "../assets/use-filter";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 
 const useLogic = ({
   onChange,
   value,
 }: {
-  onChange: (value: string) => void;
-  value: string;
+  onChange?: (value: string) => void;
+  value?: string;
 }) => {
   const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -50,7 +51,7 @@ const useLogic = ({
     const item = groupedItems[nextCurrentIndex];
     if (item !== undefined) {
       setCurrentIndex(nextCurrentIndex);
-      onChange(item.label);
+      onChange?.(item.label);
     }
   };
 
@@ -108,11 +109,16 @@ const useLogic = ({
 };
 
 type FontsManagerProps = {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
+  onChangeType?: (value: AssetType) => void;
 };
 
-export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
+export const FontsManager = ({
+  value,
+  onChange,
+  onChangeType,
+}: FontsManagerProps) => {
   const {
     groupedItems,
     uploadedItems,
@@ -150,6 +156,7 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
       searchProps={searchProps}
       type="font"
       isEmpty={groupedItems.length === 0}
+      onChangeType={onChangeType}
     >
       <List
         {...listProps}

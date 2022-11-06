@@ -4,7 +4,11 @@ import {
   useSelectedInstanceData,
   useSelectionRect,
 } from "~/designer/shared/nano-states";
-import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
+import {
+  ToggleGroupRoot,
+  ToggleGroupItem,
+  type CSS,
+} from "@webstudio-is/design-system";
 import { FontBoldIcon, FontItalicIcon, Link2Icon } from "@webstudio-is/icons";
 import { createInstance } from "~/shared/tree-utils";
 
@@ -55,7 +59,7 @@ type ToolbarProps = {
 
 const Toolbar = ({ css, onValueChange, rootRef }: ToolbarProps) => {
   return (
-    <ToggleGroup.Root
+    <ToggleGroupRoot
       ref={rootRef}
       type="single"
       onValueChange={onValueChange}
@@ -68,16 +72,16 @@ const Toolbar = ({ css, onValueChange, rootRef }: ToolbarProps) => {
         ...css,
       }}
     >
-      <ToggleGroup.Item value="Bold">
+      <ToggleGroupItem value="Bold">
         <FontBoldIcon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="Italic">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="Italic">
         <FontItalicIcon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="Link">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="Link">
         <Link2Icon />
-      </ToggleGroup.Item>
-    </ToggleGroup.Root>
+      </ToggleGroupItem>
+    </ToggleGroupRoot>
   );
 };
 
