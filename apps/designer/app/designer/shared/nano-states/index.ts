@@ -46,9 +46,6 @@ export const useCanvasRect = () => useValue(canvasRectContainer);
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
 
-const selectionRectContainer = createValueContainer<DOMRect | undefined>();
-export const useSelectionRect = () => useValue(selectionRectContainer);
-
 const assetsContainer = createValueContainer<Array<Asset | PreviewAsset>>([]);
 export const useAssets = () => useValue(assetsContainer);
 
@@ -60,3 +57,12 @@ export const useCurrentPageId = () => useValue(currentPageIdContainer);
 
 const projectContainer = createValueContainer<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
+
+export type TextToolbarState = {
+  selectionRect: DOMRect;
+  isBold: boolean;
+  isItalic: boolean;
+  isLink: boolean;
+};
+const textToolbarState = createValueContainer<null | TextToolbarState>();
+export const useTextToolbarState = () => useValue(textToolbarState);

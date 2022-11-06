@@ -1,4 +1,4 @@
-import { db } from "@webstudio-is/project/index.server";
+import { db } from "@webstudio-is/project/server";
 
 /**
  * Conceptually publishing is cloning all data that affects user site

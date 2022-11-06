@@ -1,5 +1,5 @@
 import type { FontFormat } from "@webstudio-is/fonts";
-import type { FontMeta } from "@webstudio-is/fonts/index.server";
+import type { FontMeta } from "@webstudio-is/fonts/server";
 import { Asset as DbAsset } from "@webstudio-is/prisma-client";
 import type { ImageMeta } from "./utils/format-asset";
 

@@ -113,6 +113,7 @@ describe("toUpdates", () => {
       "a ",
       {
         id: "62bcc02160a439686c7eabde",
+        component: "Bold",
         text: "b",
       },
       "c",

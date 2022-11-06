@@ -6,7 +6,7 @@ import {
   redirect,
 } from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
-import { db } from "@webstudio-is/project/index.server";
+import { db } from "@webstudio-is/project/server";
 import config, { type Config } from "~/config";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
