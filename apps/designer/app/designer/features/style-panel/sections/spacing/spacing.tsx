@@ -2,15 +2,24 @@ import { useEffect, useState } from "react";
 import {
   categories,
   toValue,
+  UnitValue,
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/react-sdk";
-import { Box } from "@webstudio-is/design-system";
+import {
+  Box,
+  keyframes,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverPortal,
+} from "@webstudio-is/design-system";
 import { SetProperty } from "../../shared/use-style-data";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "../../shared/constants";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { RenderCategoryProps } from "../../style-sections";
+import { CssValueInput } from "../../shared/css-value-input";
 
 type SpacingSingularStyle = { [property in SpacingProperty]?: StyleValue };
 
@@ -68,8 +77,8 @@ const styles = {
     border: "none",
     textAlign: "center",
     outline: "none",
-    // No idea why it's hidden otherwise
     zIndex: 0,
+    cursor: "default",
   },
   inputFromCurrentBreakpoint: {
     color: propertyNameColorForSelectedBreakpoint,
@@ -111,50 +120,79 @@ const styles = {
 
 type TextFieldProps = {
   property: StyleProperty;
-  value: string | undefined;
+  value?: UnitValue;
   onEnter: (value: string) => void;
 };
 
+const initialValue: UnitValue = {
+  value: 0,
+  unit: "px",
+  type: "unit",
+};
+
+const slideUpAndFade = keyframes({
+  "0%": { opacity: 0, transform: "scale(0)" },
+  "100%": { opacity: 1, transform: "scale(1)" },
+});
+
 const TextField = ({ property, value, onEnter }: TextFieldProps) => {
-  const [currentValue, setCurrentValue] = useState<string>(value ?? "");
+  const [currentValue, setCurrentValue] = useState<UnitValue>(
+    value ?? initialValue
+  );
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   useEffect(() => {
-    setCurrentValue(value ?? "");
+    setCurrentValue(value ?? initialValue);
   }, [value]);
 
-  return (
-    <Box
-      as="input"
-      name={property}
-      aria-label={`${property} edit`}
-      value={currentValue}
-      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === "Enter") {
-          onEnter(currentValue);
-        }
-      }}
-      onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-        setCurrentValue(event.target.value);
-      }}
-      css={
-        isFromCurrentBreakpoint
-          ? { ...styles.input, ...styles.inputFromCurrentBreakpoint }
-          : styles.input
-      }
-    />
-  );
-};
+  const [isOpen, setIsOpen] = useState(false);
 
-const toCss = (style: SpacingSingularStyle) => {
-  const css: Record<string, string> = {};
-  let property: SpacingProperty;
-  for (property in style) {
-    const value = style[property];
-    if (value === undefined) continue;
-    css[property] = toValue(value);
-  }
-  return css;
+  return (
+    <Popover modal open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Box
+          aria-label={`${property} edit`}
+          css={{
+            ...(isFromCurrentBreakpoint
+              ? { ...styles.input, ...styles.inputFromCurrentBreakpoint }
+              : styles.input),
+          }}
+        >
+          {toValue(currentValue)}
+        </Box>
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent
+          hideArrow
+          css={{
+            background: "none",
+            boxShadow: "none",
+            borderRadius: 0,
+            minWidth: 80,
+            width: 80,
+            padding: 2,
+            animationDuration: "200ms",
+            animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+            willChange: "transform, opacity",
+            '&[data-state="open"]': {
+              animationName: slideUpAndFade,
+            },
+          }}
+          sideOffset={-20}
+        >
+          <CssValueInput
+            value={currentValue}
+            property={property}
+            onChange={setCurrentValue}
+            onChangeComplete={(value) => {
+              onEnter(toValue(value));
+              setIsOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
+  );
 };
 
 type SpacingWidgetProps = {
@@ -163,9 +201,6 @@ type SpacingWidgetProps = {
 };
 
 const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
-  const margins = toCss(values.margins);
-  const paddings = toCss(values.paddings);
-
   const updateSpacing = ({
     value,
     property,
@@ -175,52 +210,55 @@ const SpacingWidget = ({ setProperty, values }: SpacingWidgetProps) => {
   }) => {
     setProperty(property)(value);
   };
-
   return (
     <Box css={styles.wrapper}>
       <Box css={styles.marginGrid}>
-        {(Object.keys(margins) as Array<Margin>).map((property: Margin) => (
-          <Box
-            key={property}
-            css={{
-              ...styles.spacingEdit,
-              gridArea: grid.margin[property],
-            }}
-          >
-            <TextField
-              property={property}
-              value={margins[property]}
-              onEnter={(value: string) => {
-                updateSpacing({
-                  value,
-                  property,
-                });
+        {(Object.keys(values.margins) as Array<Margin>).map(
+          (property: Margin) => (
+            <Box
+              key={property}
+              css={{
+                ...styles.spacingEdit,
+                gridArea: grid.margin[property],
               }}
-            />
-          </Box>
-        ))}
+            >
+              <TextField
+                property={property}
+                value={values.margins[property]}
+                onEnter={(value: string) => {
+                  updateSpacing({
+                    value,
+                    property,
+                  });
+                }}
+              />
+            </Box>
+          )
+        )}
       </Box>
       <Box css={styles.paddingGrid}>
-        {(Object.keys(paddings) as Array<Padding>).map((property: Padding) => (
-          <Box
-            key={property}
-            css={{
-              ...styles.spacingEdit,
-              gridArea: grid.padding[property],
-            }}
-          >
-            <TextField
-              property={property}
-              value={paddings[property]}
-              onEnter={(value: string) => {
-                updateSpacing({
-                  value,
-                  property,
-                });
+        {(Object.keys(values.paddings) as Array<Padding>).map(
+          (property: Padding) => (
+            <Box
+              key={property}
+              css={{
+                ...styles.spacingEdit,
+                gridArea: grid.padding[property],
               }}
-            />
-          </Box>
-        ))}
+            >
+              <TextField
+                property={property}
+                value={values.paddings[property]}
+                onEnter={(value: string) => {
+                  updateSpacing({
+                    value,
+                    property,
+                  });
+                }}
+              />
+            </Box>
+          )
+        )}
         <Box css={styles.emptySpace} />
       </Box>
       <Box

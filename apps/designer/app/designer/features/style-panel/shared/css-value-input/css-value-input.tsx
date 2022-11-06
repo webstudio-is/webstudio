@@ -213,6 +213,7 @@ export const CssValueInput = ({
   onChange,
   onChangeComplete,
   onItemHighlight,
+  ...props
 }: CssValueInputProps) => {
   const {
     items,
@@ -284,7 +285,7 @@ export const CssValueInput = ({
 
   return (
     <ComboboxPopper>
-      <Box {...getComboboxProps()}>
+      <Box {...getComboboxProps()} {...props}>
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
