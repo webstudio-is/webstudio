@@ -55,7 +55,7 @@ const getPlacement = ({
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
-type Value = "Bold" | "Italic" | "Link";
+type Value = "bold" | "italic" | "link";
 
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.preventDefault();
@@ -66,19 +66,19 @@ type ToolbarProps = {
   css?: CSS;
   rootRef: React.Ref<HTMLDivElement>;
   state: TextToolbarState;
-  publish: Publish;
+  onToggle: (value: Value) => void;
 };
 
-const Toolbar = ({ css, rootRef, state, publish }: ToolbarProps) => {
+const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
   const value: Value[] = [];
   if (state.isBold) {
-    value.push("Bold");
+    value.push("bold");
   }
   if (state.isItalic) {
-    value.push("Italic");
+    value.push("italic");
   }
   if (state.isLink) {
-    value.push("Link");
+    value.push("link");
   }
   return (
     <ToggleGroup.Root
@@ -87,23 +87,14 @@ const Toolbar = ({ css, rootRef, state, publish }: ToolbarProps) => {
       value={value}
       onValueChange={(newValues: Value[]) => {
         // @todo refactor with per button callback
-        if (state.isBold === false && newValues.includes("Bold") === true) {
-          publish({
-            type: "formatTextToolbar",
-            payload: "bold",
-          });
+        if (state.isBold !== newValues.includes("bold")) {
+          onToggle("bold");
         }
-        if (state.isItalic === false && newValues.includes("Italic") === true) {
-          publish({
-            type: "formatTextToolbar",
-            payload: "italic",
-          });
+        if (state.isItalic !== newValues.includes("italic")) {
+          onToggle("italic");
         }
-        if (state.isLink === false && newValues.includes("Link") === true) {
-          publish({
-            type: "formatTextToolbar",
-            payload: "link",
-          });
+        if (state.isLink !== newValues.includes("link")) {
+          onToggle("link");
         }
       }}
       onClick={onClickPreventDefault}
@@ -115,13 +106,13 @@ const Toolbar = ({ css, rootRef, state, publish }: ToolbarProps) => {
         ...css,
       }}
     >
-      <ToggleGroup.Item value="Bold">
+      <ToggleGroup.Item value="bold">
         <FontBoldIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="Italic">
+      <ToggleGroup.Item value="italic">
         <FontItalicIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="Link">
+      <ToggleGroup.Item value="link">
         <Link2Icon />
       </ToggleGroup.Item>
     </ToggleGroup.Root>
@@ -154,7 +145,12 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
       rootRef={setElement}
       css={placement}
       state={textToolbar}
-      publish={publish}
+      onToggle={(value) =>
+        publish({
+          type: "formatTextToolbar",
+          payload: value,
+        })
+      }
     />
   );
 };
