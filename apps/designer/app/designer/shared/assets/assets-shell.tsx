@@ -32,7 +32,6 @@ export const AssetsShell = ({
       <Flex
         css={{
           flexDirection: "column",
-          gap: "$3",
           px: "$3",
         }}
       >

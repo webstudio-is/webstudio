@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type KeyboardEvent,
+  type FocusEvent,
+} from "react";
 import { Box, styled } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { PreviewAsset } from "~/designer/shared/assets";
-import { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
+import { Filename } from "./filename";
 
 const useImageWithFallback = ({
   path = placeholderImage,
@@ -24,16 +30,19 @@ const useImageWithFallback = ({
   return src;
 };
 
-const ThumbnailContainer = styled("div", {
-  aspectRatio: "1/1",
+const ThumbnailContainer = styled(Box, {
+  position: "relative",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  padding: "0 $2",
-  position: "relative",
-  "&:hover": imageInfoTriggerCssVars({ show: true }),
+  flexDirection: "column",
+  border: "2px solid transparent",
   borderRadius: "$1",
   outline: 0,
+  gap: "$1",
+  overflow: "hidden",
+  backgroundColor: "$slate4",
+  "&:hover": imageInfoTriggerCssVars({ show: true }),
   variants: {
     status: {
       uploading: {
@@ -52,14 +61,12 @@ const ThumbnailContainer = styled("div", {
 });
 
 const Thumbnail = styled(Box, {
-  width: "100%",
-  height: "100%",
+  width: "$8",
+  height: "$8",
   backgroundSize: "contain",
   backgroundRepeat: "no-repeat",
   backgroundPosition: "center",
-  position: "absolute",
-  left: 0,
-  top: 0,
+  flexShrink: 0,
 });
 
 type ImageThumbnailProps = {
@@ -99,7 +106,7 @@ export const ImageThumbnail = ({
         }
       }}
       onKeyDown={(event: KeyboardEvent) => {
-        if (event.code === "Enter") {
+        if (event.code === "Enter" && asset.status === "uploaded") {
           onChange?.(asset);
         }
       }}
@@ -110,6 +117,15 @@ export const ImageThumbnail = ({
           if (isUploadedAsset) onChange?.(asset);
         }}
       />
+      <Box
+        css={{
+          width: "100%",
+          // @todo should be a token from design system
+          height: 12,
+        }}
+      >
+        <Filename variant={"tiny"}>{name}</Filename>
+      </Box>
       {isUploadedAsset && (
         <ImageInfoTrigger
           asset={asset}

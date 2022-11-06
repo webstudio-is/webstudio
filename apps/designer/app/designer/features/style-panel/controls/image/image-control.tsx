@@ -36,7 +36,6 @@ export const ImageControl = ({
         />
       }
     >
-      {/* @todo this should be part of the design system, probably a varian="button" */}
       <TextField defaultValue={selectedAsset?.name} />
     </ValuePickerPopover>
   );

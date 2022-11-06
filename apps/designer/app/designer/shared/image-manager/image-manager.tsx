@@ -6,7 +6,7 @@ import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
 
-const filterItems = (search: string, items: Array<ImageAsset>) => {
+const filterItems = (search: string, items: Array<Asset | PreviewAsset>) => {
   return matchSorter(items, search, {
     keys: [(item) => item.name],
   });
@@ -84,7 +84,7 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
       isEmpty={filteredItems.length === 0}
       type="image"
     >
-      <Grid columns={2} gap={2}>
+      <Grid columns={3} gap={2}>
         {filteredItems.map((asset, index) => (
           <ImageThumbnail
             key={asset.id}
