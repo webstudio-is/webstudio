@@ -58,11 +58,11 @@ export const useCurrentPageId = () => useValue(currentPageIdContainer);
 const projectContainer = createValueContainer<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
 
-export type TextToolbarValue = {
+export type TextToolbarState = {
   selectionRect: DOMRect;
   isBold: boolean;
   isItalic: boolean;
   isLink: boolean;
 };
-const textToolbar = createValueContainer<null | TextToolbarValue>();
-export const useTextToolbar = () => useValue(textToolbar);
+const textToolbarState = createValueContainer<null | TextToolbarState>();
+export const useTextToolbarState = () => useValue(textToolbarState);
