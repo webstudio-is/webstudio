@@ -68,7 +68,7 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
     });
   }, [editor, children]);
 
-  useSubscribe("textToolbarFormat", (type) => {
+  useSubscribe("formatTextToolbar", (type) => {
     let component: null | "Bold" | "Italic" | "Link" = null;
     if (type === "bold") {
       component = "Bold";

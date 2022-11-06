@@ -16,7 +16,7 @@ export const ToolbarConnectorPlugin = () => {
   const clearSelectionRect = () => {
     if (lastSelectionRef.current) {
       // Undefined Rect will hide toolbar
-      publish({ type: "textToolbarHide" });
+      publish({ type: "hideTextToolbar" });
       lastSelectionRef.current = undefined;
     }
   };
@@ -32,7 +32,7 @@ export const ToolbarConnectorPlugin = () => {
       const domRange = nativeSelection.getRangeAt(0);
       const selectionRect = domRange.getBoundingClientRect();
       publish({
-        type: "textToolbarShow",
+        type: "showTextToolbar",
         payload: {
           selectionRect,
           isBold: false,

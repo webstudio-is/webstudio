@@ -28,7 +28,7 @@ const Menu = () => {
       <Button
         onClick={() => {
           publish({
-            type: "textToolbarFormat",
+            type: "formatTextToolbar",
             payload: "bold",
           });
         }}
@@ -38,7 +38,7 @@ const Menu = () => {
       <Button
         onClick={() => {
           publish({
-            type: "textToolbarFormat",
+            type: "formatTextToolbar",
             payload: "italic",
           });
         }}
@@ -49,7 +49,7 @@ const Menu = () => {
         onClick={() => {
           const instance = createInstance({ component: "Link" });
           publish({
-            type: "textToolbarFormat",
+            type: "formatTextToolbar",
             payload: "link",
           });
           const url = prompt("Enter url");

@@ -11,16 +11,16 @@ import { useSubscribe } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    textToolbarShow: TextToolbarValue;
-    textToolbarHide: void;
-    textToolbarFormat: "bold" | "italic" | "link";
+    showTextToolbar: TextToolbarValue;
+    hideTextToolbar: void;
+    formatTextToolbar: "bold" | "italic" | "link";
   }
 }
 
 export const useSubscribeTextToolbar = () => {
   const [, setTextToolbar] = useTextToolbar();
-  useSubscribe("textToolbarShow", setTextToolbar);
-  useSubscribe("textToolbarHide", () => setTextToolbar(null));
+  useSubscribe("showTextToolbar", setTextToolbar);
+  useSubscribe("hideTextToolbar", () => setTextToolbar(null));
 };
 
 const getPlacement = ({
@@ -86,13 +86,13 @@ const Toolbar = ({ css, rootRef, textToolbar, publish }: ToolbarProps) => {
       type="multiple"
       value={value}
       onValueChange={(newValues: Value[]) => {
-        // TODO refactor with per button callback
+        // @todo refactor with per button callback
         if (
           textToolbar.isBold === false &&
           newValues.includes("Bold") === true
         ) {
           publish({
-            type: "textToolbarFormat",
+            type: "formatTextToolbar",
             payload: "bold",
           });
         }
@@ -101,7 +101,7 @@ const Toolbar = ({ css, rootRef, textToolbar, publish }: ToolbarProps) => {
           newValues.includes("Italic") === true
         ) {
           publish({
-            type: "textToolbarFormat",
+            type: "formatTextToolbar",
             payload: "italic",
           });
         }
@@ -110,7 +110,7 @@ const Toolbar = ({ css, rootRef, textToolbar, publish }: ToolbarProps) => {
           newValues.includes("Link") === true
         ) {
           publish({
-            type: "textToolbarFormat",
+            type: "formatTextToolbar",
             payload: "link",
           });
         }

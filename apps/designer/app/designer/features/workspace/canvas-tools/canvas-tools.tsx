@@ -32,7 +32,7 @@ type CanvasToolsProps = {
 };
 
 export const CanvasTools = ({ publish }: CanvasToolsProps) => {
-  // TODO try to setup cross-frame atoms to vaoid this
+  // @todo try to setup cross-frame atoms to vaoid this
   useSubscribeInstanceRect();
   useSubscribeTextToolbar();
   useSubscribeScrollState();
