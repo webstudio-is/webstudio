@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
+import { createInstance } from "~/shared/tree-utils";
 import { $createInstanceNode, InstanceNode } from "../nodes/node-instance";
 import {
   createCommand,
@@ -67,11 +68,23 @@ export const InstancePlugin = ({ children }: InstancePluginProps) => {
     });
   }, [editor, children]);
 
-  useSubscribe("insertInlineInstance", (payload) => {
-    editor.dispatchCommand<LexicalCommand<Instance>>(
-      INSERT_INSTANCE_COMMAND,
-      payload
-    );
+  useSubscribe("formatTextToolbar", (type) => {
+    let component: null | "Bold" | "Italic" | "Link" = null;
+    if (type === "bold") {
+      component = "Bold";
+    }
+    if (type === "italic") {
+      component = "Italic";
+    }
+    if (type === "link") {
+      component = "Link";
+    }
+    if (component) {
+      editor.dispatchCommand<LexicalCommand<Instance>>(
+        INSERT_INSTANCE_COMMAND,
+        createInstance({ component })
+      );
+    }
   });
 
   return null;
