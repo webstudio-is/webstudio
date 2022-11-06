@@ -266,8 +266,7 @@ export const CssValueInput = ({
   });
 
   const shouldHandleEvent = useCallback((node) => {
-    if (suffixRef.current?.contains?.(node)) return false;
-    return true;
+    return !suffixRef.current?.contains?.(node);
   }, []);
   const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
@@ -293,7 +292,7 @@ export const CssValueInput = ({
 
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
   const prefix = icon && (
-    <TextFieldIconButton state={isCurrentBreakpoint ? "highlight" : undefined}>
+    <TextFieldIconButton state={isCurrentBreakpoint ? "set" : undefined}>
       {icon}
     </TextFieldIconButton>
   );
@@ -328,7 +327,6 @@ export const CssValueInput = ({
             onKeyDown={handleKeyDown}
             baseRef={scrubRef}
             inputRef={inputRef}
-            suffixRef={suffixRef}
             name={property}
             state={
               value.type === "invalid"

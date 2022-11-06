@@ -55,12 +55,20 @@ export const TextFieldIconButton = styled(
             color: "white",
           },
         },
-        highlight: {
+        set: {
           backgroundColor: "$blue4",
           color: "$blue11",
           "&:hover": {
             backgroundColor: "$blue4",
             color: "$blue11",
+          },
+        },
+        inherited: {
+          backgroundColor: "$orange4",
+          color: "$orange11",
+          "&:hover": {
+            backgroundColor: "$orange4",
+            color: "$orange11",
           },
         },
       },
@@ -250,9 +258,7 @@ export type TextFieldProps = Pick<
   "variant" | "state" | "css"
 > &
   Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
-    suffixRef?: React.Ref<HTMLDivElement>;
-    prefixRef?: React.Ref<HTMLDivElement>;
-    baseRef?: React.Ref<HTMLDivElement>;
+    fieldRef?: React.Ref<HTMLDivElement>;
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
@@ -264,9 +270,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       prefix,
       css,
       disabled,
-      prefixRef,
-      suffixRef,
-      baseRef,
+      fieldRef,
       inputRef,
       state,
       variant: variantProp,
@@ -311,7 +315,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       <TextFieldBase
         {...focusWithinProps}
         aria-disabled={disabled}
-        ref={mergeRefs(forwardedRef, baseRef ?? null)}
+        ref={mergeRefs(forwardedRef, fieldRef ?? null)}
         state={state}
         variant={variant}
         css={css}
@@ -328,8 +332,8 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
         />
 
-        {prefix && <PrefixSlot ref={prefixRef}>{prefix}</PrefixSlot>}
-        {suffix && <SuffixSlot ref={suffixRef}>{suffix}</SuffixSlot>}
+        {prefix && <PrefixSlot>{prefix}</PrefixSlot>}
+        {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
       </TextFieldBase>
     );
   }
