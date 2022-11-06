@@ -2,9 +2,10 @@
 
 import React, { type ComponentProps, type HTMLAttributes } from "react";
 import type { ComponentMeta, ComponentStory } from "@storybook/react";
+import warnOnce from "warn-once";
 import { Image as ImagePrimitive } from "./image";
+import imageMeta from "./image.ws";
 import { type ImageLoader } from "../component-utils/image";
-import argTypes from "./image.props.json";
 
 // to not allow include local assets everywhere, just enable it for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -13,8 +14,6 @@ import localLogoImage from "../../storybook-assets/logo.webp";
 
 export default {
   title: "Components/ImageDev",
-  component: ImagePrimitive,
-  argTypes,
 } as ComponentMeta<typeof ImagePrimitive>;
 
 type ImageProps = ComponentProps<typeof ImagePrimitive>;
@@ -61,12 +60,29 @@ const imageLoader = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? cloudflareImageLoader
   : localImageLoader;
 
-const ImageTemplate: ComponentStory<
+const ImageBase: ComponentStory<
   React.ForwardRefExoticComponent<
-    ImageProps & { style: HTMLAttributes<"img">["style"] }
+    ImageProps & { style?: HTMLAttributes<"img">["style"] }
   >
 > = (args) => {
-  const style = { maxWidth: "100%", ...args.style };
+  warnOnce(
+    !(
+      imageMeta.defaultStyle?.maxWidth?.value === 100 &&
+      imageMeta.defaultStyle?.maxWidth?.unit === "%"
+    ),
+    "We expect that the image default style has maxWidth: 100%"
+  );
+
+  warnOnce(
+    imageMeta.defaultStyle?.display?.value !== "block",
+    "We expect that the image default style has display: block"
+  );
+
+  const style = {
+    maxWidth: "100%",
+    display: "block",
+    ...args.style,
+  };
 
   return (
     <ImagePrimitive
@@ -78,121 +94,76 @@ const ImageTemplate: ComponentStory<
   );
 };
 
-export const FixedWidthImage = ImageTemplate.bind({});
+/**
+ * Load images depending on image width and device per pixel ratio.
+ **/
+export const FixedWidthImage: ComponentStory<React.FunctionComponent> = () => (
+  <ImageBase src={imageSrc} width="300" height="400" />
+);
 
-FixedWidthImage.parameters = {
-  docs: {
-    description: {
-      story: "Load images depending on image width and device per pixel ratio.",
-    },
-  },
-};
+/**
+ * Preserve ratio using object-fit: cover. Load images depending on image width and device per pixel ratio.
+ **/
+export const FixedWidthImageCover: ComponentStory<
+  React.FunctionComponent
+> = () => (
+  <ImageBase
+    src={imageSrc}
+    width="300"
+    height="400"
+    style={{ objectFit: "cover" }}
+  />
+);
 
-FixedWidthImage.args = {
-  src: imageSrc,
-  width: 300,
-  height: 400,
-};
+/**
+ * Load images depending on the viewport width.
+ **/
+export const UnknownWidthImage: ComponentStory<
+  React.FunctionComponent
+> = () => <ImageBase src={imageSrc} />;
 
-export const FixedWidthImageCover = ImageTemplate.bind({});
+/**
+ * Fit width of the parent container, has own aspect-ratio and object-fit=cover.
+ * Load images depending on the viewport width.
+ **/
+export const AspectRatioImage: ComponentStory<React.FunctionComponent> = () => (
+  <div style={{ width: "50%" }}>
+    <ImageBase
+      src={imageSrc}
+      style={{ aspectRatio: "2/1", objectFit: "cover", width: "100%" }}
+    />
+  </div>
+);
 
-FixedWidthImageCover.parameters = {
-  docs: {
-    description: {
-      story:
-        "Preserve ratio using object-fit: cover. Load images depending on image width and device per pixel ratio.",
-    },
-  },
-};
-
-FixedWidthImageCover.args = {
-  src: imageSrc,
-  width: 300,
-  height: 400,
-  style: { objectFit: "cover" },
-};
-
-export const UnknownWidthImage = ImageTemplate.bind({});
-
-UnknownWidthImage.parameters = {
-  docs: {
-    description: {
-      story: `Load images depending on the viewport width.`,
-    },
-  },
-};
-
-UnknownWidthImage.args = {
-  src: imageSrc,
-};
-
-export const AspectRatioImage = ImageTemplate.bind({});
-
-AspectRatioImage.parameters = {
-  docs: {
-    description: {
-      story: `Fit width of the parent container, has own aspect-ratio and object-fit=cover. Load images depending on the viewport width.`,
-    },
-  },
-};
-
-AspectRatioImage.decorators = [
-  (Story) => <div style={{ maxWidth: "400px" }}>{<Story />}</div>,
-];
-
-AspectRatioImage.args = {
-  src: imageSrc,
-  style: { aspectRatio: "2/1", objectFit: "cover", width: "100%" },
-};
-
-export const FillParentImage = ImageTemplate.bind({});
-
-FillParentImage.parameters = {
-  docs: {
-    description: {
-      story: `Fill width and height of the relative parent container, object-fit=cover. Load images depending on the viewport width.`,
-    },
-  },
-};
-
-FillParentImage.decorators = [
-  (Story) => (
-    <div
+/**
+ * Fill width and height of the relative parent container, object-fit=cover. Load images depending on the viewport width.
+ **/
+export const FillParentImage: ComponentStory<React.FunctionComponent> = () => (
+  <div style={{ width: "50%", aspectRatio: "2/1", position: "relative" }}>
+    <ImageBase
+      src={imageSrc}
       style={{
-        maxWidth: "400px",
-        aspectRatio: "2/1",
-        position: "relative",
-        border: "1px solid red",
+        objectFit: "cover",
+        position: "absolute",
+        width: "100%",
+        height: "100%",
       }}
-    >
-      {<Story />}
-    </div>
-  ),
-];
+    />
+  </div>
+);
 
-FillParentImage.args = {
-  src: imageSrc,
-  style: {
-    position: "absolute",
-    inset: 0,
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
-};
-
-export const HeroImage = ImageTemplate.bind({});
-
-HeroImage.parameters = {
-  docs: {
-    description: {
-      story: `"sizes" attribute explicitly equal to 100vw allowing to skip the default behavior. See DEFAULT_SIZES in the Image component. Load images depending on the viewport width.`,
-    },
-  },
-};
-
-HeroImage.args = {
-  src: imageSrc,
-  sizes: "100vw",
-  style: { aspectRatio: "3/4", objectFit: "cover", width: "100%" },
-};
+/**
+ * "sizes" attribute explicitly equal to 100vw allowing to skip the default behavior.
+ * See DEFAULT_SIZES in the Image component. Load images depending on the viewport width.
+ **/
+export const HeroImage: ComponentStory<React.FunctionComponent> = () => (
+  <ImageBase
+    src={imageSrc}
+    sizes="100vw"
+    style={{
+      aspectRatio: "3/1",
+      objectFit: "cover",
+      width: "100%",
+    }}
+  />
+);
