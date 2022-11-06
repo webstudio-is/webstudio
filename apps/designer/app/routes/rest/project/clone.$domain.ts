@@ -1,6 +1,6 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
 import type { User } from "@webstudio-is/prisma-client";
-import { db as projectDb } from "@webstudio-is/project/index.server";
+import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
 import * as userDb from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";

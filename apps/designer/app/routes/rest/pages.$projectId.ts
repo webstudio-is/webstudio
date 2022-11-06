@@ -1,5 +1,5 @@
 import { LoaderFunction, ActionFunction } from "@remix-run/node";
-import { db } from "@webstudio-is/project/index.server";
+import { db } from "@webstudio-is/project/server";
 import { type Pages, utils } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
