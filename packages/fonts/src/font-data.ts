@@ -34,6 +34,8 @@ export const parseSubfamily = (subfamily: string) => {
   return { style, weight: Number(weight) };
 };
 
+// Family name can contain additional information like "Roboto Black" or "Roboto Bold", though we need pure family name, because the rest is already encoded in weight and style.
+// We need a name we can reference in CSS font-family property, while CSS matches it with the right font-face considering the weight and style.
 export const normalizeFamily = (family: string, subfamily: string) => {
   let simplifiedFamily = family;
   subfamily
