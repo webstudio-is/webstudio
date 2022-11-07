@@ -94,6 +94,7 @@ export const FontWeightControl = ({
   return (
     <Select
       options={labels}
+      // We use a weight as a value, because there are only 9 weights and they are unique.
       value={selectedLabel}
       onChange={(label) => {
         const selected = availableFontWeights.find(
