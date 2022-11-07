@@ -1,3 +1,3 @@
 export { TextEditor } from "./text-editor";
-// hack for React.lazy
+// React.lazy requires default export
 export { TextEditor as default } from "./text-editor";

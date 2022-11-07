@@ -37,7 +37,7 @@ const isSelectedLink = (selection: RangeSelection) => {
 export const ToolbarConnectorPlugin = () => {
   const [editor] = useLexicalComposerContext();
 
-  // control toolbr state on data or selection updates
+  // control toolbar state on data or selection updates
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
     const nativeSelection = window.getSelection();
