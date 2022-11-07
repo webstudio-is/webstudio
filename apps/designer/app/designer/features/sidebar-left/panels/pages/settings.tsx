@@ -59,9 +59,7 @@ const FormFields = ({
   return (
     <>
       <Group>
-        <Label htmlFor={fieldIds.name} size={2}>
-          Page Name
-        </Label>
+        <Label htmlFor={fieldIds.name}>Page Name</Label>
         <InputErrorsTooltip errors={fieldErrors.name}>
           <TextField
             state={fieldErrors.name && "invalid"}
@@ -76,9 +74,7 @@ const FormFields = ({
         </InputErrorsTooltip>
       </Group>
       <Group>
-        <Label htmlFor={fieldIds.path} size={2}>
-          Path
-        </Label>
+        <Label htmlFor={fieldIds.path}>Path</Label>
         <InputErrorsTooltip errors={fieldErrors.path}>
           <TextField
             state={fieldErrors.path && "invalid"}
