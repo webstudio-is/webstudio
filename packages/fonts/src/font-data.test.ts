@@ -60,6 +60,10 @@ describe("font-data", () => {
       expect(normalizeFamily(" Roboto X Bold ", "Bold")).toBe("Roboto X");
       expect(normalizeFamily(" 'Roboto X' Bold ", "Bold")).toBe("'Roboto X'");
       expect(normalizeFamily(` "Roboto X" Bold `, "Bold")).toBe(`"Roboto X"`);
+      expect(normalizeFamily(`"Roboto Bold"`, "Bold")).toBe(`"Roboto Bold"`);
+      expect(normalizeFamily(`"Roboto Bold" Bold`, "Bold")).toBe(
+        `"Roboto Bold"`
+      );
     });
   });
 });
