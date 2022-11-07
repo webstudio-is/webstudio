@@ -1,3 +1,6 @@
+/**
+ * @type {import('@jest/types').Config.InitialOptions}
+ */
 module.exports = {
   testEnvironment: "node",
   testMatch: ["<rootDir>/app/**/*.test.ts"],
@@ -13,6 +16,7 @@ module.exports = {
         },
       },
     ],
+    "^.+\\.webp$": "@webstudio-is/jest-config/file-transform",
   },
   moduleNameMapper: {
     "^~/(.*)$": "<rootDir>/app/$1",
