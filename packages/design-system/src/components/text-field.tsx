@@ -55,22 +55,6 @@ export const TextFieldIconButton = styled(
             color: "white",
           },
         },
-        set: {
-          backgroundColor: "$blue4",
-          color: "$blue11",
-          "&:hover": {
-            backgroundColor: "$blue4",
-            color: "$blue11",
-          },
-        },
-        inherited: {
-          backgroundColor: "$orange4",
-          color: "$orange11",
-          "&:hover": {
-            backgroundColor: "$orange4",
-            color: "$orange11",
-          },
-        },
       },
     },
   },

@@ -9,6 +9,7 @@ import {
   ComboboxListboxItem,
   numericScrubControl,
   TextFieldIconButton,
+  styled,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -293,12 +294,12 @@ export const CssValueInput = ({
 
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
   const prefix = icon && (
-    <TextFieldIconButton
+    <CssValueInputIconButton
       state={isCurrentBreakpoint ? "set" : undefined}
       css={value.type == "unit" ? { cursor: "ew-resize" } : {}}
     >
       {icon}
-    </TextFieldIconButton>
+    </CssValueInputIconButton>
   );
 
   const suffixRef = useRef<HTMLDivElement | null>(null);
@@ -365,3 +366,26 @@ export const CssValueInput = ({
     </ComboboxPopper>
   );
 };
+
+const CssValueInputIconButton = styled(TextFieldIconButton, {
+  variants: {
+    state: {
+      set: {
+        backgroundColor: "$blue4",
+        color: "$blue11",
+        "&:hover": {
+          backgroundColor: "$blue4",
+          color: "$blue11",
+        },
+      },
+      inherited: {
+        backgroundColor: "$orange4",
+        color: "$orange11",
+        "&:hover": {
+          backgroundColor: "$orange4",
+          color: "$orange11",
+        },
+      },
+    },
+  },
+});
