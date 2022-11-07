@@ -52,7 +52,7 @@ const NodesConnectorPlugin = ({ refs }: { refs: Refs }) => {
 };
 
 const onError = (error: Error) => {
-  console.error(error);
+  throw error;
 };
 
 type TextEditorProps = {

@@ -17,15 +17,14 @@ import { useSelectedElement } from "~/canvas/shared/nano-states";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
-// @todo replace with builtin lexical ContentEditable
-// when ref support is added
 const ContentEditable = ({
   Component,
   elementRef,
   ...props
 }: {
+  // eslint-disable-next-line
   Component: any;
-  elementRef: any;
+  elementRef: (element: null | HTMLElement) => void;
 }) => {
   const [editor] = useLexicalComposerContext();
 
@@ -121,28 +120,6 @@ export const WrapperComponentDev = ({
       />
     </Suspense>
   );
-
-  /*
-  return (
-    <Editor
-      instance={instance}
-      fallback={instanceElement}
-      renderInstance={({ ref, ...renderProps }) => (
-        <Component
-          {...props}
-          {...renderProps}
-          ref={(element: HTMLElement | null) => {
-            props.ref(element);
-            ref(element);
-          }}
-        />
-      )}
-      onChange={(updates) => {
-        onChangeChildren({ instanceId: instance.id, updates });
-      }}
-    />
-  );
-  */
 };
 
 // Only used for instances inside text editor.
