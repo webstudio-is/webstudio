@@ -1,7 +1,7 @@
 import { useLoaderData } from "@remix-run/react";
 import { LoaderFunction } from "@remix-run/node";
 import { type DesignerProps, Designer, links } from "~/designer";
-import { db } from "@webstudio-is/project/index.server";
+import { db } from "@webstudio-is/project/server";
 import config from "~/config";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";

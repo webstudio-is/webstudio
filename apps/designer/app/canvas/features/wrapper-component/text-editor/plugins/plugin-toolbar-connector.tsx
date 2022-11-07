@@ -9,12 +9,6 @@ import {
 } from "../lexical";
 import { publish } from "~/shared/pubsub";
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    selectionRect?: DOMRect;
-  }
-}
-
 export const ToolbarConnectorPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const lastSelectionRef = useRef<unknown>();
@@ -22,7 +16,7 @@ export const ToolbarConnectorPlugin = () => {
   const clearSelectionRect = () => {
     if (lastSelectionRef.current) {
       // Undefined Rect will hide toolbar
-      publish({ type: "selectionRect", payload: undefined });
+      publish({ type: "hideTextToolbar" });
       lastSelectionRef.current = undefined;
     }
   };
@@ -36,10 +30,15 @@ export const ToolbarConnectorPlugin = () => {
 
     if (isTextSelected) {
       const domRange = nativeSelection.getRangeAt(0);
-      const rect = domRange.getBoundingClientRect();
+      const selectionRect = domRange.getBoundingClientRect();
       publish({
-        type: "selectionRect",
-        payload: rect,
+        type: "showTextToolbar",
+        payload: {
+          selectionRect,
+          isBold: false,
+          isItalic: false,
+          isLink: false,
+        },
       });
       lastSelectionRef.current = selection;
       return true;
