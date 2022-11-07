@@ -8,41 +8,7 @@ import {
 } from "@webstudio-is/icons";
 import prettyBytes from "pretty-bytes";
 import { Asset } from "@webstudio-is/asset-uploader";
-
-const Filename = ({ name }: { name: string }) => {
-  const splitName = name.split(".");
-  const extension = splitName[splitName.length - 1];
-  const lastLetterBeforeExtension = splitName[splitName.length - 2]
-    .split("")
-    .pop();
-  return (
-    <Box
-      css={{
-        position: "relative",
-        maxWidth: "70%",
-      }}
-    >
-      <Text
-        variant="label"
-        data-extension={`${lastLetterBeforeExtension}.${extension}`}
-        css={{
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
-          overflow: "hidden",
-          "&::after": {
-            content: "attr(data-extension)",
-            position: "absolute",
-            left: "100%",
-            top: 0,
-            whiteSpace: "nowrap",
-          },
-        }}
-      >
-        {name}
-      </Text>
-    </Box>
-  );
-};
+import { Filename } from "./filename";
 
 type ImageInfoProps = {
   asset: Asset;
@@ -56,7 +22,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
       <Box css={{ p: "$2 $3" }}>
         <Grid columns={2} align="center" gap={2}>
           <Box css={{ width: 100 }}>
-            <Filename name={name} />
+            <Filename variant="label">{name}</Filename>
           </Box>
           <Flex align="center" css={{ gap: "$1" }}>
             <CloudIcon />

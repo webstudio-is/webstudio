@@ -5,7 +5,7 @@ import type { ImageMeta } from "./utils/format-asset";
 
 type BaseAsset = Omit<DbAsset, "meta"> & {
   path: string;
-  status?: "uploading" | "uploaded";
+  status?: "uploaded";
 };
 
 export type FontAsset = Omit<BaseAsset, "format"> & {
