@@ -56,6 +56,7 @@ describe("font-data", () => {
     test("basic", () => {
       expect(normalizeFamily("Roboto Black", "Black")).toBe("Roboto");
       expect(normalizeFamily("Roboto Light", "Light Italic")).toBe("Roboto");
+      expect(normalizeFamily("Robolder Bold", "Bold")).toBe("Robolder");
     });
   });
 });
