@@ -267,7 +267,7 @@ export const CssValueInput = ({
   });
 
   const shouldHandleEvent = useCallback((node) => {
-    return !suffixRef.current?.contains?.(node);
+    return suffixRef.current?.contains?.(node) === false;
   }, []);
   const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
