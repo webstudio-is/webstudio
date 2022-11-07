@@ -2,11 +2,26 @@ import { type Publish } from "~/shared/pubsub";
 import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,
-  useSelectionRect,
+  type TextToolbarState,
+  useTextToolbarState,
 } from "~/designer/shared/nano-states";
 import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
 import { FontBoldIcon, FontItalicIcon, Link2Icon } from "@webstudio-is/icons";
-import { createInstance } from "~/shared/tree-utils";
+import { useSubscribe } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    showTextToolbar: TextToolbarState;
+    hideTextToolbar: void;
+    formatTextToolbar: "bold" | "italic" | "link";
+  }
+}
+
+export const useSubscribeTextToolbar = () => {
+  const [, setTextToolbar] = useTextToolbarState();
+  useSubscribe("showTextToolbar", setTextToolbar);
+  useSubscribe("hideTextToolbar", () => setTextToolbar(null));
+};
 
 const getPlacement = ({
   toolbarRect,
@@ -40,7 +55,7 @@ const getPlacement = ({
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
-type Value = "Bold" | "Italic" | "Link";
+type Value = "bold" | "italic" | "link";
 
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.preventDefault();
@@ -49,16 +64,39 @@ const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
 
 type ToolbarProps = {
   css?: CSS;
-  onValueChange: (value: Value) => void;
   rootRef: React.Ref<HTMLDivElement>;
+  state: TextToolbarState;
+  onToggle: (value: Value) => void;
 };
 
-const Toolbar = ({ css, onValueChange, rootRef }: ToolbarProps) => {
+const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
+  const value: Value[] = [];
+  if (state.isBold) {
+    value.push("bold");
+  }
+  if (state.isItalic) {
+    value.push("italic");
+  }
+  if (state.isLink) {
+    value.push("link");
+  }
   return (
     <ToggleGroup.Root
       ref={rootRef}
-      type="single"
-      onValueChange={onValueChange}
+      type="multiple"
+      value={value}
+      onValueChange={(newValues: Value[]) => {
+        // @todo refactor with per button callback
+        if (state.isBold !== newValues.includes("bold")) {
+          onToggle("bold");
+        }
+        if (state.isItalic !== newValues.includes("italic")) {
+          onToggle("italic");
+        }
+        if (state.isLink !== newValues.includes("link")) {
+          onToggle("link");
+        }
+      }}
       onClick={onClickPreventDefault}
       css={{
         position: "absolute",
@@ -68,13 +106,13 @@ const Toolbar = ({ css, onValueChange, rootRef }: ToolbarProps) => {
         ...css,
       }}
     >
-      <ToggleGroup.Item value="Bold">
+      <ToggleGroup.Item value="bold">
         <FontBoldIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="Italic">
+      <ToggleGroup.Item value="italic">
         <FontItalicIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="Link">
+      <ToggleGroup.Item value="link">
         <Link2Icon />
       </ToggleGroup.Item>
     </ToggleGroup.Root>
@@ -86,16 +124,19 @@ type TextToolbarProps = {
 };
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
-  const [selectionRect] = useSelectionRect();
+  const [textToolbar] = useTextToolbarState();
   const [selectedIntsanceData] = useSelectedInstanceData();
   const [element, setElement] = useState<HTMLElement | null>(null);
   const placement = useMemo(() => {
-    if (selectionRect === undefined || element === null) return;
+    if (textToolbar == null || element === null) return;
     const toolbarRect = element.getBoundingClientRect();
-    return getPlacement({ toolbarRect, selectionRect });
-  }, [selectionRect, element]);
+    return getPlacement({
+      toolbarRect,
+      selectionRect: textToolbar.selectionRect,
+    });
+  }, [textToolbar, element]);
 
-  if (selectionRect === undefined || selectedIntsanceData === undefined) {
+  if (textToolbar == null || selectedIntsanceData === undefined) {
     return null;
   }
 
@@ -103,13 +144,13 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
     <Toolbar
       rootRef={setElement}
       css={placement}
-      onValueChange={(component) => {
-        const instance = createInstance({ component });
+      state={textToolbar}
+      onToggle={(value) =>
         publish({
-          type: "insertInlineInstance",
-          payload: instance,
-        });
-      }}
+          type: "formatTextToolbar",
+          payload: value,
+        })
+      }
     />
   );
 };

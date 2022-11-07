@@ -13,9 +13,8 @@ import {
   SelectedInstanceOutline,
   DropTargetOutline,
 } from "./outline";
-import { TextToolbar } from "./text-toolbar";
+import { useSubscribeTextToolbar, TextToolbar } from "./text-toolbar";
 import { useSubscribeInstanceRect } from "./hooks/use-subscribe-instance-rect";
-import { useSubscribeSelectionRect } from "./hooks/use-subscribe-selection-rect";
 import { useSubscribeTextEditingInstanceId } from "./hooks/use-subscribe-editing-instance-id";
 
 const toolsStyle = {
@@ -33,8 +32,9 @@ type CanvasToolsProps = {
 };
 
 export const CanvasTools = ({ publish }: CanvasToolsProps) => {
+  // @todo try to setup cross-frame atoms to vaoid this
   useSubscribeInstanceRect();
-  useSubscribeSelectionRect();
+  useSubscribeTextToolbar();
   useSubscribeScrollState();
   useSubscribeDragAndDropState();
   useSubscribeTextEditingInstanceId();

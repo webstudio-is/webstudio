@@ -24,28 +24,18 @@ export const setInstanceChildrenMutable = (
       children.push(update);
       continue;
     }
-    // We need to create an instance
-    if ("createInstance" in update) {
-      const childInstance = createInstance({
+    // create new child or update existing
+    let childInstance = findInstanceById(instance, update.id);
+    if (childInstance == null) {
+      childInstance = createInstance({
         id: update.id,
         component: update.component,
         children: [update.text],
       });
       children.push(childInstance);
-      continue;
-    }
-
-    // Set text as a single child of a child instance
-    if ("text" in update) {
-      const childInstance = findInstanceById(instance, update.id);
-      // It should be impossible to have not found that instance
-      if (childInstance === undefined) continue;
+    } else {
       children.push({ ...childInstance, children: [update.text] });
-      continue;
     }
-
-    // It's a new instance.
-    children.push(update);
   }
 
   instance.children = children;

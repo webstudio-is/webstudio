@@ -3,7 +3,7 @@ import { useActionData } from "@remix-run/react";
 import {
   deleteAssets,
   uploadAssets,
-} from "@webstudio-is/asset-uploader/index.server";
+} from "@webstudio-is/asset-uploader/server";
 import { toast } from "@webstudio-is/design-system";
 import { useEffect } from "react";
 import { zfd } from "zod-form-data";
