@@ -25,8 +25,7 @@ import { Box } from "./box";
 import { Grid } from "./grid";
 
 const Listbox = styled("ul", panelStyles, {
-  py: "$1",
-  px: 0,
+  p: "$1",
   margin: 0,
   overflow: "auto",
   // @todo need some non-hardcoded value
@@ -50,6 +49,7 @@ const Listbox = styled("ul", panelStyles, {
 const ListboxItem = styled("li", itemCss, {
   padding: "0 $2",
   margin: 0,
+  borderRadius: "$1",
 });
 
 const ListboxItemBase: ForwardRefRenderFunction<

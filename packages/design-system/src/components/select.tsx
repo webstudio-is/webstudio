@@ -61,7 +61,7 @@ export const SelectContent = styled(SelectPrimitive.Content, {
 });
 
 export const SelectViewport = styled(SelectPrimitive.Viewport, {
-  py: "$1",
+  p: "$1",
 });
 
 const StyledItem = styled(SelectPrimitive.Item, {
@@ -75,6 +75,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
   padding: "0 $2",
   position: "relative",
   userSelect: "none",
+  borderRadius: "$1",
 
   "&[data-disabled]": {
     color: "$muted",
