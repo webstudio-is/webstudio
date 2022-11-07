@@ -50,6 +50,26 @@ describe("Convert WS CSS rules to stitches", () => {
     });
   });
 
+  test("withFallback option", () => {
+    const cssRules: Array<CssRule> = [
+      {
+        style: {
+          fontFamily: {
+            type: "fontFamily",
+            value: ["Courier New"],
+          },
+        },
+        breakpoint: "0",
+      },
+    ];
+    const stitchesCss = toCss(cssRules, breakpoints, { withFallback: false });
+    expect(stitchesCss).toEqual({
+      "@0": {
+        fontFamily: "Courier New",
+      },
+    });
+  });
+
   test("sort order based on maxWidth in breakpoints", () => {
     const cssRules: Array<CssRule> = [
       {

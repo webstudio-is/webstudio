@@ -44,6 +44,13 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   },
 });
 
+const StyledValue = styled("span", {
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+  overflow: "hidden",
+  flexGrow: 0,
+});
+
 const StyledIcon = styled(SelectPrimitive.Icon, {
   display: "inline-flex",
   alignItems: "center",
@@ -144,6 +151,7 @@ export type SelectProps<Option = SelectOption> = Omit<
   onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
+  getValue?: (option: Option) => string | undefined;
 };
 
 const SelectBase = (
@@ -156,6 +164,7 @@ const SelectBase = (
     onOpenChange,
     open,
     getLabel = (option) => option,
+    getValue = (option) => option,
     name,
     ...props
   }: SelectProps,
@@ -171,8 +180,8 @@ const SelectBase = (
       onOpenChange={onOpenChange}
     >
       <StyledTrigger ref={forwardedRef} {...props}>
-        <SelectPrimitive.Value>
-          {value ? getLabel(value) : placeholder}
+        <SelectPrimitive.Value asChild>
+          <StyledValue>{value ? getLabel(value) : placeholder}</StyledValue>
         </SelectPrimitive.Value>
         <StyledIcon>
           <ChevronDownIcon />
@@ -185,7 +194,11 @@ const SelectBase = (
           </SelectScrollUpButton>
           <SelectViewport>
             {options.map((option) => (
-              <SelectItem key={option} value={option} textValue={option}>
+              <SelectItem
+                key={getValue(option)}
+                value={getValue(option) ?? ""}
+                textValue={getLabel(option)}
+              >
                 {getLabel(option)}
               </SelectItem>
             ))}
