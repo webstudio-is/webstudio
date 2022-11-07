@@ -83,7 +83,7 @@ export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 export const ComboboxPopper = Popper;
 
 export const ComboboxPopperContent = styled(PopperContent, {
-  zIndex: 10,
+  zIndex: '$1',
 });
 
 export const ComboboxPopperAnchor = PopperAnchor;
