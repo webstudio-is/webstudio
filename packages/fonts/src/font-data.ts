@@ -40,10 +40,12 @@ export const normalizeFamily = (family: string, subfamily: string) => {
     .trim()
     .split(" ")
     .forEach((word: string) => {
-      simplifiedFamily = simplifiedFamily.replace(
-        new RegExp(word.trim(), "i"),
-        ""
-      );
+      // We need to remove 'Black' or 'black' from 'Roboto Black'
+      const index = simplifiedFamily.toLowerCase().indexOf(word.toLowerCase());
+      if (index !== -1) {
+        const found = simplifiedFamily.slice(index, index + word.length);
+        simplifiedFamily = simplifiedFamily.replace(found, "");
+      }
     });
   return simplifiedFamily.trim();
 };
