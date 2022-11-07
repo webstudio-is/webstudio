@@ -268,7 +268,7 @@ export const CssValueInput = ({
   });
 
   const shouldHandleEvent = useCallback((node) => {
-    return !suffixRef.current?.contains?.(node);
+    return suffixRef.current?.contains?.(node) === false;
   }, []);
   const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
@@ -296,7 +296,7 @@ export const CssValueInput = ({
   const prefix = icon && (
     <CssValueInputIconButton
       state={isCurrentBreakpoint ? "set" : undefined}
-      css={value.type == "unit" ? { cursor: "ew-resize" } : {}}
+      css={value.type == "unit" ? { cursor: "ew-resize" } : undefined}
     >
       {icon}
     </CssValueInputIconButton>
