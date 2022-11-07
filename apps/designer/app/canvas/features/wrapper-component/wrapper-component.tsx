@@ -1,4 +1,6 @@
-import { useCallback, MouseEvent, FormEvent, useMemo } from "react";
+import { MouseEvent, FormEvent } from "react";
+import { Suspense, lazy, useCallback, useMemo } from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   type Instance,
   type CSS,
@@ -10,9 +12,32 @@ import {
 } from "@webstudio-is/react-sdk";
 import { useBreakpoints, useTextEditingInstanceId } from "~/shared/nano-states";
 import { useCss } from "./use-css";
-import { Editor } from "./text-editor";
 import noop from "lodash.noop";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
+
+const TextEditor = lazy(() => import("../text-editor"));
+
+const ContentEditable = ({
+  Component,
+  elementRef,
+  ...props
+}: {
+  // eslint-disable-next-line
+  Component: any;
+  elementRef: (element: null | HTMLElement) => void;
+}) => {
+  const [editor] = useLexicalComposerContext();
+
+  const ref = useCallback(
+    (rootElement: null | HTMLElement) => {
+      editor.setRootElement(rootElement);
+      elementRef(rootElement);
+    },
+    [editor, elementRef]
+  );
+
+  return <Component ref={ref} {...props} contentEditable={true} />;
+};
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -59,7 +84,6 @@ export const WrapperComponentDev = ({
     id: instance.id,
     "data-component": instance.component,
     "data-id": instance.id,
-    ref: refCallback,
     onClick: (event: MouseEvent) => {
       if (instance.component === "Link") {
         event.preventDefault();
@@ -80,23 +104,21 @@ export const WrapperComponentDev = ({
   }
 
   return (
-    <Editor
-      instance={instance}
-      fallback={instanceElement}
-      renderInstance={({ ref, ...renderProps }) => (
-        <Component
-          {...props}
-          {...renderProps}
-          ref={(element: HTMLElement | null) => {
-            props.ref(element);
-            ref(element);
-          }}
-        />
-      )}
-      onChange={(updates) => {
-        onChangeChildren({ instanceId: instance.id, updates });
-      }}
-    />
+    <Suspense fallback={instanceElement}>
+      <TextEditor
+        instance={instance}
+        contentEditable={
+          <ContentEditable
+            {...props}
+            elementRef={refCallback}
+            Component={Component}
+          />
+        }
+        onChange={(updates) => {
+          onChangeChildren({ instanceId: instance.id, updates });
+        }}
+      />
+    </Suspense>
   );
 };
 
