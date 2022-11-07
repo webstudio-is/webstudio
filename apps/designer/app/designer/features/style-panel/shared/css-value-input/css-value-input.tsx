@@ -58,6 +58,7 @@ const useHandleOnChange = (
 
     // We want to switch to unit mode if entire input is a number.
     if (isNumericString(input)) {
+      if (value.type === "unit" && String(Number(input)) !== input) return;
       onChange?.({
         type: "unit",
         // Use previously known unit or fallback to px.
