@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { findNextListIndex, Grid } from "@webstudio-is/design-system";
-import type { Asset, ImageAsset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import { AssetsShell, PreviewAsset, useAssets, useSearch } from "../assets";
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
