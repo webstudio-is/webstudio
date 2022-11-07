@@ -295,7 +295,7 @@ export const CssValueInput = ({
   const prefix = icon && (
     <TextFieldIconButton
       state={isCurrentBreakpoint ? "set" : undefined}
-      css={value.type == "unit" ? { cursor: "ew-resize" } : {}}
+      css={value.type == "unit" ? { cursor: "ew-resize" } : undefined}
     >
       {icon}
     </TextFieldIconButton>
