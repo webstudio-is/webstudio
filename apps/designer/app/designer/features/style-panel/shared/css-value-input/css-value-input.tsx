@@ -292,7 +292,10 @@ export const CssValueInput = ({
 
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
   const prefix = icon && (
-    <TextFieldIconButton state={isCurrentBreakpoint ? "set" : undefined}>
+    <TextFieldIconButton
+      state={isCurrentBreakpoint ? "set" : undefined}
+      css={value.type == "unit" ? { cursor: "ew-resize" } : {}}
+    >
       {icon}
     </TextFieldIconButton>
   );

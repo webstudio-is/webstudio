@@ -258,7 +258,7 @@ export type TextFieldProps = Pick<
   "variant" | "state" | "css"
 > &
   Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
-    fieldRef?: React.Ref<HTMLDivElement>;
+    baseRef?: React.Ref<HTMLDivElement>;
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
@@ -270,7 +270,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       prefix,
       css,
       disabled,
-      fieldRef,
+      baseRef,
       inputRef,
       state,
       variant: variantProp,
@@ -315,7 +315,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       <TextFieldBase
         {...focusWithinProps}
         aria-disabled={disabled}
-        ref={mergeRefs(forwardedRef, fieldRef ?? null)}
+        ref={mergeRefs(forwardedRef, baseRef ?? null)}
         state={state}
         variant={variant}
         css={css}
