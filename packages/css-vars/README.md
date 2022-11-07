@@ -50,13 +50,22 @@ import {styled} from 'stitches'
 
 // icon.ts
 const showVar = cssVars.define("button-show"); // --button-show-0
+const primaryBgVar = cssVars.define("button-primary-bg"); // --button-primary-bg-1
 
-export const buttonCssVars = ({ show }: { show: boolean }) => ({
+export const buttonCssVars = ({ show, variant }: { show: boolean, variant: 'primary' | 'secondary' }) => ({
   [showVar]: show ? "block" : "none",
+  [primaryBgVar]: variant === 'primary' ? "red" : "grey",
 });
 
 export const Button = styled('button', {
   display: cssVars.use(showVar, "none")
+  variants: {
+    variant: {
+      primary: {
+        background: cssVars.use(primaryBgVar, "red")
+      }
+    }
+  }
 })
 
 // panel.ts
