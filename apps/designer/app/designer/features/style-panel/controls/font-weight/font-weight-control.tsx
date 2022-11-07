@@ -6,18 +6,26 @@ import { useAssets } from "~/designer/shared/assets";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 
-const allFontWeights = (Object.keys(fontWeights) as Array<FontWeight>).map(
-  (weight) => ({
-    label: `${fontWeights[weight].label} (${weight})`,
-    weight,
-  })
-);
+type FontWeightItem = {
+  label: string;
+  weight: FontWeight;
+};
 
-const useFontWeights = (currentFamily: string, currentWeight: string) => {
+const allFontWeights: Array<FontWeightItem> = (
+  Object.keys(fontWeights) as Array<FontWeight>
+).map((weight) => ({
+  label: `${fontWeights[weight].label} (${weight})`,
+  weight,
+}));
+
+// All font weights for the current family
+const useAvailableFontWeights = (
+  currentFamily: string
+): Array<FontWeightItem> => {
   const { assets } = useAssets("font");
 
   // Find all font weights that are available for the current font family.
-  const availableFontWeights = useMemo(() => {
+  return useMemo(() => {
     const found = allFontWeights.filter((option) => {
       return assets.find((asset) => {
         return (
@@ -30,7 +38,12 @@ const useFontWeights = (currentFamily: string, currentWeight: string) => {
     });
     return found.length === 0 ? allFontWeights : found;
   }, [currentFamily, assets]);
+};
 
+const useLabels = (
+  availableFontWeights: Array<FontWeightItem>,
+  currentWeight: string
+) => {
   const labels = useMemo(
     () => availableFontWeights.map((option) => option.label),
     [availableFontWeights]
@@ -43,7 +56,7 @@ const useFontWeights = (currentFamily: string, currentWeight: string) => {
     return selectedOption?.label;
   }, [currentWeight, availableFontWeights]);
 
-  return { labels, selectedLabel, availableFontWeights };
+  return { labels, selectedLabel };
 };
 
 export const FontWeightControl = ({
@@ -66,8 +79,11 @@ export const FontWeightControl = ({
     property: "fontFamily",
   });
 
-  const { labels, selectedLabel, availableFontWeights } = useFontWeights(
-    toValue(fontFamily, { withFallback: false }),
+  const availableFontWeights = useAvailableFontWeights(
+    toValue(fontFamily, { withFallback: false })
+  );
+  const { labels, selectedLabel } = useLabels(
+    availableFontWeights,
     toValue(fontWeight)
   );
 
