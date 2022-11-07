@@ -25,21 +25,21 @@ export const buttonCssVars = ({ show }: { show: boolean }) => ({
 });
 
 export const Button = () => {
-   return <button style={{display: cssVars.use(showVar, "none")}}></button>
-}
+  return <button style={{ display: cssVars.use(showVar, "none") }}></button>;
+};
 
 // panel.ts
-import {Button, buttonCssVars} from './button'
+import { Button, buttonCssVars } from "./button";
 
 const Panel = (props) => {
-  const [show, setShow] = useState(false)
+  const [show, setShow] = useState(false);
 
   return (
-    <div {...props} style={buttonCssVars({show})} >
+    <div {...props} style={buttonCssVars({ show })}>
       <Button />
     </div>
-  )
-}
+  );
+};
 ```
 
 ## Example using stitches with `:hover`
