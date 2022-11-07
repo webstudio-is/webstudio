@@ -1,29 +1,101 @@
-import { Box, Flex, Grid } from "@webstudio-is/design-system";
+import { useState } from "react";
+import { findNextListIndex, Grid } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import { AssetsShell, PreviewAsset, useAssets, useSearch } from "../assets";
+import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
-import { AssetUpload, useAssets } from "../assets";
+import { matchSorter } from "match-sorter";
 
-type ImageManagerProps = {
-  onSelect?: (asset: Asset) => void;
+const filterItems = (search: string, items: Array<Asset | PreviewAsset>) => {
+  return matchSorter(items, search, {
+    keys: [(item) => item.name],
+  });
 };
 
-export const ImageManager = ({ onSelect }: ImageManagerProps) => {
+const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
   const { assets, handleDelete } = useAssets("image");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
+    items: assets,
+    onReset() {
+      searchProps.onCancel();
+    },
+  });
+
+  const searchProps = useSearch({
+    onCancel: resetFilteredItems,
+    onSearch(search) {
+      if (search === "") {
+        return resetFilteredItems();
+      }
+      const items = filterItems(search, assets);
+      setFilteredItems(items);
+    },
+    onSelect(direction) {
+      if (direction === "current") {
+        setSelectedIndex(selectedIndex);
+        const asset = filteredItems[selectedIndex];
+        if (asset?.status === "uploaded") {
+          onChange?.(asset);
+        }
+        return;
+      }
+      const nextIndex = findNextListIndex(
+        selectedIndex,
+        filteredItems.length,
+        direction
+      );
+      setSelectedIndex(nextIndex);
+    },
+  });
+
+  const handleSelect = (asset?: Asset | PreviewAsset) => {
+    const selectedIndex = filteredItems.findIndex(
+      (item) => item.id === asset?.id
+    );
+    setSelectedIndex(selectedIndex);
+  };
+
+  return {
+    searchProps,
+    handleDelete,
+    filteredItems,
+    handleSelect,
+    selectedIndex,
+  };
+};
+
+type ImageManagerProps = {
+  onChange?: (asset: Asset) => void;
+};
+
+export const ImageManager = ({ onChange }: ImageManagerProps) => {
+  const {
+    handleDelete,
+    handleSelect,
+    filteredItems,
+    searchProps,
+    selectedIndex,
+  } = useLogic({ onChange });
+
   return (
-    <Flex gap="3" direction="column" css={{ padding: "$1", paddingTop: "$2" }}>
-      <Box css={{ padding: "$2" }}>
-        <AssetUpload type="image" />
-      </Box>
-      <Grid columns={2} gap={2}>
-        {assets.map((asset) => (
+    <AssetsShell
+      searchProps={searchProps}
+      isEmpty={filteredItems.length === 0}
+      type="image"
+    >
+      <Grid columns={3} gap={2}>
+        {filteredItems.map((asset, index) => (
           <ImageThumbnail
             key={asset.id}
             asset={asset}
             onDelete={handleDelete}
-            onSelect={onSelect}
+            onSelect={handleSelect}
+            onChange={onChange}
+            state={index === selectedIndex ? "selected" : undefined}
           />
         ))}
       </Grid>
-    </Flex>
+    </AssetsShell>
   );
 };

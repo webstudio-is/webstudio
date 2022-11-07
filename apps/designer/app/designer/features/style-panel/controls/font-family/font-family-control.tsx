@@ -29,7 +29,6 @@ export const FontFamilyControl = ({
       content={<FontsManager value={String(value.value)} onChange={setValue} />}
       onOpenChange={setIsOpen}
     >
-      {/* @todo this should be part of the design system, probably a varian="button" */}
       <TextField
         defaultValue={value.value}
         state={isOpen ? "active" : undefined}
