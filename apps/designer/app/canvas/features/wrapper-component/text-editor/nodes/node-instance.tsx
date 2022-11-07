@@ -10,7 +10,6 @@ import { InlineWrapperComponentDev } from "../../wrapper-component";
 type Options = {
   instance: Instance;
   text: string;
-  isNew: boolean;
 };
 
 export type SerializedInstanceNode = SerializedTextNode & Options;

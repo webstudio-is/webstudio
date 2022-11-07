@@ -53,7 +53,8 @@ export type Control =
   | "MenuControl"
   | "SelectControl"
   | "FontFamilyControl"
-  | "ImageControl";
+  | "ImageControl"
+  | "FontWeightControl";
 
 export type StyleConfig = BaseStyleConfig & {
   control: Control;
@@ -73,6 +74,9 @@ const getControl = (property: StyleProperty): Control => {
     }
     case "backgroundImage": {
       return isFeatureEnabled("assets") ? "ImageControl" : "TextControl";
+    }
+    case "fontWeight": {
+      return "FontWeightControl";
     }
   }
 
@@ -99,7 +103,7 @@ const createStyleConfigs = () => {
         property,
         appliesTo: properties[property].appliesTo,
         control: getControl(property),
-        items: keywords.map((keyword: string) => ({
+        items: keywords.map((keyword) => ({
           label: keyword,
           name: keyword,
         })),

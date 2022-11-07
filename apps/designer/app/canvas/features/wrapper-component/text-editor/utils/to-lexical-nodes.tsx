@@ -31,7 +31,6 @@ export const toLexicalNodes = (children: Instance["children"]) => {
     const instanceNode = $createInstanceNode({
       instance: child,
       text,
-      isNew: false,
     });
     paragraph.append(instanceNode);
   }

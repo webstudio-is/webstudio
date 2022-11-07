@@ -1,3 +1,4 @@
+import { detectFont } from "detect-font";
 import type { StyleProperty } from "./types";
 import type { Style, StyleValue, Unit } from "./schema";
 import { properties } from "./properties";
@@ -39,5 +40,10 @@ export const getBrowserStyle = (element?: Element): Style => {
     const computedValue = computedStyle[knownProperty as unknown as number];
     browserStyle[knownProperty] = parseValue(knownProperty, computedValue);
   }
+  // We need a single font-family that is actually rendered. Computed style will return a list of potential fonts.
+  browserStyle.fontFamily = {
+    type: "fontFamily",
+    value: [detectFont(element)],
+  };
   return browserStyle;
 };
