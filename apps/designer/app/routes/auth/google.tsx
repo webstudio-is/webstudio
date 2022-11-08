@@ -13,7 +13,7 @@ export const loader: LoaderFunction = () => redirect("/login");
 export const action: ActionFunction = async ({ request }) => {
   try {
     return await authenticator.authenticate("google", request, {
-      successRedirect: dashboardPath,
+      successRedirect: dashboardPath(),
       throwOnError: true,
     });
   } catch (error: unknown) {

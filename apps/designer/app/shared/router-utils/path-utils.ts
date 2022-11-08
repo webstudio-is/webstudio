@@ -1,6 +1,7 @@
 import { AUTH_PROVIDERS } from "~/shared/session";
 import type { Page, Project } from "@webstudio-is/project";
 import type { BuildMode } from "./build-params";
+import type { ThemeSetting } from "~/shared/theme";
 import env from "~/shared/env";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
@@ -22,18 +23,39 @@ export const designerPath = ({
   pageId?: string;
 }) => `/designer/${projectId}${searchParams({ pageId })}`;
 
-export const dashboardPath = "/dashboard";
+export const dashboardPath = () => "/dashboard";
 
 export const loginPath = (params: {
   error?: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
   message?: string;
 }) => `/login${searchParams(params)}`;
 
-export const logoutPath = "/logout";
+export const logoutPath = () => "/logout";
 
-export const googleCallbackPath = "/auth/google/callback";
+export const authCallbackPath = ({
+  provider,
+}: {
+  provider: "google" | "github";
+}) => `/auth/${provider}/callback`;
 
-export const githubCallbackPath = "/auth/github/callback";
+export const authPath = ({
+  provider,
+}: {
+  provider: "google" | "github" | "dev";
+}) => `/auth/${provider}`;
+
+export const restPagesPath = ({ projectId }: { projectId: string }) =>
+  `/rest/pages/${projectId}`;
+
+export const restAssetsPath = ({ projectId }: { projectId: string }) =>
+  `/rest/assets/${projectId}`;
+
+export const restThemePath = ({ setting }: { setting: ThemeSetting }) =>
+  `/rest/theme/${setting}`;
+
+export const restPatchPath = () => "/rest/patch";
+
+export const restPublishPath = () => "/rest/publish";
 
 export const getBuildUrl = ({
   buildOrigin,

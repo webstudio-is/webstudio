@@ -12,7 +12,7 @@ export { links };
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await authenticator.isAuthenticated(request);
   if (user) {
-    return redirect(dashboardPath);
+    return redirect(dashboardPath());
   }
   return {
     isDevLogin: process.env.DEV_LOGIN === "true",

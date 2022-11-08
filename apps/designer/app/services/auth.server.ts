@@ -7,7 +7,7 @@ import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
-import { githubCallbackPath, googleCallbackPath } from "~/shared/router-utils";
+import { authCallbackPath } from "~/shared/router-utils";
 
 const url =
   process.env.DEPLOYMENT_ENVIRONMENT === "production"
@@ -46,7 +46,7 @@ if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
     {
       clientID: process.env.GH_CLIENT_ID,
       clientSecret: process.env.GH_CLIENT_SECRET,
-      callbackURL: `${url}${githubCallbackPath}`,
+      callbackURL: `${url}${authCallbackPath({ provider: "github" })}`,
     },
     strategyCallback
   );
@@ -58,7 +58,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${url}${googleCallbackPath}`,
+      callbackURL: `${url}${authCallbackPath({ provider: "google" })}`,
     },
     strategyCallback
   );

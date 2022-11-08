@@ -29,6 +29,7 @@ import type {
   EditPageData,
   CreatePageData,
 } from "~/shared/pages";
+import { restPagesPath } from "~/shared/router-utils";
 
 const Group = styled(Flex, {
   marginBottom: "$3",
@@ -121,7 +122,7 @@ export const NewPageSettings = ({
   const handleSubmit = () => {
     fetcher.submit(values, {
       method: "put",
-      action: `/rest/pages/${projectId}`,
+      action: restPagesPath({ projectId }),
     });
   };
 
@@ -244,7 +245,7 @@ export const PageSettings = ({
 
       fetcher.submit(toFormData({ id: pageId, ...valuesToSubmit }), {
         method: "post",
-        action: `/rest/pages/${projectId}`,
+        action: restPagesPath({ projectId }),
       });
 
       setSubmittedValues(valuesToSubmit);
@@ -262,7 +263,7 @@ export const PageSettings = ({
     // because we don't want the request to be canceled when the component unmounts
     submitPersistently<EditPageData>(
       toFormData({ id: pageId, ...submittedValues, ...unsavedValues }),
-      { method: "post", action: `/rest/pages/${projectId}` },
+      { method: "post", action: restPagesPath({ projectId }) },
       (data) => {
         if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);
@@ -283,7 +284,7 @@ export const PageSettings = ({
     // because we don't want the request to be canceled when the component unmounts
     submitPersistently<DeletePageData>(
       { id: pageId },
-      { method: "delete", action: `/rest/pages/${projectId}` },
+      { method: "delete", action: restPagesPath({ projectId }) },
       (data) => {
         if (data.status === "error") {
           toastUnknownFieldErrors(normalizeErrors(data.errors), []);

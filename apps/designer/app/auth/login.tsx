@@ -13,6 +13,7 @@ import interStyles from "~/shared/font-faces/inter.css";
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./components/login-button";
 import loginStyles from "./login.css";
+import { authPath } from "~/shared/router-utils";
 
 export const links: LinksFunction = () => {
   return [
@@ -52,7 +53,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
               </Text>
             ) : null}
             <Flex gap="2" direction="column">
-              <Form action="/auth/github" method="post">
+              <Form action={authPath({ provider: "github" })} method="post">
                 <LoginButton enabled={data.isGithubEnabled}>
                   <Flex gap="2" align="center">
                     <Flex css={{ width: 20, height: 20 }}>
@@ -62,7 +63,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                   </Flex>
                 </LoginButton>
               </Form>
-              <Form action="/auth/google" method="post">
+              <Form action={authPath({ provider: "google" })} method="post">
                 <LoginButton enabled={data.isGoogleEnabled}>
                   <Flex gap="2" align="center">
                     <Flex css={{ width: 20, height: 20 }}>
@@ -76,7 +77,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                 (isDevLoginOpen ? (
                   <Flex
                     as="form"
-                    action="/auth/dev"
+                    action={authPath({ provider: "dev" })}
                     method="post"
                     css={{
                       flexDirection: "row",

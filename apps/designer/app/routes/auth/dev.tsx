@@ -10,7 +10,7 @@ export default function Dev() {
 export const action: ActionFunction = async ({ request }) => {
   try {
     return await authenticator.authenticate("dev", request, {
-      successRedirect: dashboardPath,
+      successRedirect: dashboardPath(),
       throwOnError: true,
     });
   } catch (error: unknown) {

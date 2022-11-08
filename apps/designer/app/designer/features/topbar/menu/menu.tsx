@@ -137,7 +137,7 @@ export const Menu = ({ publish }: MenuProps) => {
           <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
-              navigate(dashboardPath);
+              navigate(dashboardPath());
             }}
           >
             Dashboard

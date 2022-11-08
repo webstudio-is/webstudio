@@ -16,7 +16,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     );
   }
   return authenticator.authenticate("github", request, {
-    successRedirect: dashboardPath,
+    successRedirect: dashboardPath(),
     failureRedirect: loginPath({}),
   });
 };

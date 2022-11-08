@@ -17,6 +17,7 @@ import {
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
 import type { Project } from "@webstudio-is/project";
+import { restPublishPath } from "~/shared/router-utils";
 type PublishButtonProps = { project: Project };
 
 const getHost = () => {
@@ -49,7 +50,7 @@ const Content = ({ project }: PublishButtonProps) => {
         event.preventDefault();
       }}
     >
-      <fetcher.Form method="post" action="/rest/publish">
+      <fetcher.Form method="post" action={restPublishPath()}>
         <Flex direction="column" gap="2">
           {url !== undefined && (
             <Link

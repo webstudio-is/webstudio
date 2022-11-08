@@ -11,7 +11,7 @@ export default function GH() {
 export const action: ActionFunction = async ({ request }) => {
   try {
     return await authenticator.authenticate("github", request, {
-      successRedirect: dashboardPath,
+      successRedirect: dashboardPath(),
       throwOnError: true,
     });
   } catch (error: unknown) {

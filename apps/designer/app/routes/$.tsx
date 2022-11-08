@@ -37,7 +37,7 @@ export const loader: LoaderFunction = async ({
     const buildParams = getBuildParams(request);
 
     if (buildParams === undefined) {
-      return redirect(dashboardPath);
+      return redirect(dashboardPath());
     }
 
     const { mode, pathname } = buildParams;
