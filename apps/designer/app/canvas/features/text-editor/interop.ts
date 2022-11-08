@@ -1,15 +1,14 @@
 import {
-  type ElementNode,
   $getRoot,
   $createTextNode,
   $createParagraphNode,
   TextNode,
+  ElementNode,
   LineBreakNode,
   ParagraphNode,
 } from "lexical";
 import { $createLinkNode, LinkNode } from "@lexical/link";
 import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
-import { createInstanceId } from "~/shared/tree-utils";
 
 // Map<nodeKey, Instance>
 export type Refs = Map<string, Instance>;
@@ -34,23 +33,38 @@ const $writeUpdates = (
       }
     }
     if (child instanceof LinkNode) {
-      // @todo support link children styling
-      const text = child.getTextContent();
-      const id = refs.get(child.getKey())?.id ?? createInstanceId();
-      updates.push({ id, component: "Link", text });
+      const id = refs.get(child.getKey())?.id;
+      const childrenUpdates: ChildrenUpdates = [];
+      $writeUpdates(child, childrenUpdates, refs);
+      updates.push({ id, component: "Link", children: childrenUpdates });
     }
     if (child instanceof TextNode) {
-      // @todo support nesting bold into italic and vice versa
+      // support nesting bold into italic and vice versa
+      // considering lexical represents both as single node
+      // and add ref suffix to distinct styling on one node key
       const text = child.getTextContent();
+      let parentUpdates = updates;
       if (child.hasFormat("bold")) {
-        const id = refs.get(child.getKey())?.id ?? createInstanceId();
-        updates.push({ id, component: "Bold", text });
-      } else if (child.hasFormat("italic")) {
-        const id = refs.get(child.getKey())?.id ?? createInstanceId();
-        updates.push({ id, component: "Italic", text });
-      } else {
-        updates.push(text);
+        const id = refs.get(`${child.getKey()}:bold`)?.id;
+        const update: ChildrenUpdates[number] = {
+          id,
+          component: "Bold",
+          children: [],
+        };
+        parentUpdates.push(update);
+        parentUpdates = update.children;
       }
+      if (child.hasFormat("italic")) {
+        const id = refs.get(`${child.getKey()}:italic`)?.id;
+        const update: ChildrenUpdates[number] = {
+          id,
+          component: "Italic",
+          children: [],
+        };
+        parentUpdates.push(update);
+        parentUpdates = update.children;
+      }
+      parentUpdates.push(text);
     }
   }
 };
@@ -62,6 +76,56 @@ export const $convertToUpdates = (refs: Refs) => {
   return updates;
 };
 
+type InstanceChild = string | Instance;
+
+const $writeLexical = (
+  parent: ElementNode | TextNode,
+  children: InstanceChild[],
+  refs: Refs
+) => {
+  for (const child of children) {
+    if (typeof child === "string") {
+      if (parent instanceof TextNode) {
+        parent.setTextContent(child);
+      } else {
+        const textNode = $createTextNode(child);
+        parent.append(textNode);
+      }
+    } else {
+      if (parent instanceof ElementNode && child.component === "Link") {
+        const linkNode = $createLinkNode("");
+        refs.set(linkNode.getKey(), child);
+        parent.append(linkNode);
+        $writeLexical(linkNode, child.children, refs);
+      }
+      if (child.component === "Bold") {
+        let textNode;
+        if (parent instanceof TextNode) {
+          textNode = parent;
+        } else {
+          textNode = $createTextNode("");
+          parent.append(textNode);
+        }
+        textNode.toggleFormat("bold");
+        refs.set(`${textNode.getKey()}:bold`, child);
+        $writeLexical(textNode, child.children, refs);
+      }
+      if (child.component === "Italic") {
+        let textNode;
+        if (parent instanceof TextNode) {
+          textNode = parent;
+        } else {
+          textNode = $createTextNode("");
+          parent.append(textNode);
+        }
+        textNode.toggleFormat("italic");
+        refs.set(`${textNode.getKey()}:italic`, child);
+        $writeLexical(textNode, child.children, refs);
+      }
+    }
+  }
+};
+
 export const $convertToLexical = (instance: Instance, refs: Refs) => {
   const root = $getRoot();
   let p = $createParagraphNode();
@@ -70,31 +134,8 @@ export const $convertToLexical = (instance: Instance, refs: Refs) => {
     if (child === "\n") {
       p = $createParagraphNode();
       root.append(p);
-    } else if (typeof child === "string") {
-      const textNode = $createTextNode(child);
-      p.append(textNode);
     } else {
-      // inline components should always have a single child string
-      const text =
-        typeof child.children[0] === "string" ? child.children[0] : "";
-      if (child.component === "Bold") {
-        const textNode = $createTextNode(text);
-        textNode.setFormat("bold");
-        refs.set(textNode.getKey(), child);
-        p.append(textNode);
-      }
-      if (child.component === "Italic") {
-        const textNode = $createTextNode(text);
-        textNode.setFormat("italic");
-        refs.set(textNode.getKey(), child);
-        p.append(textNode);
-      }
-      if (child.component === "Link") {
-        const textNode = $createTextNode(text);
-        const linkNode = $createLinkNode(text).append(textNode);
-        refs.set(linkNode.getKey(), child);
-        p.append(linkNode);
-      }
+      $writeLexical(p, [child], refs);
     }
   }
 };

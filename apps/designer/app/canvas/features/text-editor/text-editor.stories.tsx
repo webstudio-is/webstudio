@@ -66,7 +66,23 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
             component: "TextBlock",
             children: [
               "Pragraph you can edit ",
-              createInstance({ component: "Bold", children: ["bold"] }),
+              createInstance({
+                component: "Bold",
+                children: ["very bold text "],
+              }),
+              createInstance({
+                component: "Bold",
+                children: [
+                  createInstance({
+                    component: "Italic",
+                    children: ["with small italic"],
+                  }),
+                ],
+              }),
+              createInstance({
+                component: "Bold",
+                children: [" subtext"],
+              }),
             ],
           })}
           contentEditable={<ContentEditable />}
