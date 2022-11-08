@@ -17,11 +17,13 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isLink, setIsLink] = useState(false);
+  const [isSpan, setIsSpan] = useState(false);
   useSubscribe("showTextToolbar", (event) => {
     setIsEnabled(true);
     setIsBold(event.isBold);
     setIsItalic(event.isItalic);
     setIsLink(event.isLink);
+    setIsSpan(event.isSpan);
   });
   useSubscribe("hideTextToolbar", () => {
     setIsEnabled(false);
@@ -51,6 +53,13 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
         onClick={() => publish({ type: "formatTextToolbar", payload: "link" })}
       >
         Link
+      </button>
+      <button
+        disabled={isEnabled === false}
+        style={{ fontWeight: isSpan ? "bold" : "normal" }}
+        onClick={() => publish({ type: "formatTextToolbar", payload: "span" })}
+      >
+        span
       </button>
       <Box
         css={{
