@@ -39,8 +39,8 @@ const LayoutSectionFlex = ({
           css={{
             gridArea: "display",
             gridTemplateColumns: "auto 1fr",
-            gap: "$space$2",
-            width: "fit-content",
+            gap: "$space$6",
+            width: "100%",
             fontWeight: "500",
           }}
         >

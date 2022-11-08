@@ -20,14 +20,14 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   height: 28, // @todo waiting for the sizing scale
   px: "$2",
   fontSize: "$1",
-  "&:hover": {
-    backgroundColor: "$slate6",
-  },
   "&:focus": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
   },
-  paddingRight: "$1",
+  paddingRight: 0,
+  paddingLeft: "$sizes$2",
+  textTransform: "capitalize",
+  fontWeight: "inherit",
 
   variants: {
     ghost: {
@@ -56,7 +56,7 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
   alignItems: "center",
   justifyContent: "center",
   height: "100%",
-  padding: "calc($space$1 / 2)",
+  padding: "2px 2px 2px 0px",
 });
 
 export const SelectContent = styled(SelectPrimitive.Content, {
@@ -68,7 +68,7 @@ export const SelectContent = styled(SelectPrimitive.Content, {
 });
 
 export const SelectViewport = styled(SelectPrimitive.Viewport, {
-  py: "$1",
+  p: "$1",
 });
 
 const StyledItem = styled(SelectPrimitive.Item, {
@@ -82,6 +82,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
   padding: "0 $2",
   position: "relative",
   userSelect: "none",
+  borderRadius: "$1",
 
   "&[data-disabled]": {
     color: "$muted",
