@@ -10,16 +10,15 @@ import {
   Heading,
   Text,
 } from "@webstudio-is/design-system";
+import { designerPath } from "~/shared/router-utils";
 
 type SelectProjectProjectCardProps = {
   projects: Array<{ id: string; title: string }>;
-  config: { designerPath: string };
   errors: string;
 };
 
 export const SelectProjectCard = ({
   projects,
-  config,
   errors,
 }: SelectProjectProjectCardProps) => {
   const [selectedProject, setSelectedProject] = useState("");
@@ -28,7 +27,7 @@ export const SelectProjectCard = ({
   const transition = useTransition();
 
   const handleOpen = () => {
-    navigate(`${config.designerPath}/${selectedProject}`);
+    navigate(designerPath({ projectId: selectedProject }));
   };
 
   const options = ["", ...projects.map((project) => project.id)];

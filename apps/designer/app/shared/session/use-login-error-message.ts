@@ -6,7 +6,7 @@ export const AUTH_PROVIDERS = {
   LOGIN_DEV: "login_dev",
   LOGIN_GITHUB: "login_github",
   LOGIN_GOOGLE: "login_google",
-};
+} as const;
 
 export const LOGIN_ERROR_MESSAGES = {
   [AUTH_PROVIDERS.LOGIN_DEV]: "There has been an issue logging you in with dev",
