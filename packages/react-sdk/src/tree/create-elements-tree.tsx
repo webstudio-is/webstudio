@@ -9,7 +9,7 @@ import { SessionStoragePolyfill } from "./session-storage-polyfill";
 export type ChildrenUpdates = Array<
   | string
   | {
-      id: null | Instance["id"];
+      id: undefined | Instance["id"];
       component: Instance["component"];
       children: ChildrenUpdates;
     }

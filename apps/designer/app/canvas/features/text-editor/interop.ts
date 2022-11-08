@@ -33,7 +33,7 @@ const $writeUpdates = (
       }
     }
     if (child instanceof LinkNode) {
-      const id = refs.get(child.getKey())?.id ?? null;
+      const id = refs.get(child.getKey())?.id;
       const childrenUpdates: ChildrenUpdates = [];
       $writeUpdates(child, childrenUpdates, refs);
       updates.push({ id, component: "Link", children: childrenUpdates });
@@ -45,7 +45,7 @@ const $writeUpdates = (
       const text = child.getTextContent();
       let parentUpdates = updates;
       if (child.hasFormat("bold")) {
-        const id = refs.get(`${child.getKey()}:bold`)?.id ?? null;
+        const id = refs.get(`${child.getKey()}:bold`)?.id;
         const update: ChildrenUpdates[number] = {
           id,
           component: "Bold",
@@ -55,7 +55,7 @@ const $writeUpdates = (
         parentUpdates = update.children;
       }
       if (child.hasFormat("italic")) {
-        const id = refs.get(`${child.getKey()}:italic`)?.id ?? null;
+        const id = refs.get(`${child.getKey()}:italic`)?.id;
         const update: ChildrenUpdates[number] = {
           id,
           component: "Italic",
