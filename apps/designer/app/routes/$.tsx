@@ -7,13 +7,16 @@ import {
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData, type CanvasData } from "~/shared/db";
-import config from "~/config";
 import { db } from "@webstudio-is/project/server";
 import env, { Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-import { type BuildMode, getBuildParams } from "~/shared/router-utils";
+import {
+  type BuildMode,
+  getBuildParams,
+  dashboardPath,
+} from "~/shared/router-utils";
 
 type Data =
   | (CanvasData & { env: Env; mode: BuildMode })
@@ -34,7 +37,7 @@ export const loader: LoaderFunction = async ({
     const buildParams = getBuildParams(request);
 
     if (buildParams === undefined) {
-      return redirect(config.dashboardPath);
+      return redirect(dashboardPath());
     }
 
     const { mode, pathname } = buildParams;

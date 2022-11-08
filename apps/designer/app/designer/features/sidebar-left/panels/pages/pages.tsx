@@ -19,7 +19,6 @@ import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { type Config } from "~/config";
 import {
   useCurrentPageId,
   usePages,
@@ -27,11 +26,11 @@ import {
 } from "~/designer/shared/nano-states";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
+import { designerPath } from "~/shared/router-utils";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
   publish: Publish;
-  config: Config;
 };
 
 type PagesTreeNode =
@@ -187,11 +186,12 @@ export const TabContent = (props: TabContentProps) => {
     if (project === undefined) {
       return;
     }
-    if (pageId === "home") {
-      navigate(`${props.config.designerPath}/${project.id}`);
-    } else {
-      navigate(`${props.config.designerPath}/${project.id}?pageId=${pageId}`);
-    }
+    navigate(
+      designerPath({
+        projectId: project.id,
+        pageId: pageId === "home" ? undefined : pageId,
+      })
+    );
   };
 
   const newPageId = "new-page";

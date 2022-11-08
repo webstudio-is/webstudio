@@ -1,5 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import { darkTheme } from "@webstudio-is/design-system";
+import { restThemePath } from "~/shared/router-utils";
 import type { ColorScheme, ThemeSetting } from "./types";
 
 // User selected theme setting.
@@ -57,7 +58,7 @@ const renderThemeProps = () => {
 export const setThemeSetting = (nextSetting: ThemeSetting) => {
   setting = nextSetting;
   renderThemeProps();
-  fetch(`/rest/theme/${setting}`);
+  fetch(restThemePath({ setting }));
 };
 
 /**

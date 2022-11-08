@@ -8,6 +8,7 @@ import {
 import { toast } from "@webstudio-is/design-system";
 import ObjectID from "bson-objectid";
 import { useMemo } from "react";
+import { restAssetsPath } from "~/shared/router-utils";
 import { useAssets as useAssetsState, useProject } from "../nano-states";
 import { PreviewAsset } from "./types";
 
@@ -62,7 +63,7 @@ export const useAssets = (type: AssetType) => {
   const { submit, Form } = useFetcher();
   const [assets, setAssets] = useAssetsState();
   const [project] = useProject();
-  const action = `/rest/assets/${project?.id}`;
+  const action = project && restAssetsPath({ projectId: project.id });
 
   const handleDelete = (ids: Array<string>) => {
     const formData = new FormData();

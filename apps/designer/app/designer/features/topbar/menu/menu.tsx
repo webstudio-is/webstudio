@@ -15,7 +15,6 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, ChevronRightIcon } from "@webstudio-is/icons";
-import type { Config } from "~/config";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
@@ -27,6 +26,7 @@ import {
   type ThemeSetting,
 } from "~/shared/theme";
 import { useClientSettings } from "~/designer/shared/client-settings";
+import { dashboardPath } from "~/shared/router-utils";
 
 const menuItemCss = {
   display: "flex",
@@ -99,11 +99,10 @@ const ViewMenuItem = () => {
 };
 
 type MenuProps = {
-  config: Config;
   publish: Publish;
 };
 
-export const Menu = ({ config, publish }: MenuProps) => {
+export const Menu = ({ publish }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
@@ -138,7 +137,7 @@ export const Menu = ({ config, publish }: MenuProps) => {
           <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
-              navigate(config.dashboardPath);
+              navigate(dashboardPath());
             }}
           >
             Dashboard

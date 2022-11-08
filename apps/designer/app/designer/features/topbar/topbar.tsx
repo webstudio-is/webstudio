@@ -1,6 +1,5 @@
 import type { Publish } from "~/shared/pubsub";
 import { darkTheme, Flex, type CSS } from "@webstudio-is/design-system";
-import type { Config } from "~/config";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -10,19 +9,12 @@ import { Breakpoints } from "../breakpoints";
 import type { Project } from "@webstudio-is/project";
 
 type TopbarProps = {
-  config: Config;
   css: CSS;
   project: Project;
   publish: Publish;
   previewUrl: string;
 };
-export const Topbar = ({
-  config,
-  css,
-  project,
-  publish,
-  previewUrl,
-}: TopbarProps) => {
+export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
   return (
     <Flex
       className={darkTheme}
@@ -48,7 +40,7 @@ export const Topbar = ({
         ...css,
       }}
     >
-      <Menu config={config} publish={publish} />
+      <Menu publish={publish} />
       <Breakpoints publish={publish} />
       <Flex
         align="center"

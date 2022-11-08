@@ -5,7 +5,6 @@ import {
   type Project,
   utils as projectUtils,
 } from "@webstudio-is/project";
-import type { Config } from "~/config";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
@@ -40,8 +39,8 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { PANEL_WIDTH } from "./shared/constants";
-import env from "~/shared/env";
 import { useSetAssets } from "./shared/assets";
+import { getBuildUrl } from "~/shared/router-utils";
 
 export const links = () => {
   return [
@@ -246,7 +245,6 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 };
 
 export type DesignerProps = {
-  config: Config;
   project: Project;
   pages: Pages;
   pageId: string;
@@ -254,7 +252,6 @@ export type DesignerProps = {
 };
 
 export const Designer = ({
-  config,
   project,
   pages,
   pageId,
@@ -294,25 +291,19 @@ export const Designer = ({
     return page;
   }, [pages, pageId]);
 
-  const buildUrl = new URL(buildOrigin);
-  buildUrl.pathname = page.path;
-  if (env.BUILD_REQUIRE_SUBDOMAIN) {
-    buildUrl.host = `${project.domain}.${buildUrl.host}`;
-  } else {
-    buildUrl.searchParams.set("projectId", project.id);
-  }
+  const canvasUrl = getBuildUrl({ buildOrigin, project, page, mode: "edit" });
 
-  buildUrl.searchParams.set("mode", "edit");
-  const canvasUrl = buildUrl.toString();
-
-  buildUrl.searchParams.set("mode", "preview");
-  const previewUrl = buildUrl.toString();
+  const previewUrl = getBuildUrl({
+    buildOrigin,
+    project,
+    page,
+    mode: "preview",
+  });
 
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>
       <Topbar
         css={{ gridArea: "header" }}
-        config={config}
         project={project}
         publish={publish}
         previewUrl={previewUrl}
@@ -336,7 +327,7 @@ export const Designer = ({
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft publish={publish} config={config} />
+        <SidebarLeft publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

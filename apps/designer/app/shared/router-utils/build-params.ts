@@ -1,3 +1,6 @@
+// These are the utils for manipulating "build" params.
+// "Build" means user generated content — what user builds.
+
 export type BuildMode = "edit" | "preview" | "published";
 const modes = ["edit", "preview", "published"] as BuildMode[];
 const getMode = (url: URL): BuildMode => {

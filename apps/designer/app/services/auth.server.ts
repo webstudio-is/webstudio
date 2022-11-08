@@ -3,17 +3,16 @@ import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy, type GitHubProfile } from "remix-auth-github";
 import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
-import config from "~/config";
 import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
+import { authCallbackPath } from "~/shared/router-utils";
 
-const url = `${
+const url =
   process.env.DEPLOYMENT_ENVIRONMENT === "production"
     ? process.env.DEPLOYMENT_URL
-    : `http://localhost:${process.env.PORT || 3000}`
-}${config.authPath}`;
+    : `http://localhost:${process.env.PORT || 3000}`;
 
 const strategyCallback = async ({
   profile,
@@ -47,7 +46,7 @@ if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
     {
       clientID: process.env.GH_CLIENT_ID,
       clientSecret: process.env.GH_CLIENT_SECRET,
-      callbackURL: `${url}${config.githubCallbackPath}`,
+      callbackURL: `${url}${authCallbackPath({ provider: "github" })}`,
     },
     strategyCallback
   );
@@ -59,7 +58,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${url}${config.googleCallbackPath}`,
+      callbackURL: `${url}${authCallbackPath({ provider: "google" })}`,
     },
     strategyCallback
   );
