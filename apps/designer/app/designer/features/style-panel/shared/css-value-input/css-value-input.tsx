@@ -73,7 +73,7 @@ const useHandleOnChange = (
       type: "keyword",
       value: input,
     });
-  }, [input, onChange]);
+  }, [input, value.type, onChange]);
 
   useEffect(() => {
     valueRef.current = value;
