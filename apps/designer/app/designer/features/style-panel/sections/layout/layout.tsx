@@ -6,6 +6,7 @@ import { ShowMore } from "../../shared/show-more";
 import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
+import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
 
 const LayoutSectionFlex = ({
   currentStyle,
@@ -106,7 +107,7 @@ const LayoutSectionFlex = ({
       >
         {columnGap?.styleConfig && (
           <Box css={{ gridArea: "columnGap" }}>
-            <TextControl {...columnGap} />
+            <TextControl icon={<ColumnGapIcon />} {...columnGap} />
           </Box>
         )}
         {rowGap?.styleConfig && columnGap?.styleConfig && (
@@ -120,7 +121,7 @@ const LayoutSectionFlex = ({
         )}
         {rowGap?.styleConfig && (
           <Box css={{ gridArea: "rowGap" }}>
-            <TextControl {...rowGap} />
+            <TextControl icon={<RowGapIcon />} {...rowGap} />
           </Box>
         )}
       </Grid>

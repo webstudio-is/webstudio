@@ -9,6 +9,7 @@ import {
   ComboboxListboxItem,
   numericScrubControl,
   TextFieldIconButton,
+  styled,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -20,10 +21,12 @@ import {
 import {
   type KeyboardEventHandler,
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
+import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
@@ -56,6 +59,7 @@ const useHandleOnChange = (
 
     // We want to switch to unit mode if entire input is a number.
     if (isNumericString(input)) {
+      if (value.type === "unit" && String(Number(input)) !== input) return;
       onChange?.({
         type: "unit",
         // Use previously known unit or fallback to px.
@@ -80,11 +84,18 @@ const useScrub = ({
   value,
   onChange,
   onChangeComplete,
+  shouldHandleEvent,
 }: {
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-}): [React.MutableRefObject<HTMLInputElement | null>, boolean] => {
+  shouldHandleEvent?: (node: EventTarget) => boolean;
+}): [
+  React.MutableRefObject<HTMLDivElement | null>,
+  React.MutableRefObject<HTMLInputElement | null>,
+  boolean
+] => {
+  const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isInputActive, setIsInputActive] = useState(false);
   const onChangeRef = useRef(onChange);
@@ -101,10 +112,15 @@ const useScrub = ({
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
-    if (type !== "unit" || unit === undefined || inputRef.current === null) {
+    if (
+      type !== "unit" ||
+      unit === undefined ||
+      inputRef.current === null ||
+      scrubRef.current === null
+    ) {
       return;
     }
-    const scrub = numericScrubControl(inputRef.current, {
+    const scrub = numericScrubControl(scrubRef.current, {
       initialValue: valueRef.current.value,
       onValueInput(event) {
         onChangeRef.current({
@@ -125,12 +141,13 @@ const useScrub = ({
         inputRef.current?.focus();
         inputRef.current?.select();
       },
+      shouldHandleEvent: shouldHandleEvent,
     });
 
     return scrub.disconnectedCallback;
-  }, [type, unit]);
+  }, [type, unit, shouldHandleEvent]);
 
-  return [inputRef, isInputActive];
+  return [scrubRef, inputRef, isInputActive];
 };
 
 const useHandleKeyDown =
@@ -207,13 +224,14 @@ type CssValueInputProps = {
  */
 
 export const CssValueInput = ({
+  icon,
   property,
   value = unsetValue,
   keywords = [],
   onChange,
   onChangeComplete,
   onItemHighlight,
-}: CssValueInputProps) => {
+}: CssValueInputProps & { icon?: JSX.Element }) => {
   const {
     items,
     getInputProps,
@@ -249,10 +267,14 @@ export const CssValueInput = ({
     },
   });
 
-  const [inputRef, isInputActive] = useScrub({
+  const shouldHandleEvent = useCallback((node) => {
+    return suffixRef.current?.contains?.(node) === false;
+  }, []);
+  const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
     onChange,
     onChangeComplete,
+    shouldHandleEvent,
   });
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
@@ -270,17 +292,31 @@ export const CssValueInput = ({
     closeMenu,
   });
 
-  const suffix =
-    value.type === "keyword" ? (
-      <TextFieldIconButton
-        {...getToggleButtonProps()}
-        state={isOpen ? "active" : undefined}
-      >
-        <ChevronDownIcon />
-      </TextFieldIconButton>
-    ) : value.type === "unit" ? (
-      unitSelectElement
-    ) : null;
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const prefix = icon && (
+    <CssValueInputIconButton
+      state={isCurrentBreakpoint ? "set" : undefined}
+      css={value.type == "unit" ? { cursor: "ew-resize" } : undefined}
+    >
+      {icon}
+    </CssValueInputIconButton>
+  );
+
+  const suffixRef = useRef<HTMLDivElement | null>(null);
+  const suffix = (
+    <Box ref={suffixRef}>
+      {value.type === "keyword" ? (
+        <TextFieldIconButton
+          {...getToggleButtonProps()}
+          state={isOpen ? "active" : undefined}
+        >
+          <ChevronDownIcon />
+        </TextFieldIconButton>
+      ) : value.type === "unit" ? (
+        unitSelectElement
+      ) : null}
+    </Box>
+  );
 
   return (
     <ComboboxPopper>
@@ -294,6 +330,7 @@ export const CssValueInput = ({
             }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
+            baseRef={scrubRef}
             inputRef={inputRef}
             name={property}
             state={
@@ -303,6 +340,7 @@ export const CssValueInput = ({
                 ? "active"
                 : undefined
             }
+            prefix={prefix}
             suffix={suffix}
             css={{ cursor: "default" }}
           />
@@ -328,3 +366,26 @@ export const CssValueInput = ({
     </ComboboxPopper>
   );
 };
+
+const CssValueInputIconButton = styled(TextFieldIconButton, {
+  variants: {
+    state: {
+      set: {
+        backgroundColor: "$blue4",
+        color: "$blue11",
+        "&:hover": {
+          backgroundColor: "$blue4",
+          color: "$blue11",
+        },
+      },
+      inherited: {
+        backgroundColor: "$orange4",
+        color: "$orange11",
+        "&:hover": {
+          backgroundColor: "$orange4",
+          color: "$orange11",
+        },
+      },
+    },
+  },
+});

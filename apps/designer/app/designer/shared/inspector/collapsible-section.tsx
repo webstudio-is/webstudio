@@ -58,7 +58,7 @@ export const CollapsibleSection = ({
             <Flex
               align="center"
               justify="center"
-              css={{ marginRight: "-$space$1", opacity: "$opacity$1" }}
+              css={{ marginRight: "-$space$1", color: "$slate9" }}
             >
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </Flex>
