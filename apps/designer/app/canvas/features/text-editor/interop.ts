@@ -49,7 +49,7 @@ const $writeUpdates = (
         const id = refs.get(`${child.getKey()}:span`)?.id;
         const update: ChildrenUpdates[number] = {
           id,
-          component: "Box",
+          component: "Span",
           children: [],
         };
         parentUpdates.push(update);
@@ -109,7 +109,7 @@ const $writeLexical = (
         parent.append(linkNode);
         $writeLexical(linkNode, child.children, refs);
       }
-      if (child.component === "Box") {
+      if (child.component === "Span") {
         let textNode;
         if (parent instanceof TextNode) {
           textNode = parent;
