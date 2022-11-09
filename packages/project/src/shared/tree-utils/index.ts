@@ -4,7 +4,6 @@ export * from "./insert-instance";
 export * from "./populate";
 export * from "./find-instance";
 export * from "./set-instance-style";
-export * from "./set-instance-children";
 export * from "./get-instance-path";
 export * from "./find-closest-sibling-instance";
 export * from "./find-parent-instance";

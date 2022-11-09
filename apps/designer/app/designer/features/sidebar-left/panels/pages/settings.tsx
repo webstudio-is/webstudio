@@ -3,10 +3,12 @@ import {
   Button,
   Box,
   Label,
+  TextArea,
   TextField,
   styled,
   Flex,
   InputErrorsTooltip,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
@@ -37,9 +39,20 @@ const Group = styled(Flex, {
   defaultVariants: { direction: "column" },
 });
 
-const fieldNames = ["name", "path"] as const;
+const fieldNames = ["name", "path", "title", "description"] as const;
 type FieldName = typeof fieldNames[number];
-type EditablePage = Pick<Page, FieldName>;
+type FormPage = Pick<Page, "name" | "path" | "title"> & {
+  description: string;
+};
+
+const toFormPage = (page: Page): FormPage => {
+  return {
+    name: page.name,
+    path: page.path,
+    title: page.title,
+    description: page.meta.description ?? "",
+  };
+};
 
 const FormFields = ({
   disabled,
@@ -48,10 +61,10 @@ const FormFields = ({
   fieldErrors,
 }: {
   disabled?: boolean;
-  values: EditablePage;
+  values: FormPage;
   onChange: <Name extends FieldName>(event: {
     field: Name;
-    value: EditablePage[Name];
+    value: FormPage[Name];
   }) => void;
   fieldErrors: ZodError["formErrors"]["fieldErrors"];
 }) => {
@@ -89,6 +102,36 @@ const FormFields = ({
           />
         </InputErrorsTooltip>
       </Group>
+      <Group>
+        <Label htmlFor={fieldIds.title}>Title</Label>
+        <InputErrorsTooltip errors={fieldErrors.title}>
+          <TextField
+            state={fieldErrors.title && "invalid"}
+            id={fieldIds.title}
+            name="title"
+            disabled={disabled}
+            value={values?.title}
+            onChange={(event) => {
+              onChange({ field: "title", value: event.target.value });
+            }}
+          />
+        </InputErrorsTooltip>
+      </Group>
+      <Group>
+        <Label htmlFor={fieldIds.description}>Description</Label>
+        <InputErrorsTooltip errors={fieldErrors.description}>
+          <TextArea
+            state={fieldErrors.description && "invalid"}
+            id={fieldIds.description}
+            name="description"
+            disabled={disabled}
+            value={values?.description}
+            onChange={(event) => {
+              onChange({ field: "description", value: event.target.value });
+            }}
+          />
+        </InputErrorsTooltip>
+      </Group>
     </>
   );
 };
@@ -117,7 +160,12 @@ export const NewPageSettings = ({
     fieldNames,
   });
 
-  const [values, setValues] = useState<EditablePage>({ name: "", path: "" });
+  const [values, setValues] = useState<FormPage>({
+    name: "",
+    path: "",
+    title: "",
+    description: "",
+  });
 
   const handleSubmit = () => {
     fetcher.submit(values, {
@@ -158,9 +206,11 @@ const NewPageSettingsView = ({
         title="New Page Settings"
         suffix={
           onClose && (
-            <IconButton size="2" onClick={onClose} aria-label="Cancel">
-              <ChevronDoubleLeftIcon />
-            </IconButton>
+            <Tooltip content="Cancel" side="bottom" align="end">
+              <IconButton size="2" onClick={onClose} aria-label="Cancel">
+                <ChevronDoubleLeftIcon />
+              </IconButton>
+            </Tooltip>
           )
         }
       />
@@ -183,7 +233,7 @@ const NewPageSettingsView = ({
   );
 };
 
-const toFormData = (page: Partial<EditablePage> & { id: string }): FormData => {
+const toFormData = (page: Partial<FormPage> & { id: string }): FormData => {
   const formData = new FormData();
   for (const [key, value] of Object.entries(page)) {
     // @todo: handle "meta"
@@ -212,10 +262,8 @@ export const PageSettings = ({
   const [pages] = usePages();
   const page = pages && projectUtils.pages.findById(pages, pageId);
 
-  const [unsavedValues, setUnsavedValues] = useState<Partial<EditablePage>>({});
-  const [submittedValues, setSubmittedValues] = useState<Partial<EditablePage>>(
-    {}
-  );
+  const [unsavedValues, setUnsavedValues] = useState<Partial<FormPage>>({});
+  const [submittedValues, setSubmittedValues] = useState<Partial<FormPage>>({});
 
   const { fieldErrors, resetFieldError } = useFetcherErrors({
     fetcher,
@@ -223,10 +271,7 @@ export const PageSettings = ({
   });
 
   const handleChange = useCallback(
-    <Name extends FieldName>(event: {
-      field: Name;
-      value: EditablePage[Name];
-    }) => {
+    <Name extends FieldName>(event: { field: Name; value: FormPage[Name] }) => {
       resetFieldError(event.field);
       setUnsavedValues((values) => ({ ...values, [event.field]: event.value }));
     },
@@ -304,7 +349,7 @@ export const PageSettings = ({
       onClose={onClose}
       onDelete={hanldeDelete}
       fieldErrors={fieldErrors}
-      values={{ ...page, ...submittedValues, ...unsavedValues }}
+      values={{ ...toFormPage(page), ...submittedValues, ...unsavedValues }}
       onChange={handleChange}
     />
   );
@@ -327,18 +372,26 @@ const PageSettingsView = ({
         suffix={
           <>
             {isHomePage === false && (
-              <IconButton size="2" onClick={onDelete} aria-label="Delete page">
-                <TrashIcon />
-              </IconButton>
+              <Tooltip content="Delete page" side="bottom">
+                <IconButton
+                  size="2"
+                  onClick={onDelete}
+                  aria-label="Delete page"
+                >
+                  <TrashIcon />
+                </IconButton>
+              </Tooltip>
             )}
             {onClose && (
-              <IconButton
-                size="2"
-                onClick={onClose}
-                aria-label="Close page settings"
-              >
-                <ChevronDoubleLeftIcon />
-              </IconButton>
+              <Tooltip content="Close page settings" side="bottom" align="end">
+                <IconButton
+                  size="2"
+                  onClick={onClose}
+                  aria-label="Close page settings"
+                >
+                  <ChevronDoubleLeftIcon />
+                </IconButton>
+              </Tooltip>
             )}
           </>
         }

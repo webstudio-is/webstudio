@@ -33,6 +33,8 @@ const commonPageInput = {
       (path) => /^[-_a-z0-9\\/]*$/.test(path),
       "Only a-z, 0-9, -, _ and / are allowed"
     ),
+  title: z.string().optional(),
+  description: z.string().optional(),
 } as const;
 
 const CreatePageInput = zfd.formData(commonPageInput);
@@ -45,7 +47,11 @@ const handlePut = async (
   if (result.success === false) {
     return { status: "error", errors: result.error.formErrors };
   }
-  const data = result.data;
+  const { description, ...restData } = result.data;
+  const data = {
+    ...restData,
+    meta: description !== undefined ? { description } : undefined,
+  };
 
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
 
@@ -69,6 +75,8 @@ const EditPageInput = zfd.formData({
   id: z.string(),
   name: z.optional(commonPageInput.name),
   path: z.optional(commonPageInput.path),
+  title: z.optional(commonPageInput.title),
+  description: z.optional(commonPageInput.description),
 });
 
 const handlePost = async (
@@ -79,7 +87,11 @@ const handlePost = async (
   if (result.success === false) {
     return { status: "error", errors: result.error.formErrors };
   }
-  const { id, ...data } = result.data;
+  const { id, description, ...restData } = result.data;
+  const data = {
+    ...restData,
+    meta: description !== undefined ? { description } : undefined,
+  };
 
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
 

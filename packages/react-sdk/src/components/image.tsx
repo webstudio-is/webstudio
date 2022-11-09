@@ -1,24 +1,46 @@
 import React, { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { getImageAttributes, type ImageLoader } from "../component-utils/image";
 
 const defaultTag = "img";
 
-type ImageProps = ComponentProps<typeof defaultTag>;
+type ImageProps = ComponentProps<typeof defaultTag> & {
+  quality?: number;
+  loader?: ImageLoader;
+  optimize?: boolean;
+};
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
-  (props, ref) => <img {...props} ref={ref} />
+  ({ quality, loader, optimize, ...imageProps }, ref) => {
+    // Temporary set to false, to support previous image behaviour
+    const DEFAULT_OPTIMIZE = false;
+
+    const imageAttributes = getImageAttributes({
+      src: imageProps.src,
+      srcSet: imageProps.srcSet,
+      sizes: imageProps.sizes,
+      width: imageProps.width,
+      quality,
+      loader,
+      optimize: optimize ?? DEFAULT_OPTIMIZE,
+    }) ?? { src: imagePlaceholderSvg };
+
+    return (
+      <img {...imageProps} {...imageAttributes} decoding="async" ref={ref} />
+    );
+  }
 );
 
 Image.defaultProps = {
   src: "",
+  width: "",
+  height: "",
   loading: "lazy",
-  width: "auto",
-  height: "auto",
   alt: "",
 };
 
 Image.displayName = "Image";
 
-const imagePlaceholderSvg = `<svg
+const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
   width="140"
   height="140"
   viewBox="0 0 600 600"
@@ -40,11 +62,4 @@ const imagePlaceholderSvg = `<svg
     d="M160 405V367.205L221.609 306.364L256.552 338.628L358.161 234L440 316.043V405H160Z"
     fill="#A2A2A2"
   />
-</svg>`;
-
-// Defining src here prevents analyzer from putting the image into the UI.
-// @todo it would be better to have the image hosted like a normal image,
-// the problem is inside sdk bundler doesn't know how to do that.
-Image.defaultProps.src = `data:image/svg+xml;base64,${btoa(
-  imagePlaceholderSvg
-)}`;
+</svg>`)}`;

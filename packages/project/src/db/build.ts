@@ -120,7 +120,7 @@ export const editPage = async (
       name: data.name ?? currentPage.name,
       path: data.path ?? currentPage.path,
       title: data.title ?? currentPage.title,
-      meta: data.meta ?? currentPage.meta,
+      meta: { ...currentPage.meta, ...data.meta },
     };
 
     return {

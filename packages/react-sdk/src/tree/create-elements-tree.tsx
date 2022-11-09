@@ -8,7 +8,11 @@ import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<
   | string
-  | { id: Instance["id"]; component: Instance["component"]; text: string }
+  | {
+      id: undefined | Instance["id"];
+      component: Instance["component"];
+      children: ChildrenUpdates;
+    }
 >;
 
 export type OnChangeChildren = (change: {

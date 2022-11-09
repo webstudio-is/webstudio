@@ -1,7 +1,33 @@
 import { type ChildrenUpdates } from "@webstudio-is/react-sdk";
 import { type Instance } from "@webstudio-is/react-sdk";
-import { createInstance } from "./create-instance";
+import { createInstance, createInstanceId } from "./create-instance";
 import { findInstanceById } from "./find-instance";
+
+type InstanceChild = Instance | string;
+
+const hydrateTree = (parent: Instance, updates: ChildrenUpdates) => {
+  const children: InstanceChild[] = [];
+  for (const update of updates) {
+    // Set a string as a child
+    if (typeof update === "string") {
+      children.push(update);
+      continue;
+    }
+    // create new child or update existing
+    const instanceId = update.id ?? createInstanceId();
+    let child = findInstanceById(parent, instanceId);
+    if (child == null) {
+      child = createInstance({
+        id: instanceId,
+        component: update.component,
+        children: [],
+      });
+    }
+    children.push(child);
+    hydrateTree(child, update.children);
+  }
+  parent.children = children;
+};
 
 /**
  * Update children of an instance with new text.
@@ -16,28 +42,6 @@ export const setInstanceChildrenMutable = (
 ) => {
   const instance = findInstanceById(rootInstance, id);
   if (instance === undefined) return false;
-  const children = [];
-
-  for (const update of updates) {
-    // Set a string as a child
-    if (typeof update === "string") {
-      children.push(update);
-      continue;
-    }
-    // create new child or update existing
-    let childInstance = findInstanceById(instance, update.id);
-    if (childInstance == null) {
-      childInstance = createInstance({
-        id: update.id,
-        component: update.component,
-        children: [update.text],
-      });
-      children.push(childInstance);
-    } else {
-      children.push({ ...childInstance, children: [update.text] });
-    }
-  }
-
-  instance.children = children;
+  hydrateTree(instance, updates);
   return true;
 };

@@ -158,7 +158,7 @@
     "options": ["async", "auto", "sync"]
   },
   "height": {
-    "defaultValue": null,
+    "defaultValue": "",
     "description": "",
     "name": "height",
     "parent": {
@@ -363,7 +363,7 @@
     }
   },
   "width": {
-    "defaultValue": null,
+    "defaultValue": "",
     "description": "",
     "name": "width",
     "parent": {
@@ -2522,7 +2522,7 @@
     }
   },
   "quality": {
-    "defaultValue": 80,
+    "defaultValue": null,
     "description": "",
     "name": "quality",
     "declarations": [
@@ -2537,6 +2537,42 @@
     },
     "control": {
       "type": "number"
+    }
+  },
+  "loader": {
+    "defaultValue": null,
+    "description": "",
+    "name": "loader",
+    "declarations": [
+      {
+        "fileName": "src/components/image.tsx",
+        "name": "TypeLiteral"
+      }
+    ],
+    "required": false,
+    "type": {
+      "name": "ImageLoader"
+    },
+    "control": {
+      "type": "text"
+    }
+  },
+  "optimize": {
+    "defaultValue": null,
+    "description": "",
+    "name": "optimize",
+    "declarations": [
+      {
+        "fileName": "src/components/image.tsx",
+        "name": "TypeLiteral"
+      }
+    ],
+    "required": false,
+    "type": {
+      "name": "boolean"
+    },
+    "control": {
+      "type": "boolean"
     }
   }
 }
