@@ -7,6 +7,7 @@ import {
   styled,
   Flex,
   InputErrorsTooltip,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
@@ -158,9 +159,11 @@ const NewPageSettingsView = ({
         title="New Page Settings"
         suffix={
           onClose && (
-            <IconButton size="2" onClick={onClose} aria-label="Cancel">
-              <ChevronDoubleLeftIcon />
-            </IconButton>
+            <Tooltip content="Cancel" side="bottom" align="end">
+              <IconButton size="2" onClick={onClose} aria-label="Cancel">
+                <ChevronDoubleLeftIcon />
+              </IconButton>
+            </Tooltip>
           )
         }
       />
@@ -327,18 +330,26 @@ const PageSettingsView = ({
         suffix={
           <>
             {isHomePage === false && (
-              <IconButton size="2" onClick={onDelete} aria-label="Delete page">
-                <TrashIcon />
-              </IconButton>
+              <Tooltip content="Delete page" side="bottom">
+                <IconButton
+                  size="2"
+                  onClick={onDelete}
+                  aria-label="Delete page"
+                >
+                  <TrashIcon />
+                </IconButton>
+              </Tooltip>
             )}
             {onClose && (
-              <IconButton
-                size="2"
-                onClick={onClose}
-                aria-label="Close page settings"
-              >
-                <ChevronDoubleLeftIcon />
-              </IconButton>
+              <Tooltip content="Close page settings" side="bottom" align="end">
+                <IconButton
+                  size="2"
+                  onClick={onClose}
+                  aria-label="Close page settings"
+                >
+                  <ChevronDoubleLeftIcon />
+                </IconButton>
+              </Tooltip>
             )}
           </>
         }
