@@ -59,12 +59,13 @@
   "dependencies": {
     "@stitches/core": "^1.2.7",
     "@webstudio-is/asset-uploader": "^*",
+    "@webstudio-is/fonts": "*",
     "@webstudio-is/icons": "*",
     "@webstudio-is/jest-config": "*",
-    "@webstudio-is/fonts": "*",
     "immer": "^9.0.12",
     "mitt": "^3.0.0",
     "react-nano-state": "^0.4.0",
+    "warn-once": "^0.1.1",
     "zod": "^3.17.3"
   },
   "main": "lib/index.js",
