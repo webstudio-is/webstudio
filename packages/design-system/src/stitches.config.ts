@@ -118,7 +118,7 @@ import {
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
-const spaceAndSize = {
+const spacing = {
   0: "0px",
   1: "1px",
   2: "2px",
@@ -253,8 +253,7 @@ const {
     opacity: {
       1: "0.4",
     },
-    space: spaceAndSize,
-    sizes: spaceAndSize,
+    spacing,
     fontSizes: {
       1: "12px",
       2: "13px",
@@ -341,66 +340,6 @@ const {
       marginBottom: value,
     }),
 
-    ta: (value: Stitches.PropertyValue<"textAlign">) => ({ textAlign: value }),
-
-    fd: (value: Stitches.PropertyValue<"flexDirection">) => ({
-      flexDirection: value,
-    }),
-    fw: (value: Stitches.PropertyValue<"flexWrap">) => ({ flexWrap: value }),
-
-    ai: (value: Stitches.PropertyValue<"alignItems">) => ({
-      alignItems: value,
-    }),
-    ac: (value: Stitches.PropertyValue<"alignContent">) => ({
-      alignContent: value,
-    }),
-    jc: (value: Stitches.PropertyValue<"justifyContent">) => ({
-      justifyContent: value,
-    }),
-    as: (value: Stitches.PropertyValue<"alignSelf">) => ({ alignSelf: value }),
-    fg: (value: Stitches.PropertyValue<"flexGrow">) => ({ flexGrow: value }),
-    fs: (value: Stitches.PropertyValue<"flexShrink">) => ({
-      flexShrink: value,
-    }),
-    fb: (value: Stitches.PropertyValue<"flexBasis">) => ({ flexBasis: value }),
-
-    bc: (value: Stitches.PropertyValue<"backgroundColor">) => ({
-      backgroundColor: value,
-    }),
-
-    br: (value: Stitches.PropertyValue<"borderRadius">) => ({
-      borderRadius: value,
-    }),
-    btrr: (value: Stitches.PropertyValue<"borderTopRightRadius">) => ({
-      borderTopRightRadius: value,
-    }),
-    bbrr: (value: Stitches.PropertyValue<"borderBottomRightRadius">) => ({
-      borderBottomRightRadius: value,
-    }),
-    bblr: (value: Stitches.PropertyValue<"borderBottomLeftRadius">) => ({
-      borderBottomLeftRadius: value,
-    }),
-    btlr: (value: Stitches.PropertyValue<"borderTopLeftRadius">) => ({
-      borderTopLeftRadius: value,
-    }),
-
-    bs: (value: Stitches.PropertyValue<"boxShadow">) => ({ boxShadow: value }),
-
-    lh: (value: Stitches.PropertyValue<"lineHeight">) => ({
-      lineHeight: value,
-    }),
-
-    ox: (value: Stitches.PropertyValue<"overflowX">) => ({ overflowX: value }),
-    oy: (value: Stitches.PropertyValue<"overflowY">) => ({ overflowY: value }),
-
-    pe: (value: Stitches.PropertyValue<"pointerEvents">) => ({
-      pointerEvents: value,
-    }),
-    us: (value: Stitches.PropertyValue<"userSelect">) => ({
-      WebkitUserSelect: value,
-      userSelect: value,
-    }),
-
     userSelect: (value: Stitches.PropertyValue<"userSelect">) => ({
       WebkitUserSelect: value,
       userSelect: value,
@@ -418,6 +357,13 @@ const {
     backgroundClip: (value: Stitches.PropertyValue<"backgroundClip">) => ({
       WebkitBackgroundClip: value,
       backgroundClip: value,
+    }),
+
+    // LEGACY, please don't use them
+    as: (value: Stitches.PropertyValue<"alignSelf">) => ({ alignSelf: value }),
+    fg: (value: Stitches.PropertyValue<"flexGrow">) => ({ flexGrow: value }),
+    bc: (value: Stitches.PropertyValue<"backgroundColor">) => ({
+      backgroundColor: value,
     }),
   },
 });
