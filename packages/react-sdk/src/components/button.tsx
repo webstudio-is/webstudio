@@ -8,7 +8,4 @@ export const Button = forwardRef<ElementRef<typeof defaultTag>, ButtonProps>(
   (props, ref) => <button {...props} ref={ref} />
 );
 
-Button.defaultProps = {
-  type: "submit", // Match the platform default
-};
 Button.displayName = "Button";

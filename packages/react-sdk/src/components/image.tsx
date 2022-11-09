@@ -30,14 +30,6 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
   }
 );
 
-Image.defaultProps = {
-  src: "",
-  width: "",
-  height: "",
-  loading: "lazy",
-  alt: "",
-};
-
 Image.displayName = "Image";
 
 const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg

@@ -11,6 +11,7 @@ const meta: WsComponentMeta<typeof Button> = {
   isListed: true,
   label: "Button",
   children: ["Button text you can edit"],
+  initialVisibleProps: { type: "submit" },
 };
 
 export default meta;

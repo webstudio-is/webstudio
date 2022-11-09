@@ -4,7 +4,7 @@ import type {
   UserPropsUpdates,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
-import { componentsMeta } from "@webstudio-is/react-sdk";
+import { components, componentsMeta } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
 import uniqBy from "lodash/uniqBy";
@@ -25,41 +25,25 @@ export type handleChangePropType = (
   value: UserProp["prop"] | UserProp["value"]
 ) => void;
 
-const getRequiredProps = (
+const getInitialVisibleProps = (
   selectedInstanceData: SelectedInstanceData
 ): UserProp[] => {
   const { component } = selectedInstanceData;
+
+  const componentWs = components[component];
+  const initialVisibleProps = componentWs.initialVisibleProps;
+
   const meta = componentsMeta[component];
-  const argTypes = meta?.argTypes || {};
-  return Object.entries(argTypes)
-    .filter(([_, value]) => value.required)
-    .map(([prop, _]) => ({
+
+  if (initialVisibleProps != null) {
+    return Object.entries(initialVisibleProps).map(([prop, value]) => ({
       id: ObjectId().toString(),
       prop,
-      value: "",
-      required: true,
+      value: value == null ? "" : value.toString(),
+      required: meta?.argTypes?.[prop as keyof typeof meta.argTypes]?.required,
     }));
-};
-
-// @todo: This returns same props for all instances.
-// See the failing test in use-props-logic.test.ts
-const getPropsWithDefaultValue = (
-  selectedInstanceData: SelectedInstanceData
-): UserProp[] => {
-  const { component } = selectedInstanceData;
-  const meta = componentsMeta[component];
-  const argTypes = meta?.argTypes || {};
-  return Object.entries(argTypes)
-    .filter(([_, value]) => value.defaultValue != null)
-    .map(([prop, propObj]) => {
-      const { defaultValue } = propObj;
-      const value = defaultValue;
-      return {
-        id: ObjectId().toString(),
-        prop,
-        value,
-      };
-    });
+  }
+  return [];
 };
 
 type UsePropsLogic = {
@@ -78,11 +62,7 @@ export const usePropsLogic = ({
       : selectedInstanceData.props.props;
 
   const initialState = uniqBy(
-    [
-      ...props,
-      ...getPropsWithDefaultValue(selectedInstanceData),
-      ...getRequiredProps(selectedInstanceData),
-    ],
+    [...props, ...getInitialVisibleProps(selectedInstanceData)],
     "prop"
   );
 

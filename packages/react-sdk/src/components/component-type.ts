@@ -1,23 +1,9 @@
+import type { ComponentProps, JSXElementConstructor } from "react";
 import type { Style } from "../css";
 import { z } from "zod";
 import React from "react";
 import { IconProps } from "@webstudio-is/icons";
-
-export type WsComponentMeta<ComponentType> = {
-  Component: ComponentType;
-  Icon: React.FunctionComponent<IconProps>;
-  defaultStyle?: Style;
-  canAcceptChildren: boolean;
-  // Should children of the component be editable?
-  // Should only be possible for components like paragraph, heading etc.
-  isContentEditable: boolean;
-  // Components that render inside text editor only.
-  isInlineOnly: boolean;
-  // Should be listed in the components list.
-  isListed: boolean;
-  label: string;
-  children?: Array<string>;
-};
+import type { InitialVisibleProps } from "../component-utils/types-helpers";
 
 export const WsComponentMeta = z.lazy(() =>
   z
@@ -31,6 +17,7 @@ export const WsComponentMeta = z.lazy(() =>
       isListed: z.boolean(),
       label: z.string(),
       children: z.optional(z.array(z.string())),
+      initialVisibleProps: z.optional(z.record(z.unknown())),
     })
 
     // We need these restrictions because of the limitation of the current drag&drop implementation.
@@ -55,4 +42,22 @@ export const WsComponentMeta = z.lazy(() =>
         path: ["children"],
       }
     )
-) as z.ZodType<WsComponentMeta<unknown>>;
+);
+
+type Prettify<T> = { [key in keyof T]: T[key] };
+
+export type WsComponentMeta<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ComponentType extends keyof JSX.IntrinsicElements | JSXElementConstructor<any>
+> = Prettify<
+  {
+    Component: ComponentType;
+    Icon: React.FunctionComponent<IconProps>;
+    defaultStyle?: Style;
+    // Force all required props to have default value in `initialVisibleProps`
+    initialVisibleProps?: InitialVisibleProps<ComponentProps<ComponentType>>;
+  } & Omit<
+    z.infer<typeof WsComponentMeta>,
+    "Component" | "Icon" | "defaultStyle" | "initialVisibleProps"
+  >
+>;

@@ -18,6 +18,7 @@ const meta: WsComponentMeta<typeof Box> = {
   isInlineOnly: false,
   isListed: true,
   label: "Box",
+  initialVisibleProps: { tag: "div" },
 };
 
 export default meta;

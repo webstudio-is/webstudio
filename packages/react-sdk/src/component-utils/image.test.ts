@@ -8,6 +8,7 @@ describe("Image optimizations applied", () => {
       src: "https://webstudio.is/logo.webp",
       srcSet: undefined,
       sizes: undefined,
+      loader: undefined,
       quality: 100,
     });
 
@@ -27,6 +28,7 @@ describe("Image optimizations applied", () => {
       src: "https://webstudio.is/logo.webp",
       srcSet: undefined,
       sizes: undefined,
+      loader: undefined,
       quality: 90,
     });
 
@@ -46,6 +48,7 @@ describe("Image optimizations applied", () => {
       src: "https://webstudio.is/logo.webp",
       srcSet: undefined,
       sizes: "100vw",
+      loader: undefined,
       quality: 70,
     });
 
@@ -88,6 +91,7 @@ describe("Image optimizations not applied", () => {
       src: "https://webstudio.is/logo.webp",
       srcSet: undefined,
       sizes: undefined,
+      loader: undefined,
       quality: 100,
     });
 
@@ -107,6 +111,7 @@ describe("Image optimizations not applied", () => {
       src: "https://webstudio.is/logo.webp",
       srcSet: "user-defined-srcset",
       sizes: undefined,
+      loader: undefined,
       quality: 100,
     });
 
@@ -126,6 +131,7 @@ describe("Image optimizations not applied", () => {
       src: "",
       srcSet: undefined,
       sizes: undefined,
+      loader: undefined,
       quality: 100,
     });
 
@@ -139,6 +145,7 @@ describe("Image optimizations not applied", () => {
       src: undefined,
       srcSet: undefined,
       sizes: undefined,
+      loader: undefined,
       quality: 100,
     });
 

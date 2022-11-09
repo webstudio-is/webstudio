@@ -11,6 +11,7 @@ const meta: WsComponentMeta<typeof Heading> = {
   isListed: true,
   label: "Heading",
   children: ["Heading you can edit"],
+  initialVisibleProps: { tag: "h1" },
 };
 
 export default meta;

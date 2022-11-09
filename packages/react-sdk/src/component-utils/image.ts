@@ -232,7 +232,7 @@ export const getImageAttributes = (props: {
   sizes: string | undefined;
   width: string | number | undefined;
   quality: number | undefined;
-  loader?: ImageLoader;
+  loader: ImageLoader | undefined;
   optimize: boolean;
 }): {
   src: string;

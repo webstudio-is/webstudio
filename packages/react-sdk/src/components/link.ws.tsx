@@ -24,6 +24,7 @@ const meta: WsComponentMeta<typeof Link> = {
   isListed: true,
   label: "Link",
   children: ["Link text you can edit"],
+  initialVisibleProps: { href: "" },
 };
 
 export default meta;

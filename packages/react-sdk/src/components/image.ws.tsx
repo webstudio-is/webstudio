@@ -26,6 +26,15 @@ const meta: WsComponentMeta<typeof Image> = {
   isInlineOnly: false,
   isListed: true,
   label: "Image",
+  initialVisibleProps: {
+    src: "",
+    alt: "",
+    width: undefined,
+    height: undefined,
+    quality: undefined,
+    optimize: undefined,
+    loading: "lazy",
+  },
 };
 
 export default meta;
