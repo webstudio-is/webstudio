@@ -6,6 +6,7 @@ import {
   type TreeItemRenderProps,
   styled,
   Flex,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import {
@@ -119,13 +120,19 @@ const PagesPanel = ({
                 {isEditing ? (
                   <ChevronRightIcon />
                 ) : (
-                  <MenuButton
-                    aria-label="Page settings"
-                    isParentSelected={isSelected}
-                    onClick={() => onEdit(props.itemData.id)}
+                  <Tooltip
+                    content="Open page settings"
+                    side="left"
+                    disableHoverableContent
                   >
-                    <MenuIcon />
-                  </MenuButton>
+                    <MenuButton
+                      aria-label="Open page settings"
+                      isParentSelected={isSelected}
+                      onClick={() => onEdit(props.itemData.id)}
+                    >
+                      <MenuIcon />
+                    </MenuButton>
+                  </Tooltip>
                 )}
               </Flex>
             )
@@ -153,13 +160,15 @@ const PagesPanel = ({
         suffix={
           <>
             {onCreateNewPage && (
-              <IconButton
-                size="2"
-                onClick={() => onCreateNewPage()}
-                aria-label="New Page"
-              >
-                <NewPageIcon />
-              </IconButton>
+              <Tooltip content="New page" side="bottom">
+                <IconButton
+                  size="2"
+                  onClick={() => onCreateNewPage()}
+                  aria-label="New page"
+                >
+                  <NewPageIcon />
+                </IconButton>
+              </Tooltip>
             )}
             {onClose && <CloseButton onClick={onClose} />}
           </>
