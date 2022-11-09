@@ -74,7 +74,7 @@ export const SelectProjectCard = ({
               </Button>
             </Flex>
             {errors ? (
-              <Text color="error" css={{ marginTop: "$1" }}>
+              <Text color="error" css={{ marginTop: "$spacing$3" }}>
                 {errors}
               </Text>
             ) : null}

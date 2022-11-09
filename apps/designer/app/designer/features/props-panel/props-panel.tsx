@@ -202,7 +202,7 @@ export const PropsPanel = ({
   );
   return (
     <>
-      <Box css={{ p: "$3" }}>
+      <Box css={{ p: "$spacing$9" }}>
         <ComponentInfo selectedInstanceData={selectedInstanceData} />
       </Box>
       <CollapsibleSection

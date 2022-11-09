@@ -20,7 +20,7 @@ export const Popover = ({ children, ...props }: PopoverProps) => {
 const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
   backgroundColor: "white",
   minWidth: 200,
-  minHeight: "$6",
+  minHeight: "$spacing$13",
   maxWidth: 265,
   "&:focus": {
     outline: "none",
@@ -69,13 +69,17 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
   return (
     <>
       <Flex
-        css={{ height: 40, paddingLeft: "$3" }}
+        css={{ height: 40, paddingLeft: "$spacing$9" }}
         align="center"
         justify="between"
       >
         <Text variant="title">{title}</Text>
         <PopoverClose asChild>
-          <IconButton size="2" css={{ marginRight: "$2" }} aria-label="Close">
+          <IconButton
+            size="2"
+            css={{ marginRight: "$spacing$5" }}
+            aria-label="Close"
+          >
             <CrossIcon />
           </IconButton>
         </PopoverClose>

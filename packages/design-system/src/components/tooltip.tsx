@@ -19,7 +19,7 @@ const Content = styled(TooltipPrimitive.Content, {
   backgroundColor: "$hiContrast",
   color: "$loContrast",
   borderRadius: "$1",
-  padding: "$1 $2",
+  padding: "$spacing$3 $spacing$5",
   zIndex: "$1",
   position: "relative",
 

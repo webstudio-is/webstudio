@@ -43,7 +43,7 @@ const Content = ({ project }: PublishButtonProps) => {
 
   return (
     <PopoverContent
-      css={{ padding: "$3" }}
+      css={{ padding: "$spacing$9" }}
       hideArrow={true}
       onFocusOutside={(event) => {
         // Used to prevent closing when opened from the main dropdown menu
@@ -91,7 +91,7 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild aria-label="Publish">
-        <Button ghost css={{ display: "flex", gap: "$1" }}>
+        <Button ghost css={{ display: "flex", gap: "$spacing$3" }}>
           <RocketIcon />
           <Text>Publish</Text>
         </Button>

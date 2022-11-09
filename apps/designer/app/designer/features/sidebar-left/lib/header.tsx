@@ -11,12 +11,12 @@ export const Header = ({ title, suffix }: HeaderProps) => {
   return (
     <>
       <Flex
-        css={{ height: 40, paddingLeft: "$3", flexShrink: 0 }}
+        css={{ height: 40, paddingLeft: "$spacing$9", flexShrink: 0 }}
         align="center"
         justify="between"
       >
         <Text variant="title">{title}</Text>
-        {suffix && <Flex css={{ marginRight: "$1" }}>{suffix}</Flex>}
+        {suffix && <Flex css={{ marginRight: "$spacing$3" }}>{suffix}</Flex>}
       </Flex>
       <Separator css={{ height: 2 }} />
     </>

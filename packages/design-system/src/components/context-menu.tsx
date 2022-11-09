@@ -40,20 +40,20 @@ export const ContextMenuRadioItem = React.forwardRef<
   ContextMenuRadioItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledContextMenuRadioItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$1" }}>
+    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
       <ContextMenuPrimitive.ItemIndicator>
         <Flex
           css={{
-            width: "$3",
-            height: "$3",
+            width: "$spacing$9",
+            height: "$spacing$9",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
           <Box
             css={{
-              width: "$1",
-              height: "$1",
+              width: "$spacing$3",
+              height: "$spacing$3",
               backgroundColor: "currentColor",
               borderRadius: "$round",
             }}
@@ -83,7 +83,7 @@ export const ContextMenuCheckboxItem = React.forwardRef<
   ContextMenuCheckboxItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledContextMenuCheckboxItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$1" }}>
+    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
       <ContextMenuPrimitive.ItemIndicator>
         <CheckIcon />
       </ContextMenuPrimitive.ItemIndicator>

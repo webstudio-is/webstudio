@@ -16,13 +16,13 @@ export const Section = styled("section", {
   variants: {
     size: {
       "1": {
-        py: "$3",
+        py: "$spacing$9",
       },
       "2": {
-        py: "$5",
+        py: "$spacing$11",
       },
       "3": {
-        py: "$9",
+        py: "$spacing$20",
       },
     },
   },

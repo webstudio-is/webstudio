@@ -101,7 +101,7 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
       css={{
         position: "absolute",
         borderRadius: "$1",
-        padding: "$1 $2",
+        padding: "$spacing$3 $spacing$5",
         pointerEvents: "auto",
         ...css,
       }}

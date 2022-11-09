@@ -10,8 +10,8 @@ const StyledVerifiedBadge = styled("div", Flex, {
   color: "white",
   flexShrink: 0,
   justifyContent: "center",
-  width: "$3",
-  height: "$3",
+  width: "$spacing$9",
+  height: "$spacing$9",
 });
 
 type VerifiedBadgeProps = React.ComponentProps<typeof StyledVerifiedBadge> & {

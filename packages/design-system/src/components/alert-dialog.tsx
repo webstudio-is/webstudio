@@ -37,7 +37,7 @@ export const AlertDialogContent = styled(
     transform: "translate(-50%, -50%)",
     minWidth: 200,
     maxHeight: "85vh",
-    padding: "$4",
+    padding: "$spacing$10",
     marginTop: "-5vh",
 
     "&:focus": {

@@ -16,7 +16,7 @@ export const Alert = styled("div", {
   variants: {
     size: {
       "1": {
-        p: "$3",
+        p: "$spacing$9",
       },
     },
     variant: {

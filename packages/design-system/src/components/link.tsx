@@ -3,7 +3,7 @@ import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
 
 export const Link = styled("a", {
   alignItems: "center",
-  gap: "$1",
+  gap: "$spacing$3",
   flexShrink: 0,
   outline: "none",
   textDecorationLine: "none",

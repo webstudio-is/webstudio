@@ -4,6 +4,6 @@ import {
 } from "@webstudio-is/design-system";
 
 export const Separator = styled(SeparatorPrimitive, {
-  marginTop: "$1",
-  marginBottom: "$2",
+  marginTop: "$spacing$3",
+  marginBottom: "$spacing$5",
 });

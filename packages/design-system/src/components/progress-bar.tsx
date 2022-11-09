@@ -20,7 +20,7 @@ const indeterminateProgress = keyframes({
 const StyledProgressBar = styled(ProgressPrimitive.Root, {
   boxSizing: "border-box",
   position: "relative",
-  height: "$1",
+  height: "$spacing$3",
   overflow: "hidden",
   borderRadius: "$pill",
 

@@ -39,9 +39,9 @@ export const StylePanel = ({
 
   if (willRender(breakpoint, canvasWidth) === false) {
     return (
-      <Box css={{ p: "$2" }}>
-        <Card css={{ p: "$3", mt: "$3" }}>
-          <Paragraph css={{ marginBottom: "$2" }}>
+      <Box css={{ p: "$spacing$5" }}>
+        <Card css={{ p: "$spacing$9", mt: "$spacing$9" }}>
+          <Paragraph css={{ marginBottom: "$spacing$5" }}>
             {`Please increase the canvas width.`}
           </Paragraph>
           <Paragraph>
@@ -54,7 +54,7 @@ export const StylePanel = ({
 
   return (
     <>
-      <Box css={{ px: "$3", py: "$1" }}>
+      <Box css={{ px: "$spacing$9", py: "$spacing$3" }}>
         <SearchField
           placeholder="Search"
           onChange={(event) => {

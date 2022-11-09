@@ -17,11 +17,11 @@ const ListBase = styled("ul", {
 
 const ListItemBase = styled("li", {
   display: "grid",
-  gridTemplateColumns: "$4 1fr",
+  gridTemplateColumns: "$spacing$10 1fr",
   alignItems: "center",
   justifyContent: "space-between",
-  height: "$5",
-  px: "$1",
+  height: "$spacing$11",
+  px: "$spacing$3",
   listStyle: "none",
   borderRadius: "$1",
   outline: 0,

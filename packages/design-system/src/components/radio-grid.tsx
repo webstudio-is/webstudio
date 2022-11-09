@@ -3,7 +3,7 @@ import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 
 export const RadioGridGroup = styled(RadioGroupPrimitive.Root, {
   display: "grid",
-  gap: "$1",
+  gap: "$spacing$3",
   gridTemplateColumns: "repeat(5, 1fr)",
 });
 
@@ -20,8 +20,8 @@ export const RadioGrid = styled(RadioGroupPrimitive.Item, {
   },
   borderRadius: "$2",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
-  px: "$1",
-  height: "$6",
+  px: "$spacing$3",
+  height: "$spacing$13",
   lineHeight: "$sizes$6",
   fontSize: "$3",
   "@hover": {

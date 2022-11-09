@@ -2,7 +2,7 @@ import { styled } from "../stitches.config";
 
 export const Caption = styled("caption", {
   textAlign: "start",
-  marginBottom: "$5",
+  marginBottom: "$spacing$11",
 });
 
 export const Tbody = styled("tbody", {
@@ -17,8 +17,8 @@ export const Th = styled("th", {
   fontWeight: "unset",
   textAlign: "start",
   fontSize: "$2",
-  py: "$2",
-  borderBottom: "1px solid $gray4",
+  py: "$spacing$5",
+  borderBottom: "$spacing$1 solid $gray4",
   variants: {
     align: {
       start: {
@@ -33,10 +33,10 @@ export const Th = styled("th", {
     },
     border: {
       solid: {
-        borderBottom: "1px solid $gray4",
+        borderBottom: "$spacing$1 solid $gray4",
       },
       dashed: {
-        borderBottom: "1px dashed $gray8",
+        borderBottom: "$spacing$1 dashed $gray8",
       },
     },
   },
@@ -47,8 +47,8 @@ export const Th = styled("th", {
 });
 
 export const Td = styled("td", {
-  py: "$2",
-  borderBottom: "1px solid $gray4",
+  py: "$spacing$5",
+  borderBottom: "$spacing$1 solid $gray4",
   fontSize: "$2",
   variants: {
     align: {
@@ -64,10 +64,10 @@ export const Td = styled("td", {
     },
     border: {
       solid: {
-        borderBottom: "1px solid $gray4",
+        borderBottom: "$spacing$1 solid $gray4",
       },
       dashed: {
-        borderBottom: "1px dashed $gray8",
+        borderBottom: "$spacing$1 dashed $gray8",
       },
     },
   },

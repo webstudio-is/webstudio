@@ -17,7 +17,7 @@ const stringifyRGBA = (color: RGBColor) => {
 };
 
 const pickerStyle = css({
-  padding: "$2",
+  padding: "$spacing$5",
   background: "$panel",
   // @todo this lib doesn't have another way to define styles for inputs
   // we should either submit a PR or replace it
@@ -64,9 +64,9 @@ export const ColorPicker = ({
       >
         <Box
           css={{
-            margin: "$sizes$1",
-            width: "$sizes$4",
-            height: "$sizes$4",
+            margin: "$spacing$3",
+            width: "$spacing$10",
+            height: "$spacing$10",
             borderRadius: 2,
             background: value,
           }}

@@ -21,9 +21,17 @@ export const AssetsShell = ({
   return (
     <Flex
       direction="column"
-      css={{ overflow: "hidden", paddingTop: "$1", paddingBottom: "$3" }}
+      css={{
+        overflow: "hidden",
+        paddingTop: "$spacing$3",
+        paddingBottom: "$spacing$9",
+      }}
     >
-      <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
+      <Flex
+        css={{ py: "$spacing$5", px: "$spacing$9" }}
+        gap="2"
+        direction="column"
+      >
         <AssetUpload type={type} />
         <SearchField {...searchProps} autoFocus placeholder="Search" />
       </Flex>
@@ -32,7 +40,7 @@ export const AssetsShell = ({
       <Flex
         css={{
           flexDirection: "column",
-          px: "$3",
+          px: "$spacing$9",
         }}
       >
         {children}

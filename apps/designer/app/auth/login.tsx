@@ -81,7 +81,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                     method="post"
                     css={{
                       flexDirection: "row",
-                      gap: "$2",
+                      gap: "$spacing$5",
                     }}
                   >
                     <TextField

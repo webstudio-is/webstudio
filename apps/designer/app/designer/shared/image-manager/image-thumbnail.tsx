@@ -39,7 +39,7 @@ const ThumbnailContainer = styled(Box, {
   border: "2px solid transparent",
   borderRadius: "$1",
   outline: 0,
-  gap: "$1",
+  gap: "$spacing$3",
   overflow: "hidden",
   backgroundColor: "$slate4",
   "&:hover": imageInfoTriggerCssVars({ show: true }),
@@ -61,8 +61,8 @@ const ThumbnailContainer = styled(Box, {
 });
 
 const Thumbnail = styled(Box, {
-  width: "$8",
-  height: "$8",
+  width: "$spacing$19",
+  height: "$spacing$19",
   backgroundSize: "contain",
   backgroundRepeat: "no-repeat",
   backgroundPosition: "center",

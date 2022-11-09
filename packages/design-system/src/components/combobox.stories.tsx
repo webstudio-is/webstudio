@@ -78,7 +78,10 @@ export const Complex: ComponentStory<typeof Combobox> = () => {
     });
 
   return (
-    <Flex {...getComboboxProps()} css={{ flexDirection: "column", gap: "$3" }}>
+    <Flex
+      {...getComboboxProps()}
+      css={{ flexDirection: "column", gap: "$spacing$9" }}
+    >
       <TextField
         type="search"
         prefix={<MagnifyingGlassIcon />}

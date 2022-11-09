@@ -63,31 +63,31 @@ export const Flex = styled("div", {
     },
     gap: {
       1: {
-        gap: "$1",
+        gap: "$spacing$3",
       },
       2: {
-        gap: "$2",
+        gap: "$spacing$5",
       },
       3: {
-        gap: "$3",
+        gap: "$spacing$9",
       },
       4: {
-        gap: "$4",
+        gap: "$spacing$10",
       },
       5: {
-        gap: "$5",
+        gap: "$spacing$11",
       },
       6: {
-        gap: "$6",
+        gap: "$spacing$13",
       },
       7: {
-        gap: "$7",
+        gap: "$spacing$17",
       },
       8: {
-        gap: "$8",
+        gap: "$spacing$19",
       },
       9: {
-        gap: "$9",
+        gap: "$spacing$20",
       },
     },
   },

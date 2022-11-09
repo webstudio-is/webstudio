@@ -15,7 +15,7 @@ const StyledRadioButton = styled("div", {
   height: 25,
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   flexShrink: 0,
-  mr: "$3",
+  mr: "$spacing$9",
 });
 
 const StyledRadioIndicator = styled("div", {
@@ -40,7 +40,7 @@ const StyledRadio = styled(RadioGroupPrimitive.Item, {
   alignItems: "center",
   borderRadius: "$2",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
-  p: "$3",
+  p: "$spacing$9",
   "@hover": {
     "&:hover": {
       boxShadow: "inset 0 0 0 1px $colors$slate8",

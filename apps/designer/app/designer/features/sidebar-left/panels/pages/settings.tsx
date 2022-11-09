@@ -32,8 +32,8 @@ import type {
 import { restPagesPath } from "~/shared/router-utils";
 
 const Group = styled(Flex, {
-  marginBottom: "$3",
-  gap: "$2",
+  marginBottom: "$spacing$9",
+  gap: "$spacing$5",
   defaultVariants: { direction: "column" },
 });
 
@@ -164,7 +164,7 @@ const NewPageSettingsView = ({
           )
         }
       />
-      <Box css={{ overflow: "auto", padding: "$2 $3" }}>
+      <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -343,7 +343,7 @@ const PageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto", padding: "$2 $3" }}>
+      <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
         <FormFields {...formFieldsProps} />
       </Box>
     </>

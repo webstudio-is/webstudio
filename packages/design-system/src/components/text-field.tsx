@@ -23,8 +23,8 @@ const getTextFieldSuffixCssVars = (state: "focus" | "hover") => {
 };
 
 const textFieldIconBaseStyle = css({
-  height: "$5",
-  minWidth: "$2",
+  height: "$spacing$11",
+  minWidth: "$spacing$5",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -134,8 +134,8 @@ const TextFieldBase = styled("div", {
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
-  gap: "$1",
-  px: "$2",
+  gap: "$spacing$3",
+  px: "$spacing$5",
   borderRadius: "$1",
   fontFamily: "$sans",
   fontSize: "$1",

@@ -11,21 +11,21 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   alignItems: "center",
   justifyContent: "space-between",
   fontVariantNumeric: "tabular-nums",
-  gap: "$2",
+  gap: "$spacing$5",
   flexShrink: 0,
   borderRadius: "$1",
   backgroundColor: "$loContrast",
   color: "$hiContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   height: 28, // @todo waiting for the sizing scale
-  px: "$2",
+  px: "$spacing$5",
   fontSize: "$1",
   "&:focus": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
   },
   paddingRight: 0,
-  paddingLeft: "$sizes$2",
+  paddingLeft: "$spacing$5",
   textTransform: "capitalize",
   fontWeight: "inherit",
 
@@ -56,7 +56,7 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
   alignItems: "center",
   justifyContent: "center",
   height: "100%",
-  padding: "2px 2px 2px 0px",
+  padding: "$spacing$2 $spacing$2 $spacing$2 0px",
 });
 
 export const SelectContent = styled(SelectPrimitive.Content, {
@@ -68,7 +68,7 @@ export const SelectContent = styled(SelectPrimitive.Content, {
 });
 
 export const SelectViewport = styled(SelectPrimitive.Viewport, {
-  p: "$1",
+  p: "$spacing$3",
 });
 
 const StyledItem = styled(SelectPrimitive.Item, {
@@ -78,8 +78,8 @@ const StyledItem = styled(SelectPrimitive.Item, {
   color: "$hiContrast",
   display: "flex",
   alignItems: "center",
-  height: "$5",
-  padding: "0 $2",
+  height: "$spacing$11",
+  padding: "0 $spacing$5",
   position: "relative",
   userSelect: "none",
   borderRadius: "$1",
@@ -120,7 +120,7 @@ const SelectItemBase = (
 ) => {
   return (
     <StyledItem {...props} ref={forwardedRef}>
-      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+      <Grid align="center" css={{ gridTemplateColumns: "$spacing$10 1fr" }}>
         <SelectPrimitive.ItemIndicator>
           <CheckIcon />
         </SelectPrimitive.ItemIndicator>

@@ -55,7 +55,7 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
       <Box
         css={{
           "& > div": {
-            padding: "0 8px",
+            padding: "0 $spacing$5",
             border: "1px solid #999",
             color: "black",
           },
