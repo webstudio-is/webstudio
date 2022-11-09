@@ -3,6 +3,7 @@ import {
   Button,
   Box,
   Label,
+  TextArea,
   TextField,
   styled,
   Flex,
@@ -119,7 +120,7 @@ const FormFields = ({
       <Group>
         <Label htmlFor={fieldIds.description}>Description</Label>
         <InputErrorsTooltip errors={fieldErrors.description}>
-          <TextField
+          <TextArea
             state={fieldErrors.description && "invalid"}
             id={fieldIds.description}
             name="description"
