@@ -191,6 +191,13 @@ const fontSizeValues = new Map([
   ["14px", "4"],
 ]);
 
+const lineHeightProps = ["lineHeight"];
+const lineHeightValues = new Map([
+  ["15px", "$3"],
+  ["16px", "$3"],
+  ["20px", "$4"],
+]);
+
 const updateProperty = (
   line: string,
   props: Array<string>,
@@ -226,6 +233,12 @@ const update = async ({ filePath, buffer }) => {
   for (line of lines) {
     line = updateProperty(line, spaceProps, spaceValues, "spacing");
     line = updateProperty(line, fontSizeProps, fontSizeValues, "fontSize");
+    line = updateProperty(
+      line,
+      lineHeightProps,
+      lineHeightValues,
+      "lineHeight"
+    );
     nextLines.push(line);
   }
   await fs.writeFile(filePath, nextLines.join("\n"));
