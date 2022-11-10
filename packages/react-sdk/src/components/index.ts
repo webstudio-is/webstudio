@@ -4,6 +4,7 @@ export { default as TextBlock } from "./text-block.ws";
 export { default as Heading } from "./heading.ws";
 export { default as Paragraph } from "./paragraph.ws";
 export { default as Link } from "./link.ws";
+export { default as Span } from "./span.ws";
 export { default as Bold } from "./bold.ws";
 export { default as Italic } from "./italic.ws";
 export { default as Button } from "./button.ws";
