@@ -81,7 +81,7 @@ export const WithUnits = () => {
   });
 
   return (
-    <Flex css={{ gap: "$3" }}>
+    <Flex css={{ gap: "$spacing$9" }}>
       <CssValueInput
         property="rowGap"
         value={value}

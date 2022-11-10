@@ -116,7 +116,7 @@ const PagesPanel = ({
           {...props}
           suffix={
             onEdit && (
-              <Flex css={{ mr: "$2" }} align="center">
+              <Flex css={{ mr: "$spacing$5" }} align="center">
                 {isEditing ? (
                   <ChevronRightIcon />
                 ) : (

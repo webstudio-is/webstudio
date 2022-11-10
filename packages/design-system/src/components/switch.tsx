@@ -11,11 +11,11 @@ const StyledThumb = styled(SwitchPrimitive.Thumb, {
   borderRadius: "$round",
   boxShadow: "rgba(0, 0, 0, 0.3) 0px 0px 1px, rgba(0, 0, 0, 0.2) 0px 1px 2px;",
   transition: "transform 100ms cubic-bezier(0.22, 1, 0.36, 1)",
-  transform: "translateX(1px)",
+  transform: "translateX($spacing$1)",
   willChange: "transform",
 
   '&[data-state="checked"]': {
-    transform: "translateX(11px)",
+    transform: "translateX(1$spacing$1)",
   },
 });
 
@@ -57,18 +57,18 @@ const StyledSwitch = styled(SwitchPrimitive.Root, {
   variants: {
     size: {
       "1": {
-        width: "$5",
-        height: "$3",
+        width: "$spacing$11",
+        height: "$spacing$9",
       },
       "2": {
-        width: "$7",
-        height: "$5",
+        width: "$spacing$17",
+        height: "$spacing$11",
         [`& ${StyledThumb}`]: {
           width: 21,
           height: 21,
-          transform: "translateX(2px)",
+          transform: "translateX($spacing$2)",
           '&[data-state="checked"]': {
-            transform: "translateX(22px)",
+            transform: "translateX(2$spacing$2)",
           },
         },
       },

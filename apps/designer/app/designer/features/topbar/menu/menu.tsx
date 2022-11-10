@@ -30,7 +30,7 @@ import { dashboardPath } from "~/shared/router-utils";
 
 const menuItemCss = {
   display: "flex",
-  gap: "$3",
+  gap: "$spacing$9",
   justifyContent: "space-between",
   flexGrow: 1,
   minWidth: 140,
@@ -112,7 +112,7 @@ export const Menu = ({ publish }: MenuProps) => {
       <DropdownMenuTrigger asChild>
         <Box
           css={{
-            width: "$sizes$7",
+            width: "$spacing$17",
             height: "100%",
             borderRadius: "0",
             outline: "none",

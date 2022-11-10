@@ -37,28 +37,28 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
   variants: {
     size: {
       "1": {
-        width: "$3",
-        height: "$3",
+        width: "$spacing$9",
+        height: "$spacing$9",
       },
       "2": {
-        width: "$5",
-        height: "$5",
+        width: "$spacing$11",
+        height: "$spacing$11",
       },
       "3": {
-        width: "$6",
-        height: "$6",
+        width: "$spacing$13",
+        height: "$spacing$13",
       },
       "4": {
-        width: "$7",
-        height: "$7",
+        width: "$spacing$17",
+        height: "$spacing$17",
       },
       "5": {
-        width: "$8",
-        height: "$8",
+        width: "$spacing$19",
+        height: "$spacing$19",
       },
       "6": {
-        width: "$9",
-        height: "$9",
+        width: "$spacing$20",
+        height: "$spacing$20",
       },
     },
     variant: {
@@ -235,7 +235,7 @@ export const AvatarGroup = styled("div", {
   display: "flex",
   flexDirection: "row-reverse",
   [`& ${AvatarNestedItem}:nth-child(n+2)`]: {
-    marginRight: "-$1",
+    marginRight: "-$spacing$3",
   },
 });
 
@@ -288,8 +288,8 @@ export const Avatar = React.forwardRef<
               right: "0",
               boxShadow: "0 0 0 3px $colors$loContrast",
               borderRadius: "$round",
-              mr: "-3px",
-              mb: "-3px",
+              mr: "-$spacing$2",
+              mb: "-$spacing$2",
             }}
           >
             <Status size={size && size > 2 ? "2" : "1"} variant={status} />

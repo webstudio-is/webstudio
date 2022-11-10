@@ -34,12 +34,12 @@ export const Card = styled("div", {
   variants: {
     size: {
       1: {
-        width: "$10",
-        padding: "$5",
+        width: "$spacing$30",
+        padding: "$spacing$11",
       },
       2: {
-        width: "$12",
-        padding: "$7",
+        width: "$spacing$32",
+        padding: "$spacing$17",
       },
     },
     variant: {
@@ -71,7 +71,7 @@ export const Card = styled("div", {
         "@hover": {
           "&:hover": {
             backgroundColor: "$panel",
-            transform: "translateY(-2px)",
+            transform: "translateY(-$spacing$2)",
             "&::before": {
               opacity: "1",
             },

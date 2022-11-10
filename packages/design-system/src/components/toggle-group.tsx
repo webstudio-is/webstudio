@@ -20,8 +20,8 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   justifyContent: "center",
   marginLeft: 1,
   "&": {
-    px: "$2",
-    py: "$1",
+    px: "$spacing$5",
+    py: "$spacing$3",
   },
   "&:first-child": {
     marginLeft: 0,

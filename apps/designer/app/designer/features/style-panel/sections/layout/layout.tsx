@@ -33,13 +33,13 @@ const LayoutSectionFlex = ({
   ].some((config) => config !== undefined);
 
   return (
-    <Flex css={{ flexDirection: "column", gap: "$2" }}>
+    <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
       {display?.styleConfig && (
         <Grid
           css={{
             gridArea: "display",
             gridTemplateColumns: "auto 1fr",
-            gap: "$space$6",
+            gap: "$spacing$13",
             width: "100%",
             fontWeight: "500",
           }}
@@ -54,9 +54,10 @@ const LayoutSectionFlex = ({
       {hasMenuItems && (
         <Grid
           css={{
-            gap: "$2",
-            gridTemplateColumns: "repeat(2, $6) repeat(3, $6)",
-            gridTemplateRows: "repeat(2, $6)",
+            gap: "$spacing$5",
+            gridTemplateColumns:
+              "repeat(2, $spacing$13) repeat(3, $spacing$13)",
+            gridTemplateRows: "repeat(2, $spacing$13)",
             gridTemplateAreas: `
             "grid grid flexDirection flexWrap ."
             "grid grid alignItems justifyContent alignContent"
@@ -111,7 +112,7 @@ const LayoutSectionFlex = ({
           </Box>
         )}
         {rowGap?.styleConfig && columnGap?.styleConfig && (
-          <Box css={{ gridArea: "lock", px: "$1" }}>
+          <Box css={{ gridArea: "lock", px: "$spacing$3" }}>
             <Lock
               pairedKeys={["columnGap", "rowGap"]}
               currentStyle={currentStyle}

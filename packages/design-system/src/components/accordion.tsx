@@ -25,10 +25,10 @@ export const Accordion = React.forwardRef<
 Accordion.displayName = "Accordion";
 
 const StyledItem = styled(AccordionPrimitive.Item, {
-  borderTop: "1px solid $colors$slate6",
+  borderTop: "$spacing$1 solid $colors$slate6",
 
   "&:last-of-type": {
-    borderBottom: "1px solid $colors$slate6",
+    borderBottom: "$spacing$1 solid $colors$slate6",
   },
 });
 
@@ -50,7 +50,7 @@ const StyledTrigger = styled(AccordionPrimitive.Trigger, {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  p: "$2",
+  p: "$spacing$5",
   color: "$hiContrast",
   width: "100%",
 
@@ -95,7 +95,7 @@ export const AccordionTrigger = React.forwardRef<
 AccordionTrigger.displayName = "AccordionTrigger";
 
 const StyledContent = styled(AccordionPrimitive.Content, {
-  p: "$2",
+  p: "$spacing$5",
 });
 
 export const AccordionItem = StyledItem;

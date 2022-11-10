@@ -118,6 +118,45 @@ import {
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
+const spacing = {
+  0: "0px",
+  1: "1px",
+  2: "2px",
+  3: "4px",
+  4: "6px",
+  5: "8px",
+  6: "10px",
+  7: "12px",
+  8: "14px",
+  9: "16px",
+  10: "20px",
+  11: "24px",
+  12: "28px",
+  13: "32px",
+  14: "36px",
+  15: "40px",
+  16: "44px",
+  17: "48px",
+  18: "56px",
+  19: "64px",
+  20: "80px",
+  21: "96px",
+  22: "112px",
+  23: "128px",
+  24: "144px",
+  25: "160px",
+  26: "176px",
+  27: "192px",
+  28: "208px",
+  29: "224px",
+  30: "240px",
+  31: "256px",
+  32: "288px",
+  33: "320px",
+  34: "384px",
+  35: "448px",
+};
+
 const {
   styled,
   css,
@@ -214,31 +253,7 @@ const {
     opacity: {
       1: "0.4",
     },
-    space: {
-      1: "4px",
-      2: "8px",
-      3: "16px",
-      4: "20px",
-      5: "24px",
-      6: "32px",
-      7: "48px",
-      8: "64px",
-      9: "80px",
-      styleSection: "8px",
-    },
-    sizes: {
-      1: "4px",
-      2: "8px",
-      3: "16px",
-      4: "20px",
-      5: "24px",
-      6: "32px",
-      7: "48px",
-      8: "64px",
-      9: "80px",
-      sidebarLeft: "45px",
-      sidebarRight: "240px",
-    },
+    spacing,
     fontSizes: {
       1: "12px",
       2: "13px",
@@ -325,66 +340,6 @@ const {
       marginBottom: value,
     }),
 
-    ta: (value: Stitches.PropertyValue<"textAlign">) => ({ textAlign: value }),
-
-    fd: (value: Stitches.PropertyValue<"flexDirection">) => ({
-      flexDirection: value,
-    }),
-    fw: (value: Stitches.PropertyValue<"flexWrap">) => ({ flexWrap: value }),
-
-    ai: (value: Stitches.PropertyValue<"alignItems">) => ({
-      alignItems: value,
-    }),
-    ac: (value: Stitches.PropertyValue<"alignContent">) => ({
-      alignContent: value,
-    }),
-    jc: (value: Stitches.PropertyValue<"justifyContent">) => ({
-      justifyContent: value,
-    }),
-    as: (value: Stitches.PropertyValue<"alignSelf">) => ({ alignSelf: value }),
-    fg: (value: Stitches.PropertyValue<"flexGrow">) => ({ flexGrow: value }),
-    fs: (value: Stitches.PropertyValue<"flexShrink">) => ({
-      flexShrink: value,
-    }),
-    fb: (value: Stitches.PropertyValue<"flexBasis">) => ({ flexBasis: value }),
-
-    bc: (value: Stitches.PropertyValue<"backgroundColor">) => ({
-      backgroundColor: value,
-    }),
-
-    br: (value: Stitches.PropertyValue<"borderRadius">) => ({
-      borderRadius: value,
-    }),
-    btrr: (value: Stitches.PropertyValue<"borderTopRightRadius">) => ({
-      borderTopRightRadius: value,
-    }),
-    bbrr: (value: Stitches.PropertyValue<"borderBottomRightRadius">) => ({
-      borderBottomRightRadius: value,
-    }),
-    bblr: (value: Stitches.PropertyValue<"borderBottomLeftRadius">) => ({
-      borderBottomLeftRadius: value,
-    }),
-    btlr: (value: Stitches.PropertyValue<"borderTopLeftRadius">) => ({
-      borderTopLeftRadius: value,
-    }),
-
-    bs: (value: Stitches.PropertyValue<"boxShadow">) => ({ boxShadow: value }),
-
-    lh: (value: Stitches.PropertyValue<"lineHeight">) => ({
-      lineHeight: value,
-    }),
-
-    ox: (value: Stitches.PropertyValue<"overflowX">) => ({ overflowX: value }),
-    oy: (value: Stitches.PropertyValue<"overflowY">) => ({ overflowY: value }),
-
-    pe: (value: Stitches.PropertyValue<"pointerEvents">) => ({
-      pointerEvents: value,
-    }),
-    us: (value: Stitches.PropertyValue<"userSelect">) => ({
-      WebkitUserSelect: value,
-      userSelect: value,
-    }),
-
     userSelect: (value: Stitches.PropertyValue<"userSelect">) => ({
       WebkitUserSelect: value,
       userSelect: value,
@@ -402,6 +357,13 @@ const {
     backgroundClip: (value: Stitches.PropertyValue<"backgroundClip">) => ({
       WebkitBackgroundClip: value,
       backgroundClip: value,
+    }),
+
+    // LEGACY, please don't use them
+    as: (value: Stitches.PropertyValue<"alignSelf">) => ({ alignSelf: value }),
+    fg: (value: Stitches.PropertyValue<"flexGrow">) => ({ flexGrow: value }),
+    bc: (value: Stitches.PropertyValue<"backgroundColor">) => ({
+      backgroundColor: value,
     }),
   },
 });

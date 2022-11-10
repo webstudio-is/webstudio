@@ -37,8 +37,8 @@ export const ImageInfoTrigger = ({
             visibility: cssVars.use(triggerVisibilityVar, "hidden"),
             position: "absolute",
             color: "$slate11",
-            top: "$1",
-            right: "$1",
+            top: "$spacing$3",
+            right: "$spacing$3",
             cursor: "pointer",
             transition: "opacity 100ms ease",
             "&:hover": {

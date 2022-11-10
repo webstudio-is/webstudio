@@ -3,7 +3,7 @@ import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { Flex, Text, styled } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
-  px: "$1",
+  px: "$spacing$3",
   width: 72,
   height: 72,
   border: "1px solid $slate6",

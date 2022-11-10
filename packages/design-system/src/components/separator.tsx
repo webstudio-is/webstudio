@@ -12,33 +12,33 @@ export const Separator = styled(SeparatorPrimitive.Root, {
     size: {
       "1": {
         '&[data-orientation="horizontal"]': {
-          height: "1px",
-          width: "$3",
+          height: "$spacing$1",
+          width: "$spacing$9",
         },
 
         '&[data-orientation="vertical"]': {
-          width: "1px",
-          height: "$3",
+          width: "$spacing$1",
+          height: "$spacing$9",
         },
       },
       "2": {
         '&[data-orientation="horizontal"]': {
-          height: "2px",
-          width: "$7",
+          height: "$spacing$2",
+          width: "$spacing$17",
         },
 
         '&[data-orientation="vertical"]': {
-          width: "2px",
-          height: "$7",
+          width: "$spacing$2",
+          height: "$spacing$17",
         },
       },
       auto: {
         '&[data-orientation="horizontal"]': {
-          height: "1px",
+          height: "$spacing$1",
         },
 
         '&[data-orientation="vertical"]': {
-          width: "1px",
+          width: "$spacing$1",
         },
       },
     },

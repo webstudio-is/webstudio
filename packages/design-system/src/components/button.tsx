@@ -23,8 +23,8 @@ export const Button = styled("button", {
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
   // Custom
-  height: "$5",
-  px: "$2",
+  height: "$spacing$11",
+  px: "$spacing$5",
   fontFamily: "$sans",
   fontSize: "$2",
   fontWeight: 500,
@@ -41,20 +41,20 @@ export const Button = styled("button", {
     size: {
       "1": {
         borderRadius: "$1",
-        height: "$5",
-        px: "$3",
+        height: "$spacing$11",
+        px: "$spacing$9",
         fontSize: "$1",
       },
       "2": {
         borderRadius: "$2",
         height: 28, // @todo waiting for the sizing scale
-        px: "$3",
+        px: "$spacing$9",
         fontSize: "$3",
       },
       "3": {
         borderRadius: "$2",
-        height: "$7",
-        px: "$4",
+        height: "$spacing$17",
+        px: "$spacing$10",
         fontSize: "$4",
       },
     },

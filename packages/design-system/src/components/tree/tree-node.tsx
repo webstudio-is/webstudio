@@ -117,8 +117,8 @@ const CollapsibleTrigger = styled(Collapsible.Trigger, {
   position: "absolute",
 
   // We want the button to take extra space so it's easier to hit
-  ml: "-$1",
-  pl: "$1",
+  ml: "-$spacing$3",
+  pl: "$spacing$3",
 });
 
 const TriggerPlaceholder = styled(Box, { width: INDENT });
@@ -339,7 +339,7 @@ export const TreeItemLabel = ({
 }) => (
   <>
     {prefix}
-    <Text truncate css={{ ml: prefix ? "$1" : 0 }}>
+    <Text truncate css={{ ml: prefix ? "$spacing$3" : 0 }}>
       {children}
     </Text>
   </>

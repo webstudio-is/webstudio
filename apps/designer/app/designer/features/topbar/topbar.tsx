@@ -23,7 +23,7 @@ export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
       justify="between"
       css={{
         bc: "$loContrast",
-        height: "$sizes$7",
+        height: "$spacing$17",
         "[data-theme=dark] &": {
           boxShadow: "inset 0 -1px 0 0 $colors$panelOutline",
         },
@@ -48,7 +48,7 @@ export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
           "& > *": {
             height: "inherit",
             width: "auto",
-            padding: "0 $2",
+            padding: "0 $spacing$5",
           },
         }}
       >

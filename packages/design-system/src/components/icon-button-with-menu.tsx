@@ -10,7 +10,7 @@ const StyledContent = styled(DropdownMenuPrimitive.Content, {
   overflow: "auto",
   backgroundColor: "$colors$slate4",
   borderRadius: "$radii$1",
-  padding: "$sizes$2",
+  padding: "$spacing$5",
   boxShadow:
     "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$gray1, 0 0 0 1px $colors$gray8",
 });
@@ -23,13 +23,13 @@ const itemStyles = {
   borderRadius: "$radii$1",
   display: "flex",
   alignItems: "center",
-  height: "$sizes$5",
-  padding: "0 $space$5",
+  height: "$spacing$11",
+  padding: "0 $spacing$11",
   position: "relative",
-  paddingLeft: "$space$5",
-  paddingRight: "$space$5",
+  paddingLeft: "$spacing$11",
+  paddingRight: "$spacing$11",
   userSelect: "none",
-  gap: "$space$2",
+  gap: "$spacing$5",
   "&[data-highlighted]": {
     background: "$colors$blue10",
     color: "$colors$blue1",
@@ -47,8 +47,8 @@ const itemIndicatorStyle = {
 };
 
 const iconButtonStyle = {
-  width: "$5",
-  height: "$5",
+  width: "$spacing$11",
+  height: "$spacing$11",
   color: "$colors$gray12",
   backgroundColor: "$colors$loContrast",
   "&:focus": {

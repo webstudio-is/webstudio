@@ -50,7 +50,7 @@ const BreakpointSelectorItem = ({
 };
 const menuItemCss = {
   display: "flex",
-  gap: "$3",
+  gap: "$spacing$9",
   justifyContent: "start",
   flexGrow: 1,
   minWidth: 180,

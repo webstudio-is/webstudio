@@ -17,7 +17,7 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
         onClick={onClick}
         css={{
           color: "$hiContrast",
-          px: "$2",
+          px: "$spacing$5",
           borderRadius: "100vh",
           height: "100%",
         }}

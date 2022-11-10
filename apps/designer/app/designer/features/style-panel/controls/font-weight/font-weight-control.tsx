@@ -107,9 +107,9 @@ export const FontWeightControl = ({
       ghost
       css={{
         // @todo this shouldn't be in design system by default
-        gap: "calc($sizes$1 / 2)",
-        paddingLeft: "calc($sizes$4 / 2)",
-        height: "calc($sizes$5 + $sizes$1)",
+        gap: "calc($spacing$3 / 2)",
+        paddingLeft: "calc($spacing$10 / 2)",
+        height: "calc($spacing$11 + $spacing$3)",
         boxShadow: "inset 0 0 0 1px $colors$slate7",
         textTransform: "capitalize",
         fontWeight: "inherit",

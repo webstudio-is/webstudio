@@ -25,8 +25,8 @@ export const SimpleToggle = styled(TogglePrimitive.Root, {
   "&::after": {
     boxSizing: "border-box",
   },
-  height: "$5",
-  width: "$5",
+  height: "$spacing$11",
+  width: "$spacing$11",
   backgroundColor: "transparent",
   "@hover": {
     "&:hover": {
