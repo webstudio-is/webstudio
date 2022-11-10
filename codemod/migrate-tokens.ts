@@ -179,7 +179,7 @@ const spaceValues = new Map([
 
 const fontSizeProps = ["fontSize"];
 const fontSizeValues = new Map([
-  ["$1", "1"],
+  ["$1", "3"],
   ["$2", "3"],
   ["$3", "4"],
   ["$4", "4"],
