@@ -14,7 +14,7 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   color: "$hiContrast",
   display: "flex",
   whiteSpace: "nowrap",
-  fontSize: 15,
+  fontSize: "$fontSize$4",
   lineHeight: 1,
   alignItems: "center",
   justifyContent: "center",

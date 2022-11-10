@@ -111,7 +111,7 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
       onClick={onClickPreventDefault}
       css={{
         position: "absolute",
-        borderRadius: "$1",
+        borderRadius: "$borderRadius$4",
         padding: "$spacing$3 $spacing$5",
         pointerEvents: "auto",
         ...css,

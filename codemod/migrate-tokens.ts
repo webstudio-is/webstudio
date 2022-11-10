@@ -177,30 +177,83 @@ const spaceValues = new Map([
   ["8px", "5"],
 ]);
 
+const fontSizeProps = ["fontSize"];
+const fontSizeValues = new Map([
+  ["$1", "3"],
+  ["$2", "3"],
+  ["$3", "4"],
+  ["$4", "4"],
+  ["$5", "5"],
+  ["$6", "6"],
+  ["$7", "7"],
+  ["$8", "8"],
+  ["$9", "9"],
+  ["14px", "4"],
+]);
+
+const lineHeightProps = ["lineHeight"];
+const lineHeightValues = new Map([
+  ["15px", "3"],
+  ["16px", "3"],
+  ["20px", "4"],
+]);
+
+const borderRadiusProps = ["borderRadius"];
+const borderRadiusValues = new Map([
+  ["$1", "4"],
+  ["$2", "6"],
+  ["$3", "7"],
+  ["$round", "round"],
+  ["$pill", "pill"],
+]);
+
+const updateProperty = (
+  line: string,
+  props: Array<string>,
+  values: Map<string, string>,
+  group: string
+) => {
+  for (const prop of props) {
+    const regex = new RegExp(`${prop}: "(.+)"`, "g");
+    const match = regex.exec(line);
+    if (match && match[1]) {
+      let value = match[1];
+      for (const [key, nextValue] of values) {
+        if (value.includes(key) === false) continue;
+        // This is to allow the script to run multiple times
+        value = value.replaceAll(`$${group}$`, `__${group}__`);
+
+        value = value.replaceAll(key, `__${group}__${nextValue}`);
+      }
+
+      const next = `${prop}: "${value}"`;
+      line = line.replace(regex, next);
+    }
+  }
+  line = line.replaceAll(`__${group}__`, `$${group}$`);
+  return line;
+};
+
 const update = async ({ filePath, buffer }) => {
   let code = buffer.toString("utf-8");
   const lines = code.split("\n");
   const nextLines: Array<string> = [];
   let line: string = "";
   for (line of lines) {
-    for (const prop of spaceProps) {
-      const regex = new RegExp(`${prop}: "(.+)"`, "g");
-      const match = regex.exec(line);
-      if (match && match[1]) {
-        let value = match[1];
-        for (const [key, nextValue] of spaceValues) {
-          if (value.includes(key) === false) continue;
-          // This is to allow the script to run multiple times
-          value = value.replaceAll("$spacing$", `__spacing__`);
-
-          value = value.replaceAll(key, `__spacing__${nextValue}`);
-        }
-
-        const next = `${prop}: "${value}"`;
-        line = line.replace(regex, next);
-      }
-    }
-    line = line.replaceAll("__spacing__", "$spacing$");
+    line = updateProperty(line, spaceProps, spaceValues, "spacing");
+    line = updateProperty(line, fontSizeProps, fontSizeValues, "fontSize");
+    line = updateProperty(
+      line,
+      lineHeightProps,
+      lineHeightValues,
+      "lineHeight"
+    );
+    line = updateProperty(
+      line,
+      borderRadiusProps,
+      borderRadiusValues,
+      "borderRadius"
+    );
     nextLines.push(line);
   }
   await fs.writeFile(filePath, nextLines.join("\n"));

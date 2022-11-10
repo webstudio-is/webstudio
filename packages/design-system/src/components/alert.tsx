@@ -11,7 +11,7 @@ export const Alert = styled("div", {
   },
 
   border: "1px solid",
-  borderRadius: "$2",
+  borderRadius: "$borderRadius$6",
 
   variants: {
     size: {

@@ -11,7 +11,7 @@ export const ComponentInfo = ({
     <Flex justify="between" align="center">
       <Text
         css={{
-          fontSize: "$2",
+          fontSize: "$fontSize$3",
           color: "$colors$slate11",
           fontWeight: "500",
         }}

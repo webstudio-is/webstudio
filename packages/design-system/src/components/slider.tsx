@@ -6,7 +6,7 @@ const SliderTrack = styled(SliderPrimitive.Track, {
   position: "relative",
   flexGrow: 1,
   backgroundColor: "$slate7",
-  borderRadius: "$pill",
+  borderRadius: "$borderRadius$pill",
   '&[data-orientation="horizontal"]': {
     height: 2,
   },
@@ -36,7 +36,7 @@ const SliderThumb = styled(SliderPrimitive.Thumb, {
   outline: "none",
   backgroundColor: "white",
   boxShadow: "0 0 1px rgba(0,0,0,.3), 0 1px 4px rgba(0,0,0,.15)",
-  borderRadius: "$round",
+  borderRadius: "$borderRadius$round",
 
   "&::after": {
     content: '""',
@@ -48,7 +48,7 @@ const SliderThumb = styled(SliderPrimitive.Thumb, {
     zIndex: -2,
     backgroundColor: "hsla(0,0%,0%,.035)",
     transform: "scale(1)",
-    borderRadius: "$round",
+    borderRadius: "$borderRadius$round",
     transition: "transform 200ms cubic-bezier(0.22, 1, 0.36, 1)",
   },
 

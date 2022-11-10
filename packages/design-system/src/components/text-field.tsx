@@ -136,9 +136,9 @@ const TextFieldBase = styled("div", {
   fontVariantNumeric: "tabular-nums",
   gap: "$spacing$3",
   px: "$spacing$5",
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   fontFamily: "$sans",
-  fontSize: "$1",
+  fontSize: "$fontSize$3",
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
   "&:focus-within": {

@@ -165,7 +165,7 @@ const hoverStyle = {
   height: ITEM_HEIGHT,
   border: "solid $blue10",
   borderWidth: 2,
-  borderRadius: "$2",
+  borderRadius: "$borderRadius$6",
   pointerEvents: "none",
   boxSizing: "border-box",
 };

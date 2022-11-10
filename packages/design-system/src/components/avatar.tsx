@@ -138,7 +138,7 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
     },
     shape: {
       square: {
-        borderRadius: "$2",
+        borderRadius: "$borderRadius$6",
       },
       circle: {
         borderRadius: "50%",
@@ -201,23 +201,23 @@ const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
   variants: {
     size: {
       "1": {
-        fontSize: "10px",
-        lineHeight: "15px",
+        fontSize: "$fontSize$2",
+        lineHeight: "$lineHeight$3",
       },
       "2": {
-        fontSize: "$3",
+        fontSize: "$fontSize$4",
       },
       "3": {
-        fontSize: "$6",
+        fontSize: "$fontSize$6",
       },
       "4": {
-        fontSize: "$7",
+        fontSize: "$fontSize$7",
       },
       "5": {
-        fontSize: "$8",
+        fontSize: "$fontSize$8",
       },
       "6": {
-        fontSize: "$9",
+        fontSize: "$fontSize$9",
       },
     },
   },
@@ -287,7 +287,7 @@ export const Avatar = React.forwardRef<
               bottom: "0",
               right: "0",
               boxShadow: "0 0 0 3px $colors$loContrast",
-              borderRadius: "$round",
+              borderRadius: "$borderRadius$round",
               mr: "-$spacing$2",
               mb: "-$spacing$2",
             }}

@@ -10,7 +10,7 @@ export const baseItemCss = css({
   alignItems: "center",
   justifyContent: "space-between",
   fontFamily: "$sans",
-  fontSize: "$1",
+  fontSize: "$fontSize$3",
   fontVariantNumeric: "tabular-nums",
   lineHeight: "1",
   cursor: "default",

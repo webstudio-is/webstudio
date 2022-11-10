@@ -18,7 +18,7 @@ type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
 const Content = styled(TooltipPrimitive.Content, {
   backgroundColor: "$hiContrast",
   color: "$loContrast",
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   padding: "$spacing$3 $spacing$5",
   zIndex: "$1",
   position: "relative",

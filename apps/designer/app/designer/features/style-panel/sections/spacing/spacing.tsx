@@ -42,7 +42,7 @@ const grid = {
 
 const styles = {
   spacingEdit: {
-    fontSize: "$1",
+    fontSize: "$fontSize$3",
     // @todo use a color from design system
     color: "rgb(217, 217, 217)",
     display: "flex",
@@ -58,7 +58,7 @@ const styles = {
       "$spacing$11 $spacing$3 $spacing$11 1fr $spacing$11 $spacing$3 $spacing$11",
   },
   input: {
-    fontSize: 10,
+    fontSize: "$fontSize$2",
     fontWeight: 400,
     fontFamily: "inherit",
     display: "block",
@@ -82,7 +82,7 @@ const styles = {
     width: "$spacing$13",
     margin: "auto",
     height: "100%",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
   },
   marginGrid: {
     gridArea: "1 / 1 / -1 / -1",
@@ -91,13 +91,13 @@ const styles = {
     gridTemplateRows: "$spacing$11 minmax($spacing$9, 1fr) $spacing$11",
     height: 130,
     backgroundColor: "$gray6",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
     px: 2,
   },
   text: {
     fontWeight: "bold",
     color: "$gray12",
-    fontSize: 8,
+    fontSize: "$fontSize$1",
     margin: "$spacing$3",
   },
   paddingGrid: {
@@ -107,7 +107,7 @@ const styles = {
     gridTemplateRows: "$spacing$11 minmax($spacing$9, 1fr) $spacing$11",
     border: "2px solid",
     borderColor: "$loContrast",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
   },
 };
 

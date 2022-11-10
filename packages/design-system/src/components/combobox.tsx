@@ -49,7 +49,7 @@ const Listbox = styled("ul", panelStyles, {
 const ListboxItem = styled("li", itemCss, {
   padding: "0 $spacing$5",
   margin: 0,
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
 });
 
 const ListboxItemBase: ForwardRefRenderFunction<

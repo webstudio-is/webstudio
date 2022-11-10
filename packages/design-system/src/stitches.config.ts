@@ -254,24 +254,36 @@ const {
       1: "0.4",
     },
     spacing,
-    fontSizes: {
-      1: "12px",
-      2: "13px",
-      3: "15px",
-      4: "17px",
+    fontSize: {
+      1: "8px",
+      2: "10px",
+      3: "12px",
+      // Legacy - don't use unless specified in Figma
+      4: "14px",
       5: "19px",
       6: "21px",
       7: "27px",
       8: "35px",
       9: "59px",
     },
-    radii: {
-      1: "4px",
-      2: "6px",
-      3: "8px",
-      4: "12px",
+    lineHeight: {
+      1: "8px",
+      2: "12px",
+      3: "16px",
+      // Legacy - don't use unless specified in Figma
+      4: "20px",
+    },
+    borderRadius: {
+      1: "1px",
+      2: "2px",
+      3: "3px",
+      4: "4px",
+      5: "5px",
+      6: "6px",
       round: "50%",
       pill: "9999px",
+      // Legacy - don't use unless specified in Figma
+      7: "8px",
     },
     zIndices: {
       1: "100",

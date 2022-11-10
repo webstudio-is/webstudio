@@ -13,13 +13,13 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   fontVariantNumeric: "tabular-nums",
   gap: "$spacing$5",
   flexShrink: 0,
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   backgroundColor: "$loContrast",
   color: "$hiContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   height: 28, // @todo waiting for the sizing scale
   px: "$spacing$5",
-  fontSize: "$1",
+  fontSize: "$fontSize$3",
   "&:focus": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
@@ -62,7 +62,7 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
 export const SelectContent = styled(SelectPrimitive.Content, {
   overflow: "hidden",
   backgroundColor: "$colors$slate4",
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   boxShadow:
     "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
 });
@@ -73,7 +73,7 @@ export const SelectViewport = styled(SelectPrimitive.Viewport, {
 
 const StyledItem = styled(SelectPrimitive.Item, {
   all: "unset",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   lineHeight: 1,
   color: "$hiContrast",
   display: "flex",
@@ -82,7 +82,7 @@ const StyledItem = styled(SelectPrimitive.Item, {
   padding: "0 $spacing$5",
   position: "relative",
   userSelect: "none",
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
 
   "&[data-disabled]": {
     color: "$muted",

@@ -29,32 +29,32 @@ export const Skeleton = styled("div", {
   variants: {
     variant: {
       avatar1: {
-        borderRadius: "$round",
+        borderRadius: "$borderRadius$round",
         height: "$spacing$9",
         width: "$spacing$9",
       },
       avatar2: {
-        borderRadius: "$round",
+        borderRadius: "$borderRadius$round",
         height: "$spacing$11",
         width: "$spacing$11",
       },
       avatar3: {
-        borderRadius: "$round",
+        borderRadius: "$borderRadius$round",
         height: "$spacing$13",
         width: "$spacing$13",
       },
       avatar4: {
-        borderRadius: "$round",
+        borderRadius: "$borderRadius$round",
         height: "$spacing$17",
         width: "$spacing$17",
       },
       avatar5: {
-        borderRadius: "$round",
+        borderRadius: "$borderRadius$round",
         height: "$spacing$19",
         width: "$spacing$19",
       },
       avatar6: {
-        borderRadius: "$round",
+        borderRadius: "$borderRadius$round",
         height: "$spacing$20",
         width: "$spacing$20",
       },
@@ -68,7 +68,7 @@ export const Skeleton = styled("div", {
         height: "$spacing$9",
       },
       button: {
-        borderRadius: "$1",
+        borderRadius: "$borderRadius$4",
         height: "$spacing$11",
         width: "$spacing$19",
       },

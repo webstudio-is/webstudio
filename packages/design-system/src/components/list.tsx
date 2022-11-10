@@ -23,7 +23,7 @@ const ListItemBase = styled("li", {
   height: "$spacing$11",
   px: "$spacing$3",
   listStyle: "none",
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   outline: 0,
   variants: {
     state: {
