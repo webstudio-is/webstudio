@@ -182,7 +182,8 @@ const fontSizeValues = new Map([
   ["$1", "1"],
   ["$2", "3"],
   ["$3", "4"],
-  ["$4", "1"],
+  ["$4", "4"],
+  ["14px", "4"],
 ]);
 
 const updateProperty = (
@@ -219,7 +220,7 @@ const update = async ({ filePath, buffer }) => {
   let line: string = "";
   for (line of lines) {
     line = updateProperty(line, spaceProps, spaceValues, "spacing");
-    line = updateProperty(line, fontSizeProps, fontSizeValues, "fontSizes");
+    line = updateProperty(line, fontSizeProps, fontSizeValues, "fontSize");
     nextLines.push(line);
   }
   await fs.writeFile(filePath, nextLines.join("\n"));
