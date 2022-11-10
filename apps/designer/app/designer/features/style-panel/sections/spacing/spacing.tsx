@@ -82,7 +82,7 @@ const styles = {
     width: "$spacing$13",
     margin: "auto",
     height: "100%",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
   },
   marginGrid: {
     gridArea: "1 / 1 / -1 / -1",
@@ -91,7 +91,7 @@ const styles = {
     gridTemplateRows: "$spacing$11 minmax($spacing$9, 1fr) $spacing$11",
     height: 130,
     backgroundColor: "$gray6",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
     px: 2,
   },
   text: {
@@ -107,7 +107,7 @@ const styles = {
     gridTemplateRows: "$spacing$11 minmax($spacing$9, 1fr) $spacing$11",
     border: "2px solid",
     borderColor: "$loContrast",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
   },
 };
 

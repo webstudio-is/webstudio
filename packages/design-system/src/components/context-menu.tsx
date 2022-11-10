@@ -55,7 +55,7 @@ export const ContextMenuRadioItem = React.forwardRef<
               width: "$spacing$3",
               height: "$spacing$3",
               backgroundColor: "currentColor",
-              borderRadius: "$round",
+              borderRadius: "$borderRadius$round",
             }}
           />
         </Flex>

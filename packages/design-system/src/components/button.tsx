@@ -40,19 +40,19 @@ export const Button = styled("button", {
   variants: {
     size: {
       "1": {
-        borderRadius: "$1",
+        borderRadius: "$borderRadius$4",
         height: "$spacing$11",
         px: "$spacing$9",
         fontSize: "$fontSize$3",
       },
       "2": {
-        borderRadius: "$2",
+        borderRadius: "$borderRadius$6",
         height: 28, // @todo waiting for the sizing scale
         px: "$spacing$9",
         fontSize: "$fontSize$4",
       },
       "3": {
-        borderRadius: "$2",
+        borderRadius: "$borderRadius$6",
         height: "$spacing$17",
         px: "$spacing$10",
         fontSize: "$fontSize$4",

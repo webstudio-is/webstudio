@@ -9,7 +9,7 @@ const StyledContent = styled(DropdownMenuPrimitive.Content, {
   maxHeight: 238,
   overflow: "auto",
   backgroundColor: "$colors$slate4",
-  borderRadius: "$radii$1",
+  borderRadius: "$borderRadius$4",
   padding: "$spacing$5",
   boxShadow:
     "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$gray1, 0 0 0 1px $colors$gray8",
@@ -20,7 +20,7 @@ const itemStyles = {
   fontSize: "$fontSize$3",
   lineHeight: 1,
   color: "$colors$slate12",
-  borderRadius: "$radii$1",
+  borderRadius: "$borderRadius$4",
   display: "flex",
   alignItems: "center",
   height: "$spacing$11",

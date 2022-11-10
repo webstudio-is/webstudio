@@ -6,7 +6,7 @@ import { CheckIcon } from "@webstudio-is/icons";
 const StyledVerifiedBadge = styled("div", Flex, {
   alignItems: "center",
   backgroundColor: "$blue9",
-  borderRadius: "$round",
+  borderRadius: "$borderRadius$round",
   color: "white",
   flexShrink: 0,
   justifyContent: "center",

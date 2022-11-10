@@ -56,10 +56,10 @@ export const SimpleToggle = styled(TogglePrimitive.Root, {
   variants: {
     shape: {
       circle: {
-        borderRadius: "$round",
+        borderRadius: "$borderRadius$round",
       },
       square: {
-        borderRadius: "$1",
+        borderRadius: "$borderRadius$4",
       },
     },
   },

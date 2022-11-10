@@ -51,17 +51,17 @@ export const IconButton = styled("button", {
         },
       },
       "2": {
-        borderRadius: "$1",
+        borderRadius: "$borderRadius$4",
         height: "$spacing$13",
         width: "$spacing$13",
       },
       "3": {
-        borderRadius: "$1",
+        borderRadius: "$borderRadius$4",
         height: "$spacing$17",
         width: "$spacing$17",
       },
       "4": {
-        borderRadius: "$2",
+        borderRadius: "$borderRadius$6",
         height: "$spacing$19",
         width: "$spacing$19",
       },

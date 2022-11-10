@@ -37,7 +37,7 @@ const ThumbnailContainer = styled(Box, {
   alignItems: "center",
   flexDirection: "column",
   border: "2px solid transparent",
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   outline: 0,
   gap: "$spacing$3",
   overflow: "hidden",

@@ -41,12 +41,12 @@ export const Banner = styled("div", {
     },
     rounded: {
       true: {
-        borderRadius: "$pill",
+        borderRadius: "$borderRadius$pill",
       },
     },
     border: {
       true: {
-        borderRadius: "$pill",
+        borderRadius: "$borderRadius$pill",
       },
     },
   },

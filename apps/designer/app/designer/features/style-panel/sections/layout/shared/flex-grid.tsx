@@ -145,7 +145,7 @@ export const FlexGrid = ({
               blockSize: "calc(100% / 3)",
               maxBlockSize: "$spacing$4",
               background: "currentColor",
-              borderRadius: "calc($radii$1 / 2)",
+              borderRadius: "calc($borderRadius$4 / 2)",
             }}
           ></Flex>
         ))}

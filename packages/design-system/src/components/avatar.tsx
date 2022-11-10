@@ -138,7 +138,7 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
     },
     shape: {
       square: {
-        borderRadius: "$2",
+        borderRadius: "$borderRadius$6",
       },
       circle: {
         borderRadius: "50%",
@@ -287,7 +287,7 @@ export const Avatar = React.forwardRef<
               bottom: "0",
               right: "0",
               boxShadow: "0 0 0 3px $colors$loContrast",
-              borderRadius: "$round",
+              borderRadius: "$borderRadius$round",
               mr: "-$spacing$2",
               mb: "-$spacing$2",
             }}

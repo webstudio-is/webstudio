@@ -14,7 +14,7 @@ const StyledCheckIcon = styled(CheckIcon, {
   width: iconSize,
   height: iconSize,
   background: "$green9",
-  borderRadius: "$radii$round",
+  borderRadius: "$borderRadius$round",
 });
 
 const ellipsisKeyframes = keyframes({

@@ -15,7 +15,7 @@ export const Card = styled("div", {
   textDecoration: "none",
   color: "inherit",
   flexShrink: 0,
-  borderRadius: "$3",
+  borderRadius: "$borderRadius$7",
   position: "relative",
 
   "&::before": {
@@ -27,7 +27,7 @@ export const Card = styled("div", {
     bottom: 0,
     left: 0,
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,.1)",
-    borderRadius: "$3",
+    borderRadius: "$borderRadius$7",
     pointerEvents: "none",
   },
 
