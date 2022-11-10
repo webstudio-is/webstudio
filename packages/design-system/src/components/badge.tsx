@@ -43,12 +43,12 @@ export const Badge = styled("span", {
       "1": {
         height: "$spacing$10",
         px: "$spacing$3",
-        fontSize: "$fontSize$1",
+        fontSize: "$1",
       },
       "2": {
         height: "$spacing$11",
         px: "$spacing$5",
-        fontSize: "$fontSize$3",
+        fontSize: "$2",
       },
     },
     variant: {

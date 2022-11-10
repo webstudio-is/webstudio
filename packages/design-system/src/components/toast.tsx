@@ -52,7 +52,7 @@ const StyledToast = styled(ToastPrimitive.Root, {
   alignItems: "center",
   color: "$highContrast",
   fontWeight: 500,
-  fontSize: "$fontSize$3",
+  fontSize: "$2",
   background: "$loContrast",
 
   "@media (prefers-reduced-motion: no-preference)": {

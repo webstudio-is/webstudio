@@ -30,7 +30,7 @@ export const Kbd = styled("kbd", {
         px: "0.3em",
         height: "$spacing$9",
         minWidth: "1.6em",
-        fontSize: "$fontSize$1",
+        fontSize: "$1",
         lineHeight: "$spaces$3",
       },
       "2": {
@@ -38,7 +38,7 @@ export const Kbd = styled("kbd", {
         px: "0.5em",
         height: "$spacing$11",
         minWidth: "2em",
-        fontSize: "$fontSize$3",
+        fontSize: "$2",
         lineHeight: "$spaces$5",
       },
     },

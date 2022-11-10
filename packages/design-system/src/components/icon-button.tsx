@@ -9,7 +9,7 @@ export const IconButton = styled("button", {
   display: "inline-flex",
   flexShrink: 0,
   fontFamily: "inherit",
-  fontSize: "$fontSize$4",
+  fontSize: "14px",
   justifyContent: "center",
   lineHeight: "1",
   padding: 0,
