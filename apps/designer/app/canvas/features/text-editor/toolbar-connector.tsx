@@ -27,7 +27,7 @@ export const $setNodeSpan = (node: TextNode) => {
 
 const $getSpanNodes = (selection: RangeSelection) => {
   const nodes = selection.getNodes();
-  let spans: TextNode[] = [];
+  const spans: TextNode[] = [];
   // check each TextNode within selection for existing span nodes
   for (const node of nodes) {
     if ($isTextNode(node) && $isSpanNode(node)) {
@@ -37,10 +37,10 @@ const $getSpanNodes = (selection: RangeSelection) => {
   return spans;
 };
 
-function $toggleSpan(): void {
+const $toggleSpan = () => {
   const selection = $getSelection();
   if ($isRangeSelection(selection)) {
-    let spans: TextNode[] = $getSpanNodes(selection);
+    const spans = $getSpanNodes(selection);
     if (spans.length === 0) {
       // lexical creates separate text node when style property do not match
       $patchStyleText(selection, {
@@ -53,7 +53,7 @@ function $toggleSpan(): void {
       }
     }
   }
-}
+};
 
 const $isSelectedLink = (selection: RangeSelection) => {
   const [selectedNode] = selection.getNodes();
