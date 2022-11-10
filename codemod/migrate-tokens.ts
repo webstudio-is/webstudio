@@ -205,6 +205,7 @@ const borderRadiusValues = new Map([
   ["$3", "7"],
   ["$round", "round"],
   ["$pill", "pill"],
+  ["$radii", "borderRadius"],
 ]);
 
 const updateProperty = (
