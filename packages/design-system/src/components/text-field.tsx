@@ -138,7 +138,7 @@ const TextFieldBase = styled("div", {
   px: "$spacing$5",
   borderRadius: "$1",
   fontFamily: "$sans",
-  fontSize: "$1",
+  fontSize: "$fontSize$1",
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
   "&:focus-within": {

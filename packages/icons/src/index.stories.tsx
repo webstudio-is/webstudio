@@ -47,7 +47,7 @@ export const Icons = () => {
                     textAlign: "center",
                     wordWrap: "break-word",
                     width: "100%",
-                    fontSize: "14px",
+                    fontSize: "$fontSize$4",
                     color: "#5a5a5a",
                   }}
                 >

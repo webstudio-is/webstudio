@@ -16,7 +16,7 @@ export const Tr = styled("tr", {});
 export const Th = styled("th", {
   fontWeight: "unset",
   textAlign: "start",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   py: "$spacing$5",
   borderBottom: "$spacing$1 solid $gray4",
   variants: {
@@ -49,7 +49,7 @@ export const Th = styled("th", {
 export const Td = styled("td", {
   py: "$spacing$5",
   borderBottom: "$spacing$1 solid $gray4",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   variants: {
     align: {
       start: {
@@ -79,11 +79,11 @@ export const Td = styled("td", {
 
 export const Thead = styled("thead", {
   [`& ${Th}`]: {
-    fontSize: "$1",
+    fontSize: "$fontSize$1",
     color: "$gray11",
   },
   [`& ${Td}`]: {
-    fontSize: "$1",
+    fontSize: "$fontSize$1",
     color: "$gray11",
   },
 });

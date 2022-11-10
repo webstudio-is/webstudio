@@ -14,12 +14,12 @@ export const Text = styled("div", {
     variant: {
       regular: {
         fontWeight: 400,
-        fontSize: "$1",
+        fontSize: "$fontSize$1",
         letterSpacing: "0.005em",
       },
       label: {
         fontWeight: 500,
-        fontSize: "$1",
+        fontSize: "$fontSize$1",
         letterSpacing: "0.005em",
       },
       tiny: {
@@ -29,13 +29,13 @@ export const Text = styled("div", {
       },
       title: {
         fontWeight: 700,
-        fontSize: "$1",
+        fontSize: "$fontSize$1",
         letterSpacing: "0.01em",
       },
       mono: {
         fontFamily: "$mono",
         fontWeight: 400,
-        fontSize: "$1",
+        fontSize: "$fontSize$1",
         textTransform: "uppercase",
       },
       unit: {

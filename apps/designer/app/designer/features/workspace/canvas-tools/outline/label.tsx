@@ -43,7 +43,7 @@ const LabelContainer = styled(
     alignItems: "center",
     justifyContent: "center",
     gap: "$spacing$3",
-    fontSize: "$1",
+    fontSize: "$fontSize$1",
     fontFamily: "$sans",
     lineHeight: 1,
     minWidth: "$spacing$13",

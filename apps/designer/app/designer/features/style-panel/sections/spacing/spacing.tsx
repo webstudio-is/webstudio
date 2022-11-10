@@ -42,7 +42,7 @@ const grid = {
 
 const styles = {
   spacingEdit: {
-    fontSize: "$1",
+    fontSize: "$fontSize$1",
     // @todo use a color from design system
     color: "rgb(217, 217, 217)",
     display: "flex",
