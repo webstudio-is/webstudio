@@ -4,7 +4,7 @@ import { type PubsubMap, useSubscribeAll } from "~/shared/pubsub";
 
 const useSubscribeTreeChange = (onChange: () => void, isEnabled: boolean) => {
   const callback = useMemo(() => {
-    if (!isEnabled) {
+    if (isEnabled === false) {
       return () => null;
     }
     return (type: keyof PubsubMap) => {
