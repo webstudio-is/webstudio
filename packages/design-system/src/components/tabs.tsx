@@ -29,7 +29,7 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   },
   [`& > ${Text}`]: {
     color: "$gray9",
-    fontSize: "$fontSizes$fontSize$3",
+    fontSize: "$fontSize$3",
     fontWeight: "500",
   },
   "@hover": {
