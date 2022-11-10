@@ -1,4 +1,4 @@
-const path = require("path");
+import * as path from "path";
 
 const template = ({
   sourceFile,
@@ -21,11 +21,11 @@ export const ${componentName}Icon = forwardRef<SVGSVGElement, IconProps>(
 ${componentName}Icon.displayName = "${componentName}Icon";
 `;
 
-const transformFilename = (filename) => {
+const transformFilename = (filename: string) => {
   return path.basename(filename, path.extname(filename)) + ".tsx";
 };
 
-exports.config = {
+export const config = {
   inputDir: "./icons",
   outputDir: "./src/gen",
   template,

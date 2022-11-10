@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
-    "generate": "rm -fr src/gen && svgo-jsx && tsx ./bin/svgo-jsx-index.ts",
+    "generate": "rm -fr src/gen && tsx ./node_modules/.bin/svgo-jsx svgo-jsx.config.ts && tsx ./bin/svgo-jsx-index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint",
