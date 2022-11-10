@@ -1,4 +1,7 @@
-version: '3.1'
+version: "3.1"
+
+volumes:
+  db:
 
 services:
   db:
@@ -9,5 +12,7 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: webstudio
       POSTGRES_USER: user
+    volumes:
+      - db:/var/lib/postgresql/data
     ports:
       - ${PGPORT:-5432}:5432
