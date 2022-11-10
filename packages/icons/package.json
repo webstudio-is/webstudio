@@ -6,7 +6,8 @@
   "homepage": "https://webstudio.is",
   "scripts": {
     "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo src/generated && svgo-jsx && node ./svgo-jsx-index.js && tsc",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "generate": "rm -fr src/gen && svgo-jsx && node ./svgo-jsx-index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint",

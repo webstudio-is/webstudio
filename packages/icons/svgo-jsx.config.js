@@ -9,6 +9,7 @@ const template = ({
 import { forwardRef } from "react";
 import { IconProps } from "../types";
 
+// prettier-ignore
 export const ${componentName}Icon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", ...props }, forwardedRef) => {
     return (
@@ -26,7 +27,7 @@ const transformFilename = (filename) => {
 
 exports.config = {
   inputDir: "./icons",
-  outputDir: "./src/generated",
+  outputDir: "./src/gen",
   template,
   transformFilename,
   svgProps: {
