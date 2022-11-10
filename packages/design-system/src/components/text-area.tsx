@@ -48,13 +48,13 @@ export const TextArea = styled("textarea", {
       "1": {
         borderRadius: "$1",
         fontSize: "$fontSize$3",
-        lineHeight: "16px",
+        lineHeight: "$lineHeight$3",
         px: "$spacing$3",
       },
       "2": {
         borderRadius: "$1",
         fontSize: "$fontSize$3",
-        lineHeight: "20px",
+        lineHeight: "$lineHeight$4",
         px: "$spacing$3",
       },
       "3": {
