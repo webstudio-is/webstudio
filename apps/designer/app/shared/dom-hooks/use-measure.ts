@@ -34,7 +34,7 @@ export const useMeasure = (
   const [rect, setRect] = useRectState();
   const [isInline, setIsInline] = useState(false);
 
-  const triggerMeasure = useCallback(() => {
+  const handleChange = useCallback(() => {
     setRect(element && element.getBoundingClientRect());
     setIsInline(
       element ? window.getComputedStyle(element).display === "inline" : false
@@ -42,7 +42,7 @@ export const useMeasure = (
   }, [element, setRect]);
 
   useScrollState({
-    onScrollEnd: triggerMeasure,
+    onScrollEnd: handleChange,
   });
 
   // Detect movement of the element without remounting.
@@ -51,21 +51,21 @@ export const useMeasure = (
     // React cannot do that. It can only move within the same parent.
     const parent = element?.parentElement;
     if (parent) {
-      const observer = new window.MutationObserver(triggerMeasure);
+      const observer = new window.MutationObserver(handleChange);
       observer.observe(parent, { childList: true });
       return () => observer.disconnect();
     }
-  }, [element, triggerMeasure]);
+  }, [element, handleChange]);
 
   useEffect(() => {
     if (element) {
-      const observer = new window.ResizeObserver(triggerMeasure);
+      const observer = new window.ResizeObserver(handleChange);
       observer.observe(element);
       return () => observer.disconnect();
     }
-  }, [element, triggerMeasure]);
+  }, [element, handleChange]);
 
-  useEffect(triggerMeasure, [triggerMeasure]);
+  useEffect(handleChange, [handleChange]);
 
   return {
     // ResizeObserver does not work for inline elements
