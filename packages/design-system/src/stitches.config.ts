@@ -273,13 +273,17 @@ const {
       // Legacy - don't use unless specified in Figma
       4: "20px",
     },
-    radii: {
-      1: "4px",
-      2: "6px",
-      3: "8px",
-      4: "12px",
+    borderRadius: {
+      1: "1px",
+      2: "2px",
+      3: "3px",
+      4: "4px",
+      5: "5px",
+      6: "6px",
       round: "50%",
       pill: "9999px",
+      // Legacy - don't use unless specified in Figma
+      7: "8px",
     },
     zIndices: {
       1: "100",

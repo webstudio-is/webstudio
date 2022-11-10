@@ -198,6 +198,15 @@ const lineHeightValues = new Map([
   ["20px", "4"],
 ]);
 
+const borderRadiusProps = ["borderRadius"];
+const borderRadiusValues = new Map([
+  ["$1", "4"],
+  ["$2", "6"],
+  ["$3", "7"],
+  ["$round", "round"],
+  ["$pill", "pill"],
+]);
+
 const updateProperty = (
   line: string,
   props: Array<string>,
@@ -238,6 +247,12 @@ const update = async ({ filePath, buffer }) => {
       lineHeightProps,
       lineHeightValues,
       "lineHeight"
+    );
+    line = updateProperty(
+      line,
+      borderRadiusProps,
+      borderRadiusValues,
+      "borderRadius"
     );
     nextLines.push(line);
   }
