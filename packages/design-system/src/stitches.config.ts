@@ -258,8 +258,8 @@ const {
       1: "8px",
       2: "10px",
       3: "12px",
-      4: "14px",
       // Legacy - don't use unless specified in Figma
+      4: "14px",
       5: "19px",
       6: "21px",
       7: "27px",
