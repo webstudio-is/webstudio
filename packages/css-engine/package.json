@@ -1,0 +1,40 @@
+{
+  "name": "@webstudio-is/css-engine",
+  "version": "0.1.0",
+  "description": "CSS Renderer for Webstudio",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "checks": "yarn typecheck && yarn lint && yarn test",
+    "dev": "tsup --watch",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "test": "jest",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+  },
+  "dependencies": {
+    "@webstudio-is/react-sdk": "*"
+  },
+  "devDependencies": {
+    "@webstudio-is/jest-config": "*",
+    "tsup": "^6.1.3",
+    "typescript": "4.7.4"
+  },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/*",
+    "README.md",
+    "!*.test.*"
+  ],
+  "license": "MIT",
+  "private": false,
+  "sideEffects": false,
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": "cjs",
+    "outDir": "lib"
+  }
+}
