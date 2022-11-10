@@ -62,6 +62,8 @@ export type TextToolbarState = {
   selectionRect: DOMRect;
   isBold: boolean;
   isItalic: boolean;
+  isSuperscript: boolean;
+  isSubscript: boolean;
   isLink: boolean;
   isSpan: boolean;
 };

@@ -14,11 +14,20 @@ import {
 } from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
 
+type Format =
+  | "bold"
+  | "italic"
+  | "superscript"
+  | "subscript"
+  | "link"
+  | "span"
+  | "clear";
+
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     showTextToolbar: TextToolbarState;
     hideTextToolbar: void;
-    formatTextToolbar: "bold" | "italic" | "link" | "span";
+    formatTextToolbar: Format;
   }
 }
 
@@ -60,8 +69,6 @@ const getPlacement = ({
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
-type Value = "bold" | "italic" | "link" | "span";
-
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -71,16 +78,22 @@ type ToolbarProps = {
   css?: CSS;
   rootRef: React.Ref<HTMLDivElement>;
   state: TextToolbarState;
-  onToggle: (value: Value) => void;
+  onToggle: (value: Format) => void;
 };
 
 const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
-  const value: Value[] = [];
+  const value: Format[] = [];
   if (state.isBold) {
     value.push("bold");
   }
   if (state.isItalic) {
     value.push("italic");
+  }
+  if (state.isSuperscript) {
+    value.push("superscript");
+  }
+  if (state.isSubscript) {
+    value.push("subscript");
   }
   if (state.isLink) {
     value.push("link");
@@ -93,7 +106,7 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
       ref={rootRef}
       type="multiple"
       value={value}
-      onValueChange={(newValues: Value[]) => {
+      onValueChange={(newValues: Format[]) => {
         // @todo refactor with per button callback
         if (state.isBold !== newValues.includes("bold")) {
           onToggle("bold");
@@ -101,11 +114,20 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
         if (state.isItalic !== newValues.includes("italic")) {
           onToggle("italic");
         }
+        if (state.isSuperscript !== newValues.includes("superscript")) {
+          onToggle("superscript");
+        }
+        if (state.isSubscript !== newValues.includes("subscript")) {
+          onToggle("subscript");
+        }
         if (state.isLink !== newValues.includes("link")) {
           onToggle("link");
         }
         if (state.isSpan !== newValues.includes("span")) {
           onToggle("span");
+        }
+        if (newValues.includes("clear")) {
+          onToggle("clear");
         }
       }}
       onClick={onClickPreventDefault}
@@ -123,10 +145,19 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
       <ToggleGroup.Item value="italic">
         <FontItalicIcon />
       </ToggleGroup.Item>
+      <ToggleGroup.Item value="superscript">
+        <BrushIcon />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="subscript">
+        <BrushIcon />
+      </ToggleGroup.Item>
       <ToggleGroup.Item value="link">
         <Link2Icon />
       </ToggleGroup.Item>
       <ToggleGroup.Item value="span">
+        <BrushIcon />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="clear">
         <BrushIcon />
       </ToggleGroup.Item>
     </ToggleGroup.Root>
