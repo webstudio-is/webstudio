@@ -4,6 +4,7 @@ import { createPubsub } from "@webstudio-is/react-sdk";
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface PubsubMap {}
 
-export const { publish, usePublish, useSubscribe } = createPubsub<PubsubMap>();
+export const { publish, usePublish, useSubscribe, useSubscribeAll } =
+  createPubsub<PubsubMap>();
 export type Publish = typeof publish;
 export type UsePublish = typeof usePublish;
