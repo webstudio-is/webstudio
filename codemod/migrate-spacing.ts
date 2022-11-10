@@ -177,30 +177,40 @@ const spaceValues = new Map([
   ["8px", "5"],
 ]);
 
+const updateProperty = (
+  line: string,
+  props: Array<string>,
+  values: Map<string, string>,
+  group: string
+) => {
+  for (const prop of props) {
+    const regex = new RegExp(`${prop}: "(.+)"`, "g");
+    const match = regex.exec(line);
+    if (match && match[1]) {
+      let value = match[1];
+      for (const [key, nextValue] of values) {
+        if (value.includes(key) === false) continue;
+        // This is to allow the script to run multiple times
+        value = value.replaceAll(`$${group}$`, `__${group}__`);
+
+        value = value.replaceAll(key, `__${group}__${nextValue}`);
+      }
+
+      const next = `${prop}: "${value}"`;
+      line = line.replace(regex, next);
+    }
+  }
+  line = line.replaceAll(`__${group}__`, `$${group}$`);
+  return line;
+};
+
 const update = async ({ filePath, buffer }) => {
   let code = buffer.toString("utf-8");
   const lines = code.split("\n");
   const nextLines: Array<string> = [];
   let line: string = "";
   for (line of lines) {
-    for (const prop of spaceProps) {
-      const regex = new RegExp(`${prop}: "(.+)"`, "g");
-      const match = regex.exec(line);
-      if (match && match[1]) {
-        let value = match[1];
-        for (const [key, nextValue] of spaceValues) {
-          if (value.includes(key) === false) continue;
-          // This is to allow the script to run multiple times
-          value = value.replaceAll("$spacing$", `__spacing__`);
-
-          value = value.replaceAll(key, `__spacing__${nextValue}`);
-        }
-
-        const next = `${prop}: "${value}"`;
-        line = line.replace(regex, next);
-      }
-    }
-    line = line.replaceAll("__spacing__", "$spacing$");
+    line = updateProperty(line, spaceProps, spaceValues, "spacing");
     nextLines.push(line);
   }
   await fs.writeFile(filePath, nextLines.join("\n"));
