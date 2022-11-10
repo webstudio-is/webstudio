@@ -3,26 +3,43 @@
 // We have to use getBoundingClientRect instead.
 // @todo optimize for the case when many consumers need to measure the same element
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useScrollState } from "./use-scroll-state";
 
-export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
-  element: MeasuredElement | null
-) => void;
-export type UseMeasureResult<
-  MeasuredElement extends HTMLElement = HTMLElement
-> = [UseMeasureRef<MeasuredElement>, DOMRect | undefined];
+export const useRectState = () => {
+  const [rect, setRectBase] = useState<DOMRect>();
+  const setRect = useCallback(
+    (nextRect: DOMRect | undefined) =>
+      setRectBase((currentRect) => {
+        if (
+          currentRect === undefined ||
+          nextRect === undefined ||
+          currentRect.x !== nextRect.x ||
+          currentRect.y !== nextRect.y ||
+          currentRect.width !== nextRect.width ||
+          currentRect.height !== nextRect.height
+        ) {
+          return nextRect;
+        }
+        return currentRect;
+      }),
+    []
+  );
+  return [rect, setRect] as const;
+};
 
-export const useMeasure = <
-  MeasuredElement extends HTMLElement = HTMLElement
->(): UseMeasureResult<MeasuredElement> => {
-  const [element, setElement] = useState<MeasuredElement | null>(null);
-  const [rect, setRect] = useState<DOMRect>();
+export const useMeasure = (
+  element: HTMLElement | undefined
+): { canObserve: boolean; rect: DOMRect | undefined } => {
+  const [rect, setRect] = useRectState();
+  const [isInline, setIsInline] = useState(false);
 
   const handleChange = useCallback(() => {
-    if (element === null) return;
-    setRect(element.getBoundingClientRect());
-  }, [element]);
+    setRect(element && element.getBoundingClientRect());
+    setIsInline(
+      element ? window.getComputedStyle(element).display === "inline" : false
+    );
+  }, [element, setRect]);
 
   useScrollState({
     onScrollEnd: handleChange,
@@ -40,22 +57,19 @@ export const useMeasure = <
     }
   }, [element, handleChange]);
 
-  const observer = useMemo(() => {
-    if (typeof window === "undefined") return;
-    return new window.ResizeObserver(handleChange);
-  }, [handleChange]);
-
   useEffect(() => {
-    if (observer) {
-      if (element === null) observer.disconnect();
-      else observer.observe(element);
+    if (element) {
+      const observer = new window.ResizeObserver(handleChange);
+      observer.observe(element);
+      return () => observer.disconnect();
     }
-    return () => {
-      observer?.disconnect();
-    };
-  }, [element, observer]);
+  }, [element, handleChange]);
 
   useEffect(handleChange, [handleChange]);
 
-  return [setElement, rect];
+  return {
+    // ResizeObserver does not work for inline elements
+    canObserve: isInline === false,
+    rect,
+  };
 };

@@ -25,15 +25,13 @@ const NodeConnector = ({
 }) => {
   const [breakpoints] = useBreakpoints();
   useEffect(() => {
-    const [key, style] = nodeKey.split(":");
+    // extract key from stored key:style format
+    const [key] = nodeKey.split(":");
     const element = editor.getElementByKey(key);
     if (element) {
       const className = css(toCss(instance.cssRules, breakpoints))().toString();
       // assume only styles are important while editing text
       element.className = className;
-      if (style === "italic") {
-        element.style.fontStyle = "italic";
-      }
     }
   }, [editor, nodeKey, instance, breakpoints]);
   return null;

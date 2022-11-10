@@ -36,7 +36,7 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { useMeasure } from "~/shared/dom-hooks";
+import { useMeasureInstance } from "~/canvas/shared/use-measure-instance";
 import {
   findInstanceByElement,
   getInstanceElementById,
@@ -254,15 +254,10 @@ const publishRect = (rect: DOMRect) => {
 
 export const usePublishSelectedInstanceDataRect = () => {
   const [element] = useSelectedElement();
-  const [refCallback, rect] = useMeasure();
+  const rect = useMeasureInstance(element);
 
   useEffect(() => {
-    // Disconnect observer when there is no element.
-    refCallback(element ?? null);
-  }, [element, refCallback]);
-
-  useEffect(() => {
-    if (rect !== undefined) publishRect(rect);
+    if (rect) publishRect(rect);
   }, [rect]);
 };
 

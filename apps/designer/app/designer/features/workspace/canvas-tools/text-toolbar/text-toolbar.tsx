@@ -6,14 +6,19 @@ import {
   useTextToolbarState,
 } from "~/designer/shared/nano-states";
 import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
-import { FontBoldIcon, FontItalicIcon, Link2Icon } from "@webstudio-is/icons";
+import {
+  FontBoldIcon,
+  FontItalicIcon,
+  Link2Icon,
+  BrushIcon,
+} from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     showTextToolbar: TextToolbarState;
     hideTextToolbar: void;
-    formatTextToolbar: "bold" | "italic" | "link";
+    formatTextToolbar: "bold" | "italic" | "link" | "span";
   }
 }
 
@@ -55,7 +60,7 @@ const getPlacement = ({
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
-type Value = "bold" | "italic" | "link";
+type Value = "bold" | "italic" | "link" | "span";
 
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.preventDefault();
@@ -80,6 +85,9 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
   if (state.isLink) {
     value.push("link");
   }
+  if (state.isSpan) {
+    value.push("span");
+  }
   return (
     <ToggleGroup.Root
       ref={rootRef}
@@ -95,6 +103,9 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
         }
         if (state.isLink !== newValues.includes("link")) {
           onToggle("link");
+        }
+        if (state.isSpan !== newValues.includes("span")) {
+          onToggle("span");
         }
       }}
       onClick={onClickPreventDefault}
@@ -114,6 +125,9 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
       </ToggleGroup.Item>
       <ToggleGroup.Item value="link">
         <Link2Icon />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="span">
+        <BrushIcon />
       </ToggleGroup.Item>
     </ToggleGroup.Root>
   );
