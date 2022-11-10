@@ -19,7 +19,7 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   height: 28, // @todo waiting for the sizing scale
   px: "$spacing$5",
-  fontSize: "$1",
+  fontSize: "$fontSize$3",
   "&:focus": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
@@ -73,7 +73,7 @@ export const SelectViewport = styled(SelectPrimitive.Viewport, {
 
 const StyledItem = styled(SelectPrimitive.Item, {
   all: "unset",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   lineHeight: 1,
   color: "$hiContrast",
   display: "flex",

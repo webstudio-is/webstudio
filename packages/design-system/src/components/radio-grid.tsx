@@ -23,7 +23,7 @@ export const RadioGrid = styled(RadioGroupPrimitive.Item, {
   px: "$spacing$3",
   height: "$spacing$13",
   lineHeight: "$sizes$6",
-  fontSize: "$3",
+  fontSize: "$fontSize$4",
   "@hover": {
     "&:hover": {
       boxShadow: "inset 0 0 0 1px $colors$slate8",

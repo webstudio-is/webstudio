@@ -26,7 +26,7 @@ export const Button = styled("button", {
   height: "$spacing$11",
   px: "$spacing$5",
   fontFamily: "$sans",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",
 
@@ -43,19 +43,19 @@ export const Button = styled("button", {
         borderRadius: "$1",
         height: "$spacing$11",
         px: "$spacing$9",
-        fontSize: "$1",
+        fontSize: "$fontSize$3",
       },
       "2": {
         borderRadius: "$2",
         height: 28, // @todo waiting for the sizing scale
         px: "$spacing$9",
-        fontSize: "$3",
+        fontSize: "$fontSize$4",
       },
       "3": {
         borderRadius: "$2",
         height: "$spacing$17",
         px: "$spacing$10",
-        fontSize: "$4",
+        fontSize: "$fontSize$4",
       },
     },
     variant: {

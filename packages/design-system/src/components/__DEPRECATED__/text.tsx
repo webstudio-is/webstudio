@@ -12,16 +12,16 @@ export const __DEPRECATED__Text = styled("div", {
   variants: {
     size: {
       "1": {
-        fontSize: "$1",
+        fontSize: "$fontSize$3",
       },
       "2": {
-        fontSize: "$2",
+        fontSize: "$fontSize$3",
       },
       "3": {
-        fontSize: "$3",
+        fontSize: "$fontSize$4",
       },
       "4": {
-        fontSize: "$4",
+        fontSize: "$fontSize$4",
       },
       "5": {
         fontSize: "$5",

@@ -10,7 +10,7 @@ export const SimpleToggle = styled(TogglePrimitive.Root, {
   display: "inline-flex",
   flexShrink: 0,
   fontFamily: "inherit",
-  fontSize: "14px",
+  fontSize: "$fontSize$4",
   justifyContent: "center",
   lineHeight: "1",
   outline: "none",

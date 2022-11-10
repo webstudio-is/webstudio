@@ -6,7 +6,7 @@ export const TabLink = styled("a", {
   height: "$spacing$13",
   display: "inline-flex",
   lineHeight: 1,
-  fontSize: "$1",
+  fontSize: "$fontSize$3",
   px: "$spacing$9",
   userSelect: "none",
   outline: "none",

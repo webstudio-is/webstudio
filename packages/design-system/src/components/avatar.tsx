@@ -205,7 +205,7 @@ const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
         lineHeight: "15px",
       },
       "2": {
-        fontSize: "$3",
+        fontSize: "$fontSize$4",
       },
       "3": {
         fontSize: "$6",
