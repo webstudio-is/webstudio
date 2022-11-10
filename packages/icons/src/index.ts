@@ -1,4 +1,5 @@
 export * from "./legacy";
+export * from "./generated";
 export * from "./list-nested";
 export * from "./brush";
 export * from "./form";
