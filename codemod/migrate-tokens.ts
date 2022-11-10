@@ -193,9 +193,9 @@ const fontSizeValues = new Map([
 
 const lineHeightProps = ["lineHeight"];
 const lineHeightValues = new Map([
-  ["15px", "$3"],
-  ["16px", "$3"],
-  ["20px", "$4"],
+  ["15px", "3"],
+  ["16px", "3"],
+  ["20px", "4"],
 ]);
 
 const updateProperty = (
