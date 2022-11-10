@@ -254,11 +254,16 @@ const {
       1: "0.4",
     },
     spacing,
-    fontSizes: {
+    fontSize: {
       1: "8px",
       2: "10px",
       3: "12px",
       4: "14px",
+      // Legacy - don't use unless specified in Figma
+      6: "21px",
+      7: "27px",
+      8: "35px",
+      9: "59px",
     },
     radii: {
       1: "4px",
