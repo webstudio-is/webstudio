@@ -3,7 +3,7 @@
 // We have to use getBoundingClientRect instead.
 // @todo optimize for the case when many consumers need to measure the same element
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useScrollState } from "./use-scroll-state";
 
 export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
@@ -40,20 +40,13 @@ export const useMeasure = <
     }
   }, [element, handleChange]);
 
-  const observer = useMemo(() => {
-    if (typeof window === "undefined") return;
-    return new window.ResizeObserver(handleChange);
-  }, [handleChange]);
-
   useEffect(() => {
-    if (observer) {
-      if (element === null) observer.disconnect();
-      else observer.observe(element);
+    if (element) {
+      const observer = new window.ResizeObserver(handleChange);
+      observer.observe(element);
+      return () => observer.disconnect();
     }
-    return () => {
-      observer?.disconnect();
-    };
-  }, [element, observer]);
+  }, [element, handleChange]);
 
   useEffect(handleChange, [handleChange]);
 
