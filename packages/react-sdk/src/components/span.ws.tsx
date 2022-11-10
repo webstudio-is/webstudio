@@ -7,7 +7,7 @@ const meta: WsComponentMeta<typeof Span> = {
   Component: Span,
   canAcceptChildren: false,
   isContentEditable: false,
-  label: "Span Text",
+  label: "Styled Text",
   isInlineOnly: true,
   isListed: false,
 };
