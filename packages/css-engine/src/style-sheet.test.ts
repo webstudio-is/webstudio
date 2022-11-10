@@ -42,6 +42,26 @@ describe("StyleSheet", () => {
     `);
   });
 
+  test("add one rule", () => {
+    const sheet = new StyleSheet();
+    sheet.addBreakpoints([breakpoint0]);
+    const rule = sheet.addRule({
+      style: {
+        ...style0,
+        color: { type: "keyword", value: "red" },
+      },
+      breakpoint: "0",
+    });
+    expect(sheet.toString()).toMatchInlineSnapshot(`
+      "@media (min-width: 0px) {
+        .s0 { display: block; color: red }
+      }"
+    `);
+    expect(rule.toString()).toMatchInlineSnapshot(
+      `".s0 { display: block; color: red }"`
+    );
+  });
+
   test("skip breakpoint without rules", () => {
     const sheet = new StyleSheet();
     sheet.addBreakpoints([breakpoint0]);

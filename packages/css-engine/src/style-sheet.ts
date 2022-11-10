@@ -38,6 +38,7 @@ class MediaRule {
   }
   addRule(rule: StyleRule) {
     this.rules.push(rule);
+    return rule;
   }
   toString() {
     if (this.rules.length === 0) return "";
@@ -55,14 +56,16 @@ export class StyleSheet {
       this.mediaRules.set(breakpoint.id, new MediaRule(breakpoint));
     }
   }
+  addRule(rule: CssRule) {
+    const mediaRule = this.mediaRules.get(rule.breakpoint);
+    if (mediaRule === undefined) {
+      throw new Error(`Unknown breakpoint: ${rule.breakpoint}`);
+    }
+    return mediaRule.addRule(new StyleRule(rule.style));
+  }
   addRules(rules: Array<CssRule>) {
     for (const rule of rules) {
-      const mediaRule = this.mediaRules.get(rule.breakpoint);
-      if (mediaRule === undefined) {
-        throw new Error(`Unknown breakpoint: ${rule.breakpoint}`);
-      }
-
-      mediaRule.addRule(new StyleRule(rule.style));
+      this.addRule(rule);
     }
   }
   mount() {
