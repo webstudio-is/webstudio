@@ -9,6 +9,7 @@ import {
 } from "lexical";
 import { $createLinkNode, LinkNode } from "@lexical/link";
 import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
+import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
 // Map<nodeKey, Instance>
 export type Refs = Map<string, Instance>;
@@ -44,6 +45,16 @@ const $writeUpdates = (
       // and add ref suffix to distinct styling on one node key
       const text = child.getTextContent();
       let parentUpdates = updates;
+      if ($isSpanNode(child)) {
+        const id = refs.get(`${child.getKey()}:span`)?.id;
+        const update: ChildrenUpdates[number] = {
+          id,
+          component: "Span",
+          children: [],
+        };
+        parentUpdates.push(update);
+        parentUpdates = update.children;
+      }
       if (child.hasFormat("bold")) {
         const id = refs.get(`${child.getKey()}:bold`)?.id;
         const update: ChildrenUpdates[number] = {
@@ -97,6 +108,18 @@ const $writeLexical = (
         refs.set(linkNode.getKey(), child);
         parent.append(linkNode);
         $writeLexical(linkNode, child.children, refs);
+      }
+      if (child.component === "Span") {
+        let textNode;
+        if (parent instanceof TextNode) {
+          textNode = parent;
+        } else {
+          textNode = $createTextNode("");
+          parent.append(textNode);
+        }
+        $setNodeSpan(textNode);
+        refs.set(`${textNode.getKey()}:span`, child);
+        $writeLexical(textNode, child.children, refs);
       }
       if (child.component === "Bold") {
         let textNode;

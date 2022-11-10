@@ -1,37 +1,63 @@
 import { useCallback, useEffect } from "react";
 import {
   type RangeSelection,
+  type TextNode,
   $getSelection,
   $isRangeSelection,
+  $isTextNode,
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
   COMMAND_PRIORITY_LOW,
 } from "lexical";
-import { $isLinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
-import { $isAtNodeEnd } from "@lexical/selection";
+import { $getNearestNodeOfType } from "@lexical/utils";
+import { $patchStyleText } from "@lexical/selection";
+import { LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useSubscribe, publish } from "~/shared/pubsub";
 
-const getSelectedNode = (selection: RangeSelection) => {
-  const anchor = selection.anchor;
-  const focus = selection.focus;
-  const anchorNode = anchor.getNode();
-  const focusNode = focus.getNode();
-  if (anchorNode === focusNode) {
-    return anchorNode;
+const spanTriggerName = "--style-node-trigger";
+
+export const $isSpanNode = (node: TextNode) => {
+  return node.getStyle().includes(spanTriggerName);
+};
+
+export const $setNodeSpan = (node: TextNode) => {
+  return node.setStyle(`${spanTriggerName}:;`);
+};
+
+const $getSpanNodes = (selection: RangeSelection) => {
+  const nodes = selection.getNodes();
+  const spans: TextNode[] = [];
+  // check each TextNode within selection for existing span nodes
+  for (const node of nodes) {
+    if ($isTextNode(node) && $isSpanNode(node)) {
+      spans.push(node);
+    }
   }
-  const isBackward = selection.isBackward();
-  if (isBackward) {
-    return $isAtNodeEnd(focus) ? anchorNode : focusNode;
-  } else {
-    return $isAtNodeEnd(anchor) ? focusNode : anchorNode;
+  return spans;
+};
+
+const $toggleSpan = () => {
+  const selection = $getSelection();
+  if ($isRangeSelection(selection)) {
+    const spans = $getSpanNodes(selection);
+    if (spans.length === 0) {
+      // lexical creates separate text node when style property do not match
+      $patchStyleText(selection, {
+        [spanTriggerName]: "",
+      });
+    } else {
+      // clear span nodes style
+      for (const node of spans) {
+        node.setStyle("");
+      }
+    }
   }
 };
 
-const isSelectedLink = (selection: RangeSelection) => {
-  const node = getSelectedNode(selection);
-  const parent = node.getParent();
-  return $isLinkNode(parent) || $isLinkNode(node);
+const $isSelectedLink = (selection: RangeSelection) => {
+  const [selectedNode] = selection.getNodes();
+  return $getNearestNodeOfType(selectedNode, LinkNode) != null;
 };
 
 export const ToolbarConnectorPlugin = () => {
@@ -50,10 +76,11 @@ export const ToolbarConnectorPlugin = () => {
       const selectionRect = domRange.getBoundingClientRect();
       const isBold = selection.hasFormat("bold");
       const isItalic = selection.hasFormat("italic");
-      const isLink = isSelectedLink(selection);
+      const isLink = $isSelectedLink(selection);
+      const isSpan = $getSpanNodes(selection).length !== 0;
       publish({
         type: "showTextToolbar",
-        payload: { selectionRect, isBold, isItalic, isLink },
+        payload: { selectionRect, isBold, isItalic, isLink, isSpan },
       });
     } else {
       publish({ type: "hideTextToolbar" });
@@ -99,13 +126,18 @@ export const ToolbarConnectorPlugin = () => {
       let isLink = false;
       editorState.read(() => {
         const selection = $getSelection();
-        isLink = $isRangeSelection(selection) && isSelectedLink(selection);
+        isLink = $isRangeSelection(selection) && $isSelectedLink(selection);
       });
       if (isLink) {
         editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
       } else {
         editor.dispatchCommand(TOGGLE_LINK_COMMAND, "https://");
       }
+    }
+    if (type === "span") {
+      editor.update(() => {
+        $toggleSpan();
+      });
     }
   });
 

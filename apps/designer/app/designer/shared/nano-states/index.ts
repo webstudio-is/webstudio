@@ -63,6 +63,7 @@ export type TextToolbarState = {
   isBold: boolean;
   isItalic: boolean;
   isLink: boolean;
+  isSpan: boolean;
 };
 const textToolbarState = createValueContainer<null | TextToolbarState>();
 export const useTextToolbarState = () => useValue(textToolbarState);
