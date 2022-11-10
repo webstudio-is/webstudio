@@ -1,19 +1,19 @@
-import {
-  Breakpoint,
-  CssRule,
-  Style,
-  StyleValue,
-  toValue,
-} from "@webstudio-is/react-sdk";
+import { Breakpoint, CssRule, Style, toValue } from "@webstudio-is/react-sdk";
 
 let ruleCounter = -1;
 
-class Rule {
+export const resetRuleCounter = () => {
+  ruleCounter = -1;
+};
+
+class StyleRule {
+  id: number;
   style: Style;
   // @todo name can be composition token name or component name
-  name: string = "s";
+  name = "s";
   constructor(style: Style) {
     this.style = style;
+    this.id = ++ruleCounter;
   }
   toString() {
     const block = [];
@@ -23,23 +23,47 @@ class Rule {
       if (value === undefined) continue;
       block.push(`${property}: ${toValue(value)}`);
     }
-    const selector = `${this.name}${++ruleCounter}`;
+    const selector = `${this.name}${this.id}`;
     return `.${selector} { ${block.join("; ")} }`;
   }
 }
 
-const createRule = (rule: CssRule) => new Rule(rule.style);
+class MediaRule {
+  id = "";
+  breakpoint: Breakpoint;
+  rules: Array<StyleRule> = [];
+  constructor(breakpoint: Breakpoint) {
+    this.breakpoint = breakpoint;
+    this.id = breakpoint.id;
+  }
+  addRule(rule: StyleRule) {
+    this.rules.push(rule);
+  }
+  toString() {
+    if (this.rules.length === 0) return "";
+    const query = `min-width: ${this.breakpoint.minWidth}px`;
+    const rules = this.rules.map((rule) => `  ${rule}`).join("\n");
+    return `@media (${query}) {\n${rules}\n}`;
+  }
+}
 
 export class StyleSheet {
-  rules: Array<Rule> = [];
-  breakpoints: Array<Breakpoint> = [];
+  mediaRules: Map<Breakpoint["id"], MediaRule> = new Map();
   style?: HTMLStyleElement;
   addBreakpoints(breakpoints: Array<Breakpoint>) {
-    this.breakpoints.push(...breakpoints);
+    for (const breakpoint of breakpoints) {
+      this.mediaRules.set(breakpoint.id, new MediaRule(breakpoint));
+    }
   }
   addRules(rules: Array<CssRule>) {
-    // @todo throw if referenced breakpoint doesn't exist?
-    this.rules.push(...rules.map(createRule));
+    for (const rule of rules) {
+      const mediaRule = this.mediaRules.get(rule.breakpoint);
+      if (mediaRule === undefined) {
+        throw new Error(`Unknown breakpoint: ${rule.breakpoint}`);
+      }
+
+      mediaRule.addRule(new StyleRule(rule.style));
+    }
   }
   mount() {
     if (this.style !== undefined) {
@@ -54,8 +78,9 @@ export class StyleSheet {
   }
   toString() {
     const css = [];
-    for (const rule of this.rules) {
-      css.push(rule.toString());
+    for (const mediaRule of this.mediaRules.values()) {
+      const str = mediaRule.toString();
+      if (str !== "") css.push(mediaRule.toString());
     }
     return css.join("\n");
   }
