@@ -23,7 +23,7 @@ export const useMeasure = <
   const [isInline, setIsInline] = useState(false);
 
   const handleChange = useCallback(() => {
-    if (element === null) return;
+    if (element === null || typeof window === "undefined") return;
     setIsInline(window.getComputedStyle(element).display === "inline");
     const nextRect = element.getBoundingClientRect();
     setRect((currentRect) => {
