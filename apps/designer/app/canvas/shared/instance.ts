@@ -36,7 +36,7 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { useMeasure } from "~/canvas/shared/use-measure";
+import { useMeasureInstance } from "~/canvas/shared/use-measure-instance";
 import {
   findInstanceByElement,
   getInstanceElementById,
@@ -254,7 +254,7 @@ const publishRect = (rect: DOMRect) => {
 
 export const usePublishSelectedInstanceDataRect = () => {
   const [element] = useSelectedElement();
-  const rect = useMeasure(element);
+  const rect = useMeasureInstance(element);
 
   useEffect(() => {
     if (rect) publishRect(rect);
