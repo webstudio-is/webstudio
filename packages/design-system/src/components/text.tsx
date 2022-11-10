@@ -24,7 +24,7 @@ export const Text = styled("div", {
       },
       tiny: {
         fontWeight: 400,
-        fontSize: 8,
+        fontSize: "$fontSize$1",
         letterSpacing: "0.01em",
       },
       title: {
@@ -40,7 +40,7 @@ export const Text = styled("div", {
       },
       unit: {
         fontWeight: 500,
-        fontSize: 10,
+        fontSize: "$fontSize$2",
         textTransform: "uppercase",
       },
     },

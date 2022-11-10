@@ -24,25 +24,25 @@ export const __DEPRECATED__Text = styled("div", {
         fontSize: "$fontSize$4",
       },
       "5": {
-        fontSize: "$5",
+        fontSize: "$fontSize$5",
         letterSpacing: "-.015em",
       },
       "6": {
-        fontSize: "$6",
+        fontSize: "$fontSize$6",
         letterSpacing: "-.016em",
       },
       "7": {
-        fontSize: "$7",
+        fontSize: "$fontSize$7",
         letterSpacing: "-.031em",
         textIndent: "-.005em",
       },
       "8": {
-        fontSize: "$8",
+        fontSize: "$fontSize$8",
         letterSpacing: "-.034em",
         textIndent: "-.018em",
       },
       "9": {
-        fontSize: "$9",
+        fontSize: "$fontSize$9",
         letterSpacing: "-.055em",
         textIndent: "-.025em",
       },

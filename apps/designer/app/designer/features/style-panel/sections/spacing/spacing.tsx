@@ -58,7 +58,7 @@ const styles = {
       "$spacing$11 $spacing$3 $spacing$11 1fr $spacing$11 $spacing$3 $spacing$11",
   },
   input: {
-    fontSize: 10,
+    fontSize: "$fontSize$2",
     fontWeight: 400,
     fontFamily: "inherit",
     display: "block",
@@ -97,7 +97,7 @@ const styles = {
   text: {
     fontWeight: "bold",
     color: "$gray12",
-    fontSize: 8,
+    fontSize: "$fontSize$1",
     margin: "$spacing$3",
   },
   paddingGrid: {
