@@ -38,7 +38,7 @@ export const Card = styled("div", {
         padding: "$spacing$11",
       },
       2: {
-        width: "$spacing$32",
+        width: "$spacing$34",
         padding: "$spacing$17",
       },
     },
