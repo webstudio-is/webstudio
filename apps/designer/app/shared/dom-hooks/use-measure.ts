@@ -3,52 +3,46 @@
 // We have to use getBoundingClientRect instead.
 // @todo optimize for the case when many consumers need to measure the same element
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { PubsubMap, useSubscribeAll } from "~/shared/pubsub";
+import { useCallback, useEffect, useState } from "react";
 import { useScrollState } from "./use-scroll-state";
 
-export type UseMeasureRef<MeasuredElement extends HTMLElement = HTMLElement> = (
-  element: MeasuredElement | null
-) => void;
-export type UseMeasureResult<
-  MeasuredElement extends HTMLElement = HTMLElement
-> = [UseMeasureRef<MeasuredElement>, DOMRect | undefined];
+export const useRectState = () => {
+  const [rect, setRectBase] = useState<DOMRect>();
+  const setRect = useCallback(
+    (nextRect: DOMRect | undefined) =>
+      setRectBase((currentRect) => {
+        if (
+          currentRect === undefined ||
+          nextRect === undefined ||
+          currentRect.x !== nextRect.x ||
+          currentRect.y !== nextRect.y ||
+          currentRect.width !== nextRect.width ||
+          currentRect.height !== nextRect.height
+        ) {
+          return nextRect;
+        }
+        return currentRect;
+      }),
+    []
+  );
+  return [rect, setRect] as const;
+};
 
-export const useMeasure = <
-  MeasuredElement extends HTMLElement = HTMLElement
->(): UseMeasureResult<MeasuredElement> => {
-  const [element, setElement] = useState<MeasuredElement | null>(null);
-  const [rect, setRect] = useState<DOMRect>();
-
+export const useMeasure = (
+  element: HTMLElement | undefined
+): { canObserve: boolean; rect: DOMRect | undefined } => {
+  const [rect, setRect] = useRectState();
   const [isInline, setIsInline] = useState(false);
 
-  const handleChange = useCallback(() => {
-    if (element === null || typeof window === "undefined") return;
-    setIsInline(window.getComputedStyle(element).display === "inline");
-    const nextRect = element.getBoundingClientRect();
-    setRect((currentRect) => {
-      if (
-        currentRect === undefined ||
-        currentRect.x !== nextRect.x ||
-        currentRect.y !== nextRect.y ||
-        currentRect.width !== nextRect.width ||
-        currentRect.height !== nextRect.height
-      ) {
-        return nextRect;
-      }
-      return currentRect;
-    });
-  }, [element]);
-
-  // ResizeObserver does not work for inline elements,
-  // so if the element is inline, we measure it after any change in the instance tree.
-  //
-  // NOTE: We assume useMeasure is used only to measure elements on canvas.
-  // If this ever changes, we need to refactor this.
-  useTreeChange(handleChange, isInline);
+  const triggerMeasure = useCallback(() => {
+    setRect(element && element.getBoundingClientRect());
+    setIsInline(
+      element ? window.getComputedStyle(element).display === "inline" : false
+    );
+  }, [element, setRect]);
 
   useScrollState({
-    onScrollEnd: handleChange,
+    onScrollEnd: triggerMeasure,
   });
 
   // Detect movement of the element without remounting.
@@ -57,44 +51,25 @@ export const useMeasure = <
     // React cannot do that. It can only move within the same parent.
     const parent = element?.parentElement;
     if (parent) {
-      const observer = new window.MutationObserver(handleChange);
+      const observer = new window.MutationObserver(triggerMeasure);
       observer.observe(parent, { childList: true });
       return () => observer.disconnect();
     }
-  }, [element, handleChange]);
+  }, [element, triggerMeasure]);
 
   useEffect(() => {
     if (element) {
-      const observer = new window.ResizeObserver(handleChange);
+      const observer = new window.ResizeObserver(triggerMeasure);
       observer.observe(element);
       return () => observer.disconnect();
     }
-  }, [element, handleChange]);
+  }, [element, triggerMeasure]);
 
-  useEffect(handleChange, [handleChange]);
+  useEffect(triggerMeasure, [triggerMeasure]);
 
-  return [setElement, rect];
-};
-
-const useTreeChange = (onChange: () => void, enabled: boolean) => {
-  const callback = useMemo(() => {
-    if (!enabled) {
-      return () => null;
-    }
-    return (type: keyof PubsubMap) => {
-      if (
-        type === "updateProps" ||
-        type === "deleteProp" ||
-        type === "insertInstance" ||
-        type === "deleteInstance" ||
-        type === "reparentInstance" ||
-        type === "updateStyle" ||
-        type.startsWith("previewStyle:")
-      ) {
-        onChange();
-      }
-    };
-  }, [onChange, enabled]);
-
-  useSubscribeAll(callback);
+  return {
+    // ResizeObserver does not work for inline elements
+    canObserve: isInline === false,
+    rect,
+  };
 };
