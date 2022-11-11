@@ -3,6 +3,7 @@ import { useSubscribe } from "~/shared/pubsub";
 import { setInstanceStyleMutable } from "~/shared/tree-utils";
 import { useSelectedInstance } from "./nano-states";
 import { rootInstanceContainer } from "~/shared/nano-states";
+import { toValue, toVarNamespace } from "@webstudio-is/react-sdk";
 
 export const useUpdateStyle = () => {
   const [selectedInstance] = useSelectedInstance();
@@ -17,5 +18,18 @@ export const useUpdateStyle = () => {
       }
       setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
     });
+  });
+};
+
+export const usePreviewStyle = () => {
+  useSubscribe("previewStyle", ({ id, updates }) => {
+    for (const update of updates) {
+      const property = `--${toVarNamespace(id, update.property)}`;
+      if (update.value === undefined) {
+        document.body.style.removeProperty(property);
+        continue;
+      }
+      document.body.style.setProperty(property, toValue(update.value));
+    }
   });
 };

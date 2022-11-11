@@ -52,7 +52,7 @@ export const WrapperComponentDev = ({
   onChangeChildren = noop,
   ...rest
 }: WrapperComponentDevProps) => {
-  const className = useCss({ instance, css });
+  const className = useCss({ css });
   const [editingInstanceId] = useTextEditingInstanceId();
   const [, setSelectedElement] = useSelectedElement();
 

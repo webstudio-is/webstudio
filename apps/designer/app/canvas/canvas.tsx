@@ -24,7 +24,7 @@ import {
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
-import { useUpdateStyle } from "./shared/style";
+import { usePreviewStyle, useUpdateStyle } from "./shared/style";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
@@ -94,6 +94,7 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useUpdateStyle();
+  usePreviewStyle();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
   useHandleBreakpoints();

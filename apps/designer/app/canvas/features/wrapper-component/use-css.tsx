@@ -1,30 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   type Instance,
   css as createCss,
   type CSS,
-  toValue,
-  toVarNamespace,
 } from "@webstudio-is/react-sdk";
-import { useSubscribe } from "~/shared/pubsub";
-import { type StyleUpdates } from "~/shared/canvas-components";
 
 type UseCssProps = {
-  instance: Instance;
   css: CSS;
-};
-
-const usePreviewCss = (instance: Instance) => {
-  useSubscribe(`previewStyle:${instance.id}`, ({ updates }) => {
-    for (const update of updates) {
-      const property = `--${toVarNamespace(instance, update.property)}`;
-      if (update.value === undefined) {
-        document.body.style.removeProperty(property);
-        continue;
-      }
-      document.body.style.setProperty(property, toValue(update.value));
-    }
-  });
 };
 
 const voidElements =
@@ -53,7 +35,6 @@ const defaultStyle = {
   },
 };
 
-export const useCss = ({ instance, css }: UseCssProps): string => {
-  usePreviewCss(instance);
+export const useCss = ({ css }: UseCssProps): string => {
   return useMemo(() => createCss(css)(defaultStyle), [css]);
 };

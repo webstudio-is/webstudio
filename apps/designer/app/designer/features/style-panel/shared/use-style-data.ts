@@ -14,7 +14,7 @@ import { useRootInstance } from "~/shared/nano-states";
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     updateStyle: StyleUpdates;
-    [key: `previewStyle:${Instance["id"]}`]: StyleUpdates;
+    previewStyle: StyleUpdates;
   }
 }
 
@@ -87,10 +87,7 @@ export const useStyleData = ({
       return;
     }
     publish({
-      type:
-        type === "update"
-          ? "updateStyle"
-          : (`previewStyle:${selectedInstanceData.id}` as const),
+      type: type === "update" ? "updateStyle" : "previewStyle",
       payload: {
         id: selectedInstanceData.id,
         updates,

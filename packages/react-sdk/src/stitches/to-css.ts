@@ -33,8 +33,8 @@ export const toValue = (
   return value.value;
 };
 
-export const toVarNamespace = (instance: Instance, property: string) => {
-  return `${property}-${instance.id}`;
+export const toVarNamespace = (id: string, property: string) => {
+  return `${property}-${id}`;
 };
 
 const toVarValue = (
@@ -74,7 +74,7 @@ export const toCss = (
     for (const property in cssRule.style) {
       const value = cssRule.style[property as StyleProperty];
       if (value === undefined) continue;
-      const namespace = toVarNamespace(instance, property);
+      const namespace = toVarNamespace(instance.id, property);
       style[property] = toVarValue(namespace, value, options);
     }
 
