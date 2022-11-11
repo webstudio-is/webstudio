@@ -1,6 +1,7 @@
 import type { CSS } from "./stitches";
 import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
+import { Instance } from "..";
 
 type Options = {
   withFallback: boolean;
@@ -32,16 +33,29 @@ export const toValue = (
   return value.value;
 };
 
+export const toVarNamespace = (instance: Instance, property: string) => {
+  return `${property}-${instance.id}`;
+};
+
+export const toVarValue = (
+  namespace: string,
+  value?: StyleValue,
+  options: Options = defaultOptions
+): string => {
+  const cssValue = toValue(value, options);
+  return `var(--${namespace}, ${cssValue})`;
+};
+
 /**
  * Convert instance cssRules to a stitches CSS object.
  */
 export const toCss = (
-  cssRules: Array<CssRule>,
+  instance: Instance,
   breakpoints: Array<Breakpoint>,
   options: Options = defaultOptions
 ): CSS => {
   const css: CSS = {};
-
+  const { cssRules, id } = instance;
   const breakpointsMap: Record<Breakpoint["id"], number> = {};
   for (const breakpoint of breakpoints) {
     breakpointsMap[breakpoint.id] = breakpoint.minWidth;
@@ -60,7 +74,8 @@ export const toCss = (
     for (const property in cssRule.style) {
       const value = cssRule.style[property as StyleProperty];
       if (value === undefined) continue;
-      style[property] = toValue(value, options);
+      const namespace = toVarNamespace(instance, property);
+      style[property] = toVarValue(namespace, value, options);
     }
 
     if (cssRule.breakpoint in breakpointsMap) {

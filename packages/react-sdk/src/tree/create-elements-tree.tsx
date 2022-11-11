@@ -106,7 +106,7 @@ const createInstanceElement = ({
   const props = {
     instance,
     children,
-    css: toCss(instance.cssRules, breakpoints),
+    css: toCss(instance, breakpoints),
     key: instance.id,
     onChangeChildren,
   };

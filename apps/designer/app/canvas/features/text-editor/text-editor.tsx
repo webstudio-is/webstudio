@@ -29,7 +29,7 @@ const NodeConnector = ({
     const [key] = nodeKey.split(":");
     const element = editor.getElementByKey(key);
     if (element) {
-      const className = css(toCss(instance.cssRules, breakpoints))().toString();
+      const className = css(toCss(instance, breakpoints))().toString();
       // assume only styles are important while editing text
       element.className = className;
     }

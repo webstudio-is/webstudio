@@ -4,6 +4,7 @@ import {
   css as createCss,
   type CSS,
   toValue,
+  toVarNamespace,
 } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { type StyleUpdates } from "~/shared/canvas-components";
@@ -73,12 +74,14 @@ export const useCss = ({ instance, css }: UseCssProps): string => {
   const previewCss = usePreviewCss({ instance, css });
 
   return useMemo(() => {
-    const overrides: CSS = { ...defaultStyle };
     for (const update of previewCss) {
-      if (update.value === undefined) continue;
-      overrides[update.property as string] = toValue(update.value);
+      if (update.value === undefined) {
+        continue;
+      }
+      const property = `--${toVarNamespace(instance, update.property)}`;
+      document.body.style.setProperty(property, toValue(update.value));
     }
 
-    return createCss(css)({ css: overrides });
+    return createCss(css)(defaultStyle);
   }, [css, previewCss]);
 };
