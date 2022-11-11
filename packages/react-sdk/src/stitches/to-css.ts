@@ -37,7 +37,7 @@ export const toVarNamespace = (instance: Instance, property: string) => {
   return `${property}-${instance.id}`;
 };
 
-export const toVarValue = (
+const toVarValue = (
   namespace: string,
   value?: StyleValue,
   options: Options = defaultOptions

@@ -14,34 +14,17 @@ type UseCssProps = {
   css: CSS;
 };
 
-type UpdatesReset = Array<{
-  property: string;
-  value: undefined;
-}>;
-
-const usePreviewCss = ({ instance, css }: UseCssProps) => {
-  const [previewCss, setPreviewCss] = useState<
-    StyleUpdates["updates"] | UpdatesReset
-  >([]);
-
+const usePreviewCss = (instance: Instance) => {
   useSubscribe(`previewStyle:${instance.id}`, ({ updates }) => {
-    setPreviewCss(updates);
+    for (const update of updates) {
+      const property = `--${toVarNamespace(instance, update.property)}`;
+      if (update.value === undefined) {
+        document.body.style.removeProperty(property);
+        continue;
+      }
+      document.body.style.setProperty(property, toValue(update.value));
+    }
   });
-
-  // We are building a map for unsetting the ephemeral values we previously set for the preview
-  useEffect(() => {
-    const reset = previewCss.map(({ property }) => ({
-      property,
-      value: undefined,
-    }));
-    setPreviewCss(reset);
-    // previewCss in deps leads to an infinite loop, css is like a cache key in this case,
-    // as soon as `css` changes we can reset the preview
-    // @todo need a more correct approach than this
-    // eslint-disable-next-line  react-hooks/exhaustive-deps
-  }, [css]);
-
-  return previewCss;
 };
 
 const voidElements =
@@ -71,17 +54,6 @@ const defaultStyle = {
 };
 
 export const useCss = ({ instance, css }: UseCssProps): string => {
-  const previewCss = usePreviewCss({ instance, css });
-
-  return useMemo(() => {
-    for (const update of previewCss) {
-      if (update.value === undefined) {
-        continue;
-      }
-      const property = `--${toVarNamespace(instance, update.property)}`;
-      document.body.style.setProperty(property, toValue(update.value));
-    }
-
-    return createCss(css)(defaultStyle);
-  }, [css, previewCss]);
+  usePreviewCss(instance);
+  return useMemo(() => createCss(css)(defaultStyle), [css]);
 };
