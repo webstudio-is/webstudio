@@ -7,22 +7,14 @@ export default {
 
 export const Primitive: ComponentStoryObj<typeof Control> = {
   args: {
-    type: "text",
+    component: "Image",
+    prop: "src",
   },
 };
 
 export const Options: ComponentStoryObj<typeof Control> = {
   args: {
-    type: "radio",
-    options: ["option1", "option2"],
-  },
-};
-
-export const Range: ComponentStoryObj<typeof Control> = {
-  args: {
-    type: "range",
-    min: 0,
-    max: 100,
-    step: 1,
+    component: "Image",
+    prop: "loading",
   },
 };

@@ -3,6 +3,7 @@ import {
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
+
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
@@ -126,9 +127,7 @@ const Property = ({
     prop.length > 0 &&
     typeof argType === "undefined" &&
     !prop.match(/^data-(.)+/);
-  const type = argType?.type || "text";
-  const defaultValue = argType?.defaultValue;
-  const options = argType?.options;
+
   const allProps = Object.keys(meta);
 
   return (
@@ -158,10 +157,8 @@ const Property = ({
         // requires matching complex union
         // skip for now and fix types later
         <Control
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          type={type as any}
-          defaultValue={defaultValue ?? undefined}
-          options={options ?? []}
+          component={component}
+          prop={prop}
           value={value}
           onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
         />
