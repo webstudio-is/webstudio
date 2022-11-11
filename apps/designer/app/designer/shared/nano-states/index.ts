@@ -67,5 +67,5 @@ export type TextToolbarState = {
   isLink: boolean;
   isSpan: boolean;
 };
-const textToolbarState = createValueContainer<null | TextToolbarState>();
+const textToolbarState = createValueContainer<undefined | TextToolbarState>();
 export const useTextToolbarState = () => useValue(textToolbarState);

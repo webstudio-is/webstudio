@@ -37,7 +37,7 @@ declare module "~/shared/pubsub" {
 export const useSubscribeTextToolbar = () => {
   const [, setTextToolbar] = useTextToolbarState();
   useSubscribe("showTextToolbar", setTextToolbar);
-  useSubscribe("hideTextToolbar", () => setTextToolbar(null));
+  useSubscribe("hideTextToolbar", () => setTextToolbar(undefined));
 };
 
 const getPlacement = ({
