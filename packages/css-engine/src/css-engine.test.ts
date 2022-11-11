@@ -8,14 +8,14 @@ const style0 = {
 const breakpoint0 = { minWidth: 0, id: "0", label: "0" } as const;
 
 describe("CssEngine", () => {
-  let sheet: VirtualStyleSheet;
+  let engine: CssEngine;
 
   beforeEach(() => {
-    sheet = new VirtualStyleSheet();
+    const sheet = new VirtualStyleSheet();
+    engine = new CssEngine(sheet);
   });
 
   test("throw when breakpoint is not registered", () => {
-    const engine = new CssEngine(sheet);
     expect(() => {
       engine.addRule({
         style: style0,
@@ -25,7 +25,6 @@ describe("CssEngine", () => {
   });
 
   test("rule with multiple properties", () => {
-    const engine = new CssEngine(sheet);
     engine.addBreakpoint(breakpoint0);
     engine.addRule({
       style: {
@@ -42,7 +41,6 @@ describe("CssEngine", () => {
   });
 
   test("add one rule", () => {
-    const engine = new CssEngine(sheet);
     engine.addBreakpoint(breakpoint0);
     const rule = engine.addRule({
       style: {
@@ -62,13 +60,11 @@ describe("CssEngine", () => {
   });
 
   test("skip breakpoint without rules", () => {
-    const engine = new CssEngine(sheet);
     engine.addBreakpoint(breakpoint0);
-    expect(sheet.cssText).toBe("");
+    expect(engine.cssText).toBe("");
   });
 
   test("multiple breakpoints", () => {
-    const engine = new CssEngine(sheet);
     engine.addBreakpoint(breakpoint0);
     engine.addBreakpoint({ minWidth: 100, id: "1", label: "1" });
     engine.addRule({
