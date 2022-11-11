@@ -55,6 +55,26 @@ const $toggleSpan = () => {
   }
 };
 
+const $clearText = () => {
+  const selection = $getSelection();
+  if ($isRangeSelection(selection)) {
+    // split nodes by selection and mark with style
+    $patchStyleText(selection, {
+      "--clear-selection-trigger": "",
+    });
+    // recompute selection to get new splitted nodes
+    const newSelection = $getSelection();
+    if ($isRangeSelection(newSelection)) {
+      for (const node of selection.getNodes()) {
+        if ($isTextNode(node)) {
+          node.setFormat(0);
+          node.setStyle("");
+        }
+      }
+    }
+  }
+};
+
 const $isSelectedLink = (selection: RangeSelection) => {
   const [selectedNode] = selection.getNodes();
   return $getNearestNodeOfType(selectedNode, LinkNode) != null;
@@ -76,11 +96,21 @@ export const ToolbarConnectorPlugin = () => {
       const selectionRect = domRange.getBoundingClientRect();
       const isBold = selection.hasFormat("bold");
       const isItalic = selection.hasFormat("italic");
+      const isSuperscript = selection.hasFormat("superscript");
+      const isSubscript = selection.hasFormat("subscript");
       const isLink = $isSelectedLink(selection);
       const isSpan = $getSpanNodes(selection).length !== 0;
       publish({
         type: "showTextToolbar",
-        payload: { selectionRect, isBold, isItalic, isLink, isSpan },
+        payload: {
+          selectionRect,
+          isBold,
+          isItalic,
+          isSuperscript,
+          isSubscript,
+          isLink,
+          isSpan,
+        },
       });
     } else {
       publish({ type: "hideTextToolbar" });
@@ -121,6 +151,12 @@ export const ToolbarConnectorPlugin = () => {
     if (type === "italic") {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
     }
+    if (type === "superscript") {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
+    }
+    if (type === "subscript") {
+      editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
+    }
     if (type === "link") {
       const editorState = editor.getEditorState();
       let isLink = false;
@@ -137,6 +173,11 @@ export const ToolbarConnectorPlugin = () => {
     if (type === "span") {
       editor.update(() => {
         $toggleSpan();
+      });
+    }
+    if (type === "clear") {
+      editor.update(() => {
+        $clearText();
       });
     }
   });

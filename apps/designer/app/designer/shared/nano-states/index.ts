@@ -62,8 +62,10 @@ export type TextToolbarState = {
   selectionRect: DOMRect;
   isBold: boolean;
   isItalic: boolean;
+  isSuperscript: boolean;
+  isSubscript: boolean;
   isLink: boolean;
   isSpan: boolean;
 };
-const textToolbarState = createValueContainer<null | TextToolbarState>();
+const textToolbarState = createValueContainer<undefined | TextToolbarState>();
 export const useTextToolbarState = () => useValue(textToolbarState);
