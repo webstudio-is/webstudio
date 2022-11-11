@@ -1,9 +1,9 @@
-import { BrushIcon } from "@webstudio-is/icons";
+import { SubscriptIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta } from "./component-type";
 import { Subscript } from "./subscript";
 
 const meta: WsComponentMeta<typeof Subscript> = {
-  Icon: BrushIcon,
+  Icon: SubscriptIcon,
   Component: Subscript,
   canAcceptChildren: false,
   isContentEditable: false,

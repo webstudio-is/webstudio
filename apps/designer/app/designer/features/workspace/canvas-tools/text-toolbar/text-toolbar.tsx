@@ -9,8 +9,11 @@ import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
 import {
   FontBoldIcon,
   FontItalicIcon,
+  SuperscriptIcon,
+  SubscriptIcon,
   Link2Icon,
   BrushIcon,
+  FormatClearIcon,
 } from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
 
@@ -146,10 +149,10 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
         <FontItalicIcon />
       </ToggleGroup.Item>
       <ToggleGroup.Item value="superscript">
-        <BrushIcon />
+        <SuperscriptIcon />
       </ToggleGroup.Item>
       <ToggleGroup.Item value="subscript">
-        <BrushIcon />
+        <SubscriptIcon />
       </ToggleGroup.Item>
       <ToggleGroup.Item value="link">
         <Link2Icon />
@@ -158,7 +161,7 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
         <BrushIcon />
       </ToggleGroup.Item>
       <ToggleGroup.Item value="clear">
-        <BrushIcon />
+        <FormatClearIcon />
       </ToggleGroup.Item>
     </ToggleGroup.Root>
   );
