@@ -140,7 +140,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       <Flex
         gap="1"
         wrap="wrap"
-        css={{ padding: "$1", overflow: "auto" }}
+        css={{ padding: "$spacing$3", overflow: "auto" }}
         ref={useDragHandlers.rootRef}
       >
         {componentNames.map((component: Instance["component"]) => (

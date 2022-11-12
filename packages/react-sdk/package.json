@@ -5,7 +5,7 @@
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
-    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
+    "dev": "tsup --watch",
     "build": "yarn build:lib",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/css",
     "build:args": "tsx ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx'",
@@ -59,12 +59,13 @@
   "dependencies": {
     "@stitches/core": "^1.2.7",
     "@webstudio-is/asset-uploader": "^*",
+    "@webstudio-is/fonts": "*",
     "@webstudio-is/icons": "*",
     "@webstudio-is/jest-config": "*",
-    "@webstudio-is/fonts": "*",
     "immer": "^9.0.12",
     "mitt": "^3.0.0",
     "react-nano-state": "^0.4.0",
+    "warn-once": "^0.1.1",
     "zod": "^3.17.3"
   },
   "main": "lib/index.js",
@@ -75,5 +76,13 @@
     "!*.test.*"
   ],
   "license": "MIT",
-  "private": false
+  "private": false,
+  "sideEffects": false,
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": "cjs",
+    "outDir": "lib"
+  }
 }

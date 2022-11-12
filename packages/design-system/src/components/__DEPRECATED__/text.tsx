@@ -12,37 +12,37 @@ export const __DEPRECATED__Text = styled("div", {
   variants: {
     size: {
       "1": {
-        fontSize: "$1",
+        fontSize: "$fontSize$3",
       },
       "2": {
-        fontSize: "$2",
+        fontSize: "$fontSize$3",
       },
       "3": {
-        fontSize: "$3",
+        fontSize: "$fontSize$4",
       },
       "4": {
-        fontSize: "$4",
+        fontSize: "$fontSize$4",
       },
       "5": {
-        fontSize: "$5",
+        fontSize: "$fontSize$5",
         letterSpacing: "-.015em",
       },
       "6": {
-        fontSize: "$6",
+        fontSize: "$fontSize$6",
         letterSpacing: "-.016em",
       },
       "7": {
-        fontSize: "$7",
+        fontSize: "$fontSize$7",
         letterSpacing: "-.031em",
         textIndent: "-.005em",
       },
       "8": {
-        fontSize: "$8",
+        fontSize: "$fontSize$8",
         letterSpacing: "-.034em",
         textIndent: "-.018em",
       },
       "9": {
-        fontSize: "$9",
+        fontSize: "$fontSize$9",
         letterSpacing: "-.055em",
         textIndent: "-.025em",
       },

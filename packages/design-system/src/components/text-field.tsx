@@ -23,8 +23,8 @@ const getTextFieldSuffixCssVars = (state: "focus" | "hover") => {
 };
 
 const textFieldIconBaseStyle = css({
-  height: "$5",
-  minWidth: "$2",
+  height: "$spacing$11",
+  minWidth: "$spacing$5",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -134,11 +134,11 @@ const TextFieldBase = styled("div", {
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
-  gap: "$1",
-  px: "$2",
-  borderRadius: "$1",
+  gap: "$spacing$3",
+  px: "$spacing$5",
+  borderRadius: "$borderRadius$4",
   fontFamily: "$sans",
-  fontSize: "$1",
+  fontSize: "$fontSize$3",
   height: 28, // @todo waiting for the sizing scale
   lineHeight: 1,
   "&:focus-within": {
@@ -242,6 +242,7 @@ export type TextFieldProps = Pick<
   "variant" | "state" | "css"
 > &
   Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
+    baseRef?: React.Ref<HTMLDivElement>;
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
@@ -253,6 +254,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       prefix,
       css,
       disabled,
+      baseRef,
       inputRef,
       state,
       variant: variantProp,
@@ -297,7 +299,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       <TextFieldBase
         {...focusWithinProps}
         aria-disabled={disabled}
-        ref={forwardedRef}
+        ref={mergeRefs(forwardedRef, baseRef ?? null)}
         state={state}
         variant={variant}
         css={css}

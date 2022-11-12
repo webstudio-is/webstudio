@@ -23,10 +23,10 @@ export const Button = styled("button", {
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
   // Custom
-  height: "$5",
-  px: "$2",
+  height: "$spacing$11",
+  px: "$spacing$5",
   fontFamily: "$sans",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",
 
@@ -40,22 +40,22 @@ export const Button = styled("button", {
   variants: {
     size: {
       "1": {
-        borderRadius: "$1",
-        height: "$5",
-        px: "$3",
-        fontSize: "$1",
+        borderRadius: "$borderRadius$4",
+        height: "$spacing$11",
+        px: "$spacing$9",
+        fontSize: "$fontSize$3",
       },
       "2": {
-        borderRadius: "$2",
+        borderRadius: "$borderRadius$6",
         height: 28, // @todo waiting for the sizing scale
-        px: "$3",
-        fontSize: "$3",
+        px: "$spacing$9",
+        fontSize: "$fontSize$4",
       },
       "3": {
-        borderRadius: "$2",
-        height: "$7",
-        px: "$4",
-        fontSize: "$4",
+        borderRadius: "$borderRadius$6",
+        height: "$spacing$17",
+        px: "$spacing$10",
+        fontSize: "$fontSize$4",
       },
     },
     variant: {

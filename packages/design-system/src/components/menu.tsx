@@ -10,14 +10,14 @@ export const baseItemCss = css({
   alignItems: "center",
   justifyContent: "space-between",
   fontFamily: "$sans",
-  fontSize: "$1",
+  fontSize: "$fontSize$3",
   fontVariantNumeric: "tabular-nums",
   lineHeight: "1",
   cursor: "default",
   userSelect: "none",
   whiteSpace: "nowrap",
-  height: "$5",
-  px: "$5",
+  height: "$spacing$11",
+  px: "$spacing$11",
 });
 
 export const itemCss = css(baseItemCss, {
@@ -40,12 +40,12 @@ export const labelCss = css(baseItemCss, {
 export const menuCss = css({
   boxSizing: "border-box",
   minWidth: 120,
-  py: "$1",
+  py: "$spacing$3",
 });
 
 export const separatorCss = css({
   height: 1,
-  my: "$1",
+  my: "$spacing$3",
   backgroundColor: "$slate6",
 });
 
@@ -68,7 +68,7 @@ export const MenuRadioItem = React.forwardRef<
   MenuRadioItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledMenuRadioItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$1" }}>
+    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
       <MenuPrimitive.ItemIndicator>
         <CheckIcon />
       </MenuPrimitive.ItemIndicator>
@@ -90,7 +90,7 @@ export const MenuCheckboxItem = React.forwardRef<
   MenuCheckboxItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledMenuCheckboxItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$1" }}>
+    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
       <MenuPrimitive.ItemIndicator>
         <CheckIcon />
       </MenuPrimitive.ItemIndicator>

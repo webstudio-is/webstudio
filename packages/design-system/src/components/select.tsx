@@ -11,23 +11,23 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   alignItems: "center",
   justifyContent: "space-between",
   fontVariantNumeric: "tabular-nums",
-  gap: "$2",
+  gap: "$spacing$5",
   flexShrink: 0,
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   backgroundColor: "$loContrast",
   color: "$hiContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   height: 28, // @todo waiting for the sizing scale
-  px: "$2",
-  fontSize: "$1",
-  "&:hover": {
-    backgroundColor: "$slate6",
-  },
+  px: "$spacing$5",
+  fontSize: "$fontSize$3",
   "&:focus": {
     boxShadow:
       "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
   },
-  paddingRight: "$1",
+  paddingRight: 0,
+  paddingLeft: "$spacing$5",
+  textTransform: "capitalize",
+  fontWeight: "inherit",
 
   variants: {
     ghost: {
@@ -44,37 +44,45 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   },
 });
 
+const StyledValue = styled("span", {
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+  overflow: "hidden",
+  flexGrow: 0,
+});
+
 const StyledIcon = styled(SelectPrimitive.Icon, {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   height: "100%",
-  padding: "calc($space$1 / 2)",
+  padding: "$spacing$2 $spacing$2 $spacing$2 0px",
 });
 
 export const SelectContent = styled(SelectPrimitive.Content, {
   overflow: "hidden",
   backgroundColor: "$colors$slate4",
-  borderRadius: "$1",
+  borderRadius: "$borderRadius$4",
   boxShadow:
     "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
 });
 
 export const SelectViewport = styled(SelectPrimitive.Viewport, {
-  py: "$1",
+  p: "$spacing$3",
 });
 
 const StyledItem = styled(SelectPrimitive.Item, {
   all: "unset",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   lineHeight: 1,
   color: "$hiContrast",
   display: "flex",
   alignItems: "center",
-  height: "$5",
-  padding: "0 $2",
+  height: "$spacing$11",
+  padding: "0 $spacing$5",
   position: "relative",
   userSelect: "none",
+  borderRadius: "$borderRadius$4",
 
   "&[data-disabled]": {
     color: "$muted",
@@ -112,7 +120,7 @@ const SelectItemBase = (
 ) => {
   return (
     <StyledItem {...props} ref={forwardedRef}>
-      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+      <Grid align="center" css={{ gridTemplateColumns: "$spacing$10 1fr" }}>
         <SelectPrimitive.ItemIndicator>
           <CheckIcon />
         </SelectPrimitive.ItemIndicator>
@@ -143,6 +151,7 @@ export type SelectProps<Option = SelectOption> = Omit<
   onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
+  getValue?: (option: Option) => string | undefined;
 };
 
 const SelectBase = (
@@ -155,6 +164,7 @@ const SelectBase = (
     onOpenChange,
     open,
     getLabel = (option) => option,
+    getValue = (option) => option,
     name,
     ...props
   }: SelectProps,
@@ -170,8 +180,8 @@ const SelectBase = (
       onOpenChange={onOpenChange}
     >
       <StyledTrigger ref={forwardedRef} {...props}>
-        <SelectPrimitive.Value>
-          {value ? getLabel(value) : placeholder}
+        <SelectPrimitive.Value asChild>
+          <StyledValue>{value ? getLabel(value) : placeholder}</StyledValue>
         </SelectPrimitive.Value>
         <StyledIcon>
           <ChevronDownIcon />
@@ -184,7 +194,11 @@ const SelectBase = (
           </SelectScrollUpButton>
           <SelectViewport>
             {options.map((option) => (
-              <SelectItem key={option} value={option} textValue={option}>
+              <SelectItem
+                key={getValue(option)}
+                value={getValue(option) ?? ""}
+                textValue={getLabel(option)}
+              >
                 {getLabel(option)}
               </SelectItem>
             ))}

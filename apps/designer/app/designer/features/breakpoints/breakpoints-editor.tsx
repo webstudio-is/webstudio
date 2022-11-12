@@ -50,7 +50,10 @@ const BreakpointEditorItem = ({
         setBreakpoint(nextBreakpoint);
       }}
     >
-      <Flex gap="1" css={{ paddingLeft: "$4", paddingRight: "$3" }}>
+      <Flex
+        gap="1"
+        css={{ paddingLeft: "$spacing$10", paddingRight: "$spacing$9" }}
+      >
         <TextField
           css={{ width: 100, flexGrow: 1 }}
           type="text"
@@ -101,7 +104,11 @@ export const BreakpointsEditor = ({
         align="center"
         gap="1"
         justify="between"
-        css={{ paddingLeft: "$5", paddingRight: "$3", py: "$1" }}
+        css={{
+          paddingLeft: "$spacing$11",
+          paddingRight: "$spacing$9",
+          py: "$spacing$3",
+        }}
       >
         <Text>Breakpoints</Text>
         <Button

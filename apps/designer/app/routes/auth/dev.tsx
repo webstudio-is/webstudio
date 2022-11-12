@@ -1,6 +1,6 @@
 import { ActionFunction, redirect } from "@remix-run/node";
-import config from "~/config";
 import { authenticator } from "~/services/auth.server";
+import { dashboardPath, loginPath } from "~/shared/router-utils";
 import { AUTH_PROVIDERS } from "~/shared/session";
 
 export default function Dev() {
@@ -10,7 +10,7 @@ export default function Dev() {
 export const action: ActionFunction = async ({ request }) => {
   try {
     return await authenticator.authenticate("dev", request, {
-      successRedirect: config.dashboardPath,
+      successRedirect: dashboardPath(),
       throwOnError: true,
     });
   } catch (error: unknown) {
@@ -18,9 +18,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (error instanceof Response) return error;
     if (error instanceof Error) {
       return redirect(
-        `${config.loginPath}?error=${AUTH_PROVIDERS.LOGIN_DEV}&message=${
-          error?.message || ""
-        }`
+        loginPath({ error: AUTH_PROVIDERS.LOGIN_DEV, message: error?.message })
       );
     }
   }

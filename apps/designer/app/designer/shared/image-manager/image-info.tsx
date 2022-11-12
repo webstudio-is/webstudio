@@ -8,41 +8,7 @@ import {
 } from "@webstudio-is/icons";
 import prettyBytes from "pretty-bytes";
 import { Asset } from "@webstudio-is/asset-uploader";
-
-const Filename = ({ name }: { name: string }) => {
-  const splitName = name.split(".");
-  const extension = splitName[splitName.length - 1];
-  const lastLetterBeforeExtension = splitName[splitName.length - 2]
-    .split("")
-    .pop();
-  return (
-    <Box
-      css={{
-        position: "relative",
-        maxWidth: "70%",
-      }}
-    >
-      <Text
-        variant="label"
-        data-extension={`${lastLetterBeforeExtension}.${extension}`}
-        css={{
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
-          overflow: "hidden",
-          "&::after": {
-            content: "attr(data-extension)",
-            position: "absolute",
-            left: "100%",
-            top: 0,
-            whiteSpace: "nowrap",
-          },
-        }}
-      >
-        {name}
-      </Text>
-    </Box>
-  );
-};
+import { Filename } from "./filename";
 
 type ImageInfoProps = {
   asset: Asset;
@@ -53,36 +19,36 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
   const { size, meta, id, name } = asset;
   return (
     <>
-      <Box css={{ p: "$2 $3" }}>
+      <Box css={{ p: "$spacing$5 $spacing$9" }}>
         <Grid columns={2} align="center" gap={2}>
           <Box css={{ width: 100 }}>
-            <Filename name={name} />
+            <Filename variant="label">{name}</Filename>
           </Box>
-          <Flex align="center" css={{ gap: "$1" }}>
+          <Flex align="center" css={{ gap: "$spacing$3" }}>
             <CloudIcon />
             <Text variant="label">{prettyBytes(size)}</Text>
           </Flex>
         </Grid>
       </Box>
       {"width" in meta && "height" in meta ? (
-        <Box css={{ p: "$2 $3" }}>
+        <Box css={{ p: "$spacing$5 $spacing$9" }}>
           <Grid columns={2} gap={2} align="center">
-            <Flex align="center" css={{ gap: "$1" }}>
+            <Flex align="center" css={{ gap: "$spacing$3" }}>
               <SizeIcon />
               <Text variant="label">
                 {meta.width} x {meta.height}
               </Text>
             </Flex>{" "}
-            <Flex align="center" css={{ gap: "$1" }}>
+            <Flex align="center" css={{ gap: "$spacing$3" }}>
               <AspectRatioIcon />
               <Text variant="label">{getFormattedAspectRatio(meta)}</Text>
             </Flex>
           </Grid>
         </Box>
       ) : null}
-      <Box css={{ p: "$2 $3" }}>
+      <Box css={{ p: "$spacing$5 $spacing$9" }}>
         <Button variant="red" size="2" onClick={() => onDelete([id])}>
-          <Flex align="center" css={{ gap: "$1" }}>
+          <Flex align="center" css={{ gap: "$spacing$3" }}>
             <TrashIcon />
             Delete
           </Flex>

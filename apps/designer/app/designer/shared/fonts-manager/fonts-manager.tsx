@@ -1,15 +1,16 @@
 import {
-  Flex,
-  Separator as SeparatorPrimitive,
-  SearchField,
   List,
   ListItem,
   useList,
   findNextListIndex,
-  styled,
 } from "@webstudio-is/design-system";
-import { AssetUpload, useAssets } from "~/designer/shared/assets";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AssetsShell,
+  Separator,
+  useAssets,
+  useSearch,
+} from "~/designer/shared/assets";
+import { useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
 import { CheckIcon } from "@webstudio-is/icons";
 import {
@@ -19,38 +20,7 @@ import {
   groupItemsByType,
   toItems,
 } from "./item-utils";
-import { useSearch } from "./use-search";
-
-const NotFound = () => {
-  return (
-    <Flex align="center" justify="center" css={{ height: 100 }}>
-      Font not found
-    </Flex>
-  );
-};
-
-const useFilteredItems = ({ onReset }: { onReset: () => void }) => {
-  const { assets } = useAssets("font");
-  const fontItems = useMemo(() => toItems(assets), [assets]);
-  const [filteredItems, setFilteredItems] = useState(fontItems);
-  const onResetRef = useRef(onReset);
-  onResetRef.current = onReset;
-
-  const resetFilteredItems = useCallback(() => {
-    setFilteredItems(fontItems);
-  }, [fontItems]);
-
-  useEffect(() => {
-    setFilteredItems(fontItems);
-    onResetRef.current();
-  }, [fontItems]);
-
-  return {
-    filteredItems,
-    resetFilteredItems,
-    setFilteredItems,
-  };
-};
+import { useFilter } from "../assets/use-filter";
 
 const useLogic = ({
   onChange,
@@ -61,12 +31,13 @@ const useLogic = ({
 }) => {
   const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const { filteredItems, resetFilteredItems, setFilteredItems } =
-    useFilteredItems({
-      onReset() {
-        searchProps.onCancel();
-      },
-    });
+  const fontItems = useMemo(() => toItems(assets), [assets]);
+  const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
+    items: fontItems,
+    onReset() {
+      searchProps.onCancel();
+    },
+  });
   const { uploadedItems, systemItems, groupedItems } = useMemo(
     () => groupItemsByType(filteredItems),
     [filteredItems]
@@ -136,11 +107,6 @@ const useLogic = ({
   };
 };
 
-const Separator = styled(SeparatorPrimitive, {
-  marginTop: "$1",
-  marginBottom: "$2",
-});
-
 type FontsManagerProps = {
   value: string;
   onChange: (value: string) => void;
@@ -180,46 +146,33 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   };
 
   return (
-    <Flex
-      direction="column"
-      css={{ overflow: "hidden", paddingTop: "$1", paddingBottom: "$3" }}
+    <AssetsShell
+      searchProps={searchProps}
+      type="font"
+      isEmpty={groupedItems.length === 0}
     >
-      <Flex css={{ py: "$2", px: "$3" }} gap="2" direction="column">
-        <AssetUpload type="font" />
-        <SearchField {...searchProps} autoFocus placeholder="Search" />
-      </Flex>
-      <Separator />
-      {groupedItems.length === 0 && <NotFound />}
-      <Flex
-        css={{
-          flexDirection: "column",
-          gap: "$3",
-          px: "$3",
+      <List
+        {...listProps}
+        onBlur={(event) => {
+          if (isMenuOpen === false) {
+            listProps.onBlur(event);
+          }
         }}
       >
-        <List
-          {...listProps}
-          onBlur={(event) => {
-            if (isMenuOpen === false) {
-              listProps.onBlur(event);
-            }
-          }}
-        >
-          {uploadedItems.length !== 0 && (
-            <ListItem state="disabled">{"Uploaded"}</ListItem>
-          )}
-          {uploadedItems.map(renderItem)}
-          {systemItems.length !== 0 && (
-            <>
-              {uploadedItems.length !== 0 && <Separator />}
-              <ListItem state="disabled">{"System"}</ListItem>
-            </>
-          )}
-          {systemItems.map((item, index) =>
-            renderItem(item, index + uploadedItems.length)
-          )}
-        </List>
-      </Flex>
-    </Flex>
+        {uploadedItems.length !== 0 && (
+          <ListItem state="disabled">{"Uploaded"}</ListItem>
+        )}
+        {uploadedItems.map(renderItem)}
+        {systemItems.length !== 0 && (
+          <>
+            {uploadedItems.length !== 0 && <Separator />}
+            <ListItem state="disabled">{"System"}</ListItem>
+          </>
+        )}
+        {systemItems.map((item, index) =>
+          renderItem(item, index + uploadedItems.length)
+        )}
+      </List>
+    </AssetsShell>
   );
 };

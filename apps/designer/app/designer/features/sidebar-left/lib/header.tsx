@@ -1,4 +1,4 @@
-import { Flex, IconButton, Text } from "@webstudio-is/design-system";
+import { Flex, IconButton, Text, Tooltip } from "@webstudio-is/design-system";
 import { Separator } from "@webstudio-is/design-system";
 import { CrossIcon } from "@webstudio-is/icons";
 
@@ -11,12 +11,12 @@ export const Header = ({ title, suffix }: HeaderProps) => {
   return (
     <>
       <Flex
-        css={{ height: 40, paddingLeft: "$3", flexShrink: 0 }}
+        css={{ height: 40, paddingLeft: "$spacing$9", flexShrink: 0 }}
         align="center"
         justify="between"
       >
         <Text variant="title">{title}</Text>
-        {suffix && <Flex css={{ marginRight: "$1" }}>{suffix}</Flex>}
+        {suffix && <Flex css={{ marginRight: "$spacing$3" }}>{suffix}</Flex>}
       </Flex>
       <Separator css={{ height: 2 }} />
     </>
@@ -24,7 +24,9 @@ export const Header = ({ title, suffix }: HeaderProps) => {
 };
 
 export const CloseButton = ({ onClick }: { onClick: () => void }) => (
-  <IconButton onClick={onClick} size="2" aria-label="Close">
-    <CrossIcon />
-  </IconButton>
+  <Tooltip content="Close panel" side="bottom" align="end">
+    <IconButton onClick={onClick} size="2" aria-label="Close panel">
+      <CrossIcon />
+    </IconButton>
+  </Tooltip>
 );

@@ -13,13 +13,13 @@ export const Banner = styled("div", {
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  gap: "$3",
+  gap: "$spacing$9",
 
   variants: {
     size: {
       "1": {
-        py: "$1",
-        px: "$4",
+        py: "$spacing$3",
+        px: "$spacing$10",
       },
     },
     variant: {
@@ -41,12 +41,12 @@ export const Banner = styled("div", {
     },
     rounded: {
       true: {
-        borderRadius: "$pill",
+        borderRadius: "$borderRadius$pill",
       },
     },
     border: {
       true: {
-        borderRadius: "$pill",
+        borderRadius: "$borderRadius$pill",
       },
     },
   },

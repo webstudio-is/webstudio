@@ -8,14 +8,10 @@ import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<
   | string
-  // Updates an instance child
-  | { id: Instance["id"]; text: string }
-  // Creates a new child instance
   | {
-      id: Instance["id"];
-      text: string;
+      id: undefined | Instance["id"];
       component: Instance["component"];
-      createInstance: true;
+      children: ChildrenUpdates;
     }
 >;
 

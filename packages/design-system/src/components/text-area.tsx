@@ -7,7 +7,7 @@ export const TextArea = styled("textarea", {
   fontFamily: "inherit",
   margin: "0",
   outline: "none",
-  padding: "$1",
+  padding: "$spacing$3",
   width: "100%",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
   backgroundColor: "$loContrast",
@@ -46,22 +46,22 @@ export const TextArea = styled("textarea", {
   variants: {
     size: {
       "1": {
-        borderRadius: "$1",
-        fontSize: "$1",
-        lineHeight: "16px",
-        px: "$1",
+        borderRadius: "$borderRadius$4",
+        fontSize: "$fontSize$3",
+        lineHeight: "$lineHeight$3",
+        px: "$spacing$3",
       },
       "2": {
-        borderRadius: "$1",
-        fontSize: "$2",
-        lineHeight: "20px",
-        px: "$1",
+        borderRadius: "$borderRadius$4",
+        fontSize: "$fontSize$3",
+        lineHeight: "$lineHeight$4",
+        px: "$spacing$3",
       },
       "3": {
-        borderRadius: "$2",
-        fontSize: "$3",
+        borderRadius: "$borderRadius$6",
+        fontSize: "$fontSize$4",
         lineHeight: "23px",
-        px: "$2",
+        px: "$spacing$5",
       },
     },
     state: {

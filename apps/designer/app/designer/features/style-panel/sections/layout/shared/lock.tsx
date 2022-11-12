@@ -24,7 +24,7 @@ export const Lock = ({
   const [isPaired, setIsPaired] = useState(aVal === bVal);
 
   useEffect(() => {
-    if (!isPaired) return;
+    if (isPaired === false) return;
     if (aVal === bVal) return;
     batchUpdate.setProperty(aKey)(aVal);
     batchUpdate.setProperty(bKey)(aVal);

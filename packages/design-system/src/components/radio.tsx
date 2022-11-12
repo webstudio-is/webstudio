@@ -16,8 +16,8 @@ const StyledIndicator = styled(RadioGroupPrimitive.Indicator, {
   "&::after": {
     content: '""',
     display: "block",
-    width: "7px",
-    height: "7px",
+    width: "$spacing$4",
+    height: "$spacing$4",
     borderRadius: "50%",
     backgroundColor: "$blue9",
   },
@@ -62,17 +62,17 @@ const StyledRadio = styled(RadioGroupPrimitive.Item, {
   variants: {
     size: {
       "1": {
-        width: "$3",
-        height: "$3",
+        width: "$spacing$9",
+        height: "$spacing$9",
       },
       "2": {
-        width: "$5",
-        height: "$5",
+        width: "$spacing$11",
+        height: "$spacing$11",
 
         [`& ${StyledIndicator}`]: {
           "&::after": {
-            width: "$3",
-            height: "$3",
+            width: "$spacing$9",
+            height: "$spacing$9",
           },
         },
       },

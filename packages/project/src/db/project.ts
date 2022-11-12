@@ -7,7 +7,7 @@ import {
   Project as BaseProject,
 } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { formatAsset } from "@webstudio-is/asset-uploader/index.server";
+import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import * as db from "./index";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");

@@ -106,7 +106,7 @@ const updateTsConfig = async (
   const previousProp = ast.properties[referencesPropIndex - 1];
   const indent = formatted.match(/.*{\n(\s+)[^\s]/)?.[1];
 
-  if (!indent) {
+  if (indent === undefined) {
     throw new Error(`Couldn't determine indentation`);
   }
 

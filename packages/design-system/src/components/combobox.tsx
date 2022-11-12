@@ -25,8 +25,7 @@ import { Box } from "./box";
 import { Grid } from "./grid";
 
 const Listbox = styled("ul", panelStyles, {
-  py: "$1",
-  px: 0,
+  p: "$spacing$3",
   margin: 0,
   overflow: "auto",
   // @todo need some non-hardcoded value
@@ -48,8 +47,9 @@ const Listbox = styled("ul", panelStyles, {
 });
 
 const ListboxItem = styled("li", itemCss, {
-  padding: "0 $2",
+  padding: "0 $spacing$5",
   margin: 0,
+  borderRadius: "$borderRadius$4",
 });
 
 const ListboxItemBase: ForwardRefRenderFunction<
@@ -68,7 +68,7 @@ const ListboxItemBase: ForwardRefRenderFunction<
       {...(selected ? { "aria-current": true } : {})}
       {...rest}
     >
-      <Grid align="center" css={{ gridTemplateColumns: "$4 1fr" }}>
+      <Grid align="center" css={{ gridTemplateColumns: "$spacing$10 1fr" }}>
         {selected && <CheckIcon />}
         <Box css={{ gridColumn: 2 }}>{children}</Box>
       </Grid>

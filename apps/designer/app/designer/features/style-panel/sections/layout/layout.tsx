@@ -6,6 +6,7 @@ import { ShowMore } from "../../shared/show-more";
 import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
+import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
 
 const LayoutSectionFlex = ({
   currentStyle,
@@ -32,14 +33,14 @@ const LayoutSectionFlex = ({
   ].some((config) => config !== undefined);
 
   return (
-    <Flex css={{ flexDirection: "column", gap: "$2" }}>
+    <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
       {display?.styleConfig && (
         <Grid
           css={{
             gridArea: "display",
             gridTemplateColumns: "auto 1fr",
-            gap: "$space$2",
-            width: "fit-content",
+            gap: "$spacing$13",
+            width: "100%",
             fontWeight: "500",
           }}
         >
@@ -53,9 +54,10 @@ const LayoutSectionFlex = ({
       {hasMenuItems && (
         <Grid
           css={{
-            gap: "$2",
-            gridTemplateColumns: "repeat(2, $6) repeat(3, $6)",
-            gridTemplateRows: "repeat(2, $6)",
+            gap: "$spacing$5",
+            gridTemplateColumns:
+              "repeat(2, $spacing$13) repeat(3, $spacing$13)",
+            gridTemplateRows: "repeat(2, $spacing$13)",
             gridTemplateAreas: `
             "grid grid flexDirection flexWrap ."
             "grid grid alignItems justifyContent alignContent"
@@ -106,11 +108,11 @@ const LayoutSectionFlex = ({
       >
         {columnGap?.styleConfig && (
           <Box css={{ gridArea: "columnGap" }}>
-            <TextControl {...columnGap} />
+            <TextControl icon={<ColumnGapIcon />} {...columnGap} />
           </Box>
         )}
         {rowGap?.styleConfig && columnGap?.styleConfig && (
-          <Box css={{ gridArea: "lock", px: "$1" }}>
+          <Box css={{ gridArea: "lock", px: "$spacing$3" }}>
             <Lock
               pairedKeys={["columnGap", "rowGap"]}
               currentStyle={currentStyle}
@@ -120,7 +122,7 @@ const LayoutSectionFlex = ({
         )}
         {rowGap?.styleConfig && (
           <Box css={{ gridArea: "rowGap" }}>
-            <TextControl {...rowGap} />
+            <TextControl icon={<RowGapIcon />} {...rowGap} />
           </Box>
         )}
       </Grid>

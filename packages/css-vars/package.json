@@ -7,7 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint",
-    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
+    "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
@@ -25,5 +25,13 @@
     "!*.test.*"
   ],
   "license": "MIT",
-  "private": false
+  "private": false,
+  "sideEffects": false,
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": "cjs",
+    "outDir": "lib"
+  }
 }
