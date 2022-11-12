@@ -28,5 +28,5 @@ const defaultStyle: CSS = {
 };
 
 export const useCss = (css: CSS): string => {
-  return useMemo(() => createCss(css)(defaultStyle), [css]);
+  return useMemo(() => createCss({ ...css, ...defaultStyle })(), [css]);
 };
