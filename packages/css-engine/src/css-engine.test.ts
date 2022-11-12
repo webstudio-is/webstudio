@@ -1,5 +1,4 @@
 import { CssEngine } from "./css-engine";
-import { VirtualStyleSheet } from "./style-sheet";
 
 const style0 = {
   display: { type: "keyword", value: "block" },
@@ -11,8 +10,7 @@ describe("CssEngine", () => {
   let engine: CssEngine;
 
   beforeEach(() => {
-    const sheet = new VirtualStyleSheet();
-    engine = new CssEngine(sheet);
+    engine = new CssEngine();
   });
 
   test("throw when breakpoint is not registered", () => {
@@ -35,7 +33,7 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media (min-width: 0px) {
-        .s0 { display: block; color: red }
+        .c0 { display: block; color: red }
       }"
     `);
   });
@@ -51,17 +49,12 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media (min-width: 0px) {
-        .s0 { display: block; color: red }
+        .c0 { display: block; color: red }
       }"
     `);
     expect(rule.cssText).toMatchInlineSnapshot(
-      `".s0 { display: block; color: red }"`
+      `".c0 { display: block; color: red }"`
     );
-  });
-
-  test("skip breakpoint without rules", () => {
-    engine.addBreakpoint(breakpoint0);
-    expect(engine.cssText).toBe("");
   });
 
   test("multiple breakpoints", () => {
@@ -77,10 +70,10 @@ describe("CssEngine", () => {
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media (min-width: 0px) {
-        .s0 { display: block }
+        .c0 { display: block }
       }
       @media (min-width: 100px) {
-        .s1 { display: block }
+        .c1 { display: block }
       }"
     `);
   });

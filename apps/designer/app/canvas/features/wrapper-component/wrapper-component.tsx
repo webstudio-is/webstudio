@@ -12,7 +12,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 import { designerClass } from "./designer-css";
-import noop from "lodash.noop";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 
 const TextEditor = lazy(() => import("../text-editor"));
@@ -50,7 +49,7 @@ export const WrapperComponentDev = ({
   instance,
   css,
   children,
-  onChangeChildren = noop,
+  onChangeChildren,
   ...rest
 }: WrapperComponentDevProps) => {
   const className = useMemo(() => createCss(css)(), [css]);
@@ -115,7 +114,7 @@ export const WrapperComponentDev = ({
           />
         }
         onChange={(updates) => {
-          onChangeChildren({ instanceId: instance.id, updates });
+          onChangeChildren?.({ instanceId: instance.id, updates });
         }}
       />
     </Suspense>

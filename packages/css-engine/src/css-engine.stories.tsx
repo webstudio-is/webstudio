@@ -1,5 +1,4 @@
 import * as React from "react";
-import type { ComponentStory } from "@storybook/react";
 import { CssEngine } from "./css-engine";
 
 export default {
@@ -12,15 +11,13 @@ const style0 = {
 
 const breakpoint0 = { minWidth: 0, id: "0", label: "0" } as const;
 
-export const Test = () => {
-  const sheet = new CSSStyleSheet();
-  const engine = new CssEngine<CSSStyleSheet>(sheet);
-  engine.mount();
+export const Basic = () => {
+  const engine = new CssEngine();
   engine.addBreakpoint(breakpoint0);
   const rule = engine.addRule({
     style: style0,
     breakpoint: "0",
   });
-  console.log(rule);
-  return <div className={rule.className}>"Test"</div>;
+  engine.render();
+  return <div className={rule.className}>Should be red</div>;
 };
