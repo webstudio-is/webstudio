@@ -4,7 +4,6 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverPortal,
-  Flex,
 } from "@webstudio-is/design-system";
 import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { MutableRefObject, useRef, useState } from "react";

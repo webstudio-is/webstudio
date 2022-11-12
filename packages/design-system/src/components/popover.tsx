@@ -1,4 +1,4 @@
-import React, { useState, useRef, MutableRefObject } from "react";
+import React from "react";
 import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
