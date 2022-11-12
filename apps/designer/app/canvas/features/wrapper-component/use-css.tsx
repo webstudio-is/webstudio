@@ -1,18 +1,10 @@
 import { useMemo } from "react";
-import {
-  type Instance,
-  css as createCss,
-  type CSS,
-} from "@webstudio-is/react-sdk";
-
-type UseCssProps = {
-  css: CSS;
-};
+import { css as createCss, type CSS } from "@webstudio-is/react-sdk";
 
 const voidElements =
   "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
 
-const defaultStyle = {
+const defaultStyle: CSS = {
   "&": {
     // When double clicking into an element to edit text, it should not select the word.
     userSelect: "none",
@@ -35,6 +27,6 @@ const defaultStyle = {
   },
 };
 
-export const useCss = ({ css }: UseCssProps): string => {
+export const useCss = (css: CSS): string => {
   return useMemo(() => createCss(css)(defaultStyle), [css]);
 };
