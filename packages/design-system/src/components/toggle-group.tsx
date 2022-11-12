@@ -3,8 +3,8 @@ import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 
 export const Root = styled(ToggleGroupPrimitive.Root, {
   display: "inline-flex",
-  borderRadius: "$1",
-  boxShadow: `0 0 0 1px $colors$slate7`,
+  borderRadius: "$spacing$3",
+  boxShadow: `0 0 0 $spacing$1 $colors$slate7`,
   padding: 2,
 });
 
@@ -19,9 +19,10 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   alignItems: "center",
   justifyContent: "center",
   marginLeft: 1,
+  borderRadius: 2,
+  height: "$spacing$11",
   "&": {
-    px: "$spacing$5",
-    py: "$spacing$3",
+    px: "$spacing$3",
   },
   "&:first-child": {
     marginLeft: 0,
@@ -30,6 +31,7 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   },
   "&:last-child": { borderTopRightRadius: 4, borderBottomRightRadius: 4 },
   "&:hover": { backgroundColor: "$slateA3" },
+  "&:focus": { boxShadow: "0 0 0 $spacing$2 $colors$blue10", zIndex: 1 },
   "&[data-state=on]": {
     backgroundColor: "$slate5",
     "&[data-breakpoint=true]": {

@@ -78,7 +78,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
           <IconButton
             size="1"
             css={{
-              marginRight: "$2",
+              marginRight: "$spacing$5",
               "&:not(:hover):focus": { background: "none" },
             }}
             aria-label="Close"
@@ -96,50 +96,3 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverClose = PopoverPrimitive.Close;
 export const PopoverPortal = PopoverPrimitive.Portal;
-
-const useSideOffset = (
-  isOpen: boolean
-): [MutableRefObject<HTMLButtonElement | null>, number] => {
-  const ref = useRef<HTMLButtonElement | null>(null);
-  const sideOffset =
-    isOpen && ref.current !== null ? 240 - ref.current.offsetWidth : 0;
-  return [ref, sideOffset];
-};
-
-export const FloatingPopover = ({
-  title,
-  content,
-  children,
-}: {
-  title: string;
-  content: JSX.Element;
-  children: JSX.Element;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [ref, sideOffset] = useSideOffset(isOpen);
-
-  return (
-    <Popover open={isOpen} onOpenChange={setIsOpen} modal>
-      <PopoverTrigger
-        ref={ref}
-        asChild
-        onClick={() => {
-          setIsOpen(true);
-        }}
-      >
-        <Flex>{children}</Flex>
-      </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent
-          sideOffset={sideOffset}
-          side="right"
-          hideArrow
-          css={{ backgroundColor: "$loContrast" }}
-        >
-          <PopoverHeader title={title} />
-          {content}
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
-  );
-};

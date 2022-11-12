@@ -1,4 +1,4 @@
-import { Flex, Grid, FloatingPopover } from "@webstudio-is/design-system";
+import { Flex, Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
@@ -16,6 +16,7 @@ import {
   OrderLastIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
+import { ValuePickerPopover } from "../../shared/value-picker-popover";
 
 export const FlexChildSection = ({
   setProperty,
@@ -47,7 +48,7 @@ export const FlexChildSection = ({
   };
 
   return (
-    <Flex css={{ flexDirection: "column", gap: "$2" }}>
+    <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
       <Grid css={{ gridTemplateColumns: "4fr auto" }}>
         <PropertyName
           property={sectionStyle.alignSelf?.styleConfig.property}
@@ -145,17 +146,19 @@ export const FlexChildSection = ({
             },
             {
               child: (
-                <FloatingPopover
+                <ValuePickerPopover
                   title="Sizing"
                   content={
                     <Grid
                       css={{
                         gridTemplateColumns: "1.5fr 1fr 1fr",
-                        gap: "$3",
-                        padding: "$3",
+                        gap: "$spacing$9",
+                        padding: "$spacing$9",
                       }}
                     >
-                      <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+                      <Grid
+                        css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}
+                      >
                         <PropertyName
                           property={
                             sectionStyle.flexBasis?.styleConfig.property
@@ -164,14 +167,18 @@ export const FlexChildSection = ({
                         />
                         <TextControl {...sectionStyle.flexBasis} />
                       </Grid>
-                      <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+                      <Grid
+                        css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}
+                      >
                         <PropertyName
                           property={sectionStyle.flexGrow?.styleConfig.property}
                           label="Grow"
                         />
                         <TextControl {...sectionStyle.flexGrow} />
                       </Grid>
-                      <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+                      <Grid
+                        css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}
+                      >
                         <PropertyName
                           property={
                             sectionStyle.flexShrink?.styleConfig.property
@@ -183,8 +190,10 @@ export const FlexChildSection = ({
                     </Grid>
                   }
                 >
-                  <EllipsesIcon />
-                </FloatingPopover>
+                  <Flex>
+                    <EllipsesIcon />
+                  </Flex>
+                </ValuePickerPopover>
               ),
               label: "More sizing options",
               value: "",
@@ -228,10 +237,10 @@ export const FlexChildSection = ({
             },
             {
               child: (
-                <FloatingPopover
+                <ValuePickerPopover
                   title="Order"
                   content={
-                    <Grid css={{ padding: "$3" }}>
+                    <Grid css={{ padding: "$spacing$9" }}>
                       <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
                         <PropertyName
                           property={sectionStyle.order?.styleConfig.property}
@@ -242,8 +251,10 @@ export const FlexChildSection = ({
                     </Grid>
                   }
                 >
-                  <EllipsesIcon />
-                </FloatingPopover>
+                  <Flex>
+                    <EllipsesIcon />
+                  </Flex>
+                </ValuePickerPopover>
               ),
               label: "Customize order",
               value: "",
