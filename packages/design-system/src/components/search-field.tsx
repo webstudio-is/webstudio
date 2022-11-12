@@ -16,11 +16,11 @@ import { styled } from "../stitches.config";
 
 const SearchIcon = styled(MagnifyingGlassIcon, {
   color: "$hint",
-  padding: "$1",
+  padding: "$spacing$3",
 });
 
 const AbortButton = styled(IconButton, {
-  marginRight: "$1",
+  marginRight: "$spacing$3",
 });
 
 const SearchFieldBase: ForwardRefRenderFunction<

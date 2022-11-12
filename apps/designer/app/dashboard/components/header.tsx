@@ -11,6 +11,7 @@ import {
 } from "@webstudio-is/design-system";
 import { User } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
+import { logoutPath } from "~/shared/router-utils";
 
 export const DashboardHeader = ({ user }: { user: User }) => {
   const navigate = useNavigate();
@@ -24,16 +25,16 @@ export const DashboardHeader = ({ user }: { user: User }) => {
       align="center"
       justify="end"
       css={{
-        p: "$1",
+        p: "$spacing$3",
         bc: "$loContrast",
-        borderBottom: "1px solid $slate8",
+        borderBottom: "$spacing$1 solid $slate8",
       }}
     >
       <Flex gap="1" align="center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="raw" aria-label="Menu Button">
-              <Flex gap="1" align="center" css={{ height: "$5" }}>
+              <Flex gap="1" align="center" css={{ height: "$spacing$11" }}>
                 <Avatar
                   src={user?.image || undefined}
                   fallback={userNameFallback}
@@ -44,7 +45,7 @@ export const DashboardHeader = ({ user }: { user: User }) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onSelect={() => navigate("/logout")}>
+            <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
               <Text>Logout</Text>
             </DropdownMenuItem>
           </DropdownMenuContent>

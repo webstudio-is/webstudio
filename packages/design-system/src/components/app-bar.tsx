@@ -7,13 +7,13 @@ export const AppBar = styled("div", {
   variants: {
     size: {
       1: {
-        py: "$1",
+        py: "$spacing$3",
       },
       2: {
-        py: "$2",
+        py: "$spacing$5",
       },
       3: {
-        py: "$3",
+        py: "$spacing$9",
       },
     },
     sticky: {
@@ -31,7 +31,7 @@ export const AppBar = styled("div", {
     },
     border: {
       true: {
-        borderBottom: "1px solid",
+        borderBottom: "$spacing$1 solid",
       },
     },
     color: {

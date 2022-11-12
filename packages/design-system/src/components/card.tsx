@@ -15,7 +15,7 @@ export const Card = styled("div", {
   textDecoration: "none",
   color: "inherit",
   flexShrink: 0,
-  borderRadius: "$3",
+  borderRadius: "$borderRadius$7",
   position: "relative",
 
   "&::before": {
@@ -27,19 +27,19 @@ export const Card = styled("div", {
     bottom: 0,
     left: 0,
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,.1)",
-    borderRadius: "$3",
+    borderRadius: "$borderRadius$7",
     pointerEvents: "none",
   },
 
   variants: {
     size: {
       1: {
-        width: "$10",
-        padding: "$5",
+        width: "$spacing$30",
+        padding: "$spacing$11",
       },
       2: {
-        width: "$12",
-        padding: "$7",
+        width: "$spacing$34",
+        padding: "$spacing$17",
       },
     },
     variant: {
@@ -71,7 +71,7 @@ export const Card = styled("div", {
         "@hover": {
           "&:hover": {
             backgroundColor: "$panel",
-            transform: "translateY(-2px)",
+            transform: "translateY(-$spacing$2)",
             "&::before": {
               opacity: "1",
             },

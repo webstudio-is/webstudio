@@ -4,7 +4,7 @@ export const Code = styled("code", {
   fontFamily: "$mono",
   fontSize: "max(12px, 85%)",
   whiteSpace: "nowrap",
-  padding: "0 3px 2px 3px",
+  padding: "0 $spacing$2 $spacing$2 $spacing$2",
 
   variants: {
     variant: {

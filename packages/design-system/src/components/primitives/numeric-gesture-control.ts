@@ -31,6 +31,7 @@ export type NumericScrubOptions = {
   direction?: NumericScrubDirection;
   onValueInput?: NumericScrubCallback;
   onValueChange?: NumericScrubCallback;
+  shouldHandleEvent?: (node: EventTarget) => boolean;
 };
 
 type NumericScrubState = {
@@ -51,6 +52,7 @@ export const numericScrubControl = (
     direction = "horizontal",
     onValueInput,
     onValueChange,
+    shouldHandleEvent,
   }: NumericScrubOptions
 ) => {
   const eventNames = ["pointerup", "pointerdown"] as const;
@@ -82,6 +84,7 @@ export const numericScrubControl = (
         break;
       }
       case "pointerdown": {
+        if (event.target && shouldHandleEvent?.(event.target) === false) return;
         // light touches don't register corresponding pointerup
         if (event.pressure === 0 || event.button !== 0) break;
         state.offset = offset;

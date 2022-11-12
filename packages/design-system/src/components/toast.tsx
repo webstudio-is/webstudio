@@ -45,14 +45,14 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
 const StyledToast = styled(ToastPrimitive.Root, {
   borderRadius: 6,
   boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
-  padding: "$3",
+  padding: "$spacing$9",
   display: "flex",
   maxWidth: 250,
-  gap: "$3",
+  gap: "$spacing$9",
   alignItems: "center",
   color: "$highContrast",
   fontWeight: 500,
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   background: "$loContrast",
 
   "@media (prefers-reduced-motion: no-preference)": {
@@ -94,7 +94,7 @@ const StyledToast = styled(ToastPrimitive.Root, {
 });
 
 const StyledTitle = styled(ToastPrimitive.Title, {
-  marginBottom: "$1",
+  marginBottom: "$spacing$3",
 });
 
 export const Toaster = () => {
@@ -112,8 +112,8 @@ export const Toaster = () => {
           <Box
             css={{
               svg: {
-                width: "$5",
-                height: "$5",
+                width: "$spacing$11",
+                height: "$spacing$11",
               },
             }}
           >

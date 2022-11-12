@@ -3,6 +3,7 @@ import { sync } from "immerhin";
 import { enqueue } from "./queue";
 import type { Build } from "@webstudio-is/project";
 import { Tree } from "@webstudio-is/react-sdk";
+import { restPatchPath } from "~/shared/router-utils";
 
 export const useSync = ({
   treeId,
@@ -20,7 +21,7 @@ export const useSync = ({
     // and backend fetches and updates big objects, so if we send quickly,
     // we end up overwriting things
     enqueue(() =>
-      fetch(`/rest/patch`, {
+      fetch(restPatchPath(), {
         method: "post",
         body: JSON.stringify({
           transactions: entries,

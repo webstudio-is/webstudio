@@ -1,11 +1,11 @@
 import { ActionFunction } from "@remix-run/node";
-import config from "~/config";
 import { authenticator } from "~/services/auth.server";
+import { loginPath } from "~/shared/router-utils";
 
 export default function Logout() {
   return null;
 }
 
 export const loader: ActionFunction = async ({ request }) => {
-  await authenticator.logout(request, { redirectTo: config.loginPath });
+  await authenticator.logout(request, { redirectTo: loginPath({}) });
 };

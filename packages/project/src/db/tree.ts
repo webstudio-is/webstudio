@@ -22,6 +22,10 @@ export const create = async (root: Instance): Promise<DbTree> => {
   });
 };
 
+export const deleteById = async (treeId: string): Promise<void> => {
+  await prisma.tree.delete({ where: { id: treeId } });
+};
+
 export const loadById = async (treeId: string): Promise<Tree | null> => {
   const tree = await prisma.tree.findUnique({
     where: { id: treeId },

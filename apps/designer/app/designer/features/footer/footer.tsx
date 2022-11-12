@@ -10,12 +10,12 @@ export const Footer = ({ publish }: { publish: Publish }) => {
       align="center"
       css={{
         gridArea: "footer",
-        height: "$sizes$5",
+        height: "$spacing$11",
         background: "$loContrast",
         boxShadow: "inset 0 1px 0 0 $colors$panelOutline",
       }}
     >
-      <Box css={{ height: "100%", p: "$sizes$1" }}>
+      <Box css={{ height: "100%", p: "$spacing$3" }}>
         <Breadcrumbs publish={publish} />
       </Box>
     </Flex>

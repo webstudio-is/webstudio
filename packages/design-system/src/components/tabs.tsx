@@ -12,12 +12,12 @@ export const Tabs = styled(TabsPrimitive.Root, {
 
 export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   flexShrink: 0,
-  height: "$7",
+  height: "$spacing$17",
   display: "inline-flex",
   lineHeight: 1,
   fontFamily: "inherit",
-  fontSize: "$1",
-  px: "$2",
+  fontSize: "$fontSize$3",
+  px: "$spacing$5",
   userSelect: "none",
   outline: "none",
   alignItems: "center",
@@ -25,11 +25,11 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   border: "none",
   backgroundColor: "transparent",
   ["&:first-child"]: {
-    paddingLeft: "$3",
+    paddingLeft: "$spacing$9",
   },
   [`& > ${Text}`]: {
     color: "$gray9",
-    fontSize: "$fontSizes$1",
+    fontSize: "$fontSize$3",
     fontWeight: "500",
   },
   "@hover": {

@@ -1,8 +1,7 @@
 import { useLoaderData } from "@remix-run/react";
 import { LoaderFunction } from "@remix-run/node";
 import { type DesignerProps, Designer, links } from "~/designer";
-import { db } from "@webstudio-is/project/index.server";
-import config from "~/config";
+import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
@@ -30,7 +29,6 @@ export const loader: LoaderFunction = async ({
     const devBuild = await db.build.loadByProjectId(project.id, "dev");
 
     return {
-      config,
       project,
       pages: devBuild.pages,
       pageId: pageIdParam || devBuild.pages.homePage.id,

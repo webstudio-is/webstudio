@@ -37,16 +37,16 @@ const LabelContainer = styled(
   {
     position: "absolute",
     display: "flex",
-    padding: "0 $1",
-    height: "$4",
+    padding: "0 $spacing$3",
+    height: "$spacing$10",
     color: "white",
     alignItems: "center",
     justifyContent: "center",
-    gap: "$1",
-    fontSize: "$1",
+    gap: "$spacing$3",
+    fontSize: "$fontSize$3",
     fontFamily: "$sans",
     lineHeight: 1,
-    minWidth: "$6",
+    minWidth: "$spacing$13",
     whiteSpace: "nowrap",
     backgroundColor: "$blue9",
   },
@@ -54,13 +54,13 @@ const LabelContainer = styled(
     variants: {
       position: {
         top: {
-          top: "-$4",
+          top: "-$spacing$10",
         },
         inside: {
           top: 0,
         },
         bottom: {
-          bottom: "-$4",
+          bottom: "-$spacing$10",
         },
       },
     },

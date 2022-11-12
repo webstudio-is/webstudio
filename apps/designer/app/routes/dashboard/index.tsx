@@ -6,12 +6,12 @@ import {
   redirect,
 } from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
-import { db } from "@webstudio-is/project/index.server";
-import config, { type Config } from "~/config";
+import { db } from "@webstudio-is/project/server";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
 import { zfd } from "zod-form-data";
 import { type Project, User } from "@webstudio-is/prisma-client";
+import { designerPath, loginPath } from "~/shared/router-utils";
 
 export { links };
 const schema = zfd.formData({
@@ -19,7 +19,6 @@ const schema = zfd.formData({
 });
 
 type Data = {
-  config: Config;
   projects: Array<Project>;
   user: User;
 };
@@ -34,7 +33,7 @@ export const action: ActionFunction = async ({ request }) => {
       title,
       userId: authenticatedUser?.id || userId,
     });
-    return redirect(`${config.designerPath}/${project?.id}`, { headers });
+    return redirect(designerPath({ projectId: project.id }), { headers });
   } catch (error) {
     if (error instanceof Error) {
       return { errors: error.message };
@@ -46,17 +45,17 @@ export const action: ActionFunction = async ({ request }) => {
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await authenticator.isAuthenticated(request);
   if (!user) {
-    return redirect(config.loginPath);
+    return redirect(loginPath({}));
   }
   const { headers } = await ensureUserCookie(request);
   const projects = await db.project.loadManyByUserId(user.id);
-  return json({ config, projects, user }, headers);
+  return json({ projects, user }, headers);
 };
 
 const DashboardRoute = () => {
-  const { config, projects, user } = useLoaderData<Data>();
+  const { projects, user } = useLoaderData<Data>();
 
-  return <Dashboard config={config} user={user} projects={projects} />;
+  return <Dashboard user={user} projects={projects} />;
 };
 
 export default DashboardRoute;

@@ -54,7 +54,7 @@ export const DropdownMenuRadioItem = React.forwardRef<
   DialogMenuRadioItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledDropdownMenuRadioItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$1" }}>
+    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
       <DropdownMenuPrimitive.ItemIndicator>
         <CheckIcon />
       </DropdownMenuPrimitive.ItemIndicator>
@@ -82,7 +82,7 @@ export const DropdownMenuCheckboxItem = React.forwardRef<
   DialogMenuCheckboxItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledDropdownMenuCheckboxItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$1" }}>
+    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
       <DropdownMenuPrimitive.ItemIndicator>
         <CheckIcon />
       </DropdownMenuPrimitive.ItemIndicator>

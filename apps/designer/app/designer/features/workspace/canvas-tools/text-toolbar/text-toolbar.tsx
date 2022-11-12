@@ -2,11 +2,43 @@ import { type Publish } from "~/shared/pubsub";
 import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,
-  useSelectionRect,
+  type TextToolbarState,
+  useTextToolbarState,
 } from "~/designer/shared/nano-states";
 import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
-import { FontBoldIcon, FontItalicIcon, Link2Icon } from "@webstudio-is/icons";
-import { createInstance } from "~/shared/tree-utils";
+import {
+  FontBoldIcon,
+  FontItalicIcon,
+  SuperscriptIcon,
+  SubscriptIcon,
+  Link2Icon,
+  BrushIcon,
+  FormatClearIcon,
+} from "@webstudio-is/icons";
+import { useSubscribe } from "~/shared/pubsub";
+
+type Format =
+  | "bold"
+  | "italic"
+  | "superscript"
+  | "subscript"
+  | "link"
+  | "span"
+  | "clear";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    showTextToolbar: TextToolbarState;
+    hideTextToolbar: void;
+    formatTextToolbar: Format;
+  }
+}
+
+export const useSubscribeTextToolbar = () => {
+  const [, setTextToolbar] = useTextToolbarState();
+  useSubscribe("showTextToolbar", setTextToolbar);
+  useSubscribe("hideTextToolbar", () => setTextToolbar(undefined));
+};
 
 const getPlacement = ({
   toolbarRect,
@@ -40,8 +72,6 @@ const getPlacement = ({
   return { top, left, marginBottom, marginTop, transform, visibility };
 };
 
-type Value = "Bold" | "Italic" | "Link";
-
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -49,33 +79,89 @@ const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
 
 type ToolbarProps = {
   css?: CSS;
-  onValueChange: (value: Value) => void;
   rootRef: React.Ref<HTMLDivElement>;
+  state: TextToolbarState;
+  onToggle: (value: Format) => void;
 };
 
-const Toolbar = ({ css, onValueChange, rootRef }: ToolbarProps) => {
+const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
+  const value: Format[] = [];
+  if (state.isBold) {
+    value.push("bold");
+  }
+  if (state.isItalic) {
+    value.push("italic");
+  }
+  if (state.isSuperscript) {
+    value.push("superscript");
+  }
+  if (state.isSubscript) {
+    value.push("subscript");
+  }
+  if (state.isLink) {
+    value.push("link");
+  }
+  if (state.isSpan) {
+    value.push("span");
+  }
   return (
     <ToggleGroup.Root
       ref={rootRef}
-      type="single"
-      onValueChange={onValueChange}
+      type="multiple"
+      value={value}
+      onValueChange={(newValues: Format[]) => {
+        // @todo refactor with per button callback
+        if (state.isBold !== newValues.includes("bold")) {
+          onToggle("bold");
+        }
+        if (state.isItalic !== newValues.includes("italic")) {
+          onToggle("italic");
+        }
+        if (state.isSuperscript !== newValues.includes("superscript")) {
+          onToggle("superscript");
+        }
+        if (state.isSubscript !== newValues.includes("subscript")) {
+          onToggle("subscript");
+        }
+        if (state.isLink !== newValues.includes("link")) {
+          onToggle("link");
+        }
+        if (state.isSpan !== newValues.includes("span")) {
+          onToggle("span");
+        }
+        if (newValues.includes("clear")) {
+          onToggle("clear");
+        }
+      }}
       onClick={onClickPreventDefault}
       css={{
         position: "absolute",
-        borderRadius: "$1",
-        padding: "$1 $2",
+        borderRadius: "$borderRadius$4",
+        padding: "$spacing$3 $spacing$5",
         pointerEvents: "auto",
         ...css,
       }}
     >
-      <ToggleGroup.Item value="Bold">
+      <ToggleGroup.Item value="bold">
         <FontBoldIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="Italic">
+      <ToggleGroup.Item value="italic">
         <FontItalicIcon />
       </ToggleGroup.Item>
-      <ToggleGroup.Item value="Link">
+      <ToggleGroup.Item value="superscript">
+        <SuperscriptIcon />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="subscript">
+        <SubscriptIcon />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="link">
         <Link2Icon />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="span">
+        <BrushIcon />
+      </ToggleGroup.Item>
+      <ToggleGroup.Item value="clear">
+        <FormatClearIcon />
       </ToggleGroup.Item>
     </ToggleGroup.Root>
   );
@@ -86,16 +172,19 @@ type TextToolbarProps = {
 };
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
-  const [selectionRect] = useSelectionRect();
+  const [textToolbar] = useTextToolbarState();
   const [selectedIntsanceData] = useSelectedInstanceData();
   const [element, setElement] = useState<HTMLElement | null>(null);
   const placement = useMemo(() => {
-    if (selectionRect === undefined || element === null) return;
+    if (textToolbar == null || element === null) return;
     const toolbarRect = element.getBoundingClientRect();
-    return getPlacement({ toolbarRect, selectionRect });
-  }, [selectionRect, element]);
+    return getPlacement({
+      toolbarRect,
+      selectionRect: textToolbar.selectionRect,
+    });
+  }, [textToolbar, element]);
 
-  if (selectionRect === undefined || selectedIntsanceData === undefined) {
+  if (textToolbar == null || selectedIntsanceData === undefined) {
     return null;
   }
 
@@ -103,13 +192,13 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
     <Toolbar
       rootRef={setElement}
       css={placement}
-      onValueChange={(component) => {
-        const instance = createInstance({ component });
+      state={textToolbar}
+      onToggle={(value) =>
         publish({
-          type: "insertInlineInstance",
-          payload: instance,
-        });
-      }}
+          type: "formatTextToolbar",
+          payload: value,
+        })
+      }
     />
   );
 };

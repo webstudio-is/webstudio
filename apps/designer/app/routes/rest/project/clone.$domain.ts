@@ -1,11 +1,11 @@
 import { type LoaderFunction, redirect } from "@remix-run/node";
 import type { User } from "@webstudio-is/prisma-client";
-import { db as projectDb } from "@webstudio-is/project/index.server";
+import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
 import * as userDb from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
-import config from "~/config";
 import { authenticator } from "~/services/auth.server";
+import { designerPath } from "~/shared/router-utils";
 
 const ensureProject = async ({
   userId,
@@ -40,7 +40,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       userId,
       domain: params.domain,
     });
-    return redirect(`${config.designerPath}/${project?.id}`, { headers });
+    return redirect(designerPath({ projectId: project.id }), { headers });
   } catch (error: unknown) {
     if (error instanceof Error) {
       return { errors: error.message };

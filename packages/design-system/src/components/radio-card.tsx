@@ -10,16 +10,16 @@ const StyledRadioButton = styled("div", {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  borderRadius: "$round",
+  borderRadius: "$borderRadius$round",
   width: 25,
   height: 25,
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   flexShrink: 0,
-  mr: "$3",
+  mr: "$spacing$9",
 });
 
 const StyledRadioIndicator = styled("div", {
-  borderRadius: "$round",
+  borderRadius: "$borderRadius$round",
   width: 15,
   height: 15,
   backgroundColor: "$blue9",
@@ -38,9 +38,9 @@ const StyledRadio = styled(RadioGroupPrimitive.Item, {
   },
   display: "flex",
   alignItems: "center",
-  borderRadius: "$2",
+  borderRadius: "$borderRadius$6",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
-  p: "$3",
+  p: "$spacing$9",
   "@hover": {
     "&:hover": {
       boxShadow: "inset 0 0 0 1px $colors$slate8",

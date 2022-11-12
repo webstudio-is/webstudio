@@ -1,7 +1,7 @@
 import { Location } from "@webstudio-is/prisma-client";
 import sharp from "sharp";
 import { ImageMeta } from "./format-asset";
-import { type FontMeta, getFontData } from "@webstudio-is/fonts/index.server";
+import { type FontMeta, getFontData } from "@webstudio-is/fonts/server";
 
 type BaseData = {
   name: string;

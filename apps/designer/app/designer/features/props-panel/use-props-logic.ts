@@ -53,7 +53,7 @@ const getPropsWithDefaultValue = (
     .filter(([_, value]) => value.defaultValue != null)
     .map(([prop, propObj]) => {
       const { defaultValue } = propObj;
-      const value = "value" in defaultValue ? defaultValue.value : defaultValue;
+      const value = defaultValue;
       return {
         id: ObjectId().toString(),
         prop,

@@ -44,7 +44,7 @@ export const TriggerButton = forwardRef<
     <Button
       {...props}
       ref={ref}
-      css={{ gap: "$1" }}
+      css={{ gap: "$spacing$3" }}
       ghost
       aria-label="Show breakpoints"
     >

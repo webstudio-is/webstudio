@@ -74,7 +74,10 @@ export const TreePrevew = () => {
 
   return (
     treeProps && (
-      <Flex direction="column" css={{ pt: "$1", pb: "$1", width: "100%" }}>
+      <Flex
+        direction="column"
+        css={{ pt: "$spacing$3", pb: "$spacing$3", width: "100%" }}
+      >
         <InstanceTreeNode {...treeProps} />
       </Flex>
     )
