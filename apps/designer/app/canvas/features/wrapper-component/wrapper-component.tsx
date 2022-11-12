@@ -1,16 +1,17 @@
-import { MouseEvent, FormEvent } from "react";
+import { MouseEvent, FormEvent, useMemo } from "react";
 import { Suspense, lazy, useCallback } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   type Instance,
   type CSS,
   type OnChangeChildren,
+  css as createCss,
   useUserProps,
   renderWrapperComponentChildren,
   components,
 } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
-import { useCss } from "./use-css";
+import { designerClass } from "./designer-css";
 import noop from "lodash.noop";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 
@@ -52,7 +53,7 @@ export const WrapperComponentDev = ({
   onChangeChildren = noop,
   ...rest
 }: WrapperComponentDevProps) => {
-  const className = useCss(css);
+  const className = useMemo(() => createCss(css)(), [css]);
   const [editingInstanceId] = useTextEditingInstanceId();
   const [, setSelectedElement] = useSelectedElement();
 
@@ -75,7 +76,7 @@ export const WrapperComponentDev = ({
     ...rest,
     ...readonlyProps,
     // @todo merge className with props
-    className,
+    className: `${className} ${designerClass} ${userProps.className || ""}`,
     tabIndex: 0,
     // @todo stop using id to free it up to the user
     // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id

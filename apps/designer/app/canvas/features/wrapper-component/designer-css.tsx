@@ -1,10 +1,10 @@
-import { useMemo } from "react";
-import { css as createCss, type CSS } from "@webstudio-is/react-sdk";
+import { css as createCss, type CSS } from "@webstudio-is/design-system";
 
 const voidElements =
   "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
 
-const defaultStyle: CSS = {
+// Helper styles on for canvas in design mode
+const designerCss: CSS = {
   "&": {
     // When double clicking into an element to edit text, it should not select the word.
     userSelect: "none",
@@ -27,6 +27,4 @@ const defaultStyle: CSS = {
   },
 };
 
-export const useCss = (css: CSS): string => {
-  return useMemo(() => createCss({ ...css, ...defaultStyle })(), [css]);
-};
+export const designerClass = createCss(designerCss)();
