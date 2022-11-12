@@ -1,5 +1,5 @@
 import type { RenderCategoryProps } from "../../style-sections";
-import { FloatingPopover, Grid, IconButton } from "@webstudio-is/design-system";
+import { Grid, IconButton } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -9,6 +9,7 @@ import {
 } from "../../controls";
 import { CrossSmallIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import { ValuePickerPopover } from "../../shared/value-picker-popover";
 
 export const TypographySection = ({
   setProperty,
@@ -196,7 +197,7 @@ export const TypographySection = ({
               },
             ]}
           />
-          <FloatingPopover
+          <ValuePickerPopover
             title="Advanced Typography"
             content={
               <Grid css={{ padding: "$3", gap: "$3" }}>
@@ -282,7 +283,7 @@ export const TypographySection = ({
             <IconButton>
               <EllipsesIcon />
             </IconButton>
-          </FloatingPopover>
+          </ValuePickerPopover>
         </Grid>
       </Grid>
     </>
