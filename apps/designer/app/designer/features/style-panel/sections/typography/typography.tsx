@@ -1,9 +1,10 @@
 import type { RenderCategoryProps } from "../../style-sections";
-import { Grid, IconButton } from "@webstudio-is/design-system";
+import { Flex, Grid, IconButton } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
   FontFamilyControl,
+  FontWeightControl,
   SelectControl,
   TextControl,
 } from "../../controls";
@@ -35,8 +36,12 @@ export const TypographySection = ({
   const setHyphens = setProperty("hyphens");
 
   return (
-    <>
-      <Grid gap="2">
+    <Flex css={{ gap: "$spacing$7" }} direction="column">
+      <Grid
+        css={{
+          gap: "$spacing$5",
+        }}
+      >
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
           <PropertyName
             label="Font"
@@ -49,7 +54,7 @@ export const TypographySection = ({
             label="Weight"
             property={sectionStyle.fontWeight?.styleConfig.property}
           />
-          <SelectControl {...sectionStyle.fontWeight} />
+          <FontWeightControl {...sectionStyle.fontWeight} />
         </Grid>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
           <PropertyName
@@ -63,24 +68,24 @@ export const TypographySection = ({
       <Grid
         css={{
           gridTemplateColumns: "1fr 1fr 1fr",
-          gap: "$3",
+          gap: "$spacing$5",
         }}
       >
-        <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+        <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
           <PropertyName
             property={sectionStyle.fontSize?.styleConfig.property}
             label="Size"
           />
           <TextControl {...sectionStyle.fontSize} />
         </Grid>
-        <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+        <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
           <PropertyName
             property={sectionStyle.lineHeight?.styleConfig.property}
             label="Height"
           />
           <TextControl {...sectionStyle.lineHeight} />
         </Grid>
-        <Grid css={{ gridTemplateColumns: "auto", gap: "$1" }}>
+        <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
           <PropertyName
             property={sectionStyle.letterSpacing?.styleConfig.property}
             label="Spacing"
@@ -89,11 +94,15 @@ export const TypographySection = ({
         </Grid>
       </Grid>
 
-      <Grid gap="2">
+      <Grid
+        css={{
+          gap: "$spacing$5",
+        }}
+      >
         <Grid
           css={{
             gridTemplateColumns: "1fr 1fr",
-            gap: "$3",
+            gap: "$spacing$9",
           }}
         >
           <ToggleGroupControl
@@ -149,7 +158,7 @@ export const TypographySection = ({
         <Grid
           css={{
             gridTemplateColumns: "1fr 1fr auto",
-            gap: "$3",
+            gap: "$spacing$9",
             alignItems: "center",
           }}
         >
@@ -200,7 +209,7 @@ export const TypographySection = ({
           <ValuePickerPopover
             title="Advanced Typography"
             content={
-              <Grid css={{ padding: "$3", gap: "$3" }}>
+              <Grid css={{ padding: "$spacing$9", gap: "$spacing$9" }}>
                 <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
                   <PropertyName
                     property={sectionStyle.whiteSpace?.styleConfig.property}
@@ -286,6 +295,6 @@ export const TypographySection = ({
           </ValuePickerPopover>
         </Grid>
       </Grid>
-    </>
+    </Flex>
   );
 };
