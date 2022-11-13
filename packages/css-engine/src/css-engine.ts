@@ -1,36 +1,57 @@
 import { Breakpoint, CssRule } from "@webstudio-is/react-sdk";
 import { MediaRule, StyleRule } from "./rules";
+import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
 export class CssEngine {
-  rulesCounter = -1;
-  mediaRules: Map<Breakpoint["id"], MediaRule> = new Map();
-  sheet: StyleSheet;
+  #element;
+  #mediaRules: Map<Breakpoint["id"], MediaRule> = new Map();
+  #sheet: StyleSheet;
+  #isDirty = false;
+  #cssText = "";
   constructor() {
-    this.sheet = new StyleSheet();
+    this.#element = new StyleElement();
+    this.#sheet = new StyleSheet(this.#element);
   }
   addBreakpoint(breakpoint: Breakpoint) {
-    const mediaRule = new MediaRule(breakpoint);
-    this.mediaRules.set(breakpoint.id, mediaRule);
+    let mediaRule = this.#mediaRules.get(breakpoint.id);
+    if (mediaRule === undefined) {
+      mediaRule = new MediaRule(breakpoint);
+      this.#mediaRules.set(breakpoint.id, mediaRule);
+      this.#isDirty = true;
+    }
+    return mediaRule;
   }
-  addRule(rule: CssRule) {
-    const mediaRule = this.mediaRules.get(rule.breakpoint);
+  addRule(selectorText: string, rule: CssRule) {
+    const mediaRule = this.#mediaRules.get(rule.breakpoint);
     if (mediaRule === undefined) {
       throw new Error(`Unknown breakpoint: ${rule.breakpoint}`);
     }
-    const styleRule = new StyleRule(rule.style, ++this.rulesCounter);
+    this.#isDirty = true;
+    const styleRule = new StyleRule(selectorText, rule.style);
+    styleRule.onChange = this.#onChangeRule;
     return mediaRule.insertRule(styleRule);
   }
   render() {
-    this.sheet.mount();
-    this.sheet.replaceSync(this.cssText);
+    this.#element.mount();
+    // This isn't going to do anything if the `cssText` hasn't changed.
+    this.#sheet.replaceSync(this.cssText);
   }
   get cssText() {
+    if (this.#isDirty === false) {
+      return this.#cssText;
+    }
+    this.#isDirty = false;
     const css: Array<string> = [];
-    for (const mediaRule of this.mediaRules.values()) {
+    for (const mediaRule of this.#mediaRules.values()) {
       const { cssText } = mediaRule;
       if (cssText !== "") css.push(cssText);
     }
-    return css.join("\n");
+    this.#cssText = css.join("\n");
+    return this.#cssText;
   }
+
+  #onChangeRule = () => {
+    this.#isDirty = true;
+  };
 }

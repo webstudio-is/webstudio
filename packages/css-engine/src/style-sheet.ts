@@ -1,21 +1,15 @@
+import { StyleElement } from "./style-element";
+
 export class StyleSheet {
-  #style?: HTMLStyleElement;
-  mount() {
-    //if (typeof document === "object" && "adoptedStyleSheets" in document) {
-    //  // @ts-expect-error TS2339: Property 'adoptedStyleSheets' does not exist on type 'Document'.
-    //  document.adoptedStyleSheets = [this.sheet];
-    //  return;
-    //}
-    if (this.#style === undefined) {
-      this.#style = document.createElement("style");
-      this.#style.setAttribute("data-webstudio", "");
-      document.head.appendChild(this.#style);
-    }
+  #cssText = "";
+  #element;
+  constructor(element: StyleElement) {
+    this.#element = element;
   }
   replaceSync(cssText: string) {
-    if (this.#style === undefined) {
-      throw new Error("StyleSheet not mounted");
+    if (cssText !== this.#cssText) {
+      this.#cssText = cssText;
+      this.#element.render(cssText);
     }
-    this.#style.textContent = cssText;
   }
 }

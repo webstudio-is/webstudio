@@ -15,7 +15,8 @@
     "storybook:build": "build-storybook"
   },
   "dependencies": {
-    "@webstudio-is/react-sdk": "*"
+    "@webstudio-is/react-sdk": "*",
+    "hyphenate-style-name": "^1.0.4"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^6.5.6",

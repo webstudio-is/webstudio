@@ -1,45 +1,77 @@
-import { Breakpoint, Style, toValue } from "@webstudio-is/react-sdk";
+import {
+  Breakpoint,
+  Style,
+  toValue,
+  StyleProperty,
+  StyleValue,
+} from "@webstudio-is/react-sdk";
+import hyphenate from "hyphenate-style-name";
+
+class StylePropertyMap {
+  #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
+  #isDirty = false;
+  #string = "";
+  onChange?: () => void;
+  set(property: StyleProperty, value?: StyleValue) {
+    this.#styleMap.set(property, value);
+    this.#isDirty = true;
+    this.onChange?.();
+  }
+  toString() {
+    if (this.#isDirty === false) {
+      return this.#string;
+    }
+    const block: Array<string> = [];
+    for (const [property, value] of this.#styleMap) {
+      if (value === undefined) continue;
+      block.push(`${hyphenate(property)}: ${toValue(value)}`);
+    }
+    this.#string = block.join("; ");
+    this.#isDirty = false;
+    return this.#string;
+  }
+}
 
 export class StyleRule {
-  id = -1;
-  style: Style;
-  // @todo name can be composition token name or component name
-  name = "c";
-  get className() {
-    return `${this.name}${this.id}`;
-  }
-  constructor(style: Style, id: number) {
-    this.style = style;
-    this.id = id;
-  }
-  get cssText() {
-    const block: Array<string> = [];
-    let property: keyof Style;
-    for (property in this.style) {
-      const value = this.style[property];
-      if (value === undefined) continue;
-      block.push(`${property}: ${toValue(value)}`);
+  styleMap;
+  selectorText;
+  onChange?: () => void;
+  constructor(selectorText: string, style: Style) {
+    this.styleMap = new StylePropertyMap();
+    this.selectorText = selectorText;
+    let property: StyleProperty;
+    for (property in style) {
+      this.styleMap.set(property, style[property]);
     }
-    return `.${this.className} { ${block.join("; ")} }`;
+    this.styleMap.onChange = this.#onChange;
+  }
+  #onChange = () => {
+    this.onChange?.();
+  };
+  get cssText() {
+    return `${this.selectorText} { ${this.styleMap} }`;
   }
 }
 
 export class MediaRule {
-  #id = "";
   #breakpoint: Breakpoint;
   rules: Array<StyleRule> = [];
   constructor(breakpoint: Breakpoint) {
     this.#breakpoint = breakpoint;
-    this.#id = breakpoint.id;
   }
   insertRule(rule: StyleRule) {
     this.rules.push(rule);
     return rule;
   }
   get cssText() {
-    const rules = this.rules.map((rule) => `  ${rule.cssText}`).join("\n");
-    return `@media (min-width: ${this.#breakpoint.minWidth}px) {\n${rules}\n}`;
+    const rules = [];
+    for (const rule of this.rules) {
+      rules.push(`  ${rule.cssText}`);
+    }
+    return `@media (min-width: ${this.#breakpoint.minWidth}px) {\n${rules.join(
+      "\n"
+    )}\n}`;
   }
 }
 
-export type Rule = StyleRule | MediaRule;
+export type AnyRule = StyleRule | MediaRule;
