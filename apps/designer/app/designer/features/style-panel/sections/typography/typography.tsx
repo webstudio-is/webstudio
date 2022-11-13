@@ -1,5 +1,5 @@
 import type { RenderCategoryProps } from "../../style-sections";
-import { Flex, Grid, IconButton } from "@webstudio-is/design-system";
+import { Flex, Grid, IconButton, Tooltip } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -8,7 +8,24 @@ import {
   SelectControl,
   TextControl,
 } from "../../controls";
-import { CrossSmallIcon, EllipsesIcon } from "@webstudio-is/icons";
+import {
+  CrossSmallIcon,
+  EllipsesIcon,
+  TextDirectionLTRIcon,
+  TextDirectionRTLIcon,
+  TextAlignCenterIcon,
+  TextAlignJustifyIcon,
+  TextAlignLeftIcon,
+  TextAlignRightIcon,
+  TextCapitalizeIcon,
+  TextHyphenIcon,
+  TextItalicIcon,
+  TextLowercaseIcon,
+  TextStrikethroughIcon,
+  TextTruncateIcon,
+  TextUnderlineIcon,
+  TextUppercaseIcon,
+} from "@webstudio-is/icons";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
 
@@ -43,24 +60,15 @@ export const TypographySection = ({
         }}
       >
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-          <PropertyName
-            label="Font"
-            property={sectionStyle.fontFamily?.styleConfig.property}
-          />
+          <PropertyName label="Font" property="fontFamily" />
           <FontFamilyControl {...sectionStyle.fontFamily} />
         </Grid>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-          <PropertyName
-            label="Weight"
-            property={sectionStyle.fontWeight?.styleConfig.property}
-          />
+          <PropertyName label="Weight" property="fontWeight" />
           <FontWeightControl {...sectionStyle.fontWeight} />
         </Grid>
         <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-          <PropertyName
-            label="Color"
-            property={sectionStyle.color?.styleConfig.property}
-          />
+          <PropertyName label="Color" property="color" />
           <ColorControl {...sectionStyle.color} />
         </Grid>
       </Grid>
@@ -72,24 +80,15 @@ export const TypographySection = ({
         }}
       >
         <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
-          <PropertyName
-            property={sectionStyle.fontSize?.styleConfig.property}
-            label="Size"
-          />
+          <PropertyName property="fontSize" label="Size" />
           <TextControl {...sectionStyle.fontSize} />
         </Grid>
         <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
-          <PropertyName
-            property={sectionStyle.lineHeight?.styleConfig.property}
-            label="Height"
-          />
+          <PropertyName property="lineHeight" label="Height" />
           <TextControl {...sectionStyle.lineHeight} />
         </Grid>
         <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
-          <PropertyName
-            property={sectionStyle.letterSpacing?.styleConfig.property}
-            label="Spacing"
-          />
+          <PropertyName property="letterSpacing" label="Spacing" />
           <TextControl {...sectionStyle.letterSpacing} />
         </Grid>
       </Grid>
@@ -106,34 +105,34 @@ export const TypographySection = ({
           }}
         >
           <ToggleGroupControl
-            property={sectionStyle.textAlign?.styleConfig.property}
+            property="textAlign"
             onValueChange={(value) => setTextAlign(value)}
             value={String(getTextAlign(String(currentStyle.textAlign?.value)))}
             items={[
               {
-                child: <CrossSmallIcon />,
+                child: <TextAlignLeftIcon />,
                 label: "align: left",
                 value: "start",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextAlignCenterIcon />,
                 label: "align: center",
                 value: "center",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextAlignRightIcon />,
                 label: "align: right",
                 value: "end",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextAlignJustifyIcon />,
                 label: "align: justify",
                 value: "justify",
               },
             ]}
           />
           <ToggleGroupControl
-            property={sectionStyle.textDecorationLine?.styleConfig.property}
+            property="textDecorationLine"
             onValueChange={(value) => setTextDecorationLine(value)}
             value={String(currentStyle.textDecorationLine?.value)}
             items={[
@@ -143,12 +142,12 @@ export const TypographySection = ({
                 value: "none",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextUnderlineIcon />,
                 label: "Underline",
                 value: "underline",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextStrikethroughIcon />,
                 label: "Line through",
                 value: "line-through",
               },
@@ -163,7 +162,7 @@ export const TypographySection = ({
           }}
         >
           <ToggleGroupControl
-            property={sectionStyle.textTransform?.styleConfig.property}
+            property="textTransform"
             onValueChange={(value) => setTextTransform(value)}
             value={String(currentStyle.textTransform?.value)}
             items={[
@@ -173,24 +172,24 @@ export const TypographySection = ({
                 value: "none",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextUppercaseIcon />,
                 label: "Uppercase",
                 value: "uppercase",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextCapitalizeIcon />,
                 label: "Capitalize",
                 value: "capitalize",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextLowercaseIcon />,
                 label: "Lowercase",
                 value: "lowercase",
               },
             ]}
           />
           <ToggleGroupControl
-            property={sectionStyle.fontStyle?.styleConfig.property}
+            property="fontStyle"
             onValueChange={(value) => setFontStyle(value)}
             value={String(currentStyle.fontStyle?.value)}
             items={[
@@ -200,7 +199,7 @@ export const TypographySection = ({
                 value: "normal",
               },
               {
-                child: <CrossSmallIcon />,
+                child: <TextItalicIcon />,
                 label: "Italic",
                 value: "italic",
               },
@@ -211,29 +210,23 @@ export const TypographySection = ({
             content={
               <Grid css={{ padding: "$spacing$9", gap: "$spacing$9" }}>
                 <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-                  <PropertyName
-                    property={sectionStyle.whiteSpace?.styleConfig.property}
-                    label="White Space"
-                  />
+                  <PropertyName property="whiteSpace" label="White Space" />
                   <SelectControl {...sectionStyle.whiteSpace} />
                 </Grid>
                 <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-                  <PropertyName
-                    property={sectionStyle.whiteSpace?.styleConfig.property}
-                    label="Direction"
-                  />
+                  <PropertyName property="direction" label="Direction" />
                   <ToggleGroupControl
-                    property={sectionStyle.direction?.styleConfig.property}
+                    property="direction"
                     onValueChange={(value) => setDirection(value)}
                     value={String(currentStyle.direction?.value)}
                     items={[
                       {
-                        child: <CrossSmallIcon />,
+                        child: <TextDirectionLTRIcon />,
                         label: "Left to Right",
                         value: "ltr",
                       },
                       {
-                        child: <CrossSmallIcon />,
+                        child: <TextDirectionRTLIcon />,
                         label: "Right to Left",
                         value: "rtl",
                       },
@@ -241,12 +234,9 @@ export const TypographySection = ({
                   />
                 </Grid>
                 <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-                  <PropertyName
-                    property={sectionStyle.hyphens?.styleConfig.property}
-                    label="Hyphens"
-                  />
+                  <PropertyName property="hyphens" label="Hyphens" />
                   <ToggleGroupControl
-                    property={sectionStyle.hyphens?.styleConfig.property}
+                    property="hyphens"
                     onValueChange={(value) => setHyphens(value)}
                     value={String(currentStyle.hyphens?.value)}
                     items={[
@@ -256,7 +246,7 @@ export const TypographySection = ({
                         value: "manual",
                       },
                       {
-                        child: <CrossSmallIcon />,
+                        child: <TextHyphenIcon />,
                         label: "Auto",
                         value: "auto",
                       },
@@ -264,12 +254,9 @@ export const TypographySection = ({
                   />
                 </Grid>
                 <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-                  <PropertyName
-                    property={sectionStyle.textOverflow?.styleConfig.property}
-                    label="Text Overflow"
-                  />
+                  <PropertyName property="textOverflow" label="Text Overflow" />
                   <ToggleGroupControl
-                    property={sectionStyle.textOverflow?.styleConfig.property}
+                    property="textOverflow"
                     onValueChange={(value) => setTextOverflow(value)}
                     value={String(currentStyle.textOverflow?.value)}
                     items={[
@@ -279,7 +266,7 @@ export const TypographySection = ({
                         value: "clip",
                       },
                       {
-                        child: <CrossSmallIcon />,
+                        child: <TextTruncateIcon />,
                         label: "Ellipsis",
                         value: "ellipsis",
                       },
@@ -289,9 +276,13 @@ export const TypographySection = ({
               </Grid>
             }
           >
-            <IconButton>
-              <EllipsesIcon />
-            </IconButton>
+            <Flex>
+              <Tooltip content="More typography options" delayDuration={0}>
+                <IconButton>
+                  <EllipsesIcon />
+                </IconButton>
+              </Tooltip>
+            </Flex>
           </ValuePickerPopover>
         </Grid>
       </Grid>
