@@ -6,6 +6,8 @@ export { default as Form } from "./form.stories";
 export { default as Heading } from "./heading.stories";
 export { default as Input } from "./input.stories";
 export { default as Italic } from "./italic.stories";
+export { default as Superscript } from "./superscript.stories";
+export { default as Subscript } from "./subscript.stories";
 export { default as Link } from "./link.stories";
 export { default as Paragraph } from "./paragraph.stories";
 export { default as Span } from "./span.stories";

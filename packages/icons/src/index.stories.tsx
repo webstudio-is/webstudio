@@ -4,9 +4,6 @@ import * as legacyIcons from "./legacy";
 export const Icons = () => {
   return (
     <>
-      <style>{`
-        svg {width: 100%; height: 100%;}
-    `}</style>
       <div style={{ display: "flex", flexWrap: "wrap" }}>
         {Object.entries(icons).map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,20 +26,10 @@ export const Icons = () => {
                   justifyContent: "center",
                 }}
               >
+                <Icon width="32" height="32" />
                 <div
                   style={{
-                    display: "flex",
-                    width: 32,
-                    height: 32,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 16,
-                  }}
-                >
-                  <Icon />
-                </div>
-                <div
-                  style={{
+                    marginTop: 16,
                     fontFamily: "Arial",
                     textAlign: "center",
                     wordWrap: "break-word",

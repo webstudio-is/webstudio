@@ -5,6 +5,7 @@ import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { useSubscribe, publish } from "~/shared/pubsub";
 import { createInstance } from "~/shared/tree-utils";
+import type { TextToolbarState } from "~/designer/shared/nano-states";
 import { TextEditor } from "./text-editor";
 
 export default {
@@ -12,54 +13,78 @@ export default {
   title: "Text Editor 2",
 } as ComponentMeta<typeof TextEditor>;
 
+type Format =
+  | "bold"
+  | "italic"
+  | "superscript"
+  | "subscript"
+  | "link"
+  | "span"
+  | "clear";
+
 export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [isBold, setIsBold] = useState(false);
-  const [isItalic, setIsItalic] = useState(false);
-  const [isLink, setIsLink] = useState(false);
-  const [isSpan, setIsSpan] = useState(false);
+  const [state, setState] = useState<null | TextToolbarState>(null);
   useSubscribe("showTextToolbar", (event) => {
-    setIsEnabled(true);
-    setIsBold(event.isBold);
-    setIsItalic(event.isItalic);
-    setIsLink(event.isLink);
-    setIsSpan(event.isSpan);
+    setState(event);
   });
   useSubscribe("hideTextToolbar", () => {
-    setIsEnabled(false);
+    setState(null);
   });
+
+  const setFormat = (type: Format) => {
+    publish({ type: "formatTextToolbar", payload: type });
+  };
 
   return (
     <div>
       <button
-        disabled={isEnabled === false}
-        style={{ fontWeight: isBold ? "bold" : "normal" }}
-        onClick={() => publish({ type: "formatTextToolbar", payload: "bold" })}
+        disabled={state == null}
+        style={{ fontWeight: state?.isBold ? "bold" : "normal" }}
+        onClick={() => setFormat("bold")}
       >
         Bold
       </button>
       <button
-        disabled={isEnabled === false}
-        style={{ fontWeight: isItalic ? "bold" : "normal" }}
-        onClick={() =>
-          publish({ type: "formatTextToolbar", payload: "italic" })
-        }
+        disabled={state == null}
+        style={{ fontWeight: state?.isItalic ? "bold" : "normal" }}
+        onClick={() => setFormat("italic")}
       >
         Italic
       </button>
       <button
-        disabled={isEnabled === false}
-        style={{ fontWeight: isLink ? "bold" : "normal" }}
-        onClick={() => publish({ type: "formatTextToolbar", payload: "link" })}
+        disabled={state == null}
+        style={{ fontWeight: state?.isSuperscript ? "bold" : "normal" }}
+        onClick={() => setFormat("superscript")}
+      >
+        Superscript
+      </button>
+      <button
+        disabled={state == null}
+        style={{ fontWeight: state?.isSubscript ? "bold" : "normal" }}
+        onClick={() => setFormat("subscript")}
+      >
+        Subscript
+      </button>
+      <button
+        disabled={state == null}
+        style={{ fontWeight: state?.isLink ? "bold" : "normal" }}
+        onClick={() => setFormat("link")}
       >
         Link
       </button>
       <button
-        disabled={isEnabled === false}
-        style={{ fontWeight: isSpan ? "bold" : "normal" }}
-        onClick={() => publish({ type: "formatTextToolbar", payload: "span" })}
+        disabled={state == null}
+        style={{ fontWeight: state?.isSpan ? "bold" : "normal" }}
+        onClick={() => setFormat("span")}
       >
-        span
+        Span
+      </button>
+      <button
+        disabled={state == null}
+        style={{ fontWeight: "normal" }}
+        onClick={() => setFormat("clear")}
+      >
+        Clear
       </button>
       <Box
         css={{
