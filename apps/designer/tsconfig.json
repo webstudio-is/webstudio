@@ -14,6 +14,10 @@
     },
 
     {
+      "path": "../../packages/css-engine"
+    },
+
+    {
       "path": "../../packages/css-vars"
     },
 

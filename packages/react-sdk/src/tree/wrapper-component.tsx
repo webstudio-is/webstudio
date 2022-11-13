@@ -1,9 +1,9 @@
-import React, { useMemo, Fragment } from "react";
+import React, { Fragment } from "react";
 import type { Instance } from "../db";
 import * as components from "../components";
 import { useUserProps } from "../user-props/use-user-props";
-import { type CSS, css as createCss } from "../stitches";
 import type { OnChangeChildren } from "./create-elements-tree";
+import { Breakpoint } from "..";
 
 const renderText = (text: string): Array<JSX.Element> => {
   const lines = text.split("\n");
@@ -26,21 +26,22 @@ export const renderWrapperComponentChildren = (
   });
 };
 
-export type WrapperComponentProps = {
+type WrapperComponentProps = {
   instance: Instance;
-  css: CSS;
+  breakpoints: Array<Breakpoint>;
   children: Array<JSX.Element | string>;
   onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponent = ({
   instance,
-  css,
+  breakpoints,
   onChangeChildren, // prevent it from passing to sdk component
   children,
   ...rest
 }: WrapperComponentProps) => {
-  const className = useMemo(() => createCss(css)(), [css]);
+  // const className = useMemo(() => createCss(css)(), [css]);
+  const className = "";
   const { Component } = components[instance.component];
   const userProps = useUserProps(instance.id);
   return (

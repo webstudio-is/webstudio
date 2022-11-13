@@ -40,6 +40,119 @@ describe("Convert WS CSS rules to stitches", () => {
     });
   });
 
+  test("unit", () => {
+    const instance = createInstance([
+      {
+        style: {
+          width: {
+            type: "unit",
+            value: 10,
+            unit: "px",
+          },
+        },
+        breakpoint: "0",
+      },
+    ]);
+    const stitchesCss = toCss(instance, breakpoints);
+    expect(stitchesCss).toEqual({
+      "@0": {
+        width: "10px",
+      },
+    });
+  });
+
+  test("invalid", () => {
+    const instance = createInstance([
+      {
+        style: {
+          width: {
+            type: "invalid",
+            value: "bad",
+          },
+        },
+        breakpoint: "0",
+      },
+    ]);
+    const stitchesCss = toCss(instance, breakpoints);
+    expect(stitchesCss).toEqual({
+      "@0": {
+        width: "bad",
+      },
+    });
+  });
+
+  test("unset", () => {
+    const instance = createInstance([
+      {
+        style: {
+          width: {
+            type: "unset",
+            value: "",
+          },
+        },
+        breakpoint: "0",
+      },
+    ]);
+    const stitchesCss = toCss(instance, breakpoints);
+    expect(stitchesCss).toEqual({
+      "@0": {
+        width: "",
+      },
+    });
+  });
+
+  test("var", () => {
+    const instance = createInstance([
+      {
+        style: {
+          width: {
+            type: "var",
+            value: "namespace",
+            fallbacks: [],
+          },
+        },
+        breakpoint: "0",
+      },
+    ]);
+    const stitchesCss = toCss(instance, breakpoints);
+    expect(stitchesCss).toEqual({
+      "@0": {
+        width: "var(--namespace)",
+      },
+    });
+  });
+
+  test("var with fallbacks", () => {
+    const instance = createInstance([
+      {
+        style: {
+          width: {
+            type: "var",
+            value: "namespace",
+            fallbacks: [
+              {
+                type: "keyword",
+                value: "normal",
+              },
+              {
+                type: "unit",
+                value: 10,
+                unit: "px",
+              },
+            ],
+          },
+        },
+        breakpoint: "0",
+      },
+    ]);
+    const stitchesCss = toCss(instance, breakpoints);
+    expect(stitchesCss).toEqual({
+      "@0": {
+        width: "var(--namespace, normal, 10px)",
+      },
+    });
+  });
+
   test("fontFamily", () => {
     const instance = createInstance([
       {

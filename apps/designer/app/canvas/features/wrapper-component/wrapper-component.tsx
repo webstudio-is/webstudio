@@ -1,17 +1,17 @@
-import { MouseEvent, FormEvent, useMemo } from "react";
+import { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
-  type Instance,
-  type CSS,
-  type OnChangeChildren,
-  css as createCss,
   useUserProps,
   renderWrapperComponentChildren,
   components,
+  type Instance,
+  type OnChangeChildren,
+  type Breakpoint,
 } from "@webstudio-is/react-sdk";
+import { useCssRules } from "@webstudio-is/css-engine";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
-import { designerClass } from "./designer-css";
+import "./wrapper-component-css";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 
 const TextEditor = lazy(() => import("../text-editor"));
@@ -40,19 +40,20 @@ const ContentEditable = ({
 
 type WrapperComponentDevProps = {
   instance: Instance;
-  css: CSS;
+  breakpoints: Array<Breakpoint>;
   children: Array<JSX.Element | string>;
   onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponentDev = ({
   instance,
-  css,
+  breakpoints,
   children,
   onChangeChildren,
   ...rest
 }: WrapperComponentDevProps) => {
-  const className = useMemo(() => createCss(css)(), [css]);
+  useCssRules(instance);
+
   const [editingInstanceId] = useTextEditingInstanceId();
   const [, setSelectedElement] = useSelectedElement();
 
@@ -74,15 +75,13 @@ export const WrapperComponentDev = ({
     ...userProps,
     ...rest,
     ...readonlyProps,
-    // @todo merge className with props
-    className: `${className} ${designerClass} ${userProps.className || ""}`,
     tabIndex: 0,
     // @todo stop using id to free it up to the user
     // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id
     // for this we need to also make search by id fast
     id: instance.id,
-    "data-component": instance.component,
-    "data-id": instance.id,
+    "data-ws-component": instance.component,
+    "data-ws-id": instance.id,
     onClick: (event: MouseEvent) => {
       if (instance.component === "Link") {
         event.preventDefault();

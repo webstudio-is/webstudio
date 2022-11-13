@@ -26,6 +26,7 @@
     "@vercel/node": "^2.4.1",
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/css-vars": "*",
+    "@webstudio-is/css-engine": "*",
     "@webstudio-is/design-system": "*",
     "@webstudio-is/icons": "*",
     "@webstudio-is/prisma-client": "*",

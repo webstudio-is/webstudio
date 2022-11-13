@@ -1,8 +1,7 @@
-import { Fragment } from "react";
-import { toCss } from "../stitches";
+import { type ComponentProps, Fragment } from "react";
 import type { Instance } from "../db";
 import type { Breakpoint } from "../css";
-import { type WrapperComponentProps } from "./wrapper-component";
+import { WrapperComponent } from "./wrapper-component";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
@@ -30,7 +29,7 @@ export const createElementsTree = ({
   sandbox?: boolean;
   instance: Instance;
   breakpoints: Array<Breakpoint>;
-  Component: (props: WrapperComponentProps) => JSX.Element;
+  Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
 }) => {
   const children = createInstanceChildrenElements({
@@ -63,7 +62,7 @@ const createInstanceChildrenElements = ({
 }: {
   children: Instance["children"];
   breakpoints: Array<Breakpoint>;
-  Component: (props: WrapperComponentProps) => JSX.Element;
+  Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
 }) => {
   const elements = [];
@@ -99,14 +98,14 @@ const createInstanceElement = ({
 }: {
   instance: Instance;
   breakpoints: Array<Breakpoint>;
-  Component: (props: WrapperComponentProps) => JSX.Element;
+  Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
   children?: Array<JSX.Element | string>;
 }) => {
   const props = {
     instance,
+    breakpoints,
     children,
-    css: toCss(instance, breakpoints),
     key: instance.id,
     onChangeChildren,
   };

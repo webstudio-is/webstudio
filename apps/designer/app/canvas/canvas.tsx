@@ -24,13 +24,13 @@ import {
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
-import { usePreviewStyle, useUpdateStyle } from "./shared/style";
+import { useManageStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
 import {
-  useHandleBreakpoints,
+  useManageBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
 import {
@@ -93,11 +93,10 @@ type DesignModeProps = {
 };
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
-  useUpdateStyle();
-  usePreviewStyle();
+  useManageBreakpoints();
+  useManageStyles();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
-  useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
