@@ -1,14 +1,14 @@
 import {
-  type LoaderFunction,
   redirect,
-  MetaFunction,
   json,
+  type LoaderFunction,
+  type MetaFunction,
+  type LinksFunction,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData, type CanvasData } from "~/shared/db";
-import { db } from "@webstudio-is/project/server";
-import env, { Env } from "~/env.server";
+import env, { type Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
@@ -17,6 +17,7 @@ import {
   getBuildParams,
   dashboardPath,
 } from "~/shared/router-utils";
+import { db } from "@webstudio-is/project/server";
 
 type Data =
   | (CanvasData & { env: Env; mode: BuildMode })
@@ -42,10 +43,7 @@ export const loader: LoaderFunction = async ({
 
     const { mode, pathname } = buildParams;
 
-    const project =
-      "projectId" in buildParams
-        ? await db.project.loadById(buildParams.projectId)
-        : await db.project.loadByDomain(buildParams.projectDomain);
+    const project = await db.project.loadByParams(buildParams);
 
     if (project === null) {
       throw json("Project not found", { status: 404 });

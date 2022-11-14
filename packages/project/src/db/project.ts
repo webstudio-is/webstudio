@@ -23,6 +23,14 @@ const parseProject = (project: BaseProject): Project => {
   };
 };
 
+export const loadByParams = async (
+  params: { projectId: string } | { projectDomain: string }
+) => {
+  return "projectId" in params
+    ? await loadById(params.projectId)
+    : await loadByDomain(params.projectDomain);
+};
+
 export const loadById = async (projectId?: Project["id"]) => {
   if (typeof projectId !== "string") {
     throw new Error("Project ID required");
@@ -54,6 +62,7 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
       },
     },
   });
+
   if (!project) return null;
 
   return parseProject(project);

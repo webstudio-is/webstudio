@@ -40,12 +40,10 @@ export const WrapperComponent = ({
   children,
   ...rest
 }: WrapperComponentProps) => {
-  // const className = useMemo(() => createCss(css)(), [css]);
-  const className = "";
   const { Component } = components[instance.component];
   const userProps = useUserProps(instance.id);
   return (
-    <Component {...userProps} {...rest} id={instance.id} className={className}>
+    <Component {...userProps} {...rest} data-ws-id={instance.id}>
       {renderWrapperComponentChildren(children)}
     </Component>
   );
