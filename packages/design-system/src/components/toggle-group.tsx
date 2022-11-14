@@ -1,14 +1,14 @@
 import { styled } from "../stitches.config";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 
-export const Root = styled(ToggleGroupPrimitive.Root, {
+export const ToggleGroupRoot = styled(ToggleGroupPrimitive.Root, {
   display: "inline-flex",
   borderRadius: "$spacing$3",
   boxShadow: `0 0 0 $spacing$1 $colors$slate7`,
   padding: 2,
 });
 
-export const Item = styled(ToggleGroupPrimitive.Item, {
+export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
   all: "unset",
   backgroundColor: "$loContrast",
   color: "$hiContrast",
@@ -32,11 +32,5 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   "&:last-child": { borderTopRightRadius: 4, borderBottomRightRadius: 4 },
   "&:hover": { backgroundColor: "$slateA3" },
   "&:focus": { boxShadow: "0 0 0 $spacing$2 $colors$blue10", zIndex: 1 },
-  "&[data-state=on]": {
-    backgroundColor: "$slate5",
-    "&[data-breakpoint=true]": {
-      color: "$colors$blue11",
-      backgroundColor: "$colors$blue4",
-    },
-  },
+  "&[data-state=on]": { backgroundColor: "$slate5" },
 });
