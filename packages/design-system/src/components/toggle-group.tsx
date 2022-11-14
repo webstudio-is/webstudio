@@ -31,6 +31,7 @@ export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
   },
   "&:last-child": { borderTopRightRadius: 4, borderBottomRightRadius: 4 },
   "&:hover": { backgroundColor: "$slateA3" },
+  // @note because the outline is outside of the element others can end up covering it
   "&:focus": { boxShadow: "0 0 0 $spacing$2 $colors$blue10", zIndex: 1 },
   "&[data-state=on]": { backgroundColor: "$slate5" },
 });
