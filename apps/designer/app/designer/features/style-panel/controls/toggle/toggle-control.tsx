@@ -1,4 +1,10 @@
-import { Flex, ToggleGroup, Tooltip } from "@webstudio-is/design-system";
+import {
+  styled,
+  Flex,
+  Tooltip,
+  ToggleGroupRoot,
+  ToggleGroupItem,
+} from "@webstudio-is/design-system";
 import { StyleProperty } from "@webstudio-is/react-sdk";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 
@@ -17,7 +23,7 @@ export const ToggleGroupControl = ({
 }: ToggleGroupControlProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
   return (
-    <ToggleGroup.Root
+    <ToggleGroupRoot
       type="single"
       value={value}
       onValueChange={onValueChange}
@@ -25,17 +31,36 @@ export const ToggleGroupControl = ({
     >
       {items.map(({ child, label, value }, index) => {
         return (
-          <ToggleGroup.Item
+          <ToggleGroupControlItem
             key={index}
             value={value}
-            data-breakpoint={isCurrentBreakpoint}
+            state={isCurrentBreakpoint ? "set" : undefined}
           >
             <Tooltip content={label} delayDuration={0}>
               <Flex>{child}</Flex>
             </Tooltip>
-          </ToggleGroup.Item>
+          </ToggleGroupControlItem>
         );
       })}
-    </ToggleGroup.Root>
+    </ToggleGroupRoot>
   );
 };
+
+const ToggleGroupControlItem = styled(ToggleGroupItem, {
+  variants: {
+    state: {
+      set: {
+        "&[data-state=on]": {
+          color: "$colors$blue11",
+          backgroundColor: "$colors$blue4",
+        },
+      },
+      inherited: {
+        "&[data-state=on]": {
+          color: "$colors$orange4",
+          backgroundColor: "$colors$orange4",
+        },
+      },
+    },
+  },
+});
