@@ -79,6 +79,7 @@ const FormFields = ({
             state={fieldErrors.name && "invalid"}
             id={fieldIds.name}
             name="name"
+            placeholder="About"
             disabled={disabled}
             value={values?.name}
             onChange={(event) => {
@@ -94,6 +95,7 @@ const FormFields = ({
             state={fieldErrors.path && "invalid"}
             id={fieldIds.path}
             name="path"
+            placeholder="/about"
             disabled={disabled}
             value={values?.path}
             onChange={(event) => {
@@ -109,6 +111,7 @@ const FormFields = ({
             state={fieldErrors.title && "invalid"}
             id={fieldIds.title}
             name="title"
+            placeholder="My awesome site - About"
             disabled={disabled}
             value={values?.title}
             onChange={(event) => {
