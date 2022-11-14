@@ -32,6 +32,7 @@ import type {
   CreatePageData,
 } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
+import slugify from "slugify";
 
 const Group = styled(Flex, {
   marginBottom: "$spacing$9",
@@ -54,13 +55,18 @@ const toFormPage = (page: Page): FormPage => {
   };
 };
 
+const autoSelectHandler = (event: React.FocusEvent<HTMLInputElement>) =>
+  event.target.select();
+
 const FormFields = ({
   disabled,
+  autoSelect,
   values,
   onChange,
   fieldErrors,
 }: {
   disabled?: boolean;
+  autoSelect?: boolean;
   values: FormPage;
   onChange: <Name extends FieldName>(event: {
     field: Name;
@@ -78,7 +84,8 @@ const FormFields = ({
           <TextField
             state={fieldErrors.name && "invalid"}
             id={fieldIds.name}
-            autoFocus={true}
+            autoFocus
+            onFocus={autoSelect ? autoSelectHandler : undefined}
             name="name"
             placeholder="About"
             disabled={disabled}
@@ -149,6 +156,39 @@ export const NewPageSettings = ({
   onSuccess?: (page: Page) => void;
   projectId: string;
 }) => {
+  const [pages] = usePages();
+
+  const nameToPath = useCallback(
+    (name: string) => {
+      if (name === "") {
+        return "";
+      }
+
+      const slug = slugify(name, { lower: true, strict: true });
+      const path = `/${slug}`;
+
+      // for TypeScript
+      if (pages === undefined) {
+        return path;
+      }
+
+      if (projectUtils.pages.findByPath(pages, path) === undefined) {
+        return path;
+      }
+
+      let suffix = 1;
+
+      while (
+        projectUtils.pages.findByPath(pages, `${path}${suffix}`) !== undefined
+      ) {
+        suffix++;
+      }
+
+      return `${path}${suffix}`;
+    },
+    [pages]
+  );
+
   const fetcher = useFetcher<CreatePageData>();
 
   useOnFetchEnd(fetcher, (data) => {
@@ -165,9 +205,9 @@ export const NewPageSettings = ({
   });
 
   const [values, setValues] = useState<FormPage>({
-    name: "",
-    path: "",
-    title: "",
+    name: "Untitled",
+    path: nameToPath("Untitled"),
+    title: "Untitled",
     description: "",
   });
 
@@ -188,7 +228,20 @@ export const NewPageSettings = ({
       values={values}
       onChange={({ field, value }) => {
         resetFieldError(field);
-        setValues((values) => ({ ...values, [field]: value }));
+        setValues((values) => {
+          const changes = { [field]: value };
+
+          if (field === "name") {
+            if (values.path === nameToPath(values.name)) {
+              changes.path = nameToPath(value);
+            }
+            if (values.title === values.name) {
+              changes.title = value;
+            }
+          }
+
+          return { ...values, ...changes };
+        });
       }}
     />
   );
@@ -225,7 +278,7 @@ const NewPageSettingsView = ({
             onSubmit();
           }}
         >
-          <FormFields {...formFieldsProps} />
+          <FormFields autoSelect {...formFieldsProps} />
           <Group css={{ alignItems: "end" }}>
             <Button type="submit" variant="green" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create"}
