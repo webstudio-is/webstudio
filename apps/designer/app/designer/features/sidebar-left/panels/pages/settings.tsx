@@ -78,6 +78,7 @@ const FormFields = ({
           <TextField
             state={fieldErrors.name && "invalid"}
             id={fieldIds.name}
+            autoFocus={true}
             name="name"
             placeholder="About"
             disabled={disabled}
