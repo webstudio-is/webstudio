@@ -9,7 +9,8 @@ export const ToggleGroupRoot = styled(ToggleGroupPrimitive.Root, {
 });
 
 export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
-  all: "unset",
+  // all: "unset", // @note weird bug, this somehow gets into weird specifity issues with how styles are inserted
+  border: "none",
   backgroundColor: "$loContrast",
   color: "$hiContrast",
   display: "flex",
