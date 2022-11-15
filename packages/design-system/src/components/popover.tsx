@@ -81,7 +81,6 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
               marginRight: "$spacing$5",
             }}
             aria-label="Close"
-            autoFocus={false}
           >
             <CrossLargeIcon />
           </IconButton>
