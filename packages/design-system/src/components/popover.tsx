@@ -76,7 +76,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
         <Text variant="title">{title}</Text>
         <PopoverClose asChild>
           <IconButton
-            size="1"
+            size="2"
             css={{
               marginRight: "$spacing$5",
               "&:not(:hover):focus": { background: "none" },
