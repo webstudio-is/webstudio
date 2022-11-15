@@ -3,7 +3,6 @@ import {
   json,
   type LoaderFunction,
   type MetaFunction,
-  type LinksFunction,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
