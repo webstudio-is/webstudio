@@ -1,16 +1,17 @@
 import { styled } from "../stitches.config";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 
-export const Root = styled(ToggleGroupPrimitive.Root, {
+export const ToggleGroupRoot = styled(ToggleGroupPrimitive.Root, {
   display: "inline-flex",
-  backgroundColor: "$slate6",
-  borderRadius: 4,
-  boxShadow: `0 2px 10px $blackA7`,
+  borderRadius: "$spacing$3",
+  boxShadow: `0 0 0 $spacing$1 $colors$slate7`,
+  padding: 2,
 });
 
-export const Item = styled(ToggleGroupPrimitive.Item, {
-  all: "unset",
-  backgroundColor: "$panel",
+export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
+  // all: "unset", // @note weird bug, this somehow gets into weird specifity issues with how styles are inserted
+  border: "none",
+  backgroundColor: "$loContrast",
   color: "$hiContrast",
   display: "flex",
   whiteSpace: "nowrap",
@@ -19,9 +20,10 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   alignItems: "center",
   justifyContent: "center",
   marginLeft: 1,
+  borderRadius: 2,
+  height: "$spacing$11",
   "&": {
-    px: "$spacing$5",
-    py: "$spacing$3",
+    px: "$spacing$3",
   },
   "&:first-child": {
     marginLeft: 0,
@@ -30,11 +32,7 @@ export const Item = styled(ToggleGroupPrimitive.Item, {
   },
   "&:last-child": { borderTopRightRadius: 4, borderBottomRightRadius: 4 },
   "&:hover": { backgroundColor: "$slateA3" },
-  "&[data-state=on]": {
-    backgroundColor: "$slateA5",
-  },
-  "&:focus": {
-    position: "relative",
-    boxShadow: `0 0 0 2px black`,
-  },
+  // @note because the outline is outside of the element others can end up covering it
+  "&:focus": { boxShadow: "0 0 0 $spacing$2 $colors$blue10", zIndex: 1 },
+  "&[data-state=on]": { backgroundColor: "$slate5" },
 });

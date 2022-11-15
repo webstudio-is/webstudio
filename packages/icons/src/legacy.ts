@@ -21,7 +21,6 @@ export {
   CommitIcon,
   InputIcon,
   ButtonIcon,
-  TextAlignLeftIcon,
   HeadingIcon,
   TextIcon,
   SquareIcon,

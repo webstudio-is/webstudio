@@ -56,8 +56,8 @@ export const ValuePickerPopover = ({
           align="start"
           css={{ width: PANEL_WIDTH }}
         >
-          <PopoverHeader title={title} />
           {content}
+          <PopoverHeader title={title} />
         </PopoverContent>
       </PopoverPortal>
     </Popover>
