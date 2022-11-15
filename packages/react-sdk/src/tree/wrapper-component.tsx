@@ -28,14 +28,12 @@ export const renderWrapperComponentChildren = (
 
 type WrapperComponentProps = {
   instance: Instance;
-  breakpoints: Array<Breakpoint>;
   children: Array<JSX.Element | string>;
   onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponent = ({
   instance,
-  breakpoints,
   onChangeChildren, // prevent it from passing to sdk component
   children,
   ...rest

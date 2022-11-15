@@ -7,7 +7,6 @@ import {
   components,
   type Instance,
   type OnChangeChildren,
-  type Breakpoint,
 } from "@webstudio-is/react-sdk";
 import { useCssRules } from "@webstudio-is/css-engine";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
@@ -40,14 +39,12 @@ const ContentEditable = ({
 
 type WrapperComponentDevProps = {
   instance: Instance;
-  breakpoints: Array<Breakpoint>;
   children: Array<JSX.Element | string>;
   onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponentDev = ({
   instance,
-  breakpoints,
   children,
   onChangeChildren,
   ...rest
