@@ -39,7 +39,7 @@ describe("Find by id or path", () => {
     expect(page).toEqual(pages.pages[0]);
   });
   test("find page by path", () => {
-    const page = findByIdOrPath(pages, "/path1");
+    const page = findByIdOrPath(pages, "/page1");
     expect(page).toEqual(pages.pages[0]);
   });
 });

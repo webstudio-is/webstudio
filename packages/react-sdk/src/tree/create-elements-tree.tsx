@@ -1,6 +1,5 @@
 import { type ComponentProps, Fragment } from "react";
 import type { Instance } from "../db";
-import type { Breakpoint } from "../css";
 import { WrapperComponent } from "./wrapper-component";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";

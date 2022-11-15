@@ -7,7 +7,7 @@ import { sentryException } from "~/shared/sentry";
 import { CssEngine } from "@webstudio-is/css-engine";
 import { getCssRules } from "~/shared/tree-utils";
 
-export const loader: ActionFunction = async ({ request, params }) => {
+export const loader: ActionFunction = async ({ request }) => {
   try {
     const buildParams = getBuildParams(request);
 

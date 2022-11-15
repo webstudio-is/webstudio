@@ -35,7 +35,6 @@ import {
 } from "./shared/breakpoints";
 import {
   rootInstanceContainer,
-  useBreakpoints,
   useRootInstance,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
