@@ -57,7 +57,6 @@ export const InstanceRoot = ({
   useAllUserProps(data.props);
   return createElementsTree({
     instance: data.tree.root,
-    breakpoints: data.breakpoints,
     Component: Component ?? WrapperComponent,
   });
 };

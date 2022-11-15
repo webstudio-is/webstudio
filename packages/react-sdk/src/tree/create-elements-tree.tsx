@@ -22,20 +22,17 @@ export type OnChangeChildren = (change: {
 export const createElementsTree = ({
   sandbox,
   instance,
-  breakpoints,
   Component,
   onChangeChildren,
 }: {
   sandbox?: boolean;
   instance: Instance;
-  breakpoints: Array<Breakpoint>;
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
 }) => {
   const children = createInstanceChildrenElements({
     Component,
     children: instance.children,
-    breakpoints,
     onChangeChildren,
   });
   const body = createInstanceElement({
@@ -49,19 +46,16 @@ export const createElementsTree = ({
         <Scripts />
       </Fragment>,
     ],
-    breakpoints,
   });
   return body;
 };
 
 const createInstanceChildrenElements = ({
   children,
-  breakpoints,
   Component,
   onChangeChildren,
 }: {
   children: Instance["children"];
-  breakpoints: Array<Breakpoint>;
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
 }) => {
@@ -73,13 +67,11 @@ const createInstanceChildrenElements = ({
     }
     const children = createInstanceChildrenElements({
       children: child.children,
-      breakpoints,
       Component,
       onChangeChildren,
     });
     const element = createInstanceElement({
       instance: child,
-      breakpoints,
       Component,
       onChangeChildren,
       children,
@@ -93,18 +85,15 @@ const createInstanceElement = ({
   Component,
   instance,
   children = [],
-  breakpoints,
   onChangeChildren,
 }: {
   instance: Instance;
-  breakpoints: Array<Breakpoint>;
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
   onChangeChildren?: OnChangeChildren;
   children?: Array<JSX.Element | string>;
 }) => {
   const props = {
     instance,
-    breakpoints,
     children,
     key: instance.id,
     onChangeChildren,

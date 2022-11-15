@@ -55,14 +55,14 @@ const handlePut = async (
 
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
 
-  const existingPage = utils.pages.findByPath(devBuild.pages, data.path);
+  const existingPage = utils.pages.findByIdOrPath(devBuild.pages, data.path);
   if (existingPage !== undefined) {
     return makeFieldError("path", `Already used for "${existingPage.name}"`);
   }
 
   const updatedBuild = await db.build.addPage(devBuild.id, data);
 
-  const newPage = utils.pages.findByPath(updatedBuild.pages, data.path);
+  const newPage = utils.pages.findByIdOrPath(updatedBuild.pages, data.path);
 
   if (newPage === undefined) {
     throw new Error("New page not found");
@@ -96,7 +96,7 @@ const handlePost = async (
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
 
   if (data.path !== undefined) {
-    const existingPage = utils.pages.findByPath(devBuild.pages, data.path);
+    const existingPage = utils.pages.findByIdOrPath(devBuild.pages, data.path);
     if (existingPage !== undefined && existingPage.id !== id) {
       return makeFieldError("path", `Already used for "${existingPage.name}"`);
     }

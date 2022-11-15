@@ -75,7 +75,7 @@ export const getBuildParams = (
 
   const requestHost = getRequestHost(request);
   const buildHost = new URL(getBuildOrigin(request, env)).host;
-  const pageId = url.searchParams.get("pageId");
+  const pageId = url.searchParams.get("pageId") ?? undefined;
 
   if (env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
     const projectId = url.searchParams.get("projectId");

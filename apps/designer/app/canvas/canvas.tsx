@@ -51,7 +51,6 @@ registerContainers();
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
-  const [breakpoints] = useBreakpoints();
 
   const onChangeChildren: OnChangeChildren = useCallback((change) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
@@ -68,11 +67,10 @@ const useElementsTree = () => {
     return createElementsTree({
       sandbox: true,
       instance: rootInstance,
-      breakpoints,
       Component: WrapperComponentDev,
       onChangeChildren,
     });
-  }, [rootInstance, breakpoints, onChangeChildren]);
+  }, [rootInstance, onChangeChildren]);
 };
 
 const useSubscribePreviewMode = () => {
