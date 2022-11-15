@@ -18,6 +18,7 @@ const useIsomorphicLayoutEffect =
 
 // Wrapps a normal StyleValue into a VarStyleValue that uses the previous style value as a fallback and allows
 // to quickly pass the values over CSS variable witout rerendering the components tree.
+// Results in values like this: `var(--namespace, staticValue)`
 const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
   const dynamicStyle: Style = {};
   let property: StyleProperty;
@@ -63,6 +64,7 @@ export const useCssRules = ({
   useIsomorphicLayoutEffect(() => {
     for (const cssRule of cssRules) {
       const key = id + cssRule.breakpoint;
+
       let rule = ruleMap.current.get(key);
       if (rule === undefined) {
         const selectorText = `[data-ws-id="${id}"]`;
