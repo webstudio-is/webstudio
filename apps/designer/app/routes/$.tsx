@@ -17,10 +17,20 @@ import {
   dashboardPath,
 } from "~/shared/router-utils";
 import { db } from "@webstudio-is/project/server";
+import { DynamicLinksFunction } from "remix-utils";
 
 type Data =
   | (CanvasData & { env: Env; mode: BuildMode })
   | { errors: string; env: Env };
+
+export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
+  data,
+  location,
+}) => {
+  const searchParams = new URLSearchParams(location.search);
+  searchParams.set("pageId", data.page.id);
+  return [{ rel: "stylesheet", href: `/s/css/?${searchParams}` }];
+};
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
   if ("errors" in data) {
@@ -33,6 +43,7 @@ export const meta: MetaFunction = ({ data }: { data: Data }) => {
 export const loader: LoaderFunction = async ({
   request,
 }): Promise<Data | Response> => {
+  console.log(111);
   try {
     const buildParams = getBuildParams(request);
 
