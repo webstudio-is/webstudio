@@ -5,7 +5,11 @@ import {
   type TextToolbarState,
   useTextToolbarState,
 } from "~/designer/shared/nano-states";
-import { ToggleGroup, type CSS } from "@webstudio-is/design-system";
+import {
+  type CSS,
+  ToggleGroupRoot,
+  ToggleGroupItem,
+} from "@webstudio-is/design-system";
 import {
   FontBoldIcon,
   FontItalicIcon,
@@ -105,7 +109,7 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
     value.push("span");
   }
   return (
-    <ToggleGroup.Root
+    <ToggleGroupRoot
       ref={rootRef}
       type="multiple"
       value={value}
@@ -142,28 +146,28 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
         ...css,
       }}
     >
-      <ToggleGroup.Item value="bold">
+      <ToggleGroupItem value="bold">
         <FontBoldIcon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="italic">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="italic">
         <FontItalicIcon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="superscript">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="superscript">
         <SuperscriptIcon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="subscript">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="subscript">
         <SubscriptIcon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="link">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="link">
         <Link2Icon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="span">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="span">
         <BrushIcon />
-      </ToggleGroup.Item>
-      <ToggleGroup.Item value="clear">
+      </ToggleGroupItem>
+      <ToggleGroupItem value="clear">
         <FormatClearIcon />
-      </ToggleGroup.Item>
-    </ToggleGroup.Root>
+      </ToggleGroupItem>
+    </ToggleGroupRoot>
   );
 };
 

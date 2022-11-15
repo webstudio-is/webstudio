@@ -7,7 +7,7 @@ export * as Portal from "@radix-ui/react-portal";
 export * from "@radix-ui/react-id";
 export { Container } from "./components/container";
 export { Label } from "./components/label";
-export * as ToggleGroup from "./components/toggle-group";
+export * from "./components/toggle-group";
 export * from "./components/progress-radial";
 export * from "./components/select";
 export * from "./components/text-field";

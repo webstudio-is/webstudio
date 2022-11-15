@@ -28,7 +28,7 @@ export const PropertyName = ({ property, label, css }: PropertyProps) => {
                   color: "$hiContrast",
                 }),
           }}
-          htmlFor={property}
+          htmlFor={String(property)}
         >
           {label}
         </Label>
