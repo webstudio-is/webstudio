@@ -3,7 +3,6 @@ import type { Instance } from "../db";
 import * as components from "../components";
 import { useUserProps } from "../user-props/use-user-props";
 import type { OnChangeChildren } from "./create-elements-tree";
-import { Breakpoint } from "..";
 
 const renderText = (text: string): Array<JSX.Element> => {
   const lines = text.split("\n");
