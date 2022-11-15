@@ -101,6 +101,27 @@ export const Button = styled("button", {
           boxShadow: "inset 0 0 0 1.5px $colors$blue8",
         },
       },
+      green: {
+        backgroundColor: "$green2",
+        boxShadow: "inset 0 0 0 1px $colors$green7",
+        color: "$green11",
+        "@hover": {
+          "&:hover": {
+            boxShadow: "inset 0 0 0 1px $colors$green8",
+          },
+        },
+        "&:active": {
+          backgroundColor: "$green3",
+          boxShadow: "inset 0 0 0 1px $colors$green8",
+        },
+        "&:focus": {
+          boxShadow: "inset 0 0 0 1px $colors$green8, 0 0 0 1px $colors$green8",
+        },
+        '&[data-state="open"]': {
+          backgroundColor: "$green4",
+          boxShadow: "inset 0 0 0 1px $colors$green8",
+        },
+      },
       red: {
         backgroundColor: "$loContrast",
         boxShadow: "inset 0 0 0 1px $colors$red10",
@@ -123,12 +144,81 @@ export const Button = styled("button", {
           boxShadow: "inset 0 0 0 1px $colors$red8",
         },
       },
+      transparentWhite: {
+        backgroundColor: "hsla(0,100%,100%,.2)",
+        color: "white",
+        "@hover": {
+          "&:hover": {
+            backgroundColor: "hsla(0,100%,100%,.25)",
+          },
+        },
+        "&:active": {
+          backgroundColor: "hsla(0,100%,100%,.3)",
+        },
+        "&:focus": {
+          boxShadow:
+            "inset 0 0 0 1px hsla(0,100%,100%,.35), 0 0 0 1px hsla(0,100%,100%,.35)",
+        },
+      },
       raw: {
         background: "transparent",
         color: "inherit",
         padding: 0,
         borderRadius: 0,
         height: "auto",
+      },
+      transparentBlack: {
+        backgroundColor: "hsla(0,0%,0%,.2)",
+        color: "black",
+        "@hover": {
+          "&:hover": {
+            backgroundColor: "hsla(0,0%,0%,.25)",
+          },
+        },
+        "&:active": {
+          backgroundColor: "hsla(0,0%,0%,.3)",
+        },
+        "&:focus": {
+          boxShadow:
+            "inset 0 0 0 1px hsla(0,0%,0%,.35), 0 0 0 1px hsla(0,0%,0%,.35)",
+        },
+      },
+    },
+    state: {
+      active: {
+        backgroundColor: "$slate4",
+        boxShadow: "inset 0 0 0 1px $colors$slate8",
+        color: "$slate11",
+        "@hover": {
+          "&:hover": {
+            backgroundColor: "$slate6",
+            boxShadow: "inset 0 0 0 1px $colors$slate8",
+          },
+        },
+        "&:active": {
+          backgroundColor: "$slate6",
+        },
+        "&:focus": {
+          boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
+        },
+      },
+      waiting: {
+        backgroundColor: "$slate4",
+        boxShadow: "inset 0 0 0 1px $colors$slate8",
+        color: "transparent",
+        pointerEvents: "none",
+        "@hover": {
+          "&:hover": {
+            backgroundColor: "$slate6",
+            boxShadow: "inset 0 0 0 1px $colors$slate8",
+          },
+        },
+        "&:active": {
+          backgroundColor: "$slate6",
+        },
+        "&:focus": {
+          boxShadow: "inset 0 0 0 1px $colors$slate8",
+        },
       },
     },
     ghost: {
@@ -184,6 +274,30 @@ export const Button = styled("button", {
         },
         '&[data-state="open"]': {
           backgroundColor: "$blueA4",
+          boxShadow: "none",
+        },
+      },
+    },
+    {
+      variant: "green",
+      ghost: "true",
+      css: {
+        backgroundColor: "transparent",
+        "@hover": {
+          "&:hover": {
+            backgroundColor: "$greenA3",
+            boxShadow: "none",
+          },
+        },
+        "&:active": {
+          backgroundColor: "$greenA4",
+        },
+        "&:focus": {
+          boxShadow:
+            "inset 0 0 0 1px $colors$greenA8, 0 0 0 1px $colors$greenA8",
+        },
+        '&[data-state="open"]': {
+          backgroundColor: "$greenA4",
           boxShadow: "none",
         },
       },
