@@ -260,7 +260,7 @@ export const PageSettings = ({
   const fetcher = useFetcher<EditPageData>();
 
   const [pages] = usePages();
-  const page = pages && projectUtils.pages.findById(pages, pageId);
+  const page = pages && projectUtils.pages.findByIdOrPath(pages, pageId);
 
   const [unsavedValues, setUnsavedValues] = useState<Partial<FormPage>>({});
   const [submittedValues, setSubmittedValues] = useState<Partial<FormPage>>({});

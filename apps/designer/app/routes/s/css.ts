@@ -24,7 +24,7 @@ export const loader: ActionFunction = async ({ request, params }) => {
     const canvasData = await loadCanvasData(
       project,
       buildParams.mode === "published" ? "prod" : "dev",
-      params.pagePath // @todo use page id
+      buildParams.pageId
     );
 
     if (canvasData === undefined) {

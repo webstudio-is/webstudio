@@ -8,7 +8,7 @@ export type CanvasData = Data & { buildId: Build["id"]; page: Page };
 export const loadCanvasData = async (
   project: Project,
   env: "dev" | "prod",
-  pagePath = ""
+  pageIdOrPath = ""
 ): Promise<CanvasData | undefined> => {
   const build =
     env === "dev"
@@ -19,10 +19,10 @@ export const loadCanvasData = async (
     throw new Error("The project is not published");
   }
 
-  const page = utils.pages.findByPath(build.pages, pagePath);
+  const page = utils.pages.findByIdOrPath(build.pages, pageIdOrPath);
 
   if (page === undefined) {
-    return;
+    throw new Error(`Page ${pageIdOrPath} not found`);
   }
 
   const [tree, props, breakpoints] = await Promise.all([

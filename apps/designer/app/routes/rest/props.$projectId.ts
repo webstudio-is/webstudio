@@ -26,7 +26,7 @@ export const loader: LoaderFunction = async ({
     const page =
       params.pageId === undefined
         ? prodBuild.pages.homePage
-        : utils.pages.findById(prodBuild.pages, params.pageId);
+        : utils.pages.findByIdOrPath(prodBuild.pages, params.pageId);
 
     if (page === undefined) {
       throw new Error(`Page ${params.pageId} not found`);
