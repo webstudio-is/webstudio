@@ -29,7 +29,13 @@ export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
 }) => {
   const searchParams = new URLSearchParams(location.search);
   searchParams.set("pageId", data.page.id);
-  return [{ rel: "stylesheet", href: `/s/css/?${searchParams}` }];
+  return [
+    {
+      rel: "stylesheet",
+      href: `/s/css/?${searchParams}`,
+      "data-webstudio": "ssr",
+    },
+  ];
 };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {

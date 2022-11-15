@@ -9,6 +9,7 @@ import {
   toVarNamespace,
 } from "@webstudio-is/react-sdk";
 import { globalCss } from "@webstudio-is/design-system";
+import { useEffect } from "react";
 
 const setCssVar = (id: string, property: string, value?: StyleValue) => {
   const customProperty = `--${toVarNamespace(id, property)}`;
@@ -47,6 +48,15 @@ const usePreviewStyle = () => {
   });
 };
 
+// Once we rendered the tree in editing mode, we have rendered all styles in a <style> tag.
+// We keep the SSR styles just for the page on canvas to show up like it does in preview.
+const useRemoveSsrStyles = () => {
+  useEffect(() => {
+    const link = document.head.querySelector('[data-webstudio="ssr"]');
+    link?.parentElement?.removeChild(link);
+  }, []);
+};
+
 const voidElements =
   "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
 
@@ -81,4 +91,5 @@ export const useManageStyles = () => {
   wrapperComponentGlobalStyles();
   useUpdateStyle();
   usePreviewStyle();
+  useRemoveSsrStyles();
 };
