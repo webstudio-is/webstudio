@@ -79,7 +79,6 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
             size="2"
             css={{
               marginRight: "$spacing$5",
-              "&:not(:hover):focus": { background: "none" },
             }}
             aria-label="Close"
             autoFocus={false}
