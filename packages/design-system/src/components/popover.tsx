@@ -25,6 +25,8 @@ const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
   "&:focus": {
     outline: "none",
   },
+  display: "flex",
+  flexDirection: "column",
 });
 
 type PopoverContentPrimitiveProps = React.ComponentProps<
@@ -67,7 +69,7 @@ type PopoverHeaderProps = {
 
 export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
   return (
-    <>
+    <Box css={{ order: -1 }}>
       <Flex
         css={{ height: 40, paddingLeft: "$spacing$9" }}
         align="center"
@@ -87,7 +89,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
         </PopoverClose>
       </Flex>
       <Separator />
-    </>
+    </Box>
   );
 };
 
