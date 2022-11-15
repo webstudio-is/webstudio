@@ -17,7 +17,7 @@ import {
   dashboardPath,
 } from "~/shared/router-utils";
 import { db } from "@webstudio-is/project/server";
-import { DynamicLinksFunction } from "remix-utils";
+import type { DynamicLinksFunction } from "remix-utils";
 
 type Data =
   | (CanvasData & { env: Env; mode: BuildMode })
@@ -43,7 +43,6 @@ export const meta: MetaFunction = ({ data }: { data: Data }) => {
 export const loader: LoaderFunction = async ({
   request,
 }): Promise<Data | Response> => {
-  console.log(111);
   try {
     const buildParams = getBuildParams(request);
 
