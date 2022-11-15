@@ -158,36 +158,33 @@ export const NewPageSettings = ({
 }) => {
   const [pages] = usePages();
 
-  const nameToPath = useCallback(
-    (name: string) => {
-      if (name === "") {
-        return "";
-      }
+  const nameToPath = (name: string) => {
+    if (name === "") {
+      return "";
+    }
 
-      const slug = slugify(name, { lower: true, strict: true });
-      const path = `/${slug}`;
+    const slug = slugify(name, { lower: true, strict: true });
+    const path = `/${slug}`;
 
-      // for TypeScript
-      if (pages === undefined) {
-        return path;
-      }
+    // for TypeScript
+    if (pages === undefined) {
+      return path;
+    }
 
-      if (projectUtils.pages.findByPath(pages, path) === undefined) {
-        return path;
-      }
+    if (projectUtils.pages.findByPath(pages, path) === undefined) {
+      return path;
+    }
 
-      let suffix = 1;
+    let suffix = 1;
 
-      while (
-        projectUtils.pages.findByPath(pages, `${path}${suffix}`) !== undefined
-      ) {
-        suffix++;
-      }
+    while (
+      projectUtils.pages.findByPath(pages, `${path}${suffix}`) !== undefined
+    ) {
+      suffix++;
+    }
 
-      return `${path}${suffix}`;
-    },
-    [pages]
-  );
+    return `${path}${suffix}`;
+  };
 
   const fetcher = useFetcher<CreatePageData>();
 
