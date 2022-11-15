@@ -120,11 +120,7 @@ const PagesPanel = ({
                 {isEditing ? (
                   <ChevronRightIcon />
                 ) : (
-                  <Tooltip
-                    content="Open page settings"
-                    side="left"
-                    disableHoverableContent
-                  >
+                  <Tooltip content="Open page settings" disableHoverableContent>
                     <MenuButton
                       aria-label="Open page settings"
                       isParentSelected={isSelected}

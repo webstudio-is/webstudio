@@ -24,7 +24,7 @@ export const Header = ({ title, suffix }: HeaderProps) => {
 };
 
 export const CloseButton = ({ onClick }: { onClick: () => void }) => (
-  <Tooltip content="Close panel" side="bottom" align="end">
+  <Tooltip content="Close panel" side="bottom">
     <IconButton onClick={onClick} size="2" aria-label="Close panel">
       <CrossIcon />
     </IconButton>

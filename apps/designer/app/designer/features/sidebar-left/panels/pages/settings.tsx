@@ -263,7 +263,7 @@ const NewPageSettingsView = ({
         title="New Page Settings"
         suffix={
           onClose && (
-            <Tooltip content="Cancel" side="bottom" align="end">
+            <Tooltip content="Cancel" side="bottom">
               <IconButton size="2" onClick={onClose} aria-label="Cancel">
                 <ChevronDoubleLeftIcon />
               </IconButton>
@@ -440,7 +440,7 @@ const PageSettingsView = ({
               </Tooltip>
             )}
             {onClose && (
-              <Tooltip content="Close page settings" side="bottom" align="end">
+              <Tooltip content="Close page settings" side="bottom">
                 <IconButton
                   size="2"
                   onClick={onClose}
