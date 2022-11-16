@@ -14,7 +14,7 @@ export const loadProject = async ({
     throw new Error("Webstudio API URL is required.");
   }
   const urls = [];
-  let pages: Record<string, unknown> | null = {};
+  const pages: Record<string, unknown> | null = {};
 
   const baseUrl = new URL(apiUrl);
   const treeUrl = new URL(`/rest/tree/${projectId}`, baseUrl);
