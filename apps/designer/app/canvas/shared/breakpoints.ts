@@ -9,6 +9,7 @@ import {
   useBreakpoints,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
+import { addMediaRules } from "./styles";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
@@ -18,6 +19,7 @@ export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
     ref.current = true;
     setBreakpoints(breakpoints);
     setCurrentBreakpoints(breakpoints);
+    addMediaRules(breakpoints);
   }
 };
 
@@ -66,7 +68,7 @@ const useBreakpointDelete = () => {
   });
 };
 
-export const useHandleBreakpoints = () => {
+export const useManageBreakpoints = () => {
   usePublishBreakpoints();
   useBreakpointChange();
   useBreakpointDelete();

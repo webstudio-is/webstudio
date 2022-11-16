@@ -41,14 +41,28 @@ export const UnsetValue = z.object({
 });
 export type UnsetValue = z.infer<typeof UnsetValue>;
 
-export const StyleValue = z.union([
+export const validStaticValueTypes = ["unit", "keyword", "fontFamily"] as const;
+
+export const ValidStaticStyleValue = z.union([
   UnitValue,
   KeywordValue,
-  InvalidValue,
-  UnsetValue,
   FontFamilyValue,
 ]);
+export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 
+export const VarValue = z.object({
+  type: z.literal("var"),
+  value: z.string(),
+  fallbacks: z.array(ValidStaticStyleValue),
+});
+export type VarValue = z.infer<typeof VarValue>;
+
+export const StyleValue = z.union([
+  ValidStaticStyleValue,
+  InvalidValue,
+  UnsetValue,
+  VarValue,
+]);
 export type StyleValue = z.infer<typeof StyleValue>;
 
 export const Style = z.record(z.string(), StyleValue);

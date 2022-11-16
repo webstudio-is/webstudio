@@ -11,7 +11,7 @@ import {
  */
 export const populateInstance = (
   instance: Instance,
-  breakpoint: Breakpoint["id"] = ""
+  breakpoint: Breakpoint["id"]
 ): Instance => {
   const populatedInstance = { ...instance };
   const componentMeta = components[instance.component];

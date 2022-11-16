@@ -3,17 +3,14 @@ import type { Tree, InstanceProps } from "../db";
 import type { Breakpoint } from "../css";
 import { globalCss, setBreakpoints, renderFontFaces } from "../stitches";
 import { createElementsTree } from "./create-elements-tree";
-import {
-  WrapperComponent,
-  type WrapperComponentProps,
-} from "./wrapper-component";
+import { WrapperComponent } from "./wrapper-component";
 import {
   type FontFormat,
   FONT_FORMATS,
   getFontFaces,
 } from "@webstudio-is/fonts";
 import type { Asset, FontAsset } from "@webstudio-is/asset-uploader";
-import { useRef } from "react";
+import { type ComponentProps, useRef } from "react";
 
 export type Data = {
   tree: Tree | null;
@@ -45,7 +42,7 @@ export const useGlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
 
 type RootProps = {
   data: Data;
-  Component?: (props: WrapperComponentProps) => JSX.Element;
+  Component?: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
 };
 
 export const InstanceRoot = ({
@@ -60,7 +57,6 @@ export const InstanceRoot = ({
   useAllUserProps(data.props);
   return createElementsTree({
     instance: data.tree.root,
-    breakpoints: data.breakpoints,
     Component: Component ?? WrapperComponent,
   });
 };

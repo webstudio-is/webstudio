@@ -25,6 +25,7 @@
     "@sentry/remix": "^7.5.0",
     "@vercel/node": "^2.4.1",
     "@webstudio-is/asset-uploader": "*",
+    "@webstudio-is/css-engine": "*",
     "@webstudio-is/css-vars": "*",
     "@webstudio-is/design-system": "*",
     "@webstudio-is/icons": "*",
@@ -62,6 +63,7 @@
     "remix-auth-form": "^1.1.2",
     "remix-auth-github": "^1.1.1",
     "remix-auth-google": "^1.1.0",
+    "remix-utils": "^4.1.0",
     "slugify": "^1.6.5",
     "zod-form-data": "^1.2.1"
   },

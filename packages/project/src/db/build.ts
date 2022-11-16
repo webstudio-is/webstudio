@@ -109,7 +109,7 @@ export const editPage = async (
   data: Partial<Omit<Page, "id" | "treeId">>
 ) => {
   return updatePages(buildId, async (currentPages) => {
-    const currentPage = pagesUtils.findById(currentPages, pageId);
+    const currentPage = pagesUtils.findByIdOrPath(currentPages, pageId);
     if (currentPage === undefined) {
       throw new Error(`Page with id "${pageId}" not found`);
     }
@@ -141,7 +141,7 @@ export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
       throw new Error("Cannot delete home page");
     }
 
-    const page = pagesUtils.findById(currentPages, pageId);
+    const page = pagesUtils.findByIdOrPath(currentPages, pageId);
     if (page === undefined) {
       throw new Error(`Page with id "${pageId}" not found`);
     }

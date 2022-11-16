@@ -33,6 +33,7 @@ import {
 } from "./nano-states";
 import {
   rootInstanceContainer,
+  useBreakpoints,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -99,13 +100,14 @@ export const findInsertLocation = (
 
 export const useInsertInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+  const [breakpoints] = useBreakpoints();
 
   useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
         if (rootInstance === undefined) return;
-        const populatedInstance = populateInstance(instance);
+        const populatedInstance = populateInstance(instance, breakpoints[0].id);
         const hasInserted = insertInstanceMutable(
           rootInstance,
           populatedInstance,

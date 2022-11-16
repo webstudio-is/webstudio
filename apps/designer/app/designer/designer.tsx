@@ -284,7 +284,7 @@ export const Designer = ({
   );
 
   const page = useMemo(() => {
-    const page = projectUtils.pages.findById(pages, pageId);
+    const page = projectUtils.pages.findByIdOrPath(pages, pageId);
     if (page === undefined) {
       throw new Error(`Page with id ${pageId} not found`);
     }

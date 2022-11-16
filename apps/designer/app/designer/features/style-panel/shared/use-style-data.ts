@@ -3,7 +3,7 @@ import type {
   SelectedInstanceData,
   StyleUpdates,
 } from "~/shared/canvas-components";
-import { Instance, type StyleProperty } from "@webstudio-is/react-sdk";
+import { type StyleProperty } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
@@ -14,7 +14,7 @@ import { useRootInstance } from "~/shared/nano-states";
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     updateStyle: StyleUpdates;
-    [key: `previewStyle:${Instance["id"]}`]: StyleUpdates;
+    previewStyle: StyleUpdates;
   }
 }
 
@@ -87,10 +87,7 @@ export const useStyleData = ({
       return;
     }
     publish({
-      type:
-        type === "update"
-          ? "updateStyle"
-          : (`previewStyle:${selectedInstanceData.id}` as const),
+      type: type === "update" ? "updateStyle" : "previewStyle",
       payload: {
         id: selectedInstanceData.id,
         updates,

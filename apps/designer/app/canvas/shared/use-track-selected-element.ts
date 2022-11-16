@@ -74,9 +74,10 @@ export const useTrackSelectedElement = () => {
       let element = event.target as HTMLElement;
 
       // If we click on an element that is not a component, we search for a parent component.
-      if (element.dataset.component === undefined) {
-        const instanceElement =
-          element.closest<HTMLElement>("[data-component]");
+      if (element.dataset.wsComponent === undefined) {
+        const instanceElement = element.closest<HTMLElement>(
+          "[data-ws-component]"
+        );
         if (instanceElement === null) {
           return;
         }
@@ -92,7 +93,7 @@ export const useTrackSelectedElement = () => {
 
       // It's the second click in a double click.
       if (event.detail === 2) {
-        const component = dataset.component as Instance["component"];
+        const component = dataset.wsComponent as Instance["component"];
         if (component === undefined || component in components === false) {
           return;
         }

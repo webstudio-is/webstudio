@@ -24,18 +24,17 @@ import {
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
-import { useUpdateStyle } from "./shared/style";
+import { useManageStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
 import {
-  useHandleBreakpoints,
+  useManageBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
 import {
   rootInstanceContainer,
-  useBreakpoints,
   useRootInstance,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
@@ -51,7 +50,6 @@ registerContainers();
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
-  const [breakpoints] = useBreakpoints();
 
   const onChangeChildren: OnChangeChildren = useCallback((change) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
@@ -68,11 +66,10 @@ const useElementsTree = () => {
     return createElementsTree({
       sandbox: true,
       instance: rootInstance,
-      breakpoints,
       Component: WrapperComponentDev,
       onChangeChildren,
     });
-  }, [rootInstance, breakpoints, onChangeChildren]);
+  }, [rootInstance, onChangeChildren]);
 };
 
 const useSubscribePreviewMode = () => {
@@ -93,10 +90,10 @@ type DesignModeProps = {
 };
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
-  useUpdateStyle();
+  useManageBreakpoints();
+  useManageStyles();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
-  useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();

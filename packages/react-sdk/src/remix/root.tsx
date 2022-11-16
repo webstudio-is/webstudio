@@ -1,4 +1,5 @@
 import { Links, Meta, Outlet as DefaultOutlet } from "@remix-run/react";
+import { DynamicLinks } from "remix-utils";
 import { CRITICAL_CSS_MARKER } from "./constants";
 
 /**
@@ -17,9 +18,11 @@ export const Root = ({
         <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
         <Meta />
+        <DynamicLinks />
         <Links />
         {typeof document === "undefined" ? CRITICAL_CSS_MARKER : null}
       </head>
+
       <Outlet />
     </html>
   );

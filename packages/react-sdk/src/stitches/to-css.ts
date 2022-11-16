@@ -1,8 +1,9 @@
 import type { CSS } from "./stitches";
-import type { StyleProperty, StyleValue, CssRule, Breakpoint } from "../css";
+import type { StyleProperty, StyleValue, Breakpoint } from "../css";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
+import { Instance } from "..";
 
-type Options = {
+type ToCssOptions = {
   withFallback: boolean;
 };
 
@@ -12,14 +13,14 @@ const defaultOptions = {
 
 export const toValue = (
   value?: StyleValue,
-  { withFallback }: Options = defaultOptions
+  options: ToCssOptions = defaultOptions
 ): string => {
   if (value === undefined) return "";
   if (value.type === "unit") {
     return value.value + (value.unit === "number" ? "" : value.unit);
   }
   if (value.type === "fontFamily") {
-    if (withFallback === false) {
+    if (options.withFallback === false) {
       return value.value[0];
     }
     const family = value.value[0];
@@ -29,19 +30,32 @@ export const toValue = (
     }
     return [...value.value, DEFAULT_FONT_FALLBACK].join(", ");
   }
+  if (value.type === "var") {
+    const fallbacks = [];
+    for (const fallback of value.fallbacks) {
+      fallbacks.push(toValue(fallback, options));
+    }
+    const fallbacksString =
+      fallbacks.length > 0 ? `, ${fallbacks.join(", ")}` : "";
+    return `var(--${value.value}${fallbacksString})`;
+  }
   return value.value;
+};
+
+export const toVarNamespace = (id: string, property: string) => {
+  return `${property}-${id}`;
 };
 
 /**
  * Convert instance cssRules to a stitches CSS object.
  */
 export const toCss = (
-  cssRules: Array<CssRule>,
+  instance: Instance,
   breakpoints: Array<Breakpoint>,
-  options: Options = defaultOptions
+  options: ToCssOptions = defaultOptions
 ): CSS => {
   const css: CSS = {};
-
+  const { cssRules } = instance;
   const breakpointsMap: Record<Breakpoint["id"], number> = {};
   for (const breakpoint of breakpoints) {
     breakpointsMap[breakpoint.id] = breakpoint.minWidth;
