@@ -164,4 +164,13 @@ describe("CssEngine", () => {
       }"
     `);
   });
+
+  test("plaintext rule", () => {
+    engine.addPlaintextRule(".c { color: red }");
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c { color: red }
+      }"
+    `);
+  });
 });

@@ -1,5 +1,10 @@
 import { CssRule } from "@webstudio-is/react-sdk";
-import { MediaRule, StyleRule, type MediaRuleOptions } from "./rules";
+import {
+  MediaRule,
+  PlaintextRule,
+  StyleRule,
+  type MediaRuleOptions,
+} from "./rules";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
@@ -37,6 +42,14 @@ export class CssEngine {
       throw new Error("No media rule found");
     }
     return mediaRule.insertRule(styleRule);
+  }
+  addPlaintextRule(cssText: string) {
+    const mediaRule = this.#mediaRules.get(defaultMediaRuleId);
+    if (mediaRule === undefined) {
+      // Should be impossible to reach.
+      throw new Error("No media rule found");
+    }
+    return mediaRule.insertRule(new PlaintextRule(cssText));
   }
   render() {
     this.#element.mount();

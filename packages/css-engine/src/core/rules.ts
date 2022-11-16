@@ -60,13 +60,13 @@ export type MediaRuleOptions = {
 
 export class MediaRule {
   #options: MediaRuleOptions;
-  rules: Array<StyleRule> = [];
+  rules: Array<StyleRule | PlaintextRule> = [];
   #mediaType;
   constructor(options: MediaRuleOptions = {}) {
     this.#options = options;
     this.#mediaType = options.mediaType ?? "all";
   }
-  insertRule(rule: StyleRule) {
+  insertRule(rule: StyleRule | PlaintextRule) {
     this.rules.push(rule);
     return rule;
   }
@@ -87,4 +87,12 @@ export class MediaRule {
   }
 }
 
-export type AnyRule = StyleRule | MediaRule;
+export class PlaintextRule {
+  cssText;
+  styleMap = new Map();
+  constructor(cssText: string) {
+    this.cssText = cssText;
+  }
+}
+
+export type AnyRule = StyleRule | MediaRule | PlaintextRule;
