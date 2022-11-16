@@ -6,6 +6,7 @@ import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { getCssRules } from "~/shared/tree-utils";
+import { idAttribute } from "@webstudio-is/react-sdk";
 
 export const loader: ActionFunction = async ({ request }) => {
   try {
@@ -39,7 +40,7 @@ export const loader: ActionFunction = async ({ request }) => {
 
     const cssRules = getCssRules(canvasData.tree?.root);
     for (const [instanceId, cssRule] of cssRules) {
-      engine.addStyleRule(`[data-ws-id="${instanceId}"]`, cssRule);
+      engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, cssRule);
     }
     const { cssText } = engine;
 

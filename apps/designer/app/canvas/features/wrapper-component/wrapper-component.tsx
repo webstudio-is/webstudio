@@ -7,6 +7,7 @@ import {
   components,
   type Instance,
   type OnChangeChildren,
+  idAttribute,
 } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
@@ -77,7 +78,7 @@ export const WrapperComponentDev = ({
     // for this we need to also make search by id fast
     id: instance.id,
     "data-ws-component": instance.component,
-    "data-ws-id": instance.id,
+    [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
       if (instance.component === "Link") {
         event.preventDefault();

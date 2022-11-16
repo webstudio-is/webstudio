@@ -13,6 +13,7 @@ import {
   Breakpoint,
   ValidStaticStyleValue,
   validStaticValueTypes,
+  idAttribute,
 } from "@webstudio-is/react-sdk";
 import { globalCss } from "@webstudio-is/design-system";
 import { useEffect } from "react";
@@ -98,7 +99,7 @@ const wrappedRulesMap = new Map<string, StyleRule>();
 
 const addRule = (id: string, cssRule: CssRule) => {
   const key = id + cssRule.breakpoint;
-  const selectorText = `[data-ws-id="${id}"]`;
+  const selectorText = `[${idAttribute}="${id}"]`;
   const rule = cssEngine.addStyleRule(selectorText, {
     ...cssRule,
     style: toVarStyleWithFallback(id, cssRule.style),
