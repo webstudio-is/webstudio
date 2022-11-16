@@ -13,8 +13,8 @@ const breakpoint0 = { minWidth: 0, id: "0", label: "0" } as const;
 
 export const Basic = () => {
   const engine = new CssEngine();
-  engine.addBreakpoint(breakpoint0);
-  const rule = engine.addRule(".test", {
+  engine.addMediaRule(breakpoint0);
+  const rule = engine.addStyleRule(".test", {
     style: style0,
     breakpoint: "0",
   });
@@ -32,7 +32,7 @@ export const Basic = () => {
       </button>
       <button
         onClick={() => {
-          engine.addRule(".test", {
+          engine.addStyleRule(".test", {
             style: {
               background: { type: "keyword", value: "yellow" },
             },

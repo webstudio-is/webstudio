@@ -1,9 +1,8 @@
 import {
-  Breakpoint,
-  Style,
   toValue,
-  StyleProperty,
-  StyleValue,
+  type Style,
+  type StyleProperty,
+  type StyleValue,
 } from "@webstudio-is/react-sdk";
 import hyphenate from "hyphenate-style-name";
 
@@ -53,11 +52,20 @@ export class StyleRule {
   }
 }
 
+export type MediaRuleOptions = {
+  id: string;
+  minWidth?: number;
+  maxWidth?: number;
+  mediaType?: "all" | "screen" | "print";
+};
+
 export class MediaRule {
-  #breakpoint: Breakpoint;
+  #options: MediaRuleOptions;
   rules: Array<StyleRule> = [];
-  constructor(breakpoint: Breakpoint) {
-    this.#breakpoint = breakpoint;
+  #mediaType;
+  constructor(options: MediaRuleOptions) {
+    this.#options = options;
+    this.#mediaType = options.mediaType ?? "all";
   }
   insertRule(rule: StyleRule) {
     this.rules.push(rule);
@@ -68,7 +76,12 @@ export class MediaRule {
     for (const rule of this.rules) {
       rules.push(`  ${rule.cssText}`);
     }
-    return `@media (min-width: ${this.#breakpoint.minWidth}px) {\n${rules.join(
+    let conditionText = "";
+    const { minWidth, maxWidth } = this.#options;
+    if (minWidth !== undefined) conditionText = `min-width: ${minWidth}px`;
+    if (maxWidth !== undefined) conditionText = `max-width: ${maxWidth}px`;
+    if (conditionText) conditionText = `(${conditionText}) `;
+    return `@media ${this.#mediaType} ${conditionText}{\n${rules.join(
       "\n"
     )}\n}`;
   }

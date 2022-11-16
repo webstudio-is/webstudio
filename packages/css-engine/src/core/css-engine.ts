@@ -1,11 +1,11 @@
-import { Breakpoint, CssRule } from "@webstudio-is/react-sdk";
-import { MediaRule, StyleRule } from "./rules";
+import { CssRule } from "@webstudio-is/react-sdk";
+import { MediaRule, StyleRule, type MediaRuleOptions } from "./rules";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
 export class CssEngine {
   #element;
-  #mediaRules: Map<Breakpoint["id"], MediaRule> = new Map();
+  #mediaRules: Map<MediaRuleOptions["id"], MediaRule> = new Map();
   #sheet: StyleSheet;
   #isDirty = false;
   #cssText = "";
@@ -13,19 +13,19 @@ export class CssEngine {
     this.#element = new StyleElement();
     this.#sheet = new StyleSheet(this.#element);
   }
-  addBreakpoint(breakpoint: Breakpoint) {
-    let mediaRule = this.#mediaRules.get(breakpoint.id);
+  addMediaRule(options: MediaRuleOptions) {
+    let mediaRule = this.#mediaRules.get(options.id);
     if (mediaRule === undefined) {
-      mediaRule = new MediaRule(breakpoint);
-      this.#mediaRules.set(breakpoint.id, mediaRule);
+      mediaRule = new MediaRule(options);
+      this.#mediaRules.set(options.id, mediaRule);
       this.#isDirty = true;
     }
     return mediaRule;
   }
-  addRule(selectorText: string, rule: CssRule) {
-    const mediaRule = this.#mediaRules.get(rule.breakpoint);
+  addStyleRule(selectorText: string, rule: CssRule) {
+    let mediaRule = this.#mediaRules.get(rule.breakpoint);
     if (mediaRule === undefined) {
-      throw new Error(`Unknown breakpoint: ${rule.breakpoint}`);
+      mediaRule = this.addMediaRule({ id: "__default-media-rule__" });
     }
     this.#isDirty = true;
     const styleRule = new StyleRule(selectorText, rule.style);

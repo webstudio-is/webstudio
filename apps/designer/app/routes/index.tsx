@@ -4,7 +4,6 @@
 // To solve this, we're re-exporting the $.tsx route API in index.tsx
 
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import type { DynamicLinksFunction } from "remix-utils";
 import CatchAllContnet, {
   loader as catchAllloader,
   meta as catchAllmeta,

@@ -4,7 +4,7 @@ import { loadCanvasData } from "~/shared/db";
 import { getBuildParams } from "~/shared/router-utils";
 import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
-import { CssEngine } from "@webstudio-is/css-engine";
+import { createCssEngine } from "@webstudio-is/css-engine";
 import { getCssRules } from "~/shared/tree-utils";
 
 export const loader: ActionFunction = async ({ request }) => {
@@ -31,15 +31,15 @@ export const loader: ActionFunction = async ({ request }) => {
       throw json("Page not found", { status: 404 });
     }
 
-    const engine = new CssEngine();
+    const engine = createCssEngine();
 
     for (const breakpoint of canvasData.breakpoints) {
-      engine.addBreakpoint(breakpoint);
+      engine.addMediaRule(breakpoint);
     }
 
     const cssRules = getCssRules(canvasData.tree?.root);
     for (const [instanceId, cssRule] of cssRules) {
-      engine.addRule(`[data-ws-id="${instanceId}"]`, cssRule);
+      engine.addStyleRule(`[data-ws-id="${instanceId}"]`, cssRule);
     }
     const { cssText } = engine;
 

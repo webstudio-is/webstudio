@@ -9,7 +9,7 @@ import {
   useBreakpoints,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
-import { addBreakpoints } from "@webstudio-is/css-engine";
+import { addMediaRules } from "@webstudio-is/css-engine";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
@@ -19,7 +19,7 @@ export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
     ref.current = true;
     setBreakpoints(breakpoints);
     setCurrentBreakpoints(breakpoints);
-    addBreakpoints(breakpoints);
+    addMediaRules(breakpoints);
   }
 };
 

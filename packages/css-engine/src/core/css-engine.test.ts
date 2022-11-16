@@ -4,7 +4,7 @@ const style0 = {
   display: { type: "keyword", value: "block" },
 } as const;
 
-const breakpoint0 = { minWidth: 0, id: "0", label: "0" } as const;
+const mediaRuleOptions0 = { minWidth: 0, id: "0", label: "0" } as const;
 
 describe("CssEngine", () => {
   let engine: CssEngine;
@@ -13,18 +13,21 @@ describe("CssEngine", () => {
     engine = new CssEngine();
   });
 
-  test("throw when breakpoint is not registered", () => {
-    expect(() => {
-      engine.addRule(".c", {
-        style: style0,
-        breakpoint: "0",
-      });
-    }).toThrowErrorMatchingInlineSnapshot(`"Unknown breakpoint: 0"`);
+  test("use default media rule when there is no matching one registrered", () => {
+    engine.addStyleRule(".c", {
+      style: style0,
+      breakpoint: "0",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c { display: block }
+      }"
+    `);
   });
 
   test("rule with multiple properties", () => {
-    engine.addBreakpoint(breakpoint0);
-    engine.addRule(".c", {
+    engine.addMediaRule(mediaRuleOptions0);
+    engine.addStyleRule(".c", {
       style: {
         ...style0,
         color: { type: "keyword", value: "red" },
@@ -32,30 +35,30 @@ describe("CssEngine", () => {
       breakpoint: "0",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { display: block; color: red }
       }"
     `);
   });
 
   test("hyphenate property", () => {
-    engine.addBreakpoint(breakpoint0);
-    engine.addRule(".c", {
+    engine.addMediaRule(mediaRuleOptions0);
+    engine.addStyleRule(".c", {
       style: {
         backgroundColor: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { background-color: red }
       }"
     `);
   });
 
   test("add rule", () => {
-    engine.addBreakpoint(breakpoint0);
-    const rule1 = engine.addRule(".c", {
+    engine.addMediaRule(mediaRuleOptions0);
+    const rule1 = engine.addStyleRule(".c", {
       style: {
         ...style0,
         color: { type: "keyword", value: "red" },
@@ -63,14 +66,14 @@ describe("CssEngine", () => {
       breakpoint: "0",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { display: block; color: red }
       }"
     `);
     expect(rule1.cssText).toMatchInlineSnapshot(
       `".c { display: block; color: red }"`
     );
-    engine.addRule(".c2", {
+    engine.addStyleRule(".c2", {
       style: {
         ...style0,
         color: { type: "keyword", value: "green" },
@@ -78,7 +81,7 @@ describe("CssEngine", () => {
       breakpoint: "0",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { display: block; color: red }
         .c2 { display: block; color: green }
       }"
@@ -86,8 +89,8 @@ describe("CssEngine", () => {
   });
 
   test("update rule", () => {
-    engine.addBreakpoint(breakpoint0);
-    const rule = engine.addRule(".c", {
+    engine.addMediaRule(mediaRuleOptions0);
+    const rule = engine.addStyleRule(".c", {
       style: {
         ...style0,
         color: { type: "keyword", value: "red" },
@@ -95,7 +98,7 @@ describe("CssEngine", () => {
       breakpoint: "0",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { display: block; color: red }
       }"
     `);
@@ -110,26 +113,26 @@ describe("CssEngine", () => {
     );
 
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { display: block; color: green }
       }"
     `);
   });
 
-  test("don't override breakpoints", () => {
-    engine.addBreakpoint(breakpoint0);
-    engine.addRule(".c", {
+  test("don't override media queries", () => {
+    engine.addMediaRule(mediaRuleOptions0);
+    engine.addStyleRule(".c", {
       style: style0,
       breakpoint: "0",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { display: block }
       }"
     `);
-    engine.addBreakpoint(breakpoint0);
+    engine.addMediaRule(mediaRuleOptions0);
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media (min-width: 0px) {
+      "@media all (min-width: 0px) {
         .c { display: block }
       }"
     `);

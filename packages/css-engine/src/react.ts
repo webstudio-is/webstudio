@@ -8,10 +8,10 @@ import {
   type ValidStaticStyleValue,
 } from "@webstudio-is/react-sdk";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { CssEngine } from "./core/css-engine";
+import { createCssEngine } from "./core";
 import type { StyleRule } from "./core/rules";
 
-const cssEngine = new CssEngine();
+const cssEngine = createCssEngine();
 
 const useIsomorphicLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -46,9 +46,9 @@ const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
   return dynamicStyle;
 };
 
-export const addBreakpoints = (breakpoints: Array<Breakpoint>) => {
+export const addMediaRules = (breakpoints: Array<Breakpoint>) => {
   for (const breakpoint of breakpoints) {
-    cssEngine.addBreakpoint(breakpoint);
+    cssEngine.addMediaRule(breakpoint);
   }
 };
 
@@ -68,7 +68,7 @@ export const useCssRules = ({
       let rule = ruleMap.current.get(key);
       if (rule === undefined) {
         const selectorText = `[data-ws-id="${id}"]`;
-        rule = cssEngine.addRule(selectorText, {
+        rule = cssEngine.addStyleRule(selectorText, {
           ...cssRule,
           style: toVarStyleWithFallback(id, cssRule.style),
         });
