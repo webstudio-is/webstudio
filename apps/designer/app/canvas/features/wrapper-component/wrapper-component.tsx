@@ -8,9 +8,9 @@ import {
   type Instance,
   type OnChangeChildren,
 } from "@webstudio-is/react-sdk";
-import { useCssRules } from "@webstudio-is/css-engine";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
+import { useCssRules } from "~/canvas/shared/styles";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
