@@ -8,7 +8,7 @@ import type { DynamicLinksFunction } from "remix-utils";
 import CatchAllContnet, {
   loader as catchAllloader,
   meta as catchAllmeta,
-  dynamicLinks as catchAllDynamicLinks,
+  handle as catchAllHandle,
 } from "./$";
 
 // We're wrapping functions in order for them to be distinct from the ones in $.tsx.
@@ -16,8 +16,6 @@ import CatchAllContnet, {
 
 export const meta: MetaFunction = (args) => catchAllmeta(args);
 export const loader: LoaderFunction = (args) => catchAllloader(args);
-export const dynamicLinks: DynamicLinksFunction = (args) =>
-  catchAllDynamicLinks(args);
-export const handle = { dynamicLinks };
+export const handle = catchAllHandle;
 const Content = () => <CatchAllContnet />;
 export default Content;

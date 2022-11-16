@@ -38,6 +38,8 @@ export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
   ];
 };
 
+export const handle = { dynamicLinks };
+
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
   if ("errors" in data) {
     return { title: "Error" };
