@@ -34,7 +34,7 @@ export const loader: ActionFunction = async ({ request }) => {
     const engine = createCssEngine();
 
     for (const breakpoint of canvasData.breakpoints) {
-      engine.addMediaRule(breakpoint);
+      engine.addMediaRule(breakpoint.id, breakpoint);
     }
 
     const cssRules = getCssRules(canvasData.tree?.root);

@@ -3,33 +3,39 @@ import { MediaRule, StyleRule, type MediaRuleOptions } from "./rules";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
+const defaultMediaRuleId = "__default-media-rule__";
+
 export class CssEngine {
   #element;
-  #mediaRules: Map<MediaRuleOptions["id"], MediaRule> = new Map();
+  #mediaRules: Map<string, MediaRule> = new Map();
   #sheet: StyleSheet;
   #isDirty = false;
   #cssText = "";
   constructor() {
     this.#element = new StyleElement();
     this.#sheet = new StyleSheet(this.#element);
+    this.addMediaRule(defaultMediaRuleId);
   }
-  addMediaRule(options: MediaRuleOptions) {
-    let mediaRule = this.#mediaRules.get(options.id);
+  addMediaRule(id: string, options?: MediaRuleOptions) {
+    let mediaRule = this.#mediaRules.get(id);
     if (mediaRule === undefined) {
       mediaRule = new MediaRule(options);
-      this.#mediaRules.set(options.id, mediaRule);
+      this.#mediaRules.set(id, mediaRule);
       this.#isDirty = true;
     }
     return mediaRule;
   }
   addStyleRule(selectorText: string, rule: CssRule) {
-    let mediaRule = this.#mediaRules.get(rule.breakpoint);
-    if (mediaRule === undefined) {
-      mediaRule = this.addMediaRule({ id: "__default-media-rule__" });
-    }
+    const mediaRule =
+      this.#mediaRules.get(rule.breakpoint) ??
+      this.#mediaRules.get(defaultMediaRuleId);
     this.#isDirty = true;
     const styleRule = new StyleRule(selectorText, rule.style);
     styleRule.onChange = this.#onChangeRule;
+    if (mediaRule === undefined) {
+      // Should be impossible to reach.
+      throw new Error("No media rule found");
+    }
     return mediaRule.insertRule(styleRule);
   }
   render() {

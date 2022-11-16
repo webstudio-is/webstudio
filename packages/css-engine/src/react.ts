@@ -48,7 +48,7 @@ const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
 
 export const addMediaRules = (breakpoints: Array<Breakpoint>) => {
   for (const breakpoint of breakpoints) {
-    cssEngine.addMediaRule(breakpoint);
+    cssEngine.addMediaRule(breakpoint.id, breakpoint);
   }
 };
 

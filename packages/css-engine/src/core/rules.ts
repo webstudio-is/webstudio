@@ -53,7 +53,6 @@ export class StyleRule {
 }
 
 export type MediaRuleOptions = {
-  id: string;
   minWidth?: number;
   maxWidth?: number;
   mediaType?: "all" | "screen" | "print";
@@ -63,7 +62,7 @@ export class MediaRule {
   #options: MediaRuleOptions;
   rules: Array<StyleRule> = [];
   #mediaType;
-  constructor(options: MediaRuleOptions) {
+  constructor(options: MediaRuleOptions = {}) {
     this.#options = options;
     this.#mediaType = options.mediaType ?? "all";
   }
@@ -72,6 +71,7 @@ export class MediaRule {
     return rule;
   }
   get cssText() {
+    if (this.rules.length === 0) return "";
     const rules = [];
     for (const rule of this.rules) {
       rules.push(`  ${rule.cssText}`);
@@ -80,7 +80,7 @@ export class MediaRule {
     const { minWidth, maxWidth } = this.#options;
     if (minWidth !== undefined) conditionText = `min-width: ${minWidth}px`;
     if (maxWidth !== undefined) conditionText = `max-width: ${maxWidth}px`;
-    if (conditionText) conditionText = `(${conditionText}) `;
+    if (conditionText) conditionText = `and (${conditionText}) `;
     return `@media ${this.#mediaType} ${conditionText}{\n${rules.join(
       "\n"
     )}\n}`;

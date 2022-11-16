@@ -9,11 +9,12 @@ const style0 = {
   color: { type: "keyword", value: "red" },
 } as const;
 
-const breakpoint0 = { minWidth: 0, id: "0", label: "0" } as const;
+const mediaRuleOptions0 = { minWidth: 0 } as const;
+const mediaId = "0";
 
 export const Basic = () => {
   const engine = new CssEngine();
-  engine.addMediaRule(breakpoint0);
+  engine.addMediaRule(mediaId, mediaRuleOptions0);
   const rule = engine.addStyleRule(".test", {
     style: style0,
     breakpoint: "0",
