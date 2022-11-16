@@ -110,19 +110,18 @@ export const StyleSettings = ({
         ? true
         : appliesTo(styleConfig, currentStyle);
       const isRendered = didRender(category, styleConfig);
+      const element = {
+        ...rest,
+        setProperty,
+        currentStyle,
+        styleConfig,
+        category,
+      };
+
+      sectionStyle[styleConfig.property] = element;
 
       // @todo remove isRendered once spacing section is converted to a section
       if (isInCategory && isApplicable && isRendered === false) {
-        const element = {
-          ...rest,
-          setProperty,
-          currentStyle,
-          styleConfig,
-          category,
-        };
-
-        sectionStyle[styleConfig.property] = element;
-
         // We are making a separate array of properties which come after the "moreFrom"
         // so we can make them collapsable
         if (
