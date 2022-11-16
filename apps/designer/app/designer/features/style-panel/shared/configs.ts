@@ -70,7 +70,7 @@ const getControl = (property: StyleProperty): Control => {
 
   switch (property) {
     case "fontFamily": {
-      return isFeatureEnabled("fonts") ? "FontFamilyControl" : "TextControl";
+      return "FontFamilyControl";
     }
     case "backgroundImage": {
       return isFeatureEnabled("assets") ? "ImageControl" : "TextControl";
