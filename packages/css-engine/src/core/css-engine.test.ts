@@ -167,10 +167,40 @@ describe("CssEngine", () => {
 
   test("plaintext rule", () => {
     engine.addPlaintextRule(".c { color: red }");
+    expect(engine.cssText).toMatchInlineSnapshot(`".c { color: red }"`);
+  });
+
+  test("plaintext - no duplicates", () => {
+    engine.addPlaintextRule(".c { color: red }");
+    engine.addPlaintextRule(".c { color: red }");
+    engine.addPlaintextRule(".c { color: green }");
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media all {
-        .c { color: red }
+      ".c { color: red }
+      .c { color: green }"
+    `);
+  });
+
+  test("font family rule", () => {
+    engine.addFontFaceRule({
+      fontFamily: "Roboto",
+      fontStyle: "normal",
+      fontWeight: 400,
+      fontDisplay: "swap",
+      src: "url(/src)",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@font-face {
+        font-family: Roboto; font-style: normal; font-weight: 400; font-display: swap; src: url(/src);
       }"
     `);
+  });
+
+  test("clear", () => {
+    engine.addStyleRule(".c", {
+      style: style0,
+      breakpoint: "0",
+    });
+    engine.clear();
+    expect(engine.cssText).toMatchInlineSnapshot(`""`);
   });
 });

@@ -3,10 +3,9 @@ import store from "immerhin";
 import type { Build } from "@webstudio-is/project";
 import {
   createElementsTree,
-  useGlobalStyles,
+  useAllUserProps,
   type OnChangeChildren,
   type Tree,
-  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
@@ -24,7 +23,7 @@ import {
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
-import { useManageStyles } from "./shared/styles";
+import { useManageDesignModeStyles, useGlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
@@ -91,7 +90,7 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageBreakpoints();
-  useManageStyles();
+  useManageDesignModeStyles();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
   useInsertInstance();
@@ -123,7 +122,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
   const assets = useAssets(data.assets);
-  useGlobalStyles({ assets });
+  useGlobalStyles(assets);
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
   // e.g. toggling preview is still needed in both modes

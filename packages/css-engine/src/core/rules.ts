@@ -95,4 +95,24 @@ export class PlaintextRule {
   }
 }
 
-export type AnyRule = StyleRule | MediaRule | PlaintextRule;
+export type FontFaceOptions = {
+  fontFamily: string;
+  fontStyle: "normal" | "italic" | "oblique";
+  fontWeight: number;
+  fontDisplay: "swap" | "auto" | "block" | "fallback" | "optional";
+  src: string;
+};
+
+export class FontFaceRule {
+  #options: FontFaceOptions;
+  constructor(options: FontFaceOptions) {
+    this.#options = options;
+  }
+  get cssText() {
+    const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
+      this.#options;
+    return `@font-face {\n  font-family: ${fontFamily}; font-style: ${fontStyle}; font-weight: ${fontWeight}; font-display: ${fontDisplay}; src: ${src};\n}`;
+  }
+}
+
+export type AnyRule = StyleRule | MediaRule | PlaintextRule | FontFaceRule;

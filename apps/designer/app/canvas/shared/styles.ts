@@ -16,9 +16,15 @@ import {
   type Style,
 } from "@webstudio-is/react-sdk";
 import { useEffect } from "react";
-import { createCssEngine, type StyleRule } from "@webstudio-is/css-engine";
+import {
+  createCssEngine,
+  type CssEngine,
+  type StyleRule,
+  type PlaintextRule,
+} from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
-import { PlaintextRule } from "@webstudio-is/css-engine/src/core/rules";
+import { Asset, FontAsset } from "@webstudio-is/asset-uploader";
+import { FontFormat, FONT_FORMATS, getFontFaces } from "@webstudio-is/fonts";
 
 const cssEngine = createCssEngine();
 
@@ -26,7 +32,7 @@ const voidElements =
   "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
 
 // Helper styles on for canvas in design mode
-const styles = [
+const helperStyles = [
   // When double clicking into an element to edit text, it should not select the word.
   `[${idAttribute}] {
     user-select: none;
@@ -48,12 +54,45 @@ const styles = [
     margin: 0
   }`,
 ];
-for (const style of styles) cssEngine.addPlaintextRule(style);
 
-export const useManageStyles = () => {
+export const useManageDesignModeStyles = () => {
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
+};
+
+export const addGlobalRules = (
+  engine: CssEngine,
+  { assets = [] }: { assets?: Array<Asset> }
+) => {
+  // @todo we need to figure out all global resets while keeping
+  // the engine aware of all of them.
+  // Ideally, the user is somehow aware and in control of the reset
+  engine.addPlaintextRule("html {margin: 0; height: 100%}");
+
+  const fontAssets = assets.filter((asset) =>
+    FONT_FORMATS.has(asset.format as FontFormat)
+  ) as Array<FontAsset>;
+  const fontFaces = getFontFaces(fontAssets);
+  for (const fontFace of fontFaces) {
+    engine.addFontFaceRule(fontFace);
+  }
+};
+
+const globalStylesCssEngine = createCssEngine();
+
+export const useGlobalStyles = (assets: Array<Asset>) => {
+  globalStylesCssEngine.clear();
+
+  addGlobalRules(globalStylesCssEngine, { assets });
+
+  for (const style of helperStyles) {
+    globalStylesCssEngine.addPlaintextRule(style);
+  }
+
+  if (typeof document !== "undefined") {
+    globalStylesCssEngine.render();
+  }
 };
 
 // Wrapps a normal StyleValue into a VarStyleValue that uses the previous style value as a fallback and allows

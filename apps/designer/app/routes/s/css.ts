@@ -7,6 +7,7 @@ import { sentryException } from "~/shared/sentry";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { getCssRules } from "~/shared/tree-utils";
 import { idAttribute } from "@webstudio-is/react-sdk";
+import { addGlobalRules } from "~/canvas/shared/styles";
 
 export const loader: ActionFunction = async ({ request }) => {
   try {
@@ -33,6 +34,8 @@ export const loader: ActionFunction = async ({ request }) => {
     }
 
     const engine = createCssEngine();
+
+    addGlobalRules(engine, canvasData);
 
     for (const breakpoint of canvasData.breakpoints) {
       engine.addMediaRule(breakpoint.id, breakpoint);
