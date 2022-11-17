@@ -36,7 +36,7 @@ const textFieldIconBaseStyle = css({
 export const TextFieldIconButton = styled(
   "button",
   {
-    all: "unset",
+    border: "none",
     "&:hover": {
       backgroundColor: "$slate7",
       color: "$hiContrast",
