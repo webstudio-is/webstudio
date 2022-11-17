@@ -244,6 +244,12 @@ export const NewPageSettings = ({
   );
 };
 
+const ButtonContainer = styled("div", {
+  ml: "$spacing$5",
+  display: "flex",
+  alignItems: "center",
+});
+
 const NewPageSettingsView = ({
   onSubmit,
   isSubmitting,
@@ -259,13 +265,20 @@ const NewPageSettingsView = ({
       <Header
         title="New Page Settings"
         suffix={
-          onClose && (
-            <Tooltip content="Cancel" side="bottom">
-              <IconButton size="2" onClick={onClose} aria-label="Cancel">
-                <ChevronDoubleLeftIcon />
-              </IconButton>
-            </Tooltip>
-          )
+          <>
+            {onClose && (
+              <Tooltip content="Cancel" side="bottom">
+                <IconButton size="2" onClick={onClose} aria-label="Cancel">
+                  <ChevronDoubleLeftIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            <ButtonContainer>
+              <Button variant="blue" disabled={isSubmitting} onClick={onSubmit}>
+                {isSubmitting ? "Creating..." : "Create"}
+              </Button>
+            </ButtonContainer>
+          </>
         }
       />
       <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
@@ -276,11 +289,6 @@ const NewPageSettingsView = ({
           }}
         >
           <FormFields autoSelect {...formFieldsProps} />
-          <Group css={{ alignItems: "end" }}>
-            <Button type="submit" variant="green" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create"}
-            </Button>
-          </Group>
         </form>
       </Box>
     </>
