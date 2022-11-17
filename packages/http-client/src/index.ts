@@ -51,8 +51,8 @@ export const loadProject = async ({
       };
     }
 
-    const pagesData = await Promise.all([
-      ...urls.map(async (url) => {
+    const pagesData = await Promise.all(
+      urls.map(async (url) => {
         const res = await fetch(url.url);
         if (res.ok) {
           return { path: url.path, type: url.type, data: await res.json() };
