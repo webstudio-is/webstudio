@@ -1,5 +1,5 @@
 import fetch from "isomorphic-fetch";
-import type { Includes, Project } from "./index.d";
+import type { Includes, Project, Page } from "./index.d";
 
 export const loadProject = async ({
   apiUrl,
@@ -57,13 +57,13 @@ export const loadProject = async ({
         if (res.ok) {
           return { path: url.path, type: url.type, data: await res.json() };
         }
-      }),
-    ]);
+      })
+    );
     if (Object.keys(pagesData).length > 0) {
       for (const page of pagesData) {
         if (page && page.path && page.type && page.data) {
           pages[page.path] = {
-            ...(pages[page.path] as Record<string, unknown>),
+            ...(pages[page.path] as Record<string, Page>),
             [page.type]: page.data,
             breakpoints,
           };
