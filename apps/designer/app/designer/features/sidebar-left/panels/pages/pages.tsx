@@ -18,7 +18,7 @@ import {
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useCurrentPageId,
@@ -84,6 +84,52 @@ const MenuButton = styled(IconButton, {
   },
 });
 
+const ItemSuffix = ({
+  isParentSelected,
+  itemId,
+  editingItemId,
+  onEdit,
+}: {
+  isParentSelected: boolean;
+  itemId: string;
+  editingItemId: string | undefined;
+  onEdit: (itemId: string | undefined) => void;
+}) => {
+  const isEditing = editingItemId === itemId;
+
+  const menuLabel = isEditing ? "Close page settings" : "Open page settings";
+
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  const prevEditingItemId = useRef(editingItemId);
+  useEffect(() => {
+    // when settings panel close, move focus back to the menu button
+    if (
+      editingItemId === undefined &&
+      prevEditingItemId.current === itemId &&
+      buttonRef.current
+    ) {
+      buttonRef.current.focus();
+    }
+    prevEditingItemId.current = editingItemId;
+  }, [editingItemId, itemId]);
+
+  return (
+    <Flex css={{ mr: "$spacing$5" }} align="center">
+      <Tooltip content={menuLabel} disableHoverableContent>
+        <MenuButton
+          aria-label={menuLabel}
+          isParentSelected={isParentSelected}
+          onClick={() => onEdit(isEditing ? undefined : itemId)}
+          ref={buttonRef}
+        >
+          {isEditing ? <ChevronRightIcon /> : <MenuIcon />}
+        </MenuButton>
+      </Tooltip>
+    </Flex>
+  );
+};
+
 const PagesPanel = ({
   onClose,
   onCreateNewPage,
@@ -108,31 +154,19 @@ const PagesPanel = ({
         return null;
       }
 
-      const isSelected = props.selectedItemId === props.itemData.id;
       const isEditing = editingPageId === props.itemData.id;
-
-      const menuLabel = isEditing
-        ? "Close page settings"
-        : "Open page settings";
 
       return (
         <TreeItemBody
           {...props}
           suffix={
             onEdit && (
-              <Flex css={{ mr: "$spacing$5" }} align="center">
-                <Tooltip content={menuLabel} disableHoverableContent>
-                  <MenuButton
-                    aria-label={menuLabel}
-                    isParentSelected={isSelected}
-                    onClick={() =>
-                      onEdit(isEditing ? undefined : props.itemData.id)
-                    }
-                  >
-                    {isEditing ? <ChevronRightIcon /> : <MenuIcon />}
-                  </MenuButton>
-                </Tooltip>
-              </Flex>
+              <ItemSuffix
+                isParentSelected={props.selectedItemId === props.itemData.id}
+                itemId={props.itemData.id}
+                editingItemId={editingPageId}
+                onEdit={onEdit}
+              />
             )
           }
           alwaysShowSuffix={isEditing}
