@@ -61,12 +61,14 @@ const autoSelectHandler = (event: React.FocusEvent<HTMLInputElement>) =>
 const FormFields = ({
   disabled,
   autoSelect,
+  isHomePage,
   values,
   onChange,
   fieldErrors,
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
+  isHomePage?: boolean;
   values: FormPage;
   onChange: <Name extends FieldName>(event: {
     field: Name;
@@ -97,23 +99,25 @@ const FormFields = ({
           />
         </InputErrorsTooltip>
       </Group>
-      <Group>
-        <Label htmlFor={fieldIds.path}>Path</Label>
-        <InputErrorsTooltip errors={fieldErrors.path}>
-          <TextField
-            tabIndex={1}
-            state={fieldErrors.path && "invalid"}
-            id={fieldIds.path}
-            name="path"
-            placeholder="/about"
-            disabled={disabled}
-            value={values?.path}
-            onChange={(event) => {
-              onChange({ field: "path", value: event.target.value });
-            }}
-          />
-        </InputErrorsTooltip>
-      </Group>
+      {isHomePage !== true && (
+        <Group>
+          <Label htmlFor={fieldIds.path}>Path</Label>
+          <InputErrorsTooltip errors={fieldErrors.path}>
+            <TextField
+              tabIndex={1}
+              state={fieldErrors.path && "invalid"}
+              id={fieldIds.path}
+              name="path"
+              placeholder="/about"
+              disabled={disabled}
+              value={values?.path}
+              onChange={(event) => {
+                onChange({ field: "path", value: event.target.value });
+              }}
+            />
+          </InputErrorsTooltip>
+        </Group>
+      )}
       <Group>
         <Label htmlFor={fieldIds.title}>Title</Label>
         <InputErrorsTooltip errors={fieldErrors.title}>
@@ -341,12 +345,16 @@ export const PageSettings = ({
   const [pages] = usePages();
   const page = pages && projectUtils.pages.findByIdOrPath(pages, pageId);
 
+  const isHomePage = page?.id === pages?.homePage.id;
+
   const [unsavedValues, setUnsavedValues] = useState<Partial<FormPage>>({});
   const [submittedValues, setSubmittedValues] = useState<Partial<FormPage>>({});
 
   const { fieldErrors, resetFieldError } = useFetcherErrors({
     fetcher,
-    fieldNames,
+    fieldNames: isHomePage
+      ? fieldNames.filter((name) => name !== "path")
+      : fieldNames,
   });
 
   const handleChange = useCallback(
@@ -424,7 +432,7 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
-      isHomePage={pageId === pages?.homePage.id}
+      isHomePage={isHomePage}
       onClose={onClose}
       onDelete={hanldeDelete}
       fieldErrors={fieldErrors}
@@ -484,7 +492,7 @@ const PageSettingsView = ({
             onClose?.();
           }}
         >
-          <FormFields {...formFieldsProps} />
+          <FormFields isHomePage={isHomePage} {...formFieldsProps} />
           <input type="submit" hidden />
         </form>
       </Box>
