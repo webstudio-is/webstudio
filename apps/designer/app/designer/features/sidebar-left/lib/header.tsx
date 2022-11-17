@@ -16,7 +16,7 @@ export const Header = ({ title, suffix }: HeaderProps) => {
         justify="between"
       >
         <Text variant="title">{title}</Text>
-        {suffix && <Flex css={{ marginRight: "$spacing$3" }}>{suffix}</Flex>}
+        {suffix && <Flex css={{ marginRight: "$spacing$5" }}>{suffix}</Flex>}
       </Flex>
       <Separator css={{ height: 2 }} />
     </>
@@ -24,7 +24,7 @@ export const Header = ({ title, suffix }: HeaderProps) => {
 };
 
 export const CloseButton = ({ onClick }: { onClick: () => void }) => (
-  <Tooltip content="Close panel" side="bottom" align="end">
+  <Tooltip content="Close panel" side="bottom">
     <IconButton onClick={onClick} size="2" aria-label="Close panel">
       <CrossIcon />
     </IconButton>
