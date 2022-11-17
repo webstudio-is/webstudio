@@ -292,6 +292,9 @@ const {
       4: "400",
       max: "999",
     },
+    easing: {
+      inOutCubic: "cubic-bezier(0.65, 0, 0.35, 1)",
+    },
   },
   media: {
     bp1: "(min-width: 520px)",

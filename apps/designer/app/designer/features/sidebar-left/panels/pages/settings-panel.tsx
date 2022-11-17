@@ -30,8 +30,12 @@ const CollapsibleContent = styled(Collapsible.Content, {
   flexGrow: "1",
   display: "flex",
   flexDirection: "column",
-  '&[data-state="open"]': { animation: `${openKeyframes} 200ms ease-out` },
-  '&[data-state="closed"]': { animation: `${closeKeyframes} 200ms ease-out` },
+  '&[data-state="open"]': {
+    animation: `${openKeyframes} 200ms $easing$inOutCubic`,
+  },
+  '&[data-state="closed"]': {
+    animation: `${closeKeyframes} 200ms $easing$inOutCubic`,
+  },
 });
 
 export const SettingsPanel = ({
