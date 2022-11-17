@@ -16,13 +16,25 @@ const CollapsibleRoot = styled(Collapsible.Root, {
 });
 
 const openKeyframes = keyframes({
-  from: { width: 0 },
-  to: { width: "var(--radix-collapsible-content-width)" },
+  from: {
+    opacity: 0.5,
+    transform: "translateX(-$spacing$30)",
+  },
+  to: {
+    transform: "translateX(0)",
+    opacity: 1,
+  },
 });
 
 const closeKeyframes = keyframes({
-  from: { width: "var(--radix-collapsible-content-width)" },
-  to: { width: 0 },
+  from: {
+    transform: "translateX(0)",
+    opacity: 1,
+  },
+  to: {
+    opacity: 0.2,
+    transform: "translateX(-$spacing$30)",
+  },
 });
 
 const CollapsibleContent = styled(Collapsible.Content, {
@@ -31,10 +43,10 @@ const CollapsibleContent = styled(Collapsible.Content, {
   display: "flex",
   flexDirection: "column",
   '&[data-state="open"]': {
-    animation: `${openKeyframes} 200ms $easing$inOutCubic`,
+    animation: `${openKeyframes} 200ms $easing$easeOutQuart`,
   },
   '&[data-state="closed"]': {
-    animation: `${closeKeyframes} 200ms $easing$inOutCubic`,
+    animation: `${closeKeyframes} 200ms $easing$easeOutQuart`,
   },
 });
 
@@ -51,7 +63,7 @@ export const SettingsPanel = ({
         <Box
           css={{
             flexGrow: 1,
-            width: 424,
+            width: "$spacing$35",
             background: "$loContrast",
             borderRight: "1px solid $slate7",
             position: "relative",

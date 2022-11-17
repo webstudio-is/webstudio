@@ -293,7 +293,7 @@ const {
       max: "999",
     },
     easing: {
-      inOutCubic: "cubic-bezier(0.65, 0, 0.35, 1)",
+      easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
     },
   },
   media: {

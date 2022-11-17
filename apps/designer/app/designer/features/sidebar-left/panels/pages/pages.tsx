@@ -7,6 +7,7 @@ import {
   styled,
   Flex,
   Tooltip,
+  Box,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import {
@@ -186,7 +187,16 @@ const PagesPanel = ({
   }
 
   return (
-    <>
+    <Box
+      css={{
+        position: "relative",
+        height: "100%",
+        // z-index needed for page settings animation
+        zIndex: 1,
+        flexGrow: 1,
+        background: "$loContrast",
+      }}
+    >
       <Header
         title="Pages"
         suffix={
@@ -214,7 +224,7 @@ const PagesPanel = ({
         renderItem={renderItem}
         {...staticTreeProps}
       />
-    </>
+    </Box>
   );
 };
 
