@@ -73,12 +73,12 @@ const staticTreeProps = {
 
 const MenuButton = styled(IconButton, {
   color: "$hint",
-  "&:hover, &:focus": { color: "$hiContrast" },
+  "&:hover, &:focus-visible": { color: "$hiContrast" },
   variants: {
     isParentSelected: {
       true: {
         color: "$loContrast",
-        "&:hover, &:focus": { color: "$slate7" },
+        "&:hover, &:focus-visible": { color: "$slate7" },
       },
     },
   },

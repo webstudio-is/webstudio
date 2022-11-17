@@ -13,7 +13,7 @@ import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 
 const MenuButton = styled(IconButton, {
   color: "$hint",
-  "&:hover, &:focus": {
+  "&:hover, &:focus-visible": {
     color: "$hiContrast",
   },
 });

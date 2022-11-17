@@ -27,7 +27,7 @@ export const IconButton = styled("button", {
     backgroundColor: "$slate6",
     outline: "none",
   },
-  "&:focus": {
+  "&:focus-visible": {
     backgroundColor: "$slate6",
     outline: "none",
     border: "2px solid white",
@@ -45,7 +45,7 @@ export const IconButton = styled("button", {
         borderRadius: 2,
         height: "$spacing$9",
         width: "$spacing$9",
-        "&:hover, &:focus": {
+        "&:hover, &:focus-visible": {
           background: "none",
           border: "none",
         },

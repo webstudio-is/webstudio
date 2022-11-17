@@ -51,7 +51,7 @@ const iconButtonStyle = {
   height: "$spacing$11",
   color: "$colors$gray12",
   backgroundColor: "$colors$loContrast",
-  "&:focus": {
+  "&:focus-visible": {
     outline: "none",
     boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
   },
@@ -60,10 +60,10 @@ const iconButtonStyle = {
 const iconButtonActiveStyle = {
   color: "$colors$blue11",
   backgroundColor: "$colors$blue4",
-  "&:hover,&:focus": {
+  "&:hover,&:focus-visible": {
     backgroundColor: "$colors$blue4",
   },
-  "&:focus": {
+  "&:focus-visible": {
     outline: "none",
     boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
   },
