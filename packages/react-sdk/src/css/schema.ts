@@ -1,5 +1,5 @@
+import { units } from "@webstudio-is/css-data";
 import { z } from "zod";
-import { units } from "./units";
 import { StyleProperty } from "./types";
 
 export const Unit = z.union([z.enum(units), z.literal("number")]);

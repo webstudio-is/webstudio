@@ -1,7 +1,5 @@
 import {
-  properties,
   categories,
-  keywordValues,
   type Category,
   type StyleProperty,
   type AppliesTo,
@@ -39,6 +37,7 @@ import {
   ColumnGapIcon,
 } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "~/shared/feature-flags";
+import { keywordValues, properties } from "@webstudio-is/css-data";
 
 type BaseStyleConfig = {
   label: string;

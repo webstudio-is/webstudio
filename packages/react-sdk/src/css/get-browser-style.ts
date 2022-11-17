@@ -1,8 +1,7 @@
 import { detectFont } from "detect-font";
 import type { StyleProperty } from "./types";
 import type { Style, StyleValue, Unit } from "./schema";
-import { properties } from "./properties";
-import { units } from "./units";
+import { properties, units } from "@webstudio-is/css-data";
 
 const unitRegex = new RegExp(`${units.join("|")}`);
 

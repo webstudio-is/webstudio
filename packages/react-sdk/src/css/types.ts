@@ -1,4 +1,4 @@
-import { properties } from "./properties";
+import { properties } from "@webstudio-is/css-data";
 
 type Properties = typeof properties;
 
