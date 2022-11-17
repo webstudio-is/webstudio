@@ -23,7 +23,7 @@ import {
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
-import { useManageDesignModeStyles, useGlobalStyles } from "./shared/styles";
+import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
@@ -122,7 +122,6 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
   const assets = useAssets(data.assets);
-  useGlobalStyles(assets);
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
   // e.g. toggling preview is still needed in both modes
@@ -133,11 +132,17 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   if (elements === undefined) return null;
 
   if (isPreviewMode || isDesignerReady === false) {
-    return elements;
+    return (
+      <>
+        <GlobalStyles assets={assets} />
+        {elements}
+      </>
+    );
   }
 
   return (
     <>
+      <GlobalStyles assets={assets} />
       <DesignMode treeId={data.tree.id} buildId={data.buildId} />
       {elements}
     </>

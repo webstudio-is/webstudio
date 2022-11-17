@@ -80,18 +80,21 @@ export const addGlobalRules = (
 
 const globalStylesCssEngine = createCssEngine();
 
-export const useGlobalStyles = (assets: Array<Asset>) => {
-  globalStylesCssEngine.clear();
+export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
+  useIsomorphicLayoutEffect(() => {
+    globalStylesCssEngine.clear();
 
-  addGlobalRules(globalStylesCssEngine, { assets });
+    addGlobalRules(globalStylesCssEngine, { assets });
 
-  for (const style of helperStyles) {
-    globalStylesCssEngine.addPlaintextRule(style);
-  }
+    for (const style of helperStyles) {
+      globalStylesCssEngine.addPlaintextRule(style);
+    }
 
-  if (typeof document !== "undefined") {
-    globalStylesCssEngine.render();
-  }
+    if (typeof document !== "undefined") {
+      globalStylesCssEngine.render();
+    }
+  });
+  return null;
 };
 
 // Wrapps a normal StyleValue into a VarStyleValue that uses the previous style value as a fallback and allows
