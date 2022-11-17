@@ -96,7 +96,7 @@ const PagesPanel = ({
   onCreateNewPage?: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
-  onEdit?: (pageId: string) => void;
+  onEdit?: (pageId: string | undefined) => void;
   editingPageId?: string;
 }) => {
   const [pages] = usePages();
@@ -111,25 +111,27 @@ const PagesPanel = ({
       const isSelected = props.selectedItemId === props.itemData.id;
       const isEditing = editingPageId === props.itemData.id;
 
+      const menuLabel = isEditing
+        ? "Close page settings"
+        : "Open page settings";
+
       return (
         <TreeItemBody
           {...props}
           suffix={
             onEdit && (
               <Flex css={{ mr: "$spacing$5" }} align="center">
-                {isEditing ? (
-                  <ChevronRightIcon />
-                ) : (
-                  <Tooltip content="Open page settings" disableHoverableContent>
-                    <MenuButton
-                      aria-label="Open page settings"
-                      isParentSelected={isSelected}
-                      onClick={() => onEdit(props.itemData.id)}
-                    >
-                      <MenuIcon />
-                    </MenuButton>
-                  </Tooltip>
-                )}
+                <Tooltip content={menuLabel} disableHoverableContent>
+                  <MenuButton
+                    aria-label={menuLabel}
+                    isParentSelected={isSelected}
+                    onClick={() =>
+                      onEdit(isEditing ? undefined : props.itemData.id)
+                    }
+                  >
+                    {isEditing ? <ChevronRightIcon /> : <MenuIcon />}
+                  </MenuButton>
+                </Tooltip>
               </Flex>
             )
           }
