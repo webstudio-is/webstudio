@@ -7,6 +7,7 @@ import {
   styled,
   Flex,
   Tooltip,
+  Box,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import {
@@ -18,7 +19,7 @@ import {
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useCurrentPageId,
@@ -73,16 +74,62 @@ const staticTreeProps = {
 
 const MenuButton = styled(IconButton, {
   color: "$hint",
-  "&:hover, &:focus": { color: "$hiContrast" },
+  "&:hover, &:focus-visible": { color: "$hiContrast" },
   variants: {
     isParentSelected: {
       true: {
         color: "$loContrast",
-        "&:hover, &:focus": { color: "$slate7" },
+        "&:hover, &:focus-visible": { color: "$slate7" },
       },
     },
   },
 });
+
+const ItemSuffix = ({
+  isParentSelected,
+  itemId,
+  editingItemId,
+  onEdit,
+}: {
+  isParentSelected: boolean;
+  itemId: string;
+  editingItemId: string | undefined;
+  onEdit: (itemId: string | undefined) => void;
+}) => {
+  const isEditing = editingItemId === itemId;
+
+  const menuLabel = isEditing ? "Close page settings" : "Open page settings";
+
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  const prevEditingItemId = useRef(editingItemId);
+  useEffect(() => {
+    // when settings panel close, move focus back to the menu button
+    if (
+      editingItemId === undefined &&
+      prevEditingItemId.current === itemId &&
+      buttonRef.current
+    ) {
+      buttonRef.current.focus();
+    }
+    prevEditingItemId.current = editingItemId;
+  }, [editingItemId, itemId]);
+
+  return (
+    <Flex css={{ mr: "$spacing$5" }} align="center">
+      <Tooltip content={menuLabel} disableHoverableContent>
+        <MenuButton
+          aria-label={menuLabel}
+          isParentSelected={isParentSelected}
+          onClick={() => onEdit(isEditing ? undefined : itemId)}
+          ref={buttonRef}
+        >
+          {isEditing ? <ChevronRightIcon /> : <MenuIcon />}
+        </MenuButton>
+      </Tooltip>
+    </Flex>
+  );
+};
 
 const PagesPanel = ({
   onClose,
@@ -96,7 +143,7 @@ const PagesPanel = ({
   onCreateNewPage?: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
-  onEdit?: (pageId: string) => void;
+  onEdit?: (pageId: string | undefined) => void;
   editingPageId?: string;
 }) => {
   const [pages] = usePages();
@@ -108,7 +155,6 @@ const PagesPanel = ({
         return null;
       }
 
-      const isSelected = props.selectedItemId === props.itemData.id;
       const isEditing = editingPageId === props.itemData.id;
 
       return (
@@ -116,25 +162,12 @@ const PagesPanel = ({
           {...props}
           suffix={
             onEdit && (
-              <Flex css={{ mr: "$spacing$5" }} align="center">
-                {isEditing ? (
-                  <ChevronRightIcon />
-                ) : (
-                  <Tooltip
-                    content="Open page settings"
-                    side="left"
-                    disableHoverableContent
-                  >
-                    <MenuButton
-                      aria-label="Open page settings"
-                      isParentSelected={isSelected}
-                      onClick={() => onEdit(props.itemData.id)}
-                    >
-                      <MenuIcon />
-                    </MenuButton>
-                  </Tooltip>
-                )}
-              </Flex>
+              <ItemSuffix
+                isParentSelected={props.selectedItemId === props.itemData.id}
+                itemId={props.itemData.id}
+                editingItemId={editingPageId}
+                onEdit={onEdit}
+              />
             )
           }
           alwaysShowSuffix={isEditing}
@@ -154,7 +187,16 @@ const PagesPanel = ({
   }
 
   return (
-    <>
+    <Box
+      css={{
+        position: "relative",
+        height: "100%",
+        // z-index needed for page settings animation
+        zIndex: 1,
+        flexGrow: 1,
+        background: "$loContrast",
+      }}
+    >
       <Header
         title="Pages"
         suffix={
@@ -182,7 +224,7 @@ const PagesPanel = ({
         renderItem={renderItem}
         {...staticTreeProps}
       />
-    </>
+    </Box>
   );
 };
 

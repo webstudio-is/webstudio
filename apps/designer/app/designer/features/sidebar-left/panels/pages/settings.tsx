@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { utils as projectUtils } from "@webstudio-is/project";
+import { type Pages, utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
 import { Header } from "../../lib/header";
 import { useState, useCallback, ComponentProps } from "react";
@@ -32,10 +32,11 @@ import type {
   CreatePageData,
 } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
+import slugify from "slugify";
 
 const Group = styled(Flex, {
   marginBottom: "$spacing$9",
-  gap: "$spacing$5",
+  gap: "$spacing$4",
   defaultVariants: { direction: "column" },
 });
 
@@ -54,13 +55,20 @@ const toFormPage = (page: Page): FormPage => {
   };
 };
 
+const autoSelectHandler = (event: React.FocusEvent<HTMLInputElement>) =>
+  event.target.select();
+
 const FormFields = ({
   disabled,
+  autoSelect,
+  isHomePage,
   values,
   onChange,
   fieldErrors,
 }: {
   disabled?: boolean;
+  autoSelect?: boolean;
+  isHomePage?: boolean;
   values: FormPage;
   onChange: <Name extends FieldName>(event: {
     field: Name;
@@ -76,9 +84,13 @@ const FormFields = ({
         <Label htmlFor={fieldIds.name}>Page Name</Label>
         <InputErrorsTooltip errors={fieldErrors.name}>
           <TextField
+            tabIndex={1}
             state={fieldErrors.name && "invalid"}
             id={fieldIds.name}
+            autoFocus
+            onFocus={autoSelect ? autoSelectHandler : undefined}
             name="name"
+            placeholder="About"
             disabled={disabled}
             value={values?.name}
             onChange={(event) => {
@@ -87,28 +99,34 @@ const FormFields = ({
           />
         </InputErrorsTooltip>
       </Group>
-      <Group>
-        <Label htmlFor={fieldIds.path}>Path</Label>
-        <InputErrorsTooltip errors={fieldErrors.path}>
-          <TextField
-            state={fieldErrors.path && "invalid"}
-            id={fieldIds.path}
-            name="path"
-            disabled={disabled}
-            value={values?.path}
-            onChange={(event) => {
-              onChange({ field: "path", value: event.target.value });
-            }}
-          />
-        </InputErrorsTooltip>
-      </Group>
+      {isHomePage !== true && (
+        <Group>
+          <Label htmlFor={fieldIds.path}>Path</Label>
+          <InputErrorsTooltip errors={fieldErrors.path}>
+            <TextField
+              tabIndex={1}
+              state={fieldErrors.path && "invalid"}
+              id={fieldIds.path}
+              name="path"
+              placeholder="/about"
+              disabled={disabled}
+              value={values?.path}
+              onChange={(event) => {
+                onChange({ field: "path", value: event.target.value });
+              }}
+            />
+          </InputErrorsTooltip>
+        </Group>
+      )}
       <Group>
         <Label htmlFor={fieldIds.title}>Title</Label>
         <InputErrorsTooltip errors={fieldErrors.title}>
           <TextField
+            tabIndex={1}
             state={fieldErrors.title && "invalid"}
             id={fieldIds.title}
             name="title"
+            placeholder="My awesome site - About"
             disabled={disabled}
             value={values?.title}
             onChange={(event) => {
@@ -121,6 +139,7 @@ const FormFields = ({
         <Label htmlFor={fieldIds.description}>Description</Label>
         <InputErrorsTooltip errors={fieldErrors.description}>
           <TextArea
+            tabIndex={1}
             state={fieldErrors.description && "invalid"}
             id={fieldIds.description}
             name="description"
@@ -136,6 +155,34 @@ const FormFields = ({
   );
 };
 
+const nameToPath = (pages: Pages | undefined, name: string) => {
+  if (name === "") {
+    return "";
+  }
+
+  const slug = slugify(name, { lower: true, strict: true });
+  const path = `/${slug}`;
+
+  // for TypeScript
+  if (pages === undefined) {
+    return path;
+  }
+
+  if (projectUtils.pages.findByIdOrPath(pages, path) === undefined) {
+    return path;
+  }
+
+  let suffix = 1;
+
+  while (
+    projectUtils.pages.findByIdOrPath(pages, `${path}${suffix}`) !== undefined
+  ) {
+    suffix++;
+  }
+
+  return `${path}${suffix}`;
+};
+
 export const NewPageSettings = ({
   onClose,
   onSuccess,
@@ -145,6 +192,8 @@ export const NewPageSettings = ({
   onSuccess?: (page: Page) => void;
   projectId: string;
 }) => {
+  const [pages] = usePages();
+
   const fetcher = useFetcher<CreatePageData>();
 
   useOnFetchEnd(fetcher, (data) => {
@@ -161,9 +210,9 @@ export const NewPageSettings = ({
   });
 
   const [values, setValues] = useState<FormPage>({
-    name: "",
-    path: "",
-    title: "",
+    name: "Untitled",
+    path: nameToPath(pages, "Untitled"),
+    title: "Untitled",
     description: "",
   });
 
@@ -184,11 +233,30 @@ export const NewPageSettings = ({
       values={values}
       onChange={({ field, value }) => {
         resetFieldError(field);
-        setValues((values) => ({ ...values, [field]: value }));
+        setValues((values) => {
+          const changes = { [field]: value };
+
+          if (field === "name") {
+            if (values.path === nameToPath(pages, values.name)) {
+              changes.path = nameToPath(pages, value);
+            }
+            if (values.title === values.name) {
+              changes.title = value;
+            }
+          }
+
+          return { ...values, ...changes };
+        });
       }}
     />
   );
 };
+
+const ButtonContainer = styled("div", {
+  ml: "$spacing$5",
+  display: "flex",
+  alignItems: "center",
+});
 
 const NewPageSettingsView = ({
   onSubmit,
@@ -205,13 +273,32 @@ const NewPageSettingsView = ({
       <Header
         title="New Page Settings"
         suffix={
-          onClose && (
-            <Tooltip content="Cancel" side="bottom" align="end">
-              <IconButton size="2" onClick={onClose} aria-label="Cancel">
-                <ChevronDoubleLeftIcon />
-              </IconButton>
-            </Tooltip>
-          )
+          <>
+            {onClose && (
+              <Tooltip content="Cancel" side="bottom">
+                <IconButton
+                  size="2"
+                  onClick={onClose}
+                  aria-label="Cancel"
+                  // Tab should go:
+                  //   trought form fields -> create button -> cancel button
+                  tabIndex={3}
+                >
+                  <ChevronDoubleLeftIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            <ButtonContainer>
+              <Button
+                variant="blue"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+                tabIndex={2}
+              >
+                {isSubmitting ? "Creating..." : "Create page"}
+              </Button>
+            </ButtonContainer>
+          </>
         }
       />
       <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
@@ -221,12 +308,8 @@ const NewPageSettingsView = ({
             onSubmit();
           }}
         >
-          <FormFields {...formFieldsProps} />
-          <Group css={{ alignItems: "end" }}>
-            <Button type="submit" variant="green" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create"}
-            </Button>
-          </Group>
+          <FormFields autoSelect {...formFieldsProps} />
+          <input type="submit" hidden />
         </form>
       </Box>
     </>
@@ -262,12 +345,16 @@ export const PageSettings = ({
   const [pages] = usePages();
   const page = pages && projectUtils.pages.findByIdOrPath(pages, pageId);
 
+  const isHomePage = page?.id === pages?.homePage.id;
+
   const [unsavedValues, setUnsavedValues] = useState<Partial<FormPage>>({});
   const [submittedValues, setSubmittedValues] = useState<Partial<FormPage>>({});
 
   const { fieldErrors, resetFieldError } = useFetcherErrors({
     fetcher,
-    fieldNames,
+    fieldNames: isHomePage
+      ? fieldNames.filter((name) => name !== "path")
+      : fieldNames,
   });
 
   const handleChange = useCallback(
@@ -345,7 +432,7 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
-      isHomePage={pageId === pages?.homePage.id}
+      isHomePage={isHomePage}
       onClose={onClose}
       onDelete={hanldeDelete}
       fieldErrors={fieldErrors}
@@ -377,17 +464,19 @@ const PageSettingsView = ({
                   size="2"
                   onClick={onDelete}
                   aria-label="Delete page"
+                  tabIndex={2}
                 >
                   <TrashIcon />
                 </IconButton>
               </Tooltip>
             )}
             {onClose && (
-              <Tooltip content="Close page settings" side="bottom" align="end">
+              <Tooltip content="Close page settings" side="bottom">
                 <IconButton
                   size="2"
                   onClick={onClose}
                   aria-label="Close page settings"
+                  tabIndex={2}
                 >
                   <ChevronDoubleLeftIcon />
                 </IconButton>
@@ -397,7 +486,15 @@ const PageSettingsView = ({
         }
       />
       <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
-        <FormFields {...formFieldsProps} />
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onClose?.();
+          }}
+        >
+          <FormFields isHomePage={isHomePage} {...formFieldsProps} />
+          <input type="submit" hidden />
+        </form>
       </Box>
     </>
   );
