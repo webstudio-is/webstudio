@@ -1,5 +1,12 @@
 import { CssRule } from "@webstudio-is/react-sdk";
-import { MediaRule, StyleRule, type MediaRuleOptions } from "./rules";
+import {
+  FontFaceRule,
+  MediaRule,
+  PlaintextRule,
+  StyleRule,
+  type FontFaceOptions,
+  type MediaRuleOptions,
+} from "./rules";
 import { StyleElement } from "./style-element";
 import { StyleSheet } from "./style-sheet";
 
@@ -8,6 +15,8 @@ const defaultMediaRuleId = "__default-media-rule__";
 export class CssEngine {
   #element;
   #mediaRules: Map<string, MediaRule> = new Map();
+  #plainRules: Map<string, PlaintextRule> = new Map();
+  #fontFaceRules: Array<FontFaceRule> = [];
   #sheet: StyleSheet;
   #isDirty = false;
   #cssText = "";
@@ -38,6 +47,20 @@ export class CssEngine {
     }
     return mediaRule.insertRule(styleRule);
   }
+  addPlaintextRule(cssText: string) {
+    const rule = this.#plainRules.get(cssText);
+    if (rule !== undefined) return rule;
+    return this.#plainRules.set(cssText, new PlaintextRule(cssText));
+  }
+  addFontFaceRule(options: FontFaceOptions) {
+    return this.#fontFaceRules.push(new FontFaceRule(options));
+  }
+  clear() {
+    this.#mediaRules.clear();
+    this.#plainRules.clear();
+    this.#fontFaceRules = [];
+    this.#isDirty = true;
+  }
   render() {
     this.#element.mount();
     // This isn't going to do anything if the `cssText` hasn't changed.
@@ -49,6 +72,11 @@ export class CssEngine {
     }
     this.#isDirty = false;
     const css: Array<string> = [];
+
+    css.push(...this.#fontFaceRules.map((rule) => rule.cssText));
+    for (const plaintextRule of this.#plainRules.values()) {
+      css.push(plaintextRule.cssText);
+    }
     for (const mediaRule of this.#mediaRules.values()) {
       const { cssText } = mediaRule;
       if (cssText !== "") css.push(cssText);

@@ -1,10 +1,10 @@
 import {
-  toValue,
   type Style,
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/react-sdk";
 import hyphenate from "hyphenate-style-name";
+import { toValue } from "./to-value";
 
 class StylePropertyMap {
   #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
@@ -60,13 +60,13 @@ export type MediaRuleOptions = {
 
 export class MediaRule {
   #options: MediaRuleOptions;
-  rules: Array<StyleRule> = [];
+  rules: Array<StyleRule | PlaintextRule> = [];
   #mediaType;
   constructor(options: MediaRuleOptions = {}) {
     this.#options = options;
     this.#mediaType = options.mediaType ?? "all";
   }
-  insertRule(rule: StyleRule) {
+  insertRule(rule: StyleRule | PlaintextRule) {
     this.rules.push(rule);
     return rule;
   }
@@ -87,4 +87,32 @@ export class MediaRule {
   }
 }
 
-export type AnyRule = StyleRule | MediaRule;
+export class PlaintextRule {
+  cssText;
+  styleMap = new Map();
+  constructor(cssText: string) {
+    this.cssText = cssText;
+  }
+}
+
+export type FontFaceOptions = {
+  fontFamily: string;
+  fontStyle: "normal" | "italic" | "oblique";
+  fontWeight: number;
+  fontDisplay: "swap" | "auto" | "block" | "fallback" | "optional";
+  src: string;
+};
+
+export class FontFaceRule {
+  #options: FontFaceOptions;
+  constructor(options: FontFaceOptions) {
+    this.#options = options;
+  }
+  get cssText() {
+    const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
+      this.#options;
+    return `@font-face {\n  font-family: ${fontFamily}; font-style: ${fontStyle}; font-weight: ${fontWeight}; font-display: ${fontDisplay}; src: ${src};\n}`;
+  }
+}
+
+export type AnyRule = StyleRule | MediaRule | PlaintextRule | FontFaceRule;

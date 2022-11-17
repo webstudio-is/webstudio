@@ -6,6 +6,8 @@ import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { getCssRules } from "~/shared/tree-utils";
+import { idAttribute } from "@webstudio-is/react-sdk";
+import { addGlobalRules } from "~/canvas/shared/styles";
 
 export const loader: ActionFunction = async ({ request }) => {
   try {
@@ -33,13 +35,15 @@ export const loader: ActionFunction = async ({ request }) => {
 
     const engine = createCssEngine();
 
+    addGlobalRules(engine, canvasData);
+
     for (const breakpoint of canvasData.breakpoints) {
       engine.addMediaRule(breakpoint.id, breakpoint);
     }
 
     const cssRules = getCssRules(canvasData.tree?.root);
     for (const [instanceId, cssRule] of cssRules) {
-      engine.addStyleRule(`[data-ws-id="${instanceId}"]`, cssRule);
+      engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, cssRule);
     }
     const { cssText } = engine;
 

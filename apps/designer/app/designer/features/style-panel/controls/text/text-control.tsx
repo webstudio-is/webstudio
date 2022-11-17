@@ -1,7 +1,8 @@
 import { CssValueInput } from "../../shared/css-value-input";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
-import { type StyleValue, toValue } from "@webstudio-is/react-sdk";
+import { type StyleValue } from "@webstudio-is/react-sdk";
+import { toValue } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 

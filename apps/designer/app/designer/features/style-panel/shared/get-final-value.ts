@@ -1,9 +1,5 @@
-import {
-  Style,
-  StyleValue,
-  StyleProperty,
-  toValue,
-} from "@webstudio-is/react-sdk";
+import type { Style, StyleValue, StyleProperty } from "@webstudio-is/react-sdk";
+import { toValue } from "@webstudio-is/css-engine";
 import type { InheritedStyle } from "./get-inherited-style";
 import { isValid } from "./parse-css-value";
 

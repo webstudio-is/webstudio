@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import store from "immerhin";
-import { type Breakpoint, setBreakpoints } from "@webstudio-is/react-sdk";
+import type { Breakpoint } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
@@ -17,7 +17,6 @@ export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const ref = useRef(false);
   if (ref.current === false) {
     ref.current = true;
-    setBreakpoints(breakpoints);
     setCurrentBreakpoints(breakpoints);
     addMediaRules(breakpoints);
   }
@@ -45,7 +44,7 @@ const useBreakpointChange = () => {
         breakpoints.push(breakpoint);
       }
 
-      setBreakpoints(breakpoints);
+      addMediaRules(breakpoints);
     });
   });
 };
