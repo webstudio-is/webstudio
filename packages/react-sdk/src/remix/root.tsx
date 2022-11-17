@@ -1,6 +1,5 @@
 import { Links, Meta, Outlet as DefaultOutlet } from "@remix-run/react";
 import { DynamicLinks } from "remix-utils";
-import { CRITICAL_CSS_MARKER } from "./constants";
 
 /**
  * We are using Outlet prop from index layout when user renders site from a subdomain.
@@ -20,7 +19,6 @@ export const Root = ({
         <Meta />
         <DynamicLinks />
         <Links />
-        {typeof document === "undefined" ? CRITICAL_CSS_MARKER : null}
       </head>
 
       <Outlet />

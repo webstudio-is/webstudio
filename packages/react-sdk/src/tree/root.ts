@@ -1,7 +1,6 @@
 import { useAllUserProps } from "../user-props/";
 import type { Tree, InstanceProps } from "../db";
 import type { Breakpoint } from "../css";
-import { setBreakpoints } from "../stitches";
 import { createElementsTree } from "./create-elements-tree";
 import { WrapperComponent } from "./wrapper-component";
 import type { Asset } from "@webstudio-is/asset-uploader";
@@ -26,7 +25,6 @@ export const InstanceRoot = ({
   if (data.tree === null) {
     throw new Error("Tree is null");
   }
-  setBreakpoints(data.breakpoints);
   useAllUserProps(data.props);
   return createElementsTree({
     instance: data.tree.root,

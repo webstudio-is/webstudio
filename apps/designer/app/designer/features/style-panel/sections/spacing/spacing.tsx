@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   categories,
-  toValue,
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/react-sdk";
 import { Box } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import { SetProperty } from "../../shared/use-style-data";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "../../shared/constants";

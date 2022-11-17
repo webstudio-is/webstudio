@@ -4,8 +4,6 @@ import { setInstanceStyleMutable } from "~/shared/tree-utils";
 import { useSelectedInstance } from "./nano-states";
 import { rootInstanceContainer } from "~/shared/nano-states";
 import {
-  toValue,
-  toVarNamespace,
   validStaticValueTypes,
   idAttribute,
   type Breakpoint,
@@ -18,6 +16,7 @@ import {
 import { useEffect } from "react";
 import {
   createCssEngine,
+  toValue,
   type CssEngine,
   type StyleRule,
   type PlaintextRule,
@@ -173,6 +172,10 @@ export const useCssRules = ({
     }
     cssEngine.render();
   }, [id, cssRules]);
+};
+
+const toVarNamespace = (id: string, property: string) => {
+  return `${property}-${id}`;
 };
 
 const setCssVar = (id: string, property: string, value?: StyleValue) => {

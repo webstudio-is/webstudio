@@ -59,7 +59,6 @@
     "react-dom": "^17.0.2"
   },
   "dependencies": {
-    "@stitches/core": "^1.2.7",
     "@webstudio-is/asset-uploader": "^*",
     "@webstudio-is/fonts": "*",
     "@webstudio-is/icons": "*",

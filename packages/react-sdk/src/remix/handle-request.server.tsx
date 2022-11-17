@@ -1,7 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { RemixServer } from "@remix-run/react";
 import type { EntryContext } from "@remix-run/node";
-import { insertCriticalCss } from "./insert-critical-css";
 
 export const handleRequest = (
   request: Request,
@@ -15,7 +14,7 @@ export const handleRequest = (
 
   responseHeaders.set("Content-Type", "text/html");
 
-  return new Response("<!DOCTYPE html>" + insertCriticalCss(markup), {
+  return new Response(`<!DOCTYPE html>${markup}`, {
     status: responseStatusCode,
     headers: responseHeaders,
   });

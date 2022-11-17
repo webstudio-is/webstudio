@@ -1,10 +1,6 @@
 import { useState, useMemo } from "react";
-import {
-  type Unit,
-  type UnitValue,
-  StyleValue,
-  toValue,
-} from "@webstudio-is/react-sdk";
+import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
+import { toValue } from "@webstudio-is/css-engine";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   styled,

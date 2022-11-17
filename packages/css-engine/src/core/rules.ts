@@ -1,10 +1,10 @@
 import {
-  toValue,
   type Style,
   type StyleProperty,
   type StyleValue,
 } from "@webstudio-is/react-sdk";
 import hyphenate from "hyphenate-style-name";
+import { toValue } from "./to-value";
 
 class StylePropertyMap {
   #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();

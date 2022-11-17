@@ -7,3 +7,4 @@ export type {
   FontFaceRule,
 } from "./rules";
 export * from "./create-css-engine";
+export * from "./to-value";
