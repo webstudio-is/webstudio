@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
-import { utils as projectUtils } from "@webstudio-is/project";
+import { type Pages, utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
 import { Header } from "../../lib/header";
 import { useState, useCallback, ComponentProps } from "react";
@@ -151,6 +151,34 @@ const FormFields = ({
   );
 };
 
+const nameToPath = (pages: Pages | undefined, name: string) => {
+  if (name === "") {
+    return "";
+  }
+
+  const slug = slugify(name, { lower: true, strict: true });
+  const path = `/${slug}`;
+
+  // for TypeScript
+  if (pages === undefined) {
+    return path;
+  }
+
+  if (projectUtils.pages.findByIdOrPath(pages, path) === undefined) {
+    return path;
+  }
+
+  let suffix = 1;
+
+  while (
+    projectUtils.pages.findByIdOrPath(pages, `${path}${suffix}`) !== undefined
+  ) {
+    suffix++;
+  }
+
+  return `${path}${suffix}`;
+};
+
 export const NewPageSettings = ({
   onClose,
   onSuccess,
@@ -161,34 +189,6 @@ export const NewPageSettings = ({
   projectId: string;
 }) => {
   const [pages] = usePages();
-
-  const nameToPath = (name: string) => {
-    if (name === "") {
-      return "";
-    }
-
-    const slug = slugify(name, { lower: true, strict: true });
-    const path = `/${slug}`;
-
-    // for TypeScript
-    if (pages === undefined) {
-      return path;
-    }
-
-    if (projectUtils.pages.findByIdOrPath(pages, path) === undefined) {
-      return path;
-    }
-
-    let suffix = 1;
-
-    while (
-      projectUtils.pages.findByIdOrPath(pages, `${path}${suffix}`) !== undefined
-    ) {
-      suffix++;
-    }
-
-    return `${path}${suffix}`;
-  };
 
   const fetcher = useFetcher<CreatePageData>();
 
@@ -207,7 +207,7 @@ export const NewPageSettings = ({
 
   const [values, setValues] = useState<FormPage>({
     name: "Untitled",
-    path: nameToPath("Untitled"),
+    path: nameToPath(pages, "Untitled"),
     title: "Untitled",
     description: "",
   });
@@ -233,8 +233,8 @@ export const NewPageSettings = ({
           const changes = { [field]: value };
 
           if (field === "name") {
-            if (values.path === nameToPath(values.name)) {
-              changes.path = nameToPath(value);
+            if (values.path === nameToPath(pages, values.name)) {
+              changes.path = nameToPath(pages, value);
             }
             if (values.title === values.name) {
               changes.title = value;
