@@ -295,7 +295,7 @@ const NewPageSettingsView = ({
                 onClick={onSubmit}
                 tabIndex={2}
               >
-                {isSubmitting ? "Creating..." : "Create"}
+                {isSubmitting ? "Creating..." : "Create page"}
               </Button>
             </ButtonContainer>
           </>
