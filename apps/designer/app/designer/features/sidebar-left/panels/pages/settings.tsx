@@ -171,14 +171,14 @@ export const NewPageSettings = ({
       return path;
     }
 
-    if (projectUtils.pages.findByPath(pages, path) === undefined) {
+    if (projectUtils.pages.findByIdOrPath(pages, path) === undefined) {
       return path;
     }
 
     let suffix = 1;
 
     while (
-      projectUtils.pages.findByPath(pages, `${path}${suffix}`) !== undefined
+      projectUtils.pages.findByIdOrPath(pages, `${path}${suffix}`) !== undefined
     ) {
       suffix++;
     }
