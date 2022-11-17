@@ -38,7 +38,6 @@ import {
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { PANEL_WIDTH } from "./shared/constants";
 import { useSetAssets } from "./shared/assets";
 import { getBuildUrl } from "~/shared/router-utils";
 
@@ -179,7 +178,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "undocked") {
     return {
-      gridTemplateColumns: `auto ${PANEL_WIDTH}px 1fr ${PANEL_WIDTH}px`,
+      gridTemplateColumns: `auto $spacing$30 1fr $spacing$30`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -189,7 +188,7 @@ const getChromeLayout = ({
   }
 
   return {
-    gridTemplateColumns: `auto 1fr ${PANEL_WIDTH}px`,
+    gridTemplateColumns: `auto 1fr $spacing$30`,
     gridTemplateAreas: `
           "header header header"
           "sidebar main inspector"
@@ -234,7 +233,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
       <Box
         css={{
           borderRight: "1px solid $slate7",
-          width: PANEL_WIDTH,
+          width: "$spacing$30",
           height: "100%",
         }}
       >

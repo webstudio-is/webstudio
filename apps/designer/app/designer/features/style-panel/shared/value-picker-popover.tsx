@@ -5,7 +5,6 @@ import {
   PopoverHeader,
   PopoverPortal,
 } from "@webstudio-is/design-system";
-import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { MutableRefObject, useRef, useState } from "react";
 
 const usePickerSideOffset = (
@@ -54,7 +53,7 @@ export const ValuePickerPopover = ({
           side="right"
           hideArrow
           align="start"
-          css={{ width: PANEL_WIDTH }}
+          css={{ width: "$spacing$30" }}
         >
           {content}
           <PopoverHeader title={title} />
