@@ -36,7 +36,7 @@ import slugify from "slugify";
 
 const Group = styled(Flex, {
   marginBottom: "$spacing$9",
-  gap: "$spacing$5",
+  gap: "$spacing$4",
   defaultVariants: { direction: "column" },
 });
 
