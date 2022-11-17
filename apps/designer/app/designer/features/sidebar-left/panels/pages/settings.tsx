@@ -82,6 +82,7 @@ const FormFields = ({
         <Label htmlFor={fieldIds.name}>Page Name</Label>
         <InputErrorsTooltip errors={fieldErrors.name}>
           <TextField
+            tabIndex={1}
             state={fieldErrors.name && "invalid"}
             id={fieldIds.name}
             autoFocus
@@ -100,6 +101,7 @@ const FormFields = ({
         <Label htmlFor={fieldIds.path}>Path</Label>
         <InputErrorsTooltip errors={fieldErrors.path}>
           <TextField
+            tabIndex={1}
             state={fieldErrors.path && "invalid"}
             id={fieldIds.path}
             name="path"
@@ -116,6 +118,7 @@ const FormFields = ({
         <Label htmlFor={fieldIds.title}>Title</Label>
         <InputErrorsTooltip errors={fieldErrors.title}>
           <TextField
+            tabIndex={1}
             state={fieldErrors.title && "invalid"}
             id={fieldIds.title}
             name="title"
@@ -132,6 +135,7 @@ const FormFields = ({
         <Label htmlFor={fieldIds.description}>Description</Label>
         <InputErrorsTooltip errors={fieldErrors.description}>
           <TextArea
+            tabIndex={1}
             state={fieldErrors.description && "invalid"}
             id={fieldIds.description}
             name="description"
@@ -268,13 +272,25 @@ const NewPageSettingsView = ({
           <>
             {onClose && (
               <Tooltip content="Cancel" side="bottom">
-                <IconButton size="2" onClick={onClose} aria-label="Cancel">
+                <IconButton
+                  size="2"
+                  onClick={onClose}
+                  aria-label="Cancel"
+                  // Tab should go:
+                  //   trought form fields -> create button -> cancel button
+                  tabIndex={3}
+                >
                   <ChevronDoubleLeftIcon />
                 </IconButton>
               </Tooltip>
             )}
             <ButtonContainer>
-              <Button variant="blue" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                variant="blue"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+                tabIndex={2}
+              >
                 {isSubmitting ? "Creating..." : "Create"}
               </Button>
             </ButtonContainer>
@@ -289,6 +305,7 @@ const NewPageSettingsView = ({
           }}
         >
           <FormFields autoSelect {...formFieldsProps} />
+          <input type="submit" hidden />
         </form>
       </Box>
     </>
@@ -439,6 +456,7 @@ const PageSettingsView = ({
                   size="2"
                   onClick={onDelete}
                   aria-label="Delete page"
+                  tabIndex={2}
                 >
                   <TrashIcon />
                 </IconButton>
@@ -450,6 +468,7 @@ const PageSettingsView = ({
                   size="2"
                   onClick={onClose}
                   aria-label="Close page settings"
+                  tabIndex={2}
                 >
                   <ChevronDoubleLeftIcon />
                 </IconButton>
@@ -459,7 +478,15 @@ const PageSettingsView = ({
         }
       />
       <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
-        <FormFields {...formFieldsProps} />
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onClose?.();
+          }}
+        >
+          <FormFields {...formFieldsProps} />
+          <input type="submit" hidden />
+        </form>
       </Box>
     </>
   );
