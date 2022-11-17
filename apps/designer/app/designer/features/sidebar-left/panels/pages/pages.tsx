@@ -194,7 +194,7 @@ const PagesPanel = ({
         // z-index needed for page settings animation
         zIndex: 1,
         flexGrow: 1,
-        background: "white",
+        background: "$loContrast",
       }}
     >
       <Header
