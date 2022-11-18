@@ -17,6 +17,7 @@
     "ci:migrate": "migrations migrate --force"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.0.6",
     "@lexical/react": "^0.6.0",
     "@remix-run/node": "^1.6.4",
     "@remix-run/react": "^1.6.4",
