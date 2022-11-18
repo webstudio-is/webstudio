@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   type RangeSelection,
   type TextNode,
@@ -82,60 +82,61 @@ const $isSelectedLink = (selection: RangeSelection) => {
 
 export const ToolbarConnectorPlugin = () => {
   const [editor] = useLexicalComposerContext();
-  const [hasSelection, setHasSelection] = useState(false);
-
-  useEffect(() => {
-    if (hasSelection) {
-      const onMouseDown = () => {
-        const editorState = editor.getEditorState();
-        editorState.read(() => {
-          const selection = $getSelection();
-          const nativeSelection = window.getSelection();
-          if ($isRangeSelection(selection) && nativeSelection != null) {
-            const domRange = nativeSelection.getRangeAt(0);
-            const selectionRect = domRange.getBoundingClientRect();
-            const isBold = selection.hasFormat("bold");
-            const isItalic = selection.hasFormat("italic");
-            const isSuperscript = selection.hasFormat("superscript");
-            const isSubscript = selection.hasFormat("subscript");
-            const isLink = $isSelectedLink(selection);
-            const isSpan = $getSpanNodes(selection).length !== 0;
-            publish({
-              type: "showTextToolbar",
-              payload: {
-                selectionRect,
-                isBold,
-                isItalic,
-                isSuperscript,
-                isSubscript,
-                isLink,
-                isSpan,
-              },
-            });
-          }
-        });
-      };
-      document.addEventListener("mouseup", onMouseDown);
-      return () => {
-        publish({ type: "hideTextToolbar" });
-        document.removeEventListener("mouseup", onMouseDown);
-      };
-    }
-  }, [hasSelection]);
+  const isMouseDownRef = useRef(false);
 
   // control toolbar state on data or selection updates
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
+    const nativeSelection = window.getSelection();
     if (
       $isRangeSelection(selection) &&
-      selection.getTextContent().length !== 0
+      selection.getTextContent().length !== 0 &&
+      nativeSelection != null &&
+      isMouseDownRef.current === false
     ) {
-      setHasSelection(true);
+      const domRange = nativeSelection.getRangeAt(0);
+      const selectionRect = domRange.getBoundingClientRect();
+      const isBold = selection.hasFormat("bold");
+      const isItalic = selection.hasFormat("italic");
+      const isSuperscript = selection.hasFormat("superscript");
+      const isSubscript = selection.hasFormat("subscript");
+      const isLink = $isSelectedLink(selection);
+      const isSpan = $getSpanNodes(selection).length !== 0;
+      publish({
+        type: "showTextToolbar",
+        payload: {
+          selectionRect,
+          isBold,
+          isItalic,
+          isSuperscript,
+          isSubscript,
+          isLink,
+          isSpan,
+        },
+      });
     } else {
       publish({ type: "hideTextToolbar" });
-      setHasSelection(false);
     }
   }, []);
+
+  useEffect(() => {
+    const onMouseDown = () => {
+      isMouseDownRef.current = true;
+    };
+    const onMouseUp = () => {
+      isMouseDownRef.current = false;
+      const editorState = editor.getEditorState();
+      editorState.read(() => {
+        updateToolbar();
+      });
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [updateToolbar]);
 
   useEffect(() => {
     // hide toolbar when editor is unmounted
