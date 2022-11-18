@@ -3,7 +3,6 @@ import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
 import { toValue } from "@webstudio-is/css-engine";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
-  styled,
   SelectScrollUpButton,
   SelectScrollDownButton,
   SelectViewport,
