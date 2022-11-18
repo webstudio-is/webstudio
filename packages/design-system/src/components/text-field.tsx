@@ -37,6 +37,12 @@ export const TextFieldIconButton = styled(
   "button",
   {
     border: "none",
+    boxSizing: "border-box",
+    fontFamily: "inherit",
+    fontSize: "inherit",
+    color: "inherit",
+    padding: 0,
+    margin: 0,
     "&:hover": {
       backgroundColor: "$slate7",
       color: "$hiContrast",
