@@ -138,11 +138,18 @@ export const useShortcuts = () => {
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
 
-  useHotkeys(shortcuts.copy, shortcutHandlerMap.copy, options, [
+  useHotkeys(
+    shortcuts.copy,
     shortcutHandlerMap.copy,
-  ]);
-
-  useHotkeys(shortcuts.paste, shortcutHandlerMap.paste, options, []);
+    { ...options, enableOnTags: [...inputTags] },
+    []
+  );
+  useHotkeys(
+    shortcuts.paste,
+    shortcutHandlerMap.paste,
+    { ...options, enableOnTags: [...inputTags] },
+    []
+  );
 
   useHotkeys(shortcuts.breakpoint, shortcutHandlerMap.breakpoint, options, []);
   useHotkeys(shortcuts.zoom, shortcutHandlerMap.zoom, options, []);
