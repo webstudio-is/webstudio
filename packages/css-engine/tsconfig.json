@@ -14,6 +14,10 @@
   "references": [
     {
       "path": "../css-data"
+    },
+
+    {
+      "path": "../fonts"
     }
   ]
 }
