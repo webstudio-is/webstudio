@@ -50,6 +50,7 @@ export const pathValidators = (
     )
     .refine(
       // Remix serves build artefacts like JS bundles from /build
+      // And we cannot customize it due to bug in Remix: https://github.com/remix-run/remix/issues/2933
       (path) => path !== "/build" && path.startsWith("/build/") === false,
       "/build prefix is reserved"
     );
