@@ -28,7 +28,7 @@ export const pathValidators = (
   baseValidator: ZodType<string>
 ): ZodType<string> =>
   baseValidator
-    .refine((path) => path !== "", "Can't be just empty")
+    .refine((path) => path !== "", "Can't be empty")
     .refine((path) => path !== "/", "Can't be just a /")
     .refine(
       (path) => path === "" || path.startsWith("/"),
