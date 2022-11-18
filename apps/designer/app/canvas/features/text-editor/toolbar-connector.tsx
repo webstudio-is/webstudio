@@ -137,7 +137,7 @@ export const ToolbarConnectorPlugin = () => {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("mouseup", onMouseUp);
     };
-  }, [updateToolbar]);
+  }, [editor, updateToolbar]);
 
   useEffect(() => {
     // hide toolbar when editor is unmounted
