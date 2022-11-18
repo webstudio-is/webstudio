@@ -119,6 +119,7 @@ export const ToolbarConnectorPlugin = () => {
     }
   }, []);
 
+  // prevent showing toolbar when select with mouse
   useEffect(() => {
     const onMouseDown = () => {
       isMouseDownRef.current = true;
