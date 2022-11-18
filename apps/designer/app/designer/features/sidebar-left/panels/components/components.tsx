@@ -2,10 +2,9 @@ import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
 import { type Instance, components } from "@webstudio-is/react-sdk";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { Flex } from "@webstudio-is/design-system";
-import { useDrag, type Point } from "@webstudio-is/design-system";
+import { Flex, useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { createInstance } from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
@@ -107,7 +106,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         type: "dragStart",
         payload: {
           origin: "panel",
-          dragItem: createInstance({ component: componentName }),
+          dragItem: utils.tree.createInstance({ component: componentName }),
         },
       });
     },
@@ -151,7 +150,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               onSetActiveTab("none");
               publish({
                 type: "insertInstance",
-                payload: { instance: createInstance({ component }) },
+                payload: { instance: utils.tree.createInstance({ component }) },
               });
             }}
           />

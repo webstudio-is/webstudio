@@ -1,6 +1,12 @@
-import { units } from "@webstudio-is/css-data";
+import { units } from "./units";
+import { properties } from "./properties";
 import { z } from "zod";
-import { StyleProperty } from "./types";
+
+type Properties = typeof properties;
+
+export type StyleProperty = keyof Properties;
+
+export type AppliesTo = Properties[StyleProperty]["appliesTo"];
 
 export const Unit = z.union([z.enum(units), z.literal("number")]);
 

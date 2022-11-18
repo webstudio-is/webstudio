@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/css-data";
 import { type Publish, useSubscribe } from "~/shared/pubsub";
 import {
   Text,

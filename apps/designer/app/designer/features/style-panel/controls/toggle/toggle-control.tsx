@@ -5,7 +5,7 @@ import {
   ToggleGroupRoot,
   ToggleGroupItem,
 } from "@webstudio-is/design-system";
-import { StyleProperty } from "@webstudio-is/react-sdk";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 
 export type ToggleGroupControlProps = {

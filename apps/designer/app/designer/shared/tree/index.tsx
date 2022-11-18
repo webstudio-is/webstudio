@@ -8,16 +8,12 @@ import {
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import { components, Instance } from "@webstudio-is/react-sdk";
-import {
-  findInstanceById,
-  getInstancePath,
-  getInstancePathWithPositions,
-} from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 
 const instanceRelatedProps = {
-  findItemById: findInstanceById,
-  getItemPath: getInstancePath,
-  getItemPathWithPositions: getInstancePathWithPositions,
+  findItemById: utils.tree.findInstanceById,
+  getItemPath: utils.tree.getInstancePath,
+  getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
     return components[item.component].isInlineOnly !== true;
   },

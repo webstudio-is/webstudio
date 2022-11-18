@@ -1,4 +1,4 @@
-import type { StyleProperty } from "./types";
+import type { StyleProperty } from "@webstudio-is/css-data";
 
 const layout = [
   "display",

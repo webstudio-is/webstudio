@@ -3,11 +3,7 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import {
-  getInstancePath,
-  createInstance,
-  findClosestNonInlineParent,
-} from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import {
   findInstanceByElement,
   getInstanceElementById,
@@ -104,7 +100,7 @@ export const useDragAndDrop = () => {
         return dropTarget;
       }
 
-      const path = getInstancePath(rootInstance, dropTarget.data.id);
+      const path = utils.tree.getInstancePath(rootInstance, dropTarget.data.id);
       path.reverse();
 
       if (dropTarget.area !== "center") {
@@ -184,7 +180,7 @@ export const useDragAndDrop = () => {
 
       // When trying to drag an inline instance, drag its parent instead
       if (components[instance.component].isInlineOnly) {
-        const nonInlineParent = findClosestNonInlineParent(
+        const nonInlineParent = utils.tree.findClosestNonInlineParent(
           rootInstance,
           instance.id
         );
@@ -292,7 +288,9 @@ export const useDragAndDrop = () => {
         publish({
           type: "insertInstance",
           payload: {
-            instance: createInstance({ component: dragItem.component }),
+            instance: utils.tree.createInstance({
+              component: dragItem.component,
+            }),
             dropTarget: {
               parentId: dropTarget.data.id,
               position: dropTarget.indexWithinChildren,

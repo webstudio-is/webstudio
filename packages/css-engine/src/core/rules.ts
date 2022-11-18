@@ -1,8 +1,4 @@
-import {
-  type Style,
-  type StyleProperty,
-  type StyleValue,
-} from "@webstudio-is/react-sdk";
+import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import hyphenate from "hyphenate-style-name";
 import { toValue } from "./to-value";
 

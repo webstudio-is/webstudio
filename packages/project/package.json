@@ -16,6 +16,7 @@
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/prisma-client": "*",
     "@webstudio-is/react-sdk": "*",
+    "@webstudio-is/css-data": "*",
     "bson-objectid": "^2.0.2",
     "immer": "^9.0.12",
     "nanoid": "^3.2.0",

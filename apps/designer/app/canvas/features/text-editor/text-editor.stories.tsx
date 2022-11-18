@@ -4,7 +4,7 @@ import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { useSubscribe, publish } from "~/shared/pubsub";
-import { createInstance } from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import type { TextToolbarState } from "~/designer/shared/nano-states";
 import { TextEditor } from "./text-editor";
 
@@ -96,24 +96,24 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
         }}
       >
         <TextEditor
-          instance={createInstance({
+          instance={utils.tree.createInstance({
             component: "TextBlock",
             children: [
               "Pragraph you can edit ",
-              createInstance({
+              utils.tree.createInstance({
                 component: "Bold",
                 children: ["very bold text "],
               }),
-              createInstance({
+              utils.tree.createInstance({
                 component: "Bold",
                 children: [
-                  createInstance({
+                  utils.tree.createInstance({
                     component: "Italic",
                     children: ["with small italic"],
                   }),
                 ],
               }),
-              createInstance({
+              utils.tree.createInstance({
                 component: "Bold",
                 children: [" subtext"],
               }),

@@ -1,7 +1,7 @@
 import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph, SearchField } from "@webstudio-is/design-system";
-import type { SelectedInstanceData } from "~/shared/canvas-components";
+import type { SelectedInstanceData } from "@webstudio-is/project";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 import { useState } from "react";

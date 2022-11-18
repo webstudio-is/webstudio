@@ -6,10 +6,7 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import {
-  findClosestNonInlineParent,
-  findInstanceById,
-} from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import {
   getInstanceElementById,
   getInstanceIdFromElement,
@@ -36,7 +33,7 @@ export const useTrackSelectedElement = () => {
   const selectInstance = useCallback(
     (id) => {
       if (rootInstance === undefined) return;
-      const instance = findInstanceById(rootInstance, id);
+      const instance = utils.tree.findInstanceById(rootInstance, id);
       setSelectedInstance(instance);
     },
     [setSelectedInstance, rootInstance]
@@ -103,7 +100,8 @@ export const useTrackSelectedElement = () => {
         // Inline instances are not editable directly, only through parent instance.
         if (isInlineOnly) {
           const parent =
-            rootInstance && findClosestNonInlineParent(rootInstance, id);
+            rootInstance &&
+            utils.tree.findClosestNonInlineParent(rootInstance, id);
           if (parent && components[parent.component].isContentEditable) {
             selectInstance(parent.id);
             setEditingInstanceId(parent.id);

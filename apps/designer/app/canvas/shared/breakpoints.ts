@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import store from "immerhin";
-import type { Breakpoint } from "@webstudio-is/react-sdk";
+import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
 import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {

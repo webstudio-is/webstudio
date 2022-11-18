@@ -1,10 +1,7 @@
 import { Grid, type CSS } from "@webstudio-is/design-system";
 import type { StyleConfig } from "./shared/configs";
-import {
-  type Style,
-  type StyleProperty,
-  type Category,
-} from "@webstudio-is/react-sdk";
+import type { Category } from "@webstudio-is/react-sdk";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
 import * as controls from "./controls";

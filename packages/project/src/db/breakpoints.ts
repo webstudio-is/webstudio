@@ -1,14 +1,11 @@
-import {
-  initialBreakpoints,
-  Breakpoint,
-  Breakpoints,
-} from "@webstudio-is/react-sdk";
+import { initialBreakpoints } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import { applyPatches, type Patch } from "immer";
 import {
   type Breakpoints as DbBreakpoints,
   prisma,
 } from "@webstudio-is/prisma-client";
+import { type Breakpoint, Breakpoints } from "@webstudio-is/css-data";
 
 export const load = async (buildId: DbBreakpoints["buildId"]) => {
   const breakpoints = await prisma.breakpoints.findUnique({

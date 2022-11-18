@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  categories,
-  type StyleProperty,
-  type StyleValue,
-} from "@webstudio-is/react-sdk";
+import { categories } from "@webstudio-is/react-sdk";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { Box } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { SetProperty } from "../../shared/use-style-data";

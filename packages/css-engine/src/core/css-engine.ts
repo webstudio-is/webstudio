@@ -1,4 +1,4 @@
-import { CssRule } from "@webstudio-is/react-sdk";
+import type { CssRule } from "@webstudio-is/css-data";
 import {
   FontFaceRule,
   MediaRule,

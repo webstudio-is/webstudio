@@ -1,9 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type {
-  SelectedInstanceData,
-  StyleUpdates,
-} from "~/shared/canvas-components";
-import { type StyleProperty } from "@webstudio-is/react-sdk";
+import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { parseCssValue } from "./parse-css-value";

@@ -1,10 +1,10 @@
 import { useAllUserProps } from "../user-props/";
 import type { Tree, InstanceProps } from "../db";
-import type { Breakpoint } from "../css";
 import { createElementsTree } from "./create-elements-tree";
 import { WrapperComponent } from "./wrapper-component";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { type ComponentProps } from "react";
+import type { Breakpoint } from "@webstudio-is/css-data";
 
 export type Data = {
   tree: Tree | null;

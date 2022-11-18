@@ -1,8 +1,5 @@
-import {
-  type Instance,
-  type Breakpoint,
-  components,
-} from "@webstudio-is/react-sdk";
+import { Breakpoint } from "@webstudio-is/css-data";
+import { type Instance, components } from "@webstudio-is/react-sdk";
 
 /**
  * Populate instance with:

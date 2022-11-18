@@ -1,4 +1,4 @@
-import type { StyleValue } from "@webstudio-is/react-sdk";
+import type { StyleValue } from "@webstudio-is/css-data";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
 
 type ToCssOptions = {

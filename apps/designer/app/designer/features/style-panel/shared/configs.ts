@@ -1,9 +1,5 @@
-import {
-  categories,
-  type Category,
-  type StyleProperty,
-  type AppliesTo,
-} from "@webstudio-is/react-sdk";
+import { categories, type Category } from "@webstudio-is/react-sdk";
+import type { StyleProperty, AppliesTo } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import {
   IconRecords,

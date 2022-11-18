@@ -1,7 +1,7 @@
-import type { Style } from "../css";
 import { z } from "zod";
 import React from "react";
 import { IconProps } from "@webstudio-is/icons";
+import type { Style } from "@webstudio-is/css-data";
 
 export type WsComponentMeta<ComponentType> = {
   Component: ComponentType;

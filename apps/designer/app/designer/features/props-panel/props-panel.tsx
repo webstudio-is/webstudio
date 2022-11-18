@@ -6,7 +6,7 @@ import {
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import type { SelectedInstanceData } from "~/shared/canvas-components";
+import type { SelectedInstanceData } from "@webstudio-is/project";
 import {
   Box,
   Button,

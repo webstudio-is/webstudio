@@ -1,9 +1,10 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import { type Breakpoint, type Instance } from "@webstudio-is/react-sdk";
-import {
+import type { Instance } from "@webstudio-is/react-sdk";
+import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
+import type { Breakpoint } from "@webstudio-is/css-data";
 
 export const rootInstanceContainer = createValueContainer<
   Instance | undefined

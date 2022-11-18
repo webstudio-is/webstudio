@@ -12,7 +12,9 @@
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "zod": "^3.17.3"
+  },
   "devDependencies": {
     "@webstudio-is/jest-config": "*",
     "mdn-data": "2.0.23",

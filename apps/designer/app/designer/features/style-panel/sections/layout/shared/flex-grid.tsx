@@ -1,7 +1,7 @@
 import { Flex, Grid, IconButton } from "@webstudio-is/design-system";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import { useIsFromCurrentBreakpoint } from "../../../shared/use-is-from-current-breakpoint";
-import type { Style } from "@webstudio-is/react-sdk";
+import type { Style } from "@webstudio-is/css-data";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 
 export const FlexGrid = ({

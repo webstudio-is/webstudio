@@ -17,6 +17,10 @@
     },
 
     {
+      "path": "../css-data"
+    },
+
+    {
       "path": "../prisma-client"
     },
 
