@@ -1,9 +1,6 @@
-import { styled } from "../stitches.config";
+import { css, styled } from "../stitches.config";
 
-/**
- * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
- */
-export const Text = styled("div", {
+export const textStyles = css({
   // Reset
   margin: 0,
   lineHeight: 1,
@@ -95,3 +92,8 @@ export const Text = styled("div", {
     variant: "regular",
   },
 });
+
+/**
+ * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
+ */
+export const Text = styled("div", textStyles);

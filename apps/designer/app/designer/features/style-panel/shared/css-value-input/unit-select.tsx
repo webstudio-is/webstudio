@@ -3,13 +3,14 @@ import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
 import { toValue } from "@webstudio-is/css-engine";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
-  styled,
   SelectScrollUpButton,
   SelectScrollDownButton,
   SelectViewport,
   SelectItem,
   SelectContent,
   TextFieldIconButton,
+  styled,
+  textStyles,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { isValid } from "../parse-css-value";
@@ -90,7 +91,7 @@ export const useUnitSelect = ({
   return [isOpen, select];
 };
 
-const StyledTrigger = styled(TextFieldIconButton, {
+const StyledTrigger = styled(TextFieldIconButton, textStyles, {
   px: 3,
 });
 
@@ -119,7 +120,7 @@ const UnitSelect = ({
       open={open}
     >
       <SelectPrimitive.SelectTrigger asChild>
-        <StyledTrigger>
+        <StyledTrigger variant="unit">
           <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
         </StyledTrigger>
       </SelectPrimitive.SelectTrigger>
