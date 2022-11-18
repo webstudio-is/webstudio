@@ -66,6 +66,7 @@ type ToolbarProps = {
 
 const Toolbar = ({ state, onToggle }: ToolbarProps) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (rootRef.current && rootRef.current.parentElement) {
       const floating = rootRef.current;
@@ -79,7 +80,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       };
       computePosition(reference, floating, {
         placement: "top",
-        middleware: [flip(), shift({ padding: 4 }), offset(16)],
+        middleware: [flip(), shift({ padding: 4 }), offset(12)],
       }).then(({ x, y }) => {
         floating.style.transform = `translate(${x}px, ${y}px)`;
       });
