@@ -33,8 +33,13 @@
     "minimist": "^1.2.6",
     "tsx": "^3.9.0",
     "umzug": "^3.2.1",
-    "uuid": "^9.0.0",
-    "zod": "^3.19.0"
+    "uuid": "^9.0.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "zod": "^3.19.1"
   },
   "sideEffects": false,
   "tsup": {
