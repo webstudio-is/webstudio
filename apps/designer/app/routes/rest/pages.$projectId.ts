@@ -1,6 +1,6 @@
 import { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { db } from "@webstudio-is/project/server";
-import { type Pages, utils } from "@webstudio-is/project";
+import { type Pages, utils, pathValidators } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
 import { sentryException } from "~/shared/sentry";
@@ -21,18 +21,13 @@ const nonEmptyString = z
 
 const commonPageInput = {
   name: nonEmptyString,
-  path: nonEmptyString
-    .refine((path) => path !== "/", "Can't be just a /")
-    .transform((path) => (path.endsWith("/") ? path.slice(0, -1) : path))
-    .transform((path) => path.replace(/\/\//g, "/"))
-    .refine(
-      (path) => path === "" || path.startsWith("/"),
-      "Must start with a /"
-    )
-    .refine(
-      (path) => /^[-_a-z0-9\\/]*$/.test(path),
-      "Only a-z, 0-9, -, _ and / are allowed"
-    ),
+  path: pathValidators(
+    nonEmptyString
+      .transform((path) =>
+        path.endsWith("/") && path !== "/" ? path.slice(0, -1) : path
+      )
+      .transform((path) => path.replace(/\/\//g, "/"))
+  ),
   title: z.string().optional(),
   description: z.string().optional(),
 } as const;
