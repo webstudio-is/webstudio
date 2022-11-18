@@ -9,3 +9,5 @@ export const utils = {
 } as const;
 
 export * from "./db/types";
+export * from "./shared/canvas-components";
+export type { InstanceInsertionSpec } from "./shared/tree-utils";

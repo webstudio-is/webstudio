@@ -1,9 +1,9 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/css-data";
 import {
   type SelectedInstanceData,
   type HoveredInstanceData,
-} from "~/shared/canvas-components";
+} from "@webstudio-is/project";
 import { type SyncStatus } from "~/shared/sync";
 import { Asset } from "@webstudio-is/asset-uploader";
 import { type Pages, type Project } from "@webstudio-is/project";

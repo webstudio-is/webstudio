@@ -1,11 +1,11 @@
 import { ActionFunction, json } from "@remix-run/node";
 import { db } from "@webstudio-is/project/server";
+import { utils } from "@webstudio-is/project";
 import { loadCanvasData } from "~/shared/db";
 import { getBuildParams } from "~/shared/router-utils";
 import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { createCssEngine } from "@webstudio-is/css-engine";
-import { getCssRules } from "~/shared/tree-utils";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import { addGlobalRules } from "~/canvas/shared/styles";
 
@@ -41,7 +41,7 @@ export const loader: ActionFunction = async ({ request }) => {
       engine.addMediaRule(breakpoint.id, breakpoint);
     }
 
-    const cssRules = getCssRules(canvasData.tree?.root);
+    const cssRules = utils.tree.getCssRules(canvasData.tree?.root);
     for (const [instanceId, cssRule] of cssRules) {
       engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, cssRule);
     }

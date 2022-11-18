@@ -1,9 +1,6 @@
-import {
-  properties,
-  type StyleValue,
-  type StyleProperty,
-} from "@webstudio-is/react-sdk";
-import { type Instance } from "@webstudio-is/react-sdk";
+import { properties } from "@webstudio-is/css-data";
+import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
+import type { Instance } from "@webstudio-is/react-sdk";
 
 export type InheritedStyle = {
   [property in StyleProperty]: {

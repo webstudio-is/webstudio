@@ -1,18 +1,18 @@
 import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
-import { setInstanceStyleMutable } from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
 import { rootInstanceContainer } from "~/shared/nano-states";
+import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
-  idAttribute,
   type Breakpoint,
   type ValidStaticStyleValue,
   type StyleValue,
   type CssRule,
   type StyleProperty,
   type Style,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/css-data";
 import { useEffect } from "react";
 import {
   createCssEngine,
@@ -205,7 +205,7 @@ const useUpdateStyle = () => {
       if (rootInstance === undefined) {
         return;
       }
-      setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
+      utils.tree.setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
     });
   });
 };

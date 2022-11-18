@@ -1,4 +1,4 @@
-import type { AppliesTo, StyleProperty } from "@webstudio-is/react-sdk";
+import type { AppliesTo, StyleProperty } from "@webstudio-is/css-data";
 
 const displayInline = [
   "inline",

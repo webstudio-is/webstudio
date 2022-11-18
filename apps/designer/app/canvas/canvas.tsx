@@ -40,7 +40,7 @@ import {
 import { registerContainers } from "./shared/immerhin";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { setInstanceChildrenMutable } from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import { CanvasData } from "~/shared/db";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
@@ -55,7 +55,7 @@ const useElementsTree = () => {
       if (rootInstance === undefined) return;
 
       const { instanceId, updates } = change;
-      setInstanceChildrenMutable(instanceId, updates, rootInstance);
+      utils.tree.setInstanceChildrenMutable(instanceId, updates, rootInstance);
     });
   }, []);
 

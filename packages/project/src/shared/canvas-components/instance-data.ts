@@ -1,12 +1,11 @@
-import {
-  type Instance,
-  type InstanceProps,
-  type CssRule,
-  type Style,
-  type StyleProperty,
-  type StyleValue,
-  type Breakpoint,
-} from "@webstudio-is/react-sdk";
+import type { Instance, InstanceProps } from "@webstudio-is/react-sdk";
+import type {
+  CssRule,
+  Style,
+  StyleProperty,
+  StyleValue,
+  Breakpoint,
+} from "@webstudio-is/css-data";
 
 export type SelectedInstanceData = {
   id: Instance["id"];

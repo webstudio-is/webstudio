@@ -25,6 +25,10 @@
     },
 
     {
+      "path": "../css-data"
+    },
+
+    {
       "path": "../fonts"
     },
 

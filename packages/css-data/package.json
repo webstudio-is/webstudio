@@ -1,32 +1,30 @@
 {
-  "name": "@webstudio-is/project",
-  "version": "0.0.1",
-  "description": "Webstudio Project",
+  "name": "@webstudio-is/css-data",
+  "version": "0.1.0",
+  "description": "CSS Data",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "checks": "yarn typecheck && yarn lint && yarn test",
+    "checks": "yarn typecheck && yarn lint",
     "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
-  "dependencies": {
-    "@webstudio-is/asset-uploader": "*",
-    "@webstudio-is/prisma-client": "*",
-    "@webstudio-is/react-sdk": "*",
-    "@webstudio-is/css-data": "*",
-    "bson-objectid": "^2.0.2",
-    "immer": "^9.0.12",
-    "nanoid": "^3.2.0",
-    "slugify": "^1.6.5",
-    "uuid": "^9.0.0",
+  "dependencies": {},
+  "devDependencies": {
+    "@webstudio-is/jest-config": "*",
+    "mdn-data": "2.0.23",
+    "tsup": "^6.1.3",
+    "typescript": "4.7.4",
+    "@types/css-tree": "^1.0.7",
+    "css-tree": "^2.1.0",
+    "camelcase": "^6.3.0",
     "zod": "^3.19.1"
   },
-  "devDependencies": {
-    "tsup": "^6.1.3",
-    "typescript": "4.7.4"
+  "peerDependencies": {
+    "zod": "^3.19.1"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -40,8 +38,7 @@
   "sideEffects": false,
   "tsup": {
     "entry": [
-      "src/index.ts",
-      "src/index.server.ts"
+      "src/index.ts"
     ],
     "format": "cjs",
     "outDir": "lib"

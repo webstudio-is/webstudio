@@ -3,14 +3,8 @@ import { type Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
 import { Flex } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
-import {
-  reparentInstanceMutable,
-  insertInstanceMutable,
-  createInstance,
-  findInstanceById,
-  getInstancePath,
-} from "~/shared/tree-utils";
 import { InstanceTreeNode } from "~/designer/shared/tree";
+import { utils } from "@webstudio-is/project";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
@@ -31,20 +25,21 @@ export const TreePrevew = () => {
     }
 
     const isNew =
-      findInstanceById(rootInstance, dragItemInstance.id) === undefined;
+      utils.tree.findInstanceById(rootInstance, dragItemInstance.id) ===
+      undefined;
 
     const instance: Instance = produce((draft) => {
       if (isNew) {
-        insertInstanceMutable(
+        utils.tree.insertInstanceMutable(
           draft,
-          createInstance({ component: dragItemInstance.component }),
+          utils.tree.createInstance({ component: dragItemInstance.component }),
           {
             parentId: dropTargetInstanceId,
             position: dropTargetPosition,
           }
         );
       } else {
-        reparentInstanceMutable(
+        utils.tree.reparentInstanceMutable(
           draft,
           dragItemInstance.id,
           dropTargetInstanceId,
@@ -53,10 +48,9 @@ export const TreePrevew = () => {
       }
     })(rootInstance);
 
-    const dropTargetPath = getInstancePath(
-      rootInstance,
-      dropTargetInstanceId
-    ).map((item) => item.id);
+    const dropTargetPath = utils.tree
+      .getInstancePath(rootInstance, dropTargetInstanceId)
+      .map((item) => item.id);
 
     return {
       itemData: instance,

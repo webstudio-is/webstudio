@@ -1,6 +1,12 @@
-import { z } from "zod";
 import { units } from "./units";
-import { StyleProperty } from "./types";
+import { properties } from "./properties";
+import { z } from "zod";
+
+type Properties = typeof properties;
+
+export type StyleProperty = keyof Properties;
+
+export type AppliesTo = Properties[StyleProperty]["appliesTo"];
 
 export const Unit = z.union([z.enum(units), z.literal("number")]);
 

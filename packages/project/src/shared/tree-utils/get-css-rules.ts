@@ -1,4 +1,5 @@
-import type { CssRule, Instance } from "@webstudio-is/react-sdk";
+import type { CssRule } from "@webstudio-is/css-data";
+import type { Instance } from "@webstudio-is/react-sdk";
 
 const aggregateCssRules = (
   instance: Instance,

@@ -9,23 +9,15 @@ import {
   getBrowserStyle,
   useAllUserProps,
 } from "@webstudio-is/react-sdk";
+
 import { useSubscribe } from "~/shared/pubsub";
 import {
-  deleteInstanceMutable,
-  populateInstance,
-  findParentInstance,
-  findClosestSiblingInstance,
-  insertInstanceMutable,
-  findInstanceById,
-  reparentInstanceMutable,
-  getInstancePathWithPositions,
+  utils,
+  type HoveredInstanceData,
   type InstanceInsertionSpec,
-} from "~/shared/tree-utils";
-import store from "immerhin";
-import {
-  HoveredInstanceData,
   type SelectedInstanceData,
-} from "~/shared/canvas-components";
+} from "@webstudio-is/project";
+import store from "immerhin";
 import {
   useSelectedInstance,
   useSelectedElement,
@@ -80,7 +72,10 @@ export const findInsertLocation = (
     return { parentId: rootInstance.id, position: "end" };
   }
 
-  const path = getInstancePathWithPositions(rootInstance, selectedInstanceId);
+  const path = utils.tree.getInstancePathWithPositions(
+    rootInstance,
+    selectedInstanceId
+  );
   path.reverse();
 
   const parentIndex = path.findIndex(
@@ -107,8 +102,11 @@ export const useInsertInstance = () => {
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
         if (rootInstance === undefined) return;
-        const populatedInstance = populateInstance(instance, breakpoints[0].id);
-        const hasInserted = insertInstanceMutable(
+        const populatedInstance = utils.tree.populateInstance(
+          instance,
+          breakpoints[0].id
+        );
+        const hasInserted = utils.tree.insertInstanceMutable(
           rootInstance,
           populatedInstance,
           dropTarget ?? findInsertLocation(rootInstance, selectedInstance?.id)
@@ -130,7 +128,7 @@ export const useReparentInstance = () => {
   useSubscribe("reparentInstance", ({ instanceId, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
       if (rootInstance === undefined) return;
-      reparentInstanceMutable(
+      utils.tree.reparentInstanceMutable(
         rootInstance,
         instanceId,
         dropTarget.instanceId,
@@ -144,7 +142,7 @@ export const useReparentInstance = () => {
       rootInstanceContainer.value !== undefined
     ) {
       setSelectedInstance(
-        findInstanceById(rootInstanceContainer.value, instanceId)
+        utils.tree.findInstanceById(rootInstanceContainer.value, instanceId)
       );
     }
   });
@@ -160,9 +158,12 @@ export const useDeleteInstance = () => {
         return;
       }
 
-      const parentInstance = findParentInstance(rootInstance, id);
+      const parentInstance = utils.tree.findParentInstance(rootInstance, id);
       if (parentInstance !== undefined) {
-        const siblingInstance = findClosestSiblingInstance(parentInstance, id);
+        const siblingInstance = utils.tree.findParentInstance(
+          parentInstance,
+          id
+        );
         setSelectedInstance(siblingInstance || parentInstance);
       }
     }
@@ -177,7 +178,7 @@ export const useDeleteInstance = () => {
     // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
       if (rootInstance !== undefined) {
-        deleteInstanceMutable(rootInstance, id);
+        utils.tree.deleteInstanceMutable(rootInstance, id);
       }
     });
   });
@@ -312,7 +313,7 @@ export const useUpdateSelectedInstance = () => {
   useEffect(() => {
     let instance;
     if (rootInstance !== undefined && selectedInstance?.id) {
-      instance = findInstanceById(rootInstance, selectedInstance.id);
+      instance = utils.tree.findInstanceById(rootInstance, selectedInstance.id);
     }
     // When it's a new inserted instance, it will be undefined, so we can't set it to undefined and remove it.
     if (instance !== undefined) setSelectedInstance(instance);

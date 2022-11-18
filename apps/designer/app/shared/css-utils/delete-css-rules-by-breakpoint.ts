@@ -1,4 +1,5 @@
-import { type Instance, type Breakpoint } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/react-sdk";
+import type { Breakpoint } from "@webstudio-is/css-data";
 
 export const deleteCssRulesByBreakpoint = (
   instance: Instance,

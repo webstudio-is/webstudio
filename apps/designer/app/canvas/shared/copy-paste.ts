@@ -4,7 +4,7 @@ import {
   allUserPropsContainer,
 } from "@webstudio-is/react-sdk";
 import { selectedInstanceContainer } from "./nano-states";
-import { cloneInstance } from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import { cloneProps } from "~/shared/props-utils";
 import { publish } from "~/shared/pubsub";
 
@@ -19,7 +19,7 @@ export const copy = () => {
 
 export const paste = () => {
   if (currentInstance === undefined) return;
-  const instance = cloneInstance(currentInstance);
+  const instance = utils.tree.cloneInstance(currentInstance);
   const props = currentProps
     ? cloneProps(currentProps, { instanceId: instance.id })
     : undefined;

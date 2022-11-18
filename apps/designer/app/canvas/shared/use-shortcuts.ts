@@ -6,7 +6,7 @@ import { publish, useSubscribe } from "~/shared/pubsub";
 import { useSelectedInstance } from "./nano-states";
 import { copy, paste } from "./copy-paste";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
-import { type SelectedInstanceData } from "~/shared/canvas-components";
+import { type SelectedInstanceData } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

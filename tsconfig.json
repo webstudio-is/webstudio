@@ -4,6 +4,7 @@
   "references": [
     { "path": "apps/designer" },
     { "path": "packages/asset-uploader" },
+    { "path": "packages/css-data" },
     { "path": "packages/css-engine" },
     { "path": "packages/css-vars" },
     { "path": "packages/design-system" },
@@ -11,7 +12,10 @@
     { "path": "packages/http-client" },
     { "path": "packages/icons" },
     { "path": "packages/prisma-client" },
-    { "path": "packages/project" },
+
+    {
+      "path": "packages/project"
+    },
 
     {
       "path": "packages/react-sdk"

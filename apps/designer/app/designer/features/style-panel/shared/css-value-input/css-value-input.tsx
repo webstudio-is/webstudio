@@ -12,12 +12,12 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import {
-  type KeywordValue,
-  type StyleProperty,
-  type UnsetValue,
+import type {
+  KeywordValue,
+  StyleProperty,
+  UnsetValue,
   StyleValue,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/css-data";
 import {
   type KeyboardEventHandler,
   type KeyboardEvent,

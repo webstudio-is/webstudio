@@ -1,5 +1,5 @@
 import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
-import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/css-data";
 import { v4 as uuid } from "uuid";
 import * as db from ".";
 import { Build, Page, Pages } from "./types";

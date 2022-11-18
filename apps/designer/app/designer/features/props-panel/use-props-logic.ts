@@ -10,7 +10,7 @@ import produce from "immer";
 import uniqBy from "lodash/uniqBy";
 import debounce from "lodash/debounce";
 import { useRef, useState } from "react";
-import type { SelectedInstanceData } from "~/shared/canvas-components";
+import type { SelectedInstanceData } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
