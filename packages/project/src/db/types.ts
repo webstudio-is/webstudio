@@ -46,13 +46,13 @@ export const pathValidators = (
     .refine(
       // We use /s for our system stuff like /s/css or /s/uploads
       (path) => path !== "/s" && path.startsWith("/s/") === false,
-      "/s prefix is reserved"
+      "/s prefix is reserved for the system"
     )
     .refine(
       // Remix serves build artefacts like JS bundles from /build
       // And we cannot customize it due to bug in Remix: https://github.com/remix-run/remix/issues/2933
       (path) => path !== "/build" && path.startsWith("/build/") === false,
-      "/build prefix is reserved"
+      "/build prefix is reserved for the system"
     );
 
 const Page = z.object({
