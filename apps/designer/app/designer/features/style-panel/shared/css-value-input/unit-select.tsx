@@ -9,7 +9,8 @@ import {
   SelectItem,
   SelectContent,
   TextFieldIconButton,
-  Text,
+  styled,
+  textStyles,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { isValid } from "../parse-css-value";
@@ -90,13 +91,9 @@ export const useUnitSelect = ({
   return [isOpen, select];
 };
 
-const StyledTrigger = ({ children }: { children: JSX.Element }) => {
-  return (
-    <TextFieldIconButton css={{ px: "$spacing$2" }}>
-      <Text variant="unit">{children}</Text>
-    </TextFieldIconButton>
-  );
-};
+const StyledTrigger = styled(TextFieldIconButton, textStyles, {
+  px: 3,
+});
 
 type UnitSelectProps = {
   options: Array<string>;
@@ -123,7 +120,7 @@ const UnitSelect = ({
       open={open}
     >
       <SelectPrimitive.SelectTrigger asChild>
-        <StyledTrigger>
+        <StyledTrigger variant="unit">
           <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
         </StyledTrigger>
       </SelectPrimitive.SelectTrigger>
