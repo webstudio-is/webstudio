@@ -76,7 +76,7 @@ const useHandleOnChange = (
       type: "keyword",
       value: input,
     });
-  }, [input, value.type, onChange]);
+  }, [property, input, value.type, onChange]);
 
   useEffect(() => {
     valueRef.current = value;
@@ -305,24 +305,27 @@ export const CssValueInput = ({
     </CssValueInputIconButton>
   );
 
-  const isKeywordValue = value.type === "keyword";
+  const keywordButtonElement = (
+    <TextFieldIconButton
+      {...getToggleButtonProps()}
+      state={isOpen ? "active" : undefined}
+    >
+      <ChevronDownIcon />
+    </TextFieldIconButton>
+  );
+  const hasItems = items.length !== 0;
   const isUnitValue = value.type === "unit";
+  const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
-  const suffix =
-    items.length === 0 && isKeywordValue ? null : (
-      <Box ref={suffixRef}>
-        {isKeywordValue ? (
-          <TextFieldIconButton
-            {...getToggleButtonProps()}
-            state={isOpen ? "active" : undefined}
-          >
-            <ChevronDownIcon />
-          </TextFieldIconButton>
-        ) : isUnitValue ? (
-          unitSelectElement
-        ) : null}
-      </Box>
-    );
+  const suffix = (
+    <Box ref={suffixRef}>
+      {isUnitValue
+        ? unitSelectElement
+        : isKeywordValue
+        ? keywordButtonElement
+        : null}
+    </Box>
+  );
 
   return (
     <ComboboxPopper>
