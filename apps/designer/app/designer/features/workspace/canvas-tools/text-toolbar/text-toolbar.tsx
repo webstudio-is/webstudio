@@ -46,7 +46,7 @@ const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.stopPropagation();
 };
 
-const computeAbsoluteRect = (parent: DOMRect, rel: DOMRect) => {
+const getRectForRelativeRect = (parent: DOMRect, rel: DOMRect) => {
   return {
     x: parent.x + rel.x,
     y: parent.y + rel.y,
@@ -54,8 +54,8 @@ const computeAbsoluteRect = (parent: DOMRect, rel: DOMRect) => {
     height: rel.height,
     top: parent.top + rel.top,
     left: parent.left + rel.left,
-    bottom: parent.bottom - rel.bottom,
-    right: parent.right - rel.right,
+    bottom: parent.top + rel.bottom,
+    right: parent.left + rel.right,
   };
 };
 
@@ -71,7 +71,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
     if (rootRef.current?.parentElement) {
       const floating = rootRef.current;
       const parent = rootRef.current.parentElement;
-      const newRect = computeAbsoluteRect(
+      const newRect = getRectForRelativeRect(
         parent.getBoundingClientRect(),
         state.selectionRect
       );
