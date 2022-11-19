@@ -29,16 +29,8 @@ module.exports = {
     // It's too dumb to understand properly what's defined in ts
     "react/prop-types": 0,
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      {
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_",
-        caughtErrorsIgnorePattern: "^_",
-        ignoreRestSiblings: true,
-      },
-    ],
-    "react/react-in-jsx-scope": 0,
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/no-unused-vars": "off",
     "func-style": ["error", "expression", { allowArrowFunctions: true }],
     "unicorn/filename-case": [
       "error",

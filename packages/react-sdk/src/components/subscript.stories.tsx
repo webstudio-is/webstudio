@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Bold as BoldPrimitive } from "./bold";
 import argTypes from "./bold.props.json";

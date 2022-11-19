@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Form as FormPrimitive } from "./form";
 import argTypes from "./form.props.json";

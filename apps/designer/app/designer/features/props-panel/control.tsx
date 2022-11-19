@@ -1,5 +1,5 @@
 import { UserProp } from "@webstudio-is/react-sdk";
-import React, { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import {
   Flex,
   Label,
@@ -143,8 +143,6 @@ const RangeControl = ({
   </Flex>
 );
 
-const NotImplemented = () => <div />;
-
 type PrimitiveControlProps = BaseControlProps & {
   type: "array" | "boolean" | "date" | "number" | "object" | "text";
 };
@@ -218,8 +216,8 @@ export function Control(props: ControlProps) {
     case "text":
       return <TextControl {...props} />;
     default: {
-      const _exhaustiveCheck: never = props;
-      return <NotImplemented />;
+      const _exhaustivecheck: never = props;
+      return _exhaustivecheck;
     }
   }
 }

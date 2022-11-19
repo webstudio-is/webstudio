@@ -1,4 +1,4 @@
-import React, { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { getImageAttributes, type ImageLoader } from "../component-utils/image";
 
 const defaultTag = "img";

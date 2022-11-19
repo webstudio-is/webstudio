@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Link as LinkPrimitive } from "./link";
 import argTypes from "./link.props.json";
