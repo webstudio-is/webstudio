@@ -68,7 +68,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (rootRef.current && rootRef.current.parentElement) {
+    if (rootRef.current?.parentElement) {
       const floating = rootRef.current;
       const parent = rootRef.current.parentElement;
       const newRect = computeAbsoluteRect(
