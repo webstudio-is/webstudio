@@ -7,6 +7,7 @@ import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
+import { getFinalValue } from "../../shared/get-final-value";
 
 const LayoutSectionFlex = ({
   currentStyle,
@@ -31,6 +32,18 @@ const LayoutSectionFlex = ({
     justifyContent,
     alignContent,
   ].some((config) => config !== undefined);
+
+  const flexWrapValue = getFinalValue({
+    currentStyle: flexWrap.currentStyle,
+    inheritedStyle: flexWrap.inheritedStyle,
+    property: flexWrap.styleConfig.property,
+  });
+
+  // From design: Notice that the align-content icon button is not visible by default.
+  // This property only applies when flex-wrap is set to "wrap".
+  const showAlignContent =
+    flexWrapValue?.type === "keyword" &&
+    (flexWrapValue.value === "wrap" || flexWrapValue.value === "wrap-reverse");
 
   return (
     <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
@@ -88,7 +101,7 @@ const LayoutSectionFlex = ({
               <MenuControl {...justifyContent} />
             </Box>
           )}
-          {alignContent && (
+          {alignContent && showAlignContent && (
             <Box css={{ gridArea: "alignContent" }}>
               <MenuControl {...alignContent} />
             </Box>
