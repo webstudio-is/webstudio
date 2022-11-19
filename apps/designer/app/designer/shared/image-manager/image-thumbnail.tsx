@@ -45,10 +45,7 @@ const ThumbnailContainer = styled(Box, {
   "&:hover": imageInfoTriggerCssVars({ show: true }),
   variants: {
     status: {
-      uploading: {
-        filter: "blur(1px)",
-        opacity: 0.7,
-      },
+      uploading: {},
       uploaded: {},
     },
     state: {
