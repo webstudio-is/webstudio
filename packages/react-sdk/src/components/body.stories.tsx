@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Body as BodyPrimitive } from "./body";
 import argTypes from "./body.props.json";

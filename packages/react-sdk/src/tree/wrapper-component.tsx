@@ -1,4 +1,4 @@
-import React, { Fragment } from "react";
+import { Fragment } from "react";
 import type { Instance } from "../db";
 import * as components from "../components";
 import { useUserProps } from "../user-props/use-user-props";

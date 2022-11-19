@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Italic as ItalicPrimitive } from "./italic";
 import argTypes from "./italic.props.json";

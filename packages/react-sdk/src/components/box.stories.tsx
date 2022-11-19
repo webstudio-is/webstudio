@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Box as BoxPrimitive } from "./box";
 import argTypes from "./box.props.json";

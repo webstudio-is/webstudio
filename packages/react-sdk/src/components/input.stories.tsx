@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Input as InputPrimitive } from "./input";
 import argTypes from "./input.props.json";

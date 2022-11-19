@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { TextBlock as TextBlockPrimitive } from "./text-block";
 import argTypes from "./text-block.props.json";

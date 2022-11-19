@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Heading as HeadingPrimitive } from "./heading";
 import argTypes from "./heading.props.json";

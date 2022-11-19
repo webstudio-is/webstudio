@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Paragraph as ParagraphPrimitive } from "./paragraph";
 import argTypes from "./paragraph.props.json";

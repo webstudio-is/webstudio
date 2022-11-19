@@ -1,4 +1,3 @@
-import React from "react";
 import type { ComponentMeta, ComponentStory } from "@storybook/react";
 import { Button as ButtonPrimitive } from "./button";
 import argTypes from "./button.props.json";
