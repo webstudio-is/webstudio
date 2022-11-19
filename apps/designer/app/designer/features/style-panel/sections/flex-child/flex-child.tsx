@@ -45,32 +45,32 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         items={[
           {
             child: <CrossSmallIcon />,
-            label: "Do not align items",
+            label: "Do not align self",
             value: "auto",
           },
           {
             child: <AlignSelfStartIcon />,
-            label: "align-items: flex-start",
+            label: "align-self: flex-start",
             value: "start",
           },
           {
             child: <AlignSelfEndIcon />,
-            label: "align-items: flex-end",
+            label: "align-self: flex-end",
             value: "end",
           },
           {
             child: <AlignSelfCenterIcon />,
-            label: "align-items: center",
+            label: "align-self: center",
             value: "center",
           },
           {
             child: <AlignSelfStretchIcon />,
-            label: "align-items: stretch",
+            label: "align-self: stretch",
             value: "stretch",
           },
           {
             child: <AlignSelfBaselineIcon />,
-            label: "align-items: baseline",
+            label: "align-self: baseline",
             value: "baseline",
           },
         ]}
