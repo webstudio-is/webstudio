@@ -18,7 +18,7 @@ export const useTrackHoveredElement = (
     () => {
       onChange(hoveredElement);
     },
-    100,
+    50,
     [hoveredElement]
   );
 
