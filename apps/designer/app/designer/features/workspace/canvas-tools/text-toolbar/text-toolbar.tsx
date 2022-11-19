@@ -1,15 +1,12 @@
+import { useRef, useEffect, type MouseEventHandler } from "react";
+import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { type Publish } from "~/shared/pubsub";
-import { useMemo, useState, type MouseEventHandler } from "react";
 import {
   useSelectedInstanceData,
   type TextToolbarState,
   useTextToolbarState,
 } from "~/designer/shared/nano-states";
-import {
-  type CSS,
-  ToggleGroupRoot,
-  ToggleGroupItem,
-} from "@webstudio-is/design-system";
+import { ToggleGroupRoot, ToggleGroupItem } from "@webstudio-is/design-system";
 import {
   FontBoldIcon,
   FontItalicIcon,
@@ -44,51 +41,52 @@ export const useSubscribeTextToolbar = () => {
   useSubscribe("hideTextToolbar", () => setTextToolbar(undefined));
 };
 
-const getPlacement = ({
-  toolbarRect,
-  selectionRect,
-}: {
-  toolbarRect?: DOMRect;
-  selectionRect: DOMRect;
-}) => {
-  let align = "top";
-  let left = selectionRect.x + selectionRect.width / 2;
-  // We measure the size in a hidden state after we render the menu,
-  // then show it
-  let visibility = "hidden";
-  if (toolbarRect !== undefined) {
-    visibility = "visible";
-    // Prevent going further than left 0
-    left = Math.max(left, toolbarRect.width / 2);
-    // Prevent going further than window width
-    left = Math.min(left, window.innerWidth - toolbarRect.width / 2);
-    align = selectionRect.y > toolbarRect.height ? "top" : "bottom";
-  }
-
-  const marginBottom = align === "bottom" ? "-$5" : 0;
-  const marginTop = align === "bottom" ? 0 : "-$5";
-  const transform = "translateX(-50%)";
-  const top =
-    align === "top"
-      ? Math.max(selectionRect.y - selectionRect.height, 0)
-      : Math.max(selectionRect.y + selectionRect.height);
-
-  return { top, left, marginBottom, marginTop, transform, visibility };
-};
-
 const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
   event.preventDefault();
   event.stopPropagation();
 };
 
+const getRectForRelativeRect = (parent: DOMRect, rel: DOMRect) => {
+  return {
+    x: parent.x + rel.x,
+    y: parent.y + rel.y,
+    width: rel.width,
+    height: rel.height,
+    top: parent.top + rel.top,
+    left: parent.left + rel.left,
+    bottom: parent.top + rel.bottom,
+    right: parent.left + rel.right,
+  };
+};
+
 type ToolbarProps = {
-  css?: CSS;
-  rootRef: React.Ref<HTMLDivElement>;
   state: TextToolbarState;
   onToggle: (value: Format) => void;
 };
 
-const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
+const Toolbar = ({ state, onToggle }: ToolbarProps) => {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (rootRef.current?.parentElement) {
+      const floating = rootRef.current;
+      const parent = rootRef.current.parentElement;
+      const newRect = getRectForRelativeRect(
+        parent.getBoundingClientRect(),
+        state.selectionRect
+      );
+      const reference = {
+        getBoundingClientRect: () => newRect,
+      };
+      computePosition(reference, floating, {
+        placement: "top",
+        middleware: [flip(), shift({ padding: 4 }), offset(12)],
+      }).then(({ x, y }) => {
+        floating.style.transform = `translate(${x}px, ${y}px)`;
+      });
+    }
+  }, [state.selectionRect]);
+
   const value: Format[] = [];
   if (state.isBold) {
     value.push("bold");
@@ -108,6 +106,7 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
   if (state.isSpan) {
     value.push("span");
   }
+
   return (
     <ToggleGroupRoot
       ref={rootRef}
@@ -140,10 +139,10 @@ const Toolbar = ({ css, rootRef, state, onToggle }: ToolbarProps) => {
       onClick={onClickPreventDefault}
       css={{
         position: "absolute",
-        borderRadius: "$borderRadius$4",
-        padding: "$spacing$3 $spacing$5",
+        top: 0,
+        left: 0,
         pointerEvents: "auto",
-        ...css,
+        background: "white",
       }}
     >
       <ToggleGroupItem value="bold">
@@ -178,15 +177,6 @@ type TextToolbarProps = {
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
   const [textToolbar] = useTextToolbarState();
   const [selectedIntsanceData] = useSelectedInstanceData();
-  const [element, setElement] = useState<HTMLElement | null>(null);
-  const placement = useMemo(() => {
-    if (textToolbar == null || element === null) return;
-    const toolbarRect = element.getBoundingClientRect();
-    return getPlacement({
-      toolbarRect,
-      selectionRect: textToolbar.selectionRect,
-    });
-  }, [textToolbar, element]);
 
   if (textToolbar == null || selectedIntsanceData === undefined) {
     return null;
@@ -194,8 +184,6 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
 
   return (
     <Toolbar
-      rootRef={setElement}
-      css={placement}
       state={textToolbar}
       onToggle={(value) =>
         publish({

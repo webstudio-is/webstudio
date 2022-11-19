@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   type RangeSelection,
   type TextNode,
@@ -82,6 +82,7 @@ const $isSelectedLink = (selection: RangeSelection) => {
 
 export const ToolbarConnectorPlugin = () => {
   const [editor] = useLexicalComposerContext();
+  const isMouseDownRef = useRef(false);
 
   // control toolbar state on data or selection updates
   const updateToolbar = useCallback(() => {
@@ -90,7 +91,8 @@ export const ToolbarConnectorPlugin = () => {
     if (
       $isRangeSelection(selection) &&
       selection.getTextContent().length !== 0 &&
-      nativeSelection != null
+      nativeSelection != null &&
+      isMouseDownRef.current === false
     ) {
       const domRange = nativeSelection.getRangeAt(0);
       const selectionRect = domRange.getBoundingClientRect();
@@ -116,6 +118,26 @@ export const ToolbarConnectorPlugin = () => {
       publish({ type: "hideTextToolbar" });
     }
   }, []);
+
+  // prevent showing toolbar when select with mouse
+  useEffect(() => {
+    const onMouseDown = () => {
+      isMouseDownRef.current = true;
+    };
+    const onMouseUp = () => {
+      isMouseDownRef.current = false;
+      const editorState = editor.getEditorState();
+      editorState.read(() => {
+        updateToolbar();
+      });
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [editor, updateToolbar]);
 
   useEffect(() => {
     // hide toolbar when editor is unmounted
