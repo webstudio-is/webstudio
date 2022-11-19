@@ -29,6 +29,7 @@ import {
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
+import { isValid } from "../parse-css-value";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
 
@@ -46,6 +47,7 @@ const calcNumberChange = (
 };
 
 const useHandleOnChange = (
+  property: StyleProperty,
   value: StyleValue,
   input: string,
   onChange: (value: StyleValue) => void
@@ -59,7 +61,7 @@ const useHandleOnChange = (
     }
 
     // We want to switch to unit mode if entire input is a number.
-    if (isNumericString(input)) {
+    if (isNumericString(input) && isValid(property, input + "px")) {
       if (value.type === "unit" && String(Number(input)) !== input) return;
       onChange?.({
         type: "unit",
@@ -254,7 +256,7 @@ export const CssValueInput = ({
 
   const inputProps = getInputProps();
 
-  useHandleOnChange(value, inputProps.value, onChange);
+  useHandleOnChange(property, value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     property,
