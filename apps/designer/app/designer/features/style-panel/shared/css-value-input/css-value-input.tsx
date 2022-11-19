@@ -8,6 +8,7 @@ import {
   ComboboxListbox,
   ComboboxListboxItem,
   numericScrubControl,
+  TextFieldIcon,
   TextFieldIconButton,
   styled,
 } from "@webstudio-is/design-system";
@@ -367,7 +368,7 @@ export const CssValueInput = ({
   );
 };
 
-const CssValueInputIconButton = styled(TextFieldIconButton, {
+const CssValueInputIconButton = styled(TextFieldIcon, {
   variants: {
     state: {
       set: {
@@ -378,6 +379,7 @@ const CssValueInputIconButton = styled(TextFieldIconButton, {
           color: "$blue11",
         },
       },
+
       inherited: {
         backgroundColor: "$orange4",
         color: "$orange11",
