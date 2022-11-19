@@ -303,21 +303,24 @@ export const CssValueInput = ({
     </CssValueInputIconButton>
   );
 
+  const isKeywordValue = value.type === "keyword";
+  const isUnitValue = value.type === "unit";
   const suffixRef = useRef<HTMLDivElement | null>(null);
-  const suffix = (
-    <Box ref={suffixRef}>
-      {value.type === "keyword" ? (
-        <TextFieldIconButton
-          {...getToggleButtonProps()}
-          state={isOpen ? "active" : undefined}
-        >
-          <ChevronDownIcon />
-        </TextFieldIconButton>
-      ) : value.type === "unit" ? (
-        unitSelectElement
-      ) : null}
-    </Box>
-  );
+  const suffix =
+    items.length === 0 && isKeywordValue ? null : (
+      <Box ref={suffixRef}>
+        {isKeywordValue ? (
+          <TextFieldIconButton
+            {...getToggleButtonProps()}
+            state={isOpen ? "active" : undefined}
+          >
+            <ChevronDownIcon />
+          </TextFieldIconButton>
+        ) : isUnitValue ? (
+          unitSelectElement
+        ) : null}
+      </Box>
+    );
 
   return (
     <ComboboxPopper>
