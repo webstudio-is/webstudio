@@ -8,6 +8,7 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
+import { idAttribute } from "@webstudio-is/react-sdk";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
 
@@ -19,7 +20,7 @@ const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
       const [key] = nodeKey.split(":");
       const element = editor.getElementByKey(key);
       if (element) {
-        element.setAttribute("data-ws-id", instance.id);
+        element.setAttribute(idAttribute, instance.id);
       }
     }
   }, [editor, refs]);
