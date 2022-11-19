@@ -1,14 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
+import { idAttribute } from "@webstudio-is/react-sdk";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
 import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
+
+const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    for (const [nodeKey, instance] of refs) {
+      // extract key from stored key:style format
+      const [key] = nodeKey.split(":");
+      const element = editor.getElementByKey(key);
+      if (element) {
+        element.setAttribute(idAttribute, instance.id);
+      }
+    }
+  }, [editor, refs]);
+  return null;
+};
 
 const onError = (error: Error) => {
   throw error;
@@ -44,6 +61,7 @@ export const TextEditor = ({
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <ToolbarConnectorPlugin />
+      <BindInstanceToNodePlugin refs={refs} />
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={contentEditable}

@@ -142,7 +142,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
         top: 0,
         left: 0,
         pointerEvents: "auto",
-        background: "white",
+        background: "$loContrast",
       }}
     >
       <ToggleGroupItem value="bold">
