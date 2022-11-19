@@ -16,6 +16,7 @@
     "skipLibCheck": true,
     "strict": true,
     "allowJs": false,
+    "jsx": "react-jsx",
     "resolveJsonModule": true
   },
   "exclude": ["node_modules"]
