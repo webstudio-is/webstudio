@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import type { Publish } from "~/shared/pubsub";
 import {
   Text,
@@ -9,9 +10,10 @@ import {
   Paragraph,
   Box,
 } from "@webstudio-is/design-system";
-import { StylePanel } from "~/designer/features/style-panel";
-import { PropsPanel } from "~/designer/features/props-panel";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
+
+const StylePanel = lazy(() => import("~/designer/features/style-panel"));
+const PropsPanel = lazy(() => import("~/designer/features/props-panel"));
 
 type InspectorProps = {
   publish: Publish;
@@ -53,17 +55,21 @@ export const Inspector = ({ publish }: InspectorProps) => {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="style" css={contentStyle}>
-        <StylePanel
-          publish={publish}
-          selectedInstanceData={selectedInstanceData}
-        />
+        <Suspense fallback={null}>
+          <StylePanel
+            publish={publish}
+            selectedInstanceData={selectedInstanceData}
+          />
+        </Suspense>
       </TabsContent>
       <TabsContent value="props" css={contentStyle}>
-        <PropsPanel
-          publish={publish}
-          key={selectedInstanceData.id /* Re-render when instance changes */}
-          selectedInstanceData={selectedInstanceData}
-        />
+        <Suspense fallback={null}>
+          <PropsPanel
+            publish={publish}
+            key={selectedInstanceData.id /* Re-render when instance changes */}
+            selectedInstanceData={selectedInstanceData}
+          />
+        </Suspense>
       </TabsContent>
     </Tabs>
   );
