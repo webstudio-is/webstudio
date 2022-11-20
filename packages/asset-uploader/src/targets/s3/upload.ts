@@ -87,7 +87,7 @@ const uploadHandler = async ({
     ContentType: file.contentType,
     Metadata: {
       // encodeURIComponent is needed to support special characters like Cyrillic
-      filename: encodeURIComponent(file.filename) || "unnamed",
+      filename: "meta", // encodeURIComponent(file.filename) || "unnamed",
     },
   };
 
