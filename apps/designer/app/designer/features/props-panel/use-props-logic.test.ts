@@ -138,8 +138,8 @@ describe("usePropsLogic", () => {
 
     expect(result.current.userProps.length).toEqual(1);
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
@@ -178,14 +178,14 @@ describe("usePropsLogic", () => {
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "disabled",
           "prop": "disabled2",
           "value": false,
@@ -223,14 +223,14 @@ describe("usePropsLogic", () => {
 
     expect(result.current.userProps.length).toEqual(2);
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "disabled",
           "prop": "disabled",
           "required": true,
@@ -266,14 +266,14 @@ describe("usePropsLogic", () => {
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "2",
           "prop": "test",
           "required": true,
@@ -309,14 +309,14 @@ describe("usePropsLogic", () => {
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "2",
           "prop": "test",
           "required": true,

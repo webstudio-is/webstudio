@@ -1,90 +1,90 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Insert instance after a nested div using "end": div 1 > div 2, [div 3] 1`] = `
-Object {
-  "children": Array [
-    Object {
-      "children": Array [],
+{
+  "children": [
+    {
+      "children": [],
       "component": "Box",
-      "cssRules": Array [],
+      "cssRules": [],
       "id": "2",
     },
-    Object {
-      "children": Array [],
+    {
+      "children": [],
       "component": "Box",
-      "cssRules": Array [],
+      "cssRules": [],
       "id": "3",
     },
   ],
   "component": "Box",
-  "cssRules": Array [],
+  "cssRules": [],
   "id": "1",
 }
 `;
 
 exports[`Insert instance after a nested div using index: div 1 > div 2, [div 3] 1`] = `
-Object {
-  "children": Array [
-    Object {
-      "children": Array [],
+{
+  "children": [
+    {
+      "children": [],
       "component": "Box",
-      "cssRules": Array [],
+      "cssRules": [],
       "id": "2",
     },
-    Object {
-      "children": Array [],
+    {
+      "children": [],
       "component": "Box",
-      "cssRules": Array [],
+      "cssRules": [],
       "id": "3",
     },
   ],
   "component": "Box",
-  "cssRules": Array [],
+  "cssRules": [],
   "id": "1",
 }
 `;
 
 exports[`Insert instance before a nested div using index: div 1 > [div 3], div 2 1`] = `
-Object {
-  "children": Array [
-    Object {
-      "children": Array [],
+{
+  "children": [
+    {
+      "children": [],
       "component": "Box",
-      "cssRules": Array [],
+      "cssRules": [],
       "id": "3",
     },
-    Object {
-      "children": Array [],
+    {
+      "children": [],
       "component": "Box",
-      "cssRules": Array [],
+      "cssRules": [],
       "id": "2",
     },
   ],
   "component": "Box",
-  "cssRules": Array [],
+  "cssRules": [],
   "id": "1",
 }
 `;
 
 exports[`Insert instance inside a nested div using "end": div 1 > div 2 > [div 3] 1`] = `
-Object {
-  "children": Array [
-    Object {
-      "children": Array [
-        Object {
-          "children": Array [],
+{
+  "children": [
+    {
+      "children": [
+        {
+          "children": [],
           "component": "Box",
-          "cssRules": Array [],
+          "cssRules": [],
           "id": "3",
         },
       ],
       "component": "Box",
-      "cssRules": Array [],
+      "cssRules": [],
       "id": "2",
     },
   ],
   "component": "Box",
-  "cssRules": Array [],
+  "cssRules": [],
   "id": "1",
 }
 `;
