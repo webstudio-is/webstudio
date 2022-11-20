@@ -28,7 +28,8 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
-import { handleChangePropType, usePropsLogic } from "./use-props-logic";
+import { usePropsLogic } from "./use-props-logic";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -105,52 +106,60 @@ const Combobox = ({
   );
 };
 
-type PropertyProps = UserProp & {
+type PropertyProps = {
+  userProp: UserProp;
   component: Instance["component"];
-  onChange: handleChangePropType;
+  onChangePropName: (name: string, defaultValue: string | boolean) => void;
+  onChangePropValue: (value: string | boolean, asset?: Asset) => void;
   onDelete: (id: UserProp["id"]) => void;
 };
 
 const Property = ({
-  id,
-  prop,
-  value,
-  required = false,
+  userProp,
   component,
-  onChange,
+  onChangePropName,
+  onChangePropValue,
   onDelete,
 }: PropertyProps) => {
   const meta = componentsMeta[component];
-  const argType = meta[prop as keyof typeof meta];
+
+  const argType = meta[userProp.prop as keyof typeof meta];
   const isInvalid =
-    prop != null &&
-    prop.length > 0 &&
+    userProp.prop != null &&
+    userProp.prop.length > 0 &&
     typeof argType === "undefined" &&
-    !prop.match(/^data-(.)+/);
+    !userProp.prop.match(/^data-(.)+/);
 
   const allProps = Object.keys(meta);
 
   return (
-    <Grid
-      gap={1}
-      css={{ gridTemplateColumns: "1fr 1fr auto", alignItems: "center" }}
-    >
+    <>
       <Combobox
         items={allProps}
-        value={prop}
-        onItemSelect={(value: PropertyProps["value"] | null) => {
-          if (value !== null) {
-            onChange(id, "prop", value);
+        value={userProp.prop}
+        onItemSelect={(name) => {
+          if (name != null) {
+            const argType = meta[name as keyof typeof meta];
+
+            const defaultValue =
+              argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+
+            onChangePropName(name, defaultValue);
           }
         }}
-        onSubmit={(value) => {
-          onChange(id, "prop", value);
+        onSubmit={(name) => {
+          const argType = meta[name as keyof typeof meta];
+
+          const defaultValue =
+            argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+
+          onChangePropName(name, defaultValue);
         }}
         isInvalid={isInvalid}
-        isReadonly={required}
+        isReadonly={userProp.required ?? false}
       />
       {isInvalid ? (
-        <Tooltip content={`Invalid property name: ${prop}`}>
+        <Tooltip content={`Invalid property name: ${userProp.prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>
       ) : (
@@ -158,22 +167,21 @@ const Property = ({
         // skip for now and fix types later
         <Control
           component={component}
-          prop={prop}
-          value={value}
-          onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
+          userProp={userProp}
+          onChangePropValue={onChangePropValue}
         />
       )}
-      {required !== true && (
+      {userProp.required !== true && (
         <Button
           ghost
           onClick={() => {
-            onDelete(id);
+            onDelete(userProp.id);
           }}
         >
           <TrashIcon />
         </Button>
       )}
-    </Grid>
+    </>
   );
 };
 
@@ -186,8 +194,13 @@ export const PropsPanel = ({
   selectedInstanceData,
   publish,
 }: PropsPanelProps) => {
-  const { userProps, addEmptyProp, handleChangeProp, handleDeleteProp } =
-    usePropsLogic({ selectedInstanceData, publish });
+  const {
+    userProps,
+    addEmptyProp,
+    handleChangePropName,
+    handleChangePropValue,
+    handleDeleteProp,
+  } = usePropsLogic({ selectedInstanceData, publish });
 
   const addButton = (
     <Button
@@ -200,8 +213,9 @@ export const PropsPanel = ({
       <PlusIcon />
     </Button>
   );
+
   return (
-    <>
+    <Box>
       <Box css={{ p: "$spacing$9" }}>
         <ComponentInfo selectedInstanceData={selectedInstanceData} />
       </Box>
@@ -210,21 +224,29 @@ export const PropsPanel = ({
         rightSlot={addButton}
         isOpenDefault
       >
-        <>
-          {userProps.map(({ id, prop, value, required }) => (
+        <Grid
+          gap={1}
+          css={{
+            gridTemplateColumns: "1fr minmax(0, 1fr) auto",
+            alignItems: "center",
+          }}
+        >
+          {userProps.map((userProp) => (
             <Property
-              key={id}
-              id={id}
-              prop={prop}
-              value={value}
-              required={required}
+              key={userProp.id}
+              userProp={userProp}
               component={selectedInstanceData.component}
-              onChange={handleChangeProp}
+              onChangePropName={(name, defaultValue) =>
+                handleChangePropName(userProp.id, name, defaultValue)
+              }
+              onChangePropValue={(value, asset) =>
+                handleChangePropValue(userProp.id, value, asset)
+              }
               onDelete={handleDeleteProp}
             />
           ))}
-        </>
+        </Grid>
       </CollapsibleSection>
-    </>
+    </Box>
   );
 };

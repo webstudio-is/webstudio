@@ -8,13 +8,21 @@ export default {
 export const Primitive: ComponentStoryObj<typeof Control> = {
   args: {
     component: "Image",
-    prop: "src",
+    userProp: {
+      prop: "src",
+      id: "ddf20afe-65a8-478e-a52d-1be2d2f70830",
+      value: "",
+    },
   },
 };
 
 export const Options: ComponentStoryObj<typeof Control> = {
   args: {
     component: "Image",
-    prop: "loading",
+    userProp: {
+      prop: "loading",
+      id: "ddf20afe-65a8-478e-a52d-1be2d2f70830",
+      value: "",
+    },
   },
 };

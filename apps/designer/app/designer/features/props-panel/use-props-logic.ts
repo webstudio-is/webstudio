@@ -8,9 +8,9 @@ import { componentsMeta } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
 import uniqBy from "lodash/uniqBy";
-import debounce from "lodash/debounce";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { SelectedInstanceData } from "@webstudio-is/project";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -19,10 +19,18 @@ declare module "~/shared/pubsub" {
   }
 }
 
-export type handleChangePropType = (
+type UserPropValue = Extract<UserProp, { value: unknown }>["value"];
+
+type HandleChangePropName = (
   id: UserProp["id"],
-  field: "prop" | "value",
-  value: UserProp["prop"] | UserProp["value"]
+  name: string,
+  defaultValue: string | boolean
+) => void;
+
+type HandleChangePropValue = (
+  id: UserProp["id"],
+  value: UserPropValue,
+  asset?: Asset
 ) => void;
 
 const getRequiredProps = (
@@ -85,13 +93,8 @@ export const usePropsLogic = ({
   );
 
   const [userProps, setUserProps] = useState<Array<UserProp>>(initialState);
-  const propsToPublishRef = useRef<{
-    [id: UserProp["id"]]: true;
-  }>({});
 
-  // @todo this may call the last callback after unmount
-  // @todo we don't need to debounce change events on select for instance, so debounce is only needed on text inputs
-  const updateProps = debounce((updates: UserPropsUpdates["updates"]) => {
+  const updateProps = (updates: UserPropsUpdates["updates"]) => {
     publish({
       type: "updateProps",
       payload: {
@@ -101,10 +104,7 @@ export const usePropsLogic = ({
         updates,
       },
     });
-    for (const update of updates) {
-      delete propsToPublishRef.current[update.id];
-    }
-  }, 100);
+  };
 
   const deleteProp = (id: UserProp["id"]) => {
     publish({
@@ -116,30 +116,49 @@ export const usePropsLogic = ({
     });
   };
 
-  const handleChangeProp: handleChangePropType = (id, field, value) => {
-    const index = userProps.findIndex((item) => item.id === id);
+  const handleChangePropName: HandleChangePropName = (
+    id,
+    name,
+    defaultValue
+  ) => {
     const nextUserProps = produce((draft: Array<UserProp>) => {
+      const index = draft.findIndex((item) => item.id === id);
+
       const isPropRequired = draft[index].required;
-      switch (field) {
-        case "prop":
-          if (isPropRequired !== true) {
-            // TODO: Use discriminant type to make this more clear or separate into 2 functions
-            draft[index].prop = value as UserProp["prop"];
-          }
-          break;
-        case "value":
-          draft[index].value = value;
-          break;
+
+      if (isPropRequired !== true) {
+        draft[index].prop = name;
+        draft[index].value = defaultValue;
       }
     })(userProps);
+
+    // Optimistically update the state (what if publish fails?)
     setUserProps(nextUserProps);
 
-    propsToPublishRef.current[id] = true;
-    const updates = Object.keys(propsToPublishRef.current)
-      .map((id) => nextUserProps.find((prop) => prop.id === id))
-      // Could be empty if you quickly remove props which have pending changes
-      .filter(Boolean) as Array<UserProp>;
-    updateProps(updates);
+    const updatedProps = nextUserProps.filter((item) => item.id === id);
+
+    updateProps(updatedProps);
+  };
+
+  const handleChangePropValue: HandleChangePropValue = (id, value, asset) => {
+    const nextUserProps = produce((draft: Array<UserProp>) => {
+      const index = draft.findIndex((item) => item.id === id);
+      const val = draft[index];
+
+      val.value = value;
+      if (asset) {
+        val.asset = asset;
+      } else if (val.asset != null) {
+        delete val.asset;
+      }
+    })(userProps);
+
+    // Optimistically update the state (what if publish fails?)
+    setUserProps(nextUserProps);
+
+    const updatedProps = nextUserProps.filter((item) => item.id === id);
+
+    updateProps(updatedProps);
   };
 
   const handleDeleteProp = (id: UserProp["id"]) => {
@@ -169,7 +188,8 @@ export const usePropsLogic = ({
   return {
     addEmptyProp,
     userProps,
-    handleChangeProp,
+    handleChangePropName,
+    handleChangePropValue,
     handleDeleteProp,
   };
 };

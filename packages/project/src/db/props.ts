@@ -1,22 +1,75 @@
 import {
   type Tree,
   type AllUserProps,
-  UserProps,
+  type UserProp,
+  // @todo move zod schema into project package
+  UserUserProps,
+  UserDbProps,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
+import { formatAsset } from "@webstudio-is/asset-uploader/server";
 
 export const loadByTreeId = async (treeId: Tree["id"]) => {
   const instancePropsEntries = await prisma.instanceProps.findMany({
     where: { treeId },
   });
 
+  // Fin all assetId in all props
+  const assetIds: string[] = [];
+
+  for (const instanceProps of instancePropsEntries) {
+    const props = JSON.parse(instanceProps.props);
+    const dpProps = UserDbProps.parse(props);
+
+    for (const dbProp of dpProps) {
+      if (dbProp.assetId != null) {
+        assetIds.push(dbProp.assetId);
+      }
+    }
+  }
+  // Load all assets
+  const assets = await prisma.asset.findMany({
+    where: {
+      id: {
+        in: assetIds,
+      },
+    },
+  });
+
+  const assetsMap = new Map(
+    assets.map((asset) => [asset.id, formatAsset(asset)])
+  );
+
   return instancePropsEntries.map((instanceProps) => {
     const props = JSON.parse(instanceProps.props);
-    UserProps.parse(props);
+    const userProps: UserProp[] = [];
+    // Can be changed onto `props as ` having that above is already checked, no optmizations now
+    const dpProps = UserDbProps.parse(props);
+
+    for (const dbProp of dpProps) {
+      if (dbProp.assetId == null) {
+        userProps.push(dbProp);
+        continue;
+      }
+
+      const asset = assetsMap.get(dbProp.assetId);
+
+      if (asset) {
+        userProps.push({
+          ...dbProp,
+          asset,
+        });
+      } else {
+        // Can be ok if asset was deleted having that no db constraint checks exists
+        // TODO: remove throw on something else
+        throw new Error(`Asset with assetId "${dbProp.assetId}" not found`);
+      }
+    }
+
     return {
       ...instanceProps,
-      props,
+      props: userProps,
     };
   });
 };
@@ -70,8 +123,10 @@ export const patch = async (
 
   await Promise.all(
     Object.values(nextProps).map(({ id, instanceId, treeId, props }) => {
-      UserProps.parse(props);
-      const propsString = JSON.stringify(props);
+      const propsDb = UserUserProps.parse(props);
+
+      const propsString = JSON.stringify(propsDb);
+
       return prisma.instanceProps.upsert({
         where: { id: id },
         create: { id: id, instanceId, treeId, props: propsString },

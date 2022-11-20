@@ -17,12 +17,28 @@ export const updateAllUserPropsMutable = (
   }
   const instanceProps = allUserProps[instanceId];
   for (const update of updates) {
-    const prop = instanceProps.props.find(({ id }) => id === update.id);
-    if (prop === undefined) {
+    const propIndex = instanceProps.props.findIndex(
+      ({ id }) => id === update.id
+    );
+
+    if (propIndex === -1) {
       instanceProps.props.push(update);
     } else {
+      const prop = instanceProps.props[propIndex];
       prop.prop = update.prop;
+
       prop.value = update.value;
+
+      if (update.asset != null) {
+        prop.asset = update.asset;
+      } else {
+        if (prop.asset != null) {
+          delete prop.asset;
+        }
+      }
+
+      // Prop changed type from value to asset or vice versa
+      instanceProps.props[propIndex] = update;
     }
   }
 };
