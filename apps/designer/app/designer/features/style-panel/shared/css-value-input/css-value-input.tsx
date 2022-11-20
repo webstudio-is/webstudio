@@ -58,12 +58,17 @@ const useHandleOnChange = (
     }
 
     // We want to switch to unit mode if entire input is a number.
-    if (isNumericString(input) && isValid(property, input + "px")) {
+    if (isNumericString(input)) {
       if (value.type === "unit" && String(Number(input)) !== input) return;
       onChange?.({
         type: "unit",
-        // Use previously known unit or fallback to px.
-        unit: valueRef.current.type === "unit" ? valueRef.current.unit : "px",
+        // Use previously known unit or fallback to the most common unit: px, if supported
+        unit:
+          valueRef.current.type === "unit"
+            ? valueRef.current.unit
+            : isValid(property, input + "px")
+            ? "px"
+            : "number",
         value: Number(input),
       });
       return;
@@ -112,20 +117,24 @@ const useScrub = ({
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
+    const inputRefCurrent = inputRef.current;
+    const scrubRefCurrent = scrubRef.current;
     if (
       type !== "unit" ||
       unit === undefined ||
-      inputRef.current === null ||
-      scrubRef.current === null
+      inputRefCurrent === null ||
+      scrubRefCurrent === null
     ) {
       return;
     }
-    const scrub = numericScrubControl(scrubRef.current, {
-      initialValue: valueRef.current.value,
+
+    const value = valueRef.current.value;
+    const scrub = numericScrubControl(scrubRefCurrent, {
+      initialValue: value,
       onValueInput(event) {
-        if (inputRef.current) inputRef.current.value = String(event.value);
+        inputRefCurrent.value = String(event.value);
         setIsInputActive(true);
-        inputRef.current?.blur();
+        inputRefCurrent.blur();
       },
       onValueChange(event) {
         onChangeCompleteRef.current({
@@ -134,8 +143,8 @@ const useScrub = ({
           value: event.value,
         });
         setIsInputActive(false);
-        inputRef.current?.focus();
-        inputRef.current?.select();
+        inputRefCurrent.focus();
+        inputRefCurrent.select();
       },
       shouldHandleEvent: shouldHandleEvent,
     });
