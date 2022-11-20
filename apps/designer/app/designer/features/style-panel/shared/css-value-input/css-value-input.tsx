@@ -61,12 +61,17 @@ const useHandleOnChange = (
     }
 
     // We want to switch to unit mode if entire input is a number.
-    if (isNumericString(input) && isValid(property, input + "px")) {
+    if (isNumericString(input)) {
       if (value.type === "unit" && String(Number(input)) !== input) return;
       onChange?.({
         type: "unit",
         // Use previously known unit or fallback to px.
-        unit: valueRef.current.type === "unit" ? valueRef.current.unit : "px",
+        unit:
+          valueRef.current.type === "unit"
+            ? valueRef.current.unit
+            : isValid(property, input + "px")
+            ? "px"
+            : "number",
         value: Number(input),
       });
       return;
