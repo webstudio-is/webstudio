@@ -120,16 +120,16 @@ const Property = ({
   onDelete,
 }: PropertyProps) => {
   const meta = componentsMeta[component];
-  const argType = meta.argTypes?.[prop as keyof typeof meta.argTypes];
+  const argType = meta[prop as keyof typeof meta];
   const isInvalid =
     prop != null &&
     prop.length > 0 &&
     typeof argType === "undefined" &&
     !prop.match(/^data-(.)+/);
-  const type = argType?.control.type || "text";
-  const defaultValue = argType?.control.defaultValue;
+  const type = argType?.type || "text";
+  const defaultValue = argType?.defaultValue;
   const options = argType?.options;
-  const allProps = meta.argTypes ? Object.keys(meta.argTypes) : [];
+  const allProps = Object.keys(meta);
 
   return (
     <Grid
@@ -155,10 +155,13 @@ const Property = ({
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>
       ) : (
+        // requires matching complex union
+        // skip for now and fix types later
         <Control
-          type={type}
-          defaultValue={defaultValue}
-          options={options}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          type={type as any}
+          defaultValue={defaultValue ?? undefined}
+          options={options ?? []}
           value={value}
           onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
         />

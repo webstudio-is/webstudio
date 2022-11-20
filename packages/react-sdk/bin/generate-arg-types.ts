@@ -1,4 +1,5 @@
 import path from "path";
+import { z } from "zod";
 import { withCustomConfig } from "react-docgen-typescript";
 import fg from "fast-glob";
 import fs from "fs-extra";
@@ -33,11 +34,21 @@ if (componentFiles.length === 0) {
 // Create a parser with using your typescript config
 const tsConfigParser = withCustomConfig(tsConfigPath, options);
 
+const ArgTypes = z.record(
+  z.object({
+    type: z.string(),
+    required: z.boolean(),
+    defaultValue: z.union([z.null(), z.string()]),
+    options: z.array(z.string()).optional(),
+  })
+);
+
 // For each component file generate argTypes based on the propTypes
 componentFiles.forEach((filePath) => {
   const jsonPath = filePath.replace(".tsx", ".props.json");
   const res = tsConfigParser.parse(filePath);
   const argTypes = propsToArgTypes(res[0].props);
+  ArgTypes.parse(argTypes);
   fs.ensureFileSync(jsonPath);
   fs.writeJsonSync(jsonPath, argTypes, { spaces: 2 });
   console.log(`Done generating argTypes for ${jsonPath}`);

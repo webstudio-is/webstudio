@@ -1,4 +1,3 @@
-import type { ArgTypes } from "@storybook/csf";
 import { PropItem } from "react-docgen-typescript";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
@@ -17,7 +16,7 @@ const validAttributes = (prop: PropItem) => {
 export const propsToArgTypes = (
   props: Record<string, PropItem>,
   filter?: FilterPredicate
-): ArgTypes => {
+) => {
   const filterFn = filter ?? validAttributes;
   const entries = Object.entries(props);
   return entries.reduce((result, current) => {
@@ -30,11 +29,13 @@ export const propsToArgTypes = (
       return result;
     }
 
-    const control = mapControlForType(prop);
-
-    result[propName] = { ...prop, ...control };
+    const argType = getArgType(prop);
+    if (argType != null) {
+      result[propName] = argType;
+    }
     return result;
-  }, {} as ArgTypes);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }, {} as Record<string, any>);
 };
 
 const matchers = {
@@ -42,65 +43,58 @@ const matchers = {
   date: /Date$/,
 };
 
-export const mapControlForType = (propItem: PropItem) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getArgType = (propItem: any) => {
   const { type, name } = propItem;
   if (!type) {
     return undefined;
   }
 
-  const overrides = { defaultValue: propItem.defaultValue?.value ?? null };
+  const overrides = {
+    defaultValue: propItem.defaultValue?.value ?? null,
+    options: propItem.options,
+    required: propItem.required,
+  };
 
   // args that end with background or color e.g. iconColor
   if (matchers.color && matchers.color.test(name)) {
     const controlType = propItem.type.name;
 
     if (controlType === "string") {
-      return {
-        control: { type: "color" },
-        ...overrides,
-      };
+      return { ...overrides, type: "color" };
     }
   }
 
   // args that end with date e.g. purchaseDate
   if (matchers.date && matchers.date.test(name)) {
-    return {
-      control: { type: "date" },
-      ...overrides,
-    };
+    return { ...overrides, type: "date" };
   }
 
   switch (type?.name) {
     case "array":
-      return {
-        control: { type: "object" },
-        ...overrides,
-      };
+      return { ...overrides, type: "object" };
     case "boolean":
     case "Booleanish":
-      return {
-        control: { type: "boolean" },
-        ...overrides,
-      };
+      return { ...overrides, type: "boolean" };
     case "string":
-      return { control: { type: "text" }, ...overrides };
+      return { ...overrides, type: "text" };
     case "number":
-      return { control: { type: "number" }, ...overrides };
+      return { ...overrides, type: "number" };
     case "enum": {
       const { value } = type;
       // Remove additional quotes from enum values
       // @ts-expect-error Original type has `any` type
       const values = value.map((val) => val.value.replace(/^"(.+)"$/, "$1"));
       return {
-        control: { type: values?.length <= 5 ? "radio" : "select" },
-        options: values,
         ...overrides,
+        type: values?.length <= 5 ? "radio" : "select",
+        options: values,
       };
     }
     case "function":
     case "symbol":
       return null;
     default:
-      return { control: { type: "text" }, ...overrides };
+      return { ...overrides, type: "text" };
   }
 };

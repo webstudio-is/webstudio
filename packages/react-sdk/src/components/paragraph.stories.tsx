@@ -1,11 +1,9 @@
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import { Paragraph as ParagraphPrimitive } from "./paragraph";
-import argTypes from "./paragraph.props.json";
 
 export default {
   title: "Components/Paragraph",
   component: ParagraphPrimitive,
-  argTypes,
 } as ComponentMeta<typeof ParagraphPrimitive>;
 
 const Template: ComponentStory<typeof ParagraphPrimitive> = (args) => (
