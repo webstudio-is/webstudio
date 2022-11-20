@@ -29,12 +29,9 @@ import {
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
-import { isValid } from "../parse-css-value";
+import { isValid, isNumericString } from "../parse-css-value";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
-
-const isNumericString = (input: string) =>
-  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
