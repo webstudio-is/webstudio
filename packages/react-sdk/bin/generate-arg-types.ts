@@ -34,7 +34,7 @@ if (componentFiles.length === 0) {
 // Create a parser with using your typescript config
 const tsConfigParser = withCustomConfig(tsConfigPath, options);
 
-const schema = z.record(
+const ArgTypes = z.record(
   z.object({
     type: z.string(),
     required: z.boolean(),
@@ -48,8 +48,7 @@ componentFiles.forEach((filePath) => {
   const jsonPath = filePath.replace(".tsx", ".props.json");
   const res = tsConfigParser.parse(filePath);
   const argTypes = propsToArgTypes(res[0].props);
-  // console.log(argTypes)
-  schema.parse(argTypes);
+  ArgTypes.parse(argTypes);
   fs.ensureFileSync(jsonPath);
   fs.writeJsonSync(jsonPath, argTypes, { spaces: 2 });
   console.log(`Done generating argTypes for ${jsonPath}`);

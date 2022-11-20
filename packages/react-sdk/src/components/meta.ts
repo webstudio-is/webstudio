@@ -14,7 +14,7 @@ import Span from "./span.props.json";
 import TextBlock from "./text-block.props.json";
 import Image from "./image.props.json";
 
-const base = {
+const meta = {
   Body,
   Button,
   Bold,
@@ -42,4 +42,4 @@ type MetaProps = Record<
   }
 >;
 
-export const componentsMeta: Record<keyof typeof base, MetaProps> = base;
+export const componentsMeta: Record<keyof typeof meta, MetaProps> = meta;
