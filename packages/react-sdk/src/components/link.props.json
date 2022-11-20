@@ -1,293 +1,61 @@
 {
   "slot": {
     "defaultValue": null,
-    "description": "",
-    "name": "slot",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "style": {
     "defaultValue": null,
-    "description": "",
-    "name": "style",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "CSSProperties"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "title": {
     "defaultValue": null,
-    "description": "",
-    "name": "title",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "download": {
     "defaultValue": null,
-    "description": "",
-    "name": "download",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "any"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "href": {
     "defaultValue": "",
-    "description": "",
-    "name": "href",
-    "declarations": [
-      {
-        "fileName": "src/components/link.tsx",
-        "name": "TypeLiteral"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "hrefLang": {
     "defaultValue": null,
-    "description": "",
-    "name": "hrefLang",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "media": {
     "defaultValue": null,
-    "description": "",
-    "name": "media",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "ping": {
     "defaultValue": null,
-    "description": "",
-    "name": "ping",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "rel": {
     "defaultValue": null,
-    "description": "",
-    "name": "rel",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "target": {
     "defaultValue": null,
-    "description": "",
-    "name": "target",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "HTMLAttributeAnchorTarget"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "type": {
     "defaultValue": null,
-    "description": "",
-    "name": "type",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "referrerPolicy": {
     "defaultValue": null,
-    "description": "",
-    "name": "referrerPolicy",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AnchorHTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AnchorHTMLAttributes"
-      }
-    ],
-    "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "HTMLAttributeReferrerPolicy",
-      "value": [
-        {
-          "value": "\"\""
-        },
-        {
-          "value": "\"no-referrer\""
-        },
-        {
-          "value": "\"no-referrer-when-downgrade\""
-        },
-        {
-          "value": "\"origin\""
-        },
-        {
-          "value": "\"origin-when-cross-origin\""
-        },
-        {
-          "value": "\"same-origin\""
-        },
-        {
-          "value": "\"strict-origin\""
-        },
-        {
-          "value": "\"strict-origin-when-cross-origin\""
-        },
-        {
-          "value": "\"unsafe-url\""
-        }
-      ]
-    },
-    "control": {
-      "type": "select"
-    },
     "options": [
       "\"\"",
       "no-referrer",
@@ -298,934 +66,209 @@
       "strict-origin",
       "strict-origin-when-cross-origin",
       "unsafe-url"
-    ]
+    ],
+    "required": false,
+    "type": "select"
   },
   "defaultChecked": {
     "defaultValue": null,
-    "description": "",
-    "name": "defaultChecked",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "defaultValue": {
     "defaultValue": null,
-    "description": "",
-    "name": "defaultValue",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string | number | readonly string[]"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "suppressContentEditableWarning": {
     "defaultValue": null,
-    "description": "",
-    "name": "suppressContentEditableWarning",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "suppressHydrationWarning": {
     "defaultValue": null,
-    "description": "",
-    "name": "suppressHydrationWarning",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "accessKey": {
     "defaultValue": null,
-    "description": "",
-    "name": "accessKey",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "className": {
     "defaultValue": null,
-    "description": "",
-    "name": "className",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "contentEditable": {
     "defaultValue": null,
-    "description": "",
-    "name": "contentEditable",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish | \"inherit\""
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "contextMenu": {
     "defaultValue": null,
-    "description": "",
-    "name": "contextMenu",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "dir": {
     "defaultValue": null,
-    "description": "",
-    "name": "dir",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "draggable": {
     "defaultValue": null,
-    "description": "",
-    "name": "draggable",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "hidden": {
     "defaultValue": null,
-    "description": "",
-    "name": "hidden",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "id": {
     "defaultValue": null,
-    "description": "",
-    "name": "id",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "lang": {
     "defaultValue": null,
-    "description": "",
-    "name": "lang",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "placeholder": {
     "defaultValue": null,
-    "description": "",
-    "name": "placeholder",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "spellCheck": {
     "defaultValue": null,
-    "description": "",
-    "name": "spellCheck",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "tabIndex": {
     "defaultValue": null,
-    "description": "",
-    "name": "tabIndex",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "translate": {
     "defaultValue": null,
-    "description": "",
-    "name": "translate",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
+    "options": ["yes", "no"],
     "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"yes\" | \"no\"",
-      "value": [
-        {
-          "value": "\"yes\""
-        },
-        {
-          "value": "\"no\""
-        }
-      ]
-    },
-    "control": {
-      "type": "radio"
-    },
-    "options": ["yes", "no"]
+    "type": "radio"
   },
   "radioGroup": {
     "defaultValue": null,
-    "description": "",
-    "name": "radioGroup",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "role": {
     "defaultValue": null,
-    "description": "",
-    "name": "role",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "AriaRole"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "about": {
     "defaultValue": null,
-    "description": "",
-    "name": "about",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "datatype": {
     "defaultValue": null,
-    "description": "",
-    "name": "datatype",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "inlist": {
     "defaultValue": null,
-    "description": "",
-    "name": "inlist",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "any"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "prefix": {
     "defaultValue": null,
-    "description": "",
-    "name": "prefix",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "property": {
     "defaultValue": null,
-    "description": "",
-    "name": "property",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "resource": {
     "defaultValue": null,
-    "description": "",
-    "name": "resource",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "typeof": {
     "defaultValue": null,
-    "description": "",
-    "name": "typeof",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "vocab": {
     "defaultValue": null,
-    "description": "",
-    "name": "vocab",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "autoCapitalize": {
     "defaultValue": null,
-    "description": "",
-    "name": "autoCapitalize",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "autoCorrect": {
     "defaultValue": null,
-    "description": "",
-    "name": "autoCorrect",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "autoSave": {
     "defaultValue": null,
-    "description": "",
-    "name": "autoSave",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "color": {
     "defaultValue": null,
-    "description": "",
-    "name": "color",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "color"
-    }
+    "type": "color"
   },
   "itemProp": {
     "defaultValue": null,
-    "description": "",
-    "name": "itemProp",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "itemScope": {
     "defaultValue": null,
-    "description": "",
-    "name": "itemScope",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "itemType": {
     "defaultValue": null,
-    "description": "",
-    "name": "itemType",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "itemID": {
     "defaultValue": null,
-    "description": "",
-    "name": "itemID",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "itemRef": {
     "defaultValue": null,
-    "description": "",
-    "name": "itemRef",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "results": {
     "defaultValue": null,
-    "description": "",
-    "name": "results",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "security": {
     "defaultValue": null,
-    "description": "",
-    "name": "security",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "unselectable": {
     "defaultValue": null,
-    "description": "",
-    "name": "unselectable",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
+    "options": ["on", "off"],
     "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"on\" | \"off\"",
-      "value": [
-        {
-          "value": "\"on\""
-        },
-        {
-          "value": "\"off\""
-        }
-      ]
-    },
-    "control": {
-      "type": "radio"
-    },
-    "options": ["on", "off"]
+    "type": "radio"
   },
   "inputMode": {
     "defaultValue": null,
-    "description": "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
-    "name": "inputMode",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
-    "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"text\" | \"none\" | \"search\" | \"tel\" | \"url\" | \"email\" | \"numeric\" | \"decimal\"",
-      "value": [
-        {
-          "value": "\"text\""
-        },
-        {
-          "value": "\"none\""
-        },
-        {
-          "value": "\"search\""
-        },
-        {
-          "value": "\"tel\""
-        },
-        {
-          "value": "\"url\""
-        },
-        {
-          "value": "\"email\""
-        },
-        {
-          "value": "\"numeric\""
-        },
-        {
-          "value": "\"decimal\""
-        }
-      ]
-    },
-    "control": {
-      "type": "select"
-    },
     "options": [
       "text",
       "none",
@@ -1235,915 +278,196 @@
       "email",
       "numeric",
       "decimal"
-    ]
+    ],
+    "required": false,
+    "type": "select"
   },
   "is": {
     "defaultValue": null,
-    "description": "Specify that a standard HTML element should behave like a defined custom built-in element\n@see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is",
-    "name": "is",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "HTMLAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "HTMLAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-activedescendant": {
     "defaultValue": null,
-    "description": "Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application.",
-    "name": "aria-activedescendant",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-atomic": {
     "defaultValue": null,
-    "description": "Indicates whether assistive technologies will present all, or only parts of, the changed region based on the change notifications defined by the aria-relevant attribute.",
-    "name": "aria-atomic",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-autocomplete": {
     "defaultValue": null,
-    "description": "Indicates whether inputting text could trigger display of one or more predictions of the user's intended value for an input and specifies how predictions would be\npresented if they are made.",
-    "name": "aria-autocomplete",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
+    "options": ["list", "none", "inline", "both"],
     "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"list\" | \"none\" | \"inline\" | \"both\"",
-      "value": [
-        {
-          "value": "\"list\""
-        },
-        {
-          "value": "\"none\""
-        },
-        {
-          "value": "\"inline\""
-        },
-        {
-          "value": "\"both\""
-        }
-      ]
-    },
-    "control": {
-      "type": "radio"
-    },
-    "options": ["list", "none", "inline", "both"]
+    "type": "radio"
   },
   "aria-busy": {
     "defaultValue": null,
-    "description": "Indicates an element is being modified and that assistive technologies MAY want to wait until the modifications are complete before exposing them to the user.",
-    "name": "aria-busy",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-checked": {
     "defaultValue": null,
-    "description": "Indicates the current \"checked\" state of checkboxes, radio buttons, and other widgets.\n@see aria-pressed\n@see aria-selected.",
-    "name": "aria-checked",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean | \"true\" | \"false\" | \"mixed\""
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-colcount": {
     "defaultValue": null,
-    "description": "Defines the total number of columns in a table, grid, or treegrid.\n@see aria-colindex.",
-    "name": "aria-colcount",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-colindex": {
     "defaultValue": null,
-    "description": "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.\n@see aria-colcount\n@see aria-colspan.",
-    "name": "aria-colindex",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-colspan": {
     "defaultValue": null,
-    "description": "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-colindex\n@see aria-rowspan.",
-    "name": "aria-colspan",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-controls": {
     "defaultValue": null,
-    "description": "Identifies the element (or elements) whose contents or presence are controlled by the current element.\n@see aria-owns.",
-    "name": "aria-controls",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-current": {
     "defaultValue": null,
-    "description": "Indicates the element that represents the current item within a container or set of related elements.",
-    "name": "aria-current",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean | \"time\" | \"true\" | \"false\" | \"page\" | \"step\" | \"location\" | \"date\""
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-describedby": {
     "defaultValue": null,
-    "description": "Identifies the element (or elements) that describes the object.\n@see aria-labelledby",
-    "name": "aria-describedby",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-details": {
     "defaultValue": null,
-    "description": "Identifies the element that provides a detailed, extended description for the object.\n@see aria-describedby.",
-    "name": "aria-details",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-disabled": {
     "defaultValue": null,
-    "description": "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n@see aria-hidden\n@see aria-readonly.",
-    "name": "aria-disabled",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-dropeffect": {
     "defaultValue": null,
-    "description": "Indicates what functions can be performed when a dragged object is released on the drop target.\n@deprecated in ARIA 1.1",
-    "name": "aria-dropeffect",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
+    "options": ["link", "none", "copy", "execute", "move", "popup"],
     "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"link\" | \"none\" | \"copy\" | \"execute\" | \"move\" | \"popup\"",
-      "value": [
-        {
-          "value": "\"link\""
-        },
-        {
-          "value": "\"none\""
-        },
-        {
-          "value": "\"copy\""
-        },
-        {
-          "value": "\"execute\""
-        },
-        {
-          "value": "\"move\""
-        },
-        {
-          "value": "\"popup\""
-        }
-      ]
-    },
-    "control": {
-      "type": "select"
-    },
-    "options": ["link", "none", "copy", "execute", "move", "popup"]
+    "type": "select"
   },
   "aria-errormessage": {
     "defaultValue": null,
-    "description": "Identifies the element that provides an error message for the object.\n@see aria-invalid\n@see aria-describedby.",
-    "name": "aria-errormessage",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-expanded": {
     "defaultValue": null,
-    "description": "Indicates whether the element, or another grouping element it controls, is currently expanded or collapsed.",
-    "name": "aria-expanded",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-flowto": {
     "defaultValue": null,
-    "description": "Identifies the next element (or elements) in an alternate reading order of content which, at the user's discretion,\nallows assistive technology to override the general default of reading in document source order.",
-    "name": "aria-flowto",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-grabbed": {
     "defaultValue": null,
-    "description": "Indicates an element's \"grabbed\" state in a drag-and-drop operation.\n@deprecated in ARIA 1.1",
-    "name": "aria-grabbed",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-haspopup": {
     "defaultValue": null,
-    "description": "Indicates the availability and type of interactive popup element, such as menu or dialog, that can be triggered by an element.",
-    "name": "aria-haspopup",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean | \"dialog\" | \"menu\" | \"true\" | \"false\" | \"grid\" | \"listbox\" | \"tree\""
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-hidden": {
     "defaultValue": null,
-    "description": "Indicates whether the element is exposed to an accessibility API.\n@see aria-disabled.",
-    "name": "aria-hidden",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-invalid": {
     "defaultValue": null,
-    "description": "Indicates the entered value does not conform to the format expected by the application.\n@see aria-errormessage.",
-    "name": "aria-invalid",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean | \"true\" | \"false\" | \"grammar\" | \"spelling\""
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-keyshortcuts": {
     "defaultValue": null,
-    "description": "Indicates keyboard shortcuts that an author has implemented to activate or give focus to an element.",
-    "name": "aria-keyshortcuts",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-label": {
     "defaultValue": null,
-    "description": "Defines a string value that labels the current element.\n@see aria-labelledby.",
-    "name": "aria-label",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-labelledby": {
     "defaultValue": null,
-    "description": "Identifies the element (or elements) that labels the current element.\n@see aria-describedby.",
-    "name": "aria-labelledby",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-level": {
     "defaultValue": null,
-    "description": "Defines the hierarchical level of an element within a structure.",
-    "name": "aria-level",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-live": {
     "defaultValue": null,
-    "description": "Indicates that an element will be updated, and describes the types of updates the user agents, assistive technologies, and user can expect from the live region.",
-    "name": "aria-live",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
+    "options": ["off", "assertive", "polite"],
     "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"off\" | \"assertive\" | \"polite\"",
-      "value": [
-        {
-          "value": "\"off\""
-        },
-        {
-          "value": "\"assertive\""
-        },
-        {
-          "value": "\"polite\""
-        }
-      ]
-    },
-    "control": {
-      "type": "radio"
-    },
-    "options": ["off", "assertive", "polite"]
+    "type": "radio"
   },
   "aria-modal": {
     "defaultValue": null,
-    "description": "Indicates whether an element is modal when displayed.",
-    "name": "aria-modal",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-multiline": {
     "defaultValue": null,
-    "description": "Indicates whether a text box accepts multiple lines of input or only a single line.",
-    "name": "aria-multiline",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-multiselectable": {
     "defaultValue": null,
-    "description": "Indicates that the user may select more than one item from the current selectable descendants.",
-    "name": "aria-multiselectable",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-orientation": {
     "defaultValue": null,
-    "description": "Indicates whether the element's orientation is horizontal, vertical, or unknown/ambiguous.",
-    "name": "aria-orientation",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
+    "options": ["horizontal", "vertical"],
     "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"horizontal\" | \"vertical\"",
-      "value": [
-        {
-          "value": "\"horizontal\""
-        },
-        {
-          "value": "\"vertical\""
-        }
-      ]
-    },
-    "control": {
-      "type": "radio"
-    },
-    "options": ["horizontal", "vertical"]
+    "type": "radio"
   },
   "aria-owns": {
     "defaultValue": null,
-    "description": "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.\n@see aria-controls.",
-    "name": "aria-owns",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-placeholder": {
     "defaultValue": null,
-    "description": "Defines a short hint (a word or short phrase) intended to aid the user with data entry when the control has no value.\nA hint could be a sample value or a brief description of the expected format.",
-    "name": "aria-placeholder",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-posinset": {
     "defaultValue": null,
-    "description": "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-setsize.",
-    "name": "aria-posinset",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-pressed": {
     "defaultValue": null,
-    "description": "Indicates the current \"pressed\" state of toggle buttons.\n@see aria-checked\n@see aria-selected.",
-    "name": "aria-pressed",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "boolean | \"true\" | \"false\" | \"mixed\""
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-readonly": {
     "defaultValue": null,
-    "description": "Indicates that the element is not editable, but is otherwise operable.\n@see aria-disabled.",
-    "name": "aria-readonly",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-relevant": {
     "defaultValue": null,
-    "description": "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.\n@see aria-atomic.",
-    "name": "aria-relevant",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
-    "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"text\" | \"additions\" | \"additions removals\" | \"additions text\" | \"all\" | \"removals\" | \"removals additions\" | \"removals text\" | \"text additions\" | \"text removals\"",
-      "value": [
-        {
-          "value": "\"text\""
-        },
-        {
-          "value": "\"additions\""
-        },
-        {
-          "value": "\"additions removals\""
-        },
-        {
-          "value": "\"additions text\""
-        },
-        {
-          "value": "\"all\""
-        },
-        {
-          "value": "\"removals\""
-        },
-        {
-          "value": "\"removals additions\""
-        },
-        {
-          "value": "\"removals text\""
-        },
-        {
-          "value": "\"text additions\""
-        },
-        {
-          "value": "\"text removals\""
-        }
-      ]
-    },
-    "control": {
-      "type": "select"
-    },
     "options": [
       "text",
       "additions",
@@ -2155,286 +479,69 @@
       "removals text",
       "text additions",
       "text removals"
-    ]
+    ],
+    "required": false,
+    "type": "select"
   },
   "aria-required": {
     "defaultValue": null,
-    "description": "Indicates that user input is required on the element before a form may be submitted.",
-    "name": "aria-required",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-roledescription": {
     "defaultValue": null,
-    "description": "Defines a human-readable, author-localized description for the role of an element.",
-    "name": "aria-roledescription",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   },
   "aria-rowcount": {
     "defaultValue": null,
-    "description": "Defines the total number of rows in a table, grid, or treegrid.\n@see aria-rowindex.",
-    "name": "aria-rowcount",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-rowindex": {
     "defaultValue": null,
-    "description": "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.\n@see aria-rowcount\n@see aria-rowspan.",
-    "name": "aria-rowindex",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-rowspan": {
     "defaultValue": null,
-    "description": "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-rowindex\n@see aria-colspan.",
-    "name": "aria-rowspan",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-selected": {
     "defaultValue": null,
-    "description": "Indicates the current \"selected\" state of various widgets.\n@see aria-checked\n@see aria-pressed.",
-    "name": "aria-selected",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "Booleanish"
-    },
-    "control": {
-      "type": "boolean"
-    }
+    "type": "boolean"
   },
   "aria-setsize": {
     "defaultValue": null,
-    "description": "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-posinset.",
-    "name": "aria-setsize",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-sort": {
     "defaultValue": null,
-    "description": "Indicates if items in a table or grid are sorted in ascending or descending order.",
-    "name": "aria-sort",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
+    "options": ["none", "ascending", "descending", "other"],
     "required": false,
-    "type": {
-      "name": "enum",
-      "raw": "\"none\" | \"ascending\" | \"descending\" | \"other\"",
-      "value": [
-        {
-          "value": "\"none\""
-        },
-        {
-          "value": "\"ascending\""
-        },
-        {
-          "value": "\"descending\""
-        },
-        {
-          "value": "\"other\""
-        }
-      ]
-    },
-    "control": {
-      "type": "radio"
-    },
-    "options": ["none", "ascending", "descending", "other"]
+    "type": "radio"
   },
   "aria-valuemax": {
     "defaultValue": null,
-    "description": "Defines the maximum allowed value for a range widget.",
-    "name": "aria-valuemax",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-valuemin": {
     "defaultValue": null,
-    "description": "Defines the minimum allowed value for a range widget.",
-    "name": "aria-valuemin",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-valuenow": {
     "defaultValue": null,
-    "description": "Defines the current value for a range widget.\n@see aria-valuetext.",
-    "name": "aria-valuenow",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "number"
-    },
-    "control": {
-      "type": "number"
-    }
+    "type": "number"
   },
   "aria-valuetext": {
     "defaultValue": null,
-    "description": "Defines the human readable text alternative of aria-valuenow for a range widget.",
-    "name": "aria-valuetext",
-    "parent": {
-      "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-      "name": "AriaAttributes"
-    },
-    "declarations": [
-      {
-        "fileName": "webstudio-designer/node_modules/@types/react/index.d.ts",
-        "name": "AriaAttributes"
-      }
-    ],
     "required": false,
-    "type": {
-      "name": "string"
-    },
-    "control": {
-      "type": "text"
-    }
+    "type": "text"
   }
 }
