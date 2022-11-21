@@ -28,13 +28,13 @@ export const getAssetPath = (asset: DbAsset) => {
       // see /packages/asset-uploader/src/targets/s3/upload.ts "Key: encodeURIComponent(uniqueFilename)"
       // here we need to encode file name, i.e cndUrl.pathname = encodeURIComponent(fileName)
       // but having that fileName = encodeURIComponent(asset.name) we are doing double encoding
-      cndUrl.pathname = encodeURIComponent(encodeURIComponent(asset.name));
+      cndUrl.pathname = asset.name;
       return cndUrl.toString();
     }
     const s3Url = new URL(s3Envs.data.S3_ENDPOINT);
     s3Url.hostname = `${s3Envs.data.S3_BUCKET}.${s3Url.hostname}`;
     // See above comment about double encoding
-    s3Url.pathname = encodeURIComponent(encodeURIComponent(asset.name));
+    s3Url.pathname = asset.name;
     return s3Url.toString();
   }
 
