@@ -24,10 +24,6 @@ export const getAssetPath = (asset: DbAsset) => {
   if (asset.location === Location.REMOTE && s3Envs.success) {
     if (s3Envs.data.ASSET_CDN_URL) {
       const cndUrl = new URL(s3Envs.data.ASSET_CDN_URL);
-      // We encode file name during upload,
-      // see /packages/asset-uploader/src/targets/s3/upload.ts "Key: encodeURIComponent(uniqueFilename)"
-      // here we need to encode file name, i.e cndUrl.pathname = encodeURIComponent(fileName)
-      // but having that fileName = encodeURIComponent(asset.name) we are doing double encoding
       cndUrl.pathname = asset.name;
       return cndUrl.toString();
     }
