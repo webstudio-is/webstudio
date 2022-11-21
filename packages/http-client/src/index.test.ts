@@ -1,6 +1,6 @@
 import { loadProject } from "./index";
 
-const existingProjectId = "398d3918-9b00-4a43-8ab6-de4e151ae98a";
+const existingProjectId = "40c7a865-0bc7-4012-9318-6c4c665425de";
 const notPublishedProjectId = "7ec397c6-b3d0-4967-9073-9d83623fcf8e";
 const apiUrl = "http://localhost:3000";
 
@@ -9,7 +9,7 @@ describe("getProjectDetails", () => {
     const response = await loadProject({
       apiUrl,
       projectId: existingProjectId,
-      include: { tree: true, props: true, breakpoints: true, pages: true },
+      include: { tree: true, props: true, breakpoints: true },
     });
     expect(response.pages).toBeTruthy();
   });
@@ -17,7 +17,7 @@ describe("getProjectDetails", () => {
     const response = await loadProject({
       apiUrl,
       projectId: notPublishedProjectId,
-      include: { tree: true, props: true, breakpoints: true, pages: true },
+      include: { tree: true, props: true, breakpoints: true },
     });
     expect(response.pages).toBeNull();
   });

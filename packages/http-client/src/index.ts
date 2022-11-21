@@ -4,7 +4,7 @@ import type { Includes, Project, Page } from "./index.d";
 export const loadProject = async ({
   apiUrl,
   projectId,
-  include = { tree: true, props: true, breakpoints: true, pages: false },
+  include = { tree: true, props: true, breakpoints: true },
 }: {
   apiUrl: string;
   projectId: string;
@@ -14,67 +14,102 @@ export const loadProject = async ({
     throw new Error("Webstudio API URL is required.");
   }
   const urls = [];
-  const pages: Record<string, unknown> | null = {};
-
+  const gatheredPages: Project = {};
   const baseUrl = new URL(apiUrl);
-  const treeUrl = new URL(`/rest/tree/${projectId}`, baseUrl);
-  const propsUrl = new URL(`/rest/props/${projectId}`, baseUrl);
-  const breakpointsUrl = new URL(`/rest/breakpoints/${projectId}`, baseUrl);
+  // Get all pages
   const pagesUrl = new URL(`/rest/pages/${projectId}`, baseUrl);
+  const listOfPages = await (await fetch(pagesUrl)).json();
+  if (listOfPages === undefined) {
+    throw new Error("Project not found");
+  }
+  const { pages, homePage } = listOfPages;
+  if (homePage) {
+    const { id } = homePage;
+    const treeUrl = new URL(`/rest/tree/${projectId}/${id}`, baseUrl);
+    const propsUrl = new URL(`/rest/props/${projectId}/${id}`, baseUrl);
+    const breakpointsUrl = new URL(`/rest/breakpoints/${projectId}`, baseUrl);
+    const cssUrl = new URL(`/rest/css/${projectId}/${id}`, baseUrl);
+    urls.push({
+      url: treeUrl,
+      path: "/",
+      type: "tree",
+    });
+    urls.push({
+      url: propsUrl,
+      path: "/",
+      type: "props",
+    });
+    urls.push({
+      url: breakpointsUrl,
+      path: "/",
+      type: "breakpoints",
+    });
+    urls.push({
+      url: cssUrl,
+      path: "/",
+      type: "css",
+    });
+  }
 
-  const [tree, props, breakpoints, listOfPages] = await Promise.all([
-    include.tree && (await fetch(treeUrl)).json(),
-    include.props && (await fetch(propsUrl)).json(),
-    include.breakpoints && (await fetch(breakpointsUrl)).json(),
-    include.pages && (await fetch(pagesUrl)).json(),
-  ]);
+  if (pages && pages.length > 0) {
+    for (const page of pages) {
+      const { id, path } = page;
+      const treeUrl = new URL(`/rest/tree/${projectId}/${id}`, baseUrl);
+      const propsUrl = new URL(`/rest/props/${projectId}/${id}`, baseUrl);
+      const cssUrl = new URL(`/rest/css/${projectId}/${id}`, baseUrl);
 
-  if (include.pages && listOfPages.pages && listOfPages.pages.length > 0) {
-    for (const page of listOfPages.pages) {
       urls.push({
-        url: new URL(`/rest/tree/${projectId}/${page.id}`, baseUrl),
-        path: page.path,
+        url: treeUrl,
+        path,
         type: "tree",
       });
+
       urls.push({
-        url: new URL(`/rest/props/${projectId}/${page.id}`, baseUrl),
-        path: page.path,
+        url: propsUrl,
+        path,
         type: "props",
       });
-    }
-    if (urls.length === 0) {
-      return {
-        tree,
-        props,
-        breakpoints,
-        pages,
-      };
-    }
 
-    const pagesData = await Promise.all(
-      urls.map(async (url) => {
-        const res = await fetch(url.url);
-        if (res.ok) {
-          return { path: url.path, type: url.type, data: await res.json() };
-        }
-      })
-    );
-    if (Object.keys(pagesData).length > 0) {
-      for (const page of pagesData) {
-        if (page && page.path && page.type && page.data) {
-          pages[page.path] = {
-            ...(pages[page.path] as Record<string, Page>),
-            [page.type]: page.data,
-            breakpoints,
-          };
-        }
+      urls.push({
+        url: cssUrl,
+        path,
+        type: "css",
+      });
+    }
+  }
+
+  if (urls.length === 0) {
+    throw new Error("No pages to fetch");
+  }
+  const data = await Promise.all(
+    urls.map(async (url) => {
+      const res = await fetch(url.url);
+      if (res.ok) {
+        return {
+          path: url.path,
+          type: url.type,
+          data: url.type === "css" ? await res.text() : await res.json(),
+        };
+      }
+    })
+  );
+  const breakpoints = data.find(
+    (d) => d?.type === "breakpoints" && d.path === "/"
+  );
+
+  if (Object.keys(data).length > 0) {
+    for (const page of data) {
+      if (page && page.path && page.type && page.data) {
+        const { path, type, data } = page;
+        gatheredPages[path] = {
+          ...gatheredPages[path],
+          [type]: data,
+          breakpoints: breakpoints?.data || {},
+        };
       }
     }
   }
   return {
-    tree,
-    props,
-    breakpoints,
-    pages: Object.keys(pages).length > 0 ? pages : null,
+    ...gatheredPages,
   };
 };
