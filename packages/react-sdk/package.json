@@ -18,11 +18,10 @@
     "storybook:build": "build-storybook"
   },
   "devDependencies": {
-    "@babel/core": "^7.17.12",
+    "@babel/core": "^7.20.2",
     "@esbuild-kit/esm-loader": "^2.4.2",
     "@remix-run/react": "^1.2.3",
     "@remix-run/server-runtime": "^1.2.3",
-    "remix-utils": "^4.1.0",
     "@storybook/addon-actions": "^6.5.6",
     "@storybook/addon-essentials": "^6.5.6",
     "@storybook/addon-interactions": "^6.5.6",
@@ -41,6 +40,7 @@
     "react": "^17.0.2",
     "react-docgen-typescript": "^2.2.2",
     "react-dom": "^17.0.2",
+    "remix-utils": "^4.1.0",
     "tsup": "^6.1.3",
     "tsx": "^3.9.0",
     "typescript": "4.7.4",
@@ -49,18 +49,18 @@
   "peerDependencies": {
     "@remix-run/react": "^1.2.3",
     "@remix-run/server-runtime": "^1.2.3",
-    "remix-utils": "^4.1.0",
     "@storybook/react": "^6.5.6",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "remix-utils": "^4.1.0",
     "zod": "^3.19.1"
   },
   "dependencies": {
     "detect-font": "^0.1.5",
     "@webstudio-is/asset-uploader": "^*",
+    "@webstudio-is/css-data": "*",
     "@webstudio-is/fonts": "*",
     "@webstudio-is/icons": "*",
-    "@webstudio-is/css-data": "*",
     "@webstudio-is/jest-config": "*",
     "immer": "^9.0.12",
     "mitt": "^3.0.0",
