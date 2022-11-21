@@ -56,6 +56,7 @@ export const TextControl = ({
             setCurrentValue(undefined);
             setValue(toValue(styleValue));
           }}
+          data-control={styleConfig.property}
         />
       </Box>
     </Tooltip>

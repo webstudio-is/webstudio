@@ -115,6 +115,7 @@ export const FontWeightControl = ({
         fontWeight: "inherit",
         "&:hover": { background: "none" },
       }}
+      data-control={styleConfig.property}
     />
   );
 };

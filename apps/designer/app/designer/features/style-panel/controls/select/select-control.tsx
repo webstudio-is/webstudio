@@ -24,6 +24,7 @@ export const SelectControl = ({
       options={styleConfig.items.map(({ label }) => label)}
       value={String(value.value)}
       onChange={setValue}
+      data-control={styleConfig.property}
     />
   );
 };

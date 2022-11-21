@@ -22,6 +22,8 @@ type ValuePickerPopoverProps = {
   content: JSX.Element;
   children: JSX.Element;
   onOpenChange?: (isOpen: boolean) => void;
+  onInteractOutside?: () => void;
+  modal?: boolean;
 };
 
 export const ValuePickerPopover = ({
@@ -29,6 +31,8 @@ export const ValuePickerPopover = ({
   content,
   children,
   onOpenChange,
+  onInteractOutside,
+  modal = true,
 }: ValuePickerPopoverProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [ref, sideOffset] = usePickerSideOffset(isOpen);
@@ -36,8 +40,9 @@ export const ValuePickerPopover = ({
     setIsOpen(open);
     onOpenChange?.(open);
   };
+
   return (
-    <Popover open={isOpen} onOpenChange={handleOpenChange} modal>
+    <Popover open={isOpen} onOpenChange={handleOpenChange} modal={modal}>
       <PopoverTrigger
         asChild
         ref={ref}
@@ -54,6 +59,7 @@ export const ValuePickerPopover = ({
           hideArrow
           align="start"
           css={{ width: "$spacing$30" }}
+          onInteractOutside={onInteractOutside}
         >
           {content}
           <PopoverHeader title={title} />

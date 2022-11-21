@@ -1,6 +1,13 @@
 import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
-import { Box, Card, Paragraph, SearchField } from "@webstudio-is/design-system";
+import {
+  Box,
+  Button,
+  Card,
+  Flex,
+  Paragraph,
+  SearchField,
+} from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
@@ -9,6 +16,7 @@ import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
+import { AddBinding } from "../bindings";
 
 type StylePanelProps = {
   publish: Publish;
@@ -54,7 +62,16 @@ export const StylePanel = ({
 
   return (
     <>
-      <Box css={{ px: "$spacing$9", py: "$spacing$3" }}>
+      <Flex
+        direction="column"
+        gap="2"
+        css={{
+          px: "$spacing$9",
+          py: "$spacing$3",
+          // Hack - value picker popover positioning depends on it
+          position: "relative",
+        }}
+      >
         <SearchField
           placeholder="Search"
           onChange={(event) => {
@@ -64,12 +81,12 @@ export const StylePanel = ({
             setSearch("");
           }}
         />
-      </Box>
+        <AddBinding setProperty={setProperty} />
+      </Flex>
 
       <Box
         css={{
           overflow: "auto",
-          position: "relative", // Hack - value picker popover positioning depends on it
         }}
       >
         <StyleSettings

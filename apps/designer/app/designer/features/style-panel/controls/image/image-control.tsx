@@ -36,7 +36,10 @@ export const ImageControl = ({
         />
       }
     >
-      <TextField defaultValue={selectedAsset?.name} />
+      <TextField
+        defaultValue={selectedAsset?.name}
+        data-control={styleConfig.property}
+      />
     </ValuePickerPopover>
   );
 };

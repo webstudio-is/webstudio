@@ -18,7 +18,12 @@ export const ColorControl = ({
   const setValue = setProperty(styleConfig.property);
 
   return (
-    <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
+    <Flex
+      align="center"
+      css={{ gridColumn: "2/4" }}
+      gap="1"
+      data-control={styleConfig.property}
+    >
       <ColorPicker
         id={styleConfig.property}
         value={String(value.value)}

@@ -32,6 +32,7 @@ export const FontFamilyControl = ({
       <TextField
         defaultValue={value.value}
         state={isOpen ? "active" : undefined}
+        data-control={styleConfig.property}
       />
     </ValuePickerPopover>
   );

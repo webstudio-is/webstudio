@@ -28,6 +28,7 @@ export const ToggleGroupControl = ({
       value={value}
       onValueChange={onValueChange}
       css={{ width: "fit-content" }}
+      data-control={property}
     >
       {items.map(({ child, label, value }, index) => {
         return (

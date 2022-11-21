@@ -53,6 +53,7 @@ export const MenuControl = ({
       isActive={isFromCurrentBreakpoint}
       onChange={setValue}
       onHover={(value) => setValue(value, { isEphemeral: true })}
+      data-control={styleConfig.property}
     />
   );
 };
