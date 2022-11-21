@@ -25,7 +25,7 @@ export const isValid = (property: string, value: string): boolean => {
 // If expression is a math expression, evaluates it.
 // Otherwise returns undefined.
 const evaluateMath = (expression: string) => {
-  if (/^[\d.+*/-]+$/.test(expression) === false) {
+  if (/^[\d\s.+*/-]+$/.test(expression) === false) {
     return undefined;
   }
   try {
