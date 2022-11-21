@@ -5,6 +5,8 @@ on:
       - "packages/**/*"
       - ".github/workflows/package-tests.yml"
       - ".github/actions/publish-test/action.yaml"
+    branches-ignore:
+      - "main"
 jobs:
   publish-test:
     runs-on: ubuntu-latest
