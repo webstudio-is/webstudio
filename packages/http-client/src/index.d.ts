@@ -12,6 +12,7 @@ export type Page = {
 };
 export type Project = {
   [include in string]: {
+    page: Page;
     tree: BaseInstance & { errors: string };
     props: Array<UserProp> & { errors: string };
     breakpoints: Array<Breakpoint> & {

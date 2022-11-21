@@ -30,21 +30,25 @@ export const loadProject = async ({
     const breakpointsUrl = new URL(`/rest/breakpoints/${projectId}`, baseUrl);
     const cssUrl = new URL(`/rest/css/${projectId}/${id}`, baseUrl);
     urls.push({
+      page: { ...homePage },
       url: treeUrl,
       path: "/",
       type: "tree",
     });
     urls.push({
+      page: { ...homePage },
       url: propsUrl,
       path: "/",
       type: "props",
     });
     urls.push({
+      page: { ...homePage },
       url: breakpointsUrl,
       path: "/",
       type: "breakpoints",
     });
     urls.push({
+      page: { ...homePage },
       url: cssUrl,
       path: "/",
       type: "css",
@@ -59,18 +63,21 @@ export const loadProject = async ({
       const cssUrl = new URL(`/rest/css/${projectId}/${id}`, baseUrl);
 
       urls.push({
+        page,
         url: treeUrl,
         path,
         type: "tree",
       });
 
       urls.push({
+        page,
         url: propsUrl,
         path,
         type: "props",
       });
 
       urls.push({
+        page,
         url: cssUrl,
         path,
         type: "css",
@@ -86,6 +93,7 @@ export const loadProject = async ({
       const res = await fetch(url.url);
       if (res.ok) {
         return {
+          page: url.page,
           path: url.path,
           type: url.type,
           data: url.type === "css" ? await res.text() : await res.json(),
@@ -100,10 +108,11 @@ export const loadProject = async ({
   if (Object.keys(data).length > 0) {
     for (const page of data) {
       if (page && page.path && page.type && page.data) {
-        const { path, type, data } = page;
+        const { path, type } = page;
         gatheredPages[path] = {
           ...gatheredPages[path],
-          [type]: data,
+          page: page.page,
+          [type]: page.data,
           breakpoints: breakpoints?.data || {},
         };
       }
