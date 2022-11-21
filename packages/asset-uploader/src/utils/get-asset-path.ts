@@ -29,7 +29,6 @@ export const getAssetPath = (asset: DbAsset) => {
     }
     const s3Url = new URL(s3Envs.data.S3_ENDPOINT);
     s3Url.hostname = `${s3Envs.data.S3_BUCKET}.${s3Url.hostname}`;
-    // See above comment about double encoding
     s3Url.pathname = asset.name;
     return s3Url.toString();
   }
