@@ -8,13 +8,13 @@ const fsEnv = FsEnv.parse(process.env);
 export const getAssetPath = (asset: DbAsset) => {
   if (asset.location === Location.FS) {
     const splitPath = fsEnv.FILE_UPLOAD_PATH.split("public");
-    const locUrl = new URL(
+    const url = new URL(
       path.join("/", splitPath[splitPath.length - 1], asset.name),
       // Hostname here is not important
       "http://localhost"
     );
 
-    return locUrl.pathname;
+    return url.pathname;
   }
 
   if (asset.location === Location.REMOTE && s3Envs.success) {
