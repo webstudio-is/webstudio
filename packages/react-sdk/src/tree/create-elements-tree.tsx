@@ -1,8 +1,7 @@
-import { type ComponentProps, Fragment } from "react";
+import type { ComponentProps, ReactNode } from "react";
+import { Fragment } from "react";
 import type { Instance } from "../db";
 import { WrapperComponent } from "./wrapper-component";
-import { Scripts, ScrollRestoration } from "@remix-run/react";
-import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<
   | string
@@ -19,14 +18,14 @@ export type OnChangeChildren = (change: {
 }) => void;
 
 export const createElementsTree = ({
-  sandbox,
   instance,
   Component,
+  scripts,
   onChangeChildren,
 }: {
-  sandbox?: boolean;
   instance: Instance;
   Component: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  scripts?: ReactNode;
   onChangeChildren?: OnChangeChildren;
 }) => {
   const children = createInstanceChildrenElements({
@@ -40,9 +39,7 @@ export const createElementsTree = ({
     children: [
       <Fragment key="children">
         {children}
-        {sandbox && <SessionStoragePolyfill />}
-        <ScrollRestoration />
-        <Scripts />
+        {scripts}
       </Fragment>,
     ],
   });

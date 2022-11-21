@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { Scripts, ScrollRestoration } from "@remix-run/react";
 import store from "immerhin";
 import type { Build } from "@webstudio-is/project";
 import {
@@ -7,6 +8,7 @@ import {
   type OnChangeChildren,
   type Tree,
 } from "@webstudio-is/react-sdk";
+import { SessionStoragePolyfill } from "~/shared/session-storage-polyfill";
 import { useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
@@ -63,9 +65,15 @@ const useElementsTree = () => {
     if (rootInstance === undefined) return;
 
     return createElementsTree({
-      sandbox: true,
       instance: rootInstance,
       Component: WrapperComponentDev,
+      scripts: (
+        <>
+          <Scripts />
+          <SessionStoragePolyfill />
+          <ScrollRestoration />
+        </>
+      ),
       onChangeChildren,
     });
   }, [rootInstance, onChangeChildren]);

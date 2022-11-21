@@ -4,7 +4,7 @@ import {
   type LoaderFunction,
   type MetaFunction,
 } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, ScrollRestoration } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData, type CanvasData } from "~/shared/db";
 import env, { type Env } from "~/env.server";
@@ -102,7 +102,12 @@ const Content = () => {
   const Outlet =
     data.mode === "edit"
       ? () => <Canvas data={data} />
-      : () => <InstanceRoot data={data} />;
+      : () => (
+          <>
+            <InstanceRoot data={data} />
+            <ScrollRestoration />
+          </>
+        );
 
   // @todo This is non-standard for Remix, is there a better way?
   // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
