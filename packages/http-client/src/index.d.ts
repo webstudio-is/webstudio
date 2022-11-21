@@ -4,8 +4,6 @@ import type {
   UserProp,
 } from "@webstudio-is/react-sdk";
 
-export type IncludeTypes = "tree" | "props" | "breakpoints";
-export type Includes<T> = { [include in IncludeTypes]: T };
 export type Page = {
   id: string;
   root: [string, string];
