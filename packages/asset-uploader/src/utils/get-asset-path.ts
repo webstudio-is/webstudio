@@ -9,11 +9,7 @@ export const getAssetPath = (asset: DbAsset) => {
   if (asset.location === Location.FS) {
     const splitPath = fsEnv.FILE_UPLOAD_PATH.split("public");
     const locUrl = new URL(
-      path.join(
-        "/",
-        splitPath[splitPath.length - 1],
-        encodeURIComponent(asset.name)
-      ),
+      path.join("/", splitPath[splitPath.length - 1], asset.name),
       // Hostname here is not important
       "http://localhost"
     );
