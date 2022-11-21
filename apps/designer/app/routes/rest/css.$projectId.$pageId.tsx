@@ -1,5 +1,4 @@
 import { ActionFunction, json } from "@remix-run/node";
-import { db } from "@webstudio-is/project/server";
 import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { generateCssText } from "~/shared/css-utils";
