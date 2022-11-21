@@ -9,7 +9,6 @@ module.exports = {
       require.resolve("babel-jest"),
       {
         presets: ["@babel/typescript", "@babel/react"],
-        plugins: ["@babel/transform-modules-commonjs"],
       },
     ],
     "^.+\\.webp$": require.resolve("./file-transform.js"),
@@ -17,4 +16,5 @@ module.exports = {
   moduleNameMapper: {
     "^~/(.*)$": "<rootDir>/src/$1",
   },
+  extensionsToTreatAsEsm: [".ts", ".tsx"],
 };

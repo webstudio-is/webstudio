@@ -4,7 +4,7 @@
   "include": ["src"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2020"],
-    "module": "commonjs",
+    "module": "es2020",
     "jsx": "react-jsx",
     "target": "ES2020",
     "strict": true,

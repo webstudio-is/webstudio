@@ -37,7 +37,7 @@ export const umzug = new Umzug({
             prismaMigrations.generateMigrationClient(params.name);
 
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const migration = require(tsFilePath);
+            const migration = await import(tsFilePath);
 
             if (typeof migration.default !== "function") {
               throw new UserError(

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+import { jest } from "@jest/globals";
 import { Asset, Location } from "@webstudio-is/prisma-client";
 
 const commonAsset: Asset = {
@@ -31,8 +31,8 @@ describe("getAssetPath", () => {
   });
 
   describe("local", () => {
-    test("returns local path with no custom path", () => {
-      const { getAssetPath } = require("./get-asset-path");
+    test("returns local path with no custom path", async () => {
+      const { getAssetPath } = await import("./get-asset-path");
       expect(
         getAssetPath({
           ...commonAsset,
@@ -42,9 +42,9 @@ describe("getAssetPath", () => {
       ).toBe("/s/uploads/test.png");
     });
 
-    test("return local path with custom path", () => {
+    test("return local path with custom path", async () => {
       process.env.FILE_UPLOAD_PATH = "assets";
-      const { getAssetPath } = require("./get-asset-path");
+      const { getAssetPath } = await import("./get-asset-path");
       expect(
         getAssetPath({
           ...commonAsset,
@@ -55,11 +55,11 @@ describe("getAssetPath", () => {
     });
   });
   describe("s3", () => {
-    test("returns s3 url", () => {
+    test("returns s3 url", async () => {
       process.env.S3_ENDPOINT = "https://fr1.s3.com";
       process.env.S3_BUCKET = "bucket";
       process.env.S3_REGION = "fr1";
-      const { getAssetPath } = require("./get-asset-path");
+      const { getAssetPath } = await import("./get-asset-path");
       expect(
         getAssetPath({
           ...commonAsset,
@@ -68,11 +68,11 @@ describe("getAssetPath", () => {
         })
       ).toBe("https://bucket.fr1.s3.com/test.png");
     });
-    test("returns s3 url and fixes extra slashes", () => {
+    test("returns s3 url and fixes extra slashes", async () => {
       process.env.S3_ENDPOINT = "https://fr1.s3.com//";
       process.env.S3_BUCKET = "bucket";
       process.env.S3_REGION = "fr1";
-      const { getAssetPath } = require("./get-asset-path");
+      const { getAssetPath } = await import("./get-asset-path");
       expect(
         getAssetPath({
           ...commonAsset,
@@ -83,12 +83,12 @@ describe("getAssetPath", () => {
     });
   });
   describe("R2", () => {
-    test("returns r2 url", () => {
+    test("returns r2 url", async () => {
       process.env.S3_ENDPOINT = "https://userid.r2.cloudflarestorage.com";
       process.env.S3_BUCKET = "bucket";
       process.env.S3_REGION = "auto";
       process.env.ASSET_CDN_URL = "https://worker-test.workers.dev";
-      const { getAssetPath } = require("./get-asset-path");
+      const { getAssetPath } = await import("./get-asset-path");
       expect(
         getAssetPath({
           ...commonAsset,
