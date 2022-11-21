@@ -4,7 +4,6 @@ import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { useSelectedInstance } from "./nano-states";
-import { copy, paste } from "./copy-paste";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 import { type SelectedInstanceData } from "@webstudio-is/project";
 
@@ -19,6 +18,8 @@ declare module "~/shared/pubsub" {
     selectInstance?: SelectedInstanceData;
     togglePreviewMode: undefined;
     zoom: "zoomOut" | "zoomIn";
+    copy: undefined;
+    paste: undefined;
   }
 }
 
@@ -66,6 +67,14 @@ const publishCancelCurrentDrag = () => {
   publish({ type: "cancelCurrentDrag" });
 };
 
+const publishCopy = () => {
+  publish({ type: "copy" });
+};
+
+const publishPaste = () => {
+  publish({ type: "paste" });
+};
+
 export const useShortcuts = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
@@ -85,8 +94,8 @@ export const useShortcuts = () => {
     redo: store.redo.bind(store),
     delete: publishDeleteInstance,
     preview: togglePreviewMode,
-    copy,
-    paste,
+    copy: publishCopy,
+    paste: publishPaste,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
     zoom: publishZoom,

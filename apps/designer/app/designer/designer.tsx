@@ -40,6 +40,7 @@ import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { useSetAssets } from "./shared/assets";
 import { getBuildUrl } from "~/shared/router-utils";
+import { useSubscribeCopyPaste } from "~/shared/copy-paste";
 
 export const links = () => {
   return [
@@ -272,6 +273,7 @@ export const Designer = ({
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
   useSubscribeCanvasReady(publish);
+  useSubscribeCopyPaste(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {
