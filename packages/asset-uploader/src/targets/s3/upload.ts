@@ -14,6 +14,7 @@ import { createMany } from "../../db";
 import type { Asset } from "../../types";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
+import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 
 const AssetsUploadedSuccess = z.object({
   Location: z.string(),
@@ -72,7 +73,9 @@ const uploadHandler = async ({
     throw new Error("Filename is required");
   }
 
-  const uniqueFilename = getUniqueFilename(file.filename);
+  const fileName = sanitizeS3Key(file.filename);
+
+  const uniqueFilename = getUniqueFilename(fileName);
 
   const s3Env = S3Env.parse(process.env);
 
@@ -82,11 +85,12 @@ const uploadHandler = async ({
   const params: PutObjectCommandInput = {
     ...ACL,
     Bucket: s3Env.S3_BUCKET,
-    Key: encodeURIComponent(uniqueFilename),
+    Key: uniqueFilename,
     Body: data,
     ContentType: file.contentType,
     Metadata: {
-      filename: file.filename || "unnamed",
+      // encodeURIComponent is needed to support special characters like Cyrillic
+      filename: encodeURIComponent(fileName) || "unnamed",
     },
   };
 

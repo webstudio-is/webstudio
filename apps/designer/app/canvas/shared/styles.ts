@@ -39,14 +39,14 @@ const helperStyles = [
   `[${idAttribute}]:not(${voidElements}):not(body):empty {
     outline: 1px dashed #555;
     outline-offset: -1;
-    padding-top: 50;
-    padding-right: 50;
+    padding-top: 50px;
+    padding-right: 50px;
   }`,
   `[${idAttribute}][contenteditable], [${idAttribute}]:focus {
     outline: 0;
   }`,
   `[${idAttribute}][contenteditable] {
-    box-shadow: 0 0 0px 4px rgb(36 150 255 / 20%)
+    box-shadow: 0 0 0 4px rgb(36 150 255 / 20%)
   }`,
   // Text Editor wraps each line into a p, so we need to make sure there is no jump between regular rendering and editing
   `[${idAttribute}][contenteditable] p {

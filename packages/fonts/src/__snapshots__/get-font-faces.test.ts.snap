@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`getFontFaces() different formats 1`] = `
-Array [
-  Object {
+[
+  {
     "fontDisplay": "swap",
     "fontFamily": "Roboto",
     "fontStyle": "normal",
@@ -13,15 +13,15 @@ Array [
 `;
 
 exports[`getFontFaces() different style 1`] = `
-Array [
-  Object {
+[
+  {
     "fontDisplay": "swap",
     "fontFamily": "Roboto",
     "fontStyle": "normal",
     "fontWeight": 400,
     "src": "url('/fonts/roboto.ttf') format('truetype')",
   },
-  Object {
+  {
     "fontDisplay": "swap",
     "fontFamily": "Roboto",
     "fontStyle": "italic",
@@ -32,15 +32,15 @@ Array [
 `;
 
 exports[`getFontFaces() different weight 1`] = `
-Array [
-  Object {
+[
+  {
     "fontDisplay": "swap",
     "fontFamily": "Roboto",
     "fontStyle": "normal",
     "fontWeight": 400,
     "src": "url('/fonts/roboto.ttf') format('truetype')",
   },
-  Object {
+  {
     "fontDisplay": "swap",
     "fontFamily": "Roboto",
     "fontStyle": "normal",

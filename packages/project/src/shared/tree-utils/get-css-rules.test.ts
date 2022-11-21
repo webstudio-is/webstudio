@@ -40,13 +40,13 @@ describe("Get all cssRules from an instance including children", () => {
     };
 
     expect(getCssRules(rootInstance)).toMatchInlineSnapshot(`
-      Array [
-        Array [
+      [
+        [
           "1",
-          Object {
+          {
             "breakpoint": "a",
-            "style": Object {
-              "width": Object {
+            "style": {
+              "width": {
                 "type": "unit",
                 "unit": "px",
                 "value": 10,
@@ -54,24 +54,24 @@ describe("Get all cssRules from an instance including children", () => {
             },
           },
         ],
-        Array [
+        [
           "2",
-          Object {
+          {
             "breakpoint": "a",
-            "style": Object {
-              "display": Object {
+            "style": {
+              "display": {
                 "type": "keyword",
                 "value": "block",
               },
             },
           },
         ],
-        Array [
+        [
           "3",
-          Object {
+          {
             "breakpoint": "a",
-            "style": Object {
-              "color": Object {
+            "style": {
+              "color": {
                 "type": "keyword",
                 "value": "red",
               },
