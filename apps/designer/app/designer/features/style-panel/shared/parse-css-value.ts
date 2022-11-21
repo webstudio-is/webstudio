@@ -22,31 +22,36 @@ export const isValid = (property: string, value: string): boolean => {
   return true;
 };
 
-// wtf?
-// eslint-disable-next-line no-useless-escape
-const mathRegex = /[\+\-\*\/]/;
+// If expression is a math expression, evaluates it.
+// Otherwise returns undefined.
+const evaluateMath = (expression: string) => {
+  if (/^[\d\s.+*/-]+$/.test(expression) === false) {
+    return undefined;
+  }
+  try {
+    // Eval is safe here because of the regex above
+    const result = eval(`(${expression})`);
+    if (typeof result === "number") {
+      return result;
+    }
+  } catch (err) {
+    return undefined;
+  }
+};
 
 // - 2+2px
 // - 2*2
 const evaluate = (input: string, parsedUnit: [Unit] | null) => {
-  const parsed = parseFloat(input);
-  // If its not a number, it can't be a math expression.
-  if (isNaN(parsed)) return parsed;
+  const result = evaluateMath(
+    parsedUnit === null ? input : input.replace(parsedUnit[0], "")
+  );
 
-  // It's a math expression
-  if (mathRegex.test(input)) {
-    // Get rid of the unit
-    if (parsedUnit !== null) {
-      input = input.replace(parsedUnit[0], "");
-    }
-    try {
-      return eval(`(${input})`);
-    } catch (err) {
-      return parsed;
-    }
+  if (result !== undefined) {
+    return result;
   }
 
-  return parsed;
+  const number = parseFloat(input);
+  return isNaN(number) ? undefined : number;
 };
 
 // Helper to let user input:
@@ -73,7 +78,7 @@ export const parseCssValue = (
 
   // If we get a unit but there is no number - we assume its an accidental
   // unit match and its a keyword value.
-  if (isNaN(number) === true) {
+  if (number === undefined) {
     if (isValid(property, input)) {
       return {
         type: "keyword",
