@@ -10,7 +10,7 @@ import ObjectID from "bson-objectid";
 import { useMemo } from "react";
 import { restAssetsPath } from "~/shared/router-utils";
 import { useAssets as useAssetsState, useProject } from "../nano-states";
-import { sanitizeS3Key } from "./sanitize-s3-key";
+import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { PreviewAsset } from "./types";
 
 const toPreviewAssets = (formData: FormData): Promise<PreviewAsset[]> => {
@@ -57,6 +57,7 @@ const toFormData = (type: AssetType, input: HTMLInputElement) => {
     }
 
     // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
+    // should be removed after fix
     formData.append(type, file, sanitizeS3Key(file.name));
   }
   return formData;
