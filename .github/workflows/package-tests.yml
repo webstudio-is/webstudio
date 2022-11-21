@@ -76,3 +76,15 @@ jobs:
           workdir: ./packages/project
           filter: "@webstudio-is/project"
           token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/css-data
+          filter: "@webstudio-is/css-data"
+          token: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/publish-test
+        if: always()
+        with:
+          workdir: ./packages/css-engine
+          filter: "@webstudio-is/css-engine"
+          token: ${{ secrets.NPM_TOKEN }}
