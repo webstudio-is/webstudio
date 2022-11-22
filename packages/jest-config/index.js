@@ -6,9 +6,9 @@ module.exports = {
   testMatch: ["<rootDir>/src/**/*.test.ts"],
   transform: {
     "^.+\\.tsx?$": [
-      require.resolve("babel-jest"),
+      require.resolve("esbuild-jest"),
       {
-        presets: ["@babel/typescript", "@babel/react"],
+        format: "esm",
       },
     ],
     "^.+\\.webp$": require.resolve("./file-transform.js"),
