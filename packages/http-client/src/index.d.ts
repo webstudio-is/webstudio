@@ -9,11 +9,13 @@ export type Page = {
   root: [string, string];
 };
 export type Project = {
-  [string]: {
-    page: Page;
-    tree: BaseInstance | null;
-    props: Array<UserProp> | [];
-    breakpoints: Array<Breakpoint> | null;
-    css: string;
-  };
+  [string]:
+    | {
+        page: Page;
+        tree: BaseInstance;
+        props: Array<UserProp> | [];
+        breakpoints: Array<Breakpoint> | null;
+        css: string;
+      }
+    | string;
 };

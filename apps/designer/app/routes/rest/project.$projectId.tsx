@@ -35,9 +35,15 @@ export const loader: ActionFunction = async ({ request, params }) => {
       pages: { homePage, pages },
     } = prodBuild;
     const breakpoints = await db.breakpoints.load(prodBuild.id);
+    const tree = await db.tree.loadById(homePage.treeId);
+    if (tree === null) {
+      throw json("Tree structure not found. Please contact us to get help.", {
+        status: 500,
+      });
+    }
     pagesDetails["/"] = {
       page: homePage,
-      tree: await db.tree.loadById(homePage.treeId),
+      tree,
       props: await db.props.loadByTreeId(homePage.treeId),
       css: await generateCssText({
         projectId,
