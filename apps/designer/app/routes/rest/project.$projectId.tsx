@@ -3,21 +3,14 @@ import env from "~/env.server";
 import { db } from "@webstudio-is/project/server";
 import { sentryException } from "~/shared/sentry";
 import { generateCssText } from "~/shared/css-utils";
-import type { Props, Tree } from "@webstudio-is/react-sdk";
-import type { Page } from "@webstudio-is/project";
+import { loadCanvasData, type CanvasData } from "~/shared/db";
 
-type PagesDetails = {
-  [path: string]: {
-    page: Page;
-    tree: Tree | null;
-    props: Props[];
-    css: string;
-  };
-};
+type PagesDetails = Array<CanvasData | undefined>;
+
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {
     const projectId = params.projectId ?? undefined;
-    const pagesDetails: PagesDetails = {};
+    const pages: PagesDetails = [];
 
     if (projectId === undefined) {
       throw json("Required project id", { status: 400 });
@@ -31,55 +24,34 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       );
     }
     const {
-      pages: { homePage, pages },
+      pages: { homePage, pages: otherPages },
     } = prodBuild;
-    const breakpoints = await db.breakpoints.load(prodBuild.id);
-    const tree = await db.tree.loadById(homePage.treeId);
-    if (tree === null) {
-      throw json(
-        `Tree ${homePage.treeId} structure not found. Please contact us to get help.`,
-        {
-          status: 500,
-        }
-      );
+    const project = await db.project.loadByParams({ projectId });
+    if (project === null) {
+      throw json("Project not found", { status: 404 });
     }
-    pagesDetails["/"] = {
-      page: homePage,
-      tree,
-      props: await db.props.loadByTreeId(homePage.treeId),
-      css: await generateCssText({
-        projectId,
-        mode: "published",
-        pathname: "/",
-        pageId: homePage.id,
-      }),
-    };
-
-    if (pages.length > 0) {
-      for (const page of pages) {
-        const tree = await db.tree.loadById(page.treeId);
-        if (tree === null) {
-          throw json(
-            `Tree ${page.treeId} structure not found. Please contact us to get help.`,
-            {
-              status: 500,
-            }
-          );
-        }
-        pagesDetails[page.path] = {
-          page,
-          tree,
-          props: await db.props.loadByTreeId(page.treeId),
-          css: await generateCssText({
-            projectId,
-            mode: "published",
-            pathname: page.path,
-            pageId: page.id,
-          }),
-        };
+    const canvasData = await loadCanvasData(project, "prod", homePage.path);
+    const css = await generateCssText({
+      projectId,
+      mode: "published",
+      pathname: "/",
+      pageId: homePage.id,
+    });
+    pages.push({ ...canvasData, css });
+    if (otherPages.length > 0) {
+      for (const page of otherPages) {
+        const canvasData = await loadCanvasData(project, "prod", page.path);
+        const css = await generateCssText({
+          projectId,
+          mode: "published",
+          pathname: page.path,
+          pageId: page.id,
+        });
+        pages.push({ ...canvasData, css });
       }
     }
-    return { pages: pagesDetails, breakpoints };
+
+    return pages;
   } catch (error) {
     // If a Response is thrown, we're rethrowing it for Remix to handle.
     // https://remix.run/docs/en/v1/api/conventions#throwing-responses-in-loaders
