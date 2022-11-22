@@ -14,8 +14,7 @@ export type BuildParams =
       mode: BuildMode;
       pathname: string;
       pageId?: string;
-    }
-  | undefined;
+    };
 
 // A subtype of Request. To make testing easier.
 type MinimalRequest = {

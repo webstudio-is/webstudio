@@ -7,7 +7,7 @@ import { idAttribute } from "@webstudio-is/react-sdk";
 import { addGlobalRules } from "~/canvas/shared/styles";
 import type { BuildParams } from "../router-utils";
 
-export const generateCssText = async (buildParams: BuildParams) => {
+export const generateCssText = async (buildParams: BuildParams | undefined) => {
   if (buildParams === undefined) {
     throw json("Required project info", { status: 404 });
   }

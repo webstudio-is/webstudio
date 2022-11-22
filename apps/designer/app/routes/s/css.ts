@@ -7,7 +7,7 @@ import { generateCssText } from "~/shared/css-utils";
 
 export const loader: ActionFunction = async ({ request }) => {
   try {
-    const buildParams: BuildParams = getBuildParams(request);
+    const buildParams: BuildParams | undefined = getBuildParams(request);
 
     if (buildParams === undefined) {
       throw json("Required project info", { status: 404 });
