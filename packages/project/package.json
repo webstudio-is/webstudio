@@ -33,8 +33,7 @@
   "exports": {
     ".": {
       "import": "./lib/index.js",
-      "require": "./lib/cjs/index.cjs",
-      "default": "./lib/index.js"
+      "require": "./lib/cjs/index.cjs"
     },
     "./server": "./server.js"
   },
