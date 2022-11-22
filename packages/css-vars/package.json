@@ -37,7 +37,7 @@
     "entry": [
       "src/index.ts"
     ],
-    "format": "cjs",
+    "format": "esm",
     "outDir": "lib"
   }
 }

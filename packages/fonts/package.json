@@ -46,7 +46,7 @@
       "src/index.ts",
       "src/index.server.ts"
     ],
-    "format": "cjs",
+    "format": "esm",
     "outDir": "lib"
   }
 }
