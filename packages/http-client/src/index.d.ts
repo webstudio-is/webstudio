@@ -9,7 +9,7 @@ export type Page = {
   root: [string, string];
 };
 export type Project = {
-  [include in string]: {
+  [string]: {
     page: Page;
     tree: BaseInstance & { errors: string };
     props: Array<UserProp> & { errors: string };
