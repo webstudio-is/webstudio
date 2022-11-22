@@ -1,5 +1,5 @@
 import { useState } from "react";
-import useDebounce from "react-use/lib/useDebounce";
+import { useDebounce } from "react-use";
 import { type Breakpoint } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { Button, TextField, Flex, Text } from "@webstudio-is/design-system";
