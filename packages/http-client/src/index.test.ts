@@ -13,6 +13,9 @@ describe("getProjectDetails", () => {
       apiUrl,
       projectId: morePagesProjectId,
     });
+    if (response instanceof Error) {
+      throw response;
+    }
     expect(Object.keys(response.pages).length > 1).toBeTruthy();
   });
   test("does not include pages", async () => {
@@ -20,6 +23,9 @@ describe("getProjectDetails", () => {
       apiUrl,
       projectId: onlyHomeProjectId,
     });
+    if (response instanceof Error) {
+      throw response;
+    }
     expect(Object.keys(response.pages).length === 1).toBeTruthy();
   });
   test("loads existing project", async () => {

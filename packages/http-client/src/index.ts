@@ -7,7 +7,7 @@ export const loadProject = async ({
 }: {
   apiUrl: string;
   projectId: string;
-}): Promise<Project | string> => {
+}): Promise<Project> => {
   try {
     if (apiUrl === undefined) {
       throw new Error("Webstudio API URL is required.");
@@ -24,6 +24,6 @@ export const loadProject = async ({
     if (error instanceof Error) {
       return error;
     }
-    return "Unknown error";
+    return new Error("Unknown error");
   }
 };
