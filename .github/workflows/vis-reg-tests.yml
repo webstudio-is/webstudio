@@ -22,7 +22,7 @@ jobs:
         run: yarn storybook:ds:build
 
       - name: Lost Pixel
-        uses: lost-pixel/lost-pixel@v2.20.0
+        uses: lost-pixel/lost-pixel@v2.23.0
         env:
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
