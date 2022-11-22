@@ -27,6 +27,7 @@
   "peerDependencies": {
     "zod": "^3.19.1"
   },
+  "module": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
     "./server": "./server.js"

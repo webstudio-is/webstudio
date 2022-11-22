@@ -39,6 +39,7 @@
     "@radix-ui/react-icons": "^1.1.0",
     "@webstudio-is/css-vars": "*"
   },
+  "module": "./lib/index.js",
   "exports": {
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.cjs"
