@@ -17,7 +17,6 @@ type PagesDetails = {
 export const loader: LoaderFunction = async ({ request, params }) => {
   try {
     const projectId = params.projectId ?? undefined;
-    const url = new URL(request.url);
     const pagesDetails: PagesDetails = {};
 
     if (projectId === undefined) {
