@@ -11,11 +11,9 @@ export type Page = {
 export type Project = {
   [string]: {
     page: Page;
-    tree: BaseInstance & { errors: string };
-    props: Array<UserProp> & { errors: string };
-    breakpoints: Array<Breakpoint> & {
-      errors: string;
-    };
+    tree: BaseInstance | null;
+    props: Array<UserProp> | [];
+    breakpoints: Array<Breakpoint> | null;
     css: string;
   };
 };
