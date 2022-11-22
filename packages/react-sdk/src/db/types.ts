@@ -8,7 +8,7 @@ export type Tree = {
 };
 
 export type Props = {
-  props: any;
+  props: string;
   id: string;
   instanceId: string;
   treeId: string;
