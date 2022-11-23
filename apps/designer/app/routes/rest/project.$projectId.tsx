@@ -2,7 +2,6 @@ import { LoaderFunction, json } from "@remix-run/node";
 import env from "~/env.server";
 import { db } from "@webstudio-is/project/server";
 import { sentryException } from "~/shared/sentry";
-import { generateCssText } from "~/shared/css-utils";
 import { loadCanvasData, type CanvasData } from "~/shared/db";
 
 type PagesDetails = Array<CanvasData | undefined>;
@@ -31,23 +30,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       throw json("Project not found", { status: 404 });
     }
     const canvasData = await loadCanvasData(project, "prod", homePage.path);
-    const css = await generateCssText({
-      projectId,
-      mode: "published",
-      pathname: "/",
-      pageId: homePage.id,
-    });
-    pages.push({ ...canvasData, css });
+
+    pages.push(canvasData);
     if (otherPages.length > 0) {
       for (const page of otherPages) {
         const canvasData = await loadCanvasData(project, "prod", page.path);
-        const css = await generateCssText({
-          projectId,
-          mode: "published",
-          pathname: page.path,
-          pageId: page.id,
-        });
-        pages.push({ ...canvasData, css });
+        pages.push(canvasData);
       }
     }
 

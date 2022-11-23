@@ -13,6 +13,8 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
+    "@webstudio-is/fonts": "*",
+    "@webstudio-is/css-engine": "*",
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/prisma-client": "*",
     "@webstudio-is/react-sdk": "*",

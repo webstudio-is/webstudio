@@ -21,6 +21,14 @@
     },
 
     {
+      "path": "../css-engine"
+    },
+
+    {
+      "path": "../fonts"
+    },
+
+    {
       "path": "../prisma-client"
     },
 

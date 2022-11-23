@@ -1,10 +1,9 @@
 import { json } from "@remix-run/node";
 import { db } from "@webstudio-is/project/server";
-import { utils } from "@webstudio-is/project";
+import { addGlobalRules, utils } from "@webstudio-is/project";
 import { loadCanvasData } from "~/shared/db";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { idAttribute } from "@webstudio-is/react-sdk";
-import { addGlobalRules } from "~/canvas/shared/styles";
 import type { BuildParams } from "../router-utils";
 
 export const generateCssText = async (buildParams: BuildParams | undefined) => {

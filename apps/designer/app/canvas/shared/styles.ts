@@ -1,6 +1,6 @@
 import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
-import { utils } from "@webstudio-is/project";
+import { addGlobalRules, utils } from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
 import { rootInstanceContainer } from "~/shared/nano-states";
 import { idAttribute } from "@webstudio-is/react-sdk";
@@ -17,13 +17,11 @@ import { useEffect } from "react";
 import {
   createCssEngine,
   toValue,
-  type CssEngine,
   type StyleRule,
   type PlaintextRule,
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
-import { Asset, FontAsset } from "@webstudio-is/asset-uploader";
-import { FontFormat, FONT_FORMATS, getFontFaces } from "@webstudio-is/fonts";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 const cssEngine = createCssEngine();
 
@@ -58,24 +56,6 @@ export const useManageDesignModeStyles = () => {
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
-};
-
-export const addGlobalRules = (
-  engine: CssEngine,
-  { assets = [] }: { assets?: Array<Asset> }
-) => {
-  // @todo we need to figure out all global resets while keeping
-  // the engine aware of all of them.
-  // Ideally, the user is somehow aware and in control of the reset
-  engine.addPlaintextRule("html {margin: 0; height: 100%}");
-
-  const fontAssets = assets.filter((asset) =>
-    FONT_FORMATS.has(asset.format as FontFormat)
-  ) as Array<FontAsset>;
-  const fontFaces = getFontFaces(fontAssets);
-  for (const fontFace of fontFaces) {
-    engine.addFontFaceRule(fontFace);
-  }
 };
 
 const globalStylesCssEngine = createCssEngine();
