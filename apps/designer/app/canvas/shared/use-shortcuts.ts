@@ -18,8 +18,6 @@ declare module "~/shared/pubsub" {
     selectInstance?: SelectedInstanceData;
     togglePreviewMode: undefined;
     zoom: "zoomOut" | "zoomIn";
-    copy: undefined;
-    paste: undefined;
   }
 }
 
@@ -67,14 +65,6 @@ const publishCancelCurrentDrag = () => {
   publish({ type: "cancelCurrentDrag" });
 };
 
-const publishCopy = () => {
-  publish({ type: "copy" });
-};
-
-const publishPaste = () => {
-  publish({ type: "paste" });
-};
-
 export const useShortcuts = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
@@ -94,8 +84,6 @@ export const useShortcuts = () => {
     redo: store.redo.bind(store),
     delete: publishDeleteInstance,
     preview: togglePreviewMode,
-    copy: publishCopy,
-    paste: publishPaste,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
     zoom: publishZoom,
@@ -146,19 +134,6 @@ export const useShortcuts = () => {
   useHotkeys(shortcuts.redo, shortcutHandlerMap.redo, options, []);
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
-
-  useHotkeys(
-    shortcuts.copy,
-    shortcutHandlerMap.copy,
-    { ...options, enableOnTags: [...inputTags] },
-    []
-  );
-  useHotkeys(
-    shortcuts.paste,
-    shortcutHandlerMap.paste,
-    { ...options, enableOnTags: [...inputTags] },
-    []
-  );
 
   useHotkeys(shortcuts.breakpoint, shortcutHandlerMap.breakpoint, options, []);
   useHotkeys(shortcuts.zoom, shortcutHandlerMap.zoom, options, []);
