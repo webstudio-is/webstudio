@@ -32,14 +32,32 @@ const meta = {
   Image,
 } as const;
 
-type MetaProps = Record<
-  string,
-  {
-    type: string;
-    required: boolean;
-    defaultValue: null | string;
-    options?: string[];
-  }
->;
+type MetaProp =
+  | {
+      type: "text";
+      required: boolean;
+      defaultValue: null | string;
+    }
+  | {
+      type: "boolean";
+      required: boolean;
+      defaultValue: null | boolean;
+    }
+  | {
+      type:
+        | "radio"
+        | "inline-radio"
+        | "check"
+        | "inline-check"
+        | "multi-select"
+        | "select";
+      required: boolean;
+      defaultValue: null | string;
+      options: string[];
+    };
 
-export const componentsMeta: Record<keyof typeof meta, MetaProps> = meta;
+type MetaProps = Record<string, MetaProp>;
+
+// Probably better instead of JSON to generate ts with `as const`
+export const componentsMeta: Record<keyof typeof meta, MetaProps> =
+  meta as Record<keyof typeof meta, MetaProps>;

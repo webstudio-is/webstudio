@@ -11,6 +11,7 @@ type UserProps = { [prop: UserProp["prop"]]: UserProp["value"] };
  */
 export const useUserProps = (instanceId: Instance["id"]) => {
   const [allUserProps] = useAllUserProps();
+
   const propsData = allUserProps[instanceId];
   const initialUserProps = useMemo(() => {
     if (propsData === undefined) return {};

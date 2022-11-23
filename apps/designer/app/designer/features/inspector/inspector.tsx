@@ -39,7 +39,14 @@ export const Inspector = ({ publish }: InspectorProps) => {
 
   return (
     // @todo: Nit: I wonder if this width was supposed to be defined by the parent container layout
-    <Tabs defaultValue="style" css={{ width: "100%" }}>
+    <Tabs
+      defaultValue="style"
+      css={{
+        width: "100%",
+        position:
+          "relative" /* Hack - value picker popover positioning depends on it */,
+      }}
+    >
       <TabsList>
         <TabsTrigger value="style">
           <Text>Style</Text>

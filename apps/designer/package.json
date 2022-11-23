@@ -66,6 +66,7 @@
     "remix-auth-google": "^1.1.0",
     "remix-utils": "^4.1.0",
     "slugify": "^1.6.5",
+    "warn-once": "^0.1.1",
     "zod-form-data": "^1.2.1"
   },
   "devDependencies": {

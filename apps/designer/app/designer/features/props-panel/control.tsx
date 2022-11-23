@@ -1,80 +1,102 @@
-import { UserProp } from "@webstudio-is/react-sdk";
-import type { ComponentProps } from "react";
+import {
+  componentsMeta,
+  type Instance,
+  type UserProp,
+} from "@webstudio-is/react-sdk";
+import warnOnce from "warn-once";
 import {
   Flex,
   Label,
   Radio,
   RadioGroup,
   Select,
-  Slider,
   Switch,
-  Text,
   TextField,
 } from "@webstudio-is/design-system";
-import { Checkbox } from "@webstudio-is/design-system";
+import { isFeatureEnabled } from "~/shared/feature-flags";
+import { ValuePickerPopover } from "../style-panel/shared/value-picker-popover";
+import { ImageManager } from "~/designer/shared/image-manager";
 
-type BaseControlProps<T = UserProp["value"]> = {
-  value?: T;
-  defaultValue?: T;
-  onChange: (value: T) => void;
-  required?: boolean;
+import { Checkbox } from "@webstudio-is/design-system";
+import { Asset } from "@webstudio-is/asset-uploader";
+
+const textControlTypes = [
+  "text",
+  "array",
+  "color",
+  "date",
+  "file",
+  "number",
+  "object",
+] as const;
+
+type TextControlProps = {
+  type: typeof textControlTypes[number];
+  value: string;
+  onChange: (value: string) => void;
 };
-type TextControlProps = BaseControlProps & {
-  type?: ComponentProps<typeof TextField>["type"];
-  defaultValue?: UserProp["value"];
-};
-const TextControl = ({
-  value,
-  defaultValue,
-  type,
-  onChange,
-}: TextControlProps) => (
+
+const TextControl = ({ value, type, onChange }: TextControlProps) => (
   <TextField
     type={type}
     placeholder="Value"
     name="value"
-    value={String(value || defaultValue || "")}
+    value={value}
     onChange={(event) => {
       onChange(event.target.value);
     }}
   />
 );
-type CheckboxControlProps = BaseControlProps & {
+
+const checkboxControlTypes = ["check", "inline-check", "multi-select"] as const;
+
+type CheckboxControlProps = {
+  value: string;
+  onChange: (value: string) => void;
   options: Array<string>;
+  type: typeof checkboxControlTypes[number];
 };
+
 const CheckboxControl = ({
   value,
   options,
-  defaultValue,
   onChange,
 }: CheckboxControlProps) => (
   <RadioGroup
     css={{ flexDirection: "column" }}
     name="value"
-    value={String(value || defaultValue || "")}
+    value={value}
     onValueChange={onChange}
   >
-    {options.map((value) => (
-      <Flex align="center" gap="1" key={value}>
-        <Checkbox value={value} />
-        <Label>{value}</Label>
+    {options.map((option) => (
+      <Flex align="center" gap="1" key={option}>
+        <Checkbox value={option} />
+        <Label>{option}</Label>
       </Flex>
     ))}
   </RadioGroup>
 );
-type RadioControlProps = BaseControlProps & {
+
+const radioControlTypes = ["radio", "inline-radio"] as const;
+
+type RadioControlProps = {
+  value: string;
+  onChange: (value: string) => void;
+
   options: Array<string>;
+  type: typeof radioControlTypes[number];
 };
+
 const RadioControl = ({
   value,
   options,
-  defaultValue,
+
   onChange,
 }: RadioControlProps) => (
   <RadioGroup
     css={{ flexDirection: "column" }}
     name="value"
-    value={String(value || defaultValue || "")}
+    value={value}
     onValueChange={onChange}
   >
     {options.map((value) => (
@@ -86,29 +108,35 @@ const RadioControl = ({
   </RadioGroup>
 );
 
-type SelectControlProps = BaseControlProps & {
+const selectControlTypes = ["select"] as const;
+type SelectControlProps = {
+  value: string;
+  onChange: (value: string) => void;
+
   options: Array<string>;
+  type: typeof selectControlTypes[number];
 };
 
 const SelectControl = ({
   value,
   options,
-  defaultValue,
+
   onChange,
 }: SelectControlProps) => (
-  <Select
-    name="value"
-    value={String(value || defaultValue || "")}
-    options={options}
-    onChange={onChange}
-  />
+  <Select name="value" value={value} options={options} onChange={onChange} />
 );
+
+type BooleanControlProps = {
+  defaultValue?: boolean;
+  value: boolean;
+  onChange: (value: boolean) => void;
+};
 
 const BooleanControl = ({
   value,
   defaultValue,
   onChange,
-}: BaseControlProps) => (
+}: BooleanControlProps) => (
   <Switch
     name="value"
     defaultChecked={Boolean(defaultValue)}
@@ -117,107 +145,161 @@ const BooleanControl = ({
   />
 );
 
-const RangeControl = ({
-  value,
-  defaultValue,
-  onChange,
-  min,
-  max,
-  step,
-}: RangeControlProps) => (
-  <Flex direction="column" gap={1}>
-    <Slider
-      value={value}
-      defaultValue={defaultValue}
-      onValueChange={(values) => {
-        onChange(values[0]);
-      }}
-      min={min}
-      max={max}
-      step={step}
-    />
-    <Flex direction="row" justify="between">
-      <Text>{min}</Text>
-      <Text>{max}</Text>
-    </Flex>
-  </Flex>
-);
-
-type PrimitiveControlProps = BaseControlProps & {
-  type: "array" | "boolean" | "date" | "number" | "object" | "text";
+type ImageControlProps = {
+  asset: Asset | null;
+  onChange: (asset: Asset) => void;
 };
 
-type ColorControlProps = BaseControlProps & {
-  type: "color";
-  presetColors?: Array<string>;
+const ImageControl = ({ asset, onChange }: ImageControlProps) => {
+  return (
+    <ValuePickerPopover
+      title="Images"
+      content={<ImageManager onChange={onChange} />}
+    >
+      <TextField defaultValue={asset?.name ?? " - "} />
+    </ValuePickerPopover>
+  );
 };
 
-type FileControlProps = BaseControlProps & {
-  type: "file";
-  accept: string;
+const NotImplemented = () => <div />;
+
+const includes = <T extends string>(arr: readonly T[], v: string): v is T => {
+  return arr.includes(v as never);
 };
 
-type RangeControlProps = BaseControlProps<number> & {
-  type: "range";
-  min: number;
-  max: number;
-  step: number;
+const assertUnreachable = (_arg: never, errorMessage: string) => {
+  throw new Error(errorMessage);
 };
 
-type OptionsControlProps = BaseControlProps & {
-  type:
-    | "radio"
-    | "inline-radio"
-    | "check"
-    | "inline-check"
-    | "select"
-    | "multi-select";
-  options: Array<string>;
+type ControlProps = {
+  component: Instance["component"];
+  userProp: UserProp;
+  onChangePropValue: (value: string | boolean, asset?: Asset) => void;
 };
-
-export type ControlProps =
-  | PrimitiveControlProps
-  | OptionsControlProps
-  | FileControlProps
-  | ColorControlProps
-  | RangeControlProps;
 
 // eslint-disable-next-line func-style
-export function Control(props: ControlProps) {
-  switch (props.type) {
-    case "array":
-      return <TextControl {...props} />;
-    case "boolean":
-      return <BooleanControl {...props} />;
-    case "color":
-      return <TextControl {...props} type="color" />;
-    case "date":
-      return <TextControl {...props} type="date" />;
-    case "file":
-      return <TextControl {...props} type="file" />;
-    case "number":
-      return <TextControl {...props} type="number" />;
-    case "range":
-      return <RangeControl {...props} />;
-    case "object":
-      return <TextControl {...props} />;
-    case "radio":
-      return <RadioControl {...props} />;
-    case "inline-radio":
-      return <RadioControl {...props} />;
-    case "check":
-      return <CheckboxControl {...props} />;
-    case "inline-check":
-      return <CheckboxControl {...props} />;
-    case "select":
-      return <SelectControl {...props} />;
-    case "multi-select":
-      return <CheckboxControl {...props} />;
-    case "text":
-      return <TextControl {...props} />;
-    default: {
-      const _exhaustivecheck: never = props;
-      return _exhaustivecheck;
+export function Control({
+  component,
+  userProp,
+  onChangePropValue,
+}: ControlProps) {
+  const meta = componentsMeta[component];
+  const argType = meta[userProp.prop as keyof typeof meta];
+
+  const defaultValue = argType.defaultValue;
+  const type = argType.type;
+
+  if (type == null) {
+    warnOnce(
+      true,
+      `No control type for prop "${userProp.prop}" component "${component}" found`
+    );
+    return <NotImplemented />;
+  }
+
+  if (typeof type !== "string") {
+    warnOnce(
+      true,
+      `Control type "${typeof type}" for prop "${
+        userProp.prop
+      }" component "${component}" is not a string`
+    );
+
+    return <NotImplemented />;
+  }
+
+  if (isFeatureEnabled("assets")) {
+    if (component === "Image" && userProp.prop === "src") {
+      const asset = userProp.asset ?? null;
+
+      return (
+        <ImageControl
+          asset={asset}
+          onChange={(asset) => onChangePropValue(asset.path, asset)}
+        />
+      );
     }
   }
+
+  if (includes(textControlTypes, type)) {
+    const value = `${userProp.value}`;
+
+    return (
+      <TextControl value={value} onChange={onChangePropValue} type={type} />
+    );
+  }
+
+  if (type === "boolean") {
+    const value = Boolean(userProp.value);
+
+    return (
+      <BooleanControl
+        value={value}
+        onChange={onChangePropValue}
+        defaultValue={Boolean(defaultValue)}
+      />
+    );
+  }
+
+  if (
+    argType.type === "radio" ||
+    argType.type === "inline-radio" ||
+    argType.type === "check" ||
+    argType.type === "inline-check" ||
+    argType.type === "multi-select" ||
+    argType.type === "select"
+  ) {
+    const options = argType.options;
+
+    const value = `${userProp.value}`;
+
+    warnOnce(
+      options == null,
+      `options is not an array of strings for prop: ${userProp.prop} component: ${component}`
+    );
+
+    const DEFAULT_OPTIONS: string[] = [];
+
+    if (includes(radioControlTypes, type)) {
+      return (
+        <RadioControl
+          value={value}
+          onChange={onChangePropValue}
+          options={options ?? DEFAULT_OPTIONS}
+          type={type}
+        />
+      );
+    }
+
+    if (includes(checkboxControlTypes, type)) {
+      return (
+        <CheckboxControl
+          value={value}
+          onChange={onChangePropValue}
+          options={options ?? DEFAULT_OPTIONS}
+          type={type}
+        />
+      );
+    }
+
+    if (includes(selectControlTypes, type)) {
+      return (
+        <SelectControl
+          value={value}
+          onChange={onChangePropValue}
+          options={options ?? DEFAULT_OPTIONS}
+          type={type}
+        />
+      );
+    }
+
+    assertUnreachable(type, `Unknown control type ${type}`);
+  }
+
+  warnOnce(
+    true,
+    `Control type "${type}" is not implemented for prop: "${userProp.prop}" in component "${component}"`
+  );
+
+  return <NotImplemented />;
 }

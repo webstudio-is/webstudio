@@ -1,31 +1,20 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { getImageAttributes, type ImageLoader } from "../component-utils/image";
 
 const defaultTag = "img";
 
-type ImageProps = ComponentProps<typeof defaultTag> & {
-  quality?: number;
-  loader?: ImageLoader;
-  optimize?: boolean;
-};
+// quality and optimize can be overwritten and used by asset transform
+// Or we need and additional way to pass them upper level
+type ImageProps = ComponentProps<typeof defaultTag>;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
-  ({ quality, loader, optimize, ...imageProps }, ref) => {
-    // Temporary set to false, to support previous image behaviour
-    const DEFAULT_OPTIMIZE = false;
-
-    const imageAttributes = getImageAttributes({
-      src: imageProps.src,
-      srcSet: imageProps.srcSet,
-      sizes: imageProps.sizes,
-      width: imageProps.width,
-      quality,
-      loader,
-      optimize: optimize ?? DEFAULT_OPTIMIZE,
-    }) ?? { src: imagePlaceholderSvg };
-
+  (imageProps, ref) => {
     return (
-      <img {...imageProps} {...imageAttributes} decoding="async" ref={ref} />
+      <img
+        {...imageProps}
+        src={imageProps.src || imagePlaceholderSvg}
+        decoding="async"
+        ref={ref}
+      />
     );
   }
 );
