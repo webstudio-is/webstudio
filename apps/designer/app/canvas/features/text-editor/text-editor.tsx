@@ -67,7 +67,7 @@ export const TextEditor = ({
     return () => {
       engine.unmount();
     };
-  }, []);
+  }, [italicClassName]);
 
   // store references separately because lexical nodes
   // cannot store custom data
