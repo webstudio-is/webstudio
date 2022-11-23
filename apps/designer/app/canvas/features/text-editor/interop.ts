@@ -14,8 +14,8 @@ import { $createLinkNode, $isLinkNode } from "@lexical/link";
 import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
-// Map<nodeKey, Instance>
-export type Refs = Map<string, Instance>;
+// Map<nodeKey, instanceId>
+export type Refs = Map<string, string>;
 
 const lexicalFormats = [
   ["bold", "Bold"],
@@ -44,7 +44,7 @@ const $writeUpdates = (
       }
     }
     if ($isLinkNode(child)) {
-      const id = refs.get(child.getKey())?.id;
+      const id = refs.get(child.getKey());
       const childrenUpdates: ChildrenUpdates = [];
       $writeUpdates(child, childrenUpdates, refs);
       updates.push({ id, component: "Link", children: childrenUpdates });
@@ -56,7 +56,7 @@ const $writeUpdates = (
       const text = child.getTextContent();
       let parentUpdates = updates;
       if ($isSpanNode(child)) {
-        const id = refs.get(`${child.getKey()}:span`)?.id;
+        const id = refs.get(`${child.getKey()}:span`);
         const update: ChildrenUpdates[number] = {
           id,
           component: "Span",
@@ -68,7 +68,7 @@ const $writeUpdates = (
       // convert all lexical formats
       for (const [format, component] of lexicalFormats) {
         if (child.hasFormat(format)) {
-          const id = refs.get(`${child.getKey()}:${format}`)?.id;
+          const id = refs.get(`${child.getKey()}:${format}`);
           const update: ChildrenUpdates[number] = {
             id,
             component,
@@ -117,7 +117,7 @@ const $writeLexical = (
     // convert instances
     if (child.component === "Link" && $isElementNode(parent)) {
       const linkNode = $createLinkNode("");
-      refs.set(linkNode.getKey(), child);
+      refs.set(linkNode.getKey(), child.id);
       parent.append(linkNode);
       $writeLexical(linkNode, child.children, refs);
     }
@@ -130,7 +130,7 @@ const $writeLexical = (
         parent.append(textNode);
       }
       $setNodeSpan(textNode);
-      refs.set(`${textNode.getKey()}:span`, child);
+      refs.set(`${textNode.getKey()}:span`, child.id);
       $writeLexical(textNode, child.children, refs);
     }
     // convert all lexical formats
@@ -144,7 +144,7 @@ const $writeLexical = (
           parent.append(textNode);
         }
         textNode.toggleFormat(format);
-        refs.set(`${textNode.getKey()}:${format}`, child);
+        refs.set(`${textNode.getKey()}:${format}`, child.id);
         $writeLexical(textNode, child.children, refs);
       }
     }
