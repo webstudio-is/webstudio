@@ -49,7 +49,7 @@ describe("getProjectDetails", () => {
       throw response;
     }
     if (typeof response === "string") {
-      return expect(response.toString()).toBe(
+      return expect(response).toBe(
         `Project ${notPublishedProjectId} not found or not published yet. Please contact us to get help.`
       );
     }
