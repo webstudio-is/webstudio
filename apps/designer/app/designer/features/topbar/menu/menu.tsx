@@ -168,7 +168,7 @@ export const Menu = ({ publish }: MenuProps) => {
             <ShortcutHint value={["shift", "cmd", "z"]} />
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
+          {/* <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
               publish({
@@ -191,7 +191,7 @@ export const Menu = ({ publish }: MenuProps) => {
           >
             Paste
             <ShortcutHint value={["cmd", "v"]} />
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
