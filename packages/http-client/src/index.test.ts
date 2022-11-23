@@ -12,9 +12,6 @@ describe("getProjectDetails", () => {
       apiUrl,
       projectId: morePagesProjectId,
     });
-    if (response instanceof Error) {
-      throw response;
-    }
     if (typeof response === "object") {
       return expect(response.length > 1).toBeTruthy();
     }
@@ -25,9 +22,6 @@ describe("getProjectDetails", () => {
       apiUrl,
       projectId: onlyHomeProjectId,
     });
-    if (response instanceof Error) {
-      throw response;
-    }
     if (typeof response === "object") {
       return expect(response.length === 1).toBeTruthy();
     }
