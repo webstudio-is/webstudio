@@ -4,9 +4,10 @@
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
+  "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
@@ -29,7 +30,10 @@
     "typescript": "4.7.4",
     "zod": "^3.17.3"
   },
-  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./server": "./server.js"
+  },
   "types": "lib/index.d.ts",
   "files": [
     "lib/*",
@@ -44,7 +48,7 @@
       "src/index.ts",
       "src/index.server.ts"
     ],
-    "format": "cjs",
+    "format": "esm",
     "outDir": "lib"
   }
 }

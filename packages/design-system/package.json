@@ -4,12 +4,13 @@
   "description": "Webstudio Design System",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
+  "type": "module",
   "scripts": {
     "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook"
@@ -68,7 +69,7 @@
     "@webstudio-is/icons": "*",
     "react-hot-toast": "^2.3.0"
   },
-  "main": "lib/index.js",
+  "exports": "./lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*",
@@ -82,7 +83,7 @@
     "entry": [
       "src/index.ts"
     ],
-    "format": "cjs",
+    "format": "esm",
     "outDir": "lib"
   }
 }

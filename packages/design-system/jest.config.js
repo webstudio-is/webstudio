@@ -1,1 +1,1 @@
-module.exports = require("@webstudio-is/jest-config");
+export { default } from "@webstudio-is/jest-config";

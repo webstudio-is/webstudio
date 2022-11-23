@@ -4,9 +4,11 @@
   "description": "Webstudio Icons",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
+  "type": "module",
   "scripts": {
     "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
     "generate": "rm -fr src/gen && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
@@ -37,7 +39,11 @@
     "@radix-ui/react-icons": "^1.1.0",
     "@webstudio-is/css-vars": "*"
   },
-  "main": "lib/index.js",
+  "module": "./lib/index.js",
+  "exports": {
+    "import": "./lib/index.js",
+    "require": "./lib/cjs/index.cjs"
+  },
   "types": "lib/index.d.ts",
   "files": [
     "lib/*",
@@ -51,7 +57,7 @@
     "entry": [
       "src/index.ts"
     ],
-    "format": "cjs",
+    "format": "esm",
     "outDir": "lib"
   }
 }

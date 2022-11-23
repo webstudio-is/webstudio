@@ -22,6 +22,11 @@ module.exports = {
   framework: "@storybook/react",
   webpackFinal: async (config) => {
     config.resolve.alias["~"] = path.resolve(__dirname, "../app");
+    // fix packages modules withoot extensions
+    for (const rule of config.module.rules) {
+      rule.resolve = rule.resolve || {};
+      rule.resolve.fullySpecified = false;
+    }
     return config;
   },
   features: {

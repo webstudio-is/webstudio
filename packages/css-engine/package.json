@@ -4,12 +4,13 @@
   "description": "CSS Renderer for Webstudio",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
+  "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook"
@@ -37,7 +38,7 @@
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9"
   },
-  "main": "lib/index.js",
+  "exports": "./lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
     "lib/*",
@@ -51,7 +52,7 @@
     "entry": [
       "src/index.ts"
     ],
-    "format": "cjs",
+    "format": "esm",
     "outDir": "lib"
   }
 }

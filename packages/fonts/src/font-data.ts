@@ -1,5 +1,5 @@
 import type { FontFormat } from "./types";
-import fontkit from "fontkit";
+import { create as createFontKit } from "fontkit";
 import { FontWeight, fontWeights } from "./font-weights";
 
 // @todo sumbit this to definitely typed, they are not up to date
@@ -59,7 +59,7 @@ type FontData = {
 };
 
 export const getFontData = (data: Uint8Array): FontData => {
-  const font = fontkit.create(data as Buffer);
+  const font = createFontKit(data as Buffer);
   const format = font.type.toLowerCase() as FontData["format"];
   const originalFamily = font.getName("fontFamily");
   const subfamily =
