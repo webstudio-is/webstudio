@@ -10,7 +10,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
@@ -29,7 +30,10 @@
   },
   "module": "./lib/index.js",
   "exports": {
-    ".": "./lib/index.js",
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    },
     "./server": "./server.js"
   },
   "types": "lib/index.d.ts",
