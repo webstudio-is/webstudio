@@ -7,7 +7,7 @@ export const loadProject = async ({
 }: {
   apiUrl: string;
   projectId: string;
-}): Promise<CanvasData | string> => {
+}): Promise<Array<CanvasData> | string> => {
   try {
     if (apiUrl === undefined) {
       throw new Error("Webstudio API URL is required.");

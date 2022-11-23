@@ -6,7 +6,7 @@
   "homepage": "https://webstudio.is",
   "scripts": {
     "dev": "tsup --watch",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
