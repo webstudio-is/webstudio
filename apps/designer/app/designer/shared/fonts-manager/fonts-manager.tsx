@@ -10,7 +10,7 @@ import {
   useAssets,
   useSearch,
 } from "~/designer/shared/assets";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMenu } from "./item-menu";
 import { CheckIcon } from "@webstudio-is/icons";
 import {
@@ -42,9 +42,11 @@ const useLogic = ({
     () => groupItemsByType(filteredItems),
     [filteredItems]
   );
-  const [currentIndex, setCurrentIndex] = useState(() =>
-    groupedItems.findIndex((item) => item.label === value)
-  );
+  const [currentIndex, setCurrentIndex] = useState(-1);
+
+  useEffect(() => {
+    setCurrentIndex(groupedItems.findIndex((item) => item.label === value));
+  }, [groupedItems]);
 
   const handleChangeCurrent = (nextCurrentIndex: number) => {
     const item = groupedItems[nextCurrentIndex];
