@@ -4,6 +4,7 @@ import {
   Build as DbBuild,
 } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Data } from "@webstudio-is/react-sdk";
 
 export type Project = Omit<BaseProject, "assets"> & {
   assets?: Array<Asset>;
@@ -76,3 +77,5 @@ export const Pages: z.ZodType<{ homePage: Page; pages: Array<Page> }> =
 export type Pages = z.infer<typeof Pages>;
 
 export type Build = Omit<DbBuild, "pages"> & { pages: Pages };
+
+export type CanvasData = Data & { buildId: Build["id"]; page: Page };

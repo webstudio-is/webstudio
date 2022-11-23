@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
-import type { Build } from "@webstudio-is/project";
+import type { Build, CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
   useAllUserProps,
@@ -41,7 +41,6 @@ import { registerContainers } from "./shared/immerhin";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
-import { CanvasData } from "~/shared/db";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
 
