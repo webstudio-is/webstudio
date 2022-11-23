@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/project",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Webstudio Project",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -15,6 +15,8 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
+    "@webstudio-is/fonts": "*",
+    "@webstudio-is/css-engine": "*",
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/css-data": "*",
     "@webstudio-is/prisma-client": "*",

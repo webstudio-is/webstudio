@@ -1,40 +1,52 @@
 import { loadProject } from "./index";
-
-const existingProjectId = "398d3918-9b00-4a43-8ab6-de4e151ae98a";
+const existingProjectId = "675e8af3-48fa-4b18-9ebf-fd2b128865e2";
 const notPublishedProjectId = "7ec397c6-b3d0-4967-9073-9d83623fcf8e";
+const onlyHomeProjectId = "36d6c16f-04a0-45d4-ab1d-aa0ab61eb5b6";
+const morePagesProjectId = existingProjectId;
+
 const apiUrl = "http://localhost:3000";
 
 describe("getProjectDetails", () => {
   test("include pages", async () => {
     const response = await loadProject({
       apiUrl,
-      projectId: existingProjectId,
-      include: { tree: true, props: true, breakpoints: true, pages: true },
+      projectId: morePagesProjectId,
     });
-    expect(response.pages).toBeTruthy();
+    if (response instanceof Error) {
+      throw response;
+    }
+    if (typeof response === "object") {
+      return expect(Object.keys(response.pages).length > 1).toBeTruthy();
+    }
+    throw new Error("Unexpected response");
   });
   test("does not include pages", async () => {
     const response = await loadProject({
       apiUrl,
-      projectId: notPublishedProjectId,
-      include: { tree: true, props: true, breakpoints: true, pages: true },
+      projectId: onlyHomeProjectId,
     });
-    expect(response.pages).toBeNull();
+    if (response instanceof Error) {
+      throw response;
+    }
+    if (typeof response === "object") {
+      return expect(Object.keys(response.pages).length === 1).toBeTruthy();
+    }
+    throw new Error("Unexpected response");
   });
   test("loads existing project", async () => {
     const response = await loadProject({
       apiUrl,
       projectId: existingProjectId,
     });
-    expect(response.tree.id).toBeTruthy();
+    expect(response).toBeTruthy();
   });
   test("loads not published project", async () => {
     const response = await loadProject({
       apiUrl,
       projectId: notPublishedProjectId,
     });
-    expect(response.tree.errors).toBe(
-      `Project ${notPublishedProjectId} needs to be published first`
+    expect(response.toString()).toBe(
+      `Project ${notPublishedProjectId} not found or not published yet. Please contact us to get help.`
     );
   });
 });

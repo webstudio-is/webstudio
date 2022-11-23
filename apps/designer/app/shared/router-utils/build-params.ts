@@ -2,6 +2,26 @@
 // "Build" means user generated content — what user builds.
 
 export type BuildMode = "edit" | "preview" | "published";
+export type BuildParams =
+  | {
+      projectId: string;
+      mode: BuildMode;
+      pathname: string;
+      pageId?: string;
+    }
+  | {
+      projectDomain: string;
+      mode: BuildMode;
+      pathname: string;
+      pageId?: string;
+    };
+
+// A subtype of Request. To make testing easier.
+type MinimalRequest = {
+  url: string;
+  headers: { get: (name: string) => string | null };
+};
+
 const modes = ["edit", "preview", "published"] as BuildMode[];
 const getMode = (url: URL): BuildMode => {
   const modeParam = url.searchParams.get("mode");
@@ -11,12 +31,6 @@ const getMode = (url: URL): BuildMode => {
     throw new Error(`Invalid mode "${modeParam}"`);
   }
   return mode;
-};
-
-// A subtype of Request. To make testing easier.
-type MinimalRequest = {
-  url: string;
-  headers: { get: (name: string) => string | null };
 };
 
 const getRequestHost = (request: MinimalRequest): string =>

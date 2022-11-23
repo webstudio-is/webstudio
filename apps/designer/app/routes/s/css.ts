@@ -1,51 +1,19 @@
 import { ActionFunction, json } from "@remix-run/node";
-import { db } from "@webstudio-is/project/server";
-import { utils } from "@webstudio-is/project";
-import { loadCanvasData } from "~/shared/db";
-import { getBuildParams } from "~/shared/router-utils";
+
+import { BuildParams, getBuildParams } from "~/shared/router-utils";
 import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
-import { createCssEngine } from "@webstudio-is/css-engine";
-import { idAttribute } from "@webstudio-is/react-sdk";
-import { addGlobalRules } from "~/canvas/shared/styles";
+import { generateCssText } from "~/shared/css-utils";
 
 export const loader: ActionFunction = async ({ request }) => {
   try {
-    const buildParams = getBuildParams(request);
+    const buildParams: BuildParams | undefined = getBuildParams(request);
 
     if (buildParams === undefined) {
       throw json("Required project info", { status: 404 });
     }
 
-    const project = await db.project.loadByParams(buildParams);
-
-    if (project === null) {
-      throw json("Project not found", { status: 404 });
-    }
-
-    const canvasData = await loadCanvasData(
-      project,
-      buildParams.mode === "published" ? "prod" : "dev",
-      buildParams.pageId
-    );
-
-    if (canvasData === undefined) {
-      throw json("Page not found", { status: 404 });
-    }
-
-    const engine = createCssEngine();
-
-    addGlobalRules(engine, canvasData);
-
-    for (const breakpoint of canvasData.breakpoints) {
-      engine.addMediaRule(breakpoint.id, breakpoint);
-    }
-
-    const cssRules = utils.tree.getCssRules(canvasData.tree?.root);
-    for (const [instanceId, cssRule] of cssRules) {
-      engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, cssRule);
-    }
-    const { cssText } = engine;
+    const cssText = await generateCssText(buildParams);
 
     return new Response(cssText, {
       headers: {
