@@ -148,7 +148,7 @@ const createEventsHandler = () => {
 };
 
 // Everything is extrcated from hook,
-// to make it easier to remove React from canvast if we need to
+// to make it easier to remove React from canvas if we need to
 export const useInstanceCopyPaste = (props: Props): void => {
   const eventsHandler = useMemo(() => createEventsHandler(), []);
 
