@@ -5,9 +5,12 @@
 import { execaSync } from "execa";
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { prisma } from "../src";
 import { UserError } from "./errors";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const prismaDir = path.resolve(__dirname, "..", "prisma");
 export const schemaFilePath = path.join(prismaDir, "schema.prisma");
