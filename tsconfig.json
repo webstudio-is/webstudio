@@ -9,9 +9,17 @@
     { "path": "packages/css-vars" },
     { "path": "packages/design-system" },
     { "path": "packages/fonts" },
+    { "path": "packages/generate-arg-types" },
     { "path": "packages/http-client" },
     { "path": "packages/icons" },
-    { "path": "packages/prisma-client" },
+
+    {
+      "path": "packages/image"
+    },
+
+    {
+      "path": "packages/prisma-client"
+    },
 
     {
       "path": "packages/project"
