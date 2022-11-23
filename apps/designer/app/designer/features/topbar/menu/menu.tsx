@@ -168,13 +168,12 @@ export const Menu = ({ publish }: MenuProps) => {
             <ShortcutHint value={["shift", "cmd", "z"]} />
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {/* <DropdownMenuItem
+          {/* https://github.com/webstudio-is/webstudio-designer/issues/499
+          
+          <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
-              publish({
-                type: "shortcut",
-                payload: { name: "copy" },
-              });
+              // TODO
             }}
           >
             Copy
@@ -183,15 +182,14 @@ export const Menu = ({ publish }: MenuProps) => {
           <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
-              publish({
-                type: "shortcut",
-                payload: { name: "paste" },
-              });
+              // TODO
             }}
           >
             Paste
             <ShortcutHint value={["cmd", "v"]} />
-          </DropdownMenuItem> */}
+          </DropdownMenuItem> 
+          
+          */}
           <DropdownMenuItem
             css={menuItemCss}
             onSelect={() => {
