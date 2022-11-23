@@ -4,6 +4,9 @@ import { units } from "@webstudio-is/css-data";
 
 const unitRegex = new RegExp(`${[...units, "number"].join("|")}`);
 
+export const isNumericString = (input: string) =>
+  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
+
 export const isValid = (property: string, value: string): boolean => {
   // Only browsers with houdini api will provide validation for now
   // @todo add a polyfill maybe

@@ -65,7 +65,8 @@ export const useUnitSelect = ({
   if (
     value === undefined ||
     renderUnits == undefined ||
-    renderValue === undefined
+    renderValue === undefined ||
+    renderUnits.length < 2
   ) {
     return [isOpen, null];
   }

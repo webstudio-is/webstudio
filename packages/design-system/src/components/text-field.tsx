@@ -36,6 +36,7 @@ const textFieldIconBaseStyle = css({
 export const TextFieldIconButton = styled(
   "button",
   {
+    background: "none",
     border: "none",
     boxSizing: "border-box",
     fontFamily: "inherit",

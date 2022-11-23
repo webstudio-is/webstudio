@@ -29,11 +29,9 @@ import {
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
+import { isValid, isNumericString } from "../parse-css-value";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
-
-const isNumericString = (input: string) =>
-  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -46,6 +44,7 @@ const calcNumberChange = (
 };
 
 const useHandleOnChange = (
+  property: StyleProperty,
   value: StyleValue,
   input: string,
   onChange: (value: StyleValue) => void
@@ -63,8 +62,13 @@ const useHandleOnChange = (
       if (value.type === "unit" && String(Number(input)) !== input) return;
       onChange?.({
         type: "unit",
-        // Use previously known unit or fallback to px.
-        unit: valueRef.current.type === "unit" ? valueRef.current.unit : "px",
+        // Use previously known unit or fallback to the most common unit: px, if supported
+        unit:
+          valueRef.current.type === "unit"
+            ? valueRef.current.unit
+            : isValid(property, input + "px")
+            ? "px"
+            : "number",
         value: Number(input),
       });
       return;
@@ -74,7 +78,7 @@ const useHandleOnChange = (
       type: "keyword",
       value: input,
     });
-  }, [input, value.type, onChange]);
+  }, [property, input, value.type, onChange]);
 
   useEffect(() => {
     valueRef.current = value;
@@ -113,24 +117,24 @@ const useScrub = ({
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
+    const inputRefCurrent = inputRef.current;
+    const scrubRefCurrent = scrubRef.current;
     if (
       type !== "unit" ||
       unit === undefined ||
-      inputRef.current === null ||
-      scrubRef.current === null
+      inputRefCurrent === null ||
+      scrubRefCurrent === null
     ) {
       return;
     }
-    const scrub = numericScrubControl(scrubRef.current, {
-      initialValue: valueRef.current.value,
+
+    const value = valueRef.current.value;
+    const scrub = numericScrubControl(scrubRefCurrent, {
+      initialValue: value,
       onValueInput(event) {
-        onChangeRef.current({
-          type,
-          unit,
-          value: event.value,
-        });
+        inputRefCurrent.value = String(event.value);
         setIsInputActive(true);
-        inputRef.current?.blur();
+        inputRefCurrent.blur();
       },
       onValueChange(event) {
         onChangeCompleteRef.current({
@@ -139,8 +143,8 @@ const useScrub = ({
           value: event.value,
         });
         setIsInputActive(false);
-        inputRef.current?.focus();
-        inputRef.current?.select();
+        inputRefCurrent.focus();
+        inputRefCurrent.select();
       },
       shouldHandleEvent: shouldHandleEvent,
     });
@@ -254,7 +258,7 @@ export const CssValueInput = ({
 
   const inputProps = getInputProps();
 
-  useHandleOnChange(value, inputProps.value, onChange);
+  useHandleOnChange(property, value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     property,
@@ -303,19 +307,25 @@ export const CssValueInput = ({
     </CssValueInputIconButton>
   );
 
+  const keywordButtonElement = (
+    <TextFieldIconButton
+      {...getToggleButtonProps()}
+      state={isOpen ? "active" : undefined}
+    >
+      <ChevronDownIcon />
+    </TextFieldIconButton>
+  );
+  const hasItems = items.length !== 0;
+  const isUnitValue = value.type === "unit";
+  const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
   const suffix = (
     <Box ref={suffixRef}>
-      {value.type === "keyword" ? (
-        <TextFieldIconButton
-          {...getToggleButtonProps()}
-          state={isOpen ? "active" : undefined}
-        >
-          <ChevronDownIcon />
-        </TextFieldIconButton>
-      ) : value.type === "unit" ? (
-        unitSelectElement
-      ) : null}
+      {isUnitValue
+        ? unitSelectElement
+        : isKeywordValue
+        ? keywordButtonElement
+        : null}
     </Box>
   );
 
