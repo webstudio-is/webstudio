@@ -28,6 +28,10 @@
     },
 
     {
+      "path": "../generate-arg-types"
+    },
+
+    {
       "path": "../icons"
     },
 

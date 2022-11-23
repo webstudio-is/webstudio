@@ -1,9 +1,13 @@
+#!/usr/bin/env -S node --experimental-specifier-resolution=node
+/* eslint-disable no-console */
+
 import path from "path";
 import { z } from "zod";
 import { withCustomConfig } from "react-docgen-typescript";
 import fg from "fast-glob";
+
 import fs from "fs-extra";
-import { propsToArgTypes } from "../src/arg-types/utils";
+import { propsToArgTypes } from "./arg-types";
 
 const options = {
   shouldExtractLiteralValuesFromEnum: true,

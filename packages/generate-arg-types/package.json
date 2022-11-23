@@ -1,0 +1,36 @@
+{
+  "name": "@webstudio-is/generate-arg-types",
+  "version": "0.0.1",
+  "description": "Image optimization",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "checks": "yarn typecheck && yarn lint",
+    "build": "rm -rf .bin tsconfig.tsbuildinfo && tsc && chmod +x .bin/index.js",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+  },
+  "dependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "fast-glob": "^3.2.12",
+    "fs-extra": "^10.1.0",
+    "react-docgen-typescript": "^2.2.2",
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "typescript": "4.7.4",
+    "esbuild": "^0.14.25"
+  },
+  "files": [
+    ".bin/*",
+    "README.md",
+    "!*.test.*"
+  ],
+  "bin": {
+    "generate-arg-types": "./.bin/index.js"
+  },
+  "license": "MIT",
+  "private": false,
+  "sideEffects": false
+}
