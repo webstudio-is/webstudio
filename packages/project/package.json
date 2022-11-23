@@ -16,14 +16,15 @@
   },
   "dependencies": {
     "@webstudio-is/asset-uploader": "*",
+    "@webstudio-is/css-data": "*",
     "@webstudio-is/prisma-client": "*",
     "@webstudio-is/react-sdk": "*",
-    "@webstudio-is/css-data": "*",
     "bson-objectid": "^2.0.2",
     "immer": "^9.0.12",
     "nanoid": "^3.2.0",
     "slugify": "^1.6.5",
     "uuid": "^9.0.0",
+    "warn-once": "^0.1.1",
     "zod": "^3.19.1"
   },
   "devDependencies": {

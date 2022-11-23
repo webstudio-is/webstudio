@@ -1,3 +1,4 @@
+import warnOnce from "warn-once";
 import {
   type Tree,
   type AllUserProps,
@@ -53,17 +54,17 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
         continue;
       }
 
-      const asset = assetsMap.get(dbProp.assetId);
+      const { assetId, ...userProp } = dbProp;
+      const asset = assetsMap.get(assetId);
 
       if (asset) {
         userProps.push({
-          ...dbProp,
+          ...userProp,
           asset,
         });
       } else {
-        // Can be ok if asset was deleted having that no db constraint checks exists
-        // TODO: remove throw on something else
-        throw new Error(`Asset with assetId "${dbProp.assetId}" not found`);
+        userProps.push(userProp);
+        warnOnce(true, `Asset with assetId "${assetId}" not found`);
       }
     }
 
