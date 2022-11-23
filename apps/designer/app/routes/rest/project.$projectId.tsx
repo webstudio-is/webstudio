@@ -2,7 +2,8 @@ import { LoaderFunction, json } from "@remix-run/node";
 import env from "~/env.server";
 import { db } from "@webstudio-is/project/server";
 import { sentryException } from "~/shared/sentry";
-import { loadCanvasData, type CanvasData } from "~/shared/db";
+import { loadCanvasData } from "~/shared/db";
+import type { CanvasData } from "@webstudio-is/project";
 
 type PagesDetails = Array<CanvasData | undefined>;
 

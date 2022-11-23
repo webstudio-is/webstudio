@@ -1,9 +1,6 @@
-import { type Data } from "@webstudio-is/react-sdk";
-import type { Project, Build, Page } from "@webstudio-is/project";
+import type { CanvasData, Project } from "@webstudio-is/project";
 import { db } from "@webstudio-is/project/server";
 import { utils } from "@webstudio-is/project";
-
-export type CanvasData = Data & { buildId: Build["id"]; page: Page };
 
 export const loadCanvasData = async (
   project: Project,

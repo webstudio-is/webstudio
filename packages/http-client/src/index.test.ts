@@ -12,11 +12,8 @@ describe("getProjectDetails", () => {
       apiUrl,
       projectId: morePagesProjectId,
     });
-    if (response instanceof Error) {
-      throw response;
-    }
     if (typeof response === "object") {
-      return expect(Object.keys(response.pages).length > 1).toBeTruthy();
+      return expect(response.length > 1).toBeTruthy();
     }
     throw new Error("Unexpected response");
   });
@@ -25,11 +22,8 @@ describe("getProjectDetails", () => {
       apiUrl,
       projectId: onlyHomeProjectId,
     });
-    if (response instanceof Error) {
-      throw response;
-    }
     if (typeof response === "object") {
-      return expect(Object.keys(response.pages).length === 1).toBeTruthy();
+      return expect(response.length === 1).toBeTruthy();
     }
     throw new Error("Unexpected response");
   });
@@ -45,8 +39,14 @@ describe("getProjectDetails", () => {
       apiUrl,
       projectId: notPublishedProjectId,
     });
-    expect(response.toString()).toBe(
-      `Project ${notPublishedProjectId} not found or not published yet. Please contact us to get help.`
-    );
+    if (response instanceof Error) {
+      throw response;
+    }
+    if (typeof response === "string") {
+      return expect(response).toBe(
+        `Project ${notPublishedProjectId} not found or not published yet. Please contact us to get help.`
+      );
+    }
+    throw new Error("Unexpected response");
   });
 });

@@ -6,7 +6,7 @@ import {
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
-import { loadCanvasData, type CanvasData } from "~/shared/db";
+import { loadCanvasData } from "~/shared/db";
 import env, { type Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
@@ -18,6 +18,7 @@ import {
 } from "~/shared/router-utils";
 import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
+import type { CanvasData } from "@webstudio-is/project";
 
 type Data =
   | (CanvasData & { env: Env; mode: BuildMode })
