@@ -1,11 +1,16 @@
-import { type ChildrenUpdates } from "@webstudio-is/react-sdk";
-import { type Instance } from "@webstudio-is/react-sdk";
+import type { Breakpoint } from "@webstudio-is/css-data";
+import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
 import { createInstance, createInstanceId } from "./create-instance";
 import { findInstanceById } from "./find-instance";
+import { populateInstance } from "./populate";
 
 type InstanceChild = Instance | string;
 
-const hydrateTree = (parent: Instance, updates: ChildrenUpdates) => {
+const hydrateTree = (
+  parent: Instance,
+  updates: ChildrenUpdates,
+  breakpoint: Breakpoint["id"]
+) => {
   const children: InstanceChild[] = [];
   for (const update of updates) {
     // Set a string as a child
@@ -22,9 +27,10 @@ const hydrateTree = (parent: Instance, updates: ChildrenUpdates) => {
         component: update.component,
         children: [],
       });
+      populateInstance(child, breakpoint);
     }
     children.push(child);
-    hydrateTree(child, update.children);
+    hydrateTree(child, update.children, breakpoint);
   }
   parent.children = children;
 };
@@ -38,10 +44,11 @@ export const setInstanceChildrenMutable = (
   // Not a consistent format now, maybe better:
   // [{set: 'string'}, {set: instance}, {update: {id,text}}]
   updates: ChildrenUpdates,
-  rootInstance: Instance
+  rootInstance: Instance,
+  breakpoint: Breakpoint["id"] = ""
 ) => {
   const instance = findInstanceById(rootInstance, id);
   if (instance === undefined) return false;
-  hydrateTree(instance, updates);
+  hydrateTree(instance, updates, breakpoint);
   return true;
 };
