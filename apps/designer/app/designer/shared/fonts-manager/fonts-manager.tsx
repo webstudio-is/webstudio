@@ -46,7 +46,7 @@ const useLogic = ({
 
   useEffect(() => {
     setCurrentIndex(groupedItems.findIndex((item) => item.label === value));
-  }, [groupedItems]);
+  }, [groupedItems, value]);
 
   const handleChangeCurrent = (nextCurrentIndex: number) => {
     const item = groupedItems[nextCurrentIndex];
