@@ -1,5 +1,8 @@
 name: Publish packages on NPM 📦
-on: push
+on:
+  push:
+    branches:
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -12,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: "https://registry.npmjs.org"
           cache: "yarn"
       - run: yarn
       - run: yarn turbo run build
