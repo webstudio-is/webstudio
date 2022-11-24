@@ -13,7 +13,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:build": "build-storybook",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^6.5.6",

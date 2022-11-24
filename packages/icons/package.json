@@ -14,7 +14,8 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint",
     "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:build": "build-storybook",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^6.5.6",
