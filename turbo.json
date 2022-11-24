@@ -16,6 +16,9 @@
     "storybook:build": {
       "dependsOn": ["@webstudio-is/icons#build"],
       "cache": false
+    },
+    "publish-to-npm": {
+      "cache": false
     }
   }
 }
