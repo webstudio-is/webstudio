@@ -2,7 +2,11 @@
 
 import React, { type ComponentProps, type HTMLAttributes } from "react";
 import type { ComponentMeta, ComponentStory } from "@storybook/react";
-import { Image as ImagePrimitive, type ImageLoader } from "./";
+import {
+  Image as ImagePrimitive,
+  cloudflareImageLoader,
+  localImageLoader,
+} from "./";
 
 // to not allow include local assets everywhere, just enable it for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -19,7 +23,7 @@ type ImageProps = ComponentProps<typeof ImagePrimitive>;
  * In case you need to test img with real cloudflare trasforms
  * set  USE_CLOUDFLARE_IMAGE_TRANSFORM = true
  **/
-const USE_CLOUDFLARE_IMAGE_TRANSFORM = true;
+const USE_CLOUDFLARE_IMAGE_TRANSFORM = false;
 
 // For cloudflare image transform testing, logo should be the most consistent image on the site
 const REMOTE_SELF_DOMAIN_IMAGE = "https://webstudio.is/logo.webp";
@@ -28,34 +32,9 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
   ? REMOTE_SELF_DOMAIN_IMAGE
   : localLogoImage;
 
-// In case of REMOTE_DEBUG
-const cloudflareImageLoader: ImageLoader = ({ width, src, quality }) => {
-  // No image transformation in development
-  const resizeOrigin = "https://webstudio.is";
-
-  const pathParams = [
-    `width=${width}`,
-    quality != null && `quality=${quality}`,
-    "format=auto",
-  ].filter(Boolean);
-
-  const pathname = `/cdn-cgi/image/${pathParams.join(",")}/${src}`;
-
-  const url = new URL(pathname, resizeOrigin);
-  return url.href;
-};
-
-const localImageLoader: ImageLoader = ({ width, src, quality }) => {
-  // Just emulate like we really resize the image
-  const params = new URLSearchParams();
-  params.set("width", `${width}`);
-  params.set("quality", `${quality}`);
-  return `${src}?${params.toString()}`;
-};
-
 const imageLoader = USE_CLOUDFLARE_IMAGE_TRANSFORM
-  ? cloudflareImageLoader
-  : localImageLoader;
+  ? cloudflareImageLoader({ resizeOrigin: "https://webstudio.is" })
+  : localImageLoader();
 
 const ImageBase: ComponentStory<
   React.ForwardRefExoticComponent<

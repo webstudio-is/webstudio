@@ -62,6 +62,28 @@ describe("Image optimizations applied", () => {
     `);
   });
 
+  test("width is undefined and size defined, creates 'w' descriptor and use input sizes props, resizeOrigin defined", () => {
+    const imgAttr = getImageAttributes({
+      optimize: true,
+      width: undefined,
+      src: "https://webstudio.is/logo.webp",
+      srcSet: undefined,
+      sizes: "100vw",
+      quality: 70,
+      loader: cloudflareImageLoader({
+        resizeOrigin: "https://resize-origin.is",
+      }),
+    });
+
+    expect(imgAttr).toMatchInlineSnapshot(`
+      {
+        "sizes": "100vw",
+        "src": "https://resize-origin.is/cdn-cgi/image/width=3840,quality=70,format=auto/https://webstudio.is/logo.webp",
+        "srcSet": "https://resize-origin.is/cdn-cgi/image/width=640,quality=70,format=auto/https://webstudio.is/logo.webp 640w, https://resize-origin.is/cdn-cgi/image/width=750,quality=70,format=auto/https://webstudio.is/logo.webp 750w, https://resize-origin.is/cdn-cgi/image/width=828,quality=70,format=auto/https://webstudio.is/logo.webp 828w, https://resize-origin.is/cdn-cgi/image/width=1080,quality=70,format=auto/https://webstudio.is/logo.webp 1080w, https://resize-origin.is/cdn-cgi/image/width=1200,quality=70,format=auto/https://webstudio.is/logo.webp 1200w, https://resize-origin.is/cdn-cgi/image/width=1920,quality=70,format=auto/https://webstudio.is/logo.webp 1920w, https://resize-origin.is/cdn-cgi/image/width=2048,quality=70,format=auto/https://webstudio.is/logo.webp 2048w, https://resize-origin.is/cdn-cgi/image/width=3840,quality=70,format=auto/https://webstudio.is/logo.webp 3840w",
+      }
+    `);
+  });
+
   test("custom loader", () => {
     const imgAttr = getImageAttributes({
       optimize: true,

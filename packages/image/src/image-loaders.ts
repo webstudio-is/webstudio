@@ -36,10 +36,12 @@ export const cloudflareImageLoader: (
 /**
  * Fake pseudo loader for local testing purposes
  **/
-export const localImageLoader: ImageLoader = ({ width, src, quality }) => {
-  // Just emulate like we really resize the image
-  const params = new URLSearchParams();
-  params.set("width", `${width}`);
-  params.set("quality", `${quality}`);
-  return `${src}?${params.toString()}`;
-};
+export const localImageLoader: () => ImageLoader =
+  () =>
+  ({ width, src, quality }) => {
+    // Just emulate like we really resize the image
+    const params = new URLSearchParams();
+    params.set("width", `${width}`);
+    params.set("quality", `${quality}`);
+    return `${src}?${params.toString()}`;
+  };
