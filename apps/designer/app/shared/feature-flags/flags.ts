@@ -1,3 +1,3 @@
 export const assets = false;
-export const fonts = false;
+export const designTokens = false;
 export const example = false;

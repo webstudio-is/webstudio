@@ -8,7 +8,6 @@ export const TextArea = styled("textarea", {
   margin: "0",
   outline: "none",
   padding: "$spacing$3",
-  width: "100%",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
   backgroundColor: "$loContrast",
   boxShadow: "inset 0 0 0 1px $colors$muted",

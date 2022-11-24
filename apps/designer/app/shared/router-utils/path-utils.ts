@@ -57,6 +57,8 @@ export const restPatchPath = () => "/rest/patch";
 
 export const restPublishPath = () => "/rest/publish";
 
+export const restTokensPath = () => "/rest/tokens";
+
 export const getBuildUrl = ({
   buildOrigin,
   project,
