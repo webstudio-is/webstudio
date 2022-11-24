@@ -9,25 +9,31 @@ const isAbsoluteUrl = (href: string) => {
 // @todo: Ideally this code should live in designer app.
 // Sdk should not know how routing is implemented in designer.
 // We can move it there later when we have a way of customizing components per environment.
-const preserveMode = (href: string, currentSearch: string) => {
+const preserveBuildParams = (href: string, currentSearch: string) => {
   if (isAbsoluteUrl(href)) {
-    return href;
-  }
-
-  const mode = new URLSearchParams(currentSearch).get("mode");
-
-  if (mode !== "preview" && mode !== "edit") {
     return href;
   }
 
   const [path, search] = href.split("?");
   const searchParams = new URLSearchParams(search);
-  searchParams.set("mode", mode);
+
+  const currentSearchParams = new URLSearchParams(currentSearch);
+
+  const mode = currentSearchParams.get("mode");
+  if (mode === "preview" || mode === "edit" || mode === "published") {
+    searchParams.set("mode", mode);
+  }
+
+  const projectId = currentSearchParams.get("projectId");
+  if (projectId) {
+    searchParams.set("projectId", projectId);
+  }
+
   return `${path}?${searchParams.toString()}`;
 };
-const usePreserveMode = (href: string) => {
+const usePreserveBuildParams = (href: string) => {
   const { search } = useLocation();
-  return preserveMode(href, search);
+  return preserveBuildParams(href, search);
 };
 
 const defaultTag = "a";
@@ -38,7 +44,7 @@ type LinkProps = Omit<ComponentProps<typeof defaultTag>, "href"> & {
 
 export const Link = forwardRef<ElementRef<typeof defaultTag>, LinkProps>(
   ({ href = "", ...props }, ref) => {
-    const hrefWithMode = usePreserveMode(href);
+    const hrefWithMode = usePreserveBuildParams(href);
 
     if (isAbsoluteUrl(href)) {
       return <a {...props} href={href} ref={ref} />;
