@@ -556,20 +556,5 @@
     "defaultValue": null,
     "required": false,
     "type": "text"
-  },
-  "quality": {
-    "defaultValue": null,
-    "required": false,
-    "type": "number"
-  },
-  "loader": {
-    "defaultValue": null,
-    "required": false,
-    "type": "text"
-  },
-  "optimize": {
-    "defaultValue": null,
-    "required": false,
-    "type": "boolean"
   }
 }

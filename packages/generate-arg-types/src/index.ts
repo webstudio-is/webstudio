@@ -9,6 +9,8 @@ import fg from "fast-glob";
 import fs from "fs-extra";
 import { propsToArgTypes } from "./arg-types";
 
+const GENERATED_FILES_DIR = "__generated__";
+
 const options = {
   shouldExtractLiteralValuesFromEnum: true,
   shouldRemoveUndefinedFromOptional: true,
@@ -49,11 +51,22 @@ const ArgTypes = z.record(
 
 // For each component file generate argTypes based on the propTypes
 componentFiles.forEach((filePath) => {
-  const jsonPath = filePath.replace(".tsx", ".props.json");
+  const generatedJsonDir = path.join(
+    path.dirname(filePath),
+    GENERATED_FILES_DIR
+  );
+
+  if (!fs.existsSync(generatedJsonDir)) {
+    fs.mkdirSync(generatedJsonDir, { recursive: true });
+  }
+
+  const generateJsonFile = `${path.basename(filePath, ".tsx")}.props.json`;
+  const generateJsonPath = path.join(generatedJsonDir, generateJsonFile);
+
   const res = tsConfigParser.parse(filePath);
   const argTypes = propsToArgTypes(res[0].props);
   ArgTypes.parse(argTypes);
-  fs.ensureFileSync(jsonPath);
-  fs.writeJsonSync(jsonPath, argTypes, { spaces: 2 });
-  console.log(`Done generating argTypes for ${jsonPath}`);
+  fs.ensureFileSync(generateJsonPath);
+  fs.writeJsonSync(generateJsonPath, argTypes, { spaces: 2 });
+  console.log(`Done generating argTypes for ${generateJsonPath}`);
 });
