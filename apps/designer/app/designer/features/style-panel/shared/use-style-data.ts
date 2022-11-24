@@ -1,9 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type {
-  SelectedInstanceData,
-  StyleUpdates,
-} from "~/shared/canvas-components";
-import { Instance, type StyleProperty } from "@webstudio-is/react-sdk";
+import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
@@ -14,7 +11,7 @@ import { useRootInstance } from "~/shared/nano-states";
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     updateStyle: StyleUpdates;
-    [key: `previewStyle:${Instance["id"]}`]: StyleUpdates;
+    previewStyle: StyleUpdates;
   }
 }
 
@@ -87,10 +84,7 @@ export const useStyleData = ({
       return;
     }
     publish({
-      type:
-        type === "update"
-          ? "updateStyle"
-          : (`previewStyle:${selectedInstanceData.id}` as const),
+      type: type === "update" ? "updateStyle" : "previewStyle",
       payload: {
         id: selectedInstanceData.id,
         updates,
@@ -101,13 +95,10 @@ export const useStyleData = ({
 
   const toStyleValue = (property: StyleProperty, value: string) => {
     if (currentStyle === undefined) return;
-    const currentValue = currentStyle[property];
-    const defaultUnit =
-      currentValue?.type === "unit" ? currentValue?.unit : undefined;
     if (property === "fontFamily") {
       return { type: "fontFamily" as const, value: [value] };
     }
-    return parseCssValue(property, value, defaultUnit);
+    return parseCssValue(property, value, "number");
   };
 
   const setProperty: SetProperty = (property) => {

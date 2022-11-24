@@ -10,6 +10,7 @@ import { createMany } from "../../db";
 import { FILE_DIRECTORY } from "./file-path";
 import { Asset } from "../../types";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
+import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 
 const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
 
@@ -25,7 +26,7 @@ export const uploadToFs = async ({
   const uploadHandler = await unstable_createFileUploadHandler({
     maxPartSize: maxSize,
     directory: FILE_DIRECTORY,
-    file: ({ filename }) => getUniqueFilename(filename),
+    file: ({ filename }) => getUniqueFilename(sanitizeS3Key(filename)),
   });
 
   const formData = await unstable_parseMultipartFormData(

@@ -1,7 +1,7 @@
 import { Flex, Grid, IconButton } from "@webstudio-is/design-system";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import { useIsFromCurrentBreakpoint } from "../../../shared/use-is-from-current-breakpoint";
-import type { Style } from "@webstudio-is/react-sdk";
+import type { Style } from "@webstudio-is/css-data";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 
 export const FlexGrid = ({
@@ -57,12 +57,12 @@ export const FlexGrid = ({
       css={{
         width: "100%",
         aspectRatio: "1 / 1",
-        padding: "6px",
+        padding: "$spacing$4",
         borderRadius: "4px",
         background: "$loContrast",
         border: "2px solid currentColor",
         alignItems: "center",
-        gap: "1px",
+        gap: "$spacing$1",
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         gridTemplateAreas: `
@@ -133,7 +133,7 @@ export const FlexGrid = ({
           flexDirection: "column",
           width: "100%",
           height: "100%",
-          gap: "calc($sizes$1 / 2)",
+          gap: "calc($spacing$3 / 2)",
           color: "currentColor",
         }}
       >
@@ -143,9 +143,9 @@ export const FlexGrid = ({
             css={{
               inlineSize: value,
               blockSize: "calc(100% / 3)",
-              maxBlockSize: "6px",
+              maxBlockSize: "$spacing$4",
               background: "currentColor",
-              borderRadius: "calc($radii$1 / 2)",
+              borderRadius: "calc($borderRadius$4 / 2)",
             }}
           ></Flex>
         ))}

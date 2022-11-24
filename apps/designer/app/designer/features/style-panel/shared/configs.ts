@@ -1,11 +1,5 @@
-import {
-  properties,
-  categories,
-  keywordValues,
-  type Category,
-  type StyleProperty,
-  type AppliesTo,
-} from "@webstudio-is/react-sdk";
+import { categories, type Category } from "@webstudio-is/react-sdk";
+import type { StyleProperty, AppliesTo } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import {
   IconRecords,
@@ -39,6 +33,7 @@ import {
   ColumnGapIcon,
 } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "~/shared/feature-flags";
+import { keywordValues, properties } from "@webstudio-is/css-data";
 
 type BaseStyleConfig = {
   label: string;
@@ -53,7 +48,8 @@ export type Control =
   | "MenuControl"
   | "SelectControl"
   | "FontFamilyControl"
-  | "ImageControl";
+  | "ImageControl"
+  | "FontWeightControl";
 
 export type StyleConfig = BaseStyleConfig & {
   control: Control;
@@ -69,10 +65,13 @@ const getControl = (property: StyleProperty): Control => {
 
   switch (property) {
     case "fontFamily": {
-      return isFeatureEnabled("fonts") ? "FontFamilyControl" : "TextControl";
+      return "FontFamilyControl";
     }
     case "backgroundImage": {
       return isFeatureEnabled("assets") ? "ImageControl" : "TextControl";
+    }
+    case "fontWeight": {
+      return "FontWeightControl";
     }
   }
 
@@ -99,7 +98,7 @@ const createStyleConfigs = () => {
         property,
         appliesTo: properties[property].appliesTo,
         control: getControl(property),
-        items: keywords.map((keyword: string) => ({
+        items: keywords.map((keyword) => ({
           label: keyword,
           name: keyword,
         })),

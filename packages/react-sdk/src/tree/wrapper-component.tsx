@@ -1,8 +1,7 @@
-import React, { useMemo, Fragment } from "react";
+import { Fragment } from "react";
 import type { Instance } from "../db";
 import * as components from "../components";
 import { useUserProps } from "../user-props/use-user-props";
-import { type CSS, css as createCss } from "../stitches";
 import type { OnChangeChildren } from "./create-elements-tree";
 
 const renderText = (text: string): Array<JSX.Element> => {
@@ -26,26 +25,24 @@ export const renderWrapperComponentChildren = (
   });
 };
 
-export type WrapperComponentProps = {
+type WrapperComponentProps = {
   instance: Instance;
-  css: CSS;
   children: Array<JSX.Element | string>;
   onChangeChildren?: OnChangeChildren;
 };
 
 export const WrapperComponent = ({
   instance,
-  css,
   onChangeChildren, // prevent it from passing to sdk component
   children,
   ...rest
 }: WrapperComponentProps) => {
-  const className = useMemo(() => createCss(css)(), [css]);
   const { Component } = components[instance.component];
   const userProps = useUserProps(instance.id);
+  const props = { ...userProps, ...rest, [idAttribute]: instance.id };
   return (
-    <Component {...userProps} {...rest} id={instance.id} className={className}>
-      {renderWrapperComponentChildren(children)}
-    </Component>
+    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
   );
 };
+
+export const idAttribute = "data-ws-id";

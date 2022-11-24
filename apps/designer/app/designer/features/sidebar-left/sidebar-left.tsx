@@ -11,18 +11,15 @@ import { panels } from "./panels";
 import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
-import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { Flex } from "@webstudio-is/design-system";
-import { Config } from "~/config";
 
 const none = { TabContent: () => null };
 
 type SidebarLeftProps = {
   publish: Publish;
-  config: Config;
 };
 
-export const SidebarLeft = ({ publish, config }: SidebarLeftProps) => {
+export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [dragAndDropState] = useDragAndDropState();
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
@@ -40,8 +37,6 @@ export const SidebarLeft = ({ publish, config }: SidebarLeftProps) => {
       switch (panel) {
         case "assets":
           return isFeatureEnabled("assets");
-        case "pages":
-          return isFeatureEnabled("pages");
         case "navigator":
           return clientSettings.navigatorLayout === "docked";
       }
@@ -70,7 +65,7 @@ export const SidebarLeft = ({ publish, config }: SidebarLeftProps) => {
           value={activeTab === "none" ? "" : activeTab}
           css={{
             zIndex: "$1",
-            width: PANEL_WIDTH,
+            width: "$spacing$30",
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility:
@@ -79,11 +74,7 @@ export const SidebarLeft = ({ publish, config }: SidebarLeftProps) => {
                 : "visible",
           }}
         >
-          <TabContent
-            publish={publish}
-            onSetActiveTab={setActiveTab}
-            config={config}
-          />
+          <TabContent publish={publish} onSetActiveTab={setActiveTab} />
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>

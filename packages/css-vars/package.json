@@ -4,11 +4,13 @@
   "description": "CSS vars utility",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
+  "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint",
-    "dev": "tsup src/index.ts --format esm,cjs --watch --out-dir=lib",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "dev": "tsup --watch",
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {},
@@ -17,7 +19,11 @@
     "tsup": "^6.1.3",
     "typescript": "4.7.4"
   },
-  "main": "lib/index.js",
+  "module": "./lib/index.js",
+  "exports": {
+    "import": "./lib/index.js",
+    "require": "./lib/cjs/index.cjs"
+  },
   "types": "lib/index.d.ts",
   "files": [
     "lib/*",
@@ -25,5 +31,13 @@
     "!*.test.*"
   ],
   "license": "MIT",
-  "private": false
+  "private": false,
+  "sideEffects": false,
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": "esm",
+    "outDir": "lib"
+  }
 }

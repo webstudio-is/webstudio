@@ -1,10 +1,10 @@
 import { LoaderFunction } from "@remix-run/node";
-import config from "~/config";
 import { authenticator } from "~/services/auth.server";
+import { dashboardPath, loginPath } from "~/shared/router-utils";
 
 export const loader: LoaderFunction = async ({ request }) => {
   return authenticator.authenticate("google", request, {
-    successRedirect: config.dashboardPath,
-    failureRedirect: config.loginPath,
+    successRedirect: dashboardPath(),
+    failureRedirect: loginPath({}),
   });
 };

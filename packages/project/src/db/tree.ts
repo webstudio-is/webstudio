@@ -1,8 +1,9 @@
-import { type Breakpoint, type Tree, Instance } from "@webstudio-is/react-sdk";
+import { type Tree, Instance } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { Tree as DbTree } from "@prisma/client";
 import { utils } from "../index";
+import type { Breakpoint } from "@webstudio-is/css-data";
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -20,6 +21,10 @@ export const create = async (root: Instance): Promise<DbTree> => {
   return await prisma.tree.create({
     data: { root: rootString },
   });
+};
+
+export const deleteById = async (treeId: string): Promise<void> => {
+  await prisma.tree.delete({ where: { id: treeId } });
 };
 
 export const loadById = async (treeId: string): Promise<Tree | null> => {

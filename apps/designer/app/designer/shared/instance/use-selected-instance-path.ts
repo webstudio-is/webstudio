@@ -1,7 +1,7 @@
 import { Instance } from "@webstudio-is/react-sdk";
 import { useMemo } from "react";
 import { useRootInstance } from "~/shared/nano-states";
-import { getInstancePath } from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 
 export const useSelectedInstancePath = (
   selectedInstanceId?: Instance["id"]
@@ -10,7 +10,7 @@ export const useSelectedInstancePath = (
   return useMemo(
     () =>
       selectedInstanceId !== undefined && rootInstance !== undefined
-        ? getInstancePath(rootInstance, selectedInstanceId)
+        ? utils.tree.getInstancePath(rootInstance, selectedInstanceId)
         : [],
     [selectedInstanceId, rootInstance]
   );

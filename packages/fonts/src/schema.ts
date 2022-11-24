@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { styles } from "./get-font-data";
+import { styles } from "./font-data";
 
 export const FontMeta = z.object({
   family: z.string(),

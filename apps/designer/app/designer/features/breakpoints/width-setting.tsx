@@ -53,7 +53,11 @@ export const WidthSetting = () => {
       );
 
   return (
-    <Flex css={{ px: "$5", py: "$1" }} gap="1" direction="column">
+    <Flex
+      css={{ px: "$spacing$11", py: "$spacing$3" }}
+      gap="1"
+      direction="column"
+    >
       <Text>Canvas width</Text>
       <Flex gap="3" align="center">
         <Slider

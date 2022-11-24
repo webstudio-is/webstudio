@@ -1,21 +1,19 @@
 import {
   Tree,
-  TreeNodeLabel,
+  TreeItemLabel,
+  TreeItemBody,
   TreeNode,
   type TreeNodeProps,
   type TreeProps,
+  type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
 import { components, Instance } from "@webstudio-is/react-sdk";
-import {
-  findInstanceById,
-  getInstancePath,
-  getInstancePathWithPositions,
-} from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 
 const instanceRelatedProps = {
-  findItemById: findInstanceById,
-  getItemPath: getInstancePath,
-  getItemPathWithPositions: getInstancePathWithPositions,
+  findItemById: utils.tree.findInstanceById,
+  getItemPath: utils.tree.getInstancePath,
+  getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
     return components[item.component].isInlineOnly !== true;
   },
@@ -38,13 +36,12 @@ const instanceRelatedProps = {
       (child) => typeof child !== "string"
     ) as Instance[];
   },
-  renderItem(props: { data: Instance; isSelected: boolean }) {
-    const { Icon, label } = components[props.data.component];
+  renderItem(props: TreeItemRenderProps<Instance>) {
+    const { Icon, label } = components[props.itemData.component];
     return (
-      <>
-        <Icon />
-        <TreeNodeLabel isSelected={props.isSelected} text={label} withIcon />
-      </>
+      <TreeItemBody {...props} selectionEvent="focus">
+        <TreeItemLabel prefix={<Icon />}>{label}</TreeItemLabel>
+      </TreeItemBody>
     );
   },
 } as const;

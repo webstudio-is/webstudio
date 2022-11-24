@@ -5,39 +5,44 @@ import {
   PopoverHeader,
   PopoverPortal,
 } from "@webstudio-is/design-system";
-import { PANEL_WIDTH } from "~/designer/shared/constants";
 import { MutableRefObject, useRef, useState } from "react";
 
 const usePickerSideOffset = (
   isOpen: boolean
 ): [MutableRefObject<HTMLButtonElement | null>, number] => {
   const ref = useRef<HTMLButtonElement | null>(null);
+  // Hack - depends on a relative position of a parent container to calculate the offset.
   const sideOffset =
-    isOpen && ref.current !== null ? PANEL_WIDTH - ref.current.offsetWidth : 0;
+    isOpen && ref.current !== null ? ref.current.offsetLeft : 0;
   return [ref, sideOffset];
 };
 
-type AssetPickerProps = {
+type ValuePickerPopoverProps = {
   title: string;
   content: JSX.Element;
   children: JSX.Element;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 export const ValuePickerPopover = ({
   title,
   content,
   children,
-}: AssetPickerProps) => {
+  onOpenChange,
+}: ValuePickerPopoverProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [ref, sideOffset] = usePickerSideOffset(isOpen);
-
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    onOpenChange?.(open);
+  };
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen} modal>
+    <Popover open={isOpen} onOpenChange={handleOpenChange} modal>
       <PopoverTrigger
         asChild
         ref={ref}
         onClick={() => {
-          setIsOpen(true);
+          handleOpenChange(true);
         }}
       >
         {children}
@@ -47,10 +52,11 @@ export const ValuePickerPopover = ({
           sideOffset={sideOffset}
           side="right"
           hideArrow
-          css={{ minHeight: 500 }}
+          align="start"
+          css={{ width: "$spacing$30" }}
         >
-          <PopoverHeader title={title} />
           {content}
+          <PopoverHeader title={title} />
         </PopoverContent>
       </PopoverPortal>
     </Popover>

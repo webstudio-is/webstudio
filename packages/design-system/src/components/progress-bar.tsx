@@ -20,9 +20,9 @@ const indeterminateProgress = keyframes({
 const StyledProgressBar = styled(ProgressPrimitive.Root, {
   boxSizing: "border-box",
   position: "relative",
-  height: "$1",
+  height: "$spacing$3",
   overflow: "hidden",
-  borderRadius: "$pill",
+  borderRadius: "$borderRadius$pill",
 
   '&[data-state="indeterminate"]': {
     backgroundColor: "$slate4",
@@ -33,7 +33,7 @@ const StyledProgressBar = styled(ProgressPrimitive.Root, {
       animationTimingFunction: "cubic-bezier(0.65, 0, 0.35, 1)",
       backgroundColor: "$slate7",
       boxSizing: "border-box",
-      borderRadius: "$pill",
+      borderRadius: "$borderRadius$pill",
       content: '""',
       position: "absolute",
       top: 0,

@@ -118,6 +118,45 @@ import {
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
+const spacing = {
+  0: "0px",
+  1: "1px",
+  2: "2px",
+  3: "4px",
+  4: "6px",
+  5: "8px",
+  6: "10px",
+  7: "12px",
+  8: "14px",
+  9: "16px",
+  10: "20px",
+  11: "24px",
+  12: "28px",
+  13: "32px",
+  14: "36px",
+  15: "40px",
+  16: "44px",
+  17: "48px",
+  18: "56px",
+  19: "64px",
+  20: "80px",
+  21: "96px",
+  22: "112px",
+  23: "128px",
+  24: "144px",
+  25: "160px",
+  26: "176px",
+  27: "192px",
+  28: "208px",
+  29: "224px",
+  30: "240px",
+  31: "256px",
+  32: "288px",
+  33: "320px",
+  34: "384px",
+  35: "448px",
+};
+
 const {
   styled,
   css,
@@ -195,9 +234,9 @@ const {
       // Semantic colors
       hiContrast: "$slate12",
       loContrast: "$slate1",
-      hint: "$slate10",
+      hint: "$slate9",
       muted: "$slate6",
-      primary: "$blue12",
+      primary: "$blue10",
       canvas: "hsl(0 0% 93%)",
       panel: "white",
       panelOutline: "hsl(0deg 0% 0% / 10%)",
@@ -206,7 +245,6 @@ const {
       shadowDark: "hsl(206 22% 7% / 20%)",
       background: "$slate1",
       text: "$slate12",
-      dropPlacement: "$blue9",
     },
     fonts: {
       sans: "Inter, -apple-system, system-ui, sans-serif",
@@ -215,49 +253,37 @@ const {
     opacity: {
       1: "0.4",
     },
-    space: {
-      1: "4px",
-      2: "8px",
-      3: "16px",
-      4: "20px",
-      5: "24px",
-      6: "32px",
-      7: "48px",
-      8: "64px",
-      9: "80px",
-      styleSection: "8px",
-    },
-    sizes: {
-      1: "4px",
-      2: "8px",
-      3: "16px",
-      4: "20px",
-      5: "24px",
-      6: "32px",
-      7: "48px",
-      8: "64px",
-      9: "80px",
-      sidebarLeft: "45px",
-      sidebarRight: "240px",
-    },
-    fontSizes: {
-      1: "12px",
-      2: "13px",
-      3: "15px",
-      4: "17px",
+    spacing,
+    fontSize: {
+      1: "8px",
+      2: "10px",
+      3: "12px",
+      // Legacy - don't use unless specified in Figma
+      4: "14px",
       5: "19px",
       6: "21px",
       7: "27px",
       8: "35px",
       9: "59px",
     },
-    radii: {
-      1: "4px",
-      2: "6px",
-      3: "8px",
-      4: "12px",
+    lineHeight: {
+      1: "8px",
+      2: "12px",
+      3: "16px",
+      // Legacy - don't use unless specified in Figma
+      4: "20px",
+    },
+    borderRadius: {
+      1: "1px",
+      2: "2px",
+      3: "3px",
+      4: "4px",
+      5: "5px",
+      6: "6px",
       round: "50%",
       pill: "9999px",
+      // Legacy - don't use unless specified in Figma
+      7: "8px",
     },
     zIndices: {
       1: "100",
@@ -265,6 +291,9 @@ const {
       3: "300",
       4: "400",
       max: "999",
+    },
+    easing: {
+      easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
     },
   },
   media: {
@@ -326,66 +355,6 @@ const {
       marginBottom: value,
     }),
 
-    ta: (value: Stitches.PropertyValue<"textAlign">) => ({ textAlign: value }),
-
-    fd: (value: Stitches.PropertyValue<"flexDirection">) => ({
-      flexDirection: value,
-    }),
-    fw: (value: Stitches.PropertyValue<"flexWrap">) => ({ flexWrap: value }),
-
-    ai: (value: Stitches.PropertyValue<"alignItems">) => ({
-      alignItems: value,
-    }),
-    ac: (value: Stitches.PropertyValue<"alignContent">) => ({
-      alignContent: value,
-    }),
-    jc: (value: Stitches.PropertyValue<"justifyContent">) => ({
-      justifyContent: value,
-    }),
-    as: (value: Stitches.PropertyValue<"alignSelf">) => ({ alignSelf: value }),
-    fg: (value: Stitches.PropertyValue<"flexGrow">) => ({ flexGrow: value }),
-    fs: (value: Stitches.PropertyValue<"flexShrink">) => ({
-      flexShrink: value,
-    }),
-    fb: (value: Stitches.PropertyValue<"flexBasis">) => ({ flexBasis: value }),
-
-    bc: (value: Stitches.PropertyValue<"backgroundColor">) => ({
-      backgroundColor: value,
-    }),
-
-    br: (value: Stitches.PropertyValue<"borderRadius">) => ({
-      borderRadius: value,
-    }),
-    btrr: (value: Stitches.PropertyValue<"borderTopRightRadius">) => ({
-      borderTopRightRadius: value,
-    }),
-    bbrr: (value: Stitches.PropertyValue<"borderBottomRightRadius">) => ({
-      borderBottomRightRadius: value,
-    }),
-    bblr: (value: Stitches.PropertyValue<"borderBottomLeftRadius">) => ({
-      borderBottomLeftRadius: value,
-    }),
-    btlr: (value: Stitches.PropertyValue<"borderTopLeftRadius">) => ({
-      borderTopLeftRadius: value,
-    }),
-
-    bs: (value: Stitches.PropertyValue<"boxShadow">) => ({ boxShadow: value }),
-
-    lh: (value: Stitches.PropertyValue<"lineHeight">) => ({
-      lineHeight: value,
-    }),
-
-    ox: (value: Stitches.PropertyValue<"overflowX">) => ({ overflowX: value }),
-    oy: (value: Stitches.PropertyValue<"overflowY">) => ({ overflowY: value }),
-
-    pe: (value: Stitches.PropertyValue<"pointerEvents">) => ({
-      pointerEvents: value,
-    }),
-    us: (value: Stitches.PropertyValue<"userSelect">) => ({
-      WebkitUserSelect: value,
-      userSelect: value,
-    }),
-
     userSelect: (value: Stitches.PropertyValue<"userSelect">) => ({
       WebkitUserSelect: value,
       userSelect: value,
@@ -403,6 +372,13 @@ const {
     backgroundClip: (value: Stitches.PropertyValue<"backgroundClip">) => ({
       WebkitBackgroundClip: value,
       backgroundClip: value,
+    }),
+
+    // LEGACY, please don't use them
+    as: (value: Stitches.PropertyValue<"alignSelf">) => ({ alignSelf: value }),
+    fg: (value: Stitches.PropertyValue<"flexGrow">) => ({ flexGrow: value }),
+    bc: (value: Stitches.PropertyValue<"backgroundColor">) => ({
+      backgroundColor: value,
     }),
   },
 });
@@ -478,12 +454,11 @@ export const darkTheme = createTheme({
     ...goldDarkA,
 
     // Semantic colors
-    hint: "$slate10",
-    muted: "$slate8",
-    primary: "$blue9",
     hiContrast: "$slate12",
-    // radix colors in this range are either too dark/too light, nothing gray/black in the 16-17% luminosity range
     loContrast: "hsl(0 0% 17%)",
+    hint: "$slate9",
+    muted: "$slate8",
+    primary: "$blue10",
     canvas: "hsl(0 0% 15%)",
     panel: "$slate3",
     panelOutline: "hsl(0deg 0% 100% / 10%)",
@@ -492,6 +467,5 @@ export const darkTheme = createTheme({
     shadowDark: "hsl(206 22% 7% / 20%)",
     background: "$slate12",
     text: "$slate1",
-    dropPlacement: "$blue9",
   },
 });

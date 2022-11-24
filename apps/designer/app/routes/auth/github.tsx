@@ -1,6 +1,6 @@
 import { ActionFunction, redirect } from "@remix-run/node";
-import config from "~/config";
 import { authenticator } from "~/services/auth.server";
+import { dashboardPath, loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 
@@ -11,7 +11,7 @@ export default function GH() {
 export const action: ActionFunction = async ({ request }) => {
   try {
     return await authenticator.authenticate("github", request, {
-      successRedirect: config.dashboardPath,
+      successRedirect: dashboardPath(),
       throwOnError: true,
     });
   } catch (error: unknown) {
@@ -25,9 +25,10 @@ export const action: ActionFunction = async ({ request }) => {
         },
       });
       return redirect(
-        `${config.loginPath}?error=${AUTH_PROVIDERS.LOGIN_GITHUB}&message=${
-          error?.message || ""
-        }`
+        loginPath({
+          error: AUTH_PROVIDERS.LOGIN_GITHUB,
+          message: error?.message,
+        })
       );
     }
   }

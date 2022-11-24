@@ -1,5 +1,5 @@
 import { forwardRef, type ComponentProps, type ElementRef } from "react";
-import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/css-data";
 import {
   useCanvasWidth,
   useZoom,
@@ -44,7 +44,7 @@ export const TriggerButton = forwardRef<
     <Button
       {...props}
       ref={ref}
-      css={{ gap: "$1" }}
+      css={{ gap: "$spacing$3" }}
       ghost
       aria-label="Show breakpoints"
     >

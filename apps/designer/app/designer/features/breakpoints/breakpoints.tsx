@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/css-data";
 import { type Publish, useSubscribe } from "~/shared/pubsub";
 import {
   Text,
@@ -50,7 +50,7 @@ const BreakpointSelectorItem = ({
 };
 const menuItemCss = {
   display: "flex",
-  gap: "$3",
+  gap: "$spacing$9",
   justifyContent: "start",
   flexGrow: 1,
   minWidth: 180,

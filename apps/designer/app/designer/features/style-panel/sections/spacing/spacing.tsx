@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  categories,
-  toValue,
-  type StyleProperty,
-  type StyleValue,
-} from "@webstudio-is/react-sdk";
+import { categories } from "@webstudio-is/react-sdk";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { Box } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import { SetProperty } from "../../shared/use-style-data";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import { propertyNameColorForSelectedBreakpoint } from "../../shared/constants";
@@ -42,7 +39,7 @@ const grid = {
 
 const styles = {
   spacingEdit: {
-    fontSize: "$1",
+    fontSize: "$fontSize$3",
     // @todo use a color from design system
     color: "rgb(217, 217, 217)",
     display: "flex",
@@ -52,11 +49,13 @@ const styles = {
   wrapper: {
     display: "grid",
     height: 130,
-    gridTemplateColumns: "$5 $1 $5 1fr $5 $1 $5",
-    gridTemplateRows: "$5 $1 $5 1fr $5 $1 $5",
+    gridTemplateColumns:
+      "$spacing$11 $spacing$3 $spacing$11 1fr $spacing$11 $spacing$3 $spacing$11",
+    gridTemplateRows:
+      "$spacing$11 $spacing$3 $spacing$11 1fr $spacing$11 $spacing$3 $spacing$11",
   },
   input: {
-    fontSize: 10,
+    fontSize: "$fontSize$2",
     fontWeight: 400,
     fontFamily: "inherit",
     display: "block",
@@ -77,35 +76,35 @@ const styles = {
   emptySpace: {
     gridArea: "2 / 2 / 3 / 2",
     background: "$loContrast",
-    width: "$6",
+    width: "$spacing$13",
     margin: "auto",
     height: "100%",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
   },
   marginGrid: {
     gridArea: "1 / 1 / -1 / -1",
     display: "grid",
-    gridTemplateColumns: "$5 1fr $5",
-    gridTemplateRows: "$5 minmax($3, 1fr) $5",
+    gridTemplateColumns: "$spacing$11 1fr $spacing$11",
+    gridTemplateRows: "$spacing$11 minmax($spacing$9, 1fr) $spacing$11",
     height: 130,
     backgroundColor: "$gray6",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
     px: 2,
   },
   text: {
     fontWeight: "bold",
     color: "$gray12",
-    fontSize: 8,
-    margin: "$1",
+    fontSize: "$fontSize$1",
+    margin: "$spacing$3",
   },
   paddingGrid: {
     gridArea: "3 / 3 / span 3 / span 3",
     display: "grid",
-    gridTemplateColumns: "$5 1fr $5",
-    gridTemplateRows: "$5 minmax($3, 1fr) $5",
+    gridTemplateColumns: "$spacing$11 1fr $spacing$11",
+    gridTemplateRows: "$spacing$11 minmax($spacing$9, 1fr) $spacing$11",
     border: "2px solid",
     borderColor: "$loContrast",
-    borderRadius: "$1",
+    borderRadius: "$borderRadius$4",
   },
 };
 

@@ -11,8 +11,9 @@ import {
 } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
-import { LoginButton } from "./components/login-button";
+import { LoginButton } from "./login-button";
 import loginStyles from "./login.css";
+import { authPath } from "~/shared/router-utils";
 
 export const links: LinksFunction = () => {
   return [
@@ -45,42 +46,38 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
       <Card size={2}>
         <Flex direction="column" align="center" gap="3">
           <Heading size="2">Login</Heading>
-          <Flex direction="column" gap="4" css={{ width: 300 }}>
+          <Flex direction="column" gap="4">
             {errorMessage.length ? (
               <Text align="center" color="error">
                 {errorMessage}
               </Text>
             ) : null}
             <Flex gap="2" direction="column">
-              <Form action="/auth/github" method="post">
-                <LoginButton enabled={data.isGithubEnabled}>
-                  <Flex gap="2" align="center">
-                    <Flex css={{ width: 20, height: 20 }}>
-                      <GithubIcon />
-                    </Flex>
-                    Login with GitHub
-                  </Flex>
+              <Form action={authPath({ provider: "github" })} method="post">
+                <LoginButton
+                  disabled={data.isGithubEnabled === false}
+                  icon={<GithubIcon />}
+                >
+                  Login with GitHub
                 </LoginButton>
               </Form>
-              <Form action="/auth/google" method="post">
-                <LoginButton enabled={data.isGoogleEnabled}>
-                  <Flex gap="2" align="center">
-                    <Flex css={{ width: 20, height: 20 }}>
-                      <GoogleIcon />
-                    </Flex>
-                    Login with Google
-                  </Flex>
+              <Form action={authPath({ provider: "google" })} method="post">
+                <LoginButton
+                  disabled={data.isGoogleEnabled === false}
+                  icon={<GoogleIcon />}
+                >
+                  Login with Google
                 </LoginButton>
               </Form>
               {data.isDevLogin &&
                 (isDevLoginOpen ? (
                   <Flex
                     as="form"
-                    action="/auth/dev"
+                    action={authPath({ provider: "dev" })}
                     method="post"
                     css={{
                       flexDirection: "row",
-                      gap: "$2",
+                      gap: "$spacing$5",
                     }}
                   >
                     <TextField
@@ -96,16 +93,12 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                   </Flex>
                 ) : (
                   <LoginButton
-                    enabled={data.isDevLogin}
+                    disabled={data.isDevLogin === false}
                     isDevLogin
                     onClick={() => openDevLogin(true)}
+                    icon={<CommitIcon />}
                   >
-                    <Flex gap="2" align="center">
-                      <Flex css={{ width: 20, height: 20 }}>
-                        <CommitIcon />
-                      </Flex>
-                      Dev Login
-                    </Flex>
+                    Dev Login
                   </LoginButton>
                 ))}
             </Flex>

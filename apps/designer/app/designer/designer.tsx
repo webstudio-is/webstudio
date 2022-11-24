@@ -5,13 +5,11 @@ import {
   type Project,
   utils as projectUtils,
 } from "@webstudio-is/project";
-import type { Config } from "~/config";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
-  useAssets,
   useHoveredInstanceData,
   usePages,
   useProject,
@@ -40,9 +38,8 @@ import {
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { PANEL_WIDTH } from "./shared/constants";
-import { Asset } from "@webstudio-is/asset-uploader";
-import env from "~/shared/env";
+import { useSetAssets } from "./shared/assets";
+import { getBuildUrl } from "~/shared/router-utils";
 
 export const links = () => {
   return [
@@ -69,15 +66,6 @@ const useSubscribeHoveredInstanceData = () => {
 const useSubscribeSyncStatus = () => {
   const [, setValue] = useSyncStatus();
   useSubscribe("syncStatus", setValue);
-};
-
-const useSetAssets = (assets?: Array<Asset>) => {
-  const [, setAssets] = useAssets();
-  useEffect(() => {
-    if (assets) {
-      setAssets(assets);
-    }
-  }, [assets, setAssets]);
 };
 
 const useSetProject = (project: Project) => {
@@ -190,7 +178,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "undocked") {
     return {
-      gridTemplateColumns: `auto ${PANEL_WIDTH}px 1fr ${PANEL_WIDTH}px`,
+      gridTemplateColumns: `auto $spacing$30 1fr $spacing$30`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -200,7 +188,7 @@ const getChromeLayout = ({
   }
 
   return {
-    gridTemplateColumns: `auto 1fr ${PANEL_WIDTH}px`,
+    gridTemplateColumns: `auto 1fr $spacing$30`,
     gridTemplateAreas: `
           "header header header"
           "sidebar main inspector"
@@ -245,7 +233,7 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
       <Box
         css={{
           borderRight: "1px solid $slate7",
-          width: PANEL_WIDTH,
+          width: "$spacing$30",
           height: "100%",
         }}
       >
@@ -256,7 +244,6 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 };
 
 export type DesignerProps = {
-  config: Config;
   project: Project;
   pages: Pages;
   pageId: string;
@@ -264,7 +251,6 @@ export type DesignerProps = {
 };
 
 export const Designer = ({
-  config,
   project,
   pages,
   pageId,
@@ -275,11 +261,11 @@ export const Designer = ({
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
-  useSetAssets(project.assets);
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
+  useSetAssets({ assets: project.assets, publish });
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
@@ -297,32 +283,26 @@ export const Designer = ({
   );
 
   const page = useMemo(() => {
-    const page = projectUtils.pages.findById(pages, pageId);
+    const page = projectUtils.pages.findByIdOrPath(pages, pageId);
     if (page === undefined) {
       throw new Error(`Page with id ${pageId} not found`);
     }
     return page;
   }, [pages, pageId]);
 
-  const buildUrl = new URL(buildOrigin);
-  buildUrl.pathname = page.path;
-  if (env.BUILD_REQUIRE_SUBDOMAIN) {
-    buildUrl.host = `${project.domain}.${buildUrl.host}`;
-  } else {
-    buildUrl.searchParams.set("projectId", project.id);
-  }
+  const canvasUrl = getBuildUrl({ buildOrigin, project, page, mode: "edit" });
 
-  buildUrl.searchParams.set("mode", "edit");
-  const canvasUrl = buildUrl.toString();
-
-  buildUrl.searchParams.set("mode", "preview");
-  const previewUrl = buildUrl.toString();
+  const previewUrl = getBuildUrl({
+    buildOrigin,
+    project,
+    page,
+    mode: "preview",
+  });
 
   return (
     <ChromeWrapper isPreviewMode={isPreviewMode}>
       <Topbar
         css={{ gridArea: "header" }}
-        config={config}
         project={project}
         publish={publish}
         previewUrl={previewUrl}
@@ -346,7 +326,7 @@ export const Designer = ({
         </Workspace>
       </Main>
       <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft publish={publish} config={config} />
+        <SidebarLeft publish={publish} />
       </SidePanel>
       <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
       <SidePanel

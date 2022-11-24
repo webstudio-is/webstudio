@@ -22,10 +22,9 @@ export const links = () => {
 type DashboardProps = {
   projects?: Array<{ id: string; title: string }>;
   user: User;
-  config: { designerPath: string };
 };
 
-export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
+export const Dashboard = ({ projects = [], user }: DashboardProps) => {
   const actionData = useActionData();
   return (
     <>
@@ -36,11 +35,7 @@ export const Dashboard = ({ projects = [], config, user }: DashboardProps) => {
         align="center"
         justify="center"
       >
-        <SelectProjectCard
-          projects={projects}
-          config={config}
-          errors={actionData?.errors}
-        />
+        <SelectProjectCard projects={projects} errors={actionData?.errors} />
       </Flex>
     </>
   );

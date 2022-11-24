@@ -1,6 +1,6 @@
 import React from "react";
 import { Flex, TextField } from "@webstudio-is/design-system";
-import { StyleValue } from "@webstudio-is/react-sdk";
+import type { StyleValue } from "@webstudio-is/css-data";
 import { CssValueInput } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
 
@@ -81,7 +81,7 @@ export const WithUnits = () => {
   });
 
   return (
-    <Flex css={{ gap: "$3" }}>
+    <Flex css={{ gap: "$spacing$9" }}>
       <CssValueInput
         property="rowGap"
         value={value}

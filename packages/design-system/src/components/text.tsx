@@ -1,9 +1,6 @@
-import { styled } from "../stitches.config";
+import { css, styled } from "../stitches.config";
 
-/**
- * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
- */
-export const Text = styled("div", {
+export const textStyles = css({
   // Reset
   margin: 0,
   lineHeight: 1,
@@ -14,33 +11,33 @@ export const Text = styled("div", {
     variant: {
       regular: {
         fontWeight: 400,
-        fontSize: "$1",
+        fontSize: "$fontSize$3",
         letterSpacing: "0.005em",
       },
       label: {
         fontWeight: 500,
-        fontSize: "$1",
+        fontSize: "$fontSize$3",
         letterSpacing: "0.005em",
       },
       tiny: {
         fontWeight: 400,
-        fontSize: 8,
+        fontSize: "$fontSize$1",
         letterSpacing: "0.01em",
       },
       title: {
         fontWeight: 700,
-        fontSize: "$1",
+        fontSize: "$fontSize$3",
         letterSpacing: "0.01em",
       },
       mono: {
         fontFamily: "$mono",
         fontWeight: 400,
-        fontSize: "$1",
+        fontSize: "$fontSize$3",
         textTransform: "uppercase",
       },
       unit: {
         fontWeight: 500,
-        fontSize: 10,
+        fontSize: "$fontSize$2",
         textTransform: "uppercase",
       },
     },
@@ -95,3 +92,8 @@ export const Text = styled("div", {
     variant: "regular",
   },
 });
+
+/**
+ * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
+ */
+export const Text = styled("div", textStyles);

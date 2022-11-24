@@ -9,7 +9,7 @@ export const IconButton = styled("button", {
   display: "inline-flex",
   flexShrink: 0,
   fontFamily: "inherit",
-  fontSize: "14px",
+  fontSize: "$fontSize$4",
   justifyContent: "center",
   lineHeight: "1",
   padding: 0,
@@ -27,9 +27,11 @@ export const IconButton = styled("button", {
     backgroundColor: "$slate6",
     outline: "none",
   },
-  "&:focus": {
+  "&:focus-visible": {
     backgroundColor: "$slate6",
     outline: "none",
+    border: "2px solid white",
+    boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
   },
   "&:disabled": {
     pointerEvents: "none",
@@ -41,29 +43,27 @@ export const IconButton = styled("button", {
     size: {
       "1": {
         borderRadius: 2,
-        height: "$5",
-        width: "$5",
+        height: "$spacing$9",
+        width: "$spacing$9",
+        "&:hover, &:focus-visible": {
+          background: "none",
+          border: "none",
+        },
       },
       "2": {
-        borderRadius: "$1",
-        height: "$6",
-        width: "$6",
+        borderRadius: "$borderRadius$4",
+        height: "$spacing$13",
+        width: "$spacing$13",
       },
       "3": {
-        borderRadius: "$1",
-        height: "$7",
-        width: "$7",
+        borderRadius: "$borderRadius$4",
+        height: "$spacing$17",
+        width: "$spacing$17",
       },
       "4": {
-        borderRadius: "$2",
-        height: "$8",
-        width: "$8",
-      },
-    },
-    state: {
-      active: {
-        color: "$loContrast",
-        backgroundColor: "$blue10",
+        borderRadius: "$borderRadius$6",
+        height: "$spacing$19",
+        width: "$spacing$19",
       },
     },
   },

@@ -47,8 +47,8 @@ export const CollapsibleSection = ({
             gap="1"
             justify="between"
             css={{
-              py: "$3",
-              px: "$3",
+              py: "$spacing$9",
+              px: "$spacing$9",
               color: "$hiContrast",
               cursor: "default",
               userSelect: "none",
@@ -58,7 +58,7 @@ export const CollapsibleSection = ({
             <Flex
               align="center"
               justify="center"
-              css={{ marginRight: "-$space$1", opacity: "$opacity$1" }}
+              css={{ marginRight: "-$spacing$3", color: "$slate9" }}
             >
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </Flex>
@@ -70,7 +70,7 @@ export const CollapsibleSection = ({
             gap="3"
             direction="column"
             css={{
-              p: "$3",
+              p: "$spacing$9",
               paddingTop: 0,
               "&:empty": {
                 display: "none",

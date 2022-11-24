@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
-import type { Build } from "@webstudio-is/project";
+import type { Build, CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
-  useGlobalStyles,
+  useAllUserProps,
   type OnChangeChildren,
   type Tree,
-  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
@@ -24,13 +23,13 @@ import {
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
-import { useUpdateStyle } from "./shared/style";
+import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
 import { useManageProps } from "./shared/props";
 import {
-  useHandleBreakpoints,
+  useManageBreakpoints,
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
 import {
@@ -42,9 +41,9 @@ import {
 import { registerContainers } from "./shared/immerhin";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
-import { setInstanceChildrenMutable } from "~/shared/tree-utils";
-import { CanvasData } from "~/shared/db";
+import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 registerContainers();
 
@@ -52,14 +51,22 @@ const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
   const [breakpoints] = useBreakpoints();
 
-  const onChangeChildren: OnChangeChildren = useCallback((change) => {
-    store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance === undefined) return;
+  const onChangeChildren: OnChangeChildren = useCallback(
+    (change) => {
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
+        if (rootInstance === undefined) return;
 
-      const { instanceId, updates } = change;
-      setInstanceChildrenMutable(instanceId, updates, rootInstance);
-    });
-  }, []);
+        const { instanceId, updates } = change;
+        utils.tree.setInstanceChildrenMutable(
+          instanceId,
+          updates,
+          rootInstance,
+          breakpoints[0].id
+        );
+      });
+    },
+    [breakpoints]
+  );
 
   return useMemo(() => {
     if (rootInstance === undefined) return;
@@ -67,11 +74,10 @@ const useElementsTree = () => {
     return createElementsTree({
       sandbox: true,
       instance: rootInstance,
-      breakpoints,
       Component: WrapperComponentDev,
       onChangeChildren,
     });
-  }, [rootInstance, breakpoints, onChangeChildren]);
+  }, [rootInstance, onChangeChildren]);
 };
 
 const useSubscribePreviewMode = () => {
@@ -80,16 +86,22 @@ const useSubscribePreviewMode = () => {
   return isPreviewMode;
 };
 
+const useAssets = (initialAssets: Array<Asset>) => {
+  const [assets, setAssets] = useState(initialAssets);
+  useSubscribe("updateAssets", setAssets);
+  return assets;
+};
+
 type DesignModeProps = {
   treeId: Tree["id"];
   buildId: Build["id"];
 };
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
-  useUpdateStyle();
+  useManageBreakpoints();
+  useManageDesignModeStyles();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
-  useHandleBreakpoints();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
@@ -118,7 +130,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   }
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
-  useGlobalStyles({ assets: data.assets });
+  const assets = useAssets(data.assets);
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
   // e.g. toggling preview is still needed in both modes
@@ -129,11 +141,17 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   if (elements === undefined) return null;
 
   if (isPreviewMode || isDesignerReady === false) {
-    return elements;
+    return (
+      <>
+        <GlobalStyles assets={assets} />
+        {elements}
+      </>
+    );
   }
 
   return (
     <>
+      <GlobalStyles assets={assets} />
       <DesignMode treeId={data.tree.id} buildId={data.buildId} />
       {elements}
     </>

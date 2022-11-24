@@ -7,22 +7,22 @@ export default {
 
 export const Primitive: ComponentStoryObj<typeof Control> = {
   args: {
-    type: "text",
+    component: "Image",
+    userProp: {
+      prop: "src",
+      id: "ddf20afe-65a8-478e-a52d-1be2d2f70830",
+      value: "",
+    },
   },
 };
 
 export const Options: ComponentStoryObj<typeof Control> = {
   args: {
-    type: "radio",
-    options: ["option1", "option2"],
-  },
-};
-
-export const Range: ComponentStoryObj<typeof Control> = {
-  args: {
-    type: "range",
-    min: 0,
-    max: 100,
-    step: 1,
+    component: "Image",
+    userProp: {
+      prop: "loading",
+      id: "ddf20afe-65a8-478e-a52d-1be2d2f70830",
+      value: "",
+    },
   },
 };

@@ -1,4 +1,4 @@
-import { ProgressRadial } from "@webstudio-is/design-system";
+import { ProgressRadial, styled } from "@webstudio-is/design-system";
 
 import { useState } from "react";
 import { useInterval } from "react-use";
@@ -16,13 +16,21 @@ const useFakeProgress = () => {
   return progressBarPercentage;
 };
 
+const AnimationContainer = styled("div", {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+});
+
 export const UploadingAnimation = () => {
   const progressBarPercentage = useFakeProgress();
   return (
-    <ProgressRadial
-      css={{ position: "relative", zIndex: 10 }}
-      value={progressBarPercentage}
-      max={60}
-    />
+    <AnimationContainer>
+      <ProgressRadial value={progressBarPercentage} max={60} />
+    </AnimationContainer>
   );
 };

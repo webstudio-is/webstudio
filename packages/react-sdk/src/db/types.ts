@@ -7,6 +7,12 @@ export type Tree = {
   root: Instance;
 };
 
+export type Props = {
+  props: string;
+  id: string;
+  instanceId: string;
+  treeId: string;
+};
 export type InstanceProps = Omit<DbInstanceProps, "props"> & {
   props: Array<UserProp>;
 };

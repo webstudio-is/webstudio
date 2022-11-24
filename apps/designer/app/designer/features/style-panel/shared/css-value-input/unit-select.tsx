@@ -1,15 +1,19 @@
 import { useState, useMemo } from "react";
-import { type Unit, type UnitValue, StyleValue } from "@webstudio-is/react-sdk";
+import type { Unit, UnitValue, StyleValue } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
-  styled,
   SelectScrollUpButton,
   SelectScrollDownButton,
   SelectViewport,
   SelectItem,
   SelectContent,
+  TextFieldIconButton,
+  styled,
+  textStyles,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import { isValid } from "../parse-css-value";
 
 const unitRenderMap: Map<Unit, string> = new Map([
   ["px", "PX"],
@@ -19,7 +23,7 @@ const unitRenderMap: Map<Unit, string> = new Map([
   ["ch", "CH"],
   ["vw", "VW"],
   ["vh", "VH"],
-  ["number", "-"],
+  ["number", "—"],
 ]);
 
 const renderUnitMap: Map<string, Unit> = new Map();
@@ -30,6 +34,7 @@ for (const [key, value] of unitRenderMap.entries()) {
 const defaultUnits = Array.from(unitRenderMap.keys());
 
 type UseUnitSelectType = {
+  property: string;
   value?: UnitValue;
   onChange: (value: StyleValue) => void;
   units?: Array<Unit>;
@@ -37,6 +42,7 @@ type UseUnitSelectType = {
 };
 
 export const useUnitSelect = ({
+  property,
   onChange,
   value,
   units = defaultUnits,
@@ -44,13 +50,24 @@ export const useUnitSelect = ({
 }: UseUnitSelectType) => {
   const [isOpen, setIsOpen] = useState(false);
   const renderUnits = useMemo(
-    () => units.map((unit) => unitRenderMap.get(unit) ?? unit),
-    [units]
+    () =>
+      value &&
+      units
+        .filter((unit) => {
+          return isValid(property, toValue({ ...value, unit }));
+        })
+        .map((unit) => unitRenderMap.get(unit) ?? unit),
+    [units, property, value]
   );
 
   const renderValue = value && unitRenderMap.get(value.unit);
 
-  if (value == undefined || renderValue === undefined) {
+  if (
+    value === undefined ||
+    renderUnits == undefined ||
+    renderValue === undefined ||
+    renderUnits.length < 2
+  ) {
     return [isOpen, null];
   }
 
@@ -75,21 +92,8 @@ export const useUnitSelect = ({
   return [isOpen, select];
 };
 
-const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
-  all: "unset",
-  height: "$5",
-  px: "$1",
-  borderRadius: 2,
-  display: "inline-flex",
-  alignItems: "center",
-  color: "$hiContrast",
-  "&:hover": {
-    backgroundColor: "$slate6",
-  },
-  "&:focus": {
-    backgroundColor: "$blue10",
-    color: "$loContrast",
-  },
+const StyledTrigger = styled(TextFieldIconButton, textStyles, {
+  px: 3,
 });
 
 type UnitSelectProps = {
@@ -116,9 +120,11 @@ const UnitSelect = ({
       onOpenChange={onOpenChange}
       open={open}
     >
-      <StyledTrigger>
-        <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
-      </StyledTrigger>
+      <SelectPrimitive.SelectTrigger asChild>
+        <StyledTrigger variant="unit">
+          <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
+        </StyledTrigger>
+      </SelectPrimitive.SelectTrigger>
       <SelectPrimitive.Portal>
         <SelectContent onCloseAutoFocus={onCloseAutoFocus}>
           <SelectScrollUpButton>

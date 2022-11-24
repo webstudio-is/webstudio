@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react-hooks";
 import { components, UserProp } from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
-import { SelectedInstanceData } from "~/shared/canvas-components";
+import type { SelectedInstanceData } from "@webstudio-is/project";
 import { usePropsLogic } from "./use-props-logic";
 
 const getSelectedInstanceData = (
@@ -138,8 +138,8 @@ describe("usePropsLogic", () => {
 
     expect(result.current.userProps.length).toEqual(1);
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
@@ -170,22 +170,22 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangeProp("disabled", "prop", "disabled2");
+      result.current.handleChangePropName("disabled", "disabled2", false);
     });
 
     act(() => {
-      result.current.handleChangeProp("disabled", "value", false);
+      result.current.handleChangePropValue("disabled", false);
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "disabled",
           "prop": "disabled2",
           "value": false,
@@ -223,14 +223,14 @@ describe("usePropsLogic", () => {
 
     expect(result.current.userProps.length).toEqual(2);
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "disabled",
           "prop": "disabled",
           "required": true,
@@ -262,18 +262,18 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangeProp("2", "prop", "test-example");
+      result.current.handleChangePropName("2", "test-example", "");
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "2",
           "prop": "test",
           "required": true,
@@ -305,22 +305,96 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangeProp("2", "value", false);
+      result.current.handleChangePropValue("2", false);
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "id": "1",
           "prop": "tag",
           "required": true,
           "value": "div",
         },
-        Object {
+        {
           "id": "2",
           "prop": "test",
           "required": true,
           "value": false,
+        },
+      ]
+    `);
+  });
+
+  test("should update value and asset", () => {
+    const { result } = renderHook(() =>
+      usePropsLogic({
+        selectedInstanceData: getSelectedInstanceData("Box", [
+          {
+            id: "1",
+            prop: "tag",
+            value: "div",
+            required: true,
+          },
+        ]),
+        publish: jest.fn(),
+      })
+    );
+
+    act(() => {
+      result.current.handleChangePropValue("1", "img", {
+        id: "string",
+        projectId: "string",
+        format: "string",
+        size: 1111,
+        name: "string",
+        description: "string",
+        location: "REMOTE",
+        createdAt: new Date("1995-12-17T03:24:00Z"),
+        meta: { width: 101, height: 202 },
+        path: "string",
+        status: "uploaded",
+      });
+    });
+
+    expect(result.current.userProps).toMatchInlineSnapshot(`
+      [
+        {
+          "asset": {
+            "createdAt": 1995-12-17T03:24:00.000Z,
+            "description": "string",
+            "format": "string",
+            "id": "string",
+            "location": "REMOTE",
+            "meta": {
+              "height": 202,
+              "width": 101,
+            },
+            "name": "string",
+            "path": "string",
+            "projectId": "string",
+            "size": 1111,
+            "status": "uploaded",
+          },
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "img",
+        },
+      ]
+    `);
+
+    act(() => {
+      result.current.handleChangePropValue("1", "img");
+    });
+
+    expect(result.current.userProps).toMatchInlineSnapshot(`
+      [
+        {
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "img",
         },
       ]
     `);

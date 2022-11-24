@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, keyframes, VariantProps, CSS } from "../stitches.config";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Cross1Icon } from "@webstudio-is/icons";
+import { CrossIcon } from "@webstudio-is/icons";
 import { overlayStyles } from "./overlay";
 import { IconButton } from "./icon-button";
 
@@ -43,13 +43,13 @@ export const Sheet = ({ children, ...props }: SheetProps) => {
 };
 
 const slideIn = keyframes({
-  from: { transform: "$$transformValue" },
+  from: { transform: "$transformValue" },
   to: { transform: "translate3d(0,0,0)" },
 });
 
 const slideOut = keyframes({
   from: { transform: "translate3d(0,0,0)" },
-  to: { transform: "$$transformValue" },
+  to: { transform: "$transformValue" },
 });
 
 const StyledContent = styled(DialogPrimitive.Content, {
@@ -110,8 +110,8 @@ const StyledContent = styled(DialogPrimitive.Content, {
 
 const StyledCloseButton = styled(DialogPrimitive.Close, {
   position: "absolute",
-  top: "$2",
-  right: "$2",
+  top: "$spacing$5",
+  right: "$spacing$5",
 });
 
 type SheetContentVariants = VariantProps<typeof StyledContent>;
@@ -129,7 +129,7 @@ export const SheetContent = React.forwardRef<
     {children}
     <StyledCloseButton asChild>
       <IconButton>
-        <Cross1Icon />
+        <CrossIcon />
       </IconButton>
     </StyledCloseButton>
   </StyledContent>

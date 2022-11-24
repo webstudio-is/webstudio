@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";
-import type { Style } from "@webstudio-is/react-sdk";
+import type { Style } from "@webstudio-is/css-data";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 
 export const Lock = ({
@@ -24,7 +24,7 @@ export const Lock = ({
   const [isPaired, setIsPaired] = useState(aVal === bVal);
 
   useEffect(() => {
-    if (!isPaired) return;
+    if (isPaired === false) return;
     if (aVal === bVal) return;
     batchUpdate.setProperty(aKey)(aVal);
     batchUpdate.setProperty(bKey)(aVal);

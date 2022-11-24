@@ -1,10 +1,9 @@
 import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
-import { Box, Card, Paragraph } from "@webstudio-is/design-system";
-import type { SelectedInstanceData } from "~/shared/canvas-components";
+import { Box, Card, Paragraph, SearchField } from "@webstudio-is/design-system";
+import type { SelectedInstanceData } from "@webstudio-is/project";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
-import { Search } from "./search";
 import { useState } from "react";
 import {
   useCanvasWidth,
@@ -40,9 +39,9 @@ export const StylePanel = ({
 
   if (willRender(breakpoint, canvasWidth) === false) {
     return (
-      <Box css={{ p: "$2" }}>
-        <Card css={{ p: "$3", mt: "$3" }}>
-          <Paragraph css={{ marginBottom: "$2" }}>
+      <Box css={{ p: "$spacing$5" }}>
+        <Card css={{ p: "$spacing$9", mt: "$spacing$9" }}>
+          <Paragraph css={{ marginBottom: "$spacing$5" }}>
             {`Please increase the canvas width.`}
           </Paragraph>
           <Paragraph>
@@ -55,13 +54,23 @@ export const StylePanel = ({
 
   return (
     <>
-      <Box css={{ px: "$3", py: "$1" }}>
-        <Search
-          onSearch={setSearch}
-          selectedInstanceData={selectedInstanceData}
+      <Box css={{ px: "$spacing$9", py: "$spacing$3" }}>
+        <SearchField
+          placeholder="Search"
+          onChange={(event) => {
+            setSearch(event.target.value);
+          }}
+          onCancel={() => {
+            setSearch("");
+          }}
         />
       </Box>
-      <Box css={{ overflow: "auto" }}>
+
+      <Box
+        css={{
+          overflow: "auto",
+        }}
+      >
         <StyleSettings
           search={search}
           selectedInstanceData={selectedInstanceData}

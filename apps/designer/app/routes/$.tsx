@@ -1,23 +1,45 @@
 import {
-  type LoaderFunction,
   redirect,
-  MetaFunction,
   json,
+  type LoaderFunction,
+  type MetaFunction,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
-import { loadCanvasData, type CanvasData } from "~/shared/db";
-import config from "~/config";
-import { db } from "@webstudio-is/project/index.server";
-import env, { Env } from "~/env.server";
+import { loadCanvasData } from "~/shared/db";
+import env, { type Env } from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-import { type BuildMode, getBuildParams } from "~/shared/router-utils";
+import {
+  type BuildMode,
+  getBuildParams,
+  dashboardPath,
+} from "~/shared/router-utils";
+import { db } from "@webstudio-is/project/server";
+import type { DynamicLinksFunction } from "remix-utils";
+import type { CanvasData } from "@webstudio-is/project";
 
 type Data =
   | (CanvasData & { env: Env; mode: BuildMode })
   | { errors: string; env: Env };
+
+export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
+  data,
+  location,
+}) => {
+  const searchParams = new URLSearchParams(location.search);
+  searchParams.set("pageId", data.page.id);
+  return [
+    {
+      rel: "stylesheet",
+      href: `/s/css/?${searchParams}`,
+      "data-webstudio": "ssr",
+    },
+  ];
+};
+
+export const handle = { dynamicLinks };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
   if ("errors" in data) {
@@ -34,15 +56,12 @@ export const loader: LoaderFunction = async ({
     const buildParams = getBuildParams(request);
 
     if (buildParams === undefined) {
-      return redirect(config.dashboardPath);
+      return redirect(dashboardPath());
     }
 
     const { mode, pathname } = buildParams;
 
-    const project =
-      "projectId" in buildParams
-        ? await db.project.loadById(buildParams.projectId)
-        : await db.project.loadByDomain(buildParams.projectDomain);
+    const project = await db.project.loadByParams(buildParams);
 
     if (project === null) {
       throw json("Project not found", { status: 404 });

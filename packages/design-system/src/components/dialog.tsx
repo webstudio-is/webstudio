@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Cross1Icon } from "@webstudio-is/icons";
+import { CrossIcon } from "@webstudio-is/icons";
 import { overlayStyles } from "./overlay";
 import { panelStyles } from "./panel";
 import { IconButton } from "./icon-button";
@@ -36,7 +36,7 @@ const StyledContent = styled(DialogPrimitive.Content, panelStyles, {
   transform: "translate(-50%, -50%)",
   minWidth: 200,
   maxHeight: "85vh",
-  padding: "$4",
+  padding: "$spacing$10",
   marginTop: "-5vh",
   // animation: `${fadeIn} 125ms linear, ${moveDown} 125ms cubic-bezier(0.22, 1, 0.36, 1)`,
 
@@ -51,8 +51,8 @@ const StyledContent = styled(DialogPrimitive.Content, panelStyles, {
 
 const StyledCloseButton = styled(DialogPrimitive.Close, {
   position: "absolute",
-  top: "$2",
-  right: "$2",
+  top: "$spacing$5",
+  right: "$spacing$5",
 });
 
 type DialogContentPrimitiveProps = React.ComponentProps<
@@ -68,7 +68,7 @@ export const DialogContent = React.forwardRef<
     {children}
     <StyledCloseButton asChild>
       <IconButton>
-        <Cross1Icon />
+        <CrossIcon />
       </IconButton>
     </StyledCloseButton>
   </StyledContent>

@@ -1,60 +1,112 @@
-/* This entire module is WIP */
-import type { Asset } from "@webstudio-is/asset-uploader";
 import {
-  Flex,
-  Box,
-  ComboboxListboxItem,
-  TextField,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  IconButton,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  Text,
-  DropdownMenuPortal,
-  useCombobox,
+  List,
+  ListItem,
+  useList,
+  findNextListIndex,
 } from "@webstudio-is/design-system";
-import { AssetUpload, PreviewAsset, useAssets } from "~/designer/shared/assets";
-import { SYSTEM_FONTS } from "@webstudio-is/fonts";
-import { DotsHorizontalIcon, MagnifyingGlassIcon } from "@webstudio-is/icons";
-import { useMemo } from "react";
+import {
+  AssetsShell,
+  Separator,
+  useAssets,
+  useSearch,
+} from "~/designer/shared/assets";
+import { useEffect, useMemo, useState } from "react";
+import { useMenu } from "./item-menu";
+import { CheckIcon } from "@webstudio-is/icons";
+import {
+  type Item,
+  filterIdsByFamily,
+  filterItems,
+  groupItemsByType,
+  toItems,
+} from "./item-utils";
+import { useFilter } from "../assets/use-filter";
 
-const getItems = (
-  assets: Array<Asset | PreviewAsset>
-): Array<{ label: string }> => {
-  const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({ label }));
-  // We can have 2+ assets with the same family name, so we use a map to dedupe.
-  const uploaded = new Map();
-  for (const asset of assets) {
-    // @todo need to teach ts the right type from useAssets
-    if ("meta" in asset && "family" in asset.meta) {
-      uploaded.set(asset.meta.family, { label: asset.meta.family });
-    }
-  }
-  return [...system, ...uploaded.values()];
-};
-
-const ItemMenu = ({ onDelete }: { onDelete: () => void }) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <IconButton aria-label="Font menu button">
-          <DotsHorizontalIcon />
-        </IconButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuPortal>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onSelect={() => {
-              onDelete();
-            }}
-          >
-            <Text>Delete font</Text>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenu>
+const useLogic = ({
+  onChange,
+  value,
+}: {
+  onChange: (value: string) => void;
+  value: string;
+}) => {
+  const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const fontItems = useMemo(() => toItems(assets), [assets]);
+  const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
+    items: fontItems,
+    onReset() {
+      searchProps.onCancel();
+    },
+  });
+  const { uploadedItems, systemItems, groupedItems } = useMemo(
+    () => groupItemsByType(filteredItems),
+    [filteredItems]
   );
+  const [currentIndex, setCurrentIndex] = useState(-1);
+
+  useEffect(() => {
+    setCurrentIndex(groupedItems.findIndex((item) => item.label === value));
+  }, [groupedItems, value]);
+
+  const handleChangeCurrent = (nextCurrentIndex: number) => {
+    const item = groupedItems[nextCurrentIndex];
+    if (item !== undefined) {
+      setCurrentIndex(nextCurrentIndex);
+      onChange(item.label);
+    }
+  };
+
+  const { getItemProps, getListProps } = useList({
+    items: groupedItems,
+    selectedIndex,
+    currentIndex,
+    onSelect: setSelectedIndex,
+    onChangeCurrent: handleChangeCurrent,
+  });
+
+  const handleDelete = (index: number) => {
+    const family = groupedItems[index].label;
+    const ids = filterIdsByFamily(family, assets);
+    handleDeleteAssets(ids);
+    if (index === currentIndex) {
+      setCurrentIndex(-1);
+    }
+  };
+
+  const searchProps = useSearch({
+    onCancel: resetFilteredItems,
+    onSearch(search) {
+      if (search === "") {
+        return resetFilteredItems();
+      }
+      const items = filterItems(search, groupedItems);
+      setFilteredItems(items);
+    },
+    onSelect(direction) {
+      if (direction === "current") {
+        handleChangeCurrent(selectedIndex);
+        return;
+      }
+      const nextIndex = findNextListIndex(
+        selectedIndex,
+        groupedItems.length,
+        direction
+      );
+      setSelectedIndex(nextIndex);
+    },
+  });
+
+  return {
+    groupedItems,
+    uploadedItems,
+    systemItems,
+    selectedIndex,
+    handleDelete,
+    handleSelect: setSelectedIndex,
+    getItemProps,
+    getListProps,
+    searchProps,
+  };
 };
 
 type FontsManagerProps = {
@@ -63,80 +115,66 @@ type FontsManagerProps = {
 };
 
 export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
-  const { assets, handleDelete } = useAssets("font");
+  const {
+    groupedItems,
+    uploadedItems,
+    systemItems,
+    handleDelete,
+    handleSelect,
+    selectedIndex,
+    getListProps,
+    getItemProps,
+    searchProps,
+  } = useLogic({ onChange, value });
 
-  const handleDeleteByLabel = (family: string) => {
-    // One family may have multiple assets for different formats, so we need to delete them all.
-    const ids = assets
-      .filter(
-        (asset) =>
-          // @todo need to teach ts the right type from useAssets
-          "meta" in asset &&
-          "family" in asset.meta &&
-          asset.meta.family === family
-      )
-      .map((asset) => asset.id);
-    handleDelete(ids);
+  const listProps = getListProps();
+  const { render: renderMenu, isOpen: isMenuOpen } = useMenu({
+    selectedIndex,
+    onSelect: handleSelect,
+    onDelete: handleDelete,
+  });
+
+  const renderItem = (item: Item, index: number) => {
+    const itemProps = getItemProps({ index });
+    return (
+      <ListItem
+        {...itemProps}
+        prefix={itemProps.current ? <CheckIcon /> : undefined}
+        suffix={item.type === "uploaded" ? renderMenu(index) : undefined}
+      >
+        {item.label}
+      </ListItem>
+    );
   };
 
-  const fontItems = useMemo(() => getItems(assets), [assets]);
-  const selectedItem =
-    fontItems.find((item) => item.label === value) ?? fontItems[0];
-
-  const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
-    useCombobox({
-      items: fontItems,
-      value: selectedItem,
-      itemToString: (item) => item?.label ?? "",
-      onItemSelect: (value) => {
-        if (value !== null) {
-          onChange(value.label);
-        }
-      },
-    });
-
-  const { isEmpty, ...menuProps } = getMenuProps();
-
   return (
-    <Flex
-      gap="3"
-      direction="column"
-      css={{ padding: "$1", paddingTop: "$2", height: 460, overflow: "hidden" }}
+    <AssetsShell
+      searchProps={searchProps}
+      type="font"
+      isEmpty={groupedItems.length === 0}
     >
-      <Box css={{ padding: "$2" }}>
-        <AssetUpload type="font" />
-      </Box>
-
-      <Flex
-        {...getComboboxProps()}
-        css={{ flexDirection: "column", gap: "$3" }}
+      <List
+        {...listProps}
+        onBlur={(event) => {
+          if (isMenuOpen === false) {
+            listProps.onBlur(event);
+          }
+        }}
       >
-        <TextField
-          type="search"
-          prefix={<MagnifyingGlassIcon />}
-          {...getInputProps()}
-        />
-        <fieldset>
-          <legend>Choose an item</legend>
-          <Flex {...menuProps} css={{ flexDirection: "column" }}>
-            {items.map((item, index) => {
-              return (
-                <ComboboxListboxItem
-                  {...getItemProps({ item, index })}
-                  key={index}
-                >
-                  {item.label}
-                  <ItemMenu
-                    onDelete={() => {
-                      handleDeleteByLabel(item.label);
-                    }}
-                  />
-                </ComboboxListboxItem>
-              );
-            })}
-          </Flex>
-        </fieldset>
-      </Flex>
-    </Flex>
+        {uploadedItems.length !== 0 && (
+          <ListItem state="disabled">{"Uploaded"}</ListItem>
+        )}
+        {uploadedItems.map(renderItem)}
+        {systemItems.length !== 0 && (
+          <>
+            {uploadedItems.length !== 0 && <Separator />}
+            <ListItem state="disabled">{"System"}</ListItem>
+          </>
+        )}
+        {systemItems.map((item, index) =>
+          renderItem(item, index + uploadedItems.length)
+        )}
+      </List>
+    </AssetsShell>
   );
 };

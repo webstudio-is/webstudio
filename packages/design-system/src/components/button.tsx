@@ -7,7 +7,7 @@ export const Button = styled("button", {
   boxSizing: "border-box",
   border: "none",
   userSelect: "none",
-  transition: "all 200ms ease-out",
+  transition: "all 150ms ease-out",
   "&::before": {
     boxSizing: "border-box",
   },
@@ -23,10 +23,10 @@ export const Button = styled("button", {
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
   // Custom
-  height: "$5",
-  px: "$2",
+  height: "$spacing$11",
+  px: "$spacing$5",
   fontFamily: "$sans",
-  fontSize: "$2",
+  fontSize: "$fontSize$3",
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",
 
@@ -40,22 +40,22 @@ export const Button = styled("button", {
   variants: {
     size: {
       "1": {
-        borderRadius: 2,
-        height: "$5",
-        px: "$3",
-        fontSize: "$1",
+        borderRadius: "$borderRadius$4",
+        height: "$spacing$11",
+        px: "$spacing$9",
+        fontSize: "$fontSize$3",
       },
       "2": {
-        borderRadius: "$2",
+        borderRadius: "$borderRadius$6",
         height: 28, // @todo waiting for the sizing scale
-        px: "$3",
-        fontSize: "$3",
+        px: "$spacing$9",
+        fontSize: "$fontSize$4",
       },
       "3": {
-        borderRadius: "$2",
-        height: "$7",
-        px: "$4",
-        fontSize: "$4",
+        borderRadius: "$borderRadius$6",
+        height: "$spacing$17",
+        px: "$spacing$10",
+        fontSize: "$fontSize$4",
       },
     },
     variant: {
@@ -82,7 +82,7 @@ export const Button = styled("button", {
       },
       blue: {
         backgroundColor: "$blue10",
-        color: "$loContrast",
+        color: "white",
         "@hover": {
           "&:hover": {
             backgroundColor: "$loContrast",
@@ -269,7 +269,8 @@ export const Button = styled("button", {
           backgroundColor: "$blueA4",
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$blueA8, 0 0 0 1px $colors$blueA8",
+          boxShadow:
+            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
         },
         '&[data-state="open"]': {
           backgroundColor: "$blueA4",

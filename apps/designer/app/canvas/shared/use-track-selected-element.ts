@@ -6,10 +6,7 @@ import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import {
-  findClosestNonInlineParent,
-  findInstanceById,
-} from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 import {
   getInstanceElementById,
   getInstanceIdFromElement,
@@ -36,7 +33,7 @@ export const useTrackSelectedElement = () => {
   const selectInstance = useCallback(
     (id) => {
       if (rootInstance === undefined) return;
-      const instance = findInstanceById(rootInstance, id);
+      const instance = utils.tree.findInstanceById(rootInstance, id);
       setSelectedInstance(instance);
     },
     [setSelectedInstance, rootInstance]
@@ -74,9 +71,10 @@ export const useTrackSelectedElement = () => {
       let element = event.target as HTMLElement;
 
       // If we click on an element that is not a component, we search for a parent component.
-      if (element.dataset.component === undefined) {
-        const instanceElement =
-          element.closest<HTMLElement>("[data-component]");
+      if (element.dataset.wsComponent === undefined) {
+        const instanceElement = element.closest<HTMLElement>(
+          "[data-ws-component]"
+        );
         if (instanceElement === null) {
           return;
         }
@@ -92,7 +90,7 @@ export const useTrackSelectedElement = () => {
 
       // It's the second click in a double click.
       if (event.detail === 2) {
-        const component = dataset.component as Instance["component"];
+        const component = dataset.wsComponent as Instance["component"];
         if (component === undefined || component in components === false) {
           return;
         }
@@ -102,7 +100,8 @@ export const useTrackSelectedElement = () => {
         // Inline instances are not editable directly, only through parent instance.
         if (isInlineOnly) {
           const parent =
-            rootInstance && findClosestNonInlineParent(rootInstance, id);
+            rootInstance &&
+            utils.tree.findClosestNonInlineParent(rootInstance, id);
           if (parent && components[parent.component].isContentEditable) {
             selectInstance(parent.id);
             setEditingInstanceId(parent.id);

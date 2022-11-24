@@ -1,4 +1,4 @@
-import { type CssRule, type Breakpoint } from "@webstudio-is/react-sdk";
+import type { CssRule, Breakpoint } from "@webstudio-is/css-data";
 
 /**
  * Find a instance css rule that is set on the provided breakpoint.

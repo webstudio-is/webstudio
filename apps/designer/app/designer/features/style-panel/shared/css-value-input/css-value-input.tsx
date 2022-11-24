@@ -7,28 +7,31 @@ import {
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  IconButton,
   numericScrubControl,
+  TextFieldIcon,
+  TextFieldIconButton,
+  styled,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import {
-  type KeywordValue,
-  type StyleProperty,
-  type UnsetValue,
+import type {
+  KeywordValue,
+  StyleProperty,
+  UnsetValue,
   StyleValue,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/css-data";
 import {
   type KeyboardEventHandler,
   type KeyboardEvent,
+  useCallback,
   useEffect,
   useRef,
+  useState,
 } from "react";
+import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
+import { isValid, isNumericString } from "../parse-css-value";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
-
-const isNumericString = (input: string) =>
-  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -41,6 +44,7 @@ const calcNumberChange = (
 };
 
 const useHandleOnChange = (
+  property: StyleProperty,
   value: StyleValue,
   input: string,
   onChange: (value: StyleValue) => void
@@ -49,16 +53,22 @@ const useHandleOnChange = (
   const valueRef = useRef<StyleValue>(value);
 
   useEffect(() => {
-    if (input === String(valueRef.current.value)) {
+    if (input === "" || input === String(valueRef.current.value)) {
       return;
     }
 
     // We want to switch to unit mode if entire input is a number.
     if (isNumericString(input)) {
+      if (value.type === "unit" && String(Number(input)) !== input) return;
       onChange?.({
         type: "unit",
-        // Use previously known unit or fallback to px.
-        unit: valueRef.current.type === "unit" ? valueRef.current.unit : "px",
+        // Use previously known unit or fallback to the most common unit: px, if supported
+        unit:
+          valueRef.current.type === "unit"
+            ? valueRef.current.unit
+            : isValid(property, input + "px")
+            ? "px"
+            : "number",
         value: Number(input),
       });
       return;
@@ -68,7 +78,7 @@ const useHandleOnChange = (
       type: "keyword",
       value: input,
     });
-  }, [input, onChange]);
+  }, [property, input, value.type, onChange]);
 
   useEffect(() => {
     valueRef.current = value;
@@ -79,12 +89,20 @@ const useScrub = ({
   value,
   onChange,
   onChangeComplete,
+  shouldHandleEvent,
 }: {
   value: StyleValue;
   onChange: (value: StyleValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-}) => {
+  shouldHandleEvent?: (node: EventTarget) => boolean;
+}): [
+  React.MutableRefObject<HTMLDivElement | null>,
+  React.MutableRefObject<HTMLInputElement | null>,
+  boolean
+] => {
+  const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [isInputActive, setIsInputActive] = useState(false);
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
@@ -99,17 +117,24 @@ const useScrub = ({
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
-    if (type !== "unit" || unit === undefined || inputRef.current === null) {
+    const inputRefCurrent = inputRef.current;
+    const scrubRefCurrent = scrubRef.current;
+    if (
+      type !== "unit" ||
+      unit === undefined ||
+      inputRefCurrent === null ||
+      scrubRefCurrent === null
+    ) {
       return;
     }
-    const scrub = numericScrubControl(inputRef.current, {
-      initialValue: valueRef.current.value,
+
+    const value = valueRef.current.value;
+    const scrub = numericScrubControl(scrubRefCurrent, {
+      initialValue: value,
       onValueInput(event) {
-        onChangeRef.current({
-          type,
-          unit,
-          value: event.value,
-        });
+        inputRefCurrent.value = String(event.value);
+        setIsInputActive(true);
+        inputRefCurrent.blur();
       },
       onValueChange(event) {
         onChangeCompleteRef.current({
@@ -117,13 +142,17 @@ const useScrub = ({
           unit,
           value: event.value,
         });
+        setIsInputActive(false);
+        inputRefCurrent.focus();
+        inputRefCurrent.select();
       },
+      shouldHandleEvent: shouldHandleEvent,
     });
 
     return scrub.disconnectedCallback;
-  }, [type, unit]);
+  }, [type, unit, shouldHandleEvent]);
 
-  return inputRef;
+  return [scrubRef, inputRef, isInputActive];
 };
 
 const useHandleKeyDown =
@@ -148,7 +177,8 @@ const useHandleKeyDown =
     }
     if (
       value.type === "unit" &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown")
+      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
+      event.currentTarget.value
     ) {
       onChange({
         ...value,
@@ -199,13 +229,14 @@ type CssValueInputProps = {
  */
 
 export const CssValueInput = ({
+  icon,
   property,
   value = unsetValue,
   keywords = [],
   onChange,
   onChangeComplete,
   onItemHighlight,
-}: CssValueInputProps) => {
+}: CssValueInputProps & { icon?: JSX.Element }) => {
   const {
     items,
     getInputProps,
@@ -227,9 +258,10 @@ export const CssValueInput = ({
 
   const inputProps = getInputProps();
 
-  useHandleOnChange(value, inputProps.value, onChange);
+  useHandleOnChange(property, value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    property,
     value: value.type === "unit" ? value : undefined,
     onChange: onChangeComplete,
     onCloseAutoFocus(event) {
@@ -240,10 +272,14 @@ export const CssValueInput = ({
     },
   });
 
-  const inputRef = useScrub({
+  const shouldHandleEvent = useCallback((node) => {
+    return suffixRef.current?.contains?.(node) === false;
+  }, []);
+  const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
     onChange,
     onChangeComplete,
+    shouldHandleEvent,
   });
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
@@ -261,14 +297,37 @@ export const CssValueInput = ({
     closeMenu,
   });
 
-  const suffix =
-    value.type === "keyword" ? (
-      <IconButton {...getToggleButtonProps()}>
-        <ChevronDownIcon />
-      </IconButton>
-    ) : value.type === "unit" ? (
-      unitSelectElement
-    ) : null;
+  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const prefix = icon && (
+    <CssValueInputIconButton
+      state={isCurrentBreakpoint ? "set" : undefined}
+      css={value.type == "unit" ? { cursor: "ew-resize" } : undefined}
+    >
+      {icon}
+    </CssValueInputIconButton>
+  );
+
+  const keywordButtonElement = (
+    <TextFieldIconButton
+      {...getToggleButtonProps()}
+      state={isOpen ? "active" : undefined}
+    >
+      <ChevronDownIcon />
+    </TextFieldIconButton>
+  );
+  const hasItems = items.length !== 0;
+  const isUnitValue = value.type === "unit";
+  const isKeywordValue = value.type === "keyword" && hasItems;
+  const suffixRef = useRef<HTMLDivElement | null>(null);
+  const suffix = (
+    <Box ref={suffixRef}>
+      {isUnitValue
+        ? unitSelectElement
+        : isKeywordValue
+        ? keywordButtonElement
+        : null}
+    </Box>
+  );
 
   return (
     <ComboboxPopper>
@@ -282,14 +341,26 @@ export const CssValueInput = ({
             }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
+            baseRef={scrubRef}
             inputRef={inputRef}
             name={property}
-            state={value.type === "invalid" ? "invalid" : undefined}
+            state={
+              value.type === "invalid"
+                ? "invalid"
+                : isInputActive
+                ? "active"
+                : undefined
+            }
+            prefix={prefix}
             suffix={suffix}
             css={{ cursor: "default" }}
           />
         </ComboboxPopperAnchor>
-        <ComboboxPopperContent align="start" sideOffset={5}>
+        <ComboboxPopperContent
+          align="start"
+          sideOffset={8}
+          collisionPadding={10}
+        >
           <ComboboxListbox {...getMenuProps()}>
             {isOpen &&
               items.map((item, index) => (
@@ -306,3 +377,27 @@ export const CssValueInput = ({
     </ComboboxPopper>
   );
 };
+
+const CssValueInputIconButton = styled(TextFieldIcon, {
+  variants: {
+    state: {
+      set: {
+        backgroundColor: "$blue4",
+        color: "$blue11",
+        "&:hover": {
+          backgroundColor: "$blue4",
+          color: "$blue11",
+        },
+      },
+
+      inherited: {
+        backgroundColor: "$orange4",
+        color: "$orange11",
+        "&:hover": {
+          backgroundColor: "$orange4",
+          color: "$orange11",
+        },
+      },
+    },
+  },
+});

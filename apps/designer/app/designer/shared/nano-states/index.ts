@@ -1,9 +1,9 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import { type Breakpoint } from "@webstudio-is/react-sdk";
+import { type Breakpoint } from "@webstudio-is/css-data";
 import {
   type SelectedInstanceData,
   type HoveredInstanceData,
-} from "~/shared/canvas-components";
+} from "@webstudio-is/project";
 import { type SyncStatus } from "~/shared/sync";
 import { Asset } from "@webstudio-is/asset-uploader";
 import { type Pages, type Project } from "@webstudio-is/project";
@@ -46,9 +46,6 @@ export const useCanvasRect = () => useValue(canvasRectContainer);
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
 
-const selectionRectContainer = createValueContainer<DOMRect | undefined>();
-export const useSelectionRect = () => useValue(selectionRectContainer);
-
 const assetsContainer = createValueContainer<Array<Asset | PreviewAsset>>([]);
 export const useAssets = () => useValue(assetsContainer);
 
@@ -60,3 +57,15 @@ export const useCurrentPageId = () => useValue(currentPageIdContainer);
 
 const projectContainer = createValueContainer<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
+
+export type TextToolbarState = {
+  selectionRect: DOMRect;
+  isBold: boolean;
+  isItalic: boolean;
+  isSuperscript: boolean;
+  isSubscript: boolean;
+  isLink: boolean;
+  isSpan: boolean;
+};
+const textToolbarState = createValueContainer<undefined | TextToolbarState>();
+export const useTextToolbarState = () => useValue(textToolbarState);

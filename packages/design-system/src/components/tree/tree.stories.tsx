@@ -11,7 +11,7 @@ import {
   reparent,
 } from "./test-tree-data";
 import { Flex } from "../flex";
-import { TreeNodeLabel } from "./tree-node";
+import { TreeItemLabel, TreeItemBody } from "./tree-node";
 
 export const StressTest = ({ animate }: { animate: boolean }) => {
   const [root, setRoot] = useState<Item>((): Item => {
@@ -88,8 +88,10 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
         root={root}
         selectedItemId={selectedItemId}
         onSelect={(instanceId) => setSelectedItemId(instanceId)}
-        renderItem={({ data, isSelected }) => (
-          <TreeNodeLabel text={data.id} isSelected={isSelected} />
+        renderItem={(props) => (
+          <TreeItemBody {...props}>
+            <TreeItemLabel>{props.itemData.id}</TreeItemLabel>
+          </TreeItemBody>
         )}
         onDragEnd={(payload) => setRoot((root) => reparent(root, payload))}
         onDelete={() => null}

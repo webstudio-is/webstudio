@@ -24,16 +24,6 @@ export const SelectControl = ({
       options={styleConfig.items.map(({ label }) => label)}
       value={String(value.value)}
       onChange={setValue}
-      ghost
-      css={{
-        gap: "calc($sizes$1 / 2)",
-        paddingLeft: "calc($sizes$4 / 2)",
-        height: "calc($sizes$5 + $sizes$1)",
-        boxShadow: "inset 0 0 0 1px $colors$slate7",
-        textTransform: "capitalize",
-        fontWeight: "inherit",
-        "&:hover": { background: "none" },
-      }}
     />
   );
 };

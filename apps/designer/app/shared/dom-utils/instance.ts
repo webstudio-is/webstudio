@@ -1,5 +1,5 @@
 import { type Instance } from "@webstudio-is/react-sdk";
-import { findInstanceById } from "~/shared/tree-utils";
+import { utils } from "@webstudio-is/project";
 
 export const getInstanceElementById = (id: Instance["id"]) => {
   return document.getElementById(id);
@@ -21,5 +21,5 @@ export const findInstanceByElement = (
     return undefined;
   }
 
-  return findInstanceById(rootInstance, id);
+  return utils.tree.findInstanceById(rootInstance, id);
 };

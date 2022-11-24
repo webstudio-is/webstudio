@@ -7,7 +7,7 @@ import {
   Project as BaseProject,
 } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { formatAsset } from "@webstudio-is/asset-uploader/index.server";
+import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import * as db from "./index";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
@@ -21,6 +21,14 @@ const parseProject = (project: BaseProject): Project => {
     ...project,
     assets: project?.assets?.map(formatAsset),
   };
+};
+
+export const loadByParams = async (
+  params: { projectId: string } | { projectDomain: string }
+) => {
+  return "projectId" in params
+    ? await loadById(params.projectId)
+    : await loadByDomain(params.projectDomain);
 };
 
 export const loadById = async (projectId?: Project["id"]) => {
@@ -54,6 +62,7 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
       },
     },
   });
+
   if (!project) return null;
 
   return parseProject(project);

@@ -1,6 +1,6 @@
 import { components } from "@webstudio-is/react-sdk";
 import { Flex, Text } from "@webstudio-is/design-system";
-import type { SelectedInstanceData } from "~/shared/canvas-components";
+import type { SelectedInstanceData } from "@webstudio-is/project";
 
 export const ComponentInfo = ({
   selectedInstanceData,
@@ -11,7 +11,7 @@ export const ComponentInfo = ({
     <Flex justify="between" align="center">
       <Text
         css={{
-          fontSize: "$2",
+          fontSize: "$fontSize$3",
           color: "$colors$slate11",
           fontWeight: "500",
         }}

@@ -189,13 +189,13 @@ export const ScrollArea = (props: ScrollAreaProps) => {
           position: "absolute",
           top: 0,
           right: 0,
-          width: "8px",
+          width: "$spacing$5",
           // Fill in the thumb color
           "&::after": {
             content: '""',
             position: "absolute",
-            top: "2px",
-            left: "2px",
+            top: "$spacing$2",
+            left: "$spacing$2",
             width: "calc(100% - 4px)",
             height: "calc(100% - 4px)",
             // Match Radix hue on grays

@@ -1,24 +1,35 @@
-import React, { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 const defaultTag = "img";
 
+// quality and optimize can be overwritten and used by asset transform
+// Or we need and additional way to pass them upper level
 type ImageProps = ComponentProps<typeof defaultTag>;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
-  (props, ref) => <img {...props} ref={ref} />
+  (imageProps, ref) => {
+    return (
+      <img
+        {...imageProps}
+        src={imageProps.src || imagePlaceholderSvg}
+        decoding="async"
+        ref={ref}
+      />
+    );
+  }
 );
 
 Image.defaultProps = {
   src: "",
+  width: "",
+  height: "",
   loading: "lazy",
-  width: "auto",
-  height: "auto",
   alt: "",
 };
 
 Image.displayName = "Image";
 
-const imagePlaceholderSvg = `<svg
+const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
   width="140"
   height="140"
   viewBox="0 0 600 600"
@@ -40,11 +51,4 @@ const imagePlaceholderSvg = `<svg
     d="M160 405V367.205L221.609 306.364L256.552 338.628L358.161 234L440 316.043V405H160Z"
     fill="#A2A2A2"
   />
-</svg>`;
-
-// Defining src here prevents analyzer from putting the image into the UI.
-// @todo it would be better to have the image hosted like a normal image,
-// the problem is inside sdk bundler doesn't know how to do that.
-Image.defaultProps.src = `data:image/svg+xml;base64,${btoa(
-  imagePlaceholderSvg
-)}`;
+</svg>`)}`;

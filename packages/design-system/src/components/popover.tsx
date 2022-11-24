@@ -1,5 +1,5 @@
 import React from "react";
-import { Cross1Icon } from "@webstudio-is/icons";
+import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
 import { panelStyles } from "./panel";
@@ -18,12 +18,15 @@ export const Popover = ({ children, ...props }: PopoverProps) => {
 };
 
 const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
+  backgroundColor: "white",
   minWidth: 200,
-  minHeight: "$6",
+  minHeight: "$spacing$13",
   maxWidth: 265,
   "&:focus": {
     outline: "none",
   },
+  display: "flex",
+  flexDirection: "column",
 });
 
 type PopoverContentPrimitiveProps = React.ComponentProps<
@@ -66,21 +69,27 @@ type PopoverHeaderProps = {
 
 export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
   return (
-    <>
+    <Box css={{ order: -1 }}>
       <Flex
-        css={{ height: 40, paddingLeft: "$3" }}
+        css={{ height: 40, paddingLeft: "$spacing$9" }}
         align="center"
         justify="between"
       >
         <Text variant="title">{title}</Text>
         <PopoverClose asChild>
-          <IconButton size="1" css={{ marginRight: "$2" }} aria-label="Close">
-            <Cross1Icon />
+          <IconButton
+            size="2"
+            css={{
+              marginRight: "$spacing$5",
+            }}
+            aria-label="Close"
+          >
+            <CrossLargeIcon />
           </IconButton>
         </PopoverClose>
       </Flex>
-      <Separator css={{ height: 2 }} />
-    </>
+      <Separator />
+    </Box>
   );
 };
 

@@ -1,12 +1,63 @@
-export { default as Body } from "./body.stories";
-export { default as Button } from "./button.stories";
-export { default as Bold } from "./bold.stories";
-export { default as Box } from "./box.stories";
-export { default as Form } from "./form.stories";
-export { default as Heading } from "./heading.stories";
-export { default as Input } from "./input.stories";
-export { default as Italic } from "./italic.stories";
-export { default as Link } from "./link.stories";
-export { default as Paragraph } from "./paragraph.stories";
-export { default as TextBlock } from "./text-block.stories";
-export { default as Image } from "./image.stories";
+import Body from "./body.props.json";
+import Button from "./button.props.json";
+import Bold from "./bold.props.json";
+import Box from "./box.props.json";
+import Form from "./form.props.json";
+import Heading from "./heading.props.json";
+import Input from "./input.props.json";
+import Italic from "./italic.props.json";
+import Superscript from "./superscript.props.json";
+import Subscript from "./subscript.props.json";
+import Link from "./link.props.json";
+import Paragraph from "./paragraph.props.json";
+import Span from "./span.props.json";
+import TextBlock from "./text-block.props.json";
+import Image from "./image.props.json";
+
+const meta = {
+  Body,
+  Button,
+  Bold,
+  Box,
+  Form,
+  Heading,
+  Input,
+  Italic,
+  Superscript,
+  Subscript,
+  Link,
+  Paragraph,
+  Span,
+  TextBlock,
+  Image,
+} as const;
+
+type MetaProp =
+  | {
+      type: "text";
+      required: boolean;
+      defaultValue: null | string;
+    }
+  | {
+      type: "boolean";
+      required: boolean;
+      defaultValue: null | boolean;
+    }
+  | {
+      type:
+        | "radio"
+        | "inline-radio"
+        | "check"
+        | "inline-check"
+        | "multi-select"
+        | "select";
+      required: boolean;
+      defaultValue: null | string;
+      options: string[];
+    };
+
+type MetaProps = Record<string, MetaProp>;
+
+// Probably better instead of JSON to generate ts with `as const`
+export const componentsMeta: Record<keyof typeof meta, MetaProps> =
+  meta as Record<keyof typeof meta, MetaProps>;

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { type StyleProperty } from "@webstudio-is/react-sdk";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import {
   useSelectedBreakpoint,
   useSelectedInstanceData,

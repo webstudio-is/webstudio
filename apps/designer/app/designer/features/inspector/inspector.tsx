@@ -28,9 +28,9 @@ export const Inspector = ({ publish }: InspectorProps) => {
 
   if (selectedInstanceData === undefined) {
     return (
-      <Box css={{ p: "$2", flexBasis: "100%" }}>
+      <Box css={{ p: "$spacing$5", flexBasis: "100%" }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
-        <Card css={{ p: "$3", mt: "$3", width: "100%" }}>
+        <Card css={{ p: "$spacing$9", mt: "$spacing$9", width: "100%" }}>
           <Paragraph>Select an instance on the canvas</Paragraph>
         </Card>
       </Box>
@@ -39,7 +39,14 @@ export const Inspector = ({ publish }: InspectorProps) => {
 
   return (
     // @todo: Nit: I wonder if this width was supposed to be defined by the parent container layout
-    <Tabs defaultValue="style" css={{ width: "100%" }}>
+    <Tabs
+      defaultValue="style"
+      css={{
+        width: "100%",
+        position:
+          "relative" /* Hack - value picker popover positioning depends on it */,
+      }}
+    >
       <TabsList>
         <TabsTrigger value="style">
           <Text>Style</Text>

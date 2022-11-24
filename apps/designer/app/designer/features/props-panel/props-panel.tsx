@@ -3,10 +3,11 @@ import {
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
+
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import type { SelectedInstanceData } from "~/shared/canvas-components";
+import type { SelectedInstanceData } from "@webstudio-is/project";
 import {
   Box,
   Button,
@@ -27,7 +28,8 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
-import { handleChangePropType, usePropsLogic } from "./use-props-logic";
+import { usePropsLogic } from "./use-props-logic";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -104,76 +106,82 @@ const Combobox = ({
   );
 };
 
-type PropertyProps = UserProp & {
+type PropertyProps = {
+  userProp: UserProp;
   component: Instance["component"];
-  onChange: handleChangePropType;
+  onChangePropName: (name: string, defaultValue: string | boolean) => void;
+  onChangePropValue: (value: string | boolean, asset?: Asset) => void;
   onDelete: (id: UserProp["id"]) => void;
 };
 
 const Property = ({
-  id,
-  prop,
-  value,
-  required = false,
+  userProp,
   component,
-  onChange,
+  onChangePropName,
+  onChangePropValue,
   onDelete,
 }: PropertyProps) => {
   const meta = componentsMeta[component];
-  const argType = meta.argTypes?.[prop as keyof typeof meta.argTypes];
+
+  const argType = meta[userProp.prop as keyof typeof meta];
   const isInvalid =
-    prop != null &&
-    prop.length > 0 &&
+    userProp.prop != null &&
+    userProp.prop.length > 0 &&
     typeof argType === "undefined" &&
-    !prop.match(/^data-(.)+/);
-  const type = argType?.control.type || "text";
-  const defaultValue = argType?.control.defaultValue;
-  const options = argType?.options;
-  const allProps = meta.argTypes ? Object.keys(meta.argTypes) : [];
+    !userProp.prop.match(/^data-(.)+/);
+
+  const allProps = Object.keys(meta);
 
   return (
-    <Grid
-      gap={1}
-      css={{ gridTemplateColumns: "1fr 1fr auto", alignItems: "center" }}
-    >
+    <>
       <Combobox
         items={allProps}
-        value={prop}
-        onItemSelect={(value: PropertyProps["value"] | null) => {
-          if (value !== null) {
-            onChange(id, "prop", value);
+        value={userProp.prop}
+        onItemSelect={(name) => {
+          if (name != null) {
+            const argType = meta[name as keyof typeof meta];
+
+            const defaultValue =
+              argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+
+            onChangePropName(name, defaultValue);
           }
         }}
-        onSubmit={(value) => {
-          onChange(id, "prop", value);
+        onSubmit={(name) => {
+          const argType = meta[name as keyof typeof meta];
+
+          const defaultValue =
+            argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+
+          onChangePropName(name, defaultValue);
         }}
         isInvalid={isInvalid}
-        isReadonly={required}
+        isReadonly={userProp.required ?? false}
       />
       {isInvalid ? (
-        <Tooltip content={`Invalid property name: ${prop}`}>
+        <Tooltip content={`Invalid property name: ${userProp.prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>
       ) : (
+        // requires matching complex union
+        // skip for now and fix types later
         <Control
-          type={type}
-          defaultValue={defaultValue}
-          options={options}
-          value={value}
-          onChange={(value: UserProp["value"]) => onChange(id, "value", value)}
+          component={component}
+          userProp={userProp}
+          onChangePropValue={onChangePropValue}
         />
       )}
-      {required !== true && (
+      {userProp.required !== true && (
         <Button
           ghost
           onClick={() => {
-            onDelete(id);
+            onDelete(userProp.id);
           }}
         >
           <TrashIcon />
         </Button>
       )}
-    </Grid>
+    </>
   );
 };
 
@@ -186,8 +194,13 @@ export const PropsPanel = ({
   selectedInstanceData,
   publish,
 }: PropsPanelProps) => {
-  const { userProps, addEmptyProp, handleChangeProp, handleDeleteProp } =
-    usePropsLogic({ selectedInstanceData, publish });
+  const {
+    userProps,
+    addEmptyProp,
+    handleChangePropName,
+    handleChangePropValue,
+    handleDeleteProp,
+  } = usePropsLogic({ selectedInstanceData, publish });
 
   const addButton = (
     <Button
@@ -200,9 +213,10 @@ export const PropsPanel = ({
       <PlusIcon />
     </Button>
   );
+
   return (
-    <>
-      <Box css={{ p: "$3" }}>
+    <Box>
+      <Box css={{ p: "$spacing$9" }}>
         <ComponentInfo selectedInstanceData={selectedInstanceData} />
       </Box>
       <CollapsibleSection
@@ -210,21 +224,29 @@ export const PropsPanel = ({
         rightSlot={addButton}
         isOpenDefault
       >
-        <>
-          {userProps.map(({ id, prop, value, required }) => (
+        <Grid
+          gap={1}
+          css={{
+            gridTemplateColumns: "1fr minmax(0, 1fr) auto",
+            alignItems: "center",
+          }}
+        >
+          {userProps.map((userProp) => (
             <Property
-              key={id}
-              id={id}
-              prop={prop}
-              value={value}
-              required={required}
+              key={userProp.id}
+              userProp={userProp}
               component={selectedInstanceData.component}
-              onChange={handleChangeProp}
+              onChangePropName={(name, defaultValue) =>
+                handleChangePropName(userProp.id, name, defaultValue)
+              }
+              onChangePropValue={(value, asset) =>
+                handleChangePropValue(userProp.id, value, asset)
+              }
               onDelete={handleDeleteProp}
             />
           ))}
-        </>
+        </Grid>
       </CollapsibleSection>
-    </>
+    </Box>
   );
 };

@@ -1,20 +1,27 @@
-import { Grid } from "@webstudio-is/design-system";
+import { Grid, type CSS } from "@webstudio-is/design-system";
 import type { StyleConfig } from "./shared/configs";
-import {
-  type Style,
-  type StyleProperty,
-  type Category,
-  type CSS,
-} from "@webstudio-is/react-sdk";
+import type { Category } from "@webstudio-is/react-sdk";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
 import * as controls from "./controls";
-import { ShowMore } from "./shared/show-more";
-import { LayoutSection, SpacingSection } from "./sections";
+import {
+  LayoutSection,
+  FlexChildSection,
+  GridChildSection,
+  SpacingSection,
+  SizeSection,
+  PositionSection,
+  TypographySection,
+  BackgroundsSection,
+  BordersSection,
+  EffectsSection,
+  OtherSection,
+} from "./sections";
 import { PropertyName } from "./shared/property-name";
 
 export type PropertyProps = {
-  property: StyleProperty;
+  property: StyleProperty | StyleProperty[];
   label: string;
   css?: CSS;
 };
@@ -32,7 +39,7 @@ export type RenderCategoryProps = {
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   sectionStyle: {
-    [Property in keyof Style]: RenderPropertyProps;
+    [Property in Required<keyof Style>]: RenderPropertyProps;
   };
   inheritedStyle: InheritedStyle;
   category: Category;
@@ -60,7 +67,7 @@ export const renderProperty = ({
   if (!Control) return null;
 
   return (
-    <Grid key={category + property} css={{ gridTemplateColumns: "40% 60%" }}>
+    <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>
       <PropertyName property={styleConfig.property} label={styleConfig.label} />
       <Control
         currentStyle={currentStyle}
@@ -83,22 +90,9 @@ export const renderCategory = ({
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
 }: RenderCategoryProps) => {
-  const Category = sections[category];
-  if (!Category) {
-    return (
-      <>
-        {styleConfigsByCategory.map((entry) => renderProperty(entry))}
-        <ShowMore
-          styleConfigs={moreStyleConfigsByCategory.map((entry) =>
-            renderProperty(entry)
-          )}
-        />
-      </>
-    );
-  }
-
+  const Section = sections[category];
   return (
-    <Category
+    <Section
       setProperty={setProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
@@ -126,8 +120,17 @@ export const shouldRenderCategory = ({
 };
 
 const sections: {
-  [key: string]: (props: RenderCategoryProps) => JSX.Element | null;
+  [Property in Category]: (props: RenderCategoryProps) => JSX.Element | null;
 } = {
   layout: LayoutSection,
+  flexChild: FlexChildSection,
+  gridChild: GridChildSection,
   spacing: SpacingSection,
+  size: SizeSection,
+  position: PositionSection,
+  typography: TypographySection,
+  backgrounds: BackgroundsSection,
+  borders: BordersSection,
+  effects: EffectsSection,
+  other: OtherSection,
 };

@@ -6,6 +6,8 @@ import { ShowMore } from "../../shared/show-more";
 import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
+import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
+import { getFinalValue } from "../../shared/get-final-value";
 
 const LayoutSectionFlex = ({
   currentStyle,
@@ -31,15 +33,27 @@ const LayoutSectionFlex = ({
     alignContent,
   ].some((config) => config !== undefined);
 
+  const flexWrapValue = getFinalValue({
+    currentStyle: flexWrap.currentStyle,
+    inheritedStyle: flexWrap.inheritedStyle,
+    property: flexWrap.styleConfig.property,
+  });
+
+  // From design: Notice that the align-content icon button is not visible by default.
+  // This property only applies when flex-wrap is set to "wrap".
+  const showAlignContent =
+    flexWrapValue?.type === "keyword" &&
+    (flexWrapValue.value === "wrap" || flexWrapValue.value === "wrap-reverse");
+
   return (
-    <Flex css={{ flexDirection: "column", gap: "$2" }}>
+    <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
       {display?.styleConfig && (
         <Grid
           css={{
             gridArea: "display",
             gridTemplateColumns: "auto 1fr",
-            gap: "$space$2",
-            width: "fit-content",
+            gap: "$spacing$13",
+            width: "100%",
             fontWeight: "500",
           }}
         >
@@ -53,9 +67,10 @@ const LayoutSectionFlex = ({
       {hasMenuItems && (
         <Grid
           css={{
-            gap: "$2",
-            gridTemplateColumns: "repeat(2, $6) repeat(3, $6)",
-            gridTemplateRows: "repeat(2, $6)",
+            gap: "$spacing$5",
+            gridTemplateColumns:
+              "repeat(2, $spacing$13) repeat(3, $spacing$13)",
+            gridTemplateRows: "repeat(2, $spacing$13)",
             gridTemplateAreas: `
             "grid grid flexDirection flexWrap ."
             "grid grid alignItems justifyContent alignContent"
@@ -86,7 +101,7 @@ const LayoutSectionFlex = ({
               <MenuControl {...justifyContent} />
             </Box>
           )}
-          {alignContent && (
+          {alignContent && showAlignContent && (
             <Box css={{ gridArea: "alignContent" }}>
               <MenuControl {...alignContent} />
             </Box>
@@ -106,11 +121,11 @@ const LayoutSectionFlex = ({
       >
         {columnGap?.styleConfig && (
           <Box css={{ gridArea: "columnGap" }}>
-            <TextControl {...columnGap} />
+            <TextControl icon={<ColumnGapIcon />} {...columnGap} />
           </Box>
         )}
         {rowGap?.styleConfig && columnGap?.styleConfig && (
-          <Box css={{ gridArea: "lock", px: "$1" }}>
+          <Box css={{ gridArea: "lock", px: "$spacing$3" }}>
             <Lock
               pairedKeys={["columnGap", "rowGap"]}
               currentStyle={currentStyle}
@@ -120,7 +135,7 @@ const LayoutSectionFlex = ({
         )}
         {rowGap?.styleConfig && (
           <Box css={{ gridArea: "rowGap" }}>
-            <TextControl {...rowGap} />
+            <TextControl icon={<RowGapIcon />} {...rowGap} />
           </Box>
         )}
       </Grid>

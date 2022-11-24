@@ -1,10 +1,6 @@
 import hyphenate from "hyphenate-style-name";
-import {
-  categories,
-  type CssRule,
-  type Category,
-  type Style,
-} from "@webstudio-is/react-sdk";
+import { categories, type Category } from "@webstudio-is/react-sdk";
+import type { CssRule, Style } from "@webstudio-is/css-data";
 
 import { type StyleConfig, styleConfigs } from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
@@ -19,7 +15,7 @@ import {
   type SetProperty,
   type CreateBatchUpdate,
 } from "./shared/use-style-data";
-import { type SelectedInstanceData } from "~/shared/canvas-components";
+import { type SelectedInstanceData } from "@webstudio-is/project";
 import { type RenderPropertyProps } from "./style-sections";
 
 // Finds a property/value by using any available form: property, label, value
@@ -110,19 +106,18 @@ export const StyleSettings = ({
         ? true
         : appliesTo(styleConfig, currentStyle);
       const isRendered = didRender(category, styleConfig);
+      const element = {
+        ...rest,
+        setProperty,
+        currentStyle,
+        styleConfig,
+        category,
+      };
+
+      sectionStyle[styleConfig.property] = element;
 
       // @todo remove isRendered once spacing section is converted to a section
       if (isInCategory && isApplicable && isRendered === false) {
-        const element = {
-          ...rest,
-          setProperty,
-          currentStyle,
-          styleConfig,
-          category,
-        };
-
-        sectionStyle[styleConfig.property] = element;
-
         // We are making a separate array of properties which come after the "moreFrom"
         // so we can make them collapsable
         if (

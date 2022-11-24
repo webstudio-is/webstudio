@@ -1,4 +1,27 @@
+// These are the utils for manipulating "build" params.
+// "Build" means user generated content — what user builds.
+
 export type BuildMode = "edit" | "preview" | "published";
+export type BuildParams =
+  | {
+      projectId: string;
+      mode: BuildMode;
+      pathname: string;
+      pageId?: string;
+    }
+  | {
+      projectDomain: string;
+      mode: BuildMode;
+      pathname: string;
+      pageId?: string;
+    };
+
+// A subtype of Request. To make testing easier.
+type MinimalRequest = {
+  url: string;
+  headers: { get: (name: string) => string | null };
+};
+
 const modes = ["edit", "preview", "published"] as BuildMode[];
 const getMode = (url: URL): BuildMode => {
   const modeParam = url.searchParams.get("mode");
@@ -8,12 +31,6 @@ const getMode = (url: URL): BuildMode => {
     throw new Error(`Invalid mode "${modeParam}"`);
   }
   return mode;
-};
-
-// A subtype of Request. To make testing easier.
-type MinimalRequest = {
-  url: string;
-  headers: { get: (name: string) => string | null };
 };
 
 const getRequestHost = (request: MinimalRequest): string =>
@@ -59,17 +76,20 @@ export const getBuildParams = (
       projectId: string;
       mode: BuildMode;
       pathname: string;
+      pageId?: string;
     }
   | {
       projectDomain: string;
       mode: BuildMode;
       pathname: string;
+      pageId?: string;
     }
   | undefined => {
   const url = new URL(request.url);
 
   const requestHost = getRequestHost(request);
   const buildHost = new URL(getBuildOrigin(request, env)).host;
+  const pageId = url.searchParams.get("pageId") ?? undefined;
 
   if (env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
     const projectId = url.searchParams.get("projectId");
@@ -78,6 +98,7 @@ export const getBuildParams = (
         projectId,
         mode: getMode(url),
         pathname: url.pathname,
+        pageId,
       };
     }
   }
@@ -89,6 +110,7 @@ export const getBuildParams = (
       projectDomain,
       mode: getMode(url),
       pathname: url.pathname,
+      pageId,
     };
   }
 };

@@ -8,4 +8,7 @@ export const utils = {
   pages: pagesUtils,
 } as const;
 
+export * from "./shared/styles";
 export * from "./db/types";
+export * from "./shared/canvas-components";
+export type { InstanceInsertionSpec } from "./shared/tree-utils";
