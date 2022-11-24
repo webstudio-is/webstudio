@@ -1,7 +1,7 @@
 {
   "name": "@webstudio-is/generate-arg-types",
   "version": "0.0.1",
-  "description": "Image optimization",
+  "description": "Generate components property types",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
