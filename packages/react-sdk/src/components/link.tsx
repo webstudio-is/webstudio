@@ -14,22 +14,21 @@ const preserveBuildParams = (href: string, currentSearch: string) => {
     return href;
   }
 
-  const [path, search] = href.split("?");
-  const searchParams = new URLSearchParams(search);
+  const url = new URL(href, "http://localhost");
 
   const currentSearchParams = new URLSearchParams(currentSearch);
 
   const mode = currentSearchParams.get("mode");
   if (mode === "preview" || mode === "edit" || mode === "published") {
-    searchParams.set("mode", mode);
+    url.searchParams.set("mode", mode);
   }
 
   const projectId = currentSearchParams.get("projectId");
   if (projectId) {
-    searchParams.set("projectId", projectId);
+    url.searchParams.set("projectId", projectId);
   }
 
-  return `${path}?${searchParams.toString()}`;
+  return `${url.pathname}?${url.searchParams.toString()}`;
 };
 const usePreserveBuildParams = (href: string) => {
   const { search } = useLocation();
