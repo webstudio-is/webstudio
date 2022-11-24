@@ -11,7 +11,7 @@
     "checks": "yarn typecheck && yarn lint",
     "dev": "yarn concurrently 'prisma generate --watch' 'tsup --watch'",
     "build": "prisma format && prisma generate && rm -fr lib tsconfig.tsbuildinfo && tsc",
-    "publish-to-npm": "bash ../../publish-to-npm.sh"
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "bin": {
     "migrations": "./migrations-cli/cli.ts"

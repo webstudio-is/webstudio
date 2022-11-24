@@ -12,7 +12,7 @@
     "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "publish-to-npm": "bash ../../publish-to-npm.sh"
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",

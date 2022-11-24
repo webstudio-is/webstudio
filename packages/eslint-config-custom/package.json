@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "publish-to-npm": "bash ../../publish-to-npm.sh"
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^5.36.2",

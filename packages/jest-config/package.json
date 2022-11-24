@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "license": "MIT",
   "scripts": {
-    "publish-to-npm": "bash ../../publish-to-npm.sh"
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
     "@types/jest": "^29.2.3",

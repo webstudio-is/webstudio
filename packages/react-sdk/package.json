@@ -18,7 +18,7 @@
     "prepublishOnly": "yarn checks && yarn build:lib",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
-    "publish-to-npm": "bash ../../publish-to-npm.sh"
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",

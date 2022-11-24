@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint",
-    "publish-to-npm": "bash ../../publish-to-npm.sh"
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "devDependencies": {
     "@types/isomorphic-fetch": "^0.0.36",

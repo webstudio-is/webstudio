@@ -4,7 +4,7 @@
   "private": false,
   "main": "index.js",
   "scripts": {
-    "publish-to-npm": "bash ../../publish-to-npm.sh"
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "files": [
     "base.json",
