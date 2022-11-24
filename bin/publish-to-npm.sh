@@ -7,6 +7,8 @@ NPM_VERSION=$(npm view $npm_package_name version || echo NOT_FOUND)
 
 echo Current $npm_package_name $NPM_VERSION
 
+echo $NODE_AUTH_TOKEN
+
 if [[ $PKG_VERSION != $NPM_VERSION ]]; then
   echo Publishing $npm_package_name $PKG_VERSION
   npm publish --access public
