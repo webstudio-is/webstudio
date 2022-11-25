@@ -8,7 +8,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint",
-    "build": "rm -rf .bin tsconfig.tsbuildinfo && tsc && chmod +x .bin/index.js",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
@@ -28,7 +27,7 @@
     "!*.test.*"
   ],
   "bin": {
-    "generate-arg-types": "./.bin/index.js"
+    "generate-arg-types": "./src/index.ts"
   },
   "license": "MIT",
   "private": false,
