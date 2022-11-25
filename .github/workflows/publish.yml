@@ -21,4 +21,4 @@ jobs:
       - run: yarn turbo run build
       - run: yarn turbo run publish-to-npm
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
