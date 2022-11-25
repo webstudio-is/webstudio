@@ -17,4 +17,5 @@ jobs:
       - run: yarn turbo run build
       - run: yarn turbo run publish-to-npm
         env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
