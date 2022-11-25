@@ -1,5 +1,8 @@
 name: Publish packages on NPM 📦
-on: push
+on:
+  push:
+    branches:
+      - main
 jobs:
   publish:
     runs-on: ubuntu-latest
