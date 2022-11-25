@@ -13,14 +13,18 @@ import {
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { type FormEvent, useState, useEffect } from "react";
-import { createValueContainer, useValue } from "react-nano-state";
+import { useDesignTokens } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { CollapsibleSection } from "../inspector";
 import { groups } from "./groups";
 import type { DesignToken } from "./schema";
-import { filterByType, findByName } from "./utilts";
+import { filterByType, findByName } from "./utils";
 
-const tokensContainer = createValueContainer<Array<DesignToken>>([]);
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    updateTokens: Array<DesignToken>;
+  }
+}
 
 const validate = (
   tokens: Array<DesignToken>,
@@ -57,7 +61,7 @@ const TokenEditor = ({
   name?: string;
   onChangeComplete: (token: DesignToken) => void;
 }) => {
-  const [tokens] = useValue(tokensContainer);
+  const [tokens] = useDesignTokens();
   const [isOpen, setIsOpen] = useState(false);
   const [errors, setErrors] =
     useState<ReturnType<typeof validate>>(initialErrors);
@@ -140,7 +144,7 @@ const TokenItem = ({ token }: { token: DesignToken }) => {
 };
 
 export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
-  const [tokens, setTokens] = useValue(tokensContainer);
+  const [tokens, setTokens] = useDesignTokens();
 
   return (
     <>
@@ -154,7 +158,9 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
                 group={group}
                 type={type}
                 onChangeComplete={(token) => {
-                  setTokens([...tokens, token]);
+                  const nextTokens = [...tokens, token];
+                  publish({ type: "updateTokens", payload: nextTokens });
+                  setTokens(nextTokens);
                 }}
               />
             }

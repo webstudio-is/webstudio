@@ -2,7 +2,11 @@ import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
 import { addGlobalRules, utils } from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
-import { rootInstanceContainer } from "~/shared/nano-states";
+import {
+  designTokensContainer,
+  rootInstanceContainer,
+  useDesignTokens,
+} from "~/shared/nano-states";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
@@ -13,7 +17,7 @@ import {
   type StyleProperty,
   type Style,
 } from "@webstudio-is/css-data";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   createCssEngine,
   toValue,
@@ -22,6 +26,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import { tokenToStyle } from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine();
 
@@ -53,27 +58,59 @@ const helperStyles = [
 ];
 
 export const useManageDesignModeStyles = () => {
+  useUpdateTokens();
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
 };
 
-const globalStylesCssEngine = createCssEngine();
+const helpersCssEngine = createCssEngine();
+const fontsAndDefaultsCssEngine = createCssEngine();
+const tokensCssEngine = createCssEngine();
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
+  const varsRuleRef = useRef<StyleRule>();
+
   useIsomorphicLayoutEffect(() => {
-    globalStylesCssEngine.clear();
-
-    addGlobalRules(globalStylesCssEngine, { assets });
-
     for (const style of helperStyles) {
-      globalStylesCssEngine.addPlaintextRule(style);
+      helpersCssEngine.addPlaintextRule(style);
+    }
+    if (typeof document !== "undefined") {
+      helpersCssEngine.render();
+    }
+  }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    fontsAndDefaultsCssEngine.clear();
+    addGlobalRules(fontsAndDefaultsCssEngine, { assets });
+    if (typeof document !== "undefined") {
+      fontsAndDefaultsCssEngine.render();
+    }
+  }, [assets]);
+
+  const [tokens] = useDesignTokens();
+
+  useIsomorphicLayoutEffect(() => {
+    if (tokens.length !== 0) {
+      const style = tokenToStyle(tokens);
+      if (varsRuleRef.current === undefined) {
+        varsRuleRef.current = tokensCssEngine.addStyleRule(`:root`, {
+          breakpoint: "",
+          style,
+        });
+      } else {
+        varsRuleRef.current.styleMap.clear();
+        for (const property in style) {
+          varsRuleRef.current.styleMap.set(property, style[property]);
+        }
+      }
     }
 
     if (typeof document !== "undefined") {
-      globalStylesCssEngine.render();
+      tokensCssEngine.render();
     }
-  });
+  }, [tokens]);
+
   return null;
 };
 
@@ -186,6 +223,14 @@ const useUpdateStyle = () => {
         return;
       }
       utils.tree.setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
+    });
+  });
+};
+
+const useUpdateTokens = () => {
+  useSubscribe("updateTokens", (updatedTokens) => {
+    store.createTransaction([designTokensContainer], (tokens) => {
+      tokens.splice(0, tokens.length, ...updatedTokens);
     });
   });
 };

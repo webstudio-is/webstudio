@@ -73,8 +73,10 @@ export type StyleValue = z.infer<typeof StyleValue>;
 
 export const Style = z.record(z.string(), StyleValue);
 
+type CustomProperty = `--${string}`;
+
 export type Style = {
-  [property in StyleProperty]?: StyleValue;
+  [property in StyleProperty | CustomProperty]?: StyleValue;
 };
 
 export const CssRule = z.object({

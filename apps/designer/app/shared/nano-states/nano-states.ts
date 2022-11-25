@@ -5,6 +5,7 @@ import type {
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
 import type { Breakpoint } from "@webstudio-is/css-data";
+import { DesignToken } from "~/designer/shared/design-tokens-manager";
 
 export const rootInstanceContainer = createValueContainer<
   Instance | undefined
@@ -49,3 +50,8 @@ const dragAndDropStateContainer = createValueContainer<DragAndDropState>({
   isDragging: false,
 });
 export const useDragAndDropState = () => useValue(dragAndDropStateContainer);
+
+export const designTokensContainer = createValueContainer<Array<DesignToken>>(
+  []
+);
+export const useDesignTokens = () => useValue(designTokensContainer);
