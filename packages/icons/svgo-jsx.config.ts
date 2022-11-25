@@ -29,7 +29,7 @@ const transformFilename = (filename: string) => {
 
 export const config: Config = {
   inputDir: "./icons",
-  outputDir: "./src/gen",
+  outputDir: "./src/__generated__",
   template,
   transformFilename,
   svgProps: {
@@ -58,6 +58,9 @@ export const config: Config = {
       const tsFile = path.basename(file, path.extname(file));
       result += `export * from "./${tsFile}";\n`;
     }
-    await fs.writeFile(path.join(process.cwd(), "./src/gen/index.ts"), result);
+    await fs.writeFile(
+      path.join(process.cwd(), "./src/__generated__/index.ts"),
+      result
+    );
   },
 };
