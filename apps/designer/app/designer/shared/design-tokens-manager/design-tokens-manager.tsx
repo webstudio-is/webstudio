@@ -50,6 +50,11 @@ const initialErrors = {
   hasErrors: false,
 };
 
+const getData = (event: FormEvent<HTMLFormElement>) => {
+  const formData = new FormData(event.currentTarget);
+  return Object.fromEntries(formData);
+};
+
 const TokenEditor = ({
   group,
   name,
@@ -73,17 +78,20 @@ const TokenEditor = ({
     }
   }, [isOpen]);
 
-  const handleChangeOrSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleChange = (event: FormEvent<HTMLFormElement>) => {
+    if (errors.hasErrors === false) return;
+    const data = getData(event);
+    const nextErrors = validate(tokens, data);
+    setErrors(nextErrors);
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const data = Object.fromEntries(formData);
-    const errors = validate(tokens, data);
+    const data = getData(event);
+    const nextErrors = validate(tokens, data);
+    setErrors(nextErrors);
 
-    if (errors.hasErrors && event.type === "submit") {
-      setErrors(errors);
-    }
-
-    if (errors.hasErrors === false && event.type === "submit") {
+    if (nextErrors.hasErrors === false) {
       onChangeComplete({ ...data, group, type } as DesignToken);
       setIsOpen(false);
     }
@@ -107,7 +115,7 @@ const TokenEditor = ({
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent align="end" css={{ zIndex: "$zIndices$1" }}>
-          <form onChange={handleChangeOrSubmit} onSubmit={handleChangeOrSubmit}>
+          <form onChange={handleChange} onSubmit={handleSubmit}>
             <Flex direction="column" gap="2" css={{ padding: "$spacing$7" }}>
               <Label htmlFor="name">Name</Label>
               <InputErrorsTooltip
