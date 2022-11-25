@@ -350,7 +350,7 @@ describe("usePropsLogic", () => {
         name: "string",
         description: "string",
         location: "REMOTE",
-        createdAt: new Date("1995-12-17T03:24:00"),
+        createdAt: new Date("1995-12-17T03:24:00Z"),
         meta: { width: 101, height: 202 },
         path: "string",
         status: "uploaded",

@@ -67,6 +67,9 @@ export class CssEngine {
     // This isn't going to do anything if the `cssText` hasn't changed.
     this.#sheet.replaceSync(this.cssText);
   }
+  unmount() {
+    this.#element.unmount();
+  }
   get cssText() {
     if (this.#isDirty === false) {
       return this.#cssText;

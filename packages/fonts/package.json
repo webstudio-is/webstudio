@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/fonts",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Fonts utils",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -10,8 +10,10 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
     "fontkit": "^2.0.2"
@@ -29,7 +31,10 @@
   },
   "module": "./lib/index.js",
   "exports": {
-    ".": "./lib/index.js",
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    },
     "./server": "./server.js"
   },
   "types": "lib/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-data",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CSS Data",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -11,8 +11,9 @@
     "dev": "tsup --watch",
     "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
-    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {},
   "devDependencies": {

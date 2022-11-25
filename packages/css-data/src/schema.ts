@@ -1,5 +1,5 @@
-import { units } from "./units";
-import { properties } from "./properties";
+import { units } from "./__generated__/units";
+import { properties } from "./__generated__/properties";
 import { z } from "zod";
 
 type Properties = typeof properties & {

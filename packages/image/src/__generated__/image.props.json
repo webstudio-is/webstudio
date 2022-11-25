@@ -15,7 +15,7 @@
     "type": "text"
   },
   "alt": {
-    "defaultValue": "",
+    "defaultValue": null,
     "required": false,
     "type": "text"
   },
@@ -32,7 +32,7 @@
     "type": "radio"
   },
   "height": {
-    "defaultValue": "",
+    "defaultValue": null,
     "required": false,
     "type": "text"
   },
@@ -79,7 +79,7 @@
     "type": "text"
   },
   "width": {
-    "defaultValue": "",
+    "defaultValue": null,
     "required": false,
     "type": "text"
   },
@@ -564,7 +564,7 @@
   },
   "loader": {
     "defaultValue": null,
-    "required": false,
+    "required": true,
     "type": "text"
   },
   "optimize": {

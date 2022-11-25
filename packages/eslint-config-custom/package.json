@@ -3,6 +3,9 @@
   "version": "1.0.1",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+  },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",

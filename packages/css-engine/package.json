@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CSS Renderer for Webstudio",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -13,7 +13,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:build": "build-storybook",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
     "hyphenate-style-name": "^1.0.4",

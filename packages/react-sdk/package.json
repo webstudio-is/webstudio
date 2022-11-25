@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/react-sdk",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "description": "Webstudio JavaScript / TypeScript API",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "yarn build:lib",
-    "build:args": "tsx ./bin/generate-arg-types.ts './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx'",
+    "build:args": "generate-arg-types './src/components/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.json\"",
     "typecheck": "tsc --noEmit",
     "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
     "build:lib": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
@@ -17,7 +17,8 @@
     "checks": "yarn typecheck && yarn lint && yarn test",
     "prepublishOnly": "yarn checks && yarn build:lib",
     "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "storybook:build": "build-storybook",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
@@ -32,15 +33,14 @@
     "@storybook/manager-webpack4": "^6.5.6",
     "@storybook/react": "^6.5.6",
     "@storybook/testing-library": "^0.0.11",
-    "@types/fs-extra": "^9.0.13",
     "@types/node": "^17.0.21",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/prisma-client": "*",
+    "@webstudio-is/generate-arg-types": "*",
     "babel-loader": "^8.2.5",
     "esbuild": "^0.14.25",
     "esbuild-node-externals": "^1.4.1",
     "react": "^17.0.2",
-    "react-docgen-typescript": "^2.2.2",
     "react-dom": "^17.0.2",
     "remix-utils": "^4.1.0",
     "tsup": "^6.1.3",

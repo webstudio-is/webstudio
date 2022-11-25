@@ -34,6 +34,7 @@ import {
 } from "./shared/breakpoints";
 import {
   rootInstanceContainer,
+  useBreakpoints,
   useRootInstance,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
@@ -48,15 +49,24 @@ registerContainers();
 
 const useElementsTree = () => {
   const [rootInstance] = useRootInstance();
+  const [breakpoints] = useBreakpoints();
 
-  const onChangeChildren: OnChangeChildren = useCallback((change) => {
-    store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance === undefined) return;
+  const onChangeChildren: OnChangeChildren = useCallback(
+    (change) => {
+      store.createTransaction([rootInstanceContainer], (rootInstance) => {
+        if (rootInstance === undefined) return;
 
-      const { instanceId, updates } = change;
-      utils.tree.setInstanceChildrenMutable(instanceId, updates, rootInstance);
-    });
-  }, []);
+        const { instanceId, updates } = change;
+        utils.tree.setInstanceChildrenMutable(
+          instanceId,
+          updates,
+          rootInstance,
+          breakpoints[0].id
+        );
+      });
+    },
+    [breakpoints]
+  );
 
   return useMemo(() => {
     if (rootInstance === undefined) return;

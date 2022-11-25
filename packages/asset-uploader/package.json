@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/asset-uploader",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -11,7 +11,8 @@
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",

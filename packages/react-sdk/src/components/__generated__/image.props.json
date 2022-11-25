@@ -1,0 +1,560 @@
+{
+  "slot": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "style": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "title": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "alt": {
+    "defaultValue": "",
+    "required": false,
+    "type": "text"
+  },
+  "crossOrigin": {
+    "defaultValue": null,
+    "options": ["\"\"", "anonymous", "use-credentials"],
+    "required": false,
+    "type": "radio"
+  },
+  "decoding": {
+    "defaultValue": null,
+    "options": ["async", "auto", "sync"],
+    "required": false,
+    "type": "radio"
+  },
+  "height": {
+    "defaultValue": "",
+    "required": false,
+    "type": "text"
+  },
+  "loading": {
+    "defaultValue": "lazy",
+    "options": ["eager", "lazy"],
+    "required": false,
+    "type": "radio"
+  },
+  "referrerPolicy": {
+    "defaultValue": null,
+    "options": [
+      "\"\"",
+      "no-referrer",
+      "no-referrer-when-downgrade",
+      "origin",
+      "origin-when-cross-origin",
+      "same-origin",
+      "strict-origin",
+      "strict-origin-when-cross-origin",
+      "unsafe-url"
+    ],
+    "required": false,
+    "type": "select"
+  },
+  "sizes": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "src": {
+    "defaultValue": "",
+    "required": false,
+    "type": "text"
+  },
+  "srcSet": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "useMap": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "width": {
+    "defaultValue": "",
+    "required": false,
+    "type": "text"
+  },
+  "defaultChecked": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "defaultValue": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "suppressContentEditableWarning": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "suppressHydrationWarning": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "accessKey": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "className": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "contentEditable": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "contextMenu": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "dir": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "draggable": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "hidden": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "id": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "lang": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "placeholder": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "spellCheck": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "tabIndex": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "translate": {
+    "defaultValue": null,
+    "options": ["yes", "no"],
+    "required": false,
+    "type": "radio"
+  },
+  "radioGroup": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "role": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "about": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "datatype": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "inlist": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "prefix": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "property": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "resource": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "typeof": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "vocab": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "autoCapitalize": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "autoCorrect": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "autoSave": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "color": {
+    "defaultValue": null,
+    "required": false,
+    "type": "color"
+  },
+  "itemProp": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "itemScope": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "itemType": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "itemID": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "itemRef": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "results": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "security": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "unselectable": {
+    "defaultValue": null,
+    "options": ["on", "off"],
+    "required": false,
+    "type": "radio"
+  },
+  "inputMode": {
+    "defaultValue": null,
+    "options": [
+      "text",
+      "none",
+      "search",
+      "tel",
+      "url",
+      "email",
+      "numeric",
+      "decimal"
+    ],
+    "required": false,
+    "type": "select"
+  },
+  "is": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-activedescendant": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-atomic": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-autocomplete": {
+    "defaultValue": null,
+    "options": ["list", "none", "inline", "both"],
+    "required": false,
+    "type": "radio"
+  },
+  "aria-busy": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-checked": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-colcount": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-colindex": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-colspan": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-controls": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-current": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-describedby": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-details": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-disabled": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-dropeffect": {
+    "defaultValue": null,
+    "options": ["link", "none", "copy", "execute", "move", "popup"],
+    "required": false,
+    "type": "select"
+  },
+  "aria-errormessage": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-expanded": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-flowto": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-grabbed": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-haspopup": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-hidden": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-invalid": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-keyshortcuts": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-label": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-labelledby": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-level": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-live": {
+    "defaultValue": null,
+    "options": ["off", "assertive", "polite"],
+    "required": false,
+    "type": "radio"
+  },
+  "aria-modal": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-multiline": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-multiselectable": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-orientation": {
+    "defaultValue": null,
+    "options": ["horizontal", "vertical"],
+    "required": false,
+    "type": "radio"
+  },
+  "aria-owns": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-placeholder": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-posinset": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-pressed": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-readonly": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-relevant": {
+    "defaultValue": null,
+    "options": [
+      "text",
+      "additions",
+      "additions removals",
+      "additions text",
+      "all",
+      "removals",
+      "removals additions",
+      "removals text",
+      "text additions",
+      "text removals"
+    ],
+    "required": false,
+    "type": "select"
+  },
+  "aria-required": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-roledescription": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  },
+  "aria-rowcount": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-rowindex": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-rowspan": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-selected": {
+    "defaultValue": null,
+    "required": false,
+    "type": "boolean"
+  },
+  "aria-setsize": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-sort": {
+    "defaultValue": null,
+    "options": ["none", "ascending", "descending", "other"],
+    "required": false,
+    "type": "radio"
+  },
+  "aria-valuemax": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-valuemin": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-valuenow": {
+    "defaultValue": null,
+    "required": false,
+    "type": "number"
+  },
+  "aria-valuetext": {
+    "defaultValue": null,
+    "required": false,
+    "type": "text"
+  }
+}

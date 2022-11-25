@@ -3,6 +3,9 @@
   "version": "1.0.1",
   "private": false,
   "main": "index.js",
+  "scripts": {
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+  },
   "files": [
     "base.json",
     "remix.json"
