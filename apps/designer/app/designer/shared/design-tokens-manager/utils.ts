@@ -7,7 +7,7 @@ export const filterByType = (tokens: Array<DesignToken>, type: string) =>
 export const findByName = (tokens: Array<DesignToken>, name?: string) =>
   tokens.find((token) => token.name === name);
 
-export const tokenToStyle = (tokens: Array<DesignToken>) => {
+export const tokensToStyle = (tokens: Array<DesignToken>) => {
   const style: Style = {};
   for (const token of tokens) {
     style[`--token-${token.name}`] = {

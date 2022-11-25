@@ -26,7 +26,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { tokenToStyle } from "~/designer/shared/design-tokens-manager";
+import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine();
 
@@ -91,7 +91,7 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {
     tokensCssEngine.clear();
     if (tokens.length !== 0) {
-      const style = tokenToStyle(tokens);
+      const style = tokensToStyle(tokens);
       tokensCssEngine.addStyleRule(`:root`, { style });
     }
 
