@@ -86,7 +86,8 @@ export const Tooltip = React.forwardRef(function TooltipWrapper(
 export const InputErrorsTooltip = ({
   errors,
   children,
-}: {
+  ...rest
+}: Omit<TooltipProps, "content"> & {
   errors?: string[];
   children: ComponentProps<typeof Tooltip>["children"];
 }) => {
@@ -102,6 +103,7 @@ export const InputErrorsTooltip = ({
     // If this optimization accur, the input will remount which will cause focus loss
     // and current value loss.
     <Tooltip
+      {...rest}
       content={content || " "}
       open={errors !== undefined && errors.length !== 0}
       side="right"

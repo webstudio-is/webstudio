@@ -18,27 +18,19 @@ import { groups } from "./groups";
 // }
 
 type Type = typeof groups[number]["type"];
+type Group = typeof groups[number]["group"];
 
 const types: Array<Type> = groups.map((group) => group.type);
-
-export const TokenName = z.string();
-export type TokenName = z.infer<typeof TokenName>;
-
-export const GroupName = z.string();
-export type GroupName = z.infer<typeof GroupName>;
+const groupNames: Array<Group> = groups.map((group) => group.group);
 
 export const DesignToken = z.object({
-  // @todo help
-  $type: z.enum(types as any),
-  $value: z.string(),
-  $description: z.string(),
+  name: z.string(),
+  // @todo
+  type: z.enum(types as any),
+  value: z.string(),
+  description: z.optional(z.string()),
+  // @todo
+  group: z.enum(groupNames as any),
 });
+
 export type DesignToken = z.infer<typeof DesignToken>;
-
-export const DesignTokens = z.record(TokenName, DesignToken);
-
-export type DesignTokens = z.infer<typeof DesignTokens>;
-
-export const DesignTokensGroup = z.record(GroupName, DesignTokens);
-
-export type DesignTokensGroup = z.infer<typeof DesignTokensGroup>;
