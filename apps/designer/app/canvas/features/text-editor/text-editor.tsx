@@ -77,17 +77,17 @@ const RemoveParagaphsPlugin = () => {
         if (node.getChildrenSize() > 1) {
           const children = node.getChildren();
           let first;
-          for (let i = 0; i < children.length; i += 1) {
-            const p = children[i];
-            if (p instanceof ElementNode) {
-              if (i === 0) {
-                first = p;
+          for (let index = 0; index < children.length; index += 1) {
+            const paragraph = children[index];
+            if (paragraph instanceof ElementNode) {
+              if (index === 0) {
+                first = paragraph;
               } else if (first) {
                 first.append($createLineBreakNode());
-                for (const child of p.getChildren()) {
+                for (const child of paragraph.getChildren()) {
                   first.append(child);
                 }
-                p.remove();
+                paragraph.remove();
               }
             }
           }
