@@ -38,8 +38,8 @@ const isInstanceClipboardEvent = (
 type Props = {
   selectedInstanceData?: InstanceCopyData | undefined;
   allowAnyTarget?: boolean;
-  onPaste?: (instance: Instance, props?: UserProp[]) => void;
-  onCut?: (instance: Instance) => void;
+  onPaste: (instance: Instance, props?: UserProp[]) => void;
+  onCut: (instance: Instance) => void;
 };
 
 const createEventsHandler = () => {
@@ -92,7 +92,7 @@ const createEventsHandler = () => {
       serialize(selectedInstanceData)
     );
 
-    onCut?.(selectedInstanceData.instance);
+    onCut(selectedInstanceData.instance);
   };
 
   const handlePaste = (event: ClipboardEvent) => {
@@ -102,7 +102,6 @@ const createEventsHandler = () => {
     const { onPaste, allowAnyTarget } = currentProps;
 
     if (
-      onPaste === undefined ||
       event.clipboardData === null ||
       // we might want a separate predicate for paste,
       // but for now the logic is the same
@@ -150,7 +149,7 @@ const createEventsHandler = () => {
 // Everything is extrcated from hook,
 // to make it easier to remove React from canvas if we need to
 export const useInstanceCopyPaste = (props: Props): void => {
-  const eventsHandler = useMemo(() => createEventsHandler(), []);
+  const eventsHandler = useMemo(createEventsHandler, []);
 
   useEffect(() => {
     eventsHandler.setProps(props);
