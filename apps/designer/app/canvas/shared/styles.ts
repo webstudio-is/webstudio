@@ -155,7 +155,7 @@ const addRule = (id: string, cssRule: CssRule) => {
   return rule;
 };
 
-const getRule = (id: string, breakpoint: string) => {
+const getRule = (id: string, breakpoint?: string) => {
   const key = id + breakpoint;
   return wrappedRulesMap.get(key);
 };
