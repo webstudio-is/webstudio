@@ -12,6 +12,11 @@ class StylePropertyMap {
     this.#isDirty = true;
     this.onChange?.();
   }
+  clear() {
+    this.#styleMap.clear();
+    this.#isDirty = true;
+    this.onChange?.();
+  }
   toString() {
     if (this.#isDirty === false) {
       return this.#string;
