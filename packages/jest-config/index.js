@@ -8,6 +8,9 @@ module.exports = {
     "^.+\\.tsx?$": [
       require.resolve("esbuild-jest"),
       {
+        // This is needed for inline snapshots to work
+        // See: https://github.com/aelbore/esbuild-jest#setting-up-jest-config-file-with-transformoptions
+        sourcemap: true,
         format: "esm",
       },
     ],
