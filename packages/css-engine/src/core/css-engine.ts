@@ -23,7 +23,6 @@ export class CssEngine {
   constructor() {
     this.#element = new StyleElement();
     this.#sheet = new StyleSheet(this.#element);
-    this.addMediaRule(defaultMediaRuleId);
   }
   addMediaRule(id: string, options?: MediaRuleOptions) {
     let mediaRule = this.#mediaRules.get(id);
@@ -35,9 +34,7 @@ export class CssEngine {
     return mediaRule;
   }
   addStyleRule(selectorText: string, rule: CssRule) {
-    const mediaRule =
-      this.#mediaRules.get(rule.breakpoint) ??
-      this.#mediaRules.get(defaultMediaRuleId);
+    const mediaRule = this.addMediaRule(rule.breakpoint || defaultMediaRuleId);
     this.#isDirty = true;
     const styleRule = new StyleRule(selectorText, rule.style);
     styleRule.onChange = this.#onChangeRule;
@@ -51,9 +48,11 @@ export class CssEngine {
   addPlaintextRule(cssText: string) {
     const rule = this.#plainRules.get(cssText);
     if (rule !== undefined) return rule;
+    this.#isDirty = true;
     return this.#plainRules.set(cssText, new PlaintextRule(cssText));
   }
   addFontFaceRule(options: FontFaceOptions) {
+    this.#isDirty = true;
     return this.#fontFaceRules.push(new FontFaceRule(options));
   }
   clear() {

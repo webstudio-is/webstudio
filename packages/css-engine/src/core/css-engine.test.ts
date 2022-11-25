@@ -17,7 +17,7 @@ describe("CssEngine", () => {
   test("use default media rule when there is no matching one registrered", () => {
     engine.addStyleRule(".c", {
       style: style0,
-      breakpoint: "0",
+      breakpoint: "x",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
@@ -26,7 +26,7 @@ describe("CssEngine", () => {
     `);
     engine.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "red" } },
-      breakpoint: "0",
+      breakpoint: "x",
     });
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
@@ -38,7 +38,7 @@ describe("CssEngine", () => {
     engine.addMediaRule(mediaId, mediaRuleOptions0);
     engine.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "blue" } },
-      breakpoint: "0",
+      breakpoint: mediaId,
     });
     // Default media query should allways be the first to have the lowest source order specificity
     expect(engine.cssText).toMatchInlineSnapshot(`

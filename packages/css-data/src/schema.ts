@@ -87,7 +87,7 @@ export type Style = {
 
 export const CssRule = z.object({
   style: Style,
-  breakpoint: z.string(),
+  breakpoint: z.optional(z.string()),
 });
 
 export type CssRule = z.infer<typeof CssRule>;

@@ -69,8 +69,6 @@ const fontsAndDefaultsCssEngine = createCssEngine();
 const tokensCssEngine = createCssEngine();
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
-  const varsRuleRef = useRef<StyleRule>();
-
   useIsomorphicLayoutEffect(() => {
     for (const style of helperStyles) {
       helpersCssEngine.addPlaintextRule(style);
@@ -91,20 +89,10 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   const [tokens] = useDesignTokens();
 
   useIsomorphicLayoutEffect(() => {
+    tokensCssEngine.clear();
     if (tokens.length !== 0) {
       const style = tokenToStyle(tokens);
-      if (varsRuleRef.current === undefined) {
-        varsRuleRef.current = tokensCssEngine.addStyleRule(`:root`, {
-          breakpoint: "",
-          style,
-        });
-      } else {
-        varsRuleRef.current.styleMap.clear();
-        let property: StyleProperty;
-        for (property in style) {
-          varsRuleRef.current.styleMap.set(property, style[property]);
-        }
-      }
+      tokensCssEngine.addStyleRule(`:root`, { style });
     }
 
     if (typeof document !== "undefined") {
