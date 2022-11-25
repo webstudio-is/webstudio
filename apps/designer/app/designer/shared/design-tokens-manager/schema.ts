@@ -1,22 +1,6 @@
 import { z } from "zod";
 import { groups } from "./groups";
 
-// Example data
-// {
-//   "Sizing": {
-//     "Token 1 name": {
-//       "$type": "sizing",
-//       "$value": "Token 1 value",
-//       "$description": "Token 1 description"
-//     },
-//     "Toke, 2 name": {
-//       "$type": "sizing",
-//       "$value": "Token 2 value",
-//       "$description": "Token 2 description"
-//     },
-//   },
-// }
-
 type Type = typeof groups[number]["type"];
 type Group = typeof groups[number]["group"];
 
