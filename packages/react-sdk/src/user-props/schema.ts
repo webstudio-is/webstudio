@@ -11,7 +11,7 @@ const UserPropDb = z.object({
 
 export const UserDbProps = z.array(UserPropDb);
 
-const UserUserProp = z
+export const UserUserProp = z
   .object({
     id: z.string(),
     prop: z.string(),
