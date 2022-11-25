@@ -76,7 +76,7 @@ const TokenEditor = ({
     if (isOpen === false && errors.hasErrors) {
       setErrors(initialErrors);
     }
-  }, [isOpen]);
+  }, [isOpen, errors.hasErrors]);
 
   const handleChange = (event: FormEvent<HTMLFormElement>) => {
     if (errors.hasErrors === false) return;

@@ -10,12 +10,13 @@ export type InheritedStyle = {
 };
 
 type InheritableProperties = { [property in StyleProperty]: true };
-const propertyNames = Object.keys(properties) as Array<StyleProperty>;
+// Object keys should give `keyof typeof ...` but now it gives string[]
+const propertyNames = Object.keys(properties) as (keyof typeof properties)[];
 // All inheritable properties we support
 const inheritableProperties: InheritableProperties = propertyNames.reduce(
-  (acc: InheritableProperties, property: StyleProperty) => {
+  (acc: InheritableProperties, property) => {
     // @todo
-    const config = (properties as any)[property];
+    const config = properties[property];
     if (config.inherited) {
       acc[property as StyleProperty] = true;
     }

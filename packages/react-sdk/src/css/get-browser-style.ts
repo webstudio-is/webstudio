@@ -1,16 +1,14 @@
 import { detectFont } from "detect-font";
-import type {
-  StyleProperty,
-  Style,
-  StyleValue,
-  Unit,
-} from "@webstudio-is/css-data";
+import type { Style, StyleValue, Unit } from "@webstudio-is/css-data";
 import { properties, units } from "@webstudio-is/css-data";
 
 const unitRegex = new RegExp(`${units.join("|")}`);
 
 // @todo use a parser
-const parseValue = (property: StyleProperty, value: string): StyleValue => {
+const parseValue = (
+  property: keyof typeof properties,
+  value: string
+): StyleValue => {
   const number = parseFloat(value);
   const parsedUnit = unitRegex.exec(value);
   if (value === "rgba(0, 0, 0, 0)") value = "transparent";
@@ -23,7 +21,7 @@ const parseValue = (property: StyleProperty, value: string): StyleValue => {
 
   if (number === 0 && property in properties) {
     // @todo
-    return (properties as any)[property].initial;
+    return properties[property].initial;
   }
 
   return {
@@ -36,7 +34,7 @@ const parseValue = (property: StyleProperty, value: string): StyleValue => {
 export const getBrowserStyle = (element?: Element): Style => {
   const browserStyle: Style = {};
   if (element === undefined) return browserStyle;
-  let knownProperty: StyleProperty;
+  let knownProperty: keyof typeof properties;
   const computedStyle = getComputedStyle(element);
   for (knownProperty in properties) {
     if (knownProperty in computedStyle === false) continue;
