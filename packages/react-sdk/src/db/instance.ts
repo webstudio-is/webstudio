@@ -1,12 +1,12 @@
 import { CssRule } from "@webstudio-is/css-data";
 import { z } from "zod";
-import * as components from "../components";
+import { ComponentName } from "../components";
 
 // This should be used when passing a lot of data is potentially costly.
 // For example, when passing data from an iframe.
 export type BaseInstance = {
   id: string;
-  component: keyof typeof components;
+  component: ComponentName;
   cssRules: Array<CssRule>;
 };
 

@@ -1,15 +1,43 @@
-export { default as Body } from "./body.ws";
-export { default as Box } from "./box.ws";
-export { default as TextBlock } from "./text-block.ws";
-export { default as Heading } from "./heading.ws";
-export { default as Paragraph } from "./paragraph.ws";
-export { default as Link } from "./link.ws";
-export { default as Span } from "./span.ws";
-export { default as Bold } from "./bold.ws";
-export { default as Italic } from "./italic.ws";
-export { default as Superscript } from "./superscript.ws";
-export { default as Subscript } from "./subscript.ws";
-export { default as Button } from "./button.ws";
-export { default as Input } from "./input.ws";
-export { default as Form } from "./form.ws";
-export { default as Image } from "./image.ws";
+import Body from "./body.ws";
+import Box from "./box.ws";
+import TextBlock from "./text-block.ws";
+import Heading from "./heading.ws";
+import Paragraph from "./paragraph.ws";
+import Link from "./link.ws";
+import Span from "./span.ws";
+import Bold from "./bold.ws";
+import Italic from "./italic.ws";
+import Superscript from "./superscript.ws";
+import Subscript from "./subscript.ws";
+import Button from "./button.ws";
+import Input from "./input.ws";
+import Form from "./form.ws";
+import Image from "./image.ws";
+
+const components = {
+  Body,
+  Box,
+  TextBlock,
+  Heading,
+  Paragraph,
+  Link,
+  Span,
+  Bold,
+  Italic,
+  Superscript,
+  Subscript,
+  Button,
+  Input,
+  Form,
+  Image,
+} as const;
+
+export type ComponentName = keyof typeof components;
+
+export const componentNames = Object.keys(components) as ComponentName[];
+
+export const getComponent = <Name extends ComponentName>(
+  name: Name
+): typeof components[Name] => {
+  return components[name];
+};
