@@ -22,7 +22,7 @@
     "esbuild": "^0.14.25"
   },
   "files": [
-    ".bin/*",
+    "src/*",
     "README.md",
     "!*.test.*"
   ],

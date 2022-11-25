@@ -36,9 +36,6 @@ yarn-error.log*
 # turbo
 .turbo
 
-# cli utils
-.bin
-
 # data
 /data
 *.db
