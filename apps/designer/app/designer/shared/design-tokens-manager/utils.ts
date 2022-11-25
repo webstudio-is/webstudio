@@ -17,3 +17,15 @@ export const tokensToStyle = (tokens: Array<DesignToken>) => {
   }
   return style;
 };
+
+export const updateOrAddTokenMutable = (
+  tokens: Array<DesignToken>,
+  token: DesignToken
+) => {
+  const found = findByName(tokens, token.name);
+  if (found) {
+    Object.assign(found, token);
+    return;
+  }
+  tokens.push(token);
+};

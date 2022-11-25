@@ -17,7 +17,7 @@ import {
   type StyleProperty,
   type Style,
 } from "@webstudio-is/css-data";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import {
   createCssEngine,
   toValue,
@@ -26,7 +26,10 @@ import {
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
+import {
+  tokensToStyle,
+  updateOrAddTokenMutable,
+} from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine();
 
@@ -217,9 +220,9 @@ const useUpdateStyle = () => {
 };
 
 const useUpdateTokens = () => {
-  useSubscribe("updateTokens", (updatedTokens) => {
+  useSubscribe("updateToken", (updatedToken) => {
     store.createTransaction([designTokensContainer], (tokens) => {
-      tokens.splice(0, tokens.length, ...updatedTokens);
+      updateOrAddTokenMutable(tokens, updatedToken);
     });
   });
 };

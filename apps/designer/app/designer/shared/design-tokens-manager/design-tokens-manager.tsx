@@ -22,7 +22,7 @@ import { filterByType, findByName } from "./utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    updateTokens: Array<DesignToken>;
+    updateToken: DesignToken;
   }
 }
 
@@ -166,9 +166,9 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
                 group={group}
                 type={type}
                 onChangeComplete={(token) => {
-                  const nextTokens = [...tokens, token];
-                  publish({ type: "updateTokens", payload: nextTokens });
-                  setTokens(nextTokens);
+                  publish({ type: "updateToken", payload: token });
+                  // @todo update token when its an existing one
+                  setTokens([...tokens, token]);
                 }}
               />
             }

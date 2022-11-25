@@ -1,3 +1,3 @@
 export * from "./design-tokens-manager";
 export * from "./schema";
-export { tokensToStyle } from "./utils";
+export { tokensToStyle, updateOrAddTokenMutable } from "./utils";
