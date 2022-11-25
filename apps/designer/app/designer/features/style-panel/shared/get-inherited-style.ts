@@ -14,7 +14,8 @@ const propertyNames = Object.keys(properties) as Array<StyleProperty>;
 // All inheritable properties we support
 const inheritableProperties: InheritableProperties = propertyNames.reduce(
   (acc: InheritableProperties, property: StyleProperty) => {
-    const config = properties[property];
+    // @todo
+    const config = (properties as any)[property];
     if (config.inherited) {
       acc[property as StyleProperty] = true;
     }

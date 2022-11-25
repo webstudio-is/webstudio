@@ -45,7 +45,8 @@ export class CssEngine {
       // Should be impossible to reach.
       throw new Error("No media rule found");
     }
-    return mediaRule.insertRule(styleRule);
+    mediaRule.insertRule(styleRule);
+    return styleRule;
   }
   addPlaintextRule(cssText: string) {
     const rule = this.#plainRules.get(cssText);

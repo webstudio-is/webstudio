@@ -21,8 +21,9 @@ const parseValue = (property: StyleProperty, value: string): StyleValue => {
     };
   }
 
-  if (number === 0) {
-    return properties[property].initial;
+  if (number === 0 && property in properties) {
+    // @todo
+    return (properties as any)[property].initial;
   }
 
   return {

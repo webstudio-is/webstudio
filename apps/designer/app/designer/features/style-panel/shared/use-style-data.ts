@@ -135,7 +135,8 @@ export const useStyleData = ({
       publishUpdates("update", updates);
       const nextStyle = updates.reduce(
         (currentStyle, { property, value }) => {
-          currentStyle[property] = value;
+          // @todo
+          (currentStyle as any)[property] = value;
           return currentStyle;
         },
         { ...currentStyle }

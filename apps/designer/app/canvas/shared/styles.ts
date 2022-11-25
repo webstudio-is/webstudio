@@ -100,7 +100,8 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
         });
       } else {
         varsRuleRef.current.styleMap.clear();
-        for (const property in style) {
+        let property: StyleProperty;
+        for (property in style) {
           varsRuleRef.current.styleMap.set(property, style[property]);
         }
       }

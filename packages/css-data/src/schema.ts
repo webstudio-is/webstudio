@@ -2,9 +2,17 @@ import { units } from "./units";
 import { properties } from "./properties";
 import { z } from "zod";
 
-type Properties = typeof properties;
+type Properties = typeof properties & {
+  [custom: CustomProperty]: {
+    appliesTo: "allElements";
+    initial: string;
+    inherited: boolean;
+  };
+};
 
 export type StyleProperty = keyof Properties;
+
+type CustomProperty = `--${string}`;
 
 export type AppliesTo = Properties[StyleProperty]["appliesTo"];
 
@@ -73,11 +81,9 @@ export type StyleValue = z.infer<typeof StyleValue>;
 
 export const Style = z.record(z.string(), StyleValue);
 
-type CustomProperty = `--${string}`;
-
 export type Style = {
-  [property in StyleProperty | CustomProperty]?: StyleValue;
-};
+  [property in StyleProperty]?: StyleValue;
+} & { [property: CustomProperty]: StyleValue };
 
 export const CssRule = z.object({
   style: Style,
