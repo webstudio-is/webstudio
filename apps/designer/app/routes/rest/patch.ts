@@ -22,11 +22,13 @@ export const action: ActionFunction = async ({ request }) => {
       const { namespace, patches } = change;
 
       if (namespace === "root") {
-        await db.tree.patchRoot({ treeId }, patches);
+        await db.tree.patch({ treeId }, patches);
       } else if (namespace === "props") {
         await db.props.patch({ treeId }, patches);
       } else if (namespace === "breakpoints") {
         await db.breakpoints.patch(buildId, patches);
+      } else if (namespace === "designTokens") {
+        await db.designTokens.patch(buildId, patches);
       } else {
         return { errors: `Unknown namespace "${namespace}"` };
       }

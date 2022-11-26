@@ -3,4 +3,5 @@ import * as tree from "./tree";
 import * as props from "./props";
 import * as breakpoints from "./breakpoints";
 import * as build from "./build";
-export { project, tree, breakpoints, props, build };
+import * as designTokens from "./design-tokens";
+export { project, tree, breakpoints, props, build, designTokens };

@@ -50,7 +50,7 @@ export const clone = async (treeId: string) => {
   return await create(tree.root);
 };
 
-export const patchRoot = async (
+export const patch = async (
   { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
 ) => {

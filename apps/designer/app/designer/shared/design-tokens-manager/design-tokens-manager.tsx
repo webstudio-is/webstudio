@@ -1,3 +1,4 @@
+import { type FormEvent, useState, useEffect } from "react";
 import {
   Button,
   Flex,
@@ -12,12 +13,11 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { type FormEvent, useState, useEffect } from "react";
+import type { DesignToken } from "@webstudio-is/project";
+import { designTokensGroups } from "@webstudio-is/project";
 import { useDesignTokens } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { CollapsibleSection } from "../inspector";
-import { groups } from "./groups";
-import type { DesignToken } from "./schema";
 import { filterByType, findByName } from "./utils";
 
 declare module "~/shared/pubsub" {
@@ -156,7 +156,7 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
 
   return (
     <>
-      {groups.map(({ group, type }) => {
+      {designTokensGroups.map(({ group, type }) => {
         return (
           <CollapsibleSection
             label={group}

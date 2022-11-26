@@ -68,7 +68,8 @@ model Build {
   isDev  Boolean // exctly one is true per project
   isProd Boolean // at most one is true per project (none if not published)
 
-  breakpoints Breakpoints?
+  breakpoints  Breakpoints?
+  designTokens DesignTokens?
 }
 
 model Tree {
@@ -87,4 +88,10 @@ model Breakpoints {
   build   Build  @relation(fields: [buildId], references: [id])
   buildId String @id
   values  String @default("[]")
+}
+
+model DesignTokens {
+  build   Build  @relation(fields: [buildId], references: [id])
+  buildId String @id
+  value   String @default("[]")
 }

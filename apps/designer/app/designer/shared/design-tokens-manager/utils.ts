@@ -1,5 +1,5 @@
 import type { Style } from "@webstudio-is/css-data";
-import type { DesignToken } from "./schema";
+import type { DesignToken } from "@webstudio-is/project";
 
 export const filterByType = (tokens: Array<DesignToken>, type: string) =>
   tokens.filter((token) => token.type === type);
