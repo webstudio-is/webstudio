@@ -22,7 +22,6 @@ export const meta: MetaFunction = (args) => catchAllmeta(args);
 export const loader: LoaderFunction = (args) => catchAllloader(args);
 export const handle = catchAllHandle;
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => (
-  // @ts-ignore for some reason cannot be invoked according to types
   <CatchAllErrorBoundary error={error} />
 );
 const Content = () => <CatchAllContnet />;
