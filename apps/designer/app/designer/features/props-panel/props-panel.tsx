@@ -1,5 +1,5 @@
 import {
-  getComponentMeta,
+  getComponentMetaProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
@@ -121,7 +121,7 @@ const Property = ({
   onChangePropValue,
   onDelete,
 }: PropertyProps) => {
-  const meta = getComponentMeta(component);
+  const meta = getComponentMetaProps(component);
 
   const argType = meta[userProp.prop as keyof typeof meta];
   const isInvalid =

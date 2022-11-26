@@ -1,5 +1,5 @@
 import {
-  getComponentMeta,
+  getComponentMetaProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
@@ -183,7 +183,7 @@ export function Control({
   userProp,
   onChangePropValue,
 }: ControlProps) {
-  const meta = getComponentMeta(component);
+  const meta = getComponentMetaProps(component);
   const argType = meta[userProp.prop as keyof typeof meta];
 
   const defaultValue = argType.defaultValue;

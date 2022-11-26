@@ -58,6 +58,6 @@ type MetaProp =
 
 type MetaProps = Record<string, MetaProp>;
 
-export const getComponentMeta = (name: keyof typeof meta): MetaProps => {
+export const getComponentMetaProps = (name: keyof typeof meta): MetaProps => {
   return meta[name] as MetaProps;
 };
