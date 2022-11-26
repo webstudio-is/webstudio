@@ -4,6 +4,8 @@ import type { Build, CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
   useAllUserProps,
+  registerComponents,
+  customComponents,
   type OnChangeChildren,
   type Tree,
 } from "@webstudio-is/react-sdk";
@@ -133,6 +135,9 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
+
+  registerComponents(customComponents);
+
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   const isPreviewMode = useSubscribePreviewMode();

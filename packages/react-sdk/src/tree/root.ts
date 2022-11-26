@@ -5,6 +5,8 @@ import { WrapperComponent } from "./wrapper-component";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { type ComponentProps } from "react";
 import type { Breakpoint } from "@webstudio-is/css-data";
+import { registerComponents } from "../components";
+import * as customComponents from "../app/custom-components";
 
 export type Data = {
   tree: Tree | null;
@@ -26,6 +28,9 @@ export const InstanceRoot = ({
     throw new Error("Tree is null");
   }
   useAllUserProps(data.props);
+
+  registerComponents(customComponents);
+
   return createElementsTree({
     instance: data.tree.root,
     Component: Component ?? WrapperComponent,
