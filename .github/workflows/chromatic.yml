@@ -14,27 +14,27 @@ jobs:
           [designer-app, css-engine, design-system, icons, image, react-sdk]
         include:
           - project: designer-app
-            chromaticToken: ${{ secrets.CHROMATIC_DESIGNER_APP_TOKEN }}
+            chromaticSecretKey: CHROMATIC_DESIGNER_APP_TOKEN
             workingDir: apps/designer
 
           - project: css-engine
-            chromaticToken: ${{ secrets.CHROMATIC_CSS_ENGINE_TOKEN }}
+            chromaticSecretKey: CHROMATIC_CSS_ENGINE_TOKEN
             workingDir: packages/css-engine
 
           - project: design-system
-            chromaticToken: ${{ secrets.CHROMATIC_DESIGN_SYSTEM_TOKEN }}
+            chromaticSecretKey: CHROMATIC_DESIGN_SYSTEM_TOKEN
             workingDir: packages/design-system
 
           - project: icons
-            chromaticToken: ${{ secrets.CHROMATIC_ICONS_TOKEN }}
+            chromaticSecretKey: CHROMATIC_ICONS_TOKEN
             workingDir: packages/icons
 
           - project: image
-            chromaticToken: ${{ secrets.CHROMATIC_IMAGE_TOKEN }}
+            chromaticSecretKey: CHROMATIC_IMAGE_TOKEN
             workingDir: packages/image
 
           - project: react-sdk
-            chromaticToken: ${{ secrets.CHROMATIC_REACT_SDK_TOKEN }}
+            chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
             workingDir: packages/react-sdk
 
     steps:
@@ -44,5 +44,5 @@ jobs:
       - name: Chromatic
         uses: chromaui/action@v1
         with:
-          projectToken: ${{ matrix.chromaticToken }}
+          projectToken: ${{ secrets[matrix.chromaticSecretKey] }}
           workingDir: ${{ matrix.workingDir }}
