@@ -69,6 +69,12 @@ export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
     throw json("Page not found", { status: 404 });
   }
 
+  const params: CanvasData["params"] = {};
+
+  if (env.IMAGE_RESIZE_ORIGIN != null) {
+    params.resizeOrigin = env.IMAGE_RESIZE_ORIGIN;
+  }
+
   return { ...canvasData, env, mode };
 };
 

@@ -7,12 +7,14 @@ import { type ComponentProps } from "react";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { registerComponents } from "../components";
 import * as customComponents from "../app/custom-components";
+import { setParams, type Params } from "../app/params";
 
 export type Data = {
   tree: Tree | null;
   breakpoints: Array<Breakpoint>;
   props: Array<InstanceProps>;
   assets: Array<Asset>;
+  params?: Params;
 };
 
 type RootProps = {
@@ -28,6 +30,7 @@ export const InstanceRoot = ({
     throw new Error("Tree is null");
   }
   useAllUserProps(data.props);
+  setParams(data.params ?? null);
 
   registerComponents(customComponents);
 

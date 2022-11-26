@@ -5,8 +5,7 @@ import { useAllUserProps } from "./all-user-props";
 import type { Asset } from "@webstudio-is/asset-uploader";
 
 /**
- * User props mapped in prop:value format,
- * up to date with props panel.
+ * Get asset for prop, like src on the Image component
  */
 export const useUserPropsAsset = (
   instanceId: Instance["id"],
