@@ -5,8 +5,8 @@ import {
   type ElementRef,
 } from "react";
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
-import { useUserPropsAsset } from "~/user-props/use-user-props-asset";
-import { idAttribute } from "~/tree/wrapper-component";
+import { useUserPropsAsset } from "../../user-props/use-user-props-asset";
+import { idAttribute } from "../../tree/wrapper-component";
 
 const defaultTag = "img";
 

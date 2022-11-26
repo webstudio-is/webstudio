@@ -11,7 +11,8 @@
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
     "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.json\"",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "build": "rm -fr lib tsconfig.tsbuildinfo && yarn build:cjs && tsc",
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
@@ -38,8 +39,8 @@
   },
   "module": "./lib/index.js",
   "exports": {
-    ".": "./lib/index.js",
-    "./server": "./server.js"
+    "import": "./lib/index.js",
+    "require": "./lib/cjs/index.cjs"
   },
   "types": "lib/index.d.ts",
   "files": [
