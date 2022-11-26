@@ -36,8 +36,7 @@ export type ComponentName = keyof typeof components;
 
 export const componentNames = Object.keys(components) as ComponentName[];
 
-// @todo We already have getComponentMetaProps export
-export const getWsComponentMeta = <Name extends ComponentName>(
+export const getComponentMeta = <Name extends ComponentName>(
   name: Name
 ): Omit<typeof components[Name], "Component"> => {
   return components[name];

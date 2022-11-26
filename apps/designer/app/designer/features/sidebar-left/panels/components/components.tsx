@@ -2,7 +2,7 @@ import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type Instance,
-  getWsComponentMeta,
+  getComponentMeta,
   componentNames,
 } from "@webstudio-is/react-sdk";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
@@ -15,7 +15,7 @@ import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import { Header, CloseButton } from "../../lib/header";
 
 const listedComponentNames = componentNames.filter(
-  (name) => getWsComponentMeta(name).isListed
+  (name) => getComponentMeta(name).isListed
 );
 
 type DraggableThumbProps = {
