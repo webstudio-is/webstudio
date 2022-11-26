@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { Instance } from "../db";
-import * as components from "../components";
+import { getComponent } from "../components";
 import { useUserProps } from "../user-props/use-user-props";
 import type { OnChangeChildren } from "./create-elements-tree";
 
@@ -37,7 +37,7 @@ export const WrapperComponent = ({
   children,
   ...rest
 }: WrapperComponentProps) => {
-  const { Component } = components[instance.component];
+  const Component = getComponent(instance.component);
   const userProps = useUserProps(instance.id);
   const props = { ...userProps, ...rest, [idAttribute]: instance.id };
   return (

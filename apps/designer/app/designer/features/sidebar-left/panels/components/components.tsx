@@ -1,6 +1,10 @@
 import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  getComponentMeta,
+  componentNames,
+} from "@webstudio-is/react-sdk";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { Flex, useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
@@ -10,9 +14,9 @@ import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import { Header, CloseButton } from "../../lib/header";
 
-const componentNames = (
-  Object.keys(components) as Array<Instance["component"]>
-).filter((component) => components[component].isListed);
+const listedComponentNames = componentNames.filter(
+  (name) => getComponentMeta(name).isListed
+);
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -74,7 +78,7 @@ const elementToComponentName = (element: Element) => {
     return;
   }
   const { dragComponent } = parentWithData.dataset;
-  return componentNames.find((component) => component === dragComponent);
+  return listedComponentNames.find((component) => component === dragComponent);
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
@@ -142,7 +146,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         css={{ padding: "$spacing$3", overflow: "auto" }}
         ref={useDragHandlers.rootRef}
       >
-        {componentNames.map((component: Instance["component"]) => (
+        {listedComponentNames.map((component: Instance["component"]) => (
           <DraggableThumb
             key={component}
             component={component}

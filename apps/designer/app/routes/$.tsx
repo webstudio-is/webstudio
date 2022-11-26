@@ -69,7 +69,13 @@ export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
     throw json("Page not found", { status: 404 });
   }
 
-  return { ...canvasData, env, mode };
+  const params: CanvasData["params"] = {};
+
+  if (env.RESIZE_ORIGIN != null) {
+    params.resizeOrigin = env.RESIZE_ORIGIN;
+  }
+
+  return { ...canvasData, env, mode, params };
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {

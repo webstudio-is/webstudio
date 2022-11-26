@@ -1,6 +1,6 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { useSelectedInstance } from "./nano-states";
@@ -120,7 +120,9 @@ export const useShortcuts = () => {
     "enter",
     (event) => {
       if (selectedInstance === undefined) return;
-      const { isContentEditable } = components[selectedInstance.component];
+      const { isContentEditable } = getComponentMeta(
+        selectedInstance.component
+      );
       if (isContentEditable === false) return;
       // Prevents inserting a newline when entering text-editing mode
       event.preventDefault();

@@ -1,11 +1,11 @@
 import { renderHook, act } from "@testing-library/react-hooks";
-import { components, UserProp } from "@webstudio-is/react-sdk";
+import { type ComponentName, UserProp } from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 import { usePropsLogic } from "./use-props-logic";
 
 const getSelectedInstanceData = (
-  componentName: keyof typeof components,
+  componentName: ComponentName,
   props: UserProp[]
 ): SelectedInstanceData => {
   return {

@@ -58,6 +58,6 @@ type MetaProp =
 
 type MetaProps = Record<string, MetaProp>;
 
-// Probably better instead of JSON to generate ts with `as const`
-export const componentsMeta: Record<keyof typeof meta, MetaProps> =
-  meta as Record<keyof typeof meta, MetaProps>;
+export const getComponentMetaProps = (name: keyof typeof meta): MetaProps => {
+  return meta[name] as MetaProps;
+};

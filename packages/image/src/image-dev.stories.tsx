@@ -2,11 +2,7 @@
 
 import React, { type ComponentProps, type HTMLAttributes } from "react";
 import type { ComponentMeta, ComponentStory } from "@storybook/react";
-import {
-  Image as ImagePrimitive,
-  cloudflareImageLoader,
-  localImageLoader,
-} from "./";
+import { Image as ImagePrimitive, loaders } from "./";
 
 // to not allow include local assets everywhere, just enable it for this file
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -33,8 +29,8 @@ const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM
   : localLogoImage;
 
 const imageLoader = USE_CLOUDFLARE_IMAGE_TRANSFORM
-  ? cloudflareImageLoader({ resizeOrigin: "https://webstudio.is" })
-  : localImageLoader();
+  ? loaders.cloudflareImageLoader({ resizeOrigin: "https://webstudio.is" })
+  : loaders.localImageLoader();
 
 const ImageBase: ComponentStory<
   React.ForwardRefExoticComponent<
