@@ -5,6 +5,7 @@ import {
   type ElementRef,
 } from "react";
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
+import { Image as SdkImage } from "../../components/image";
 import { useUserPropsAsset } from "../../user-props/use-user-props-asset";
 import { idAttribute } from "../../tree/wrapper-component";
 
@@ -37,7 +38,7 @@ export const Component = forwardRef<ElementRef<typeof defaultTag>, Props>(
     }, [asset, params]);
 
     if (asset === null || loader == null)
-      return <WebstudioImage {...props} ref={ref} />;
+      return <SdkImage {...props} ref={ref} />;
 
     return (
       <WebstudioImage {...props} loader={loader} optimize={true} ref={ref} />
