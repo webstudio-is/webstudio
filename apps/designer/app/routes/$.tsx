@@ -71,11 +71,11 @@ export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
 
   const params: CanvasData["params"] = {};
 
-  if (env.IMAGE_RESIZE_ORIGIN != null) {
-    params.resizeOrigin = env.IMAGE_RESIZE_ORIGIN;
+  if (env.RESIZE_ORIGIN != null) {
+    params.resizeOrigin = env.RESIZE_ORIGIN;
   }
 
-  return { ...canvasData, env, mode };
+  return { ...canvasData, env, mode, params };
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {

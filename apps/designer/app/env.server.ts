@@ -10,7 +10,7 @@ const env = {
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
   BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN === "true",
   // Must be set for Vercel deployments
-  IMAGE_RESIZE_ORIGIN: process.env.IMAGE_RESIZE_ORIGIN,
+  RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
 } as const;
 
 export default env;
