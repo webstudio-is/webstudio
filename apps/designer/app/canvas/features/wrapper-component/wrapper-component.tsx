@@ -66,7 +66,7 @@ export const WrapperComponentDev = ({
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
 
-  const { Component } = getComponent(instance.component);
+  const Component = getComponent(instance.component);
 
   const props = {
     ...userProps,

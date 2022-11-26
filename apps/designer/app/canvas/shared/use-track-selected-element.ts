@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { type Instance, getComponent } from "@webstudio-is/react-sdk";
+import { type Instance, getWsComponentMeta } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
@@ -94,7 +94,8 @@ export const useTrackSelectedElement = () => {
         if (component === undefined /*|| component in components === false*/) {
           return;
         }
-        const { isInlineOnly, isContentEditable } = getComponent(component);
+        const { isInlineOnly, isContentEditable } =
+          getWsComponentMeta(component);
 
         // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
         // Inline instances are not editable directly, only through parent instance.
@@ -102,7 +103,10 @@ export const useTrackSelectedElement = () => {
           const parent =
             rootInstance &&
             utils.tree.findClosestNonInlineParent(rootInstance, id);
-          if (parent && getComponent(parent.component).isContentEditable) {
+          if (
+            parent &&
+            getWsComponentMeta(parent.component).isContentEditable
+          ) {
             selectInstance(parent.id);
             setEditingInstanceId(parent.id);
           }

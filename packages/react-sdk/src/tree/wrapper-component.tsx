@@ -37,7 +37,7 @@ export const WrapperComponent = ({
   children,
   ...rest
 }: WrapperComponentProps) => {
-  const { Component } = getComponent(instance.component);
+  const Component = getComponent(instance.component);
   const userProps = useUserProps(instance.id);
   const props = { ...userProps, ...rest, [idAttribute]: instance.id };
   return (

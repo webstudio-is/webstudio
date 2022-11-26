@@ -7,7 +7,7 @@ import {
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
-import { getComponent, Instance } from "@webstudio-is/react-sdk";
+import { getWsComponentMeta, Instance } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 
 const instanceRelatedProps = {
@@ -15,13 +15,13 @@ const instanceRelatedProps = {
   getItemPath: utils.tree.getInstancePath,
   getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
-    return getComponent(item.component).isInlineOnly !== true;
+    return getWsComponentMeta(item.component).isInlineOnly !== true;
   },
   canAcceptChild(item: Instance) {
-    return getComponent(item.component).canAcceptChildren;
+    return getWsComponentMeta(item.component).canAcceptChildren;
   },
   getItemChildren(item: Instance) {
-    const component = getComponent(item.component);
+    const component = getWsComponentMeta(item.component);
 
     // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
     // We rely on the fact that only content editable or inline components may have `string` children.
@@ -37,7 +37,7 @@ const instanceRelatedProps = {
     ) as Instance[];
   },
   renderItem(props: TreeItemRenderProps<Instance>) {
-    const { Icon, label } = getComponent(props.itemData.component);
+    const { Icon, label } = getWsComponentMeta(props.itemData.component);
     return (
       <TreeItemBody {...props} selectionEvent="focus">
         <TreeItemLabel prefix={<Icon />}>{label}</TreeItemLabel>

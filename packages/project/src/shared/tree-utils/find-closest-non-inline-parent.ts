@@ -1,4 +1,4 @@
-import { Instance, getComponent } from "@webstudio-is/react-sdk";
+import { Instance, getWsComponentMeta } from "@webstudio-is/react-sdk";
 import { getInstancePath } from "./get-instance-path";
 
 export const findClosestNonInlineParent = (
@@ -8,6 +8,6 @@ export const findClosestNonInlineParent = (
   const path = getInstancePath(rootInstance, instanceId);
   path.reverse();
   return path.find(
-    (item) => getComponent(item.component).isInlineOnly === false
+    (item) => getWsComponentMeta(item.component).isInlineOnly === false
   );
 };

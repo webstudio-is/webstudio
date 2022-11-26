@@ -1,4 +1,4 @@
-import { getComponent } from "@webstudio-is/react-sdk";
+import { getWsComponentMeta } from "@webstudio-is/react-sdk";
 import { Flex, Text } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 
@@ -16,7 +16,7 @@ export const ComponentInfo = ({
           fontWeight: "500",
         }}
       >{`Selected: ${
-        getComponent(selectedInstanceData.component).label
+        getWsComponentMeta(selectedInstanceData.component).label
       }`}</Text>
     </Flex>
   );
