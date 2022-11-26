@@ -45,7 +45,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       # only packages have to be built as they might be imported by Storybooks
-      - run: yarn build --ignore="apps/**/*"
+      - run: yarn build --filter='!./apps/*'
 
       - name: Chromatic
         uses: chromaui/action@v1
