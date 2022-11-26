@@ -9,6 +9,7 @@ import type { Breakpoint } from "@webstudio-is/css-data";
 export type Data = {
   tree: Tree | null;
   breakpoints: Array<Breakpoint>;
+  designTokens: Array<any>;
   props: Array<InstanceProps>;
   assets: Array<Asset>;
 };

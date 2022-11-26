@@ -22,10 +22,11 @@ export const loadCanvasData = async (
     throw new Error(`Page ${pageIdOrPath} not found`);
   }
 
-  const [tree, props, breakpoints] = await Promise.all([
+  const [tree, props, breakpoints, designTokens] = await Promise.all([
     db.tree.loadById(page.treeId),
     db.props.loadByTreeId(page.treeId),
     db.breakpoints.load(build.id),
+    db.designTokens.load(build.id),
   ]);
 
   if (tree === null) {
@@ -40,6 +41,7 @@ export const loadCanvasData = async (
     tree,
     props,
     breakpoints: breakpoints.values,
+    designTokens,
     buildId: build.id,
     page,
     assets: project.assets ?? [],

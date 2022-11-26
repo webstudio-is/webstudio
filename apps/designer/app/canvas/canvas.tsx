@@ -44,6 +44,10 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import {
+  useInitializeDesignTokens,
+  usePublishDesignTokens,
+} from "./shared/design-tokens";
 
 registerContainers();
 
@@ -99,6 +103,7 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageBreakpoints();
+  usePublishDesignTokens();
   useManageDesignModeStyles();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
@@ -130,6 +135,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   }
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
+  useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
