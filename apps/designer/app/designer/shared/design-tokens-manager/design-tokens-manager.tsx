@@ -4,6 +4,8 @@ import {
   Flex,
   InputErrorsTooltip,
   Label,
+  List,
+  ListItem,
   Popover,
   PopoverContent,
   PopoverHeader,
@@ -11,14 +13,16 @@ import {
   PopoverTrigger,
   TextArea,
   TextField,
+  useList,
 } from "@webstudio-is/design-system";
-import { PlusIcon } from "@webstudio-is/icons";
+import { CheckIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DesignToken } from "@webstudio-is/project";
 import { designTokensGroups } from "@webstudio-is/project";
 import { useDesignTokens } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { CollapsibleSection } from "../inspector";
 import { filterByType, findByName } from "./utils";
+import { useMenu } from "./item-menu";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -147,15 +151,38 @@ const TokenEditor = ({
   );
 };
 
-const TokenItem = ({ token }: { token: DesignToken }) => {
-  return <div>{token.value}</div>;
-};
-
 export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
   const [tokens, setTokens] = useDesignTokens();
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const { getItemProps, getListProps } = useList({
+    items: tokens,
+    selectedIndex,
+    currentIndex,
+    onSelect: setSelectedIndex,
+    onChangeCurrent: setCurrentIndex,
+  });
+
+  const { render: renderMenu, isOpen: isMenuOpen } = useMenu({
+    selectedIndex,
+    onSelect: setSelectedIndex,
+    onDelete: () => {},
+    onEdit: () => {},
+  });
+
+  const listProps = getListProps();
+
+  let index = -1;
 
   return (
-    <>
+    <List
+      {...listProps}
+      onBlur={(event) => {
+        if (isMenuOpen === false) {
+          listProps.onBlur(event);
+        }
+      }}
+    >
       {designTokensGroups.map(({ group, type }) => {
         return (
           <CollapsibleSection
@@ -175,12 +202,22 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
           >
             <>
               {filterByType(tokens, type).map((token) => {
-                return <TokenItem token={token} key={token.name} />;
+                const itemProps = getItemProps({ index: ++index });
+                return (
+                  <ListItem
+                    {...itemProps}
+                    key={token.name}
+                    prefix={itemProps.current ? <CheckIcon /> : undefined}
+                    suffix={renderMenu(index)}
+                  >
+                    {token.name}
+                  </ListItem>
+                );
               })}
             </>
           </CollapsibleSection>
         );
       })}
-    </>
+    </List>
   );
 };
