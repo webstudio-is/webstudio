@@ -39,7 +39,7 @@ const getRequiredProps = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
   return Object.entries(meta)
-    .filter(([_, value]) => value.required)
+    .filter(([_, value]) => value?.required)
     .map(([prop, _]) => ({
       id: ObjectId().toString(),
       prop,
@@ -56,10 +56,9 @@ const getPropsWithDefaultValue = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
   return Object.entries(meta)
-    .filter(([_, value]) => value.defaultValue != null)
+    .filter(([_, value]) => value?.defaultValue != null)
     .map(([prop, propObj]) => {
-      const { defaultValue } = propObj;
-      const value = defaultValue ?? "";
+      const value = propObj?.defaultValue ?? "";
       return {
         id: ObjectId().toString(),
         prop,

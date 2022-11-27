@@ -81,7 +81,7 @@ export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
           return {
             id: prop,
             prop,
-            value: value.defaultValue,
+            value: value?.defaultValue ?? "",
           } as UserProp;
         }),
       },
