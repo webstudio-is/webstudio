@@ -24,10 +24,6 @@
     },
 
     {
-      "path": "../fonts"
-    },
-
-    {
       "path": "../generate-arg-types"
     },
 
