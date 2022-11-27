@@ -38,7 +38,12 @@ jobs:
             workingDir: packages/react-sdk
 
     outputs:
-      deployed-urls: ${{ toJSON(steps.deployed-url.outputs) }}
+      designer-app: ${{ steps.deployed-url.outputs.designer-app }}
+      css-engine: ${{ steps.deployed-url.outputs.css-engine }}
+      design-system: ${{ steps.deployed-url.outputs.design-system }}
+      icons: ${{ steps.deployed-url.outputs.icons }}
+      image: ${{ steps.deployed-url.outputs.image }}
+      react-sdk: ${{ steps.deployed-url.outputs.react-sdk }}
 
     steps:
       - uses: actions/checkout@v3
@@ -60,7 +65,6 @@ jobs:
       - name: Save deployed URL
         id: deployed-url
         run: echo "${{ matrix.project }}=${{ steps.chromatic.outputs.storybookUrl }}" >> $GITHUB_OUTPUT
-      #   run: echo '' > ${{ matrix.workingDir }}/storybook_deploy.json
 
   chromatic-root:
     timeout-minutes: 20
@@ -75,5 +79,6 @@ jobs:
       #     fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
 
       # - uses: ./.github/actions/ci-setup
+
       - name: Print deployed URLs
-        run: echo "${{ fromJSON(needs.chromatic.outputs.deployed-urls) }}"
+        run: echo "${{ toJSON(needs.chromatic.outputs) }}"
