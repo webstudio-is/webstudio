@@ -1,5 +1,5 @@
 import {
-  componentsMeta,
+  getComponentMetaProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
@@ -13,7 +13,6 @@ import {
   Switch,
   TextField,
 } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import { ValuePickerPopover } from "../style-panel/shared/value-picker-popover";
 import { ImageManager } from "~/designer/shared/image-manager";
 
@@ -183,11 +182,13 @@ export function Control({
   userProp,
   onChangePropValue,
 }: ControlProps) {
-  const meta = componentsMeta[component];
-  const argType = meta[userProp.prop as keyof typeof meta];
+  const meta = getComponentMetaProps(component);
 
-  const defaultValue = argType.defaultValue;
-  const type = argType.type;
+  const argType = meta[userProp.prop];
+
+  // argType can be undefined in case of new property created
+  const defaultValue = argType?.defaultValue ?? "";
+  const type = argType?.type ?? "text";
 
   if (type == null) {
     warnOnce(
@@ -208,17 +209,15 @@ export function Control({
     return <NotImplemented />;
   }
 
-  if (isFeatureEnabled("assets")) {
-    if (component === "Image" && userProp.prop === "src") {
-      const asset = userProp.asset ?? null;
+  if (component === "Image" && userProp.prop === "src") {
+    const asset = userProp.asset ?? null;
 
-      return (
-        <ImageControl
-          asset={asset}
-          onChange={(asset) => onChangePropValue(asset.path, asset)}
-        />
-      );
-    }
+    return (
+      <ImageControl
+        asset={asset}
+        onChange={(asset) => onChangePropValue(asset.path, asset)}
+      />
+    );
   }
 
   if (includes(textControlTypes, type)) {
@@ -242,12 +241,12 @@ export function Control({
   }
 
   if (
-    argType.type === "radio" ||
-    argType.type === "inline-radio" ||
-    argType.type === "check" ||
-    argType.type === "inline-check" ||
-    argType.type === "multi-select" ||
-    argType.type === "select"
+    argType?.type === "radio" ||
+    argType?.type === "inline-radio" ||
+    argType?.type === "check" ||
+    argType?.type === "inline-check" ||
+    argType?.type === "multi-select" ||
+    argType?.type === "select"
   ) {
     const options = argType.options;
 

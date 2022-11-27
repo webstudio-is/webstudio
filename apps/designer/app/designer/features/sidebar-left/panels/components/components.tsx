@@ -1,6 +1,11 @@
 import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  type ComponentName,
+  getComponentMeta,
+  getComponentNames,
+} from "@webstudio-is/react-sdk";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { Flex, useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
@@ -9,10 +14,6 @@ import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import { Header, CloseButton } from "../../lib/header";
-
-const componentNames = (
-  Object.keys(components) as Array<Instance["component"]>
-).filter((component) => components[component].isListed);
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -65,7 +66,10 @@ type TabContentProps = {
   publish: Publish;
 };
 
-const elementToComponentName = (element: Element) => {
+const elementToComponentName = (
+  element: Element,
+  listedComponentNames: ComponentName[]
+) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
   const parentWithData = element.closest("[data-drag-component]");
@@ -74,7 +78,7 @@ const elementToComponentName = (element: Element) => {
     return;
   }
   const { dragComponent } = parentWithData.dataset;
-  return componentNames.find((component) => component === dragComponent);
+  return listedComponentNames.find((component) => component === dragComponent);
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
@@ -92,9 +96,16 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
   };
 
+  const listedComponentNames = getComponentNames().filter(
+    (name) => getComponentMeta(name).isListed
+  );
+
   const useDragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
-      const componentName = elementToComponentName(element);
+      const componentName = elementToComponentName(
+        element,
+        listedComponentNames
+      );
       if (componentName === undefined) {
         return false;
       }
@@ -142,7 +153,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
         css={{ padding: "$spacing$3", overflow: "auto" }}
         ref={useDragHandlers.rootRef}
       >
-        {componentNames.map((component: Instance["component"]) => (
+        {listedComponentNames.map((component: Instance["component"]) => (
           <DraggableThumb
             key={component}
             component={component}

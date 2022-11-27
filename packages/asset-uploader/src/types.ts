@@ -3,9 +3,10 @@ import type { FontMeta } from "@webstudio-is/fonts/server";
 import { Asset as DbAsset } from "@webstudio-is/prisma-client";
 import type { ImageMeta } from "./utils/format-asset";
 
-type BaseAsset = Omit<DbAsset, "meta"> & {
+type BaseAsset = Omit<DbAsset, "meta" | "createdAt"> & {
   path: string;
   status?: "uploaded";
+  createdAt: string;
 };
 
 export type FontAsset = Omit<BaseAsset, "format"> & {

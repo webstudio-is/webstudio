@@ -24,15 +24,15 @@
     },
 
     {
-      "path": "../fonts"
-    },
-
-    {
       "path": "../generate-arg-types"
     },
 
     {
       "path": "../icons"
+    },
+
+    {
+      "path": "../image"
     },
 
     {

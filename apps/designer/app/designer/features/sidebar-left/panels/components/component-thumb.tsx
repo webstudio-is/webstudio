@@ -1,4 +1,4 @@
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { Flex, Text, styled } from "@webstudio-is/design-system";
 
@@ -30,7 +30,7 @@ export const ComponentThumb = forwardRef<
   ElementRef<typeof Thumb>,
   ComponentThumbProps
 >(({ component, ...rest }, ref) => {
-  const { Icon, label } = components[component];
+  const { Icon, label } = getComponentMeta(component);
   return (
     <Thumb
       direction="column"

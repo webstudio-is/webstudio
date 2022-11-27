@@ -1,5 +1,5 @@
 import {
-  componentsMeta,
+  getComponentMetaProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
@@ -121,7 +121,7 @@ const Property = ({
   onChangePropValue,
   onDelete,
 }: PropertyProps) => {
-  const meta = componentsMeta[component];
+  const meta = getComponentMetaProps(component);
 
   const argType = meta[userProp.prop as keyof typeof meta];
   const isInvalid =
@@ -142,7 +142,8 @@ const Property = ({
             const argType = meta[name as keyof typeof meta];
 
             const defaultValue =
-              argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+              argType?.defaultValue ??
+              (argType?.type === "boolean" ? false : "");
 
             onChangePropName(name, defaultValue);
           }
@@ -151,7 +152,7 @@ const Property = ({
           const argType = meta[name as keyof typeof meta];
 
           const defaultValue =
-            argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+            argType?.defaultValue ?? (argType?.type === "boolean" ? false : "");
 
           onChangePropName(name, defaultValue);
         }}

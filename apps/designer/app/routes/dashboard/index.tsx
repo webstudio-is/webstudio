@@ -10,8 +10,12 @@ import { db } from "@webstudio-is/project/server";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
 import { zfd } from "zod-form-data";
-import { type Project, User } from "@webstudio-is/prisma-client";
+import { type Project, User as DbUser } from "@webstudio-is/prisma-client";
 import { designerPath, loginPath } from "~/shared/router-utils";
+
+type User = Omit<DbUser, "createdAt"> & {
+  createdAt: string;
+};
 
 export { links };
 const schema = zfd.formData({

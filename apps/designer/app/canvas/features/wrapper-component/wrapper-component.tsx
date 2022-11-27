@@ -4,7 +4,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
   useUserProps,
   renderWrapperComponentChildren,
-  components,
+  getComponent,
   type Instance,
   type OnChangeChildren,
   idAttribute,
@@ -66,7 +66,7 @@ export const WrapperComponentDev = ({
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
 
-  const { Component } = components[instance.component];
+  const Component = getComponent(instance.component);
 
   const props = {
     ...userProps,
@@ -80,7 +80,10 @@ export const WrapperComponentDev = ({
     "data-ws-component": instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
-      if (instance.component === "Link") {
+      if (
+        instance.component === "Link" ||
+        instance.component === "RichTextLink"
+      ) {
         event.preventDefault();
       }
     },

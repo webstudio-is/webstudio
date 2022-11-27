@@ -9,9 +9,13 @@ import {
   Text,
   Flex,
 } from "@webstudio-is/design-system";
-import { User } from "@webstudio-is/prisma-client";
+import { User as DbUser } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
 import { logoutPath } from "~/shared/router-utils";
+
+type User = Omit<DbUser, "createdAt"> & {
+  createdAt: string;
+};
 
 export const DashboardHeader = ({ user }: { user: User }) => {
   const navigate = useNavigate();

@@ -1,5 +1,5 @@
 import { Breakpoint } from "@webstudio-is/css-data";
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 
 /**
  * Populate instance with:
@@ -11,7 +11,7 @@ export const populateInstance = (
   breakpoint: Breakpoint["id"] = ""
 ): Instance => {
   const populatedInstance = { ...instance };
-  const componentMeta = components[instance.component];
+  const componentMeta = getComponentMeta(instance.component);
   if (componentMeta !== undefined && "defaultStyle" in componentMeta) {
     const cssRule = {
       breakpoint,
