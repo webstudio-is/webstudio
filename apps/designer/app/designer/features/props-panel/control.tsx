@@ -183,10 +183,12 @@ export function Control({
   onChangePropValue,
 }: ControlProps) {
   const meta = getComponentMetaProps(component);
-  const argType = meta[userProp.prop as keyof typeof meta];
 
-  const defaultValue = argType.defaultValue;
-  const type = argType.type;
+  const argType = meta[userProp.prop];
+
+  // argType can be undefined in case of new property created
+  const defaultValue = argType?.defaultValue ?? "";
+  const type = argType?.type ?? "text";
 
   if (type == null) {
     warnOnce(
@@ -239,12 +241,12 @@ export function Control({
   }
 
   if (
-    argType.type === "radio" ||
-    argType.type === "inline-radio" ||
-    argType.type === "check" ||
-    argType.type === "inline-check" ||
-    argType.type === "multi-select" ||
-    argType.type === "select"
+    argType?.type === "radio" ||
+    argType?.type === "inline-radio" ||
+    argType?.type === "check" ||
+    argType?.type === "inline-check" ||
+    argType?.type === "multi-select" ||
+    argType?.type === "select"
   ) {
     const options = argType.options;
 
