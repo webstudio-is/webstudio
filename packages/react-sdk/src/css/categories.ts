@@ -60,6 +60,7 @@ const size = [
   "maxHeight",
   "overflow",
   "objectFit",
+  "aspectRatio",
 ] as const;
 
 const position = [
