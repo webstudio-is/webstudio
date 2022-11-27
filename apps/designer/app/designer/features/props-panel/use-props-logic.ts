@@ -126,7 +126,6 @@ export const usePropsLogic = ({
       const isPropRequired = draft[index].required;
 
       if (isPropRequired !== true) {
-        console.log(name, defaultValue);
         draft[index].prop = name;
         draft[index].value = defaultValue;
       }
