@@ -67,7 +67,9 @@ const getControl = (property: StyleProperty): Control => {
       return "FontFamilyControl";
     }
     case "backgroundImage": {
-      return "ImageControl";
+      // @todo implement image picker for background image
+      return "TextControl";
+      //return "ImageControl";
     }
     case "fontWeight": {
       return "FontWeightControl";
