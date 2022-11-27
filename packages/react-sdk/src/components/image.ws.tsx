@@ -18,14 +18,11 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta<typeof Image> = {
+  type: "embed",
+  label: "Image",
   Icon: ImageIcon,
   Component: Image,
-  canAcceptChildren: false,
   defaultStyle,
-  isContentEditable: false,
-  isInlineOnly: false,
-  isListed: true,
-  label: "Image",
 };
 
 export default meta;

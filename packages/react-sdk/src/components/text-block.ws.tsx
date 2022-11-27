@@ -11,14 +11,11 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta<typeof TextBlock> = {
+  type: "rich-text",
+  label: "Text Block",
   Icon: TextIcon,
   Component: TextBlock,
   defaultStyle,
-  canAcceptChildren: false,
-  isContentEditable: true,
-  isInlineOnly: false,
-  isListed: true,
-  label: "Text Block",
   children: ["Block of text you can edit"],
 };
 

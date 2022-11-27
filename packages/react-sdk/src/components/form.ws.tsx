@@ -15,14 +15,11 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta<typeof Form> = {
+  type: "container",
+  label: "Form",
   Icon: FormIcon,
   Component: Form,
   defaultStyle,
-  canAcceptChildren: true,
-  isContentEditable: false,
-  isInlineOnly: false,
-  isListed: true,
-  label: "Form",
 };
 
 export default meta;

@@ -78,7 +78,7 @@ export const findInsertLocation = (
   path.reverse();
 
   const parentIndex = path.findIndex(
-    ({ item }) => getComponentMeta(item.component).canAcceptChildren
+    ({ item }) => getComponentMeta(item.component).type === "container"
   );
 
   // Just in case selected Instance is not in the tree for some reason.

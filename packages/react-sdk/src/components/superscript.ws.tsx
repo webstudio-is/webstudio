@@ -3,13 +3,10 @@ import type { WsComponentMeta } from "./component-type";
 import { Superscript } from "./superscript";
 
 const meta: WsComponentMeta<typeof Superscript> = {
+  type: "rich-text-child",
+  label: "Superscript Text",
   Icon: SuperscriptIcon,
   Component: Superscript,
-  canAcceptChildren: false,
-  isContentEditable: false,
-  label: "Superscript Text",
-  isInlineOnly: true,
-  isListed: false,
 };
 
 export default meta;

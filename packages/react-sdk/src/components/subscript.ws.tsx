@@ -3,13 +3,10 @@ import type { WsComponentMeta } from "./component-type";
 import { Subscript } from "./subscript";
 
 const meta: WsComponentMeta<typeof Subscript> = {
+  type: "rich-text-child",
+  label: "Subscript Text",
   Icon: SubscriptIcon,
   Component: Subscript,
-  canAcceptChildren: false,
-  isContentEditable: false,
-  label: "Subscript Text",
-  isInlineOnly: true,
-  isListed: false,
 };
 
 export default meta;

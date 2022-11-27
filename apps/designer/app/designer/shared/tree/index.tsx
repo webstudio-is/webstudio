@@ -15,20 +15,24 @@ const instanceRelatedProps = {
   getItemPath: utils.tree.getInstancePath,
   getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
-    return getComponentMeta(item.component).isInlineOnly !== true;
+    const { type } = getComponentMeta(item.component);
+    return (
+      type === "container" ||
+      type === "control" ||
+      type === "embed" ||
+      type === "rich-text"
+    );
   },
   canAcceptChild(item: Instance) {
-    return getComponentMeta(item.component).canAcceptChildren;
+    const { type } = getComponentMeta(item.component);
+    return type === "container";
   },
   getItemChildren(item: Instance) {
-    const component = getComponentMeta(item.component);
+    const { type } = getComponentMeta(item.component);
 
     // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
     // We rely on the fact that only content editable or inline components may have `string` children.
-    if (
-      component.isContentEditable === false &&
-      component.isInlineOnly === false
-    ) {
+    if (type === "container" || type === "control" || type === "embed") {
       return item.children as Instance[];
     }
 

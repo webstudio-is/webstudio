@@ -3,13 +3,10 @@ import type { WsComponentMeta } from "./component-type";
 import { Input } from "./input";
 
 const meta: WsComponentMeta<typeof Input> = {
+  type: "control",
+  label: "Input",
   Icon: InputIcon,
   Component: Input,
-  canAcceptChildren: false,
-  isContentEditable: false,
-  isInlineOnly: false,
-  isListed: true,
-  label: "Input",
 };
 
 export default meta;

@@ -10,14 +10,11 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta<typeof Italic> = {
+  type: "rich-text-child",
+  label: "Italic Text",
   Icon: FontItalicIcon,
   Component: Italic,
   defaultStyle,
-  canAcceptChildren: false,
-  isContentEditable: false,
-  isInlineOnly: true,
-  label: "Italic Text",
-  isListed: false,
 };
 
 export default meta;

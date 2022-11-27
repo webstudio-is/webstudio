@@ -53,13 +53,10 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta<typeof Body> = {
+  type: "container",
+  label: "Body",
   Icon: BodyIcon,
   Component: Body,
-  canAcceptChildren: true,
-  isContentEditable: false,
-  label: "Body",
-  isInlineOnly: false,
-  isListed: false,
   defaultStyle,
 };
 
