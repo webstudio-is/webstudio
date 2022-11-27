@@ -4,6 +4,13 @@ import { IconProps } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/css-data";
 
 export type WsComponentMeta<ComponentType> = {
+  /**
+   * container - can accept other components with dnd
+   * control - usually form controls like inputs, without children
+   * embed - images, videos or other embeddable components, without children
+   * rich-text - editable text component
+   * rich-text-child - formatted text fragment, not listed in components list
+   */
   type: "container" | "control" | "embed" | "rich-text" | "rich-text-child";
   label: string;
   Component: ComponentType;
