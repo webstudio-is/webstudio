@@ -2,8 +2,9 @@ import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   type Instance,
+  type ComponentName,
   getComponentMeta,
-  componentNames,
+  getComponentNames,
 } from "@webstudio-is/react-sdk";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { Flex, useDrag, type Point } from "@webstudio-is/design-system";
@@ -13,10 +14,6 @@ import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import { Header, CloseButton } from "../../lib/header";
-
-const listedComponentNames = componentNames.filter(
-  (name) => getComponentMeta(name).isListed
-);
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -69,7 +66,10 @@ type TabContentProps = {
   publish: Publish;
 };
 
-const elementToComponentName = (element: Element) => {
+const elementToComponentName = (
+  element: Element,
+  listedComponentNames: ComponentName[]
+) => {
   // If drag doesn't start on the button element directly but on one of its children,
   // we need to trace back to the button that has the data.
   const parentWithData = element.closest("[data-drag-component]");
@@ -96,9 +96,16 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
   };
 
+  const listedComponentNames = getComponentNames().filter(
+    (name) => getComponentMeta(name).isListed
+  );
+
   const useDragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
-      const componentName = elementToComponentName(element);
+      const componentName = elementToComponentName(
+        element,
+        listedComponentNames
+      );
       if (componentName === undefined) {
         return false;
       }
