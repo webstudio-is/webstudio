@@ -32,7 +32,6 @@ import {
   RowGapIcon,
   ColumnGapIcon,
 } from "@webstudio-is/icons";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import { keywordValues, properties } from "@webstudio-is/css-data";
 
 type BaseStyleConfig = {
@@ -68,7 +67,7 @@ const getControl = (property: StyleProperty): Control => {
       return "FontFamilyControl";
     }
     case "backgroundImage": {
-      return isFeatureEnabled("assets") ? "ImageControl" : "TextControl";
+      return "ImageControl";
     }
     case "fontWeight": {
       return "FontWeightControl";

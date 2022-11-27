@@ -13,7 +13,6 @@ import {
   Switch,
   TextField,
 } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import { ValuePickerPopover } from "../style-panel/shared/value-picker-popover";
 import { ImageManager } from "~/designer/shared/image-manager";
 
@@ -208,17 +207,15 @@ export function Control({
     return <NotImplemented />;
   }
 
-  if (isFeatureEnabled("assets")) {
-    if (component === "Image" && userProp.prop === "src") {
-      const asset = userProp.asset ?? null;
+  if (component === "Image" && userProp.prop === "src") {
+    const asset = userProp.asset ?? null;
 
-      return (
-        <ImageControl
-          asset={asset}
-          onChange={(asset) => onChangePropValue(asset.path, asset)}
-        />
-      );
-    }
+    return (
+      <ImageControl
+        asset={asset}
+        onChange={(asset) => onChangePropValue(asset.path, asset)}
+      />
+    );
   }
 
   if (includes(textControlTypes, type)) {
