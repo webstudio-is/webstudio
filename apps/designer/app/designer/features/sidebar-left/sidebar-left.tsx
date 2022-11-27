@@ -37,8 +37,6 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
       switch (panel) {
         case "designTokens":
           return isFeatureEnabled("designTokens");
-        case "assets":
-          return isFeatureEnabled("assets");
         case "navigator":
           return clientSettings.navigatorLayout === "docked";
       }
