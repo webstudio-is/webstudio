@@ -8,6 +8,7 @@ import Input from "./__generated__/input.props.json";
 import Italic from "./__generated__/italic.props.json";
 import Superscript from "./__generated__/superscript.props.json";
 import Subscript from "./__generated__/subscript.props.json";
+import RichTextLink from "./__generated__/rich-text-link.props.json";
 import Link from "./__generated__/link.props.json";
 import Paragraph from "./__generated__/paragraph.props.json";
 import Span from "./__generated__/span.props.json";
@@ -25,6 +26,7 @@ const meta = {
   Italic,
   Superscript,
   Subscript,
+  RichTextLink,
   Link,
   Paragraph,
   Span,

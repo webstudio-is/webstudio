@@ -4,6 +4,7 @@ import TextBlock from "./text-block.ws";
 import Heading from "./heading.ws";
 import Paragraph from "./paragraph.ws";
 import Link from "./link.ws";
+import RichTextLink from "./rich-text-link.ws";
 import Span from "./span.ws";
 import Bold from "./bold.ws";
 import Italic from "./italic.ws";
@@ -21,6 +22,7 @@ const components = {
   Heading,
   Paragraph,
   Link,
+  RichTextLink,
   Span,
   Bold,
   Italic,

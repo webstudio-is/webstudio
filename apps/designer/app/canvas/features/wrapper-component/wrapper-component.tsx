@@ -80,7 +80,10 @@ export const WrapperComponentDev = ({
     "data-ws-component": instance.component,
     [idAttribute]: instance.id,
     onClick: (event: MouseEvent) => {
-      if (instance.component === "Link") {
+      if (
+        instance.component === "Link" ||
+        instance.component === "RichTextLink"
+      ) {
         event.preventDefault();
       }
     },

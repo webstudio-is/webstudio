@@ -41,7 +41,11 @@ const $writeUpdates = (
       const id = refs.get(child.getKey());
       const childrenUpdates: ChildrenUpdates = [];
       $writeUpdates(child, childrenUpdates, refs);
-      updates.push({ id, component: "Link", children: childrenUpdates });
+      updates.push({
+        id,
+        component: "RichTextLink",
+        children: childrenUpdates,
+      });
     }
     if ($isTextNode(child)) {
       // support nesting bold into italic and vice versa
@@ -109,7 +113,7 @@ const $writeLexical = (
     }
 
     // convert instances
-    if (child.component === "Link" && $isElementNode(parent)) {
+    if (child.component === "RichTextLink" && $isElementNode(parent)) {
       const linkNode = $createLinkNode("");
       refs.set(linkNode.getKey(), child.id);
       parent.append(linkNode);
