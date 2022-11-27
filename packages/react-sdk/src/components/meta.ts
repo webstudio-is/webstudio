@@ -58,7 +58,7 @@ type MetaProp =
       options: string[];
     };
 
-type MetaProps = Record<string, MetaProp>;
+type MetaProps = { [p in string]?: MetaProp };
 
 export const getComponentMetaProps = (name: keyof typeof meta): MetaProps => {
   return meta[name] as MetaProps;

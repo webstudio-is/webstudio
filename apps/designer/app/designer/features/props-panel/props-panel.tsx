@@ -142,7 +142,8 @@ const Property = ({
             const argType = meta[name as keyof typeof meta];
 
             const defaultValue =
-              argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+              argType?.defaultValue ??
+              (argType?.type === "boolean" ? false : "");
 
             onChangePropName(name, defaultValue);
           }
@@ -151,7 +152,7 @@ const Property = ({
           const argType = meta[name as keyof typeof meta];
 
           const defaultValue =
-            argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+            argType?.defaultValue ?? (argType?.type === "boolean" ? false : "");
 
           onChangePropName(name, defaultValue);
         }}
