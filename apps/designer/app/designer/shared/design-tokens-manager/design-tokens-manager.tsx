@@ -1,4 +1,9 @@
-import { type FormEvent, useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  type FormEvent,
+  type ComponentProps,
+} from "react";
 import {
   Button,
   Flex,
@@ -20,13 +25,16 @@ import type { DesignToken } from "@webstudio-is/project";
 import { designTokensGroups } from "@webstudio-is/project";
 import { useDesignTokens } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
+// @todo this is temporary, we need to either make that collapsible reusable or copy it over
+// This wasn't properly designed, so this is mostly temp
 import { CollapsibleSection } from "../inspector";
-import { filterByType, findByName } from "./utils";
+import { deleteTokenMutable, filterByType, findByName } from "./utils";
 import { useMenu } from "./item-menu";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     updateToken: DesignToken;
+    deleteToken: DesignToken["name"];
   }
 }
 
@@ -60,18 +68,19 @@ const getData = (event: FormEvent<HTMLFormElement>) => {
 };
 
 const TokenEditor = ({
-  group,
-  name,
-  type,
+  token,
+  trigger,
+  isOpen,
   onChangeComplete,
+  onOpenChange,
 }: {
-  group: string;
-  type: string;
-  name?: string;
+  token: DesignToken;
+  trigger?: JSX.Element;
+  isOpen: boolean;
   onChangeComplete: (token: DesignToken) => void;
+  onOpenChange: (isOpen: boolean) => void;
 }) => {
   const [tokens] = useDesignTokens();
-  const [isOpen, setIsOpen] = useState(false);
   const [errors, setErrors] =
     useState<ReturnType<typeof validate>>(initialErrors);
   const isNew = name === undefined;
@@ -96,26 +105,28 @@ const TokenEditor = ({
     setErrors(nextErrors);
 
     if (nextErrors.hasErrors === false) {
-      onChangeComplete({ ...data, group, type } as DesignToken);
-      setIsOpen(false);
+      onChangeComplete({ ...token, ...data } as DesignToken);
+      onOpenChange(false);
     }
   };
 
   return (
-    <Popover modal open={isOpen} onOpenChange={setIsOpen}>
+    <Popover modal open={isOpen} onOpenChange={onOpenChange}>
       <PopoverTrigger
         asChild
         aria-label={isNew ? "Create Token" : "Edit Token"}
       >
-        <Button
-          ghost
-          onClick={(event) => {
-            event.preventDefault();
-            setIsOpen(true);
-          }}
-        >
-          <PlusIcon />
-        </Button>
+        {trigger ?? (
+          <Button
+            ghost
+            onClick={(event) => {
+              event.preventDefault();
+              onOpenChange(true);
+            }}
+          >
+            <PlusIcon />
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent align="end" css={{ zIndex: "$zIndices$1" }}>
@@ -162,15 +173,47 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
     onSelect: setSelectedIndex,
     onChangeCurrent: setCurrentIndex,
   });
+  const [editingToken, setEditingToken] = useState<
+    DesignToken["name"] | undefined
+  >();
 
   const { render: renderMenu, isOpen: isMenuOpen } = useMenu({
     selectedIndex,
     onSelect: setSelectedIndex,
-    onDelete: () => {},
-    onEdit: () => {},
+    onDelete: () => {
+      const { name } = tokens[index];
+      publish({ type: "deleteToken", payload: name });
+      deleteTokenMutable([...tokens], name);
+    },
+    onEdit: (index) => {
+      setEditingToken(tokens[index].name);
+    },
   });
-
   const listProps = getListProps();
+
+  const renderTokenEditor = (
+    props: Omit<ComponentProps<typeof TokenEditor>, "token"> & {
+      token: Partial<DesignToken>;
+    }
+  ) => {
+    return (
+      <TokenEditor
+        {...props}
+        onChangeComplete={(token) => {
+          publish({ type: "updateToken", payload: token });
+          // @todo update token when its an existing one
+          setTokens([...tokens, token]);
+        }}
+        onOpenChange={(isOpen) => {
+          if (isOpen === false) {
+            return setEditingToken(undefined);
+          }
+          console.log(2222, props.token.name || props.token.type);
+          setEditingToken(props.token.name || props.token.type);
+        }}
+      />
+    );
+  };
 
   let index = -1;
 
@@ -188,33 +231,39 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
           <CollapsibleSection
             label={group}
             key={group}
-            rightSlot={
-              <TokenEditor
-                group={group}
-                type={type}
-                onChangeComplete={(token) => {
-                  publish({ type: "updateToken", payload: token });
-                  // @todo update token when its an existing one
-                  setTokens([...tokens, token]);
-                }}
-              />
-            }
+            rightSlot={renderTokenEditor({
+              token: { group, type },
+              isOpen: editingToken === type,
+            })}
           >
-            <>
+            <Flex direction="column">
               {filterByType(tokens, type).map((token) => {
                 const itemProps = getItemProps({ index: ++index });
-                return (
+                const listItem = (
                   <ListItem
                     {...itemProps}
                     key={token.name}
                     prefix={itemProps.current ? <CheckIcon /> : undefined}
                     suffix={renderMenu(index)}
                   >
-                    {token.name}
+                    {renderTokenEditor({
+                      token,
+                      trigger: (
+                        <div
+                          onClick={(event) => {
+                            event.preventDefault();
+                          }}
+                        >
+                          {token.name}
+                        </div>
+                      ),
+                      isOpen: editingToken === token.name,
+                    })}
                   </ListItem>
                 );
+                return listItem;
               })}
-            </>
+            </Flex>
           </CollapsibleSection>
         );
       })}

@@ -27,6 +27,7 @@ import {
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
+  deleteTokenMutable,
   tokensToStyle,
   updateOrAddTokenMutable,
 } from "~/designer/shared/design-tokens-manager";
@@ -61,7 +62,8 @@ const helperStyles = [
 ];
 
 export const useManageDesignModeStyles = () => {
-  useUpdateTokens();
+  useUpdateToken();
+  useDeleteToken();
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
@@ -219,10 +221,18 @@ const useUpdateStyle = () => {
   });
 };
 
-const useUpdateTokens = () => {
+const useUpdateToken = () => {
   useSubscribe("updateToken", (updatedToken) => {
     store.createTransaction([designTokensContainer], (tokens) => {
       updateOrAddTokenMutable(tokens, updatedToken);
+    });
+  });
+};
+
+const useDeleteToken = () => {
+  useSubscribe("deleteToken", (name) => {
+    store.createTransaction([designTokensContainer], (tokens) => {
+      deleteTokenMutable(tokens, name);
     });
   });
 };

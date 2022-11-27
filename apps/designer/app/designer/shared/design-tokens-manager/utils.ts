@@ -29,3 +29,11 @@ export const updateOrAddTokenMutable = (
   }
   tokens.push(token);
 };
+
+export const deleteTokenMutable = (
+  tokens: Array<DesignToken>,
+  name: DesignToken["name"]
+) => {
+  const index = tokens.findIndex((token) => token.name === name);
+  tokens.splice(index, 1);
+};
