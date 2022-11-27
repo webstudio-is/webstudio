@@ -69,7 +69,8 @@ const RemoveParagaphsPlugin = () => {
       COMMAND_PRIORITY_EDITOR
     );
 
-    // flatten pasted paragraphs
+    // merge pasted paragraphs into single one
+    // and separate lines with line breaks
     const removeNodeTransform = editor.registerNodeTransform(
       RootNode,
       (node) => {
@@ -79,6 +80,9 @@ const RemoveParagaphsPlugin = () => {
           let first;
           for (let index = 0; index < children.length; index += 1) {
             const paragraph = children[index];
+            // With default configuration root contains only paragraphs.
+            // Lexical converts headings to paragraphs on paste for example.
+            // So he we just check root children which are all paragraphs.
             if (paragraph instanceof ElementNode) {
               if (index === 0) {
                 first = paragraph;
