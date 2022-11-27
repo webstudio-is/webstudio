@@ -54,10 +54,6 @@ const helperStyles = [
   `[${idAttribute}][contenteditable] {
     box-shadow: 0 0 0 4px rgb(36 150 255 / 20%)
   }`,
-  // Text Editor wraps each line into a p, so we need to make sure there is no jump between regular rendering and editing
-  `[${idAttribute}][contenteditable] p {
-    margin: 0
-  }`,
 ];
 
 export const useManageDesignModeStyles = () => {
