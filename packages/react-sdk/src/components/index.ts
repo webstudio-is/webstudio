@@ -45,7 +45,16 @@ let registeredComponents: RegisteredComponents | null = null;
 
 export type ComponentName = keyof typeof components;
 
-export const componentNames = Object.keys(components) as ComponentName[];
+const componentNames = Object.keys(components) as ComponentName[];
+
+export const getComponentNames = (): ComponentName[] => {
+  const uniqueNames = new Set([
+    ...componentNames,
+    ...Object.keys(registeredComponents || {}),
+  ]);
+
+  return [...uniqueNames.values()] as ComponentName[];
+};
 
 export const getComponentMeta = <Name extends ComponentName>(
   name: Name

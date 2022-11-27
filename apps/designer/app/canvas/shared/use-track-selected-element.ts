@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  getComponentMeta,
+  getComponentNames,
+} from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
@@ -87,11 +91,12 @@ export const useTrackSelectedElement = () => {
       if (editingInstanceIdRef.current === id) {
         return;
       }
+      const components = getComponentNames();
 
       // It's the second click in a double click.
       if (event.detail === 2) {
         const component = dataset.wsComponent as Instance["component"];
-        if (component === undefined /*|| component in components === false*/) {
+        if (component === undefined || !components.includes(component)) {
           return;
         }
         const { isInlineOnly, isContentEditable } = getComponentMeta(component);
