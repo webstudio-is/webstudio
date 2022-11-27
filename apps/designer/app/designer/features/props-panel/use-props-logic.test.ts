@@ -350,7 +350,7 @@ describe("usePropsLogic", () => {
         name: "string",
         description: "string",
         location: "REMOTE",
-        createdAt: new Date("1995-12-17T03:24:00Z"),
+        createdAt: new Date("1995-12-17T03:24:00Z").toISOString(),
         meta: { width: 101, height: 202 },
         path: "string",
         status: "uploaded",
@@ -361,7 +361,7 @@ describe("usePropsLogic", () => {
       [
         {
           "asset": {
-            "createdAt": 1995-12-17T03:24:00.000Z,
+            "createdAt": "1995-12-17T03:24:00.000Z",
             "description": "string",
             "format": "string",
             "id": "string",
