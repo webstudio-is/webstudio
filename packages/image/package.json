@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/image",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Image optimization",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -16,7 +16,8 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
-    "generate-types": "generate-arg-types"
+    "generate-types": "generate-arg-types",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {},
   "devDependencies": {
