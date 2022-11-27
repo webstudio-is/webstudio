@@ -5,7 +5,7 @@
 
 import type {
   ErrorBoundaryComponent,
-  LoaderFunction,
+  LoaderArgs,
   MetaFunction,
 } from "@remix-run/node";
 import CatchAllContnet, {
@@ -19,7 +19,7 @@ import CatchAllContnet, {
 // If they are the same, Remix may get confused, and don't load data on page transitions.
 
 export const meta: MetaFunction = (args) => catchAllmeta(args);
-export const loader: LoaderFunction = (args) => catchAllloader(args);
+export const loader = (args: LoaderArgs) => catchAllloader(args);
 export const handle = catchAllHandle;
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => (
   <CatchAllErrorBoundary error={error} />

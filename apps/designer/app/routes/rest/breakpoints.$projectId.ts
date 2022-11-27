@@ -1,4 +1,4 @@
-import type { LoaderFunction } from "@remix-run/node";
+import type { LoaderArgs } from "@remix-run/node";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { db } from "@webstudio-is/project/server";
 
@@ -6,9 +6,9 @@ export type ErrorData = {
   errors: string;
 };
 
-export const loader: LoaderFunction = async ({
+export const loader = async ({
   params,
-}): Promise<Array<Breakpoint> | ErrorData> => {
+}: LoaderArgs): Promise<Array<Breakpoint> | ErrorData> => {
   try {
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);

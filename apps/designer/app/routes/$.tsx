@@ -1,26 +1,20 @@
-import { redirect, json } from "@remix-run/node";
 import type {
   MetaFunction,
-  LoaderFunction,
+  LoaderArgs,
   ErrorBoundaryComponent,
 } from "@remix-run/node";
+import { redirect, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData } from "~/shared/db";
-import env, { type Env } from "~/env.server";
+import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-import {
-  type BuildMode,
-  getBuildParams,
-  dashboardPath,
-} from "~/shared/router-utils";
+import { getBuildParams, dashboardPath } from "~/shared/router-utils";
 import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
-
-type Data = CanvasData & { env: Env; mode: BuildMode };
 
 export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
   data,
@@ -39,12 +33,12 @@ export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
 
 export const handle = { dynamicLinks };
 
-export const meta: MetaFunction = ({ data }: { data: Data }) => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const { page } = data;
   return { title: page.title, ...page.meta };
 };
 
-export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
+export const loader = async ({ request }: LoaderArgs) => {
   const buildParams = getBuildParams(request);
 
   if (buildParams === undefined) {
@@ -85,7 +79,7 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
 };
 
 const Content = () => {
-  const data = useLoaderData<Data>();
+  const data = useLoaderData<typeof loader>();
 
   const Outlet =
     data.mode === "edit"

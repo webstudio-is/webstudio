@@ -1,4 +1,4 @@
-import { type LoaderFunction, redirect } from "@remix-run/node";
+import { type LoaderArgs, redirect } from "@remix-run/node";
 import type { User } from "@webstudio-is/prisma-client";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
@@ -28,7 +28,7 @@ const ensureProject = async ({
  * 2. Clone the project by domain if user doesn't have any projects yet
  * 3. Redirect user to the designer with the cloned project
  */
-export const loader: LoaderFunction = async ({ request, params }) => {
+export const loader = async ({ request, params }: LoaderArgs) => {
   if (params.domain === undefined) return { errors: "Domain required" };
   const user = await authenticator.isAuthenticated(request);
   const { headers, userId: generatedUserId } = await ensureUserCookie(request);

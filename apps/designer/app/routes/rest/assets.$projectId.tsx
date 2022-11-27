@@ -1,4 +1,4 @@
-import { ActionFunction } from "@remix-run/node";
+import type { ActionArgs } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
 import {
   deleteAssets,
@@ -14,10 +14,10 @@ const DeleteAssets = zfd.formData({
   assetId: zfd.repeatableOfType(zfd.text()),
 });
 
-export const action: ActionFunction = async ({
+export const action = async ({
   request,
   params,
-}): Promise<ActionData | undefined> => {
+}: ActionArgs): Promise<ActionData | undefined> => {
   if (params.projectId === undefined) throw new Error("Project id undefined");
   try {
     if (request.method === "DELETE") {
@@ -49,7 +49,7 @@ export const action: ActionFunction = async ({
 };
 
 export const useAction = () => {
-  const actionData: ActionData | undefined = useActionData();
+  const actionData = useActionData<typeof action>();
 
   useEffect(() => {
     if (actionData?.errors) {

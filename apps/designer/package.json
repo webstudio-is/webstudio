@@ -19,10 +19,10 @@
   "dependencies": {
     "@floating-ui/dom": "^1.0.6",
     "@lexical/react": "^0.6.0",
-    "@remix-run/node": "^1.6.4",
-    "@remix-run/react": "^1.6.4",
-    "@remix-run/serve": "^1.6.4",
-    "@remix-run/vercel": "^1.6.4",
+    "@remix-run/node": "^1.7.6",
+    "@remix-run/react": "^1.7.6",
+    "@remix-run/serve": "^1.7.6",
+    "@remix-run/vercel": "^1.7.6",
     "@sentry/remix": "^7.5.0",
     "@vercel/node": "^2.4.1",
     "@webstudio-is/asset-uploader": "*",
@@ -71,7 +71,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
-    "@remix-run/dev": "^1.6.4",
+    "@remix-run/dev": "^1.7.6",
     "@storybook/addon-actions": "^6.5.9",
     "@storybook/addon-essentials": "^6.5.9",
     "@storybook/addon-interactions": "^6.5.9",

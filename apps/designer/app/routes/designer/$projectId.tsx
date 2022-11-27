@@ -1,6 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
-import type { ErrorBoundaryComponent, LoaderFunction } from "@remix-run/node";
-import { type DesignerProps, Designer, links } from "~/designer";
+import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
+import { Designer, links } from "~/designer";
 import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
@@ -8,10 +8,7 @@ import { getBuildOrigin } from "~/shared/router-utils";
 
 export { links };
 
-export const loader: LoaderFunction = async ({
-  params,
-  request,
-}): Promise<DesignerProps> => {
+export const loader = async ({ params, request }: LoaderArgs) => {
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }
@@ -42,7 +39,7 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
 };
 
 export const DesignerRoute = () => {
-  const data = useLoaderData<DesignerProps>();
+  const data = useLoaderData<typeof loader>();
 
   return <Designer {...data} />;
 };

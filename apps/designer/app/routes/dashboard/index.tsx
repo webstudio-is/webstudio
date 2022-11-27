@@ -1,33 +1,19 @@
 import { useLoaderData } from "@remix-run/react";
-import {
-  type ActionFunction,
-  json,
-  type LoaderFunction,
-  redirect,
-} from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
 import { db } from "@webstudio-is/project/server";
 import { ensureUserCookie } from "~/shared/session";
 import { authenticator } from "~/services/auth.server";
 import { zfd } from "zod-form-data";
-import { type Project, User as DbUser } from "@webstudio-is/prisma-client";
 import { designerPath, loginPath } from "~/shared/router-utils";
-
-type User = Omit<DbUser, "createdAt"> & {
-  createdAt: string;
-};
 
 export { links };
 const schema = zfd.formData({
   project: zfd.text(),
 });
 
-type Data = {
-  projects: Array<Project>;
-  user: User;
-};
-
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionArgs) => {
   const { project: title } = schema.parse(await request.formData());
 
   const { userId, headers } = await ensureUserCookie(request);
@@ -46,7 +32,7 @@ export const action: ActionFunction = async ({ request }) => {
   return { errors: "Unexpected error" };
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request);
   if (!user) {
     return redirect(loginPath({}));
@@ -57,7 +43,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 const DashboardRoute = () => {
-  const { projects, user } = useLoaderData<Data>();
+  const { projects, user } = useLoaderData<typeof loader>();
 
   return <Dashboard user={user} projects={projects} />;
 };

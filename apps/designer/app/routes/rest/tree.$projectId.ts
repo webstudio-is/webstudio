@@ -1,4 +1,4 @@
-import { type LoaderFunction } from "@remix-run/node";
+import type { LoaderArgs } from "@remix-run/node";
 import type { Tree } from "@webstudio-is/react-sdk";
 import { db } from "@webstudio-is/project/server";
 import { utils } from "@webstudio-is/project";
@@ -7,9 +7,9 @@ export type ErrorData = {
   errors: string;
 };
 
-export const loader: LoaderFunction = async ({
+export const loader = async ({
   params,
-}): Promise<Tree | null | ErrorData> => {
+}: LoaderArgs): Promise<Tree | null | ErrorData> => {
   try {
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);
