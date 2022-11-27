@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { parseCssValue } from "./parse-css-value";
@@ -46,7 +46,7 @@ export const useStyleData = ({
     [selectedInstanceData?.cssRules, selectedBreakpoint]
   );
 
-  const getCurrentStyle = useCallback(
+  const getCurrentStyle = useCallback<() => Style>(
     () => ({
       ...selectedInstanceData?.browserStyle,
       ...cssRule?.style,
@@ -135,6 +135,7 @@ export const useStyleData = ({
       publishUpdates("update", updates);
       const nextStyle = updates.reduce(
         (currentStyle, { property, value }) => {
+          // @todo
           currentStyle[property] = value;
           return currentStyle;
         },

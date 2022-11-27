@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import {
+  type Instance,
+  getComponentMeta,
+  getComponentNames,
+} from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
 import { useSelectedElement, useSelectedInstance } from "./nano-states";
 import {
@@ -87,14 +91,15 @@ export const useTrackSelectedElement = () => {
       if (editingInstanceIdRef.current === id) {
         return;
       }
+      const components = getComponentNames();
 
       // It's the second click in a double click.
       if (event.detail === 2) {
         const component = dataset.wsComponent as Instance["component"];
-        if (component === undefined || component in components === false) {
+        if (component === undefined || !components.includes(component)) {
           return;
         }
-        const { isInlineOnly, isContentEditable } = components[component];
+        const { isInlineOnly, isContentEditable } = getComponentMeta(component);
 
         // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
         // Inline instances are not editable directly, only through parent instance.
@@ -102,7 +107,7 @@ export const useTrackSelectedElement = () => {
           const parent =
             rootInstance &&
             utils.tree.findClosestNonInlineParent(rootInstance, id);
-          if (parent && components[parent.component].isContentEditable) {
+          if (parent && getComponentMeta(parent.component).isContentEditable) {
             selectInstance(parent.id);
             setEditingInstanceId(parent.id);
           }

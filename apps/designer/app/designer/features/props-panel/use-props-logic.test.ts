@@ -1,11 +1,11 @@
 import { renderHook, act } from "@testing-library/react-hooks";
-import { components, UserProp } from "@webstudio-is/react-sdk";
+import { type ComponentName, UserProp } from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 import { usePropsLogic } from "./use-props-logic";
 
 const getSelectedInstanceData = (
-  componentName: keyof typeof components,
+  componentName: ComponentName,
   props: UserProp[]
 ): SelectedInstanceData => {
   return {
@@ -350,7 +350,7 @@ describe("usePropsLogic", () => {
         name: "string",
         description: "string",
         location: "REMOTE",
-        createdAt: new Date("1995-12-17T03:24:00Z"),
+        createdAt: new Date("1995-12-17T03:24:00Z").toISOString(),
         meta: { width: 101, height: 202 },
         path: "string",
         status: "uploaded",
@@ -361,7 +361,7 @@ describe("usePropsLogic", () => {
       [
         {
           "asset": {
-            "createdAt": 1995-12-17T03:24:00.000Z,
+            "createdAt": "1995-12-17T03:24:00.000Z",
             "description": "string",
             "format": "string",
             "id": "string",

@@ -1,5 +1,5 @@
 import { ComponentStoryObj } from "@storybook/react";
-import { componentsMeta, type UserProp } from "@webstudio-is/react-sdk";
+import { getComponentMetaProps, type UserProp } from "@webstudio-is/react-sdk";
 import { PropsPanel } from "./props-panel";
 
 export default {
@@ -64,7 +64,7 @@ export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
   },
 };
 
-const meta = componentsMeta["Button"];
+const meta = getComponentMetaProps("Button");
 
 export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
   args: {

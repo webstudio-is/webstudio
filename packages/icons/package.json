@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/icons",
-  "version": "0.1.1",
+  "version": "0.3.0",
   "description": "Webstudio Icons",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,7 +9,7 @@
     "dev": "tsup --watch",
     "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
-    "generate": "rm -fr src/gen && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts",
+    "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "yarn typecheck && yarn lint",

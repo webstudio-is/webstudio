@@ -60,9 +60,9 @@ export const CollapsibleSection = ({
               justify="center"
               css={{ marginRight: "-$spacing$3", color: "$slate9" }}
             >
+              {rightSlot}
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </Flex>
-            {rightSlot}
           </Flex>
         </Collapsible.Trigger>
         <Collapsible.Content asChild>

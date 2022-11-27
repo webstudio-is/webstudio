@@ -35,8 +35,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
     (panel) => {
       switch (panel) {
-        case "assets":
-          return isFeatureEnabled("assets");
+        case "designTokens":
+          return isFeatureEnabled("designTokens");
         case "navigator":
           return clientSettings.navigatorLayout === "docked";
       }

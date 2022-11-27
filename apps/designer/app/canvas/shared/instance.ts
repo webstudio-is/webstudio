@@ -4,7 +4,7 @@ import {
   type Instance,
   type InstanceProps,
   type Tree,
-  components,
+  getComponentMeta,
   allUserPropsContainer,
   getBrowserStyle,
   useAllUserProps,
@@ -79,7 +79,7 @@ export const findInsertLocation = (
   path.reverse();
 
   const parentIndex = path.findIndex(
-    ({ item }) => components[item.component].canAcceptChildren
+    ({ item }) => getComponentMeta(item.component).canAcceptChildren
   );
 
   // Just in case selected Instance is not in the tree for some reason.

@@ -1,5 +1,5 @@
 import ObjectId from "bson-objectid";
-import { type Instance, components } from "@webstudio-is/react-sdk";
+import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { CssRule } from "@webstudio-is/css-data";
 
 export const createInstanceId = () => {
@@ -17,7 +17,7 @@ export const createInstance = ({
   children?: Instance["children"];
   cssRules?: Array<CssRule>;
 }): Instance => {
-  const componentMeta = components[component];
+  const componentMeta = getComponentMeta(component);
   return {
     component,
     id: id === undefined ? createInstanceId() : id,

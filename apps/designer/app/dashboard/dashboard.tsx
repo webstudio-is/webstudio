@@ -3,9 +3,10 @@ import { useActionData } from "@remix-run/react";
 import { Flex } from "@webstudio-is/design-system";
 import interStyles from "~/shared/font-faces/inter.css";
 import dashboardStyles from "./dashboard.css";
-import { User } from "@webstudio-is/prisma-client";
+import { User as DbUser } from "@webstudio-is/prisma-client";
 import { DashboardHeader } from "./components/header";
 import { SelectProjectCard } from "./components/card";
+
 export const links = () => {
   return [
     {
@@ -17,6 +18,10 @@ export const links = () => {
       href: dashboardStyles,
     },
   ];
+};
+
+type User = Omit<DbUser, "createdAt"> & {
+  createdAt: string;
 };
 
 type DashboardProps = {

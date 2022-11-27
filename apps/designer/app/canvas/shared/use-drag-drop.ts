@@ -18,7 +18,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   type Instance,
-  components,
+  getComponentMeta,
   BaseInstance,
   toBaseInstance,
 } from "@webstudio-is/react-sdk";
@@ -116,7 +116,7 @@ export const useDragAndDrop = () => {
       }
 
       const data = path.find(
-        (instance) => components[instance.component].canAcceptChildren
+        (instance) => getComponentMeta(instance.component).canAcceptChildren
       );
 
       if (data === undefined) {
@@ -179,7 +179,7 @@ export const useDragAndDrop = () => {
       }
 
       // When trying to drag an inline instance, drag its parent instead
-      if (components[instance.component].isInlineOnly) {
+      if (getComponentMeta(instance.component).isInlineOnly) {
         const nonInlineParent = utils.tree.findClosestNonInlineParent(
           rootInstance,
           instance.id

@@ -2,7 +2,11 @@ import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
 import { addGlobalRules, utils } from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
-import { rootInstanceContainer } from "~/shared/nano-states";
+import {
+  designTokensContainer,
+  rootInstanceContainer,
+  useDesignTokens,
+} from "~/shared/nano-states";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
@@ -22,6 +26,10 @@ import {
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import {
+  tokensToStyle,
+  updateOrAddTokenMutable,
+} from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine();
 
@@ -46,34 +54,51 @@ const helperStyles = [
   `[${idAttribute}][contenteditable] {
     box-shadow: 0 0 0 4px rgb(36 150 255 / 20%)
   }`,
-  // Text Editor wraps each line into a p, so we need to make sure there is no jump between regular rendering and editing
-  `[${idAttribute}][contenteditable] p {
-    margin: 0
-  }`,
 ];
 
 export const useManageDesignModeStyles = () => {
+  useUpdateTokens();
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
 };
 
-const globalStylesCssEngine = createCssEngine();
+const helpersCssEngine = createCssEngine();
+const fontsAndDefaultsCssEngine = createCssEngine();
+const tokensCssEngine = createCssEngine();
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {
-    globalStylesCssEngine.clear();
-
-    addGlobalRules(globalStylesCssEngine, { assets });
-
     for (const style of helperStyles) {
-      globalStylesCssEngine.addPlaintextRule(style);
+      helpersCssEngine.addPlaintextRule(style);
+    }
+    if (typeof document !== "undefined") {
+      helpersCssEngine.render();
+    }
+  }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    fontsAndDefaultsCssEngine.clear();
+    addGlobalRules(fontsAndDefaultsCssEngine, { assets });
+    if (typeof document !== "undefined") {
+      fontsAndDefaultsCssEngine.render();
+    }
+  }, [assets]);
+
+  const [tokens] = useDesignTokens();
+
+  useIsomorphicLayoutEffect(() => {
+    tokensCssEngine.clear();
+    if (tokens.length !== 0) {
+      const style = tokensToStyle(tokens);
+      tokensCssEngine.addStyleRule(`:root`, { style });
     }
 
     if (typeof document !== "undefined") {
-      globalStylesCssEngine.render();
+      tokensCssEngine.render();
     }
-  });
+  }, [tokens]);
+
   return null;
 };
 
@@ -126,7 +151,7 @@ const addRule = (id: string, cssRule: CssRule) => {
   return rule;
 };
 
-const getRule = (id: string, breakpoint: string) => {
+const getRule = (id: string, breakpoint?: string) => {
   const key = id + breakpoint;
   return wrappedRulesMap.get(key);
 };
@@ -186,6 +211,14 @@ const useUpdateStyle = () => {
         return;
       }
       utils.tree.setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
+    });
+  });
+};
+
+const useUpdateTokens = () => {
+  useSubscribe("updateToken", (updatedToken) => {
+    store.createTransaction([designTokensContainer], (tokens) => {
+      updateOrAddTokenMutable(tokens, updatedToken);
     });
   });
 };

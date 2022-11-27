@@ -1,4 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
+import {
+  KEY_ENTER_COMMAND,
+  INSERT_LINE_BREAK_COMMAND,
+  COMMAND_PRIORITY_EDITOR,
+  RootNode,
+  ElementNode,
+  $createLineBreakNode,
+  $getSelection,
+  $isRangeSelection,
+} from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -39,6 +49,65 @@ const AutofocusPlugin = () => {
   return null;
 };
 
+const RemoveParagaphsPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+
+  // register own commands before RichTextPlugin
+  // to stop propagation
+  useLayoutEffect(() => {
+    const removeCommand = editor.registerCommand(
+      KEY_ENTER_COMMAND,
+      (event) => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) {
+          return false;
+        }
+        event?.preventDefault();
+        // returns true which stops propagation
+        return editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+
+    // merge pasted paragraphs into single one
+    // and separate lines with line breaks
+    const removeNodeTransform = editor.registerNodeTransform(
+      RootNode,
+      (node) => {
+        // merge paragraphs into first with line breaks between
+        if (node.getChildrenSize() > 1) {
+          const children = node.getChildren();
+          let first;
+          for (let index = 0; index < children.length; index += 1) {
+            const paragraph = children[index];
+            // With default configuration root contains only paragraphs.
+            // Lexical converts headings to paragraphs on paste for example.
+            // So he we just check root children which are all paragraphs.
+            if (paragraph instanceof ElementNode) {
+              if (index === 0) {
+                first = paragraph;
+              } else if (first) {
+                first.append($createLineBreakNode());
+                for (const child of paragraph.getChildren()) {
+                  first.append(child);
+                }
+                paragraph.remove();
+              }
+            }
+          }
+        }
+      }
+    );
+
+    return () => {
+      removeCommand();
+      removeNodeTransform();
+    };
+  }, [editor]);
+
+  return null;
+};
+
 const onError = (error: Error) => {
   throw error;
 };
@@ -54,12 +123,16 @@ export const TextEditor = ({
   contentEditable,
   onChange,
 }: TextEditorProps) => {
+  const [paragraphClassName] = useState(() => nanoid());
   const [italicClassName] = useState(() => nanoid());
 
-  // initially instance styles are applied to all nodes
-  // so not necessary to use layout effect
-  useEffect(() => {
+  useLayoutEffect(() => {
     const engine = createCssEngine();
+    // reset paragraph styles and make it work inside <a>
+    engine.addPlaintextRule(`
+      .${paragraphClassName} { display: inline; margin: 0; }
+    `);
+    /// set italic style for bold italic combination on the same element
     engine.addPlaintextRule(`
       .${italicClassName} { font-style: italic; }
     `);
@@ -67,7 +140,7 @@ export const TextEditor = ({
     return () => {
       engine.unmount();
     };
-  }, [italicClassName]);
+  }, [paragraphClassName, italicClassName]);
 
   // store references separately because lexical nodes
   // cannot store custom data
@@ -76,6 +149,7 @@ export const TextEditor = ({
   const initialConfig = {
     namespace: "WsTextEditor",
     theme: {
+      paragraph: paragraphClassName,
       text: {
         italic: italicClassName,
       },
@@ -93,6 +167,7 @@ export const TextEditor = ({
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <AutofocusPlugin />
+      <RemoveParagaphsPlugin />
       <ToolbarConnectorPlugin />
       <BindInstanceToNodePlugin refs={refs} />
       <RichTextPlugin

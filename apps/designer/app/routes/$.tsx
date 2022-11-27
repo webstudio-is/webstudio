@@ -1,8 +1,8 @@
-import {
-  redirect,
-  json,
-  type LoaderFunction,
-  type MetaFunction,
+import { redirect, json } from "@remix-run/node";
+import type {
+  MetaFunction,
+  LoaderFunction,
+  ErrorBoundaryComponent,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
@@ -20,9 +20,7 @@ import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
 
-type Data =
-  | (CanvasData & { env: Env; mode: BuildMode })
-  | { errors: string; env: Env };
+type Data = CanvasData & { env: Env; mode: BuildMode };
 
 export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
   data,
@@ -42,63 +40,52 @@ export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
 export const handle = { dynamicLinks };
 
 export const meta: MetaFunction = ({ data }: { data: Data }) => {
-  if ("errors" in data) {
-    return { title: "Error" };
-  }
   const { page } = data;
   return { title: page.title, ...page.meta };
 };
 
-export const loader: LoaderFunction = async ({
-  request,
-}): Promise<Data | Response> => {
-  try {
-    const buildParams = getBuildParams(request);
+export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
+  const buildParams = getBuildParams(request);
 
-    if (buildParams === undefined) {
-      return redirect(dashboardPath());
-    }
-
-    const { mode, pathname } = buildParams;
-
-    const project = await db.project.loadByParams(buildParams);
-
-    if (project === null) {
-      throw json("Project not found", { status: 404 });
-    }
-
-    const canvasData = await loadCanvasData(
-      project,
-      mode === "published" ? "prod" : "dev",
-      pathname
-    );
-
-    if (canvasData === undefined) {
-      throw json("Page not found", { status: 404 });
-    }
-
-    return { ...canvasData, env, mode };
-  } catch (error) {
-    // If a Response is thrown, we're rethrowing it for Remix to handle.
-    // https://remix.run/docs/en/v1/api/conventions#throwing-responses-in-loaders
-    if (error instanceof Response) {
-      throw error;
-    }
-
-    sentryException({ error });
-    return {
-      errors: error instanceof Error ? error.message : String(error),
-      env,
-    };
+  if (buildParams === undefined) {
+    throw redirect(dashboardPath());
   }
+
+  const { mode, pathname } = buildParams;
+
+  const project = await db.project.loadByParams(buildParams);
+
+  if (project === null) {
+    throw json("Project not found", { status: 404 });
+  }
+
+  const canvasData = await loadCanvasData(
+    project,
+    mode === "published" ? "prod" : "dev",
+    pathname
+  );
+
+  if (canvasData === undefined) {
+    throw json("Page not found", { status: 404 });
+  }
+
+  const params: CanvasData["params"] = {};
+
+  if (env.RESIZE_ORIGIN != null) {
+    params.resizeOrigin = env.RESIZE_ORIGIN;
+  }
+
+  return { ...canvasData, env, mode, params };
+};
+
+export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
+  sentryException({ error });
+  const message = error instanceof Error ? error.message : String(error);
+  return <ErrorMessage message={message} />;
 };
 
 const Content = () => {
   const data = useLoaderData<Data>();
-
-  if ("errors" in data) {
-    return <ErrorMessage message={data.errors} />;
-  }
 
   const Outlet =
     data.mode === "edit"
