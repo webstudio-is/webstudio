@@ -37,6 +37,9 @@ jobs:
             chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
             workingDir: packages/react-sdk
 
+    outputs:
+      deployed-urls: ${{ toJSON(steps.deployed-url.outputs) }}
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -48,7 +51,29 @@ jobs:
       - run: yarn build --filter='!./apps/*'
 
       - name: Chromatic
+        id: chromatic
         uses: chromaui/action@v1
         with:
           projectToken: ${{ secrets[matrix.chromaticSecretKey] }}
           workingDir: ${{ matrix.workingDir }}
+
+      - name: Save deployed URL
+        id: deployed-url
+        run: echo "${{ matrix.project }}=${{ steps.chromatic.outputs.storybookUrl }}" >> $GITHUB_OUTPUT
+      #   run: echo '' > ${{ matrix.workingDir }}/storybook_deploy.json
+
+  chromatic-root:
+    timeout-minutes: 20
+
+    needs: chromatic
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # - uses: actions/checkout@v3
+      #   with:
+      #     fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
+
+      # - uses: ./.github/actions/ci-setup
+      - name: Print deployed URLs
+        run: echo "${{ fromJSON(needs.chromatic.outputs.deployed-urls) }}"
