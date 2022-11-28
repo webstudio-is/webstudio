@@ -9,10 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
-    "dev": "tsup --watch",
+    "dev": "build-package --watch",
+    "build": "build-package",
     "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.json\"",
-    "build": "rm -fr lib && yarn build:cjs && tsc",
-    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
@@ -30,9 +29,10 @@
     "@storybook/manager-webpack4": "^6.5.6",
     "@storybook/react": "^6.5.6",
     "@storybook/testing-library": "^0.0.13",
+    "@webstudio-is/generate-arg-types": "*",
     "@webstudio-is/jest-config": "*",
-    "typescript": "4.7.4",
-    "@webstudio-is/generate-arg-types": "*"
+    "@webstudio-is/scripts": "*",
+    "typescript": "4.7.4"
   },
   "peerDependencies": {
     "react": "^17.0.2",
@@ -51,12 +51,5 @@
   ],
   "license": "MIT",
   "private": false,
-  "sideEffects": false,
-  "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
-    "format": "esm",
-    "outDir": "lib"
-  }
+  "sideEffects": false
 }

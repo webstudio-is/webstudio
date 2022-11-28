@@ -9,9 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
-    "dev": "tsup --watch",
-    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
-    "build": "rm -fr lib && tsc && yarn build:cjs",
+    "dev": "build-package --watch",
+    "build": "build-package",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
@@ -22,7 +21,7 @@
     "@types/fontkit": "^2.0.0",
     "@webstudio-is/design-system": "*",
     "@webstudio-is/jest-config": "*",
-    "tsup": "^6.1.3",
+    "@webstudio-is/scripts": "*",
     "typescript": "4.7.4",
     "zod": "^3.19.1"
   },
@@ -45,13 +44,5 @@
   ],
   "license": "MIT",
   "private": false,
-  "sideEffects": false,
-  "tsup": {
-    "entry": [
-      "src/index.ts",
-      "src/index.server.ts"
-    ],
-    "format": "esm",
-    "outDir": "lib"
-  }
+  "sideEffects": false
 }
