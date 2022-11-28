@@ -1,6 +1,5 @@
 import { FONT_FORMATS } from "./constants";
-import type { FontMeta } from "./schema";
-import type { FontFormat } from "./types";
+import type { FontMeta, FontFormat } from "./schema";
 
 export type PartialFontAsset = {
   format: FontFormat;

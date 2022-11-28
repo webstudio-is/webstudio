@@ -8,7 +8,7 @@ import { Location } from "@webstudio-is/prisma-client";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createMany } from "../../db";
 import { FILE_DIRECTORY } from "./file-path";
-import { Asset } from "../../types";
+import { Asset } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 

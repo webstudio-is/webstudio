@@ -1,5 +1,5 @@
 import { prisma } from "@webstudio-is/prisma-client";
-import { Asset } from "../types";
+import { Asset } from "../schema";
 
 export const deleteFromDb = async (ids: Array<Asset["id"]>) => {
   if (ids.length === 0) {

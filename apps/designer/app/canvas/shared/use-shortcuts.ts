@@ -4,7 +4,6 @@ import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { useSelectedInstance } from "./nano-states";
-import { copy, paste } from "./copy-paste";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 import { type SelectedInstanceData } from "@webstudio-is/project";
 
@@ -85,8 +84,6 @@ export const useShortcuts = () => {
     redo: store.redo.bind(store),
     delete: publishDeleteInstance,
     preview: togglePreviewMode,
-    copy,
-    paste,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
     zoom: publishZoom,
@@ -137,12 +134,6 @@ export const useShortcuts = () => {
   useHotkeys(shortcuts.redo, shortcutHandlerMap.redo, options, []);
 
   useHotkeys(shortcuts.preview, shortcutHandlerMap.preview, options, []);
-
-  useHotkeys(shortcuts.copy, shortcutHandlerMap.copy, options, [
-    shortcutHandlerMap.copy,
-  ]);
-
-  useHotkeys(shortcuts.paste, shortcutHandlerMap.paste, options, []);
 
   useHotkeys(shortcuts.breakpoint, shortcutHandlerMap.breakpoint, options, []);
   useHotkeys(shortcuts.zoom, shortcutHandlerMap.zoom, options, []);

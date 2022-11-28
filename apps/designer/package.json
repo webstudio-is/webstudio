@@ -106,7 +106,7 @@
     "dotenv": "^16.0.0",
     "esbuild-jest": "^0.5.0",
     "esbuild-node-externals": "^1.4.1",
-    "jest": "^29.3.1",
+    "@webstudio-is/jest-config": "*",
     "prettier": "^2.6.2",
     "react-test-renderer": "^17.0.2",
     "relative-deps": "^1.0.7",

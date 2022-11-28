@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ObjectId from "bson-objectid";
 import {
   type Instance,
-  type InstanceProps,
+  type UserProp,
   type Tree,
   getComponentMeta,
   allUserPropsContainer,
@@ -48,7 +47,7 @@ declare module "~/shared/pubsub" {
     insertInstance: {
       instance: Instance;
       dropTarget?: { parentId: Instance["id"]; position: number };
-      props?: InstanceProps;
+      props?: Array<UserProp>;
     };
     unselectInstance: undefined;
   }
@@ -93,7 +92,7 @@ export const findInsertLocation = (
   };
 };
 
-export const useInsertInstance = () => {
+export const useInsertInstance = ({ treeId }: { treeId: string }) => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [breakpoints] = useBreakpoints();
 
@@ -115,7 +114,11 @@ export const useInsertInstance = () => {
           setSelectedInstance(instance);
         }
         if (props !== undefined) {
-          allUserProps[props.instanceId] = props;
+          allUserProps[instance.id] = utils.props.createInstanceProps({
+            instanceId: instance.id,
+            treeId,
+            props,
+          });
         }
       }
     );
@@ -197,15 +200,9 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
     // Unselects the instance by `undefined`
     let payload;
     if (instance !== undefined) {
-      let props = allUserProps[instance.id];
-      if (props === undefined) {
-        props = {
-          id: ObjectId().toString(),
-          instanceId: instance.id,
-          treeId,
-          props: [],
-        };
-      }
+      const props =
+        allUserProps[instance.id] ??
+        utils.props.createInstanceProps({ instanceId: instance.id, treeId });
       payload = {
         id: instance.id,
         component: instance.component,
