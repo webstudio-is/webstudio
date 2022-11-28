@@ -1,12 +1,12 @@
 import { FontBoldIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Bold } from "./bold";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/bold.props.json";
 
-const meta: WsComponentMeta<typeof Bold> = {
+const meta: WsComponentMeta = {
   type: "rich-text-child",
   label: "Bold Text",
   Icon: FontBoldIcon,
-  Component: Bold,
+  props: props as MetaProps,
 };
 
 export default meta;
