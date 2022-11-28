@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useSelectedElement } from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
-import { useDebounce } from "react-use";
+
+// @todo: importing normally doesn't work in Jest for some reason
+// import { useDebounce } from "react-use";
+import useDebounce from "react-use/lib/useDebounce";
 
 const eventOptions = {
   passive: true,
