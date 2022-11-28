@@ -4,7 +4,6 @@
   "references": [
     { "path": "apps/designer" },
     { "path": "packages/asset-uploader" },
-    { "path": "packages/build" },
     { "path": "packages/css-data" },
     { "path": "packages/css-engine" },
     { "path": "packages/css-vars" },
@@ -12,10 +11,7 @@
     { "path": "packages/fonts" },
     { "path": "packages/generate-arg-types" },
     { "path": "packages/http-client" },
-
-    {
-      "path": "packages/icons"
-    },
+    { "path": "packages/icons" },
 
     {
       "path": "packages/image"

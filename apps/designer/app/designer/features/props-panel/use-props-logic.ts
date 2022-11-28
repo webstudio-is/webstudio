@@ -24,7 +24,7 @@ type UserPropValue = Extract<UserProp, { value: unknown }>["value"];
 type HandleChangePropName = (
   id: UserProp["id"],
   name: string,
-  defaultValue: string | boolean
+  defaultValue: string | boolean | number
 ) => void;
 
 type HandleChangePropValue = (
@@ -55,6 +55,7 @@ const getPropsWithDefaultValue = (
 ): UserProp[] => {
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
+
   return Object.entries(meta)
     .filter(([_, value]) => value?.defaultValue != null)
     .map(([prop, propObj]) => {

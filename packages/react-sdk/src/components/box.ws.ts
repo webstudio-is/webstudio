@@ -1,6 +1,6 @@
 import { SquareIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Box } from "./box";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/box.props.json";
 
 const defaultStyle = {
   boxSizing: {
@@ -9,12 +9,12 @@ const defaultStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta<typeof Box> = {
+const meta: WsComponentMeta = {
   type: "container",
   label: "Box",
   Icon: SquareIcon,
-  Component: Box,
   defaultStyle,
+  props: props as MetaProps,
 };
 
 export default meta;

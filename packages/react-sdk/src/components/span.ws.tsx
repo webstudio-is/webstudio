@@ -1,12 +1,12 @@
 import { BrushIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Span } from "./span";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/span.props.json";
 
-const meta: WsComponentMeta<typeof Span> = {
+const meta: WsComponentMeta = {
   type: "rich-text",
   label: "Styled Text",
   Icon: BrushIcon,
-  Component: Span,
+  props: props as MetaProps,
 };
 
 export default meta;

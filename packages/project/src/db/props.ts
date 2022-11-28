@@ -3,8 +3,8 @@ import {
   type Tree,
   type AllUserProps,
   type UserProp,
-  // @todo move zod schema into project package
   UserProps,
+  // @todo move zod schema into project package
   UserDbProps,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";

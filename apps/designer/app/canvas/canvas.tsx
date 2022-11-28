@@ -5,7 +5,9 @@ import {
   createElementsTree,
   useAllUserProps,
   registerComponents,
+  registerComponentsMeta,
   customComponents,
+  customComponentsMeta,
   setParams,
   type OnChangeChildren,
   type Tree,
@@ -166,6 +168,8 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   setParams(data.params ?? null);
 
   registerComponents(customComponents);
+
+  registerComponentsMeta(customComponentsMeta);
 
   // e.g. toggling preview is still needed in both modes
   useShortcuts();

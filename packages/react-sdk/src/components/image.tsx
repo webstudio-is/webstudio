@@ -12,7 +12,6 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
       <img
         {...imageProps}
         src={imageProps.src || imagePlaceholderSvg}
-        decoding="async"
         ref={ref}
       />
     );
@@ -23,7 +22,6 @@ Image.defaultProps = {
   src: "",
   width: "",
   height: "",
-  loading: "lazy",
   alt: "",
 };
 
