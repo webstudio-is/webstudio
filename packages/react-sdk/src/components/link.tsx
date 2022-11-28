@@ -6,19 +6,24 @@ const isAbsoluteUrl = (href: string) => {
   return /^[a-z]+:/i.test(href);
 };
 
-const defaultTag = "a";
+export const renderLink = (
+  href: string,
+  props: Omit<ComponentProps<"a">, "href">,
+  ref: React.ForwardedRef<HTMLAnchorElement>
+) => {
+  return isAbsoluteUrl(href) ? (
+    <a {...props} href={href} ref={ref} />
+  ) : (
+    <RemixLink {...props} to={href} ref={ref} />
+  );
+};
 
-type LinkProps = Omit<ComponentProps<typeof defaultTag>, "href"> & {
+type LinkProps = Omit<ComponentProps<"a">, "href"> & {
   href?: string;
 };
 
-export const Link = forwardRef<ElementRef<typeof defaultTag>, LinkProps>(
-  ({ href = "", ...props }, ref) => {
-    if (isAbsoluteUrl(href)) {
-      return <a {...props} href={href} ref={ref} />;
-    }
-    return <RemixLink {...props} to={href} ref={ref} />;
-  }
+export const Link = forwardRef<ElementRef<"a">, LinkProps>(
+  ({ href = "", ...props }, ref) => renderLink(href, props, ref)
 );
 
 Link.displayName = "Link";
