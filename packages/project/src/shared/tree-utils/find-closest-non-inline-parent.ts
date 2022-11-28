@@ -8,12 +8,7 @@ export const findClosestNonInlineParent = (
   const path = getInstancePath(rootInstance, instanceId);
   path.reverse();
   return path.find((item) => {
-    const type = getComponentMeta(item.component).type;
-    return (
-      type === "container" ||
-      type === "control" ||
-      type === "embed" ||
-      type === "rich-text"
-    );
+    const { type } = getComponentMeta(item.component);
+    return type !== "rich-text-child";
   });
 };
