@@ -51,7 +51,7 @@ export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
     throw redirect(dashboardPath());
   }
 
-  const { mode, pathname } = buildParams;
+  const { mode } = buildParams;
 
   const project = await db.project.loadByParams(buildParams);
 
@@ -62,7 +62,7 @@ export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
   const canvasData = await loadCanvasData(
     project,
     mode === "published" ? "prod" : "dev",
-    pathname
+    "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath
   );
 
   if (canvasData === undefined) {
