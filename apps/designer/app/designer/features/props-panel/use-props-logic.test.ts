@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react-hooks";
-import { type ComponentName, UserProp } from "@webstudio-is/react-sdk";
+import type { ComponentName, UserProp } from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 import { usePropsLogic } from "./use-props-logic";

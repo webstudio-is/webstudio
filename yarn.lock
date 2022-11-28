@@ -18600,11 +18600,6 @@ zod-form-data@^1.2.1:
   resolved "https://registry.yarnpkg.com/zod-form-data/-/zod-form-data-1.2.1.tgz#6da07d7964765b464e959a75f0d797690ee477f7"
   integrity sha512-L4zocmlzikYB9A2uVVj3OUKX/t3spOZTzQLOhoCXECn9w+eN3bw0D/KYGX4J72iLdCIwDP6YJyYwVXkx3WTu7A==
 
-zod@^3.17.3:
-  version "3.17.3"
-  resolved "https://registry.yarnpkg.com/zod/-/zod-3.17.3.tgz#86abbc670ff0063a4588d85a4dcc917d6e4af2ba"
-  integrity sha512-4oKP5zvG6GGbMlqBkI5FESOAweldEhSOZ6LI6cG+JzUT7ofj1ZOC0PJudpQOpT1iqOFpYYtX5Pw0+o403y4bcg==
-
 zod@^3.19.1:
   version "3.19.1"
   resolved "https://registry.yarnpkg.com/zod/-/zod-3.19.1.tgz#112f074a97b50bfc4772d4ad1576814bd8ac4473"

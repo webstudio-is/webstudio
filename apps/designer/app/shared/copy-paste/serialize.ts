@@ -1,11 +1,11 @@
-import { Instance, UserUserProp } from "@webstudio-is/react-sdk";
+import { Instance, UserProps } from "@webstudio-is/react-sdk";
 import { z } from "zod";
 
 const TYPE = "@webstudio/instance/v0.1" as const;
 
 const InstanceCopyData = z.object({
   instance: Instance,
-  props: z.array(UserUserProp).optional(),
+  props: UserProps.optional(),
 });
 
 export type InstanceCopyData = z.infer<typeof InstanceCopyData>;

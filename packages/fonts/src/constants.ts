@@ -1,4 +1,4 @@
-import type { FontFormat } from "./types";
+import type { FontFormat } from "./schema";
 
 export const SYSTEM_FONTS = new Map([
   ["Arial", ["sans-serif"]],

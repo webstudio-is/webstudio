@@ -21,4 +21,5 @@ module.exports = {
   moduleNameMapper: {
     "^~/(.*)$": "<rootDir>/app/$1",
   },
+  // extensionsToTreatAsEsm: [".ts", ".tsx"],
 };

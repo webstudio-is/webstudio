@@ -1,4 +1,4 @@
 export * from "./constants";
 export * from "./get-font-faces";
-export * from "./types";
+export * from "./schema";
 export * from "./font-weights";
