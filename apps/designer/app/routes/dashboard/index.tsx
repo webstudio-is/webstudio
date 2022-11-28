@@ -8,7 +8,7 @@ import {
 import { Dashboard, links } from "~/dashboard";
 import { db } from "@webstudio-is/project/server";
 import { ensureUserCookie } from "~/shared/session";
-import { authenticator } from "~/services/auth.server";
+import { findAuthenticatedUser } from "~/services/auth.server";
 import { zfd } from "zod-form-data";
 import { type Project, User as DbUser } from "@webstudio-is/prisma-client";
 import { designerPath, loginPath } from "~/shared/router-utils";
@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ request }) => {
   const { project: title } = schema.parse(await request.formData());
 
   const { userId, headers } = await ensureUserCookie(request);
-  const authenticatedUser = await authenticator.isAuthenticated(request);
+  const authenticatedUser = await findAuthenticatedUser(request);
   try {
     const project = await db.project.create({
       title,
@@ -47,7 +47,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const user = await authenticator.isAuthenticated(request);
+  const user = await findAuthenticatedUser(request);
   if (!user) {
     return redirect(loginPath({}));
   }
