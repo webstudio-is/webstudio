@@ -3,13 +3,10 @@ import { RichTextLink } from "./rich-text-link";
 import type { WsComponentMeta } from "./component-type";
 
 const meta: WsComponentMeta<typeof RichTextLink> = {
+  type: "rich-text-child",
+  label: "Link",
   Icon: Link2Icon,
   Component: RichTextLink,
-  canAcceptChildren: false,
-  isContentEditable: false,
-  isInlineOnly: true,
-  isListed: false,
-  label: "Link",
 };
 
 export default meta;

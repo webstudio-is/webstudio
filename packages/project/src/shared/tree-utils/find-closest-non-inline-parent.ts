@@ -7,7 +7,8 @@ export const findClosestNonInlineParent = (
 ): Instance | undefined => {
   const path = getInstancePath(rootInstance, instanceId);
   path.reverse();
-  return path.find(
-    (item) => getComponentMeta(item.component).isInlineOnly === false
-  );
+  return path.find((item) => {
+    const { type } = getComponentMeta(item.component);
+    return type !== "rich-text-child";
+  });
 };

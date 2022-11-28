@@ -15,14 +15,11 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta<typeof Link> = {
+  type: "rich-text",
+  label: "Link",
   Icon: Link2Icon,
   Component: Link,
   defaultStyle,
-  canAcceptChildren: false,
-  isContentEditable: true,
-  isInlineOnly: false,
-  isListed: true,
-  label: "Link",
   children: ["Link text you can edit"],
 };
 

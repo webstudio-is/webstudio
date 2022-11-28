@@ -116,7 +116,7 @@ export const useDragAndDrop = () => {
       }
 
       const data = path.find(
-        (instance) => getComponentMeta(instance.component).canAcceptChildren
+        (instance) => getComponentMeta(instance.component).type === "container"
       );
 
       if (data === undefined) {
@@ -179,7 +179,7 @@ export const useDragAndDrop = () => {
       }
 
       // When trying to drag an inline instance, drag its parent instead
-      if (getComponentMeta(instance.component).isInlineOnly) {
+      if (getComponentMeta(instance.component).type === "rich-text-child") {
         const nonInlineParent = utils.tree.findClosestNonInlineParent(
           rootInstance,
           instance.id

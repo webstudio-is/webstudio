@@ -117,13 +117,12 @@ export const useShortcuts = () => {
     "enter",
     (event) => {
       if (selectedInstance === undefined) return;
-      const { isContentEditable } = getComponentMeta(
-        selectedInstance.component
-      );
-      if (isContentEditable === false) return;
-      // Prevents inserting a newline when entering text-editing mode
-      event.preventDefault();
-      setEditingInstanceId(selectedInstance.id);
+      const { type } = getComponentMeta(selectedInstance.component);
+      if (type === "rich-text") {
+        // Prevents inserting a newline when entering text-editing mode
+        event.preventDefault();
+        setEditingInstanceId(selectedInstance.id);
+      }
     },
     options,
     [selectedInstance, setEditingInstanceId]

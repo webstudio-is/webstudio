@@ -10,14 +10,11 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta<typeof Box> = {
+  type: "container",
+  label: "Box",
   Icon: SquareIcon,
   Component: Box,
   defaultStyle,
-  canAcceptChildren: true,
-  isContentEditable: false,
-  isInlineOnly: false,
-  isListed: true,
-  label: "Box",
 };
 
 export default meta;
