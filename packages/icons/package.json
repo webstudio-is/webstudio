@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
+    "build": "rm -fr lib && tsc && yarn build:cjs",
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
@@ -45,10 +45,10 @@
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.cjs"
   },
-  "types": "lib/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "lib/*",
-    "README.md",
+    "src/*",
     "!*.test.*"
   ],
   "license": "MIT",

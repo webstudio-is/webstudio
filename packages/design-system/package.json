@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "build": "rm -fr lib && tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
@@ -71,10 +71,10 @@
     "react-hot-toast": "^2.3.0"
   },
   "exports": "./lib/index.js",
-  "types": "lib/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "lib/*",
-    "README.md",
+    "src/*",
     "!*.test.*"
   ],
   "license": "MIT",

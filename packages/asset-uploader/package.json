@@ -10,7 +10,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "build": "rm -fr lib && tsc",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
@@ -35,10 +35,10 @@
     ".": "./lib/index.js",
     "./server": "./server.js"
   },
-  "types": "lib/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "lib/*",
-    "README.md",
+    "src/*",
     "!*.test.*"
   ],
   "license": "MIT",

@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "build": "rm -fr lib && tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
@@ -40,10 +40,10 @@
     "@types/react-dom": "^17.0.9"
   },
   "exports": "./lib/index.js",
-  "types": "lib/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "lib/*",
-    "README.md",
+    "src/*",
     "!*.test.*"
   ],
   "license": "MIT",

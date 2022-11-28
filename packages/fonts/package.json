@@ -11,7 +11,7 @@
     "checks": "yarn typecheck && yarn lint && yarn test",
     "dev": "tsup --watch",
     "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
+    "build": "rm -fr lib && tsc && yarn build:cjs",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
@@ -37,10 +37,10 @@
     },
     "./server": "./server.js"
   },
-  "types": "lib/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "lib/*",
-    "README.md",
+    "src/*",
     "!*.test.*"
   ],
   "license": "MIT",
