@@ -6,7 +6,7 @@
     "build": "remix build",
     "dev": "remix dev",
     "start": "remix-serve build",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "yarn lint && yarn typecheck && yarn prettier --check && yarn test",
