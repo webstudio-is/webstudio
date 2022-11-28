@@ -113,7 +113,34 @@ export const getComponent = (
 };
 
 export const getComponentMetaProps = (name: ComponentName): MetaProps => {
-  return getComponentMeta(name).props;
+  if (registeredComponentsMeta != null && name in registeredComponentsMeta) {
+    const allMetaPropKeys = new Set([
+      ...Object.keys(meta[name]?.props ?? {}),
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ...Object.keys(registeredComponentsMeta[name]!.props!),
+    ]);
+
+    const props: MetaProps = {};
+    /**
+     * Merge props, taking non null defaultValue and required=true from meta
+     **/
+    for (const key of allMetaPropKeys.values()) {
+      props[key] = {
+        ...meta[name]?.props[key],
+        ...registeredComponentsMeta[name]?.props?.[key],
+        defaultValue:
+          registeredComponentsMeta[name]?.props?.[key]?.defaultValue ??
+          meta[name]?.props[key]?.defaultValue ??
+          null,
+        required:
+          registeredComponentsMeta[name]?.props?.[key]?.required ||
+          meta[name]?.props[key]?.required,
+      } as MetaProps[string];
+    }
+    return props;
+  }
+
+  return meta[name].props;
 };
 
 /**
