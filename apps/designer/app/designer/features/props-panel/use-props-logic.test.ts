@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
 import type { ComponentName, UserProp } from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
