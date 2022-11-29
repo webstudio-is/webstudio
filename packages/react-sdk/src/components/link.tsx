@@ -1,12 +1,8 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
-export type LinkProps = Omit<ComponentProps<"a">, "href"> & {
-  href?: string;
-};
+type Props = Omit<ComponentProps<"a">, "href"> & { href?: string };
 
-export type LinkRef = ElementRef<"a">;
-
-export const Link = forwardRef<LinkRef, LinkProps>(
+export const Link = forwardRef<ElementRef<"a">, Props>(
   ({ href = "", ...props }, ref) => <a {...props} href={href} ref={ref} />
 );
 

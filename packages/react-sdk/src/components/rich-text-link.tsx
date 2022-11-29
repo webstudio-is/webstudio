@@ -1,12 +1,8 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
-export type RichTextLinkProps = Omit<ComponentProps<"a">, "href"> & {
-  href?: string;
-};
+type Props = Omit<ComponentProps<"a">, "href"> & { href?: string };
 
-export type RichTextLinkRef = ElementRef<"a">;
-
-export const RichTextLink = forwardRef<RichTextLinkRef, RichTextLinkProps>(
+export const RichTextLink = forwardRef<ElementRef<"a">, Props>(
   ({ href = "", ...props }, ref) => <a {...props} href={href} ref={ref} />
 );
 
