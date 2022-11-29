@@ -22,16 +22,24 @@ export const preserveBuildParams = (href: string, sourceSearch: string) => {
     return href;
   }
 
-  const url = new URL(
-    href,
-    // doesn't affect anything, just need some base to use URL
-    "http://localhost"
-  );
+  let url;
+  let sourceSearchParams;
+  try {
+    url = new URL(
+      href,
+      // doesn't affect anything, just need some base to use URL
+      "http://localhost"
+    );
+    sourceSearchParams = new URLSearchParams(sourceSearch);
 
-  preserveSearchBuildParams(
-    new URLSearchParams(sourceSearch),
-    url.searchParams
-  );
+    // eslint-disable-next-line no-empty
+  } catch (e) {}
+
+  if (url === undefined || sourceSearchParams === undefined) {
+    return href;
+  }
+
+  preserveSearchBuildParams(sourceSearchParams, url.searchParams);
 
   const search = url.searchParams.toString();
 
