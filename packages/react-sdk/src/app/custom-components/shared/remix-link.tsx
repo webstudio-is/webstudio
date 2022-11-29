@@ -7,8 +7,14 @@ import type {
 } from "react";
 import { forwardRef } from "react";
 
-// href starts with http:, mailto:, tel:, etc.
-const isAbsoluteUrl = (href: string) => /^[a-z]+:/i.test(href);
+const isAbsoluteUrl = (href: string) => {
+  try {
+    new URL(href);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 type Props = Omit<ComponentProps<"a">, "href"> & { href?: string };
 

@@ -8,15 +8,25 @@ import type {
 import { forwardRef } from "react";
 import { preserveSearchBuildParams } from "~/shared/router-utils";
 
-// href starts with http:, mailto:, tel:, etc.
-const isAbsoluteUrl = (href: string) => /^[a-z]+:/i.test(href);
+const isAbsoluteUrl = (href: string) => {
+  try {
+    new URL(href);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 export const preserveBuildParams = (href: string, sourceSearch: string) => {
   if (isAbsoluteUrl(href)) {
     return href;
   }
 
-  const url = new URL(href, "http://localhost");
+  const url = new URL(
+    href,
+    // doesn't affect anything, just need some base to use URL
+    "http://localhost"
+  );
 
   preserveSearchBuildParams(
     new URLSearchParams(sourceSearch),
