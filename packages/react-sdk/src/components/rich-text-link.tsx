@@ -1,12 +1,13 @@
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { renderLink } from "./link";
 
-type RichTextLinkProps = Omit<ComponentProps<"a">, "href"> & {
+export type RichTextLinkProps = Omit<ComponentProps<"a">, "href"> & {
   href?: string;
 };
 
-export const RichTextLink = forwardRef<ElementRef<"a">, RichTextLinkProps>(
-  ({ href = "", ...props }, ref) => renderLink(href, props, ref)
+export type RichTextLinkRef = ElementRef<"a">;
+
+export const RichTextLink = forwardRef<RichTextLinkRef, RichTextLinkProps>(
+  ({ href = "", ...props }, ref) => <a {...props} href={href} ref={ref} />
 );
 
 RichTextLink.displayName = "RichTextLink";
