@@ -11,6 +11,10 @@ describe("preserveBuildParams", () => {
     );
   });
 
+  test("doesn't crash on a weird value", () => {
+    expect(preserveBuildParams("http://", "?projectId=123")).toBe("http://");
+  });
+
   test("projectId is preserved", () => {
     expect(preserveBuildParams("/foo", "?projectId=123")).toBe(
       "/foo?projectId=123"
