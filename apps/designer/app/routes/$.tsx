@@ -19,7 +19,7 @@ import {
 import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
-import customComponents from "~/canvas/custom-components";
+import { customComponents } from "~/canvas/custom-components";
 
 type Data = CanvasData & { env: Env; mode: BuildMode };
 

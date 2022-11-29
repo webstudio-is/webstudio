@@ -50,7 +50,7 @@ import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { useSelectedInstance } from "./shared/nano-states";
-import customComponents from "./custom-components";
+import { customComponents } from "./custom-components";
 
 registerContainers();
 
