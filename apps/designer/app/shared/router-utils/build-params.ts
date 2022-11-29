@@ -2,19 +2,8 @@
 // "Build" means user generated content — what user builds.
 
 export type BuildMode = "edit" | "preview" | "published";
-export type BuildParams =
-  | {
-      projectId: string;
-      mode: BuildMode;
-      pathname: string;
-      pageId?: string;
-    }
-  | {
-      projectDomain: string;
-      mode: BuildMode;
-      pathname: string;
-      pageId?: string;
-    };
+export type BuildParams = ({ pagePath: string } | { pageId: string }) &
+  ({ projectId: string } | { projectDomain: string }) & { mode: BuildMode };
 
 // A subtype of Request. To make testing easier.
 type MinimalRequest = {
@@ -71,20 +60,7 @@ export const getBuildOrigin = (
 export const getBuildParams = (
   request: MinimalRequest,
   env = process.env
-):
-  | {
-      projectId: string;
-      mode: BuildMode;
-      pathname: string;
-      pageId?: string;
-    }
-  | {
-      projectDomain: string;
-      mode: BuildMode;
-      pathname: string;
-      pageId?: string;
-    }
-  | undefined => {
+): BuildParams | undefined => {
   const url = new URL(request.url);
 
   const requestHost = getRequestHost(request);
@@ -94,23 +70,32 @@ export const getBuildParams = (
   if (env.BUILD_REQUIRE_SUBDOMAIN !== "true") {
     const projectId = url.searchParams.get("projectId");
     if (projectId !== null && buildHost === requestHost) {
-      return {
-        projectId,
-        mode: getMode(url),
-        pathname: url.pathname,
-        pageId,
-      };
+      return pageId === undefined
+        ? { projectId, mode: getMode(url), pagePath: url.pathname }
+        : { projectId, mode: getMode(url), pageId };
     }
   }
 
   const [projectDomain, ...rest] = requestHost.split(".");
   const baseHost = rest.join(".");
   if (baseHost === buildHost) {
-    return {
-      projectDomain,
-      mode: getMode(url),
-      pathname: url.pathname,
-      pageId,
-    };
+    return pageId === undefined
+      ? { projectDomain, mode: getMode(url), pagePath: url.pathname }
+      : { projectDomain, mode: getMode(url), pageId };
+  }
+};
+
+export const preserveSearchBuildParams = (
+  source: URLSearchParams,
+  target: URLSearchParams
+): void => {
+  const mode = source.get("mode");
+  if (typeof mode === "string" && modes.includes(mode as BuildMode)) {
+    target.set("mode", mode);
+  }
+
+  const projectId = source.get("projectId");
+  if (projectId) {
+    target.set("projectId", projectId);
   }
 };

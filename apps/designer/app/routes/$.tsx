@@ -19,6 +19,7 @@ import {
 import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
+import { customComponents } from "~/canvas/custom-components";
 
 type Data = CanvasData & { env: Env; mode: BuildMode };
 
@@ -51,7 +52,7 @@ export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
     throw redirect(dashboardPath());
   }
 
-  const { mode, pathname } = buildParams;
+  const { mode } = buildParams;
 
   const project = await db.project.loadByParams(buildParams);
 
@@ -62,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
   const canvasData = await loadCanvasData(
     project,
     mode === "published" ? "prod" : "dev",
-    pathname
+    "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath
   );
 
   if (canvasData === undefined) {
@@ -90,7 +91,7 @@ const Content = () => {
   const Outlet =
     data.mode === "edit"
       ? () => <Canvas data={data} />
-      : () => <InstanceRoot data={data} />;
+      : () => <InstanceRoot data={data} customComponents={customComponents} />;
 
   // @todo This is non-standard for Remix, is there a better way?
   // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
