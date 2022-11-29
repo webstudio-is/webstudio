@@ -84,3 +84,18 @@ export const getBuildParams = (
       : { projectDomain, mode: getMode(url), pageId };
   }
 };
+
+export const preserveSearchBuildParams = (
+  source: URLSearchParams,
+  target: URLSearchParams
+): void => {
+  const mode = source.get("mode");
+  if (typeof mode === "string" && modes.includes(mode as BuildMode)) {
+    target.set("mode", mode);
+  }
+
+  const projectId = source.get("projectId");
+  if (projectId) {
+    target.set("projectId", projectId);
+  }
+};
