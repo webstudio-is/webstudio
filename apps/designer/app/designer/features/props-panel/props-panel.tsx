@@ -28,8 +28,7 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
-import { usePropsLogic } from "./use-props-logic";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import { usePropsLogic, type UserPropValue } from "./use-props-logic";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -109,12 +108,8 @@ const Combobox = ({
 type PropertyProps = {
   userProp: UserProp;
   component: Instance["component"];
-  onChangePropName: (
-    name: string,
-    defaultValue: string | boolean | number
-  ) => void;
-  onChangePropValue: (value: string | boolean | number) => void;
-  onChangePropAsset: (asset: Asset) => void;
+  onChangePropName: (name: string) => void;
+  onChangePropValue: (value: UserPropValue) => void;
   onDelete: (id: UserProp["id"]) => void;
 };
 
@@ -122,7 +117,6 @@ const Property = ({
   userProp,
   component,
   onChangePropName,
-  onChangePropAsset,
   onChangePropValue,
   onDelete,
 }: PropertyProps) => {
@@ -144,32 +138,10 @@ const Property = ({
         value={userProp.prop}
         onItemSelect={(name) => {
           if (name != null) {
-            const argType = meta[name as keyof typeof meta];
-
-            const defaultValue =
-              argType?.defaultValue ??
-              (argType?.type === "boolean"
-                ? false
-                : argType?.type === "number"
-                ? 0
-                : "");
-
-            onChangePropName(name, defaultValue);
+            onChangePropName(name);
           }
         }}
-        onSubmit={(name) => {
-          const argType = meta[name as keyof typeof meta];
-
-          const defaultValue =
-            argType?.defaultValue ??
-            (argType?.type === "boolean"
-              ? false
-              : argType?.type === "number"
-              ? 0
-              : "");
-
-          onChangePropName(name, defaultValue);
-        }}
+        onSubmit={onChangePropName}
         isInvalid={isInvalid}
         isReadonly={userProp.required ?? false}
       />
@@ -184,7 +156,6 @@ const Property = ({
           component={component}
           userProp={userProp}
           onChangePropValue={onChangePropValue}
-          onChangePropAsset={onChangePropAsset}
         />
       )}
       {userProp.required !== true && (
@@ -215,7 +186,6 @@ export const PropsPanel = ({
     addEmptyProp,
     handleChangePropName,
     handleChangePropValue,
-    handleChangePropAsset,
     handleDeleteProp,
   } = usePropsLogic({ selectedInstanceData, publish });
 
@@ -253,14 +223,11 @@ export const PropsPanel = ({
               key={userProp.id}
               userProp={userProp}
               component={selectedInstanceData.component}
-              onChangePropName={(name, defaultValue) =>
-                handleChangePropName(userProp.id, name, defaultValue)
+              onChangePropName={(name) =>
+                handleChangePropName(userProp.id, name)
               }
               onChangePropValue={(value) =>
                 handleChangePropValue(userProp.id, value)
-              }
-              onChangePropAsset={(asset) =>
-                handleChangePropAsset(userProp.id, asset)
               }
               onDelete={handleDeleteProp}
             />

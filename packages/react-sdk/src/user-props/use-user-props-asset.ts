@@ -20,8 +20,8 @@ export const useUserPropsAsset = (
 
     if (prop == null) return null;
 
-    if ("asset" in prop) {
-      return prop.asset;
+    if (prop.type === "asset") {
+      return prop.value;
     }
 
     return null;

@@ -38,7 +38,7 @@ describe("Update props", () => {
       propsId: "id",
       instanceId: "instanceId",
       treeId: "treeId",
-      updates: [{ id: "propId", prop: "a", value: "1" }],
+      updates: [{ id: "propId", prop: "a", value: "1", type: "string" }],
     };
     updateAllUserPropsMutable(propsMap, update);
     expect(propsMap).toMatchSnapshot();
@@ -50,14 +50,14 @@ describe("Update props", () => {
         id: "id",
         instanceId: "instanceId",
         treeId: "treeId",
-        props: [{ id: "propId", prop: "a", value: "1" }],
+        props: [{ id: "propId", prop: "a", value: "1", type: "string" }],
       },
     };
     const update: UserPropsUpdates = {
       propsId: "id",
       instanceId: "instanceId",
       treeId: "treeId",
-      updates: [{ id: "propId", prop: "a", value: "2" }],
+      updates: [{ id: "propId", prop: "a", value: "2", type: "string" }],
     };
     updateAllUserPropsMutable(propsMap, update);
     expect(propsMap).toMatchSnapshot();
@@ -69,14 +69,14 @@ describe("Update props", () => {
         id: "id",
         instanceId: "instanceId",
         treeId: "treeId",
-        props: [{ id: "propId", prop: "a", value: "1" }],
+        props: [{ id: "propId", prop: "a", value: "1", type: "string" }],
       },
     };
     const update: UserPropsUpdates = {
       propsId: "id",
       instanceId: "instanceId",
       treeId: "treeId",
-      updates: [{ id: "propId", prop: "b", value: "1" }],
+      updates: [{ id: "propId", prop: "b", value: "1", type: "string" }],
     };
     updateAllUserPropsMutable(propsMap, update);
     expect(propsMap).toMatchSnapshot();
@@ -88,7 +88,7 @@ describe("Update props", () => {
         id: "id",
         instanceId: "instanceId",
         treeId: "treeId",
-        props: [{ id: "propId", prop: "a", value: "1" }],
+        props: [{ id: "propId", prop: "a", value: "1", type: "string" }],
       },
     };
     const update: UserPropsUpdates = {
@@ -99,8 +99,8 @@ describe("Update props", () => {
         {
           id: "propId",
           prop: "a",
-          value: "test",
-          asset: { id: "assetId" } as Asset,
+          type: "asset",
+          value: { id: "assetId" } as Asset,
         },
       ],
     };
@@ -112,12 +112,13 @@ describe("Update props", () => {
           "instanceId": "instanceId",
           "props": [
             {
-              "asset": {
-                "id": "assetId",
-              },
               "id": "propId",
               "prop": "a",
-              "value": "test",
+              "required": undefined,
+              "type": "asset",
+              "value": {
+                "id": "assetId",
+              },
             },
           ],
           "treeId": "treeId",

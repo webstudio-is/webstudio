@@ -1,16 +1,49 @@
+import { z } from "zod";
+
 import warnOnce from "warn-once";
 import {
   type Tree,
   type AllUserProps,
   type UserProp,
   UserProps,
-  // @todo move zod schema into project package
-  UserDbProps,
-  type UserDbProp,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
+
+const baseUserProps = {
+  id: z.string(),
+  prop: z.string(),
+  required: z.optional(z.boolean()),
+};
+
+export const UserDbProp = z.discriminatedUnion("type", [
+  z.object({
+    ...baseUserProps,
+    type: z.literal("number"),
+    value: z.number(),
+  }),
+  z.object({
+    ...baseUserProps,
+    type: z.literal("string"),
+    value: z.string(),
+  }),
+  z.object({
+    ...baseUserProps,
+    type: z.literal("boolean"),
+    value: z.boolean(),
+  }),
+  z.object({
+    ...baseUserProps,
+    type: z.literal("asset"),
+    // In database we hold asset_id
+    value: z.string(),
+  }),
+]);
+
+const UserDbProps = z.array(UserDbProp);
+
+type UserDbProp = z.infer<typeof UserDbProp>;
 
 export const loadByTreeId = async (treeId: Tree["id"]) => {
   const instancePropsEntries = await prisma.instanceProps.findMany({
@@ -22,11 +55,11 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
 
   for (const instanceProps of instancePropsEntries) {
     const props = JSON.parse(instanceProps.props);
-    const dpProps = UserDbProps.parse(props);
+    const dbProps = UserDbProps.parse(props);
 
-    for (const dbProp of dpProps) {
-      if ("assetId" in dbProp) {
-        assetIds.push(dbProp.assetId);
+    for (const dbProp of dbProps) {
+      if (dbProp.type === "asset") {
+        assetIds.push(dbProp.value);
       }
     }
   }
@@ -46,23 +79,24 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
   return instancePropsEntries.map((instanceProps) => {
     const props = JSON.parse(instanceProps.props);
     const userProps: UserProp[] = [];
+
     // Can be changed onto `props as ` having that above is already checked, no optmizations now
     const dpProps = UserDbProps.parse(props);
 
     for (const dbProp of dpProps) {
-      if ("assetId" in dbProp) {
-        const { assetId, ...userProp } = dbProp;
+      if (dbProp.type === "asset") {
+        const assetId = dbProp.value;
         const asset = assetsMap.get(assetId);
 
         if (asset) {
           userProps.push({
-            ...userProp,
-            asset,
+            ...dbProp,
+            value: asset,
           });
-        } else {
-          warnOnce(true, `Asset with assetId "${assetId}" not found`);
+          continue;
         }
 
+        warnOnce(true, `Asset with assetId "${assetId}" not found`);
         continue;
       }
 
@@ -105,9 +139,6 @@ export const clone = async ({
   );
 };
 
-type UserDbPropAsset = Extract<UserDbProp, { assetId: unknown }>;
-type UserDbPropValue = Extract<UserDbProp, { value: unknown }>;
-
 export const patch = async (
   { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
@@ -129,24 +160,14 @@ export const patch = async (
   await Promise.all(
     Object.values(nextProps).map(({ id, instanceId, treeId, props }) => {
       const propsDb: UserDbProp[] = UserProps.parse(props).map((prop) => {
-        if ("asset" in prop) {
-          const dbProp: UserDbPropAsset = {
-            id: prop.id,
-            prop: prop.prop,
-            required: prop.required,
-            assetId: prop.asset.id,
+        if (prop.type === "asset") {
+          return {
+            ...prop,
+            value: prop.value.id,
           };
-          return dbProp;
         }
 
-        const dbProp: UserDbPropValue = {
-          id: prop.id,
-          prop: prop.prop,
-          required: prop.required,
-          value: prop.value,
-        };
-
-        return dbProp;
+        return prop;
       });
 
       const propsString = JSON.stringify(propsDb);

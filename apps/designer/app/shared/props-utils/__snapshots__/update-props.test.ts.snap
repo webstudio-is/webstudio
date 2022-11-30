@@ -9,6 +9,7 @@ exports[`Update props with added prop 1`] = `
       {
         "id": "propId",
         "prop": "a",
+        "type": "string",
         "value": "1",
       },
     ],
@@ -37,6 +38,8 @@ exports[`Update props with renamed prop name 1`] = `
       {
         "id": "propId",
         "prop": "b",
+        "required": undefined,
+        "type": "string",
         "value": "1",
       },
     ],
@@ -54,6 +57,8 @@ exports[`Update props with updated prop value 1`] = `
       {
         "id": "propId",
         "prop": "a",
+        "required": undefined,
+        "type": "string",
         "value": "2",
       },
     ],
