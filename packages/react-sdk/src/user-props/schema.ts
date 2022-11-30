@@ -2,7 +2,9 @@ import { z } from "zod";
 import { Asset } from "@webstudio-is/asset-uploader";
 
 // @todo move zod out of sdk
-// @todo clean db make objects .strict()
+// @todo clean db make objects .strict(),
+// as of now we already have asset and value simulateneously in db
+// and instead of strict error zod will ignore value
 const UserDbProp = z.union([
   z.object({
     id: z.string(),
