@@ -17,9 +17,14 @@ export const useUserPropsAsset = (
   const asset = useMemo(() => {
     if (propsData == null) return null;
     const prop = propsData.props.find((prop) => prop.prop === propName);
+
     if (prop == null) return null;
 
-    return prop.asset ?? null;
+    if ("asset" in prop) {
+      return prop.asset;
+    }
+
+    return null;
   }, [propName, propsData]);
 
   return asset;

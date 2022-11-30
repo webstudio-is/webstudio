@@ -343,7 +343,22 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangePropValue("1", "img", {
+      result.current.handleChangePropValue("1", "img");
+    });
+
+    expect(result.current.userProps).toMatchInlineSnapshot(`
+      [
+        {
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "value": "img",
+        },
+      ]
+    `);
+
+    act(() => {
+      result.current.handleChangePropAsset("1", {
         id: "string",
         projectId: "string",
         format: "string",
@@ -380,13 +395,12 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
-          "value": "img",
         },
       ]
     `);
 
     act(() => {
-      result.current.handleChangePropValue("1", "img");
+      result.current.handleChangePropValue("1", "img-3");
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
@@ -395,7 +409,7 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
-          "value": "img",
+          "value": "img-3",
         },
       ]
     `);

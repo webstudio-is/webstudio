@@ -25,16 +25,23 @@ export const updateAllUserPropsMutable = (
       instanceProps.props.push(update);
     } else {
       const prop = instanceProps.props[propIndex];
+
       prop.prop = update.prop;
 
-      prop.value = update.value;
-
-      if (update.asset != null) {
-        prop.asset = update.asset;
+      if ("value" in update) {
+        instanceProps.props[propIndex] = {
+          id: prop.id,
+          prop: update.prop,
+          value: update.value,
+          required: update.required,
+        };
       } else {
-        if (prop.asset != null) {
-          delete prop.asset;
-        }
+        instanceProps.props[propIndex] = {
+          id: prop.id,
+          prop: update.prop,
+          asset: update.asset,
+          required: update.required,
+        };
       }
 
       // Prop changed type from value to asset or vice versa

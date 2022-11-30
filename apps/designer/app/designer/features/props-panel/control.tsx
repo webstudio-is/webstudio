@@ -174,6 +174,7 @@ type ControlProps = {
   component: Instance["component"];
   userProp: UserProp;
   onChangePropValue: (value: string | boolean, asset?: Asset) => void;
+  onChangePropAsset: (asset: Asset) => void;
 };
 
 // eslint-disable-next-line func-style
@@ -181,6 +182,7 @@ export function Control({
   component,
   userProp,
   onChangePropValue,
+  onChangePropAsset,
 }: ControlProps) {
   const meta = getComponentMetaProps(component);
 
@@ -210,13 +212,14 @@ export function Control({
   }
 
   if (component === "Image" && userProp.prop === "src") {
-    const asset = userProp.asset ?? null;
+    const asset = "asset" in userProp ? userProp.asset : null;
 
-    return (
-      <ImageControl
-        asset={asset}
-        onChange={(asset) => onChangePropValue(asset.path, asset)}
-      />
+    return <ImageControl asset={asset} onChange={onChangePropAsset} />;
+  }
+
+  if ("asset" in userProp) {
+    throw new Error(
+      `userProp with id "${userProp.id}" has asset but no control exists to process it`
     );
   }
 

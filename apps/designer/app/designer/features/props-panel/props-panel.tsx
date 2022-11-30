@@ -113,7 +113,8 @@ type PropertyProps = {
     name: string,
     defaultValue: string | boolean | number
   ) => void;
-  onChangePropValue: (value: string | boolean | number, asset?: Asset) => void;
+  onChangePropValue: (value: string | boolean | number) => void;
+  onChangePropAsset: (asset: Asset) => void;
   onDelete: (id: UserProp["id"]) => void;
 };
 
@@ -121,6 +122,7 @@ const Property = ({
   userProp,
   component,
   onChangePropName,
+  onChangePropAsset,
   onChangePropValue,
   onDelete,
 }: PropertyProps) => {
@@ -182,6 +184,7 @@ const Property = ({
           component={component}
           userProp={userProp}
           onChangePropValue={onChangePropValue}
+          onChangePropAsset={onChangePropAsset}
         />
       )}
       {userProp.required !== true && (
@@ -212,6 +215,7 @@ export const PropsPanel = ({
     addEmptyProp,
     handleChangePropName,
     handleChangePropValue,
+    handleChangePropAsset,
     handleDeleteProp,
   } = usePropsLogic({ selectedInstanceData, publish });
 
@@ -252,8 +256,11 @@ export const PropsPanel = ({
               onChangePropName={(name, defaultValue) =>
                 handleChangePropName(userProp.id, name, defaultValue)
               }
-              onChangePropValue={(value, asset) =>
-                handleChangePropValue(userProp.id, value, asset)
+              onChangePropValue={(value) =>
+                handleChangePropValue(userProp.id, value)
+              }
+              onChangePropAsset={(asset) =>
+                handleChangePropAsset(userProp.id, asset)
               }
               onDelete={handleDeleteProp}
             />

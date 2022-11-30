@@ -10,7 +10,6 @@ import produce from "immer";
 import uniqBy from "lodash/uniqBy";
 import { useState } from "react";
 import type { SelectedInstanceData } from "@webstudio-is/project";
-import type { Asset } from "@webstudio-is/asset-uploader";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -20,6 +19,7 @@ declare module "~/shared/pubsub" {
 }
 
 type UserPropValue = Extract<UserProp, { value: unknown }>["value"];
+type UserPropAsset = Extract<UserProp, { asset: unknown }>["asset"];
 
 type HandleChangePropName = (
   id: UserProp["id"],
@@ -27,11 +27,9 @@ type HandleChangePropName = (
   defaultValue: string | boolean | number
 ) => void;
 
-type HandleChangePropValue = (
-  id: UserProp["id"],
-  value: UserPropValue,
-  asset?: Asset
-) => void;
+type HandleChangePropValue = (id: UserProp["id"], value: UserPropValue) => void;
+
+type HandleChangePropAsset = (id: UserProp["id"], asset: UserPropAsset) => void;
 
 const getRequiredProps = (
   selectedInstanceData: SelectedInstanceData
@@ -127,8 +125,12 @@ export const usePropsLogic = ({
       const isPropRequired = draft[index].required;
 
       if (isPropRequired !== true) {
-        draft[index].prop = name;
-        draft[index].value = defaultValue;
+        // @todo we need to now allow to change non required on required prop too
+        draft[index] = {
+          id: draft[index].id,
+          prop: name,
+          value: defaultValue,
+        };
       }
     })(userProps);
 
@@ -140,17 +142,22 @@ export const usePropsLogic = ({
     updateProps(updatedProps);
   };
 
-  const handleChangePropValue: HandleChangePropValue = (id, value, asset) => {
+  const handleChangePropValue: HandleChangePropValue = (id, value) => {
     const nextUserProps = produce((draft: Array<UserProp>) => {
       const index = draft.findIndex((item) => item.id === id);
       const val = draft[index];
 
-      val.value = value;
-      if (asset) {
-        val.asset = asset;
-      } else if (val.asset != null) {
-        delete val.asset;
+      if ("value" in val) {
+        val.value = value;
+        return;
       }
+
+      draft[index] = {
+        id: val.id,
+        prop: val.prop,
+        required: val.required,
+        value,
+      };
     })(userProps);
 
     // Optimistically update the state (what if publish fails?)
@@ -160,6 +167,34 @@ export const usePropsLogic = ({
 
     updateProps(updatedProps);
   };
+
+  const handleChangePropAsset: HandleChangePropAsset = (id, asset) => {
+    const nextUserProps = produce((draft: Array<UserProp>) => {
+      const index = draft.findIndex((item) => item.id === id);
+      const val = draft[index];
+
+      if ("asset" in val) {
+        val.asset = asset;
+        return;
+      }
+
+      draft[index] = {
+        id: val.id,
+        prop: val.prop,
+        required: val.required,
+        asset,
+      };
+    })(userProps);
+
+    // Optimistically update the state (what if publish fails?)
+    setUserProps(nextUserProps);
+
+    const updatedProps = nextUserProps.filter((item) => item.id === id);
+
+    updateProps(updatedProps);
+  };
+
+  // HandleChangePropAsset
 
   const handleDeleteProp = (id: UserProp["id"]) => {
     const nextUserProps = [...userProps];
@@ -190,6 +225,7 @@ export const usePropsLogic = ({
     userProps,
     handleChangePropName,
     handleChangePropValue,
+    handleChangePropAsset,
     handleDeleteProp,
   };
 };

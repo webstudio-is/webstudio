@@ -3,7 +3,8 @@ import { type Instance } from "../db";
 import { type UserProp } from "./schema";
 import { useAllUserProps } from "./all-user-props";
 
-type UserProps = { [prop: UserProp["prop"]]: UserProp["value"] };
+type UserPropValue = Extract<UserProp, { value: unknown }>;
+type UserProps = { [prop: UserProp["prop"]]: UserPropValue["value"] };
 
 /**
  * User props mapped in prop:value format,
@@ -15,10 +16,15 @@ export const useUserProps = (instanceId: Instance["id"]) => {
   const propsData = allUserProps[instanceId];
   const props = useMemo(() => {
     if (propsData == null) return {};
-    return propsData.props.reduce((props, { prop, value }) => {
-      props[prop] = value;
-      return props;
-    }, {} as UserProps);
+    const result: UserProps = {};
+
+    for (const userProp of propsData.props) {
+      if ("value" in userProp) {
+        result[userProp.prop] = userProp.value;
+      }
+    }
+
+    return result;
   }, [propsData]);
 
   return props;

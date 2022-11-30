@@ -22,7 +22,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
     ref
   ) => {
     // Temporary set to false, to support previous image behaviour
-    const DEFAULT_OPTIMIZE = false;
+    const DEFAULT_OPTIMIZE = true;
 
     const imageAttributes = getImageAttributes({
       src: imageProps.src,

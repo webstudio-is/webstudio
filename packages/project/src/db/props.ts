@@ -6,6 +6,7 @@ import {
   UserProps,
   // @todo move zod schema into project package
   UserDbProps,
+  type UserDbProp,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
@@ -24,7 +25,7 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
     const dpProps = UserDbProps.parse(props);
 
     for (const dbProp of dpProps) {
-      if (dbProp.assetId != null) {
+      if ("assetId" in dbProp) {
         assetIds.push(dbProp.assetId);
       }
     }
@@ -49,23 +50,23 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
     const dpProps = UserDbProps.parse(props);
 
     for (const dbProp of dpProps) {
-      if (dbProp.assetId == null) {
-        userProps.push(dbProp);
+      if ("assetId" in dbProp) {
+        const { assetId, ...userProp } = dbProp;
+        const asset = assetsMap.get(assetId);
+
+        if (asset) {
+          userProps.push({
+            ...userProp,
+            asset,
+          });
+        } else {
+          warnOnce(true, `Asset with assetId "${assetId}" not found`);
+        }
+
         continue;
       }
 
-      const { assetId, ...userProp } = dbProp;
-      const asset = assetsMap.get(assetId);
-
-      if (asset) {
-        userProps.push({
-          ...userProp,
-          asset,
-        });
-      } else {
-        userProps.push(userProp);
-        warnOnce(true, `Asset with assetId "${assetId}" not found`);
-      }
+      userProps.push(dbProp);
     }
 
     return {
@@ -104,6 +105,9 @@ export const clone = async ({
   );
 };
 
+type UserDbPropAsset = Extract<UserDbProp, { assetId: unknown }>;
+type UserDbPropValue = Extract<UserDbProp, { value: unknown }>;
+
 export const patch = async (
   { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
@@ -124,9 +128,25 @@ export const patch = async (
 
   await Promise.all(
     Object.values(nextProps).map(({ id, instanceId, treeId, props }) => {
-      const propsDb: UserDbProps = UserProps.parse(props).map((prop) => {
-        const { asset, ...rest } = prop;
-        return { ...rest, assetId: asset?.id };
+      const propsDb: UserDbProp[] = UserProps.parse(props).map((prop) => {
+        if ("asset" in prop) {
+          const dbProp: UserDbPropAsset = {
+            id: prop.id,
+            prop: prop.prop,
+            required: prop.required,
+            assetId: prop.asset.id,
+          };
+          return dbProp;
+        }
+
+        const dbProp: UserDbPropValue = {
+          id: prop.id,
+          prop: prop.prop,
+          required: prop.required,
+          value: prop.value,
+        };
+
+        return dbProp;
       });
 
       const propsString = JSON.stringify(propsDb);
