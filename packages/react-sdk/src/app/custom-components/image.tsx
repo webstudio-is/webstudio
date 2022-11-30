@@ -34,7 +34,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
       src = asset.path;
     }
 
-    if (asset === null || loader == null) {
+    if (asset == null || loader == null) {
       return <SdkImage {...props} src={src} ref={ref} />;
     }
 
