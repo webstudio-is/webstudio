@@ -3,8 +3,7 @@ import { type Instance } from "../db";
 import { type UserProp } from "./schema";
 import { useAllUserProps } from "./all-user-props";
 
-type UserPropValue = Extract<UserProp, { value: unknown }>;
-type UserProps = { [prop: UserProp["prop"]]: UserPropValue["value"] };
+type UserProps = { [prop: UserProp["prop"]]: string | number | boolean };
 
 /**
  * User props mapped in prop:value format,
@@ -19,7 +18,7 @@ export const useUserProps = (instanceId: Instance["id"]) => {
     const result: UserProps = {};
 
     for (const userProp of propsData.props) {
-      if ("value" in userProp) {
+      if (userProp.type !== "asset") {
         result[userProp.prop] = userProp.value;
       }
     }
