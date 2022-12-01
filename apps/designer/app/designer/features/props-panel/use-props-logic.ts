@@ -197,8 +197,6 @@ export const usePropsLogic = ({
     updateProps(updatedProps);
   };
 
-  // HandleChangePropAsset
-
   const handleDeleteProp = (id: UserProp["id"]) => {
     const nextUserProps = [...userProps];
     const prop = userProps.find((prop) => prop.id === id);
