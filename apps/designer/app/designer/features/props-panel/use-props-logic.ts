@@ -162,7 +162,7 @@ export const usePropsLogic = ({
           typedValue = getValueFromPropMeta(meta[name]);
         }
 
-        // @todo we need to now allow to change non required on required prop too
+        // @todo we need to not allow changing non required on required prop too
         draft[index] = {
           id: draft[index].id,
           prop: name,
