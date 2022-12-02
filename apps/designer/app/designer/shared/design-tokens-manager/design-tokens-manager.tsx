@@ -279,8 +279,9 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
   return (
     <List
       {...listProps}
+      css={{ overflow: "auto" }}
       onBlur={(event) => {
-        if (isMenuOpen === false) {
+        if (isMenuOpen === false && editingToken === undefined) {
           listProps.onBlur(event);
         }
       }}
