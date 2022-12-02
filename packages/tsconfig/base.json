@@ -2,9 +2,6 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Default",
   "compilerOptions": {
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
@@ -18,6 +15,5 @@
     "allowJs": false,
     "jsx": "react-jsx",
     "resolveJsonModule": true
-  },
-  "exclude": ["node_modules"]
+  }
 }

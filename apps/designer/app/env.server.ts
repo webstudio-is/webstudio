@@ -9,6 +9,8 @@ const env = {
   PUBLISHER_ENDPOINT: process.env.PUBLISHER_ENDPOINT || null,
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
   BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN === "true",
+  // Must be set for Vercel deployments
+  RESIZE_ORIGIN: process.env.RESIZE_ORIGIN,
 } as const;
 
 export default env;

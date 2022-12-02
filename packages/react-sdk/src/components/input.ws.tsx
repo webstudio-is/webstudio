@@ -1,15 +1,12 @@
 import { InputIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Input } from "./input";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/input.props.json";
 
-const meta: WsComponentMeta<typeof Input> = {
-  Icon: InputIcon,
-  Component: Input,
-  canAcceptChildren: false,
-  isContentEditable: false,
-  isInlineOnly: false,
-  isListed: true,
+const meta: WsComponentMeta = {
+  type: "control",
   label: "Input",
+  Icon: InputIcon,
+  props: props as MetaProps,
 };
 
 export default meta;

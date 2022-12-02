@@ -47,7 +47,7 @@ describe("getBuildOrigin", () => {
   });
 });
 
-describe("getCanvasRequestParams", () => {
+describe("getBuildParams", () => {
   const env = {
     ...process.env,
     BUILD_ORIGIN: "https://foo.com",
@@ -86,13 +86,25 @@ describe("getCanvasRequestParams", () => {
 
   test("detects path", () => {
     expect(
-      getBuildParams(makeRequest("https://bar.foo.com"), env)?.pathname
+      (
+        getBuildParams(makeRequest("https://bar.foo.com"), env) as {
+          pagePath: string;
+        }
+      ).pagePath
     ).toBe("/");
     expect(
-      getBuildParams(makeRequest("https://bar.foo.com/abc"), env)?.pathname
+      (
+        getBuildParams(makeRequest("https://bar.foo.com/abc"), env) as {
+          pagePath: string;
+        }
+      ).pagePath
     ).toBe("/abc");
     expect(
-      getBuildParams(makeRequest("https://bar.foo.com/abc/123"), env)?.pathname
+      (
+        getBuildParams(makeRequest("https://bar.foo.com/abc/123"), env) as {
+          pagePath: string;
+        }
+      ).pagePath
     ).toBe("/abc/123");
   });
 

@@ -3,8 +3,8 @@ import {
   type Tree,
   type AllUserProps,
   type UserProp,
+  UserProps,
   // @todo move zod schema into project package
-  UserUserProps,
   UserDbProps,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
@@ -124,7 +124,10 @@ export const patch = async (
 
   await Promise.all(
     Object.values(nextProps).map(({ id, instanceId, treeId, props }) => {
-      const propsDb = UserUserProps.parse(props);
+      const propsDb: UserDbProps = UserProps.parse(props).map((prop) => {
+        const { asset, ...rest } = prop;
+        return { ...rest, assetId: asset?.id };
+      });
 
       const propsString = JSON.stringify(propsDb);
 

@@ -1,4 +1,4 @@
-import { components } from "@webstudio-is/react-sdk";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { Flex, Text } from "@webstudio-is/design-system";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 
@@ -15,7 +15,9 @@ export const ComponentInfo = ({
           color: "$colors$slate11",
           fontWeight: "500",
         }}
-      >{`Selected: ${components[selectedInstanceData.component].label}`}</Text>
+      >{`Selected: ${
+        getComponentMeta(selectedInstanceData.component).label
+      }`}</Text>
     </Flex>
   );
 };

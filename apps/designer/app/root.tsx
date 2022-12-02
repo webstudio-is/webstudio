@@ -7,7 +7,6 @@ import { OutletProps } from "react-router-dom";
 import { PersistentFetcherProvider } from "./shared/fetcher";
 
 const RootWithErrorBoundary = (props: OutletProps) => (
-  // @ts-expect-error 'ErrorBoundary' cannot be used as a JSX component.
   <ErrorBoundary>
     <TooltipProvider>
       <PersistentFetcherProvider>

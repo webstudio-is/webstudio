@@ -1,6 +1,6 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Image } from "./image";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/image.props.json";
 
 const defaultStyle = {
   // Otherwise on new image insert onto canvas it can overfit screen size multiple times
@@ -17,15 +17,12 @@ const defaultStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta<typeof Image> = {
-  Icon: ImageIcon,
-  Component: Image,
-  canAcceptChildren: false,
-  defaultStyle,
-  isContentEditable: false,
-  isInlineOnly: false,
-  isListed: true,
+const meta: WsComponentMeta = {
+  type: "embed",
   label: "Image",
+  Icon: ImageIcon,
+  defaultStyle,
+  props: props as MetaProps,
 };
 
 export default meta;

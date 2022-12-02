@@ -7,7 +7,7 @@ import {
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
-import { components, Instance } from "@webstudio-is/react-sdk";
+import { getComponentMeta, Instance } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 
 const instanceRelatedProps = {
@@ -15,20 +15,19 @@ const instanceRelatedProps = {
   getItemPath: utils.tree.getInstancePath,
   getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
-    return components[item.component].isInlineOnly !== true;
+    const { type } = getComponentMeta(item.component);
+    return type !== "rich-text-child";
   },
   canAcceptChild(item: Instance) {
-    return components[item.component].canAcceptChildren;
+    const { type } = getComponentMeta(item.component);
+    return type === "container";
   },
   getItemChildren(item: Instance) {
-    const component = components[item.component];
+    const { type } = getComponentMeta(item.component);
 
     // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
-    // We rely on the fact that only content editable or inline components may have `string` children.
-    if (
-      component.isContentEditable === false &&
-      component.isInlineOnly === false
-    ) {
+    // We rely on the fact that only rich-text or rich-text-child components may have `string` children.
+    if (type === "container" || type === "control" || type === "embed") {
       return item.children as Instance[];
     }
 
@@ -37,7 +36,7 @@ const instanceRelatedProps = {
     ) as Instance[];
   },
   renderItem(props: TreeItemRenderProps<Instance>) {
-    const { Icon, label } = components[props.itemData.component];
+    const { Icon, label } = getComponentMeta(props.itemData.component);
     return (
       <TreeItemBody {...props} selectionEvent="focus">
         <TreeItemLabel prefix={<Icon />}>{label}</TreeItemLabel>

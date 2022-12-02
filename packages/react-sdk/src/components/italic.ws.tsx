@@ -1,6 +1,6 @@
 import { FontItalicIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Italic } from "./italic";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/italic.props.json";
 
 const defaultStyle = {
   fontStyle: {
@@ -9,15 +9,12 @@ const defaultStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta<typeof Italic> = {
-  Icon: FontItalicIcon,
-  Component: Italic,
-  defaultStyle,
-  canAcceptChildren: false,
-  isContentEditable: false,
-  isInlineOnly: true,
+const meta: WsComponentMeta = {
+  type: "rich-text-child",
   label: "Italic Text",
-  isListed: false,
+  Icon: FontItalicIcon,
+  defaultStyle,
+  props: props as MetaProps,
 };
 
 export default meta;

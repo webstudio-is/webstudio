@@ -32,22 +32,20 @@ const $writeUpdates = (
   const children = node.getChildren();
   for (const child of children) {
     if ($isParagraphNode(child)) {
-      if (updates.length !== 0) {
-        updates.push("\n");
-      }
       $writeUpdates(child, updates, refs);
     }
     if ($isLineBreakNode(child)) {
-      if (updates.length !== 0) {
-        // @todo should we visually distinct line breaks and paragraphs?
-        updates.push("\n");
-      }
+      updates.push("\n");
     }
     if ($isLinkNode(child)) {
       const id = refs.get(child.getKey());
       const childrenUpdates: ChildrenUpdates = [];
       $writeUpdates(child, childrenUpdates, refs);
-      updates.push({ id, component: "Link", children: childrenUpdates });
+      updates.push({
+        id,
+        component: "RichTextLink",
+        children: childrenUpdates,
+      });
     }
     if ($isTextNode(child)) {
       // support nesting bold into italic and vice versa
@@ -115,7 +113,7 @@ const $writeLexical = (
     }
 
     // convert instances
-    if (child.component === "Link" && $isElementNode(parent)) {
+    if (child.component === "RichTextLink" && $isElementNode(parent)) {
       const linkNode = $createLinkNode("");
       refs.set(linkNode.getKey(), child.id);
       parent.append(linkNode);

@@ -1,15 +1,12 @@
 import { SubscriptIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Subscript } from "./subscript";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/subscript.props.json";
 
-const meta: WsComponentMeta<typeof Subscript> = {
-  Icon: SubscriptIcon,
-  Component: Subscript,
-  canAcceptChildren: false,
-  isContentEditable: false,
+const meta: WsComponentMeta = {
+  type: "rich-text-child",
   label: "Subscript Text",
-  isInlineOnly: true,
-  isListed: false,
+  Icon: SubscriptIcon,
+  props: props as MetaProps,
 };
 
 export default meta;

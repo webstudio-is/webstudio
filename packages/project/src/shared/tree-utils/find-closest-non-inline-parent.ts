@@ -1,4 +1,4 @@
-import { Instance, components } from "@webstudio-is/react-sdk";
+import { Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { getInstancePath } from "./get-instance-path";
 
 export const findClosestNonInlineParent = (
@@ -7,5 +7,8 @@ export const findClosestNonInlineParent = (
 ): Instance | undefined => {
   const path = getInstancePath(rootInstance, instanceId);
   path.reverse();
-  return path.find((item) => components[item.component].isInlineOnly === false);
+  return path.find((item) => {
+    const { type } = getComponentMeta(item.component);
+    return type !== "rich-text-child";
+  });
 };

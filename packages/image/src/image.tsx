@@ -10,7 +10,17 @@ type ImageProps = ComponentProps<typeof defaultTag> & {
 };
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
-  ({ quality, loader, optimize, ...imageProps }, ref) => {
+  (
+    {
+      quality,
+      loader,
+      optimize,
+      loading = "lazy",
+      decoding = "async",
+      ...imageProps
+    },
+    ref
+  ) => {
     // Temporary set to false, to support previous image behaviour
     const DEFAULT_OPTIMIZE = false;
 
@@ -25,14 +35,19 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
     }) ?? { src: imagePlaceholderSvg };
 
     return (
-      <img {...imageProps} {...imageAttributes} decoding="async" ref={ref} />
+      <img
+        {...imageProps}
+        {...imageAttributes}
+        decoding={decoding}
+        loading={loading}
+        ref={ref}
+      />
     );
   }
 );
 
 Image.defaultProps = {
   src: "",
-  loading: "lazy",
 };
 
 Image.displayName = "Image";

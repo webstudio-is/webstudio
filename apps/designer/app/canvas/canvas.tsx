@@ -4,10 +4,14 @@ import type { Build, CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
   useAllUserProps,
+  registerComponents,
+  registerComponentsMeta,
+  customComponentsMeta,
+  setParams,
   type OnChangeChildren,
   type Tree,
 } from "@webstudio-is/react-sdk";
-import { useSubscribe } from "~/shared/pubsub";
+import { publish, useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useDeleteInstance,
@@ -44,6 +48,9 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import { useInstanceCopyPaste } from "~/shared/copy-paste";
+import { useSelectedInstance } from "./shared/nano-states";
+import { customComponents } from "./custom-components";
 
 registerContainers();
 
@@ -92,6 +99,29 @@ const useAssets = (initialAssets: Array<Asset>) => {
   return assets;
 };
 
+const useCopyPaste = () => {
+  const [instance] = useSelectedInstance();
+  const [allUserProps] = useAllUserProps();
+
+  const selectedInstanceData = useMemo(
+    () => instance && { instance, props: allUserProps[instance.id]?.props },
+    [allUserProps, instance]
+  );
+
+  // We need to initialize this in both canvas and designer,
+  // because the events will fire in either one, depending on where the focus is
+  useInstanceCopyPaste({
+    selectedInstanceData,
+    allowAnyTarget: true,
+    onCut: (instance) => {
+      publish({ type: "deleteInstance", payload: { id: instance.id } });
+    },
+    onPaste: (instance, props) => {
+      publish({ type: "insertInstance", payload: { instance, props } });
+    },
+  });
+};
+
 type DesignModeProps = {
   treeId: Tree["id"];
   buildId: Build["id"];
@@ -102,7 +132,7 @@ const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageDesignModeStyles();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
-  useInsertInstance();
+  useInsertInstance({ treeId });
   useReparentInstance();
   useDeleteInstance();
   usePublishRootInstance();
@@ -117,6 +147,8 @@ const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
   useDragAndDrop();
+  useCopyPaste();
+
   return null;
 };
 
@@ -133,6 +165,12 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
+  setParams(data.params ?? null);
+
+  registerComponents(customComponents);
+
+  registerComponentsMeta(customComponentsMeta);
+
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
   const isPreviewMode = useSubscribePreviewMode();

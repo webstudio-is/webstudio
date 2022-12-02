@@ -1,5 +1,5 @@
 import {
-  componentsMeta,
+  getComponentMetaProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
@@ -109,8 +109,11 @@ const Combobox = ({
 type PropertyProps = {
   userProp: UserProp;
   component: Instance["component"];
-  onChangePropName: (name: string, defaultValue: string | boolean) => void;
-  onChangePropValue: (value: string | boolean, asset?: Asset) => void;
+  onChangePropName: (
+    name: string,
+    defaultValue: string | boolean | number
+  ) => void;
+  onChangePropValue: (value: string | boolean | number, asset?: Asset) => void;
   onDelete: (id: UserProp["id"]) => void;
 };
 
@@ -121,7 +124,7 @@ const Property = ({
   onChangePropValue,
   onDelete,
 }: PropertyProps) => {
-  const meta = componentsMeta[component];
+  const meta = getComponentMetaProps(component);
 
   const argType = meta[userProp.prop as keyof typeof meta];
   const isInvalid =
@@ -142,7 +145,12 @@ const Property = ({
             const argType = meta[name as keyof typeof meta];
 
             const defaultValue =
-              argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+              argType?.defaultValue ??
+              (argType?.type === "boolean"
+                ? false
+                : argType?.type === "number"
+                ? 0
+                : "");
 
             onChangePropName(name, defaultValue);
           }
@@ -151,7 +159,12 @@ const Property = ({
           const argType = meta[name as keyof typeof meta];
 
           const defaultValue =
-            argType?.defaultValue ?? argType?.type === "boolean" ? false : "";
+            argType?.defaultValue ??
+            (argType?.type === "boolean"
+              ? false
+              : argType?.type === "number"
+              ? 0
+              : "");
 
           onChangePropName(name, defaultValue);
         }}

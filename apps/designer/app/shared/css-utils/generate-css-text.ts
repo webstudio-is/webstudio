@@ -6,10 +6,7 @@ import { createCssEngine } from "@webstudio-is/css-engine";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import type { BuildParams } from "../router-utils";
 
-export const generateCssText = async (buildParams: BuildParams | undefined) => {
-  if (buildParams === undefined) {
-    throw json("Required project info", { status: 404 });
-  }
+export const generateCssText = async (buildParams: BuildParams) => {
   const project = await db.project.loadByParams(buildParams);
 
   if (project === null) {
@@ -19,7 +16,7 @@ export const generateCssText = async (buildParams: BuildParams | undefined) => {
   const canvasData = await loadCanvasData(
     project,
     buildParams.mode === "published" ? "prod" : "dev",
-    buildParams.pageId
+    "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath
   );
 
   if (canvasData === undefined) {
