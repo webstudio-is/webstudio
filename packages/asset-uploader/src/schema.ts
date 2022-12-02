@@ -1,6 +1,13 @@
 import { z } from "zod";
+import { FontFormat, FontMeta } from "@webstudio-is/fonts";
 import { DEFAULT_UPLOAD_PATH, MAX_UPLOAD_SIZE } from "./constants";
 import { toBytes } from "./utils/to-bytes";
+
+export const ImageMeta = z.object({
+  width: z.number(),
+  height: z.number(),
+});
+export type ImageMeta = z.infer<typeof ImageMeta>;
 
 const maxSize = z
   .string()
@@ -23,3 +30,32 @@ export const FsEnv = z.object({
   MAX_UPLOAD_SIZE: maxSize,
   FILE_UPLOAD_PATH: z.string().default(DEFAULT_UPLOAD_PATH),
 });
+
+const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
+
+const BaseAsset = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  format: z.string(),
+  size: z.number(),
+  name: z.string(),
+  description: z.union([z.string(), z.null()]),
+  location: Location,
+  createdAt: z.string(),
+  path: z.string(),
+  status: z.literal("uploaded").optional(),
+});
+
+export const FontAsset = BaseAsset.omit({ format: true }).extend({
+  format: FontFormat,
+  meta: FontMeta,
+});
+export type FontAsset = z.infer<typeof FontAsset>;
+
+export const ImageAsset = BaseAsset.extend({
+  meta: ImageMeta,
+});
+export type ImageAsset = z.infer<typeof ImageAsset>;
+
+export const Asset = z.union([FontAsset, ImageAsset]);
+export type Asset = z.infer<typeof Asset>;

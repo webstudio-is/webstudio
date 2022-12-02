@@ -1,6 +1,6 @@
 import { Link2Icon } from "@webstudio-is/icons";
-import { Link } from "./link";
-import type { WsComponentMeta } from "./component-type";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/link.props.json";
 
 const defaultStyle = {
   minHeight: {
@@ -14,16 +14,13 @@ const defaultStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta<typeof Link> = {
-  Icon: Link2Icon,
-  Component: Link,
-  defaultStyle,
-  canAcceptChildren: false,
-  isContentEditable: true,
-  isInlineOnly: false,
-  isListed: true,
+const meta: WsComponentMeta = {
+  type: "rich-text",
   label: "Link",
+  Icon: Link2Icon,
+  defaultStyle,
   children: ["Link text you can edit"],
+  props: props as MetaProps,
 };
 
 export default meta;

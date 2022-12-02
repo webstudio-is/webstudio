@@ -1,4 +1,4 @@
-import type { FontFormat } from "./types";
+import type { FontFormat } from "./schema";
 import { create as createFontKit } from "fontkit";
 import { FontWeight, fontWeights } from "./font-weights";
 

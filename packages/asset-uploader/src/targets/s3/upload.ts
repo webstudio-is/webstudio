@@ -11,7 +11,7 @@ import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createMany } from "../../db";
-import type { Asset } from "../../types";
+import type { Asset } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";

@@ -1,6 +1,6 @@
 import { prisma } from "@webstudio-is/prisma-client";
 import { deleteFromDb } from "./db";
-import { Asset } from "./types";
+import { Asset } from "./schema";
 import { deleteFromFs } from "./targets/fs/delete";
 import { deleteFromS3 } from "./targets/s3/delete";
 import { formatAsset } from "./utils/format-asset";

@@ -1,5 +1,5 @@
 import { prisma, Project } from "@webstudio-is/prisma-client";
-import { Asset } from "../types";
+import { Asset } from "../schema";
 import { formatAsset } from "../utils/format-asset";
 
 export const loadByProject = async (

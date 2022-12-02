@@ -1,15 +1,12 @@
 import { SuperscriptIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Superscript } from "./superscript";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/superscript.props.json";
 
-const meta: WsComponentMeta<typeof Superscript> = {
-  Icon: SuperscriptIcon,
-  Component: Superscript,
-  canAcceptChildren: false,
-  isContentEditable: false,
+const meta: WsComponentMeta = {
+  type: "rich-text-child",
   label: "Superscript Text",
-  isInlineOnly: true,
-  isListed: false,
+  Icon: SuperscriptIcon,
+  props: props as MetaProps,
 };
 
 export default meta;

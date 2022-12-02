@@ -96,9 +96,15 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     return { x: (x - canvasRect.x) / scale, y: (y - canvasRect.y) / scale };
   };
 
-  const listedComponentNames = getComponentNames().filter(
-    (name) => getComponentMeta(name).isListed
-  );
+  const listedComponentNames = getComponentNames().filter((name) => {
+    const { type } = getComponentMeta(name);
+    return (
+      type === "container" ||
+      type === "control" ||
+      type === "embed" ||
+      type === "rich-text"
+    );
+  });
 
   const useDragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {

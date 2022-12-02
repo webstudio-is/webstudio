@@ -1,15 +1,8 @@
-import { z } from "zod";
 import type { Asset as DbAsset } from "@webstudio-is/prisma-client";
 import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
-import { FontMeta } from "@webstudio-is/fonts/server";
-import type { Asset } from "../types";
+import { FontMeta } from "@webstudio-is/fonts";
 import { getAssetPath } from "./get-asset-path";
-
-const ImageMeta = z.object({
-  width: z.number(),
-  height: z.number(),
-});
-export type ImageMeta = z.infer<typeof ImageMeta>;
+import { type Asset, ImageMeta } from "../schema";
 
 export const formatAsset = (asset: DbAsset): Asset => {
   const base = { ...asset, path: getAssetPath(asset) };

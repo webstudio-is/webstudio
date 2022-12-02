@@ -14,7 +14,7 @@ const defaultTag = "img";
 
 type Props = ComponentProps<typeof WebstudioImage> & { [idAttribute]: string };
 
-export const Component = forwardRef<ElementRef<typeof defaultTag>, Props>(
+export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
     const componentId = props[idAttribute] as string;
 
@@ -37,4 +37,4 @@ export const Component = forwardRef<ElementRef<typeof defaultTag>, Props>(
   }
 );
 
-Component.displayName = "Image";
+Image.displayName = "Image";

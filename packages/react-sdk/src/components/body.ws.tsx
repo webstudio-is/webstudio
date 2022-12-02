@@ -1,6 +1,6 @@
 import { BodyIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Body } from "./body";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/body.props.json";
 
 const defaultStyle = {
   marginTop: {
@@ -52,14 +52,11 @@ const defaultStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta<typeof Body> = {
-  Icon: BodyIcon,
-  Component: Body,
-  canAcceptChildren: true,
-  isContentEditable: false,
+const meta: WsComponentMeta = {
+  type: "container",
   label: "Body",
-  isInlineOnly: false,
-  isListed: false,
+  Icon: BodyIcon,
+  props: props as MetaProps,
   defaultStyle,
 };
 

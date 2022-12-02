@@ -8,17 +8,16 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint",
-    "dev": "tsup --watch",
-    "build:cjs": "tsc --module commonjs --outDir lib/cjs && find lib/cjs -name '*.js' | while read NAME; do mv $NAME ${NAME%.js}.cjs; done",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc && yarn build:cjs",
+    "dev": "build-package --watch",
+    "build": "build-package",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {},
   "devDependencies": {
+    "@webstudio-is/scripts": "*",
     "mdn-data": "2.0.23",
-    "tsup": "^6.1.3",
     "typescript": "4.7.4",
     "@types/css-tree": "^1.0.7",
     "css-tree": "^2.1.0",
@@ -32,20 +31,13 @@
     "import": "./lib/index.js",
     "require": "./lib/cjs/index.cjs"
   },
-  "types": "lib/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "lib/*",
-    "README.md",
+    "src/*",
     "!*.test.*"
   ],
   "license": "MIT",
   "private": false,
-  "sideEffects": false,
-  "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
-    "format": "esm",
-    "outDir": "lib"
-  }
+  "sideEffects": false
 }

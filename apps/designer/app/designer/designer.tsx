@@ -41,6 +41,7 @@ import { Navigator } from "./features/sidebar-left";
 import { useSetAssets } from "./shared/assets";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
+import { useInstanceCopyPaste } from "~/shared/copy-paste";
 
 export const links = () => {
   return [
@@ -97,9 +98,36 @@ const useNavigatorLayout = () => {
   return isLoaded ? clientSettings.navigatorLayout : "docked";
 };
 
-export const useSubscribeCanvasReady = (publish: Publish) => {
+const useSubscribeCanvasReady = (publish: Publish) => {
   useSubscribe("canvasReady", () => {
     publish({ type: "canvasReadyAck" });
+  });
+};
+
+const useCopyPaste = (publish: Publish) => {
+  const [selectedInstance] = useSelectedInstanceData();
+  const [rootInstance] = useRootInstance();
+
+  const selectedInstanceData = useMemo(() => {
+    if (selectedInstance && rootInstance) {
+      const instance = projectUtils.tree.findInstanceById(
+        rootInstance,
+        selectedInstance.id
+      );
+      return instance && { instance, props: selectedInstance.props.props };
+    }
+  }, [rootInstance, selectedInstance]);
+
+  // We need to initialize this in both canvas and designer,
+  // because the events will fire in either one, depending on where the focus is
+  useInstanceCopyPaste({
+    selectedInstanceData,
+    onCut: (instance) => {
+      publish({ type: "deleteInstance", payload: { id: instance.id } });
+    },
+    onPaste: (instance, props) => {
+      publish({ type: "insertInstance", payload: { instance, props } });
+    },
   });
 };
 
@@ -274,6 +302,7 @@ export const Designer = ({
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
   useSubscribeCanvasReady(publish);
+  useCopyPaste(publish);
 
   const iframeRefCallback = useCallback(
     (ref) => {

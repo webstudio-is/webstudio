@@ -1,6 +1,6 @@
 import { TextIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { TextBlock } from "./text-block";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/text-block.props.json";
 
 const defaultStyle = {
   minHeight: {
@@ -10,16 +10,13 @@ const defaultStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta<typeof TextBlock> = {
-  Icon: TextIcon,
-  Component: TextBlock,
-  defaultStyle,
-  canAcceptChildren: false,
-  isContentEditable: true,
-  isInlineOnly: false,
-  isListed: true,
+const meta: WsComponentMeta = {
+  type: "rich-text",
   label: "Text Block",
+  Icon: TextIcon,
+  defaultStyle,
   children: ["Block of text you can edit"],
+  props: props as MetaProps,
 };
 
 export default meta;

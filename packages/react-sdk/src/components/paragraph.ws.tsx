@@ -1,16 +1,13 @@
 import { TextAlignLeftIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Paragraph } from "./paragraph";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/paragraph.props.json";
 
-const meta: WsComponentMeta<typeof Paragraph> = {
-  Icon: TextAlignLeftIcon,
-  Component: Paragraph,
-  canAcceptChildren: false,
-  isContentEditable: true,
-  isInlineOnly: false,
-  isListed: true,
+const meta: WsComponentMeta = {
+  type: "rich-text",
   label: "Paragraph",
+  Icon: TextAlignLeftIcon,
   children: ["Pragraph you can edit"],
+  props: props as MetaProps,
 };
 
 export default meta;

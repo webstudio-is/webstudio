@@ -1,23 +1,61 @@
-import Body from "./body.ws";
-import Box from "./box.ws";
-import TextBlock from "./text-block.ws";
-import Heading from "./heading.ws";
-import Paragraph from "./paragraph.ws";
-import Link from "./link.ws";
-import RichTextLink from "./rich-text-link.ws";
-import Span from "./span.ws";
-import Bold from "./bold.ws";
-import Italic from "./italic.ws";
-import Superscript from "./superscript.ws";
-import Subscript from "./subscript.ws";
-import Button from "./button.ws";
-import Input from "./input.ws";
-import Form from "./form.ws";
-import Image from "./image.ws";
+import BodyMeta from "./body.ws";
+import BoxMeta from "./box.ws";
+import TextBlockMeta from "./text-block.ws";
+import HeadingMeta from "./heading.ws";
+import ParagraphMeta from "./paragraph.ws";
+import LinkMeta from "./link.ws";
+import RichTextLinkMeta from "./rich-text-link.ws";
+import SpanMeta from "./span.ws";
+import BoldMeta from "./bold.ws";
+import ItalicMeta from "./italic.ws";
+import SuperscriptMeta from "./superscript.ws";
+import SubscriptMeta from "./subscript.ws";
+import ButtonMeta from "./button.ws";
+import InputMeta from "./input.ws";
+import FormMeta from "./form.ws";
+import ImageMeta from "./image.ws";
+
+import { Body } from "./body";
+import { Box } from "./box";
+import { TextBlock } from "./text-block";
+import { Heading } from "./heading";
+import { Paragraph } from "./paragraph";
+import { Link } from "./link";
+import { RichTextLink } from "./rich-text-link";
+import { Span } from "./span";
+import { Bold } from "./bold";
+import { Italic } from "./italic";
+import { Superscript } from "./superscript";
+import { Subscript } from "./subscript";
+import { Button } from "./button";
+import { Input } from "./input";
+import { Form } from "./form";
+import { Image } from "./image";
+
+import type { WsComponentMeta, MetaProps } from "./component-type";
+
+const meta = {
+  Box: BoxMeta,
+  Body: BodyMeta,
+  TextBlock: TextBlockMeta,
+  Heading: HeadingMeta,
+  Paragraph: ParagraphMeta,
+  Link: LinkMeta,
+  RichTextLink: RichTextLinkMeta,
+  Span: SpanMeta,
+  Bold: BoldMeta,
+  Italic: ItalicMeta,
+  Superscript: SuperscriptMeta,
+  Subscript: SubscriptMeta,
+  Button: ButtonMeta,
+  Input: InputMeta,
+  Form: FormMeta,
+  Image: ImageMeta,
+} as const;
 
 const components = {
-  Body,
   Box,
+  Body,
   TextBlock,
   Heading,
   Paragraph,
@@ -34,18 +72,18 @@ const components = {
   Image,
 } as const;
 
+export type ComponentName = keyof typeof components;
 type RegisteredComponents = Partial<{
-  [p in ComponentName]: {
-    // @todo: Anyone knows what the type can be for any React Component?
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    Component: {};
-    meta?: Partial<Omit<typeof components[p], "Component">>;
-  };
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  [p in ComponentName]: {};
+}>;
+
+type RegisteredComponentsMeta = Partial<{
+  [p in ComponentName]: Partial<WsComponentMeta>;
 }>;
 
 let registeredComponents: RegisteredComponents | null = null;
-
-export type ComponentName = keyof typeof components;
+let registeredComponentsMeta: RegisteredComponentsMeta | null = null;
 
 const componentNames = Object.keys(components) as ComponentName[];
 
@@ -58,34 +96,51 @@ export const getComponentNames = (): ComponentName[] => {
   return [...uniqueNames.values()] as ComponentName[];
 };
 
-export const getComponentMeta = <Name extends ComponentName>(
-  name: Name
-): Omit<typeof components[Name], "Component"> => {
-  if (
-    registeredComponents != null &&
-    name in registeredComponents &&
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    registeredComponents[name]!.meta != null
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return { ...components[name], ...registeredComponents[name]!.meta };
+export const getComponentMeta = (name: ComponentName): WsComponentMeta => {
+  if (registeredComponentsMeta != null && name in registeredComponentsMeta) {
+    return { ...meta[name], ...registeredComponentsMeta[name] };
   }
 
-  return components[name];
+  return meta[name];
 };
 
-/**
- * @todo Remove Component from meta and read directly (via import),
- * as meta information is not needed during production render.
- **/
-export const getComponent = <Name extends ComponentName>(
-  name: Name
-): typeof components[Name]["Component"] => {
+export const getComponent = (
+  name: ComponentName
+): typeof components[ComponentName] => {
   return registeredComponents != null && name in registeredComponents
-    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      (registeredComponents[name]!
-        .Component as typeof components[Name]["Component"])
-    : components[name].Component;
+    ? (registeredComponents[name] as typeof components[ComponentName])
+    : components[name];
+};
+
+export const getComponentMetaProps = (name: ComponentName): MetaProps => {
+  if (registeredComponentsMeta != null && name in registeredComponentsMeta) {
+    const allMetaPropKeys = new Set([
+      ...Object.keys(meta[name]?.props ?? {}),
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ...Object.keys(registeredComponentsMeta[name]!.props!),
+    ]);
+
+    const props: MetaProps = {};
+    /**
+     * Merge props, taking non null defaultValue and required=true from meta
+     **/
+    for (const key of allMetaPropKeys.values()) {
+      props[key] = {
+        ...meta[name]?.props[key],
+        ...registeredComponentsMeta[name]?.props?.[key],
+        defaultValue:
+          registeredComponentsMeta[name]?.props?.[key]?.defaultValue ??
+          meta[name]?.props[key]?.defaultValue ??
+          null,
+        required:
+          registeredComponentsMeta[name]?.props?.[key]?.required ||
+          meta[name]?.props[key]?.required,
+      } as MetaProps[string];
+    }
+    return props;
+  }
+
+  return meta[name].props;
 };
 
 /**
@@ -95,4 +150,10 @@ export const getComponent = <Name extends ComponentName>(
  **/
 export const registerComponents = (components: RegisteredComponents) => {
   registeredComponents = components;
+};
+
+export const registerComponentsMeta = (
+  componentsMeta: RegisteredComponentsMeta
+) => {
+  registeredComponentsMeta = componentsMeta;
 };

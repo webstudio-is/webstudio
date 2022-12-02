@@ -8,8 +8,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "checks": "yarn typecheck && yarn lint && yarn test",
-    "dev": "tsup --watch",
-    "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
+    "dev": "build-package --watch",
+    "build": "build-package",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "storybook:run": "start-storybook -p 6006",
@@ -34,26 +34,19 @@
     "@storybook/testing-library": "^0.0.13",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/css-data": "*",
-    "tsup": "^6.1.3",
+    "@webstudio-is/scripts": "*",
     "typescript": "4.7.4",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9"
   },
   "exports": "./lib/index.js",
-  "types": "lib/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "lib/*",
-    "README.md",
+    "src/*",
     "!*.test.*"
   ],
   "license": "MIT",
   "private": false,
-  "sideEffects": false,
-  "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
-    "format": "esm",
-    "outDir": "lib"
-  }
+  "sideEffects": false
 }

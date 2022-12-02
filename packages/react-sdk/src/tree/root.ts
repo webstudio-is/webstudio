@@ -6,7 +6,7 @@ import type { Asset } from "@webstudio-is/asset-uploader";
 import { type ComponentProps } from "react";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { registerComponents } from "../components";
-import * as customComponents from "../app/custom-components";
+import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
 
 export type Data = {
@@ -21,11 +21,13 @@ export type Data = {
 type RootProps = {
   data: Data;
   Component?: (props: ComponentProps<typeof WrapperComponent>) => JSX.Element;
+  customComponents?: Parameters<typeof registerComponents>[0];
 };
 
 export const InstanceRoot = ({
   data,
   Component,
+  customComponents = defaultCustomComponents,
 }: RootProps): JSX.Element | null => {
   if (data.tree === null) {
     throw new Error("Tree is null");

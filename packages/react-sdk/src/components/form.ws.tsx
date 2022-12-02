@@ -1,6 +1,6 @@
 import { FormIcon } from "@webstudio-is/icons";
-import type { WsComponentMeta } from "./component-type";
-import { Form } from "./form";
+import type { WsComponentMeta, MetaProps } from "./component-type";
+import props from "./__generated__/form.props.json";
 
 const defaultStyle = {
   minHeight: {
@@ -14,15 +14,12 @@ const defaultStyle = {
   },
 } as const;
 
-const meta: WsComponentMeta<typeof Form> = {
-  Icon: FormIcon,
-  Component: Form,
-  defaultStyle,
-  canAcceptChildren: true,
-  isContentEditable: false,
-  isInlineOnly: false,
-  isListed: true,
+const meta: WsComponentMeta = {
+  type: "container",
   label: "Form",
+  Icon: FormIcon,
+  defaultStyle,
+  props: props as MetaProps,
 };
 
 export default meta;
