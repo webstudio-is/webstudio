@@ -51,7 +51,15 @@ export default () => {
   });
   return client.$transaction(
     async (prisma) => {
-      const allInstanceProps = await prisma.instanceProps.findMany({});
+      const allInstanceProps = await prisma.instanceProps.findMany({
+        where: {
+          props: {
+            not: {
+              equals: "[]",
+            },
+          },
+        },
+      });
 
       for (const instanceProps of allInstanceProps) {
         const rawProps = JSON.parse(instanceProps.props);
@@ -59,12 +67,16 @@ export default () => {
 
         const newProps: UserDbProp[] = [];
 
+        let need_update = false;
+
         for (const prop of props) {
           if (prop.type != null) {
             const dbProp = UserDbProp.parse(prop);
             newProps.push(dbProp);
             continue;
           }
+
+          need_update = true;
 
           if (prop.assetId != null) {
             newProps.push({
@@ -128,10 +140,12 @@ export default () => {
           throw new Error(`Unexpected prop type ${typeof prop.value}`);
         }
 
-        await prisma.instanceProps.update({
-          where: { id: instanceProps.id },
-          data: { props: JSON.stringify(UserDbProps.parse(newProps)) },
-        });
+        if (need_update) {
+          await prisma.instanceProps.update({
+            where: { id: instanceProps.id },
+            data: { props: JSON.stringify(UserDbProps.parse(newProps)) },
+          });
+        }
       }
     },
     { timeout: 1000 * 60 }
