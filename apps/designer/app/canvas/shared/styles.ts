@@ -29,7 +29,7 @@ import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   deleteTokenMutable,
   tokensToStyle,
-  updateOrAddTokenMutable,
+  updateTokenMutable,
 } from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine();
@@ -59,6 +59,7 @@ const helperStyles = [
 
 export const useManageDesignModeStyles = () => {
   useUpdateToken();
+  useCreateToken();
   useDeleteToken();
   useUpdateStyle();
   usePreviewStyle();
@@ -218,9 +219,17 @@ const useUpdateStyle = () => {
 };
 
 const useUpdateToken = () => {
-  useSubscribe("updateToken", (updatedToken) => {
+  useSubscribe("updateToken", (update) => {
     store.createTransaction([designTokensContainer], (tokens) => {
-      updateOrAddTokenMutable(tokens, updatedToken);
+      updateTokenMutable(tokens, update.token, update.name);
+    });
+  });
+};
+
+const useCreateToken = () => {
+  useSubscribe("createToken", (token) => {
+    store.createTransaction([designTokensContainer], (tokens) => {
+      tokens.push(token);
     });
   });
 };

@@ -1,9 +1,4 @@
-import {
-  useState,
-  useEffect,
-  type FormEvent,
-  type ComponentProps,
-} from "react";
+import { useState, useEffect, type FormEvent, useRef } from "react";
 import {
   Button,
   Flex,
@@ -28,25 +23,39 @@ import type { Publish } from "~/shared/pubsub";
 // @todo this is temporary, we need to either make that collapsible reusable or copy it over
 // This wasn't properly designed, so this is mostly temp
 import { CollapsibleSection } from "../inspector";
-import { deleteTokenMutable, filterByType, findByName } from "./utils";
+import {
+  deleteTokenMutable,
+  filterByType,
+  findByName,
+  updateTokenMutable,
+} from "./utils";
 import { useMenu } from "./item-menu";
+import produce from "immer";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    updateToken: DesignToken;
+    updateToken: {
+      // Previously known token name in case token name has changed
+      name: DesignToken["name"];
+      token: DesignToken;
+    };
+    createToken: DesignToken;
     deleteToken: DesignToken["name"];
   }
 }
 
 const validate = (
   tokens: Array<DesignToken>,
-  data: Partial<DesignToken>
+  data: Partial<DesignToken>,
+  isNew: boolean
 ): { name: Array<string>; value: Array<string>; hasErrors: boolean } => {
   const name = [];
   const value = [];
 
   if (String(data.name).trim() === "") name.push("Name is required");
-  if (findByName(tokens, data?.name)) name.push("Name is already taken");
+  if (isNew && findByName(tokens, data?.name)) {
+    name.push("Name is already taken");
+  }
   if (String(data.value).trim() === "") value.push("Value is required");
 
   return {
@@ -62,10 +71,12 @@ const initialErrors = {
   hasErrors: false,
 };
 
-const getData = (event: FormEvent<HTMLFormElement>) => {
-  const formData = new FormData(event.currentTarget);
+const getData = (form: HTMLFormElement) => {
+  const formData = new FormData(form);
   return Object.fromEntries(formData);
 };
+
+type DesignTokenSeed = Pick<DesignToken, "group" | "type">;
 
 const TokenEditor = ({
   token,
@@ -74,7 +85,7 @@ const TokenEditor = ({
   onChangeComplete,
   onOpenChange,
 }: {
-  token: DesignToken;
+  token: DesignToken | DesignTokenSeed;
   trigger?: JSX.Element;
   isOpen: boolean;
   onChangeComplete: (token: DesignToken) => void;
@@ -83,7 +94,8 @@ const TokenEditor = ({
   const [tokens] = useDesignTokens();
   const [errors, setErrors] =
     useState<ReturnType<typeof validate>>(initialErrors);
-  const isNew = name === undefined;
+  const isNew = "name" in token === false;
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (isOpen === false && errors.hasErrors) {
@@ -92,16 +104,19 @@ const TokenEditor = ({
   }, [isOpen, errors.hasErrors]);
 
   const handleChange = (event: FormEvent<HTMLFormElement>) => {
-    if (errors.hasErrors === false) return;
-    const data = getData(event);
-    const nextErrors = validate(tokens, data);
+    if (errors.hasErrors === false || formRef.current === null) {
+      return;
+    }
+    const data = getData(formRef.current);
+    const nextErrors = validate(tokens, data, isNew);
     setErrors(nextErrors);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = getData(event);
-    const nextErrors = validate(tokens, data);
+  const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    if (formRef.current === null) return;
+    const data = getData(formRef.current);
+    const nextErrors = validate(tokens, data, isNew);
     setErrors(nextErrors);
 
     if (nextErrors.hasErrors === false) {
@@ -110,8 +125,16 @@ const TokenEditor = ({
     }
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen === false) {
+      handleSubmit();
+      return;
+    }
+    onOpenChange(isOpen);
+  };
+
   return (
-    <Popover modal open={isOpen} onOpenChange={onOpenChange}>
+    <Popover modal open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         asChild
         aria-label={isNew ? "Create Token" : "Edit Token"}
@@ -130,24 +153,36 @@ const TokenEditor = ({
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent align="end" css={{ zIndex: "$zIndices$1" }}>
-          <form onChange={handleChange} onSubmit={handleSubmit}>
+          <form onChange={handleChange} onSubmit={handleSubmit} ref={formRef}>
             <Flex direction="column" gap="2" css={{ padding: "$spacing$7" }}>
               <Label htmlFor="name">Name</Label>
               <InputErrorsTooltip
                 errors={errors.name}
                 css={{ zIndex: "$zIndices$2" }}
               >
-                <TextField id="name" name="name" />
+                <TextField
+                  id="name"
+                  name="name"
+                  defaultValue={"name" in token ? token.name : ""}
+                />
               </InputErrorsTooltip>
               <Label htmlFor="value">Value</Label>
               <InputErrorsTooltip
                 errors={errors.value}
                 css={{ zIndex: "$zIndices$2" }}
               >
-                <TextField id="value" name="value" />
+                <TextField
+                  id="value"
+                  name="value"
+                  defaultValue={"value" in token ? token.value : ""}
+                />
               </InputErrorsTooltip>
               <Label htmlFor="description">Description</Label>
-              <TextArea id="description" name="description" />
+              <TextArea
+                id="description"
+                name="description"
+                defaultValue={"description" in token ? token.description : ""}
+              />
               {isNew && (
                 <Button type="submit" variant="blue">
                   Create
@@ -155,7 +190,7 @@ const TokenEditor = ({
               )}
             </Flex>
           </form>
-          <PopoverHeader title={isNew ? "New Token" : name} />
+          <PopoverHeader title={"name" in token ? token.name : "New Token"} />
         </PopoverContent>
       </PopoverPortal>
     </Popover>
@@ -174,42 +209,66 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
     onChangeCurrent: setCurrentIndex,
   });
   const [editingToken, setEditingToken] = useState<
-    DesignToken["name"] | undefined
+    Partial<DesignToken> | undefined
   >();
-
   const { render: renderMenu, isOpen: isMenuOpen } = useMenu({
     selectedIndex,
     onSelect: setSelectedIndex,
     onDelete: () => {
-      const { name } = tokens[index];
+      const { name } = tokens[selectedIndex];
       publish({ type: "deleteToken", payload: name });
-      deleteTokenMutable([...tokens], name);
+      const updatedTokens = [...tokens];
+      deleteTokenMutable(updatedTokens, name);
+      setTokens(updatedTokens);
     },
     onEdit: (index) => {
-      setEditingToken(tokens[index].name);
+      setEditingToken(tokens[index]);
     },
   });
   const listProps = getListProps();
 
-  const renderTokenEditor = (
-    props: Omit<ComponentProps<typeof TokenEditor>, "token"> & {
-      token: Partial<DesignToken>;
-    }
-  ) => {
+  const renderTokenEditor = ({
+    token,
+    isOpen,
+    trigger,
+  }: {
+    token: DesignToken | DesignTokenSeed;
+    isOpen: boolean;
+    trigger?: JSX.Element;
+  }) => {
     return (
       <TokenEditor
-        {...props}
+        token={token}
+        isOpen={isOpen}
+        trigger={trigger}
         onChangeComplete={(token) => {
-          publish({ type: "updateToken", payload: token });
-          // @todo update token when its an existing one
-          setTokens([...tokens, token]);
+          const foundToken = findByName(tokens, token.name);
+          const previousTokenName = token.name;
+          const isNew =
+            foundToken === undefined || previousTokenName === undefined;
+
+          if (isNew) {
+            publish({ type: "createToken", payload: token });
+            setTokens([...tokens, token]);
+            return;
+          }
+
+          const updatedToken = { ...foundToken, ...token };
+
+          publish({
+            type: "updateToken",
+            payload: { name: previousTokenName, token: updatedToken },
+          });
+          const updatedTokens = produce(tokens, (draft) => {
+            updateTokenMutable(draft, token, previousTokenName);
+          });
+          setTokens(updatedTokens);
         }}
         onOpenChange={(isOpen) => {
           if (isOpen === false) {
             return setEditingToken(undefined);
           }
-          console.log(2222, props.token.name || props.token.type);
-          setEditingToken(props.token.name || props.token.type);
+          setEditingToken(token);
         }}
       />
     );
@@ -233,7 +292,8 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
             key={group}
             rightSlot={renderTokenEditor({
               token: { group, type },
-              isOpen: editingToken === type,
+              isOpen:
+                editingToken?.name === undefined && editingToken?.type === type,
             })}
           >
             <Flex direction="column">
@@ -257,7 +317,7 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
                           {token.name}
                         </div>
                       ),
-                      isOpen: editingToken === token.name,
+                      isOpen: editingToken?.name === token.name,
                     })}
                   </ListItem>
                 );
