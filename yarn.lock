@@ -5208,10 +5208,10 @@
   resolved "https://registry.yarnpkg.com/@types/cookie/-/cookie-0.4.1.tgz#bfd02c1f2224567676c1545199f87c3a861d878d"
   integrity sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==
 
-"@types/css-tree@^1.0.7":
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/@types/css-tree/-/css-tree-1.0.7.tgz#4483b824a7923d9a7819408a33144014b0c5124c"
-  integrity sha512-Pz+DfVODpQTAV6PwPBK6kzyy7+f6EyPbr1+mYkc1YolJfl2NAJ4wbg0TC/AJPBsqn9jWfyiO19A/sgpvFLfqnw==
+"@types/css-tree@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/css-tree/-/css-tree-2.0.0.tgz#b5f940aae863899a5a628114d8bc526863937e0a"
+  integrity sha512-mY2sXRLBnUPMYw6mkOT+6dABeaNxAEKZz6scE9kQPNJx8fKe1fOsm8Honl7+xFYe6TKX8WNk2+7oMp2vBArJ9Q==
 
 "@types/debug@^4.0.0":
   version "4.1.7"
@@ -8234,20 +8234,20 @@ css-tree@^1.1.2:
     mdn-data "2.0.14"
     source-map "^0.6.1"
 
-css-tree@^2.0.4, css-tree@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/css-tree/-/css-tree-2.1.0.tgz#170e27ccf94e7c5facb183765c25898be843d1d2"
-  integrity sha512-PcysZRzToBbrpoUrZ9qfblRIRf8zbEAkU0AIpQFtgkFK0vSbzOmBCvdSAx2Zg7Xx5wiYJKUKk0NMP7kxevie/A==
-  dependencies:
-    mdn-data "2.0.27"
-    source-map-js "^1.0.1"
-
 css-tree@^2.2.1, css-tree@~2.2.0:
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/css-tree/-/css-tree-2.2.1.tgz#36115d382d60afd271e377f9c5f67d02bd48c032"
   integrity sha512-OA0mILzGc1kCOCSJerOeqDxDQ4HOh+G8NbOJFOTgOCzpw7fCBubk0fEyxp8AgOL/jvLgYA/uV0cMbe43ElF1JA==
   dependencies:
     mdn-data "2.0.28"
+    source-map-js "^1.0.1"
+
+css-tree@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/css-tree/-/css-tree-2.3.0.tgz#a0122cbc85305576df92ac528fb079c8217a15b2"
+  integrity sha512-1rg0LiK2MFi4R3/lVvnRokEWTZb30ljSAe5x+0HHkZ+OqZaAeiP8g8Eh91VmkyCtQn9vMgQRiaTDYgLBt+2Qyw==
+  dependencies:
+    mdn-data "2.0.30"
     source-map-js "^1.0.1"
 
 css-what@^6.0.1, css-what@^6.1.0:
@@ -12754,15 +12754,15 @@ mdn-data@2.0.23:
   resolved "https://registry.yarnpkg.com/mdn-data/-/mdn-data-2.0.23.tgz#dfb6c41e50a0edb808cf340973ab29321b70808e"
   integrity sha512-IonVb7pfla2U4zW8rc7XGrtgq11BvYeCxWN8HS+KFBnLDE7XDK9AAMVhRuG6fj9BBsjc69Fqsp6WEActEdNTDQ==
 
-mdn-data@2.0.27:
-  version "2.0.27"
-  resolved "https://registry.yarnpkg.com/mdn-data/-/mdn-data-2.0.27.tgz#1710baa7b0db8176d3b3d565ccb7915fc69525ab"
-  integrity sha512-kwqO0I0jtWr25KcfLm9pia8vLZ8qoAKhWZuZMbneJq3jjBD3gl5nZs8l8Tu3ZBlBAHVQtDur9rdDGyvtfVraHQ==
-
 mdn-data@2.0.28:
   version "2.0.28"
   resolved "https://registry.yarnpkg.com/mdn-data/-/mdn-data-2.0.28.tgz#5ec48e7bef120654539069e1ae4ddc81ca490eba"
   integrity sha512-aylIc7Z9y4yzHYAJNuESG3hfhC+0Ibp/MAMiaOZgNv4pmEdFyfZhhhny4MNiAfWdBQ1RQ2mfDWmM1x8SvGyp8g==
+
+mdn-data@2.0.30:
+  version "2.0.30"
+  resolved "https://registry.yarnpkg.com/mdn-data/-/mdn-data-2.0.30.tgz#ce4df6f80af6cfbe218ecd5c552ba13c4dfa08cc"
+  integrity sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==
 
 mdurl@^1.0.0:
   version "1.0.1"
@@ -14921,9 +14921,9 @@ react-refresh@^0.11.0:
   integrity sha512-F27qZr8uUqwhWZboondsPx8tnC3Ct3SxZA3V5WyEvujRyyNv0VYPhoBg1gZ8/MV5tubQp76Trw8lTv9hzRBa+A==
 
 react-remove-scroll-bar@^2.3.3:
-  version "2.3.3"
-  resolved "https://registry.yarnpkg.com/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.3.tgz#e291f71b1bb30f5f67f023765b7435f4b2b2cd94"
-  integrity sha512-i9GMNWwpz8XpUpQ6QlevUtFjHGqnPG4Hxs+wlIJntu/xcsZVEpJcIV71K3ZkqNy2q3GfgvkD7y6t/Sv8ofYSbw==
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.4.tgz#53e272d7a5cb8242990c7f144c44d8bd8ab5afd9"
+  integrity sha512-63C4YQBUt0m6ALadE9XV56hV8BgJWDmmTPY758iIJjfQKt2nYwoUrPk0LXRXcB/yIj82T1/Ixfdpdk68LwIB0A==
   dependencies:
     react-style-singleton "^2.2.1"
     tslib "^2.0.0"

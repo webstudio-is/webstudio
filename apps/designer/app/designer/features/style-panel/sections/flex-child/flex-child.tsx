@@ -1,6 +1,6 @@
 import { Flex, Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
-import { ToggleGroupControl } from "../../controls";
+import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";
 import {

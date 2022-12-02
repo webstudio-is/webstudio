@@ -1,12 +1,14 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import warnOnce from "warn-once";
 import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
+import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import { parseCssValue } from "./parse-css-value";
 import { getInheritedStyle } from "./get-inherited-style";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 import { useRootInstance } from "~/shared/nano-states";
+// @todo: must be removed, now it's only for compatibility with existing code
+import { parseCssValue } from "./parse-css-value";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -22,9 +24,10 @@ type UseStyleData = {
 
 type StyleUpdateOptions = { isEphemeral: boolean };
 
+// @todo: style must have StyleValue type always
 export type SetProperty = (
   property: StyleProperty
-) => (value: string, options?: StyleUpdateOptions) => void;
+) => (style: string | StyleValue, options?: StyleUpdateOptions) => void;
 
 export type CreateBatchUpdate = () => {
   setProperty: SetProperty;
@@ -93,23 +96,36 @@ export const useStyleData = ({
     });
   };
 
+  // @deprecated should not be called
   const toStyleValue = (property: StyleProperty, value: string) => {
-    if (currentStyle === undefined) return;
     if (property === "fontFamily") {
       return { type: "fontFamily" as const, value: [value] };
     }
-    return parseCssValue(property, value, "number");
+
+    return parseCssValue(property, value);
   };
 
   const setProperty: SetProperty = (property) => {
-    return (input, options = { isEphemeral: false }) => {
-      const nextValue = toStyleValue(property, input);
-      if (nextValue === undefined) return;
+    return (inputOrStyle, options = { isEphemeral: false }) => {
+      if (currentStyle === undefined) return;
+
+      warnOnce(
+        typeof inputOrStyle === "string",
+        "setProperty should be called with a style object, string is deprecated"
+      );
+
+      const nextValue =
+        typeof inputOrStyle === "string"
+          ? toStyleValue(property, inputOrStyle)
+          : inputOrStyle;
+
       if (nextValue.type !== "invalid") {
         const updates = [{ property, value: nextValue }];
         const type = options.isEphemeral ? "preview" : "update";
+
         publishUpdates(type, updates);
       }
+
       if (options.isEphemeral === false) {
         setCurrentStyle({ ...currentStyle, [property]: nextValue });
       }
@@ -120,11 +136,23 @@ export const useStyleData = ({
     let updates: StyleUpdates["updates"] = [];
 
     const setProperty = (property: StyleProperty) => {
-      const setValue = (input: string) => {
-        const value = toStyleValue(property, input);
-        if (value === undefined || value.type === "invalid") {
+      const setValue = (inputOrStyle: string | StyleValue) => {
+        if (currentStyle === undefined) return;
+
+        warnOnce(
+          typeof inputOrStyle === "string",
+          "setProperty should be called with a style object, string is deprecated"
+        );
+
+        const value =
+          typeof inputOrStyle === "string"
+            ? toStyleValue(property, inputOrStyle)
+            : inputOrStyle;
+
+        if (value.type === "invalid") {
           return;
         }
+
         updates.push({ property, value });
       };
       return setValue;

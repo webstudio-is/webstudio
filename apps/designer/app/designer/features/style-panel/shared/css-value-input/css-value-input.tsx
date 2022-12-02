@@ -18,6 +18,7 @@ import type {
   StyleProperty,
   UnsetValue,
   StyleValue,
+  Unit,
 } from "@webstudio-is/css-data";
 import {
   type KeyboardEventHandler,
@@ -29,7 +30,9 @@ import {
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
-import { isValid, isNumericString } from "../parse-css-value";
+import { parseCssValue } from "../parse-css-value";
+import { unstable_batchedUpdates } from "react-dom";
+import { evaluateMath } from "./evaluate-math";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
 
@@ -43,56 +46,14 @@ const calcNumberChange = (
   return Number((value + delta * multiplier).toFixed(1));
 };
 
-const useHandleOnChange = (
-  property: StyleProperty,
-  value: StyleValue,
-  input: string,
-  onChange: (value: StyleValue) => void
-) => {
-  // Used to decouple onChange effect from value ref change
-  const valueRef = useRef<StyleValue>(value);
-
-  useEffect(() => {
-    if (input === "" || input === String(valueRef.current.value)) {
-      return;
-    }
-
-    // We want to switch to unit mode if entire input is a number.
-    if (isNumericString(input)) {
-      if (value.type === "unit" && String(Number(input)) !== input) return;
-      onChange?.({
-        type: "unit",
-        // Use previously known unit or fallback to the most common unit: px, if supported
-        unit:
-          valueRef.current.type === "unit"
-            ? valueRef.current.unit
-            : isValid(property, input + "px")
-            ? "px"
-            : "number",
-        value: Number(input),
-      });
-      return;
-    }
-
-    onChange?.({
-      type: "keyword",
-      value: input,
-    });
-  }, [property, input, value.type, onChange]);
-
-  useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-};
-
 const useScrub = ({
   value,
   onChange,
   onChangeComplete,
   shouldHandleEvent,
 }: {
-  value: StyleValue;
-  onChange: (value: StyleValue) => void;
+  value: CSSValueInputValue;
+  onChange: (value: CSSValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   shouldHandleEvent?: (node: EventTarget) => boolean;
 }): [
@@ -103,12 +64,14 @@ const useScrub = ({
   const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isInputActive, setIsInputActive] = useState(false);
+
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
 
   onChangeCompleteRef.current = onChangeComplete;
   onChangeRef.current = onChange;
+
   valueRef.current = value;
 
   const type = valueRef.current.type;
@@ -132,16 +95,27 @@ const useScrub = ({
     const scrub = numericScrubControl(scrubRefCurrent, {
       initialValue: value,
       onValueInput(event) {
-        inputRefCurrent.value = String(event.value);
+        // inputRefCurrent.value = String(event.value);
         setIsInputActive(true);
         inputRefCurrent.blur();
-      },
-      onValueChange(event) {
-        onChangeCompleteRef.current({
+
+        onChangeRef.current({
           type,
           unit,
           value: event.value,
         });
+      },
+      onValueChange(event) {
+        // Will work without but depends on order of setState updates
+        // at text-control, now fixed in both places (order of updates is right, and batched here)
+        unstable_batchedUpdates(() => {
+          onChangeCompleteRef.current({
+            type,
+            unit,
+            value: event.value,
+          });
+        });
+
         setIsInputActive(false);
         inputRefCurrent.focus();
         inputRefCurrent.select();
@@ -157,24 +131,28 @@ const useScrub = ({
 
 const useHandleKeyDown =
   ({
+    isOpen,
     value,
     onChange,
     onChangeComplete,
     onKeyDown,
-    closeMenu,
   }: {
-    value: StyleValue;
-    onChange: (value: StyleValue) => void;
-    onChangeComplete: (value: StyleValue) => void;
+    isOpen: boolean;
+    value: CSSValueInputValue;
+    onChange: (value: CSSValueInputValue) => void;
+    onChangeComplete: (value: CSSValueInputValue) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
-    closeMenu: () => void;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
     onKeyDown(event);
-    if (event.key === "Enter") {
-      closeMenu();
-      onChangeComplete(value);
+
+    // Do not prevent downshit behaviour on item select
+    if (isOpen === false) {
+      if (event.key === "Enter") {
+        onChangeComplete(value);
+      }
     }
+
     if (
       value.type === "unit" &&
       (event.key === "ArrowUp" || event.key === "ArrowDown") &&
@@ -187,13 +165,21 @@ const useHandleKeyDown =
     }
   };
 
+export type IntermediateStyleValue = {
+  type: "intermediate";
+  value: string;
+  unit?: Unit;
+};
+
+type CSSValueInputValue = StyleValue | IntermediateStyleValue;
+
 type CssValueInputProps = {
   property: StyleProperty;
-  value?: StyleValue;
+  value?: CSSValueInputValue;
   keywords?: Array<KeywordValue>;
-  onChange: (value: StyleValue) => void;
+  onChange: (value: CSSValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-  onItemHighlight?: (value: StyleValue | null) => void;
+  onPreview: (value: StyleValue) => void;
 };
 
 /**
@@ -227,16 +213,74 @@ type CssValueInputProps = {
  * - Typing number + unit (e.g. "12px") in unit mode will change the selected unit on blur/enter
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
-
 export const CssValueInput = ({
   icon,
   property,
   value = unsetValue,
   keywords = [],
-  onChange,
-  onChangeComplete,
-  onItemHighlight,
+  onPreview,
+  ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
+  const onChange = (input: string) => {
+    let styleInput = parseCssValue(property, input);
+
+    if (styleInput.type !== "invalid") {
+      props.onChange(styleInput);
+      return;
+    }
+
+    const unit = "unit" in value ? value.unit : "px";
+    styleInput = parseCssValue(property, `${input}${unit}`);
+
+    if (styleInput.type !== "invalid") {
+      props.onChange(styleInput);
+      return;
+    }
+
+    // We don't know what's inside the input,
+    // preserve current unit value if exists
+    props.onChange({
+      type: "intermediate",
+      value: input,
+      unit: "unit" in value ? value.unit : undefined,
+    });
+  };
+
+  const onChangeComplete = (value: CSSValueInputValue) => {
+    // Value already validated
+    if (value.type !== "intermediate") {
+      props.onChangeComplete(value);
+      return;
+    }
+
+    const mathResult = evaluateMath(value.value);
+
+    if (mathResult != null) {
+      // If math expression is valid, use it as a value
+      let styleInput = parseCssValue(property, String(mathResult));
+
+      if (styleInput.type !== "invalid") {
+        props.onChangeComplete(styleInput);
+        return;
+      }
+
+      const unit = "unit" in value ? value.unit : "px";
+      styleInput = parseCssValue(property, `${String(mathResult)}${unit}`);
+
+      if (styleInput.type !== "invalid") {
+        props.onChangeComplete(styleInput);
+        return;
+      }
+    }
+
+    // If we are here it means that value can be Valid but out parseCssValue can't handle it
+    // or value is invalid
+    props.onChangeComplete({
+      type: "invalid",
+      value: value.value,
+    });
+  };
+
   const {
     items,
     getInputProps,
@@ -245,20 +289,28 @@ export const CssValueInput = ({
     getMenuProps,
     getItemProps,
     isOpen,
-    closeMenu,
-  } = useCombobox<StyleValue>({
+  } = useCombobox<CSSValueInputValue>({
     items: keywords,
     value,
     itemToString: (item) => (item === null ? "" : String(item.value)),
+    onInputChange: (inputValue) => {
+      onChange(inputValue ?? unsetValue.value);
+    },
     onItemSelect: (value) => {
       onChangeComplete(value ?? unsetValue);
     },
-    onItemHighlight,
+    onItemHighlight: (value) => {
+      if (value == null) {
+        onPreview(unsetValue);
+        return;
+      }
+      if (value.type !== "intermediate") {
+        onPreview(value ?? unsetValue);
+      }
+    },
   });
 
   const inputProps = getInputProps();
-
-  useHandleOnChange(property, value, inputProps.value, onChange);
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     property,
@@ -277,7 +329,7 @@ export const CssValueInput = ({
   }, []);
   const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
-    onChange,
+    onChange: props.onChange,
     onChangeComplete,
     shouldHandleEvent,
   });
@@ -290,11 +342,11 @@ export const CssValueInput = ({
   };
 
   const handleKeyDown = useHandleKeyDown({
-    value,
-    onChange,
+    isOpen: isOpen && !getMenuProps().empty,
     onChangeComplete,
+    value,
+    onChange: props.onChange,
     onKeyDown: inputProps.onKeyDown,
-    closeMenu,
   });
 
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
@@ -316,7 +368,7 @@ export const CssValueInput = ({
     </TextFieldIconButton>
   );
   const hasItems = items.length !== 0;
-  const isUnitValue = value.type === "unit";
+  const isUnitValue = "unit" in value;
   const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
   const suffix = (

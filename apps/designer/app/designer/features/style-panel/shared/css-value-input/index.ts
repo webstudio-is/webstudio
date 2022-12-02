@@ -1,1 +1,1 @@
-export { CssValueInput } from "./css-value-input";
+export { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
