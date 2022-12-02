@@ -26,7 +26,7 @@ export const UserDbProp = z.discriminatedUnion("type", [
   z.object({
     ...baseUserProps,
     type: z.literal("asset"),
-    // In database we hold asset_id
+    // In database we hold asset.id
     value: z.string(),
   }),
 ]);
