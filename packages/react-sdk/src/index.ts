@@ -9,3 +9,4 @@ export {
   customComponents,
   customComponentsMeta,
 } from "./app/custom-components";
+export type { MetaProps } from "./components/component-type";

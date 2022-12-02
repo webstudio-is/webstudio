@@ -20,6 +20,7 @@ export const NoProps: ComponentStoryObj<typeof PropsPanel> = {
           {
             id: "disabled",
             prop: "disabled",
+            type: "boolean",
             value: true,
           },
         ],

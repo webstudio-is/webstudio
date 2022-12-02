@@ -15,9 +15,9 @@ import {
 } from "@webstudio-is/design-system";
 import { ValuePickerPopover } from "../style-panel/shared/value-picker-popover";
 import { ImageManager } from "~/designer/shared/image-manager";
-
 import { Checkbox } from "@webstudio-is/design-system";
 import { Asset } from "@webstudio-is/asset-uploader";
+import type { UserPropValue } from "./use-props-logic";
 
 const textControlTypes = [
   "text",
@@ -173,7 +173,7 @@ const assertUnreachable = (_arg: never, errorMessage: string) => {
 type ControlProps = {
   component: Instance["component"];
   userProp: UserProp;
-  onChangePropValue: (value: string | boolean, asset?: Asset) => void;
+  onChangePropValue: (value: UserPropValue) => void;
 };
 
 // eslint-disable-next-line func-style
@@ -210,13 +210,19 @@ export function Control({
   }
 
   if (component === "Image" && userProp.prop === "src") {
-    const asset = userProp.asset ?? null;
+    const asset = userProp.type === "asset" ? userProp.value : null;
 
     return (
       <ImageControl
         asset={asset}
-        onChange={(asset) => onChangePropValue(asset.path, asset)}
+        onChange={(value) => onChangePropValue({ type: "asset", value })}
       />
+    );
+  }
+
+  if (userProp.type === "asset") {
+    throw new Error(
+      `userProp with id "${userProp.value.id}" has asset but no control exists to process it`
     );
   }
 
@@ -224,7 +230,16 @@ export function Control({
     const value = `${userProp.value}`;
 
     return (
-      <TextControl value={value} onChange={onChangePropValue} type={type} />
+      <TextControl
+        value={value}
+        onChange={(value) =>
+          onChangePropValue({
+            type: "string",
+            value,
+          })
+        }
+        type={type}
+      />
     );
   }
 
@@ -234,7 +249,12 @@ export function Control({
     return (
       <BooleanControl
         value={value}
-        onChange={onChangePropValue}
+        onChange={(value) =>
+          onChangePropValue({
+            type: "boolean",
+            value,
+          })
+        }
         defaultValue={Boolean(defaultValue)}
       />
     );
@@ -263,7 +283,12 @@ export function Control({
       return (
         <RadioControl
           value={value}
-          onChange={onChangePropValue}
+          onChange={(value) =>
+            onChangePropValue({
+              type: "string",
+              value,
+            })
+          }
           options={options ?? DEFAULT_OPTIONS}
           type={type}
         />
@@ -274,7 +299,12 @@ export function Control({
       return (
         <CheckboxControl
           value={value}
-          onChange={onChangePropValue}
+          onChange={(value) =>
+            onChangePropValue({
+              type: "string",
+              value,
+            })
+          }
           options={options ?? DEFAULT_OPTIONS}
           type={type}
         />
@@ -285,7 +315,12 @@ export function Control({
       return (
         <SelectControl
           value={value}
-          onChange={onChangePropValue}
+          onChange={(value) =>
+            onChangePropValue({
+              type: "string",
+              value,
+            })
+          }
           options={options ?? DEFAULT_OPTIONS}
           type={type}
         />

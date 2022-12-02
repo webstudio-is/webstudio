@@ -2,6 +2,7 @@ import type {
   DeleteProp,
   UserProp,
   UserPropsUpdates,
+  MetaProps,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
 import { getComponentMetaProps } from "@webstudio-is/react-sdk";
@@ -10,7 +11,7 @@ import produce from "immer";
 import uniqBy from "lodash/uniqBy";
 import { useState } from "react";
 import type { SelectedInstanceData } from "@webstudio-is/project";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import warnOnce from "warn-once";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -19,33 +20,62 @@ declare module "~/shared/pubsub" {
   }
 }
 
-type UserPropValue = Extract<UserProp, { value: unknown }>["value"];
+export type UserPropValue = UserProp extends infer T
+  ? T extends { value: unknown; type: unknown }
+    ? { value: T["value"]; type: T["type"] }
+    : never
+  : never;
 
-type HandleChangePropName = (
-  id: UserProp["id"],
-  name: string,
-  defaultValue: string | boolean | number
-) => void;
+type HandleChangePropName = (id: UserProp["id"], name: string) => void;
 
-type HandleChangePropValue = (
-  id: UserProp["id"],
-  value: UserPropValue,
-  asset?: Asset
-) => void;
+type HandleChangePropValue = (id: UserProp["id"], value: UserPropValue) => void;
+
+export const getValueFromPropMeta = (propValue: MetaProps[string]) => {
+  let typedValue: UserPropValue = {
+    type: "string",
+    value: `${propValue?.defaultValue ?? ""}`,
+  };
+
+  if (propValue?.type === "boolean") {
+    typedValue = {
+      type: "boolean",
+      value: propValue.defaultValue ?? false,
+    };
+  }
+
+  if (propValue?.type === "number") {
+    typedValue = {
+      type: "number",
+      value: propValue.defaultValue ?? 0,
+    };
+  }
+
+  return typedValue;
+};
 
 const getRequiredProps = (
   selectedInstanceData: SelectedInstanceData
 ): UserProp[] => {
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
+
   return Object.entries(meta)
     .filter(([_, value]) => value?.required)
-    .map(([prop, _]) => ({
-      id: ObjectId().toString(),
-      prop,
-      value: "",
-      required: true,
-    }));
+    .map(([prop, propValue]) => {
+      warnOnce(
+        propValue?.defaultValue == null,
+        `Default value for required "${prop}" is required`
+      );
+
+      const typedValue = getValueFromPropMeta(propValue);
+
+      return {
+        id: ObjectId().toString(),
+        prop,
+        ...typedValue,
+        required: true,
+      };
+    });
 };
 
 // @todo: This returns same props for all instances.
@@ -58,12 +88,13 @@ const getPropsWithDefaultValue = (
 
   return Object.entries(meta)
     .filter(([_, value]) => value?.defaultValue != null)
-    .map(([prop, propObj]) => {
-      const value = propObj?.defaultValue ?? "";
+    .map(([prop, propValue]) => {
+      const typedValue = getValueFromPropMeta(propValue);
+
       return {
         id: ObjectId().toString(),
         prop,
-        value,
+        ...typedValue,
       };
     });
 };
@@ -116,19 +147,27 @@ export const usePropsLogic = ({
     });
   };
 
-  const handleChangePropName: HandleChangePropName = (
-    id,
-    name,
-    defaultValue
-  ) => {
+  const handleChangePropName: HandleChangePropName = (id, name) => {
     const nextUserProps = produce((draft: Array<UserProp>) => {
       const index = draft.findIndex((item) => item.id === id);
 
       const isPropRequired = draft[index].required;
 
       if (isPropRequired !== true) {
-        draft[index].prop = name;
-        draft[index].value = defaultValue;
+        const { component } = selectedInstanceData;
+        const meta = getComponentMetaProps(component);
+
+        let typedValue: UserPropValue = { type: "string", value: "" };
+        if (name in meta) {
+          typedValue = getValueFromPropMeta(meta[name]);
+        }
+
+        // @todo we need to not allow changing non required on required prop too
+        draft[index] = {
+          id: draft[index].id,
+          prop: name,
+          ...typedValue,
+        };
       }
     })(userProps);
 
@@ -140,17 +179,14 @@ export const usePropsLogic = ({
     updateProps(updatedProps);
   };
 
-  const handleChangePropValue: HandleChangePropValue = (id, value, asset) => {
+  const handleChangePropValue: HandleChangePropValue = (id, value) => {
     const nextUserProps = produce((draft: Array<UserProp>) => {
       const index = draft.findIndex((item) => item.id === id);
-      const val = draft[index];
 
-      val.value = value;
-      if (asset) {
-        val.asset = asset;
-      } else if (val.asset != null) {
-        delete val.asset;
-      }
+      draft[index] = {
+        ...draft[index],
+        ...value,
+      };
     })(userProps);
 
     // Optimistically update the state (what if publish fails?)
@@ -180,6 +216,7 @@ export const usePropsLogic = ({
       {
         id: ObjectId().toString(),
         prop: "",
+        type: "string",
         value: "",
       },
     ]);

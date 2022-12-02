@@ -28,8 +28,7 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
-import { usePropsLogic } from "./use-props-logic";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import { usePropsLogic, type UserPropValue } from "./use-props-logic";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -109,11 +108,8 @@ const Combobox = ({
 type PropertyProps = {
   userProp: UserProp;
   component: Instance["component"];
-  onChangePropName: (
-    name: string,
-    defaultValue: string | boolean | number
-  ) => void;
-  onChangePropValue: (value: string | boolean | number, asset?: Asset) => void;
+  onChangePropName: (name: string) => void;
+  onChangePropValue: (value: UserPropValue) => void;
   onDelete: (id: UserProp["id"]) => void;
 };
 
@@ -142,32 +138,10 @@ const Property = ({
         value={userProp.prop}
         onItemSelect={(name) => {
           if (name != null) {
-            const argType = meta[name as keyof typeof meta];
-
-            const defaultValue =
-              argType?.defaultValue ??
-              (argType?.type === "boolean"
-                ? false
-                : argType?.type === "number"
-                ? 0
-                : "");
-
-            onChangePropName(name, defaultValue);
+            onChangePropName(name);
           }
         }}
-        onSubmit={(name) => {
-          const argType = meta[name as keyof typeof meta];
-
-          const defaultValue =
-            argType?.defaultValue ??
-            (argType?.type === "boolean"
-              ? false
-              : argType?.type === "number"
-              ? 0
-              : "");
-
-          onChangePropName(name, defaultValue);
-        }}
+        onSubmit={onChangePropName}
         isInvalid={isInvalid}
         isReadonly={userProp.required ?? false}
       />
@@ -249,11 +223,11 @@ export const PropsPanel = ({
               key={userProp.id}
               userProp={userProp}
               component={selectedInstanceData.component}
-              onChangePropName={(name, defaultValue) =>
-                handleChangePropName(userProp.id, name, defaultValue)
+              onChangePropName={(name) =>
+                handleChangePropName(userProp.id, name)
               }
-              onChangePropValue={(value, asset) =>
-                handleChangePropValue(userProp.id, value, asset)
+              onChangePropValue={(value) =>
+                handleChangePropValue(userProp.id, value)
               }
               onDelete={handleDeleteProp}
             />

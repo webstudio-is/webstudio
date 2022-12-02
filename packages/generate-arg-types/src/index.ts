@@ -44,7 +44,7 @@ const ArgTypes = z.record(
   z.object({
     type: z.string(),
     required: z.boolean(),
-    defaultValue: z.union([z.null(), z.string()]),
+    defaultValue: z.union([z.null(), z.string(), z.number(), z.boolean()]),
     options: z.array(z.string()).optional(),
   })
 );

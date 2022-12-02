@@ -28,12 +28,17 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
       return loaders.localImageLoader();
     }, [asset, params]);
 
-    if (asset === null || loader == null)
-      return <SdkImage {...props} ref={ref} />;
+    let src = props.src;
 
-    return (
-      <WebstudioImage {...props} loader={loader} optimize={true} ref={ref} />
-    );
+    if (asset != null) {
+      src = asset.path;
+    }
+
+    if (asset == null || loader == null) {
+      return <SdkImage {...props} src={src} ref={ref} />;
+    }
+
+    return <WebstudioImage {...props} loader={loader} src={src} ref={ref} />;
   }
 );
 
