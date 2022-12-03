@@ -71,9 +71,13 @@ const initialErrors = {
   hasErrors: false,
 };
 
-const getData = (form: HTMLFormElement) => {
+const getToken = (
+  form: HTMLFormElement,
+  tokenOrSeed?: DesignToken | DesignTokenSeed
+) => {
   const formData = new FormData(form);
-  return Object.fromEntries(formData);
+  const data = Object.fromEntries(formData);
+  return { ...tokenOrSeed, ...data } as DesignToken;
 };
 
 type DesignTokenSeed = Pick<DesignToken, "group" | "type">;
@@ -108,20 +112,20 @@ const TokenEditor = ({
     if (errors.hasErrors === false || formRef.current === null) {
       return;
     }
-    const data = getData(formRef.current);
-    const nextErrors = validate(tokens, data, token === undefined);
+    const updatedToken = getToken(formRef.current, token ?? seed);
+    const nextErrors = validate(tokens, updatedToken, token === undefined);
     setErrors(nextErrors);
   };
 
   const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault();
     if (formRef.current === null) return;
-    const data = getData(formRef.current);
-    const nextErrors = validate(tokens, data, token === undefined);
+    const updatedToken = getToken(formRef.current, token ?? seed);
+    const nextErrors = validate(tokens, updatedToken, token === undefined);
     setErrors(nextErrors);
 
     if (nextErrors.hasErrors === false) {
-      onChangeComplete({ ...seed, ...token, ...data } as DesignToken);
+      onChangeComplete(updatedToken);
       onOpenChange(false);
     }
   };
