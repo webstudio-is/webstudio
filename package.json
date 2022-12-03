@@ -15,6 +15,7 @@
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "prepare": "husky install",
+    "build-storybook": "build-storybook",
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@changesets/get-dependents-graph": "^1.3.4",
     "@manypkg/get-packages": "^1.1.3",
+    "@storybook/react": "^6.5.9",
     "@webstudio-is/eslint-config-custom": "*",
     "chromatic": "^6.11.4",
     "golden-fleece": "^1.0.9",
