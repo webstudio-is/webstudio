@@ -14,16 +14,13 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
     {
       quality,
       loader,
-      optimize,
+      optimize = true,
       loading = "lazy",
       decoding = "async",
       ...imageProps
     },
     ref
   ) => {
-    // Temporary set to false, to support previous image behaviour
-    const DEFAULT_OPTIMIZE = false;
-
     const imageAttributes = getImageAttributes({
       src: imageProps.src,
       srcSet: imageProps.srcSet,
@@ -31,7 +28,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
       width: imageProps.width,
       quality,
       loader,
-      optimize: optimize ?? DEFAULT_OPTIMIZE,
+      optimize,
     }) ?? { src: imagePlaceholderSvg };
 
     return (

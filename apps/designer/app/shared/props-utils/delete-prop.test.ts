@@ -9,8 +9,8 @@ describe("Delete prop", () => {
         instanceId: "instanceId",
         treeId: "treeId",
         props: [
-          { id: "propId", prop: "b", value: "1" },
-          { id: "propId1", prop: "a", value: "1" },
+          { id: "propId", prop: "b", value: "1", type: "string" },
+          { id: "propId1", prop: "a", value: "1", type: "string" },
         ],
       },
     };
@@ -19,7 +19,23 @@ describe("Delete prop", () => {
       instanceId: "instanceId",
       propId: "propId",
     });
-    expect(propsMap).toMatchSnapshot();
+    expect(propsMap).toMatchInlineSnapshot(`
+      {
+        "instanceId": {
+          "id": "id",
+          "instanceId": "instanceId",
+          "props": [
+            {
+              "id": "propId1",
+              "prop": "a",
+              "type": "string",
+              "value": "1",
+            },
+          ],
+          "treeId": "treeId",
+        },
+      }
+    `);
     expect(isDeleted).toBeTruthy();
   });
 
@@ -30,8 +46,8 @@ describe("Delete prop", () => {
         instanceId: "instanceId",
         treeId: "treeId",
         props: [
-          { id: "propId", prop: "b", value: "1" },
-          { id: "propId1", prop: "a", value: "1" },
+          { id: "propId", prop: "b", value: "1", type: "string" },
+          { id: "propId1", prop: "a", value: "1", type: "string" },
         ],
       },
     };
@@ -40,7 +56,29 @@ describe("Delete prop", () => {
       instanceId: "instanceId",
       propId: "notFound",
     });
-    expect(propsMap).toMatchSnapshot();
+    expect(propsMap).toMatchInlineSnapshot(`
+      {
+        "instanceId": {
+          "id": "id",
+          "instanceId": "instanceId",
+          "props": [
+            {
+              "id": "propId",
+              "prop": "b",
+              "type": "string",
+              "value": "1",
+            },
+            {
+              "id": "propId1",
+              "prop": "a",
+              "type": "string",
+              "value": "1",
+            },
+          ],
+          "treeId": "treeId",
+        },
+      }
+    `);
     expect(isDeleted).toBeFalsy();
   });
 });

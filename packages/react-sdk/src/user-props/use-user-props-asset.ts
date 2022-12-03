@@ -10,16 +10,21 @@ import type { Asset } from "@webstudio-is/asset-uploader";
 export const useUserPropsAsset = (
   instanceId: Instance["id"],
   propName: UserProp["prop"]
-): Asset | null => {
+): Asset | undefined => {
   const [allUserProps] = useAllUserProps();
 
   const propsData = allUserProps[instanceId];
   const asset = useMemo(() => {
-    if (propsData == null) return null;
+    if (propsData == null) return undefined;
     const prop = propsData.props.find((prop) => prop.prop === propName);
-    if (prop == null) return null;
 
-    return prop.asset ?? null;
+    if (prop == null) return undefined;
+
+    if (prop.type === "asset") {
+      return prop.value;
+    }
+
+    return undefined;
   }, [propName, propsData]);
 
   return asset;

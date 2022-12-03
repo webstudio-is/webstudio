@@ -568,7 +568,7 @@
     "type": "text"
   },
   "optimize": {
-    "defaultValue": null,
+    "defaultValue": true,
     "required": false,
     "type": "boolean"
   }

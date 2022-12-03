@@ -82,6 +82,7 @@ describe("usePropsLogic", () => {
           {
             id: "default",
             prop: "type",
+            type: "string",
             value: "submit",
           },
         ]),
@@ -120,13 +121,15 @@ describe("usePropsLogic", () => {
           {
             id: "1",
             prop: "tag",
+            type: "string",
             value: "div",
             required: true,
           },
           {
             id: "disabled",
             prop: "disabled",
-            value: "true",
+            type: "boolean",
+            value: true,
           },
         ]),
         publish: jest.fn(),
@@ -144,6 +147,7 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
+          "type": "string",
           "value": "div",
         },
       ]
@@ -157,13 +161,15 @@ describe("usePropsLogic", () => {
           {
             id: "1",
             prop: "tag",
+            type: "string",
             value: "div",
             required: true,
           },
           {
             id: "disabled",
             prop: "disabled",
-            value: "true",
+            type: "boolean",
+            value: true,
           },
         ]),
         publish: jest.fn(),
@@ -171,11 +177,14 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangePropName("disabled", "disabled2", false);
+      result.current.handleChangePropName("disabled", "disabled2");
     });
 
     act(() => {
-      result.current.handleChangePropValue("disabled", false);
+      result.current.handleChangePropValue("disabled", {
+        type: "boolean",
+        value: false,
+      });
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
@@ -184,11 +193,13 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
+          "type": "string",
           "value": "div",
         },
         {
           "id": "disabled",
           "prop": "disabled2",
+          "type": "boolean",
           "value": false,
         },
       ]
@@ -202,13 +213,15 @@ describe("usePropsLogic", () => {
           {
             id: "1",
             prop: "tag",
+            type: "string",
             value: "div",
             required: true,
           },
           {
             id: "disabled",
             prop: "disabled",
-            value: "true",
+            type: "boolean",
+            value: true,
             required: true,
           },
         ]),
@@ -229,13 +242,15 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
+          "type": "string",
           "value": "div",
         },
         {
           "id": "disabled",
           "prop": "disabled",
           "required": true,
-          "value": "true",
+          "type": "boolean",
+          "value": true,
         },
       ]
     `);
@@ -248,12 +263,14 @@ describe("usePropsLogic", () => {
           {
             id: "1",
             prop: "tag",
+            type: "string",
             value: "div",
             required: true,
           },
           {
             id: "2",
             prop: "test",
+            type: "string",
             value: "test",
             required: true,
           },
@@ -263,7 +280,7 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangePropName("2", "test-example", "");
+      result.current.handleChangePropName("2", "test-example");
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
@@ -272,12 +289,14 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
+          "type": "string",
           "value": "div",
         },
         {
           "id": "2",
           "prop": "test",
           "required": true,
+          "type": "string",
           "value": "test",
         },
       ]
@@ -291,12 +310,14 @@ describe("usePropsLogic", () => {
           {
             id: "1",
             prop: "tag",
+            type: "string",
             value: "div",
             required: true,
           },
           {
             id: "2",
             prop: "test",
+            type: "boolean",
             value: true,
             required: true,
           },
@@ -306,7 +327,10 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangePropValue("2", false);
+      result.current.handleChangePropValue("2", {
+        type: "boolean",
+        value: false,
+      });
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
@@ -315,12 +339,14 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
+          "type": "string",
           "value": "div",
         },
         {
           "id": "2",
           "prop": "test",
           "required": true,
+          "type": "boolean",
           "value": false,
         },
       ]
@@ -334,6 +360,7 @@ describe("usePropsLogic", () => {
           {
             id: "1",
             prop: "tag",
+            type: "string",
             value: "div",
             required: true,
           },
@@ -343,25 +370,51 @@ describe("usePropsLogic", () => {
     );
 
     act(() => {
-      result.current.handleChangePropValue("1", "img", {
-        id: "string",
-        projectId: "string",
-        format: "string",
-        size: 1111,
-        name: "string",
-        description: "string",
-        location: "REMOTE",
-        createdAt: new Date("1995-12-17T03:24:00Z").toISOString(),
-        meta: { width: 101, height: 202 },
-        path: "string",
-        status: "uploaded",
+      result.current.handleChangePropValue("1", {
+        type: "string",
+        value: "img",
       });
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
       [
         {
-          "asset": {
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "type": "string",
+          "value": "img",
+        },
+      ]
+    `);
+
+    act(() => {
+      result.current.handleChangePropValue("1", {
+        type: "asset",
+        value: {
+          id: "string",
+          projectId: "string",
+          format: "string",
+          size: 1111,
+          name: "string",
+          description: "string",
+          location: "REMOTE",
+          createdAt: new Date("1995-12-17T03:24:00Z").toISOString(),
+          meta: { width: 101, height: 202 },
+          path: "string",
+          status: "uploaded",
+        },
+      });
+    });
+
+    expect(result.current.userProps).toMatchInlineSnapshot(`
+      [
+        {
+          "id": "1",
+          "prop": "tag",
+          "required": true,
+          "type": "asset",
+          "value": {
             "createdAt": "1995-12-17T03:24:00.000Z",
             "description": "string",
             "format": "string",
@@ -377,16 +430,15 @@ describe("usePropsLogic", () => {
             "size": 1111,
             "status": "uploaded",
           },
-          "id": "1",
-          "prop": "tag",
-          "required": true,
-          "value": "img",
         },
       ]
     `);
 
     act(() => {
-      result.current.handleChangePropValue("1", "img");
+      result.current.handleChangePropValue("1", {
+        type: "string",
+        value: "img-3",
+      });
     });
 
     expect(result.current.userProps).toMatchInlineSnapshot(`
@@ -395,7 +447,8 @@ describe("usePropsLogic", () => {
           "id": "1",
           "prop": "tag",
           "required": true,
-          "value": "img",
+          "type": "string",
+          "value": "img-3",
         },
       ]
     `);
