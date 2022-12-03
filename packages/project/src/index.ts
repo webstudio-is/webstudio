@@ -13,5 +13,4 @@ export const utils = {
 export * from "./shared/styles";
 export * from "./db/schema";
 export * from "./shared/canvas-components";
-export * from "./shared/design-tokens";
 export type { InstanceInsertionSpec } from "./shared/tree-utils";

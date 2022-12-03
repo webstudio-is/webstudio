@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { designTokensGroups } from "./groups";
 
+// @todo this doesn't belong here https://github.com/webstudio-is/webstudio-designer/issues/544
 type UnionToIntersection<U> = (
   U extends never ? never : (arg: U) => never
 ) extends (arg: infer I) => void

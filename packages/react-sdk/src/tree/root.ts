@@ -8,11 +8,12 @@ import type { Breakpoint } from "@webstudio-is/css-data";
 import { registerComponents } from "../components";
 import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
+import type { DesignToken } from "@webstudio-is/design-tokens";
 
 export type Data = {
   tree: Tree | null;
   breakpoints: Array<Breakpoint>;
-  designTokens: Array<any>;
+  designTokens: Array<DesignToken>;
   props: Array<InstanceProps>;
   assets: Array<Asset>;
   params?: Params;

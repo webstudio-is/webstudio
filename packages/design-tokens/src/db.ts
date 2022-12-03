@@ -3,7 +3,7 @@ import {
   prisma,
 } from "@webstudio-is/prisma-client";
 import { applyPatches, Patch } from "immer";
-import { DesignToken } from "../shared/design-tokens";
+import { DesignToken } from "./schema";
 
 export const load = async (buildId: DbDesignTokens["buildId"]) => {
   const data = await prisma.designTokens.findUnique({

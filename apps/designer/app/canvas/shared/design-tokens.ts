@@ -1,4 +1,4 @@
-import type { DesignToken } from "@webstudio-is/project";
+import type { DesignToken } from "@webstudio-is/design-tokens";
 import { useEffect, useRef } from "react";
 import { useDesignTokens } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";

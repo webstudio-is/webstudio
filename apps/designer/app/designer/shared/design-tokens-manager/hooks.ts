@@ -1,6 +1,6 @@
 import { useSubscribe } from "~/shared/pubsub";
 import { useDesignTokens } from "~/shared/nano-states";
-import type { DesignToken } from "@webstudio-is/project";
+import type { DesignToken } from "@webstudio-is/design-tokens";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {

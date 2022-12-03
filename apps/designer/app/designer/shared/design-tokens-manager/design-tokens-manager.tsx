@@ -16,8 +16,8 @@ import {
   useList,
 } from "@webstudio-is/design-system";
 import { CheckIcon, PlusIcon } from "@webstudio-is/icons";
-import type { DesignToken } from "@webstudio-is/project";
-import { designTokensGroups } from "@webstudio-is/project";
+import type { DesignToken } from "@webstudio-is/design-tokens";
+import { designTokensGroups } from "@webstudio-is/design-tokens";
 import { useDesignTokens } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 // @todo this is temporary, we need to either make that collapsible reusable or copy it over

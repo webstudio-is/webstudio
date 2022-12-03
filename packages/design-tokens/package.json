@@ -1,0 +1,42 @@
+{
+  "name": "@webstudio-is/design-tokens",
+  "version": "0.1.0",
+  "description": "Webstudio Design Tokens",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "checks": "yarn typecheck && yarn lint && yarn test",
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+  },
+  "dependencies": {
+    "@webstudio-is/prisma-client": "*",
+    "immer": "^9.0.12",
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "@webstudio-is/scripts": "*",
+    "typescript": "4.7.4"
+  },
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    },
+    "./server": "./server.js"
+  },
+  "types": "src/index.ts",
+  "files": [
+    "lib/*",
+    "src/*",
+    "!*.test.*"
+  ],
+  "license": "MIT",
+  "private": false,
+  "sideEffects": false
+}
