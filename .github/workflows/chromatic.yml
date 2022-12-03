@@ -74,11 +74,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - uses: actions/checkout@v3
-      #   with:
-      #     fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
 
-      # - uses: ./.github/actions/ci-setup
+      - uses: ./.github/actions/ci-setup
 
-      - name: Print deployed URLs
-        run: echo "${{ toJSON(needs.chromatic.outputs) }}"
+      - name: Chromatic
+        id: chromatic
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_ROOT }}
+        env:
+          DEPLOYED_URLS: ${{ toJSON(needs.chromatic.outputs) }}
