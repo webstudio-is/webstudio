@@ -1,15 +1,12 @@
 import type { DesignToken } from "@webstudio-is/design-tokens";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useDesignTokens } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 
 export const useInitializeDesignTokens = (designTokens: Array<DesignToken>) => {
   const [, setDesignTokens] = useDesignTokens();
-  const ref = useRef(false);
-  if (ref.current === false) {
-    ref.current = true;
-    setDesignTokens(designTokens);
-  }
+  // Trick to set it only once.
+  useState(() => setDesignTokens(designTokens));
 };
 
 export const usePublishDesignTokens = () => {

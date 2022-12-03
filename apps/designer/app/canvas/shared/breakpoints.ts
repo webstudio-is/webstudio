@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
@@ -13,13 +13,10 @@ import { addMediaRules } from "./styles";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
-  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
-  const ref = useRef(false);
-  if (ref.current === false) {
-    ref.current = true;
+  useState(() => {
     setCurrentBreakpoints(breakpoints);
     addMediaRules(breakpoints);
-  }
+  });
 };
 
 const usePublishBreakpoints = () => {

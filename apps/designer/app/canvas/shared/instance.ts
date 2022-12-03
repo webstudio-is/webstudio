@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type Instance,
   type UserProp,
@@ -54,13 +54,9 @@ declare module "~/shared/pubsub" {
 }
 
 export const usePopulateRootInstance = (tree: Tree) => {
-  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
-  const ref = useRef(false);
-  // It is only set once when the canvas is first loaded.
-  if (ref.current === false) {
-    ref.current = true;
+  useState(() => {
     rootInstanceContainer.value = tree.root;
-  }
+  });
 };
 
 export const findInsertLocation = (
