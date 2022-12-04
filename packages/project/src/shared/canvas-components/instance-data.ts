@@ -22,7 +22,7 @@ export type HoveredInstanceData = {
 
 type StyleUpdate = {
   property: StyleProperty;
-  value: StyleValue;
+  value?: StyleValue;
 };
 
 export type StyleUpdates = {

@@ -24,7 +24,7 @@ type StyleUpdateOptions = { isEphemeral: boolean };
 
 export type SetProperty = (
   property: StyleProperty
-) => (value: string, options?: StyleUpdateOptions) => void;
+) => (value?: string, options?: StyleUpdateOptions) => void;
 
 export type CreateBatchUpdate = () => {
   setProperty: SetProperty;
@@ -93,8 +93,8 @@ export const useStyleData = ({
     });
   };
 
-  const toStyleValue = (property: StyleProperty, value: string) => {
-    if (currentStyle === undefined) return;
+  const toStyleValue = (property: StyleProperty, value?: string) => {
+    if (currentStyle === undefined || value === undefined) return;
     if (property === "fontFamily") {
       return { type: "fontFamily" as const, value: [value] };
     }
@@ -103,15 +103,14 @@ export const useStyleData = ({
 
   const setProperty: SetProperty = (property) => {
     return (input, options = { isEphemeral: false }) => {
-      const nextValue = toStyleValue(property, input);
-      if (nextValue === undefined) return;
-      if (nextValue.type !== "invalid") {
-        const updates = [{ property, value: nextValue }];
+      const value = toStyleValue(property, input);
+      if (value?.type !== "invalid") {
+        const updates = [{ property, value }];
         const type = options.isEphemeral ? "preview" : "update";
         publishUpdates(type, updates);
       }
       if (options.isEphemeral === false) {
-        setCurrentStyle({ ...currentStyle, [property]: nextValue });
+        setCurrentStyle({ ...currentStyle, [property]: value });
       }
     };
   };
@@ -119,10 +118,10 @@ export const useStyleData = ({
   const createBatchUpdate = () => {
     let updates: StyleUpdates["updates"] = [];
 
-    const setProperty = (property: StyleProperty) => {
-      const setValue = (input: string) => {
+    const setProperty: SetProperty = (property: StyleProperty) => {
+      const setValue = (input?: string) => {
         const value = toStyleValue(property, input);
-        if (value === undefined || value.type === "invalid") {
+        if (value?.type === "invalid") {
           return;
         }
         updates.push({ property, value });
@@ -135,8 +134,9 @@ export const useStyleData = ({
       publishUpdates("update", updates);
       const nextStyle = updates.reduce(
         (currentStyle, { property, value }) => {
-          // @todo
-          currentStyle[property] = value;
+          if (value !== undefined) {
+            currentStyle[property] = value;
+          }
           return currentStyle;
         },
         { ...currentStyle }

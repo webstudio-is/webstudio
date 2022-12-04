@@ -20,6 +20,10 @@ export const setInstanceStyleMutable = (
   }
 
   for (const update of updates) {
+    if (update.value === undefined) {
+      delete cssRule.style[update.property];
+      continue;
+    }
     cssRule.style[update.property] = update.value;
   }
   return true;
