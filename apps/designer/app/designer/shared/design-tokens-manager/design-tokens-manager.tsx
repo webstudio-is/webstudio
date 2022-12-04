@@ -25,7 +25,7 @@ declare module "~/shared/pubsub" {
   }
 }
 
-export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
+const useLogic = ({ publish }: { publish: Publish }) => {
   const [tokens, setTokens] = useDesignTokens();
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [currentIndex, setCurrentIndex] = useState(-1);
@@ -54,7 +54,49 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
     },
   });
 
-  const renderTokenEditor = ({
+  const createToken = (token: DesignToken) => {
+    publish({ type: "createToken", payload: token });
+    setTokens([...tokens, token]);
+  };
+
+  const updateToken = (previousToken: DesignToken, nextToken: DesignToken) => {
+    publish({
+      type: "updateToken",
+      payload: { name: previousToken.name, token: nextToken },
+    });
+    const updatedTokens = produce(tokens, (draft) => {
+      updateTokenMutable(draft, nextToken, previousToken.name);
+    });
+    setTokens(updatedTokens);
+  };
+
+  return {
+    isMenuOpen,
+    getListProps,
+    getItemProps,
+    createToken,
+    updateToken,
+    setEditingToken,
+    editingToken,
+    tokens,
+    renderMenu,
+  };
+};
+
+export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
+  const {
+    getListProps,
+    getItemProps,
+    createToken,
+    updateToken,
+    setEditingToken,
+    isMenuOpen,
+    editingToken,
+    tokens,
+    renderMenu,
+  } = useLogic({ publish });
+
+  const renderEditor = ({
     token,
     seed,
     isOpen,
@@ -73,19 +115,10 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
         trigger={trigger}
         onChangeComplete={(updatedToken) => {
           if (token === undefined) {
-            publish({ type: "createToken", payload: updatedToken });
-            setTokens([...tokens, updatedToken]);
-            return;
+            return createToken(updatedToken);
           }
 
-          publish({
-            type: "updateToken",
-            payload: { name: token.name, token: updatedToken },
-          });
-          const updatedTokens = produce(tokens, (draft) => {
-            updateTokenMutable(draft, updatedToken, token.name);
-          });
-          setTokens(updatedTokens);
+          updateToken(token, updatedToken);
         }}
         onOpenChange={(isOpen) => {
           if (isOpen === false) {
@@ -115,7 +148,7 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
           <CollapsibleSection
             label={group}
             key={group}
-            rightSlot={renderTokenEditor({
+            rightSlot={renderEditor({
               seed: { group, type },
               isOpen:
                 editingToken?.name === undefined && editingToken?.type === type,
@@ -131,7 +164,7 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
                     prefix={itemProps.current ? <CheckIcon /> : undefined}
                     suffix={renderMenu(index)}
                   >
-                    {renderTokenEditor({
+                    {renderEditor({
                       token,
                       trigger: (
                         <div
