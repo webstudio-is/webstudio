@@ -90,8 +90,7 @@ export const TokenEditor = ({
     setErrors(nextErrors);
   };
 
-  const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault();
+  const submit = (ignoreErrors: boolean = false) => {
     if (formRef.current === null) return;
     const updatedToken = getToken(formRef.current, token ?? seed);
     const nextErrors = validate(tokens, updatedToken, token === undefined);
@@ -99,13 +98,21 @@ export const TokenEditor = ({
 
     if (nextErrors.hasErrors === false) {
       onChangeComplete(updatedToken);
+    }
+
+    if (ignoreErrors) {
       onOpenChange(false);
     }
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    submit();
+  };
+
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
-      handleSubmit();
+      submit(true);
       return;
     }
     onOpenChange(isOpen);
@@ -138,11 +145,7 @@ export const TokenEditor = ({
                 errors={errors.name}
                 css={{ zIndex: "$zIndices$2" }}
               >
-                <TextField
-                  id="name"
-                  name="name"
-                  defaultValue={token?.name ?? ""}
-                />
+                <TextField id="name" name="name" defaultValue={token?.name} />
               </InputErrorsTooltip>
               <Label htmlFor="value">Value</Label>
               <InputErrorsTooltip
@@ -152,14 +155,14 @@ export const TokenEditor = ({
                 <TextField
                   id="value"
                   name="value"
-                  defaultValue={token?.value ?? ""}
+                  defaultValue={token?.value}
                 />
               </InputErrorsTooltip>
               <Label htmlFor="description">Description</Label>
               <TextArea
                 id="description"
                 name="description"
-                defaultValue={token?.description ?? ""}
+                defaultValue={token?.description}
               />
               {token === undefined && (
                 <Button type="submit" variant="blue">
