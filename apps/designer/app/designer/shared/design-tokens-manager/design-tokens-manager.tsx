@@ -45,8 +45,9 @@ const useLogic = ({ publish }: { publish: Publish }) => {
     onDelete: () => {
       const { name } = tokens[selectedIndex];
       publish({ type: "deleteToken", payload: name });
-      const updatedTokens = [...tokens];
-      deleteTokenMutable(updatedTokens, name);
+      const updatedTokens = produce(tokens, (draft) => {
+        deleteTokenMutable(draft, name);
+      });
       setTokens(updatedTokens);
     },
     onEdit: (index) => {
