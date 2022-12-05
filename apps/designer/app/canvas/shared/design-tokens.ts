@@ -1,12 +1,14 @@
 import type { DesignToken } from "@webstudio-is/design-tokens";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { useDesignTokens } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 
 export const useInitializeDesignTokens = (designTokens: Array<DesignToken>) => {
   const [, setDesignTokens] = useDesignTokens();
-  // Trick to set it only once.
-  useState(() => setDesignTokens(designTokens));
+  useSyncInitializeOnce(() => {
+    setDesignTokens(designTokens);
+  });
 };
 
 export const usePublishDesignTokens = () => {

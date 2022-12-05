@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
@@ -10,10 +10,11 @@ import {
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 import { addMediaRules } from "./styles";
+import { useSyncInitializeOnce } from "~/shared/hook-utils";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
-  useState(() => {
+  useSyncInitializeOnce(() => {
     setCurrentBreakpoints(breakpoints);
     addMediaRules(breakpoints);
   });

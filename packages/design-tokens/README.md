@@ -1,3 +1,3 @@
-# Webstudio Project
+# Webstudio Design Tokens
 
-Project related functionalities.
+Shared functionality for Design Tokens
