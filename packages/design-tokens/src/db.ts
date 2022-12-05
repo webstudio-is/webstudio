@@ -3,7 +3,7 @@ import {
   prisma,
 } from "@webstudio-is/prisma-client";
 import { applyPatches, Patch } from "immer";
-import { DesignToken } from "./schema";
+import { DesignToken, DesignTokens } from "./schema";
 
 export const load = async (buildId: DbDesignTokens["buildId"]) => {
   const data = await prisma.designTokens.findUnique({
@@ -25,9 +25,7 @@ export const patch = async (
 ) => {
   const designTokens = await load(buildId);
   const nextDesignTokens = applyPatches(designTokens, patches);
-  const parsedNextDesignTokens = nextDesignTokens.map((token) =>
-    DesignToken.parse(token)
-  );
+  const parsedNextDesignTokens = DesignTokens.parse(nextDesignTokens);
   await prisma.designTokens.upsert({
     where: { buildId },
     update: { value: JSON.stringify(parsedNextDesignTokens) },

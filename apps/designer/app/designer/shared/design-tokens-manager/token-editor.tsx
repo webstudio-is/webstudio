@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent, useRef } from "react";
+import { z } from "zod";
 import {
   Button,
   Flex,
@@ -13,35 +14,39 @@ import {
   TextField,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import type { DesignToken } from "@webstudio-is/design-tokens";
+import { DesignToken } from "@webstudio-is/design-tokens";
 import { useDesignTokens } from "~/shared/nano-states";
 import { findByName } from "./utils";
 
 const validate = (
   tokens: Array<DesignToken>,
   data: Partial<DesignToken>,
-  isNew: boolean
-): { name: Array<string>; value: Array<string>; hasErrors: boolean } => {
-  const name = [];
-  const value = [];
+  token?: DesignToken
+) => {
+  const result = DesignToken.safeParse(data);
+  const foundToken = findByName(tokens, data.name);
+  const isRenaming =
+    token !== undefined &&
+    token.name !== data.name &&
+    foundToken?.name !== data.name;
 
-  if (String(data.name).trim() === "") name.push("Name is required");
-  if (isNew && findByName(tokens, data?.name)) {
-    name.push("Name is already taken");
+  if (foundToken && isRenaming === false) {
+    const finalResult = result.success
+      ? {
+          error: new z.ZodError([]),
+          success: false,
+        }
+      : result;
+
+    finalResult.error.addIssue({
+      code: "custom",
+      message: "Name has to be unique",
+      path: ["name"],
+    });
+    return finalResult;
   }
-  if (String(data.value).trim() === "") value.push("Value is required");
 
-  return {
-    name,
-    value,
-    hasErrors: name.length !== 0 || value.length !== 0,
-  };
-};
-
-const initialErrors = {
-  name: [],
-  value: [],
-  hasErrors: false,
+  return result;
 };
 
 const getToken = (
@@ -51,6 +56,18 @@ const getToken = (
   const formData = new FormData(form);
   const data = Object.fromEntries(formData);
   return { ...tokenOrSeed, ...data } as DesignToken;
+};
+
+const getErrors = (
+  field: string,
+  validationResult?: ReturnType<typeof validate>
+) => {
+  if (validationResult === undefined || validationResult.success) {
+    return [];
+  }
+  return validationResult.error?.issues
+    .filter((issue) => issue.path[0] === field)
+    .map((issue) => issue.message);
 };
 
 export type DesignTokenSeed = Pick<DesignToken, "group" | "type">;
@@ -71,33 +88,36 @@ export const TokenEditor = ({
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const [tokens] = useDesignTokens();
-  const [errors, setErrors] =
-    useState<ReturnType<typeof validate>>(initialErrors);
+  const [validationResult, setValidationResult] = useState<
+    ReturnType<typeof validate> | undefined
+  >();
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (isOpen === false && errors.hasErrors) {
-      setErrors(initialErrors);
+    if (isOpen === false && validationResult?.success === false) {
+      setValidationResult(undefined);
     }
-  }, [isOpen, errors.hasErrors]);
+  }, [isOpen, validationResult?.success]);
 
   const handleChange = (event: FormEvent<HTMLFormElement>) => {
-    if (errors.hasErrors === false || formRef.current === null) {
+    if (token === undefined || formRef.current === null) {
       return;
     }
     const updatedToken = getToken(formRef.current, token ?? seed);
-    const nextErrors = validate(tokens, updatedToken, token === undefined);
-    setErrors(nextErrors);
+    const nextValidationResult = validate(tokens, updatedToken, token);
+    setValidationResult(nextValidationResult);
   };
 
-  const submit = (ignoreErrors: boolean = false) => {
+  const submit = (ignoreErrors = false) => {
     if (formRef.current === null) return;
     const updatedToken = getToken(formRef.current, token ?? seed);
-    const nextErrors = validate(tokens, updatedToken, token === undefined);
-    setErrors(nextErrors);
+    const nextValidationResult = validate(tokens, updatedToken, token);
+    setValidationResult(nextValidationResult);
 
-    if (nextErrors.hasErrors === false) {
+    if (nextValidationResult.success) {
       onChangeComplete(updatedToken);
+      onOpenChange(false);
+      return;
     }
 
     if (ignoreErrors) {
@@ -142,14 +162,14 @@ export const TokenEditor = ({
             <Flex direction="column" gap="2" css={{ padding: "$spacing$7" }}>
               <Label htmlFor="name">Name</Label>
               <InputErrorsTooltip
-                errors={errors.name}
+                errors={getErrors("name", validationResult)}
                 css={{ zIndex: "$zIndices$2" }}
               >
                 <TextField id="name" name="name" defaultValue={token?.name} />
               </InputErrorsTooltip>
               <Label htmlFor="value">Value</Label>
               <InputErrorsTooltip
-                errors={errors.value}
+                errors={getErrors("value", validationResult)}
                 css={{ zIndex: "$zIndices$2" }}
               >
                 <TextField
