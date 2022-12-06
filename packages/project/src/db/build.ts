@@ -1,6 +1,6 @@
+import { v4 as uuid } from "uuid";
 import { prisma, Build as DbBuild, Prisma } from "@webstudio-is/prisma-client";
 import { type Breakpoint } from "@webstudio-is/css-data";
-import { v4 as uuid } from "uuid";
 import * as db from ".";
 import { Build, Page, Pages } from "./schema";
 import * as pagesUtils from "../shared/pages";
@@ -158,7 +158,7 @@ export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
 
 const createPages = async (
   breakpoints: Array<Breakpoint>,
-  client: Prisma.TransactionClient
+  client: Prisma.TransactionClient = prisma
 ) => {
   const tree = await db.tree.create(
     db.tree.createRootInstance(breakpoints),
@@ -205,7 +205,7 @@ const clonePages = async (
  * We create "dev" build in two cases:
  *   1. when we create a new project
  *   2. when we clone a project
- * When create "prod" build when we publish a dev build.
+ * We create "prod" build when we publish a dev build.
  */
 export async function create(
   projectId: Build["projectId"],
@@ -245,7 +245,7 @@ export async function create(
     const pages =
       sourceBuild === undefined
         ? await createPages(breakpointsValues, client)
-        : await clonePages(sourceBuild.pages);
+        : await clonePages(sourceBuild.pages, client);
 
     if (env === "prod") {
       await client.build.updateMany({
@@ -259,7 +259,7 @@ export async function create(
         projectId,
         pages: JSON.stringify(pages),
         isDev: env === "dev",
-        isProd: env === "dev",
+        isProd: env === "prod",
       },
     });
 
