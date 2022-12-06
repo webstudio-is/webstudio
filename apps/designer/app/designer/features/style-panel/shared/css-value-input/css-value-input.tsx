@@ -130,13 +130,13 @@ const useScrub = ({
 
 const useHandleKeyDown =
   ({
-    isOpen,
+    ignoreEnter,
     value,
     onChange,
     onChangeComplete,
     onKeyDown,
   }: {
-    isOpen: boolean;
+    ignoreEnter: boolean;
     value: CSSValueInputValue;
     onChange: (value: CSSValueInputValue) => void;
     onChangeComplete: (value: CSSValueInputValue) => void;
@@ -145,8 +145,8 @@ const useHandleKeyDown =
   (event: KeyboardEvent<HTMLInputElement>) => {
     onKeyDown(event);
 
-    // Do not prevent downshit behaviour on item select
-    if (isOpen === false) {
+    // Do not prevent downshift behaviour on item select
+    if (ignoreEnter === false) {
       if (event.key === "Enter") {
         onChangeComplete(value);
       }
@@ -272,7 +272,7 @@ export const CssValueInput = ({
       }
     }
 
-    // If we are here it means that value can be Valid but out parseCssValue can't handle it
+    // If we are here it means that value can be Valid but our parseCssValue can't handle it
     // or value is invalid
     props.onChangeComplete({
       type: "invalid",
@@ -342,7 +342,7 @@ export const CssValueInput = ({
 
   const handleKeyDown = useHandleKeyDown({
     // In case of menu is really open do not prevent default downshift Enter key behaviour
-    isOpen: isOpen && !getMenuProps().empty,
+    ignoreEnter: isOpen && !getMenuProps().empty,
     onChangeComplete,
     value,
     onChange: props.onChange,

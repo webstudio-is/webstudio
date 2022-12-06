@@ -41,7 +41,6 @@ type BaseStyleConfig = {
   appliesTo: AppliesTo;
 };
 
-// @todo make it use actual list of controls
 export type Control = keyof typeof Controls;
 
 export type StyleConfig = BaseStyleConfig & {
