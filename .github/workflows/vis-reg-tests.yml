@@ -2,21 +2,13 @@ on: [push]
 
 jobs:
   build:
+    timeout-minutes: 20
 
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16.x
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-scripts
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Design System
         run: yarn storybook:ds:build
