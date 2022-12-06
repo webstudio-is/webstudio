@@ -171,7 +171,7 @@ export const useCombobox = <Item,>({
     stateReducer,
     itemToString,
     onInputValueChange({ inputValue, type }) {
-      if (type === "__input_change__") {
+      if (type === comboboxStateChangeTypes.InputChange) {
         filter(inputValue);
         onInputChange?.(inputValue);
       }
@@ -179,7 +179,7 @@ export const useCombobox = <Item,>({
     onSelectedItemChange({ selectedItem }) {
       onItemSelect?.(selectedItem ?? null);
     },
-    onHighlightedIndexChange({ highlightedIndex, type }) {
+    onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
         onItemHighlight?.(filteredItems[highlightedIndex] ?? null);
       }
