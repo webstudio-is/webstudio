@@ -144,8 +144,6 @@ const useHandleKeyDown =
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
-    onKeyDown(event);
-
     // Do not prevent downshift behaviour on item select
     if (ignoreEnter === false) {
       if (event.key === "Enter") {
@@ -162,7 +160,11 @@ const useHandleKeyDown =
         ...value,
         value: calcNumberChange(value.value, event),
       });
+      // Prevent Downshift from opening menu on arrow up/down
+      return;
     }
+
+    onKeyDown(event);
   };
 
 export type IntermediateStyleValue = {
