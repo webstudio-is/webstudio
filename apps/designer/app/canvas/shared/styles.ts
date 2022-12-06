@@ -250,8 +250,6 @@ const usePreviewStyle = () => {
       rule = addRule(id, { breakpoint: breakpoint.id, style: {} });
     }
 
-    let needCssEngineRender = false;
-
     for (const update of updates) {
       // This is possible on newly created instances, properties are not yet defined in the style.
       if (rule.styleMap.get(update.property) == null) {
@@ -260,15 +258,12 @@ const usePreviewStyle = () => {
         });
 
         rule.styleMap.set(update.property, dynamicStyle[update.property]);
-        needCssEngineRender = true;
       }
 
       setCssVar(id, update.property, update.value);
     }
 
-    if (needCssEngineRender) {
-      cssEngine.render();
-    }
+    cssEngine.render();
   });
 };
 
