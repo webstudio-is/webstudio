@@ -96,6 +96,8 @@ export const numericScrubControl = (
         if (event.pressure === 0 || event.button !== 0) break;
         state.offset = offset;
         state.timerId = setTimeout(() => {
+          exitPointerLock?.();
+
           exitPointerLock = requestPointerLock(state, event, targetNode);
         }, 150);
 
@@ -188,7 +190,7 @@ const requestPointerLock = (
         state.cursor.remove();
         state.cursor = undefined;
       }
-      // targetNode.onpointermove = null;
+
       targetNode.ownerDocument.exitPointerLock();
     };
   } else {

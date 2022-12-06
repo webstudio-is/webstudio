@@ -95,7 +95,6 @@ const useScrub = ({
     const scrub = numericScrubControl(scrubRefCurrent, {
       initialValue: value,
       onValueInput(event) {
-        // inputRefCurrent.value = String(event.value);
         setIsInputActive(true);
         inputRefCurrent.blur();
 
@@ -247,12 +246,12 @@ export const CssValueInput = ({
   };
 
   const onChangeComplete = (value: CSSValueInputValue) => {
-    // Value already validated
     if (value.type !== "intermediate" && value.type !== "invalid") {
       props.onChangeComplete(value);
       return;
     }
 
+    // Try to extract anything from intermediate or invalid value
     const mathResult = evaluateMath(value.value);
 
     if (mathResult != null) {
@@ -342,6 +341,7 @@ export const CssValueInput = ({
   };
 
   const handleKeyDown = useHandleKeyDown({
+    // In case of menu is really open do not prevent default downshift Enter key behaviour
     isOpen: isOpen && !getMenuProps().empty,
     onChangeComplete,
     value,
