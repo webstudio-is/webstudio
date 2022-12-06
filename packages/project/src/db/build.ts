@@ -1,6 +1,7 @@
 import { v4 as uuid } from "uuid";
 import { prisma, Build as DbBuild, Prisma } from "@webstudio-is/prisma-client";
 import { type Breakpoint } from "@webstudio-is/css-data";
+import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
 import * as db from ".";
 import { Build, Page, Pages } from "./schema";
 import * as pagesUtils from "../shared/pages";
@@ -234,7 +235,7 @@ export async function create(
   }
 
   if (env === "prod" && sourceBuild === undefined) {
-    throw new Error("Source build required");
+    throw new Error("Source build required for production build");
   }
 
   const breakpointsValues = sourceBuild
@@ -264,5 +265,8 @@ export async function create(
     });
 
     await db.breakpoints.create(build.id, breakpointsValues, client);
+    if (sourceBuild) {
+      await designTokensDb.clone(sourceBuild.id, build.id, client);
+    }
   });
 }
