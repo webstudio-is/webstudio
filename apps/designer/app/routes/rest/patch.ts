@@ -1,6 +1,7 @@
 import { type ActionFunction } from "@remix-run/node";
 import { type Build } from "@webstudio-is/project";
-import { db } from "@webstudio-is/project/server";
+import { db as projectDb } from "@webstudio-is/project/server";
+import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
 import { type SyncItem } from "immerhin";
 import { type Tree } from "@webstudio-is/react-sdk";
 
@@ -22,11 +23,13 @@ export const action: ActionFunction = async ({ request }) => {
       const { namespace, patches } = change;
 
       if (namespace === "root") {
-        await db.tree.patchRoot({ treeId }, patches);
+        await projectDb.tree.patch({ treeId }, patches);
       } else if (namespace === "props") {
-        await db.props.patch({ treeId }, patches);
+        await projectDb.props.patch({ treeId }, patches);
       } else if (namespace === "breakpoints") {
-        await db.breakpoints.patch(buildId, patches);
+        await projectDb.breakpoints.patch(buildId, patches);
+      } else if (namespace === "designTokens") {
+        await designTokensDb.patch(buildId, patches);
       } else {
         return { errors: `Unknown namespace "${namespace}"` };
       }

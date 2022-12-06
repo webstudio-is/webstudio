@@ -1,6 +1,6 @@
 // Copied from https://docs.tokens.studio/available-tokens/available-tokens
 
-export const groups = [
+export const designTokensGroups = [
   { type: "sizing", group: "Sizing" },
   { type: "spacing", group: "Spacing" },
   { type: "color", group: "Color" },

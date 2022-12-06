@@ -1,5 +1,6 @@
 import type { CanvasData, Project } from "@webstudio-is/project";
-import { db } from "@webstudio-is/project/server";
+import { db as projectDb } from "@webstudio-is/project/server";
+import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
 import { utils } from "@webstudio-is/project";
 
 export const loadCanvasData = async (
@@ -9,8 +10,8 @@ export const loadCanvasData = async (
 ): Promise<CanvasData | undefined> => {
   const build =
     env === "dev"
-      ? await db.build.loadByProjectId(project.id, "dev")
-      : await db.build.loadByProjectId(project.id, "prod");
+      ? await projectDb.build.loadByProjectId(project.id, "dev")
+      : await projectDb.build.loadByProjectId(project.id, "prod");
 
   if (build === undefined) {
     throw new Error("The project is not published");
@@ -22,10 +23,11 @@ export const loadCanvasData = async (
     throw new Error(`Page ${pageIdOrPath} not found`);
   }
 
-  const [tree, props, breakpoints] = await Promise.all([
-    db.tree.loadById(page.treeId),
-    db.props.loadByTreeId(page.treeId),
-    db.breakpoints.load(build.id),
+  const [tree, props, breakpoints, designTokens] = await Promise.all([
+    projectDb.tree.loadById(page.treeId),
+    projectDb.props.loadByTreeId(page.treeId),
+    projectDb.breakpoints.load(build.id),
+    designTokensDb.load(build.id),
   ]);
 
   if (tree === null) {
@@ -40,6 +42,7 @@ export const loadCanvasData = async (
     tree,
     props,
     breakpoints: breakpoints.values,
+    designTokens,
     buildId: build.id,
     page,
     assets: project.assets ?? [],

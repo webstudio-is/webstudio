@@ -20,7 +20,6 @@ const parseValue = (
   }
 
   if (number === 0 && property in properties) {
-    // @todo
     return properties[property].initial;
   }
 
