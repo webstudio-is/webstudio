@@ -368,8 +368,9 @@ export const CssValueInput = ({
   });
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
-    // When units select is open, onBlur is triggered,though we don't want a change event in this case.
-    if (isUnitsOpen) return;
+    // When select is open, onBlur is triggered,though we don't want a change event in this case.
+    if (isUnitsOpen || isOpen) return;
+
     onChangeComplete(value);
     inputProps.onBlur(event);
   };
