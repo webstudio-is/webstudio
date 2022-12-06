@@ -1,24 +1,34 @@
 name: Publish packages on NPM 📦
+
 on:
   push:
     branches:
       - main
+
 jobs:
   publish:
+    timeout-minutes: 20
+
     runs-on: ubuntu-latest
+
     env:
       NODE_ENV: test
       DATABASE_URL: postgres://
       AUTH_SECRET: test
+
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          registry-url: "https://registry.npmjs.org"
-          cache: "yarn"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/ci-setup
+
       - run: yarn
       - run: yarn turbo run build
+
+      - name: Creating .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - run: yarn turbo run publish-to-npm

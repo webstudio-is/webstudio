@@ -1,0 +1,15 @@
+name: CI setup
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+        cache: "yarn"
+
+    - name: Install Dependencies
+      run: yarn install --frozen-lockfile --ignore-scripts
+      shell: bash

@@ -9,5 +9,5 @@ echo Current $npm_package_name $NPM_VERSION
 
 if [[ $PKG_VERSION != $NPM_VERSION ]]; then
   echo Publishing $npm_package_name $PKG_VERSION
-  npm publish --access public --registry 'https://registry.npmjs.org/'
+  npm publish --access public
 fi

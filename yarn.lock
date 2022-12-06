@@ -2121,7 +2121,7 @@
     "@devtools-ds/themes" "^1.2.0"
     clsx "1.1.0"
 
-"@discoveryjs/json-ext@^0.5.3":
+"@discoveryjs/json-ext@^0.5.3", "@discoveryjs/json-ext@^0.5.7":
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
@@ -5637,6 +5637,11 @@
   resolved "https://registry.yarnpkg.com/@types/webpack-env/-/webpack-env-1.17.0.tgz#f99ce359f1bfd87da90cc4a57cab0a18f34a48d0"
   integrity sha512-eHSaNYEyxRA5IAG0Ym/yCyf86niZUIF/TpWKofQI/CVfh5HsMEUyfE2kwFxha4ow0s5g0LfISQxpDKjbRDrizw==
 
+"@types/webpack-env@^1.17.0":
+  version "1.18.0"
+  resolved "https://registry.yarnpkg.com/@types/webpack-env/-/webpack-env-1.18.0.tgz#ed6ecaa8e5ed5dfe8b2b3d00181702c9925f13fb"
+  integrity sha512-56/MAlX5WMsPVbOg7tAxnYvNYMMWr/QJiIp6BxVSW3JJXUVzzOn64qW8TzQyMSqSUFM2+PVI4aUHcHOzIz/1tg==
+
 "@types/webpack-sources@*":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@types/webpack-sources/-/webpack-sources-3.2.0.tgz#16d759ba096c289034b26553d2df1bf45248d38b"
@@ -7509,6 +7514,14 @@ chownr@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/chownr/-/chownr-2.0.0.tgz#15bfbe53d2eab4cf70f18a8cd68ebe5b3cb1dece"
   integrity sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==
+
+chromatic@^6.11.4:
+  version "6.11.4"
+  resolved "https://registry.yarnpkg.com/chromatic/-/chromatic-6.11.4.tgz#1bb72bceb8f4455694e9e27db86c585e8b7cb7cd"
+  integrity sha512-f1TcuIXKjGUuOjPuwFF44kzbuEcESFcDxHzrzWPLmHuC90dV8HLxbufqYaTOBYMO/rJ32Zftb7S9pXuF/Rhfog==
+  dependencies:
+    "@discoveryjs/json-ext" "^0.5.7"
+    "@types/webpack-env" "^1.17.0"
 
 chrome-trace-event@^1.0.2:
   version "1.0.3"

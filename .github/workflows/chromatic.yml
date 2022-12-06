@@ -1,0 +1,54 @@
+name: Chromatic
+
+on: [push]
+
+jobs:
+  chromatic:
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        project:
+          [designer-app, css-engine, design-system, icons, image, react-sdk]
+        include:
+          - project: designer-app
+            chromaticSecretKey: CHROMATIC_DESIGNER_APP_TOKEN
+            workingDir: apps/designer
+
+          - project: css-engine
+            chromaticSecretKey: CHROMATIC_CSS_ENGINE_TOKEN
+            workingDir: packages/css-engine
+
+          - project: design-system
+            chromaticSecretKey: CHROMATIC_DESIGN_SYSTEM_TOKEN
+            workingDir: packages/design-system
+
+          - project: icons
+            chromaticSecretKey: CHROMATIC_ICONS_TOKEN
+            workingDir: packages/icons
+
+          - project: image
+            chromaticSecretKey: CHROMATIC_IMAGE_TOKEN
+            workingDir: packages/image
+
+          - project: react-sdk
+            chromaticSecretKey: CHROMATIC_REACT_SDK_TOKEN
+            workingDir: packages/react-sdk
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
+
+      - uses: ./.github/actions/ci-setup
+
+      # only packages have to be built as they might be imported by Storybooks
+      - run: yarn build --filter='!./apps/*'
+
+      - name: Chromatic
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets[matrix.chromaticSecretKey] }}
+          workingDir: ${{ matrix.workingDir }}
