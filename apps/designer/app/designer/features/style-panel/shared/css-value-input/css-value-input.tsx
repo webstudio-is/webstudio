@@ -33,6 +33,7 @@ import { useUnitSelect } from "./unit-select";
 import { parseCssValue } from "../parse-css-value";
 import { unstable_batchedUpdates } from "react-dom";
 import { evaluateMath } from "./evaluate-math";
+import { units } from "@webstudio-is/css-data";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
 
@@ -255,6 +256,7 @@ export const CssValueInput = ({
       return;
     }
 
+    // Probably value is already valid, use it
     let styleInput = parseCssValue(property, value.value);
 
     if (styleInput.type !== "invalid") {
@@ -262,6 +264,7 @@ export const CssValueInput = ({
       return;
     }
 
+    // Try value with existing or fallback unit
     const unit = "unit" in value ? value.unit ?? "px" : "px";
     styleInput = parseCssValue(property, `${value.value}${unit}`);
 
@@ -270,8 +273,15 @@ export const CssValueInput = ({
       return;
     }
 
-    // Try to extract anything from intermediate or invalid value
-    const mathResult = evaluateMath(value.value);
+    // Try evaluate something like 10px + 4 or 13 + 4em
+
+    // Try to extract/remove anything similar to unit value
+    const unitRegex = new RegExp(`(?:${units.join("|")})`, "g");
+    const matchedUnit = value.value.match(unitRegex)?.[0];
+    const unitlessValue = value.value.replace(unitRegex, "");
+
+    // Try to evaluate math expression if possible
+    const mathResult = evaluateMath(unitlessValue);
 
     if (mathResult != null) {
       // If math expression is valid, use it as a value
@@ -282,7 +292,7 @@ export const CssValueInput = ({
         return;
       }
 
-      const unit = "unit" in value ? value.unit ?? "px" : "px";
+      const unit = matchedUnit ?? ("unit" in value ? value.unit ?? "px" : "px");
       styleInput = parseCssValue(property, `${String(mathResult)}${unit}`);
 
       if (styleInput.type !== "invalid") {
