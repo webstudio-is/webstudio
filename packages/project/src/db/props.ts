@@ -8,7 +8,7 @@ import {
   UserProps,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma } from "@webstudio-is/prisma-client";
+import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 
 const baseUserProps = {
@@ -114,14 +114,17 @@ export const deleteByTreeId = async (treeId: Tree["id"]) => {
   await prisma.instanceProps.deleteMany({ where: { treeId } });
 };
 
-export const clone = async ({
-  previousTreeId,
-  nextTreeId,
-}: {
-  previousTreeId: string;
-  nextTreeId: string;
-}) => {
-  const props = await prisma.instanceProps.findMany({
+export const clone = async (
+  {
+    previousTreeId,
+    nextTreeId,
+  }: {
+    previousTreeId: string;
+    nextTreeId: string;
+  },
+  client: Prisma.TransactionClient | typeof prisma = prisma
+) => {
+  const props = await client.instanceProps.findMany({
     where: { treeId: previousTreeId },
   });
   if (props.length === 0) return;
@@ -130,13 +133,17 @@ export const clone = async ({
     treeId: nextTreeId,
   }));
 
-  await prisma.$transaction(
+  const create = async (client: Prisma.TransactionClient) =>
     data.map((prop) =>
-      prisma.instanceProps.create({
+      client.instanceProps.create({
         data: prop,
       })
-    )
-  );
+    );
+
+  // If our client is not a transaction client, we need to create a transaction
+  "$transaction" in client
+    ? await client.$transaction(create)
+    : await create(client);
 };
 
 export const patch = async (

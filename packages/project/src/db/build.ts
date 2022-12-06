@@ -1,4 +1,4 @@
-import { prisma, Build as DbBuild } from "@webstudio-is/prisma-client";
+import { prisma, Build as DbBuild, Prisma } from "@webstudio-is/prisma-client";
 import { type Breakpoint } from "@webstudio-is/css-data";
 import { v4 as uuid } from "uuid";
 import * as db from ".";
@@ -156,8 +156,14 @@ export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
   });
 };
 
-const createPages = async (breakpoints: Array<Breakpoint>) => {
-  const tree = await db.tree.create(db.tree.createRootInstance(breakpoints));
+const createPages = async (
+  breakpoints: Array<Breakpoint>,
+  client: Prisma.TransactionClient
+) => {
+  const tree = await db.tree.create(
+    db.tree.createRootInstance(breakpoints),
+    client
+  );
   return Pages.parse({
     homePage: {
       id: uuid(),
@@ -171,26 +177,36 @@ const createPages = async (breakpoints: Array<Breakpoint>) => {
   });
 };
 
-const clonePage = async (source: Page) => {
+const clonePage = async (
+  source: Page,
+  client: Prisma.TransactionClient = prisma
+) => {
   const treeId = source.treeId;
-
-  const tree = await db.tree.clone(treeId);
-  await db.props.clone({ previousTreeId: treeId, nextTreeId: tree.id });
-
+  const tree = await db.tree.clone(treeId, client);
+  await db.props.clone({ previousTreeId: treeId, nextTreeId: tree.id }, client);
   return { ...source, id: uuid(), treeId: tree.id };
 };
 
-const clonePages = async (source: Pages) => {
+const clonePages = async (
+  source: Pages,
+  client: Prisma.TransactionClient = prisma
+) => {
   const clones = [];
   for (const page of source.pages) {
-    clones.push(await clonePage(page));
+    clones.push(await clonePage(page, client));
   }
   return Pages.parse({
-    homePage: await clonePage(source.homePage),
+    homePage: await clonePage(source.homePage, client),
     pages: clones,
   });
 };
 
+/*
+ * We create "dev" build in two cases:
+ *   1. when we create a new project
+ *   2. when we clone a project
+ * When create "prod" build when we publish a dev build.
+ */
 export async function create(
   projectId: Build["projectId"],
   env: "prod",
@@ -215,52 +231,38 @@ export async function create(
     if (count > 0) {
       throw new Error("Dev build already exists");
     }
-
-    const breakpointsValues = sourceBuild
-      ? (await db.breakpoints.load(sourceBuild.id)).values
-      : db.breakpoints.createValues();
-
-    const pages =
-      sourceBuild === undefined
-        ? await createPages(breakpointsValues)
-        : await clonePages(sourceBuild.pages);
-
-    const build = await prisma.build.create({
-      data: {
-        projectId,
-        pages: JSON.stringify(pages),
-        isDev: true,
-        isProd: false,
-      },
-    });
-
-    await db.breakpoints.create(build.id, breakpointsValues);
-
-    return;
   }
 
-  if (sourceBuild === undefined) {
+  if (env === "prod" && sourceBuild === undefined) {
     throw new Error("Source build required");
   }
 
-  const breakpointsValues = (await db.breakpoints.load(sourceBuild.id)).values;
+  const breakpointsValues = sourceBuild
+    ? (await db.breakpoints.load(sourceBuild.id)).values
+    : db.breakpoints.createValues();
 
-  const pages = await clonePages(sourceBuild.pages);
+  await prisma.$transaction(async (client) => {
+    const pages =
+      sourceBuild === undefined
+        ? await createPages(breakpointsValues, client)
+        : await clonePages(sourceBuild.pages);
 
-  const [, build] = await prisma.$transaction([
-    prisma.build.updateMany({
-      where: { projectId: projectId, isProd: true },
-      data: { isProd: false },
-    }),
-    prisma.build.create({
+    if (env === "prod") {
+      await client.build.updateMany({
+        where: { projectId: projectId, isProd: true },
+        data: { isProd: false },
+      });
+    }
+
+    const build = await client.build.create({
       data: {
         projectId,
         pages: JSON.stringify(pages),
-        isDev: false,
-        isProd: true,
+        isDev: env === "dev",
+        isProd: env === "dev",
       },
-    }),
-  ]);
+    });
 
-  await db.breakpoints.create(build.id, breakpointsValues);
+    await db.breakpoints.create(build.id, breakpointsValues, client);
+  });
 }

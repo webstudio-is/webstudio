@@ -4,6 +4,7 @@ import { applyPatches, type Patch } from "immer";
 import {
   type Breakpoints as DbBreakpoints,
   prisma,
+  Prisma,
 } from "@webstudio-is/prisma-client";
 import { type Breakpoint, Breakpoints } from "@webstudio-is/css-data";
 
@@ -33,9 +34,10 @@ export const createValues = () =>
 
 export const create = async (
   buildId: DbBreakpoints["buildId"],
-  values: Array<Breakpoint>
+  values: Array<Breakpoint>,
+  client: Prisma.TransactionClient = prisma
 ) => {
-  const breakpoints = await prisma.breakpoints.create({
+  const breakpoints = await client.breakpoints.create({
     data: {
       values: JSON.stringify(values),
       buildId,

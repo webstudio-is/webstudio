@@ -1,6 +1,6 @@
 import { type Tree, Instance } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma } from "@webstudio-is/prisma-client";
+import { prisma, type Prisma } from "@webstudio-is/prisma-client";
 import { Tree as DbTree } from "@prisma/client";
 import { utils } from "../index";
 import type { Breakpoint } from "@webstudio-is/css-data";
@@ -15,10 +15,13 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   return utils.tree.populateInstance(instance, defaultBreakpoint.id);
 };
 
-export const create = async (root: Instance): Promise<DbTree> => {
+export const create = async (
+  root: Instance,
+  client: Prisma.TransactionClient = prisma
+): Promise<DbTree> => {
   Instance.parse(root);
   const rootString = JSON.stringify(root);
-  return await prisma.tree.create({
+  return await client.tree.create({
     data: { root: rootString },
   });
 };
@@ -27,8 +30,11 @@ export const deleteById = async (treeId: string): Promise<void> => {
   await prisma.tree.delete({ where: { id: treeId } });
 };
 
-export const loadById = async (treeId: string): Promise<Tree | null> => {
-  const tree = await prisma.tree.findUnique({
+export const loadById = async (
+  treeId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<Tree | null> => {
+  const tree = await client.tree.findUnique({
     where: { id: treeId },
   });
 
@@ -42,12 +48,15 @@ export const loadById = async (treeId: string): Promise<Tree | null> => {
   };
 };
 
-export const clone = async (treeId: string) => {
-  const tree = await loadById(treeId);
+export const clone = async (
+  treeId: string,
+  client: Prisma.TransactionClient = prisma
+) => {
+  const tree = await loadById(treeId, client);
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
-  return await create(tree.root);
+  return await create(tree.root, client);
 };
 
 export const patch = async (
