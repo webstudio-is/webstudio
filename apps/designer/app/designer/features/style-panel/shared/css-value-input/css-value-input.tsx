@@ -229,7 +229,7 @@ export const CssValueInput = ({
       return;
     }
 
-    const unit = "unit" in value ? value.unit : "px";
+    const unit = "unit" in value ? value.unit ?? "px" : "px";
     styleInput = parseCssValue(property, `${input}${unit}`);
 
     if (styleInput.type !== "invalid") {
@@ -248,7 +248,7 @@ export const CssValueInput = ({
 
   const onChangeComplete = (value: CSSValueInputValue) => {
     // Value already validated
-    if (value.type !== "intermediate") {
+    if (value.type !== "intermediate" && value.type !== "invalid") {
       props.onChangeComplete(value);
       return;
     }
@@ -264,7 +264,7 @@ export const CssValueInput = ({
         return;
       }
 
-      const unit = "unit" in value ? value.unit : "px";
+      const unit = "unit" in value ? value.unit ?? "px" : "px";
       styleInput = parseCssValue(property, `${String(mathResult)}${unit}`);
 
       if (styleInput.type !== "invalid") {
