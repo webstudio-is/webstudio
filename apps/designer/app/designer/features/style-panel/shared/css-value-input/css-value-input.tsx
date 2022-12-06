@@ -262,7 +262,7 @@ export const CssValueInput = ({
     let styleInput = parseCssValue(property, value.value);
 
     if (styleInput.type !== "invalid") {
-      props.onChange(styleInput);
+      props.onChangeComplete(styleInput);
       return;
     }
 
@@ -271,7 +271,7 @@ export const CssValueInput = ({
     styleInput = parseCssValue(property, `${value.value}${unit}`);
 
     if (styleInput.type !== "invalid") {
-      props.onChange(styleInput);
+      props.onChangeComplete(styleInput);
       return;
     }
 
