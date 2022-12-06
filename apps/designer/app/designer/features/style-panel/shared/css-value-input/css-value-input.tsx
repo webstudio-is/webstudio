@@ -221,6 +221,9 @@ export const CssValueInput = ({
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
   const onChange = (input: string) => {
+    /*
+    // Coment for now live updating of unit values
+
     let styleInput = parseCssValue(property, input);
 
     if (styleInput.type !== "invalid") {
@@ -235,6 +238,7 @@ export const CssValueInput = ({
       props.onChange(styleInput);
       return;
     }
+    */
 
     // We don't know what's inside the input,
     // preserve current unit value if exists
@@ -248,6 +252,21 @@ export const CssValueInput = ({
   const onChangeComplete = (value: CSSValueInputValue) => {
     if (value.type !== "intermediate" && value.type !== "invalid") {
       props.onChangeComplete(value);
+      return;
+    }
+
+    let styleInput = parseCssValue(property, value.value);
+
+    if (styleInput.type !== "invalid") {
+      props.onChange(styleInput);
+      return;
+    }
+
+    const unit = "unit" in value ? value.unit ?? "px" : "px";
+    styleInput = parseCssValue(property, `${value.value}${unit}`);
+
+    if (styleInput.type !== "invalid") {
+      props.onChange(styleInput);
       return;
     }
 
@@ -313,7 +332,10 @@ export const CssValueInput = ({
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     property,
-    value: value.type === "unit" ? value : undefined,
+    value:
+      value.type === "unit" || value.type === "intermediate"
+        ? value
+        : undefined,
     onChange: onChangeComplete,
     onCloseAutoFocus(event) {
       // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
