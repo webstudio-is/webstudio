@@ -12,6 +12,9 @@ class StylePropertyMap {
     this.#isDirty = true;
     this.onChange?.();
   }
+  get(property: StyleProperty) {
+    return this.#styleMap.get(property);
+  }
   clear() {
     this.#styleMap.clear();
     this.#isDirty = true;
