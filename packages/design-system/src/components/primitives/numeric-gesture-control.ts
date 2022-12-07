@@ -98,6 +98,8 @@ export const numericScrubControl = (
         const value = getValue();
 
         // We don't support scrub on non unit values
+        // Its highly unlikely that the value here will be undefined, as useScrub tries to not create scrub on non unit values
+        // but having that we use lazy getValue() and vanilla js events it's possible.
         if (value === undefined) return;
 
         state.value = value;
