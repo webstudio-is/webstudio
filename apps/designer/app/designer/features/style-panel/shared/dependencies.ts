@@ -75,7 +75,7 @@ export const dependencies: Dependencies = {
     notValues: ["none"],
   },
   blockLevelElements: {
-    property: "clear",
+    property: "display",
     values: ["block", "flex", "grid", "table"],
   },
   allElementsExceptTableDisplayTypes: {
