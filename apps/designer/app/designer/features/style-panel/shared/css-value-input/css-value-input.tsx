@@ -18,6 +18,7 @@ import type {
   StyleProperty,
   UnsetValue,
   StyleValue,
+  Unit,
 } from "@webstudio-is/css-data";
 import {
   type KeyboardEventHandler,
@@ -29,7 +30,8 @@ import {
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
-import { isValid, isNumericString } from "../parse-css-value";
+import { unstable_batchedUpdates } from "react-dom";
+import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
 
@@ -43,56 +45,14 @@ const calcNumberChange = (
   return Number((value + delta * multiplier).toFixed(1));
 };
 
-const useHandleOnChange = (
-  property: StyleProperty,
-  value: StyleValue,
-  input: string,
-  onChange: (value: StyleValue) => void
-) => {
-  // Used to decouple onChange effect from value ref change
-  const valueRef = useRef<StyleValue>(value);
-
-  useEffect(() => {
-    if (input === "" || input === String(valueRef.current.value)) {
-      return;
-    }
-
-    // We want to switch to unit mode if entire input is a number.
-    if (isNumericString(input)) {
-      if (value.type === "unit" && String(Number(input)) !== input) return;
-      onChange?.({
-        type: "unit",
-        // Use previously known unit or fallback to the most common unit: px, if supported
-        unit:
-          valueRef.current.type === "unit"
-            ? valueRef.current.unit
-            : isValid(property, input + "px")
-            ? "px"
-            : "number",
-        value: Number(input),
-      });
-      return;
-    }
-
-    onChange?.({
-      type: "keyword",
-      value: input,
-    });
-  }, [property, input, value.type, onChange]);
-
-  useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
-};
-
 const useScrub = ({
   value,
   onChange,
   onChangeComplete,
   shouldHandleEvent,
 }: {
-  value: StyleValue;
-  onChange: (value: StyleValue) => void;
+  value: CssValueInputValue;
+  onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   shouldHandleEvent?: (node: EventTarget) => boolean;
 }): [
@@ -103,12 +63,14 @@ const useScrub = ({
   const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isInputActive, setIsInputActive] = useState(false);
+
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
   const valueRef = useRef(value);
 
   onChangeCompleteRef.current = onChangeComplete;
   onChangeRef.current = onChange;
+
   valueRef.current = value;
 
   const type = valueRef.current.type;
@@ -132,16 +94,26 @@ const useScrub = ({
     const scrub = numericScrubControl(scrubRefCurrent, {
       initialValue: value,
       onValueInput(event) {
-        inputRefCurrent.value = String(event.value);
         setIsInputActive(true);
         inputRefCurrent.blur();
-      },
-      onValueChange(event) {
-        onChangeCompleteRef.current({
+
+        onChangeRef.current({
           type,
           unit,
           value: event.value,
         });
+      },
+      onValueChange(event) {
+        // Will work without but depends on order of setState updates
+        // at text-control, now fixed in both places (order of updates is right, and batched here)
+        unstable_batchedUpdates(() => {
+          onChangeCompleteRef.current({
+            type,
+            unit,
+            value: event.value,
+          });
+        });
+
         setIsInputActive(false);
         inputRefCurrent.focus();
         inputRefCurrent.select();
@@ -157,24 +129,26 @@ const useScrub = ({
 
 const useHandleKeyDown =
   ({
+    ignoreEnter,
     value,
     onChange,
     onChangeComplete,
     onKeyDown,
-    closeMenu,
   }: {
-    value: StyleValue;
-    onChange: (value: StyleValue) => void;
-    onChangeComplete: (value: StyleValue) => void;
+    ignoreEnter: boolean;
+    value: CssValueInputValue;
+    onChange: (value: CssValueInputValue) => void;
+    onChangeComplete: (value: CssValueInputValue) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
-    closeMenu: () => void;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
-    onKeyDown(event);
-    if (event.key === "Enter") {
-      closeMenu();
-      onChangeComplete(value);
+    // Do not prevent downshift behaviour on item select
+    if (ignoreEnter === false) {
+      if (event.key === "Enter") {
+        onChangeComplete(value);
+      }
     }
+
     if (
       value.type === "unit" &&
       (event.key === "ArrowUp" || event.key === "ArrowDown") &&
@@ -184,16 +158,28 @@ const useHandleKeyDown =
         ...value,
         value: calcNumberChange(value.value, event),
       });
+      // Prevent Downshift from opening menu on arrow up/down
+      return;
     }
+
+    onKeyDown(event);
   };
+
+export type IntermediateStyleValue = {
+  type: "intermediate";
+  value: string;
+  unit?: Unit;
+};
+
+type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
 type CssValueInputProps = {
   property: StyleProperty;
-  value?: StyleValue;
+  value?: CssValueInputValue;
   keywords?: Array<KeywordValue>;
-  onChange: (value: StyleValue) => void;
+  onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-  onItemHighlight?: (value: StyleValue | null) => void;
+  onPreview: (value: StyleValue) => void;
 };
 
 /**
@@ -227,16 +213,33 @@ type CssValueInputProps = {
  * - Typing number + unit (e.g. "12px") in unit mode will change the selected unit on blur/enter
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
-
 export const CssValueInput = ({
   icon,
   property,
   value = unsetValue,
   keywords = [],
-  onChange,
-  onChangeComplete,
-  onItemHighlight,
+  onPreview,
+  ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
+  const onChange = (input: string) => {
+    // We don't know what's inside the input,
+    // preserve current unit value if exists
+    props.onChange({
+      type: "intermediate",
+      value: input,
+      unit: "unit" in value ? value.unit : undefined,
+    });
+  };
+
+  const onChangeComplete = (value: CssValueInputValue) => {
+    if (value.type !== "intermediate" && value.type !== "invalid") {
+      props.onChangeComplete(value);
+      return;
+    }
+
+    props.onChangeComplete(parseIntermediateOrInvalidValue(property, value));
+  };
+
   const {
     items,
     getInputProps,
@@ -245,24 +248,35 @@ export const CssValueInput = ({
     getMenuProps,
     getItemProps,
     isOpen,
-    closeMenu,
-  } = useCombobox<StyleValue>({
+  } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
     itemToString: (item) => (item === null ? "" : String(item.value)),
+    onInputChange: (inputValue) => {
+      onChange(inputValue ?? unsetValue.value);
+    },
     onItemSelect: (value) => {
       onChangeComplete(value ?? unsetValue);
     },
-    onItemHighlight,
+    onItemHighlight: (value) => {
+      if (value == null) {
+        onPreview(unsetValue);
+        return;
+      }
+      if (value.type !== "intermediate") {
+        onPreview(value ?? unsetValue);
+      }
+    },
   });
 
   const inputProps = getInputProps();
 
-  useHandleOnChange(property, value, inputProps.value, onChange);
-
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
     property,
-    value: value.type === "unit" ? value : undefined,
+    value:
+      value.type === "unit" || value.type === "intermediate"
+        ? value
+        : undefined,
     onChange: onChangeComplete,
     onCloseAutoFocus(event) {
       // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
@@ -277,24 +291,26 @@ export const CssValueInput = ({
   }, []);
   const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
-    onChange,
+    onChange: props.onChange,
     onChangeComplete,
     shouldHandleEvent,
   });
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
-    // When units select is open, onBlur is triggered,though we don't want a change event in this case.
-    if (isUnitsOpen) return;
+    // When select is open, onBlur is triggered,though we don't want a change event in this case.
+    if (isUnitsOpen || isOpen) return;
+
     onChangeComplete(value);
     inputProps.onBlur(event);
   };
 
   const handleKeyDown = useHandleKeyDown({
-    value,
-    onChange,
+    // In case of menu is really open do not prevent default downshift Enter key behaviour
+    ignoreEnter: isOpen && !getMenuProps().empty,
     onChangeComplete,
+    value,
+    onChange: props.onChange,
     onKeyDown: inputProps.onKeyDown,
-    closeMenu,
   });
 
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
@@ -316,7 +332,7 @@ export const CssValueInput = ({
     </TextFieldIconButton>
   );
   const hasItems = items.length !== 0;
-  const isUnitValue = value.type === "unit";
+  const isUnitValue = "unit" in value;
   const isKeywordValue = value.type === "keyword" && hasItems;
   const suffixRef = useRef<HTMLDivElement | null>(null);
   const suffix = (

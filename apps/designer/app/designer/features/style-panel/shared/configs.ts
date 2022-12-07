@@ -33,6 +33,7 @@ import {
   ColumnGapIcon,
 } from "@webstudio-is/icons";
 import { keywordValues, properties } from "@webstudio-is/css-data";
+import type * as Controls from "../controls";
 
 type BaseStyleConfig = {
   label: string;
@@ -40,15 +41,7 @@ type BaseStyleConfig = {
   appliesTo: AppliesTo;
 };
 
-// @todo make it use actual list of controls
-export type Control =
-  | "TextControl"
-  | "ColorControl"
-  | "MenuControl"
-  | "SelectControl"
-  | "FontFamilyControl"
-  | "ImageControl"
-  | "FontWeightControl";
+export type Control = keyof typeof Controls;
 
 export type StyleConfig = BaseStyleConfig & {
   control: Control;

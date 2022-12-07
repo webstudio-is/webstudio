@@ -1,8 +1,10 @@
-import { CssValueInput } from "../../shared/css-value-input";
+import {
+  CssValueInput,
+  type IntermediateStyleValue,
+} from "../../shared/css-value-input";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import type { StyleValue } from "@webstudio-is/css-data";
-import { toValue } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 
@@ -21,7 +23,10 @@ export const TextControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const [currentValue, setCurrentValue] = useState<StyleValue>();
+  const [currentValue, setCurrentValue] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
   return (
     <Tooltip
       content={styleConfig.label}
@@ -39,22 +44,16 @@ export const TextControl = ({
           }))}
           onChange={(styleValue) => {
             setCurrentValue(styleValue);
-            setValue(toValue(styleValue), { isEphemeral: true });
-          }}
-          onItemHighlight={(styleValue) => {
-            const nextValue = styleValue ?? currentValue ?? value;
-            if (nextValue) {
-              setValue(toValue(nextValue), {
-                isEphemeral: true,
-              });
+            if (styleValue.type !== "intermediate") {
+              setValue(styleValue, { isEphemeral: true });
             }
           }}
+          onPreview={(styleValue) => {
+            setValue(styleValue, { isEphemeral: true });
+          }}
           onChangeComplete={(styleValue) => {
-            const prevValue = toValue(value);
-            const nextValue = toValue(styleValue);
-            if (prevValue === nextValue) return;
+            setValue(styleValue);
             setCurrentValue(undefined);
-            setValue(toValue(styleValue));
           }}
         />
       </Box>

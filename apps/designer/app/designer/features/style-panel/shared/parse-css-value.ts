@@ -1,103 +1,131 @@
+import * as csstree from "css-tree";
 import hyphenate from "hyphenate-style-name";
 import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/css-data";
 import { units } from "@webstudio-is/css-data";
+import warnOnce from "warn-once";
 
-const unitRegex = new RegExp(`${[...units, "number"].join("|")}`);
-
-export const isNumericString = (input: string) =>
-  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
+const cssTryParseValue = (input: string) => {
+  try {
+    const ast = csstree.parse(input, { context: "value" });
+    return ast;
+  } catch {
+    return undefined;
+  }
+};
 
 export const isValid = (property: string, value: string): boolean => {
-  // Only browsers with houdini api will provide validation for now
-  // @todo add a polyfill maybe
-  if (
-    typeof CSSStyleValue === "undefined" ||
-    typeof CSSStyleValue.parse === "undefined"
-  ) {
-    return true;
-  }
+  const ast = cssTryParseValue(value);
 
-  try {
-    CSSStyleValue.parse(hyphenate(property), value);
-  } catch (error) {
+  if (ast == null) {
     return false;
   }
-  return true;
+
+  const matchResult = csstree.lexer.matchProperty(hyphenate(property), ast);
+
+  return matchResult.matched != null;
 };
 
-// If expression is a math expression, evaluates it.
-// Otherwise returns undefined.
-const evaluateMath = (expression: string) => {
-  if (/^[\d\s.+*/-]+$/.test(expression) === false) {
-    return undefined;
-  }
-  try {
-    // Eval is safe here because of the regex above
-    const result = eval(`(${expression})`);
-    if (typeof result === "number") {
-      return result;
-    }
-  } catch (err) {
-    return undefined;
-  }
-};
-
-// - 2+2px
-// - 2*2
-const evaluate = (input: string, parsedUnit: [Unit] | null) => {
-  const result = evaluateMath(
-    parsedUnit === null ? input : input.replace(parsedUnit[0], "")
-  );
-
-  if (result !== undefined) {
-    return result;
-  }
-
-  const number = parseFloat(input);
-  return isNaN(number) ? undefined : number;
-};
-
-// Helper to let user input:
-// - 10
-// - 10p
-// - 10px > px as unit
-// - empty string
-// - a keyword
 export const parseCssValue = (
   property: StyleProperty,
-  input: string,
-  defaultUnit?: Unit
+  input: string
 ): StyleValue => {
   const invalidValue = {
     type: "invalid",
     value: input,
   } as const;
+
   if (input.length === 0) {
     return invalidValue;
   }
 
-  const parsedUnit = unitRegex.exec(input) as [Unit] | null;
-  const number = evaluate(input, parsedUnit);
+  if (!isValid(property, input)) {
+    return invalidValue;
+  }
 
-  // If we get a unit but there is no number - we assume its an accidental
-  // unit match and its a keyword value.
-  if (number === undefined) {
-    if (isValid(property, input)) {
+  const ast = cssTryParseValue(input);
+
+  if (ast == null) {
+    warnOnce(
+      true,
+      `Can't parse css property "${property}" with value "${input}"`
+    );
+    return invalidValue;
+  }
+
+  if (
+    ast != null &&
+    ast.type === "Value" &&
+    ast.children.first === ast.children.last
+  ) {
+    // Try extract units from 1st children
+    const singleChild = ast.children.filter(
+      (child) =>
+        child.type === "Number" ||
+        child.type === "Dimension" ||
+        child.type === "Percentage"
+    ).first;
+
+    if (singleChild?.type === "Number") {
+      return {
+        type: "unit",
+        unit: "number",
+        value: Number(singleChild.value),
+      };
+    }
+
+    if (singleChild?.type === "Dimension") {
+      const parsedUnit =
+        singleChild.unit != null && units.includes(singleChild.unit as never)
+          ? (singleChild.unit as never)
+          : undefined;
+
+      if (parsedUnit !== undefined) {
+        return {
+          type: "unit",
+          unit: parsedUnit as Unit,
+          value: Number(singleChild.value),
+        };
+      }
+    }
+
+    if (singleChild?.type === "Percentage") {
+      return {
+        type: "unit",
+        unit: "%",
+        value: Number(singleChild.value),
+      };
+    }
+  }
+
+  const matchResult = csstree.lexer.matchProperty(hyphenate(property), ast);
+
+  if (
+    matchResult.matched != null &&
+    matchResult.matched.syntax != null &&
+    matchResult.matched.syntax.type === "Property"
+  ) {
+    const match =
+      "match" in matchResult.matched ? matchResult.matched.match : undefined;
+
+    if (
+      match != null &&
+      match.length === 1 &&
+      match[0].syntax?.type === "Keyword"
+    ) {
       return {
         type: "keyword",
         value: input,
       } as const;
     }
-    return invalidValue;
   }
 
-  // If user didn't enter a unit, use the previous known unit otherwise fallback to px.
-  const fallbackUnit: Unit = defaultUnit ?? "number";
-  const [unit] = parsedUnit || [fallbackUnit];
+  warnOnce(
+    true,
+    `Property "${property}" with value "${input}" is valid but can't be parsed.`
+  );
 
   return {
-    type: "unit",
-    unit: isValid(property, number + unit.replace("number", "")) ? unit : "px",
-    value: number,
+    type: "invalid",
+    value: input,
   };
 };

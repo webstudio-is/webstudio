@@ -134,6 +134,7 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
+  onInputChange?: (value: string | undefined) => void;
   onItemSelect?: (value: Item | null) => void;
   onItemHighlight?: (value: Item | null) => void;
   stateReducer?: (
@@ -149,6 +150,7 @@ export const useCombobox = <Item,>({
   items,
   value,
   itemToString,
+  onInputChange,
   onItemSelect,
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
@@ -168,15 +170,18 @@ export const useCombobox = <Item,>({
     selectedItem: value, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
-    onInputValueChange({ inputValue }) {
-      filter(inputValue);
+    onInputValueChange({ inputValue, type }) {
+      if (type === comboboxStateChangeTypes.InputChange) {
+        filter(inputValue);
+        onInputChange?.(inputValue);
+      }
     },
     onSelectedItemChange({ selectedItem }) {
       onItemSelect?.(selectedItem ?? null);
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(items[highlightedIndex] ?? null);
+        onItemHighlight?.(filteredItems[highlightedIndex] ?? null);
       }
     },
   });

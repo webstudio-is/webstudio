@@ -244,16 +244,26 @@ const useDeleteToken = () => {
 
 const usePreviewStyle = () => {
   useSubscribe("previewStyle", ({ id, updates, breakpoint }) => {
-    if (getRule(id, breakpoint.id) === undefined) {
-      const rule = addRule(id, { breakpoint: breakpoint.id, style: {} });
-      for (const update of updates) {
-        rule.styleMap.set(update.property, update.value);
-      }
-      cssEngine.render();
+    let rule = getRule(id, breakpoint.id);
+
+    if (rule === undefined) {
+      rule = addRule(id, { breakpoint: breakpoint.id, style: {} });
     }
+
     for (const update of updates) {
+      // This is possible on newly created instances, properties are not yet defined in the style.
+      if (rule.styleMap.has(update.property) === false) {
+        const dynamicStyle = toVarStyleWithFallback(id, {
+          [update.property]: update.value,
+        });
+
+        rule.styleMap.set(update.property, dynamicStyle[update.property]);
+      }
+
       setCssVar(id, update.property, update.value);
     }
+
+    cssEngine.render();
   });
 };
 

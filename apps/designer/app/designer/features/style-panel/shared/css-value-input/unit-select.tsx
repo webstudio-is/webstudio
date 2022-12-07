@@ -14,6 +14,7 @@ import {
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { isValid } from "../parse-css-value";
+import type { IntermediateStyleValue } from "../css-value-input";
 
 const unitRenderMap: Map<Unit, string> = new Map([
   ["px", "PX"],
@@ -35,8 +36,8 @@ const defaultUnits = Array.from(unitRenderMap.keys());
 
 type UseUnitSelectType = {
   property: string;
-  value?: UnitValue;
-  onChange: (value: StyleValue) => void;
+  value?: UnitValue | IntermediateStyleValue;
+  onChange: (value: StyleValue | IntermediateStyleValue) => void;
   units?: Array<Unit>;
   onCloseAutoFocus: (event: Event) => void;
 };
@@ -49,18 +50,31 @@ export const useUnitSelect = ({
   ...props
 }: UseUnitSelectType) => {
   const [isOpen, setIsOpen] = useState(false);
+
   const renderUnits = useMemo(
     () =>
       value &&
       units
         .filter((unit) => {
+          if (value.type === "intermediate") {
+            if (value.unit !== undefined) {
+              // check that property is valid for any positive number like 1 during editing
+              return isValid(
+                property,
+                toValue({ type: "unit", unit, value: 1 })
+              );
+            }
+            return false;
+          }
+
           return isValid(property, toValue({ ...value, unit }));
         })
         .map((unit) => unitRenderMap.get(unit) ?? unit),
     [units, property, value]
   );
 
-  const renderValue = value && unitRenderMap.get(value.unit);
+  const renderValue =
+    value?.unit !== undefined ? unitRenderMap.get(value.unit) : undefined;
 
   if (
     value === undefined ||

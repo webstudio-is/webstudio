@@ -64,17 +64,24 @@ export const numericScrubControl = (
     direction: direction,
     timerId: undefined,
   };
+
+  let exitPointerLock: (() => void) | undefined = undefined;
+
   const handleEvent = (event: PointerEvent) => {
     const { type, clientX, clientY, movementY, movementX } = event;
     const offset = direction === "horizontal" ? clientX : clientY;
     const movement = direction === "horizontal" ? movementX : -movementY;
+
     switch (type) {
       case "pointerup": {
         const shouldComponentUpdate = Boolean(state.cursor);
         state.offset = 0;
         targetNode.removeEventListener("pointermove", handleEvent);
         clearTimeout(state.timerId);
-        exitPointerLock(state, event, targetNode);
+
+        exitPointerLock?.();
+        exitPointerLock = undefined;
+
         if (shouldComponentUpdate)
           onValueChange?.({
             target: targetNode,
@@ -88,10 +95,12 @@ export const numericScrubControl = (
         // light touches don't register corresponding pointerup
         if (event.pressure === 0 || event.button !== 0) break;
         state.offset = offset;
-        state.timerId = setTimeout(
-          () => requestPointerLock(state, event, targetNode),
-          150
-        );
+        state.timerId = setTimeout(() => {
+          exitPointerLock?.();
+
+          exitPointerLock = requestPointerLock(state, event, targetNode);
+        }, 150);
+
         targetNode.addEventListener("pointermove", handleEvent);
         break;
       }
@@ -125,11 +134,18 @@ export const numericScrubControl = (
   eventNames.forEach((eventName) =>
     targetNode.addEventListener(eventName, handleEvent)
   );
+
   return {
     disconnectedCallback: () => {
       eventNames.forEach((eventName) =>
         targetNode.removeEventListener(eventName, handleEvent)
       );
+
+      clearTimeout(state.timerId);
+      targetNode.removeEventListener("pointermove", handleEvent);
+
+      exitPointerLock?.();
+      exitPointerLock = undefined;
     },
   };
 };
@@ -169,30 +185,26 @@ const requestPointerLock = (
     if (state.cursor) {
       targetNode.ownerDocument.documentElement.append(state.cursor);
     }
+    return () => {
+      if (state.cursor) {
+        state.cursor.remove();
+        state.cursor = undefined;
+      }
+
+      targetNode.ownerDocument.exitPointerLock();
+    };
   } else {
+    const { pointerId } = event;
     targetNode.ownerDocument.documentElement.style.setProperty(
       "cursor",
       state.direction === "horizontal" ? "ew-resize" : "ns-resize"
     );
-    targetNode.setPointerCapture(event.pointerId);
-  }
-};
+    targetNode.setPointerCapture(pointerId);
 
-const exitPointerLock = (
-  state: NumericScrubState,
-  event: PointerEvent,
-  targetNode: HTMLElement
-) => {
-  if (shouldUsePointerLock) {
-    if (state.cursor) {
-      state.cursor.remove();
-      state.cursor = undefined;
-    }
-    targetNode.onpointermove = null;
-    targetNode.ownerDocument.exitPointerLock();
-  } else {
-    targetNode.ownerDocument.documentElement.style.removeProperty("cursor");
-    targetNode.releasePointerCapture(event.pointerId);
+    return () => {
+      targetNode.ownerDocument.documentElement.style.removeProperty("cursor");
+      targetNode.releasePointerCapture(pointerId);
+    };
   }
 };
 
