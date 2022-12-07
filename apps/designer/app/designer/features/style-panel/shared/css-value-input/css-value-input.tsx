@@ -53,8 +53,8 @@ const useScrub = ({
   onChangeComplete,
   shouldHandleEvent,
 }: {
-  value: CSSValueInputValue;
-  onChange: (value: CSSValueInputValue) => void;
+  value: CssValueInputValue;
+  onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   shouldHandleEvent?: (node: EventTarget) => boolean;
 }): [
@@ -138,9 +138,9 @@ const useHandleKeyDown =
     onKeyDown,
   }: {
     ignoreEnter: boolean;
-    value: CSSValueInputValue;
-    onChange: (value: CSSValueInputValue) => void;
-    onChangeComplete: (value: CSSValueInputValue) => void;
+    value: CssValueInputValue;
+    onChange: (value: CssValueInputValue) => void;
+    onChangeComplete: (value: CssValueInputValue) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
@@ -173,13 +173,13 @@ export type IntermediateStyleValue = {
   unit?: Unit;
 };
 
-type CSSValueInputValue = StyleValue | IntermediateStyleValue;
+type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
 type CssValueInputProps = {
   property: StyleProperty;
-  value?: CSSValueInputValue;
+  value?: CssValueInputValue;
   keywords?: Array<KeywordValue>;
-  onChange: (value: CSSValueInputValue) => void;
+  onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   onPreview: (value: StyleValue) => void;
 };
@@ -252,7 +252,7 @@ export const CssValueInput = ({
     });
   };
 
-  const onChangeComplete = (value: CSSValueInputValue) => {
+  const onChangeComplete = (value: CssValueInputValue) => {
     if (value.type !== "intermediate" && value.type !== "invalid") {
       props.onChangeComplete(value);
       return;
@@ -319,7 +319,7 @@ export const CssValueInput = ({
     getMenuProps,
     getItemProps,
     isOpen,
-  } = useCombobox<CSSValueInputValue>({
+  } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
     itemToString: (item) => (item === null ? "" : String(item.value)),
