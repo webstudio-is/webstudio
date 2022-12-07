@@ -37,7 +37,22 @@ export const PersistentFetcherProvider = ({
     ((data: unknown) => void) | undefined
   >();
 
+  // we can't use fetcher.state === "idle"
+  // because it's not updated immediately when you call fetcher.submit()
+  const isIdle = useRef(true);
+
+  const submitTask = useCallback(
+    (task: Task<unknown>) => {
+      isIdle.current = false;
+      currentRequestCallback.current = task.callback;
+      fetcher.submit(task.target, task.options);
+    },
+    [fetcher]
+  );
+
   useOnFetchEnd(fetcher, (data) => {
+    isIdle.current = true;
+
     if (currentRequestCallback.current) {
       currentRequestCallback.current(data);
       currentRequestCallback.current = undefined;
@@ -46,8 +61,7 @@ export const PersistentFetcherProvider = ({
     const nextTask = queue.current.shift();
 
     if (nextTask) {
-      currentRequestCallback.current = nextTask.callback;
-      fetcher.submit(nextTask.target, nextTask.options);
+      submitTask(nextTask);
     }
   });
 
@@ -58,14 +72,13 @@ export const PersistentFetcherProvider = ({
       callback: Task<unknown>["callback"]
     ) => {
       const task: Task<unknown> = { target, options, callback };
-      if (fetcher.state === "idle" && queue.current.length === 0) {
-        currentRequestCallback.current = task.callback;
-        fetcher.submit(task.target, task.options);
+      if (isIdle.current && queue.current.length === 0) {
+        submitTask(task);
       } else {
         queue.current.push(task);
       }
     },
-    [fetcher]
+    [submitTask]
   ) as AddTaskFn;
 
   return <Context.Provider value={addTask}>{children}</Context.Provider>;
