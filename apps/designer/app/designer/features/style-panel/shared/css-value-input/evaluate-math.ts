@@ -1,6 +1,6 @@
 export const evaluateMath = (expression: string) => {
   if (/^[\d\s.+*/-]+$/.test(expression) === false) {
-    return undefined;
+    return;
   }
   try {
     // Eval is safe here because of the regex above
@@ -8,7 +8,7 @@ export const evaluateMath = (expression: string) => {
     if (typeof result === "number") {
       return result;
     }
-  } catch (err) {
-    return undefined;
+  } catch {
+    return;
   }
 };
