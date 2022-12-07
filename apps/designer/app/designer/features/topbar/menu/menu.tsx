@@ -27,6 +27,7 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
+import { isFeatureEnabled } from "~/shared/feature-flags";
 
 const menuItemCss = {
   display: "flex",
@@ -37,6 +38,9 @@ const menuItemCss = {
 };
 
 const ThemeMenuItem = () => {
+  if (isFeatureEnabled("dark") === false) {
+    return null;
+  }
   const currentSetting = getThemeSetting();
   const labels: Record<ThemeSetting, string> = {
     light: "Light",
