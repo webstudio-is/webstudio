@@ -225,8 +225,15 @@ export function Control({
 
           const { meta } = value;
           if ("width" in meta && "height" in meta) {
-            const aspectRatio = `${meta.width} / ${meta.height}`;
-            setCssProperty("aspectRatio")(`${aspectRatio}`);
+            // @todo: change on own type, pass width/hight separately
+            const aspectRatio = meta.width / meta.height;
+
+            // @todo: own type, simlify width/height, until that use unit as before
+            setCssProperty("aspectRatio")({
+              type: "unit",
+              value: aspectRatio,
+              unit: "number",
+            });
           }
         }}
       />
