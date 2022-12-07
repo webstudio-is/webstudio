@@ -1,10 +1,11 @@
 import { useLoaderData } from "@remix-run/react";
 import { darkTheme } from "@webstudio-is/design-system";
 import { restThemePath } from "~/shared/router-utils";
+import { isFeatureEnabled } from "../feature-flags";
 import type { ColorScheme, ThemeSetting } from "./types";
 
 // User selected theme setting.
-let setting: ThemeSetting = "system";
+let setting: ThemeSetting = isFeatureEnabled("dark") ? "system" : "light";
 // Current systeme theme.
 let system: ColorScheme;
 

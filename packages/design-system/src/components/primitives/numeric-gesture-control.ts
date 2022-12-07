@@ -27,7 +27,7 @@ export type NumericScrubCallback = (event: {
 export type NumericScrubOptions = {
   minValue?: NumericScrubValue;
   maxValue?: NumericScrubValue;
-  initialValue?: NumericScrubValue;
+  getValue: () => number | undefined;
   direction?: NumericScrubDirection;
   onValueInput?: NumericScrubCallback;
   onValueChange?: NumericScrubCallback;
@@ -48,7 +48,7 @@ export const numericScrubControl = (
   {
     minValue = Number.MIN_SAFE_INTEGER,
     maxValue = Number.MAX_SAFE_INTEGER,
-    initialValue = 0,
+    getValue,
     direction = "horizontal",
     onValueInput,
     onValueChange,
@@ -57,7 +57,8 @@ export const numericScrubControl = (
 ) => {
   const eventNames = ["pointerup", "pointerdown"] as const;
   const state: NumericScrubState = {
-    value: initialValue,
+    // We will read value lazyly in a moment it will be used to avoid having outdated value
+    value: -1,
     cursor: undefined,
     offset: 0,
     velocity: direction === "horizontal" ? 1 : -1,
@@ -94,6 +95,15 @@ export const numericScrubControl = (
         if (event.target && shouldHandleEvent?.(event.target) === false) return;
         // light touches don't register corresponding pointerup
         if (event.pressure === 0 || event.button !== 0) break;
+        const value = getValue();
+
+        // We don't support scrub on non unit values
+        // Its highly unlikely that the value here will be undefined, as useScrub tries to not create scrub on non unit values
+        // but having that we use lazy getValue() and vanilla js events it's possible.
+        if (value === undefined) return;
+
+        state.value = value;
+
         state.offset = offset;
         state.timerId = setTimeout(() => {
           exitPointerLock?.();
@@ -108,10 +118,14 @@ export const numericScrubControl = (
         if (state.offset) {
           if (state.offset < 0) state.offset = globalThis.innerWidth + 1;
           else if (state.offset > globalThis.innerWidth) state.offset = 1;
+
           state.value += movement;
+
           if (state.value < minValue) state.value = minValue;
           else if (state.value > maxValue) state.value = maxValue;
+
           state.offset += movement * state.velocity;
+
           onValueInput?.({
             target: targetNode,
             value: state.value,
