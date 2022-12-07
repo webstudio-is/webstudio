@@ -224,25 +224,6 @@ export const CssValueInput = ({
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
   const onChange = (input: string) => {
-    /*
-    // Coment for now live updating of unit values
-
-    let styleInput = parseCssValue(property, input);
-
-    if (styleInput.type !== "invalid") {
-      props.onChange(styleInput);
-      return;
-    }
-
-    const unit = "unit" in value ? value.unit ?? "px" : "px";
-    styleInput = parseCssValue(property, `${input}${unit}`);
-
-    if (styleInput.type !== "invalid") {
-      props.onChange(styleInput);
-      return;
-    }
-    */
-
     // We don't know what's inside the input,
     // preserve current unit value if exists
     props.onChange({
