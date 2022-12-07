@@ -51,10 +51,12 @@ const appliesTo = (styleConfig: StyleConfig, currentStyle: Style): boolean => {
     if (dependency === undefined) return false;
     const currentValue = currentStyle[dependency.property]?.value;
     if (currentValue === undefined) return false;
-    if (Array.isArray(dependency.values))
+    if (Array.isArray(dependency.values)) {
       return dependency.values.includes(String(currentValue));
-    if (Array.isArray(dependency.notValues))
+    }
+    if (Array.isArray(dependency.notValues)) {
       return dependency.notValues.includes(String(currentValue)) === false;
+    }
   }
 
   return true;
