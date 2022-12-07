@@ -6,7 +6,11 @@ import {
   type TextToolbarState,
   useTextToolbarState,
 } from "~/designer/shared/nano-states";
-import { Flex, IconButton2 as IconButton } from "@webstudio-is/design-system";
+import {
+  Flex,
+  IconButton2 as IconButton,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import {
   FontBoldIcon,
   FontItalicIcon,
@@ -103,53 +107,82 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
         padding: 4,
         borderRadius: 6,
         border: "1px solid $slate8",
+        filter:
+          "drop-shadow(0px 2px 7px rgba(0, 0, 0, 0.1)) drop-shadow(0px 5px 17px rgba(0, 0, 0, 0.15))",
       }}
       onClick={(event) => {
         event.stopPropagation();
       }}
     >
-      <IconButton
-        variant={isCleared ? "setByDefault" : "default"}
-        onClick={() => onToggle("clear")}
-      >
-        <FormatClearIcon />
-      </IconButton>
-      <IconButton
-        variant={state.isBold ? "set" : "default"}
-        onClick={() => onToggle("bold")}
-      >
-        <FontBoldIcon />
-      </IconButton>
-      <IconButton
-        variant={state.isItalic ? "set" : "default"}
-        onClick={() => onToggle("italic")}
-      >
-        <FontItalicIcon />
-      </IconButton>
-      <IconButton
-        variant={state.isSuperscript ? "set" : "default"}
-        onClick={() => onToggle("superscript")}
-      >
-        <SuperscriptIcon />
-      </IconButton>
-      <IconButton
-        variant={state.isSubscript ? "set" : "default"}
-        onClick={() => onToggle("subscript")}
-      >
-        <SubscriptIcon />
-      </IconButton>
-      <IconButton
-        variant={state.isLink ? "set" : "default"}
-        onClick={() => onToggle("link")}
-      >
-        <Link2Icon />
-      </IconButton>
-      <IconButton
-        variant={state.isSpan ? "set" : "default"}
-        onClick={() => onToggle("span")}
-      >
-        <BrushIcon />
-      </IconButton>
+      <Tooltip content="Clear styles">
+        <IconButton
+          aria-label="Clear styles"
+          variant={isCleared ? "setByDefault" : "default"}
+          onClick={() => onToggle("clear")}
+        >
+          <FormatClearIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Bold">
+        <IconButton
+          aria-label="Bold"
+          variant={state.isBold ? "set" : "default"}
+          onClick={() => onToggle("bold")}
+        >
+          <FontBoldIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Italic">
+        <IconButton
+          aria-label="Italic"
+          variant={state.isItalic ? "set" : "default"}
+          onClick={() => onToggle("italic")}
+        >
+          <FontItalicIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Superscript">
+        <IconButton
+          aria-label="Superscript"
+          variant={state.isSuperscript ? "set" : "default"}
+          onClick={() => onToggle("superscript")}
+        >
+          <SuperscriptIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Subscript">
+        <IconButton
+          aria-label="Subscript"
+          variant={state.isSubscript ? "set" : "default"}
+          onClick={() => onToggle("subscript")}
+        >
+          <SubscriptIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Inline link">
+        <IconButton
+          aria-label="Inline link"
+          variant={state.isLink ? "set" : "default"}
+          onClick={() => onToggle("link")}
+        >
+          <Link2Icon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Wrap with span">
+        <IconButton
+          aria-label="Wrap with span"
+          variant={state.isSpan ? "set" : "default"}
+          onClick={() => onToggle("span")}
+        >
+          <BrushIcon />
+        </IconButton>
+      </Tooltip>
     </Flex>
   );
 };
