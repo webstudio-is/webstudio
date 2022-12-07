@@ -13,6 +13,10 @@ export const IconButton2 = styled("button", {
   alignItems: "center",
   // prevent shrinking inside flex box
   flexShrink: 0,
+  // set size and shape
+  width: 28,
+  height: 28,
+  borderRadius: 3,
 
   "&:focus-visible": {
     outline: "2px solid $blue10",
@@ -61,23 +65,10 @@ export const IconButton2 = styled("button", {
         // has no hover state because usually covered with overlay
       },
     },
-    size: {
-      normal: {
-        width: 28,
-        height: 28,
-        borderRadius: 3,
-      },
-      small: {
-        width: 16,
-        height: 16,
-        borderRadius: 2,
-      },
-    },
   },
 
   defaultVariants: {
     variant: "default",
-    size: "normal",
   },
 });
 
