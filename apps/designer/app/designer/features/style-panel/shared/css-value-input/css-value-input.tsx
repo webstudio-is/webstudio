@@ -90,9 +90,15 @@ const useScrub = ({
       return;
     }
 
-    const value = valueRef.current.value;
     const scrub = numericScrubControl(scrubRefCurrent, {
-      initialValue: value,
+      // Getter to avoid recreating scrub on every value change
+      getValue: () => {
+        if (valueRef.current.type === "unit") {
+          return valueRef.current.value;
+        }
+
+        return;
+      },
       onValueInput(event) {
         setIsInputActive(true);
         inputRefCurrent.blur();
