@@ -35,10 +35,27 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
     }
 
     if (asset == null || loader == null) {
-      return <SdkImage {...props} src={src} ref={ref} />;
+      return <SdkImage key={src} {...props} src={src} ref={ref} />;
     }
 
-    return <WebstudioImage {...props} loader={loader} src={src} ref={ref} />;
+    return (
+      <WebstudioImage
+        /**
+         * `key` is needed to recreate the image in case of asset change in designer,
+         * this gives immediate feedback when an asset is changed.
+         * Also, it visually fixes image distortion when another asset has a seriously different  aspectRatio
+         * (we change aspectRatio CSS prop on asset change)
+         *
+         * In non-designer mode, key on images are usually also a good idea,
+         * prevents showing outdated images on route change.
+         **/
+        key={src}
+        {...props}
+        loader={loader}
+        src={src}
+        ref={ref}
+      />
+    );
   }
 );
 
