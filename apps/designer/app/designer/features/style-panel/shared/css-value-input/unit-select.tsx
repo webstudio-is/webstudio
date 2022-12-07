@@ -57,7 +57,7 @@ export const useUnitSelect = ({
       units
         .filter((unit) => {
           if (value.type === "intermediate") {
-            if (value.unit != null) {
+            if (value.unit !== undefined) {
               // check that property is valid for any positive number like 1 during editing
               return isValid(
                 property,
@@ -74,7 +74,7 @@ export const useUnitSelect = ({
   );
 
   const renderValue =
-    value && value.unit != null ? unitRenderMap.get(value.unit) : undefined;
+    value?.unit !== undefined ? unitRenderMap.get(value.unit) : undefined;
 
   if (
     value === undefined ||
