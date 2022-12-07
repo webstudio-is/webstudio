@@ -96,8 +96,6 @@ const useScrub = ({
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
-
-        return;
       },
       onValueInput(event) {
         setIsInputActive(true);
