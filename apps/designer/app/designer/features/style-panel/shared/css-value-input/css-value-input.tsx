@@ -90,9 +90,21 @@ const useScrub = ({
       return;
     }
 
-    const value = valueRef.current.value;
     const scrub = numericScrubControl(scrubRefCurrent, {
-      initialValue: value,
+      // @todo: after this https://github.com/webstudio-is/webstudio-designer/issues/564
+      // we can switch back on using just initial value
+      //
+      // For now we are reusing controls for different selectedInstanceData,
+      // and the best here is to call useEffect every time selectedInstanceData changes
+      // and recreate numericScrubControl.
+      // Until we have decision do we use key properties for this or not,
+      // on of the solution to get value inside scrub is to use ref and lazy getter.
+      // Getter to avoid recreating scrub on every value change
+      getValue: () => {
+        if (valueRef.current.type === "unit") {
+          return valueRef.current.value;
+        }
+      },
       onValueInput(event) {
         setIsInputActive(true);
         inputRefCurrent.blur();
