@@ -53,7 +53,7 @@ const defaultStyle = {
 } as const;
 
 const meta: WsComponentMeta = {
-  type: "container",
+  type: "body",
   label: "Body",
   Icon: BodyIcon,
   props: props as MetaProps,

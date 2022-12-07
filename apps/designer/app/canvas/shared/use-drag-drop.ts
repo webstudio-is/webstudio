@@ -115,9 +115,10 @@ export const useDragAndDrop = () => {
         path.splice(0, dragItemIndex + 1);
       }
 
-      const data = path.find(
-        (instance) => getComponentMeta(instance.component).type === "container"
-      );
+      const data = path.find((instance) => {
+        const { type } = getComponentMeta(instance.component);
+        return type === "body" || type === "container";
+      });
 
       if (data === undefined) {
         return getDefaultDropTarget();
