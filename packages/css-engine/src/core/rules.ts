@@ -12,8 +12,8 @@ class StylePropertyMap {
     this.#isDirty = true;
     this.onChange?.();
   }
-  get(property: StyleProperty) {
-    return this.#styleMap.get(property);
+  has(property: StyleProperty) {
+    return this.#styleMap.has(property);
   }
   clear() {
     this.#styleMap.clear();
@@ -93,7 +93,7 @@ export class MediaRule {
 
 export class PlaintextRule {
   cssText;
-  styleMap = new Map();
+  styleMap = new StylePropertyMap();
   constructor(cssText: string) {
     this.cssText = cssText;
   }

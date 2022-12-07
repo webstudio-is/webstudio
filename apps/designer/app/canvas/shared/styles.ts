@@ -252,7 +252,7 @@ const usePreviewStyle = () => {
 
     for (const update of updates) {
       // This is possible on newly created instances, properties are not yet defined in the style.
-      if (rule.styleMap.get(update.property) == null) {
+      if (rule.styleMap.has(update.property) === false) {
         const dynamicStyle = toVarStyleWithFallback(id, {
           [update.property]: update.value,
         });
