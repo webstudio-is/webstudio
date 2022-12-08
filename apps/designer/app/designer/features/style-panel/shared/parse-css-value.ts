@@ -107,7 +107,7 @@ export const parseCssValue = (
     const match =
       "match" in matchResult.matched ? matchResult.matched.match : undefined;
 
-    if (match != null && match.length === 1) {
+    if (match?.length === 1) {
       const singleMatch = match[0];
 
       if (singleMatch.syntax?.type === "Keyword") {
@@ -118,11 +118,7 @@ export const parseCssValue = (
       }
 
       if (singleMatch.syntax?.type === "Type") {
-        if (
-          "match" in singleMatch &&
-          singleMatch.match != null &&
-          singleMatch.match.length === 1
-        ) {
+        if ("match" in singleMatch && singleMatch.match.length === 1) {
           const singleMatchMatch = singleMatch.match[0];
 
           if (singleMatchMatch.syntax?.type === "Keyword") {
