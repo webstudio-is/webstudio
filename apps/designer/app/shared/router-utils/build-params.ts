@@ -42,8 +42,14 @@ export const getBuildOrigin = (
 
   // Local development special case
   const host = getRequestHost(request);
-  if (env.NODE_ENV === "development" && isLocalhost(host)) {
-    return `http://${host.split(".").pop()}`;
+  if (env.NODE_ENV === "development") {
+    if (isLocalhost(host)) {
+      return `http://${host.split(".").pop()}`;
+    }
+    // If we're not on localhost, we're probably using ip address - useful for remote development
+    if (host.split(".").length === 4) {
+      return `http://${host}`;
+    }
   }
 
   // Vercel preview special case
