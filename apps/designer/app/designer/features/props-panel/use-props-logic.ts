@@ -8,7 +8,8 @@ import { type Publish } from "~/shared/pubsub";
 import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
-import uniqBy from "lodash/uniqBy";
+// @todo: importing normally doesn't work in Jest for some reason
+import uniqBy from "lodash/uniqBy"; // eslint-disable-line
 import { useState } from "react";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 import warnOnce from "warn-once";

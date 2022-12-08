@@ -1,4 +1,4 @@
-import useInterval from "react-use/lib/useInterval";
+import { useInterval } from "react-use";
 import { sync } from "immerhin";
 import { enqueue } from "./queue";
 import type { Build } from "@webstudio-is/project";

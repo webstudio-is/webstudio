@@ -4,7 +4,7 @@ import { useRootInstance } from "~/shared/nano-states";
 
 // @todo: importing normally doesn't work in Jest for some reason
 // import { useDebounce } from "react-use";
-import useDebounce from "react-use/lib/useDebounce";
+import useDebounce from "react-use/lib/useDebounce"; // eslint-disable-line
 
 const eventOptions = {
   passive: true,

@@ -19,7 +19,7 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  plugins: ["react", "@typescript-eslint", "unicorn"],
+  plugins: ["react", "@typescript-eslint", "unicorn", "import"],
   settings: {
     react: {
       version: "detect",
@@ -43,5 +43,11 @@ module.exports = {
     curly: 2,
     eqeqeq: ["error", "always", { null: "ignore" }],
     camelcase: 2,
+    "import/no-internal-modules": [
+      "error",
+      {
+        allow: ["**/server", "@lexical/react/*"],
+      },
+    ],
   },
 };
