@@ -4,7 +4,7 @@ import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
 import * as userDb from "~/shared/db";
 import { ensureUserCookie } from "~/shared/session";
-import { authenticator } from "~/services/auth.server";
+import { findAuthenticatedUser } from "~/services/auth.server";
 import { designerPath } from "~/shared/router-utils";
 
 const ensureProject = async ({
@@ -30,7 +30,7 @@ const ensureProject = async ({
  */
 export const loader: LoaderFunction = async ({ request, params }) => {
   if (params.domain === undefined) return { errors: "Domain required" };
-  const user = await authenticator.isAuthenticated(request);
+  const user = await findAuthenticatedUser(request);
   const { headers, userId: generatedUserId } = await ensureUserCookie(request);
   try {
     const userId = await userDb.user.ensureUser({
