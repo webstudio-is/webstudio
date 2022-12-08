@@ -33,7 +33,7 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
   const { inputRef, onChange } = useUpload(type);
   return (
     <form onChange={onChange}>
-      <Flex css={{ flexGrow: 1 }}>
+      <Flex>
         <input
           accept={acceptMap[type]}
           type="file"
