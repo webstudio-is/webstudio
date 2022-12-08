@@ -127,23 +127,16 @@ export const clone = async (
   const props = await client.instanceProps.findMany({
     where: { treeId: previousTreeId },
   });
+
   if (props.length === 0) return;
   const data = props.map(({ id: _id, treeId: _treeId, ...rest }) => ({
     ...rest,
     treeId: nextTreeId,
   }));
 
-  const create = async (client: Prisma.TransactionClient) =>
-    data.map((prop) =>
-      client.instanceProps.create({
-        data: prop,
-      })
-    );
-
-  // If our client is not a transaction client, we need to create a transaction
-  "$transaction" in client
-    ? await client.$transaction(create)
-    : await create(client);
+  for (const prop of data) {
+    await client.instanceProps.create({ data: prop });
+  }
 };
 
 export const patch = async (
