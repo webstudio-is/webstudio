@@ -36,6 +36,13 @@ describe("Parse CSS value", () => {
       });
     });
 
+    test("keyword display block", () => {
+      expect(parseCssValue("display", "block")).toEqual({
+        type: "keyword",
+        value: "block",
+      });
+    });
+
     test("keyword with unit", () => {
       expect(parseCssValue("width", "autopx")).toEqual({
         type: "invalid",
