@@ -10,6 +10,10 @@ declare module "css-tree" {
         match: Match[];
       }
     | {
+        syntax: { type: "Type"; name: string };
+        match: Match[];
+      }
+    | {
         syntax: { type: "Keyword"; name: string };
         token: string;
       }

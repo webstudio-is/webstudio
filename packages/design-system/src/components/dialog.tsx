@@ -1,10 +1,10 @@
-import React from "react";
+import * as React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { CrossIcon } from "@webstudio-is/icons";
 import { overlayStyles } from "./overlay";
 import { panelStyles } from "./panel";
-import { IconButton } from "./icon-button";
+import { IconButton_deprecated } from "./icon-button-deprecated";
 
 type DialogProps = React.ComponentProps<typeof DialogPrimitive.Root> & {
   children: React.ReactNode;
@@ -67,9 +67,9 @@ export const DialogContent = React.forwardRef<
   <StyledContent {...props} ref={forwardedRef}>
     {children}
     <StyledCloseButton asChild>
-      <IconButton>
+      <IconButton_deprecated>
         <CrossIcon />
-      </IconButton>
+      </IconButton_deprecated>
     </StyledCloseButton>
   </StyledContent>
 ));

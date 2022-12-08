@@ -107,15 +107,28 @@ export const parseCssValue = (
     const match =
       "match" in matchResult.matched ? matchResult.matched.match : undefined;
 
-    if (
-      match != null &&
-      match.length === 1 &&
-      match[0].syntax?.type === "Keyword"
-    ) {
-      return {
-        type: "keyword",
-        value: input,
-      } as const;
+    if (match?.length === 1) {
+      const singleMatch = match[0];
+
+      if (singleMatch.syntax?.type === "Keyword") {
+        return {
+          type: "keyword",
+          value: input,
+        } as const;
+      }
+
+      if (singleMatch.syntax?.type === "Type") {
+        if ("match" in singleMatch && singleMatch.match.length === 1) {
+          const singleMatchMatch = singleMatch.match[0];
+
+          if (singleMatchMatch.syntax?.type === "Keyword") {
+            return {
+              type: "keyword",
+              value: input,
+            } as const;
+          }
+        }
+      }
     }
   }
 
