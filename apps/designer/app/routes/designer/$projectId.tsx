@@ -5,7 +5,6 @@ import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
-import { loadByProject } from "@webstudio-is/asset-uploader/server";
 
 export { links };
 
@@ -27,14 +26,12 @@ export const loader: LoaderFunction = async ({
   }
 
   const devBuild = await db.build.loadByProjectId(project.id, "dev");
-  const assets = await loadByProject(project.id);
 
   return {
     project,
     pages: devBuild.pages,
     pageId: pageIdParam || devBuild.pages.homePage.id,
     buildOrigin: getBuildOrigin(request),
-    assets,
   };
 };
 

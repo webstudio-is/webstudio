@@ -38,11 +38,10 @@ import {
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { useSetAssets } from "./shared/assets";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import { usePublishAssets } from "./shared/assets";
 
 export const links = () => {
   return [
@@ -278,7 +277,6 @@ export type DesignerProps = {
   pages: Pages;
   pageId: string;
   buildOrigin: string;
-  assets: Array<Asset>;
 };
 
 export const Designer = ({
@@ -286,7 +284,6 @@ export const Designer = ({
   pages,
   pageId,
   buildOrigin,
-  assets,
 }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
@@ -298,7 +295,7 @@ export const Designer = ({
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
-  useSetAssets({ assets, publish });
+  usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();

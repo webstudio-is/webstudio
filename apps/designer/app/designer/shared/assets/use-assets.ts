@@ -1,12 +1,13 @@
+import { useEffect, useMemo } from "react";
 import {
   AssetType,
   filterByType,
   MAX_UPLOAD_SIZE,
   toBytes,
+  type Asset,
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import ObjectID from "bson-objectid";
-import { useMemo } from "react";
 import { restAssetsPath } from "~/shared/router-utils";
 import { useAssets as useAssetsState, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
@@ -18,6 +19,26 @@ import {
   normalizeErrors,
   toastUnknownFieldErrors,
 } from "~/shared/form-utils";
+import { Publish } from "~/shared/pubsub";
+import { useFetcher } from "@remix-run/react";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    updateAssets: Array<Asset>;
+  }
+}
+
+export const usePublishAssets = (publish: Publish) => {
+  const [assets] = useAssetsState();
+  useEffect(() => {
+    publish({
+      type: "updateAssets",
+      payload: assets.filter(
+        (asset) => asset.status === "uploaded"
+      ) as Array<Asset>, // TS doesn't understand we filtered out PrevewAssets
+    });
+  }, [assets, publish]);
+};
 
 export type UploadData = FetcherData<ActionData>;
 
@@ -77,10 +98,24 @@ const toFormsData = (type: AssetType, input: HTMLInputElement) => {
 };
 
 export const useAssets = (type: AssetType) => {
-  const submit = usePersistentFetcher();
-  const [assets, setAssets] = useAssetsState();
   const [project] = useProject();
+  const [assets, setAssets] = useAssetsState();
+  const { load, data } = useFetcher();
+  const submit = usePersistentFetcher();
+
   const action = project && restAssetsPath({ projectId: project.id });
+
+  useEffect(() => {
+    if (action && assets.length === 0) {
+      load(action);
+    }
+  }, [action, assets.length, load]);
+
+  useEffect(() => {
+    if (data !== undefined) {
+      setAssets(data);
+    }
+  }, [data, setAssets]);
 
   const handleDelete = (ids: Array<string>) => {
     const formData = new FormData();
@@ -113,6 +148,12 @@ export const useAssets = (type: AssetType) => {
         (data) => {
           if (data.status === "error") {
             return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+          }
+
+          // @todo currently waiting until all of them are fetched
+          // should update each individually when its loaded
+          if (action) {
+            load(action);
           }
         }
       );
