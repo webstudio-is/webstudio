@@ -11,7 +11,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
   DropdownMenuPortal,
-  IconButton,
+  IconButton_deprecated,
   Box,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, ChevronRightIcon } from "@webstudio-is/icons";
@@ -127,9 +127,9 @@ export const Menu = ({ publish }: MenuProps) => {
             },
           }}
         >
-          <IconButton aria-label="Menu Button">
+          <IconButton_deprecated aria-label="Menu Button">
             <HamburgerMenuIcon />
-          </IconButton>
+          </IconButton_deprecated>
         </Box>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
