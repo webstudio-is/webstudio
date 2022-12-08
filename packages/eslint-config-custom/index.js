@@ -46,7 +46,12 @@ module.exports = {
     "import/no-internal-modules": [
       "error",
       {
-        allow: ["**/server", "@lexical/react/*"],
+        allow: [
+          "**/server",
+          "@lexical/react/*",
+          "__generated__/*",
+          "react-hot-toast/headless",
+        ],
       },
     ],
   },

@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { PrismaClientKnownRequestError, Decimal } from "@prisma/client/runtime";
+const { PrismaClientKnownRequestError, Decimal } = Prisma;
 
 declare global {
   // allow global `var` declarations
