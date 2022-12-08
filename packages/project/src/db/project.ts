@@ -1,27 +1,9 @@
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
-import {
-  User,
-  prisma,
-  Prisma,
-  Project as BaseProject,
-} from "@webstudio-is/prisma-client";
-import type { Asset } from "@webstudio-is/asset-uploader";
-import { formatAsset } from "@webstudio-is/asset-uploader/server";
+import { User, prisma, Prisma, Project } from "@webstudio-is/prisma-client";
 import * as db from "./index";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
-
-export type Project = Omit<BaseProject, "assets"> & {
-  assets?: Array<Asset>;
-};
-
-const parseProject = (project: BaseProject): Project => {
-  return {
-    ...project,
-    assets: project?.assets?.map(formatAsset),
-  };
-};
 
 export const loadByParams = async (
   params: { projectId: string } | { projectDomain: string }
@@ -36,50 +18,27 @@ export const loadById = async (projectId?: Project["id"]) => {
     throw new Error("Project ID required");
   }
 
-  const project = await prisma.project.findUnique({
+  return await prisma.project.findUnique({
     where: { id: projectId },
-    include: {
-      assets: {
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-    },
   });
-
-  if (!project) return null;
-  return parseProject(project);
 };
 
 export const loadByDomain = async (domain: string): Promise<Project | null> => {
-  const project = await prisma.project.findUnique({
+  return await prisma.project.findUnique({
     where: { domain: domain.toLowerCase() },
-    include: {
-      assets: {
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
-    },
   });
-
-  if (!project) return null;
-
-  return parseProject(project);
 };
 
 export const loadManyByUserId = async (
   userId: User["id"]
 ): Promise<Array<Project>> => {
-  const projects = await prisma.project.findMany({
+  return await prisma.project.findMany({
     where: {
       user: {
         id: userId,
       },
     },
   });
-
-  return projects.map(parseProject) as Project[];
 };
 
 const slugifyOptions = { lower: true, strict: true };
@@ -118,7 +77,7 @@ export const create = async ({
 
   await db.build.create(project.id, "dev");
 
-  return parseProject(project);
+  return project;
 };
 
 export const clone = async (clonableDomain: string, userId: string) => {
@@ -143,7 +102,7 @@ export const clone = async (clonableDomain: string, userId: string) => {
 
   await db.build.create(project.id, "dev", prodBuild);
 
-  return parseProject(project);
+  return project;
 };
 
 export const update = async ({

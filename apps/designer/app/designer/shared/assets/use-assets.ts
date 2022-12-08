@@ -112,7 +112,7 @@ export const useAssets = (type: AssetType) => {
         },
         (data) => {
           if (data.status === "error") {
-            toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+            return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
           }
         }
       );

@@ -24,7 +24,6 @@ enum Location {
 
 model Asset {
   id          String   @id @default(uuid())
-  project     Project  @relation(fields: [projectId], references: [id])
   projectId   String
   format      String
   size        Int
@@ -53,7 +52,6 @@ model Project {
   domain String  @unique
   user   User?   @relation(fields: [userId], references: [id])
   userId String?
-  assets Asset[]
   build  Build[]
 }
 
