@@ -72,6 +72,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               dragAndDropState.isDragging && dragAndDropState.origin === "panel"
                 ? "hidden"
                 : "visible",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <TabContent publish={publish} onSetActiveTab={setActiveTab} />
