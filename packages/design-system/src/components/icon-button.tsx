@@ -22,7 +22,6 @@ export const IconButton = styled("button", {
     outline: "2px solid $blue10",
   },
   "&:disabled": {
-    color: "$slate8",
     borderColor: "transparent",
     pointerEvents: "none",
   },
@@ -34,13 +33,19 @@ export const IconButton = styled("button", {
         "&:hover": {
           backgroundColor: "$slate6",
         },
+        "&:disabled": {
+          color: "$slate8",
+        },
       },
-      setByDefault: {
+      preset: {
         backgroundColor: "$slate6",
         borderColor: "$slate8",
         color: "$slate12",
         "&:hover": {
           backgroundColor: "$slate8",
+        },
+        "&:disabled": {
+          color: "$slate8",
         },
       },
       set: {
@@ -50,6 +55,9 @@ export const IconButton = styled("button", {
         "&:hover": {
           backgroundColor: "$blue6",
         },
+        "&:disabled": {
+          color: "$blue6",
+        },
       },
       inherited: {
         backgroundColor: "$orange4",
@@ -58,11 +66,14 @@ export const IconButton = styled("button", {
         "&:hover": {
           backgroundColor: "$orange6",
         },
+        "&:disabled": {
+          color: "$orange6",
+        },
       },
       active: {
         backgroundColor: "$blue10",
         color: "White",
-        // has no hover state because usually covered with overlay
+        // non-interactive state because usually covered with overlay
       },
     },
   },

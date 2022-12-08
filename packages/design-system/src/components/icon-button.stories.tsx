@@ -9,25 +9,38 @@ export default {
 
 export const Default: ComponentStory<typeof IconButton> = () => {
   return (
-    <Flex gap={2}>
-      <IconButton>
-        <CrossIcon fill="currentColor" />
-      </IconButton>
-      <IconButton variant="setByDefault">
-        <CrossIcon fill="currentColor" />
-      </IconButton>
-      <IconButton variant="set">
-        <CrossIcon fill="currentColor" />
-      </IconButton>
-      <IconButton variant="inherited">
-        <CrossIcon fill="currentColor" />
-      </IconButton>
-      <IconButton variant="active">
-        <CrossIcon fill="currentColor" />
-      </IconButton>
-      <IconButton disabled={true}>
-        <CrossIcon fill="currentColor" />
-      </IconButton>
+    <Flex direction="column" gap={2}>
+      <Flex gap={2}>
+        <IconButton>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="preset">
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="set">
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="inherited">
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="active">
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+      </Flex>
+      <Flex gap={2}>
+        <IconButton disabled={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="preset" disabled={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="set" disabled={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+        <IconButton variant="inherited" disabled={true}>
+          <CrossIcon fill="currentColor" />
+        </IconButton>
+      </Flex>
     </Flex>
   );
 };

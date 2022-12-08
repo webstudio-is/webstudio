@@ -113,7 +113,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
       <Tooltip content="Clear styles">
         <IconButton
           aria-label="Clear styles"
-          variant={isCleared ? "setByDefault" : "default"}
+          disabled={isCleared}
           onClick={() => onToggle("clear")}
         >
           <FormatClearIcon />
