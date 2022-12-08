@@ -5,7 +5,9 @@ import { type Instance } from "@webstudio-is/react-sdk";
 const updateIds = (instance: Instance) => {
   instance.id = ObjectId().toString();
   for (const child of instance.children) {
-    if (typeof child === "string") continue;
+    if (typeof child === "string") {
+      continue;
+    }
     updateIds(child);
   }
 };

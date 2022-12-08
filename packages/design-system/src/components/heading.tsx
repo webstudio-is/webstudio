@@ -1,14 +1,14 @@
 import React from "react";
-import { __DEPRECATED__Text } from "./__DEPRECATED__/text";
+import { DEPRECATEDText } from "./__DEPRECATED__/text";
 import { VariantProps, CSS } from "../stitches.config";
 import merge from "lodash.merge";
 
 const DEFAULT_TAG = "h1";
 
-type TextSizeVariants = Pick<VariantProps<typeof __DEPRECATED__Text>, "size">;
+type TextSizeVariants = Pick<VariantProps<typeof DEPRECATEDText>, "size">;
 type HeadingSizeVariants = "1" | "2" | "3" | "4";
 type HeadingVariants = { size?: HeadingSizeVariants } & Omit<
-  VariantProps<typeof __DEPRECATED__Text>,
+  VariantProps<typeof DEPRECATEDText>,
   "size"
 >;
 type HeadingProps = React.ComponentProps<typeof DEFAULT_TAG> &
@@ -41,7 +41,7 @@ export const Heading = React.forwardRef<
   };
 
   return (
-    <__DEPRECATED__Text
+    <DEPRECATEDText
       as={DEFAULT_TAG}
       {...textProps}
       ref={forwardedRef}

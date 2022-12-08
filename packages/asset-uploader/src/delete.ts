@@ -11,7 +11,9 @@ export const deleteAssets = async (
   const assets = await prisma.asset.findMany({
     where: { id: { in: ids } },
   });
-  if (assets.length === 0) throw new Error("Assets not found");
+  if (assets.length === 0) {
+    throw new Error("Assets not found");
+  }
 
   await deleteFromDb(ids);
 

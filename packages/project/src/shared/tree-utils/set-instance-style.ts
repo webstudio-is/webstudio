@@ -10,7 +10,9 @@ export const setInstanceStyleMutable = (
   breakpoint: Breakpoint
 ) => {
   const instance = findInstanceById(rootInstance, id);
-  if (instance === undefined) return false;
+  if (instance === undefined) {
+    return false;
+  }
   let cssRule = instance.cssRules.find(
     (cssRule) => cssRule.breakpoint === breakpoint.id
   );

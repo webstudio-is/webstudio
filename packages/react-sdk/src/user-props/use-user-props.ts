@@ -14,7 +14,9 @@ export const useUserProps = (instanceId: Instance["id"]) => {
 
   const propsData = allUserProps[instanceId];
   const props = useMemo(() => {
-    if (propsData == null) return {};
+    if (propsData == null) {
+      return {};
+    }
     const result: UserProps = {};
 
     for (const userProp of propsData.props) {

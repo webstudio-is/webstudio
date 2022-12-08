@@ -13,7 +13,9 @@ const useContentController = ({
   callback: (value: { name: string; value: string }) => void;
 }) => {
   useEffect(() => {
-    if (ref.current == null) return;
+    if (ref.current == null) {
+      return;
+    }
     const { disconnectedCallback } = createContentController(ref.current, {
       contents: [
         {

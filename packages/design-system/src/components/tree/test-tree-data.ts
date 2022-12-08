@@ -10,11 +10,15 @@ export const getItemPathWithPositions = (tree: Item, itemId: string) => {
   const path = [];
 
   const find = (item: Item) => {
-    if (item.id === itemId) return true;
+    if (item.id === itemId) {
+      return true;
+    }
     const children = item.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
-      if (typeof child === "string") continue;
+      if (typeof child === "string") {
+        continue;
+      }
       const found = find(child);
       if (found) {
         path.push({ item: child, position: i });
