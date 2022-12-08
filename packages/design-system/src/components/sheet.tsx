@@ -1,9 +1,9 @@
-import React from "react";
+import * as React from "react";
 import { styled, keyframes, VariantProps, CSS } from "../stitches.config";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { CrossIcon } from "@webstudio-is/icons";
 import { overlayStyles } from "./overlay";
-import { IconButton } from "./icon-button";
+import { IconButton_deprecated } from "./icon-button-deprecated";
 
 const fadeIn = keyframes({
   from: { opacity: "0" },
@@ -128,9 +128,9 @@ export const SheetContent = React.forwardRef<
   <StyledContent {...props} ref={forwardedRef}>
     {children}
     <StyledCloseButton asChild>
-      <IconButton>
+      <IconButton_deprecated>
         <CrossIcon />
-      </IconButton>
+      </IconButton_deprecated>
     </StyledCloseButton>
   </StyledContent>
 ));
