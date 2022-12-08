@@ -14,7 +14,7 @@ import {
   SubscriptIcon,
   Link2Icon,
   BrushIcon,
-  FormatClearIcon,
+  CrossSmallIcon,
 } from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
 
@@ -116,7 +116,7 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
           disabled={isCleared}
           onClick={() => onToggle("clear")}
         >
-          <FormatClearIcon />
+          <CrossSmallIcon />
         </IconButton>
       </Tooltip>
 
