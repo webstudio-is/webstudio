@@ -6,11 +6,7 @@ import {
   type TextToolbarState,
   useTextToolbarState,
 } from "~/designer/shared/nano-states";
-import {
-  Flex,
-  IconButton2 as IconButton,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import {
   FontBoldIcon,
   FontItalicIcon,

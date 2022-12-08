@@ -1,6 +1,6 @@
 import { styled } from "../stitches.config";
 
-export const IconButton2 = styled("button", {
+export const IconButton = styled("button", {
   // reset styles
   boxSizing: "border-box",
   padding: 0,
@@ -72,4 +72,4 @@ export const IconButton2 = styled("button", {
   },
 });
 
-IconButton2.displayName = "IconButton2";
+IconButton.displayName = "IconButton";
