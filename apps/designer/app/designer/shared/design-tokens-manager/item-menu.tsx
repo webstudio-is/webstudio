@@ -123,7 +123,9 @@ export const useMenu = ({
       openMenu.current === index ||
       focusedMenuTrigger.current === index;
 
-    if (show === false) return;
+    if (show === false) {
+      return;
+    }
 
     return (
       <ItemMenu

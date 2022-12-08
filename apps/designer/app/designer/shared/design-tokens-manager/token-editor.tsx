@@ -109,7 +109,9 @@ export const TokenEditor = ({
   };
 
   const submit = (ignoreErrors = false) => {
-    if (formRef.current === null) return;
+    if (formRef.current === null) {
+      return;
+    }
     const updatedToken = getToken(formRef.current, token ?? seed);
     const nextValidationResult = validate(tokens, updatedToken, token);
     setValidationResult(nextValidationResult);

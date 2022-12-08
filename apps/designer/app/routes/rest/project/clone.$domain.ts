@@ -15,7 +15,9 @@ const ensureProject = async ({
   domain: string;
 }): Promise<Project> => {
   const projects = await projectDb.project.loadManyByUserId(userId);
-  if (projects.length !== 0) return projects[0];
+  if (projects.length !== 0) {
+    return projects[0];
+  }
 
   return await projectDb.project.clone(domain, userId);
 };
@@ -29,7 +31,9 @@ const ensureProject = async ({
  * 3. Redirect user to the designer with the cloned project
  */
 export const loader: LoaderFunction = async ({ request, params }) => {
-  if (params.domain === undefined) return { errors: "Domain required" };
+  if (params.domain === undefined) {
+    return { errors: "Domain required" };
+  }
   const user = await authenticator.isAuthenticated(request);
   const { headers, userId: generatedUserId } = await ensureUserCookie(request);
   try {

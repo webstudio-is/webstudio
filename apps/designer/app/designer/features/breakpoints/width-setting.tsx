@@ -24,11 +24,15 @@ const useNextBreakpoint = () => {
   );
 
   return useMemo(() => {
-    if (selectedBreakpoint === undefined) return;
+    if (selectedBreakpoint === undefined) {
+      return;
+    }
     const index = sortedBreakpoints.findIndex(
       (breakpoint) => breakpoint.id === selectedBreakpoint.id
     );
-    if (index === -1) return undefined;
+    if (index === -1) {
+      return undefined;
+    }
     return sortedBreakpoints[index + 1];
   }, [sortedBreakpoints, selectedBreakpoint]);
 };
@@ -39,7 +43,9 @@ export const WidthSetting = () => {
   const nextBreakpoint = useNextBreakpoint();
   const [isPreviewMode] = useIsPreviewMode();
 
-  if (selectedBreakpoint === undefined) return null;
+  if (selectedBreakpoint === undefined) {
+    return null;
+  }
 
   // We want to enable unconstrained resizing in a preview mode
   const min = isPreviewMode

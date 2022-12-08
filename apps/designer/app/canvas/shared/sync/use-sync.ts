@@ -14,7 +14,9 @@ export const useSync = ({
 }) => {
   useInterval(() => {
     const entries = sync();
-    if (entries.length === 0) return;
+    if (entries.length === 0) {
+      return;
+    }
 
     // @todo this entire queueing logic needs to be gone, it's a workaround,
     // because prisma can't do atomic updates yet with sandbox documents

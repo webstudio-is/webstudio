@@ -65,7 +65,9 @@ const useElementsTree = () => {
   const onChangeChildren: OnChangeChildren = useCallback(
     (change) => {
       store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) return;
+        if (rootInstance === undefined) {
+          return;
+        }
 
         const { instanceId, updates } = change;
         utils.tree.setInstanceChildrenMutable(
@@ -80,7 +82,9 @@ const useElementsTree = () => {
   );
 
   return useMemo(() => {
-    if (rootInstance === undefined) return;
+    if (rootInstance === undefined) {
+      return;
+    }
 
     return createElementsTree({
       sandbox: true,
@@ -182,7 +186,9 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const isPreviewMode = useSubscribePreviewMode();
   const elements = useElementsTree();
 
-  if (elements === undefined) return null;
+  if (elements === undefined) {
+    return null;
+  }
 
   if (isPreviewMode || isDesignerReady === false) {
     return (

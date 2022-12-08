@@ -150,7 +150,9 @@ const toCss = (style: SpacingSingularStyle) => {
   let property: SpacingProperty;
   for (property in style) {
     const value = style[property];
-    if (value === undefined) continue;
+    if (value === undefined) {
+      continue;
+    }
     css[property] = toValue(value);
   }
   return css;

@@ -15,7 +15,9 @@ export const useSearch = ({ onSearch, onSelect, onCancel }: UseSearch) => {
       Enter: "current",
     } as const;
     const direction = keyMap[code as keyof typeof keyMap];
-    if (direction !== undefined) onSelect(direction);
+    if (direction !== undefined) {
+      onSelect(direction);
+    }
   };
 
   const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {

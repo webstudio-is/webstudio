@@ -102,7 +102,9 @@ export const useMenu = ({ selectedIndex, onSelect, onDelete }: UseMenu) => {
       openMenu.current === index ||
       focusedMenuTrigger.current === index;
 
-    if (show === false) return;
+    if (show === false) {
+      return;
+    }
 
     return (
       <ItemMenu

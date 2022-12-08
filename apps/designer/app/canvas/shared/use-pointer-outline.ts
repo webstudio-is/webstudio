@@ -22,7 +22,9 @@ export const usePointerOutline = () => {
   }, []);
 
   return (offset: Point) => {
-    if (ref.current === undefined) return;
+    if (ref.current === undefined) {
+      return;
+    }
     ref.current.style.left = `${offset.x}px`;
     ref.current.style.top = `${offset.y}px`;
   };

@@ -15,7 +15,9 @@ export const action: ActionFunction = async ({ request }) => {
     });
   } catch (error: unknown) {
     // all redirects are basically errors and in that case we don't want to catch it
-    if (error instanceof Response) return error;
+    if (error instanceof Response) {
+      return error;
+    }
     if (error instanceof Error) {
       return redirect(
         loginPath({ error: AUTH_PROVIDERS.LOGIN_DEV, message: error?.message })

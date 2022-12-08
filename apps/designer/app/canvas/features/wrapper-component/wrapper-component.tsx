@@ -57,7 +57,9 @@ export const WrapperComponentDev = ({
   const refCallback = useCallback(
     (element) => {
       // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
-      if (element !== null) setSelectedElement(element);
+      if (element !== null) {
+        setSelectedElement(element);
+      }
     },
     [setSelectedElement]
   );

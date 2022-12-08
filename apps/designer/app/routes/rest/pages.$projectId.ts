@@ -13,8 +13,8 @@ import { type FetcherData, makeFieldError } from "~/shared/form-utils";
 
 const nonEmptyString = z
   .string({
-    invalid_type_error: "Can't be empty",
-    required_error: "Can't be empty",
+    invalid_type_error: "Can't be empty", // eslint-disable-line
+    required_error: "Can't be empty", // eslint-disable-line
   })
   .transform((value) => value.trim())
   .refine((value) => value !== "", "Can't be empty");

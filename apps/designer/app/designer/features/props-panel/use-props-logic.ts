@@ -202,7 +202,9 @@ export const usePropsLogic = ({
     const prop = userProps.find((prop) => prop.id === id);
 
     // Required prop should never be deleted
-    if (prop === undefined || prop.required) return;
+    if (prop === undefined || prop.required) {
+      return;
+    }
 
     const index = nextUserProps.indexOf(prop);
     nextUserProps.splice(index, 1);
