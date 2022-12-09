@@ -167,6 +167,16 @@ export const ToolbarConnectorPlugin = () => {
 
   // dispatch commands sent from toolbar
   useSubscribe("formatTextToolbar", (type) => {
+    let isSuperscript = false;
+    let isSubscript = false;
+    editor.getEditorState().read(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        isSuperscript = selection.hasFormat("superscript");
+        isSubscript = selection.hasFormat("subscript");
+      }
+    });
+
     if (type === "bold") {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
     }
@@ -175,9 +185,17 @@ export const ToolbarConnectorPlugin = () => {
     }
     if (type === "superscript") {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
+      // remove subscript if superscript is added
+      if (isSubscript) {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
+      }
     }
     if (type === "subscript") {
       editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
+      // remove superscript if subscript is added
+      if (isSuperscript) {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
+      }
     }
     if (type === "link") {
       const editorState = editor.getEditorState();

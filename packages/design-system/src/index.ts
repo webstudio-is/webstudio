@@ -29,6 +29,7 @@ export { ScrollArea } from "./components/scrollbar";
 export { Tooltip, InputErrorsTooltip } from "./components/tooltip";
 export { Button } from "./components/button";
 export { IconButtonDeprecated } from "./components/icon-button-deprecated";
+export { IconButton } from "./components/icon-button";
 export { Box } from "./components/box";
 export { ProgressBar } from "./components/progress-bar";
 export * from "./components/popover";
