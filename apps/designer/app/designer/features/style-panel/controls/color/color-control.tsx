@@ -3,6 +3,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 import { ColorPicker } from "../../shared/color-picker";
+import { colord } from "colord";
 
 export const ColorControl = ({
   currentStyle,
@@ -10,21 +11,49 @@ export const ColorControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const value = getFinalValue({
+  let value = getFinalValue({
     currentStyle,
     inheritedStyle,
     property: styleConfig.property,
   });
+
   if (value === undefined) {
     return null;
   }
+
   const setValue = setProperty(styleConfig.property);
+
+  if (value.type !== "rgb") {
+    // Support previously set colors
+    const colordValue = colord(toValue(value));
+
+    if (colordValue.isValid()) {
+      const rgb = colordValue.toRgb();
+      value = {
+        type: "rgb",
+        r: rgb.r,
+        g: rgb.g,
+        b: rgb.b,
+        alpha: rgb.a ?? 100,
+      };
+    } else {
+      // @todo what to show as default?
+      // Default to black
+      value = {
+        type: "rgb",
+        r: 0,
+        g: 0,
+        b: 0,
+        alpha: 100,
+      };
+    }
+  }
 
   return (
     <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
       <ColorPicker
         id={styleConfig.property}
-        value={toValue(value)}
+        value={value}
         onChange={(value) => {
           setValue(value, { isEphemeral: true });
         }}

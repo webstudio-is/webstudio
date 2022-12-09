@@ -35,6 +35,7 @@
     "@webstudio-is/react-sdk": "*",
     "bson-objectid": "^2.0.2",
     "camelcase": "^6.3.0",
+    "colord": "^2.9.3",
     "css-tree": "^2.3.0",
     "debug": "^4.3.4",
     "detect-font": "^0.1.5",

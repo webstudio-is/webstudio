@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { colord, type RgbaColor } from "colord";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
+import type { RGBValue } from "@webstudio-is/css-data";
+
 import {
   Box,
   Popover,
@@ -9,12 +12,7 @@ import {
   TextField,
   css,
 } from "@webstudio-is/design-system";
-
-const stringifyRGBA = (color: RGBColor) => {
-  const { r, g, b, a = 1 } = color;
-
-  return `rgba(${r},${g},${b},${a})`;
-};
+import { toValue } from "@webstudio-is/css-engine";
 
 const pickerStyle = css({
   padding: "$spacing$5",
@@ -35,10 +33,20 @@ const defaultPickerStyles = {
 };
 
 type ColorPickerProps = {
-  onChange: (value: string) => void;
-  onChangeComplete: (value: string) => void;
-  value: string;
+  onChange: (value: RGBValue) => void;
+  onChangeComplete: (value: RGBValue) => void;
+  value: RGBValue;
   id: string;
+};
+
+const colorResultToRGBValue = (rgb: RgbaColor | RGBColor): RGBValue => {
+  return {
+    type: "rgb",
+    r: rgb.r,
+    g: rgb.g,
+    b: rgb.b,
+    alpha: rgb.a ?? 100,
+  };
 };
 
 export const ColorPicker = ({
@@ -48,10 +56,6 @@ export const ColorPicker = ({
   id,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  // Color picker will use 0 as alpha value, which will force user to set alpha every time they have to change from transparent
-  if (value === "transparent") {
-    value = "";
-  }
 
   const prefix = (
     <Popover
@@ -70,7 +74,7 @@ export const ColorPicker = ({
             width: "$spacing$10",
             height: "$spacing$10",
             borderRadius: 2,
-            background: value,
+            background: toValue(value),
           }}
         />
       </PopoverTrigger>
@@ -79,10 +83,10 @@ export const ColorPicker = ({
           <SketchPicker
             color={value}
             onChange={(color: ColorResult) =>
-              onChange(stringifyRGBA(color.rgb))
+              onChange(colorResultToRGBValue(color.rgb))
             }
             onChangeComplete={(color: ColorResult) => {
-              onChangeComplete(stringifyRGBA(color.rgb));
+              onChangeComplete(colorResultToRGBValue(color.rgb));
             }}
             // @todo to remove both when we have preset colors
             presetColors={[]}
@@ -96,8 +100,14 @@ export const ColorPicker = ({
 
   return (
     <TextField
-      onChange={(event) => onChange(event.target.value)}
-      value={value}
+      onChange={(event) => {
+        const rgb = colord(event.target.value).toRgb();
+        // @todo this is not editable, must be the same logic as in CSSValueInput
+        // edit then transform on Complete (blur or enter)
+        // checking colord .isValid() etc
+        onChange(colorResultToRGBValue(rgb));
+      }}
+      value={toValue(value)}
       id={id}
       prefix={prefix}
     />
