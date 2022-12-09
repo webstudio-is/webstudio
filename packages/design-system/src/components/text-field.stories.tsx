@@ -1,11 +1,11 @@
 import { expect } from "@storybook/jest";
 import { userEvent, waitFor, within } from "@storybook/testing-library";
-import React from "react";
+import * as React from "react";
 import { ComponentStory } from "@storybook/react";
 import { RowGapIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Button } from "./button";
 import { Flex } from "./flex";
-import { IconButton } from "./icon-button";
+import { IconButton_deprecated } from "./icon-button-deprecated";
 import { TextField } from "./text-field";
 import { Box } from "./box";
 import { Grid } from "./grid";
@@ -64,27 +64,27 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
       <TextField
         prefix={<RowGapIcon />}
         suffix={
-          <IconButton>
+          <IconButton_deprecated>
             <ChevronDownIcon />
-          </IconButton>
+          </IconButton_deprecated>
         }
       />
       <TextField
         state="invalid"
         prefix={<RowGapIcon />}
         suffix={
-          <IconButton>
+          <IconButton_deprecated>
             <ChevronDownIcon />
-          </IconButton>
+          </IconButton_deprecated>
         }
       />
       <TextField
         disabled
         prefix={<RowGapIcon />}
         suffix={
-          <IconButton>
+          <IconButton_deprecated>
             <ChevronDownIcon />
-          </IconButton>
+          </IconButton_deprecated>
         }
       />
     </Flex>
@@ -99,9 +99,9 @@ export const Layout: ComponentStory<typeof TextField> = () => {
           value="Long content comes here and it doesn't wrap"
           prefix={<RowGapIcon />}
           suffix={
-            <IconButton>
+            <IconButton_deprecated>
               <ChevronDownIcon />
-            </IconButton>
+            </IconButton_deprecated>
           }
           css={{
             flexGrow: 1,
@@ -211,9 +211,9 @@ export const ClickCapture: ComponentStory<typeof TextField> = (args) => {
         </Flex>
       }
       suffix={
-        <IconButton>
+        <IconButton_deprecated>
           <ChevronDownIcon />
-        </IconButton>
+        </IconButton_deprecated>
       }
       {...args}
     />

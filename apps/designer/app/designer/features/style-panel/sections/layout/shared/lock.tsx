@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
+import {
+  Flex,
+  IconButton_deprecated,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/css-data";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
@@ -47,9 +51,9 @@ export const Lock = ({
           justifyContent: "center",
         }}
       >
-        <IconButton onClick={() => setIsPaired((value) => !value)}>
+        <IconButton_deprecated onClick={() => setIsPaired((value) => !value)}>
           {isPaired ? <LockCloseIcon /> : <LockOpenIcon />}
-        </IconButton>
+        </IconButton_deprecated>
       </Flex>
     </Tooltip>
   );
