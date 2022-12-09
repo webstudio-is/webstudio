@@ -1,7 +1,10 @@
 import type { Style, StyleValue, StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import type { InheritedStyle } from "./get-inherited-style";
-import { isValid, isNumericString } from "./parse-css-value";
+import { isValid } from "./parse-css-value";
+
+export const isNumericString = (input: string) =>
+  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
 
 // @todo expose which instance we inherited the value from
 export const getFinalValue = ({

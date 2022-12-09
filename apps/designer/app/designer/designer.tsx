@@ -40,6 +40,7 @@ import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { useSetAssets } from "./shared/assets";
 import { getBuildUrl } from "~/shared/router-utils";
+import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 
 export const links = () => {
@@ -143,7 +144,9 @@ const SidePanel = ({
   gridArea,
   css,
 }: SidePanelProps) => {
-  if (isPreviewMode === true) return null;
+  if (isPreviewMode === true) {
+    return null;
+  }
   return (
     <Box
       as="aside"
@@ -289,6 +292,7 @@ export const Designer = ({
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
+  useSubscribeDesignTokens();
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);

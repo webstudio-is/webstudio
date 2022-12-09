@@ -48,6 +48,10 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import {
+  useInitializeDesignTokens,
+  usePublishDesignTokens,
+} from "./shared/design-tokens";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { useSelectedInstance } from "./shared/nano-states";
 import { customComponents } from "./custom-components";
@@ -61,7 +65,9 @@ const useElementsTree = () => {
   const onChangeChildren: OnChangeChildren = useCallback(
     (change) => {
       store.createTransaction([rootInstanceContainer], (rootInstance) => {
-        if (rootInstance === undefined) return;
+        if (rootInstance === undefined) {
+          return;
+        }
 
         const { instanceId, updates } = change;
         utils.tree.setInstanceChildrenMutable(
@@ -76,7 +82,9 @@ const useElementsTree = () => {
   );
 
   return useMemo(() => {
-    if (rootInstance === undefined) return;
+    if (rootInstance === undefined) {
+      return;
+    }
 
     return createElementsTree({
       sandbox: true,
@@ -129,6 +137,7 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageBreakpoints();
+  usePublishDesignTokens();
   useManageDesignModeStyles();
   useManageProps();
   usePublishSelectedInstanceData(treeId);
@@ -162,6 +171,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   }
   const isDesignerReady = useSubscribeDesignerReady();
   useInitializeBreakpoints(data.breakpoints);
+  useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
   usePopulateRootInstance(data.tree);
@@ -176,7 +186,9 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const isPreviewMode = useSubscribePreviewMode();
   const elements = useElementsTree();
 
-  if (elements === undefined) return null;
+  if (elements === undefined) {
+    return null;
+  }
 
   if (isPreviewMode || isDesignerReady === false) {
     return (

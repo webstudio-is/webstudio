@@ -1,5 +1,5 @@
 import {
-  IconButton,
+  IconButtonDeprecated,
   TreeItemLabel,
   TreeItemBody,
   TreeNode,
@@ -72,7 +72,7 @@ const staticTreeProps = {
   },
 };
 
-const MenuButton = styled(IconButton, {
+const MenuButton = styled(IconButtonDeprecated, {
   color: "$hint",
   "&:hover, &:focus-visible": { color: "$hiContrast" },
   variants: {
@@ -203,13 +203,13 @@ const PagesPanel = ({
           <>
             {onCreateNewPage && (
               <Tooltip content="New page" side="bottom">
-                <IconButton
+                <IconButtonDeprecated
                   size="2"
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
                 >
                   <NewPageIcon />
-                </IconButton>
+                </IconButtonDeprecated>
               </Tooltip>
             )}
             {onClose && <CloseButton onClick={onClose} />}

@@ -43,7 +43,9 @@ export const createPubsub = <PublishMap>() => {
       const publishCallback = useCallback(
         <Type extends keyof PublishMap>(action: Action<Type>) => {
           const element = iframeRef.current;
-          if (element?.contentWindow == null) return;
+          if (element?.contentWindow == null) {
+            return;
+          }
           element.contentWindow.postMessage(action, "*");
           window.postMessage(action, "*");
         },

@@ -1,5 +1,10 @@
 import type { RenderCategoryProps } from "../../style-sections";
-import { Flex, Grid, IconButton, Tooltip } from "@webstudio-is/design-system";
+import {
+  Flex,
+  Grid,
+  IconButtonDeprecated,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -297,9 +302,9 @@ export const TypographySectionAdvancedPopover = (
     >
       <Flex>
         <Tooltip content="More typography options" delayDuration={0}>
-          <IconButton>
+          <IconButtonDeprecated>
             <EllipsesIcon />
-          </IconButton>
+          </IconButtonDeprecated>
         </Tooltip>
       </Flex>
     </ValuePickerPopover>

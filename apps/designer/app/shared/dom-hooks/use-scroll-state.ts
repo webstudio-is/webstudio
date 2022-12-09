@@ -26,7 +26,9 @@ if (typeof window === "object") {
     emitter.emit("scrollStart");
     clearTimeout(timeoutId);
     timeoutId = window.setTimeout(() => {
-      if (isScrolling === false) return;
+      if (isScrolling === false) {
+        return;
+      }
       isScrolling = false;
       emitter.emit("scrollEnd");
     }, 150);

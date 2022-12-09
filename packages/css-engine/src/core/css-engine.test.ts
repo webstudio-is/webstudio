@@ -5,16 +5,25 @@ const style0 = {
 } as const;
 
 const mediaRuleOptions0 = { minWidth: 0 } as const;
-const mediaId = "0";
+const mediaId0 = "0";
+
+const style1 = {
+  display: { type: "keyword", value: "flex" },
+} as const;
+
+const mediaRuleOptions1 = { minWidth: 300 } as const;
+const mediaId1 = "1";
 
 describe("CssEngine", () => {
   let engine: CssEngine;
 
-  beforeEach(() => {
+  const reset = () => {
     engine = new CssEngine();
-  });
+  };
 
-  test("use default media rule when there is no matching one registrered", () => {
+  beforeEach(reset);
+
+  test("use default media rule when there is no matching one registered", () => {
     engine.addStyleRule(".c", {
       style: style0,
       breakpoint: "x",
@@ -35,10 +44,10 @@ describe("CssEngine", () => {
       }"
     `);
 
-    engine.addMediaRule(mediaId, mediaRuleOptions0);
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
     engine.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "blue" } },
-      breakpoint: mediaId,
+      breakpoint: mediaId0,
     });
     // Default media query should allways be the first to have the lowest source order specificity
     expect(engine.cssText).toMatchInlineSnapshot(`
@@ -52,8 +61,74 @@ describe("CssEngine", () => {
     `);
   });
 
+  test("sort media queries based on lower min-width", () => {
+    engine.addMediaRule(mediaId1, mediaRuleOptions1);
+    engine.addStyleRule(".c2", {
+      style: style1,
+      breakpoint: mediaId1,
+    });
+
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
+    engine.addStyleRule(".c1", {
+      style: style0,
+      breakpoint: mediaId0,
+    });
+
+    engine.addStyleRule(".c3", {
+      style: style0,
+      breakpoint: "x",
+    });
+
+    // Default media query should allways be the first to have the lowest source order specificity
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c3 { display: block }
+      }
+      @media all and (min-width: 0px) {
+        .c1 { display: block }
+      }
+      @media all and (min-width: 300px) {
+        .c2 { display: flex }
+      }"
+    `);
+  });
+
+  test("keep the sort order when minWidth is not defined", () => {
+    engine.addStyleRule(".c0", {
+      style: style0,
+      breakpoint: "x",
+    });
+    engine.addStyleRule(".c1", {
+      style: style1,
+      breakpoint: "x",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c0 { display: block }
+        .c1 { display: flex }
+      }"
+    `);
+
+    reset();
+
+    engine.addStyleRule(".c1", {
+      style: style1,
+      breakpoint: "x",
+    });
+    engine.addStyleRule(".c0", {
+      style: style0,
+      breakpoint: "x",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c1 { display: flex }
+        .c0 { display: block }
+      }"
+    `);
+  });
+
   test("rule with multiple properties", () => {
-    engine.addMediaRule(mediaId, mediaRuleOptions0);
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
     engine.addStyleRule(".c", {
       style: {
         ...style0,
@@ -69,7 +144,7 @@ describe("CssEngine", () => {
   });
 
   test("hyphenate property", () => {
-    engine.addMediaRule(mediaId, mediaRuleOptions0);
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
     engine.addStyleRule(".c", {
       style: {
         backgroundColor: { type: "keyword", value: "red" },
@@ -84,7 +159,7 @@ describe("CssEngine", () => {
   });
 
   test("add rule", () => {
-    engine.addMediaRule(mediaId, mediaRuleOptions0);
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
     const rule1 = engine.addStyleRule(".c", {
       style: {
         ...style0,
@@ -116,7 +191,7 @@ describe("CssEngine", () => {
   });
 
   test("update rule", () => {
-    engine.addMediaRule(mediaId, mediaRuleOptions0);
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
     const rule = engine.addStyleRule(".c", {
       style: {
         ...style0,
@@ -147,7 +222,7 @@ describe("CssEngine", () => {
   });
 
   test("don't override media queries", () => {
-    engine.addMediaRule(mediaId, mediaRuleOptions0);
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
     engine.addStyleRule(".c", {
       style: style0,
       breakpoint: "0",
@@ -157,7 +232,7 @@ describe("CssEngine", () => {
         .c { display: block }
       }"
     `);
-    engine.addMediaRule(mediaId, mediaRuleOptions0);
+    engine.addMediaRule(mediaId0, mediaRuleOptions0);
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c { display: block }

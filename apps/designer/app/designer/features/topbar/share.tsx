@@ -1,7 +1,7 @@
 import {
   Button,
   Flex,
-  IconButton,
+  IconButtonDeprecated,
   Popover,
   PopoverContent,
   PopoverPortal,
@@ -57,9 +57,9 @@ export const ShareButton = (props: ShareButtonProps) => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild aria-label="Share project">
-        <IconButton>
+        <IconButtonDeprecated>
           <Share1Icon />
-        </IconButton>
+        </IconButtonDeprecated>
       </PopoverTrigger>
       <PopoverPortal>
         <Content {...props} />

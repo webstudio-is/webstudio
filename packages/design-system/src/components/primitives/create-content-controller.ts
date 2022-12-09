@@ -33,7 +33,9 @@ const measureTextPadding = (node: HTMLElement, value: string) => {
     paddingLeft,
     paddingRight,
   } = getComputedStyle(node);
-  if (letterSpacing !== "normal") canvasContext.letterSpacing = letterSpacing;
+  if (letterSpacing !== "normal") {
+    canvasContext.letterSpacing = letterSpacing;
+  }
   canvasContext.font = `${fontWeight} ${fontSize} ${fontFamily}`;
   return ["left", "start"].includes(textAlign)
     ? parseFloat(paddingLeft)
@@ -95,12 +97,13 @@ export const createContentController = (
     const { type } = event;
     const targetValue = read(targetNode);
     const targetPadding = measureTextPadding(targetNode, targetValue);
-    if (type === eventNames[0])
+    if (type === eventNames[0]) {
       offsetX =
         targetPadding +
         measureTextWidth(
           targetValue.slice(0, targetNode.selectionStart || undefined)
         );
+    }
     const targetMetrics = measureTextMetrics(
       targetValue,
       offsetX,

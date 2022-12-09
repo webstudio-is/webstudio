@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
@@ -10,16 +10,14 @@ import {
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 import { addMediaRules } from "./styles";
+import { useSyncInitializeOnce } from "~/shared/hook-utils";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
-  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
-  const ref = useRef(false);
-  if (ref.current === false) {
-    ref.current = true;
+  useSyncInitializeOnce(() => {
     setCurrentBreakpoints(breakpoints);
     addMediaRules(breakpoints);
-  }
+  });
 };
 
 const usePublishBreakpoints = () => {
@@ -35,7 +33,9 @@ const usePublishBreakpoints = () => {
 const useBreakpointChange = () => {
   useSubscribe("breakpointChange", (breakpoint) => {
     store.createTransaction([breakpointsContainer], (breakpoints) => {
-      const foundBreakpoint = breakpoints.find(({ id }) => id == breakpoint.id);
+      const foundBreakpoint = breakpoints.find(
+        ({ id }) => id === breakpoint.id
+      );
       if (foundBreakpoint) {
         foundBreakpoint.label = breakpoint.label;
         foundBreakpoint.minWidth = breakpoint.minWidth;
@@ -54,9 +54,11 @@ const useBreakpointDelete = () => {
     store.createTransaction(
       [breakpointsContainer, rootInstanceContainer],
       (breakpoints, rootInstance) => {
-        if (rootInstance === undefined) return;
+        if (rootInstance === undefined) {
+          return;
+        }
 
-        const index = breakpoints.findIndex(({ id }) => id == breakpoint.id);
+        const index = breakpoints.findIndex(({ id }) => id === breakpoint.id);
         if (index !== -1) {
           breakpoints.splice(index, 1);
         }

@@ -1,7 +1,7 @@
 import React from "react";
 import { Flex, TextField } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-data";
-import { CssValueInput } from "./css-value-input";
+import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
 
 export default {
@@ -9,10 +9,12 @@ export default {
 };
 
 export const WithKeywords = () => {
-  const [value, setValue] = React.useState<StyleValue>({
-    type: "keyword",
-    value: "auto",
-  });
+  const [value, setValue] = React.useState<StyleValue | IntermediateStyleValue>(
+    {
+      type: "keyword",
+      value: "auto",
+    }
+  );
 
   return (
     <CssValueInput
@@ -27,23 +29,25 @@ export const WithKeywords = () => {
       onChange={(value) => {
         setValue(value);
       }}
+      onPreview={(value) => {
+        action("onPreview")(value);
+      }}
       onChangeComplete={(newValue) => {
         // on blur, select, enter etc.
         setValue(newValue);
         action("onChangeComplete")(newValue);
-      }}
-      onItemHighlight={(value) => {
-        action("onItemHighlight")(value);
       }}
     />
   );
 };
 
 export const WithIcons = () => {
-  const [value, setValue] = React.useState<StyleValue>({
-    type: "keyword",
-    value: "space-around",
-  });
+  const [value, setValue] = React.useState<StyleValue | IntermediateStyleValue>(
+    {
+      type: "keyword",
+      value: "space-around",
+    }
+  );
 
   return (
     <CssValueInput
@@ -61,24 +65,26 @@ export const WithIcons = () => {
       onChange={(newValue) => {
         setValue(newValue);
       }}
+      onPreview={(value) => {
+        action("onPreview")(value);
+      }}
       onChangeComplete={(newValue) => {
         // on blur, select, enter etc.
         setValue(newValue);
         action("onChangeComplete")(newValue);
-      }}
-      onItemHighlight={(value) => {
-        action("onItemHighlight")(value);
       }}
     />
   );
 };
 
 export const WithUnits = () => {
-  const [value, setValue] = React.useState<StyleValue>({
-    type: "unit",
-    value: 100,
-    unit: "px",
-  });
+  const [value, setValue] = React.useState<StyleValue | IntermediateStyleValue>(
+    {
+      type: "unit",
+      value: 100,
+      unit: "px",
+    }
+  );
 
   return (
     <Flex css={{ gap: "$spacing$9" }}>
@@ -94,13 +100,13 @@ export const WithUnits = () => {
         onChange={(newValue) => {
           setValue(newValue);
         }}
+        onPreview={(value) => {
+          action("onPreview")(value);
+        }}
         onChangeComplete={(newValue) => {
           // on blur, select, enter etc.
           setValue(newValue);
           action("onChangeComplete")(newValue);
-        }}
-        onItemHighlight={(value) => {
-          action("onItemHighlight")(value);
         }}
       />
       <TextField

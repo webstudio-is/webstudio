@@ -5,7 +5,7 @@ import type {
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
 import type { Breakpoint } from "@webstudio-is/css-data";
-import { DesignToken } from "~/designer/shared/design-tokens-manager";
+import type { DesignToken } from "@webstudio-is/design-tokens";
 
 export const rootInstanceContainer = createValueContainer<
   Instance | undefined

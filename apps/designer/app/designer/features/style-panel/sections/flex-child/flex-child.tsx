@@ -1,6 +1,6 @@
 import { Flex, Grid } from "@webstudio-is/design-system";
 import type { RenderCategoryProps } from "../../style-sections";
-import { ToggleGroupControl } from "../../controls";
+import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";
 import {
@@ -270,8 +270,14 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
 };
 
 const getSizingValue = (flexGrow: string, flexShrink: string) => {
-  if (flexGrow === "0" && flexShrink === "0") return "none";
-  if (flexGrow === "1" && flexShrink === "0") return "grow";
-  if (flexGrow === "0" && flexShrink === "1") return "shrink";
+  if (flexGrow === "0" && flexShrink === "0") {
+    return "none";
+  }
+  if (flexGrow === "1" && flexShrink === "0") {
+    return "grow";
+  }
+  if (flexGrow === "0" && flexShrink === "1") {
+    return "shrink";
+  }
   return "";
 };

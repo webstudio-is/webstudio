@@ -20,14 +20,19 @@ const instanceRelatedProps = {
   },
   canAcceptChild(item: Instance) {
     const { type } = getComponentMeta(item.component);
-    return type === "container";
+    return type === "body" || type === "container";
   },
   getItemChildren(item: Instance) {
     const { type } = getComponentMeta(item.component);
 
     // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
     // We rely on the fact that only rich-text or rich-text-child components may have `string` children.
-    if (type === "container" || type === "control" || type === "embed") {
+    if (
+      type === "body" ||
+      type === "container" ||
+      type === "control" ||
+      type === "embed"
+    ) {
       return item.children as Instance[];
     }
 

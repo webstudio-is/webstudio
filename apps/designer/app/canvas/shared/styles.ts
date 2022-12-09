@@ -27,8 +27,9 @@ import {
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
+  deleteTokenMutable,
   tokensToStyle,
-  updateOrAddTokenMutable,
+  updateTokenMutable,
 } from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine();
@@ -57,7 +58,9 @@ const helperStyles = [
 ];
 
 export const useManageDesignModeStyles = () => {
-  useUpdateTokens();
+  useUpdateToken();
+  useCreateToken();
+  useDeleteToken();
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
@@ -200,7 +203,9 @@ const useUpdateStyle = () => {
   useSubscribe("updateStyle", ({ id, updates, breakpoint }) => {
     // Only update styles if they match the selected instance
     // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
-    if (id !== selectedInstance?.id) return;
+    if (id !== selectedInstance?.id) {
+      return;
+    }
 
     for (const update of updates) {
       setCssVar(id, update.property, undefined);
@@ -215,26 +220,52 @@ const useUpdateStyle = () => {
   });
 };
 
-const useUpdateTokens = () => {
-  useSubscribe("updateToken", (updatedToken) => {
+const useUpdateToken = () => {
+  useSubscribe("updateToken", (update) => {
     store.createTransaction([designTokensContainer], (tokens) => {
-      updateOrAddTokenMutable(tokens, updatedToken);
+      updateTokenMutable(tokens, update.token, update.name);
+    });
+  });
+};
+
+const useCreateToken = () => {
+  useSubscribe("createToken", (token) => {
+    store.createTransaction([designTokensContainer], (tokens) => {
+      tokens.push(token);
+    });
+  });
+};
+
+const useDeleteToken = () => {
+  useSubscribe("deleteToken", (name) => {
+    store.createTransaction([designTokensContainer], (tokens) => {
+      deleteTokenMutable(tokens, name);
     });
   });
 };
 
 const usePreviewStyle = () => {
   useSubscribe("previewStyle", ({ id, updates, breakpoint }) => {
-    if (getRule(id, breakpoint.id) === undefined) {
-      const rule = addRule(id, { breakpoint: breakpoint.id, style: {} });
-      for (const update of updates) {
-        rule.styleMap.set(update.property, update.value);
-      }
-      cssEngine.render();
+    let rule = getRule(id, breakpoint.id);
+
+    if (rule === undefined) {
+      rule = addRule(id, { breakpoint: breakpoint.id, style: {} });
     }
+
     for (const update of updates) {
+      // This is possible on newly created instances, properties are not yet defined in the style.
+      if (rule.styleMap.has(update.property) === false) {
+        const dynamicStyle = toVarStyleWithFallback(id, {
+          [update.property]: update.value,
+        });
+
+        rule.styleMap.set(update.property, dynamicStyle[update.property]);
+      }
+
       setCssVar(id, update.property, update.value);
     }
+
+    cssEngine.render();
   });
 };
 

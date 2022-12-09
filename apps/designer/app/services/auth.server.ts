@@ -1,4 +1,4 @@
-import { User } from "@webstudio-is/prisma-client";
+import { type User, prisma } from "@webstudio-is/prisma-client";
 import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy, type GitHubProfile } from "remix-auth-github";
@@ -92,3 +92,14 @@ if (process.env.DEV_LOGIN === "true") {
     "dev"
   );
 }
+
+export const findAuthenticatedUser = async (request: Request) => {
+  const user = await authenticator.isAuthenticated(request);
+  if (user != null) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+    return dbUser;
+  }
+  return null;
+};

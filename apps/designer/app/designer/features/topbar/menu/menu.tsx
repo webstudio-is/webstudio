@@ -11,7 +11,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
   DropdownMenuPortal,
-  IconButton,
+  IconButtonDeprecated,
   Box,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, ChevronRightIcon } from "@webstudio-is/icons";
@@ -27,6 +27,7 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
+import { isFeatureEnabled } from "~/shared/feature-flags";
 
 const menuItemCss = {
   display: "flex",
@@ -37,6 +38,9 @@ const menuItemCss = {
 };
 
 const ThemeMenuItem = () => {
+  if (isFeatureEnabled("dark") === false) {
+    return null;
+  }
   const currentSetting = getThemeSetting();
   const labels: Record<ThemeSetting, string> = {
     light: "Light",
@@ -123,9 +127,9 @@ export const Menu = ({ publish }: MenuProps) => {
             },
           }}
         >
-          <IconButton aria-label="Menu Button">
+          <IconButtonDeprecated aria-label="Menu Button">
             <HamburgerMenuIcon />
-          </IconButton>
+          </IconButtonDeprecated>
         </Box>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>

@@ -4,7 +4,9 @@ import { cloneInstance } from "./clone-instance";
 const getIds = (instance: Instance, ids: Array<Instance["id"]> = []) => {
   ids.push(instance.id);
   for (const child of instance.children) {
-    if (typeof child !== "string") getIds(child);
+    if (typeof child !== "string") {
+      getIds(child);
+    }
   }
   return ids;
 };

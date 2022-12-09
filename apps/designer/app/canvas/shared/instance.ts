@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type Instance,
   type UserProp,
@@ -54,13 +54,9 @@ declare module "~/shared/pubsub" {
 }
 
 export const usePopulateRootInstance = (tree: Tree) => {
-  // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
-  const ref = useRef(false);
-  // It is only set once when the canvas is first loaded.
-  if (ref.current === false) {
-    ref.current = true;
+  useState(() => {
     rootInstanceContainer.value = tree.root;
-  }
+  });
 };
 
 export const findInsertLocation = (
@@ -77,9 +73,10 @@ export const findInsertLocation = (
   );
   path.reverse();
 
-  const parentIndex = path.findIndex(
-    ({ item }) => getComponentMeta(item.component).type === "container"
-  );
+  const parentIndex = path.findIndex(({ item }) => {
+    const { type } = getComponentMeta(item.component);
+    return type === "body" || type === "container";
+  });
 
   // Just in case selected Instance is not in the tree for some reason.
   if (parentIndex === -1) {
@@ -100,7 +97,9 @@ export const useInsertInstance = ({ treeId }: { treeId: string }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
-        if (rootInstance === undefined) return;
+        if (rootInstance === undefined) {
+          return;
+        }
         const populatedInstance = utils.tree.populateInstance(
           instance,
           breakpoints[0].id
@@ -130,7 +129,9 @@ export const useReparentInstance = () => {
 
   useSubscribe("reparentInstance", ({ instanceId, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance === undefined) return;
+      if (rootInstance === undefined) {
+        return;
+      }
       utils.tree.reparentInstanceMutable(
         rootInstance,
         instanceId,
@@ -257,7 +258,9 @@ export const usePublishSelectedInstanceDataRect = () => {
   const rect = useMeasureInstance(element);
 
   useEffect(() => {
-    if (rect) publishRect(rect);
+    if (rect) {
+      publishRect(rect);
+    }
   }, [rect]);
 };
 
@@ -281,7 +284,9 @@ export const useSetHoveredInstance = () => {
   );
 
   useEffect(() => {
-    if (hoveredElement === undefined) return;
+    if (hoveredElement === undefined) {
+      return;
+    }
     publish({
       type: "hoveredInstanceRect",
       payload: hoveredElement.getBoundingClientRect(),
@@ -313,7 +318,9 @@ export const useUpdateSelectedInstance = () => {
       instance = utils.tree.findInstanceById(rootInstance, selectedInstance.id);
     }
     // When it's a new inserted instance, it will be undefined, so we can't set it to undefined and remove it.
-    if (instance !== undefined) setSelectedInstance(instance);
+    if (instance !== undefined) {
+      setSelectedInstance(instance);
+    }
   }, [rootInstance, selectedInstance, setSelectedInstance]);
 };
 

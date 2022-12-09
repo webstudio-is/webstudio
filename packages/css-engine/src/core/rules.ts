@@ -12,6 +12,9 @@ class StylePropertyMap {
     this.#isDirty = true;
     this.onChange?.();
   }
+  has(property: StyleProperty) {
+    return this.#styleMap.has(property);
+  }
   clear() {
     this.#styleMap.clear();
     this.#isDirty = true;
@@ -23,7 +26,9 @@ class StylePropertyMap {
     }
     const block: Array<string> = [];
     for (const [property, value] of this.#styleMap) {
-      if (value === undefined) continue;
+      if (value === undefined) {
+        continue;
+      }
       block.push(`${hyphenate(property)}: ${toValue(value)}`);
     }
     this.#string = block.join("; ");
@@ -60,11 +65,22 @@ export type MediaRuleOptions = {
 };
 
 export class MediaRule {
-  #options: MediaRuleOptions;
+  // Sort media rules by minWidth.
+  // Needed to ensure that more specific media rules are inserted after less specific ones.
+  // So that they get a higher specificity.
+  static sort(mediaRules: Iterable<MediaRule>) {
+    return Array.from(mediaRules).sort((ruleA, ruleB) => {
+      return (
+        (ruleA.options.minWidth ?? -Number.MAX_SAFE_INTEGER) -
+        (ruleB.options.minWidth ?? -Number.MAX_SAFE_INTEGER)
+      );
+    });
+  }
+  options: MediaRuleOptions;
   rules: Array<StyleRule | PlaintextRule> = [];
   #mediaType;
   constructor(options: MediaRuleOptions = {}) {
-    this.#options = options;
+    this.options = options;
     this.#mediaType = options.mediaType ?? "all";
   }
   insertRule(rule: StyleRule | PlaintextRule) {
@@ -72,16 +88,24 @@ export class MediaRule {
     return rule;
   }
   get cssText() {
-    if (this.rules.length === 0) return "";
+    if (this.rules.length === 0) {
+      return "";
+    }
     const rules = [];
     for (const rule of this.rules) {
       rules.push(`  ${rule.cssText}`);
     }
     let conditionText = "";
-    const { minWidth, maxWidth } = this.#options;
-    if (minWidth !== undefined) conditionText = `min-width: ${minWidth}px`;
-    if (maxWidth !== undefined) conditionText = `max-width: ${maxWidth}px`;
-    if (conditionText) conditionText = `and (${conditionText}) `;
+    const { minWidth, maxWidth } = this.options;
+    if (minWidth !== undefined) {
+      conditionText = `min-width: ${minWidth}px`;
+    }
+    if (maxWidth !== undefined) {
+      conditionText = `max-width: ${maxWidth}px`;
+    }
+    if (conditionText) {
+      conditionText = `and (${conditionText}) `;
+    }
     return `@media ${this.#mediaType} ${conditionText}{\n${rules.join(
       "\n"
     )}\n}`;
@@ -90,7 +114,7 @@ export class MediaRule {
 
 export class PlaintextRule {
   cssText;
-  styleMap = new Map();
+  styleMap = new StylePropertyMap();
   constructor(cssText: string) {
     this.cssText = cssText;
   }
@@ -105,13 +129,13 @@ export type FontFaceOptions = {
 };
 
 export class FontFaceRule {
-  #options: FontFaceOptions;
+  options: FontFaceOptions;
   constructor(options: FontFaceOptions) {
-    this.#options = options;
+    this.options = options;
   }
   get cssText() {
     const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
-      this.#options;
+      this.options;
     return `@font-face {\n  font-family: ${fontFamily}; font-style: ${fontStyle}; font-weight: ${fontWeight}; font-display: ${fontDisplay}; src: ${src};\n}`;
   }
 }

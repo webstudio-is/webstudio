@@ -20,7 +20,7 @@ import {
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  IconButton,
+  IconButtonDeprecated,
 } from "@webstudio-is/design-system";
 import {
   PlusIcon,
@@ -29,6 +29,11 @@ import {
   ChevronDownIcon,
 } from "@webstudio-is/icons";
 import { usePropsLogic, type UserPropValue } from "./use-props-logic";
+import {
+  useStyleData,
+  type SetProperty,
+} from "../style-panel/shared/use-style-data";
+import type { Style } from "@webstudio-is/css-data";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -79,9 +84,9 @@ const Combobox = ({
             readOnly={isReadonly}
             state={isInvalid ? "invalid" : undefined}
             suffix={
-              <IconButton {...getToggleButtonProps()}>
+              <IconButtonDeprecated {...getToggleButtonProps()}>
                 <ChevronDownIcon />
-              </IconButton>
+              </IconButtonDeprecated>
             }
           />
         </ComboboxPopperAnchor>
@@ -111,6 +116,8 @@ type PropertyProps = {
   onChangePropName: (name: string) => void;
   onChangePropValue: (value: UserPropValue) => void;
   onDelete: (id: UserProp["id"]) => void;
+  setCssProperty: SetProperty;
+  currentStyle: Style;
 };
 
 const Property = ({
@@ -119,6 +126,8 @@ const Property = ({
   onChangePropName,
   onChangePropValue,
   onDelete,
+  setCssProperty,
+  currentStyle,
 }: PropertyProps) => {
   const meta = getComponentMetaProps(component);
 
@@ -156,6 +165,8 @@ const Property = ({
           component={component}
           userProp={userProp}
           onChangePropValue={onChangePropValue}
+          setCssProperty={setCssProperty}
+          currentStyle={currentStyle}
         />
       )}
       {userProp.required !== true && (
@@ -188,6 +199,11 @@ export const PropsPanel = ({
     handleChangePropValue,
     handleDeleteProp,
   } = usePropsLogic({ selectedInstanceData, publish });
+
+  const { setProperty: setCssProperty, currentStyle } = useStyleData({
+    selectedInstanceData,
+    publish,
+  });
 
   const addButton = (
     <Button
@@ -229,6 +245,8 @@ export const PropsPanel = ({
               onChangePropValue={(value) =>
                 handleChangePropValue(userProp.id, value)
               }
+              setCssProperty={setCssProperty}
+              currentStyle={currentStyle}
               onDelete={handleDeleteProp}
             />
           ))}

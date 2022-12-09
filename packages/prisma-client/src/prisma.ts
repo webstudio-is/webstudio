@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { PrismaClientKnownRequestError, Decimal } from "@prisma/client/runtime";
+const { PrismaClientKnownRequestError, Decimal } = Prisma;
 
 declare global {
   // allow global `var` declarations
@@ -12,6 +12,8 @@ declare global {
 // https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
 export const prisma = global.prisma || new PrismaClient();
 
-if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+if (process.env.NODE_ENV !== "production") {
+  global.prisma = prisma;
+}
 
 export { Prisma, PrismaClientKnownRequestError, Decimal };

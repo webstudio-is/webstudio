@@ -17,7 +17,7 @@ import {
 } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled } from "../stitches.config";
-import { IconButton } from "./icon-button";
+import { IconButtonDeprecated } from "./icon-button-deprecated";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
 import { TextField } from "./text-field";
@@ -134,6 +134,7 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
+  onInputChange?: (value: string | undefined) => void;
   onItemSelect?: (value: Item | null) => void;
   onItemHighlight?: (value: Item | null) => void;
   stateReducer?: (
@@ -149,6 +150,7 @@ export const useCombobox = <Item,>({
   items,
   value,
   itemToString,
+  onInputChange,
   onItemSelect,
   onItemHighlight,
   stateReducer = (state, { changes }) => changes,
@@ -168,15 +170,18 @@ export const useCombobox = <Item,>({
     selectedItem: value, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
-    onInputValueChange({ inputValue }) {
-      filter(inputValue);
+    onInputValueChange({ inputValue, type }) {
+      if (type === comboboxStateChangeTypes.InputChange) {
+        filter(inputValue);
+        onInputChange?.(inputValue);
+      }
     },
     onSelectedItemChange({ selectedItem }) {
       onItemSelect?.(selectedItem ?? null);
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
-        onItemHighlight?.(items[highlightedIndex] ?? null);
+        onItemHighlight?.(filteredItems[highlightedIndex] ?? null);
       }
     },
   });
@@ -263,9 +268,9 @@ export const Combobox = <Item,>({
               placeholder,
             })}
             suffix={
-              <IconButton {...getToggleButtonProps()}>
+              <IconButtonDeprecated {...getToggleButtonProps()}>
                 <ChevronDownIcon />
-              </IconButton>
+              </IconButtonDeprecated>
             }
           />
         </PopperAnchor>

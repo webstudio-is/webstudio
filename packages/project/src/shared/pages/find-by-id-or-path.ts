@@ -1,4 +1,4 @@
-import { type Pages, type Page } from "../../db/types";
+import { type Pages, type Page } from "../../db/schema";
 
 export const findByIdOrPath = (
   pages: Pages,

@@ -18,6 +18,8 @@ import { ImageManager } from "~/designer/shared/image-manager";
 import { Checkbox } from "@webstudio-is/design-system";
 import { Asset } from "@webstudio-is/asset-uploader";
 import type { UserPropValue } from "./use-props-logic";
+import { type SetProperty } from "../style-panel/shared/use-style-data";
+import type { Style } from "@webstudio-is/css-data";
 
 const textControlTypes = [
   "text",
@@ -174,6 +176,8 @@ type ControlProps = {
   component: Instance["component"];
   userProp: UserProp;
   onChangePropValue: (value: UserPropValue) => void;
+  setCssProperty: SetProperty;
+  currentStyle: Style;
 };
 
 // eslint-disable-next-line func-style
@@ -181,6 +185,7 @@ export function Control({
   component,
   userProp,
   onChangePropValue,
+  setCssProperty,
 }: ControlProps) {
   const meta = getComponentMetaProps(component);
 
@@ -215,7 +220,22 @@ export function Control({
     return (
       <ImageControl
         asset={asset}
-        onChange={(value) => onChangePropValue({ type: "asset", value })}
+        onChange={(value) => {
+          onChangePropValue({ type: "asset", value });
+
+          const { meta } = value;
+          if ("width" in meta && "height" in meta) {
+            // @todo: change on own type, pass width/hight separately
+            const aspectRatio = meta.width / meta.height;
+
+            // @todo: own type, simlify width/height, until that use unit as before
+            setCssProperty("aspectRatio")({
+              type: "unit",
+              value: aspectRatio,
+              unit: "number",
+            });
+          }
+        }}
       />
     );
   }

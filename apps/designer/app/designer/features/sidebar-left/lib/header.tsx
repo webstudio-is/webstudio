@@ -1,4 +1,9 @@
-import { Flex, IconButton, Text, Tooltip } from "@webstudio-is/design-system";
+import {
+  Flex,
+  IconButtonDeprecated,
+  Text,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import { Separator } from "@webstudio-is/design-system";
 import { CrossIcon } from "@webstudio-is/icons";
 
@@ -25,8 +30,8 @@ export const Header = ({ title, suffix }: HeaderProps) => {
 
 export const CloseButton = ({ onClick }: { onClick: () => void }) => (
   <Tooltip content="Close panel" side="bottom">
-    <IconButton onClick={onClick} size="2" aria-label="Close panel">
+    <IconButtonDeprecated onClick={onClick} size="2" aria-label="Close panel">
       <CrossIcon />
-    </IconButton>
+    </IconButtonDeprecated>
   </Tooltip>
 );

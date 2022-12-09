@@ -19,7 +19,9 @@ const queue: Array<Job> = [];
 
 export const enqueue = (job: Job) => {
   queue.push(job);
-  if (isInProgress === false) dequeue();
+  if (isInProgress === false) {
+    dequeue();
+  }
 };
 
 let isInProgress = false;
