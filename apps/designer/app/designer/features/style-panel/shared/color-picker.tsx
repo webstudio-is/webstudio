@@ -92,6 +92,7 @@ export const ColorPicker = ({
 
     // We don't store invalid values in the CSS data, below is the only way we can show errors.
     // See for details: https://github.com/webstudio-is/webstudio-designer/issues/564
+    // Anyway same behavior has Webflow - shows an error state on "Enter", and resets on Blur
 
     // In case of "Enter" click show that the value is invalid
     if (source === "enter") {
