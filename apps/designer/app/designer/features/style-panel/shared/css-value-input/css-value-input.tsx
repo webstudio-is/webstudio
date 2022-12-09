@@ -267,8 +267,8 @@ export const CssValueInput = ({
     itemToString: (item) =>
       item === null
         ? ""
-        : item.type === "intermediate"
-        ? item.value
+        : item.type === "intermediate" || item.type === "unit"
+        ? String(item.value)
         : toValue(item),
     onInputChange: (inputValue) => {
       onChange(inputValue ?? unsetValue.value);
