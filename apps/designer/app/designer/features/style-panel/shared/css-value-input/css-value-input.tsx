@@ -234,6 +234,7 @@ export const CssValueInput = ({
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
   const onChange = (input: string) => {
+    console.log(2);
     // We don't know what's inside the input,
     // preserve current unit value if exists
     props.onChange({
@@ -244,6 +245,7 @@ export const CssValueInput = ({
   };
 
   const onChangeComplete = (value: CssValueInputValue) => {
+    console.log(1);
     if (value.type !== "intermediate" && value.type !== "invalid") {
       props.onChangeComplete(value);
       return;
@@ -309,13 +311,13 @@ export const CssValueInput = ({
   });
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
+    inputProps.onBlur(event);
     // When select is open, onBlur is triggered,though we don't want a change event in this case.
-    if (isUnitsOpen || isOpen) {
+    if (isUnitsOpen || (isOpen && !getMenuProps().empty)) {
       return;
     }
 
     onChangeComplete(value);
-    inputProps.onBlur(event);
   };
 
   const handleKeyDown = useHandleKeyDown({
