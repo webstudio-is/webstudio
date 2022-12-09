@@ -1,6 +1,6 @@
 import {
   Flex,
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
   Text,
   Tooltip,
 } from "@webstudio-is/design-system";

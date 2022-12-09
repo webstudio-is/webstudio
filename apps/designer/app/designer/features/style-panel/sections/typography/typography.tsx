@@ -2,7 +2,7 @@ import type { RenderCategoryProps } from "../../style-sections";
 import {
   Flex,
   Grid,
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
   Tooltip,
 } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";

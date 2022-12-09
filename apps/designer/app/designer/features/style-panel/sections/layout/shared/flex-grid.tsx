@@ -1,8 +1,4 @@
-import {
-  Flex,
-  Grid,
-  IconButton_deprecated as IconButtonDeprecated,
-} from "@webstudio-is/design-system";
+import { Flex, Grid, IconButtonDeprecated } from "@webstudio-is/design-system";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import { useIsFromCurrentBreakpoint } from "../../../shared/use-is-from-current-breakpoint";
 import type { Style } from "@webstudio-is/css-data";

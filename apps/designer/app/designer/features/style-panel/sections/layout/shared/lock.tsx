@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Flex,
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
   Tooltip,
 } from "@webstudio-is/design-system";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";

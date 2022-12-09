@@ -20,7 +20,7 @@ import {
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
 } from "@webstudio-is/design-system";
 import {
   PlusIcon,

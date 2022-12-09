@@ -4,7 +4,7 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
 import { panelStyles } from "./panel";
 import { Flex } from "./flex";
-import { IconButton_deprecated } from "./icon-button-deprecated";
+import { IconButtonDeprecated } from "./icon-button-deprecated";
 import { Text } from "./text";
 import { Separator } from "./separator";
 import { styled, CSS } from "../stitches.config";
@@ -77,7 +77,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
       >
         <Text variant="title">{title}</Text>
         <PopoverClose asChild>
-          <IconButton_deprecated
+          <IconButtonDeprecated
             size="2"
             css={{
               marginRight: "$spacing$5",
@@ -85,7 +85,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
             aria-label="Close"
           >
             <CrossLargeIcon />
-          </IconButton_deprecated>
+          </IconButtonDeprecated>
         </PopoverClose>
       </Flex>
       <Separator />

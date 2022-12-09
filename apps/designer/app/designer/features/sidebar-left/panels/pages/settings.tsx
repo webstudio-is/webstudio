@@ -1,5 +1,5 @@
 import {
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
   Button,
   Box,
   Label,

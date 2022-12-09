@@ -1,7 +1,7 @@
 import {
   DropdownMenu,
   DropdownMenuTrigger,
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
   DropdownMenuContent,
   DropdownMenuItem,
   Text,

@@ -1,7 +1,7 @@
 import {
   Button,
   Flex,
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
   Popover,
   PopoverContent,
   PopoverPortal,

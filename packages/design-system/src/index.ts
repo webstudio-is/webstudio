@@ -28,7 +28,7 @@ export { SimpleToggle } from "./components/simple-toggle";
 export { ScrollArea } from "./components/scrollbar";
 export { Tooltip, InputErrorsTooltip } from "./components/tooltip";
 export { Button } from "./components/button";
-export { IconButton_deprecated } from "./components/icon-button-deprecated";
+export { IconButtonDeprecated } from "./components/icon-button-deprecated";
 export { Box } from "./components/box";
 export { ProgressBar } from "./components/progress-bar";
 export * from "./components/popover";

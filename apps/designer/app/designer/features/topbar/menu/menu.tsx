@@ -11,7 +11,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
   DropdownMenuPortal,
-  IconButton_deprecated as IconButtonDeprecated,
+  IconButtonDeprecated,
   Box,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, ChevronRightIcon } from "@webstudio-is/icons";
