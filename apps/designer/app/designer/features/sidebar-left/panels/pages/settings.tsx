@@ -1,5 +1,5 @@
 import {
-  IconButton_deprecated,
+  IconButton_deprecated as IconButtonDeprecated,
   Button,
   Box,
   Label,
@@ -276,7 +276,7 @@ const NewPageSettingsView = ({
           <>
             {onClose && (
               <Tooltip content="Cancel" side="bottom">
-                <IconButton_deprecated
+                <IconButtonDeprecated
                   size="2"
                   onClick={onClose}
                   aria-label="Cancel"
@@ -285,7 +285,7 @@ const NewPageSettingsView = ({
                   tabIndex={3}
                 >
                   <ChevronDoubleLeftIcon />
-                </IconButton_deprecated>
+                </IconButtonDeprecated>
               </Tooltip>
             )}
             <ButtonContainer>
@@ -460,26 +460,26 @@ const PageSettingsView = ({
           <>
             {isHomePage === false && (
               <Tooltip content="Delete page" side="bottom">
-                <IconButton_deprecated
+                <IconButtonDeprecated
                   size="2"
                   onClick={onDelete}
                   aria-label="Delete page"
                   tabIndex={2}
                 >
                   <TrashIcon />
-                </IconButton_deprecated>
+                </IconButtonDeprecated>
               </Tooltip>
             )}
             {onClose && (
               <Tooltip content="Close page settings" side="bottom">
-                <IconButton_deprecated
+                <IconButtonDeprecated
                   size="2"
                   onClick={onClose}
                   aria-label="Close page settings"
                   tabIndex={2}
                 >
                   <ChevronDoubleLeftIcon />
-                </IconButton_deprecated>
+                </IconButtonDeprecated>
               </Tooltip>
             )}
           </>

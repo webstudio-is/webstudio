@@ -1,7 +1,7 @@
 import {
   DropdownMenu,
   DropdownMenuTrigger,
-  IconButton_deprecated,
+  IconButton_deprecated as IconButtonDeprecated,
   DropdownMenuContent,
   DropdownMenuItem,
   Text,
@@ -11,7 +11,7 @@ import {
 import { MenuIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 
-const MenuButton = styled(IconButton_deprecated, {
+const MenuButton = styled(IconButtonDeprecated, {
   color: "$hint",
   "&:hover, &:focus-visible": {
     color: "$hiContrast",

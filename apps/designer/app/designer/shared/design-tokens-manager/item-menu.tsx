@@ -1,7 +1,7 @@
 import {
   DropdownMenu,
   DropdownMenuTrigger,
-  IconButton_deprecated,
+  IconButton_deprecated as IconButtonDeprecated,
   DropdownMenuContent,
   DropdownMenuItem,
   Text,
@@ -22,7 +22,7 @@ const stopPropagation: MouseEventHandler = (event) => {
   event.stopPropagation();
 };
 
-const MenuButton = styled(IconButton_deprecated, {
+const MenuButton = styled(IconButtonDeprecated, {
   color: "$hint",
   "&:hover, &:focus-visible": {
     color: "$hiContrast",
