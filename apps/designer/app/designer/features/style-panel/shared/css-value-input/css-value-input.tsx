@@ -234,7 +234,6 @@ export const CssValueInput = ({
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
   const onChange = (input: string) => {
-    console.log(2);
     // We don't know what's inside the input,
     // preserve current unit value if exists
     props.onChange({
@@ -245,7 +244,6 @@ export const CssValueInput = ({
   };
 
   const onChangeComplete = (value: CssValueInputValue) => {
-    console.log(1);
     if (value.type !== "intermediate" && value.type !== "invalid") {
       props.onChangeComplete(value);
       return;
