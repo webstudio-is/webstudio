@@ -100,8 +100,8 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
         left: 0,
         pointerEvents: "auto",
         background: "$loContrast",
-        padding: 4,
-        borderRadius: 6,
+        padding: "$spacing$3",
+        borderRadius: "$borderRadius$6",
         border: "1px solid $slate8",
         filter:
           "drop-shadow(0px 2px 7px rgba(0, 0, 0, 0.1)) drop-shadow(0px 5px 17px rgba(0, 0, 0, 0.15))",

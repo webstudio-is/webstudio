@@ -16,7 +16,7 @@ export const IconButton = styled("button", {
   // set size and shape
   width: 28,
   height: 28,
-  borderRadius: 3,
+  borderRadius: "$borderRadius$3",
 
   "&:focus-visible": {
     outline: "2px solid $blue10",
