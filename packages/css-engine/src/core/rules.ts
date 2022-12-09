@@ -67,14 +67,11 @@ export class MediaRule {
   // Needed to ensure that more specific media rules are inserted after less specific ones.
   // So that they get a higher specificity.
   static sort(mediaRules: Iterable<MediaRule>) {
-    return Array.from(mediaRules).sort((a, b) => {
-      if (
-        a.options.minWidth === undefined ||
-        b.options.minWidth === undefined
-      ) {
-        return -1;
-      }
-      return a.options.minWidth - b.options.minWidth;
+    return Array.from(mediaRules).sort((ruleA, ruleB) => {
+      return (
+        (ruleA.options.minWidth ?? -Infinity) -
+        (ruleB.options.minWidth ?? -Infinity)
+      );
     });
   }
   options: MediaRuleOptions;

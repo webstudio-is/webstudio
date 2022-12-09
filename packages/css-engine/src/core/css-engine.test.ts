@@ -17,9 +17,11 @@ const mediaId1 = "1";
 describe("CssEngine", () => {
   let engine: CssEngine;
 
-  beforeEach(() => {
+  const reset = () => {
     engine = new CssEngine();
-  });
+  };
+
+  beforeEach(reset);
 
   test("use default media rule when there is no matching one registered", () => {
     engine.addStyleRule(".c", {
@@ -49,17 +51,17 @@ describe("CssEngine", () => {
     });
     // Default media query should allways be the first to have the lowest source order specificity
     expect(engine.cssText).toMatchInlineSnapshot(`
-      "@media all and (min-width: 0px) {
-        .c1 { color: blue }
-      }
-      @media all {
+      "@media all {
         .c { display: block }
         .c1 { color: red }
+      }
+      @media all and (min-width: 0px) {
+        .c1 { color: blue }
       }"
     `);
   });
 
-  test("sort media queries based on min-width", () => {
+  test("sort media queries based on lower min-width", () => {
     engine.addMediaRule(mediaId1, mediaRuleOptions1);
     engine.addStyleRule(".c2", {
       style: style1,
@@ -87,6 +89,40 @@ describe("CssEngine", () => {
       }
       @media all and (min-width: 300px) {
         .c2 { display: flex }
+      }"
+    `);
+  });
+
+  test("keep the sort order when minWidth is not defined", () => {
+    engine.addStyleRule(".c0", {
+      style: style0,
+      breakpoint: "x",
+    });
+    engine.addStyleRule(".c1", {
+      style: style1,
+      breakpoint: "x",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c0 { display: block }
+        .c1 { display: flex }
+      }"
+    `);
+
+    reset();
+
+    engine.addStyleRule(".c1", {
+      style: style1,
+      breakpoint: "x",
+    });
+    engine.addStyleRule(".c0", {
+      style: style0,
+      breakpoint: "x",
+    });
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c1 { display: flex }
+        .c0 { display: block }
       }"
     `);
   });
