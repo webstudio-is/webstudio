@@ -1,8 +1,10 @@
-import { ActionFunction } from "@remix-run/node";
+import { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import {
   deleteAssets,
   uploadAssets,
+  loadByProject,
 } from "@webstudio-is/asset-uploader/server";
 import { toast } from "@webstudio-is/design-system";
 import { useEffect } from "react";
@@ -13,6 +15,15 @@ import { sentryException } from "~/shared/sentry";
 const DeleteAssets = zfd.formData({
   assetId: zfd.repeatableOfType(zfd.text()),
 });
+
+export const loader: LoaderFunction = async ({
+  params,
+}): Promise<Array<Asset>> => {
+  if (params.projectId === undefined) {
+    throw new Error("Project id undefined");
+  }
+  return await loadByProject(params.projectId);
+};
 
 export const action: ActionFunction = async ({
   request,

@@ -1,14 +1,8 @@
 import { z, type ZodType } from "zod";
-import {
-  Project as BaseProject,
-  Build as DbBuild,
-} from "@webstudio-is/prisma-client";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import { Project, Build as DbBuild } from "@webstudio-is/prisma-client";
 import type { Data } from "@webstudio-is/react-sdk";
 
-export type Project = Omit<BaseProject, "assets"> & {
-  assets?: Array<Asset>;
-};
+export type { Project };
 
 const commonPageFields = {
   id: z.string(),

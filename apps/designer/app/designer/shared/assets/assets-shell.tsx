@@ -23,8 +23,7 @@ export const AssetsShell = ({
       direction="column"
       css={{
         overflow: "hidden",
-        paddingTop: "$spacing$3",
-        paddingBottom: "$spacing$9",
+        py: "$spacing$5",
       }}
     >
       <Flex
@@ -41,6 +40,7 @@ export const AssetsShell = ({
         css={{
           flexDirection: "column",
           px: "$spacing$9",
+          overflow: "auto",
         }}
       >
         {children}
