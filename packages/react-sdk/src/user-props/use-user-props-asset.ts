@@ -15,10 +15,14 @@ export const useUserPropsAsset = (
 
   const propsData = allUserProps[instanceId];
   const asset = useMemo(() => {
-    if (propsData == null) return undefined;
+    if (propsData == null) {
+      return undefined;
+    }
     const prop = propsData.props.find((prop) => prop.prop === propName);
 
-    if (prop == null) return undefined;
+    if (prop == null) {
+      return undefined;
+    }
 
     if (prop.type === "asset") {
       return prop.value;

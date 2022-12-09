@@ -64,7 +64,9 @@ export const renderProperty = ({
 }: RenderPropertyProps) => {
   const Control = controls[styleConfig.control];
   const { property } = styleConfig;
-  if (!Control) return null;
+  if (!Control) {
+    return null;
+  }
 
   return (
     <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>

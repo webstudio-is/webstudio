@@ -1,7 +1,7 @@
 import {
   DropdownMenu,
   DropdownMenuTrigger,
-  IconButton_deprecated,
+  IconButtonDeprecated,
   DropdownMenuContent,
   DropdownMenuItem,
   Text,
@@ -11,7 +11,7 @@ import {
 import { MenuIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 
-const MenuButton = styled(IconButton_deprecated, {
+const MenuButton = styled(IconButtonDeprecated, {
   color: "$hint",
   "&:hover, &:focus-visible": {
     color: "$hiContrast",
@@ -102,7 +102,9 @@ export const useMenu = ({ selectedIndex, onSelect, onDelete }: UseMenu) => {
       openMenu.current === index ||
       focusedMenuTrigger.current === index;
 
-    if (show === false) return;
+    if (show === false) {
+      return;
+    }
 
     return (
       <ItemMenu

@@ -49,7 +49,9 @@ export const ColorPicker = ({
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   // Color picker will use 0 as alpha value, which will force user to set alpha every time they have to change from transparent
-  if (value === "transparent") value = "";
+  if (value === "transparent") {
+    value = "";
+  }
 
   const prefix = (
     <Popover

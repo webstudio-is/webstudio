@@ -93,8 +93,12 @@ type SliderPrimitiveProps = Omit<
 type SliderProps = SliderPrimitiveProps & { css?: CSS };
 
 const toArrayValue = (value?: Array<number> | number) => {
-  if (Array.isArray(value)) return value;
-  if (value === undefined) return;
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (value === undefined) {
+    return;
+  }
   return [value];
 };
 

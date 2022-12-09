@@ -13,7 +13,9 @@ let system: ColorScheme;
  * Subscribes color scheme change event and rerenders
  */
 const subscribeSystemTheme = () => {
-  if (typeof matchMedia === "undefined") return;
+  if (typeof matchMedia === "undefined") {
+    return;
+  }
   const query = matchMedia("(prefers-color-scheme: light)");
   const queryColorScheme = (query: MediaQueryList | MediaQueryListEvent) =>
     query.matches ? "light" : "dark";
@@ -67,8 +69,12 @@ export const setThemeSetting = (nextSetting: ThemeSetting) => {
  */
 export const useThemeProps = () => {
   const data = useLoaderData();
-  if (data.theme.setting) setting = data.theme.setting;
-  if (data.theme.system) system = data.theme.system;
+  if (data.theme.setting) {
+    setting = data.theme.setting;
+  }
+  if (data.theme.system) {
+    system = data.theme.system;
+  }
   const theme = getColorScheme();
   return {
     className: theme === "dark" ? darkTheme.className : undefined,

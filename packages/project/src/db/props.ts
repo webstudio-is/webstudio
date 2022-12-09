@@ -128,7 +128,9 @@ export const clone = async (
     where: { treeId: previousTreeId },
   });
 
-  if (props.length === 0) return;
+  if (props.length === 0) {
+    return;
+  }
   const data = props.map(({ id: _id, treeId: _treeId, ...rest }) => ({
     ...rest,
     treeId: nextTreeId,

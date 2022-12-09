@@ -51,7 +51,7 @@ const useLabels = (
 
   const selectedLabel = useMemo(() => {
     const selectedOption = availableFontWeights.find(
-      (option) => option.weight == currentWeight
+      (option) => option.weight === currentWeight
     );
     return selectedOption?.label;
   }, [currentWeight, availableFontWeights]);
@@ -87,7 +87,9 @@ export const FontWeightControl = ({
     toValue(fontWeight)
   );
 
-  if (fontWeight === undefined) return null;
+  if (fontWeight === undefined) {
+    return null;
+  }
 
   const setValue = setProperty(styleConfig.property);
 
@@ -98,7 +100,7 @@ export const FontWeightControl = ({
       value={selectedLabel}
       onChange={(label) => {
         const selected = availableFontWeights.find(
-          (option) => option.label == label
+          (option) => option.label === label
         );
         if (selected) {
           setValue(selected.weight);

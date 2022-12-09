@@ -12,7 +12,9 @@ const OutlineContainer = styled("div", {
 
 const useStyle = (rect?: Rect) => {
   return useMemo(() => {
-    if (rect === undefined) return;
+    if (rect === undefined) {
+      return;
+    }
     return {
       transform: `translate3d(${rect.left}px, ${rect.top}px, 0)`,
       width: rect.width,

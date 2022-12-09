@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   type UploadHandlerPart,
-  unstable_parseMultipartFormData,
+  unstable_parseMultipartFormData as unstableCreateFileUploadHandler,
   MaxPartSizeExceededError,
 } from "@remix-run/node";
 import { PutObjectCommandInput } from "@aws-sdk/client-s3";
@@ -29,7 +29,7 @@ export const uploadToS3 = async ({
   projectId: string;
   maxSize: number;
 }): Promise<Array<Asset>> => {
-  const formData = await unstable_parseMultipartFormData(
+  const formData = await unstableCreateFileUploadHandler(
     request,
     (file: UploadHandlerPart) =>
       uploadHandler({

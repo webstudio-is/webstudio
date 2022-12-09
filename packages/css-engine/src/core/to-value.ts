@@ -13,7 +13,9 @@ export const toValue = (
   value?: StyleValue,
   options: ToCssOptions = defaultOptions
 ): string => {
-  if (value === undefined) return "";
+  if (value === undefined) {
+    return "";
+  }
   if (value.type === "unit") {
     return value.value + (value.unit === "number" ? "" : value.unit);
   }

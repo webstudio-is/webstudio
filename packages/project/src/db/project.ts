@@ -47,7 +47,9 @@ export const loadById = async (projectId?: Project["id"]) => {
     },
   });
 
-  if (!project) return null;
+  if (!project) {
+    return null;
+  }
   return parseProject(project);
 };
 
@@ -63,7 +65,9 @@ export const loadByDomain = async (domain: string): Promise<Project | null> => {
     },
   });
 
-  if (!project) return null;
+  if (!project) {
+    return null;
+  }
 
   return parseProject(project);
 };

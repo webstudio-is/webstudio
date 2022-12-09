@@ -23,8 +23,9 @@ export const useSubscribeBreakpoints = () => {
       const nextSelectedBreakpoint = breakpoints.find(
         (breakpoint) => breakpoint.id === selectedBreakpoint.id
       );
-      if (nextSelectedBreakpoint !== undefined)
+      if (nextSelectedBreakpoint !== undefined) {
         setSelectedBreakpoint(nextSelectedBreakpoint);
+      }
     }
   }, [breakpoints, selectedBreakpoint, setSelectedBreakpoint]);
 };

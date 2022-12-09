@@ -78,7 +78,7 @@ export const useUnitSelect = ({
 
   if (
     value === undefined ||
-    renderUnits == undefined ||
+    renderUnits === undefined ||
     renderValue === undefined ||
     renderUnits.length < 2
   ) {
@@ -94,7 +94,9 @@ export const useUnitSelect = ({
       onOpenChange={setIsOpen}
       onChange={(option) => {
         const unit = renderUnitMap.get(option);
-        if (unit === undefined) return;
+        if (unit === undefined) {
+          return;
+        }
         onChange?.({
           ...value,
           unit,

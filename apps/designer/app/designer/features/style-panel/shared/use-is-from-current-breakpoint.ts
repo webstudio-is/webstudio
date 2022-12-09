@@ -22,8 +22,11 @@ export const useIsFromCurrentBreakpoint = (
       ),
     [selectedInstanceData, selectedBreakpoint]
   );
-  if (cssRule === undefined) return false;
-  if (Array.isArray(property))
+  if (cssRule === undefined) {
+    return false;
+  }
+  if (Array.isArray(property)) {
     return property.some((property) => property in cssRule.style);
+  }
   return property in cssRule.style;
 };

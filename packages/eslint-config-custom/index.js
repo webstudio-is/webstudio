@@ -9,6 +9,7 @@ module.exports = {
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:react-hooks/recommended",
+    "plugin:react/jsx-runtime",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -18,7 +19,7 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  plugins: ["react", "@typescript-eslint", "unicorn"],
+  plugins: ["react", "@typescript-eslint", "unicorn", "import"],
   settings: {
     react: {
       version: "detect",
@@ -29,7 +30,6 @@ module.exports = {
     // It's too dumb to understand properly what's defined in ts
     "react/prop-types": 0,
     "no-unused-vars": "off",
-    "react/react-in-jsx-scope": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "func-style": ["error", "expression", { allowArrowFunctions: true }],
     "unicorn/filename-case": [
@@ -38,6 +38,21 @@ module.exports = {
         case: "kebabCase",
         // Remix routes need to contain $variable in the file name
         ignore: ["\\$"],
+      },
+    ],
+    curly: 2,
+    eqeqeq: ["error", "always", { null: "ignore" }],
+    camelcase: 2,
+    radix: 2,
+    "import/no-internal-modules": [
+      "error",
+      {
+        allow: [
+          "**/server",
+          "@lexical/react/*",
+          "__generated__/*",
+          "react-hot-toast/headless",
+        ],
       },
     ],
   },

@@ -33,7 +33,9 @@ const usePublishBreakpoints = () => {
 const useBreakpointChange = () => {
   useSubscribe("breakpointChange", (breakpoint) => {
     store.createTransaction([breakpointsContainer], (breakpoints) => {
-      const foundBreakpoint = breakpoints.find(({ id }) => id == breakpoint.id);
+      const foundBreakpoint = breakpoints.find(
+        ({ id }) => id === breakpoint.id
+      );
       if (foundBreakpoint) {
         foundBreakpoint.label = breakpoint.label;
         foundBreakpoint.minWidth = breakpoint.minWidth;
@@ -52,9 +54,11 @@ const useBreakpointDelete = () => {
     store.createTransaction(
       [breakpointsContainer, rootInstanceContainer],
       (breakpoints, rootInstance) => {
-        if (rootInstance === undefined) return;
+        if (rootInstance === undefined) {
+          return;
+        }
 
-        const index = breakpoints.findIndex(({ id }) => id == breakpoint.id);
+        const index = breakpoints.findIndex(({ id }) => id === breakpoint.id);
         if (index !== -1) {
           breakpoints.splice(index, 1);
         }

@@ -86,10 +86,14 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
     setView(undefined);
   });
 
-  if (selectedBreakpoint === undefined) return null;
+  if (selectedBreakpoint === undefined) {
+    return null;
+  }
 
   const handleDelete = () => {
-    if (breakpointToDelete === undefined) return;
+    if (breakpointToDelete === undefined) {
+      return;
+    }
     const nextBreakpoints = [...breakpoints];
     const index = breakpoints.indexOf(breakpointToDelete);
     nextBreakpoints.splice(index, 1);
