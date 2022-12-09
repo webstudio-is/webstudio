@@ -1,5 +1,6 @@
 import { properties } from "@webstudio-is/css-data";
 import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
 import type { Instance } from "@webstudio-is/react-sdk";
 
 export type InheritedStyle = {
@@ -60,7 +61,7 @@ export const getInheritedStyle = (
       for (const property in cssRule.style) {
         const isInheritable = property in inheritableProperties;
         const value = cssRule.style[property as StyleProperty];
-        const hasValue = value !== undefined && value.value !== "inherit";
+        const hasValue = value !== undefined && toValue(value) !== "inherit";
         const isFirst = property in inheritedStyle === false;
         if (isInheritable && hasValue && isFirst) {
           inheritedStyle[property as StyleProperty] = {

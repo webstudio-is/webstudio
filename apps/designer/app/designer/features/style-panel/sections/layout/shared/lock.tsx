@@ -4,6 +4,7 @@ import {
   IconButtonDeprecated,
   Tooltip,
 } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/css-data";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
@@ -22,9 +23,9 @@ export const Lock = ({
   const a = currentStyle[aKey];
   const b = currentStyle[bKey];
   const aVal =
-    a?.value + (a?.type === "unit" && a.unit !== "number" ? a.unit : "");
+    toValue(a) + (a?.type === "unit" && a.unit !== "number" ? a.unit : "");
   const bVal =
-    b?.value + (b?.type === "unit" && b.unit !== "number" ? b.unit : "");
+    toValue(b) + (b?.type === "unit" && b.unit !== "number" ? b.unit : "");
   const [isPaired, setIsPaired] = useState(aVal === bVal);
 
   useEffect(() => {

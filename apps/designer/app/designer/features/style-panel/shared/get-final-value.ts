@@ -19,14 +19,15 @@ export const getFinalValue = ({
   const currentValue = currentStyle[property];
   const inheritedValue =
     property in inheritedStyle ? inheritedStyle[property].value : undefined;
-  if (currentValue?.value === "inherit" && inheritedValue !== undefined) {
+  if (toValue(currentValue) === "inherit" && inheritedValue !== undefined) {
     return inheritedValue;
   }
-  if (
-    currentValue?.type !== "unit" &&
-    isNumericString(String(currentValue?.value))
-  ) {
-    return { value: Number(currentValue?.value), type: "unit", unit: "number" };
+  if (currentValue?.type !== "unit" && isNumericString(toValue(currentValue))) {
+    return {
+      value: Number(toValue(currentValue)),
+      type: "unit",
+      unit: "number",
+    };
   }
   if (
     currentValue &&

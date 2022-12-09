@@ -9,6 +9,11 @@ const defaultOptions = {
   withFallback: true,
 };
 
+// exhaustive check, should never happen in runtime as ts would give error
+const assertUnreachable = (_arg: never, errorMessage: string) => {
+  throw new Error(errorMessage);
+};
+
 export const toValue = (
   value?: StyleValue,
   options: ToCssOptions = defaultOptions
@@ -39,5 +44,26 @@ export const toValue = (
       fallbacks.length > 0 ? `, ${fallbacks.join(", ")}` : "";
     return `var(--${value.value}${fallbacksString})`;
   }
-  return value.value;
+
+  if (value.type === "keyword") {
+    return value.value;
+  }
+
+  if (value.type === "invalid") {
+    return value.value;
+  }
+
+  if (value.type === "unset") {
+    return value.value;
+  }
+
+  if (value.type === "rgb") {
+    return `rgba(${value.r}, ${value.g}, ${value.b}, ${value.alpha})`;
+  }
+
+  // Will give ts error in case of missing type
+  assertUnreachable(value, `Unknown value type`);
+
+  // Will never happen
+  throw new Error("Unknown value type");
 };

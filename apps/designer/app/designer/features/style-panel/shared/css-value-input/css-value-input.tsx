@@ -32,6 +32,7 @@ import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
+import { toValue } from "@webstudio-is/css-engine";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
 
@@ -263,7 +264,12 @@ export const CssValueInput = ({
   } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
-    itemToString: (item) => (item === null ? "" : String(item.value)),
+    itemToString: (item) =>
+      item === null
+        ? ""
+        : item.type === "intermediate" || item.type === "unit"
+        ? String(item.value)
+        : toValue(item),
     onInputChange: (inputValue) => {
       onChange(inputValue ?? unsetValue.value);
     },
@@ -408,7 +414,7 @@ export const CssValueInput = ({
                   {...getItemProps({ item, index })}
                   key={index}
                 >
-                  {item.value}
+                  {item.type === "intermediate" ? item.value : toValue(item)}
                 </ComboboxListboxItem>
               ))}
           </ComboboxListbox>
