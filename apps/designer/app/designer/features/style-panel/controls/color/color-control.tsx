@@ -34,7 +34,7 @@ export const ColorControl = ({
         r: rgb.r,
         g: rgb.g,
         b: rgb.b,
-        alpha: rgb.a ?? 100,
+        alpha: rgb.a ?? 1,
       };
     } else {
       // @todo what to show as default?
@@ -44,7 +44,7 @@ export const ColorControl = ({
         r: 0,
         g: 0,
         b: 0,
-        alpha: 100,
+        alpha: 1,
       };
     }
   }

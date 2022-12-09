@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { colord, type RgbaColor } from "colord";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
-import type { RGBValue } from "@webstudio-is/css-data";
+import type { RgbValue } from "@webstudio-is/css-data";
 
 import {
   Box,
@@ -33,13 +33,13 @@ const defaultPickerStyles = {
 };
 
 type ColorPickerProps = {
-  onChange: (value: RGBValue) => void;
-  onChangeComplete: (value: RGBValue) => void;
-  value: RGBValue;
+  onChange: (value: RgbValue) => void;
+  onChangeComplete: (value: RgbValue) => void;
+  value: RgbValue;
   id: string;
 };
 
-const colorResultToRGBValue = (rgb: RgbaColor | RGBColor): RGBValue => {
+const colorResultToRGBValue = (rgb: RgbaColor | RGBColor): RgbValue => {
   return {
     type: "rgb",
     r: rgb.r,

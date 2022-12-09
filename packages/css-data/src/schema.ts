@@ -41,14 +41,14 @@ const FontFamilyValue = z.object({
 });
 export type FontFamilyValue = z.infer<typeof FontFamilyValue>;
 
-const RGBValue = z.object({
+const RgbValue = z.object({
   type: z.literal("rgb"),
   r: z.number(),
   g: z.number(),
   b: z.number(),
   alpha: z.number(),
 });
-export type RGBValue = z.infer<typeof RGBValue>;
+export type RgbValue = z.infer<typeof RgbValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
@@ -75,7 +75,7 @@ const ValidStaticStyleValue = z.union([
   UnitValue,
   KeywordValue,
   FontFamilyValue,
-  RGBValue,
+  RgbValue,
 ]);
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 
@@ -91,7 +91,7 @@ const StyleValue = z.union([
   InvalidValue,
   UnsetValue,
   VarValue,
-  RGBValue,
+  RgbValue,
 ]);
 export type StyleValue = z.infer<typeof StyleValue>;
 
