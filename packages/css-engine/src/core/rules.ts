@@ -65,11 +65,22 @@ export type MediaRuleOptions = {
 };
 
 export class MediaRule {
-  #options: MediaRuleOptions;
+  // Sort media rules by minWidth.
+  // Needed to ensure that more specific media rules are inserted after less specific ones.
+  // So that they get a higher specificity.
+  static sort(mediaRules: Iterable<MediaRule>) {
+    return Array.from(mediaRules).sort((ruleA, ruleB) => {
+      return (
+        (ruleA.options.minWidth ?? -Number.MAX_SAFE_INTEGER) -
+        (ruleB.options.minWidth ?? -Number.MAX_SAFE_INTEGER)
+      );
+    });
+  }
+  options: MediaRuleOptions;
   rules: Array<StyleRule | PlaintextRule> = [];
   #mediaType;
   constructor(options: MediaRuleOptions = {}) {
-    this.#options = options;
+    this.options = options;
     this.#mediaType = options.mediaType ?? "all";
   }
   insertRule(rule: StyleRule | PlaintextRule) {
@@ -85,7 +96,7 @@ export class MediaRule {
       rules.push(`  ${rule.cssText}`);
     }
     let conditionText = "";
-    const { minWidth, maxWidth } = this.#options;
+    const { minWidth, maxWidth } = this.options;
     if (minWidth !== undefined) {
       conditionText = `min-width: ${minWidth}px`;
     }
@@ -118,13 +129,13 @@ export type FontFaceOptions = {
 };
 
 export class FontFaceRule {
-  #options: FontFaceOptions;
+  options: FontFaceOptions;
   constructor(options: FontFaceOptions) {
-    this.#options = options;
+    this.options = options;
   }
   get cssText() {
     const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
-      this.#options;
+      this.options;
     return `@font-face {\n  font-family: ${fontFamily}; font-style: ${fontStyle}; font-weight: ${fontWeight}; font-display: ${fontDisplay}; src: ${src};\n}`;
   }
 }
