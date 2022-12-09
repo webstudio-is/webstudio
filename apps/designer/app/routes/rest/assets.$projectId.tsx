@@ -19,7 +19,9 @@ const DeleteAssets = zfd.formData({
 export const loader: LoaderFunction = async ({
   params,
 }): Promise<Array<Asset>> => {
-  if (params.projectId === undefined) throw new Error("Project id undefined");
+  if (params.projectId === undefined) {
+    throw new Error("Project id undefined");
+  }
   return await loadByProject(params.projectId);
 };
 
