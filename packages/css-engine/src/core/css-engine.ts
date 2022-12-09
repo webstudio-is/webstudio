@@ -80,7 +80,7 @@ export class CssEngine {
     for (const plaintextRule of this.#plainRules.values()) {
       css.push(plaintextRule.cssText);
     }
-    for (const mediaRule of this.#mediaRules.values()) {
+    for (const mediaRule of MediaRule.sort(this.#mediaRules.values())) {
       const { cssText } = mediaRule;
       if (cssText !== "") css.push(cssText);
     }
