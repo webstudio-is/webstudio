@@ -48,7 +48,10 @@ const toPreviewAssets = (
   const assets: Array<Promise<PreviewAsset>> = [];
   for (const formData of formsData) {
     for (const entry of formData) {
-      const file = entry[1] as File;
+      const file = entry[1];
+      if (!(file instanceof File)) {
+        continue;
+      }
       const promise: Promise<PreviewAsset> = new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.addEventListener("load", (event) => {
