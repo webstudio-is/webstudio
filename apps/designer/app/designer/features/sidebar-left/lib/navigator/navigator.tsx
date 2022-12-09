@@ -78,7 +78,9 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
     [publish]
   );
 
-  if (rootInstance === undefined) return null;
+  if (rootInstance === undefined) {
+    return null;
+  }
   return (
     <Flex css={{ height: "100%", flexDirection: "column" }}>
       <Header

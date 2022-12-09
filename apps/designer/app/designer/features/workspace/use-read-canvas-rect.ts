@@ -21,7 +21,9 @@ export const useReadCanvasRect = () => {
 
   const readRect = useCallback(
     () => {
-      if (iframeElement === null) return;
+      if (iframeElement === null) {
+        return;
+      }
       requestAnimationFrame(() => {
         const rect = iframeElement.getBoundingClientRect();
         setCanvasRect(rect);

@@ -19,7 +19,9 @@ export const MenuControl = ({
     styleConfig.property
   );
 
-  if (value === undefined) return null;
+  if (value === undefined) {
+    return null;
+  }
 
   const setValue = setProperty(styleConfig.property);
   const currentValue = value.value as string;

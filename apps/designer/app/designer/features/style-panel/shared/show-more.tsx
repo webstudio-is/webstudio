@@ -8,7 +8,9 @@ export const ShowMore = ({
   styleConfigs: Array<JSX.Element | null>;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  if (styleConfigs.length === 0) return null;
+  if (styleConfigs.length === 0) {
+    return null;
+  }
   return (
     <Collapsible.Root asChild onOpenChange={setIsOpen}>
       <Flex direction="column" gap="3">

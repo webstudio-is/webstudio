@@ -15,7 +15,9 @@ export const SelectControl = ({
     property: styleConfig.property,
   });
 
-  if (value === undefined) return null;
+  if (value === undefined) {
+    return null;
+  }
 
   const setValue = setProperty(styleConfig.property);
 

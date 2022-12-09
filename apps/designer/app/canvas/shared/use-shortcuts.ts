@@ -50,7 +50,9 @@ const publishZoom = (event: HandlerEvent) => {
       "`publishZoom` doesn't account for being called without a `key`"
     );
   }
-  if (event.preventDefault !== undefined) event.preventDefault();
+  if (event.preventDefault !== undefined) {
+    event.preventDefault();
+  }
   publish({
     type: "zoom",
     payload: event.key === "-" ? "zoomOut" : "zoomIn",
@@ -100,7 +102,9 @@ export const useShortcuts = () => {
   useHotkeys(
     "esc",
     () => {
-      if (selectedInstance === undefined) return;
+      if (selectedInstance === undefined) {
+        return;
+      }
       // Since we are in text editing mode, we want to first exit that mode without unselecting the instance.
       if (editingInstanceId) {
         setEditingInstanceId(undefined);
@@ -116,7 +120,9 @@ export const useShortcuts = () => {
   useHotkeys(
     "enter",
     (event) => {
-      if (selectedInstance === undefined) return;
+      if (selectedInstance === undefined) {
+        return;
+      }
       const { type } = getComponentMeta(selectedInstance.component);
       if (type === "rich-text") {
         // Prevents inserting a newline when entering text-editing mode

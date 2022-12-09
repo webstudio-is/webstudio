@@ -22,8 +22,12 @@ import { type RenderPropertyProps } from "./style-sections";
 const filterProperties = (properties: Array<string>, search: string) => {
   const searchParts = search.split(" ").map((part) => part.trim());
   const includes = (property: string) => {
-    if (property.toLowerCase().includes(search)) return true;
-    if (hyphenate(property).includes(search)) return true;
+    if (property.toLowerCase().includes(search)) {
+      return true;
+    }
+    if (hyphenate(property).includes(search)) {
+      return true;
+    }
     // Enables "ba co" to match "background color"
     return searchParts.every((searchPart) =>
       property.toLowerCase().includes(searchPart)
@@ -31,9 +35,15 @@ const filterProperties = (properties: Array<string>, search: string) => {
   };
   return properties.filter((property) => {
     for (const styleConfig of styleConfigs) {
-      if (styleConfig.property !== property) continue;
-      if (includes(styleConfig.property)) return true;
-      if (includes(styleConfig.label)) return true;
+      if (styleConfig.property !== property) {
+        continue;
+      }
+      if (includes(styleConfig.property)) {
+        return true;
+      }
+      if (includes(styleConfig.label)) {
+        return true;
+      }
       for (const item of styleConfig.items) {
         if (includes(item.name) || includes(item.label)) {
           return true;
@@ -48,9 +58,13 @@ const appliesTo = (styleConfig: StyleConfig, currentStyle: Style): boolean => {
   const { appliesTo } = styleConfig;
   if (appliesTo in dependencies) {
     const dependency = dependencies[appliesTo];
-    if (dependency === undefined) return false;
+    if (dependency === undefined) {
+      return false;
+    }
     const currentValue = currentStyle[dependency.property]?.value;
-    if (currentValue === undefined) return false;
+    if (currentValue === undefined) {
+      return false;
+    }
     if (Array.isArray(dependency.values)) {
       return dependency.values.includes(String(currentValue));
     }
@@ -135,7 +149,9 @@ export const StyleSettings = ({
       }
     }
 
-    if (styleConfigsByCategory.length === 0) continue;
+    if (styleConfigsByCategory.length === 0) {
+      continue;
+    }
     const categoryProps = {
       ...rest,
       setProperty,
@@ -146,7 +162,7 @@ export const StyleSettings = ({
       styleConfigsByCategory,
       moreStyleConfigsByCategory,
     };
-    if (shouldRenderCategory(categoryProps))
+    if (shouldRenderCategory(categoryProps)) {
       all.push(
         <CollapsibleSection
           isOpen={isSearchMode ? true : undefined}
@@ -156,6 +172,7 @@ export const StyleSettings = ({
           <>{renderCategory(categoryProps)}</>
         </CollapsibleSection>
       );
+    }
   }
   return <>{all}</>;
 };

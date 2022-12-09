@@ -11,9 +11,13 @@ export const findInstanceById = (
 
   if (instance.children !== undefined) {
     for (const child of instance.children) {
-      if (typeof child === "string") continue;
+      if (typeof child === "string") {
+        continue;
+      }
       const foundInstance = findInstanceById(child, id);
-      if (foundInstance !== undefined) return foundInstance;
+      if (foundInstance !== undefined) {
+        return foundInstance;
+      }
     }
   }
 };

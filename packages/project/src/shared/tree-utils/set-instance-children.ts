@@ -48,7 +48,9 @@ export const setInstanceChildrenMutable = (
   breakpoint: Breakpoint["id"] = ""
 ) => {
   const instance = findInstanceById(rootInstance, id);
-  if (instance === undefined) return false;
+  if (instance === undefined) {
+    return false;
+  }
   hydrateTree(instance, updates, breakpoint);
   return true;
 };

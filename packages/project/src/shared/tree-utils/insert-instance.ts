@@ -12,9 +12,13 @@ export const insertInstanceMutable = (
 ): boolean => {
   if (spec.parentId !== rootInstance.id) {
     for (const child of rootInstance.children) {
-      if (typeof child === "string") continue;
+      if (typeof child === "string") {
+        continue;
+      }
       const hasInserted = insertInstanceMutable(child, instance, spec);
-      if (hasInserted === true) return true;
+      if (hasInserted === true) {
+        return true;
+      }
     }
     return false;
   }

@@ -111,7 +111,9 @@ export const ImageThumbnail = ({
       <Thumbnail
         css={{ backgroundImage: `url("${src}")` }}
         onClick={() => {
-          if (isUploadedAsset) onChange?.(asset);
+          if (isUploadedAsset) {
+            onChange?.(asset);
+          }
         }}
       />
       <Box

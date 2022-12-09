@@ -225,7 +225,7 @@ export const getImageAttributes = (props: {
     0
   );
 
-  if (props.src != null && props.src != "") {
+  if (props.src != null && props.src !== "") {
     if (props.srcSet == null && props.optimize) {
       const sizes =
         props.sizes ?? (props.width == null ? DEFAULT_SIZES : undefined);

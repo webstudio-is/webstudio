@@ -22,9 +22,12 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
     const params = getParams();
 
     const loader = useMemo(() => {
-      if (asset == null) return null;
-      if (asset.location === "REMOTE")
+      if (asset == null) {
+        return null;
+      }
+      if (asset.location === "REMOTE") {
         return loaders.cloudflareImageLoader(params);
+      }
       return loaders.localImageLoader();
     }, [asset, params]);
 

@@ -25,7 +25,9 @@ const read = (): Settings => {
     // We don't need to handle this one.
   }
 
-  if (settingsString == null) return defaultSettings;
+  if (settingsString == null) {
+    return defaultSettings;
+  }
 
   try {
     // @todo add zod schema
@@ -55,7 +57,9 @@ export const getSetting = (name: Name) => {
   const validValues = config[name].values;
   const value = settings[name];
   const isValidValue = value !== undefined && validValues.includes(value);
-  if (isValidValue) return value;
+  if (isValidValue) {
+    return value;
+  }
   return config[name].defaultValue;
 };
 
@@ -63,7 +67,9 @@ export const setSetting = (name: Name, value: Value) => {
   const settings = read();
   const validValues = config[name].values;
   const isValidValue = validValues.includes(value);
-  if (isValidValue) write({ ...settings, [name]: value });
+  if (isValidValue) {
+    write({ ...settings, [name]: value });
+  }
 };
 
 const settingsContainer = createValueContainer<Settings>(defaultSettings);
@@ -80,7 +86,9 @@ export const useClientSettings = (): [Settings, typeof setSetting, boolean] => {
   }, [setSettings]);
 
   const setSettingValue = (name: Name, value: Value) => {
-    if (settings[name] === value) return;
+    if (settings[name] === value) {
+      return;
+    }
     setSettings({ ...settings, [name]: value });
     setSetting(name, value);
   };

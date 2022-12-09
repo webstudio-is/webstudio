@@ -5,9 +5,13 @@ export const deletePropMutable = (
   deleteProp: DeleteProp
 ) => {
   const prop = allProps[deleteProp.instanceId];
-  if (prop === undefined) return false;
+  if (prop === undefined) {
+    return false;
+  }
   const index = prop.props.findIndex(({ id }) => id === deleteProp.propId);
-  if (index === -1) return false;
+  if (index === -1) {
+    return false;
+  }
   prop.props.splice(index, 1);
   return true;
 };

@@ -270,8 +270,14 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
 };
 
 const getSizingValue = (flexGrow: string, flexShrink: string) => {
-  if (flexGrow === "0" && flexShrink === "0") return "none";
-  if (flexGrow === "1" && flexShrink === "0") return "grow";
-  if (flexGrow === "0" && flexShrink === "1") return "shrink";
+  if (flexGrow === "0" && flexShrink === "0") {
+    return "none";
+  }
+  if (flexGrow === "1" && flexShrink === "0") {
+    return "grow";
+  }
+  if (flexGrow === "0" && flexShrink === "1") {
+    return "shrink";
+  }
   return "";
 };

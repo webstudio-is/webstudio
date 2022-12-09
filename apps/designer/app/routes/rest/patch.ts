@@ -13,8 +13,12 @@ type PatchData = {
 
 export const action: ActionFunction = async ({ request }) => {
   const { treeId, buildId, transactions }: PatchData = await request.json();
-  if (treeId === undefined) return { errors: "Tree id required" };
-  if (buildId === undefined) return { errors: "Build id required" };
+  if (treeId === undefined) {
+    return { errors: "Tree id required" };
+  }
+  if (buildId === undefined) {
+    return { errors: "Build id required" };
+  }
   // @todo parallelize the updates
   // currently not possible because we fetch the entire tree
   // and parallelized updates will cause unpredictable side effects

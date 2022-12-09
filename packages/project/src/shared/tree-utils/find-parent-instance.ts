@@ -8,11 +8,17 @@ export const findParentInstance = (
     childInstance: Instance,
     parentInstance?: Instance
   ): Instance | undefined => {
-    if (childInstance.id === instanceId) return parentInstance;
+    if (childInstance.id === instanceId) {
+      return parentInstance;
+    }
     for (const child of childInstance.children) {
-      if (typeof child === "string") continue;
+      if (typeof child === "string") {
+        continue;
+      }
       const foundInstance = find(child, childInstance);
-      if (foundInstance !== undefined) return foundInstance;
+      if (foundInstance !== undefined) {
+        return foundInstance;
+      }
     }
   };
   return find(instance);

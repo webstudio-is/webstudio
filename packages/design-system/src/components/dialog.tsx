@@ -4,7 +4,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { CrossIcon } from "@webstudio-is/icons";
 import { overlayStyles } from "./overlay";
 import { panelStyles } from "./panel";
-import { IconButton_deprecated } from "./icon-button-deprecated";
+import { IconButtonDeprecated } from "./icon-button-deprecated";
 
 type DialogProps = React.ComponentProps<typeof DialogPrimitive.Root> & {
   children: React.ReactNode;
@@ -67,9 +67,9 @@ export const DialogContent = React.forwardRef<
   <StyledContent {...props} ref={forwardedRef}>
     {children}
     <StyledCloseButton asChild>
-      <IconButton_deprecated>
+      <IconButtonDeprecated>
         <CrossIcon />
-      </IconButton_deprecated>
+      </IconButtonDeprecated>
     </StyledCloseButton>
   </StyledContent>
 ));

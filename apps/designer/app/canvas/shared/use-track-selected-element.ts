@@ -36,7 +36,9 @@ export const useTrackSelectedElement = () => {
   const [rootInstance] = useRootInstance();
   const selectInstance = useCallback(
     (id) => {
-      if (rootInstance === undefined) return;
+      if (rootInstance === undefined) {
+        return;
+      }
       const instance = utils.tree.findInstanceById(rootInstance, id);
       setSelectedInstance(instance);
     },
@@ -53,7 +55,9 @@ export const useTrackSelectedElement = () => {
         selectedInstance?.id !== getInstanceIdFromElement(selectedElement))
     ) {
       const element = getInstanceElementById(selectedInstance.id);
-      if (element === null) return;
+      if (element === null) {
+        return;
+      }
       setSelectedElement(element);
     }
   }, [selectedInstance, selectedElement, setSelectedElement]);

@@ -47,7 +47,9 @@ const maxSize = toBytes(MAX_UPLOAD_SIZE);
 const toFormData = (type: AssetType, input: HTMLInputElement) => {
   const files = Array.from(input?.files ?? []);
   const formData = new FormData();
-  if (files.length === 0) return formData;
+  if (files.length === 0) {
+    return formData;
+  }
   for (const file of files) {
     if (file.size > maxSize) {
       toast.error(

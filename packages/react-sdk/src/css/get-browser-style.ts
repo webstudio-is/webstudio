@@ -11,7 +11,9 @@ const parseValue = (
 ): StyleValue => {
   const number = parseFloat(value);
   const parsedUnit = unitRegex.exec(value);
-  if (value === "rgba(0, 0, 0, 0)") value = "transparent";
+  if (value === "rgba(0, 0, 0, 0)") {
+    value = "transparent";
+  }
   if (isNaN(number) || parsedUnit === null) {
     return {
       type: "keyword",
@@ -32,11 +34,15 @@ const parseValue = (
 
 export const getBrowserStyle = (element?: Element): Style => {
   const browserStyle: Style = {};
-  if (element === undefined) return browserStyle;
+  if (element === undefined) {
+    return browserStyle;
+  }
   let knownProperty: keyof typeof properties;
   const computedStyle = getComputedStyle(element);
   for (knownProperty in properties) {
-    if (knownProperty in computedStyle === false) continue;
+    if (knownProperty in computedStyle === false) {
+      continue;
+    }
     // Typescript doesn't know we can access CSSStyleDeclaration properties by keys
     const computedValue = computedStyle[knownProperty as unknown as number];
     browserStyle[knownProperty] = parseValue(knownProperty, computedValue);

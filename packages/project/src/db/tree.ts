@@ -38,7 +38,9 @@ export const loadById = async (
     where: { id: treeId },
   });
 
-  if (tree === null) return null;
+  if (tree === null) {
+    return null;
+  }
 
   const root = JSON.parse(tree.root);
   Instance.parse(root);

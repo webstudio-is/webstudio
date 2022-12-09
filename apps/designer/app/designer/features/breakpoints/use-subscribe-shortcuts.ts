@@ -11,7 +11,9 @@ export const useSubscribeSelectBreakpointFromShortcut = () => {
   const [, setSelectedBreakpoint] = useSelectedBreakpoint();
   useSubscribe("selectBreakpointFromShortcut", (index) => {
     const breakpoint = utils.breakpoints.sort(breakpoints)[index - 1];
-    if (breakpoint) setSelectedBreakpoint(breakpoint);
+    if (breakpoint) {
+      setSelectedBreakpoint(breakpoint);
+    }
   });
 };
 
