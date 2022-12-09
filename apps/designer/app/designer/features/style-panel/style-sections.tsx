@@ -1,4 +1,5 @@
 import { Grid, type CSS } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import type { StyleConfig } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
 import type { Style, StyleProperty } from "@webstudio-is/css-data";
@@ -113,9 +114,9 @@ export const shouldRenderCategory = ({
 }: RenderCategoryProps) => {
   switch (category) {
     case "flexChild":
-      return (currentStyle.display?.value as string)?.includes("flex");
+      return toValue(currentStyle.display).includes("flex");
     case "gridChild":
-      return (currentStyle.display?.value as string)?.includes("grid");
+      return toValue(currentStyle.display).includes("grid");
   }
 
   return true;

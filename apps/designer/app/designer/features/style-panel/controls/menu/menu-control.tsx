@@ -3,6 +3,7 @@ import { getFinalValue } from "../../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { ControlProps } from "../../style-sections";
 import { iconConfigs } from "../../shared/configs";
+import { toValue } from "@webstudio-is/css-engine";
 
 export const MenuControl = ({
   currentStyle,
@@ -24,7 +25,7 @@ export const MenuControl = ({
   }
 
   const setValue = setProperty(styleConfig.property);
-  const currentValue = value.value as string;
+  const currentValue = toValue(value);
 
   const iconProps = iconConfigs[styleConfig.property];
   const iconStyle =
@@ -32,7 +33,7 @@ export const MenuControl = ({
       ? {}
       : {
           transform: `rotate(${
-            currentStyle.flexDirection?.value === "column"
+            toValue(currentStyle.flexDirection) === "column"
               ? 90 * (styleConfig.property === "alignItems" ? -1 : 1)
               : 0
           }deg)`,

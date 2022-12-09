@@ -1,6 +1,7 @@
 import hyphenate from "hyphenate-style-name";
 import { categories, type Category } from "@webstudio-is/react-sdk";
 import type { CssRule, Style } from "@webstudio-is/css-data";
+import { toValue } from "@webstudio-is/css-engine";
 
 import { type StyleConfig, styleConfigs } from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
@@ -61,7 +62,7 @@ const appliesTo = (styleConfig: StyleConfig, currentStyle: Style): boolean => {
     if (dependency === undefined) {
       return false;
     }
-    const currentValue = currentStyle[dependency.property]?.value;
+    const currentValue = toValue(currentStyle[dependency.property]);
     if (currentValue === undefined) {
       return false;
     }

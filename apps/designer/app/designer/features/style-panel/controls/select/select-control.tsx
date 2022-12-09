@@ -1,3 +1,4 @@
+import { toValue } from "@webstudio-is/css-engine";
 import { Select } from "@webstudio-is/design-system";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
@@ -24,7 +25,7 @@ export const SelectControl = ({
   return (
     <Select
       options={styleConfig.items.map(({ label }) => label)}
-      value={String(value.value)}
+      value={toValue(value)}
       onChange={setValue}
     />
   );

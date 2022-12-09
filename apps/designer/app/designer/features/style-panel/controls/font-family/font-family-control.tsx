@@ -4,6 +4,7 @@ import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
 import { useState } from "react";
+import { toValue } from "@webstudio-is/css-engine";
 
 export const FontFamilyControl = ({
   currentStyle,
@@ -28,11 +29,11 @@ export const FontFamilyControl = ({
   return (
     <ValuePickerPopover
       title="Fonts"
-      content={<FontsManager value={String(value.value)} onChange={setValue} />}
+      content={<FontsManager value={toValue(value)} onChange={setValue} />}
       onOpenChange={setIsOpen}
     >
       <TextField
-        defaultValue={value.value}
+        defaultValue={toValue(value)}
         state={isOpen ? "active" : undefined}
       />
     </ValuePickerPopover>

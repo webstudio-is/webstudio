@@ -1,4 +1,5 @@
 import { Flex } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 import { ColorPicker } from "../../shared/color-picker";
@@ -23,7 +24,7 @@ export const ColorControl = ({
     <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
       <ColorPicker
         id={styleConfig.property}
-        value={String(value.value)}
+        value={toValue(value)}
         onChange={(value) => {
           setValue(value, { isEphemeral: true });
         }}

@@ -1,4 +1,5 @@
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { Lock } from "./shared/lock";
@@ -153,7 +154,7 @@ export const LayoutSection = ({
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
 }: RenderCategoryProps) => {
-  const ActiveLayout = layouts.get(String(currentStyle.display?.value));
+  const ActiveLayout = layouts.get(toValue(currentStyle.display));
 
   if (ActiveLayout) {
     return (

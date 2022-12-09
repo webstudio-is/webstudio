@@ -5,6 +5,7 @@ import {
   IconButtonDeprecated,
   Tooltip,
 } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -117,7 +118,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         <ToggleGroupControl
           property="textAlign"
           onValueChange={(value) => setTextAlign(value)}
-          value={String(getTextAlign(String(currentStyle.textAlign?.value)))}
+          value={String(getTextAlign(toValue(currentStyle.textAlign)))}
           items={[
             {
               child: <TextAlignLeftIcon />,
@@ -144,7 +145,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         <ToggleGroupControl
           property="textDecorationLine"
           onValueChange={(value) => setTextDecorationLine(value)}
-          value={String(currentStyle.textDecorationLine?.value)}
+          value={toValue(currentStyle.textDecorationLine)}
           items={[
             {
               child: <CrossSmallIcon />,
@@ -174,7 +175,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         <ToggleGroupControl
           property="textTransform"
           onValueChange={(value) => setTextTransform(value)}
-          value={String(currentStyle.textTransform?.value)}
+          value={toValue(currentStyle.textTransform)}
           items={[
             {
               child: <CrossSmallIcon />,
@@ -201,7 +202,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         <ToggleGroupControl
           property="fontStyle"
           onValueChange={(value) => setFontStyle(value)}
-          value={String(currentStyle.fontStyle?.value)}
+          value={toValue(currentStyle.fontStyle)}
           items={[
             {
               child: <CrossSmallIcon />,
@@ -242,7 +243,7 @@ export const TypographySectionAdvancedPopover = (
             <ToggleGroupControl
               property="direction"
               onValueChange={(value) => setDirection(value)}
-              value={String(currentStyle.direction?.value)}
+              value={toValue(currentStyle.direction)}
               items={[
                 {
                   child: <TextDirectionLTRIcon />,
@@ -262,7 +263,7 @@ export const TypographySectionAdvancedPopover = (
             <ToggleGroupControl
               property="hyphens"
               onValueChange={(value) => setHyphens(value)}
-              value={String(currentStyle.hyphens?.value)}
+              value={toValue(currentStyle.hyphens)}
               items={[
                 {
                   child: <CrossSmallIcon />,
@@ -282,7 +283,7 @@ export const TypographySectionAdvancedPopover = (
             <ToggleGroupControl
               property="textOverflow"
               onValueChange={(value) => setTextOverflow(value)}
-              value={String(currentStyle.textOverflow?.value)}
+              value={toValue(currentStyle.textOverflow)}
               items={[
                 {
                   child: <CrossSmallIcon />,
