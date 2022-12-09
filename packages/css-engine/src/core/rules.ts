@@ -71,8 +71,8 @@ export class MediaRule {
   static sort(mediaRules: Iterable<MediaRule>) {
     return Array.from(mediaRules).sort((ruleA, ruleB) => {
       return (
-        (ruleA.options.minWidth ?? -Infinity) -
-        (ruleB.options.minWidth ?? -Infinity)
+        (ruleA.options.minWidth ?? -Number.MAX_SAFE_INTEGER) -
+        (ruleB.options.minWidth ?? -Number.MAX_SAFE_INTEGER)
       );
     });
   }
