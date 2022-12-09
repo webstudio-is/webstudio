@@ -83,24 +83,31 @@ export const numericScrubControl = (
         exitPointerLock?.();
         exitPointerLock = undefined;
 
-        if (shouldComponentUpdate)
+        if (shouldComponentUpdate) {
           onValueChange?.({
             target: targetNode,
             value: state.value,
             preventDefault: () => event.preventDefault(),
           });
+        }
         break;
       }
       case "pointerdown": {
-        if (event.target && shouldHandleEvent?.(event.target) === false) return;
+        if (event.target && shouldHandleEvent?.(event.target) === false) {
+          return;
+        }
         // light touches don't register corresponding pointerup
-        if (event.pressure === 0 || event.button !== 0) break;
+        if (event.pressure === 0 || event.button !== 0) {
+          break;
+        }
         const value = getValue();
 
         // We don't support scrub on non unit values
         // Its highly unlikely that the value here will be undefined, as useScrub tries to not create scrub on non unit values
         // but having that we use lazy getValue() and vanilla js events it's possible.
-        if (value === undefined) return;
+        if (value === undefined) {
+          return;
+        }
 
         state.value = value;
 
@@ -116,13 +123,19 @@ export const numericScrubControl = (
       }
       case "pointermove": {
         if (state.offset) {
-          if (state.offset < 0) state.offset = globalThis.innerWidth + 1;
-          else if (state.offset > globalThis.innerWidth) state.offset = 1;
+          if (state.offset < 0) {
+            state.offset = globalThis.innerWidth + 1;
+          } else if (state.offset > globalThis.innerWidth) {
+            state.offset = 1;
+          }
 
           state.value += movement;
 
-          if (state.value < minValue) state.value = minValue;
-          else if (state.value > maxValue) state.value = maxValue;
+          if (state.value < minValue) {
+            state.value = minValue;
+          } else if (state.value > maxValue) {
+            state.value = maxValue;
+          }
 
           state.offset += movement * state.velocity;
 

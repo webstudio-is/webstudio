@@ -26,7 +26,9 @@ export const sentryMessage = ({
 }: SentryHelperProps & { message: string }) => {
   if (env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
-      if (extras) scope.setExtras(extras);
+      if (extras) {
+        scope.setExtras(extras);
+      }
       Sentry.captureMessage(message);
     });
   }
@@ -44,7 +46,9 @@ export const sentryException = ({
 }: SentryHelperProps & { error: unknown }) => {
   if (env.SENTRY_DSN) {
     Sentry.withScope((scope) => {
-      if (extras) scope.setExtras(extras);
+      if (extras) {
+        scope.setExtras(extras);
+      }
       Sentry.captureException(error);
     });
   }

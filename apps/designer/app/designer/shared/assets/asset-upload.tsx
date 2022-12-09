@@ -12,7 +12,9 @@ const useUpload = (type: AssetType) => {
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {
     const form = event.currentTarget;
     const input = inputRef.current;
-    if (input === null) return;
+    if (input === null) {
+      return;
+    }
     handleSubmit(input);
     form.reset();
   };

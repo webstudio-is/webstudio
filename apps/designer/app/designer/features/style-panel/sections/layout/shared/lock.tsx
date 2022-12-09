@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Flex,
-  IconButton_deprecated,
+  IconButtonDeprecated,
   Tooltip,
 } from "@webstudio-is/design-system";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";
@@ -28,8 +28,12 @@ export const Lock = ({
   const [isPaired, setIsPaired] = useState(aVal === bVal);
 
   useEffect(() => {
-    if (isPaired === false) return;
-    if (aVal === bVal) return;
+    if (isPaired === false) {
+      return;
+    }
+    if (aVal === bVal) {
+      return;
+    }
     batchUpdate.setProperty(aKey)(aVal);
     batchUpdate.setProperty(bKey)(aVal);
     batchUpdate.publish();
@@ -47,9 +51,9 @@ export const Lock = ({
           justifyContent: "center",
         }}
       >
-        <IconButton_deprecated onClick={() => setIsPaired((value) => !value)}>
+        <IconButtonDeprecated onClick={() => setIsPaired((value) => !value)}>
           {isPaired ? <LockCloseIcon /> : <LockOpenIcon />}
-        </IconButton_deprecated>
+        </IconButtonDeprecated>
       </Flex>
     </Tooltip>
   );

@@ -27,7 +27,9 @@ export const action: ActionFunction = async ({
   request,
   params,
 }): Promise<ActionData | undefined> => {
-  if (params.projectId === undefined) throw new Error("Project id undefined");
+  if (params.projectId === undefined) {
+    throw new Error("Project id undefined");
+  }
   try {
     if (request.method === "DELETE") {
       const { assetId: ids } = DeleteAssets.parse(await request.formData());

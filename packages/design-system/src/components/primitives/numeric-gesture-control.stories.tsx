@@ -15,7 +15,9 @@ const useNumericScrubControl = ({
   direction: NumericScrubDirection;
 }) => {
   useEffect(() => {
-    if (ref.current === null) return;
+    if (ref.current === null) {
+      return;
+    }
     ref.current.value = String(value);
     const { disconnectedCallback } = numericScrubControl(ref.current, {
       getValue: () => value,

@@ -144,7 +144,9 @@ const SidePanel = ({
   gridArea,
   css,
 }: SidePanelProps) => {
-  if (isPreviewMode === true) return null;
+  if (isPreviewMode === true) {
+    return null;
+  }
   return (
     <Box
       as="aside"

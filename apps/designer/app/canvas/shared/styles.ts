@@ -203,7 +203,9 @@ const useUpdateStyle = () => {
   useSubscribe("updateStyle", ({ id, updates, breakpoint }) => {
     // Only update styles if they match the selected instance
     // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
-    if (id !== selectedInstance?.id) return;
+    if (id !== selectedInstance?.id) {
+      return;
+    }
 
     for (const update of updates) {
       setCssVar(id, update.property, undefined);

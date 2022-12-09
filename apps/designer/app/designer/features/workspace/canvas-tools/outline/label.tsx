@@ -18,7 +18,9 @@ const useLabelPosition = (
 
   const ref = useCallback(
     (element) => {
-      if (element === null || instanceRect === undefined) return;
+      if (element === null || instanceRect === undefined) {
+        return;
+      }
       const labelRect = element.getBoundingClientRect();
       let nextPosition: LabelPosition = "top";
       if (labelRect.height > instanceRect.top) {

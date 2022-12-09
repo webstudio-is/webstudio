@@ -82,7 +82,7 @@ export const useStyleData = ({
     if (
       updates.length === 0 ||
       selectedInstanceData === undefined ||
-      selectedBreakpoint == undefined
+      selectedBreakpoint === undefined
     ) {
       return;
     }
@@ -107,7 +107,9 @@ export const useStyleData = ({
 
   const setProperty: SetProperty = (property) => {
     return (inputOrStyle, options = { isEphemeral: false }) => {
-      if (currentStyle === undefined) return;
+      if (currentStyle === undefined) {
+        return;
+      }
 
       warnOnce(
         typeof inputOrStyle === "string",
@@ -137,7 +139,9 @@ export const useStyleData = ({
 
     const setProperty = (property: StyleProperty) => {
       const setValue = (inputOrStyle: string | StyleValue) => {
-        if (currentStyle === undefined) return;
+        if (currentStyle === undefined) {
+          return;
+        }
 
         warnOnce(
           typeof inputOrStyle === "string",
@@ -159,7 +163,9 @@ export const useStyleData = ({
     };
 
     const publish = () => {
-      if (!updates.length) return;
+      if (!updates.length) {
+        return;
+      }
       publishUpdates("update", updates);
       const nextStyle = updates.reduce(
         (currentStyle, { property, value }) => {

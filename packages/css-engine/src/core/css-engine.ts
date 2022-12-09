@@ -47,7 +47,9 @@ export class CssEngine {
   }
   addPlaintextRule(cssText: string) {
     const rule = this.#plainRules.get(cssText);
-    if (rule !== undefined) return rule;
+    if (rule !== undefined) {
+      return rule;
+    }
     this.#isDirty = true;
     return this.#plainRules.set(cssText, new PlaintextRule(cssText));
   }
@@ -82,7 +84,9 @@ export class CssEngine {
     }
     for (const mediaRule of this.#mediaRules.values()) {
       const { cssText } = mediaRule;
-      if (cssText !== "") css.push(cssText);
+      if (cssText !== "") {
+        css.push(cssText);
+      }
     }
     this.#cssText = css.join("\n");
     return this.#cssText;

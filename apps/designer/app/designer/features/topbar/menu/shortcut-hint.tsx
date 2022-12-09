@@ -20,7 +20,9 @@ type ShortcutDefinition = Array<string>;
 // @todo check what linux needs
 // Converts commands to OS specific equivalent, e.g. cmd on mac to ctrl on win
 const mapToOs = (value: ShortcutDefinition) => {
-  if (isMac) return value;
+  if (isMac) {
+    return value;
+  }
   return value.map((key) => shortcutWinMap[key] || key);
 };
 

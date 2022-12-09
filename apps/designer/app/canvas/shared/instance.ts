@@ -97,7 +97,9 @@ export const useInsertInstance = ({ treeId }: { treeId: string }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
-        if (rootInstance === undefined) return;
+        if (rootInstance === undefined) {
+          return;
+        }
         const populatedInstance = utils.tree.populateInstance(
           instance,
           breakpoints[0].id
@@ -127,7 +129,9 @@ export const useReparentInstance = () => {
 
   useSubscribe("reparentInstance", ({ instanceId, dropTarget }) => {
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance === undefined) return;
+      if (rootInstance === undefined) {
+        return;
+      }
       utils.tree.reparentInstanceMutable(
         rootInstance,
         instanceId,
@@ -254,7 +258,9 @@ export const usePublishSelectedInstanceDataRect = () => {
   const rect = useMeasureInstance(element);
 
   useEffect(() => {
-    if (rect) publishRect(rect);
+    if (rect) {
+      publishRect(rect);
+    }
   }, [rect]);
 };
 
@@ -278,7 +284,9 @@ export const useSetHoveredInstance = () => {
   );
 
   useEffect(() => {
-    if (hoveredElement === undefined) return;
+    if (hoveredElement === undefined) {
+      return;
+    }
     publish({
       type: "hoveredInstanceRect",
       payload: hoveredElement.getBoundingClientRect(),
@@ -310,7 +318,9 @@ export const useUpdateSelectedInstance = () => {
       instance = utils.tree.findInstanceById(rootInstance, selectedInstance.id);
     }
     // When it's a new inserted instance, it will be undefined, so we can't set it to undefined and remove it.
-    if (instance !== undefined) setSelectedInstance(instance);
+    if (instance !== undefined) {
+      setSelectedInstance(instance);
+    }
   }, [rootInstance, selectedInstance, setSelectedInstance]);
 };
 

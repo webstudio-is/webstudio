@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
-  unstable_parseMultipartFormData,
-  unstable_createFileUploadHandler,
+  unstable_parseMultipartFormData as unstableParseMultipartFormData,
+  unstable_createFileUploadHandler as unstableCreateFileUploadHandler,
   NodeOnDiskFile,
 } from "@remix-run/node";
 import { Location } from "@webstudio-is/prisma-client";
@@ -23,16 +23,13 @@ export const uploadToFs = async ({
   projectId: string;
   maxSize: number;
 }): Promise<Array<Asset>> => {
-  const uploadHandler = await unstable_createFileUploadHandler({
+  const uploadHandler = await unstableCreateFileUploadHandler({
     maxPartSize: maxSize,
     directory: FILE_DIRECTORY,
     file: ({ filename }) => getUniqueFilename(sanitizeS3Key(filename)),
   });
 
-  const formData = await unstable_parseMultipartFormData(
-    request,
-    uploadHandler
-  );
+  const formData = await unstableParseMultipartFormData(request, uploadHandler);
   const formDataImages = AssetsFromFs.parse(formData.getAll("image"));
   const formDataFonts = AssetsFromFs.parse(formData.getAll("font"));
   const formDataAll = [...formDataImages, ...formDataFonts];

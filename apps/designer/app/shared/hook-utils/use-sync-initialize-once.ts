@@ -8,7 +8,9 @@ import { useRef } from "react";
 // Can't use useState initializer because it can be called twice in strict mode and also isn't designed for this.
 export const useSyncInitializeOnce = (fn: () => void) => {
   const ref = useRef(false);
-  if (ref.current) return;
+  if (ref.current) {
+    return;
+  }
   ref.current = true;
   fn();
 };

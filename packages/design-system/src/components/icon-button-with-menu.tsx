@@ -2,7 +2,7 @@ import { CheckIcon, IconComponent } from "@webstudio-is/icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { styled } from "../stitches.config";
 import { Tooltip } from "./tooltip";
-import { IconButton_deprecated } from "./icon-button-deprecated";
+import { IconButtonDeprecated } from "./icon-button-deprecated";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   width: 192,
@@ -114,14 +114,14 @@ export const IconButtonWithMenu = ({
         disableHoverableContent={true}
       >
         <DropdownMenuPrimitive.Trigger asChild>
-          <IconButton_deprecated
+          <IconButtonDeprecated
             css={{
               ...iconButtonStyle,
               ...(isActive && iconButtonActiveStyle),
             }}
           >
             {Icon}
-          </IconButton_deprecated>
+          </IconButtonDeprecated>
         </DropdownMenuPrimitive.Trigger>
       </Tooltip>
       <DropdownMenuPrimitive.Portal>

@@ -30,7 +30,7 @@ import {
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
-import { unstable_batchedUpdates } from "react-dom";
+import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
@@ -118,7 +118,7 @@ const useScrub = ({
       onValueChange(event) {
         // Will work without but depends on order of setState updates
         // at text-control, now fixed in both places (order of updates is right, and batched here)
-        unstable_batchedUpdates(() => {
+        unstableBatchedUpdates(() => {
           onChangeCompleteRef.current({
             type,
             unit,
@@ -310,7 +310,9 @@ export const CssValueInput = ({
 
   const handleOnBlur: KeyboardEventHandler = (event) => {
     // When select is open, onBlur is triggered,though we don't want a change event in this case.
-    if (isUnitsOpen || isOpen) return;
+    if (isUnitsOpen || isOpen) {
+      return;
+    }
 
     onChangeComplete(value);
     inputProps.onBlur(event);
@@ -329,7 +331,7 @@ export const CssValueInput = ({
   const prefix = icon && (
     <CssValueInputIconButton
       state={isCurrentBreakpoint ? "set" : undefined}
-      css={value.type == "unit" ? { cursor: "ew-resize" } : undefined}
+      css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
     >
       {icon}
     </CssValueInputIconButton>
@@ -365,7 +367,9 @@ export const CssValueInput = ({
             {...inputProps}
             onFocus={() => {
               const isFocused = document.activeElement === inputRef.current;
-              if (isFocused) inputRef.current?.select();
+              if (isFocused) {
+                inputRef.current?.select();
+              }
             }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}

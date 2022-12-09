@@ -11,7 +11,7 @@ import {
   MagnifyingGlassIcon,
 } from "@webstudio-is/icons";
 import { TextField } from "./text-field";
-import { IconButton_deprecated } from "./icon-button-deprecated";
+import { IconButtonDeprecated } from "./icon-button-deprecated";
 import { styled } from "../stitches.config";
 
 const SearchIcon = styled(MagnifyingGlassIcon, {
@@ -19,7 +19,7 @@ const SearchIcon = styled(MagnifyingGlassIcon, {
   padding: "$spacing$3",
 });
 
-const AbortButton = styled(IconButton_deprecated, {
+const AbortButton = styled(IconButtonDeprecated, {
   marginRight: "$spacing$3",
 });
 
