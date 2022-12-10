@@ -57,13 +57,13 @@ export const PropertyName = ({ property, label, onReset }: PropertyProps) => {
           </PopoverTrigger>
           <PopoverPortal>
             <PopoverContent align="start" onClick={() => setIsOpen(false)}>
-              <Flex align="start" css={{ padding: "$spacing$3 $spacing$4" }}>
+              <Flex align="start" css={{ px: "$spacing$4", py: "$spacing$3" }}>
                 <Button onClick={onReset}>
                   <UndoIcon /> &nbsp; Reset
                 </Button>
               </Flex>
               <Separator />
-              <Box css={{ padding: "$spacing$3 $spacing$4" }}>
+              <Box css={{ px: "$spacing$4", py: "$spacing$3" }}>
                 <Text color="hint">
                   Resetting will revert to initial or inherited value
                 </Text>
