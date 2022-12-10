@@ -345,9 +345,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       return;
     }
 
-    // prevent scrolling
-    event.preventDefault();
-
     if (event.key === "ArrowRight" && getIsExpanded(selectedItem) === false) {
       setIsExpanded(selectedItem, true);
     }
@@ -361,12 +358,16 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
       if (index > 0) {
         setFocus(flatCurrentlyExpandedTree[index - 1], "changing");
+        // prevent scrolling
+        event.preventDefault();
       }
     }
     if (event.key === "ArrowDown") {
       const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
       if (index < flatCurrentlyExpandedTree.length - 1) {
         setFocus(flatCurrentlyExpandedTree[index + 1], "changing");
+        // prevent scrolling
+        event.preventDefault();
       }
     }
     if (event.key === "Backspace" || event.key === "Delete") {
