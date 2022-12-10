@@ -2,7 +2,7 @@ import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleConfig } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
-import type { Style } from "@webstudio-is/css-data";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
 import * as controls from "./controls";
@@ -31,6 +31,7 @@ export type ControlProps = {
 
 export type RenderCategoryProps = {
   setProperty: SetProperty;
+  deleteProperty: (property: StyleProperty) => void;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   sectionStyle: {
@@ -44,6 +45,7 @@ export type RenderCategoryProps = {
 
 export type RenderPropertyProps = {
   setProperty: SetProperty;
+  deleteProperty: (property: StyleProperty) => void;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
@@ -54,6 +56,7 @@ export const renderProperty = ({
   currentStyle,
   inheritedStyle,
   setProperty,
+  deleteProperty,
   styleConfig,
   category,
 }: RenderPropertyProps) => {
@@ -68,9 +71,7 @@ export const renderProperty = ({
       <PropertyName
         property={styleConfig.property}
         label={styleConfig.label}
-        onReset={() => {
-          setProperty(styleConfig.property)({ type: "unset", value: "" });
-        }}
+        onReset={() => deleteProperty(styleConfig.property)}
       />
       <Control
         currentStyle={currentStyle}
@@ -85,6 +86,7 @@ export const renderProperty = ({
 
 export const renderCategory = ({
   setProperty,
+  deleteProperty,
   createBatchUpdate,
   currentStyle,
   sectionStyle,
@@ -97,6 +99,7 @@ export const renderCategory = ({
   return (
     <Section
       setProperty={setProperty}
+      deleteProperty={deleteProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       sectionStyle={sectionStyle}

@@ -46,7 +46,7 @@ export const TypographySection = (props: RenderCategoryProps) => {
 };
 
 export const TypographySectionFont = (props: RenderCategoryProps) => {
-  const { sectionStyle } = props;
+  const { deleteProperty, sectionStyle } = props;
 
   return (
     <Grid
@@ -58,12 +58,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           label="Font"
           property="fontFamily"
-          onReset={() => {
-            sectionStyle.fontFamily.setProperty("fontFamily")({
-              type: "unset",
-              value: "",
-            });
-          }}
+          onReset={() => deleteProperty("fontFamily")}
         />
         <FontFamilyControl {...sectionStyle.fontFamily} />
       </Grid>
@@ -71,12 +66,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           label="Weight"
           property="fontWeight"
-          onReset={() => {
-            sectionStyle.fontWeight.setProperty("fontWeight")({
-              type: "unset",
-              value: "",
-            });
-          }}
+          onReset={() => deleteProperty("fontWeight")}
         />
         <FontWeightControl {...sectionStyle.fontWeight} />
       </Grid>
@@ -84,12 +74,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           label="Color"
           property="color"
-          onReset={() => {
-            sectionStyle.color.setProperty("color")({
-              type: "unset",
-              value: "",
-            });
-          }}
+          onReset={() => deleteProperty("color")}
         />
         <ColorControl {...sectionStyle.color} />
       </Grid>
@@ -98,7 +83,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
 };
 
 export const TypographySectionSizing = (props: RenderCategoryProps) => {
-  const { sectionStyle } = props;
+  const { deleteProperty, sectionStyle } = props;
 
   return (
     <Grid
@@ -111,12 +96,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
         <PropertyName
           property="fontSize"
           label="Size"
-          onReset={() => {
-            sectionStyle.fontSize.setProperty("fontSize")({
-              type: "unset",
-              value: "",
-            });
-          }}
+          onReset={() => deleteProperty("fontSize")}
         />
         <TextControl {...sectionStyle.fontSize} />
       </Grid>
@@ -124,12 +104,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
         <PropertyName
           property="lineHeight"
           label="Height"
-          onReset={() => {
-            sectionStyle.lineHeight.setProperty("lineHeight")({
-              type: "unset",
-              value: "",
-            });
-          }}
+          onReset={() => deleteProperty("lineHeight")}
         />
         <TextControl {...sectionStyle.lineHeight} />
       </Grid>
@@ -137,12 +112,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
         <PropertyName
           property="letterSpacing"
           label="Spacing"
-          onReset={() => {
-            sectionStyle.letterSpacing.setProperty("letterSpacing")({
-              type: "unset",
-              value: "",
-            });
-          }}
+          onReset={() => deleteProperty("letterSpacing")}
         />
         <TextControl {...sectionStyle.letterSpacing} />
       </Grid>
@@ -279,7 +249,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
 export const TypographySectionAdvancedPopover = (
   props: RenderCategoryProps
 ) => {
-  const { setProperty, currentStyle, sectionStyle } = props;
+  const { deleteProperty, setProperty, currentStyle, sectionStyle } = props;
   const setDirection = setProperty("direction");
   const setTextOverflow = setProperty("textOverflow");
   const setHyphens = setProperty("hyphens");
@@ -292,12 +262,7 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="whiteSpace"
               label="White Space"
-              onReset={() => {
-                sectionStyle.whiteSpace.setProperty("whiteSpace")({
-                  type: "unset",
-                  value: "",
-                });
-              }}
+              onReset={() => deleteProperty("whiteSpace")}
             />
             <SelectControl {...sectionStyle.whiteSpace} />
           </Grid>
@@ -305,12 +270,7 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="direction"
               label="Direction"
-              onReset={() => {
-                sectionStyle.direction.setProperty("direction")({
-                  type: "unset",
-                  value: "",
-                });
-              }}
+              onReset={() => deleteProperty("direction")}
             />
             <ToggleGroupControl
               property="direction"
@@ -334,12 +294,7 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="hyphens"
               label="Hyphens"
-              onReset={() => {
-                sectionStyle.hyphens.setProperty("hyphens")({
-                  type: "unset",
-                  value: "",
-                });
-              }}
+              onReset={() => deleteProperty("hyphens")}
             />
             <ToggleGroupControl
               property="hyphens"
@@ -363,12 +318,7 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="textOverflow"
               label="Text Overflow"
-              onReset={() => {
-                sectionStyle.textOverflow.setProperty("textOverflow")({
-                  type: "unset",
-                  value: "",
-                });
-              }}
+              onReset={() => deleteProperty("textOverflow")}
             />
             <ToggleGroupControl
               property="textOverflow"

@@ -19,11 +19,16 @@ export const StylePanel = ({
   selectedInstanceData,
   publish,
 }: StylePanelProps) => {
-  const { currentStyle, inheritedStyle, setProperty, createBatchUpdate } =
-    useStyleData({
-      selectedInstanceData,
-      publish,
-    });
+  const {
+    currentStyle,
+    inheritedStyle,
+    setProperty,
+    deleteProperty,
+    createBatchUpdate,
+  } = useStyleData({
+    selectedInstanceData,
+    publish,
+  });
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth] = useCanvasWidth();
   const [search, setSearch] = useState("");
@@ -77,6 +82,7 @@ export const StylePanel = ({
           currentStyle={currentStyle}
           inheritedStyle={inheritedStyle}
           setProperty={setProperty}
+          deleteProperty={deleteProperty}
           createBatchUpdate={createBatchUpdate}
         />
       </Box>

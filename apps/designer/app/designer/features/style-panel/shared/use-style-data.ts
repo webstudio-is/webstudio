@@ -31,6 +31,7 @@ export type SetProperty = (
 
 export type CreateBatchUpdate = () => {
   setProperty: SetProperty;
+  deleteProperty: (property: StyleProperty) => void;
   publish: () => void;
 };
 
@@ -122,22 +123,30 @@ export const useStyleData = ({
           : inputOrStyle;
 
       if (nextValue.type !== "invalid") {
-        const updates = [{ property, value: nextValue }];
+        const updates = [
+          { operation: "set" as const, property, value: nextValue },
+        ];
         const type = options.isEphemeral ? "preview" : "update";
 
         publishUpdates(type, updates);
       }
 
       if (options.isEphemeral === false) {
-        if (nextValue.type === "unset") {
-          const nextStyle = { ...currentStyle };
-          delete nextStyle[property];
-          setCurrentStyle(nextStyle);
-        } else {
-          setCurrentStyle({ ...currentStyle, [property]: nextValue });
-        }
+        setCurrentStyle({ ...currentStyle, [property]: nextValue });
       }
     };
+  };
+
+  const deleteProperty = (property: StyleProperty) => {
+    if (currentStyle === undefined) {
+      return;
+    }
+
+    const updates = [{ operation: "delete" as const, property }];
+    publishUpdates("update", updates);
+    const nextStyle = { ...currentStyle };
+    delete nextStyle[property];
+    setCurrentStyle(nextStyle);
   };
 
   const createBatchUpdate = () => {
@@ -163,9 +172,17 @@ export const useStyleData = ({
           return;
         }
 
-        updates.push({ property, value });
+        updates.push({ operation: "set", property, value });
       };
       return setValue;
+    };
+
+    const deleteProperty = (property: StyleProperty) => {
+      if (currentStyle === undefined) {
+        return;
+      }
+
+      updates.push({ operation: "delete", property });
     };
 
     const publish = () => {
@@ -174,12 +191,13 @@ export const useStyleData = ({
       }
       publishUpdates("update", updates);
       const nextStyle = updates.reduce(
-        (currentStyle, { property, value }) => {
-          if (value.type === "unset") {
-            delete currentStyle[property];
-          } else {
+        (currentStyle, update) => {
+          if (update.operation === "delete") {
+            delete currentStyle[update.property];
+          }
+          if (update.operation === "set") {
             // @todo
-            currentStyle[property] = value;
+            currentStyle[update.property] = update.value;
           }
           return currentStyle;
         },
@@ -191,9 +209,16 @@ export const useStyleData = ({
 
     return {
       setProperty,
+      deleteProperty,
       publish,
     };
   };
 
-  return { currentStyle, inheritedStyle, setProperty, createBatchUpdate };
+  return {
+    currentStyle,
+    inheritedStyle,
+    setProperty,
+    deleteProperty,
+    createBatchUpdate,
+  };
 };
