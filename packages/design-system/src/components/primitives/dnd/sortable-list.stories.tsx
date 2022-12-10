@@ -188,6 +188,7 @@ export const SortableList = ({
 };
 
 export default {
+  title: "SortableList",
   args: {
     direction: "vertical",
     reversed: false,
