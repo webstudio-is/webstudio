@@ -180,6 +180,12 @@ export const useCssRules = ({
       for (property in dynamicStyle) {
         rule.styleMap.set(property, dynamicStyle[property]);
       }
+      // delete previously rendered properties when reset
+      for (const property of rule.styleMap.keys()) {
+        if (dynamicStyle[property] == null) {
+          rule.styleMap.delete(property);
+        }
+      }
     }
     cssEngine.render();
   }, [id, cssRules]);

@@ -129,7 +129,13 @@ export const useStyleData = ({
       }
 
       if (options.isEphemeral === false) {
-        setCurrentStyle({ ...currentStyle, [property]: nextValue });
+        if (nextValue.type === "unset") {
+          const newStyle = { ...currentStyle };
+          delete newStyle[property];
+          setCurrentStyle(newStyle);
+        } else {
+          setCurrentStyle({ ...currentStyle, [property]: nextValue });
+        }
       }
     };
   };
@@ -169,8 +175,12 @@ export const useStyleData = ({
       publishUpdates("update", updates);
       const nextStyle = updates.reduce(
         (currentStyle, { property, value }) => {
-          // @todo
-          currentStyle[property] = value;
+          if (value.type === "unset") {
+            delete currentStyle[property];
+          } else {
+            // @todo
+            currentStyle[property] = value;
+          }
           return currentStyle;
         },
         { ...currentStyle }

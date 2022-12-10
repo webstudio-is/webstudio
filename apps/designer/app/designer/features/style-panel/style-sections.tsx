@@ -2,7 +2,7 @@ import { Grid, type CSS } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleConfig } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
+import type { Style } from "@webstudio-is/css-data";
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
 import * as controls from "./controls";
@@ -20,12 +20,6 @@ import {
   OtherSection,
 } from "./sections";
 import { PropertyName } from "./shared/property-name";
-
-export type PropertyProps = {
-  property: StyleProperty | StyleProperty[];
-  label: string;
-  css?: CSS;
-};
 
 export type ControlProps = {
   setProperty: SetProperty;
@@ -71,7 +65,13 @@ export const renderProperty = ({
 
   return (
     <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <PropertyName
+        property={styleConfig.property}
+        label={styleConfig.label}
+        onReset={() => {
+          setProperty(styleConfig.property)({ type: "unset", value: "" });
+        }}
+      />
       <Control
         currentStyle={currentStyle}
         inheritedStyle={inheritedStyle}

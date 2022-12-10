@@ -38,6 +38,11 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
       <PropertyName
         property={sectionStyle.alignSelf?.styleConfig.property}
         label="Align"
+        onReset={() => {
+          sectionStyle.alignSelf.setProperty(
+            sectionStyle.alignSelf?.styleConfig.property
+          )({ type: "unset", value: "" });
+        }}
       />
       <ToggleGroupControl
         property={sectionStyle.alignSelf?.styleConfig.property}
@@ -92,6 +97,11 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
           sectionStyle.flexShrink?.styleConfig.property,
         ]}
         label="Sizing"
+        onReset={() => {
+          setSizing.setProperty("flexGrow")({ type: "unset", value: "" });
+          setSizing.setProperty("flexShrink")({ type: "unset", value: "" });
+          setSizing.publish();
+        }}
       />
       <ToggleGroupControl
         property={[
@@ -169,6 +179,11 @@ const FlexChildSectionSizingPopover = ({
             <PropertyName
               property={sectionStyle.flexBasis?.styleConfig.property}
               label="Basis"
+              onReset={() => {
+                sectionStyle.flexBasis.setProperty(
+                  sectionStyle.flexBasis?.styleConfig.property
+                )({ type: "unset", value: "" });
+              }}
             />
             <TextControl {...sectionStyle.flexBasis} />
           </Grid>
@@ -176,6 +191,11 @@ const FlexChildSectionSizingPopover = ({
             <PropertyName
               property={sectionStyle.flexGrow?.styleConfig.property}
               label="Grow"
+              onReset={() => {
+                sectionStyle.flexGrow.setProperty(
+                  sectionStyle.flexGrow?.styleConfig.property
+                )({ type: "unset", value: "" });
+              }}
             />
             <TextControl {...sectionStyle.flexGrow} />
           </Grid>
@@ -183,6 +203,11 @@ const FlexChildSectionSizingPopover = ({
             <PropertyName
               property={sectionStyle.flexShrink?.styleConfig.property}
               label="Shrink"
+              onReset={() => {
+                sectionStyle.flexShrink.setProperty(
+                  sectionStyle.flexShrink?.styleConfig.property
+                )({ type: "unset", value: "" });
+              }}
             />
             <TextControl {...sectionStyle.flexShrink} />
           </Grid>
@@ -205,6 +230,11 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
       <PropertyName
         property={sectionStyle.order?.styleConfig.property}
         label="Order"
+        onReset={() => {
+          sectionStyle.order.setProperty(
+            sectionStyle.order?.styleConfig.property
+          )({ type: "unset", value: "" });
+        }}
       />
       <ToggleGroupControl
         property={sectionStyle.order?.styleConfig.property}
@@ -257,6 +287,11 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
             <PropertyName
               property={sectionStyle.order?.styleConfig.property}
               label="Order"
+              onReset={() => {
+                sectionStyle.order.setProperty(
+                  sectionStyle.order?.styleConfig.property
+                )({ type: "unset", value: "" });
+              }}
             />
             <TextControl {...sectionStyle.order} />
           </Grid>
