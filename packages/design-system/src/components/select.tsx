@@ -1,8 +1,9 @@
+import type { ReactNode, Ref, ComponentProps } from "react";
+import { forwardRef, useState } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import React, { ReactNode, Ref } from "react";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { Grid } from "./grid";
 import { Box } from "./box";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
@@ -135,20 +136,18 @@ const SelectItemBase = (
 type SelectItemProps = SelectPrimitive.SelectItemProps & {
   children: ReactNode;
 };
-export const SelectItem = React.forwardRef(SelectItemBase);
+export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
 export type SelectProps<Option = SelectOption> = Omit<
-  React.ComponentProps<typeof StyledTrigger>,
+  ComponentProps<typeof StyledTrigger>,
   "onChange" | "value" | "defaultValue"
 > & {
   options: Option[];
   defaultValue?: Option;
   value?: Option;
   onChange?: (option: Option) => void;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
   getValue?: (option: Option) => string | undefined;
@@ -161,8 +160,6 @@ const SelectBase = (
     defaultValue,
     placeholder = "Select an option",
     onChange,
-    onOpenChange,
-    open,
     getLabel = (option) => option,
     getValue = (option) => option,
     name,
@@ -170,6 +167,7 @@ const SelectBase = (
   }: SelectProps,
   forwardedRef: Ref<HTMLButtonElement>
 ) => {
+  const [open, setOpen] = useState(false);
   return (
     <SelectPrimitive.Root
       name={name}
@@ -177,7 +175,7 @@ const SelectBase = (
       defaultValue={defaultValue}
       onValueChange={onChange}
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={setOpen}
     >
       <StyledTrigger ref={forwardedRef} {...props}>
         <SelectPrimitive.Value asChild>
@@ -188,7 +186,7 @@ const SelectBase = (
         </StyledIcon>
       </StyledTrigger>
       <SelectPrimitive.Portal>
-        <SelectContent>
+        <SelectContent onEscapeKeyDown={() => setOpen(false)}>
           <SelectScrollUpButton>
             <ChevronUpIcon />
           </SelectScrollUpButton>
@@ -212,5 +210,5 @@ const SelectBase = (
   );
 };
 
-export const Select = React.forwardRef(SelectBase);
+export const Select = forwardRef(SelectBase);
 Select.displayName = "Select";

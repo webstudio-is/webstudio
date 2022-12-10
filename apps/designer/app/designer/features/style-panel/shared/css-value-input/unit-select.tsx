@@ -142,7 +142,10 @@ const UnitSelect = ({
         </StyledTrigger>
       </SelectPrimitive.SelectTrigger>
       <SelectPrimitive.Portal>
-        <SelectContent onCloseAutoFocus={onCloseAutoFocus}>
+        <SelectContent
+          onCloseAutoFocus={onCloseAutoFocus}
+          onEscapeKeyDown={() => onOpenChange(false)}
+        >
           <SelectScrollUpButton>
             <ChevronUpIcon />
           </SelectScrollUpButton>
