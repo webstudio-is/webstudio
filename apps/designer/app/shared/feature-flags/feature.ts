@@ -25,6 +25,9 @@ const readLocal = (): Array<Name> => {
  * - by setting it in the browser console: localStorage.features = 'something1, something2', browser defined flag will override server-side flag
  */
 export const isFeatureEnabled = (name: Name): boolean => {
+  if (env.FEATURES === "*") {
+    return true;
+  }
   const defaultValue = flags[name];
   const envValue = parse(env.FEATURES).includes(name);
   const localValue = readLocal().includes(name);
