@@ -32,6 +32,7 @@ import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
+import { toValue } from "@webstudio-is/css-engine";
 
 const unsetValue: UnsetValue = { type: "unset", value: "" };
 
@@ -263,7 +264,12 @@ export const CssValueInput = ({
   } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
-    itemToString: (item) => (item === null ? "" : String(item.value)),
+    itemToString: (item) =>
+      item === null
+        ? ""
+        : item.type === "intermediate" || item.type === "unit"
+        ? String(item.value)
+        : toValue(item),
     onInputChange: (inputValue) => {
       onChange(inputValue ?? unsetValue.value);
     },
@@ -308,19 +314,27 @@ export const CssValueInput = ({
     shouldHandleEvent,
   });
 
+  const menuProps = getMenuProps();
+
   const handleOnBlur: KeyboardEventHandler = (event) => {
-    // When select is open, onBlur is triggered,though we don't want a change event in this case.
-    if (isUnitsOpen || isOpen) {
+    inputProps.onBlur(event);
+    // When unit select is open, onBlur is triggered,though we don't want a change event in this case.
+    if (isUnitsOpen) {
+      return;
+    }
+
+    // If the menu is open and visible we don't want to trigger onChangeComplete
+    // as it will be done by Downshift
+    if (isOpen && !menuProps.empty) {
       return;
     }
 
     onChangeComplete(value);
-    inputProps.onBlur(event);
   };
 
   const handleKeyDown = useHandleKeyDown({
     // In case of menu is really open do not prevent default downshift Enter key behaviour
-    ignoreEnter: isOpen && !getMenuProps().empty,
+    ignoreEnter: isOpen && !menuProps.empty,
     onChangeComplete,
     value,
     onChange: props.onChange,
@@ -393,14 +407,14 @@ export const CssValueInput = ({
           sideOffset={8}
           collisionPadding={10}
         >
-          <ComboboxListbox {...getMenuProps()}>
+          <ComboboxListbox {...menuProps}>
             {isOpen &&
               items.map((item, index) => (
                 <ComboboxListboxItem
                   {...getItemProps({ item, index })}
                   key={index}
                 >
-                  {item.value}
+                  {item.type === "intermediate" ? item.value : toValue(item)}
                 </ComboboxListboxItem>
               ))}
           </ComboboxListbox>

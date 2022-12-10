@@ -1,4 +1,4 @@
-import { useRef, useEffect, type MouseEventHandler } from "react";
+import { useRef, useEffect } from "react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { type Publish } from "~/shared/pubsub";
 import {
@@ -6,7 +6,7 @@ import {
   type TextToolbarState,
   useTextToolbarState,
 } from "~/designer/shared/nano-states";
-import { ToggleGroupRoot, ToggleGroupItem } from "@webstudio-is/design-system";
+import { Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
 import {
   FontBoldIcon,
   FontItalicIcon,
@@ -14,7 +14,7 @@ import {
   SubscriptIcon,
   Link2Icon,
   BrushIcon,
-  FormatClearIcon,
+  CrossSmallIcon,
 } from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
 
@@ -39,11 +39,6 @@ export const useSubscribeTextToolbar = () => {
   const [, setTextToolbar] = useTextToolbarState();
   useSubscribe("showTextToolbar", setTextToolbar);
   useSubscribe("hideTextToolbar", () => setTextToolbar(undefined));
-};
-
-const onClickPreventDefault: MouseEventHandler<HTMLDivElement> = (event) => {
-  event.preventDefault();
-  event.stopPropagation();
 };
 
 const getRectForRelativeRect = (parent: DOMRect, rel: DOMRect) => {
@@ -87,86 +82,104 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
     }
   }, [state.selectionRect]);
 
-  const value: Format[] = [];
-  if (state.isBold) {
-    value.push("bold");
-  }
-  if (state.isItalic) {
-    value.push("italic");
-  }
-  if (state.isSuperscript) {
-    value.push("superscript");
-  }
-  if (state.isSubscript) {
-    value.push("subscript");
-  }
-  if (state.isLink) {
-    value.push("link");
-  }
-  if (state.isSpan) {
-    value.push("span");
-  }
+  const isCleared =
+    state.isBold === false &&
+    state.isItalic === false &&
+    state.isSuperscript === false &&
+    state.isSubscript === false &&
+    state.isLink === false &&
+    state.isSpan === false;
 
   return (
-    <ToggleGroupRoot
+    <Flex
       ref={rootRef}
-      type="multiple"
-      value={value}
-      onValueChange={(newValues: Format[]) => {
-        // @todo refactor with per button callback
-        if (state.isBold !== newValues.includes("bold")) {
-          onToggle("bold");
-        }
-        if (state.isItalic !== newValues.includes("italic")) {
-          onToggle("italic");
-        }
-        if (state.isSuperscript !== newValues.includes("superscript")) {
-          onToggle("superscript");
-        }
-        if (state.isSubscript !== newValues.includes("subscript")) {
-          onToggle("subscript");
-        }
-        if (state.isLink !== newValues.includes("link")) {
-          onToggle("link");
-        }
-        if (state.isSpan !== newValues.includes("span")) {
-          onToggle("span");
-        }
-        if (newValues.includes("clear")) {
-          onToggle("clear");
-        }
-      }}
-      onClick={onClickPreventDefault}
+      gap={2}
       css={{
         position: "absolute",
         top: 0,
         left: 0,
         pointerEvents: "auto",
         background: "$loContrast",
+        padding: "$spacing$3",
+        borderRadius: "$borderRadius$6",
+        border: "1px solid $slate8",
+        filter:
+          "drop-shadow(0px 2px 7px rgba(0, 0, 0, 0.1)) drop-shadow(0px 5px 17px rgba(0, 0, 0, 0.15))",
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
       }}
     >
-      <ToggleGroupItem value="bold">
-        <FontBoldIcon />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="italic">
-        <FontItalicIcon />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="superscript">
-        <SuperscriptIcon />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="subscript">
-        <SubscriptIcon />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="link">
-        <Link2Icon />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="span">
-        <BrushIcon />
-      </ToggleGroupItem>
-      <ToggleGroupItem value="clear">
-        <FormatClearIcon />
-      </ToggleGroupItem>
-    </ToggleGroupRoot>
+      <Tooltip content="Clear styles">
+        <IconButton
+          aria-label="Clear styles"
+          disabled={isCleared}
+          onClick={() => onToggle("clear")}
+        >
+          <CrossSmallIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Bold">
+        <IconButton
+          aria-label="Bold"
+          variant={state.isBold ? "set" : "default"}
+          onClick={() => onToggle("bold")}
+        >
+          <FontBoldIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Italic">
+        <IconButton
+          aria-label="Italic"
+          variant={state.isItalic ? "set" : "default"}
+          onClick={() => onToggle("italic")}
+        >
+          <FontItalicIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Superscript">
+        <IconButton
+          aria-label="Superscript"
+          variant={state.isSuperscript ? "set" : "default"}
+          onClick={() => onToggle("superscript")}
+        >
+          <SuperscriptIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Subscript">
+        <IconButton
+          aria-label="Subscript"
+          variant={state.isSubscript ? "set" : "default"}
+          onClick={() => onToggle("subscript")}
+        >
+          <SubscriptIcon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Inline link">
+        <IconButton
+          aria-label="Inline link"
+          variant={state.isLink ? "set" : "default"}
+          onClick={() => onToggle("link")}
+        >
+          <Link2Icon />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip content="Wrap with span">
+        <IconButton
+          aria-label="Wrap with span"
+          variant={state.isSpan ? "set" : "default"}
+          onClick={() => onToggle("span")}
+        >
+          <BrushIcon />
+        </IconButton>
+      </Tooltip>
+    </Flex>
   );
 };
 

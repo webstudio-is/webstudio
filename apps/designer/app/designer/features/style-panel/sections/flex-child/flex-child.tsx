@@ -1,4 +1,5 @@
 import { Flex, Grid } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import type { RenderCategoryProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
@@ -41,7 +42,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
       <ToggleGroupControl
         property={sectionStyle.alignSelf?.styleConfig.property}
         onValueChange={(value) => setAlignSelf(value)}
-        value={String(currentStyle.alignSelf?.value)}
+        value={toValue(currentStyle.alignSelf)}
         items={[
           {
             child: <CrossSmallIcon />,
@@ -120,8 +121,8 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
           }
         }}
         value={getSizingValue(
-          String(currentStyle.flexGrow?.value),
-          String(currentStyle.flexShrink?.value)
+          toValue(currentStyle.flexGrow),
+          toValue(currentStyle.flexShrink)
         )}
         items={[
           {
@@ -217,7 +218,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
             }
           }
         }}
-        value={String(currentStyle.order?.value)}
+        value={toValue(currentStyle.order)}
         items={[
           {
             child: <CrossSmallIcon />,

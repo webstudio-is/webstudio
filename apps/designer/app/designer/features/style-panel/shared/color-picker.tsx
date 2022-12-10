@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { colord, type RgbaColor } from "colord";
 import { ColorResult, RGBColor, SketchPicker } from "react-color";
+import type { RgbValue } from "@webstudio-is/css-data";
+
 import {
   Box,
   Popover,
@@ -9,12 +12,7 @@ import {
   TextField,
   css,
 } from "@webstudio-is/design-system";
-
-const stringifyRGBA = (color: RGBColor) => {
-  const { r, g, b, a = 1 } = color;
-
-  return `rgba(${r},${g},${b},${a})`;
-};
+import { toValue } from "@webstudio-is/css-engine";
 
 const pickerStyle = css({
   padding: "$spacing$5",
@@ -35,10 +33,20 @@ const defaultPickerStyles = {
 };
 
 type ColorPickerProps = {
-  onChange: (value: string) => void;
-  onChangeComplete: (value: string) => void;
-  value: string;
+  onChange: (value: RgbValue) => void;
+  onChangeComplete: (value: RgbValue) => void;
+  value: RgbValue;
   id: string;
+};
+
+const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
+  return {
+    type: "rgb",
+    r: rgb.r,
+    g: rgb.g,
+    b: rgb.b,
+    alpha: rgb.a ?? 100,
+  };
 };
 
 export const ColorPicker = ({
@@ -48,10 +56,59 @@ export const ColorPicker = ({
   id,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  // Color picker will use 0 as alpha value, which will force user to set alpha every time they have to change from transparent
-  if (value === "transparent") {
-    value = "";
-  }
+  const [intermediateValue, setIntermediateValue] = useState<
+    | {
+        /**
+         * TextField value
+         */
+        stringValue: string;
+        /**
+         * Color picker value
+         */
+        rgbValue: RGBColor;
+        state: "invalid" | undefined;
+      }
+    | undefined
+  >(undefined);
+
+  const onInputChangeComplete = (source: "enter" | "blur") => {
+    if (intermediateValue === undefined) {
+      return;
+    }
+
+    const colordValue = colord(intermediateValue.stringValue);
+    if (colordValue.isValid()) {
+      const rgb = colordValue.toRgb();
+      onChangeComplete({
+        type: "rgb",
+        r: rgb.r,
+        g: rgb.g,
+        b: rgb.b,
+        alpha: rgb.a,
+      });
+      setIntermediateValue(undefined);
+      return;
+    }
+
+    // We don't store invalid values in the CSS data, below is the only way we can show errors.
+    // See for details: https://github.com/webstudio-is/webstudio-designer/issues/564
+    // Anyway same behavior has Webflow - shows an error state on "Enter", and resets on Blur
+
+    // In case of "Enter" click show that the value is invalid
+    if (source === "enter") {
+      setIntermediateValue({
+        ...intermediateValue,
+        state: "invalid",
+      });
+      return;
+    }
+
+    // In case of blur, just reset to external value
+    setIntermediateValue(undefined);
+  };
+
+  const stringValue = intermediateValue?.stringValue ?? toValue(value);
+  const rgbValue = intermediateValue?.rgbValue ?? value;
 
   const prefix = (
     <Popover
@@ -70,19 +127,25 @@ export const ColorPicker = ({
             width: "$spacing$10",
             height: "$spacing$10",
             borderRadius: 2,
-            background: value,
+            background: toValue(value),
           }}
         />
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent>
           <SketchPicker
-            color={value}
-            onChange={(color: ColorResult) =>
-              onChange(stringifyRGBA(color.rgb))
-            }
+            color={rgbValue}
+            onChange={(color: ColorResult) => {
+              setIntermediateValue({
+                stringValue: toValue(colorResultToRgbValue(color.rgb)),
+                rgbValue: color.rgb,
+                state: undefined,
+              });
+              onChange(colorResultToRgbValue(color.rgb));
+            }}
             onChangeComplete={(color: ColorResult) => {
-              onChangeComplete(stringifyRGBA(color.rgb));
+              setIntermediateValue(undefined);
+              onChangeComplete(colorResultToRgbValue(color.rgb));
             }}
             // @todo to remove both when we have preset colors
             presetColors={[]}
@@ -96,10 +159,28 @@ export const ColorPicker = ({
 
   return (
     <TextField
-      onChange={(event) => onChange(event.target.value)}
-      value={value}
+      onChange={(event) => {
+        setIntermediateValue({
+          stringValue: event.target.value,
+          rgbValue: rgbValue,
+          state: undefined,
+        });
+      }}
+      onBlur={() => {
+        if (displayColorPicker) {
+          return;
+        }
+        onInputChangeComplete("blur");
+      }}
+      value={stringValue}
+      state={intermediateValue?.state}
       id={id}
       prefix={prefix}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          onInputChangeComplete("enter");
+        }
+      }}
     />
   );
 };

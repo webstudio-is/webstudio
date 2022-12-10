@@ -38,10 +38,10 @@ import {
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { useSetAssets } from "./shared/assets";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
+import { usePublishAssets } from "./shared/assets";
 
 export const links = () => {
   return [
@@ -297,7 +297,7 @@ export const Designer = ({
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
-  useSetAssets({ assets: project.assets, publish });
+  usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();

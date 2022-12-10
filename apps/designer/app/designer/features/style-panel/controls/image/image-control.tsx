@@ -4,6 +4,7 @@ import { getFinalValue } from "../../shared/get-final-value";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
 import { ImageManager } from "~/designer/shared/image-manager";
 import { useAssets } from "~/designer/shared/assets";
+import { toValue } from "@webstudio-is/css-engine";
 
 export const ImageControl = ({
   currentStyle,
@@ -25,7 +26,7 @@ export const ImageControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const selectedAsset = assets.find((asset) => asset.id === value.value);
+  const selectedAsset = assets.find((asset) => asset.id === toValue(value));
 
   return (
     <ValuePickerPopover

@@ -3,6 +3,7 @@ import { Flex, TextField } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
+import { toValue } from "@webstudio-is/css-engine";
 
 export default {
   component: CssValueInput,
@@ -113,9 +114,9 @@ export const WithUnits = () => {
         readOnly
         value={
           value
-            ? value?.type === "unit"
+            ? value?.type === "intermediate"
               ? value.value + value.unit
-              : value.value
+              : toValue(value)
             : ""
         }
       />

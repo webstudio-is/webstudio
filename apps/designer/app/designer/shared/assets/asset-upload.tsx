@@ -6,7 +6,7 @@ import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { useAssets } from "./use-assets";
 
 const useUpload = (type: AssetType) => {
-  const { handleSubmit, Form } = useAssets(type);
+  const { handleSubmit } = useAssets(type);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {
@@ -19,7 +19,7 @@ const useUpload = (type: AssetType) => {
     form.reset();
   };
 
-  return { inputRef, onChange, Form };
+  return { inputRef, onChange };
 };
 
 const acceptMap = {
@@ -32,29 +32,31 @@ type AssetUploadProps = {
 };
 
 export const AssetUpload = ({ type }: AssetUploadProps) => {
-  const { inputRef, onChange, Form } = useUpload(type);
+  const { inputRef, onChange } = useUpload(type);
   return (
-    <Flex as={Form} css={{ flexGrow: 1 }} onChange={onChange}>
-      <input
-        accept={acceptMap[type]}
-        type="file"
-        name={type}
-        multiple
-        ref={inputRef}
-        style={{ display: "none" }}
-      />
-      <Button
-        variant="blue"
-        type="button"
-        onClick={() => inputRef?.current?.click()}
-        size={2}
-        css={{ flexGrow: 1 }}
-      >
-        <Flex align="center" gap={1}>
-          <UploadIcon />
-          <Text>Upload</Text>
-        </Flex>
-      </Button>
-    </Flex>
+    <form onChange={onChange}>
+      <Flex>
+        <input
+          accept={acceptMap[type]}
+          type="file"
+          name={type}
+          multiple
+          ref={inputRef}
+          style={{ display: "none" }}
+        />
+        <Button
+          variant="blue"
+          type="button"
+          onClick={() => inputRef?.current?.click()}
+          size={2}
+          css={{ flexGrow: 1 }}
+        >
+          <Flex align="center" gap={1}>
+            <UploadIcon />
+            <Text>Upload</Text>
+          </Flex>
+        </Button>
+      </Flex>
+    </form>
   );
 };

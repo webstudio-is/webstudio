@@ -1,4 +1,5 @@
 import { Flex, Grid, IconButtonDeprecated } from "@webstudio-is/design-system";
+import { toValue } from "@webstudio-is/css-engine";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import { useIsFromCurrentBreakpoint } from "../../../shared/use-is-from-current-breakpoint";
 import type { Style } from "@webstudio-is/css-data";
@@ -18,9 +19,9 @@ export const FlexGrid = ({
     "alignContent",
     "alignItems",
   ]);
-  const flexDirection = currentStyle.flexDirection?.value as string;
-  const justifyContent = currentStyle.justifyContent?.value as string;
-  const alignItems = currentStyle.alignItems?.value as string;
+  const flexDirection = toValue(currentStyle.flexDirection);
+  const justifyContent = toValue(currentStyle.justifyContent);
+  const alignItems = toValue(currentStyle.alignItems);
   const direction = Number(flexDirection.includes("column"));
   const cells = [
     "_0_0",
