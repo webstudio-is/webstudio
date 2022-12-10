@@ -182,7 +182,7 @@ export const useCssRules = ({
       }
       // delete previously rendered properties when reset
       for (const property of rule.styleMap.keys()) {
-        if (dynamicStyle[property] == null) {
+        if (dynamicStyle[property] === undefined) {
           rule.styleMap.delete(property);
         }
       }
