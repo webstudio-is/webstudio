@@ -59,12 +59,13 @@ const LayoutSectionFlex = ({
           }}
         >
           <PropertyName
-            property={display.styleConfig.property}
+            property="display"
             label={display.styleConfig.label}
             onReset={() => {
-              sectionStyle.display.setProperty(
-                sectionStyle.display.styleConfig.property
-              )({ type: "unset", value: "" });
+              sectionStyle.display.setProperty("display")({
+                type: "unset",
+                value: "",
+              });
             }}
           />
           <SelectControl {...display} />

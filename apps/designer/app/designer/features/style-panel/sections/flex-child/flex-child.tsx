@@ -36,12 +36,13 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
-        property={sectionStyle.alignSelf?.styleConfig.property}
+        property="alignSelf"
         label="Align"
         onReset={() => {
-          sectionStyle.alignSelf.setProperty(
-            sectionStyle.alignSelf?.styleConfig.property
-          )({ type: "unset", value: "" });
+          sectionStyle.alignSelf.setProperty("alignSelf")({
+            type: "unset",
+            value: "",
+          });
         }}
       />
       <ToggleGroupControl
@@ -92,10 +93,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
-        property={[
-          sectionStyle.flexGrow?.styleConfig.property,
-          sectionStyle.flexShrink?.styleConfig.property,
-        ]}
+        property={["flexGrow", "flexShrink"]}
         label="Sizing"
         onReset={() => {
           setSizing.setProperty("flexGrow")({ type: "unset", value: "" });
@@ -177,36 +175,39 @@ const FlexChildSectionSizingPopover = ({
         >
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
-              property={sectionStyle.flexBasis?.styleConfig.property}
+              property="flexBasis"
               label="Basis"
               onReset={() => {
-                sectionStyle.flexBasis.setProperty(
-                  sectionStyle.flexBasis?.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.flexBasis.setProperty("flexBasis")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <TextControl {...sectionStyle.flexBasis} />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
-              property={sectionStyle.flexGrow?.styleConfig.property}
+              property="flexGrow"
               label="Grow"
               onReset={() => {
-                sectionStyle.flexGrow.setProperty(
-                  sectionStyle.flexGrow?.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.flexGrow.setProperty("flexGrow")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <TextControl {...sectionStyle.flexGrow} />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
-              property={sectionStyle.flexShrink?.styleConfig.property}
+              property="flexShrink"
               label="Shrink"
               onReset={() => {
-                sectionStyle.flexShrink.setProperty(
-                  sectionStyle.flexShrink?.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.flexShrink.setProperty("flexShrink")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <TextControl {...sectionStyle.flexShrink} />
@@ -228,12 +229,10 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
-        property={sectionStyle.order?.styleConfig.property}
+        property="order"
         label="Order"
         onReset={() => {
-          sectionStyle.order.setProperty(
-            sectionStyle.order?.styleConfig.property
-          )({ type: "unset", value: "" });
+          sectionStyle.order.setProperty("order")({ type: "unset", value: "" });
         }}
       />
       <ToggleGroupControl
@@ -285,12 +284,13 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
         <Grid css={{ padding: "$spacing$9" }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
-              property={sectionStyle.order?.styleConfig.property}
+              property="order"
               label="Order"
               onReset={() => {
-                sectionStyle.order.setProperty(
-                  sectionStyle.order?.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.order.setProperty("order")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <TextControl {...sectionStyle.order} />

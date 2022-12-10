@@ -59,9 +59,10 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
           label="Font"
           property="fontFamily"
           onReset={() => {
-            sectionStyle.fontFamily.setProperty(
-              sectionStyle.fontFamily.styleConfig.property
-            )({ type: "unset", value: "" });
+            sectionStyle.fontFamily.setProperty("fontFamily")({
+              type: "unset",
+              value: "",
+            });
           }}
         />
         <FontFamilyControl {...sectionStyle.fontFamily} />
@@ -71,9 +72,10 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
           label="Weight"
           property="fontWeight"
           onReset={() => {
-            sectionStyle.fontWeight.setProperty(
-              sectionStyle.fontWeight.styleConfig.property
-            )({ type: "unset", value: "" });
+            sectionStyle.fontWeight.setProperty("fontWeight")({
+              type: "unset",
+              value: "",
+            });
           }}
         />
         <FontWeightControl {...sectionStyle.fontWeight} />
@@ -83,9 +85,10 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
           label="Color"
           property="color"
           onReset={() => {
-            sectionStyle.color.setProperty(
-              sectionStyle.color.styleConfig.property
-            )({ type: "unset", value: "" });
+            sectionStyle.color.setProperty("color")({
+              type: "unset",
+              value: "",
+            });
           }}
         />
         <ColorControl {...sectionStyle.color} />
@@ -109,9 +112,10 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           property="fontSize"
           label="Size"
           onReset={() => {
-            sectionStyle.fontSize.setProperty(
-              sectionStyle.fontSize.styleConfig.property
-            )({ type: "unset", value: "" });
+            sectionStyle.fontSize.setProperty("fontSize")({
+              type: "unset",
+              value: "",
+            });
           }}
         />
         <TextControl {...sectionStyle.fontSize} />
@@ -121,9 +125,10 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           property="lineHeight"
           label="Height"
           onReset={() => {
-            sectionStyle.lineHeight.setProperty(
-              sectionStyle.lineHeight.styleConfig.property
-            )({ type: "unset", value: "" });
+            sectionStyle.lineHeight.setProperty("lineHeight")({
+              type: "unset",
+              value: "",
+            });
           }}
         />
         <TextControl {...sectionStyle.lineHeight} />
@@ -133,9 +138,10 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           property="letterSpacing"
           label="Spacing"
           onReset={() => {
-            sectionStyle.letterSpacing.setProperty(
-              sectionStyle.letterSpacing.styleConfig.property
-            )({ type: "unset", value: "" });
+            sectionStyle.letterSpacing.setProperty("letterSpacing")({
+              type: "unset",
+              value: "",
+            });
           }}
         />
         <TextControl {...sectionStyle.letterSpacing} />
@@ -287,9 +293,10 @@ export const TypographySectionAdvancedPopover = (
               property="whiteSpace"
               label="White Space"
               onReset={() => {
-                sectionStyle.whiteSpace.setProperty(
-                  sectionStyle.whiteSpace.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.whiteSpace.setProperty("whiteSpace")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <SelectControl {...sectionStyle.whiteSpace} />
@@ -299,9 +306,10 @@ export const TypographySectionAdvancedPopover = (
               property="direction"
               label="Direction"
               onReset={() => {
-                sectionStyle.direction.setProperty(
-                  sectionStyle.direction.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.direction.setProperty("direction")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <ToggleGroupControl
@@ -327,9 +335,10 @@ export const TypographySectionAdvancedPopover = (
               property="hyphens"
               label="Hyphens"
               onReset={() => {
-                sectionStyle.hyphens.setProperty(
-                  sectionStyle.hyphens.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.hyphens.setProperty("hyphens")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <ToggleGroupControl
@@ -355,9 +364,10 @@ export const TypographySectionAdvancedPopover = (
               property="textOverflow"
               label="Text Overflow"
               onReset={() => {
-                sectionStyle.textOverflow.setProperty(
-                  sectionStyle.textOverflow.styleConfig.property
-                )({ type: "unset", value: "" });
+                sectionStyle.textOverflow.setProperty("textOverflow")({
+                  type: "unset",
+                  value: "",
+                });
               }}
             />
             <ToggleGroupControl
