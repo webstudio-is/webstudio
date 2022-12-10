@@ -1,0 +1,16 @@
+diff --git a/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars b/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars
+index 30df5e4..a8c6f78 100644
+--- a/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars
++++ b/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars
+@@ -11,8 +11,9 @@ import { importFn } from './{{storiesFilename}}';
+ 
+ const { SERVER_CHANNEL_URL } = global;
+ 
+-const getProjectAnnotations = () =>
+-  composeConfigs([{{#each configs}}require('{{this}}'),{{/each}}]);
++// patch from https://github.com/storybookjs/storybook/pull/17108/commits/cde08674427f005aafc63a4cec7a216217974f53
++const getProjectAnnotations = async () =>
++  composeConfigs(await Promise.all([{{#each configs}}import('{{this}}'),{{/each}}]));
+ 
+ const channel = createPostMessageChannel({ page: 'preview' });
+ addons.setChannel(channel);
