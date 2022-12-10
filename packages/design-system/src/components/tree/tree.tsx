@@ -353,6 +353,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     }
     if (event.key === " ") {
       setIsExpanded(selectedItem, !getIsExpanded(selectedItem));
+      // prevent scrolling
+      event.preventDefault();
     }
     if (event.key === "ArrowUp") {
       const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
