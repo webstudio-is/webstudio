@@ -1,4 +1,4 @@
-import { Grid, type CSS } from "@webstudio-is/design-system";
+import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleConfig } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
