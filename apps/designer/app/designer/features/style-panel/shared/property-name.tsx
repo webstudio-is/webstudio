@@ -15,6 +15,7 @@ import {
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
 import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
+import { isFeatureEnabled } from "~/shared/feature-flags";
 
 type PropertyProps = {
   property: StyleProperty | StyleProperty[];
@@ -25,7 +26,8 @@ type PropertyProps = {
 export const PropertyName = ({ property, label, onReset }: PropertyProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
   const [isOpen, setIsOpen] = useState(false);
-  const isPopoverEnabled = isCurrentBreakpoint;
+  const isPopoverEnabled =
+    isFeatureEnabled("propertyReset") && isCurrentBreakpoint;
 
   const labelElement = (
     <Label
