@@ -101,6 +101,6 @@ export const StressTest = ({ animate }: { animate: boolean }) => {
 };
 
 export default {
-  title: "Tree",
+  component: Tree,
   args: { animate: true },
 } as ComponentMeta<typeof Tree>;
