@@ -14,5 +14,5 @@ runs:
           patches/*.patch
 
     - name: Install Dependencies
-      run: yarn install --frozen-lockfile --ignore-scripts
+      run: yarn install --frozen-lockfile
       shell: bash
