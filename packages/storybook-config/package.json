@@ -1,0 +1,13 @@
+{
+  "name": "@webstudio-is/storybook-config",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "@storybook/addon-essentials": "^6.5.14",
+    "@storybook/addon-interactions": "^6.5.14",
+    "@storybook/addon-links": "^6.5.14",
+    "@storybook/builder-webpack5": "^6.5.14",
+    "@storybook/manager-webpack5": "^6.5.14"
+  }
+}
