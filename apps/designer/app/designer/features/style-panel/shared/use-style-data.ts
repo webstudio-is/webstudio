@@ -130,9 +130,9 @@ export const useStyleData = ({
 
       if (options.isEphemeral === false) {
         if (nextValue.type === "unset") {
-          const newStyle = { ...currentStyle };
-          delete newStyle[property];
-          setCurrentStyle(newStyle);
+          const nextStyle = { ...currentStyle };
+          delete nextStyle[property];
+          setCurrentStyle(nextStyle);
         } else {
           setCurrentStyle({ ...currentStyle, [property]: nextValue });
         }
