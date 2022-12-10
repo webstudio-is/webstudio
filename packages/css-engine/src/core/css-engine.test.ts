@@ -11,6 +11,11 @@ const style1 = {
   display: { type: "keyword", value: "flex" },
 } as const;
 
+const style2 = {
+  display: { type: "keyword", value: "block" },
+  color: { type: "keyword", value: "black" },
+} as const;
+
 const mediaRuleOptions1 = { minWidth: 300 } as const;
 const mediaId1 = "1";
 
@@ -277,5 +282,31 @@ describe("CssEngine", () => {
     });
     engine.clear();
     expect(engine.cssText).toMatchInlineSnapshot(`""`);
+  });
+
+  test("get all rule style keys", () => {
+    const rule = engine.addStyleRule(".c", {
+      style: style2,
+      breakpoint: "0",
+    });
+    expect(Array.from(rule.styleMap.keys())).toMatchInlineSnapshot(`
+      [
+        "display",
+        "color",
+      ]
+    `);
+  });
+
+  test("delete style from rule", () => {
+    const rule = engine.addStyleRule(".c", {
+      style: style2,
+      breakpoint: "0",
+    });
+    rule.styleMap.delete("display");
+    expect(engine.cssText).toMatchInlineSnapshot(`
+      "@media all {
+        .c { color: black }
+      }"
+    `);
   });
 });
