@@ -34,7 +34,7 @@ export const usePublishAssets = (publish: Publish) => {
     publish({
       type: "updateAssets",
       payload: assets.filter(
-        (asset) => asset.status === "uploaded"
+        (asset) => asset.status === undefined || asset.status === "uploaded"
       ) as Array<Asset>, // TS doesn't understand we filtered out PrevewAssets
     });
   }, [assets, publish]);
