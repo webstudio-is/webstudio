@@ -49,7 +49,7 @@ const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
   };
 };
 
-const rgbValueToRGBColor = (rgb: RgbValue): RGBColor => {
+const rgbValueToRgbColor = (rgb: RgbValue): RGBColor => {
   return {
     r: rgb.r,
     g: rgb.g,
@@ -117,7 +117,7 @@ export const ColorPicker = ({
   };
 
   const stringValue = intermediateValue?.stringValue ?? toValue(value);
-  const rgbValue = intermediateValue?.rgbValue ?? rgbValueToRGBColor(value);
+  const rgbValue = intermediateValue?.rgbValue ?? rgbValueToRgbColor(value);
 
   const prefix = (
     <Popover
