@@ -1,6 +1,6 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useHotkeys } from "react-hotkeys-hook";
 import { TreeNode, INDENT, TreeItemRenderProps } from "./tree-node";
 import { PlacementIndicator } from "./placement-indicator";
 import {
@@ -265,7 +265,11 @@ export const Tree = <Data extends { id: string }>({
       onScroll={dropHandlers.handleScroll}
     >
       <Box
+        // styled should support passing { current: T | undefined } to ref
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore React.MutableRefObject cannot be passed to React.RefObject
         ref={keyboardNavigation.rootRef}
+        onKeyDown={keyboardNavigation.handleKeyDown}
         onClick={keyboardNavigation.handleClick}
         onBlur={keyboardNavigation.handleBlur}
       >
@@ -333,50 +337,48 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     return result;
   }, [root, getIsExpanded, getItemChildren]);
 
-  const rootRef = useHotkeys(
-    "up,down,right,left,space,backspace,delete,esc",
-    (event, { shortcut }) => {
-      if (selectedItem === undefined) {
-        return;
+  const rootRef = useRef<HTMLDivElement | undefined>();
+
+  const handleKeyDown = (event: ReactKeyboardEvent) => {
+    // skip if nothing is selected in the tree
+    if (selectedItem === undefined) {
+      return;
+    }
+
+    if (event.key === "ArrowRight" && getIsExpanded(selectedItem) === false) {
+      setIsExpanded(selectedItem, true);
+    }
+    if (event.key === "ArrowLeft" && getIsExpanded(selectedItem)) {
+      setIsExpanded(selectedItem, false);
+    }
+    if (event.key === " ") {
+      setIsExpanded(selectedItem, !getIsExpanded(selectedItem));
+      // prevent scrolling
+      event.preventDefault();
+    }
+    if (event.key === "ArrowUp") {
+      const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
+      if (index > 0) {
+        setFocus(flatCurrentlyExpandedTree[index - 1], "changing");
+        // prevent scrolling
+        event.preventDefault();
       }
-      if (shortcut === "right" && getIsExpanded(selectedItem) === false) {
-        setIsExpanded(selectedItem, true);
+    }
+    if (event.key === "ArrowDown") {
+      const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
+      if (index < flatCurrentlyExpandedTree.length - 1) {
+        setFocus(flatCurrentlyExpandedTree[index + 1], "changing");
+        // prevent scrolling
+        event.preventDefault();
       }
-      if (shortcut === "left" && getIsExpanded(selectedItem)) {
-        setIsExpanded(selectedItem, false);
-      }
-      if (shortcut === "space") {
-        setIsExpanded(selectedItem, !getIsExpanded(selectedItem));
-      }
-      if (shortcut === "up") {
-        const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
-        if (index > 0) {
-          setFocus(flatCurrentlyExpandedTree[index - 1], "changing");
-          event.preventDefault(); // prevent scrolling
-        }
-      }
-      if (shortcut === "down") {
-        const index = flatCurrentlyExpandedTree.indexOf(selectedItem.id);
-        if (index < flatCurrentlyExpandedTree.length - 1) {
-          setFocus(flatCurrentlyExpandedTree[index + 1], "changing");
-          event.preventDefault(); // prevent scrolling
-        }
-      }
-      if (shortcut === "backspace" || shortcut === "delete") {
-        onDelete(selectedItem.id);
-      }
-      if (shortcut === "esc") {
-        onEsc();
-      }
-    },
-    [
-      selectedItem,
-      flatCurrentlyExpandedTree,
-      getIsExpanded,
-      setIsExpanded,
-      onDelete,
-    ]
-  );
+    }
+    if (event.key === "Backspace" || event.key === "Delete") {
+      onDelete(selectedItem.id);
+    }
+    if (event.key === "Escape") {
+      onEsc();
+    }
+  };
 
   const setFocus = useCallback(
     (itemId: string, reason: "restoring" | "changing") => {
@@ -419,9 +421,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   });
 
   return {
-    rootRef(element: HTMLElement | null) {
-      rootRef.current = element;
-    },
+    rootRef,
+    handleKeyDown,
     handleClick(event: React.MouseEvent<Element>) {
       // When clicking on an item button make sure it gets focused.
       // (see https://zellwk.com/blog/inconsistent-button-behavior/)
