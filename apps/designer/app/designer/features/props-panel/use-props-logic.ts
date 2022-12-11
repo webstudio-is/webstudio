@@ -5,7 +5,10 @@ import type {
   MetaProps,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
-import { getComponentMetaProps } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  getComponentMetaProps,
+} from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
 // @todo: importing normally doesn't work in Jest for some reason
@@ -100,11 +103,55 @@ const getPropsWithDefaultValue = (
     });
 };
 
+const getInitialProps = (
+  selectedInstanceData: SelectedInstanceData
+): UserProp[] => {
+  const props =
+    selectedInstanceData.props === undefined ||
+    selectedInstanceData.props.props.length === 0
+      ? []
+      : selectedInstanceData.props.props;
+
+  const { component } = selectedInstanceData;
+  const meta = getComponentMeta(component);
+  const metaProps = getComponentMetaProps(component);
+
+  const initialProps = meta.initialProps ?? [];
+
+  const userProps: UserProp[] = [];
+
+  // Preserve ordering from `initialProps` getting values from DB props or default values
+  for (const initialProp of initialProps) {
+    const userProp = props.find((prop) => prop.prop === initialProp);
+    if (userProp !== undefined) {
+      userProps.push(userProp);
+      continue;
+    }
+
+    const metaPropValue = metaProps[initialProp];
+    if (metaPropValue !== undefined) {
+      const typedValue = getValueFromPropMeta(metaPropValue);
+
+      userProps.push({
+        id: ObjectId().toString(),
+        prop: initialProp,
+        ...typedValue,
+      });
+
+      continue;
+    }
+  }
+  return userProps;
+};
+
 type UsePropsLogic = {
   publish: Publish;
   selectedInstanceData: SelectedInstanceData;
 };
 
+/**
+ * usePropsLogic expects that key={selectedInstanceData.id} is used on the ancestor component
+ */
 export const usePropsLogic = ({
   selectedInstanceData,
   publish,
@@ -115,16 +162,18 @@ export const usePropsLogic = ({
       ? []
       : selectedInstanceData.props.props;
 
-  const initialState = uniqBy(
-    [
-      ...props,
-      ...getPropsWithDefaultValue(selectedInstanceData),
-      ...getRequiredProps(selectedInstanceData),
-    ],
-    "prop"
+  // Prefer ordering from `initialProps`
+  const [userProps, setUserProps] = useState<Array<UserProp>>(() =>
+    uniqBy(
+      [
+        ...getInitialProps(selectedInstanceData),
+        ...getRequiredProps(selectedInstanceData),
+        ...getPropsWithDefaultValue(selectedInstanceData),
+        ...props,
+      ],
+      "prop"
+    )
   );
-
-  const [userProps, setUserProps] = useState<Array<UserProp>>(initialState);
 
   const updateProps = (updates: UserPropsUpdates["updates"]) => {
     publish({

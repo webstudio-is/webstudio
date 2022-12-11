@@ -23,6 +23,7 @@ const meta: WsComponentMeta = {
   Icon: ImageIcon,
   defaultStyle,
   props: props as MetaProps,
+  initialProps: ["src", "width", "height", "alt", "loading"],
 };
 
 export default meta;
