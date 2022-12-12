@@ -538,7 +538,7 @@ describe("usePropsLogic", () => {
     ).toBe(true);
   });
 
-  test("should return isRequired true for required props", () => {
+  test("isRequired should respect required prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Image", []),
