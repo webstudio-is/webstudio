@@ -39,6 +39,7 @@
     "css-tree": "^2.3.0",
     "debug": "^4.3.4",
     "detect-font": "^0.1.5",
+    "djb2a": "^2.0.0",
     "downshift": "^6.1.7",
     "hyphenate-style-name": "^1.0.4",
     "immer": "^9.0.12",
