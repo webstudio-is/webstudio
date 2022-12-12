@@ -203,15 +203,18 @@ const Property = ({
           currentStyle={currentStyle}
         />
       )}
-      <Button
-        disabled={required}
-        ghost
-        onClick={() => {
-          onDelete(userProp.id);
-        }}
-      >
-        <TrashIcon />
-      </Button>
+      {required ? (
+        <Box />
+      ) : (
+        <Button
+          ghost
+          onClick={() => {
+            onDelete(userProp.id);
+          }}
+        >
+          <TrashIcon />
+        </Button>
+      )}
     </>
   );
 };
