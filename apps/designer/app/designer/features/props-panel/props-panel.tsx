@@ -1,9 +1,9 @@
+import { useState } from "react";
 import {
   getComponentMetaProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
-
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
@@ -42,6 +42,7 @@ type ComboboxProps = {
   value: string;
   onItemSelect: (value: string | null) => void;
   onSubmit: (value: string) => void;
+  onInput: (value: string) => void;
 };
 
 const Combobox = ({
@@ -51,6 +52,7 @@ const Combobox = ({
   value,
   onItemSelect,
   onSubmit,
+  onInput,
 }: ComboboxProps) => {
   const {
     items,
@@ -77,6 +79,9 @@ const Combobox = ({
                 if (event.key === "Enter") {
                   onSubmit(event.currentTarget.value);
                 }
+              },
+              onInput: (event) => {
+                onInput(event.currentTarget.value);
               },
             })}
             name="prop"
@@ -118,6 +123,8 @@ type PropertyProps = {
   onDelete: (id: UserProp["id"]) => void;
   setCssProperty: SetProperty;
   currentStyle: Style;
+  required: boolean;
+  existingProps: string[];
 };
 
 const Property = ({
@@ -128,34 +135,61 @@ const Property = ({
   onDelete,
   setCssProperty,
   currentStyle,
+  required,
+  existingProps,
 }: PropertyProps) => {
-  const meta = getComponentMetaProps(component);
+  const metaProps = getComponentMetaProps(component);
 
-  const argType = meta[userProp.prop as keyof typeof meta];
+  const argType = metaProps[userProp.prop as keyof typeof metaProps];
   const isInvalid =
     userProp.prop != null &&
     userProp.prop.length > 0 &&
     typeof argType === "undefined" &&
     !userProp.prop.match(/^data-(.)+/);
 
-  const allProps = Object.keys(meta);
+  const allProps = Object.keys(metaProps).filter(
+    (propName) => existingProps.includes(propName) === false
+  );
+
+  const [error, setError] = useState<string | undefined>(undefined);
 
   return (
     <>
-      <Combobox
-        items={allProps}
-        value={userProp.prop}
-        onItemSelect={(name) => {
-          if (name != null) {
-            onChangePropName(name);
-          }
-        }}
-        onSubmit={onChangePropName}
-        isInvalid={isInvalid}
-        isReadonly={userProp.required ?? false}
-      />
-      {isInvalid ? (
-        <Tooltip content={`Invalid property name: ${userProp.prop}`}>
+      {required ? (
+        <TextField
+          name="prop"
+          placeholder="Property"
+          readOnly={true}
+          state={isInvalid ? "invalid" : undefined}
+          value={userProp.prop}
+        />
+      ) : (
+        <Combobox
+          items={allProps}
+          value={userProp.prop}
+          onItemSelect={(name) => {
+            if (name != null) {
+              setError(undefined);
+              onChangePropName(name);
+            }
+          }}
+          onSubmit={(name) => {
+            if (existingProps.includes(name) === false) {
+              setError(undefined);
+              onChangePropName(name);
+              return;
+            }
+            setError(`Property "${name}" is already exists`);
+          }}
+          onInput={() => {
+            setError(undefined);
+          }}
+          isInvalid={isInvalid || error !== undefined}
+          isReadonly={required}
+        />
+      )}
+      {isInvalid || error !== undefined ? (
+        <Tooltip content={error ?? `Invalid property name: ${userProp.prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>
       ) : (
@@ -169,7 +203,9 @@ const Property = ({
           currentStyle={currentStyle}
         />
       )}
-      {userProp.required !== true && (
+      {required ? (
+        <Box />
+      ) : (
         <Button
           ghost
           onClick={() => {
@@ -198,6 +234,7 @@ export const PropsPanel = ({
     handleChangePropName,
     handleChangePropValue,
     handleDeleteProp,
+    isRequired,
   } = usePropsLogic({ selectedInstanceData, publish });
 
   const { setProperty: setCssProperty, currentStyle } = useStyleData({
@@ -216,6 +253,8 @@ export const PropsPanel = ({
       <PlusIcon />
     </Button>
   );
+
+  const existingProps = userProps.map((userProp) => userProp.prop);
 
   return (
     <Box>
@@ -248,6 +287,8 @@ export const PropsPanel = ({
               setCssProperty={setCssProperty}
               currentStyle={currentStyle}
               onDelete={handleDeleteProp}
+              required={isRequired(userProp)}
+              existingProps={existingProps}
             />
           ))}
         </Grid>

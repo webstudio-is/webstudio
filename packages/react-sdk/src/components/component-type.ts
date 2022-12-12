@@ -26,6 +26,7 @@ export type WsComponentMeta = {
   defaultStyle?: Style;
   children?: Array<string>;
   props: MetaProps;
+  initialProps?: Array<string>;
 };
 
 const Props = z.record(
@@ -85,5 +86,6 @@ export const WsComponentMeta = z.lazy(() =>
     defaultStyle: z.optional(z.any()),
     children: z.optional(z.array(z.string())),
     props: Props,
+    initialProps: z.optional(z.array(z.string())),
   })
 );

@@ -15,7 +15,7 @@ const StyledThumb = styled(SwitchPrimitive.Thumb, {
   willChange: "transform",
 
   '&[data-state="checked"]': {
-    transform: "translateX(1$spacing$1)",
+    transform: "translateX($spacing$6)",
   },
 });
 

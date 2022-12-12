@@ -5,7 +5,10 @@ import type {
   MetaProps,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
-import { getComponentMetaProps } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  getComponentMetaProps,
+} from "@webstudio-is/react-sdk";
 import ObjectId from "bson-objectid";
 import produce from "immer";
 // @todo: importing normally doesn't work in Jest for some reason
@@ -60,19 +63,30 @@ const getRequiredProps = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
 
+  const props =
+    selectedInstanceData.props === undefined ||
+    selectedInstanceData.props.props.length === 0
+      ? []
+      : selectedInstanceData.props.props;
+
   return Object.entries(meta)
     .filter(([_, value]) => value?.required)
-    .map(([prop, propValue]) => {
+    .map(([requiredProp, requiredPropValue]) => {
       warnOnce(
-        propValue?.defaultValue == null,
-        `Default value for required "${prop}" is required`
+        requiredPropValue?.defaultValue == null,
+        `Default value for required "${requiredProp}" is required`
       );
+      const userProp = props.find((prop) => prop.prop === requiredProp);
 
-      const typedValue = getValueFromPropMeta(propValue);
+      if (userProp !== undefined) {
+        return userProp;
+      }
+
+      const typedValue = getValueFromPropMeta(requiredPropValue);
 
       return {
         id: ObjectId().toString(),
-        prop,
+        prop: requiredProp,
         ...typedValue,
         required: true,
       };
@@ -87,17 +101,70 @@ const getPropsWithDefaultValue = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
 
+  const props =
+    selectedInstanceData.props === undefined ||
+    selectedInstanceData.props.props.length === 0
+      ? []
+      : selectedInstanceData.props.props;
+
   return Object.entries(meta)
     .filter(([_, value]) => value?.defaultValue != null)
-    .map(([prop, propValue]) => {
-      const typedValue = getValueFromPropMeta(propValue);
+    .map(([defaultProp, defaultPropValue]) => {
+      const userProp = props.find((prop) => prop.prop === defaultProp);
+
+      if (userProp !== undefined) {
+        return userProp;
+      }
+
+      const typedValue = getValueFromPropMeta(defaultPropValue);
 
       return {
         id: ObjectId().toString(),
-        prop,
+        prop: defaultProp,
         ...typedValue,
       };
     });
+};
+
+const getInitialProps = (
+  selectedInstanceData: SelectedInstanceData
+): UserProp[] => {
+  const props =
+    selectedInstanceData.props === undefined ||
+    selectedInstanceData.props.props.length === 0
+      ? []
+      : selectedInstanceData.props.props;
+
+  const { component } = selectedInstanceData;
+  const meta = getComponentMeta(component);
+  const metaProps = getComponentMetaProps(component);
+
+  const initialProps = meta.initialProps ?? [];
+
+  const userProps: UserProp[] = [];
+
+  // Preserve ordering from `initialProps` getting values from DB props or default values
+  for (const initialProp of initialProps) {
+    const userProp = props.find((prop) => prop.prop === initialProp);
+    if (userProp !== undefined) {
+      userProps.push(userProp);
+      continue;
+    }
+
+    const metaPropValue = metaProps[initialProp];
+    if (metaPropValue !== undefined) {
+      const typedValue = getValueFromPropMeta(metaPropValue);
+
+      userProps.push({
+        id: ObjectId().toString(),
+        prop: initialProp,
+        ...typedValue,
+      });
+
+      continue;
+    }
+  }
+  return userProps;
 };
 
 type UsePropsLogic = {
@@ -105,6 +172,9 @@ type UsePropsLogic = {
   selectedInstanceData: SelectedInstanceData;
 };
 
+/**
+ * usePropsLogic expects that key={selectedInstanceData.id} is used on the ancestor component
+ */
 export const usePropsLogic = ({
   selectedInstanceData,
   publish,
@@ -115,16 +185,20 @@ export const usePropsLogic = ({
       ? []
       : selectedInstanceData.props.props;
 
-  const initialState = uniqBy(
-    [
-      ...props,
-      ...getPropsWithDefaultValue(selectedInstanceData),
-      ...getRequiredProps(selectedInstanceData),
-    ],
-    "prop"
+  const [requiredProps] = useState<Array<UserProp>>(() =>
+    uniqBy(
+      [
+        ...getInitialProps(selectedInstanceData),
+        ...getRequiredProps(selectedInstanceData),
+        ...getPropsWithDefaultValue(selectedInstanceData),
+      ],
+      "prop"
+    )
   );
-
-  const [userProps, setUserProps] = useState<Array<UserProp>>(initialState);
+  // Prefer ordering from `initialProps`
+  const [userProps, setUserProps] = useState<Array<UserProp>>(() =>
+    uniqBy([...requiredProps, ...props], "prop")
+  );
 
   const updateProps = (updates: UserPropsUpdates["updates"]) => {
     publish({
@@ -225,11 +299,22 @@ export const usePropsLogic = ({
     ]);
   };
 
+  const isRequired = (prop: UserProp) => {
+    if (prop.required) {
+      return true;
+    }
+
+    return requiredProps.some(
+      (requiredProp) => requiredProp.prop === prop.prop
+    );
+  };
+
   return {
     addEmptyProp,
     userProps,
     handleChangePropName,
     handleChangePropValue,
     handleDeleteProp,
+    isRequired,
   };
 };
