@@ -63,19 +63,30 @@ const getRequiredProps = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
 
+  const props =
+    selectedInstanceData.props === undefined ||
+    selectedInstanceData.props.props.length === 0
+      ? []
+      : selectedInstanceData.props.props;
+
   return Object.entries(meta)
     .filter(([_, value]) => value?.required)
-    .map(([prop, propValue]) => {
+    .map(([requiredProp, requiredPropValue]) => {
       warnOnce(
-        propValue?.defaultValue == null,
-        `Default value for required "${prop}" is required`
+        requiredPropValue?.defaultValue == null,
+        `Default value for required "${requiredProp}" is required`
       );
+      const userProp = props.find((prop) => prop.prop === requiredProp);
 
-      const typedValue = getValueFromPropMeta(propValue);
+      if (userProp !== undefined) {
+        return userProp;
+      }
+
+      const typedValue = getValueFromPropMeta(requiredPropValue);
 
       return {
         id: ObjectId().toString(),
-        prop,
+        prop: requiredProp,
         ...typedValue,
         required: true,
       };
@@ -90,14 +101,26 @@ const getPropsWithDefaultValue = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
 
+  const props =
+    selectedInstanceData.props === undefined ||
+    selectedInstanceData.props.props.length === 0
+      ? []
+      : selectedInstanceData.props.props;
+
   return Object.entries(meta)
     .filter(([_, value]) => value?.defaultValue != null)
-    .map(([prop, propValue]) => {
-      const typedValue = getValueFromPropMeta(propValue);
+    .map(([defaultProp, defaultPropValue]) => {
+      const userProp = props.find((prop) => prop.prop === defaultProp);
+
+      if (userProp !== undefined) {
+        return userProp;
+      }
+
+      const typedValue = getValueFromPropMeta(defaultPropValue);
 
       return {
         id: ObjectId().toString(),
-        prop,
+        prop: defaultProp,
         ...typedValue,
       };
     });
