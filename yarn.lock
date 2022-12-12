@@ -8594,6 +8594,11 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
+djb2a@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/djb2a/-/djb2a-2.0.0.tgz#63ad541b06b821de4b81ea7d59420cad76ce41aa"
+  integrity sha512-mSkCTNSJRGjNUADzWx1ubTGxJh2IVY9uoc/WGozUIu0mgBUEvIyBn9uTs9jqFBbJxQthJMF3uDx0cnpdlAUo4Q==
+
 doctrine@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-2.1.0.tgz#5cd01fc101621b42c4cd7f5d1a66243716d3f39d"

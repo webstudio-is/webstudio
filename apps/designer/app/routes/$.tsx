@@ -5,6 +5,7 @@ import type {
   ErrorBoundaryComponent,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import djb2a from "djb2a";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData } from "~/shared/db";
 import env, { type Env } from "~/env.server";
@@ -29,6 +30,11 @@ export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
 }) => {
   const searchParams = new URLSearchParams(location.search);
   searchParams.set("pageId", data.page.id);
+
+  // Break cache in case of css has changed
+  const cssHash = djb2a(JSON.stringify(data.tree));
+  searchParams.set("css-hash", `${cssHash}`);
+
   return [
     {
       rel: "stylesheet",
