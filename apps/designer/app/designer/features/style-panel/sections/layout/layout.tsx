@@ -130,7 +130,7 @@ const LayoutSectionFlex = ({
   );
 };
 
-const orderDisplayValuesFirst = [
+const orderedDisplayValues = [
   "block",
   "flex",
   "inline-block",
@@ -140,8 +140,8 @@ const orderDisplayValuesFirst = [
 ];
 
 const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
-  const aIndex = orderDisplayValuesFirst.indexOf(a.name);
-  const bIndex = orderDisplayValuesFirst.indexOf(b.name);
+  const aIndex = orderedDisplayValues.indexOf(a.name);
+  const bIndex = orderedDisplayValues.indexOf(b.name);
   return aIndex - bIndex;
 };
 
@@ -174,7 +174,7 @@ export const LayoutSection = ({
             styleConfig={{
               ...display.styleConfig,
               items: display.styleConfig.items
-                .filter((item) => orderDisplayValuesFirst.includes(item.name))
+                .filter((item) => orderedDisplayValues.includes(item.name))
                 .sort(compareDisplayValues),
             }}
           />
