@@ -196,7 +196,6 @@ export const useStyleData = ({
             delete currentStyle[update.property];
           }
           if (update.operation === "set") {
-            // @todo
             currentStyle[update.property] = update.value;
           }
           return currentStyle;
