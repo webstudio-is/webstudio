@@ -1,9 +1,9 @@
+import { useState } from "react";
 import {
   getComponentMetaProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
-
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
@@ -42,6 +42,7 @@ type ComboboxProps = {
   value: string;
   onItemSelect: (value: string | null) => void;
   onSubmit: (value: string) => void;
+  onInput: (value: string) => void;
 };
 
 const Combobox = ({
@@ -51,6 +52,7 @@ const Combobox = ({
   value,
   onItemSelect,
   onSubmit,
+  onInput,
 }: ComboboxProps) => {
   const {
     items,
@@ -77,6 +79,9 @@ const Combobox = ({
                 if (event.key === "Enter") {
                   onSubmit(event.currentTarget.value);
                 }
+              },
+              onInput: (event) => {
+                onInput(event.currentTarget.value);
               },
             })}
             name="prop"
@@ -146,6 +151,8 @@ const Property = ({
     (propName) => existingProps.includes(propName) === false
   );
 
+  const [error, setError] = useState<string | undefined>(undefined);
+
   return (
     <>
       {required ? (
@@ -162,21 +169,27 @@ const Property = ({
           value={userProp.prop}
           onItemSelect={(name) => {
             if (name != null) {
+              setError(undefined);
               onChangePropName(name);
             }
           }}
           onSubmit={(name) => {
             if (existingProps.includes(name) === false) {
+              setError(undefined);
               onChangePropName(name);
+              return;
             }
-            // @todo: show error or invalid state
+            setError(`Property "${name}" is already exists`);
           }}
-          isInvalid={isInvalid}
+          onInput={() => {
+            setError(undefined);
+          }}
+          isInvalid={isInvalid || error !== undefined}
           isReadonly={required}
         />
       )}
-      {isInvalid ? (
-        <Tooltip content={`Invalid property name: ${userProp.prop}`}>
+      {isInvalid || error !== undefined ? (
+        <Tooltip content={error ?? `Invalid property name: ${userProp.prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>
       ) : (
