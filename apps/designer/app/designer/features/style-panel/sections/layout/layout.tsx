@@ -3,7 +3,6 @@ import { toValue } from "@webstudio-is/css-engine";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { Lock } from "./shared/lock";
-import { ShowMore } from "../../shared/show-more";
 import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
@@ -11,13 +10,16 @@ import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
 import { getFinalValue } from "../../shared/get-final-value";
 
 const LayoutSectionFlex = ({
-  deleteProperty,
   currentStyle,
   sectionStyle,
   createBatchUpdate,
-}: RenderCategoryProps) => {
+}: {
+  deleteProperty: RenderCategoryProps["deleteProperty"];
+  currentStyle: RenderCategoryProps["currentStyle"];
+  sectionStyle: RenderCategoryProps["sectionStyle"];
+  createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
+}) => {
   const {
-    display,
     flexDirection,
     flexWrap,
     alignItems,
@@ -49,24 +51,6 @@ const LayoutSectionFlex = ({
 
   return (
     <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
-      {display?.styleConfig && (
-        <Grid
-          css={{
-            gridArea: "display",
-            gridTemplateColumns: "auto 1fr",
-            gap: "$spacing$13",
-            width: "100%",
-            fontWeight: "500",
-          }}
-        >
-          <PropertyName
-            property="display"
-            label={display.styleConfig.label}
-            onReset={() => deleteProperty("display")}
-          />
-          <SelectControl {...display} />
-        </Grid>
-      )}
       {hasMenuItems && (
         <Grid
           css={{
@@ -146,53 +130,72 @@ const LayoutSectionFlex = ({
   );
 };
 
+const orderedDisplayValues = [
+  "block",
+  "flex",
+  "inline-block",
+  "inline-flex",
+  "inline",
+  "none",
+];
+
+const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
+  const aIndex = orderedDisplayValues.indexOf(a.name);
+  const bIndex = orderedDisplayValues.indexOf(b.name);
+  return aIndex - bIndex;
+};
+
 export const LayoutSection = ({
-  setProperty,
   deleteProperty,
   createBatchUpdate,
   currentStyle,
   sectionStyle,
-  inheritedStyle,
-  category,
   styleConfigsByCategory,
-  moreStyleConfigsByCategory,
 }: RenderCategoryProps) => {
-  const ActiveLayout = layouts.get(toValue(currentStyle.display));
+  const displayValue = toValue(currentStyle.display);
 
-  if (ActiveLayout) {
-    return (
-      <ActiveLayout
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-        createBatchUpdate={createBatchUpdate}
-        currentStyle={currentStyle}
-        sectionStyle={sectionStyle}
-        inheritedStyle={inheritedStyle}
-        category={category}
-        styleConfigsByCategory={styleConfigsByCategory}
-        moreStyleConfigsByCategory={moreStyleConfigsByCategory}
-      />
-    );
-  }
+  const { display } = sectionStyle;
 
   return (
     <>
-      <ShowMore
-        styleConfigs={moreStyleConfigsByCategory.map((entry) =>
-          renderProperty(entry)
-        )}
-      />
-      {styleConfigsByCategory.map((entry) => renderProperty(entry))}
+      {display?.styleConfig && (
+        <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+          <PropertyName
+            property="display"
+            label={display.styleConfig.label}
+            onReset={() => deleteProperty("display")}
+          />
+          <SelectControl
+            category={display.category}
+            currentStyle={display.currentStyle}
+            inheritedStyle={display.inheritedStyle}
+            setProperty={display.setProperty}
+            // show only important values first and hide others with scroll
+            styleConfig={{
+              ...display.styleConfig,
+              items: display.styleConfig.items
+                .filter((item) => orderedDisplayValues.includes(item.name))
+                .sort(compareDisplayValues),
+            }}
+          />
+        </Grid>
+      )}
+
+      {displayValue === "flex" || displayValue === "inline-flex" ? (
+        <LayoutSectionFlex
+          deleteProperty={deleteProperty}
+          createBatchUpdate={createBatchUpdate}
+          currentStyle={currentStyle}
+          sectionStyle={sectionStyle}
+        />
+      ) : (
+        styleConfigsByCategory.map((entry) =>
+          // exclude display already rendered above
+          entry.styleConfig.property === "display"
+            ? null
+            : renderProperty(entry)
+        )
+      )}
     </>
   );
 };
-
-const layouts = new Map([
-  ["none", null],
-  ["block", null],
-  ["inline-block", null],
-  ["flex", LayoutSectionFlex],
-  ["inline-flex", LayoutSectionFlex],
-  ["grid", null],
-  ["inline-grid", null],
-]);
