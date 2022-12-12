@@ -122,17 +122,28 @@ export const useAssets = (type: AssetType) => {
     }
   }, [data, setAssets]);
 
-  const handleDelete = (ids: Array<string>) => {
-    if (action === undefined) {
-      return;
+  const handleAfterSubmit = (data: UploadData) => {
+    if (data.status === "error") {
+      return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
     }
+
+    // @todo currently waiting until all of them are fetched
+    // should update each individually when its loaded
+    if (action) {
+      load(action);
+    }
+  };
+
+  const handleDelete = (ids: Array<string>) => {
     const formData = new FormData();
     for (const id of ids) {
       formData.append("assetId", id);
     }
-    submit(formData, { method: "delete", action }, () => {
-      load(action);
-    });
+    submit<UploadData>(
+      formData,
+      { method: "delete", action },
+      handleAfterSubmit
+    );
   };
 
   const handleSubmit = (input: HTMLInputElement) => {
@@ -155,17 +166,7 @@ export const useAssets = (type: AssetType) => {
           action,
           encType: "multipart/form-data",
         },
-        (data) => {
-          if (data.status === "error") {
-            return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
-          }
-
-          // @todo currently waiting until all of them are fetched
-          // should update each individually when its loaded
-          if (action) {
-            load(action);
-          }
-        }
+        handleAfterSubmit
       );
     }
   };
