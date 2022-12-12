@@ -261,6 +261,7 @@ export const CssValueInput = ({
     getMenuProps,
     getItemProps,
     isOpen,
+    highlightedIndex,
   } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
@@ -333,8 +334,9 @@ export const CssValueInput = ({
   };
 
   const handleKeyDown = useHandleKeyDown({
-    // In case of menu is really open do not prevent default downshift Enter key behaviour
-    ignoreEnter: isOpen && !menuProps.empty,
+    // In case of the menu is really open and the selection is inside it
+    // we do not prevent the default downshift Enter key behavior
+    ignoreEnter: isOpen && !menuProps.empty && highlightedIndex !== -1,
     onChangeComplete,
     value,
     onChange: props.onChange,
