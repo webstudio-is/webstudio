@@ -123,11 +123,16 @@ export const useAssets = (type: AssetType) => {
   }, [data, setAssets]);
 
   const handleDelete = (ids: Array<string>) => {
+    if (action === undefined) {
+      return;
+    }
     const formData = new FormData();
     for (const id of ids) {
       formData.append("assetId", id);
     }
-    submit(formData, { method: "delete", action });
+    submit(formData, { method: "delete", action }, () => {
+      load(action);
+    });
   };
 
   const handleSubmit = (input: HTMLInputElement) => {
