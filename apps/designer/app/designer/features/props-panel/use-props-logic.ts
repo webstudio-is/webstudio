@@ -162,17 +162,19 @@ export const usePropsLogic = ({
       ? []
       : selectedInstanceData.props.props;
 
-  // Prefer ordering from `initialProps`
-  const [userProps, setUserProps] = useState<Array<UserProp>>(() =>
+  const [requiredProps] = useState<Array<UserProp>>(() =>
     uniqBy(
       [
         ...getInitialProps(selectedInstanceData),
         ...getRequiredProps(selectedInstanceData),
         ...getPropsWithDefaultValue(selectedInstanceData),
-        ...props,
       ],
       "prop"
     )
+  );
+  // Prefer ordering from `initialProps`
+  const [userProps, setUserProps] = useState<Array<UserProp>>(() =>
+    uniqBy([...requiredProps, ...props], "prop")
   );
 
   const updateProps = (updates: UserPropsUpdates["updates"]) => {
@@ -274,11 +276,18 @@ export const usePropsLogic = ({
     ]);
   };
 
+  const isRequired = (prop: UserProp) => {
+    return requiredProps.some(
+      (requiredProp) => requiredProp.prop === prop.prop
+    );
+  };
+
   return {
     addEmptyProp,
     userProps,
     handleChangePropName,
     handleChangePropValue,
     handleDeleteProp,
+    isRequired,
   };
 };

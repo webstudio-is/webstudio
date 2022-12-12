@@ -118,6 +118,8 @@ type PropertyProps = {
   onDelete: (id: UserProp["id"]) => void;
   setCssProperty: SetProperty;
   currentStyle: Style;
+  required: boolean;
+  existingProps: string[];
 };
 
 const Property = ({
@@ -128,32 +130,51 @@ const Property = ({
   onDelete,
   setCssProperty,
   currentStyle,
+  required,
+  existingProps,
 }: PropertyProps) => {
-  const meta = getComponentMetaProps(component);
+  const metaProps = getComponentMetaProps(component);
 
-  const argType = meta[userProp.prop as keyof typeof meta];
+  const argType = metaProps[userProp.prop as keyof typeof metaProps];
   const isInvalid =
     userProp.prop != null &&
     userProp.prop.length > 0 &&
     typeof argType === "undefined" &&
     !userProp.prop.match(/^data-(.)+/);
 
-  const allProps = Object.keys(meta);
+  const allProps = Object.keys(metaProps).filter(
+    (propName) => existingProps.includes(propName) === false
+  );
 
   return (
     <>
-      <Combobox
-        items={allProps}
-        value={userProp.prop}
-        onItemSelect={(name) => {
-          if (name != null) {
-            onChangePropName(name);
-          }
-        }}
-        onSubmit={onChangePropName}
-        isInvalid={isInvalid}
-        isReadonly={userProp.required ?? false}
-      />
+      {required ? (
+        <TextField
+          name="prop"
+          placeholder="Property"
+          readOnly={true}
+          state={isInvalid ? "invalid" : undefined}
+          value={userProp.prop}
+        />
+      ) : (
+        <Combobox
+          items={allProps}
+          value={userProp.prop}
+          onItemSelect={(name) => {
+            if (name != null) {
+              onChangePropName(name);
+            }
+          }}
+          onSubmit={(name) => {
+            if (existingProps.includes(name) === false) {
+              onChangePropName(name);
+            }
+            // @todo: show error or invalid state
+          }}
+          isInvalid={isInvalid}
+          isReadonly={required}
+        />
+      )}
       {isInvalid ? (
         <Tooltip content={`Invalid property name: ${userProp.prop}`}>
           <ExclamationTriangleIcon width={12} height={12} />
@@ -169,16 +190,15 @@ const Property = ({
           currentStyle={currentStyle}
         />
       )}
-      {userProp.required !== true && (
-        <Button
-          ghost
-          onClick={() => {
-            onDelete(userProp.id);
-          }}
-        >
-          <TrashIcon />
-        </Button>
-      )}
+      <Button
+        disabled={required}
+        ghost
+        onClick={() => {
+          onDelete(userProp.id);
+        }}
+      >
+        <TrashIcon />
+      </Button>
     </>
   );
 };
@@ -198,6 +218,7 @@ export const PropsPanel = ({
     handleChangePropName,
     handleChangePropValue,
     handleDeleteProp,
+    isRequired,
   } = usePropsLogic({ selectedInstanceData, publish });
 
   const { setProperty: setCssProperty, currentStyle } = useStyleData({
@@ -216,6 +237,8 @@ export const PropsPanel = ({
       <PlusIcon />
     </Button>
   );
+
+  const existingProps = userProps.map((userProp) => userProp.prop);
 
   return (
     <Box>
@@ -248,6 +271,8 @@ export const PropsPanel = ({
               setCssProperty={setCssProperty}
               currentStyle={currentStyle}
               onDelete={handleDeleteProp}
+              required={isRequired(userProp)}
+              existingProps={existingProps}
             />
           ))}
         </Grid>
