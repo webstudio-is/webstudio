@@ -11,6 +11,7 @@ import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
 import { getFinalValue } from "../../shared/get-final-value";
 
 const LayoutSectionFlex = ({
+  deleteProperty,
   currentStyle,
   sectionStyle,
   createBatchUpdate,
@@ -59,8 +60,9 @@ const LayoutSectionFlex = ({
           }}
         >
           <PropertyName
-            property={display.styleConfig.property}
+            property="display"
             label={display.styleConfig.label}
+            onReset={() => deleteProperty("display")}
           />
           <SelectControl {...display} />
         </Grid>
@@ -146,6 +148,7 @@ const LayoutSectionFlex = ({
 
 export const LayoutSection = ({
   setProperty,
+  deleteProperty,
   createBatchUpdate,
   currentStyle,
   sectionStyle,
@@ -160,6 +163,7 @@ export const LayoutSection = ({
     return (
       <ActiveLayout
         setProperty={setProperty}
+        deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
         currentStyle={currentStyle}
         sectionStyle={sectionStyle}

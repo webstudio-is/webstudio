@@ -1,4 +1,4 @@
-import { Grid, type CSS } from "@webstudio-is/design-system";
+import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleConfig } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
@@ -21,12 +21,6 @@ import {
 } from "./sections";
 import { PropertyName } from "./shared/property-name";
 
-export type PropertyProps = {
-  property: StyleProperty | StyleProperty[];
-  label: string;
-  css?: CSS;
-};
-
 export type ControlProps = {
   setProperty: SetProperty;
   currentStyle: Style;
@@ -37,6 +31,7 @@ export type ControlProps = {
 
 export type RenderCategoryProps = {
   setProperty: SetProperty;
+  deleteProperty: (property: StyleProperty) => void;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   sectionStyle: {
@@ -50,6 +45,7 @@ export type RenderCategoryProps = {
 
 export type RenderPropertyProps = {
   setProperty: SetProperty;
+  deleteProperty: (property: StyleProperty) => void;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
@@ -60,6 +56,7 @@ export const renderProperty = ({
   currentStyle,
   inheritedStyle,
   setProperty,
+  deleteProperty,
   styleConfig,
   category,
 }: RenderPropertyProps) => {
@@ -71,7 +68,11 @@ export const renderProperty = ({
 
   return (
     <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>
-      <PropertyName property={styleConfig.property} label={styleConfig.label} />
+      <PropertyName
+        property={styleConfig.property}
+        label={styleConfig.label}
+        onReset={() => deleteProperty(styleConfig.property)}
+      />
       <Control
         currentStyle={currentStyle}
         inheritedStyle={inheritedStyle}
@@ -85,6 +86,7 @@ export const renderProperty = ({
 
 export const renderCategory = ({
   setProperty,
+  deleteProperty,
   createBatchUpdate,
   currentStyle,
   sectionStyle,
@@ -97,6 +99,7 @@ export const renderCategory = ({
   return (
     <Section
       setProperty={setProperty}
+      deleteProperty={deleteProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       sectionStyle={sectionStyle}

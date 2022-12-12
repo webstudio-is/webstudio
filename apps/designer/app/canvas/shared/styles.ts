@@ -180,6 +180,12 @@ export const useCssRules = ({
       for (property in dynamicStyle) {
         rule.styleMap.set(property, dynamicStyle[property]);
       }
+      // delete previously rendered properties when reset
+      for (const property of rule.styleMap.keys()) {
+        if (dynamicStyle[property] === undefined) {
+          rule.styleMap.delete(property);
+        }
+      }
     }
     cssEngine.render();
   }, [id, cssRules]);
@@ -253,16 +259,18 @@ const usePreviewStyle = () => {
     }
 
     for (const update of updates) {
-      // This is possible on newly created instances, properties are not yet defined in the style.
-      if (rule.styleMap.has(update.property) === false) {
-        const dynamicStyle = toVarStyleWithFallback(id, {
-          [update.property]: update.value,
-        });
+      if (update.operation === "set") {
+        // This is possible on newly created instances, properties are not yet defined in the style.
+        if (rule.styleMap.has(update.property) === false) {
+          const dynamicStyle = toVarStyleWithFallback(id, {
+            [update.property]: update.value,
+          });
 
-        rule.styleMap.set(update.property, dynamicStyle[update.property]);
+          rule.styleMap.set(update.property, dynamicStyle[update.property]);
+        }
+
+        setCssVar(id, update.property, update.value);
       }
-
-      setCssVar(id, update.property, update.value);
     }
 
     cssEngine.render();

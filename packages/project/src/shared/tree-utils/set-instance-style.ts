@@ -22,7 +22,12 @@ export const setInstanceStyleMutable = (
   }
 
   for (const update of updates) {
-    cssRule.style[update.property] = update.value;
+    if (update.operation === "delete") {
+      delete cssRule.style[update.property];
+    }
+    if (update.operation === "set") {
+      cssRule.style[update.property] = update.value;
+    }
   }
   return true;
 };

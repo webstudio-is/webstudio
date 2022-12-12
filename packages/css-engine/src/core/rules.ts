@@ -15,6 +15,14 @@ class StylePropertyMap {
   has(property: StyleProperty) {
     return this.#styleMap.has(property);
   }
+  keys() {
+    return this.#styleMap.keys();
+  }
+  delete(property: StyleProperty) {
+    this.#styleMap.delete(property);
+    this.#isDirty = true;
+    this.onChange?.();
+  }
   clear() {
     this.#styleMap.clear();
     this.#isDirty = true;

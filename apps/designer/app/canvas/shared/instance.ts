@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   type Instance,
   type UserProp,
@@ -192,10 +192,6 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
   const [instance] = useSelectedInstance();
   const [selectedElement] = useSelectedElement();
   const [allUserProps] = useAllUserProps();
-  const browserStyle = useMemo(
-    () => getBrowserStyle(selectedElement),
-    [selectedElement]
-  );
 
   useEffect(() => {
     // Unselects the instance by `undefined`
@@ -204,6 +200,7 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
       const props =
         allUserProps[instance.id] ??
         utils.props.createInstanceProps({ instanceId: instance.id, treeId });
+      const browserStyle = getBrowserStyle(selectedElement);
       payload = {
         id: instance.id,
         component: instance.component,
@@ -216,7 +213,7 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
       type: "selectInstance",
       payload,
     });
-  }, [instance, allUserProps, treeId, browserStyle]);
+  }, [instance, allUserProps, treeId, selectedElement]);
 };
 
 export const usePublishHoveredInstanceData = () => {

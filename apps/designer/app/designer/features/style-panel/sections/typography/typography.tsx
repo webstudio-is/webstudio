@@ -46,7 +46,7 @@ export const TypographySection = (props: RenderCategoryProps) => {
 };
 
 export const TypographySectionFont = (props: RenderCategoryProps) => {
-  const { sectionStyle } = props;
+  const { deleteProperty, sectionStyle } = props;
 
   return (
     <Grid
@@ -55,15 +55,27 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
       }}
     >
       <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-        <PropertyName label="Font" property="fontFamily" />
+        <PropertyName
+          label="Font"
+          property="fontFamily"
+          onReset={() => deleteProperty("fontFamily")}
+        />
         <FontFamilyControl {...sectionStyle.fontFamily} />
       </Grid>
       <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-        <PropertyName label="Weight" property="fontWeight" />
+        <PropertyName
+          label="Weight"
+          property="fontWeight"
+          onReset={() => deleteProperty("fontWeight")}
+        />
         <FontWeightControl {...sectionStyle.fontWeight} />
       </Grid>
       <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-        <PropertyName label="Color" property="color" />
+        <PropertyName
+          label="Color"
+          property="color"
+          onReset={() => deleteProperty("color")}
+        />
         <ColorControl {...sectionStyle.color} />
       </Grid>
     </Grid>
@@ -71,7 +83,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
 };
 
 export const TypographySectionSizing = (props: RenderCategoryProps) => {
-  const { sectionStyle } = props;
+  const { deleteProperty, sectionStyle } = props;
 
   return (
     <Grid
@@ -81,15 +93,27 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
       }}
     >
       <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
-        <PropertyName property="fontSize" label="Size" />
+        <PropertyName
+          property="fontSize"
+          label="Size"
+          onReset={() => deleteProperty("fontSize")}
+        />
         <TextControl {...sectionStyle.fontSize} />
       </Grid>
       <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
-        <PropertyName property="lineHeight" label="Height" />
+        <PropertyName
+          property="lineHeight"
+          label="Height"
+          onReset={() => deleteProperty("lineHeight")}
+        />
         <TextControl {...sectionStyle.lineHeight} />
       </Grid>
       <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
-        <PropertyName property="letterSpacing" label="Spacing" />
+        <PropertyName
+          property="letterSpacing"
+          label="Spacing"
+          onReset={() => deleteProperty("letterSpacing")}
+        />
         <TextControl {...sectionStyle.letterSpacing} />
       </Grid>
     </Grid>
@@ -225,7 +249,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
 export const TypographySectionAdvancedPopover = (
   props: RenderCategoryProps
 ) => {
-  const { setProperty, currentStyle, sectionStyle } = props;
+  const { deleteProperty, setProperty, currentStyle, sectionStyle } = props;
   const setDirection = setProperty("direction");
   const setTextOverflow = setProperty("textOverflow");
   const setHyphens = setProperty("hyphens");
@@ -235,11 +259,19 @@ export const TypographySectionAdvancedPopover = (
       content={
         <Grid css={{ padding: "$spacing$9", gap: "$spacing$9" }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-            <PropertyName property="whiteSpace" label="White Space" />
+            <PropertyName
+              property="whiteSpace"
+              label="White Space"
+              onReset={() => deleteProperty("whiteSpace")}
+            />
             <SelectControl {...sectionStyle.whiteSpace} />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-            <PropertyName property="direction" label="Direction" />
+            <PropertyName
+              property="direction"
+              label="Direction"
+              onReset={() => deleteProperty("direction")}
+            />
             <ToggleGroupControl
               property="direction"
               onValueChange={(value) => setDirection(value)}
@@ -259,7 +291,11 @@ export const TypographySectionAdvancedPopover = (
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-            <PropertyName property="hyphens" label="Hyphens" />
+            <PropertyName
+              property="hyphens"
+              label="Hyphens"
+              onReset={() => deleteProperty("hyphens")}
+            />
             <ToggleGroupControl
               property="hyphens"
               onValueChange={(value) => setHyphens(value)}
@@ -279,7 +315,11 @@ export const TypographySectionAdvancedPopover = (
             />
           </Grid>
           <Grid css={{ gridTemplateColumns: "4fr auto" }}>
-            <PropertyName property="textOverflow" label="Text Overflow" />
+            <PropertyName
+              property="textOverflow"
+              label="Text Overflow"
+              onReset={() => deleteProperty("textOverflow")}
+            />
             <ToggleGroupControl
               property="textOverflow"
               onValueChange={(value) => setTextOverflow(value)}
