@@ -130,16 +130,20 @@ const LayoutSectionFlex = ({
   );
 };
 
-const orderDisplayValuesFirst = new Set([
+const orderDisplayValuesFirst = [
   "block",
   "flex",
-  "grid",
-  "inline",
   "inline-block",
   "inline-flex",
-  "inline-grid",
+  "inline",
   "none",
-]);
+];
+
+const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
+  const aIndex = orderDisplayValuesFirst.indexOf(a.name);
+  const bIndex = orderDisplayValuesFirst.indexOf(b.name);
+  return aIndex - bIndex;
+};
 
 export const LayoutSection = ({
   deleteProperty,
@@ -169,9 +173,9 @@ export const LayoutSection = ({
             // show only important values first and hide others with scroll
             styleConfig={{
               ...display.styleConfig,
-              items: display.styleConfig.items.filter((item) =>
-                orderDisplayValuesFirst.has(item.name)
-              ),
+              items: display.styleConfig.items
+                .filter((item) => orderDisplayValuesFirst.includes(item.name))
+                .sort(compareDisplayValues),
             }}
           />
         </Grid>
