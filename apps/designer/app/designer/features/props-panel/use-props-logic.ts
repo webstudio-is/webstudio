@@ -300,6 +300,10 @@ export const usePropsLogic = ({
   };
 
   const isRequired = (prop: UserProp) => {
+    if (prop.required) {
+      return true;
+    }
+
     return requiredProps.some(
       (requiredProp) => requiredProp.prop === prop.prop
     );
