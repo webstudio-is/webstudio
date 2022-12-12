@@ -265,9 +265,6 @@ export const Tree = <Data extends { id: string }>({
       onScroll={dropHandlers.handleScroll}
     >
       <Box
-        // styled should support passing { current: T | undefined } to ref
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore React.MutableRefObject cannot be passed to React.RefObject
         ref={keyboardNavigation.rootRef}
         onKeyDown={keyboardNavigation.handleKeyDown}
         onClick={keyboardNavigation.handleClick}
@@ -337,7 +334,7 @@ const useKeyboardNavigation = <Data extends { id: string }>({
     return result;
   }, [root, getIsExpanded, getItemChildren]);
 
-  const rootRef = useRef<HTMLDivElement | undefined>();
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = (event: ReactKeyboardEvent) => {
     // skip if nothing is selected in the tree
