@@ -194,24 +194,27 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
   const [allUserProps] = useAllUserProps();
 
   useEffect(() => {
-    // Unselects the instance by `undefined`
-    let payload;
-    if (instance !== undefined) {
-      const props =
-        allUserProps[instance.id] ??
-        utils.props.createInstanceProps({ instanceId: instance.id, treeId });
-      const browserStyle = getBrowserStyle(selectedElement);
-      payload = {
-        id: instance.id,
-        component: instance.component,
-        cssRules: instance.cssRules,
-        browserStyle,
-        props,
-      };
-    }
-    publish({
-      type: "selectInstance",
-      payload,
+    // some styles require nexxxt frame to provide new value
+    requestAnimationFrame(() => {
+      // Unselects the instance by `undefined`
+      let payload;
+      if (instance !== undefined) {
+        const props =
+          allUserProps[instance.id] ??
+          utils.props.createInstanceProps({ instanceId: instance.id, treeId });
+        const browserStyle = getBrowserStyle(selectedElement);
+        payload = {
+          id: instance.id,
+          component: instance.component,
+          cssRules: instance.cssRules,
+          browserStyle,
+          props,
+        };
+      }
+      publish({
+        type: "selectInstance",
+        payload,
+      });
     });
   }, [instance, allUserProps, treeId, selectedElement]);
 };
