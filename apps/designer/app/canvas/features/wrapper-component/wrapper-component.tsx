@@ -12,6 +12,7 @@ import {
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 import { useSelectedElement } from "~/canvas/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
+import { publish } from "~/shared/pubsub";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -51,7 +52,8 @@ export const WrapperComponentDev = ({
 }: WrapperComponentDevProps) => {
   useCssRules(instance);
 
-  const [editingInstanceId] = useTextEditingInstanceId();
+  const [editingInstanceId, setTextEditingInstanceId] =
+    useTextEditingInstanceId();
   const [, setSelectedElement] = useSelectedElement();
 
   const refCallback = useCallback(
@@ -116,6 +118,13 @@ export const WrapperComponentDev = ({
         }
         onChange={(updates) => {
           onChangeChildren?.({ instanceId: instance.id, updates });
+        }}
+        onSelectInstance={(instanceId) => {
+          setTextEditingInstanceId(undefined);
+          publish({
+            type: "selectInstanceById",
+            payload: instanceId,
+          });
         }}
       />
     </Suspense>

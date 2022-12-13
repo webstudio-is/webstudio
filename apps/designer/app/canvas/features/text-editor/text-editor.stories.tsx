@@ -121,6 +121,10 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
           })}
           contentEditable={<ContentEditable />}
           onChange={onChange}
+          onSelectInstance={(instanceId) =>
+            // eslint-disable-next-line no-console
+            console.info("select instance", instanceId)
+          }
         />
       </Box>
     </div>
