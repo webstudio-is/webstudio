@@ -121,6 +121,9 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
           })}
           contentEditable={<ContentEditable />}
           onChange={onChange}
+          onSelectInstance={(instanceId) =>
+            console.info("select instance", instanceId)
+          }
         />
       </Box>
     </div>
