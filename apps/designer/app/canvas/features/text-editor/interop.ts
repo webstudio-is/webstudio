@@ -12,6 +12,7 @@ import {
 } from "lexical";
 import { $createLinkNode, $isLinkNode } from "@lexical/link";
 import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
+import { utils } from "@webstudio-is/project";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
 // Map<nodeKey, instanceId>
@@ -54,7 +55,12 @@ const $writeUpdates = (
       const text = child.getTextContent();
       let parentUpdates = updates;
       if ($isSpanNode(child)) {
-        const id = refs.get(`${child.getKey()}:span`);
+        // prematurely generate span id to select it right after applying
+        const storedId = refs.get(`${child.getKey()}:span`);
+        const id = storedId ?? utils.tree.createInstanceId();
+        if (storedId == null) {
+          refs.set(`${child.getKey()}:span`, id);
+        }
         const update: ChildrenUpdates[number] = {
           id,
           component: "Span",

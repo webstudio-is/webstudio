@@ -116,12 +116,14 @@ type TextEditorProps = {
   instance: Instance;
   contentEditable: JSX.Element;
   onChange: (updates: ChildrenUpdates) => void;
+  onSelectInstance: (instanceId: string) => void;
 };
 
 export const TextEditor = ({
   instance,
   contentEditable,
   onChange,
+  onSelectInstance,
 }: TextEditorProps) => {
   const [paragraphClassName] = useState(() => nanoid());
   const [italicClassName] = useState(() => nanoid());
@@ -168,7 +170,14 @@ export const TextEditor = ({
     <LexicalComposer initialConfig={initialConfig}>
       <AutofocusPlugin />
       <RemoveParagaphsPlugin />
-      <ToolbarConnectorPlugin />
+      <ToolbarConnectorPlugin
+        onSelectNode={(nodeKey) => {
+          const instanceId = refs.get(`${nodeKey}:span`);
+          if (instanceId !== undefined) {
+            onSelectInstance(instanceId);
+          }
+        }}
+      />
       <BindInstanceToNodePlugin refs={refs} />
       <RichTextPlugin
         ErrorBoundary={LexicalErrorBoundary}
