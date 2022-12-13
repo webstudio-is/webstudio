@@ -34,3 +34,12 @@ export const UploadingAnimation = () => {
     </AnimationContainer>
   );
 };
+
+export const DeletingAnimation = () => {
+  const progressBarPercentage = useFakeProgress();
+  return (
+    <AnimationContainer>
+      <ProgressRadial value={progressBarPercentage} variants="red" max={60} />
+    </AnimationContainer>
+  );
+};

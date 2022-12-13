@@ -1,12 +1,21 @@
 import { useState } from "react";
 import { findNextListIndex, Grid } from "@webstudio-is/design-system";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { AssetsShell, PreviewAsset, useAssets, useSearch } from "../assets";
+import {
+  AssetsShell,
+  DeletingAsset,
+  PreviewAsset,
+  useAssets,
+  useSearch,
+} from "../assets";
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
 
-const filterItems = (search: string, items: Array<Asset | PreviewAsset>) => {
+const filterItems = (
+  search: string,
+  items: Array<Asset | PreviewAsset | DeletingAsset>
+) => {
   return matchSorter(items, search, {
     keys: [(item) => item.name],
   });
@@ -14,6 +23,7 @@ const filterItems = (search: string, items: Array<Asset | PreviewAsset>) => {
 
 const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
   const { assets, handleDelete } = useAssets("image");
+
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
     items: assets,

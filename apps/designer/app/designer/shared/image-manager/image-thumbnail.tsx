@@ -7,9 +7,9 @@ import {
 import { Box, styled } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
-import { UploadingAnimation } from "./uploading-animation";
+import { DeletingAnimation, UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
-import type { PreviewAsset } from "~/designer/shared/assets";
+import type { DeletingAsset, PreviewAsset } from "~/designer/shared/assets";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { Filename } from "./filename";
 
@@ -36,6 +36,7 @@ const ThumbnailContainer = styled(Box, {
   justifyContent: "center",
   alignItems: "center",
   flexDirection: "column",
+  margin: "$spacing$2",
   border: "2px solid transparent",
   borderRadius: "$borderRadius$4",
   outline: 0,
@@ -47,6 +48,7 @@ const ThumbnailContainer = styled(Box, {
     status: {
       uploading: {},
       uploaded: {},
+      deleting: {},
     },
     state: {
       selected: {
@@ -67,7 +69,7 @@ const Thumbnail = styled(Box, {
 });
 
 type ImageThumbnailProps = {
-  asset: Asset | PreviewAsset;
+  asset: Asset | PreviewAsset | DeletingAsset;
   onDelete: (ids: Array<string>) => void;
   onSelect: (asset?: Asset | PreviewAsset) => void;
   onChange?: (asset: Asset) => void;
@@ -85,8 +87,8 @@ export const ImageThumbnail = ({
   const description =
     "description" in asset && asset.description ? asset.description : name;
   const isUploading = status === "uploading";
-  const isUploadedAsset = isUploading === false && "size" in asset;
-  const [isDeleting, setIsDeleting] = useState(false);
+  const isDeleting = status === "deleting";
+
   const src = useImageWithFallback({ path });
 
   return (
@@ -95,7 +97,11 @@ export const ImageThumbnail = ({
       tabIndex={0}
       status={status}
       state={state}
-      onFocus={() => onSelect?.(asset)}
+      onFocus={() => {
+        if (asset.status !== "deleting") {
+          onSelect?.(asset);
+        }
+      }}
       onBlur={(event: FocusEvent) => {
         const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
         if (isFocusWithin === false) {
@@ -103,7 +109,10 @@ export const ImageThumbnail = ({
         }
       }}
       onKeyDown={(event: KeyboardEvent) => {
-        if (event.code === "Enter" && asset.status === "uploaded") {
+        if (
+          event.code === "Enter" &&
+          (asset.status === "uploaded" || asset.status === undefined)
+        ) {
           onChange?.(asset);
         }
       }}
@@ -111,7 +120,7 @@ export const ImageThumbnail = ({
       <Thumbnail
         css={{ backgroundImage: `url("${src}")` }}
         onClick={() => {
-          if (isUploadedAsset) {
+          if (asset.status === "uploaded" || asset.status === undefined) {
             onChange?.(asset);
           }
         }}
@@ -125,16 +134,16 @@ export const ImageThumbnail = ({
       >
         <Filename variant={"tiny"}>{name}</Filename>
       </Box>
-      {isUploadedAsset && (
+      {(asset.status === "uploaded" || asset.status === undefined) && (
         <ImageInfoTrigger
           asset={asset}
           onDelete={(ids) => {
-            setIsDeleting(true);
             onDelete(ids);
           }}
         />
       )}
-      {(isUploading || isDeleting) && <UploadingAnimation />}
+      {isUploading && <UploadingAnimation />}
+      {isDeleting && <DeletingAnimation />}
     </ThumbnailContainer>
   );
 };
