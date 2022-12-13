@@ -87,14 +87,13 @@ export const FontWeightControl = ({
     toValue(fontWeight)
   );
 
-  if (fontWeight === undefined) {
-    return null;
-  }
-
   const setValue = setProperty(styleConfig.property);
 
   return (
     <Select
+      // show empty field instead of radix placeholder
+      // like css value input does
+      placeholder=""
       options={labels}
       // We use a weight as a value, because there are only 9 weights and they are unique.
       value={selectedLabel}
