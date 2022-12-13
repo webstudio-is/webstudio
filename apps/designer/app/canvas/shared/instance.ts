@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import {
   type Instance,
   type UserProp,
@@ -193,30 +193,36 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
   const [selectedElement] = useSelectedElement();
   const [allUserProps] = useAllUserProps();
 
+  // trigger style recomputing every time
+  // new updates for this node are sent from designer
+  const [styleKey, recomputeStyles] = useReducer((d) => d + 1, 0);
+  useSubscribe("updateStyle", ({ id }) => {
+    if (id === instance?.id) {
+      recomputeStyles();
+    }
+  });
+
   useEffect(() => {
-    // some styles require nexxxt frame to provide new value
-    requestAnimationFrame(() => {
-      // Unselects the instance by `undefined`
-      let payload;
-      if (instance !== undefined) {
-        const props =
-          allUserProps[instance.id] ??
-          utils.props.createInstanceProps({ instanceId: instance.id, treeId });
-        const browserStyle = getBrowserStyle(selectedElement);
-        payload = {
-          id: instance.id,
-          component: instance.component,
-          cssRules: instance.cssRules,
-          browserStyle,
-          props,
-        };
-      }
-      publish({
-        type: "selectInstance",
-        payload,
-      });
+    // Unselects the instance by `undefined`
+    let payload;
+    if (instance !== undefined) {
+      const props =
+        allUserProps[instance.id] ??
+        utils.props.createInstanceProps({ instanceId: instance.id, treeId });
+      const browserStyle = getBrowserStyle(selectedElement);
+      payload = {
+        id: instance.id,
+        component: instance.component,
+        cssRules: instance.cssRules,
+        browserStyle,
+        props,
+      };
+    }
+    publish({
+      type: "selectInstance",
+      payload,
     });
-  }, [instance, allUserProps, treeId, selectedElement]);
+  }, [instance, allUserProps, treeId, selectedElement, styleKey]);
 };
 
 export const usePublishHoveredInstanceData = () => {
