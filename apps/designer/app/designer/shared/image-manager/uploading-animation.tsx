@@ -39,7 +39,7 @@ export const DeletingAnimation = () => {
   const progressBarPercentage = useFakeProgress();
   return (
     <AnimationContainer>
-      <ProgressRadial value={progressBarPercentage} variants="red" max={60} />
+      <ProgressRadial value={progressBarPercentage} variant="red" max={60} />
     </AnimationContainer>
   );
 };
