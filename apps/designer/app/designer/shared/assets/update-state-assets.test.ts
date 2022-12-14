@@ -108,4 +108,19 @@ describe("updateStateAssets", () => {
     // Check referential equality
     expect(updateStateAssets(nextAssets, serverAssets)).toBe(nextAssets);
   });
+
+  test("Add asset not existing in stateAssets", () => {
+    const serverAssets = [createAsset("8")];
+
+    const nextAssets = updateStateAssets(stateAssets, serverAssets);
+
+    expect(nextAssets).toEqual([
+      createPreviewAsset("1"),
+      createPreviewAsset("7"),
+      createAsset("8"),
+    ]);
+
+    // Check referential equality
+    expect(updateStateAssets(nextAssets, serverAssets)).toBe(nextAssets);
+  });
 });
