@@ -2,7 +2,7 @@ import { FormIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, MetaProps } from "./component-type";
 import props from "./__generated__/form.props.json";
 
-const defaultStyle = {
+const presetStyle = {
   minHeight: {
     type: "unit",
     unit: "px",
@@ -18,7 +18,7 @@ const meta: WsComponentMeta = {
   type: "container",
   label: "Form",
   Icon: FormIcon,
-  defaultStyle,
+  presetStyle,
   props: props as MetaProps,
 };
 

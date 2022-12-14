@@ -23,7 +23,7 @@ export type WsComponentMeta = {
     | "rich-text-child";
   label: string;
   Icon: FunctionComponent<IconProps>;
-  defaultStyle?: Style;
+  presetStyle?: Style;
   children?: Array<string>;
   props: MetaProps;
   initialProps?: Array<string>;
@@ -83,7 +83,7 @@ export const WsComponentMeta = z.lazy(() =>
     ]),
     label: z.string(),
     Icon: z.any(),
-    defaultStyle: z.optional(z.any()),
+    presetStyle: z.optional(z.any()),
     children: z.optional(z.array(z.string())),
     props: Props,
     initialProps: z.optional(z.array(z.string())),
