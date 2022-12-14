@@ -19,7 +19,7 @@ export type NumericScrubDirection = "horizontal" | "vertical";
 export type NumericScrubValue = number;
 
 export type NumericScrubCallback = (event: {
-  target: HTMLElement;
+  target: HTMLElement | SVGElement;
   value: NumericScrubValue;
   preventDefault: () => void;
 }) => void;
@@ -31,6 +31,7 @@ export type NumericScrubOptions = {
   direction?: NumericScrubDirection;
   onValueInput?: NumericScrubCallback;
   onValueChange?: NumericScrubCallback;
+  onStatusChange?: (status: "idle" | "scrubbing") => void;
   shouldHandleEvent?: (node: EventTarget) => boolean;
 };
 
@@ -42,7 +43,7 @@ type NumericScrubState = {
 };
 
 export const numericScrubControl = (
-  targetNode: HTMLElement,
+  targetNode: HTMLElement | SVGElement,
   {
     minValue = Number.MIN_SAFE_INTEGER,
     maxValue = Number.MAX_SAFE_INTEGER,
@@ -50,6 +51,7 @@ export const numericScrubControl = (
     direction = "horizontal",
     onValueInput,
     onValueChange,
+    onStatusChange,
     shouldHandleEvent,
   }: NumericScrubOptions
 ) => {
@@ -64,7 +66,15 @@ export const numericScrubControl = (
 
   let exitPointerLock: (() => void) | undefined = undefined;
 
-  const handleEvent = (event: PointerEvent) => {
+  // Cannot define `event:` as PointerEvent,
+  // because (HTMLElement | SVGElement).addEventListener("pointermove", ...)
+  // takes (Event => void) as a callback
+  const handleEvent = (event: Event) => {
+    // For TypeScript
+    if (!(event instanceof PointerEvent)) {
+      return;
+    }
+
     const { type, movementY, movementX } = event;
     const movement = direction === "horizontal" ? movementX : -movementY;
 
@@ -72,6 +82,7 @@ export const numericScrubControl = (
       case "pointerup": {
         const shouldComponentUpdate = Boolean(state.cursor);
         targetNode.removeEventListener("pointermove", handleEvent);
+        onStatusChange?.("idle");
         clearTimeout(state.timerId);
 
         exitPointerLock?.();
@@ -111,6 +122,7 @@ export const numericScrubControl = (
           exitPointerLock = requestPointerLock(state, event, targetNode);
         }, 150);
 
+        onStatusChange?.("scrubbing");
         targetNode.addEventListener("pointermove", handleEvent);
         break;
       }
@@ -165,6 +177,7 @@ export const numericScrubControl = (
 
       clearTimeout(state.timerId);
       targetNode.removeEventListener("pointermove", handleEvent);
+      onStatusChange?.("idle");
 
       exitPointerLock?.();
       exitPointerLock = undefined;
@@ -175,7 +188,7 @@ export const numericScrubControl = (
 const requestPointerLock = (
   state: NumericScrubState,
   event: PointerEvent,
-  targetNode: HTMLElement
+  targetNode: HTMLElement | SVGElement
 ) => {
   // The pointer lock api nukes the cursor on requestng a pointer lock,
   // creating and managing the visual que of the cursor is thus left to the author
