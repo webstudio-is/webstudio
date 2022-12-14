@@ -45,6 +45,7 @@ const Cell = ({
       onChange={onChange}
       onClose={onPopoverClose}
     >
+      {/* @todo: don't use ValueText to align popover, because its bottom edge pos. depends on wrapping */}
       <ValueText
         value={finalValue}
         isActive={isHovered || scrubStatus.isActive || isPopoverOpen}
