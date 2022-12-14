@@ -57,17 +57,25 @@ export const InputPopover = ({
   onChange,
   children,
   isOpen,
-  onOpenChange,
+  onClose,
 }: {
   property: StyleProperty;
   value: StyleValue;
   onChange: (event: StyleChangeEvent) => void;
   isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
+  onClose: () => void;
   children: ReactNode;
 }) => {
   return (
-    <Popover modal open={isOpen} onOpenChange={onOpenChange}>
+    <Popover
+      modal
+      open={isOpen}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen === false) {
+          onClose();
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <div>{children}</div>
       </PopoverTrigger>

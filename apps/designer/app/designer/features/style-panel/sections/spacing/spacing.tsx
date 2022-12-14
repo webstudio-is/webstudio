@@ -4,14 +4,13 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { type HoverTagret, SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
-import type { StyleProperty } from "@webstudio-is/css-data";
-import type { StyleChangeEvent } from "./types";
+import type { StyleChangeEvent, SpacingStyleProperty } from "./types";
 import { InputPopover } from "./input-popover";
 
 const Cell = ({
   isPopoverOpen,
   onChange,
-  onOpenPopoverChange,
+  onPopoverClose,
   property,
   isHovered,
   scrubStatus,
@@ -19,9 +18,9 @@ const Cell = ({
   inheritedStyle,
 }: {
   isPopoverOpen: boolean;
+  onPopoverClose: () => void;
   onChange: (event: StyleChangeEvent) => void;
-  onOpenPopoverChange: (isOpen: boolean) => void;
-  property: StyleProperty;
+  property: SpacingStyleProperty;
   isHovered: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
 } & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">) => {
@@ -44,11 +43,11 @@ const Cell = ({
       isOpen={isPopoverOpen}
       property={property}
       onChange={onChange}
-      onOpenChange={onOpenPopoverChange}
+      onClose={onPopoverClose}
     >
       <ValueText
         value={finalValue}
-        isHovered={isHovered || scrubStatus.isActive}
+        isActive={isHovered || scrubStatus.isActive || isPopoverOpen}
         source="set" // @todo: set correct source
       />
     </InputPopover>
@@ -72,20 +71,20 @@ export const SpacingSection = ({
     inheritedStyle,
   });
 
-  const [openProperty, setOpenProperty] = useState<StyleProperty>();
+  const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
 
   return (
     <SpacingLayout
       onClick={setOpenProperty}
       onHover={setHoverTarget}
       forceHoverStateFor={
-        scrubStatus.isActive ? scrubStatus.property : undefined
+        scrubStatus.isActive ? scrubStatus.property : openProperty
       }
       renderCell={({ property }) => (
         <Cell
           isPopoverOpen={openProperty === property}
-          onOpenPopoverChange={(isOpen) => {
-            if (isOpen === false && openProperty === property) {
+          onPopoverClose={() => {
+            if (openProperty === property) {
               setOpenProperty(undefined);
             }
           }}

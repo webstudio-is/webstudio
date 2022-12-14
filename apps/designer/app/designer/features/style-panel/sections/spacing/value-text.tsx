@@ -26,10 +26,10 @@ const Container = styled("span", {
         borderColor: "$colors$orange6",
       },
     },
-    isHovered: { true: {} },
+    isActive: { true: {} },
   },
   compoundVariants: [
-    { source: "unset", isHovered: true, css: { color: "$colors$slate12" } },
+    { source: "unset", isActive: true, css: { color: "$colors$slate12" } },
   ],
 });
 
