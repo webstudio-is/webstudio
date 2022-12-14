@@ -20,10 +20,6 @@ export const FontFamilyControl = ({
   });
   const [isOpen, setIsOpen] = useState(false);
 
-  if (value === undefined) {
-    return null;
-  }
-
   const setValue = setProperty(styleConfig.property);
 
   return (

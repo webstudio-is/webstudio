@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import {
   type Instance,
   type UserProp,
@@ -193,6 +193,15 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
   const [selectedElement] = useSelectedElement();
   const [allUserProps] = useAllUserProps();
 
+  // trigger style recomputing every time
+  // new updates for this node are sent from designer
+  const [styleKey, recomputeStyles] = useReducer((d) => d + 1, 0);
+  useSubscribe("updateStyle", ({ id }) => {
+    if (id === instance?.id) {
+      recomputeStyles();
+    }
+  });
+
   useEffect(() => {
     // Unselects the instance by `undefined`
     let payload;
@@ -213,7 +222,7 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
       type: "selectInstance",
       payload,
     });
-  }, [instance, allUserProps, treeId, selectedElement]);
+  }, [instance, allUserProps, treeId, selectedElement, styleKey]);
 };
 
 export const usePublishHoveredInstanceData = () => {

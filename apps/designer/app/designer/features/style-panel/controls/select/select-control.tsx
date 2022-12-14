@@ -16,14 +16,13 @@ export const SelectControl = ({
     property: styleConfig.property,
   });
 
-  if (value === undefined) {
-    return null;
-  }
-
   const setValue = setProperty(styleConfig.property);
 
   return (
     <Select
+      // show empty field instead of radix placeholder
+      // like css value input does
+      placeholder=""
       options={styleConfig.items.map(({ label }) => label)}
       value={toValue(value)}
       onChange={setValue}
