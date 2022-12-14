@@ -185,7 +185,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (data.status === "error") {
-      // Remove preview asset from assets for now
+      // We don't know what's wrong, remove preview asset and wait for the load to fix it
       setAssets(assets.filter((asset) => asset.id !== previewAssetId));
 
       return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
@@ -207,8 +207,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Optimistically update preview asset with uploaded asset
-    // This will be updated in load
+    // Optimistically update preview asset with the uploaded asset
     const nextAssets = [...assets];
 
     const index = nextAssets.findIndex(
@@ -230,6 +229,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
     for (const id of ids) {
       formData.append("assetId", id);
+
       // Mark assets as deleting
       const index = nextAssets.findIndex((nextAsset) => nextAsset.id === id);
       if (index !== -1) {
