@@ -1,5 +1,6 @@
 import { styled, useId } from "@webstudio-is/design-system";
 import type { ComponentProps } from "react";
+import { spacingPropertiesNames, type SpacingStyleProperty } from "./types";
 
 const VALUE_WIDTH = 34;
 const VALUE_HEIGHT = 24;
@@ -177,21 +178,7 @@ const Label = styled("div", {
   },
 });
 
-// @todo: get this from theme `import { categories } from "@webstudio-is/react-sdk";`?
-// @todo: move out of layout in any case
-const propertyNames = [
-  "marginTop",
-  "marginRight",
-  "marginBottom",
-  "marginLeft",
-  "paddingTop",
-  "paddingRight",
-  "paddingBottom",
-  "paddingLeft",
-] as const;
-export type PropertyName = typeof propertyNames[number];
-
-const getSide = (property: PropertyName) => {
+const getSide = (property: SpacingStyleProperty) => {
   switch (property) {
     case "marginTop":
     case "paddingTop":
@@ -208,7 +195,7 @@ const getSide = (property: PropertyName) => {
   }
 };
 
-const getPath = (property: PropertyName) => {
+const getPath = (property: SpacingStyleProperty) => {
   const width = TOTAL_WIDTH;
   const height = TOTAL_HEIGHT;
   // distance between LeftValueArea's and RightValueArea's tips in the middle
@@ -235,15 +222,15 @@ const getPath = (property: PropertyName) => {
 
 // @todo: move?
 export type HoverTagret = {
-  property: PropertyName;
+  property: SpacingStyleProperty;
   element: SVGElement;
 };
 
 type LayoutProps = {
-  onClick: (property: PropertyName) => void;
+  onClick: (property: SpacingStyleProperty) => void;
   onHover: (hoverTarget: HoverTagret | undefined) => void;
-  forceHoverStateFor?: PropertyName;
-  renderCell: (args: { property: PropertyName }) => React.ReactNode;
+  forceHoverStateFor?: SpacingStyleProperty;
+  renderCell: (args: { property: SpacingStyleProperty }) => React.ReactNode;
 };
 
 export const SpacingLayout = ({
@@ -255,7 +242,7 @@ export const SpacingLayout = ({
   const outerClipId = useId();
   const innerClipId = useId();
 
-  const renderValueArea = (property: PropertyName) => (
+  const renderValueArea = (property: SpacingStyleProperty) => (
     <ValueArea
       side={getSide(property)}
       d={getPath(property)}
@@ -312,7 +299,7 @@ export const SpacingLayout = ({
         <Label>Margin</Label>
         <Label inner>Padding</Label>
 
-        {propertyNames.map((property) => (
+        {spacingPropertiesNames.map((property) => (
           <Cell property={property} key={property}>
             {renderCell({ property })}
           </Cell>

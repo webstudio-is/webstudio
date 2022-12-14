@@ -3,22 +3,17 @@ import { numericScrubControl } from "@webstudio-is/design-system";
 import { useState, useEffect, useRef } from "react";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { RenderCategoryProps } from "../../style-sections";
-import { type PropertyName, type HoverTagret } from "./layout";
+import type { HoverTagret } from "./layout";
+import type { StyleChangeEvent, SpacingStyleProperty } from "./types";
 
 type ScrubStatus =
   | { isActive: false }
-  | { isActive: true; property: PropertyName; value: UnitValue };
-
-type ChangeEvent = {
-  property: PropertyName;
-  value: UnitValue;
-  isEphemeral: boolean;
-};
+  | { isActive: true; property: SpacingStyleProperty; value: UnitValue };
 
 export const useScrub = (
   props: {
     target: HoverTagret | undefined;
-    onChange: (event: ChangeEvent) => void;
+    onChange: (event: StyleChangeEvent) => void;
   } & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">
 ): ScrubStatus => {
   // we want to hold on to the target while scrub is active even if hover changes

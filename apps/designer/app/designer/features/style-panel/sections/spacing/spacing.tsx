@@ -1,18 +1,27 @@
 import { useState } from "react";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { RenderCategoryProps } from "../../style-sections";
-import { type PropertyName, type HoverTagret, SpacingLayout } from "./layout";
+import { type HoverTagret, SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
+import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleChangeEvent } from "./types";
+import { InputPopover } from "./input-popover";
 
 const Cell = ({
+  isPopoverOpen,
+  onChange,
+  onOpenPopoverChange,
   property,
   isHovered,
   scrubStatus,
   currentStyle,
   inheritedStyle,
 }: {
-  property: PropertyName;
+  isPopoverOpen: boolean;
+  onChange: (event: StyleChangeEvent) => void;
+  onOpenPopoverChange: (isOpen: boolean) => void;
+  property: StyleProperty;
   isHovered: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
 } & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">) => {
@@ -24,12 +33,25 @@ const Cell = ({
 
   const finalValue = scrubStatus.isActive ? scrubStatus.value : styleValue;
 
-  return finalValue === undefined ? null : (
-    <ValueText
+  // for TypeScript
+  if (finalValue === undefined) {
+    return null;
+  }
+
+  return (
+    <InputPopover
       value={finalValue}
-      isHovered={isHovered || scrubStatus.isActive}
-      source="set" // @todo: set correct source
-    />
+      isOpen={isPopoverOpen}
+      property={property}
+      onChange={onChange}
+      onOpenChange={onOpenPopoverChange}
+    >
+      <ValueText
+        value={finalValue}
+        isHovered={isHovered || scrubStatus.isActive}
+        source="set" // @todo: set correct source
+      />
+    </InputPopover>
   );
 };
 
@@ -40,24 +62,34 @@ export const SpacingSection = ({
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
 
+  const handleChange = ({ property, value, isEphemeral }: StyleChangeEvent) =>
+    setProperty(property)(value, { isEphemeral });
+
   const scrubStatus = useScrub({
     target: hoverTarget,
-    onChange: ({ property, value, isEphemeral }) => {
-      setProperty(property)(value, { isEphemeral });
-    },
+    onChange: handleChange,
     currentStyle,
     inheritedStyle,
   });
 
+  const [openProperty, setOpenProperty] = useState<StyleProperty>();
+
   return (
     <SpacingLayout
-      onClick={() => undefined}
+      onClick={setOpenProperty}
       onHover={setHoverTarget}
       forceHoverStateFor={
         scrubStatus.isActive ? scrubStatus.property : undefined
       }
       renderCell={({ property }) => (
         <Cell
+          isPopoverOpen={openProperty === property}
+          onOpenPopoverChange={(isOpen) => {
+            if (isOpen === false && openProperty === property) {
+              setOpenProperty(undefined);
+            }
+          }}
+          onChange={handleChange}
           property={property}
           scrubStatus={
             scrubStatus.isActive && scrubStatus.property === property
