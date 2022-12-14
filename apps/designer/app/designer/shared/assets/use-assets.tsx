@@ -15,7 +15,6 @@ import {
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import ObjectID from "bson-objectid";
-import deepEqual from "fast-deep-equal";
 import { restAssetsPath } from "~/shared/router-utils";
 import { useAssets as useAssetsState, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
@@ -31,6 +30,7 @@ import { Publish } from "~/shared/pubsub";
 import { useFetcher } from "@remix-run/react";
 import warnOnce from "warn-once";
 import { Context } from "@sentry/types";
+import { updateStateAssets } from "./update-state-assets";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -128,7 +128,7 @@ const Context = createContext<AssetsContext | undefined>(undefined);
 export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   const [project] = useProject();
   const [stateAssets, setAssets] = useAssetsState();
-  const { load, data } = useFetcher<Asset[]>();
+  const { load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
   const assetsRef = useRef(stateAssets);
 
@@ -142,47 +142,19 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   }, [action, stateAssets.length, load]);
 
   useEffect(() => {
-    if (data !== undefined) {
-      let nextAssets = [...stateAssets];
-      // Merging data with existing assets, trying to preserve sorting
-      for (const dataAsset of data) {
-        // The same asset is already in the assets
-        const sameIndex = nextAssets.findIndex(
-          (asset) => asset.id === dataAsset.id
-        );
+    if (serverAssets !== undefined) {
+      const nextAssets = updateStateAssets(stateAssets, serverAssets);
 
-        if (sameIndex !== -1) {
-          if (nextAssets[sameIndex].status !== "deleting") {
-            nextAssets[sameIndex] = dataAsset;
-          }
-          continue;
-        }
-
-        // Assets array were empty or somebody loaded in parallel
-        nextAssets.push(dataAsset);
-      }
-
-      // Remove non-preview assets that are not in the data
-      nextAssets = nextAssets.filter((asset) => {
-        if (asset.status !== "uploading") {
-          if (
-            data.find((dataAsset) => dataAsset.id === asset.id) === undefined
-          ) {
-            return false;
-          }
-        }
-
-        return true;
-      });
-
-      if (deepEqual(nextAssets, stateAssets) === false) {
+      if (nextAssets !== stateAssets) {
         setAssets(nextAssets);
       }
     }
-  }, [data, stateAssets, setAssets]);
+  }, [serverAssets, stateAssets, setAssets]);
 
   const handleDeleteAfterSubmit = (data: UploadData) => {
-    // remove from assets deleted assets
+    // We need to remove assets only at updateStateAssets.
+    // We can't remove it here optimistically because the previous load
+    // can return it as "updated" because of the async operation nature
     if (action) {
       load(action);
     }
