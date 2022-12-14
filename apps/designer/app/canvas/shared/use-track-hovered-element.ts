@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useSelectedElement } from "./nano-states";
 import { useRootInstance } from "~/shared/nano-states";
 
 // @todo: importing normally doesn't work in Jest for some reason
@@ -14,7 +13,6 @@ export const useTrackHoveredElement = (
   onChange: (element: HTMLElement | undefined) => void
 ) => {
   const [rootInstance] = useRootInstance();
-  const [selectedElement] = useSelectedElement();
   const [hoveredElement, setHoveredElement] = useState<HTMLElement>();
 
   useDebounce(
@@ -45,5 +43,5 @@ export const useTrackHoveredElement = (
       window.removeEventListener("mouseover", handleMouseOver);
       window.removeEventListener("mouseout", handleMouseOut);
     };
-  }, [rootInstance, selectedElement, onChange]);
+  }, [rootInstance, onChange]);
 };
