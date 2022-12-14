@@ -112,6 +112,7 @@ export const WrapperComponentDev = ({
         />
       )}
       {/* Component includes many types and it's hard to provide right ref type with useRef */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <Component {...props} ref={instanceElementRef as any}>
         {renderWrapperComponentChildren(children)}
       </Component>
