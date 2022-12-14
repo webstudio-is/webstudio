@@ -43,7 +43,7 @@ const BaseAsset = z.object({
   location: Location,
   createdAt: z.string(),
   path: z.string(),
-  status: z.literal("uploaded").optional(),
+  status: z.literal("uploaded").default("uploaded"),
 });
 
 export const FontAsset = BaseAsset.omit({ format: true }).extend({

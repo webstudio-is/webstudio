@@ -109,10 +109,7 @@ export const ImageThumbnail = ({
         }
       }}
       onKeyDown={(event: KeyboardEvent) => {
-        if (
-          event.code === "Enter" &&
-          (asset.status === "uploaded" || asset.status === undefined)
-        ) {
+        if (event.code === "Enter" && asset.status === "uploaded") {
           onChange?.(asset);
         }
       }}
@@ -120,7 +117,7 @@ export const ImageThumbnail = ({
       <Thumbnail
         css={{ backgroundImage: `url("${src}")` }}
         onClick={() => {
-          if (asset.status === "uploaded" || asset.status === undefined) {
+          if (asset.status === "uploaded") {
             onChange?.(asset);
           }
         }}

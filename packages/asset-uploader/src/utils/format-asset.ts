@@ -15,6 +15,7 @@ export const formatAsset = (asset: DbAsset): Asset => {
       createdAt: base.createdAt.toISOString(),
       format: asset.format as FontFormat,
       meta: FontMeta.parse(JSON.parse(asset.meta)),
+      status: "uploaded",
     };
   }
 
@@ -22,5 +23,6 @@ export const formatAsset = (asset: DbAsset): Asset => {
     ...base,
     createdAt: base.createdAt.toISOString(),
     meta: ImageMeta.parse(JSON.parse(asset.meta)),
+    status: "uploaded",
   };
 };

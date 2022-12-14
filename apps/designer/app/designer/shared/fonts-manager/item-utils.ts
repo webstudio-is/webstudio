@@ -1,14 +1,16 @@
 import { Asset } from "@webstudio-is/asset-uploader";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { matchSorter } from "match-sorter";
-import { PreviewAsset } from "../assets";
+import { DeletingAsset, PreviewAsset } from "../assets";
 
 export type Item = {
   label: string;
   type: "uploaded" | "system";
 };
 
-export const toItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
+export const toItems = (
+  assets: Array<Asset | PreviewAsset | DeletingAsset>
+): Array<Item> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
@@ -29,7 +31,7 @@ export const toItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
 
 export const filterIdsByFamily = (
   family: string,
-  assets: Array<Asset | PreviewAsset>
+  assets: Array<Asset | PreviewAsset | DeletingAsset>
 ) => {
   // One family may have multiple assets for different formats, so we need to find them all.
   return assets

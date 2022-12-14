@@ -15,6 +15,7 @@ import {
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import ObjectID from "bson-objectid";
+import deepEqual from "fast-deep-equal";
 import { restAssetsPath } from "~/shared/router-utils";
 import { useAssets as useAssetsState, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
@@ -43,7 +44,7 @@ export const usePublishAssets = (publish: Publish) => {
     publish({
       type: "updateAssets",
       payload: assets.filter(
-        (asset) => asset.status === undefined || asset.status === "uploaded"
+        (asset) => asset.status === "uploaded"
       ) as Array<Asset>, // TS doesn't understand we filtered out PrevewAssets
     });
   }, [assets, publish]);
@@ -53,33 +54,37 @@ export type UploadData = FetcherData<ActionData>;
 
 const toPreviewAssets = (
   formsData: Array<FormData>
-): Promise<PreviewAsset[]> => {
-  const assets: Array<Promise<PreviewAsset>> = [];
+): Promise<[PreviewAsset, FormData][]> => {
+  const assets: Array<Promise<[PreviewAsset, FormData]>> = [];
   for (const formData of formsData) {
     for (const entry of formData) {
       const file = entry[1];
       if (!(file instanceof File)) {
         continue;
       }
-      const promise: Promise<PreviewAsset> = new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", (event) => {
-          const dataUri = event?.target?.result;
-          if (dataUri === undefined) {
-            return reject(new Error(`Could not read file "${file.name}"`));
-          }
+      const promise = new Promise<[PreviewAsset, FormData]>(
+        (resolve, reject) => {
+          const reader = new FileReader();
+          reader.addEventListener("load", (event) => {
+            const dataUri = event?.target?.result;
+            if (dataUri === undefined) {
+              return reject(new Error(`Could not read file "${file.name}"`));
+            }
 
-          resolve({
-            format: file.type.split("/")[1],
-            path: String(dataUri),
-            name: file.name,
-            id: ObjectID().toString(),
-            status: "uploading",
-            formData,
+            resolve([
+              {
+                format: file.type.split("/")[1],
+                path: String(dataUri),
+                name: file.name,
+                id: ObjectID().toString(),
+                status: "uploading",
+              },
+              formData,
+            ]);
           });
-        });
-        reader.readAsDataURL(file);
-      });
+          reader.readAsDataURL(file);
+        }
+      );
       assets.push(promise);
     }
   }
@@ -141,13 +146,15 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       let nextAssets = [...stateAssets];
       // Merging data with existing assets, trying to preserve sorting
       for (const dataAsset of data) {
-        // The same asset is already in assets
+        // The same asset is already in the assets
         const sameIndex = nextAssets.findIndex(
           (asset) => asset.id === dataAsset.id
         );
 
         if (sameIndex !== -1) {
-          nextAssets[sameIndex] = dataAsset;
+          if (nextAssets[sameIndex].status !== "deleting") {
+            nextAssets[sameIndex] = dataAsset;
+          }
           continue;
         }
 
@@ -155,7 +162,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
         nextAssets.push(dataAsset);
       }
 
-      // Remove non preview assets thats are not in data
+      // Remove non-preview assets that are not in the data
       nextAssets = nextAssets.filter((asset) => {
         if (asset.status !== "uploading") {
           if (
@@ -168,35 +175,34 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
         return true;
       });
 
-      setAssets(nextAssets);
+      if (deepEqual(nextAssets, stateAssets) === false) {
+        setAssets(nextAssets);
+      }
     }
-  }, [data, setAssets]);
+  }, [data, stateAssets, setAssets]);
 
   const handleDeleteAfterSubmit = (data: UploadData) => {
-    const assets = assetsRef.current;
     // remove from assets deleted assets
     if (action) {
       load(action);
     }
 
     if (data.status === "error") {
+      // We don't know what's wrong, remove the "deleting" status from assets and wait for the load to fix it
+      const assets = assetsRef.current;
+      const nextAssets = [...assets].map((asset) => {
+        if (asset.status === "deleting") {
+          const newAsset = { ...asset, status: "uploaded" } as Asset;
+          return newAsset;
+        }
+
+        return asset;
+      });
+
+      setAssets(nextAssets);
+
       return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
     }
-
-    const { deletedAssets } = data;
-
-    if (deletedAssets === undefined) {
-      return;
-    }
-
-    // Optimistically remove deleted assets
-    setAssets(
-      assets.filter(
-        (asset) =>
-          deletedAssets.find((deletedAsset) => deletedAsset.id === asset.id) ===
-          undefined
-      )
-    );
   };
 
   const handleAfterSubmit = (previewAssetId: string) => (data: UploadData) => {
@@ -238,7 +244,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     );
 
     if (index !== -1) {
-      nextAssets[index] = uploadedAsset;
+      nextAssets[index] = { ...uploadedAsset, status: "uploading" };
     }
 
     setAssets(nextAssets);
@@ -255,13 +261,14 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       // Mark assets as deleting
       const index = nextAssets.findIndex((nextAsset) => nextAsset.id === id);
       if (index !== -1) {
-        const newAsset: DeletingAsset = {
+        const newAsset = {
           ...nextAssets[index],
           status: "deleting",
-        };
+        } as DeletingAsset;
 
         nextAssets[index] = newAsset;
       }
+
       setAssets(nextAssets);
     }
 
@@ -276,7 +283,10 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     const previewAssets = await toPreviewAssets(formsData)
       .then((previewAssets) => {
         const assets = assetsRef.current;
-        setAssets([...previewAssets, ...assets]);
+        setAssets([
+          ...previewAssets.map(([previewAsset]) => previewAsset),
+          ...assets,
+        ]);
         return previewAssets;
       })
       .catch((error) => {
@@ -289,9 +299,9 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    for (const previewAsset of previewAssets) {
+    for (const [previewAsset, formData] of previewAssets) {
       submit<UploadData>(
-        previewAsset.formData,
+        formData,
         {
           method: "post",
           action,
