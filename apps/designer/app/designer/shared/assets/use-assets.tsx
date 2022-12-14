@@ -29,7 +29,6 @@ import {
 import { Publish } from "~/shared/pubsub";
 import { useFetcher } from "@remix-run/react";
 import warnOnce from "warn-once";
-import { Context } from "@sentry/types";
 import { updateStateAssets } from "./update-state-assets";
 
 declare module "~/shared/pubsub" {
