@@ -8,10 +8,21 @@ runs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
-        cache: "pnpm"
 
     - run: corepack enable
       shell: bash
+
+    - name: Get pnpm cache directory path
+      id: pnpm-cache-dir-path
+      run: echo "::set-output name=dir::$(pnpm store path --silent)"
+      shell: bash
+
+    - uses: actions/cache@v3
+      with:
+        path: ${{ steps.pnpm-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-
 
     - name: Install Dependencies
       run: pnpm install --frozen-lockfile --ignore-scripts
