@@ -1,33 +1,9 @@
-import {
-  useEffect,
-  useState,
-  type KeyboardEvent,
-  type FocusEvent,
-} from "react";
+import { type KeyboardEvent, type FocusEvent } from "react";
 import { Box, styled } from "@webstudio-is/design-system";
-import placeholderImage from "~/shared/images/image-placeholder.svg";
-import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { RenderableAsset } from "~/designer/shared/assets";
 import { Filename } from "./filename";
-
-const useImageWithFallback = ({
-  path = placeholderImage,
-}: {
-  path?: string;
-}) => {
-  const [src, setSrc] = useState(placeholderImage);
-
-  useEffect(() => {
-    const newImage = new Image();
-    newImage.onload = () => setSrc(path);
-    newImage.onerror = () => setSrc(brokenImage);
-    newImage.src = path;
-  }, [path]);
-
-  return src;
-};
 
 const ThumbnailContainer = styled(Box, {
   position: "relative",
@@ -61,10 +37,15 @@ const ThumbnailContainer = styled(Box, {
 const Thumbnail = styled(Box, {
   width: "$spacing$19",
   height: "$spacing$19",
-  backgroundSize: "contain",
-  backgroundRepeat: "no-repeat",
-  backgroundPosition: "center",
   flexShrink: 0,
+  position: "relative",
+});
+
+const Image = styled("img", {
+  position: "absolute",
+  width: "100%",
+  height: "100%",
+  objectFit: "contain",
 });
 
 type ImageThumbnailProps = {
@@ -98,7 +79,15 @@ export const ImageThumbnail = ({
 
   const isUploading = status === "uploading";
 
-  const src = useImageWithFallback({ path });
+  // In case of preview exists set dataUri as fallback
+  const src = clientAsset.preview ? clientAsset.preview.path : path;
+
+  // In case of asset exists set srcSet it will be used even if src is set
+  // The main point we are doing this is that switching from src fallback to srcSet has no flickering
+  // This solves Image flicker during upload when the real server path becomes available
+  const srcSet = clientAsset.asset?.path
+    ? `${clientAsset.asset?.path} 1x, ${clientAsset.asset?.path} 2x`
+    : undefined;
 
   return (
     <ThumbnailContainer
@@ -122,13 +111,14 @@ export const ImageThumbnail = ({
       }}
     >
       <Thumbnail
-        css={{ backgroundImage: `url("${src}")` }}
         onClick={() => {
           if (clientAsset.status === "uploaded") {
             onChange?.(clientAsset);
           }
         }}
-      />
+      >
+        <Image src={src} srcSet={srcSet} alt={description} />
+      </Thumbnail>
       <Box
         css={{
           width: "100%",
