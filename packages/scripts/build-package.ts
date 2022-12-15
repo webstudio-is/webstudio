@@ -1,4 +1,4 @@
-#!/usr/bin/env pnpm tsx
+#!/usr/bin/env node --loader=tsx
 
 import { rm, cp } from "node:fs/promises";
 import { join } from "node:path";
