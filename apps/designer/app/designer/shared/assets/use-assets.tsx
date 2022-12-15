@@ -78,7 +78,7 @@ const toUploadingAssetsAndFormData = (
           // should be removed after fix
           const formData = new FormData();
           formData.append(type, file, sanitizeS3Key(file.name));
-          formData.append(idsFormDataFieldName, crypto.randomUUID());
+          formData.append(idsFormDataFieldName, id);
 
           resolve([
             {
