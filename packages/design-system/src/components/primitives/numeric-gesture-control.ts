@@ -146,12 +146,14 @@ export const numericScrubControl = (
           });
         }
         if (state.cursor) {
+          // We allow movement on both axis to allow user to
+          // move cursor away from the value text to not obscure it
           state.cursor.style.top = `${
             parseFloat(state.cursor.style.top) + event.movementY
           }px`;
-          state.cursor.style[
-            state.direction === "horizontal" ? "left" : "top"
-          ] = `${state.offset}px`;
+          state.cursor.style.left = `${
+            parseFloat(state.cursor.style.left) + event.movementX
+          }px`;
         }
         break;
       }
