@@ -65,7 +65,12 @@ const uploadHandler = async ({
 }: {
   file: UploadHandlerPart;
   maxSize: number;
-}): Promise<string> => {
+}): Promise<string | undefined> => {
+  if (file.filename === undefined) {
+    // Do not parse if it's not a file
+    return undefined;
+  }
+
   if (!file.data) {
     throw new Error("Your asset seems to be empty");
   }
@@ -78,10 +83,6 @@ const uploadHandler = async ({
 
   if (data.byteLength > maxSize) {
     throw new MaxPartSizeExceededError(file.name, maxSize);
-  }
-
-  if (file.filename === undefined) {
-    throw new Error("Filename is required");
   }
 
   const fileName = sanitizeS3Key(file.filename);
