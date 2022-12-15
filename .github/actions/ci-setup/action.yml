@@ -10,6 +10,7 @@ runs:
         node-version: 16
         cache: "pnpm"
 
+    - run: corepack enable
+
     - name: Install Dependencies
       run: pnpm install --frozen-lockfile --ignore-scripts
-      shell: bash
