@@ -23,6 +23,9 @@ export type DeletingClientAsset = {
   preview: PreviewAsset | undefined;
 };
 
+/**
+ * Client side we need more information about the asset than the server provides.
+ */
 export type ClientAsset =
   | UploadedClientAsset
   | UploadingClientAsset

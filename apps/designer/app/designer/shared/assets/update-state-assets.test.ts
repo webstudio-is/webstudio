@@ -7,8 +7,10 @@ import {
 } from "./types";
 import { updateStateAssets } from "./update-state-assets";
 
-const getAssetId = (asset: ClientAsset): string =>
-  asset.status === "uploading" ? asset.preview.id : asset.asset.id;
+const getAssetId = (clientAsset: ClientAsset): string =>
+  clientAsset.status === "uploading"
+    ? clientAsset.preview.id
+    : clientAsset.asset.id;
 
 const createServerAsset = (id: string, name?: string): Asset => ({
   id,

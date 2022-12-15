@@ -10,7 +10,7 @@ import {
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import { ImageInfo } from "./image-info";
 import { cssVars } from "@webstudio-is/css-vars";
-import { UploadedClientAsset } from "../assets";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const triggerVisibilityVar = cssVars.define("trigger-visibility");
 
@@ -22,7 +22,7 @@ export const ImageInfoTrigger = ({
   asset,
   onDelete,
 }: {
-  asset: UploadedClientAsset;
+  asset: Asset;
   onDelete: (ids: Array<string>) => void;
 }) => {
   const [isInfoOpen, setInfoOpen] = useState(false);
@@ -58,7 +58,7 @@ export const ImageInfoTrigger = ({
               setInfoOpen(false);
               onDelete(ids);
             }}
-            asset={asset.asset}
+            asset={asset}
           />
         </PopoverContent>
       </PopoverPortal>

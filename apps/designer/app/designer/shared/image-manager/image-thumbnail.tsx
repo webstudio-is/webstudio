@@ -143,7 +143,7 @@ export const ImageThumbnail = ({
       </Box>
       {clientAsset.status === "uploaded" && (
         <ImageInfoTrigger
-          asset={clientAsset}
+          asset={clientAsset.asset}
           onDelete={(ids) => {
             onDelete(ids);
           }}

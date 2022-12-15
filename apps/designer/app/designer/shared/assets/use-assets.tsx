@@ -38,16 +38,16 @@ declare module "~/shared/pubsub" {
 }
 
 export const usePublishAssets = (publish: Publish) => {
-  const [assets] = useClientAssets();
+  const [clientAssets] = useClientAssets();
   useEffect(() => {
     publish({
       type: "updateAssets",
-      payload: assets
-        .filter((asset) => asset.status === "uploaded")
+      payload: clientAssets
+        .filter((clientAsset) => clientAsset.status === "uploaded")
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- for "status" === "uploaded" asset is defined
-        .map((asset) => asset.asset!),
+        .map((clientAsset) => clientAsset.asset!),
     });
-  }, [assets, publish]);
+  }, [clientAssets, publish]);
 };
 
 export type UploadData = FetcherData<ActionData>;
@@ -128,29 +128,29 @@ const Context = createContext<AssetsContext | undefined>(undefined);
 
 export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   const [project] = useProject();
-  const [stateAssets, setAssets] = useClientAssets();
+  const [clientAssets, setClientAssets] = useClientAssets();
   const { load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
-  const assetsRef = useRef(stateAssets);
+  const assetsRef = useRef(clientAssets);
 
   const action = project && restAssetsPath({ projectId: project.id });
-  assetsRef.current = stateAssets;
+  assetsRef.current = clientAssets;
 
   useEffect(() => {
-    if (action && stateAssets.length === 0) {
+    if (action && clientAssets.length === 0) {
       load(action);
     }
-  }, [action, stateAssets.length, load]);
+  }, [action, clientAssets.length, load]);
 
   useEffect(() => {
     if (serverAssets !== undefined) {
-      const nextAssets = updateStateAssets(stateAssets, serverAssets);
+      const nextAssets = updateStateAssets(clientAssets, serverAssets);
 
-      if (nextAssets !== stateAssets) {
-        setAssets(nextAssets);
+      if (nextAssets !== clientAssets) {
+        setClientAssets(nextAssets);
       }
     }
-  }, [serverAssets, stateAssets, setAssets]);
+  }, [serverAssets, clientAssets, setClientAssets]);
 
   const handleDeleteAfterSubmit = (data: UploadData) => {
     // We need to remove assets only at updateStateAssets.
@@ -172,7 +172,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
         return asset;
       });
 
-      setAssets(nextAssets);
+      setClientAssets(nextAssets);
 
       return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
     }
@@ -187,7 +187,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
     if (data.status === "error") {
       // We don't know what's wrong, remove uploading asset and wait for the load to fix it
-      setAssets(
+      setClientAssets(
         assets.filter(
           (asset) =>
             asset.status !== "uploading" || asset.preview.id !== assetId
@@ -209,7 +209,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       toast.error("Could not upload an asset");
 
       // remove uploading asset and wait for the load to fix it
-      setAssets(
+      setClientAssets(
         assets.filter(
           (asset) =>
             asset.status !== "uploading" || asset.preview.id !== assetId
@@ -218,7 +218,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    setAssets(
+    setClientAssets(
       assets.map((asset) => {
         if (asset.status === "uploading" && asset.preview.id === assetId) {
           // We can start using the uploaded asset for image previews etc
@@ -259,7 +259,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    setAssets(nextAssets);
+    setClientAssets(nextAssets);
 
     submit<UploadData>(
       formData,
@@ -276,7 +276,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       );
 
       const assets = assetsRef.current;
-      setAssets([
+      setClientAssets([
         ...uploadingAssetsAndFormData.map(([previewAsset]) => previewAsset),
         ...assets,
       ]);
@@ -301,16 +301,16 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <Context.Provider
-      value={{ handleSubmit, assets: stateAssets, handleDelete }}
+      value={{ handleSubmit, assets: clientAssets, handleDelete }}
     >
       {children}
     </Context.Provider>
   );
 };
 
-const filterByType = (assets: Array<ClientAsset>, type: AssetType) => {
-  return assets.filter((asset) => {
-    const format = asset.asset?.format ?? asset.preview?.format;
+const filterByType = (clientAssets: Array<ClientAsset>, type: AssetType) => {
+  return clientAssets.filter((clientAsset) => {
+    const format = clientAsset.asset?.format ?? clientAsset.preview?.format;
 
     const isFont = FONT_FORMATS.has(format as FontFormat);
     if (type === "font") {

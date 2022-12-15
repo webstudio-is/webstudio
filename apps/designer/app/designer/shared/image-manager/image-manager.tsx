@@ -22,6 +22,8 @@ const useLogic = ({
   const { assets, handleDelete } = useAssets("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  // @todo filter out deleting assets
   const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
     items: assets,
     onReset() {
@@ -56,11 +58,11 @@ const useLogic = ({
     },
   });
 
-  const handleSelect = (asset?: ClientAsset) => {
+  const handleSelect = (clientAsset?: ClientAsset) => {
     const selectedIndex = filteredItems.findIndex(
       (item) =>
         (item.asset?.id ?? item.preview?.id) ===
-        (asset?.asset?.id ?? asset?.preview?.id)
+        (clientAsset?.asset?.id ?? clientAsset?.preview?.id)
     );
     setSelectedIndex(selectedIndex);
   };
@@ -94,10 +96,10 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
       type="image"
     >
       <Grid columns={3} gap={2}>
-        {filteredItems.map((asset, index) => (
+        {filteredItems.map((clientAsset, index) => (
           <ImageThumbnail
-            key={asset.asset?.id ?? asset.preview?.id}
-            asset={asset}
+            key={clientAsset.asset?.id ?? clientAsset.preview?.id}
+            asset={clientAsset}
             onDelete={handleDelete}
             onSelect={handleSelect}
             onChange={onChange}

@@ -27,7 +27,8 @@ export const ImageControl = ({
   const setValue = setProperty(styleConfig.property);
 
   const selectedAsset = assets.find(
-    (asset) => (asset.asset?.id ?? asset.preview?.id) === toValue(value)
+    (clientAsset) =>
+      (clientAsset.asset?.id ?? clientAsset.preview?.id) === toValue(value)
   );
 
   return (
@@ -35,9 +36,10 @@ export const ImageControl = ({
       title="Images"
       content={
         <ImageManager
-          onChange={(asset) => {
-            if (asset.status === "uploaded") {
-              setValue(asset.asset?.id);
+          onChange={(clientAsset) => {
+            if (clientAsset.status === "uploaded") {
+              // @todo looks like a bug fix next PRs
+              setValue(clientAsset.asset.id);
             }
           }}
         />
