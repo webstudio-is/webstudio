@@ -79,16 +79,6 @@ export const ImageThumbnail = ({
 
   const isUploading = status === "uploading";
 
-  // In case of preview exists set dataUri as fallback
-  const src = clientAsset.preview ? clientAsset.preview.path : path;
-
-  // In case of asset exists set srcSet it will be used even if src is set
-  // The main point we are doing this is that switching from src fallback to srcSet has no flickering
-  // This solves Image flicker during upload when the real server path becomes available
-  const srcSet = clientAsset.asset?.path
-    ? `${clientAsset.asset?.path} 1x, ${clientAsset.asset?.path} 2x`
-    : undefined;
-
   return (
     <ThumbnailContainer
       title={description}
@@ -117,7 +107,7 @@ export const ImageThumbnail = ({
           }
         }}
       >
-        <Image src={src} srcSet={srcSet} alt={description} />
+        <Image src={path} alt={description} />
       </Thumbnail>
       <Box
         css={{
