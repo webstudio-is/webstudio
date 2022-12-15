@@ -9,7 +9,7 @@ import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
-import type { ClientAsset } from "~/designer/shared/assets";
+import type { ActiveAsset } from "~/designer/shared/assets";
 import { Filename } from "./filename";
 
 const useImageWithFallback = ({
@@ -68,10 +68,10 @@ const Thumbnail = styled(Box, {
 });
 
 type ImageThumbnailProps = {
-  asset: ClientAsset;
+  asset: ActiveAsset;
   onDelete: (ids: Array<string>) => void;
-  onSelect: (asset?: ClientAsset) => void;
-  onChange?: (asset: ClientAsset) => void;
+  onSelect: (asset?: ActiveAsset) => void;
+  onChange?: (asset: ActiveAsset) => void;
   state?: "selected";
 };
 
@@ -97,7 +97,6 @@ export const ImageThumbnail = ({
       : name;
 
   const isUploading = status === "uploading";
-  const isDeleting = status === "deleting";
 
   const src = useImageWithFallback({ path });
 
@@ -108,9 +107,7 @@ export const ImageThumbnail = ({
       status={status}
       state={state}
       onFocus={() => {
-        if (clientAsset.status !== "deleting") {
-          onSelect?.(clientAsset);
-        }
+        onSelect?.(clientAsset);
       }}
       onBlur={(event: FocusEvent) => {
         const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
@@ -149,7 +146,7 @@ export const ImageThumbnail = ({
           }}
         />
       )}
-      {(isUploading || isDeleting) && <UploadingAnimation />}
+      {isUploading && <UploadingAnimation />}
     </ThumbnailContainer>
   );
 };

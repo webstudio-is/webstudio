@@ -18,7 +18,7 @@ import { toast } from "@webstudio-is/design-system";
 import { restAssetsPath } from "~/shared/router-utils";
 import { useClientAssets, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
-import { ClientAsset, UploadingClientAsset } from "./types";
+import type { ActiveAsset, ClientAsset, UploadingClientAsset } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/designer/shared/assets";
 import {
@@ -308,7 +308,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const filterByType = (clientAssets: Array<ClientAsset>, type: AssetType) => {
+const filterByType = (clientAssets: ActiveAsset[], type: AssetType) => {
   return clientAssets.filter((clientAsset) => {
     const format = clientAsset.asset?.format ?? clientAsset.preview?.format;
 
@@ -327,10 +327,19 @@ export const useAssets = (type: AssetType) => {
     throw new Error("useAssets is used without AssetsProvider");
   }
 
-  const assetsByType = useMemo(
-    () => filterByType(assetsContext.assets, type),
-    [assetsContext.assets, type]
-  );
+  const assetsByType = useMemo(() => {
+    // In no case we need to have access to deleting assets
+    // But we need them for optiistic updates, filter out here
+    const activeAssets: ActiveAsset[] = [];
+
+    for (const asset of assetsContext.assets) {
+      if (asset.status !== "deleting") {
+        activeAssets.push(asset);
+      }
+    }
+
+    return filterByType(activeAssets, type);
+  }, [assetsContext.assets, type]);
 
   const handleSubmit = (input: HTMLInputElement) => {
     const formsData = getFilesFromInput(type, input);
@@ -338,8 +347,11 @@ export const useAssets = (type: AssetType) => {
   };
 
   return {
-    handleSubmit,
+    /**
+     * Already loaded assets or assets that are being uploaded
+     */
     assets: assetsByType,
+    handleSubmit,
     handleDelete: assetsContext.handleDelete,
   };
 };

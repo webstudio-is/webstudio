@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { findNextListIndex, Grid } from "@webstudio-is/design-system";
-import { AssetsShell, type ClientAsset, useAssets, useSearch } from "../assets";
+import { AssetsShell, type ActiveAsset, useAssets, useSearch } from "../assets";
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
 
-const filterItems = (search: string, items: Array<ClientAsset>) => {
+const filterItems = (search: string, items: ActiveAsset[]) => {
   return matchSorter(items, search, {
     keys: [
       (item) =>
@@ -17,7 +17,7 @@ const filterItems = (search: string, items: Array<ClientAsset>) => {
 const useLogic = ({
   onChange,
 }: {
-  onChange?: (asset: ClientAsset) => void;
+  onChange?: (asset: ActiveAsset) => void;
 }) => {
   const { assets, handleDelete } = useAssets("image");
 
@@ -58,7 +58,7 @@ const useLogic = ({
     },
   });
 
-  const handleSelect = (clientAsset?: ClientAsset) => {
+  const handleSelect = (clientAsset?: ActiveAsset) => {
     const selectedIndex = filteredItems.findIndex(
       (item) =>
         (item.asset?.id ?? item.preview?.id) ===
@@ -77,7 +77,7 @@ const useLogic = ({
 };
 
 type ImageManagerProps = {
-  onChange?: (asset: ClientAsset) => void;
+  onChange?: (asset: ActiveAsset) => void;
 };
 
 export const ImageManager = ({ onChange }: ImageManagerProps) => {
