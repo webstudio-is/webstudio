@@ -18,7 +18,11 @@ import { toast } from "@webstudio-is/design-system";
 import { restAssetsPath } from "~/shared/router-utils";
 import { useClientAssets, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
-import type { ActiveAsset, ClientAsset, UploadingClientAsset } from "./types";
+import type {
+  RenderableAsset,
+  ClientAsset,
+  UploadingClientAsset,
+} from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/designer/shared/assets";
 import {
@@ -308,7 +312,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const filterByType = (clientAssets: ActiveAsset[], type: AssetType) => {
+const filterByType = (clientAssets: RenderableAsset[], type: AssetType) => {
   return clientAssets.filter((clientAsset) => {
     const format = clientAsset.asset?.format ?? clientAsset.preview?.format;
 
@@ -330,7 +334,7 @@ export const useAssets = (type: AssetType) => {
   const assetsByType = useMemo(() => {
     // In no case we need to have access to deleting assets
     // But we need them for optiistic updates, filter out here
-    const activeAssets: ActiveAsset[] = [];
+    const activeAssets: RenderableAsset[] = [];
 
     for (const asset of assetsContext.assets) {
       if (asset.status !== "deleting") {

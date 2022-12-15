@@ -37,7 +37,7 @@ export type ClientAsset =
 /**
  * Assets that can be shown in the UI
  */
-export type ActiveAsset = UploadedClientAsset | UploadingClientAsset;
+export type RenderableAsset = UploadedClientAsset | UploadingClientAsset;
 
 export type ActionData = {
   uploadedAssets?: Array<Asset>;

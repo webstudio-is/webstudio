@@ -9,7 +9,7 @@ import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
-import type { ActiveAsset } from "~/designer/shared/assets";
+import type { RenderableAsset } from "~/designer/shared/assets";
 import { Filename } from "./filename";
 
 const useImageWithFallback = ({
@@ -68,10 +68,10 @@ const Thumbnail = styled(Box, {
 });
 
 type ImageThumbnailProps = {
-  asset: ActiveAsset;
+  asset: RenderableAsset;
   onDelete: (ids: Array<string>) => void;
-  onSelect: (asset?: ActiveAsset) => void;
-  onChange?: (asset: ActiveAsset) => void;
+  onSelect: (asset?: RenderableAsset) => void;
+  onChange?: (asset: RenderableAsset) => void;
   state?: "selected";
 };
 
