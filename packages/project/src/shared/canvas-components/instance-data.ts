@@ -12,7 +12,7 @@ export type SelectedInstanceData = {
   component: Instance["component"];
   cssRules: Array<CssRule>;
   browserStyle: Style;
-  props: InstanceProps;
+  props?: InstanceProps;
 };
 
 export type HoveredInstanceData = {

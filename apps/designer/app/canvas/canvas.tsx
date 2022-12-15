@@ -139,8 +139,8 @@ const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageBreakpoints();
   usePublishDesignTokens();
   useManageDesignModeStyles();
-  useManageProps();
-  usePublishSelectedInstanceData(treeId);
+  useManageProps({ treeId });
+  usePublishSelectedInstanceData();
   useInsertInstance({ treeId });
   useReparentInstance();
   useDeleteInstance();

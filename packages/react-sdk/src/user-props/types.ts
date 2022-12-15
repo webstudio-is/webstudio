@@ -2,9 +2,8 @@ import type { InstanceProps, Instance } from "../db";
 import { UserProp } from "./schema";
 
 export type UserPropsUpdates = {
-  treeId: InstanceProps["treeId"];
-  propsId: InstanceProps["id"];
   instanceId: Instance["id"];
+  propsId?: InstanceProps["id"];
   updates: Array<UserProp>;
 };
 

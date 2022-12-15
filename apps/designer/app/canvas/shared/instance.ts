@@ -188,7 +188,7 @@ export const useDeleteInstance = () => {
   });
 };
 
-export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
+export const usePublishSelectedInstanceData = () => {
   const [instance] = useSelectedInstance();
   const [selectedElement] = useSelectedElement();
   const [allUserProps] = useAllUserProps();
@@ -204,11 +204,9 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
 
   useEffect(() => {
     // Unselects the instance by `undefined`
-    let payload;
+    let payload: undefined | SelectedInstanceData;
     if (instance !== undefined) {
-      const props =
-        allUserProps[instance.id] ??
-        utils.props.createInstanceProps({ instanceId: instance.id, treeId });
+      const props = allUserProps[instance.id];
       const browserStyle = getBrowserStyle(selectedElement);
       payload = {
         id: instance.id,
@@ -222,7 +220,7 @@ export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
       type: "selectInstance",
       payload,
     });
-  }, [instance, allUserProps, treeId, selectedElement, styleKey]);
+  }, [instance, allUserProps, selectedElement, styleKey]);
 };
 
 export const usePublishHoveredInstanceData = () => {

@@ -204,8 +204,7 @@ export const usePropsLogic = ({
     publish({
       type: "updateProps",
       payload: {
-        treeId: selectedInstanceData.props.treeId,
-        propsId: selectedInstanceData.props.id,
+        propsId: selectedInstanceData.props?.id,
         instanceId: selectedInstanceData.id,
         updates,
       },

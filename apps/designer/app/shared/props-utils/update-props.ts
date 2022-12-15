@@ -1,15 +1,17 @@
+import { v4 as uuid } from "uuid";
 import {
   type AllUserProps,
   type UserPropsUpdates,
 } from "@webstudio-is/react-sdk";
 
 export const updateAllUserPropsMutable = (
+  treeId: string,
   allUserProps: AllUserProps,
-  { instanceId, propsId, treeId, updates }: UserPropsUpdates
+  { instanceId, propsId, updates }: UserPropsUpdates
 ) => {
   if (instanceId in allUserProps === false) {
     allUserProps[instanceId] = {
-      id: propsId,
+      id: propsId ?? uuid(),
       instanceId,
       treeId,
       props: [],
