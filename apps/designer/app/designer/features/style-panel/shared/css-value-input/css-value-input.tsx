@@ -27,6 +27,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useLayoutEffect,
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
@@ -77,6 +78,13 @@ const useScrub = ({
   const type = valueRef.current.type;
   const unit = type === "unit" ? valueRef.current.unit : undefined;
 
+  // make sure caret doesn't jump around as you scrub
+  useLayoutEffect(() => {
+    if (isInputActive) {
+      inputRef.current?.select();
+    }
+  });
+
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
   useEffect(() => {
@@ -108,7 +116,6 @@ const useScrub = ({
       },
       onValueInput(event) {
         setIsInputActive(true);
-        inputRefCurrent.blur();
 
         onChangeRef.current({
           type,
@@ -128,8 +135,6 @@ const useScrub = ({
         });
 
         setIsInputActive(false);
-        inputRefCurrent.focus();
-        inputRefCurrent.select();
       },
       shouldHandleEvent: shouldHandleEvent,
     });
@@ -308,6 +313,7 @@ export const CssValueInput = ({
   const shouldHandleEvent = useCallback((node) => {
     return suffixRef.current?.contains?.(node) === false;
   }, []);
+
   const [scrubRef, inputRef, isInputActive] = useScrub({
     value,
     onChange: props.onChange,
