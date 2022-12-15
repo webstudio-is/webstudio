@@ -234,7 +234,7 @@ const requestPointerLock = (
 
 const shouldUsePointerLock = "chrome" in globalThis;
 
-// When the value is outside of the range make come back to the range from the other side
+// When the value is outside of the range make it come back to the range from the other side
 //   |        | . -> | .      |
 // . |        |   -> |      . |
 const wrapAround = (value: number, min: number, max: number) => {
