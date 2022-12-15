@@ -4,6 +4,7 @@ import { idsFormDataFieldName } from "../schema";
 export const uuidHandler: UnstableUploadHandler = async (part) => {
   let id: string | undefined = undefined;
   if (part.name === idsFormDataFieldName) {
+    // 36 is the length of a UUID in bytes
     const idBuffer = new Uint8Array(36);
     let offset = 0;
 
