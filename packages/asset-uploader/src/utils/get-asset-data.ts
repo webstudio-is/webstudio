@@ -5,6 +5,7 @@ import { type FontMeta } from "@webstudio-is/fonts";
 import { getFontData } from "@webstudio-is/fonts/server";
 
 type BaseData = {
+  id: string;
   name: string;
   size: number;
   location: Location;
@@ -24,6 +25,7 @@ type FontData = BaseData & {
 export type AssetData = ImageData | FontData;
 
 type BaseAssetOptions = {
+  id: string;
   name: string;
   size: number;
   data: Uint8Array;
@@ -56,6 +58,7 @@ export const getAssetData = async (
 
     return {
       ...baseData,
+      id: options.id,
       type: options.type,
       format,
       meta: { width, height },
@@ -65,6 +68,7 @@ export const getAssetData = async (
   const { format, ...meta } = getFontData(options.data);
 
   return {
+    id: options.id,
     type: options.type,
     ...baseData,
     format,

@@ -1,8 +1,6 @@
 import deepEqual from "fast-deep-equal";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { DeletingAsset, PreviewAsset } from "./types";
-
-type StateAssets = Asset | PreviewAsset | DeletingAsset;
+import { ClientAsset } from "./types";
 
 /**
  * Update local assets (containing optimistic data) with data from the server
@@ -12,34 +10,45 @@ type StateAssets = Asset | PreviewAsset | DeletingAsset;
  * - updateAssets(assets, data) must be referentially equal to updateAssets(updateAssets(assets, data), data)
  */
 export const updateStateAssets = <T>(
-  stateAssets: StateAssets[],
+  clientAssets: ClientAsset[],
   serverAssets: Asset[]
 ) => {
-  let nextAssets = [...stateAssets];
+  let nextAssets: ClientAsset[] = [...clientAssets];
   // Merging data with existing assets, trying to preserve sorting
   for (const serverAsset of serverAssets) {
     // The same asset is already in the assets
     const sameIndex = nextAssets.findIndex(
-      (asset) => asset.id === serverAsset.id
+      (nextAsset) =>
+        (nextAsset.asset?.id ?? nextAsset.preview?.id) === serverAsset.id
     );
 
     if (sameIndex !== -1) {
       if (nextAssets[sameIndex].status !== "deleting") {
-        nextAssets[sameIndex] = serverAsset;
+        nextAssets[sameIndex] = {
+          status: "uploaded",
+          asset: serverAsset,
+          // preserve preview to avoid image flickering
+          preview: nextAssets[sameIndex].preview,
+        };
       }
       continue;
     }
 
     // Assets array were empty or somebody loaded in parallel
-    nextAssets.push(serverAsset);
+    nextAssets.push({
+      status: "uploaded",
+      asset: serverAsset,
+      preview: undefined,
+    });
   }
 
   // Remove non-preview assets that are not in the data
-  nextAssets = nextAssets.filter((asset) => {
-    if (asset.status !== "uploading") {
+  nextAssets = nextAssets.filter((nextAsset) => {
+    if (nextAsset.status !== "uploading") {
       if (
-        serverAssets.find((serverAsset) => serverAsset.id === asset.id) ===
-        undefined
+        serverAssets.find(
+          (serverAsset) => serverAsset.id === nextAsset.asset.id
+        ) === undefined
       ) {
         return false;
       }
@@ -48,8 +57,8 @@ export const updateStateAssets = <T>(
     return true;
   });
 
-  if (deepEqual(nextAssets, stateAssets)) {
-    return stateAssets;
+  if (deepEqual(nextAssets, clientAssets)) {
+    return clientAssets;
   }
 
   return nextAssets;

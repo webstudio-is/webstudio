@@ -1,27 +1,24 @@
 import { useState } from "react";
 import { findNextListIndex, Grid } from "@webstudio-is/design-system";
-import type { Asset } from "@webstudio-is/asset-uploader";
-import {
-  AssetsShell,
-  DeletingAsset,
-  PreviewAsset,
-  useAssets,
-  useSearch,
-} from "../assets";
+import { AssetsShell, type ClientAsset, useAssets, useSearch } from "../assets";
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
 
-const filterItems = (
-  search: string,
-  items: Array<Asset | PreviewAsset | DeletingAsset>
-) => {
+const filterItems = (search: string, items: Array<ClientAsset>) => {
   return matchSorter(items, search, {
-    keys: [(item) => item.name],
+    keys: [
+      (item) =>
+        item.status === "uploading" ? item.preview.name : item.asset.name,
+    ],
   });
 };
 
-const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
+const useLogic = ({
+  onChange,
+}: {
+  onChange?: (asset: ClientAsset) => void;
+}) => {
   const { assets, handleDelete } = useAssets("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -59,9 +56,11 @@ const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
     },
   });
 
-  const handleSelect = (asset?: Asset | PreviewAsset) => {
+  const handleSelect = (asset?: ClientAsset) => {
     const selectedIndex = filteredItems.findIndex(
-      (item) => item.id === asset?.id
+      (item) =>
+        (item.asset?.id ?? item.preview?.id) ===
+        (asset?.asset?.id ?? asset?.preview?.id)
     );
     setSelectedIndex(selectedIndex);
   };
@@ -76,7 +75,7 @@ const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
 };
 
 type ImageManagerProps = {
-  onChange?: (asset: Asset) => void;
+  onChange?: (asset: ClientAsset) => void;
 };
 
 export const ImageManager = ({ onChange }: ImageManagerProps) => {
@@ -97,7 +96,7 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
       <Grid columns={3} gap={2}>
         {filteredItems.map((asset, index) => (
           <ImageThumbnail
-            key={asset.id}
+            key={asset.asset?.id ?? asset.preview?.id}
             asset={asset}
             onDelete={handleDelete}
             onSelect={handleSelect}

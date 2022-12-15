@@ -1,10 +1,18 @@
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { DeletingAsset, PreviewAsset } from "./types";
+import {
+  UploadedClientAsset,
+  UploadingClientAsset,
+  DeletingClientAsset,
+  ClientAsset,
+} from "./types";
 import { updateStateAssets } from "./update-state-assets";
 
-const createAsset = (id: string, name?: string): Asset => ({
+const getAssetId = (asset: ClientAsset): string =>
+  asset.status === "uploading" ? asset.preview.id : asset.asset.id;
+
+const createServerAsset = (id: string, name?: string): Asset => ({
   id,
-  status: "uploaded",
+
   name: name ?? "test",
   location: "FS",
   projectId: "id",
@@ -16,14 +24,32 @@ const createAsset = (id: string, name?: string): Asset => ({
   path: "",
 });
 
-const createPreviewAsset = (id: string): PreviewAsset => {
+const createAsset = (id: string, name?: string): UploadedClientAsset => ({
+  status: "uploaded",
+  asset: createServerAsset(id, name),
+  preview: undefined,
+});
+
+const createPreviewAsset = (id: string): UploadingClientAsset => {
   return {
-    ...createAsset(id),
     status: "uploading",
+    asset: undefined,
+    preview: createAsset(id).asset,
   };
 };
 
-const createDeletingAsset = (id: string): DeletingAsset => {
+const createPreviewAndAsset = (
+  id: string,
+  name?: string
+): UploadedClientAsset => {
+  return {
+    status: "uploaded",
+    asset: createAsset(id, name).asset,
+    preview: createAsset(id).asset,
+  };
+};
+
+const createDeletingAsset = (id: string): DeletingClientAsset => {
   return {
     ...createAsset(id),
     status: "deleting",
@@ -43,11 +69,11 @@ describe("updateStateAssets", () => {
 
   test("Deleting assets should not update", () => {
     const serverAssets = [
-      createAsset("2"),
-      createAsset("3"),
-      createAsset("4"),
-      createAsset("5"),
-      createAsset("6"),
+      createServerAsset("2"),
+      createServerAsset("3"),
+      createServerAsset("4"),
+      createServerAsset("5"),
+      createServerAsset("6"),
     ];
 
     const nextAssets = updateStateAssets(stateAssets, serverAssets);
@@ -59,12 +85,16 @@ describe("updateStateAssets", () => {
   });
 
   test("Deleting asset should gone if not exists in server data", () => {
-    const serverAssets = [createAsset("2"), createAsset("4"), createAsset("6")];
+    const serverAssets = [
+      createServerAsset("2"),
+      createServerAsset("4"),
+      createServerAsset("6"),
+    ];
 
     const nextAssets = updateStateAssets(stateAssets, serverAssets);
 
     expect(nextAssets).toEqual(
-      stateAssets.filter((a) => a.id !== "3" && a.id !== "5")
+      stateAssets.filter((a) => getAssetId(a) !== "3" && getAssetId(a) !== "5")
     );
 
     // Check referential equality
@@ -85,23 +115,26 @@ describe("updateStateAssets", () => {
   });
 
   test("Preview assets updated on same id asset at server state", () => {
-    const serverAssets = [createAsset("1")];
+    const serverAssets = [createServerAsset("1")];
 
     const nextAssets = updateStateAssets(stateAssets, serverAssets);
 
-    expect(nextAssets).toEqual([createAsset("1"), createPreviewAsset("7")]);
+    expect(nextAssets).toEqual([
+      createPreviewAndAsset("1"),
+      createPreviewAsset("7"),
+    ]);
 
     // Check referential equality
     expect(updateStateAssets(nextAssets, serverAssets)).toBe(nextAssets);
   });
 
   test("Updated asset updated", () => {
-    const serverAssets = [createAsset("1", "new name")];
+    const serverAssets = [createServerAsset("1", "new name")];
 
     const nextAssets = updateStateAssets(stateAssets, serverAssets);
 
     expect(nextAssets).toEqual([
-      createAsset("1", "new name"),
+      createPreviewAndAsset("1", "new name"),
       createPreviewAsset("7"),
     ]);
 
@@ -110,7 +143,7 @@ describe("updateStateAssets", () => {
   });
 
   test("Add asset not existing in stateAssets", () => {
-    const serverAssets = [createAsset("8")];
+    const serverAssets = [createServerAsset("8")];
 
     const nextAssets = updateStateAssets(stateAssets, serverAssets);
 

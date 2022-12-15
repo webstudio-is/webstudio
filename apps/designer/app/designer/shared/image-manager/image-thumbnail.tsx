@@ -9,8 +9,7 @@ import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import { DeletingAnimation, UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
-import type { DeletingAsset, PreviewAsset } from "~/designer/shared/assets";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { ClientAsset } from "~/designer/shared/assets";
 import { Filename } from "./filename";
 
 const useImageWithFallback = ({
@@ -69,23 +68,34 @@ const Thumbnail = styled(Box, {
 });
 
 type ImageThumbnailProps = {
-  asset: Asset | PreviewAsset | DeletingAsset;
+  asset: ClientAsset;
   onDelete: (ids: Array<string>) => void;
-  onSelect: (asset?: Asset | PreviewAsset) => void;
-  onChange?: (asset: Asset) => void;
+  onSelect: (asset?: ClientAsset) => void;
+  onChange?: (asset: ClientAsset) => void;
   state?: "selected";
 };
 
 export const ImageThumbnail = ({
-  asset,
+  asset: clientAsset,
   onDelete,
   onSelect,
   onChange,
   state,
 }: ImageThumbnailProps) => {
-  const { path, status, name } = asset;
+  const asset =
+    clientAsset.status === "uploading"
+      ? clientAsset.preview
+      : clientAsset.asset;
+
+  const { status } = clientAsset;
+
+  const { path, name } = asset;
+
   const description =
-    "description" in asset && asset.description ? asset.description : name;
+    "description" in asset && asset.description
+      ? (asset.description as string)
+      : name;
+
   const isUploading = status === "uploading";
   const isDeleting = status === "deleting";
 
@@ -98,8 +108,8 @@ export const ImageThumbnail = ({
       status={status}
       state={state}
       onFocus={() => {
-        if (asset.status !== "deleting") {
-          onSelect?.(asset);
+        if (clientAsset.status !== "deleting") {
+          onSelect?.(clientAsset);
         }
       }}
       onBlur={(event: FocusEvent) => {
@@ -109,16 +119,16 @@ export const ImageThumbnail = ({
         }
       }}
       onKeyDown={(event: KeyboardEvent) => {
-        if (event.code === "Enter" && asset.status === "uploaded") {
-          onChange?.(asset);
+        if (event.code === "Enter" && clientAsset.status === "uploaded") {
+          onChange?.(clientAsset);
         }
       }}
     >
       <Thumbnail
         css={{ backgroundImage: `url("${src}")` }}
         onClick={() => {
-          if (asset.status === "uploaded") {
-            onChange?.(asset);
+          if (clientAsset.status === "uploaded") {
+            onChange?.(clientAsset);
           }
         }}
       />
@@ -131,9 +141,9 @@ export const ImageThumbnail = ({
       >
         <Filename variant={"tiny"}>{name}</Filename>
       </Box>
-      {(asset.status === "uploaded" || asset.status === undefined) && (
+      {clientAsset.status === "uploaded" && (
         <ImageInfoTrigger
-          asset={asset}
+          asset={clientAsset}
           onDelete={(ids) => {
             onDelete(ids);
           }}

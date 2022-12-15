@@ -26,7 +26,9 @@ export const ImageControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const selectedAsset = assets.find((asset) => asset.id === toValue(value));
+  const selectedAsset = assets.find(
+    (asset) => (asset.asset?.id ?? asset.preview?.id) === toValue(value)
+  );
 
   return (
     <ValuePickerPopover
@@ -34,12 +36,14 @@ export const ImageControl = ({
       content={
         <ImageManager
           onChange={(asset) => {
-            setValue(asset.id);
+            if (asset.status === "uploaded") {
+              setValue(asset.asset?.id);
+            }
           }}
         />
       }
     >
-      <TextField defaultValue={selectedAsset?.name} />
+      <TextField defaultValue={selectedAsset?.asset?.name} />
     </ValuePickerPopover>
   );
 };

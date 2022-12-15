@@ -8,17 +8,17 @@ import {
 } from "react";
 import {
   AssetType,
-  filterByType,
+  idsFormDataFieldName,
   MAX_UPLOAD_SIZE,
   toBytes,
   type Asset,
 } from "@webstudio-is/asset-uploader";
+import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
 import { toast } from "@webstudio-is/design-system";
-import ObjectID from "bson-objectid";
 import { restAssetsPath } from "~/shared/router-utils";
-import { useAssets as useAssetsState, useProject } from "../nano-states";
+import { useClientAssets, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
-import { DeletingAsset, PreviewAsset } from "./types";
+import { ClientAsset, UploadingClientAsset } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/designer/shared/assets";
 import {
@@ -38,54 +38,65 @@ declare module "~/shared/pubsub" {
 }
 
 export const usePublishAssets = (publish: Publish) => {
-  const [assets] = useAssetsState();
+  const [assets] = useClientAssets();
   useEffect(() => {
     publish({
       type: "updateAssets",
-      payload: assets.filter(
-        (asset) => asset.status === "uploaded"
-      ) as Array<Asset>, // TS doesn't understand we filtered out PrevewAssets
+      payload: assets
+        .filter((asset) => asset.status === "uploaded")
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- for "status" === "uploaded" asset is defined
+        .map((asset) => asset.asset!),
     });
   }, [assets, publish]);
 };
 
 export type UploadData = FetcherData<ActionData>;
 
-const toPreviewAssets = (
-  formsData: Array<FormData>
-): Promise<[PreviewAsset, FormData][]> => {
-  const assets: Array<Promise<[PreviewAsset, FormData]>> = [];
-  for (const formData of formsData) {
-    for (const entry of formData) {
-      const file = entry[1];
-      if (!(file instanceof File)) {
-        continue;
-      }
-      const promise = new Promise<[PreviewAsset, FormData]>(
-        (resolve, reject) => {
-          const reader = new FileReader();
-          reader.addEventListener("load", (event) => {
-            const dataUri = event?.target?.result;
-            if (dataUri === undefined) {
-              return reject(new Error(`Could not read file "${file.name}"`));
-            }
+const toUploadingAssetsAndFormData = (
+  type: AssetType,
+  files: File[]
+): Promise<[UploadingClientAsset, FormData][]> => {
+  const assets: Array<Promise<[UploadingClientAsset, FormData]>> = [];
 
-            resolve([
-              {
+  for (const file of files) {
+    const promise = new Promise<[UploadingClientAsset, FormData]>(
+      (resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener("load", (event) => {
+          const dataUri = event?.target?.result;
+          if (dataUri === undefined) {
+            return reject(new Error(`Could not read file "${file.name}"`));
+          }
+
+          const id = crypto.randomUUID();
+
+          // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
+          // should be removed after fix
+          const formData = new FormData();
+          formData.append(type, file, sanitizeS3Key(file.name));
+          formData.append(idsFormDataFieldName, crypto.randomUUID());
+
+          resolve([
+            {
+              status: "uploading",
+              asset: undefined,
+              preview: {
                 format: file.type.split("/")[1],
                 path: String(dataUri),
                 name: file.name,
-                id: ObjectID().toString(),
-                status: "uploading",
+                description: file.name,
+                id,
               },
-              formData,
-            ]);
-          });
-          reader.readAsDataURL(file);
-        }
-      );
-      assets.push(promise);
-    }
+            },
+            formData,
+          ]);
+        });
+
+        reader.readAsDataURL(file);
+      }
+    );
+
+    assets.push(promise);
   }
 
   return Promise.all(assets);
@@ -93,32 +104,23 @@ const toPreviewAssets = (
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
-const toFormsData = (type: AssetType, input: HTMLInputElement) => {
+const getFilesFromInput = (type: AssetType, input: HTMLInputElement) => {
   const files = Array.from(input?.files ?? []);
-  const formsData: Array<FormData> = [];
-  if (files.length === 0) {
-    return formsData;
-  }
-  for (const file of files) {
-    const formData = new FormData();
-    if (file.size > maxSize) {
-      toast.error(
-        `Asset "${file.name}" cannot be bigger than ${MAX_UPLOAD_SIZE}MB`
-      );
-      continue;
-    }
 
-    // sanitizeS3Key here is just because of https://github.com/remix-run/remix/issues/4443
-    // should be removed after fix
-    formData.append(type, file, sanitizeS3Key(file.name));
-    formsData.push(formData);
+  const exceedSizeFiles = files.filter((file) => file.size > maxSize);
+
+  for (const file of exceedSizeFiles) {
+    toast.error(
+      `Asset "${file.name}" cannot be bigger than ${MAX_UPLOAD_SIZE}MB`
+    );
   }
-  return formsData;
+
+  return files.filter((file) => file.size <= maxSize);
 };
 
 type AssetsContext = {
-  handleSubmit: (formsData: FormData[]) => Promise<void>;
-  assets: Array<Asset | PreviewAsset | DeletingAsset>;
+  handleSubmit: (type: AssetType, files: File[]) => Promise<void>;
+  assets: Array<ClientAsset>;
   handleDelete: (ids: Array<string>) => void;
 };
 
@@ -126,7 +128,7 @@ const Context = createContext<AssetsContext | undefined>(undefined);
 
 export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   const [project] = useProject();
-  const [stateAssets, setAssets] = useAssetsState();
+  const [stateAssets, setAssets] = useClientAssets();
   const { load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
   const assetsRef = useRef(stateAssets);
@@ -161,9 +163,9 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     if (data.status === "error") {
       // We don't know what's wrong, remove the "deleting" status from assets and wait for the load to fix it
       const assets = assetsRef.current;
-      const nextAssets = [...assets].map((asset) => {
+      const nextAssets = assets.map((asset) => {
         if (asset.status === "deleting") {
-          const newAsset = { ...asset, status: "uploaded" } as Asset;
+          const newAsset: ClientAsset = { ...asset, status: "uploaded" };
           return newAsset;
         }
 
@@ -176,7 +178,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const handleAfterSubmit = (previewAssetId: string) => (data: UploadData) => {
+  const handleAfterSubmit = (assetId: string) => (data: UploadData) => {
     const assets = assetsRef.current;
 
     if (action) {
@@ -184,8 +186,13 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (data.status === "error") {
-      // We don't know what's wrong, remove preview asset and wait for the load to fix it
-      setAssets(assets.filter((asset) => asset.id !== previewAssetId));
+      // We don't know what's wrong, remove uploading asset and wait for the load to fix it
+      setAssets(
+        assets.filter(
+          (asset) =>
+            asset.status !== "uploading" || asset.preview.id !== assetId
+        )
+      );
 
       return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
     }
@@ -201,23 +208,25 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       warnOnce(true, "An uploaded asset is undefined");
       toast.error("Could not upload an asset");
 
-      // @todo better to create ErrorAsset type and show asset with error
-      setAssets(assets.filter((asset) => asset.id !== previewAssetId));
+      // remove uploading asset and wait for the load to fix it
+      setAssets(
+        assets.filter(
+          (asset) =>
+            asset.status !== "uploading" || asset.preview.id !== assetId
+        )
+      );
       return;
     }
 
-    // Optimistically update preview asset with the uploaded asset
-    const nextAssets = [...assets];
-
-    const index = nextAssets.findIndex(
-      (nextAsset) => nextAsset.id === previewAssetId
+    setAssets(
+      assets.map((asset) => {
+        if (asset.status === "uploading" && asset.preview.id === assetId) {
+          // We can start using the uploaded asset for image previews etc
+          return { ...asset, asset: uploadedAsset };
+        }
+        return asset;
+      })
     );
-
-    if (index !== -1) {
-      nextAssets[index] = { ...uploadedAsset, status: "uploading" };
-    }
-
-    setAssets(nextAssets);
   };
 
   const handleDelete = (ids: Array<string>) => {
@@ -228,20 +237,29 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
     for (const id of ids) {
       formData.append("assetId", id);
-
       // Mark assets as deleting
-      const index = nextAssets.findIndex((nextAsset) => nextAsset.id === id);
+      const index = nextAssets.findIndex(
+        (nextAsset) => nextAsset.asset?.id === id
+      );
+
       if (index !== -1) {
-        const newAsset = {
-          ...nextAssets[index],
-          status: "deleting",
-        } as DeletingAsset;
+        const asset = nextAssets[index];
 
-        nextAssets[index] = newAsset;
+        if (asset.status === "uploaded") {
+          const newAsset: ClientAsset = {
+            ...asset,
+            status: "deleting",
+          };
+
+          nextAssets[index] = newAsset;
+          continue;
+        }
+
+        warnOnce(true, "Trying to delete an asset that is not uploaded");
       }
-
-      setAssets(nextAssets);
     }
+
+    setAssets(nextAssets);
 
     submit<UploadData>(
       formData,
@@ -250,36 +268,34 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const handleSubmit = async (formsData: FormData[]) => {
-    const previewAssets = await toPreviewAssets(formsData)
-      .then((previewAssets) => {
-        const assets = assetsRef.current;
-        setAssets([
-          ...previewAssets.map(([previewAsset]) => previewAsset),
-          ...assets,
-        ]);
-        return previewAssets;
-      })
-      .catch((error) => {
-        if (error instanceof Error) {
-          toast.error(error.message);
-        }
-      });
-
-    if (previewAssets === undefined) {
-      return;
-    }
-
-    for (const [previewAsset, formData] of previewAssets) {
-      submit<UploadData>(
-        formData,
-        {
-          method: "post",
-          action,
-          encType: "multipart/form-data",
-        },
-        handleAfterSubmit(previewAsset.id)
+  const handleSubmit = async (type: AssetType, files: File[]) => {
+    try {
+      const uploadingAssetsAndFormData = await toUploadingAssetsAndFormData(
+        type,
+        files
       );
+
+      const assets = assetsRef.current;
+      setAssets([
+        ...uploadingAssetsAndFormData.map(([previewAsset]) => previewAsset),
+        ...assets,
+      ]);
+
+      for (const [uploadingAsset, formData] of uploadingAssetsAndFormData) {
+        submit<UploadData>(
+          formData,
+          {
+            method: "post",
+            action,
+            encType: "multipart/form-data",
+          },
+          handleAfterSubmit(uploadingAsset.preview.id)
+        );
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
     }
   };
 
@@ -290,6 +306,19 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </Context.Provider>
   );
+};
+
+const filterByType = (assets: Array<ClientAsset>, type: AssetType) => {
+  return assets.filter((asset) => {
+    const format = asset.asset?.format ?? asset.preview?.format;
+
+    const isFont = FONT_FORMATS.has(format as FontFormat);
+    if (type === "font") {
+      return isFont;
+    }
+
+    return isFont === false;
+  });
 };
 
 export const useAssets = (type: AssetType) => {
@@ -304,8 +333,8 @@ export const useAssets = (type: AssetType) => {
   );
 
   const handleSubmit = (input: HTMLInputElement) => {
-    const formsData = toFormsData(type, input);
-    assetsContext.handleSubmit(formsData);
+    const formsData = getFilesFromInput(type, input);
+    assetsContext.handleSubmit(type, formsData);
   };
 
   return {
