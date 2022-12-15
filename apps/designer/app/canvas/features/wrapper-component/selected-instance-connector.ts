@@ -1,10 +1,8 @@
-import { type ComponentRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import type { Instance } from "@webstudio-is/react-sdk";
-import { getComponent, useUserProps } from "@webstudio-is/react-sdk";
+import { useUserProps } from "@webstudio-is/react-sdk";
 import { publish, subscribeAll } from "~/shared/pubsub";
 import { useScrollState } from "~/shared/dom-hooks";
-
-type ComponentRefValue = ComponentRef<ReturnType<typeof getComponent>>;
 
 const publishSelectedRect = (element: HTMLElement) => {
   publish({
@@ -17,7 +15,7 @@ export const SelectedInstanceConnector = ({
   instanceElementRef,
   instanceProps,
 }: {
-  instanceElementRef: { current: undefined | ComponentRefValue };
+  instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
   instanceProps: ReturnType<typeof useUserProps>;
 }) => {
