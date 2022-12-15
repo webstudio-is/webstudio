@@ -1,20 +1,10 @@
 import { type UploadHandler as UnstableUploadHandler } from "@remix-run/node";
 import { idsFormDataFieldName } from "../schema";
+import { toUint8Array } from "./to-uint8-array";
 
 export const uuidHandler: UnstableUploadHandler = async (part) => {
-  let id: string | undefined = undefined;
   if (part.name === idsFormDataFieldName) {
-    // 36 is the length of a UUID in bytes
-    const idBuffer = new Uint8Array(36);
-    let offset = 0;
-
-    for await (const chunk of part.data) {
-      // Will throw in case of buffer overflow
-      idBuffer.set(chunk, offset);
-      offset += chunk.length;
-    }
-
-    id = Buffer.from(idBuffer).toString();
+    return Buffer.from(await toUint8Array(part.data)).toString();
   }
-  return id;
+  return undefined;
 };
