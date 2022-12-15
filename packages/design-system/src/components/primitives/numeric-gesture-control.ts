@@ -37,7 +37,7 @@ export type NumericScrubOptions = {
 type NumericScrubState = {
   value: number;
   cursor?: SVGElement;
-  offset: number;
+  offset?: number;
   velocity: number;
   direction: string;
   timerId?: ReturnType<typeof window.setTimeout>;
@@ -60,7 +60,7 @@ export const numericScrubControl = (
     // We will read value lazyly in a moment it will be used to avoid having outdated value
     value: -1,
     cursor: undefined,
-    offset: 0,
+    offset: undefined,
     velocity: direction === "horizontal" ? 1 : -1,
     direction: direction,
     timerId: undefined,
@@ -76,7 +76,7 @@ export const numericScrubControl = (
     switch (type) {
       case "pointerup": {
         const shouldComponentUpdate = Boolean(state.cursor);
-        state.offset = 0;
+        state.offset = undefined;
         targetNode.removeEventListener("pointermove", handleEvent);
         clearTimeout(state.timerId);
 
@@ -122,7 +122,7 @@ export const numericScrubControl = (
         break;
       }
       case "pointermove": {
-        if (state.offset) {
+        if (state.offset !== undefined) {
           if (state.offset < 0) {
             state.offset = globalThis.innerWidth + 1;
           } else if (state.offset > globalThis.innerWidth) {
