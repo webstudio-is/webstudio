@@ -6,5 +6,4 @@ export const uuidHandler: UnstableUploadHandler = async (part) => {
   if (part.name === idsFormDataFieldName) {
     return Buffer.from(await toUint8Array(part.data)).toString();
   }
-  return undefined;
 };
