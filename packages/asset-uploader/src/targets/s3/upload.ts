@@ -22,7 +22,7 @@ const AssetsUploadedSuccess = z.object({
   Location: z.string(),
 });
 
-const Ids = z.array(z.string());
+const Ids = z.array(z.string().uuid());
 
 export const uploadToS3 = async ({
   request,

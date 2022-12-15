@@ -15,7 +15,7 @@ import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
 import { uuidHandler } from "../../utils/uuid-handler";
 
 const AssetsFromFs = z.array(z.instanceof(NodeOnDiskFile));
-const Ids = z.array(z.string());
+const Ids = z.array(z.string().uuid());
 
 export const uploadToFs = async ({
   request,
