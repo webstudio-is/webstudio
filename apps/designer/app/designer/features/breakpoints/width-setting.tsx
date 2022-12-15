@@ -1,44 +1,17 @@
-import { useMemo } from "react";
 import {
   useCanvasWidth,
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
 import { Text, Flex, Slider } from "@webstudio-is/design-system";
-import { useBreakpoints, useIsPreviewMode } from "~/shared/nano-states";
-import { utils } from "@webstudio-is/project";
+import { useIsPreviewMode } from "~/shared/nano-states";
+import { useNextBreakpoint } from "./use-next-breakpoint";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 50;
 export const maxWidth = 3000;
 
-/**
- * Return the next breakpoint from the currently selected one, sorted by the `sort()`
- */
-const useNextBreakpoint = () => {
-  const [selectedBreakpoint] = useSelectedBreakpoint();
-  const [breakpoints] = useBreakpoints();
-
-  const sortedBreakpoints = useMemo(
-    () => utils.breakpoints.sort(breakpoints),
-    [breakpoints]
-  );
-
-  return useMemo(() => {
-    if (selectedBreakpoint === undefined) {
-      return;
-    }
-    const index = sortedBreakpoints.findIndex(
-      (breakpoint) => breakpoint.id === selectedBreakpoint.id
-    );
-    if (index === -1) {
-      return undefined;
-    }
-    return sortedBreakpoints[index + 1];
-  }, [sortedBreakpoints, selectedBreakpoint]);
-};
-
 export const WidthSetting = () => {
-  const [value, setValue] = useCanvasWidth();
+  const [canvasWidth, setCanvasWidth] = useCanvasWidth();
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const nextBreakpoint = useNextBreakpoint();
   const [isPreviewMode] = useIsPreviewMode();
@@ -69,12 +42,12 @@ export const WidthSetting = () => {
         <Slider
           min={min}
           max={max}
-          value={[value]}
+          value={[canvasWidth]}
           onValueChange={([value]) => {
-            setValue(value);
+            setCanvasWidth(value);
           }}
         />
-        <Text>{`${value}px`}</Text>
+        <Text>{`${canvasWidth}px`}</Text>
       </Flex>
     </Flex>
   );
