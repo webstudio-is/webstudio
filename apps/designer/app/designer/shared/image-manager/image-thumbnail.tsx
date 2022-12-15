@@ -7,7 +7,7 @@ import {
 import { Box, styled } from "@webstudio-is/design-system";
 import placeholderImage from "~/shared/images/image-placeholder.svg";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
-import { DeletingAnimation, UploadingAnimation } from "./uploading-animation";
+import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { ClientAsset } from "~/designer/shared/assets";
 import { Filename } from "./filename";
@@ -149,8 +149,7 @@ export const ImageThumbnail = ({
           }}
         />
       )}
-      {isUploading && <UploadingAnimation />}
-      {isDeleting && <DeletingAnimation />}
+      {(isUploading || isDeleting) && <UploadingAnimation />}
     </ThumbnailContainer>
   );
 };
