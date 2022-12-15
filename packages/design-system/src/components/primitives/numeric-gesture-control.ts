@@ -37,7 +37,6 @@ export type NumericScrubOptions = {
 type NumericScrubState = {
   value: number;
   cursor?: SVGElement;
-  offset: number;
   velocity: number;
   direction: string;
   timerId?: ReturnType<typeof window.setTimeout>;
@@ -60,7 +59,6 @@ export const numericScrubControl = (
     // We will read value lazyly in a moment it will be used to avoid having outdated value
     value: -1,
     cursor: undefined,
-    offset: 0,
     velocity: direction === "horizontal" ? 1 : -1,
     direction: direction,
     timerId: undefined,
@@ -69,14 +67,12 @@ export const numericScrubControl = (
   let exitPointerLock: (() => void) | undefined = undefined;
 
   const handleEvent = (event: PointerEvent) => {
-    const { type, clientX, clientY, movementY, movementX } = event;
-    const offset = direction === "horizontal" ? clientX : clientY;
+    const { type, movementY, movementX } = event;
     const movement = direction === "horizontal" ? movementX : -movementY;
 
     switch (type) {
       case "pointerup": {
         const shouldComponentUpdate = Boolean(state.cursor);
-        state.offset = 0;
         targetNode.removeEventListener("pointermove", handleEvent);
         clearTimeout(state.timerId);
 
@@ -111,7 +107,6 @@ export const numericScrubControl = (
 
         state.value = value;
 
-        state.offset = offset;
         state.timerId = setTimeout(() => {
           exitPointerLock?.();
 
@@ -122,36 +117,38 @@ export const numericScrubControl = (
         break;
       }
       case "pointermove": {
-        if (state.offset) {
-          if (state.offset < 0) {
-            state.offset = globalThis.innerWidth + 1;
-          } else if (state.offset > globalThis.innerWidth) {
-            state.offset = 1;
-          }
+        state.value += movement;
 
-          state.value += movement;
-
-          if (state.value < minValue) {
-            state.value = minValue;
-          } else if (state.value > maxValue) {
-            state.value = maxValue;
-          }
-
-          state.offset += movement * state.velocity;
-
-          onValueInput?.({
-            target: targetNode,
-            value: state.value,
-            preventDefault: () => event.preventDefault(),
-          });
+        if (state.value < minValue) {
+          state.value = minValue;
+        } else if (state.value > maxValue) {
+          state.value = maxValue;
         }
+
+        onValueInput?.({
+          target: targetNode,
+          value: state.value,
+          preventDefault: () => event.preventDefault(),
+        });
+
         if (state.cursor) {
-          state.cursor.style.top = `${
-            parseFloat(state.cursor.style.top) + event.movementY
-          }px`;
-          state.cursor.style[
-            state.direction === "horizontal" ? "left" : "top"
-          ] = `${state.offset}px`;
+          // When cursor moves out of the browser window
+          // we want it to come back from the other side
+          const top = wrapAround(
+            parseFloat(state.cursor.style.top) + event.movementY,
+            0,
+            globalThis.innerHeight
+          );
+          const left = wrapAround(
+            parseFloat(state.cursor.style.left) + event.movementX,
+            0,
+            globalThis.innerWidth
+          );
+
+          // We allow movement on both axis to allow user to
+          // move cursor away from the value text to not obscure it
+          state.cursor.style.top = `${top}px`;
+          state.cursor.style.left = `${left}px`;
         }
         break;
       }
@@ -236,3 +233,20 @@ const requestPointerLock = (
 };
 
 const shouldUsePointerLock = "chrome" in globalThis;
+
+// When the value is outside of the range make it come back to the range from the other side
+//   |        | . -> | .      |
+// . |        |   -> |      . |
+const wrapAround = (value: number, min: number, max: number) => {
+  const range = max - min;
+
+  while (value < min) {
+    value += range;
+  }
+
+  while (value > max) {
+    value -= range;
+  }
+
+  return value;
+};
