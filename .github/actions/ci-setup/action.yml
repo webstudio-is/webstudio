@@ -11,6 +11,8 @@ runs:
         cache: "pnpm"
 
     - run: corepack enable
+      shell: bash
 
     - name: Install Dependencies
       run: pnpm install --frozen-lockfile --ignore-scripts
+      shell: bash
