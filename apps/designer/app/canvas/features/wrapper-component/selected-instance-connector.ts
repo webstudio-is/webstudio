@@ -41,6 +41,16 @@ export const SelectedInstanceConnector = ({
     });
     resizeObserver.observe(element);
 
+    // detect movement of the element within same parent
+    // React prevent remount when key stays the same
+    const mutationObserver = new window.MutationObserver(() => {
+      publishSelectedRect(element);
+    });
+    const parent = element?.parentElement;
+    if (parent) {
+      mutationObserver.observe(parent, { childList: true });
+    }
+
     let unsubscribeTreeChange: undefined | (() => void);
     if (canObserve === false) {
       // recompute inline elements on tree changes
@@ -61,6 +71,7 @@ export const SelectedInstanceConnector = ({
 
     return () => {
       resizeObserver.disconnect();
+      mutationObserver.disconnect();
       unsubscribeTreeChange?.();
     };
 
