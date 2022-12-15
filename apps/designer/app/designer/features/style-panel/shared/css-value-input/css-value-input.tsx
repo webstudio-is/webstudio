@@ -79,8 +79,9 @@ const useScrub = ({
 
   // make sure caret doesn't jump around as you scrub
   useLayoutEffect(() => {
-    if (isInputActive) {
-      inputRef.current?.select();
+    const input = inputRef.current;
+    if (isInputActive && input) {
+      input.selectionStart = input.selectionEnd = input.value.length;
     }
   });
 
