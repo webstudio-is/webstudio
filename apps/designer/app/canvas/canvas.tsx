@@ -19,7 +19,6 @@ import {
   usePopulateRootInstance,
   usePublishRootInstance,
   usePublishSelectedInstanceData,
-  usePublishSelectedInstanceDataRect,
   usePublishTextEditingInstanceId,
   useReparentInstance,
   useSetHoveredInstance,
@@ -150,7 +149,6 @@ const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   usePublishHoveredInstanceData();
   useSync({ buildId, treeId });
   useUpdateSelectedInstance();
-  usePublishSelectedInstanceDataRect();
   useUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();

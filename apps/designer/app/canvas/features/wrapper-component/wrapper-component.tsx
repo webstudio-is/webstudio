@@ -1,4 +1,5 @@
-import { MouseEvent, FormEvent } from "react";
+import type { MouseEvent, FormEvent } from "react";
+import { useRef } from "react";
 import { Suspense, lazy, useCallback } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
@@ -10,9 +11,13 @@ import {
   idAttribute,
 } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
-import { useSelectedElement } from "~/canvas/shared/nano-states";
+import {
+  useSelectedElement,
+  useSelectedInstance,
+} from "~/canvas/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { publish } from "~/shared/pubsub";
+import { SelectedInstanceConnector } from "./selected-instance-connector";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -21,16 +26,15 @@ const ContentEditable = ({
   elementRef,
   ...props
 }: {
-  // eslint-disable-next-line
-  Component: any;
-  elementRef: (element: null | HTMLElement) => void;
+  Component: ReturnType<typeof getComponent>;
+  elementRef: (element: undefined | HTMLElement) => void;
 }) => {
   const [editor] = useLexicalComposerContext();
 
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
       editor.setRootElement(rootElement);
-      elementRef(rootElement);
+      elementRef(rootElement ?? undefined);
     },
     [editor, elementRef]
   );
@@ -48,20 +52,23 @@ export const WrapperComponentDev = ({
   instance,
   children,
   onChangeChildren,
-  ...rest
 }: WrapperComponentDevProps) => {
   useCssRules(instance);
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
+  const [selectedInstance] = useSelectedInstance();
   const [, setSelectedElement] = useSelectedElement();
 
+  const instanceElementRef = useRef<HTMLElement>();
+
   const refCallback = useCallback(
-    (element) => {
+    (element: undefined | HTMLElement) => {
       // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
-      if (element !== null) {
+      if (element !== undefined) {
         setSelectedElement(element);
       }
+      instanceElementRef.current = element;
     },
     [setSelectedElement]
   );
@@ -74,10 +81,8 @@ export const WrapperComponentDev = ({
 
   const props = {
     ...userProps,
-    ...rest,
     ...readonlyProps,
     tabIndex: 0,
-    // @todo stop using id to free it up to the user
     // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id
     // for this we need to also make search by id fast
     id: instance.id,
@@ -98,7 +103,20 @@ export const WrapperComponentDev = ({
   };
 
   const instanceElement = (
-    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+    <>
+      {selectedInstance?.id === instance.id && (
+        <SelectedInstanceConnector
+          instanceElementRef={instanceElementRef}
+          instance={instance}
+          instanceProps={userProps}
+        />
+      )}
+      {/* Component includes many types and it's hard to provide right ref type with useRef */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <Component {...props} ref={instanceElementRef as any}>
+        {renderWrapperComponentChildren(children)}
+      </Component>
+    </>
   );
 
   if (editingInstanceId !== instance.id) {
