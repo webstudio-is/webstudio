@@ -68,7 +68,7 @@ const uploadHandler = async ({
 }): Promise<string | undefined> => {
   if (file.filename === undefined) {
     // Do not parse if it's not a file
-    return undefined;
+    return;
   }
 
   if (!file.data) {
