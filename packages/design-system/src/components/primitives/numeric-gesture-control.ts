@@ -146,6 +146,9 @@ export const numericScrubControl = (
           });
         }
         if (state.cursor) {
+          state.cursor.style.top = `${
+            parseFloat(state.cursor.style.top) + event.movementY
+          }px`;
           state.cursor.style[
             state.direction === "horizontal" ? "left" : "top"
           ] = `${state.offset}px`;
