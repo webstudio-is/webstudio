@@ -59,8 +59,7 @@ const useScrub = ({
   shouldHandleEvent?: (node: EventTarget) => boolean;
 }): [
   React.MutableRefObject<HTMLDivElement | null>,
-  React.MutableRefObject<HTMLInputElement | null>,
-  boolean
+  React.MutableRefObject<HTMLInputElement | null>
 ] => {
   const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -142,7 +141,7 @@ const useScrub = ({
     return scrub.disconnectedCallback;
   }, [type, unit, shouldHandleEvent]);
 
-  return [scrubRef, inputRef, isInputActive];
+  return [scrubRef, inputRef];
 };
 
 const useHandleKeyDown =
@@ -314,7 +313,7 @@ export const CssValueInput = ({
     return suffixRef.current?.contains?.(node) === false;
   }, []);
 
-  const [scrubRef, inputRef, isInputActive] = useScrub({
+  const [scrubRef, inputRef] = useScrub({
     value,
     onChange: props.onChange,
     onChangeComplete,
@@ -398,13 +397,7 @@ export const CssValueInput = ({
             baseRef={scrubRef}
             inputRef={inputRef}
             name={property}
-            state={
-              value.type === "invalid"
-                ? "invalid"
-                : isInputActive
-                ? "active"
-                : undefined
-            }
+            state={value.type === "invalid" ? "invalid" : undefined}
             prefix={prefix}
             suffix={suffix}
             css={{ cursor: "default" }}
