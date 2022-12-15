@@ -2,7 +2,7 @@ import { ImageIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, MetaProps } from "./component-type";
 import props from "./__generated__/image.props.json";
 
-const defaultStyle = {
+const presetStyle = {
   // Otherwise on new image insert onto canvas it can overfit screen size multiple times
   maxWidth: {
     type: "unit",
@@ -21,7 +21,7 @@ const meta: WsComponentMeta = {
   type: "embed",
   label: "Image",
   Icon: ImageIcon,
-  defaultStyle,
+  presetStyle,
   props: props as MetaProps,
   initialProps: ["src", "width", "height", "alt", "loading"],
 };

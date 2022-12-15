@@ -2,7 +2,7 @@ import { SquareIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, MetaProps } from "./component-type";
 import props from "./__generated__/box.props.json";
 
-const defaultStyle = {
+const presetStyle = {
   boxSizing: {
     type: "keyword",
     value: "border-box",
@@ -13,7 +13,7 @@ const meta: WsComponentMeta = {
   type: "container",
   label: "Box",
   Icon: SquareIcon,
-  defaultStyle,
+  presetStyle,
   props: props as MetaProps,
 };
 
