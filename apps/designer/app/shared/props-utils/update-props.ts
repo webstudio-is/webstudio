@@ -1,3 +1,4 @@
+import { v4 as uuid } from "uuid";
 import {
   type AllUserProps,
   type UserPropsUpdates,
@@ -10,7 +11,7 @@ export const updateAllUserPropsMutable = (
 ) => {
   if (instanceId in allUserProps === false) {
     allUserProps[instanceId] = {
-      id: propsId ?? crypto.randomUUID(),
+      id: propsId ?? uuid(),
       instanceId,
       treeId,
       props: [],
