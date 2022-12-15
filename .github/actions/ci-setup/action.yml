@@ -8,8 +8,8 @@ runs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
-        cache: "yarn"
+        cache: "pnpm"
 
     - name: Install Dependencies
-      run: yarn install --frozen-lockfile
+      run: pnpm install --frozen-lockfile --ignore-scripts
       shell: bash

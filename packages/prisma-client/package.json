@@ -8,8 +8,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "yarn typecheck && yarn lint",
-    "dev": "yarn concurrently 'prisma generate --watch' 'build-package --watch'",
+    "checks": "pnpm typecheck && pnpm lint",
+    "dev": "pnpm concurrently 'prisma generate --watch' 'build-package --watch'",
     "build": "prisma format && prisma generate && build-package",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },

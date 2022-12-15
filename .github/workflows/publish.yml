@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/ci-setup
 
-      - run: yarn turbo run build
+      - run: pnpm turbo run build
 
       - name: Creating .npmrc
         run: |
@@ -30,4 +30,4 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - run: yarn turbo run publish-to-npm
+      - run: pnpm turbo run publish-to-npm

@@ -11,7 +11,7 @@
     "generate": "rm -fr src/__generated__ && NODE_OPTIONS='--loader=tsx' svgo-jsx svgo-jsx.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "yarn typecheck && yarn lint",
+    "checks": "pnpm typecheck && pnpm lint",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"

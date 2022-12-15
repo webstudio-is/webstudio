@@ -8,7 +8,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "yarn typecheck && yarn lint && yarn test",
+    "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
     "build:args": "generate-arg-types './src/*.tsx !./src/**/*.stories.tsx !./src/**/*.ws.tsx' && prettier --write \"**/*.props.json\"",

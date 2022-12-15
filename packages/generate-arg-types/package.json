@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "checks": "yarn typecheck && yarn lint",
+    "checks": "pnpm typecheck && pnpm lint",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {

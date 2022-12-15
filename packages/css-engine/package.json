@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "checks": "yarn typecheck && yarn lint && yarn test",
+    "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",

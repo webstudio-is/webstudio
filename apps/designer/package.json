@@ -9,7 +9,7 @@
     "typecheck": "tsc",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "yarn lint && yarn typecheck && yarn prettier --check && yarn test",
+    "checks": "pnpm lint && pnpm typecheck && pnpm prettier --check && pnpm test",
     "watch:sdk": "relative-deps && relative-deps watch",
     "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
     "storybook:run": "start-storybook -p 6006",

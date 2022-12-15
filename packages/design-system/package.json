@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "yarn typecheck && yarn lint && yarn test",
+    "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "storybook:run": "start-storybook -p 6006",
     "storybook:build": "build-storybook",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"

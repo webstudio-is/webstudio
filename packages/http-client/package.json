@@ -10,7 +10,7 @@
     "build": "rm -fr lib tsconfig.tsbuildinfo && tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "checks": "yarn typecheck && yarn lint",
+    "checks": "pnpm typecheck && pnpm lint",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "devDependencies": {
