@@ -322,10 +322,12 @@ importers:
     specifiers:
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/scripts': '*'
+      tsx: ^3.12.1
       typescript: 4.7.4
     devDependencies:
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
+      tsx: 3.12.1
       typescript: 4.7.4
 
   packages/design-system:
