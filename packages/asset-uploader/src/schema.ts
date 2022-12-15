@@ -43,7 +43,6 @@ const BaseAsset = z.object({
   location: Location,
   createdAt: z.string(),
   path: z.string(),
-  status: z.literal("uploaded").optional(),
 });
 
 export const FontAsset = BaseAsset.omit({ format: true }).extend({
@@ -59,3 +58,5 @@ export type ImageAsset = z.infer<typeof ImageAsset>;
 
 export const Asset = z.union([FontAsset, ImageAsset]);
 export type Asset = z.infer<typeof Asset>;
+
+export const idsFormDataFieldName = "ids";

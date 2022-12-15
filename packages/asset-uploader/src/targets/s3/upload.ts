@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   type UploadHandlerPart,
   unstable_parseMultipartFormData as unstableCreateFileUploadHandler,
+  unstable_composeUploadHandlers as unstableComposeUploadHandlers,
   MaxPartSizeExceededError,
 } from "@remix-run/node";
 import { PutObjectCommandInput } from "@aws-sdk/client-s3";
@@ -11,14 +12,17 @@ import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createMany } from "../../db";
-import type { Asset } from "../../schema";
+import { idsFormDataFieldName, type Asset } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
 import { sanitizeS3Key } from "../../utils/sanitize-s3-key";
+import { uuidHandler } from "../../utils/uuid-handler";
 
 const AssetsUploadedSuccess = z.object({
   Location: z.string(),
 });
+
+const Ids = z.array(z.string().uuid());
 
 export const uploadToS3 = async ({
   request,
@@ -31,19 +35,26 @@ export const uploadToS3 = async ({
 }): Promise<Array<Asset>> => {
   const formData = await unstableCreateFileUploadHandler(
     request,
-    (file: UploadHandlerPart) =>
-      uploadHandler({
-        file,
-        maxSize,
-      })
+    unstableComposeUploadHandlers(
+      (file: UploadHandlerPart) =>
+        uploadHandler({
+          file,
+          maxSize,
+        }),
+      uuidHandler
+    )
   );
 
   const imagesFormData = formData.getAll("image") as Array<string>;
   const fontsFormData = formData.getAll("font") as Array<string>;
-  const assetsData = [...imagesFormData, ...fontsFormData].map((dataString) => {
-    // @todo validate with zod
-    return JSON.parse(dataString);
-  });
+  const ids = Ids.parse(formData.getAll(idsFormDataFieldName));
+
+  const assetsData = [...imagesFormData, ...fontsFormData].map(
+    (dataString, i) => {
+      // @todo validate with zod
+      return { ...JSON.parse(dataString), id: ids[i] };
+    }
+  );
 
   return await createMany(projectId, assetsData);
 };
@@ -54,7 +65,12 @@ const uploadHandler = async ({
 }: {
   file: UploadHandlerPart;
   maxSize: number;
-}): Promise<string> => {
+}): Promise<string | undefined> => {
+  if (file.filename === undefined) {
+    // Do not parse if it's not a file
+    return;
+  }
+
   if (!file.data) {
     throw new Error("Your asset seems to be empty");
   }
@@ -67,10 +83,6 @@ const uploadHandler = async ({
 
   if (data.byteLength > maxSize) {
     throw new MaxPartSizeExceededError(file.name, maxSize);
-  }
-
-  if (file.filename === undefined) {
-    throw new Error("Filename is required");
   }
 
   const fileName = sanitizeS3Key(file.filename);
@@ -112,11 +124,15 @@ const uploadHandler = async ({
 
   if (type === "image") {
     assetOptions = {
+      // Id will be set later
+      id: "",
       type,
       ...baseAssetOptions,
     };
   } else if (type === "font") {
     assetOptions = {
+      // Id will be set later
+      id: "",
       type,
       ...baseAssetOptions,
     };

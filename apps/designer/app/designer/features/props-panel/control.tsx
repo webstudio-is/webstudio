@@ -155,7 +155,15 @@ const ImageControl = ({ asset, onChange }: ImageControlProps) => {
   return (
     <ValuePickerPopover
       title="Images"
-      content={<ImageManager onChange={onChange} />}
+      content={
+        <ImageManager
+          onChange={(clientAsset) => {
+            if (clientAsset.status === "uploaded") {
+              onChange(clientAsset.asset);
+            }
+          }}
+        />
+      }
     >
       <TextField defaultValue={asset?.name ?? " - "} />
     </ValuePickerPopover>

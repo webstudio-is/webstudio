@@ -27,7 +27,13 @@ const useAvailableFontWeights = (
   // Find all font weights that are available for the current font family.
   return useMemo(() => {
     const found = allFontWeights.filter((option) => {
-      return assets.find((asset) => {
+      return assets.find((clientAsset) => {
+        if (clientAsset.status !== "uploaded") {
+          return false;
+        }
+
+        const { asset } = clientAsset;
+
         return (
           "meta" in asset &&
           "family" in asset.meta &&
