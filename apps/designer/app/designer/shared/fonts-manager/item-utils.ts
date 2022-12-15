@@ -1,13 +1,13 @@
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { matchSorter } from "match-sorter";
-import { ClientAsset } from "../assets";
+import { RenderableAsset } from "../assets";
 
 export type Item = {
   label: string;
   type: "uploaded" | "system";
 };
 
-export const toItems = (clientAssets: Array<ClientAsset>): Array<Item> => {
+export const toItems = (clientAssets: Array<RenderableAsset>): Array<Item> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
@@ -33,7 +33,7 @@ export const toItems = (clientAssets: Array<ClientAsset>): Array<Item> => {
 
 export const filterIdsByFamily = (
   family: string,
-  clientAssets: Array<ClientAsset>
+  clientAssets: Array<RenderableAsset>
 ) => {
   // One family may have multiple assets for different formats, so we need to find them all.
   return (

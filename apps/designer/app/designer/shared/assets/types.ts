@@ -17,6 +17,9 @@ export type UploadingClientAsset = {
   preview: PreviewAsset;
 };
 
+/**
+ * Used for optimistic UI only
+ **/
 export type DeletingClientAsset = {
   status: "deleting";
   asset: Asset;
@@ -24,12 +27,17 @@ export type DeletingClientAsset = {
 };
 
 /**
- * Client side we need more information about the asset than the server provides.
+ * On the client side, we need more information about the asset than the server provides.
  */
 export type ClientAsset =
   | UploadedClientAsset
   | UploadingClientAsset
   | DeletingClientAsset;
+
+/**
+ * Assets that can be shown in the UI
+ */
+export type RenderableAsset = UploadedClientAsset | UploadingClientAsset;
 
 export type ActionData = {
   uploadedAssets?: Array<Asset>;
