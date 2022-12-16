@@ -250,7 +250,6 @@ export const SpacingLayout = ({
       }
       onMouseLeave={() => onHover(undefined)}
       isActive={activeProperty === property}
-      id={property}
     />
   );
 
