@@ -1,5 +1,5 @@
 {
-  "extends": "../../node_modules/@webstudio-is/tsconfig/base.json",
+  "extends": "@webstudio-is/tsconfig/base.json",
   "compilerOptions": {
     "module": "ES2022",
     "target": "ES2022"

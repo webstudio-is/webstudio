@@ -1,13 +1,10 @@
 {
-  // Extends can't use node's resolution rn https://github.com/dividab/tsconfig-paths/issues/209#issuecomment-1177261091
-  "extends": "../../node_modules/@webstudio-is/tsconfig/base.json",
+  "extends": "@webstudio-is/tsconfig/base.json",
   "include": ["src"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2020"],
     "module": "ES2020",
-    "jsx": "react-jsx",
     "target": "ES2020",
-    "strict": true,
     "baseUrl": ".",
     "rootDir": "./src",
     "outDir": "./lib"

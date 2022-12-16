@@ -35,6 +35,7 @@
     "@webstudio-is/generate-arg-types": "*",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/scripts": "*",
+    "@webstudio-is/tsconfig": "*",
     "babel-loader": "^8.2.5",
     "esbuild": "^0.14.25",
     "esbuild-node-externals": "^1.4.1",

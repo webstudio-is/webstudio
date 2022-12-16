@@ -18,6 +18,7 @@
   "devDependencies": {
     "@types/css-tree": "^2.0.0",
     "@webstudio-is/scripts": "*",
+    "@webstudio-is/tsconfig": "*",
     "camelcase": "^6.3.0",
     "css-tree": "^2.3.0",
     "mdn-data": "2.0.23",
