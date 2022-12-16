@@ -1,10 +1,11 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   keyframes,
   Popover,
   PopoverTrigger,
   PopoverContent,
   PopoverPortal,
+  styled,
 } from "@webstudio-is/design-system";
 import {
   CssValueInput,
@@ -51,11 +52,13 @@ const Input = ({
   );
 };
 
+// Trigger is used only for positioning
+const Trigger = styled("div", { position: "absolute", width: 0, height: 0 });
+
 export const InputPopover = ({
   value,
   property,
   onChange,
-  children,
   isOpen,
   onClose,
 }: {
@@ -64,7 +67,6 @@ export const InputPopover = ({
   onChange: (event: StyleChangeEvent) => void;
   isOpen: boolean;
   onClose: () => void;
-  children: ReactNode;
 }) => {
   return (
     <Popover
@@ -77,7 +79,7 @@ export const InputPopover = ({
       }}
     >
       <PopoverTrigger asChild>
-        <div>{children}</div>
+        <Trigger />
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent

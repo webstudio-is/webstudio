@@ -38,20 +38,20 @@ const Cell = ({
   }
 
   return (
-    <InputPopover
-      value={finalValue}
-      isOpen={isPopoverOpen}
-      property={property}
-      onChange={onChange}
-      onClose={onPopoverClose}
-    >
-      {/* @todo: don't use ValueText to align popover, because its bottom edge pos. depends on wrapping */}
+    <>
+      <InputPopover
+        value={finalValue}
+        isOpen={isPopoverOpen}
+        property={property}
+        onChange={onChange}
+        onClose={onPopoverClose}
+      />
       <ValueText
         value={finalValue}
         isActive={isActive}
         source="set" // @todo: set correct source
       />
-    </InputPopover>
+    </>
   );
 };
 
