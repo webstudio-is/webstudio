@@ -37,7 +37,6 @@ export type NumericScrubOptions = {
 type NumericScrubState = {
   value: number;
   cursor?: SVGElement;
-  velocity: number;
   direction: string;
   timerId?: ReturnType<typeof window.setTimeout>;
 };
@@ -59,7 +58,6 @@ export const numericScrubControl = (
     // We will read value lazyly in a moment it will be used to avoid having outdated value
     value: -1,
     cursor: undefined,
-    velocity: direction === "horizontal" ? 1 : -1,
     direction: direction,
     timerId: undefined,
   };
