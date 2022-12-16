@@ -36,7 +36,7 @@ const ThumbnailContainer = styled(Box, {
 });
 
 const Thumbnail = styled(Box, {
-  // below we use theme.spacing[19].value, must be in sync
+  // Below we use theme.spacing[19].value, must be in sync
   width: "$spacing$19",
   height: "$spacing$19",
   flexShrink: 0,
@@ -74,7 +74,7 @@ export const ImageThumbnail = ({
 
   const isUploading = status === "uploading";
 
-  // Must be same as Thumbnail width "$spacing$19"
+  // Must be the same as the Thumbnail width "$spacing$19"
   const imageWidth = theme.spacing[19].value;
 
   return (
