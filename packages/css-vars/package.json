@@ -17,6 +17,7 @@
   "devDependencies": {
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/scripts": "*",
+    "@webstudio-is/tsconfig": "*",
     "typescript": "4.7.4"
   },
   "module": "./lib/index.js",

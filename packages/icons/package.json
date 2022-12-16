@@ -28,6 +28,7 @@
     "@storybook/testing-library": "^0.0.13",
     "@svgo/jsx": "^0.4.2",
     "@webstudio-is/scripts": "*",
+    "@webstudio-is/tsconfig": "*",
     "tsx": "^3.9.0",
     "typescript": "4.7.4"
   },

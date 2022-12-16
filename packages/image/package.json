@@ -32,6 +32,7 @@
     "@webstudio-is/generate-arg-types": "*",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/scripts": "*",
+    "@webstudio-is/tsconfig": "*",
     "typescript": "4.7.4"
   },
   "peerDependencies": {
