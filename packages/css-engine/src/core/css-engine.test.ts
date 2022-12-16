@@ -1,3 +1,4 @@
+import { describe, beforeEach, test, expect } from "@jest/globals";
 import { CssEngine } from "./css-engine";
 
 const style0 = {

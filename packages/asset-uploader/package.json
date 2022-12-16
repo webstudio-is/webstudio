@@ -17,18 +17,20 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",
     "@aws-sdk/lib-storage": "^3.131.0",
-    "@webstudio-is/prisma-client": "*",
     "@webstudio-is/fonts": "*",
+    "@webstudio-is/prisma-client": "*",
     "app-root-path": "^3.0.0",
     "sharp": "^0.30.7"
   },
   "devDependencies": {
+    "@jest/globals": "^29.3.1",
     "@types/app-root-path": "^1.2.4",
     "@types/node": "^18.7.16",
     "@types/sharp": "^0.30.4",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/scripts": "*",
     "@webstudio-is/tsconfig": "*",
+    "jest": "^29.3.1",
     "typescript": "4.7.4",
     "zod": "^3.19.1"
   },

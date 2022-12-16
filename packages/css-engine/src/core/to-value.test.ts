@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { toValue } from "./to-value";
 
 describe("Convert WS CSS Values to native CSS strings", () => {

@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { parseSubfamily, normalizeFamily } from "./font-data";
 
 describe("font-data", () => {

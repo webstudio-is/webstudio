@@ -1,4 +1,11 @@
-import { jest } from "@jest/globals";
+import {
+  jest,
+  describe,
+  beforeEach,
+  afterAll,
+  test,
+  expect,
+} from "@jest/globals";
 import { Asset, Location } from "@webstudio-is/prisma-client";
 
 const commonAsset: Asset = {

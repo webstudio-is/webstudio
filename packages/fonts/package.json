@@ -18,11 +18,13 @@
     "fontkit": "^2.0.2"
   },
   "devDependencies": {
+    "@jest/globals": "^29.3.1",
     "@types/fontkit": "^2.0.0",
     "@webstudio-is/design-system": "*",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/scripts": "*",
     "@webstudio-is/tsconfig": "*",
+    "jest": "^29.3.1",
     "typescript": "4.7.4",
     "zod": "^3.19.1"
   },
