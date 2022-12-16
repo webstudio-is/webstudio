@@ -8,13 +8,11 @@ type PreviewAsset = Pick<
 export type UploadedAssetContainer = {
   status: "uploaded";
   asset: Asset;
-  preview: PreviewAsset | undefined;
 };
 
 export type UploadingAssetContainer = {
   status: "uploading";
-  asset: Asset | undefined;
-  preview: PreviewAsset;
+  asset: Asset | PreviewAsset;
 };
 
 /**
@@ -23,7 +21,6 @@ export type UploadingAssetContainer = {
 export type DeletingAssetContainer = {
   status: "deleting";
   asset: Asset;
-  preview: PreviewAsset | undefined;
 };
 
 /**

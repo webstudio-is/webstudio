@@ -20,8 +20,7 @@ export const updateStateAssets = <T>(
   for (const serverAsset of serverAssets) {
     // The same asset is already in the assets
     const sameIndex = nextAssets.findIndex(
-      (nextAsset) =>
-        (nextAsset.asset?.id ?? nextAsset.preview?.id) === serverAsset.id
+      (nextAsset) => nextAsset.asset.id === serverAsset.id
     );
 
     if (sameIndex !== -1) {
@@ -29,8 +28,6 @@ export const updateStateAssets = <T>(
         nextAssets[sameIndex] = {
           status: "uploaded",
           asset: serverAsset,
-          // preserve preview to avoid image flickering
-          preview: nextAssets[sameIndex].preview,
         };
       }
       continue;
@@ -40,7 +37,6 @@ export const updateStateAssets = <T>(
     nextAssets.push({
       status: "uploaded",
       asset: serverAsset,
-      preview: undefined,
     });
   }
 

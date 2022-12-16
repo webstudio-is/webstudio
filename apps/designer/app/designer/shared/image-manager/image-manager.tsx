@@ -12,10 +12,7 @@ import { matchSorter } from "match-sorter";
 
 const filterItems = (search: string, items: AssetContainer[]) => {
   return matchSorter(items, search, {
-    keys: [
-      (item) =>
-        item.status === "uploading" ? item.preview.name : item.asset.name,
-    ],
+    keys: [(item) => item.asset.name],
   });
 };
 
@@ -48,9 +45,9 @@ const useLogic = ({
     onSelect(direction) {
       if (direction === "current") {
         setSelectedIndex(selectedIndex);
-        const asset = filteredItems[selectedIndex];
-        if (asset?.status === "uploaded") {
-          onChange?.(asset);
+        const assetContainer = filteredItems[selectedIndex];
+        if (assetContainer.status === "uploaded") {
+          onChange?.(assetContainer);
         }
         return;
       }
@@ -65,9 +62,7 @@ const useLogic = ({
 
   const handleSelect = (assetContainer?: AssetContainer) => {
     const selectedIndex = filteredItems.findIndex(
-      (item) =>
-        (item.asset?.id ?? item.preview?.id) ===
-        (assetContainer?.asset?.id ?? assetContainer?.preview?.id)
+      (item) => item.asset.id === assetContainer?.asset.id
     );
     setSelectedIndex(selectedIndex);
   };
@@ -103,7 +98,7 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
       <Grid columns={3} gap={2}>
         {filteredItems.map((assetContainer, index) => (
           <ImageThumbnail
-            key={assetContainer.asset?.id ?? assetContainer.preview?.id}
+            key={assetContainer.asset.id}
             assetContainer={assetContainer}
             onDelete={handleDelete}
             onSelect={handleSelect}

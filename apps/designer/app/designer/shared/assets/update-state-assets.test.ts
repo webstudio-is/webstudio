@@ -10,10 +10,7 @@ import { updateStateAssets } from "./update-state-assets";
 
 const getAssetId = (
   assetContainer: AssetContainer | DeletingAssetContainer
-): string =>
-  assetContainer.status === "uploading"
-    ? assetContainer.preview.id
-    : assetContainer.asset.id;
+): string => assetContainer.asset.id;
 
 const createServerAsset = (id: string, name?: string): Asset => ({
   id,
@@ -32,14 +29,12 @@ const createServerAsset = (id: string, name?: string): Asset => ({
 const createAsset = (id: string, name?: string): UploadedAssetContainer => ({
   status: "uploaded",
   asset: createServerAsset(id, name),
-  preview: undefined,
 });
 
 const createPreviewAsset = (id: string): UploadingAssetContainer => {
   return {
     status: "uploading",
-    asset: undefined,
-    preview: createAsset(id).asset,
+    asset: createAsset(id).asset,
   };
 };
 
@@ -50,7 +45,6 @@ const createPreviewAndAsset = (
   return {
     status: "uploaded",
     asset: createAsset(id, name).asset,
-    preview: createAsset(id).asset,
   };
 };
 

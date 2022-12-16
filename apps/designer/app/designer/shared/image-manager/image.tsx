@@ -39,16 +39,14 @@ const StyledWebstudioImage = styled(WebstudioImage, {
 
 export const Image = ({ assetContainer, alt, width }: ImageProps) => {
   const optimize = assetContainer.status === "uploaded";
-  const asset =
-    assetContainer.status === "uploaded"
-      ? assetContainer.asset
-      : assetContainer.preview;
+  const asset = assetContainer.asset;
   const remoteLocation =
     assetContainer.status === "uploaded" &&
     assetContainer.asset.location === "REMOTE";
 
   // Avoid image flickering on switching from preview to asset (during upload)
-  const decoding = assetContainer.preview === undefined ? "async" : "sync";
+  // Possible optimisation, we can set it to "sync" only if asset.path has changed
+  const decoding = "sync";
 
   const loader = useMemo(() => {
     if (remoteLocation) {

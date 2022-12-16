@@ -50,8 +50,8 @@ const Thumbnail = styled(Box, {
 type ImageThumbnailProps = {
   assetContainer: AssetContainer;
   onDelete: (ids: Array<string>) => void;
-  onSelect: (asset?: AssetContainer) => void;
-  onChange?: (asset: AssetContainer) => void;
+  onSelect: (assetContainer?: AssetContainer) => void;
+  onChange?: (assetContainer: AssetContainer) => void;
   state?: "selected";
 };
 
@@ -62,25 +62,15 @@ export const ImageThumbnail = ({
   onChange,
   state,
 }: ImageThumbnailProps) => {
-  const asset =
-    assetContainer.status === "uploading"
-      ? assetContainer.preview
-      : assetContainer.asset;
+  const { asset, status } = assetContainer;
 
-  const { status } = assetContainer;
-
-  const { name } = asset;
-
-  const description =
-    "description" in asset && asset.description
-      ? (asset.description as string)
-      : name;
+  const { name, description } = asset;
 
   const isUploading = status === "uploading";
 
   return (
     <ThumbnailContainer
-      title={description}
+      title={description ?? name}
       tabIndex={0}
       status={status}
       state={state}
@@ -108,7 +98,7 @@ export const ImageThumbnail = ({
       >
         <Image
           assetContainer={assetContainer}
-          alt={description}
+          alt={description ?? name}
           width={THUMBNAIL_WIDTH}
         />
       </Thumbnail>
