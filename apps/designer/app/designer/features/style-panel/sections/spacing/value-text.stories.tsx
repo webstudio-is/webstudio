@@ -16,7 +16,7 @@ const Template = (
       onClick={() => null}
       renderCell={({ property }) => (
         <ValueTextCommponent
-          isHovered={property === hovered?.property}
+          isActive={property === hovered?.property}
           {...args}
         />
       )}
