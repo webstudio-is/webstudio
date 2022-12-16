@@ -3,10 +3,10 @@ import { Button, Flex, Text } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
-import { useAssetContainers } from "./use-asset-containers";
+import { useAssets } from "./use-assets";
 
 const useUpload = (type: AssetType) => {
-  const { handleSubmit } = useAssetContainers(type);
+  const { handleSubmit } = useAssets(type);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {

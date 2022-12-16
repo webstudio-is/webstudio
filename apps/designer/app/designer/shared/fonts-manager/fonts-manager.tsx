@@ -7,7 +7,7 @@ import {
 import {
   AssetsShell,
   Separator,
-  useAssetContainers,
+  useAssets,
   useSearch,
 } from "~/designer/shared/assets";
 import { useEffect, useMemo, useState } from "react";
@@ -29,8 +29,7 @@ const useLogic = ({
   onChange: (value: string) => void;
   value: string;
 }) => {
-  const { assets, handleDelete: handleDeleteAssets } =
-    useAssetContainers("font");
+  const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const fontItems = useMemo(() => toItems(assets), [assets]);
   const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({

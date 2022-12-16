@@ -3,7 +3,7 @@ import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
 import { ImageManager } from "~/designer/shared/image-manager";
-import { useAssetContainers } from "~/designer/shared/assets";
+import { useAssets } from "~/designer/shared/assets";
 import { toValue } from "@webstudio-is/css-engine";
 
 export const ImageControl = ({
@@ -12,7 +12,7 @@ export const ImageControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const { assets } = useAssetContainers("image");
+  const { assets } = useAssets("image");
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
