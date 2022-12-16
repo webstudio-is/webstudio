@@ -45,7 +45,7 @@ export const Image = ({ assetContainer, alt, width }: ImageProps) => {
     assetContainer.asset.location === "REMOTE";
 
   // Avoid image flickering on switching from preview to asset (during upload)
-  // Possible optimisation, we can set it to "sync" only if asset.path has changed
+  // Possible optimisation, we can set it to "sync" only if asset.path has changed or add isNew prop to UploadedAssetContainer
   const decoding = "sync";
 
   const loader = useMemo(() => {

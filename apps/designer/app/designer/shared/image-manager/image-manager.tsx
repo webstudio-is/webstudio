@@ -9,6 +9,7 @@ import {
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const filterItems = (search: string, items: AssetContainer[]) => {
   return matchSorter(items, search, {
@@ -16,11 +17,7 @@ const filterItems = (search: string, items: AssetContainer[]) => {
   });
 };
 
-const useLogic = ({
-  onChange,
-}: {
-  onChange?: (asset: AssetContainer) => void;
-}) => {
+const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
   const { assetContainers, handleDelete } = useAssetContainers("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -47,7 +44,7 @@ const useLogic = ({
         setSelectedIndex(selectedIndex);
         const assetContainer = filteredItems[selectedIndex];
         if (assetContainer.status === "uploaded") {
-          onChange?.(assetContainer);
+          onChange?.(assetContainer.asset);
         }
         return;
       }
@@ -77,7 +74,7 @@ const useLogic = ({
 };
 
 type ImageManagerProps = {
-  onChange?: (asset: AssetContainer) => void;
+  onChange?: (asset: Asset) => void;
 };
 
 export const ImageManager = ({ onChange }: ImageManagerProps) => {
@@ -102,7 +99,12 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
             assetContainer={assetContainer}
             onDelete={handleDelete}
             onSelect={handleSelect}
-            onChange={onChange}
+            onChange={(assetContainer) => {
+              // @todo we probably should not allow select uploading images too
+              if (assetContainer.status === "uploaded") {
+                onChange?.(assetContainer.asset);
+              }
+            }}
             state={index === selectedIndex ? "selected" : undefined}
           />
         ))}

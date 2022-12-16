@@ -35,11 +35,9 @@ export const ImageControl = ({
       title="Images"
       content={
         <ImageManager
-          onChange={(assetContainer) => {
-            if (assetContainer.status === "uploaded") {
-              // @todo looks like a bug fix next PRs
-              setValue(assetContainer.asset.id);
-            }
+          onChange={(asset) => {
+            // @todo looks like a bug fix next PRs
+            setValue(asset.id);
           }}
         />
       }
