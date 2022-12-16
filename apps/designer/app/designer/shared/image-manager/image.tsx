@@ -38,8 +38,8 @@ const StyledWebstudioImage = styled(WebstudioImage, {
 });
 
 export const Image = ({ assetContainer, alt, width }: ImageProps) => {
+  const { asset } = assetContainer;
   const optimize = assetContainer.status === "uploaded";
-  const asset = assetContainer.asset;
   const remoteLocation =
     assetContainer.status === "uploaded" &&
     assetContainer.asset.location === "REMOTE";
