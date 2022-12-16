@@ -1,10 +1,15 @@
 import { type KeyboardEvent, type FocusEvent } from "react";
-import { Box, theme, styled } from "@webstudio-is/design-system";
+import { Box, styled } from "@webstudio-is/design-system";
 import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { RenderableAsset } from "~/designer/shared/assets";
 import { Filename } from "./filename";
 import { Image } from "./image";
+
+/**
+ *  The value should be one of the values in the theme, because of the spacing grid compliance
+ **/
+const THUMBNAIL_WIDTH = 64;
 
 const ThumbnailContainer = styled(Box, {
   position: "relative",
@@ -36,8 +41,7 @@ const ThumbnailContainer = styled(Box, {
 });
 
 const Thumbnail = styled(Box, {
-  // Below we use theme.spacing[19].value, must be in sync
-  width: "$spacing$19",
+  width: `${THUMBNAIL_WIDTH}px`,
   height: "$spacing$19",
   flexShrink: 0,
   position: "relative",
@@ -49,22 +53,6 @@ type ImageThumbnailProps = {
   onSelect: (asset?: RenderableAsset) => void;
   onChange?: (asset: RenderableAsset) => void;
   state?: "selected";
-};
-
-const getInt = (value: unknown): number | undefined => {
-  if (typeof value === "number") {
-    return Math.round(value);
-  }
-
-  if (typeof value === "string") {
-    const vNum = Number.parseFloat(value);
-
-    if (!Number.isNaN(vNum)) {
-      return Math.round(vNum);
-    }
-  }
-
-  return undefined;
 };
 
 export const ImageThumbnail = ({
@@ -89,9 +77,6 @@ export const ImageThumbnail = ({
       : name;
 
   const isUploading = status === "uploading";
-
-  // Must be the same as the Thumbnail width "$spacing$19"
-  const imageWidth = getInt(theme.spacing[19].value) ?? 64;
 
   return (
     <ThumbnailContainer
@@ -124,7 +109,7 @@ export const ImageThumbnail = ({
         <Image
           renderableAsset={renderableAsset}
           alt={description}
-          width={imageWidth}
+          width={THUMBNAIL_WIDTH}
         />
       </Thumbnail>
       <Box
