@@ -123,11 +123,9 @@ const getFilesFromInput = (type: AssetType, input: HTMLInputElement) => {
   return files.filter((file) => file.size <= maxSize);
 };
 
-type ContextAssetContainer = AssetContainer | DeletingAssetContainer;
-
 type AssetsContext = {
   handleSubmit: (type: AssetType, files: File[]) => Promise<void>;
-  assetContainers: Array<ContextAssetContainer>;
+  assetContainers: Array<AssetContainer | DeletingAssetContainer>;
   handleDelete: (ids: Array<string>) => void;
 };
 
