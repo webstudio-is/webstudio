@@ -9,7 +9,7 @@ const useFakeProgress = () => {
   // @todo rewrite this fake indication to show real progress
   useInterval(() => {
     setProgressBarPercentage((percentage) =>
-      percentage < 60 ? percentage + 1 : percentage
+      percentage < 60 ? percentage + 1 : 0
     );
   }, 100);
 
@@ -21,9 +21,11 @@ const AnimationContainer = styled("div", {
   top: 0,
   left: 0,
   height: "100%",
+  width: "100%",
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
+  alignItems: "center",
 });
 
 export const UploadingAnimation = () => {

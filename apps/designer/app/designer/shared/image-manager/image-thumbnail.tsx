@@ -41,7 +41,7 @@ const ThumbnailContainer = styled(Box, {
 });
 
 const Thumbnail = styled(Box, {
-  width: `${THUMBNAIL_WIDTH}px`,
+  width: "100%",
   height: "$spacing$19",
   flexShrink: 0,
   position: "relative",
