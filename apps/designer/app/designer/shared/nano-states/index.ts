@@ -5,9 +5,8 @@ import {
   type HoveredInstanceData,
 } from "@webstudio-is/project";
 import { type SyncStatus } from "~/shared/sync";
-import { Asset } from "@webstudio-is/asset-uploader";
 import { type Pages, type Project } from "@webstudio-is/project";
-import type { PreviewAsset } from "../assets";
+import type { ClientAsset } from "../assets";
 
 const selectedInstanceDataContainer = createValueContainer<
   SelectedInstanceData | undefined
@@ -46,8 +45,8 @@ export const useCanvasRect = () => useValue(canvasRectContainer);
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
 
-const assetsContainer = createValueContainer<Array<Asset | PreviewAsset>>([]);
-export const useAssets = () => useValue(assetsContainer);
+const clientAssetsContainer = createValueContainer<Array<ClientAsset>>([]);
+export const useClientAssets = () => useValue(clientAssetsContainer);
 
 const pagesContainer = createValueContainer<Pages | undefined>();
 export const usePages = () => useValue(pagesContainer);

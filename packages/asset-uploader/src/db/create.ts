@@ -8,6 +8,7 @@ import { type ImageMeta } from "../schema";
 import { formatAsset } from "../utils/format-asset";
 
 type BaseOptions = {
+  id: string;
   name: string;
   size: number;
   location: Location;
@@ -23,9 +24,10 @@ type Options =
 
 const create = (projectId: Project["id"], options: Options) => {
   const size = options.size || 0;
-  const { meta, format, name, location } = options;
+  const { id, meta, format, name, location } = options;
   return prisma.asset.create({
     data: {
+      id,
       location,
       name,
       size,

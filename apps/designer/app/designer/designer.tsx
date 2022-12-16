@@ -41,7 +41,7 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
-import { usePublishAssets } from "./shared/assets";
+import { AssetsProvider, usePublishAssets } from "./shared/assets";
 
 export const links = () => {
   return [
@@ -335,47 +335,50 @@ export const Designer = ({
   });
 
   return (
-    <ChromeWrapper isPreviewMode={isPreviewMode}>
-      <Topbar
-        css={{ gridArea: "header" }}
-        project={project}
-        publish={publish}
-        previewUrl={previewUrl}
-      />
-      <Main>
-        <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
-          <CanvasIframe
-            ref={iframeRefCallback}
-            src={canvasUrl}
-            pointerEvents={
-              dragAndDropState.isDragging && dragAndDropState.origin === "panel"
-                ? "none"
-                : "all"
-            }
-            title={project.title}
-            css={{
-              height: "100%",
-              width: "100%",
-            }}
-          />
-        </Workspace>
-      </Main>
-      <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-        <SidebarLeft publish={publish} />
-      </SidePanel>
-      <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
-      <SidePanel
-        gridArea="inspector"
-        isPreviewMode={isPreviewMode}
-        css={{ overflow: "hidden" }}
-      >
-        {dragAndDropState.isDragging ? (
-          <TreePrevew />
-        ) : (
-          <Inspector publish={publish} />
-        )}
-      </SidePanel>
-      <Footer publish={publish} />
-    </ChromeWrapper>
+    <AssetsProvider>
+      <ChromeWrapper isPreviewMode={isPreviewMode}>
+        <Topbar
+          css={{ gridArea: "header" }}
+          project={project}
+          publish={publish}
+          previewUrl={previewUrl}
+        />
+        <Main>
+          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+            <CanvasIframe
+              ref={iframeRefCallback}
+              src={canvasUrl}
+              pointerEvents={
+                dragAndDropState.isDragging &&
+                dragAndDropState.origin === "panel"
+                  ? "none"
+                  : "all"
+              }
+              title={project.title}
+              css={{
+                height: "100%",
+                width: "100%",
+              }}
+            />
+          </Workspace>
+        </Main>
+        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+          <SidebarLeft publish={publish} />
+        </SidePanel>
+        <NavigatorPanel publish={publish} isPreviewMode={isPreviewMode} />
+        <SidePanel
+          gridArea="inspector"
+          isPreviewMode={isPreviewMode}
+          css={{ overflow: "hidden" }}
+        >
+          {dragAndDropState.isDragging ? (
+            <TreePrevew />
+          ) : (
+            <Inspector publish={publish} />
+          )}
+        </SidePanel>
+        <Footer publish={publish} />
+      </ChromeWrapper>
+    </AssetsProvider>
   );
 };

@@ -1,21 +1,25 @@
-import { Asset } from "@webstudio-is/asset-uploader";
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { matchSorter } from "match-sorter";
-import { PreviewAsset } from "../assets";
+import { RenderableAsset } from "../assets";
 
 export type Item = {
   label: string;
   type: "uploaded" | "system";
 };
 
-export const toItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
+export const toItems = (clientAssets: Array<RenderableAsset>): Array<Item> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
   }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
-  for (const asset of assets) {
+  for (const clientAsset of clientAssets) {
+    if (clientAsset.status !== "uploaded") {
+      continue;
+    }
+
+    const { asset } = clientAsset;
     // @todo need to teach ts the right type from useAssets
     if ("meta" in asset && "family" in asset.meta) {
       uploaded.set(asset.meta.family, {
@@ -29,18 +33,26 @@ export const toItems = (assets: Array<Asset | PreviewAsset>): Array<Item> => {
 
 export const filterIdsByFamily = (
   family: string,
-  assets: Array<Asset | PreviewAsset>
+  clientAssets: Array<RenderableAsset>
 ) => {
   // One family may have multiple assets for different formats, so we need to find them all.
-  return assets
-    .filter(
-      (asset) =>
+  return (
+    clientAssets
+      .filter((clientAsset) => {
+        if (clientAsset.status !== "uploaded") {
+          return false;
+        }
+        const { asset } = clientAsset;
         // @todo need to teach TS the right type from useAssets
-        "meta" in asset &&
-        "family" in asset.meta &&
-        asset.meta.family === family
-    )
-    .map((asset) => asset.id);
+        return (
+          "meta" in asset &&
+          "family" in asset.meta &&
+          asset.meta.family === family
+        );
+      })
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- we filtered out non uploaded items
+      .map((clientAssets) => clientAssets.asset!.id)
+  );
 };
 
 export const groupItemsByType = (items: Array<Item>) => {

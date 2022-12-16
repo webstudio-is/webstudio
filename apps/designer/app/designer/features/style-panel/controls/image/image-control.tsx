@@ -26,20 +26,26 @@ export const ImageControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const selectedAsset = assets.find((asset) => asset.id === toValue(value));
+  const selectedAsset = assets.find(
+    (clientAsset) =>
+      (clientAsset.asset?.id ?? clientAsset.preview?.id) === toValue(value)
+  );
 
   return (
     <ValuePickerPopover
       title="Images"
       content={
         <ImageManager
-          onChange={(asset) => {
-            setValue(asset.id);
+          onChange={(clientAsset) => {
+            if (clientAsset.status === "uploaded") {
+              // @todo looks like a bug fix next PRs
+              setValue(clientAsset.asset.id);
+            }
           }}
         />
       }
     >
-      <TextField defaultValue={selectedAsset?.name} />
+      <TextField defaultValue={selectedAsset?.asset?.name} />
     </ValuePickerPopover>
   );
 };
