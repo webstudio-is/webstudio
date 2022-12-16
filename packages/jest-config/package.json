@@ -6,7 +6,7 @@
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
-    "@types/jest": "^29.2.3",
+    "@jest/types": "^29.3.1",
     "esbuild-jest": "^0.5.0",
     "jest": "^29.3.1"
   },

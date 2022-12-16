@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 
 const properties = ["width", "lineHeight", "backgroundPositionX"] as const;
