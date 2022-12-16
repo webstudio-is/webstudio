@@ -2,11 +2,11 @@ import { useMemo } from "react";
 import { styled } from "@webstudio-is/design-system";
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
 import env from "~/shared/env";
-import type { RenderableAsset } from "../assets";
+import type { AssetContainer } from "../assets";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 
 type ImageProps = {
-  renderableAsset: RenderableAsset;
+  assetContainer: AssetContainer;
   alt: string;
   width: number;
 };
@@ -37,18 +37,18 @@ const StyledWebstudioImage = styled(WebstudioImage, {
   },
 });
 
-export const Image = ({ renderableAsset, alt, width }: ImageProps) => {
-  const optimize = renderableAsset.status === "uploaded";
+export const Image = ({ assetContainer, alt, width }: ImageProps) => {
+  const optimize = assetContainer.status === "uploaded";
   const asset =
-    renderableAsset.status === "uploaded"
-      ? renderableAsset.asset
-      : renderableAsset.preview;
+    assetContainer.status === "uploaded"
+      ? assetContainer.asset
+      : assetContainer.preview;
   const remoteLocation =
-    renderableAsset.status === "uploaded" &&
-    renderableAsset.asset.location === "REMOTE";
+    assetContainer.status === "uploaded" &&
+    assetContainer.asset.location === "REMOTE";
 
   // Avoid image flickering on switching from preview to asset (during upload)
-  const decoding = renderableAsset.preview === undefined ? "async" : "sync";
+  const decoding = assetContainer.preview === undefined ? "async" : "sync";
 
   const loader = useMemo(() => {
     if (remoteLocation) {

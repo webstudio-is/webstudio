@@ -1,17 +1,19 @@
 import { describe, test, expect } from "@jest/globals";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
-  UploadedClientAsset,
-  UploadingClientAsset,
-  DeletingClientAsset,
-  ClientAsset,
+  UploadedAssetContainer,
+  UploadingAssetContainer,
+  DeletingAssetContainer,
+  AssetContainer,
 } from "./types";
 import { updateStateAssets } from "./update-state-assets";
 
-const getAssetId = (clientAsset: ClientAsset): string =>
-  clientAsset.status === "uploading"
-    ? clientAsset.preview.id
-    : clientAsset.asset.id;
+const getAssetId = (
+  assetContainer: AssetContainer | DeletingAssetContainer
+): string =>
+  assetContainer.status === "uploading"
+    ? assetContainer.preview.id
+    : assetContainer.asset.id;
 
 const createServerAsset = (id: string, name?: string): Asset => ({
   id,
@@ -27,13 +29,13 @@ const createServerAsset = (id: string, name?: string): Asset => ({
   path: "",
 });
 
-const createAsset = (id: string, name?: string): UploadedClientAsset => ({
+const createAsset = (id: string, name?: string): UploadedAssetContainer => ({
   status: "uploaded",
   asset: createServerAsset(id, name),
   preview: undefined,
 });
 
-const createPreviewAsset = (id: string): UploadingClientAsset => {
+const createPreviewAsset = (id: string): UploadingAssetContainer => {
   return {
     status: "uploading",
     asset: undefined,
@@ -44,7 +46,7 @@ const createPreviewAsset = (id: string): UploadingClientAsset => {
 const createPreviewAndAsset = (
   id: string,
   name?: string
-): UploadedClientAsset => {
+): UploadedAssetContainer => {
   return {
     status: "uploaded",
     asset: createAsset(id, name).asset,
@@ -52,7 +54,7 @@ const createPreviewAndAsset = (
   };
 };
 
-const createDeletingAsset = (id: string): DeletingClientAsset => {
+const createDeletingAsset = (id: string): DeletingAssetContainer => {
   return {
     ...createAsset(id),
     status: "deleting",

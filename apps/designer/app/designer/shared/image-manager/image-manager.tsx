@@ -2,15 +2,15 @@ import { useState } from "react";
 import { findNextListIndex, Grid } from "@webstudio-is/design-system";
 import {
   AssetsShell,
-  type RenderableAsset,
-  useAssets,
+  type AssetContainer,
+  useAssetContainers,
   useSearch,
 } from "../assets";
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
 
-const filterItems = (search: string, items: RenderableAsset[]) => {
+const filterItems = (search: string, items: AssetContainer[]) => {
   return matchSorter(items, search, {
     keys: [
       (item) =>
@@ -22,15 +22,15 @@ const filterItems = (search: string, items: RenderableAsset[]) => {
 const useLogic = ({
   onChange,
 }: {
-  onChange?: (asset: RenderableAsset) => void;
+  onChange?: (asset: AssetContainer) => void;
 }) => {
-  const { assets, handleDelete } = useAssets("image");
+  const { assetContainers, handleDelete } = useAssetContainers("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   // @todo filter out deleting assets
   const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
-    items: assets,
+    items: assetContainers,
     onReset() {
       searchProps.onCancel();
     },
@@ -42,7 +42,7 @@ const useLogic = ({
       if (search === "") {
         return resetFilteredItems();
       }
-      const items = filterItems(search, assets);
+      const items = filterItems(search, assetContainers);
       setFilteredItems(items);
     },
     onSelect(direction) {
@@ -63,11 +63,11 @@ const useLogic = ({
     },
   });
 
-  const handleSelect = (clientAsset?: RenderableAsset) => {
+  const handleSelect = (assetContainer?: AssetContainer) => {
     const selectedIndex = filteredItems.findIndex(
       (item) =>
         (item.asset?.id ?? item.preview?.id) ===
-        (clientAsset?.asset?.id ?? clientAsset?.preview?.id)
+        (assetContainer?.asset?.id ?? assetContainer?.preview?.id)
     );
     setSelectedIndex(selectedIndex);
   };
@@ -82,7 +82,7 @@ const useLogic = ({
 };
 
 type ImageManagerProps = {
-  onChange?: (asset: RenderableAsset) => void;
+  onChange?: (asset: AssetContainer) => void;
 };
 
 export const ImageManager = ({ onChange }: ImageManagerProps) => {
@@ -101,10 +101,10 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
       type="image"
     >
       <Grid columns={3} gap={2}>
-        {filteredItems.map((clientAsset, index) => (
+        {filteredItems.map((assetContainer, index) => (
           <ImageThumbnail
-            key={clientAsset.asset?.id ?? clientAsset.preview?.id}
-            asset={clientAsset}
+            key={assetContainer.asset?.id ?? assetContainer.preview?.id}
+            assetContainer={assetContainer}
             onDelete={handleDelete}
             onSelect={handleSelect}
             onChange={onChange}

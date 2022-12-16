@@ -1,25 +1,27 @@
 import { SYSTEM_FONTS } from "@webstudio-is/fonts";
 import { matchSorter } from "match-sorter";
-import { RenderableAsset } from "../assets";
+import { AssetContainer } from "../assets";
 
 export type Item = {
   label: string;
   type: "uploaded" | "system";
 };
 
-export const toItems = (clientAssets: Array<RenderableAsset>): Array<Item> => {
+export const toItems = (
+  assetContainers: Array<AssetContainer>
+): Array<Item> => {
   const system = Array.from(SYSTEM_FONTS.keys()).map((label) => ({
     label,
     type: "system",
   }));
   // We can have 2+ assets with the same family name, so we use a map to dedupe.
   const uploaded = new Map();
-  for (const clientAsset of clientAssets) {
-    if (clientAsset.status !== "uploaded") {
+  for (const assetContainer of assetContainers) {
+    if (assetContainer.status !== "uploaded") {
       continue;
     }
 
-    const { asset } = clientAsset;
+    const { asset } = assetContainer;
     // @todo need to teach ts the right type from useAssets
     if ("meta" in asset && "family" in asset.meta) {
       uploaded.set(asset.meta.family, {
@@ -33,16 +35,16 @@ export const toItems = (clientAssets: Array<RenderableAsset>): Array<Item> => {
 
 export const filterIdsByFamily = (
   family: string,
-  clientAssets: Array<RenderableAsset>
+  assetContainers: Array<AssetContainer>
 ) => {
   // One family may have multiple assets for different formats, so we need to find them all.
   return (
-    clientAssets
-      .filter((clientAsset) => {
-        if (clientAsset.status !== "uploaded") {
+    assetContainers
+      .filter((assetContainer) => {
+        if (assetContainer.status !== "uploaded") {
           return false;
         }
-        const { asset } = clientAsset;
+        const { asset } = assetContainer;
         // @todo need to teach TS the right type from useAssets
         return (
           "meta" in asset &&
@@ -51,7 +53,7 @@ export const filterIdsByFamily = (
         );
       })
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- we filtered out non uploaded items
-      .map((clientAssets) => clientAssets.asset!.id)
+      .map((assetContainer) => assetContainer.asset!.id)
   );
 };
 

@@ -3,7 +3,7 @@ import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
 import { ValuePickerPopover } from "../../shared/value-picker-popover";
 import { ImageManager } from "~/designer/shared/image-manager";
-import { useAssets } from "~/designer/shared/assets";
+import { useAssetContainers } from "~/designer/shared/assets";
 import { toValue } from "@webstudio-is/css-engine";
 
 export const ImageControl = ({
@@ -12,7 +12,7 @@ export const ImageControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const { assets } = useAssets("image");
+  const { assetContainers } = useAssetContainers("image");
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
@@ -26,9 +26,10 @@ export const ImageControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const selectedAsset = assets.find(
-    (clientAsset) =>
-      (clientAsset.asset?.id ?? clientAsset.preview?.id) === toValue(value)
+  const selectedAsset = assetContainers.find(
+    (assetContainer) =>
+      (assetContainer.asset?.id ?? assetContainer.preview?.id) ===
+      toValue(value)
   );
 
   return (
@@ -36,10 +37,10 @@ export const ImageControl = ({
       title="Images"
       content={
         <ImageManager
-          onChange={(clientAsset) => {
-            if (clientAsset.status === "uploaded") {
+          onChange={(assetContainer) => {
+            if (assetContainer.status === "uploaded") {
               // @todo looks like a bug fix next PRs
-              setValue(clientAsset.asset.id);
+              setValue(assetContainer.asset.id);
             }
           }}
         />
