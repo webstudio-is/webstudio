@@ -2650,7 +2650,7 @@
   dependencies:
     "@lexical/selection" "0.6.0"
 
-"@lexical/link@0.6.0":
+"@lexical/link@0.6.0", "@lexical/link@^0.6.0":
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/@lexical/link/-/link-0.6.0.tgz#2f72fcc999182728670b90f9c3fbe8b219aab795"
   integrity sha512-VnHQk6lDcwbm+xiIrFVGlAclzn/n2cM8WX6aM3lwiq9vk3WDFcO+ZgDRs/UGgw4NHXoTn2LBs1ovveYEWdOhdw==
@@ -2727,7 +2727,7 @@
   resolved "https://registry.yarnpkg.com/@lexical/rich-text/-/rich-text-0.6.0.tgz#b4c2391bdd2d062cd3e0faa11d1ded82a1096224"
   integrity sha512-shGN15bjjXG1FRcxuKdlM1/eSq/s91yGbI1T9y7ezMihbDyUa+Ytf0xP51QPYTLEmXtqZrUOFoFZm+tqGNugYQ==
 
-"@lexical/selection@0.6.0":
+"@lexical/selection@0.6.0", "@lexical/selection@^0.6.0":
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/@lexical/selection/-/selection-0.6.0.tgz#e36acb49983ab78168eb070898f193b0417dbab7"
   integrity sha512-IP9QNAH0em0cavS1M+d6rzTWWo0zdxyhPiYnxpj0mzhtbObfEV7L1fEn9PFH8CMDWGC+zXh810l+0Nz9SEPyKA==
@@ -2744,7 +2744,7 @@
   resolved "https://registry.yarnpkg.com/@lexical/text/-/text-0.6.0.tgz#9b8728beabf2e1c437d0aafc98450628c2972d73"
   integrity sha512-jY29kKa5t1elEtSOWpzVak1vDQdQBHzGdaNDkces0KYntzlJ9AFoEU6lVNJWRoKXWDwh5pEvhYLKUzz6luaniQ==
 
-"@lexical/utils@0.6.0":
+"@lexical/utils@0.6.0", "@lexical/utils@^0.6.0":
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/@lexical/utils/-/utils-0.6.0.tgz#992a1052d833e407ee797dfbd66a455c07659125"
   integrity sha512-qIhIkRSbgGLOq/sOOpvHkEnDDvMxljV3D8y/feNyYJv8e/qbY0lHT5E+hDauAAbDDwnGTtQ3GTNVnmOtqG2cbw==
@@ -9663,7 +9663,7 @@ extglob@^2.0.4:
     snapdragon "^0.8.1"
     to-regex "^3.0.1"
 
-fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
+fast-deep-equal@3.1.3, fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz#3a7d56b559d6cbc3eb512325244e619a65c6c525"
   integrity sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==
@@ -10885,7 +10885,7 @@ human-signals@^3.0.1:
   resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-3.0.1.tgz#c740920859dafa50e5a3222da9d3bf4bb0e5eef5"
   integrity sha512-rQLskxnM/5OCldHo+wNXbpVgDn5A17CUoKX+7Sokwaknlq7CdSnphy0W39GU8dw59XiCXmFXDg4fRuckQRKewQ==
 
-husky@>=6:
+husky@8.0.1:
   version "8.0.1"
   resolved "https://registry.yarnpkg.com/husky/-/husky-8.0.1.tgz#511cb3e57de3e3190514ae49ed50f6bc3f50b3e9"
   integrity sha512-xs7/chUH/CKdOCs7Zy0Aev9e/dKOMZf3K1Az1nar3tzlv0jfqnYtu235bstsWTmXOR0EfINrPa97yy4Lz6RiKw==
@@ -12531,7 +12531,7 @@ lodash.uniq@4.5.0:
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
   integrity sha512-xfBaXQd9ryd9dlSDvnvI0lvxfLJlYAZzXomUYzLKtUeOQvOP5piqAWuGtrhWeqaXK9hhoM/iyJc5AV+XfsX3HQ==
 
-lodash@^4.0.1, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21:
+lodash@4.17.21, lodash@^4.0.1, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21:
   version "4.17.21"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
@@ -14594,15 +14594,15 @@ prettier@2.6.1:
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.6.1.tgz#d472797e0d7461605c1609808e27b80c0f9cfe17"
   integrity sha512-8UVbTBYGwN37Bs9LERmxCPjdvPxlEowx2urIL6urHzdb3SDq4B/Z6xLFCblrSnE4iKWcS6ziJ3aOYrc1kz/E2A==
 
+prettier@2.7.1, prettier@^2.6.2:
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.7.1.tgz#e235806850d057f97bb08368a4f7d899f7760c64"
+  integrity sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==
+
 "prettier@>=2.2.1 <=2.3.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.3.0.tgz#b6a5bf1284026ae640f17f7ff5658a7567fc0d18"
   integrity sha512-kXtO4s0Lz/DW/IJ9QdWhAf7/NmPWQXkFr/r/WkR3vyI+0v8amTDxiaQSLzs8NBlytfLWX/7uQUMIW677yLKl4w==
-
-prettier@^2.6.2, prettier@latest:
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.7.1.tgz#e235806850d057f97bb08368a4f7d899f7760c64"
-  integrity sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==
 
 pretty-bytes@5.6.0:
   version "5.6.0"
@@ -17327,7 +17327,7 @@ turbo-windows-arm64@1.3.1:
   resolved "https://registry.yarnpkg.com/turbo-windows-arm64/-/turbo-windows-arm64-1.3.1.tgz#5abe1743b93e272641018cef213b21ac6c984f04"
   integrity sha512-0MWcHLvYgs/qdcoTFZ55nu8HhrpeiwXEMw9cbNfgqTlzy3OsrAsovYEJFyQ8KSxeploiD+QJlCdvhxx+5C0tlA==
 
-turbo@latest:
+turbo@1.3.1:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/turbo/-/turbo-1.3.1.tgz#8091f3c8b654addaac84f9452476204a879b32ea"
   integrity sha512-DXckoGKlZgvTn/PrHpBI/57aeXR7tfyPf2dK+4LmBczt24ELA3o6eYHeA7KzfpSYhB2LE9qveYFQ6mJ1OzGjjg==
