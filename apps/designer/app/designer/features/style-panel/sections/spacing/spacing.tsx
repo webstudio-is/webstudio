@@ -9,10 +9,10 @@ import { InputPopover } from "./input-popover";
 
 const Cell = ({
   isPopoverOpen,
-  onChange,
   onPopoverClose,
+  onChange,
   property,
-  isHovered,
+  isActive,
   scrubStatus,
   currentStyle,
   inheritedStyle,
@@ -21,7 +21,7 @@ const Cell = ({
   onPopoverClose: () => void;
   onChange: (event: StyleChangeEvent) => void;
   property: SpacingStyleProperty;
-  isHovered: boolean;
+  isActive: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
 } & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">) => {
   const styleValue = getFinalValue({
@@ -48,7 +48,7 @@ const Cell = ({
       {/* @todo: don't use ValueText to align popover, because its bottom edge pos. depends on wrapping */}
       <ValueText
         value={finalValue}
-        isActive={isHovered || scrubStatus.isActive || isPopoverOpen}
+        isActive={isActive}
         source="set" // @todo: set correct source
       />
     </InputPopover>
@@ -74,13 +74,15 @@ export const SpacingSection = ({
 
   const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
 
+  const activeProperty = scrubStatus.isActive
+    ? scrubStatus.property
+    : openProperty ?? hoverTarget?.property;
+
   return (
     <SpacingLayout
       onClick={setOpenProperty}
       onHover={setHoverTarget}
-      forceHoverStateFor={
-        scrubStatus.isActive ? scrubStatus.property : openProperty
-      }
+      activeProperty={activeProperty}
       renderCell={({ property }) => (
         <Cell
           isPopoverOpen={openProperty === property}
@@ -96,7 +98,7 @@ export const SpacingSection = ({
               ? scrubStatus
               : { isActive: false }
           }
-          isHovered={hoverTarget?.property === property}
+          isActive={activeProperty === property}
           currentStyle={currentStyle}
           inheritedStyle={inheritedStyle}
         />

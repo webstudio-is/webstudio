@@ -46,10 +46,8 @@ const ValueArea = styled("path", {
       right: { cursor: "e-resize", fill: "$slate2" },
       left: { cursor: "w-resize", fill: "$slate2" },
     },
-    forceHover: { true: { fill: "$slate5" } },
-    enableHover: { true: { "&:hover": { fill: "$slate5" } } },
+    isActive: { true: { fill: "$slate5" } },
   },
-  defaultVariants: { enableHover: true },
 });
 
 const OuterRect = styled(
@@ -229,14 +227,14 @@ export type HoverTagret = {
 type LayoutProps = {
   onClick: (property: SpacingStyleProperty) => void;
   onHover: (hoverTarget: HoverTagret | undefined) => void;
-  forceHoverStateFor?: SpacingStyleProperty;
+  activeProperty?: SpacingStyleProperty;
   renderCell: (args: { property: SpacingStyleProperty }) => React.ReactNode;
 };
 
 export const SpacingLayout = ({
   onClick,
   onHover,
-  forceHoverStateFor,
+  activeProperty,
   renderCell,
 }: LayoutProps) => {
   const outerClipId = useId();
@@ -251,8 +249,7 @@ export const SpacingLayout = ({
         onHover({ element: event.currentTarget, property })
       }
       onMouseLeave={() => onHover(undefined)}
-      enableHover={forceHoverStateFor === undefined}
-      forceHover={forceHoverStateFor === property}
+      isActive={activeProperty === property}
       id={property}
     />
   );
