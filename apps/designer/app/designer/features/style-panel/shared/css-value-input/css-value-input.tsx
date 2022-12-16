@@ -26,8 +26,6 @@ import {
   useCallback,
   useEffect,
   useRef,
-  useState,
-  useLayoutEffect,
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
@@ -63,7 +61,6 @@ const useScrub = ({
 ] => {
   const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [isInputActive, setIsInputActive] = useState(false);
 
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
@@ -76,14 +73,6 @@ const useScrub = ({
 
   const type = valueRef.current.type;
   const unit = type === "unit" ? valueRef.current.unit : undefined;
-
-  // make sure caret doesn't jump around as you scrub
-  useLayoutEffect(() => {
-    const input = inputRef.current;
-    if (isInputActive && input) {
-      input.selectionStart = input.selectionEnd = input.value.length;
-    }
-  });
 
   // Since scrub is going to call onChange and onChangeComplete callbacks, it will result in a new value and potentially new callback refs.
   // We need this effect to ONLY run when type or unit changes, but not when callbacks or value.value changes.
@@ -115,7 +104,9 @@ const useScrub = ({
         }
       },
       onValueInput(event) {
-        setIsInputActive(true);
+        // Moving focus to container of the input to hide the caret
+        // (it makes text harder to read and may jump around as you scrub)
+        scrubRef.current?.focus();
 
         onChangeRef.current({
           type,
@@ -134,7 +125,9 @@ const useScrub = ({
           });
         });
 
-        setIsInputActive(false);
+        // Returning focus that we've moved above
+        inputRef.current?.focus();
+        inputRef.current?.select();
       },
       shouldHandleEvent: shouldHandleEvent,
     });
