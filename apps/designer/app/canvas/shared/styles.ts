@@ -45,7 +45,7 @@ const helperStyles = [
   }`,
   `[${idAttribute}]:not(${voidElements}):not(body):empty {
     outline: 1px dashed #555;
-    outline-offset: -1;
+    outline-offset: -1px;
     padding-top: 50px;
     padding-right: 50px;
   }`,

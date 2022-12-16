@@ -14,24 +14,11 @@ export const useUpdateCanvasWidth = () => {
   // Ensure the size is within currently selected breakpoint when returning to design mode out of preview mode,
   // because preview mode enables resizing without constraining to the selected breakpoint.
   useEffect(() => {
-    if (isPreviewMode === true || selectedBreakpoint === undefined) {
+    if (isPreviewMode || selectedBreakpoint === undefined) {
       return;
     }
     setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
   }, [isPreviewMode, selectedBreakpoint, setCanvasWidth]);
-
-  useEffect(() => {
-    if (selectedBreakpoint === undefined) {
-      return;
-    }
-
-    if (selectedBreakpoint.minWidth === 0) {
-      setCanvasWidth(minWidth);
-      return;
-    }
-
-    setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
-  }, [selectedBreakpoint, setCanvasWidth]);
 
   // This fallback is needed for cases when something unexpected loads in the iframe.
   // In that case the width remains 0, and user is unable to see what has loaded,
@@ -39,12 +26,13 @@ export const useUpdateCanvasWidth = () => {
   // The delay is used to make sure we don't set the fallback width too early,
   // because when canvas loads normally this will cause a jump in the width.
   useEffect(() => {
-    if (canvasWidth === 0) {
-      const timeout = setTimeout(() => {
-        setCanvasWidth(600);
-      }, 3000);
-      return () => clearTimeout(timeout);
+    if (canvasWidth !== 0) {
+      return;
     }
+    const timeoutId = setTimeout(() => {
+      setCanvasWidth(600);
+    }, 3000);
+    return () => clearTimeout(timeoutId);
   }, [canvasWidth, setCanvasWidth]);
 
   // Set the initial canvas width based on the selected breakpoint upper bound, which starts where the next breakpoint begins.
