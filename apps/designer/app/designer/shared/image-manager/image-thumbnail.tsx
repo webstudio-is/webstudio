@@ -1,9 +1,10 @@
 import { type KeyboardEvent, type FocusEvent } from "react";
-import { Box, styled } from "@webstudio-is/design-system";
+import { Box, theme, styled } from "@webstudio-is/design-system";
 import { UploadingAnimation } from "./uploading-animation";
 import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { RenderableAsset } from "~/designer/shared/assets";
 import { Filename } from "./filename";
+import { Image } from "./image";
 
 const ThumbnailContainer = styled(Box, {
   position: "relative",
@@ -35,17 +36,11 @@ const ThumbnailContainer = styled(Box, {
 });
 
 const Thumbnail = styled(Box, {
+  // below we use theme.spacing[19].value, must be in sync
   width: "$spacing$19",
   height: "$spacing$19",
   flexShrink: 0,
   position: "relative",
-});
-
-const Image = styled("img", {
-  position: "absolute",
-  width: "100%",
-  height: "100%",
-  objectFit: "contain",
 });
 
 type ImageThumbnailProps = {
@@ -57,20 +52,20 @@ type ImageThumbnailProps = {
 };
 
 export const ImageThumbnail = ({
-  asset: clientAsset,
+  asset: renderableAsset,
   onDelete,
   onSelect,
   onChange,
   state,
 }: ImageThumbnailProps) => {
   const asset =
-    clientAsset.status === "uploading"
-      ? clientAsset.preview
-      : clientAsset.asset;
+    renderableAsset.status === "uploading"
+      ? renderableAsset.preview
+      : renderableAsset.asset;
 
-  const { status } = clientAsset;
+  const { status } = renderableAsset;
 
-  const { path, name } = asset;
+  const { name } = asset;
 
   const description =
     "description" in asset && asset.description
@@ -79,6 +74,9 @@ export const ImageThumbnail = ({
 
   const isUploading = status === "uploading";
 
+  // Must be same as Thumbnail width "$spacing$19"
+  const imageWidth = theme.spacing[19].value;
+
   return (
     <ThumbnailContainer
       title={description}
@@ -86,7 +84,7 @@ export const ImageThumbnail = ({
       status={status}
       state={state}
       onFocus={() => {
-        onSelect?.(clientAsset);
+        onSelect?.(renderableAsset);
       }}
       onBlur={(event: FocusEvent) => {
         const isFocusWithin = event.currentTarget.contains(event.relatedTarget);
@@ -95,19 +93,23 @@ export const ImageThumbnail = ({
         }
       }}
       onKeyDown={(event: KeyboardEvent) => {
-        if (event.code === "Enter" && clientAsset.status === "uploaded") {
-          onChange?.(clientAsset);
+        if (event.code === "Enter" && renderableAsset.status === "uploaded") {
+          onChange?.(renderableAsset);
         }
       }}
     >
       <Thumbnail
         onClick={() => {
-          if (clientAsset.status === "uploaded") {
-            onChange?.(clientAsset);
+          if (renderableAsset.status === "uploaded") {
+            onChange?.(renderableAsset);
           }
         }}
       >
-        <Image src={path} alt={description} />
+        <Image
+          renderableAsset={renderableAsset}
+          alt={description}
+          width={imageWidth}
+        />
       </Thumbnail>
       <Box
         css={{
@@ -118,9 +120,9 @@ export const ImageThumbnail = ({
       >
         <Filename variant={"tiny"}>{name}</Filename>
       </Box>
-      {clientAsset.status === "uploaded" && (
+      {renderableAsset.status === "uploaded" && (
         <ImageInfoTrigger
-          asset={clientAsset.asset}
+          asset={renderableAsset.asset}
           onDelete={(ids) => {
             onDelete(ids);
           }}
