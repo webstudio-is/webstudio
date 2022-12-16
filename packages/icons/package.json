@@ -38,7 +38,8 @@
   },
   "dependencies": {
     "@radix-ui/react-icons": "^1.1.0",
-    "@webstudio-is/css-vars": "*"
+    "@webstudio-is/css-vars": "*",
+    "react": "^17.0.2"
   },
   "module": "./lib/index.js",
   "exports": {

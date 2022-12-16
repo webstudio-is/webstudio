@@ -18,7 +18,10 @@
     "generate-types": "generate-arg-types",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
-  "dependencies": {},
+  "dependencies": {
+    "react": "^17.0.2",
+    "warn-once": "^0.1.1"
+  },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@storybook/addon-actions": "^6.5.6",

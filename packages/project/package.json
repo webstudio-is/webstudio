@@ -15,6 +15,7 @@
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
+    "@webstudio-is/design-tokens": "*",
     "@webstudio-is/fonts": "*",
     "@webstudio-is/css-engine": "*",
     "@webstudio-is/asset-uploader": "*",
@@ -24,6 +25,7 @@
     "bson-objectid": "^2.0.2",
     "immer": "^9.0.12",
     "nanoid": "^3.2.0",
+    "react": "^17.0.2",
     "slugify": "^1.6.5",
     "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
