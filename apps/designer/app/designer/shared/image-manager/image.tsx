@@ -8,7 +8,7 @@ import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 type ImageProps = {
   renderableAsset: RenderableAsset;
   alt: string;
-  width: string;
+  width: number;
 };
 
 const StyledWebstudioImage = styled(WebstudioImage, {

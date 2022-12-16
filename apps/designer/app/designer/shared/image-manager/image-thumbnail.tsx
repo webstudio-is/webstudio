@@ -51,6 +51,22 @@ type ImageThumbnailProps = {
   state?: "selected";
 };
 
+const getInt = (value: unknown): number | undefined => {
+  if (typeof value === "number") {
+    return Math.round(value);
+  }
+
+  if (typeof value === "string") {
+    const vNum = Number.parseFloat(value);
+
+    if (!Number.isNaN(vNum)) {
+      return Math.round(vNum);
+    }
+  }
+
+  return undefined;
+};
+
 export const ImageThumbnail = ({
   asset: renderableAsset,
   onDelete,
@@ -75,7 +91,7 @@ export const ImageThumbnail = ({
   const isUploading = status === "uploading";
 
   // Must be the same as the Thumbnail width "$spacing$19"
-  const imageWidth = theme.spacing[19].value;
+  const imageWidth = getInt(theme.spacing[19].value) ?? 64;
 
   return (
     <ThumbnailContainer
