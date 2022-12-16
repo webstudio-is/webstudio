@@ -3,7 +3,7 @@ import { findNextListIndex, Grid } from "@webstudio-is/design-system";
 import {
   AssetsShell,
   type RenderableAsset,
-  useAssets,
+  useAssetContainers,
   useSearch,
 } from "../assets";
 import { useFilter } from "../assets/use-filter";
@@ -24,7 +24,7 @@ const useLogic = ({
 }: {
   onChange?: (asset: RenderableAsset) => void;
 }) => {
-  const { assets, handleDelete } = useAssets("image");
+  const { assets, handleDelete } = useAssetContainers("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 

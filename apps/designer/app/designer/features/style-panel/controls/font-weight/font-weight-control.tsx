@@ -2,7 +2,7 @@ import { Select } from "@webstudio-is/design-system";
 import { FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
-import { useAssets } from "~/designer/shared/assets";
+import { useAssetContainers } from "~/designer/shared/assets";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 
@@ -22,7 +22,7 @@ const allFontWeights: Array<FontWeightItem> = (
 const useAvailableFontWeights = (
   currentFamily: string
 ): Array<FontWeightItem> => {
-  const { assets } = useAssets("font");
+  const { assets } = useAssetContainers("font");
 
   // Find all font weights that are available for the current font family.
   return useMemo(() => {

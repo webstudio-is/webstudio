@@ -6,7 +6,7 @@ import {
   DeletingClientAsset,
   ClientAsset,
 } from "./types";
-import { updateStateAssets } from "./update-state-assets";
+import { updateStateAssets } from "./update-asset-containers";
 
 const getAssetId = (clientAsset: ClientAsset): string =>
   clientAsset.status === "uploading"

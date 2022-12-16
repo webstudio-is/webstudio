@@ -33,7 +33,7 @@ import {
 import { Publish } from "~/shared/pubsub";
 import { useFetcher } from "@remix-run/react";
 import warnOnce from "warn-once";
-import { updateStateAssets } from "./update-state-assets";
+import { updateStateAssets } from "./update-asset-containers";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -325,7 +325,7 @@ const filterByType = (clientAssets: RenderableAsset[], type: AssetType) => {
   });
 };
 
-export const useAssets = (type: AssetType) => {
+export const useAssetContainers = (type: AssetType) => {
   const assetsContext = useContext(Context);
   if (!assetsContext) {
     throw new Error("useAssets is used without AssetsProvider");
