@@ -6,7 +6,7 @@ import {
   DeletingAssetContainer,
   AssetContainer,
 } from "./types";
-import { updateStateAssets } from "./update-state-assets";
+import { updateStateAssets } from "./update-asset-containers";
 
 const getAssetId = (
   assetContainer: AssetContainer | DeletingAssetContainer

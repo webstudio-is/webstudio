@@ -34,7 +34,7 @@ import {
 import { Publish } from "~/shared/pubsub";
 import { useFetcher } from "@remix-run/react";
 import warnOnce from "warn-once";
-import { updateStateAssets } from "./update-state-assets";
+import { updateStateAssets } from "./update-asset-containers";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
