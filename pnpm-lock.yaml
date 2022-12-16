@@ -17,6 +17,7 @@ importers:
       lint-staged: ^13.0.2
       prettier: 2.7.1
       prisma: ^4.3.1
+      tsx: ^3.9.0
       turbo: 1.3.1
       typescript: 4.7.4
     devDependencies:
@@ -30,6 +31,7 @@ importers:
       lint-staged: 13.0.3
       prettier: 2.7.1
       prisma: 4.6.1
+      tsx: 3.12.1
       turbo: 1.3.1
       typescript: 4.7.4
 
@@ -72,17 +74,17 @@ importers:
       '@types/sharp': ^0.30.4
       '@types/w3c-css-typed-object-model-level-1': ^20180410.0.4
       '@vercel/node': ^2.4.1
-      '@webstudio-is/asset-uploader': workspace:^
-      '@webstudio-is/css-engine': workspace:^
-      '@webstudio-is/css-vars': workspace:^
-      '@webstudio-is/design-system': workspace:^
-      '@webstudio-is/eslint-config-custom': workspace:^
-      '@webstudio-is/icons': workspace:^
-      '@webstudio-is/jest-config': workspace:^
-      '@webstudio-is/prisma-client': workspace:^
-      '@webstudio-is/project': workspace:^
-      '@webstudio-is/react-sdk': workspace:^
-      '@webstudio-is/tsconfig': workspace:^
+      '@webstudio-is/asset-uploader': '*'
+      '@webstudio-is/css-engine': '*'
+      '@webstudio-is/css-vars': '*'
+      '@webstudio-is/design-system': '*'
+      '@webstudio-is/eslint-config-custom': '*'
+      '@webstudio-is/icons': '*'
+      '@webstudio-is/jest-config': '*'
+      '@webstudio-is/prisma-client': '*'
+      '@webstudio-is/project': '*'
+      '@webstudio-is/react-sdk': '*'
+      '@webstudio-is/tsconfig': '*'
       babel-loader: ^8.2.5
       bson-objectid: ^2.0.2
       camelcase: ^6.3.0
@@ -237,6 +239,7 @@ importers:
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/prisma-client': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       app-root-path: ^3.0.0
       sharp: ^0.30.7
       typescript: 4.7.4
@@ -254,6 +257,7 @@ importers:
       '@types/sharp': 0.30.4
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
       zod: 3.19.1
 
@@ -261,6 +265,7 @@ importers:
     specifiers:
       '@types/css-tree': ^2.0.0
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       camelcase: ^6.3.0
       css-tree: ^2.3.0
       mdn-data: 2.0.23
@@ -269,6 +274,7 @@ importers:
     devDependencies:
       '@types/css-tree': 2.0.0
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       camelcase: 6.3.0
       css-tree: 2.3.0
       mdn-data: 2.0.23
@@ -292,6 +298,7 @@ importers:
       '@webstudio-is/fonts': '*'
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       hyphenate-style-name: ^1.0.4
       react: ^17.0.2
       react-dom: ^17.0.2
@@ -316,18 +323,19 @@ importers:
       '@webstudio-is/css-data': link:../css-data
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/css-vars:
     specifiers:
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/scripts': '*'
-      tsx: ^3.12.1
+      '@webstudio-is/tsconfig': '*'
       typescript: 4.7.4
     devDependencies:
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
-      tsx: 3.12.1
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/design-system:
@@ -375,6 +383,7 @@ importers:
       '@webstudio-is/icons': '*'
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       react-hot-toast: ^2.3.0
       typescript: 4.7.4
     dependencies:
@@ -423,12 +432,14 @@ importers:
       '@storybook/testing-library': 0.0.13
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/design-tokens:
     specifiers:
       '@webstudio-is/prisma-client': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       immer: ^9.0.12
       typescript: 4.7.4
       zod: ^3.19.1
@@ -438,6 +449,7 @@ importers:
       zod: 3.19.1
     devDependencies:
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/eslint-config-custom:
@@ -468,6 +480,7 @@ importers:
       '@webstudio-is/design-system': '*'
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       fontkit: ^2.0.2
       typescript: 4.7.4
       zod: ^3.19.1
@@ -478,12 +491,14 @@ importers:
       '@webstudio-is/design-system': link:../design-system
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
       zod: 3.19.1
 
   packages/generate-arg-types:
     specifiers:
       '@types/fs-extra': ^9.0.13
+      '@webstudio-is/tsconfig': '*'
       esbuild: 0.15.13
       fast-glob: ^3.2.12
       fs-extra: ^10.1.0
@@ -497,6 +512,7 @@ importers:
       react-docgen-typescript: 2.2.2_typescript@4.7.4
       zod: 3.19.1
     devDependencies:
+      '@webstudio-is/tsconfig': link:../tsconfig
       esbuild: 0.15.13
       typescript: 4.7.4
 
@@ -506,6 +522,7 @@ importers:
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/prisma-client': '*'
       '@webstudio-is/project': '*'
+      '@webstudio-is/tsconfig': '*'
       isomorphic-fetch: ^3.0.0
       tsup: ^6.1.3
       typescript: 4.7.4
@@ -516,6 +533,7 @@ importers:
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/prisma-client': link:../prisma-client
       '@webstudio-is/project': link:../project
+      '@webstudio-is/tsconfig': link:../tsconfig
       tsup: 6.1.3_typescript@4.7.4
       typescript: 4.7.4
 
@@ -534,6 +552,7 @@ importers:
       '@svgo/jsx': ^0.4.2
       '@webstudio-is/css-vars': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       tsx: ^3.9.0
       typescript: 4.7.4
     dependencies:
@@ -551,6 +570,7 @@ importers:
       '@storybook/testing-library': 0.0.13
       '@svgo/jsx': 0.4.2
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       tsx: 3.12.1
       typescript: 4.7.4
 
@@ -568,6 +588,7 @@ importers:
       '@webstudio-is/generate-arg-types': '*'
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       typescript: 4.7.4
     devDependencies:
       '@storybook/addon-actions': 6.5.9
@@ -582,6 +603,7 @@ importers:
       '@webstudio-is/generate-arg-types': link:../generate-arg-types
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/jest-config:
@@ -601,6 +623,7 @@ importers:
       '@types/minimist': ^1.2.2
       '@types/uuid': ^8.3.4
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       concurrently: ^7.6.0
       dotenv: ^16.0.0
       execa: ^6.1.0
@@ -624,6 +647,7 @@ importers:
     devDependencies:
       '@types/uuid': 8.3.4
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       concurrently: 7.6.0
       prisma: 4.6.1
       typescript: 4.7.4
@@ -638,6 +662,7 @@ importers:
       '@webstudio-is/prisma-client': '*'
       '@webstudio-is/react-sdk': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       bson-objectid: ^2.0.2
       immer: ^9.0.12
       nanoid: ^3.2.0
@@ -662,6 +687,7 @@ importers:
       zod: 3.19.1
     devDependencies:
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/react-sdk:
@@ -688,6 +714,7 @@ importers:
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/prisma-client': '*'
       '@webstudio-is/scripts': '*'
+      '@webstudio-is/tsconfig': '*'
       babel-loader: ^8.2.5
       detect-font: ^0.1.5
       esbuild: 0.15.13
@@ -731,6 +758,7 @@ importers:
       '@webstudio-is/generate-arg-types': link:../generate-arg-types
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       babel-loader: 8.2.5_@babel+core@7.20.2
       esbuild: 0.15.13
       esbuild-node-externals: 1.4.1_esbuild@0.15.13
@@ -743,6 +771,7 @@ importers:
 
   packages/scripts:
     specifiers:
+      '@webstudio-is/tsconfig': '*'
       esbuild: 0.15.13
       totalist: ^3.0.0
       tsx: ^3.12.1
@@ -752,6 +781,7 @@ importers:
       totalist: 3.0.0
       tsx: 3.12.1
     devDependencies:
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/tsconfig:
