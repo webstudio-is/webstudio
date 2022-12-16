@@ -7,7 +7,7 @@ import { useIsPreviewMode } from "~/shared/nano-states";
 import { useNextBreakpoint } from "./use-next-breakpoint";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
-export const minWidth = 50;
+export const minWidth = 360;
 export const maxWidth = 3000;
 
 export const WidthSetting = () => {

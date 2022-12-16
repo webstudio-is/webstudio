@@ -4,14 +4,12 @@ import {
   useCanvasWidth,
 } from "~/designer/shared/nano-states";
 import { useIsPreviewMode } from "~/shared/nano-states";
-import { useNextBreakpoint } from "./use-next-breakpoint";
 import { minWidth } from "./width-setting";
 
 export const useUpdateCanvasWidth = () => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
   const [isPreviewMode] = useIsPreviewMode();
-  const nextBreakpoint = useNextBreakpoint();
 
   // Ensure the size is within currently selected breakpoint when returning to design mode out of preview mode,
   // because preview mode enables resizing without constraining to the selected breakpoint.
@@ -19,11 +17,8 @@ export const useUpdateCanvasWidth = () => {
     if (isPreviewMode || selectedBreakpoint === undefined) {
       return;
     }
-    const nextWidth = nextBreakpoint
-      ? nextBreakpoint.minWidth - 1
-      : selectedBreakpoint.minWidth;
-    setCanvasWidth(Math.max(nextWidth, minWidth));
-  }, [isPreviewMode, nextBreakpoint, selectedBreakpoint, setCanvasWidth]);
+    setCanvasWidth(Math.max(selectedBreakpoint.minWidth, minWidth));
+  }, [isPreviewMode, selectedBreakpoint, setCanvasWidth]);
 
   // This fallback is needed for cases when something unexpected loads in the iframe.
   // In that case the width remains 0, and user is unable to see what has loaded,
