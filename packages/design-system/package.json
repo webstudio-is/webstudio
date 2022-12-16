@@ -28,6 +28,7 @@
     "@storybook/testing-library": "^0.0.13",
     "@webstudio-is/scripts": "*",
     "@webstudio-is/jest-config": "*",
+    "@webstudio-is/tsconfig": "*",
     "typescript": "4.7.4"
   },
   "peerDependencies": {

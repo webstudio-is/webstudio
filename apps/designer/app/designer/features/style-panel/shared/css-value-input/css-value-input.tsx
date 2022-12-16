@@ -26,7 +26,6 @@ import {
   useCallback,
   useEffect,
   useRef,
-  useState,
 } from "react";
 import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
@@ -58,12 +57,10 @@ const useScrub = ({
   shouldHandleEvent?: (node: EventTarget) => boolean;
 }): [
   React.MutableRefObject<HTMLDivElement | null>,
-  React.MutableRefObject<HTMLInputElement | null>,
-  boolean
+  React.MutableRefObject<HTMLInputElement | null>
 ] => {
   const scrubRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [isInputActive, setIsInputActive] = useState(false);
 
   const onChangeRef = useRef(onChange);
   const onChangeCompleteRef = useRef(onChangeComplete);
@@ -107,8 +104,9 @@ const useScrub = ({
         }
       },
       onValueInput(event) {
-        setIsInputActive(true);
-        inputRefCurrent.blur();
+        // Moving focus to container of the input to hide the caret
+        // (it makes text harder to read and may jump around as you scrub)
+        scrubRef.current?.focus();
 
         onChangeRef.current({
           type,
@@ -127,9 +125,9 @@ const useScrub = ({
           });
         });
 
-        setIsInputActive(false);
-        inputRefCurrent.focus();
-        inputRefCurrent.select();
+        // Returning focus that we've moved above
+        inputRef.current?.focus();
+        inputRef.current?.select();
       },
       shouldHandleEvent: shouldHandleEvent,
     });
@@ -137,7 +135,7 @@ const useScrub = ({
     return scrub.disconnectedCallback;
   }, [type, unit, shouldHandleEvent]);
 
-  return [scrubRef, inputRef, isInputActive];
+  return [scrubRef, inputRef];
 };
 
 const useHandleKeyDown =
@@ -308,7 +306,8 @@ export const CssValueInput = ({
   const shouldHandleEvent = useCallback((node) => {
     return suffixRef.current?.contains?.(node) === false;
   }, []);
-  const [scrubRef, inputRef, isInputActive] = useScrub({
+
+  const [scrubRef, inputRef] = useScrub({
     value,
     onChange: props.onChange,
     onChangeComplete,
@@ -392,13 +391,7 @@ export const CssValueInput = ({
             baseRef={scrubRef}
             inputRef={inputRef}
             name={property}
-            state={
-              value.type === "invalid"
-                ? "invalid"
-                : isInputActive
-                ? "active"
-                : undefined
-            }
+            state={value.type === "invalid" ? "invalid" : undefined}
             prefix={prefix}
             suffix={suffix}
             css={{ cursor: "default" }}
