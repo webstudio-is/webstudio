@@ -41,6 +41,22 @@ type UseScrollState = {
   onScrollEnd?: () => void;
 };
 
+export const subscribeScrollState = ({
+  onScroll = noop,
+  onScrollStart = noop,
+  onScrollEnd = noop,
+}: UseScrollState) => {
+  emitter.on("scrollStart", onScrollStart);
+  emitter.on("scroll", onScroll);
+  emitter.on("scrollEnd", onScrollEnd);
+
+  return () => {
+    emitter.off("scrollStart", onScrollStart);
+    emitter.off("scroll", onScroll);
+    emitter.off("scrollEnd", onScrollEnd);
+  };
+};
+
 /**
  * Scroll state abstraction that can handle a lot of subscribers well.
  * Potentially could add rate limiting and actual scroll top/left values.

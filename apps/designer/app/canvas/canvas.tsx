@@ -21,8 +21,6 @@ import {
   usePublishSelectedInstanceData,
   usePublishTextEditingInstanceId,
   useReparentInstance,
-  useSetHoveredInstance,
-  usePublishHoveredInstanceData,
   useUnselectInstance,
   useUpdateSelectedInstance,
 } from "./shared/instance";
@@ -54,6 +52,7 @@ import {
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { useSelectedInstance } from "./shared/nano-states";
 import { customComponents } from "./custom-components";
+import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 
 registerContainers();
 
@@ -145,8 +144,6 @@ const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useDeleteInstance();
   usePublishRootInstance();
   useTrackSelectedElement();
-  useSetHoveredInstance();
-  usePublishHoveredInstanceData();
   useSync({ buildId, treeId });
   useUpdateSelectedInstance();
   useUnselectInstance();
@@ -155,6 +152,8 @@ const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   usePublishTextEditingInstanceId();
   useDragAndDrop();
   useCopyPaste();
+
+  useHoveredInstanceConnector();
 
   return null;
 };

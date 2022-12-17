@@ -5,8 +5,3 @@ export const selectedInstanceContainer = createValueContainer<
   Instance | undefined
 >();
 export const useSelectedInstance = () => useValue(selectedInstanceContainer);
-
-export const hoveredInstanceContainer = createValueContainer<
-  Instance | undefined
->();
-export const useHoveredInstance = () => useValue(hoveredInstanceContainer);

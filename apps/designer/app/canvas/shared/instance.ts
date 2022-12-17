@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   type Instance,
   type UserProp,
@@ -15,19 +15,14 @@ import {
   type SelectedInstanceData,
 } from "@webstudio-is/project";
 import store from "immerhin";
-import { useSelectedInstance, useHoveredInstance } from "./nano-states";
+import { useSelectedInstance } from "./nano-states";
 import {
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import {
-  findInstanceByElement,
-  getInstanceElementById,
-} from "~/shared/dom-utils";
 import { publish } from "~/shared/pubsub";
-import { useTrackHoveredElement } from "./use-track-hovered-element";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -195,23 +190,6 @@ export const usePublishSelectedInstanceData = () => {
   }, [instance]);
 };
 
-export const usePublishHoveredInstanceData = () => {
-  const [instance] = useHoveredInstance();
-
-  useEffect(() => {
-    const payload = instance
-      ? {
-          id: instance.id,
-          component: instance.component,
-        }
-      : undefined;
-    publish({
-      type: "hoverInstance",
-      payload,
-    });
-  }, [instance]);
-};
-
 export const usePublishRootInstance = () => {
   const [rootInstance] = useRootInstance();
   useEffect(() => {
@@ -220,44 +198,6 @@ export const usePublishRootInstance = () => {
       payload: rootInstance,
     });
   }, [rootInstance]);
-};
-
-export const useSetHoveredInstance = () => {
-  const [rootInstance] = useRootInstance();
-  const [, setHoveredInstance] = useHoveredInstance();
-
-  const [hoveredElement, setHoveredElement] = useState<HTMLElement | undefined>(
-    undefined
-  );
-
-  useTrackHoveredElement(setHoveredElement);
-
-  useSubscribe(
-    "navigatorHoveredInstance",
-    useCallback((instance) => {
-      setHoveredElement(
-        instance && (getInstanceElementById(instance.id) || undefined)
-      );
-    }, [])
-  );
-
-  useEffect(() => {
-    if (hoveredElement === undefined) {
-      return;
-    }
-    publish({
-      type: "hoveredInstanceRect",
-      payload: hoveredElement.getBoundingClientRect(),
-    });
-  }, [hoveredElement]);
-
-  useEffect(() => {
-    let instance;
-    if (rootInstance !== undefined && hoveredElement) {
-      instance = findInstanceByElement(rootInstance, hoveredElement);
-    }
-    setHoveredInstance(instance);
-  }, [rootInstance, hoveredElement, setHoveredInstance]);
 };
 
 /**
