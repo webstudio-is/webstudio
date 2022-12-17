@@ -1,6 +1,6 @@
 import hyphenate from "hyphenate-style-name";
 import { categories, type Category } from "@webstudio-is/react-sdk";
-import type { CssRule, Style } from "@webstudio-is/css-data";
+import type { CssRule, Style, StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 
 import { type StyleConfig, styleConfigs } from "./shared/configs";
@@ -90,6 +90,7 @@ export type StyleSettingsProps = {
   inheritedStyle: InheritedStyle;
   cssRule?: CssRule;
   setProperty: SetProperty;
+  deleteProperty: (property: StyleProperty) => void;
   createBatchUpdate: CreateBatchUpdate;
   selectedInstanceData: SelectedInstanceData;
   search: string;
@@ -97,6 +98,7 @@ export type StyleSettingsProps = {
 
 export const StyleSettings = ({
   setProperty,
+  deleteProperty,
   createBatchUpdate,
   currentStyle,
   search,
@@ -126,6 +128,7 @@ export const StyleSettings = ({
       const element = {
         ...rest,
         setProperty,
+        deleteProperty,
         currentStyle,
         styleConfig,
         category,
@@ -156,6 +159,7 @@ export const StyleSettings = ({
     const categoryProps = {
       ...rest,
       setProperty,
+      deleteProperty,
       createBatchUpdate,
       currentStyle,
       category,

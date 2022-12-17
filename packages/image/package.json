@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/image",
-  "version": "0.15.0",
+  "version": "0.17.0",
   "description": "Image optimization",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -18,15 +18,22 @@
     "generate-types": "generate-arg-types",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
-  "dependencies": {},
+  "dependencies": {
+    "react": "^17.0.2",
+    "warn-once": "^0.1.1"
+  },
   "devDependencies": {
+    "@jest/globals": "^29.3.1",
     "@storybook/jest": "^0.0.10",
     "@storybook/react": "^6.5.14",
     "@storybook/testing-library": "^0.0.13",
+    "@types/react": "^17.0.24",
     "@webstudio-is/generate-arg-types": "*",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/scripts": "*",
     "@webstudio-is/storybook-config": "*",
+    "@webstudio-is/tsconfig": "*",
+    "jest": "^29.3.1",
     "typescript": "4.7.4"
   },
   "peerDependencies": {

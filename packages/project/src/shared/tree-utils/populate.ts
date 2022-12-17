@@ -3,7 +3,7 @@ import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 
 /**
  * Populate instance with:
- * - defaultStyles
+ * - presetStyle
  * @todo rewrite using immer
  */
 export const populateInstance = (
@@ -12,10 +12,10 @@ export const populateInstance = (
 ): Instance => {
   const populatedInstance = { ...instance };
   const componentMeta = getComponentMeta(instance.component);
-  if (componentMeta !== undefined && "defaultStyle" in componentMeta) {
+  if (componentMeta !== undefined && "presetStyle" in componentMeta) {
     const cssRule = {
       breakpoint,
-      style: componentMeta.defaultStyle ?? {},
+      style: componentMeta.presetStyle ?? {},
     };
     populatedInstance.cssRules.push(cssRule);
   }

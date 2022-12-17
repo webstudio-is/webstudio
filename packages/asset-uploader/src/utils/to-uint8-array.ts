@@ -1,10 +1,8 @@
 export const toUint8Array = async (data: AsyncIterable<Uint8Array>) => {
   const result = [];
   for await (const chunk of data) {
-    for (const byte of chunk) {
-      result.push(byte);
-    }
+    result.push(Buffer.from(chunk));
   }
 
-  return Uint8Array.from(result);
+  return new Uint8Array(Buffer.concat(result));
 };

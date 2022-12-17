@@ -30,14 +30,15 @@ export const FlexChildSection = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionAlign = (props: RenderCategoryProps) => {
-  const { setProperty, currentStyle, sectionStyle } = props;
+  const { setProperty, deleteProperty, currentStyle, sectionStyle } = props;
   const setAlignSelf = setProperty("alignSelf");
 
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
-        property={sectionStyle.alignSelf?.styleConfig.property}
+        property="alignSelf"
         label="Align"
+        onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
         property={sectionStyle.alignSelf?.styleConfig.property}
@@ -87,11 +88,13 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
-        property={[
-          sectionStyle.flexGrow?.styleConfig.property,
-          sectionStyle.flexShrink?.styleConfig.property,
-        ]}
+        property={["flexGrow", "flexShrink"]}
         label="Sizing"
+        onReset={() => {
+          setSizing.deleteProperty("flexGrow");
+          setSizing.deleteProperty("flexShrink");
+          setSizing.publish();
+        }}
       />
       <ToggleGroupControl
         property={[
@@ -152,6 +155,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionSizingPopover = ({
+  deleteProperty,
   sectionStyle,
 }: RenderCategoryProps) => {
   return (
@@ -167,22 +171,25 @@ const FlexChildSectionSizingPopover = ({
         >
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
-              property={sectionStyle.flexBasis?.styleConfig.property}
+              property="flexBasis"
               label="Basis"
+              onReset={() => deleteProperty("flexBasis")}
             />
             <TextControl {...sectionStyle.flexBasis} />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
-              property={sectionStyle.flexGrow?.styleConfig.property}
+              property="flexGrow"
               label="Grow"
+              onReset={() => deleteProperty("flexGrow")}
             />
             <TextControl {...sectionStyle.flexGrow} />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
-              property={sectionStyle.flexShrink?.styleConfig.property}
+              property="flexShrink"
               label="Shrink"
+              onReset={() => deleteProperty("flexShrink")}
             />
             <TextControl {...sectionStyle.flexShrink} />
           </Grid>
@@ -197,14 +204,15 @@ const FlexChildSectionSizingPopover = ({
 };
 
 const FlexChildSectionOrder = (props: RenderCategoryProps) => {
-  const { setProperty, currentStyle, sectionStyle } = props;
+  const { deleteProperty, setProperty, currentStyle, sectionStyle } = props;
   const setOrder = setProperty("order");
 
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
-        property={sectionStyle.order?.styleConfig.property}
+        property="order"
         label="Order"
+        onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
         property={sectionStyle.order?.styleConfig.property}
@@ -247,7 +255,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
-  const { sectionStyle } = props;
+  const { deleteProperty, sectionStyle } = props;
   return (
     <ValuePickerPopover
       title="Order"
@@ -255,8 +263,9 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
         <Grid css={{ padding: "$spacing$9" }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
-              property={sectionStyle.order?.styleConfig.property}
+              property="order"
               label="Order"
+              onReset={() => deleteProperty("order")}
             />
             <TextControl {...sectionStyle.order} />
           </Grid>

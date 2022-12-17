@@ -2,7 +2,7 @@ import { BodyIcon } from "@webstudio-is/icons";
 import type { WsComponentMeta, MetaProps } from "./component-type";
 import props from "./__generated__/body.props.json";
 
-const defaultStyle = {
+const presetStyle = {
   marginTop: {
     type: "unit",
     unit: "px",
@@ -57,7 +57,7 @@ const meta: WsComponentMeta = {
   label: "Body",
   Icon: BodyIcon,
   props: props as MetaProps,
-  defaultStyle,
+  presetStyle,
 };
 
 export default meta;

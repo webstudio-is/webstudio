@@ -80,7 +80,11 @@ const $isSelectedLink = (selection: RangeSelection) => {
   return $getNearestNodeOfType(selectedNode, LinkNode) != null;
 };
 
-export const ToolbarConnectorPlugin = () => {
+export const ToolbarConnectorPlugin = ({
+  onSelectNode,
+}: {
+  onSelectNode: (nodeKey: string) => void;
+}) => {
   const [editor] = useLexicalComposerContext();
   const isMouseDownRef = useRef(false);
 
@@ -211,9 +215,26 @@ export const ToolbarConnectorPlugin = () => {
       }
     }
     if (type === "span") {
-      editor.update(() => {
-        $toggleSpan();
-      });
+      editor.update(
+        () => {
+          $toggleSpan();
+        },
+        {
+          onUpdate: () => {
+            const editorState = editor.getEditorState();
+            editorState.read(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                const spans = $getSpanNodes(selection);
+                if (spans.length !== 0) {
+                  const [node] = spans;
+                  onSelectNode(node.getKey());
+                }
+              }
+            });
+          },
+        }
+      );
     }
     if (type === "clear") {
       editor.update(() => {

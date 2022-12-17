@@ -27,7 +27,13 @@ const useAvailableFontWeights = (
   // Find all font weights that are available for the current font family.
   return useMemo(() => {
     const found = allFontWeights.filter((option) => {
-      return assets.find((asset) => {
+      return assets.find((clientAsset) => {
+        if (clientAsset.status !== "uploaded") {
+          return false;
+        }
+
+        const { asset } = clientAsset;
+
         return (
           "meta" in asset &&
           "family" in asset.meta &&
@@ -87,14 +93,13 @@ export const FontWeightControl = ({
     toValue(fontWeight)
   );
 
-  if (fontWeight === undefined) {
-    return null;
-  }
-
   const setValue = setProperty(styleConfig.property);
 
   return (
     <Select
+      // show empty field instead of radix placeholder
+      // like css value input does
+      placeholder=""
       options={labels}
       // We use a weight as a value, because there are only 9 weights and they are unique.
       value={selectedLabel}

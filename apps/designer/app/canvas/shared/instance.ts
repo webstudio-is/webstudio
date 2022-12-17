@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   type Instance,
   type UserProp,
   type Tree,
   getComponentMeta,
   allUserPropsContainer,
-  getBrowserStyle,
-  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 
 import { useSubscribe } from "~/shared/pubsub";
@@ -17,18 +15,13 @@ import {
   type SelectedInstanceData,
 } from "@webstudio-is/project";
 import store from "immerhin";
-import {
-  useSelectedInstance,
-  useSelectedElement,
-  useHoveredInstance,
-} from "./nano-states";
+import { useSelectedInstance, useHoveredInstance } from "./nano-states";
 import {
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { useMeasureInstance } from "~/canvas/shared/use-measure-instance";
 import {
   findInstanceByElement,
   getInstanceElementById,
@@ -188,35 +181,18 @@ export const useDeleteInstance = () => {
   });
 };
 
-export const usePublishSelectedInstanceData = (treeId: Tree["id"]) => {
+export const usePublishSelectedInstanceData = () => {
   const [instance] = useSelectedInstance();
-  const [selectedElement] = useSelectedElement();
-  const [allUserProps] = useAllUserProps();
-  const browserStyle = useMemo(
-    () => getBrowserStyle(selectedElement),
-    [selectedElement]
-  );
 
   useEffect(() => {
     // Unselects the instance by `undefined`
-    let payload;
-    if (instance !== undefined) {
-      const props =
-        allUserProps[instance.id] ??
-        utils.props.createInstanceProps({ instanceId: instance.id, treeId });
-      payload = {
-        id: instance.id,
-        component: instance.component,
-        cssRules: instance.cssRules,
-        browserStyle,
-        props,
-      };
+    if (instance === undefined) {
+      publish({
+        type: "selectInstance",
+        payload: undefined,
+      });
     }
-    publish({
-      type: "selectInstance",
-      payload,
-    });
-  }, [instance, allUserProps, treeId, browserStyle]);
+  }, [instance]);
 };
 
 export const usePublishHoveredInstanceData = () => {
@@ -244,24 +220,6 @@ export const usePublishRootInstance = () => {
       payload: rootInstance,
     });
   }, [rootInstance]);
-};
-
-const publishRect = (rect: DOMRect) => {
-  publish({
-    type: "selectedInstanceRect",
-    payload: rect,
-  });
-};
-
-export const usePublishSelectedInstanceDataRect = () => {
-  const [element] = useSelectedElement();
-  const rect = useMeasureInstance(element);
-
-  useEffect(() => {
-    if (rect) {
-      publishRect(rect);
-    }
-  }, [rect]);
 };
 
 export const useSetHoveredInstance = () => {

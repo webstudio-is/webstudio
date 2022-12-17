@@ -5,16 +5,12 @@ import {
   getComponentNames,
 } from "@webstudio-is/react-sdk";
 import { useSubscribe } from "~/shared/pubsub";
-import { useSelectedElement, useSelectedInstance } from "./nano-states";
+import { useSelectedInstance } from "./nano-states";
 import {
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { utils } from "@webstudio-is/project";
-import {
-  getInstanceElementById,
-  getInstanceIdFromElement,
-} from "~/shared/dom-utils";
 import { publish } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
@@ -28,7 +24,6 @@ const eventOptions = {
 };
 
 export const useTrackSelectedElement = () => {
-  const [selectedElement, setSelectedElement] = useSelectedElement();
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
   const editingInstanceIdRef = useRef(editingInstanceId);
@@ -46,21 +41,6 @@ export const useTrackSelectedElement = () => {
   );
 
   useSubscribe("selectInstanceById", selectInstance);
-
-  // Focus and select the element when selected instance changes
-  useEffect(() => {
-    if (
-      selectedInstance !== undefined &&
-      (selectedElement === undefined ||
-        selectedInstance?.id !== getInstanceIdFromElement(selectedElement))
-    ) {
-      const element = getInstanceElementById(selectedInstance.id);
-      if (element === null) {
-        return;
-      }
-      setSelectedElement(element);
-    }
-  }, [selectedInstance, selectedElement, setSelectedElement]);
 
   useEffect(() => {
     if (

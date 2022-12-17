@@ -82,5 +82,17 @@ export const createPubsub = <PublishMap>() => {
         };
       }, [onAction]);
     },
+
+    subscribeAll(
+      onAction: <Type extends keyof PublishMap>(
+        type: Type,
+        payload: PublishMap[Type]
+      ) => void
+    ) {
+      emitter.on("*", onAction);
+      return () => {
+        emitter.off("*", onAction);
+      };
+    },
   };
 };

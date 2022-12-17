@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { getFontFaces, type PartialFontAsset } from "./get-font-faces";
 
 describe("getFontFaces()", () => {

@@ -1,17 +1,21 @@
-import { MouseEvent, FormEvent } from "react";
+import { type MouseEvent, type FormEvent, useMemo } from "react";
+import { useRef } from "react";
 import { Suspense, lazy, useCallback } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
-  useUserProps,
-  renderWrapperComponentChildren,
-  getComponent,
   type Instance,
   type OnChangeChildren,
+  type UserProp,
+  renderWrapperComponentChildren,
+  getComponent,
   idAttribute,
+  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
-import { useSelectedElement } from "~/canvas/shared/nano-states";
+import { useSelectedInstance } from "~/canvas/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
+import { publish } from "~/shared/pubsub";
+import { SelectedInstanceConnector } from "./selected-instance-connector";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -20,22 +24,23 @@ const ContentEditable = ({
   elementRef,
   ...props
 }: {
-  // eslint-disable-next-line
-  Component: any;
-  elementRef: (element: null | HTMLElement) => void;
+  Component: ReturnType<typeof getComponent>;
+  elementRef: { current: undefined | HTMLElement };
 }) => {
   const [editor] = useLexicalComposerContext();
 
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
       editor.setRootElement(rootElement);
-      elementRef(rootElement);
+      elementRef.current = rootElement ?? undefined;
     },
     [editor, elementRef]
   );
 
   return <Component ref={ref} {...props} contentEditable={true} />;
 };
+
+type UserProps = Record<UserProp["prop"], string | number | boolean>;
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -47,24 +52,30 @@ export const WrapperComponentDev = ({
   instance,
   children,
   onChangeChildren,
-  ...rest
 }: WrapperComponentDevProps) => {
   useCssRules(instance);
 
-  const [editingInstanceId] = useTextEditingInstanceId();
-  const [, setSelectedElement] = useSelectedElement();
+  const [editingInstanceId, setTextEditingInstanceId] =
+    useTextEditingInstanceId();
+  const [selectedInstance] = useSelectedInstance();
 
-  const refCallback = useCallback(
-    (element) => {
-      // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
-      if (element !== null) {
-        setSelectedElement(element);
+  const [allUserProps] = useAllUserProps();
+  const instanceProps = allUserProps[instance.id];
+  const userProps = useMemo(() => {
+    const result: UserProps = {};
+    if (instanceProps === undefined) {
+      return result;
+    }
+    for (const item of instanceProps.props) {
+      if (item.type !== "asset") {
+        result[item.prop] = item.value;
       }
-    },
-    [setSelectedElement]
-  );
+    }
+    return result;
+  }, [instanceProps]);
 
-  const userProps = useUserProps(instance.id);
+  const instanceElementRef = useRef<HTMLElement>();
+
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
 
@@ -72,10 +83,8 @@ export const WrapperComponentDev = ({
 
   const props = {
     ...userProps,
-    ...rest,
     ...readonlyProps,
     tabIndex: 0,
-    // @todo stop using id to free it up to the user
     // we should replace id, data-component and data-id with "data-ws"=instance.id and grab the rest always over the id
     // for this we need to also make search by id fast
     id: instance.id,
@@ -96,7 +105,20 @@ export const WrapperComponentDev = ({
   };
 
   const instanceElement = (
-    <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
+    <>
+      {selectedInstance?.id === instance.id && (
+        <SelectedInstanceConnector
+          instanceElementRef={instanceElementRef}
+          instance={instance}
+          instanceProps={instanceProps}
+        />
+      )}
+      {/* Component includes many types and it's hard to provide right ref type with useRef */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <Component {...props} ref={instanceElementRef as any}>
+        {renderWrapperComponentChildren(children)}
+      </Component>
+    </>
   );
 
   if (editingInstanceId !== instance.id) {
@@ -110,12 +132,19 @@ export const WrapperComponentDev = ({
         contentEditable={
           <ContentEditable
             {...props}
-            elementRef={refCallback}
+            elementRef={instanceElementRef}
             Component={Component}
           />
         }
         onChange={(updates) => {
           onChangeChildren?.({ instanceId: instance.id, updates });
+        }}
+        onSelectInstance={(instanceId) => {
+          setTextEditingInstanceId(undefined);
+          publish({
+            type: "selectInstanceById",
+            payload: instanceId,
+          });
         }}
       />
     </Suspense>

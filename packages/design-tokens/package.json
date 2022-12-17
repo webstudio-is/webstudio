@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/design-tokens",
-  "version": "0.15.0",
+  "version": "0.17.0",
   "description": "Webstudio Design Tokens",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -20,7 +20,9 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
+    "@types/node": "^17.0.21",
     "@webstudio-is/scripts": "*",
+    "@webstudio-is/tsconfig": "*",
     "typescript": "4.7.4"
   },
   "exports": {

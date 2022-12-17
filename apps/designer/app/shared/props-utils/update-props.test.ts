@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { Asset } from "@webstudio-is/asset-uploader";
 import {
   type AllUserProps,
@@ -18,10 +19,9 @@ describe("Update props", () => {
     const update: UserPropsUpdates = {
       propsId: "id",
       instanceId: "instanceId",
-      treeId: "treeId",
       updates: [],
     };
-    updateAllUserPropsMutable(propsMap, update);
+    updateAllUserPropsMutable("treeId", propsMap, update);
     expect(propsMap).toMatchSnapshot();
   });
 
@@ -37,10 +37,9 @@ describe("Update props", () => {
     const update: UserPropsUpdates = {
       propsId: "id",
       instanceId: "instanceId",
-      treeId: "treeId",
       updates: [{ id: "propId", prop: "a", value: "1", type: "string" }],
     };
-    updateAllUserPropsMutable(propsMap, update);
+    updateAllUserPropsMutable("treeId", propsMap, update);
     expect(propsMap).toMatchSnapshot();
   });
 
@@ -56,10 +55,9 @@ describe("Update props", () => {
     const update: UserPropsUpdates = {
       propsId: "id",
       instanceId: "instanceId",
-      treeId: "treeId",
       updates: [{ id: "propId", prop: "a", value: "2", type: "string" }],
     };
-    updateAllUserPropsMutable(propsMap, update);
+    updateAllUserPropsMutable("treeId", propsMap, update);
     expect(propsMap).toMatchSnapshot();
   });
 
@@ -75,10 +73,9 @@ describe("Update props", () => {
     const update: UserPropsUpdates = {
       propsId: "id",
       instanceId: "instanceId",
-      treeId: "treeId",
       updates: [{ id: "propId", prop: "b", value: "1", type: "string" }],
     };
-    updateAllUserPropsMutable(propsMap, update);
+    updateAllUserPropsMutable("treeId", propsMap, update);
     expect(propsMap).toMatchSnapshot();
   });
 
@@ -94,7 +91,6 @@ describe("Update props", () => {
     const update: UserPropsUpdates = {
       propsId: "id",
       instanceId: "instanceId",
-      treeId: "treeId",
       updates: [
         {
           id: "propId",
@@ -104,7 +100,7 @@ describe("Update props", () => {
         },
       ],
     };
-    updateAllUserPropsMutable(propsMap, update);
+    updateAllUserPropsMutable("treeId", propsMap, update);
     expect(propsMap).toMatchInlineSnapshot(`
       {
         "instanceId": {

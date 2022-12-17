@@ -15,11 +15,15 @@ export const ColorControl = ({
     currentStyle,
     inheritedStyle,
     property: styleConfig.property,
-  });
-
-  if (value === undefined) {
-    return null;
-  }
+  }) ?? {
+    // provide default value to avoid control hiding
+    // when value is recomputed
+    type: "rgb" as const,
+    r: 0,
+    g: 0,
+    b: 0,
+    alpha: 0,
+  };
 
   const setValue = setProperty(styleConfig.property);
 

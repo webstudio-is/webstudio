@@ -18,6 +18,7 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
+    "@webstudio-is/tsconfig": "*",
     "typescript": "4.7.4",
     "esbuild": "^0.14.25"
   },

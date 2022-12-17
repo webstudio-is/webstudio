@@ -18,6 +18,8 @@ export const loader: ActionFunction = async ({ request }) => {
     return new Response(cssText, {
       headers: {
         "Content-Type": "text/css",
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+        "Cache-Control": "public, max-age=31536000, immutable",
       },
     });
   } catch (error) {

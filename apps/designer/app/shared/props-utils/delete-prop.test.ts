@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { type AllUserProps } from "@webstudio-is/react-sdk";
 import { deletePropMutable } from "./delete-prop";
 
