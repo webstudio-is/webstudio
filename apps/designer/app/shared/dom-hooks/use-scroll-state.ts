@@ -64,19 +64,16 @@ export const subscribeScrollState = ({
  * Potentially could add rate limiting and actual scroll top/left values.
  */
 export const useScrollState = ({
-  onScroll = noop,
-  onScrollStart = noop,
-  onScrollEnd = noop,
+  onScroll,
+  onScrollStart,
+  onScrollEnd,
 }: UseScrollState) => {
   useEffect(() => {
-    emitter.on("scrollStart", onScrollStart);
-    emitter.on("scroll", onScroll);
-    emitter.on("scrollEnd", onScrollEnd);
-
-    return () => {
-      emitter.off("scrollStart", onScrollStart);
-      emitter.off("scroll", onScroll);
-      emitter.off("scrollEnd", onScrollEnd);
-    };
+    const unsubscribe = subscribeScrollState({
+      onScrollStart,
+      onScroll,
+      onScrollEnd,
+    });
+    return unsubscribe;
   }, [onScroll, onScrollEnd, onScrollStart]);
 };
