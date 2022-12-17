@@ -10,31 +10,29 @@ if (typeof window === "object") {
     passive: true,
     capture: true,
   };
-  window.addEventListener(
-    "scroll",
-    () => {
-      emitter.emit("scroll");
-    },
-    eventOptions
-  );
 
   let timeoutId = 0;
   let isScrolling = false;
 
-  emitter.on("scroll", () => {
-    if (isScrolling === false) {
-      emitter.emit("scrollStart");
-    }
-    isScrolling = true;
-    clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => {
+  window.addEventListener(
+    "scroll",
+    () => {
       if (isScrolling === false) {
-        return;
+        emitter.emit("scrollStart");
       }
-      isScrolling = false;
-      emitter.emit("scrollEnd");
-    }, 150);
-  });
+      emitter.emit("scroll");
+      isScrolling = true;
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        if (isScrolling === false) {
+          return;
+        }
+        isScrolling = false;
+        emitter.emit("scrollEnd");
+      }, 150);
+    },
+    eventOptions
+  );
 }
 
 type UseScrollState = {
