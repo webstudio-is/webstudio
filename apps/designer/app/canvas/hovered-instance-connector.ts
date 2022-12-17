@@ -93,6 +93,7 @@ export const useHoveredInstanceConnector = () => {
     });
 
     return () => {
+      publishHover.cancel();
       window.removeEventListener("mouseover", handleMouseOver);
       window.removeEventListener("mouseout", handleMouseOut);
       unsubscribeNavigatorHoveredInstance();
