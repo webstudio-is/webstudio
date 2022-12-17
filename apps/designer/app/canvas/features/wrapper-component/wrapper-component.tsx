@@ -12,10 +12,7 @@ import {
   useAllUserProps,
 } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
-import {
-  useSelectedElement,
-  useSelectedInstance,
-} from "~/canvas/shared/nano-states";
+import { useSelectedInstance } from "~/canvas/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { publish } from "~/shared/pubsub";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
@@ -28,14 +25,14 @@ const ContentEditable = ({
   ...props
 }: {
   Component: ReturnType<typeof getComponent>;
-  elementRef: (element: undefined | HTMLElement) => void;
+  elementRef: { current: undefined | HTMLElement };
 }) => {
   const [editor] = useLexicalComposerContext();
 
   const ref = useCallback(
     (rootElement: null | HTMLElement) => {
       editor.setRootElement(rootElement);
-      elementRef(rootElement ?? undefined);
+      elementRef.current = rootElement ?? undefined;
     },
     [editor, elementRef]
   );
@@ -61,7 +58,6 @@ export const WrapperComponentDev = ({
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
   const [selectedInstance] = useSelectedInstance();
-  const [, setSelectedElement] = useSelectedElement();
 
   const [allUserProps] = useAllUserProps();
   const instanceProps = allUserProps[instance.id];
@@ -79,17 +75,6 @@ export const WrapperComponentDev = ({
   }, [instanceProps]);
 
   const instanceElementRef = useRef<HTMLElement>();
-
-  const refCallback = useCallback(
-    (element: undefined | HTMLElement) => {
-      // When entering text editing we unmount the instance element, so we need to update the reference, otherwise we have a detached element referenced and bounding box will be wrong.
-      if (element !== undefined) {
-        setSelectedElement(element);
-      }
-      instanceElementRef.current = element;
-    },
-    [setSelectedElement]
-  );
 
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
@@ -147,7 +132,7 @@ export const WrapperComponentDev = ({
         contentEditable={
           <ContentEditable
             {...props}
-            elementRef={refCallback}
+            elementRef={instanceElementRef}
             Component={Component}
           />
         }
