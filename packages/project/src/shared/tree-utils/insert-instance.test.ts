@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { insertInstanceMutable } from "./insert-instance";
 import { createInstance } from "./create-instance";

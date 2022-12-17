@@ -33,6 +33,7 @@
     "@storybook/manager-webpack4": "^6.5.6",
     "@storybook/react": "^6.5.6",
     "@storybook/testing-library": "^0.0.13",
+    "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
     "@webstudio-is/css-data": "*",

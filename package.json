@@ -25,6 +25,7 @@
     "@changesets/get-dependents-graph": "^1.3.4",
     "@manypkg/get-packages": "^1.1.3",
     "@storybook/react": "^6.5.9",
+    "@types/css-tree": "^2.0.0",
     "@webstudio-is/eslint-config-custom": "*",
     "chromatic": "^6.11.4",
     "golden-fleece": "^1.0.9",

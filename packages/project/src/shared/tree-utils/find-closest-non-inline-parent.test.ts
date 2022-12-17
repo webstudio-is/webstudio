@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { createInstance } from "./create-instance";
 import { findClosestNonInlineParent } from "./find-closest-non-inline-parent";
 
