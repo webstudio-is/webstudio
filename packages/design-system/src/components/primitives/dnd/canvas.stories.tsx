@@ -351,4 +351,6 @@ export const Canvas = () => {
   );
 };
 
-export default {} as ComponentMeta<typeof Canvas>;
+export default {
+  component: Canvas,
+} as ComponentMeta<typeof Canvas>;

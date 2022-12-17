@@ -24,14 +24,8 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/addon-actions": "^6.5.6",
-    "@storybook/addon-essentials": "^6.5.6",
-    "@storybook/addon-interactions": "^6.5.12",
-    "@storybook/addon-links": "^6.5.6",
-    "@storybook/builder-webpack4": "^6.5.6",
     "@storybook/jest": "^0.0.10",
-    "@storybook/manager-webpack4": "^6.5.6",
-    "@storybook/react": "^6.5.6",
+    "@storybook/react": "^6.5.14",
     "@storybook/testing-library": "^0.0.13",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^17.0.24",
@@ -39,6 +33,7 @@
     "@webstudio-is/css-data": "*",
     "@webstudio-is/jest-config": "*",
     "@webstudio-is/scripts": "*",
+    "@webstudio-is/storybook-config": "*",
     "@webstudio-is/tsconfig": "*",
     "jest": "^29.3.1",
     "typescript": "4.7.4"
