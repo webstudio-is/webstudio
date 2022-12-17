@@ -17,6 +17,7 @@
     "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
+    "@types/node": "^17.0.21",
     "@types/uuid": "^8.3.4",
     "@webstudio-is/scripts": "*",
     "@webstudio-is/tsconfig": "*",
