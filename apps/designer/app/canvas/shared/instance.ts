@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   type Instance,
   type UserProp,
   type Tree,
   getComponentMeta,
   allUserPropsContainer,
-  getBrowserStyle,
-  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 
 import { useSubscribe } from "~/shared/pubsub";
@@ -17,11 +15,7 @@ import {
   type SelectedInstanceData,
 } from "@webstudio-is/project";
 import store from "immerhin";
-import {
-  useSelectedInstance,
-  useSelectedElement,
-  useHoveredInstance,
-} from "./nano-states";
+import { useSelectedInstance, useHoveredInstance } from "./nano-states";
 import {
   rootInstanceContainer,
   useBreakpoints,
@@ -189,37 +183,16 @@ export const useDeleteInstance = () => {
 
 export const usePublishSelectedInstanceData = () => {
   const [instance] = useSelectedInstance();
-  const [selectedElement] = useSelectedElement();
-  const [allUserProps] = useAllUserProps();
-
-  // trigger style recomputing every time
-  // new updates for this node are sent from designer
-  const [styleKey, recomputeStyles] = useReducer((d) => d + 1, 0);
-  useSubscribe("updateStyle", ({ id }) => {
-    if (id === instance?.id) {
-      recomputeStyles();
-    }
-  });
 
   useEffect(() => {
     // Unselects the instance by `undefined`
-    let payload: undefined | SelectedInstanceData;
-    if (instance !== undefined) {
-      const props = allUserProps[instance.id];
-      const browserStyle = getBrowserStyle(selectedElement);
-      payload = {
-        id: instance.id,
-        component: instance.component,
-        cssRules: instance.cssRules,
-        browserStyle,
-        props,
-      };
+    if (instance === undefined) {
+      publish({
+        type: "selectInstance",
+        payload: undefined,
+      });
     }
-    publish({
-      type: "selectInstance",
-      payload,
-    });
-  }, [instance, allUserProps, selectedElement, styleKey]);
+  }, [instance]);
 };
 
 export const usePublishHoveredInstanceData = () => {

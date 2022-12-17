@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
-import type { Instance } from "@webstudio-is/react-sdk";
-import { useUserProps } from "@webstudio-is/react-sdk";
+import type { Instance, InstanceProps } from "@webstudio-is/react-sdk";
+import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribeAll } from "~/shared/pubsub";
 import { useScrollState } from "~/shared/dom-hooks";
 
@@ -13,11 +13,12 @@ const publishSelectedRect = (element: HTMLElement) => {
 
 export const SelectedInstanceConnector = ({
   instanceElementRef,
+  instance,
   instanceProps,
 }: {
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
-  instanceProps: ReturnType<typeof useUserProps>;
+  instanceProps: undefined | InstanceProps;
 }) => {
   useEffect(() => {
     const element = instanceElementRef.current;
@@ -67,6 +68,18 @@ export const SelectedInstanceConnector = ({
       });
     }
 
+    // trigger style recomputing every time instance styles are changed
+    publish({
+      type: "selectInstance",
+      payload: {
+        id: instance.id,
+        component: instance.component,
+        cssRules: instance.cssRules,
+        browserStyle: getBrowserStyle(element),
+        props: instanceProps,
+      },
+    });
+
     return () => {
       resizeObserver.disconnect();
       mutationObserver.disconnect();
@@ -74,7 +87,7 @@ export const SelectedInstanceConnector = ({
     };
 
     // instance props may change dom element
-  }, [instanceElementRef, instanceProps]);
+  }, [instanceElementRef, instance, instanceProps]);
 
   const onScrollEnd = useCallback(() => {
     const element = instanceElementRef.current;

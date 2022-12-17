@@ -1,14 +1,15 @@
-import type { MouseEvent, FormEvent } from "react";
+import { type MouseEvent, type FormEvent, useMemo } from "react";
 import { useRef } from "react";
 import { Suspense, lazy, useCallback } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
-  useUserProps,
-  renderWrapperComponentChildren,
-  getComponent,
   type Instance,
   type OnChangeChildren,
+  type UserProp,
+  renderWrapperComponentChildren,
+  getComponent,
   idAttribute,
+  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 import { useTextEditingInstanceId } from "~/shared/nano-states";
 import {
@@ -42,6 +43,8 @@ const ContentEditable = ({
   return <Component ref={ref} {...props} contentEditable={true} />;
 };
 
+type UserProps = Record<UserProp["prop"], string | number | boolean>;
+
 type WrapperComponentDevProps = {
   instance: Instance;
   children: Array<JSX.Element | string>;
@@ -60,6 +63,21 @@ export const WrapperComponentDev = ({
   const [selectedInstance] = useSelectedInstance();
   const [, setSelectedElement] = useSelectedElement();
 
+  const [allUserProps] = useAllUserProps();
+  const instanceProps = allUserProps[instance.id];
+  const userProps = useMemo(() => {
+    const result: UserProps = {};
+    if (instanceProps === undefined) {
+      return result;
+    }
+    for (const item of instanceProps.props) {
+      if (item.type !== "asset") {
+        result[item.prop] = item.value;
+      }
+    }
+    return result;
+  }, [instanceProps]);
+
   const instanceElementRef = useRef<HTMLElement>();
 
   const refCallback = useCallback(
@@ -73,7 +91,6 @@ export const WrapperComponentDev = ({
     [setSelectedElement]
   );
 
-  const userProps = useUserProps(instance.id);
   const readonlyProps =
     instance.component === "Input" ? { readOnly: true } : undefined;
 
@@ -108,7 +125,7 @@ export const WrapperComponentDev = ({
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
-          instanceProps={userProps}
+          instanceProps={instanceProps}
         />
       )}
       {/* Component includes many types and it's hard to provide right ref type with useRef */}
