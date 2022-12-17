@@ -65,11 +65,11 @@ export const WrapperComponentDev = ({
 
   const [allUserProps] = useAllUserProps();
   const instanceProps = allUserProps[instance.id];
-  const userProps: UserProps = useMemo(() => {
-    if (instanceProps === undefined) {
-      return {};
-    }
+  const userProps = useMemo(() => {
     const result: UserProps = {};
+    if (instanceProps === undefined) {
+      return result;
+    }
     for (const item of instanceProps.props) {
       if (item.type !== "asset") {
         result[item.prop] = item.value;
