@@ -22,8 +22,10 @@ if (typeof window === "object") {
   let isScrolling = false;
 
   emitter.on("scroll", () => {
+    if (isScrolling === false) {
+      emitter.emit("scrollStart");
+    }
     isScrolling = true;
-    emitter.emit("scrollStart");
     clearTimeout(timeoutId);
     timeoutId = window.setTimeout(() => {
       if (isScrolling === false) {

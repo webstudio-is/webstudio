@@ -16,6 +16,7 @@ export const useHoveredInstanceConnector = () => {
 
     let hoveredElement: undefined | Element = undefined;
 
+    // debounce is used to avoid hover flickering because of iframe message delay
     const publishHover = debounce((element: Element) => {
       const id = element.getAttribute(idAttribute) ?? undefined;
       if (id === undefined) {
