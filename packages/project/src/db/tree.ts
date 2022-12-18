@@ -1,4 +1,9 @@
-import { type Tree, Instance } from "@webstudio-is/react-sdk";
+import {
+  type Tree,
+  Instance,
+  denormalizeTree,
+  normalizeTree,
+} from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma, type Prisma } from "@webstudio-is/prisma-client";
 import { Tree as DbTree } from "@prisma/client";
@@ -20,7 +25,7 @@ export const create = async (
   client: Prisma.TransactionClient = prisma
 ): Promise<DbTree> => {
   Instance.parse(root);
-  const rootString = JSON.stringify(root);
+  const rootString = JSON.stringify(normalizeTree(root));
   return await client.tree.create({
     data: { root: rootString },
   });
@@ -42,10 +47,11 @@ export const loadById = async (
     return null;
   }
 
-  const root = JSON.parse(tree.root);
+  const root = denormalizeTree(JSON.parse(tree.root));
   Instance.parse(root);
+
   return {
-    ...tree,
+    id: tree.id,
     root,
   };
 };
@@ -72,7 +78,7 @@ export const patch = async (
   const root = applyPatches(tree.root, patches);
   Instance.parse(root);
   await prisma.tree.update({
-    data: { root: JSON.stringify(root) },
+    data: { root: JSON.stringify(normalizeTree(root)) },
     where: { id: treeId },
   });
 };
