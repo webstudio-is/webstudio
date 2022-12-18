@@ -9,6 +9,7 @@ export const {
   usePublish,
   useSubscribe,
   useSubscribeAll,
+  subscribe,
   subscribeAll,
 } = createPubsub<PubsubMap>();
 export type Publish = typeof publish;

@@ -10,29 +10,29 @@ if (typeof window === "object") {
     passive: true,
     capture: true,
   };
-  window.addEventListener(
-    "scroll",
-    () => {
-      emitter.emit("scroll");
-    },
-    eventOptions
-  );
 
   let timeoutId = 0;
   let isScrolling = false;
 
-  emitter.on("scroll", () => {
-    isScrolling = true;
-    emitter.emit("scrollStart");
-    clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => {
+  window.addEventListener(
+    "scroll",
+    () => {
       if (isScrolling === false) {
-        return;
+        emitter.emit("scrollStart");
       }
-      isScrolling = false;
-      emitter.emit("scrollEnd");
-    }, 150);
-  });
+      emitter.emit("scroll");
+      isScrolling = true;
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        if (isScrolling === false) {
+          return;
+        }
+        isScrolling = false;
+        emitter.emit("scrollEnd");
+      }, 150);
+    },
+    eventOptions
+  );
 }
 
 type UseScrollState = {
@@ -41,24 +41,37 @@ type UseScrollState = {
   onScrollEnd?: () => void;
 };
 
+export const subscribeScrollState = ({
+  onScroll = noop,
+  onScrollStart = noop,
+  onScrollEnd = noop,
+}: UseScrollState) => {
+  emitter.on("scrollStart", onScrollStart);
+  emitter.on("scroll", onScroll);
+  emitter.on("scrollEnd", onScrollEnd);
+
+  return () => {
+    emitter.off("scrollStart", onScrollStart);
+    emitter.off("scroll", onScroll);
+    emitter.off("scrollEnd", onScrollEnd);
+  };
+};
+
 /**
  * Scroll state abstraction that can handle a lot of subscribers well.
  * Potentially could add rate limiting and actual scroll top/left values.
  */
 export const useScrollState = ({
-  onScroll = noop,
-  onScrollStart = noop,
-  onScrollEnd = noop,
+  onScroll,
+  onScrollStart,
+  onScrollEnd,
 }: UseScrollState) => {
   useEffect(() => {
-    emitter.on("scrollStart", onScrollStart);
-    emitter.on("scroll", onScroll);
-    emitter.on("scrollEnd", onScrollEnd);
-
-    return () => {
-      emitter.off("scrollStart", onScrollStart);
-      emitter.off("scroll", onScroll);
-      emitter.off("scrollEnd", onScrollEnd);
-    };
+    const unsubscribe = subscribeScrollState({
+      onScrollStart,
+      onScroll,
+      onScrollEnd,
+    });
+    return unsubscribe;
   }, [onScroll, onScrollEnd, onScrollStart]);
 };
