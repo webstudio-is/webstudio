@@ -38,6 +38,7 @@ export const TextControl = ({
           icon={icon}
           property={styleConfig.property}
           value={currentValue ?? value}
+          selectedItem={value}
           keywords={styleConfig.items.map((item) => ({
             type: "keyword",
             value: item.name,

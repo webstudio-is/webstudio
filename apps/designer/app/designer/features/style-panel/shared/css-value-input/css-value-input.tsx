@@ -186,7 +186,11 @@ type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
 type CssValueInputProps = {
   property: StyleProperty;
-  value?: CssValueInputValue;
+  value: CssValueInputValue | undefined;
+  /**
+   * Selected item in the dropdown
+   */
+  selectedItem: CssValueInputValue | undefined;
   keywords?: Array<KeywordValue>;
   onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
@@ -228,6 +232,7 @@ export const CssValueInput = ({
   icon,
   property,
   value = unsetValue,
+  selectedItem,
   keywords = [],
   onPreview,
   ...props
@@ -263,6 +268,7 @@ export const CssValueInput = ({
   } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
+    selectedItem,
     itemToString: (item) =>
       item === null
         ? ""

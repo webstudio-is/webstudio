@@ -21,6 +21,7 @@ export const WithKeywords = () => {
     <CssValueInput
       property="width"
       value={value}
+      selectedItem={value}
       keywords={[
         { type: "keyword", value: "auto" },
         { type: "keyword", value: "min-content" },
@@ -54,6 +55,7 @@ export const WithIcons = () => {
     <CssValueInput
       property="alignItems"
       value={value}
+      selectedItem={value}
       keywords={[
         { type: "keyword", value: "normal" },
         { type: "keyword", value: "start" },
@@ -92,6 +94,7 @@ export const WithUnits = () => {
       <CssValueInput
         property="rowGap"
         value={value}
+        selectedItem={value}
         keywords={[
           { type: "keyword", value: "auto" },
           { type: "keyword", value: "min-content" },

@@ -134,6 +134,7 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
   itemToString: (item: Item | null) => string;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
+  selectedItem: Item | undefined;
   onInputChange?: (value: string | undefined) => void;
   onItemSelect?: (value: Item | null) => void;
   onItemHighlight?: (value: Item | null) => void;
@@ -149,6 +150,7 @@ export const comboboxStateChangeTypes = useDownshiftCombobox.stateChangeTypes;
 export const useCombobox = <Item,>({
   items,
   value,
+  selectedItem,
   itemToString,
   onInputChange,
   onItemSelect,
@@ -167,7 +169,7 @@ export const useCombobox = <Item,>({
     ...rest,
     items: filteredItems,
     defaultHighlightedIndex: -1,
-    selectedItem: value, // Prevent downshift warning about switching controlled mode
+    selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
     onInputValueChange({ inputValue, type }) {
@@ -186,7 +188,7 @@ export const useCombobox = <Item,>({
     },
   });
 
-  const { isOpen, getItemProps, highlightedIndex, selectedItem, getMenuProps } =
+  const { isOpen, getItemProps, highlightedIndex, getMenuProps } =
     downshiftProps;
 
   useEffect(() => {
@@ -200,7 +202,9 @@ export const useCombobox = <Item,>({
       return getItemProps({
         highlighted: highlightedIndex === options.index,
         // We need to either deep compare objects here or use itemToString to get primitive types
-        selected: itemToString(selectedItem) === itemToString(options.item),
+        selected:
+          selectedItem !== undefined &&
+          itemToString(selectedItem) === itemToString(options.item),
         key: options.id,
         ...options,
       });
@@ -238,6 +242,7 @@ export const Combobox = <Item,>({
   items,
   value = null,
   name,
+  selectedItem,
   placeholder,
   itemToString,
   onItemSelect,
@@ -254,6 +259,7 @@ export const Combobox = <Item,>({
   } = useCombobox({
     items,
     value,
+    selectedItem,
     itemToString,
     onItemSelect,
     onItemHighlight,
