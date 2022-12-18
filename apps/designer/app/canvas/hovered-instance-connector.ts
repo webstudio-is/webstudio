@@ -19,7 +19,6 @@ const startHoveredInstanceConnection = (rootInstance: Instance) => {
     if (instance === undefined) {
       return;
     }
-    // @todo combine hover events
     publish({
       type: "hoveredInstanceRect",
       payload: element.getBoundingClientRect(),
