@@ -5,16 +5,19 @@ import { findParentInstance } from "./find-parent-instance";
 describe("Find parent instance", () => {
   test("find", () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3",
               cssRules: [],

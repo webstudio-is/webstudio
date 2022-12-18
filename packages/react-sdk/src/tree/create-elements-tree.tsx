@@ -5,8 +5,12 @@ import { Scripts, ScrollRestoration } from "@remix-run/react";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<
-  | string
   | {
+      type: "text";
+      value: string;
+    }
+  | {
+      type: "instance";
       id: undefined | Instance["id"];
       component: Instance["component"];
       children: ChildrenUpdates;
@@ -60,8 +64,8 @@ const createInstanceChildrenElements = ({
 }) => {
   const elements = [];
   for (const child of children) {
-    if (typeof child === "string") {
-      elements.push(child);
+    if (child.type === "text") {
+      elements.push(child.value);
       continue;
     }
     const children = createInstanceChildrenElements({

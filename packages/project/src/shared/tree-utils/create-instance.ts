@@ -19,9 +19,14 @@ export const createInstance = ({
 }): Instance => {
   const componentMeta = getComponentMeta(component);
   return {
+    type: "instance",
     component,
     id: id === undefined ? createInstanceId() : id,
     cssRules: cssRules ?? [],
-    children: children === undefined ? componentMeta.children ?? [] : children,
+    children:
+      children === undefined
+        ? componentMeta.children?.map((value) => ({ type: "text", value })) ??
+          []
+        : children,
   };
 };

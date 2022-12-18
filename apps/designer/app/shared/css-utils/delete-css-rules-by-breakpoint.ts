@@ -13,7 +13,7 @@ export const deleteCssRulesByBreakpoint = (
   });
 
   for (const child of instance.children) {
-    if (typeof child === "string") {
+    if (child.type === "text") {
       continue;
     }
     deleteCssRulesByBreakpoint(child, breakpointId);

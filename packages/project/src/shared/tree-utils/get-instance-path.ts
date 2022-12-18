@@ -11,7 +11,7 @@ export const getInstancePath = (
       return true;
     }
     for (const child of instance.children) {
-      if (typeof child === "string") {
+      if (child.type === "text") {
         continue;
       }
       const found = find(child);
@@ -41,7 +41,7 @@ export const getInstancePathWithPositions = (
     }
     for (let index = 0; index < instance.children.length; index++) {
       const child = instance.children[index];
-      if (typeof child === "string") {
+      if (child.type === "text") {
         continue;
       }
       const found = find(child);

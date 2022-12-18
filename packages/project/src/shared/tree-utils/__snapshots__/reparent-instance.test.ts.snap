@@ -10,22 +10,26 @@ exports[`Reparent instance new parent 1`] = `
           "component": "Box",
           "cssRules": [],
           "id": "4",
+          "type": "instance",
         },
       ],
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
     {
       "children": [],
       "component": "Box",
       "cssRules": [],
       "id": "3",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;
 
@@ -37,22 +41,26 @@ exports[`Reparent instance same parent different position 1`] = `
       "component": "Box",
       "cssRules": [],
       "id": "3",
+      "type": "instance",
     },
     {
       "children": [],
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
     {
       "children": [],
       "component": "Box",
       "cssRules": [],
       "id": "4",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;

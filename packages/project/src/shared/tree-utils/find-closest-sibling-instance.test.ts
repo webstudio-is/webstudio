@@ -5,25 +5,29 @@ import { findClosestSiblingInstance } from "./find-closest-sibling-instance";
 describe("Find closest sibling instance", () => {
   test("find", () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "3",
           cssRules: [],
           children: [],
         },
-        "a",
+        { type: "text", value: "a" },
         {
+          type: "instance",
           component: "Box",
           id: "4",
           cssRules: [],
           children: [],
         },
-        "b",
+        { type: "text", value: "b" },
         {
+          type: "instance",
           component: "Box",
           id: "5",
           cssRules: [],

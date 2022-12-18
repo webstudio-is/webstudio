@@ -11,7 +11,7 @@ export const findInstanceById = (
 
   if (instance.children !== undefined) {
     for (const child of instance.children) {
-      if (typeof child === "string") {
+      if (child.type === "text") {
         continue;
       }
       const foundInstance = findInstanceById(child, id);

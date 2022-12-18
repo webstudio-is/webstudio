@@ -11,7 +11,7 @@ import {
   $isLineBreakNode,
 } from "lexical";
 import { $createLinkNode, $isLinkNode } from "@lexical/link";
-import type { ChildrenUpdates, Instance } from "@webstudio-is/react-sdk";
+import type { ChildrenUpdates, Instance, Text } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 
@@ -36,13 +36,14 @@ const $writeUpdates = (
       $writeUpdates(child, updates, refs);
     }
     if ($isLineBreakNode(child)) {
-      updates.push("\n");
+      updates.push({ type: "text", value: "\n" });
     }
     if ($isLinkNode(child)) {
       const id = refs.get(child.getKey());
       const childrenUpdates: ChildrenUpdates = [];
       $writeUpdates(child, childrenUpdates, refs);
       updates.push({
+        type: "instance",
         id,
         component: "RichTextLink",
         children: childrenUpdates,
@@ -62,6 +63,7 @@ const $writeUpdates = (
           refs.set(`${child.getKey()}:span`, id);
         }
         const update: ChildrenUpdates[number] = {
+          type: "instance",
           id,
           component: "Span",
           children: [],
@@ -74,6 +76,7 @@ const $writeUpdates = (
         if (child.hasFormat(format)) {
           const id = refs.get(`${child.getKey()}:${format}`);
           const update: ChildrenUpdates[number] = {
+            type: "instance",
             id,
             component,
             children: [],
@@ -82,7 +85,7 @@ const $writeUpdates = (
           parentUpdates = update.children;
         }
       }
-      parentUpdates.push(text);
+      parentUpdates.push({ type: "text", value: text });
     }
   }
 };
@@ -94,7 +97,7 @@ export const $convertToUpdates = (refs: Refs) => {
   return updates;
 };
 
-type InstanceChild = string | Instance;
+type InstanceChild = Text | Instance;
 
 const $writeLexical = (
   parent: ElementNode | TextNode,
@@ -102,17 +105,17 @@ const $writeLexical = (
   refs: Refs
 ) => {
   for (const child of children) {
-    // convert text
-    if (child === "\n" && $isElementNode(parent)) {
-      const lineBreakNode = $createLineBreakNode();
-      parent.append(lineBreakNode);
-      continue;
-    }
-    if (typeof child === "string") {
+    if (child.type === "text") {
+      // convert text
+      if (child.value === "\n" && $isElementNode(parent)) {
+        const lineBreakNode = $createLineBreakNode();
+        parent.append(lineBreakNode);
+        continue;
+      }
       if ($isTextNode(parent)) {
-        parent.setTextContent(child);
+        parent.setTextContent(child.value);
       } else {
-        const textNode = $createTextNode(child);
+        const textNode = $createTextNode(child.value);
         parent.append(textNode);
       }
       continue;

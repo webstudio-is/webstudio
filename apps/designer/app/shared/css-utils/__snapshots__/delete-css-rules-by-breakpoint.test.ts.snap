@@ -10,6 +10,7 @@ exports[`Delete breakpoint basic 1`] = `
           "component": "Box",
           "cssRules": [],
           "id": "3",
+          "type": "instance",
         },
       ],
       "component": "Box",
@@ -20,10 +21,12 @@ exports[`Delete breakpoint basic 1`] = `
         },
       ],
       "id": "2",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;

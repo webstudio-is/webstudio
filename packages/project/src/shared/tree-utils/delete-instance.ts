@@ -9,7 +9,7 @@ export const deleteInstanceMutable = (
   }
 
   for (const child of instance.children) {
-    if (typeof child === "string") {
+    if (child.type === "text") {
       continue;
     }
     const shouldDelete = deleteInstanceMutable(child, instanceId);

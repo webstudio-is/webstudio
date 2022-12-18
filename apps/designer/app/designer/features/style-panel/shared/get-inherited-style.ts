@@ -32,7 +32,7 @@ const findParents = (
   const parents: Array<Instance> = [];
 
   for (const child of instance.children) {
-    if (typeof child === "string") {
+    if (child.type === "text") {
       continue;
     }
     // I am your father

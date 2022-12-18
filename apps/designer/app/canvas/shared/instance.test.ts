@@ -3,19 +3,45 @@ import { type Instance } from "@webstudio-is/react-sdk";
 import { findInsertLocation } from "./instance";
 
 const tree: Instance = {
+  type: "instance",
   component: "Body",
   id: "root",
   cssRules: [],
   children: [
-    { component: "Heading", id: "heading1", cssRules: [], children: [] },
     {
+      type: "instance",
+      component: "Heading",
+      id: "heading1",
+      cssRules: [],
+      children: [],
+    },
+    {
+      type: "instance",
       component: "Box",
       id: "box1",
       cssRules: [],
       children: [
-        { component: "Box", id: "box2", cssRules: [], children: [] },
-        { component: "Heading", id: "heading2", cssRules: [], children: [] },
-        { component: "Heading", id: "heading3", cssRules: [], children: [] },
+        {
+          type: "instance",
+          component: "Box",
+          id: "box2",
+          cssRules: [],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Heading",
+          id: "heading2",
+          cssRules: [],
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "Heading",
+          id: "heading3",
+          cssRules: [],
+          children: [],
+        },
       ],
     },
   ],

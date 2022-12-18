@@ -12,7 +12,7 @@ export const findParentInstance = (
       return parentInstance;
     }
     for (const child of childInstance.children) {
-      if (typeof child === "string") {
+      if (child.type === "text") {
         continue;
       }
       const foundInstance = find(child, childInstance);

@@ -10,16 +10,19 @@ const getIds = (array: Array<{ id: string }>) => array.map((item) => item.id);
 describe("Get instance path", () => {
   test("single possible path", () => {
     const instance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3",
               cssRules: [],
@@ -35,16 +38,19 @@ describe("Get instance path", () => {
 
   test("two possible paths", () => {
     const instance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2a",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3a",
               cssRules: [],
@@ -53,11 +59,13 @@ describe("Get instance path", () => {
           ],
         },
         {
+          type: "instance",
           component: "Box",
           id: "2b",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3b",
               cssRules: [],
@@ -81,16 +89,19 @@ const getIdAndPosition = (
 describe("Get instance path with positions", () => {
   test("single possible path", () => {
     const instance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3",
               cssRules: [],
@@ -110,16 +121,19 @@ describe("Get instance path with positions", () => {
 
   test("two possible paths", () => {
     const instance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2a",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3a",
               cssRules: [],
@@ -128,11 +142,13 @@ describe("Get instance path with positions", () => {
           ],
         },
         {
+          type: "instance",
           component: "Box",
           id: "2b",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3b",
               cssRules: [],
