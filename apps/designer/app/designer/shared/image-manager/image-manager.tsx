@@ -3,7 +3,7 @@ import { findNextListIndex, Grid } from "@webstudio-is/design-system";
 import {
   AssetsShell,
   type AssetContainer,
-  useAssetContainers,
+  useAssets,
   useSearch,
 } from "../assets";
 import { useFilter } from "../assets/use-filter";
@@ -18,7 +18,7 @@ const filterItems = (search: string, items: AssetContainer[]) => {
 };
 
 const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
-  const { assetContainers, handleDelete } = useAssetContainers("image");
+  const { assetContainers, handleDelete } = useAssets("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
 

@@ -347,7 +347,7 @@ const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
   });
 };
 
-export const useAssetContainers = (type: AssetType) => {
+export const useAssets = (type: AssetType) => {
   const assetContainersContext = useContext(Context);
   if (!assetContainersContext) {
     throw new Error("useAssets is used without AssetsProvider");
