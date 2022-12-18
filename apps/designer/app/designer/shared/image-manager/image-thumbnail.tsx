@@ -6,11 +6,6 @@ import type { AssetContainer } from "~/designer/shared/assets";
 import { Filename } from "./filename";
 import { Image } from "./image";
 
-/**
- *  The value should be one of the values in the theme, because of the spacing grid compliance
- **/
-const THUMBNAIL_WIDTH = 64;
-
 const ThumbnailContainer = styled(Box, {
   position: "relative",
   display: "flex",
@@ -99,7 +94,8 @@ export const ImageThumbnail = ({
         <Image
           assetContainer={assetContainer}
           alt={description ?? name}
-          width={THUMBNAIL_WIDTH}
+          // width={64} used for Image optimizations it should be approximately equal to the width of the picture on the screen in px
+          width={64}
         />
       </Thumbnail>
       <Box
