@@ -48,9 +48,15 @@ export default () => {
     async (prisma) => {
       const previousTrees = await prisma.tree.findMany();
       const update = previousTrees.map((tree) => {
+        let newRoot = tree.root;
+        try {
+          newRoot = JSON.stringify(convertTree(JSON.parse(tree.root)));
+        } catch {
+          console.info(`Tree ${tree.id} cannot be converted`);
+        }
         return {
           id: tree.id,
-          root: JSON.stringify(convertTree(JSON.parse(tree.root))),
+          root: newRoot,
         };
       });
       await Promise.all(
@@ -59,6 +65,6 @@ export default () => {
         )
       );
     },
-    { timeout: 1000 * 60 }
+    { timeout: 1000 * 60 * 5 }
   );
 };
