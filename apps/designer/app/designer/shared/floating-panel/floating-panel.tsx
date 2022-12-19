@@ -5,7 +5,13 @@ import {
   PopoverHeader,
   PopoverPortal,
 } from "@webstudio-is/design-system";
-import { MutableRefObject, useContext, useRef, useState } from "react";
+import {
+  MutableRefObject,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { FloatingPanelContext } from "./floating-panel-provider";
 
 const useSideOffset = ({
@@ -15,13 +21,23 @@ const useSideOffset = ({
 }): [MutableRefObject<HTMLButtonElement | null>, number] => {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const { container } = useContext(FloatingPanelContext);
-  if (isOpen === false) {
-    // Prevent computation if the panel is closed
-    return [triggerRef, 0];
-  }
-  const containerRect = container?.current?.getBoundingClientRect();
-  const triggerRect = triggerRef.current?.getBoundingClientRect();
-  return [triggerRef, (triggerRect?.left ?? 0) - (containerRect?.left ?? 0)];
+  const [sideOffset, setSideOffset] = useState(0);
+
+  useEffect(() => {
+    if (
+      isOpen === false ||
+      container.current === null ||
+      triggerRef.current === null
+    ) {
+      // Prevent computation if the panel is closed
+      return;
+    }
+    const containerRect = container.current.getBoundingClientRect();
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    setSideOffset(triggerRect.left - containerRect.left);
+  }, [isOpen, container]);
+
+  return [triggerRef, sideOffset];
 };
 
 const useLogic = (onOpenChange?: (isOpen: boolean) => void) => {

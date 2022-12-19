@@ -1,2 +1,2 @@
 export * from "./floating-panel";
-export * from "./floating-panel-provider";
+export { FloatingPanelProvider } from "./floating-panel-provider";
