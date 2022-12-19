@@ -186,11 +186,15 @@ type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
 type CssValueInputProps = {
   property: StyleProperty;
-  value?: CssValueInputValue;
+  value: StyleValue | undefined;
+  intermediateValue: CssValueInputValue | undefined;
+  /**
+   * Selected item in the dropdown
+   */
   keywords?: Array<KeywordValue>;
   onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
-  onPreview: (value: StyleValue) => void;
+  onHighlight: (value: StyleValue) => void;
 };
 
 /**
@@ -227,11 +231,12 @@ type CssValueInputProps = {
 export const CssValueInput = ({
   icon,
   property,
-  value = unsetValue,
   keywords = [],
-  onPreview,
+  onHighlight,
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
+  const value = props.intermediateValue ?? props.value ?? unsetValue;
+
   const onChange = (input: string) => {
     // We don't know what's inside the input,
     // preserve current unit value if exists
@@ -263,6 +268,7 @@ export const CssValueInput = ({
   } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
+    selectedItem: props.value,
     itemToString: (item) =>
       item === null
         ? ""
@@ -277,11 +283,11 @@ export const CssValueInput = ({
     },
     onItemHighlight: (value) => {
       if (value == null) {
-        onPreview(unsetValue);
+        onHighlight(unsetValue);
         return;
       }
       if (value.type !== "intermediate") {
-        onPreview(value ?? unsetValue);
+        onHighlight(value ?? unsetValue);
       }
     },
   });
