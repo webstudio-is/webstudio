@@ -2,7 +2,7 @@ import { TextField } from "@webstudio-is/design-system";
 import { FontsManager } from "~/designer/shared/fonts-manager";
 import type { ControlProps } from "../../style-sections";
 import { getFinalValue } from "../../shared/get-final-value";
-import { ValuePickerPopover } from "../../shared/value-picker-popover";
+import { FloatingPanel } from "~/designer/shared/floating-panel";
 import { useState } from "react";
 import { toValue } from "@webstudio-is/css-engine";
 
@@ -23,7 +23,7 @@ export const FontFamilyControl = ({
   const setValue = setProperty(styleConfig.property);
 
   return (
-    <ValuePickerPopover
+    <FloatingPanel
       title="Fonts"
       content={<FontsManager value={toValue(value)} onChange={setValue} />}
       onOpenChange={setIsOpen}
@@ -32,6 +32,6 @@ export const FontFamilyControl = ({
         defaultValue={toValue(value)}
         state={isOpen ? "active" : undefined}
       />
-    </ValuePickerPopover>
+    </FloatingPanel>
   );
 };
