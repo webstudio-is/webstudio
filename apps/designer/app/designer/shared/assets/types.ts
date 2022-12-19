@@ -5,39 +5,28 @@ type PreviewAsset = Pick<
   "path" | "name" | "id" | "format" | "description"
 >;
 
-export type UploadedClientAsset = {
+export type UploadedAssetContainer = {
   status: "uploaded";
   asset: Asset;
-  preview: PreviewAsset | undefined;
 };
 
-export type UploadingClientAsset = {
+export type UploadingAssetContainer = {
   status: "uploading";
-  asset: Asset | undefined;
-  preview: PreviewAsset;
+  asset: Asset | PreviewAsset;
 };
 
 /**
  * Used for optimistic UI only
  **/
-export type DeletingClientAsset = {
+export type DeletingAssetContainer = {
   status: "deleting";
   asset: Asset;
-  preview: PreviewAsset | undefined;
 };
-
-/**
- * On the client side, we need more information about the asset than the server provides.
- */
-export type ClientAsset =
-  | UploadedClientAsset
-  | UploadingClientAsset
-  | DeletingClientAsset;
 
 /**
  * Assets that can be shown in the UI
  */
-export type RenderableAsset = UploadedClientAsset | UploadingClientAsset;
+export type AssetContainer = UploadedAssetContainer | UploadingAssetContainer;
 
 export type ActionData = {
   uploadedAssets?: Array<Asset>;

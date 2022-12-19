@@ -1,6 +1,6 @@
 import deepEqual from "fast-deep-equal";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { ClientAsset } from "./types";
+import { AssetContainer, DeletingAssetContainer } from "./types";
 
 /**
  * Update local assets (containing optimistic data) with data from the server
@@ -10,16 +10,17 @@ import { ClientAsset } from "./types";
  * - updateAssets(assets, data) must be referentially equal to updateAssets(updateAssets(assets, data), data)
  */
 export const updateStateAssets = <T>(
-  clientAssets: ClientAsset[],
+  assetContainer: (AssetContainer | DeletingAssetContainer)[],
   serverAssets: Asset[]
 ) => {
-  let nextAssets: ClientAsset[] = [...clientAssets];
+  let nextAssets: (AssetContainer | DeletingAssetContainer)[] = [
+    ...assetContainer,
+  ];
   // Merging data with existing assets, trying to preserve sorting
   for (const serverAsset of serverAssets) {
     // The same asset is already in the assets
     const sameIndex = nextAssets.findIndex(
-      (nextAsset) =>
-        (nextAsset.asset?.id ?? nextAsset.preview?.id) === serverAsset.id
+      (nextAsset) => nextAsset.asset.id === serverAsset.id
     );
 
     if (sameIndex !== -1) {
@@ -27,8 +28,6 @@ export const updateStateAssets = <T>(
         nextAssets[sameIndex] = {
           status: "uploaded",
           asset: serverAsset,
-          // preserve preview to avoid image flickering
-          preview: nextAssets[sameIndex].preview,
         };
       }
       continue;
@@ -38,7 +37,6 @@ export const updateStateAssets = <T>(
     nextAssets.push({
       status: "uploaded",
       asset: serverAsset,
-      preview: undefined,
     });
   }
 
@@ -57,8 +55,8 @@ export const updateStateAssets = <T>(
     return true;
   });
 
-  if (deepEqual(nextAssets, clientAssets)) {
-    return clientAssets;
+  if (deepEqual(nextAssets, assetContainer)) {
+    return assetContainer;
   }
 
   return nextAssets;

@@ -22,17 +22,17 @@ const allFontWeights: Array<FontWeightItem> = (
 const useAvailableFontWeights = (
   currentFamily: string
 ): Array<FontWeightItem> => {
-  const { assets } = useAssets("font");
+  const { assetContainers } = useAssets("font");
 
   // Find all font weights that are available for the current font family.
   return useMemo(() => {
     const found = allFontWeights.filter((option) => {
-      return assets.find((clientAsset) => {
-        if (clientAsset.status !== "uploaded") {
+      return assetContainers.find((assetContainer) => {
+        if (assetContainer.status !== "uploaded") {
           return false;
         }
 
-        const { asset } = clientAsset;
+        const { asset } = assetContainer;
 
         return (
           "meta" in asset &&
@@ -43,7 +43,7 @@ const useAvailableFontWeights = (
       });
     });
     return found.length === 0 ? allFontWeights : found;
-  }, [currentFamily, assets]);
+  }, [currentFamily, assetContainers]);
 };
 
 const useLabels = (

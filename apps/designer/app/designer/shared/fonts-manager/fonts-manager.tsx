@@ -29,9 +29,10 @@ const useLogic = ({
   onChange: (value: string) => void;
   value: string;
 }) => {
-  const { assets, handleDelete: handleDeleteAssets } = useAssets("font");
+  const { assetContainers, handleDelete: handleDeleteAssets } =
+    useAssets("font");
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const fontItems = useMemo(() => toItems(assets), [assets]);
+  const fontItems = useMemo(() => toItems(assetContainers), [assetContainers]);
   const { filteredItems, resetFilteredItems, setFilteredItems } = useFilter({
     items: fontItems,
     onReset() {
@@ -66,7 +67,7 @@ const useLogic = ({
 
   const handleDelete = (index: number) => {
     const family = groupedItems[index].label;
-    const ids = filterIdsByFamily(family, assets);
+    const ids = filterIdsByFamily(family, assetContainers);
     handleDeleteAssets(ids);
     if (index === currentIndex) {
       setCurrentIndex(-1);

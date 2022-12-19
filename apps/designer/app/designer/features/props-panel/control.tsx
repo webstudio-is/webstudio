@@ -157,10 +157,8 @@ const ImageControl = ({ asset, onChange }: ImageControlProps) => {
       title="Images"
       content={
         <ImageManager
-          onChange={(clientAsset) => {
-            if (clientAsset.status === "uploaded") {
-              onChange(clientAsset.asset);
-            }
+          onChange={(asset) => {
+            onChange(asset);
           }}
         />
       }

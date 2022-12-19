@@ -16,12 +16,13 @@ import {
 import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
 import { toast } from "@webstudio-is/design-system";
 import { restAssetsPath } from "~/shared/router-utils";
-import { useClientAssets, useProject } from "../nano-states";
+import { useAssetsContainer, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import type {
-  RenderableAsset,
-  ClientAsset,
-  UploadingClientAsset,
+  AssetContainer,
+  DeletingAssetContainer,
+  UploadedAssetContainer,
+  UploadingAssetContainer,
 } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/designer/shared/assets";
@@ -33,7 +34,7 @@ import {
 import { Publish } from "~/shared/pubsub";
 import { useFetcher } from "@remix-run/react";
 import warnOnce from "warn-once";
-import { updateStateAssets } from "./update-state-assets";
+import { updateStateAssets } from "./update-asset-containers";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -42,16 +43,24 @@ declare module "~/shared/pubsub" {
 }
 
 export const usePublishAssets = (publish: Publish) => {
-  const [clientAssets] = useClientAssets();
+  const [assetContainers] = useAssetsContainer();
   useEffect(() => {
     publish({
       type: "updateAssets",
-      payload: clientAssets
-        .filter((clientAsset) => clientAsset.status === "uploaded")
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- for "status" === "uploaded" asset is defined
-        .map((clientAsset) => clientAsset.asset!),
+      payload: assetContainers
+        .filter((assetContainer) => assetContainer.status === "uploaded")
+        .map((assetContainer) => {
+          //  This check is only to fix that ts can't detect type based on the filter above
+          if (assetContainer.status !== "uploaded") {
+            throw new Error(
+              `Impossible, asset must have status "uploaded" see filter above`
+            );
+          }
+
+          return assetContainer.asset;
+        }),
     });
-  }, [clientAssets, publish]);
+  }, [assetContainers, publish]);
 };
 
 export type UploadData = FetcherData<ActionData>;
@@ -59,11 +68,11 @@ export type UploadData = FetcherData<ActionData>;
 const toUploadingAssetsAndFormData = (
   type: AssetType,
   files: File[]
-): Promise<[UploadingClientAsset, FormData][]> => {
-  const assets: Array<Promise<[UploadingClientAsset, FormData]>> = [];
+): Promise<[UploadingAssetContainer, FormData][]> => {
+  const assets: Array<Promise<[UploadingAssetContainer, FormData]>> = [];
 
   for (const file of files) {
-    const promise = new Promise<[UploadingClientAsset, FormData]>(
+    const promise = new Promise<[UploadingAssetContainer, FormData]>(
       (resolve, reject) => {
         const reader = new FileReader();
         reader.addEventListener("load", (event) => {
@@ -83,8 +92,7 @@ const toUploadingAssetsAndFormData = (
           resolve([
             {
               status: "uploading",
-              asset: undefined,
-              preview: {
+              asset: {
                 format: file.type.split("/")[1],
                 path: String(dataUri),
                 name: file.name,
@@ -124,7 +132,7 @@ const getFilesFromInput = (type: AssetType, input: HTMLInputElement) => {
 
 type AssetsContext = {
   handleSubmit: (type: AssetType, files: File[]) => Promise<void>;
-  assets: Array<ClientAsset>;
+  assetContainers: Array<AssetContainer | DeletingAssetContainer>;
   handleDelete: (ids: Array<string>) => void;
 };
 
@@ -132,29 +140,32 @@ const Context = createContext<AssetsContext | undefined>(undefined);
 
 export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   const [project] = useProject();
-  const [clientAssets, setClientAssets] = useClientAssets();
+  const [assetContainers, setAssetContainers] = useAssetsContainer();
   const { load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
-  const assetsRef = useRef(clientAssets);
+  const assetContainersRef = useRef(assetContainers);
 
   const action = project && restAssetsPath({ projectId: project.id });
-  assetsRef.current = clientAssets;
+  assetContainersRef.current = assetContainers;
 
   useEffect(() => {
-    if (action && clientAssets.length === 0) {
+    if (action && assetContainers.length === 0) {
       load(action);
     }
-  }, [action, clientAssets.length, load]);
+  }, [action, assetContainers.length, load]);
 
   useEffect(() => {
     if (serverAssets !== undefined) {
-      const nextAssets = updateStateAssets(clientAssets, serverAssets);
+      const nextAssetContainers = updateStateAssets(
+        assetContainers,
+        serverAssets
+      );
 
-      if (nextAssets !== clientAssets) {
-        setClientAssets(nextAssets);
+      if (nextAssetContainers !== assetContainers) {
+        setAssetContainers(nextAssetContainers);
       }
     }
-  }, [serverAssets, clientAssets, setClientAssets]);
+  }, [serverAssets, assetContainers, setAssetContainers]);
 
   const handleDeleteAfterSubmit = (data: UploadData) => {
     // We need to remove assets only at updateStateAssets.
@@ -166,24 +177,27 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
     if (data.status === "error") {
       // We don't know what's wrong, remove the "deleting" status from assets and wait for the load to fix it
-      const assets = assetsRef.current;
-      const nextAssets = assets.map((asset) => {
-        if (asset.status === "deleting") {
-          const newAsset: ClientAsset = { ...asset, status: "uploaded" };
-          return newAsset;
+      const assetContainers = assetContainersRef.current;
+      const nextAssetContainers = assetContainers.map((assetContainer) => {
+        if (assetContainer.status === "deleting") {
+          const uploadedAssetContainer: UploadedAssetContainer = {
+            ...assetContainer,
+            status: "uploaded",
+          };
+          return uploadedAssetContainer;
         }
 
-        return asset;
+        return assetContainer;
       });
 
-      setClientAssets(nextAssets);
+      setAssetContainers(nextAssetContainers);
 
       return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
     }
   };
 
   const handleAfterSubmit = (assetId: string) => (data: UploadData) => {
-    const assets = assetsRef.current;
+    const assetContainers = assetContainersRef.current;
 
     if (action) {
       load(action);
@@ -191,10 +205,11 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
     if (data.status === "error") {
       // We don't know what's wrong, remove uploading asset and wait for the load to fix it
-      setClientAssets(
-        assets.filter(
-          (asset) =>
-            asset.status !== "uploading" || asset.preview.id !== assetId
+      setAssetContainers(
+        assetContainers.filter(
+          (assetContainer) =>
+            assetContainer.status !== "uploading" ||
+            assetContainer.asset.id !== assetId
         )
       );
 
@@ -213,49 +228,53 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       toast.error("Could not upload an asset");
 
       // remove uploading asset and wait for the load to fix it
-      setClientAssets(
-        assets.filter(
-          (asset) =>
-            asset.status !== "uploading" || asset.preview.id !== assetId
+      setAssetContainers(
+        assetContainers.filter(
+          (assetContainer) =>
+            assetContainer.status !== "uploading" ||
+            assetContainer.asset.id !== assetId
         )
       );
       return;
     }
 
-    setClientAssets(
-      assets.map((asset) => {
-        if (asset.status === "uploading" && asset.preview.id === assetId) {
+    setAssetContainers(
+      assetContainers.map((assetContainer) => {
+        if (
+          assetContainer.status === "uploading" &&
+          assetContainer.asset.id === assetId
+        ) {
           // We can start using the uploaded asset for image previews etc
-          return { ...asset, asset: uploadedAsset };
+          return { ...assetContainer, asset: uploadedAsset };
         }
-        return asset;
+        return assetContainer;
       })
     );
   };
 
   const handleDelete = (ids: Array<string>) => {
     const formData = new FormData();
-    const assets = assetsRef.current;
+    const assetContainer = assetContainersRef.current;
 
-    const nextAssets = [...assets];
+    const nextAssetContainers = [...assetContainer];
 
     for (const id of ids) {
       formData.append("assetId", id);
       // Mark assets as deleting
-      const index = nextAssets.findIndex(
-        (nextAsset) => nextAsset.asset?.id === id
+      const index = nextAssetContainers.findIndex(
+        (nextAssetContainer) => nextAssetContainer.asset.id === id
       );
 
       if (index !== -1) {
-        const asset = nextAssets[index];
+        const asset = nextAssetContainers[index];
 
         if (asset.status === "uploaded") {
-          const newAsset: ClientAsset = {
+          const newAsset: DeletingAssetContainer = {
             ...asset,
             status: "deleting",
           };
 
-          nextAssets[index] = newAsset;
+          nextAssetContainers[index] = newAsset;
           continue;
         }
 
@@ -263,7 +282,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    setClientAssets(nextAssets);
+    setAssetContainers(nextAssetContainers);
 
     submit<UploadData>(
       formData,
@@ -279,13 +298,16 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
         files
       );
 
-      const assets = assetsRef.current;
-      setClientAssets([
+      const assets = assetContainersRef.current;
+      setAssetContainers([
         ...uploadingAssetsAndFormData.map(([previewAsset]) => previewAsset),
         ...assets,
       ]);
 
-      for (const [uploadingAsset, formData] of uploadingAssetsAndFormData) {
+      for (const [
+        uploadingAssetContainer,
+        formData,
+      ] of uploadingAssetsAndFormData) {
         submit<UploadData>(
           formData,
           {
@@ -293,7 +315,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
             action,
             encType: "multipart/form-data",
           },
-          handleAfterSubmit(uploadingAsset.preview.id)
+          handleAfterSubmit(uploadingAssetContainer.asset.id)
         );
       }
     } catch (error) {
@@ -305,16 +327,16 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <Context.Provider
-      value={{ handleSubmit, assets: clientAssets, handleDelete }}
+      value={{ handleSubmit, assetContainers: assetContainers, handleDelete }}
     >
       {children}
     </Context.Provider>
   );
 };
 
-const filterByType = (clientAssets: RenderableAsset[], type: AssetType) => {
-  return clientAssets.filter((clientAsset) => {
-    const format = clientAsset.asset?.format ?? clientAsset.preview?.format;
+const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
+  return assetContainers.filter((assetContainer) => {
+    const format = assetContainer.asset.format;
 
     const isFont = FONT_FORMATS.has(format as FontFormat);
     if (type === "font") {
@@ -326,36 +348,36 @@ const filterByType = (clientAssets: RenderableAsset[], type: AssetType) => {
 };
 
 export const useAssets = (type: AssetType) => {
-  const assetsContext = useContext(Context);
-  if (!assetsContext) {
+  const assetContainersContext = useContext(Context);
+  if (!assetContainersContext) {
     throw new Error("useAssets is used without AssetsProvider");
   }
 
   const assetsByType = useMemo(() => {
     // In no case we need to have access to deleting assets
     // But we need them for optiistic updates, filter out here
-    const activeAssets: RenderableAsset[] = [];
+    const assetContainers: AssetContainer[] = [];
 
-    for (const asset of assetsContext.assets) {
+    for (const asset of assetContainersContext.assetContainers) {
       if (asset.status !== "deleting") {
-        activeAssets.push(asset);
+        assetContainers.push(asset);
       }
     }
 
-    return filterByType(activeAssets, type);
-  }, [assetsContext.assets, type]);
+    return filterByType(assetContainers, type);
+  }, [assetContainersContext.assetContainers, type]);
 
   const handleSubmit = (input: HTMLInputElement) => {
     const formsData = getFilesFromInput(type, input);
-    assetsContext.handleSubmit(type, formsData);
+    assetContainersContext.handleSubmit(type, formsData);
   };
 
   return {
     /**
      * Already loaded assets or assets that are being uploaded
      */
-    assets: assetsByType,
+    assetContainers: assetsByType,
     handleSubmit,
-    handleDelete: assetsContext.handleDelete,
+    handleDelete: assetContainersContext.handleDelete,
   };
 };

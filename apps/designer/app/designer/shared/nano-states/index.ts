@@ -6,7 +6,7 @@ import {
 } from "@webstudio-is/project";
 import { type SyncStatus } from "~/shared/sync";
 import { type Pages, type Project } from "@webstudio-is/project";
-import type { ClientAsset } from "../assets";
+import type { AssetContainer, DeletingAssetContainer } from "../assets";
 
 const selectedInstanceDataContainer = createValueContainer<
   SelectedInstanceData | undefined
@@ -45,8 +45,10 @@ export const useCanvasRect = () => useValue(canvasRectContainer);
 const syncStatusContainer = createValueContainer<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
 
-const clientAssetsContainer = createValueContainer<Array<ClientAsset>>([]);
-export const useClientAssets = () => useValue(clientAssetsContainer);
+const assetsContainer = createValueContainer<
+  Array<AssetContainer | DeletingAssetContainer>
+>([]);
+export const useAssetsContainer = () => useValue(assetsContainer);
 
 const pagesContainer = createValueContainer<Pages | undefined>();
 export const usePages = () => useValue(pagesContainer);

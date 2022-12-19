@@ -12,7 +12,7 @@ export const ImageControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const { assets } = useAssets("image");
+  const { assetContainers } = useAssets("image");
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
@@ -26,9 +26,8 @@ export const ImageControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const selectedAsset = assets.find(
-    (clientAsset) =>
-      (clientAsset.asset?.id ?? clientAsset.preview?.id) === toValue(value)
+  const selectedAsset = assetContainers.find(
+    (assetContainer) => assetContainer.asset.id === toValue(value)
   );
 
   return (
@@ -36,16 +35,14 @@ export const ImageControl = ({
       title="Images"
       content={
         <ImageManager
-          onChange={(clientAsset) => {
-            if (clientAsset.status === "uploaded") {
-              // @todo looks like a bug fix next PRs
-              setValue(clientAsset.asset.id);
-            }
+          onChange={(asset) => {
+            // @todo looks like a bug fix next PRs
+            setValue(asset.id);
           }}
         />
       }
     >
-      <TextField defaultValue={selectedAsset?.asset?.name} />
+      <TextField defaultValue={selectedAsset?.asset.name} />
     </ValuePickerPopover>
   );
 };
