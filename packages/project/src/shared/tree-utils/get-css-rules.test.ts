@@ -5,6 +5,7 @@ import { getCssRules } from "./get-css-rules";
 describe("Get all cssRules from an instance including children", () => {
   test("getCssRules", () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [
@@ -15,6 +16,7 @@ describe("Get all cssRules from an instance including children", () => {
       ],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [
@@ -25,6 +27,7 @@ describe("Get all cssRules from an instance including children", () => {
           ],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "3",
               cssRules: [

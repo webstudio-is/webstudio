@@ -10,8 +10,14 @@ export type BaseInstance = {
   cssRules: Array<CssRule>;
 };
 
+export type Text = {
+  type: "text";
+  value: string;
+};
+
 export type Instance = BaseInstance & {
-  children: Array<Instance | string>;
+  type: "instance";
+  children: Array<Instance | Text>;
 };
 
 export const toBaseInstance = (instance: Instance): BaseInstance => {
@@ -22,12 +28,20 @@ export const toBaseInstance = (instance: Instance): BaseInstance => {
   };
 };
 
+export const Text = z.lazy(() =>
+  z.object({
+    type: z.literal("text"),
+    value: z.string(),
+  })
+);
+
 export const Instance = z.lazy(
   () =>
     z.object({
+      type: z.literal("instance"),
       id: z.string(),
       component: z.string(),
-      children: z.array(z.union([Instance, z.string()])),
+      children: z.array(z.union([Instance, Text])),
       cssRules: z.array(CssRule),
     })
   // @todo can't figure out how to make component to be z.enum(Object.keys(components))

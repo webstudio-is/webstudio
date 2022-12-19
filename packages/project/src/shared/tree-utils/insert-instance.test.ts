@@ -8,11 +8,13 @@ const instance = createInstance({ id: "3", component: "Box" });
 describe("Insert instance", () => {
   test(`inside a nested div using "end": div 1 > div 2 > [div 3]`, () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
@@ -31,11 +33,13 @@ describe("Insert instance", () => {
 
   test("after a nested div using index: div 1 > div 2, [div 3]", () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
@@ -54,11 +58,13 @@ describe("Insert instance", () => {
 
   test("before a nested div using index: div 1 > [div 3], div 2", () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
@@ -76,11 +82,13 @@ describe("Insert instance", () => {
 
   test(`after a nested div using "end": div 1 > div 2, [div 3]`, () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],

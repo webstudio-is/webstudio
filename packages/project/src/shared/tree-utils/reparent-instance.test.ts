@@ -5,22 +5,26 @@ import { reparentInstanceMutable } from "./reparent-instance";
 describe("Reparent instance", () => {
   test(`new parent`, () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
           children: [],
         },
         {
+          type: "instance",
           component: "Box",
           id: "3",
           cssRules: [],
           children: [
             {
+              type: "instance",
               component: "Box",
               id: "4",
               cssRules: [],
@@ -37,23 +41,27 @@ describe("Reparent instance", () => {
 
   test(`same parent different position`, () => {
     const rootInstance: Instance = {
+      type: "instance",
       component: "Box",
       id: "1",
       cssRules: [],
       children: [
         {
+          type: "instance",
           component: "Box",
           id: "2",
           cssRules: [],
           children: [],
         },
         {
+          type: "instance",
           component: "Box",
           id: "3",
           cssRules: [],
           children: [],
         },
         {
+          type: "instance",
           component: "Box",
           id: "4",
           cssRules: [],

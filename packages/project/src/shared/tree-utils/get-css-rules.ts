@@ -9,7 +9,7 @@ const aggregateCssRules = (
     result.push([instance.id, cssRule]);
   }
   for (const child of instance.children) {
-    if (typeof child === "string") {
+    if (child.type === "text") {
       continue;
     }
     aggregateCssRules(child, result);

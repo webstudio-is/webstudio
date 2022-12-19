@@ -37,8 +37,8 @@ const instanceRelatedProps = {
     }
 
     return item.children.filter(
-      (child) => typeof child !== "string"
-    ) as Instance[];
+      (child): child is Instance => child.type === "instance"
+    );
   },
   renderItem(props: TreeItemRenderProps<Instance>) {
     const { Icon, label } = getComponentMeta(props.itemData.component);

@@ -8,8 +8,8 @@ export const findClosestSiblingInstance = (
     return;
   }
   const children = instance.children.filter(
-    (instance) => typeof instance === "object"
-  ) as Array<Instance>;
+    (child): child is Instance => child.type === "instance"
+  );
   const index = children.findIndex((instance) => instance.id === instanceId);
   if (index === -1) {
     return;

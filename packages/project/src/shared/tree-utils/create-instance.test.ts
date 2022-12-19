@@ -29,6 +29,7 @@ describe("create instance", () => {
       component: "Box",
       children: [
         {
+          type: "instance",
           id: "1",
           component: "Box",
           cssRules: [],
@@ -39,6 +40,7 @@ describe("create instance", () => {
     });
     expect(createdInstance.children).toEqual([
       {
+        type: "instance",
         id: "1",
         component: "Box",
         cssRules: [],

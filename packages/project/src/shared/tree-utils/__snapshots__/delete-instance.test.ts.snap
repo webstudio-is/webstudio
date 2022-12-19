@@ -8,11 +8,13 @@ exports[`Delete instance div 1 > div 2 > [div 3] 1`] = `
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;
 
@@ -24,10 +26,12 @@ exports[`Delete instance div 1 > div 2, [div 3] 1`] = `
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;

@@ -8,17 +8,20 @@ exports[`Insert instance after a nested div using "end": div 1 > div 2, [div 3] 
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
     {
       "children": [],
       "component": "Box",
       "cssRules": [],
       "id": "3",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;
 
@@ -30,17 +33,20 @@ exports[`Insert instance after a nested div using index: div 1 > div 2, [div 3] 
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
     {
       "children": [],
       "component": "Box",
       "cssRules": [],
       "id": "3",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;
 
@@ -52,17 +58,20 @@ exports[`Insert instance before a nested div using index: div 1 > [div 3], div 2
       "component": "Box",
       "cssRules": [],
       "id": "3",
+      "type": "instance",
     },
     {
       "children": [],
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;
 
@@ -76,15 +85,18 @@ exports[`Insert instance inside a nested div using "end": div 1 > div 2 > [div 3
           "component": "Box",
           "cssRules": [],
           "id": "3",
+          "type": "instance",
         },
       ],
       "component": "Box",
       "cssRules": [],
       "id": "2",
+      "type": "instance",
     },
   ],
   "component": "Box",
   "cssRules": [],
   "id": "1",
+  "type": "instance",
 }
 `;

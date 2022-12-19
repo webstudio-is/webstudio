@@ -99,23 +99,23 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
           instance={utils.tree.createInstance({
             component: "TextBlock",
             children: [
-              "Pragraph you can edit ",
+              { type: "text", value: "Paragraph you can edit " },
               utils.tree.createInstance({
                 component: "Bold",
-                children: ["very bold text "],
+                children: [{ type: "text", value: "very bold text " }],
               }),
               utils.tree.createInstance({
                 component: "Bold",
                 children: [
                   utils.tree.createInstance({
                     component: "Italic",
-                    children: ["with small italic"],
+                    children: [{ type: "text", value: "with small italic" }],
                   }),
                 ],
               }),
               utils.tree.createInstance({
                 component: "Bold",
-                children: [" subtext"],
+                children: [{ type: "text", value: " subtext" }],
               }),
             ],
           })}
