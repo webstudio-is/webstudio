@@ -28,14 +28,12 @@ export const toBaseInstance = (instance: Instance): BaseInstance => {
   };
 };
 
-export const Text = z.lazy(
-  () =>
-    z.object({
-      type: z.literal("text"),
-      value: z.string(),
-    })
-  // @todo can't figure out how to make component to be z.enum(Object.keys(components))
-) as z.ZodType<Text>;
+export const Text = z.lazy(() =>
+  z.object({
+    type: z.literal("text"),
+    value: z.string(),
+  })
+);
 
 export const Instance = z.lazy(
   () =>
