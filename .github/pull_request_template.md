@@ -1,16 +1,23 @@
+## Description
+
+1. What is this PR about (link the issue and add a short description)
+
+## Steps for reproduction
+
+1. click button
+2. expect xyz
+
+## Code Review
+
+- [ ] hi @kof, I need you to do
+  - conceptual review (architecture, feature-correctness)
+  - detailed review (read every line)
+  - test it on preview
+
 ## Before requesting a review
 
-- [ ] if the PR is WIP - use draft mode
 - [ ] made a self-review
 - [ ] added inline comments where things may be not obvious (the "why", not "what")
-- [ ] what kind of review is needed?
-  - [ ] conceptual
-  - [ ] detailed
-  - [ ] with testing
-
-## Test cases
-
-- [ ] step by step interaction description and what is expected to happen
 
 ## Before merging
 
