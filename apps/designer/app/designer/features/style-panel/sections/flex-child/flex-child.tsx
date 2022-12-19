@@ -17,7 +17,7 @@ import {
   OrderLastIcon,
   EllipsesIcon,
 } from "@webstudio-is/icons";
-import { ValuePickerPopover } from "../../shared/value-picker-popover";
+import { FloatingPanel } from "~/designer/shared/floating-panel";
 
 export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
@@ -159,7 +159,7 @@ const FlexChildSectionSizingPopover = ({
   sectionStyle,
 }: RenderCategoryProps) => {
   return (
-    <ValuePickerPopover
+    <FloatingPanel
       title="Sizing"
       content={
         <Grid
@@ -199,7 +199,7 @@ const FlexChildSectionSizingPopover = ({
       <Flex>
         <EllipsesIcon />
       </Flex>
-    </ValuePickerPopover>
+    </FloatingPanel>
   );
 };
 
@@ -257,7 +257,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
 const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
   const { deleteProperty, sectionStyle } = props;
   return (
-    <ValuePickerPopover
+    <FloatingPanel
       title="Order"
       content={
         <Grid css={{ padding: "$spacing$9" }}>
@@ -275,7 +275,7 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
       <Flex>
         <EllipsesIcon />
       </Flex>
-    </ValuePickerPopover>
+    </FloatingPanel>
   );
 };
 

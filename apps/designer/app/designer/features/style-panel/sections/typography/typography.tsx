@@ -33,7 +33,7 @@ import {
   TextUppercaseIcon,
 } from "@webstudio-is/icons";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
-import { ValuePickerPopover } from "../../shared/value-picker-popover";
+import { FloatingPanel } from "~/designer/shared/floating-panel";
 
 export const TypographySection = (props: RenderCategoryProps) => {
   return (
@@ -254,7 +254,7 @@ export const TypographySectionAdvancedPopover = (
   const setTextOverflow = setProperty("textOverflow");
   const setHyphens = setProperty("hyphens");
   return (
-    <ValuePickerPopover
+    <FloatingPanel
       title="Advanced Typography"
       content={
         <Grid css={{ padding: "$spacing$9", gap: "$spacing$9" }}>
@@ -348,7 +348,7 @@ export const TypographySectionAdvancedPopover = (
           </IconButtonDeprecated>
         </Tooltip>
       </Flex>
-    </ValuePickerPopover>
+    </FloatingPanel>
   );
 };
 

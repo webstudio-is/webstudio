@@ -12,6 +12,8 @@ import {
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
+import { FloatingPanelProvider } from "~/designer/shared/floating-panel";
+import { useRef } from "react";
 
 type InspectorProps = {
   publish: Publish;
@@ -25,6 +27,7 @@ const contentStyle = {
 
 export const Inspector = ({ publish }: InspectorProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   if (selectedInstanceData === undefined) {
     return (
@@ -38,40 +41,34 @@ export const Inspector = ({ publish }: InspectorProps) => {
   }
 
   return (
-    // @todo: Nit: I wonder if this width was supposed to be defined by the parent container layout
-    <Tabs
-      defaultValue="style"
-      css={{
-        width: "100%",
-        position:
-          "relative" /* Hack - value picker popover positioning depends on it */,
-      }}
-    >
-      <TabsList>
-        <TabsTrigger value="style">
-          <Text>Style</Text>
-        </TabsTrigger>
-        {/* @note: events would be part of props */}
-        <TabsTrigger value="props">
-          <Text>Props</Text>
-        </TabsTrigger>
-        <TabsTrigger value="inspect">
-          <Text>Inspect</Text>
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="style" css={contentStyle}>
-        <StylePanel
-          publish={publish}
-          selectedInstanceData={selectedInstanceData}
-        />
-      </TabsContent>
-      <TabsContent value="props" css={contentStyle}>
-        <PropsPanel
-          publish={publish}
-          key={selectedInstanceData.id /* Re-render when instance changes */}
-          selectedInstanceData={selectedInstanceData}
-        />
-      </TabsContent>
-    </Tabs>
+    <FloatingPanelProvider container={tabsRef}>
+      <Tabs defaultValue="style" ref={tabsRef}>
+        <TabsList>
+          <TabsTrigger value="style">
+            <Text>Style</Text>
+          </TabsTrigger>
+          {/* @note: events would be part of props */}
+          <TabsTrigger value="props">
+            <Text>Props</Text>
+          </TabsTrigger>
+          <TabsTrigger value="inspect">
+            <Text>Inspect</Text>
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="style" css={contentStyle}>
+          <StylePanel
+            publish={publish}
+            selectedInstanceData={selectedInstanceData}
+          />
+        </TabsContent>
+        <TabsContent value="props" css={contentStyle}>
+          <PropsPanel
+            publish={publish}
+            key={selectedInstanceData.id /* Re-render when instance changes */}
+            selectedInstanceData={selectedInstanceData}
+          />
+        </TabsContent>
+      </Tabs>
+    </FloatingPanelProvider>
   );
 };

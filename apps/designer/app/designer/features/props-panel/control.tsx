@@ -13,7 +13,7 @@ import {
   Switch,
   TextField,
 } from "@webstudio-is/design-system";
-import { ValuePickerPopover } from "../style-panel/shared/value-picker-popover";
+import { FloatingPanel } from "~/designer/shared/floating-panel/";
 import { ImageManager } from "~/designer/shared/image-manager";
 import { Checkbox } from "@webstudio-is/design-system";
 import { Asset } from "@webstudio-is/asset-uploader";
@@ -153,7 +153,7 @@ type ImageControlProps = {
 
 const ImageControl = ({ asset, onChange }: ImageControlProps) => {
   return (
-    <ValuePickerPopover
+    <FloatingPanel
       title="Images"
       content={
         <ImageManager
@@ -164,7 +164,7 @@ const ImageControl = ({ asset, onChange }: ImageControlProps) => {
       }
     >
       <TextField defaultValue={asset?.name ?? " - "} />
-    </ValuePickerPopover>
+    </FloatingPanel>
   );
 };
 
