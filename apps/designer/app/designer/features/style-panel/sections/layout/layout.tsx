@@ -170,6 +170,7 @@ export const LayoutSection = ({
             currentStyle={display.currentStyle}
             inheritedStyle={display.inheritedStyle}
             setProperty={display.setProperty}
+            deleteProperty={display.deleteProperty}
             // show only important values first and hide others with scroll
             styleConfig={{
               ...display.styleConfig,

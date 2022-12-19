@@ -5,13 +5,14 @@ import {
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import type { StyleValue } from "@webstudio-is/css-data";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 
 export const TextControl = ({
   currentStyle,
   inheritedStyle,
   setProperty,
+  deleteProperty,
   styleConfig,
   icon,
 }: ControlProps & { icon?: JSX.Element }) => {
