@@ -20,22 +20,22 @@ const useSideOffset = ({
   isOpen: boolean;
 }): [MutableRefObject<HTMLButtonElement | null>, number] => {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const { container } = useContext(FloatingPanelContext);
+  const { container: containerRef } = useContext(FloatingPanelContext);
   const [sideOffset, setSideOffset] = useState(0);
 
   useEffect(() => {
     if (
       isOpen === false ||
-      container.current === null ||
+      containerRef.current === null ||
       triggerRef.current === null
     ) {
       // Prevent computation if the panel is closed
       return;
     }
-    const containerRect = container.current.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
     const triggerRect = triggerRef.current.getBoundingClientRect();
     setSideOffset(triggerRect.left - containerRect.left);
-  }, [isOpen, container]);
+  }, [isOpen, containerRef]);
 
   return [triggerRef, sideOffset];
 };
