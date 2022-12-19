@@ -172,6 +172,7 @@ export const useCombobox = <Item,>({
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     stateReducer,
     itemToString,
+    inputValue: value ? itemToString(value) : undefined,
     onInputValueChange({ inputValue, type }) {
       if (type === comboboxStateChangeTypes.InputChange) {
         filter(inputValue);
