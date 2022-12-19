@@ -1,17 +1,18 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import store from "immerhin";
 import type { Build, CanvasData } from "@webstudio-is/project";
 import {
+  type OnChangeChildren,
+  type Tree,
   createElementsTree,
   useAllUserProps,
   registerComponents,
   registerComponentsMeta,
   customComponentsMeta,
   setParams,
-  type OnChangeChildren,
-  type Tree,
+  allUserPropsContainer,
 } from "@webstudio-is/react-sdk";
-import { publish, useSubscribe } from "~/shared/pubsub";
+import { publish, subscribe, useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useDeleteInstance,
@@ -28,7 +29,6 @@ import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
-import { useManageProps } from "./shared/props";
 import {
   useManageBreakpoints,
   useInitializeBreakpoints,
@@ -53,6 +53,7 @@ import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { useSelectedInstance } from "./shared/nano-states";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
+import { applyPatches } from "immer";
 
 registerContainers();
 
@@ -134,10 +135,23 @@ type DesignModeProps = {
 };
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
+  useEffect(() => {
+    return subscribe("patches", (changes) => {
+      for (const change of changes) {
+        if (change.namespace === "props") {
+          const value = applyPatches(
+            allUserPropsContainer.value,
+            change.patches
+          );
+          allUserPropsContainer.dispatch(value);
+        }
+      }
+    });
+  }, []);
+
   useManageBreakpoints();
   usePublishDesignTokens();
   useManageDesignModeStyles();
-  useManageProps({ treeId });
   usePublishSelectedInstanceData();
   useInsertInstance({ treeId });
   useReparentInstance();

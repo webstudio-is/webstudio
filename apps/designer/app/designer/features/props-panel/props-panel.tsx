@@ -34,6 +34,12 @@ import {
   type SetProperty,
 } from "../style-panel/shared/use-style-data";
 import type { Style } from "@webstudio-is/css-data";
+import {
+  deleteProp,
+  getInstanceProps,
+  updateProps,
+  useTreeProps,
+} from "./store";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -220,14 +226,21 @@ const Property = ({
 };
 
 type PropsPanelProps = {
+  treeId: string;
   publish: Publish;
   selectedInstanceData: SelectedInstanceData;
 };
 
 export const PropsPanel = ({
+  treeId,
   selectedInstanceData,
   publish,
 }: PropsPanelProps) => {
+  const { id: selectedInstanceId } = selectedInstanceData;
+  const [treeProps] = useTreeProps();
+  const instanceProps = getInstanceProps(treeId, selectedInstanceId, treeProps);
+  const props = instanceProps.props;
+
   const {
     userProps,
     addEmptyProp,
@@ -235,7 +248,21 @@ export const PropsPanel = ({
     handleChangePropValue,
     handleDeleteProp,
     isRequired,
-  } = usePropsLogic({ selectedInstanceData, publish });
+  } = usePropsLogic({
+    props,
+    selectedComponentName: selectedInstanceData.component,
+    updateProps: (updates) => {
+      updateProps(
+        instanceProps.treeId,
+        instanceProps.instanceId,
+        instanceProps.id,
+        updates
+      );
+    },
+    deleteProp: (propId) => {
+      deleteProp(instanceProps.instanceId, propId);
+    },
+  });
 
   const { setProperty: setCssProperty, currentStyle } = useStyleData({
     selectedInstanceData,

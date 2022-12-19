@@ -84,7 +84,7 @@ export const useInsertInstance = ({ treeId }: { treeId: string }) => {
   useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
-      (rootInstance, allUserProps) => {
+      (rootInstance /*, allUserProps*/) => {
         if (rootInstance === undefined) {
           return;
         }
@@ -100,6 +100,7 @@ export const useInsertInstance = ({ treeId }: { treeId: string }) => {
         if (hasInserted) {
           setSelectedInstance(instance);
         }
+        /*
         if (props !== undefined) {
           allUserProps[instance.id] = utils.props.createInstanceProps({
             instanceId: instance.id,
@@ -107,6 +108,7 @@ export const useInsertInstance = ({ treeId }: { treeId: string }) => {
             props,
           });
         }
+        */
       }
     );
   });

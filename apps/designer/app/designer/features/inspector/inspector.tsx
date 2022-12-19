@@ -14,6 +14,7 @@ import { PropsPanel } from "~/designer/features/props-panel";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 
 type InspectorProps = {
+  treeId: string;
   publish: Publish;
 };
 
@@ -23,7 +24,7 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const Inspector = ({ publish }: InspectorProps) => {
+export const Inspector = ({ treeId, publish }: InspectorProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
 
   if (selectedInstanceData === undefined) {
@@ -67,8 +68,9 @@ export const Inspector = ({ publish }: InspectorProps) => {
       </TabsContent>
       <TabsContent value="props" css={contentStyle}>
         <PropsPanel
-          publish={publish}
           key={selectedInstanceData.id /* Re-render when instance changes */}
+          treeId={treeId}
+          publish={publish}
           selectedInstanceData={selectedInstanceData}
         />
       </TabsContent>

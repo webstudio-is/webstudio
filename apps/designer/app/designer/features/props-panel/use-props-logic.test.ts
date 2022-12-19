@@ -1,38 +1,16 @@
 import { jest, describe, test, expect } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
-import {
-  ComponentName,
-  getComponentMeta,
-  UserProp,
-} from "@webstudio-is/react-sdk";
-import { nanoid } from "nanoid";
-import type { SelectedInstanceData } from "@webstudio-is/project";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { usePropsLogic } from "./use-props-logic";
-
-const getSelectedInstanceData = (
-  componentName: ComponentName,
-  props: UserProp[]
-): SelectedInstanceData => {
-  return {
-    id: nanoid(8),
-    component: componentName,
-    cssRules: [],
-    browserStyle: {},
-    props: {
-      id: nanoid(8),
-      props,
-      instanceId: nanoid(8),
-      treeId: nanoid(8),
-    },
-  };
-};
 
 describe("usePropsLogic", () => {
   test("should return required props", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Link", []),
-        publish: jest.fn(),
+        props: [],
+        selectedComponentName: "Link",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
@@ -45,14 +23,18 @@ describe("usePropsLogic", () => {
   test("should return different default props for different instances", () => {
     const { result: res1 } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Heading", []),
-        publish: jest.fn(),
+        props: [],
+        selectedComponentName: "Heading",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     const { result: res2 } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", []),
-        publish: jest.fn(),
+        props: [],
+        selectedComponentName: "Button",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(res1.current.userProps[0]).toMatchObject({
@@ -68,8 +50,10 @@ describe("usePropsLogic", () => {
   test("should return props with defaultValue set", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", []),
-        publish: jest.fn(),
+        props: [],
+        selectedComponentName: "Button",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
@@ -82,15 +66,17 @@ describe("usePropsLogic", () => {
   test("should dedupe by prop name and user props take precedence ", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Button", [
+        props: [
           {
             id: "default",
             prop: "type",
             type: "string",
             value: "submit",
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Button",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
@@ -103,8 +89,10 @@ describe("usePropsLogic", () => {
   test("should add an empty prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Box", []),
-        publish: jest.fn(),
+        props: [],
+        selectedComponentName: "Box",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -121,7 +109,7 @@ describe("usePropsLogic", () => {
   test("should remove a prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Box", [
+        props: [
           {
             id: "1",
             prop: "tag",
@@ -135,8 +123,10 @@ describe("usePropsLogic", () => {
             type: "boolean",
             value: true,
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Box",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -161,7 +151,7 @@ describe("usePropsLogic", () => {
   test("should update a prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Box", [
+        props: [
           {
             id: "1",
             prop: "tag",
@@ -175,8 +165,10 @@ describe("usePropsLogic", () => {
             type: "boolean",
             value: true,
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Box",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -213,7 +205,7 @@ describe("usePropsLogic", () => {
   test("should not remove a required prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Box", [
+        props: [
           {
             id: "1",
             prop: "tag",
@@ -228,8 +220,10 @@ describe("usePropsLogic", () => {
             value: true,
             required: true,
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Box",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -263,7 +257,7 @@ describe("usePropsLogic", () => {
   test("should not update a required prop name", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Box", [
+        props: [
           {
             id: "1",
             prop: "tag",
@@ -278,8 +272,10 @@ describe("usePropsLogic", () => {
             value: "test",
             required: true,
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Box",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -310,7 +306,7 @@ describe("usePropsLogic", () => {
   test("should update a required prop value", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Box", [
+        props: [
           {
             id: "1",
             prop: "tag",
@@ -325,8 +321,10 @@ describe("usePropsLogic", () => {
             value: true,
             required: true,
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Box",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -360,7 +358,7 @@ describe("usePropsLogic", () => {
   test("should update value and asset", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Box", [
+        props: [
           {
             id: "1",
             prop: "tag",
@@ -368,8 +366,10 @@ describe("usePropsLogic", () => {
             value: "div",
             required: true,
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Box",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -459,7 +459,7 @@ describe("usePropsLogic", () => {
   test("should respect initialProps ordering", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Image", [
+        props: [
           {
             id: "22",
             prop: "aria-label",
@@ -495,8 +495,10 @@ describe("usePropsLogic", () => {
             value: "https://example.com",
             required: true,
           },
-        ]),
-        publish: jest.fn(),
+        ],
+        selectedComponentName: "Image",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -520,8 +522,10 @@ describe("usePropsLogic", () => {
   test("should return isRequired true for initial props", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Image", []),
-        publish: jest.fn(),
+        props: [],
+        selectedComponentName: "Image",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -539,8 +543,10 @@ describe("usePropsLogic", () => {
   test("isRequired should respect required prop", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
-        selectedInstanceData: getSelectedInstanceData("Image", []),
-        publish: jest.fn(),
+        props: [],
+        selectedComponentName: "Image",
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 

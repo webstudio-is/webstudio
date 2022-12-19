@@ -1,10 +1,8 @@
 import type {
-  DeleteProp,
   UserProp,
-  UserPropsUpdates,
   MetaProps,
+  ComponentName,
 } from "@webstudio-is/react-sdk";
-import { type Publish } from "~/shared/pubsub";
 import {
   getComponentMeta,
   getComponentMetaProps,
@@ -14,15 +12,7 @@ import produce from "immer";
 // @todo: importing normally doesn't work in Jest for some reason
 import uniqBy from "lodash/uniqBy"; // eslint-disable-line
 import { useState } from "react";
-import type { SelectedInstanceData } from "@webstudio-is/project";
 import warnOnce from "warn-once";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    deleteProp: DeleteProp;
-    updateProps: UserPropsUpdates;
-  }
-}
 
 export type UserPropValue = UserProp extends infer T
   ? T extends { value: unknown; type: unknown }
@@ -58,16 +48,10 @@ export const getValueFromPropMeta = (propValue: MetaProps[string]) => {
 };
 
 const getRequiredProps = (
-  selectedInstanceData: SelectedInstanceData
+  component: ComponentName,
+  props: UserProp[]
 ): UserProp[] => {
-  const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
-
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
 
   return Object.entries(meta)
     .filter(([_, value]) => value?.required)
@@ -96,16 +80,10 @@ const getRequiredProps = (
 // @todo: This returns same props for all instances.
 // See the failing test in use-props-logic.test.ts
 const getPropsWithDefaultValue = (
-  selectedInstanceData: SelectedInstanceData
+  component: ComponentName,
+  props: UserProp[]
 ): UserProp[] => {
-  const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
-
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
 
   return Object.entries(meta)
     .filter(([_, value]) => value?.defaultValue != null)
@@ -127,15 +105,9 @@ const getPropsWithDefaultValue = (
 };
 
 const getInitialProps = (
-  selectedInstanceData: SelectedInstanceData
+  component: ComponentName,
+  props: UserProp[]
 ): UserProp[] => {
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
-
-  const { component } = selectedInstanceData;
   const meta = getComponentMeta(component);
   const metaProps = getComponentMetaProps(component);
 
@@ -168,29 +140,27 @@ const getInitialProps = (
 };
 
 type UsePropsLogic = {
-  publish: Publish;
-  selectedInstanceData: SelectedInstanceData;
+  selectedComponentName: ComponentName;
+  props: UserProp[];
+  updateProps: (updates: Array<UserProp>) => void;
+  deleteProp: (propId: string) => void;
 };
 
 /**
  * usePropsLogic expects that key={selectedInstanceData.id} is used on the ancestor component
  */
 export const usePropsLogic = ({
-  selectedInstanceData,
-  publish,
+  props,
+  selectedComponentName,
+  updateProps,
+  deleteProp,
 }: UsePropsLogic) => {
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
-
   const [requiredProps] = useState<Array<UserProp>>(() =>
     uniqBy(
       [
-        ...getInitialProps(selectedInstanceData),
-        ...getRequiredProps(selectedInstanceData),
-        ...getPropsWithDefaultValue(selectedInstanceData),
+        ...getInitialProps(selectedComponentName, props),
+        ...getRequiredProps(selectedComponentName, props),
+        ...getPropsWithDefaultValue(selectedComponentName, props),
       ],
       "prop"
     )
@@ -200,27 +170,6 @@ export const usePropsLogic = ({
     uniqBy([...requiredProps, ...props], "prop")
   );
 
-  const updateProps = (updates: UserPropsUpdates["updates"]) => {
-    publish({
-      type: "updateProps",
-      payload: {
-        propsId: selectedInstanceData.props?.id,
-        instanceId: selectedInstanceData.id,
-        updates,
-      },
-    });
-  };
-
-  const deleteProp = (id: UserProp["id"]) => {
-    publish({
-      type: "deleteProp",
-      payload: {
-        instanceId: selectedInstanceData.id,
-        propId: id,
-      },
-    });
-  };
-
   const handleChangePropName: HandleChangePropName = (id, name) => {
     const nextUserProps = produce((draft: Array<UserProp>) => {
       const index = draft.findIndex((item) => item.id === id);
@@ -228,8 +177,7 @@ export const usePropsLogic = ({
       const isPropRequired = draft[index].required;
 
       if (isPropRequired !== true) {
-        const { component } = selectedInstanceData;
-        const meta = getComponentMetaProps(component);
+        const meta = getComponentMetaProps(selectedComponentName);
 
         let typedValue: UserPropValue = { type: "string", value: "" };
         if (name in meta) {

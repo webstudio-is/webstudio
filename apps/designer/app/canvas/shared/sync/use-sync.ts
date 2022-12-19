@@ -1,16 +1,28 @@
 import { useInterval } from "react-use";
 import { sync } from "immerhin";
+import type { Change } from "immerhin/dist/declarations/src/transaction";
 import { enqueue } from "./queue";
 import type { Build } from "@webstudio-is/project";
 import { Tree } from "@webstudio-is/react-sdk";
 import { restPatchPath } from "~/shared/router-utils";
+import { Publish } from "~/shared/pubsub";
+
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    patches: Change[];
+  }
+}
 
 export const useSync = ({
   treeId,
   buildId,
+  publish,
+  publishPatches,
 }: {
   buildId: Build["id"];
   treeId: Tree["id"];
+  publish?: Publish;
+  publishPatches?: boolean;
 }) => {
   useInterval(() => {
     const entries = sync();
@@ -32,5 +44,18 @@ export const useSync = ({
         }),
       })
     );
+
+    if (publishPatches) {
+      const changes = [];
+      for (const entry of entries) {
+        for (const change of entry.changes) {
+          changes.push(change);
+        }
+      }
+      publish?.({
+        type: "patches",
+        payload: changes,
+      });
+    }
   }, 1000);
 };

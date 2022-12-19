@@ -26,11 +26,25 @@ export const loader: LoaderFunction = async ({
   }
 
   const devBuild = await db.build.loadByProjectId(project.id, "dev");
+  const pageId = pageIdParam || devBuild.pages.homePage.id;
+  const page = [devBuild.pages.homePage, ...devBuild.pages.pages].find(
+    (page) => page.id === pageId
+  );
+  const treeId = page?.treeId;
+  const treeProps =
+    treeId === undefined ? [] : await db.props.loadByTreeId(treeId);
+
+  if (treeId === undefined) {
+    throw Error("Tree not found");
+  }
 
   return {
     project,
     pages: devBuild.pages,
-    pageId: pageIdParam || devBuild.pages.homePage.id,
+    buildId: devBuild.id,
+    pageId,
+    treeId,
+    treeProps,
     buildOrigin: getBuildOrigin(request),
   };
 };

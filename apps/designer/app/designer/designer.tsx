@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
+import store from "immerhin";
+import type { InstanceProps } from "@webstudio-is/react-sdk";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import {
   type Pages,
@@ -42,6 +44,10 @@ import { getBuildUrl } from "~/shared/router-utils";
 import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
+import { treePropsStore, useSetTreeProps } from "./features/props-panel/store";
+import { useSync } from "~/canvas/shared/sync";
+
+store.register("props", treePropsStore);
 
 export const links = () => {
   return [
@@ -279,16 +285,24 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
 export type DesignerProps = {
   project: Project;
   pages: Pages;
+  buildId: string;
   pageId: string;
+  treeId: string;
+  treeProps: InstanceProps[];
   buildOrigin: string;
 };
 
 export const Designer = ({
   project,
   pages,
+  buildId,
   pageId,
+  treeId,
+  treeProps,
   buildOrigin,
 }: DesignerProps) => {
+  useSetTreeProps(treeProps);
+
   useSubscribeSyncStatus();
   useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
@@ -299,6 +313,7 @@ export const Designer = ({
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
+  useSync({ buildId, treeId, publish, publishPatches: true });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -374,7 +389,7 @@ export const Designer = ({
           {dragAndDropState.isDragging ? (
             <TreePrevew />
           ) : (
-            <Inspector publish={publish} />
+            <Inspector treeId={treeId} publish={publish} />
           )}
         </SidePanel>
         <Footer publish={publish} />
