@@ -23,7 +23,7 @@ export const TextControl = ({
 
   const setValue = setProperty(styleConfig.property);
 
-  const [currentValue, setCurrentValue] = useState<
+  const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
 
@@ -37,23 +37,24 @@ export const TextControl = ({
         <CssValueInput
           icon={icon}
           property={styleConfig.property}
-          value={currentValue ?? value}
+          value={value}
+          intermediateValue={intermediateValue}
           keywords={styleConfig.items.map((item) => ({
             type: "keyword",
             value: item.name,
           }))}
           onChange={(styleValue) => {
-            setCurrentValue(styleValue);
+            setIntermediateValue(styleValue);
             if (styleValue.type !== "intermediate") {
               setValue(styleValue, { isEphemeral: true });
             }
           }}
-          onPreview={(styleValue) => {
+          onHighlight={(styleValue) => {
             setValue(styleValue, { isEphemeral: true });
           }}
           onChangeComplete={(styleValue) => {
             setValue(styleValue);
-            setCurrentValue(undefined);
+            setIntermediateValue(undefined);
           }}
         />
       </Box>

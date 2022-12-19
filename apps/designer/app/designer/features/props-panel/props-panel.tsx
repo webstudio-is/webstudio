@@ -65,6 +65,7 @@ const Combobox = ({
   } = useCombobox({
     items: itemsProp,
     value,
+    selectedItem: value,
     itemToString: (item) => item ?? "",
     onItemSelect,
   });

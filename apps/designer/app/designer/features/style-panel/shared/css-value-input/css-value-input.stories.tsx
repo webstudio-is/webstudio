@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { Flex, TextField } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
@@ -10,17 +10,20 @@ export default {
 };
 
 export const WithKeywords = () => {
-  const [value, setValue] = React.useState<StyleValue | IntermediateStyleValue>(
-    {
-      type: "keyword",
-      value: "auto",
-    }
-  );
+  const [value, setValue] = React.useState<StyleValue>({
+    type: "keyword",
+    value: "auto",
+  });
+
+  const [intermediateValue, setIntermediateValue] = React.useState<
+    StyleValue | IntermediateStyleValue
+  >();
 
   return (
     <CssValueInput
       property="width"
       value={value}
+      intermediateValue={intermediateValue}
       keywords={[
         { type: "keyword", value: "auto" },
         { type: "keyword", value: "min-content" },
@@ -28,14 +31,15 @@ export const WithKeywords = () => {
         { type: "keyword", value: "fit-content" },
       ]}
       onChange={(value) => {
-        setValue(value);
+        setIntermediateValue(value);
       }}
-      onPreview={(value) => {
-        action("onPreview")(value);
+      onHighlight={(value) => {
+        action("onHighlight")(value);
       }}
       onChangeComplete={(newValue) => {
         // on blur, select, enter etc.
         setValue(newValue);
+        setIntermediateValue(undefined);
         action("onChangeComplete")(newValue);
       }}
     />
@@ -43,17 +47,20 @@ export const WithKeywords = () => {
 };
 
 export const WithIcons = () => {
-  const [value, setValue] = React.useState<StyleValue | IntermediateStyleValue>(
-    {
-      type: "keyword",
-      value: "space-around",
-    }
-  );
+  const [value, setValue] = React.useState<StyleValue>({
+    type: "keyword",
+    value: "space-around",
+  });
+
+  const [intermediateValue, setIntermediateValue] = React.useState<
+    StyleValue | IntermediateStyleValue
+  >();
 
   return (
     <CssValueInput
       property="alignItems"
       value={value}
+      intermediateValue={intermediateValue}
       keywords={[
         { type: "keyword", value: "normal" },
         { type: "keyword", value: "start" },
@@ -64,14 +71,15 @@ export const WithIcons = () => {
         { type: "keyword", value: "space-between" },
       ]}
       onChange={(newValue) => {
-        setValue(newValue);
+        setIntermediateValue(newValue);
       }}
-      onPreview={(value) => {
-        action("onPreview")(value);
+      onHighlight={(value) => {
+        action("onHighlight")(value);
       }}
       onChangeComplete={(newValue) => {
         // on blur, select, enter etc.
         setValue(newValue);
+        setIntermediateValue(undefined);
         action("onChangeComplete")(newValue);
       }}
     />
@@ -79,19 +87,22 @@ export const WithIcons = () => {
 };
 
 export const WithUnits = () => {
-  const [value, setValue] = React.useState<StyleValue | IntermediateStyleValue>(
-    {
-      type: "unit",
-      value: 100,
-      unit: "px",
-    }
-  );
+  const [value, setValue] = React.useState<StyleValue>({
+    type: "unit",
+    value: 100,
+    unit: "px",
+  });
+
+  const [intermediateValue, setIntermediateValue] = React.useState<
+    StyleValue | IntermediateStyleValue
+  >();
 
   return (
     <Flex css={{ gap: "$spacing$9" }}>
       <CssValueInput
         property="rowGap"
         value={value}
+        intermediateValue={intermediateValue}
         keywords={[
           { type: "keyword", value: "auto" },
           { type: "keyword", value: "min-content" },
@@ -99,14 +110,15 @@ export const WithUnits = () => {
           { type: "keyword", value: "fit-content" },
         ]}
         onChange={(newValue) => {
-          setValue(newValue);
+          setIntermediateValue(newValue);
         }}
-        onPreview={(value) => {
-          action("onPreview")(value);
+        onHighlight={(value) => {
+          action("onHighlight")(value);
         }}
         onChangeComplete={(newValue) => {
           // on blur, select, enter etc.
           setValue(newValue);
+          setIntermediateValue(undefined);
           action("onChangeComplete")(newValue);
         }}
       />
@@ -114,8 +126,8 @@ export const WithUnits = () => {
         readOnly
         value={
           value
-            ? value?.type === "intermediate"
-              ? value.value + value.unit
+            ? intermediateValue?.type === "intermediate"
+              ? intermediateValue.value + intermediateValue.unit
               : toValue(value)
             : ""
         }

@@ -23,6 +23,7 @@ export const Simple: ComponentStory<typeof Combobox> = () => {
       placeholder="Select a fruit"
       items={items}
       value={value}
+      selectedItem={value}
       onItemSelect={(value) => {
         // If the value is cleared, we revert to previous state
         if (value !== null) {
@@ -70,6 +71,7 @@ export const Complex: ComponentStory<typeof Combobox> = () => {
     useCombobox({
       items: ["Apple", "Banana", "Orange"],
       value,
+      selectedItem: value,
       itemToString: (item) => item ?? "",
       stateReducer,
       onItemSelect: (value) => {
