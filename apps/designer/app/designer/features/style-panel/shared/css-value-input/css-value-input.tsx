@@ -276,18 +276,18 @@ export const CssValueInput = ({
         ? String(item.value)
         : toValue(item),
     onInputChange: (inputValue) => {
-      onChange(inputValue ?? unsetValue.value);
+      onChange(inputValue ?? toValue(props.value));
     },
     onItemSelect: (value) => {
-      onChangeComplete(value ?? unsetValue);
+      onChangeComplete(value ?? props.value ?? unsetValue);
     },
     onItemHighlight: (value) => {
       if (value == null) {
-        onHighlight(unsetValue);
+        onHighlight(props.value ?? unsetValue);
         return;
       }
       if (value.type !== "intermediate") {
-        onHighlight(value ?? unsetValue);
+        onHighlight(value ?? props.value ?? unsetValue);
       }
     },
   });
