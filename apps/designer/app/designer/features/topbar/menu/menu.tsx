@@ -226,7 +226,7 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Zoom in
-            <ShortcutHint value={["cmd", "+"]} />
+            <ShortcutHint value={["+"]} />
           </DropdownMenuItem>
           <DropdownMenuItem
             css={menuItemCss}
@@ -238,7 +238,7 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Zoom out
-            <ShortcutHint value={["cmd", "-"]} />
+            <ShortcutHint value={["-"]} />
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <ThemeMenuItem />
