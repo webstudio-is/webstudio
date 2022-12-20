@@ -1,6 +1,7 @@
 import { styled, useId } from "@webstudio-is/design-system";
 import type { ComponentProps } from "react";
-import { spacingPropertiesNames, type SpacingStyleProperty } from "./types";
+import type { HoverTagret, SpacingStyleProperty } from "./types";
+import { spacingPropertiesNames } from "./types";
 
 const VALUE_WIDTH = 34;
 const VALUE_HEIGHT = 24;
@@ -144,6 +145,7 @@ const Grid = styled("div", {
 });
 
 const Cell = styled("div", {
+  position: "relative",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -216,12 +218,6 @@ const getPath = (property: SpacingStyleProperty) => {
     case "left":
       return `M0 0L${(width - tips) / 2} ${height / 2}L0 ${height}V0Z`;
   }
-};
-
-// @todo: move?
-export type HoverTagret = {
-  property: SpacingStyleProperty;
-  element: SVGElement;
 };
 
 type LayoutProps = {

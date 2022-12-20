@@ -2,11 +2,16 @@ import { useState } from "react";
 import { getFinalValue } from "../../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { RenderCategoryProps } from "../../style-sections";
-import { type HoverTagret, SpacingLayout } from "./layout";
+import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
-import type { StyleChangeEvent, SpacingStyleProperty } from "./types";
+import type {
+  StyleChangeEvent,
+  SpacingStyleProperty,
+  HoverTagret,
+} from "./types";
 import { InputPopover } from "./input-popover";
+import { SpacingTooltip } from "./tooltip";
 
 const Cell = ({
   isPopoverOpen,
@@ -48,6 +53,12 @@ const Cell = ({
         property={property}
         onChange={onChange}
         onClose={onPopoverClose}
+      />
+      <SpacingTooltip
+        property={property}
+        isOpen={
+          isActive && isPopoverOpen === false && scrubStatus.isActive === false
+        }
       />
       <ValueText
         value={finalValue}

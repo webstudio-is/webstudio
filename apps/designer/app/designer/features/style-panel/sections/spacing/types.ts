@@ -10,3 +10,8 @@ export type StyleChangeEvent = {
 export const spacingPropertiesNames = categories.spacing.properties;
 
 export type SpacingStyleProperty = typeof spacingPropertiesNames[number];
+
+export type HoverTagret = {
+  property: SpacingStyleProperty;
+  element: SVGElement;
+};
