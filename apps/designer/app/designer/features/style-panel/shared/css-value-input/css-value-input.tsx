@@ -195,6 +195,7 @@ type CssValueInputProps = {
   onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   onHighlight: (value: StyleValue) => void;
+  onBlur?: () => void;
 };
 
 /**
@@ -334,6 +335,8 @@ export const CssValueInput = ({
     if (isOpen && !menuProps.empty) {
       return;
     }
+
+    props.onBlur?.();
 
     onChangeComplete(value);
   };

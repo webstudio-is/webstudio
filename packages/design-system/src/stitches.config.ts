@@ -294,6 +294,7 @@ const {
     },
     easing: {
       easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
+      easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
     },
   },
   media: {

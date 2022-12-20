@@ -23,37 +23,57 @@ const Input = ({
   value,
   property,
   onChange,
+  onBlur,
 }: {
   property: StyleProperty;
   value: StyleValue;
   onChange: (event: StyleChangeEvent) => void;
+  onBlur: () => void;
 }) => {
-  const [currentValue, setCurrentValue] = useState<
+  const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
   >();
+
+  // @todo: ability to set to "auto" via unit picker
   return (
     <CssValueInput
       property={property}
-      value={currentValue ?? value}
+      value={value}
+      intermediateValue={intermediateValue}
+      onBlur={onBlur}
       onChange={(styleValue) => {
-        setCurrentValue(styleValue);
+        setIntermediateValue(styleValue);
         if (styleValue.type !== "intermediate") {
           onChange({ property, value: styleValue, isEphemeral: true });
         }
       }}
-      onPreview={(styleValue) => {
+      onHighlight={(styleValue) => {
         onChange({ property, value: styleValue, isEphemeral: true });
       }}
       onChangeComplete={(styleValue) => {
-        setCurrentValue(undefined);
+        setIntermediateValue(undefined);
         onChange({ property, value: styleValue, isEphemeral: false });
       }}
     />
   );
 };
 
-// Trigger is used only for positioning
+// trigger is used only for positioning
 const Trigger = styled("div", { position: "absolute", width: 0, height: 0 });
+
+const PopoverContentStyled = styled(PopoverContent, {
+  minWidth: 0,
+  minHeight: 0,
+  width: 88,
+  border: "1px solid $colors$slate8",
+  borderRadius: "$borderRadius$7",
+  background: "$colors$gray2",
+  padding: "$spacing$5",
+  boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
+  animationDuration: "200ms",
+  animationTimingFunction: "$easing$easeOut",
+  '&[data-state="open"]': { animationName: slideUpAndFade },
+});
 
 export const InputPopover = ({
   value,
@@ -70,7 +90,6 @@ export const InputPopover = ({
 }) => {
   return (
     <Popover
-      modal
       open={isOpen}
       onOpenChange={(nextOpen) => {
         if (nextOpen === false) {
@@ -82,23 +101,17 @@ export const InputPopover = ({
         <Trigger />
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent
-          hideArrow
-          css={{
-            background: "none",
-            boxShadow: "none",
-            borderRadius: 0,
-            minWidth: 80,
-            width: 80,
-            padding: 2,
-            animationDuration: "200ms",
-            animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
-            '&[data-state="open"]': { animationName: slideUpAndFade },
-          }}
-          sideOffset={-20}
-        >
-          <Input value={value} property={property} onChange={onChange} />
-        </PopoverContent>
+        <PopoverContentStyled hideArrow sideOffset={-24}>
+          {/* @todo: close popover on Enter */}
+          <Input
+            value={value}
+            property={property}
+            onChange={onChange}
+            // when modal=false, close on click-outside doesn't work reliably,
+            // so we close on blur as well to be sure
+            onBlur={onClose}
+          />
+        </PopoverContentStyled>
       </PopoverPortal>
     </Popover>
   );

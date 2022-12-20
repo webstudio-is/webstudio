@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { getFinalValue } from "../../shared/get-final-value";
+import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { RenderCategoryProps } from "../../style-sections";
 import { type HoverTagret, SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
 import type { StyleChangeEvent, SpacingStyleProperty } from "./types";
 import { InputPopover } from "./input-popover";
-import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 
 const Cell = ({
   isPopoverOpen,
@@ -68,6 +68,11 @@ export const SpacingSection = ({
   const handleChange = ({ property, value, isEphemeral }: StyleChangeEvent) =>
     setProperty(property)(value, { isEphemeral });
 
+  // @todo:
+  // From design documetation:
+  // > Note that holding OPTION while scrubbing will adjust
+  // > the value on the opposite end at the same time.
+  // > Holding CONTROL while scrubbing will adjust all 4 padding/margin values at the same time.
   const scrubStatus = useScrub({
     target: hoverTarget,
     onChange: handleChange,
