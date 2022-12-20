@@ -90,6 +90,7 @@
     "@babel/core": "^7.20.2",
     "@jest/globals": "^29.3.1",
     "@remix-run/dev": "^1.6.4",
+    "@storybook/addon-actions": "6.5.14",
     "@storybook/react": "^6.5.14",
     "@storybook/testing-library": "^0.0.13",
     "@testing-library/react": "^12.1.5",
