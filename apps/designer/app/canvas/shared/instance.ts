@@ -29,7 +29,7 @@ declare module "~/shared/pubsub" {
     hoveredInstanceRect: DOMRect;
     hoverInstance?: HoveredInstanceData;
     loadRootInstance?: Instance;
-    selectedInstanceRect: DOMRect;
+    selectedInstanceRect?: DOMRect;
     selectInstance?: SelectedInstanceData;
     textEditingInstanceId?: Instance["id"];
     insertInstance: {

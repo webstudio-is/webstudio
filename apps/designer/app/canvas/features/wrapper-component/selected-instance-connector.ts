@@ -1,13 +1,20 @@
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import type { Instance, InstanceProps } from "@webstudio-is/react-sdk";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
-import { publish, subscribeAll } from "~/shared/pubsub";
-import { useScrollState } from "~/shared/dom-hooks";
+import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
+import { subscribeScrollState } from "~/shared/dom-hooks";
 
 const publishSelectedRect = (element: HTMLElement) => {
   publish({
     type: "selectedInstanceRect",
     payload: element.getBoundingClientRect(),
+  });
+};
+
+const hideSelectedRect = () => {
+  publish({
+    type: "selectedInstanceRect",
+    payload: undefined,
   });
 };
 
@@ -59,14 +66,28 @@ export const SelectedInstanceConnector = ({
           type === "deleteProp" ||
           type === "insertInstance" ||
           type === "deleteInstance" ||
-          type === "reparentInstance" ||
-          type === "updateStyle" ||
-          type.startsWith("previewStyle:")
+          type === "reparentInstance"
         ) {
           publishSelectedRect(element);
         }
       });
     }
+
+    // hide rect when preview style is send
+    // new rect will be send when new styles
+    // will be written to instance css rules
+    const unsubscribePreviewStyle = subscribe("previewStyle", () => {
+      hideSelectedRect();
+    });
+
+    const unsubscribeScrollState = subscribeScrollState({
+      onScrollStart() {
+        hideSelectedRect();
+      },
+      onScrollEnd() {
+        publishSelectedRect(element);
+      },
+    });
 
     // trigger style recomputing every time instance styles are changed
     publish({
@@ -84,22 +105,12 @@ export const SelectedInstanceConnector = ({
       resizeObserver.disconnect();
       mutationObserver.disconnect();
       unsubscribeTreeChange?.();
+      unsubscribePreviewStyle();
+      unsubscribeScrollState();
     };
 
     // instance props may change dom element
   }, [instanceElementRef, instance, instanceProps]);
-
-  const onScrollEnd = useCallback(() => {
-    const element = instanceElementRef.current;
-    if (element === undefined) {
-      return;
-    }
-    publishSelectedRect(element);
-  }, [instanceElementRef]);
-
-  useScrollState({
-    onScrollEnd,
-  });
 
   return null;
 };
