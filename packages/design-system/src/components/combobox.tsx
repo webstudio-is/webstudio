@@ -159,6 +159,8 @@ export const useCombobox = <Item,>({
   match,
   ...rest
 }: UseComboboxProps<Item>) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
     itemToString,
@@ -168,6 +170,14 @@ export const useCombobox = <Item,>({
   const downshiftProps = useDownshiftCombobox({
     ...rest,
     items: filteredItems,
+    isOpen,
+    onIsOpenChange(value) {
+      // Don't set isOpen to true if there are no items to show
+      // because otherwise first ESC press will try to close it and only next ESC
+      // will reset the value. When list is empty, first ESC should reset the value.
+      const nextIsOpen = value.isOpen === true && filteredItems.length !== 0;
+      setIsOpen(nextIsOpen);
+    },
     defaultHighlightedIndex: -1,
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
     stateReducer,
@@ -189,8 +199,7 @@ export const useCombobox = <Item,>({
     },
   });
 
-  const { isOpen, getItemProps, highlightedIndex, getMenuProps } =
-    downshiftProps;
+  const { getItemProps, highlightedIndex, getMenuProps } = downshiftProps;
 
   useEffect(() => {
     if (isOpen === false) {
