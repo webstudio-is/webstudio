@@ -6,6 +6,7 @@ import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
 import type { StyleChangeEvent, SpacingStyleProperty } from "./types";
 import { InputPopover } from "./input-popover";
+import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 
 const Cell = ({
   isPopoverOpen,
@@ -24,6 +25,8 @@ const Cell = ({
   isActive: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
 } & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">) => {
+  const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+
   const styleValue = getFinalValue({
     property,
     currentStyle,
@@ -49,7 +52,7 @@ const Cell = ({
       <ValueText
         value={finalValue}
         isActive={isActive}
-        source="set" // @todo: set correct source
+        source={isFromCurrentBreakpoint ? "set" : "unset"}
       />
     </>
   );

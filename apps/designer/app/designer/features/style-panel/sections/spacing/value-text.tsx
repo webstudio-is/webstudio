@@ -48,10 +48,16 @@ const Span = styled("span", {
 
 export const ValueText = ({
   value,
+  source,
   ...rest
 }: { value: StyleValue } & ComponentProps<typeof Container>) => {
   const children = useMemo(() => {
     if (value.type === "unit") {
+      // we want to show "0" rather than "0px" for unset values for cleaner UI
+      if (source === "unset" && value.unit === "px" && value.value === 0) {
+        return <Span>{value.value}</Span>;
+      }
+
       return (
         <>
           <Span>{value.value}</Span>
@@ -75,7 +81,7 @@ export const ValueText = ({
     }
 
     throw new Error(`Unexpected StyleValue type ${value.type}`);
-  }, [value]);
+  }, [value, source]);
 
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -105,7 +111,7 @@ export const ValueText = ({
   }, [children]);
 
   return (
-    <Container {...rest} ref={ref}>
+    <Container source={source} {...rest} ref={ref}>
       {children}
     </Container>
   );
