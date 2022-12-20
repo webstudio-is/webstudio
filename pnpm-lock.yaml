@@ -86,6 +86,7 @@ importers:
       '@webstudio-is/eslint-config-custom': '*'
       '@webstudio-is/fonts': '*'
       '@webstudio-is/icons': '*'
+      '@webstudio-is/image': '*'
       '@webstudio-is/jest-config': '*'
       '@webstudio-is/prisma-client': '*'
       '@webstudio-is/project': '*'
@@ -165,6 +166,7 @@ importers:
       '@webstudio-is/design-tokens': link:../../packages/design-tokens
       '@webstudio-is/fonts': link:../../packages/fonts
       '@webstudio-is/icons': link:../../packages/icons
+      '@webstudio-is/image': link:../../packages/image
       '@webstudio-is/prisma-client': link:../../packages/prisma-client
       '@webstudio-is/project': link:../../packages/project
       '@webstudio-is/react-sdk': link:../../packages/react-sdk

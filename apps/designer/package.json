@@ -39,6 +39,7 @@
     "@webstudio-is/design-tokens": "*",
     "@webstudio-is/fonts": "*",
     "@webstudio-is/icons": "*",
+    "@webstudio-is/image": "*",
     "@webstudio-is/prisma-client": "*",
     "@webstudio-is/project": "*",
     "@webstudio-is/react-sdk": "*",
