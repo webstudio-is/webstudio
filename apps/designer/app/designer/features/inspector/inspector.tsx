@@ -42,7 +42,14 @@ export const Inspector = ({ publish }: InspectorProps) => {
 
   return (
     <FloatingPanelProvider container={tabsRef}>
-      <Tabs defaultValue="style" ref={tabsRef}>
+      <Tabs
+        defaultValue="style"
+        ref={tabsRef}
+        css={{
+          // minHeight is required to get flex item height apply to this container
+          minHeight: 1,
+        }}
+      >
         <TabsList>
           <TabsTrigger value="style">
             <Text>Style</Text>

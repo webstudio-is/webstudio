@@ -155,6 +155,7 @@ const SidePanel = ({
       css={{
         gridArea,
         display: "flex",
+        flexDirection: "column",
         px: 0,
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
