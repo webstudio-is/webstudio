@@ -3,8 +3,11 @@ import { numericScrubControl } from "@webstudio-is/design-system";
 import { useState, useEffect, useRef } from "react";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { RenderCategoryProps } from "../../style-sections";
-import type { HoverTagret } from "./layout";
-import type { StyleChangeEvent, SpacingStyleProperty } from "./types";
+import type {
+  StyleChangeEvent,
+  SpacingStyleProperty,
+  HoverTagret,
+} from "./types";
 
 type ScrubStatus =
   | { isActive: false }
