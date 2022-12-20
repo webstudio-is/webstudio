@@ -34,7 +34,6 @@ const Input = ({
     StyleValue | IntermediateStyleValue
   >();
 
-  // @todo: ability to set to "auto" via unit picker
   return (
     <CssValueInput
       property={property}

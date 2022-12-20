@@ -79,11 +79,6 @@ export const SpacingSection = ({
   const handleChange = ({ property, value, isEphemeral }: StyleChangeEvent) =>
     setProperty(property)(value, { isEphemeral });
 
-  // @todo:
-  // From design documetation:
-  // > Note that holding OPTION while scrubbing will adjust
-  // > the value on the opposite end at the same time.
-  // > Holding CONTROL while scrubbing will adjust all 4 padding/margin values at the same time.
   const scrubStatus = useScrub({
     target: hoverTarget,
     onChange: handleChange,
