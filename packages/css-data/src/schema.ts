@@ -58,24 +58,26 @@ const InvalidValue = z.object({
 });
 export type InvalidValue = z.infer<typeof InvalidValue>;
 
-const UnsetValue = z.object({
-  type: z.literal("unset"),
-  value: z.literal(""),
-});
-export type UnsetValue = z.infer<typeof UnsetValue>;
-
 export const validStaticValueTypes = [
   "unit",
   "keyword",
   "fontFamily",
   "rgb",
+  "string",
 ] as const;
+
+const StringValue = z.object({
+  type: z.literal("string"),
+  value: z.string(),
+});
+export type StringValue = z.infer<typeof StringValue>;
 
 const ValidStaticStyleValue = z.union([
   UnitValue,
   KeywordValue,
   FontFamilyValue,
   RgbValue,
+  StringValue,
 ]);
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 
@@ -86,13 +88,7 @@ const VarValue = z.object({
 });
 export type VarValue = z.infer<typeof VarValue>;
 
-const StyleValue = z.union([
-  ValidStaticStyleValue,
-  InvalidValue,
-  UnsetValue,
-  VarValue,
-  RgbValue,
-]);
+const StyleValue = z.union([ValidStaticStyleValue, InvalidValue, VarValue]);
 export type StyleValue = z.infer<typeof StyleValue>;
 
 const Style = z.record(z.string(), StyleValue);

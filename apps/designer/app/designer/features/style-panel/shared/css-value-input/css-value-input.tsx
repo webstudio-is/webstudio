@@ -16,7 +16,6 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import type {
   KeywordValue,
   StyleProperty,
-  UnsetValue,
   StyleValue,
   Unit,
 } from "@webstudio-is/css-data";
@@ -32,8 +31,6 @@ import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
-
-const unsetValue: UnsetValue = { type: "unset", value: "" };
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -186,7 +183,7 @@ type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
 type CssValueInputProps = {
   property: StyleProperty;
-  value: StyleValue | undefined;
+  value: StyleValue;
   intermediateValue: CssValueInputValue | undefined;
   /**
    * Selected item in the dropdown
@@ -235,7 +232,7 @@ export const CssValueInput = ({
   onHighlight,
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
-  const value = props.intermediateValue ?? props.value ?? unsetValue;
+  const value = props.intermediateValue ?? props.value;
 
   const onChange = (input: string) => {
     // We don't know what's inside the input,
@@ -279,15 +276,15 @@ export const CssValueInput = ({
       onChange(inputValue ?? toValue(props.value));
     },
     onItemSelect: (value) => {
-      onChangeComplete(value ?? props.value ?? unsetValue);
+      onChangeComplete(value ?? props.value);
     },
     onItemHighlight: (value) => {
       if (value == null) {
-        onHighlight(props.value ?? unsetValue);
+        onHighlight(props.value);
         return;
       }
       if (value.type !== "intermediate") {
-        onHighlight(value ?? props.value ?? unsetValue);
+        onHighlight(value ?? props.value);
       }
     },
   });

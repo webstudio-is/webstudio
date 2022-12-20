@@ -17,14 +17,14 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("bad");
   });
 
-  test("unset", () => {
-    const value = toValue({ type: "unset", value: "" });
-    expect(value).toBe("");
-  });
-
   test("var", () => {
     const value = toValue({ type: "var", value: "namespace", fallbacks: [] });
     expect(value).toBe("var(--namespace)");
+  });
+
+  test("string", () => {
+    const value = toValue({ type: "string", value: "test" });
+    expect(value).toBe("test");
   });
 
   test("var with fallbacks", () => {

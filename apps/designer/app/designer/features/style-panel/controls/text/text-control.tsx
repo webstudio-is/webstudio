@@ -8,6 +8,8 @@ import type { StyleValue } from "@webstudio-is/css-data";
 import { useState } from "react";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 
+const emptyValue: StyleValue = { type: "string", value: "" };
+
 export const TextControl = ({
   currentStyle,
   inheritedStyle,
@@ -37,7 +39,7 @@ export const TextControl = ({
         <CssValueInput
           icon={icon}
           property={styleConfig.property}
-          value={value}
+          value={value ?? emptyValue}
           intermediateValue={intermediateValue}
           keywords={styleConfig.items.map((item) => ({
             type: "keyword",

@@ -53,7 +53,7 @@ export const toValue = (
     return value.value;
   }
 
-  if (value.type === "unset") {
+  if (value.type === "string") {
     return value.value;
   }
 
