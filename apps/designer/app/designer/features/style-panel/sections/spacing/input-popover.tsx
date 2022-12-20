@@ -23,12 +23,12 @@ const Input = ({
   value,
   property,
   onChange,
-  onBlur,
+  onClosePopover,
 }: {
   property: StyleProperty;
   value: StyleValue;
   onChange: (event: StyleChangeEvent) => void;
-  onBlur: () => void;
+  onClosePopover: () => void;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -40,7 +40,6 @@ const Input = ({
       property={property}
       value={value}
       intermediateValue={intermediateValue}
-      onBlur={onBlur}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         if (styleValue.type !== "intermediate") {
@@ -50,9 +49,14 @@ const Input = ({
       onHighlight={(styleValue) => {
         onChange({ property, value: styleValue, isEphemeral: true });
       }}
-      onChangeComplete={(styleValue) => {
+      onChangeComplete={(styleValue, reason) => {
         setIntermediateValue(undefined);
         onChange({ property, value: styleValue, isEphemeral: false });
+
+        // @todo: handle Esc
+        if (reason === "blur" || reason === "enter") {
+          onClosePopover();
+        }
       }}
     />
   );
@@ -102,14 +106,11 @@ export const InputPopover = ({
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContentStyled hideArrow sideOffset={-24}>
-          {/* @todo: close popover on Enter */}
           <Input
             value={value}
             property={property}
             onChange={onChange}
-            // when modal=false, close on click-outside doesn't work reliably,
-            // so we close on blur as well to be sure
-            onBlur={onClose}
+            onClosePopover={onClose}
           />
         </PopoverContentStyled>
       </PopoverPortal>
