@@ -73,7 +73,7 @@ const PopoverContentStyled = styled(PopoverContent, {
   background: "$colors$gray2",
   padding: "$spacing$5",
   boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
-  animationDuration: "200ms",
+  animationDuration: "150ms",
   animationTimingFunction: "$easing$easeOut",
   '&[data-state="open"]': { animationName: slideUpAndFade },
 });
