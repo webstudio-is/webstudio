@@ -52,8 +52,8 @@ export const TextControl = ({
           onHighlight={(styleValue) => {
             setValue(styleValue, { isEphemeral: true });
           }}
-          onChangeComplete={(styleValue) => {
-            setValue(styleValue);
+          onChangeComplete={({ value }) => {
+            setValue(value);
             setIntermediateValue(undefined);
           }}
         />

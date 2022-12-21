@@ -184,6 +184,13 @@ export type IntermediateStyleValue = {
 
 type CssValueInputValue = StyleValue | IntermediateStyleValue;
 
+type ChangeReason =
+  | "enter"
+  | "blur"
+  | "unit-select"
+  | "keyword-select"
+  | "scrub-end";
+
 type CssValueInputProps = {
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -193,7 +200,10 @@ type CssValueInputProps = {
    */
   keywords?: Array<KeywordValue>;
   onChange: (value: CssValueInputValue) => void;
-  onChangeComplete: (value: StyleValue) => void;
+  onChangeComplete: (event: {
+    value: StyleValue;
+    reason: ChangeReason;
+  }) => void;
   onHighlight: (value: StyleValue) => void;
 };
 
@@ -247,13 +257,19 @@ export const CssValueInput = ({
     });
   };
 
-  const onChangeComplete = (value: CssValueInputValue) => {
+  const onChangeComplete = (
+    value: CssValueInputValue,
+    reason: ChangeReason
+  ) => {
     if (value.type !== "intermediate" && value.type !== "invalid") {
-      props.onChangeComplete(value);
+      props.onChangeComplete({ value, reason });
       return;
     }
 
-    props.onChangeComplete(parseIntermediateOrInvalidValue(property, value));
+    props.onChangeComplete({
+      value: parseIntermediateOrInvalidValue(property, value),
+      reason,
+    });
   };
 
   const {
@@ -279,7 +295,7 @@ export const CssValueInput = ({
       onChange(inputValue ?? unsetValue.value);
     },
     onItemSelect: (value) => {
-      onChangeComplete(value ?? unsetValue);
+      onChangeComplete(value ?? unsetValue, "keyword-select");
     },
     onItemHighlight: (value) => {
       if (value == null) {
@@ -300,7 +316,7 @@ export const CssValueInput = ({
       value.type === "unit" || value.type === "intermediate"
         ? value
         : undefined,
-    onChange: onChangeComplete,
+    onChange: (value) => onChangeComplete(value, "unit-select"),
     onCloseAutoFocus(event) {
       // We don't want to focus the unit trigger when closing the select (no matter if unit was selected, clicked outside or esc was pressed)
       event.preventDefault();
@@ -316,7 +332,7 @@ export const CssValueInput = ({
   const [scrubRef, inputRef] = useScrub({
     value,
     onChange: props.onChange,
-    onChangeComplete,
+    onChangeComplete: (value) => onChangeComplete(value, "scrub-end"),
     shouldHandleEvent,
   });
 
@@ -335,14 +351,14 @@ export const CssValueInput = ({
       return;
     }
 
-    onChangeComplete(value);
+    onChangeComplete(value, "blur");
   };
 
   const handleKeyDown = useHandleKeyDown({
     // In case of the menu is really open and the selection is inside it
     // we do not prevent the default downshift Enter key behavior
     ignoreEnter: isOpen && !menuProps.empty && highlightedIndex !== -1,
-    onChangeComplete,
+    onChangeComplete: (value) => onChangeComplete(value, "enter"),
     value,
     onChange: props.onChange,
     onKeyDown: inputProps.onKeyDown,
