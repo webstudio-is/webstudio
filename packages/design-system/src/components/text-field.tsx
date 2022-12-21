@@ -270,6 +270,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       onBlur,
       onClick,
       type,
+      onKeyDown,
       // prevent spreading it into the dom
       suffix: suffixProp,
       ...textFieldProps
@@ -314,6 +315,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
         withPrefix={Boolean(prefix)}
         withSuffix={Boolean(suffix)}
         onClickCapture={focusInnerInput}
+        onKeyDown={onKeyDown}
         // Setting tabIndex to -1 to allow this element to be focused via JavaScript.
         // This is used when we need to hide the caret but want to:
         //   1. keep the visual focused state of the component
