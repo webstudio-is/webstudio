@@ -188,7 +188,7 @@ type ChangeReason =
   | "enter"
   | "blur"
   | "unit-select"
-  | "combo-select"
+  | "keyword-select"
   | "scrub-end";
 
 type CssValueInputProps = {
@@ -292,7 +292,7 @@ export const CssValueInput = ({
       onChange(inputValue ?? unsetValue.value);
     },
     onItemSelect: (value) => {
-      onChangeComplete(value ?? unsetValue, "combo-select");
+      onChangeComplete(value ?? unsetValue, "keyword-select");
     },
     onItemHighlight: (value) => {
       if (value == null) {
