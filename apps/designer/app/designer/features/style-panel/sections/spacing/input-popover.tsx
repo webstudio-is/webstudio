@@ -54,12 +54,9 @@ const Input = ({
           { isEphemeral: true }
         );
       }}
-      onChangeComplete={(styleValue, reason) => {
+      onChangeComplete={({ value, reason }) => {
         setIntermediateValue(undefined);
-        onChange(
-          { operation: "set", property, value: styleValue },
-          { isEphemeral: false }
-        );
+        onChange({ operation: "set", property, value }, { isEphemeral: false });
 
         // @todo: handle Esc
         if (reason === "blur" || reason === "enter") {

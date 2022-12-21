@@ -200,7 +200,10 @@ type CssValueInputProps = {
    */
   keywords?: Array<KeywordValue>;
   onChange: (value: CssValueInputValue) => void;
-  onChangeComplete: (value: StyleValue, reason: ChangeReason) => void;
+  onChangeComplete: (event: {
+    value: StyleValue;
+    reason: ChangeReason;
+  }) => void;
   onHighlight: (value: StyleValue) => void;
 };
 
@@ -259,14 +262,14 @@ export const CssValueInput = ({
     reason: ChangeReason
   ) => {
     if (value.type !== "intermediate" && value.type !== "invalid") {
-      props.onChangeComplete(value, reason);
+      props.onChangeComplete({ value, reason });
       return;
     }
 
-    props.onChangeComplete(
-      parseIntermediateOrInvalidValue(property, value),
-      reason
-    );
+    props.onChangeComplete({
+      value: parseIntermediateOrInvalidValue(property, value),
+      reason,
+    });
   };
 
   const {
