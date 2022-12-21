@@ -45,7 +45,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   );
 
   return (
-    <Flex css={{ flexGrow: 1 }}>
+    <Flex grow>
       <SidebarTabs activationMode="manual" value={activeTab}>
         <SidebarTabsList>
           {enabledPanels.map((tabName: TabName) => (

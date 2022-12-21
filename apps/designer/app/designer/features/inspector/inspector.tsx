@@ -8,6 +8,7 @@ import {
   Card,
   Paragraph,
   Box,
+  Flex,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
@@ -42,14 +43,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
 
   return (
     <FloatingPanelProvider container={tabsRef}>
-      <Tabs
-        defaultValue="style"
-        ref={tabsRef}
-        css={{
-          // minHeight is required to get flex item height apply to this container
-          minHeight: 1,
-        }}
-      >
+      <Flex as={Tabs} defaultValue="style" ref={tabsRef}>
         <TabsList>
           <TabsTrigger value="style">
             <Text>Style</Text>
@@ -75,7 +69,7 @@ export const Inspector = ({ publish }: InspectorProps) => {
             selectedInstanceData={selectedInstanceData}
           />
         </TabsContent>
-      </Tabs>
+      </Flex>
     </FloatingPanelProvider>
   );
 };

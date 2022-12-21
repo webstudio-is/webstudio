@@ -30,6 +30,7 @@ export const AssetsShell = ({
         css={{ py: "$spacing$5", px: "$spacing$9" }}
         gap="2"
         direction="column"
+        shrink={false}
       >
         <AssetUpload type={type} />
         <SearchField {...searchProps} autoFocus placeholder="Search" />

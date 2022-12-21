@@ -3,7 +3,9 @@ import { styled } from "../stitches.config";
 export const Flex = styled("div", {
   boxSizing: "border-box",
   display: "flex",
-
+  // Fixes a bug where container doesn't want to grow.
+  minHeight: 0,
+  minWidth: 0,
   variants: {
     direction: {
       row: {
@@ -88,6 +90,22 @@ export const Flex = styled("div", {
       },
       9: {
         gap: "$spacing$20",
+      },
+    },
+    shrink: {
+      true: {
+        flexShrink: 1,
+      },
+      false: {
+        flexShrink: 0,
+      },
+    },
+    grow: {
+      true: {
+        flexGrow: 1,
+      },
+      false: {
+        flexGrow: 0,
       },
     },
   },
