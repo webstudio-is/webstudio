@@ -22,7 +22,7 @@ type UseStyleData = {
   selectedInstanceData?: SelectedInstanceData;
 };
 
-type StyleUpdateOptions = { isEphemeral: boolean };
+export type StyleUpdateOptions = { isEphemeral: boolean };
 
 // @todo: style must have StyleValue type always
 export type SetProperty = (

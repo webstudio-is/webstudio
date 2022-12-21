@@ -20,7 +20,7 @@ export type HoveredInstanceData = {
   component: Instance["component"];
 };
 
-type StyleUpdate =
+export type StyleUpdate =
   | {
       operation: "delete";
       property: StyleProperty;
