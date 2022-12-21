@@ -16,7 +16,6 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import type {
   KeywordValue,
   StyleProperty,
-  UnsetValue,
   StyleValue,
   Unit,
 } from "@webstudio-is/css-data";
@@ -32,8 +31,6 @@ import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
-
-const unsetValue: UnsetValue = { type: "unset", value: "" };
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -199,12 +196,18 @@ type CssValueInputProps = {
    * Selected item in the dropdown
    */
   keywords?: Array<KeywordValue>;
-  onChange: (value: CssValueInputValue) => void;
+  onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: {
     value: StyleValue;
     reason: ChangeReason;
   }) => void;
-  onHighlight: (value: StyleValue) => void;
+  onHighlight: (value: StyleValue | undefined) => void;
+  onAbort: () => void;
+};
+
+const initialValue: IntermediateStyleValue = {
+  type: "intermediate",
+  value: "",
 };
 
 /**
@@ -243,11 +246,16 @@ export const CssValueInput = ({
   property,
   keywords = [],
   onHighlight,
+  onAbort,
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
-  const value = props.intermediateValue ?? props.value ?? unsetValue;
+  const value = props.intermediateValue ?? props.value ?? initialValue;
 
-  const onChange = (input: string) => {
+  const onChange = (input: string | undefined) => {
+    if (input === undefined) {
+      props.onChange(undefined);
+      return;
+    }
     // We don't know what's inside the input,
     // preserve current unit value if exists
     props.onChange({
@@ -292,18 +300,19 @@ export const CssValueInput = ({
         ? String(item.value)
         : toValue(item),
     onInputChange: (inputValue) => {
-      onChange(inputValue ?? unsetValue.value);
+      onChange(inputValue);
     },
     onItemSelect: (value) => {
-      onChangeComplete(value ?? unsetValue, "keyword-select");
+      onChangeComplete(value, "keyword-select");
     },
     onItemHighlight: (value) => {
       if (value == null) {
-        onHighlight(unsetValue);
+        onHighlight(undefined);
         return;
       }
+
       if (value.type !== "intermediate") {
-        onHighlight(value ?? unsetValue);
+        onHighlight(value);
       }
     },
   });
@@ -351,6 +360,12 @@ export const CssValueInput = ({
       return;
     }
 
+    // Probably no changes has been made at this point
+    // In that case we will call onAbort instead of onChangeComplete
+    if (props.intermediateValue === undefined) {
+      onAbort();
+      return;
+    }
     onChangeComplete(value, "blur");
   };
 

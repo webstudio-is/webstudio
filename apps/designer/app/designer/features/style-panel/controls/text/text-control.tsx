@@ -46,14 +46,24 @@ export const TextControl = ({
           }))}
           onChange={(styleValue) => {
             setIntermediateValue(styleValue);
+
+            if (styleValue === undefined) {
+              deleteProperty(styleConfig.property, { isEphemeral: true });
+              return;
+            }
+
             if (styleValue.type !== "intermediate") {
               setValue(styleValue, { isEphemeral: true });
             }
           }}
           onHighlight={(styleValue) => {
-            setValue(styleValue, { isEphemeral: true });
+            if (styleValue !== undefined) {
+              setValue(styleValue, { isEphemeral: true });
+            } else {
+              deleteProperty(styleConfig.property, { isEphemeral: true });
+            }
           }}
-          onChangeComplete={({ value }) => {
+          onChangeComplete={({ value, reason }) => {
             setValue(value);
             setIntermediateValue(undefined);
           }}
