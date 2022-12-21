@@ -13,12 +13,19 @@ const Container = styled("span", {
   borderRadius: "$borderRadius$3",
   padding: "0 $spacing$1",
   variants: {
-    source: {
+    origin: {
       unset: { color: "$colors$slate11" },
       set: {
         color: "$colors$blue11",
         backgroundColor: "$colors$blue4",
         borderColor: "$colors$blue6",
+      },
+      preset: {
+        // as I'm adding this Figma already uses new colors system,
+        // so I don't know which tokens to use from our legacy system
+        color: "#11181C", // foreground/main
+        backgroundColor: "#DFE3E6", // background/preset/main
+        borderColor: "#C1C8CD", // border/main
       },
       inherited: {
         color: "$colors$orange11",
@@ -29,7 +36,7 @@ const Container = styled("span", {
     isActive: { true: {} },
   },
   compoundVariants: [
-    { source: "unset", isActive: true, css: { color: "$colors$slate12" } },
+    { origin: "unset", isActive: true, css: { color: "$colors$slate12" } },
   ],
 });
 
@@ -48,13 +55,13 @@ const Span = styled("span", {
 
 export const ValueText = ({
   value,
-  source,
+  origin,
   ...rest
 }: { value: StyleValue } & ComponentProps<typeof Container>) => {
   const children = useMemo(() => {
     if (value.type === "unit") {
       // we want to show "0" rather than "0px" for unset values for cleaner UI
-      if (source === "unset" && value.unit === "px" && value.value === 0) {
+      if (origin === "unset" && value.unit === "px" && value.value === 0) {
         return <Span>{value.value}</Span>;
       }
 
@@ -81,7 +88,7 @@ export const ValueText = ({
     }
 
     throw new Error(`Unexpected StyleValue type ${value.type}`);
-  }, [value, source]);
+  }, [value, origin]);
 
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -111,7 +118,7 @@ export const ValueText = ({
   }, [children]);
 
   return (
-    <Container source={source} {...rest} ref={ref}>
+    <Container origin={origin} {...rest} ref={ref}>
       {children}
     </Container>
   );

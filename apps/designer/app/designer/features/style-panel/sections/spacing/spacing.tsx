@@ -74,7 +74,7 @@ const Cell = ({
         }}
         value={finalValue}
         isActive={isActive}
-        source={isFromCurrentBreakpoint ? "set" : "unset"}
+        origin={isFromCurrentBreakpoint ? "set" : "unset"}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
         }

@@ -7,7 +7,7 @@ import { ValueText as ValueTextComponent } from "./value-text";
 const Template = (
   args: Pick<
     React.ComponentProps<typeof ValueTextComponent>,
-    "source" | "value"
+    "origin" | "value"
   >
 ) => {
   const [hovered, setHovered] = React.useState<{ property: string }>();
@@ -29,7 +29,10 @@ export default {
   title: "Spacing/ValueText",
   component: Template,
   argTypes: {
-    source: { control: "select", options: ["set", "unset", "inherited"] },
+    origin: {
+      control: "select",
+      options: ["set", "preset", "unset", "inherited"],
+    },
     value: {
       control: "select",
       options: Object.fromEntries(
@@ -51,6 +54,6 @@ export default {
 
 export const ValueText: ComponentStory<typeof Template> = Template.bind({});
 ValueText.args = {
-  source: "set",
+  origin: "set",
   value: { type: "unit", value: 100, unit: "px" },
 };
