@@ -41,6 +41,13 @@ const Input = ({
       intermediateValue={intermediateValue}
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
+
+        if (styleValue === undefined) {
+          onChange({ operation: "delete", property }, { isEphemeral: true });
+          return;
+        }
+
+        setIntermediateValue(styleValue);
         if (styleValue.type !== "intermediate") {
           onChange(
             { operation: "set", property, value: styleValue },
@@ -49,6 +56,11 @@ const Input = ({
         }
       }}
       onHighlight={(styleValue) => {
+        if (styleValue === undefined) {
+          onChange({ operation: "delete", property }, { isEphemeral: true });
+          return;
+        }
+
         onChange(
           { operation: "set", property, value: styleValue },
           { isEphemeral: true }
@@ -62,6 +74,9 @@ const Input = ({
         if (reason === "blur" || reason === "enter") {
           onClosePopover();
         }
+      }}
+      onAbort={() => {
+        onChange({ operation: "delete", property }, { isEphemeral: true });
       }}
     />
   );
