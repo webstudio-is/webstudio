@@ -1,24 +1,24 @@
 import { action } from "@storybook/addon-actions";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import React from "react";
-import { SpacingLayout as SpacingLayoutComponet } from "./layout";
+import { SpacingLayout } from "./layout";
 
 export default {
-  title: "SpacingLayout",
-  component: SpacingLayoutComponet,
-} as ComponentMeta<typeof SpacingLayoutComponet>;
+  title: "Spacing/Layout",
+  component: SpacingLayout,
+} as ComponentMeta<typeof SpacingLayout>;
 
 const Template = (
-  args: Omit<React.ComponentProps<typeof SpacingLayoutComponet>, "renderCell">
+  args: Omit<React.ComponentProps<typeof SpacingLayout>, "renderCell">
 ) => (
-  <SpacingLayoutComponet
+  <SpacingLayout
     renderCell={() => <div style={{ color: "red" }}>·</div>}
     {...args}
   />
 );
 
-export const SpacingLayout: ComponentStory<typeof Template> = Template.bind({});
-SpacingLayout.args = {
+export const Layout: ComponentStory<typeof Template> = Template.bind({});
+Layout.args = {
   onClick: action("onClick"),
   onHover: action("onHover"),
 };
