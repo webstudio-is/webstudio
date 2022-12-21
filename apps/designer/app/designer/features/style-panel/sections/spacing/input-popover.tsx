@@ -67,7 +67,7 @@ const Trigger = styled("div", { position: "absolute", width: 0, height: 0 });
 const PopoverContentStyled = styled(PopoverContent, {
   minWidth: 0,
   minHeight: 0,
-  width: 88,
+  width: "$spacing$20",
   border: "1px solid $colors$slate8",
   borderRadius: "$borderRadius$7",
   background: "$colors$gray2",
