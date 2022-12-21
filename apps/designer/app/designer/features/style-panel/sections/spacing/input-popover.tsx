@@ -15,7 +15,7 @@ import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import type { StyleChangeHandler } from "./types";
 
 const slideUpAndFade = keyframes({
-  "0%": { opacity: 0, transform: "scale(0)" },
+  "0%": { opacity: 0, transform: "scale(0.8)" },
   "100%": { opacity: 1, transform: "scale(1)" },
 });
 
@@ -82,7 +82,7 @@ const PopoverContentStyled = styled(PopoverContent, {
   background: "$colors$gray2",
   padding: "$spacing$5",
   boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
-  animationDuration: "150ms",
+  animationDuration: "200ms",
   animationTimingFunction: "$easing$easeOut",
   '&[data-state="open"]': { animationName: slideUpAndFade },
 });
