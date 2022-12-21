@@ -360,7 +360,7 @@ export const CssValueInput = ({
       return;
     }
 
-    // Probably no changes has been made at this point
+    // Probably no changes have been made at this point
     // In that case we will call onAbort instead of onChangeComplete
     if (props.intermediateValue === undefined) {
       onAbort();
