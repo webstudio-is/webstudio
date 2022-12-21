@@ -39,13 +39,13 @@ const emulateInnerStroke = ({
 });
 
 const ValueArea = styled("path", {
-  fill: "$slate3",
+  fill: "$slate2",
   variants: {
     side: {
       top: { cursor: "n-resize" },
       bottom: { cursor: "s-resize" },
-      right: { cursor: "e-resize", fill: "$slate2" },
-      left: { cursor: "w-resize", fill: "$slate2" },
+      right: { cursor: "e-resize", fill: "$slate3" },
+      left: { cursor: "w-resize", fill: "$slate3" },
     },
     isActive: { true: { fill: "$slate5" } },
   },
