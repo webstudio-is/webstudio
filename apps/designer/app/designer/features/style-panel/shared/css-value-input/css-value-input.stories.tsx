@@ -36,11 +36,11 @@ export const WithKeywords = () => {
       onHighlight={(value) => {
         action("onHighlight")(value);
       }}
-      onChangeComplete={(newValue) => {
+      onChangeComplete={({ value }) => {
         // on blur, select, enter etc.
-        setValue(newValue);
+        setValue(value);
         setIntermediateValue(undefined);
-        action("onChangeComplete")(newValue);
+        action("onChangeComplete")(value);
       }}
     />
   );
@@ -76,11 +76,11 @@ export const WithIcons = () => {
       onHighlight={(value) => {
         action("onHighlight")(value);
       }}
-      onChangeComplete={(newValue) => {
+      onChangeComplete={({ value }) => {
         // on blur, select, enter etc.
-        setValue(newValue);
+        setValue(value);
         setIntermediateValue(undefined);
-        action("onChangeComplete")(newValue);
+        action("onChangeComplete")(value);
       }}
     />
   );
@@ -115,11 +115,11 @@ export const WithUnits = () => {
         onHighlight={(value) => {
           action("onHighlight")(value);
         }}
-        onChangeComplete={(newValue) => {
+        onChangeComplete={({ value }) => {
           // on blur, select, enter etc.
-          setValue(newValue);
+          setValue(value);
           setIntermediateValue(undefined);
-          action("onChangeComplete")(newValue);
+          action("onChangeComplete")(value);
         }}
       />
       <TextField
