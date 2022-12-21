@@ -1,11 +1,11 @@
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
 import React from "react";
 import { SpacingLayout } from "./layout";
-import { ValueText as ValueTextCommponent } from "./value-text";
+import { ValueText as ValueTextComponent } from "./value-text";
 
 const Template = (
   args: Pick<
-    React.ComponentProps<typeof ValueTextCommponent>,
+    React.ComponentProps<typeof ValueTextComponent>,
     "source" | "value"
   >
 ) => {
@@ -15,7 +15,7 @@ const Template = (
       onHover={setHovered}
       onClick={() => null}
       renderCell={({ property }) => (
-        <ValueTextCommponent
+        <ValueTextComponent
           isActive={property === hovered?.property}
           {...args}
         />
