@@ -1,10 +1,10 @@
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { ComponentMeta } from "@storybook/react";
 import React from "react";
 import { parseCssValue } from "../../shared/parse-css-value";
 import { SpacingLayout } from "./layout";
 import { ValueText as ValueTextComponent } from "./value-text";
 
-const Template = (
+export const ValueText = (
   args: Pick<
     React.ComponentProps<typeof ValueTextComponent>,
     "origin" | "value"
@@ -25,9 +25,14 @@ const Template = (
   );
 };
 
+ValueText.args = {
+  origin: "set",
+  value: { type: "unit", value: 100, unit: "px" },
+};
+
 export default {
   title: "Spacing/ValueText",
-  component: Template,
+  component: ValueText,
   argTypes: {
     origin: {
       control: "select",
@@ -50,10 +55,4 @@ export default {
       ),
     },
   },
-} as ComponentMeta<typeof Template>;
-
-export const ValueText: ComponentStory<typeof Template> = Template.bind({});
-ValueText.args = {
-  origin: "set",
-  value: { type: "unit", value: 100, unit: "px" },
-};
+} as ComponentMeta<typeof ValueText>;

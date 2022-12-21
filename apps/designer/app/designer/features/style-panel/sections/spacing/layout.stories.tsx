@@ -1,14 +1,8 @@
-import { action } from "@storybook/addon-actions";
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { ComponentMeta } from "@storybook/react";
 import React from "react";
 import { SpacingLayout } from "./layout";
 
-export default {
-  title: "Spacing/Layout",
-  component: SpacingLayout,
-} as ComponentMeta<typeof SpacingLayout>;
-
-const Template = (
+export const Layout = (
   args: Omit<React.ComponentProps<typeof SpacingLayout>, "renderCell">
 ) => (
   <SpacingLayout
@@ -17,8 +11,7 @@ const Template = (
   />
 );
 
-export const Layout: ComponentStory<typeof Template> = Template.bind({});
-Layout.args = {
-  onClick: action("onClick"),
-  onHover: action("onHover"),
-};
+export default {
+  title: "Spacing/Layout",
+  component: Layout,
+} as ComponentMeta<typeof Layout>;
