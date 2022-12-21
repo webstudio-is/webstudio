@@ -12,7 +12,7 @@ import {
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
-import type { StyleChangeEvent } from "./types";
+import type { StyleChangeHandler } from "./types";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0)" },
@@ -27,7 +27,7 @@ const Input = ({
 }: {
   property: StyleProperty;
   value: StyleValue;
-  onChange: (event: StyleChangeEvent) => void;
+  onChange: StyleChangeHandler;
   onClosePopover: () => void;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
@@ -42,15 +42,24 @@ const Input = ({
       onChange={(styleValue) => {
         setIntermediateValue(styleValue);
         if (styleValue.type !== "intermediate") {
-          onChange({ property, value: styleValue, isEphemeral: true });
+          onChange(
+            { operation: "set", property, value: styleValue },
+            { isEphemeral: true }
+          );
         }
       }}
       onHighlight={(styleValue) => {
-        onChange({ property, value: styleValue, isEphemeral: true });
+        onChange(
+          { operation: "set", property, value: styleValue },
+          { isEphemeral: true }
+        );
       }}
       onChangeComplete={(styleValue, reason) => {
         setIntermediateValue(undefined);
-        onChange({ property, value: styleValue, isEphemeral: false });
+        onChange(
+          { operation: "set", property, value: styleValue },
+          { isEphemeral: false }
+        );
 
         // @todo: handle Esc
         if (reason === "blur" || reason === "enter") {
@@ -87,7 +96,7 @@ export const InputPopover = ({
 }: {
   property: StyleProperty;
   value: StyleValue;
-  onChange: (event: StyleChangeEvent) => void;
+  onChange: StyleChangeHandler;
   isOpen: boolean;
   onClose: () => void;
 }) => {

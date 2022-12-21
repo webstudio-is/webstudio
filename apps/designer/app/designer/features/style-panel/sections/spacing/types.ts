@@ -1,11 +1,6 @@
-import type { StyleValue, StyleProperty } from "@webstudio-is/css-data";
+import { StyleUpdate } from "@webstudio-is/project";
 import { categories } from "@webstudio-is/react-sdk";
-
-export type StyleChangeEvent = {
-  property: StyleProperty;
-  value: StyleValue;
-  isEphemeral: boolean;
-};
+import { StyleUpdateOptions } from "../../shared/use-style-data";
 
 export const spacingPropertiesNames = categories.spacing.properties;
 
@@ -15,3 +10,8 @@ export type HoverTagret = {
   property: SpacingStyleProperty;
   element: SVGElement | HTMLElement;
 };
+
+export type StyleChangeHandler = (
+  update: StyleUpdate,
+  options: StyleUpdateOptions
+) => void;

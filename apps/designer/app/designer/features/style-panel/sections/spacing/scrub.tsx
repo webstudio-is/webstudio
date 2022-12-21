@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { getFinalValue } from "../../shared/get-final-value";
 import type { RenderCategoryProps } from "../../style-sections";
 import type {
-  StyleChangeEvent,
+  StyleChangeHandler,
   SpacingStyleProperty,
   HoverTagret,
 } from "./types";
@@ -16,7 +16,7 @@ type ScrubStatus =
 export const useScrub = (
   props: {
     target: HoverTagret | undefined;
-    onChange: (event: StyleChangeEvent) => void;
+    onChange: StyleChangeHandler;
   } & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">
 ): ScrubStatus => {
   // we want to hold on to the target while scrub is active even if hover changes
@@ -68,7 +68,10 @@ export const useScrub = (
         } as const;
 
         setValue(value);
-        latestProps.current.onChange({ property, value, isEphemeral: true });
+        latestProps.current.onChange(
+          { operation: "set", property, value },
+          { isEphemeral: true }
+        );
       },
       onValueChange(event) {
         // for TypeScript
@@ -82,7 +85,10 @@ export const useScrub = (
           unit: unitRef.current,
         } as const;
 
-        latestProps.current.onChange({ property, value, isEphemeral: false });
+        latestProps.current.onChange(
+          { operation: "set", property, value },
+          { isEphemeral: false }
+        );
       },
       onStatusChange(status) {
         setActiveTarget(

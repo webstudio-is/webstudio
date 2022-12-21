@@ -6,7 +6,7 @@ import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
 import type {
-  StyleChangeEvent,
+  StyleChangeHandler,
   SpacingStyleProperty,
   HoverTagret,
 } from "./types";
@@ -26,7 +26,7 @@ const Cell = ({
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
-  onChange: (event: StyleChangeEvent) => void;
+  onChange: StyleChangeHandler;
   onHover: (target: HoverTagret | undefined) => void;
   property: SpacingStyleProperty;
   isActive: boolean;
@@ -86,13 +86,19 @@ const Cell = ({
 
 export const SpacingSection = ({
   setProperty,
+  deleteProperty,
   currentStyle,
   inheritedStyle,
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
 
-  const handleChange = ({ property, value, isEphemeral }: StyleChangeEvent) =>
-    setProperty(property)(value, { isEphemeral });
+  const handleChange: StyleChangeHandler = (update, options) => {
+    if (update.operation === "set") {
+      setProperty(update.property)(update.value, options);
+    } else {
+      deleteProperty(update.property);
+    }
+  };
 
   const scrubStatus = useScrub({
     target: hoverTarget,
