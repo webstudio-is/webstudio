@@ -57,7 +57,9 @@ export const useStyleData = ({
     [selectedInstanceData?.cssRules, selectedBreakpoint]
   );
 
-  const [breakpointStyle, setBreakpointStyle] = useState(() => cssRule?.style);
+  const [breakpointStyle, setBreakpointStyle] = useState(
+    () => cssRule?.style as Style
+  );
 
   const currentStyle = useMemo<Style>(
     () => ({
@@ -68,7 +70,7 @@ export const useStyleData = ({
   );
 
   useEffect(() => {
-    setBreakpointStyle(cssRule?.style);
+    setBreakpointStyle({ ...cssRule?.style });
   }, [cssRule?.style]);
 
   const inheritedStyle = useMemo(() => {

@@ -5,7 +5,7 @@ import {
 import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import type { StyleValue } from "@webstudio-is/css-data";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 
 export const TextControl = ({
@@ -56,6 +56,9 @@ export const TextControl = ({
           onChangeComplete={({ value }) => {
             setValue(value);
             setIntermediateValue(undefined);
+          }}
+          onAbort={() => {
+            deleteProperty(styleConfig.property, { isEphemeral: true });
           }}
         />
       </Box>

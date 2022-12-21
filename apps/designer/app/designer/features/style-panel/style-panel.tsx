@@ -29,6 +29,7 @@ export const StylePanel = ({
     selectedInstanceData,
     publish,
   });
+
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth] = useCanvasWidth();
   const [search, setSearch] = useState("");
