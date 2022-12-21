@@ -196,11 +196,6 @@ export const useCombobox = <Item,>({
     itemToString,
     inputValue: value ? itemToString(value) : undefined,
     onInputValueChange({ inputValue, type }) {
-      if (type === comboboxStateChangeTypes.InputKeyDownEscape) {
-        // Reset intermediate value when ESC is pressed
-        onInputChange?.(undefined);
-      }
-
       if (type === comboboxStateChangeTypes.InputChange) {
         filter(inputValue);
         onInputChange?.(inputValue);
@@ -209,8 +204,11 @@ export const useCombobox = <Item,>({
     onSelectedItemChange({ selectedItem, type }) {
       // Don't call onItemSelect when ESC is pressed
       if (type === comboboxStateChangeTypes.InputKeyDownEscape) {
+        // Reset intermediate value when ESC is pressed
+        onInputChange?.(undefined);
         return;
       }
+
       if (selectedItem != null) {
         onItemSelect?.(selectedItem);
       }
