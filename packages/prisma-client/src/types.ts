@@ -7,4 +7,5 @@ export type {
   DesignTokens,
   Project,
   Asset,
+  Tree,
 } from "@prisma/client";

@@ -706,7 +706,6 @@ importers:
   packages/project:
     specifiers:
       '@jest/globals': ^29.3.1
-      '@prisma/client': ^4.3.1
       '@types/uuid': ^8.3.4
       '@webstudio-is/asset-uploader': '*'
       '@webstudio-is/css-data': '*'
@@ -729,7 +728,6 @@ importers:
       warn-once: ^0.1.1
       zod: ^3.19.1
     dependencies:
-      '@prisma/client': 4.3.1
       '@webstudio-is/asset-uploader': link:../asset-uploader
       '@webstudio-is/css-data': link:../css-data
       '@webstudio-is/css-engine': link:../css-engine
@@ -4957,19 +4955,6 @@ packages:
       source-map: 0.7.4
       webpack: 5.75.0
     dev: true
-
-  /@prisma/client/4.3.1:
-    resolution: {integrity: sha512-FA0/d1VMJNWqzU7WVWTNWJ+lGOLR9JUBnF73GdIPAEVo/6dWk4gHx0EmgeU+SMv4MZoxgOeTBJF2azhg7x0hMw==}
-    engines: {node: '>=14.17'}
-    requiresBuild: true
-    peerDependencies:
-      prisma: '*'
-    peerDependenciesMeta:
-      prisma:
-        optional: true
-    dependencies:
-      '@prisma/engines-version': 4.3.0-32.c875e43600dfe042452e0b868f7a48b817b9640b
-    dev: false
 
   /@prisma/client/4.3.1_prisma@4.6.1:
     resolution: {integrity: sha512-FA0/d1VMJNWqzU7WVWTNWJ+lGOLR9JUBnF73GdIPAEVo/6dWk4gHx0EmgeU+SMv4MZoxgOeTBJF2azhg7x0hMw==}
