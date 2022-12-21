@@ -17,6 +17,7 @@ const Cell = ({
   isPopoverOpen,
   onPopoverClose,
   onChange,
+  onHover,
   property,
   isActive,
   scrubStatus,
@@ -26,6 +27,7 @@ const Cell = ({
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
   onChange: (event: StyleChangeEvent) => void;
+  onHover: (target: HoverTagret | undefined) => void;
   property: SpacingStyleProperty;
   isActive: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
@@ -61,9 +63,22 @@ const Cell = ({
         }
       />
       <ValueText
+        css={{
+          // We want value to have `default` cursor to indicate that it's clickable,
+          // unlike the rest of the value area that has cursor that indicates scrubbing.
+          // Click and scrub works everywhere anyway, but we want cursors to be different.
+          //
+          // In order to have control over cursor we're setting pointerEvents to "all" here
+          // because SpacingLayout sets it to "none" for cells' content.
+          pointerEvents: "all",
+        }}
         value={finalValue}
         isActive={isActive}
         source={isFromCurrentBreakpoint ? "set" : "unset"}
+        onMouseEnter={(event) =>
+          onHover({ property, element: event.currentTarget })
+        }
+        onMouseLeave={() => onHover(undefined)}
       />
     </>
   );
@@ -94,7 +109,7 @@ export const SpacingSection = ({
 
   return (
     <SpacingLayout
-      onClick={setOpenProperty}
+      onClick={() => setOpenProperty(hoverTarget?.property)}
       onHover={setHoverTarget}
       activeProperty={activeProperty}
       renderCell={({ property }) => (
@@ -106,6 +121,7 @@ export const SpacingSection = ({
             }
           }}
           onChange={handleChange}
+          onHover={setHoverTarget}
           property={property}
           scrubStatus={
             scrubStatus.isActive && scrubStatus.property === property

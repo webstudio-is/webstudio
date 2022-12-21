@@ -13,5 +13,5 @@ export type SpacingStyleProperty = typeof spacingPropertiesNames[number];
 
 export type HoverTagret = {
   property: SpacingStyleProperty;
-  element: SVGElement;
+  element: SVGElement | HTMLElement;
 };

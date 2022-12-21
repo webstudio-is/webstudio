@@ -221,7 +221,7 @@ const getPath = (property: SpacingStyleProperty) => {
 };
 
 type LayoutProps = {
-  onClick: (property: SpacingStyleProperty) => void;
+  onClick: () => void;
   onHover: (hoverTarget: HoverTagret | undefined) => void;
   activeProperty?: SpacingStyleProperty;
   renderCell: (args: { property: SpacingStyleProperty }) => React.ReactNode;
@@ -240,7 +240,6 @@ export const SpacingLayout = ({
     <ValueArea
       side={getSide(property)}
       d={getPath(property)}
-      onClick={() => onClick(property)}
       onMouseEnter={(event) =>
         onHover({ element: event.currentTarget, property })
       }
@@ -250,7 +249,7 @@ export const SpacingLayout = ({
   );
 
   return (
-    <Container>
+    <Container onClick={onClick}>
       <svg
         width={TOTAL_WIDTH}
         height={TOTAL_HEIGHT}
