@@ -12,14 +12,14 @@ const Trigger = styled("div", {
 });
 
 const labels = {
-  paddingTop: "Padding-top",
-  paddingRight: "Padding-right",
-  paddingBottom: "Padding-bottom",
-  paddingLeft: "Padding-left",
-  marginTop: "Margin-top",
-  marginRight: "Margin-right",
-  marginBottom: "Margin-bottom",
-  marginLeft: "Margin-left",
+  paddingTop: "Padding Top",
+  paddingRight: "Padding Right",
+  paddingBottom: "Padding Bottom",
+  paddingLeft: "Padding Left",
+  marginTop: "Margin Top",
+  marginRight: "Margin Right",
+  marginBottom: "Margin Bottom",
+  marginLeft: "Margin Left",
 };
 
 const sides = {
