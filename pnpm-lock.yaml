@@ -48,6 +48,7 @@ importers:
       '@lexical/react': ^0.6.0
       '@lexical/selection': ^0.6.0
       '@lexical/utils': ^0.6.0
+      '@prisma/client': 4.3.1
       '@radix-ui/react-select': ^1.0.0
       '@radix-ui/react-tooltip': ^1.0.0
       '@remix-run/dev': ^1.6.4
@@ -151,6 +152,7 @@ importers:
       '@lexical/react': 0.6.0_p7mvqmjvwf4nexue7sv3sfptum
       '@lexical/selection': 0.6.0_lexical@0.6.0
       '@lexical/utils': 0.6.0_lexical@0.6.0
+      '@prisma/client': 4.3.1
       '@radix-ui/react-select': 1.0.0_nn45z5sr7igu7sfun6tiae5hx4
       '@radix-ui/react-tooltip': 1.0.0_nn45z5sr7igu7sfun6tiae5hx4
       '@remix-run/node': 1.6.4_sfoxds7t5ydpegc3knd667wn6m
@@ -668,7 +670,7 @@ importers:
   packages/prisma-client:
     specifiers:
       '@inquirer/confirm': ^0.0.25-alpha.0
-      '@prisma/client': ^4.3.1
+      '@prisma/client': 4.3.1
       '@types/minimist': ^1.2.2
       '@types/node': ^17.0.21
       '@types/uuid': ^8.3.4
@@ -686,7 +688,7 @@ importers:
       zod: ^3.19.1
     dependencies:
       '@inquirer/confirm': 0.0.25-alpha.0
-      '@prisma/client': 4.3.1_prisma@4.6.1
+      '@prisma/client': 4.3.1
       '@types/minimist': 1.2.2
       dotenv: 16.0.1
       execa: 6.1.0
@@ -4957,7 +4959,7 @@ packages:
       webpack: 5.75.0
     dev: true
 
-  /@prisma/client/4.3.1_prisma@4.6.1:
+  /@prisma/client/4.3.1:
     resolution: {integrity: sha512-FA0/d1VMJNWqzU7WVWTNWJ+lGOLR9JUBnF73GdIPAEVo/6dWk4gHx0EmgeU+SMv4MZoxgOeTBJF2azhg7x0hMw==}
     engines: {node: '>=14.17'}
     requiresBuild: true
@@ -4968,7 +4970,6 @@ packages:
         optional: true
     dependencies:
       '@prisma/engines-version': 4.3.0-32.c875e43600dfe042452e0b868f7a48b817b9640b
-      prisma: 4.6.1
     dev: false
 
   /@prisma/engines-version/4.3.0-32.c875e43600dfe042452e0b868f7a48b817b9640b:

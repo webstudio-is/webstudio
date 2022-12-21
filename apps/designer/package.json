@@ -22,6 +22,7 @@
     "@lexical/react": "^0.6.0",
     "@lexical/selection": "^0.6.0",
     "@lexical/utils": "^0.6.0",
+    "@prisma/client": "4.3.1",
     "@radix-ui/react-select": "^1.0.0",
     "@radix-ui/react-tooltip": "^1.0.0",
     "@remix-run/node": "^1.6.4",
