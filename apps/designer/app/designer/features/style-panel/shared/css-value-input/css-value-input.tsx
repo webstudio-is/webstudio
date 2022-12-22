@@ -16,7 +16,6 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import type {
   KeywordValue,
   StyleProperty,
-  UnsetValue,
   StyleValue,
   Unit,
 } from "@webstudio-is/css-data";
@@ -32,8 +31,6 @@ import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
-
-const unsetValue: UnsetValue = { type: "unset", value: "" };
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -138,21 +135,31 @@ const useScrub = ({
   return [scrubRef, inputRef];
 };
 
+export const isNumericString = (input: string) =>
+  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
+
 const useHandleKeyDown =
   ({
     ignoreEnter,
+    ignoreUpDownNumeric,
     value,
     onChange,
     onChangeComplete,
     onKeyDown,
   }: {
     ignoreEnter: boolean;
+    ignoreUpDownNumeric: boolean;
     value: CssValueInputValue;
     onChange: (value: CssValueInputValue) => void;
     onChangeComplete: (value: CssValueInputValue) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.defaultPrevented) {
+      // Underlying select like `unitSelect` can already prevent an event like up/down buttons
+      return;
+    }
+
     // Do not prevent downshift behaviour on item select
     if (ignoreEnter === false) {
       if (event.key === "Enter") {
@@ -161,13 +168,19 @@ const useHandleKeyDown =
     }
 
     if (
-      value.type === "unit" &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
-      event.currentTarget.value
+      ignoreUpDownNumeric === false &&
+      (value.type === "unit" ||
+        (value.type === "intermediate" && isNumericString(value.value))) &&
+      value.unit !== undefined &&
+      (event.key === "ArrowUp" || event.key === "ArrowDown")
     ) {
+      const inputValue =
+        value.type === "unit" ? value.value : Number(value.value.trim());
+
       onChange({
-        ...value,
-        value: calcNumberChange(value.value, event),
+        type: "unit",
+        value: calcNumberChange(inputValue, event),
+        unit: value.unit,
       });
       // Prevent Downshift from opening menu on arrow up/down
       return;
@@ -199,12 +212,18 @@ type CssValueInputProps = {
    * Selected item in the dropdown
    */
   keywords?: Array<KeywordValue>;
-  onChange: (value: CssValueInputValue) => void;
+  onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: {
     value: StyleValue;
     reason: ChangeReason;
   }) => void;
-  onHighlight: (value: StyleValue) => void;
+  onHighlight: (value: StyleValue | undefined) => void;
+  onAbort: () => void;
+};
+
+const initialValue: IntermediateStyleValue = {
+  type: "intermediate",
+  value: "",
 };
 
 /**
@@ -243,11 +262,16 @@ export const CssValueInput = ({
   property,
   keywords = [],
   onHighlight,
+  onAbort,
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
-  const value = props.intermediateValue ?? props.value ?? unsetValue;
+  const value = props.intermediateValue ?? props.value ?? initialValue;
 
-  const onChange = (input: string) => {
+  const onChange = (input: string | undefined) => {
+    if (input === undefined) {
+      props.onChange(undefined);
+      return;
+    }
     // We don't know what's inside the input,
     // preserve current unit value if exists
     props.onChange({
@@ -292,18 +316,19 @@ export const CssValueInput = ({
         ? String(item.value)
         : toValue(item),
     onInputChange: (inputValue) => {
-      onChange(inputValue ?? unsetValue.value);
+      onChange(inputValue);
     },
     onItemSelect: (value) => {
-      onChangeComplete(value ?? unsetValue, "keyword-select");
+      onChangeComplete(value, "keyword-select");
     },
     onItemHighlight: (value) => {
       if (value == null) {
-        onHighlight(unsetValue);
+        onHighlight(undefined);
         return;
       }
+
       if (value.type !== "intermediate") {
-        onHighlight(value ?? unsetValue);
+        onHighlight(value);
       }
     },
   });
@@ -351,13 +376,22 @@ export const CssValueInput = ({
       return;
     }
 
+    // Probably no changes have been made at this point
+    // In that case we will call onAbort instead of onChangeComplete
+    if (props.intermediateValue === undefined) {
+      onAbort();
+      return;
+    }
     onChangeComplete(value, "blur");
   };
 
   const handleKeyDown = useHandleKeyDown({
     // In case of the menu is really open and the selection is inside it
     // we do not prevent the default downshift Enter key behavior
-    ignoreEnter: isOpen && !menuProps.empty && highlightedIndex !== -1,
+    ignoreEnter:
+      isUnitsOpen || (isOpen && !menuProps.empty && highlightedIndex !== -1),
+    // Do not change the number value on the arrow up/down if any menu is opened
+    ignoreUpDownNumeric: isUnitsOpen || isOpen,
     onChangeComplete: (value) => onChangeComplete(value, "enter"),
     value,
     onChange: props.onChange,

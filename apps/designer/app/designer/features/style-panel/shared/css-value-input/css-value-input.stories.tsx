@@ -42,6 +42,9 @@ export const WithKeywords = () => {
         setIntermediateValue(undefined);
         action("onChangeComplete")(value);
       }}
+      onAbort={() => {
+        action("onAbort")();
+      }}
     />
   );
 };
@@ -82,6 +85,9 @@ export const WithIcons = () => {
         setIntermediateValue(undefined);
         action("onChangeComplete")(value);
       }}
+      onAbort={() => {
+        action("onAbort")();
+      }}
     />
   );
 };
@@ -120,6 +126,9 @@ export const WithUnits = () => {
           setValue(value);
           setIntermediateValue(undefined);
           action("onChangeComplete")(value);
+        }}
+        onAbort={() => {
+          action("onAbort")();
         }}
       />
       <TextField

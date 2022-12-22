@@ -48,7 +48,7 @@ export const useUnitSelect = ({
   value,
   units = defaultUnits,
   ...props
-}: UseUnitSelectType) => {
+}: UseUnitSelectType): [boolean, JSX.Element | null] => {
   const [isOpen, setIsOpen] = useState(false);
 
   const renderUnits = useMemo(

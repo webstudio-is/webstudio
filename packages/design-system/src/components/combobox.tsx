@@ -136,7 +136,7 @@ type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
   selectedItem: Item | undefined;
   onInputChange?: (value: string | undefined) => void;
-  onItemSelect?: (value: Item | null) => void;
+  onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value: Item | null) => void;
   stateReducer?: (
     state: DownshiftState<Item>,
@@ -159,17 +159,39 @@ export const useCombobox = <Item,>({
   match,
   ...rest
 }: UseComboboxProps<Item>) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
     itemToString,
     match,
   });
 
+  if (isOpen && filteredItems.length === 0) {
+    setIsOpen(false);
+  }
+
   const downshiftProps = useDownshiftCombobox({
     ...rest,
     items: filteredItems,
     defaultHighlightedIndex: -1,
     selectedItem: selectedItem ?? null, // Prevent downshift warning about switching controlled mode
+    isOpen,
+
+    onIsOpenChange({ isOpen, inputValue }) {
+      const foundItems =
+        match !== undefined
+          ? match(inputValue ?? "", items, itemToString)
+          : defaultMatch(inputValue ?? "", items, itemToString);
+
+      // Don't set isOpen to true if there are no items to show
+      // because otherwise first ESC press will try to close it and only next ESC
+      // will reset the value. When list is empty, first ESC should reset the value.
+      const nextIsOpen = isOpen === true && foundItems.length !== 0;
+
+      setIsOpen(nextIsOpen);
+    },
+
     stateReducer,
     itemToString,
     inputValue: value ? itemToString(value) : undefined,
@@ -179,8 +201,17 @@ export const useCombobox = <Item,>({
         onInputChange?.(inputValue);
       }
     },
-    onSelectedItemChange({ selectedItem }) {
-      onItemSelect?.(selectedItem ?? null);
+    onSelectedItemChange({ selectedItem, type }) {
+      // Don't call onItemSelect when ESC is pressed
+      if (type === comboboxStateChangeTypes.InputKeyDownEscape) {
+        // Reset intermediate value when ESC is pressed
+        onInputChange?.(undefined);
+        return;
+      }
+
+      if (selectedItem != null) {
+        onItemSelect?.(selectedItem);
+      }
     },
     onHighlightedIndexChange({ highlightedIndex }) {
       if (highlightedIndex !== undefined) {
@@ -189,8 +220,7 @@ export const useCombobox = <Item,>({
     },
   });
 
-  const { isOpen, getItemProps, highlightedIndex, getMenuProps } =
-    downshiftProps;
+  const { getItemProps, highlightedIndex, getMenuProps } = downshiftProps;
 
   useEffect(() => {
     if (isOpen === false) {

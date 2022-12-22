@@ -271,6 +271,10 @@ const usePreviewStyle = () => {
 
         setCssVar(id, update.property, update.value);
       }
+
+      if (update.operation === "delete") {
+        setCssVar(id, update.property, undefined);
+      }
     }
 
     cssEngine.render();

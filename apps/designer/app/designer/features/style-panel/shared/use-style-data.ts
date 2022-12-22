@@ -29,8 +29,15 @@ export type SetProperty = (
   property: StyleProperty
 ) => (style: string | StyleValue, options?: StyleUpdateOptions) => void;
 
+export type DeleteProperty = (
+  property: StyleProperty,
+  options?: StyleUpdateOptions
+) => void;
+
 export type CreateBatchUpdate = () => {
-  setProperty: SetProperty;
+  setProperty: (
+    property: StyleProperty
+  ) => (style: string | StyleValue) => void;
   deleteProperty: (property: StyleProperty) => void;
   publish: () => void;
 };
@@ -50,52 +57,49 @@ export const useStyleData = ({
     [selectedInstanceData?.cssRules, selectedBreakpoint]
   );
 
-  const getCurrentStyle = useCallback<() => Style>(
-    () => ({
-      ...selectedInstanceData?.browserStyle,
-      ...cssRule?.style,
-    }),
-    [selectedInstanceData, cssRule]
+  const [breakpointStyle, setBreakpointStyle] = useState(
+    () => cssRule?.style as Style
   );
 
-  const [currentStyle, setCurrentStyle] = useState(() => getCurrentStyle());
+  const currentStyle = useMemo<Style>(
+    () => ({
+      ...selectedInstanceData?.browserStyle,
+      ...breakpointStyle,
+    }),
+    [selectedInstanceData?.browserStyle, breakpointStyle]
+  );
 
   useEffect(() => {
-    const currentStyle = getCurrentStyle();
-    setCurrentStyle(currentStyle);
-  }, [getCurrentStyle]);
+    setBreakpointStyle({ ...cssRule?.style });
+  }, [cssRule?.style]);
 
   const inheritedStyle = useMemo(() => {
-    if (
-      currentStyle === undefined ||
-      selectedInstanceData === undefined ||
-      rootInstance === undefined
-    ) {
+    if (selectedInstanceData === undefined || rootInstance === undefined) {
       return;
     }
     return getInheritedStyle(rootInstance, selectedInstanceData.id);
-  }, [currentStyle, selectedInstanceData, rootInstance]);
+  }, [selectedInstanceData, rootInstance]);
 
-  const publishUpdates = (
-    type: "update" | "preview",
-    updates: StyleUpdates["updates"]
-  ) => {
-    if (
-      updates.length === 0 ||
-      selectedInstanceData === undefined ||
-      selectedBreakpoint === undefined
-    ) {
-      return;
-    }
-    publish({
-      type: type === "update" ? "updateStyle" : "previewStyle",
-      payload: {
-        id: selectedInstanceData.id,
-        updates,
-        breakpoint: selectedBreakpoint,
-      },
-    });
-  };
+  const publishUpdates = useCallback(
+    (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
+      if (
+        updates.length === 0 ||
+        selectedInstanceData === undefined ||
+        selectedBreakpoint === undefined
+      ) {
+        return;
+      }
+      publish({
+        type: type === "update" ? "updateStyle" : "previewStyle",
+        payload: {
+          id: selectedInstanceData.id,
+          updates,
+          breakpoint: selectedBreakpoint,
+        },
+      });
+    },
+    [publish, selectedBreakpoint, selectedInstanceData]
+  );
 
   // @deprecated should not be called
   const toStyleValue = (property: StyleProperty, value: string) => {
@@ -106,58 +110,61 @@ export const useStyleData = ({
     return parseCssValue(property, value);
   };
 
-  const setProperty: SetProperty = (property) => {
-    return (inputOrStyle, options = { isEphemeral: false }) => {
-      if (currentStyle === undefined) {
-        return;
-      }
+  const setProperty = useCallback<SetProperty>(
+    (property) => {
+      return (inputOrStyle, options = { isEphemeral: false }) => {
+        warnOnce(
+          typeof inputOrStyle === "string",
+          "setProperty should be called with a style object, string is deprecated"
+        );
 
-      warnOnce(
-        typeof inputOrStyle === "string",
-        "setProperty should be called with a style object, string is deprecated"
-      );
+        const nextValue =
+          typeof inputOrStyle === "string"
+            ? toStyleValue(property, inputOrStyle)
+            : inputOrStyle;
 
-      const nextValue =
-        typeof inputOrStyle === "string"
-          ? toStyleValue(property, inputOrStyle)
-          : inputOrStyle;
+        if (nextValue.type !== "invalid") {
+          const updates = [
+            { operation: "set" as const, property, value: nextValue },
+          ];
+          const type = options.isEphemeral ? "preview" : "update";
 
-      if (nextValue.type !== "invalid") {
-        const updates = [
-          { operation: "set" as const, property, value: nextValue },
-        ];
-        const type = options.isEphemeral ? "preview" : "update";
+          publishUpdates(type, updates);
+        }
 
-        publishUpdates(type, updates);
-      }
+        if (options.isEphemeral === false) {
+          setBreakpointStyle((prevStyle) => ({
+            ...prevStyle,
+            [property]: nextValue,
+          }));
+        }
+      };
+    },
+    [publishUpdates]
+  );
+
+  const deleteProperty = useCallback(
+    (property: StyleProperty, options = { isEphemeral: false }) => {
+      const updates = [{ operation: "delete" as const, property }];
+      const type = options.isEphemeral ? "preview" : "update";
+      publishUpdates(type, updates);
 
       if (options.isEphemeral === false) {
-        setCurrentStyle({ ...currentStyle, [property]: nextValue });
+        setBreakpointStyle((prevStyle) => {
+          const nextStyle = { ...prevStyle };
+          delete nextStyle[property];
+          return nextStyle;
+        });
       }
-    };
-  };
+    },
+    [publishUpdates]
+  );
 
-  const deleteProperty = (property: StyleProperty) => {
-    if (currentStyle === undefined) {
-      return;
-    }
-
-    const updates = [{ operation: "delete" as const, property }];
-    publishUpdates("update", updates);
-    const nextStyle = { ...currentStyle };
-    delete nextStyle[property];
-    setCurrentStyle(nextStyle);
-  };
-
-  const createBatchUpdate = () => {
+  const createBatchUpdate = useCallback(() => {
     let updates: StyleUpdates["updates"] = [];
 
     const setProperty = (property: StyleProperty) => {
       const setValue = (inputOrStyle: string | StyleValue) => {
-        if (currentStyle === undefined) {
-          return;
-        }
-
         warnOnce(
           typeof inputOrStyle === "string",
           "setProperty should be called with a style object, string is deprecated"
@@ -178,10 +185,6 @@ export const useStyleData = ({
     };
 
     const deleteProperty = (property: StyleProperty) => {
-      if (currentStyle === undefined) {
-        return;
-      }
-
       updates.push({ operation: "delete", property });
     };
 
@@ -190,20 +193,22 @@ export const useStyleData = ({
         return;
       }
       publishUpdates("update", updates);
-      const nextStyle = updates.reduce(
-        (currentStyle, update) => {
-          if (update.operation === "delete") {
-            delete currentStyle[update.property];
-          }
-          if (update.operation === "set") {
-            currentStyle[update.property] = update.value;
-          }
-          return currentStyle;
-        },
-        { ...currentStyle }
-      );
-      updates = [];
-      setCurrentStyle(nextStyle);
+      setBreakpointStyle((prevStyle) => {
+        const nextStyle = updates.reduce(
+          (reduceStyle, update) => {
+            if (update.operation === "delete") {
+              delete reduceStyle[update.property];
+            }
+            if (update.operation === "set") {
+              reduceStyle[update.property] = update.value;
+            }
+            return reduceStyle;
+          },
+          { ...prevStyle }
+        );
+        updates = [];
+        return nextStyle;
+      });
     };
 
     return {
@@ -211,7 +216,7 @@ export const useStyleData = ({
       deleteProperty,
       publish,
     };
-  };
+  }, [publishUpdates]);
 
   return {
     currentStyle,

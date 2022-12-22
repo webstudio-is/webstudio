@@ -2,8 +2,12 @@ import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleConfig } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
-import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
+import type { Style } from "@webstudio-is/css-data";
+import type {
+  SetProperty,
+  DeleteProperty,
+  CreateBatchUpdate,
+} from "./shared/use-style-data";
 import type { InheritedStyle } from "./shared/get-inherited-style";
 import * as controls from "./controls";
 import {
@@ -23,6 +27,7 @@ import { PropertyName } from "./shared/property-name";
 
 export type ControlProps = {
   setProperty: SetProperty;
+  deleteProperty: DeleteProperty;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
@@ -31,7 +36,7 @@ export type ControlProps = {
 
 export type RenderCategoryProps = {
   setProperty: SetProperty;
-  deleteProperty: (property: StyleProperty) => void;
+  deleteProperty: DeleteProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
   sectionStyle: {
@@ -45,7 +50,7 @@ export type RenderCategoryProps = {
 
 export type RenderPropertyProps = {
   setProperty: SetProperty;
-  deleteProperty: (property: StyleProperty) => void;
+  deleteProperty: DeleteProperty;
   currentStyle: Style;
   inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
@@ -77,6 +82,7 @@ export const renderProperty = ({
         currentStyle={currentStyle}
         inheritedStyle={inheritedStyle}
         setProperty={setProperty}
+        deleteProperty={deleteProperty}
         styleConfig={styleConfig}
         category={category}
       />

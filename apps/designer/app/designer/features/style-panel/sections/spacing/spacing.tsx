@@ -96,7 +96,7 @@ export const SpacingSection = ({
     if (update.operation === "set") {
       setProperty(update.property)(update.value, options);
     } else {
-      deleteProperty(update.property);
+      deleteProperty(update.property, options);
     }
   };
 
