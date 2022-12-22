@@ -141,12 +141,14 @@ export const isNumericString = (input: string) =>
 const useHandleKeyDown =
   ({
     ignoreEnter,
+    ignoreUpDownNumeric,
     value,
     onChange,
     onChangeComplete,
     onKeyDown,
   }: {
     ignoreEnter: boolean;
+    ignoreUpDownNumeric: boolean;
     value: CssValueInputValue;
     onChange: (value: CssValueInputValue) => void;
     onChangeComplete: (value: CssValueInputValue) => void;
@@ -161,6 +163,7 @@ const useHandleKeyDown =
     }
 
     if (
+      ignoreUpDownNumeric === false &&
       (value.type === "unit" ||
         (value.type === "intermediate" && isNumericString(value.value))) &&
       value.unit !== undefined &&
@@ -381,6 +384,7 @@ export const CssValueInput = ({
     // In case of the menu is really open and the selection is inside it
     // we do not prevent the default downshift Enter key behavior
     ignoreEnter: isOpen && !menuProps.empty && highlightedIndex !== -1,
+    ignoreUpDownNumeric: isUnitsOpen || isOpen,
     onChangeComplete: (value) => onChangeComplete(value, "enter"),
     value,
     onChange: props.onChange,
