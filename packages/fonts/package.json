@@ -11,8 +11,7 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
     "fontkit": "^2.0.2"
@@ -20,10 +19,10 @@
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@types/fontkit": "^2.0.0",
-    "@webstudio-is/design-system": "*",
-    "@webstudio-is/jest-config": "*",
-    "@webstudio-is/scripts": "*",
-    "@webstudio-is/tsconfig": "*",
+    "@webstudio-is/design-system": "workspace:^",
+    "@webstudio-is/jest-config": "workspace:^",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
     "typescript": "4.7.4",
     "zod": "^3.19.1"

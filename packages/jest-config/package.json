@@ -2,15 +2,9 @@
   "name": "@webstudio-is/jest-config",
   "version": "1.0.2",
   "license": "MIT",
-  "scripts": {
-    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
-  },
   "dependencies": {
     "@jest/types": "^29.3.1",
     "esbuild-jest": "^0.5.0",
     "jest": "^29.3.1"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

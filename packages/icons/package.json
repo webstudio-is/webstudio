@@ -13,8 +13,7 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint",
     "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook",
-    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+    "storybook:build": "build-storybook"
   },
   "devDependencies": {
     "@storybook/jest": "^0.0.10",
@@ -22,9 +21,9 @@
     "@storybook/testing-library": "^0.0.13",
     "@svgo/jsx": "^0.4.2",
     "@types/react": "^17.0.24",
-    "@webstudio-is/scripts": "*",
-    "@webstudio-is/storybook-config": "*",
-    "@webstudio-is/tsconfig": "*",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/storybook-config": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
     "tsx": "^3.9.0",
     "typescript": "4.7.4"
   },
@@ -34,7 +33,7 @@
   },
   "dependencies": {
     "@radix-ui/react-icons": "^1.1.0",
-    "@webstudio-is/css-vars": "*",
+    "@webstudio-is/css-vars": "workspace:^",
     "react": "^17.0.2"
   },
   "module": "./lib/index.js",

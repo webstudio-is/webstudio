@@ -20,7 +20,7 @@
     "@manypkg/get-packages": "^1.1.3",
     "@storybook/react": "^6.5.14",
     "@types/css-tree": "^2.0.0",
-    "@webstudio-is/eslint-config-custom": "*",
+    "@webstudio-is/eslint-config-custom": "workspace:^",
     "chromatic": "^6.11.4",
     "husky": "8.0.1",
     "lint-staged": "^13.0.2",

@@ -11,15 +11,14 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.131.0",
     "@aws-sdk/lib-storage": "^3.131.0",
     "@remix-run/node": "^1.6.4",
-    "@webstudio-is/fonts": "*",
-    "@webstudio-is/prisma-client": "*",
+    "@webstudio-is/fonts": "workspace:^",
+    "@webstudio-is/prisma-client": "workspace:^",
     "app-root-path": "^3.0.0",
     "bson-objectid": "^2.0.2",
     "sharp": "^0.30.7"
@@ -29,9 +28,9 @@
     "@types/app-root-path": "^1.2.4",
     "@types/node": "^18.7.16",
     "@types/sharp": "^0.30.4",
-    "@webstudio-is/jest-config": "*",
-    "@webstudio-is/scripts": "*",
-    "@webstudio-is/tsconfig": "*",
+    "@webstudio-is/jest-config": "workspace:^",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
     "typescript": "4.7.4",
     "zod": "^3.19.1"
