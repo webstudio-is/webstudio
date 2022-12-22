@@ -56,9 +56,11 @@ const useLabels = (
   );
 
   const selectedLabel = useMemo(() => {
-    const selectedOption = availableFontWeights.find(
-      (option) => option.weight === currentWeight
-    );
+    const selectedOption =
+      availableFontWeights.find((option) => option.weight === currentWeight) ??
+      // In case available weights a custom font supports does not include the current weight,
+      // we show the first available weight.
+      availableFontWeights[0];
     return selectedOption?.label;
   }, [currentWeight, availableFontWeights]);
 
