@@ -4,17 +4,40 @@ import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
 import { subscribeScrollState } from "~/shared/dom-hooks";
 
-const publishSelectedRect = (element: HTMLElement) => {
+declare module "~/shared/pubsub" {
+  export interface PubsubMap {
+    updateSelectedInstanceOutline: {
+      visible?: boolean;
+      rect?: DOMRect;
+    };
+  }
+}
+
+const updateOutlineRect = (element: HTMLElement) => {
   publish({
-    type: "selectedInstanceRect",
-    payload: element.getBoundingClientRect(),
+    type: "updateSelectedInstanceOutline",
+    payload: {
+      rect: element.getBoundingClientRect(),
+    },
   });
 };
 
-const hideSelectedRect = () => {
+const showOutline = (element: HTMLElement) => {
   publish({
-    type: "selectedInstanceRect",
-    payload: undefined,
+    type: "updateSelectedInstanceOutline",
+    payload: {
+      visible: true,
+      rect: element.getBoundingClientRect(),
+    },
+  });
+};
+
+const hideOutline = () => {
+  publish({
+    type: "updateSelectedInstanceOutline",
+    payload: {
+      visible: false,
+    },
   });
 };
 
@@ -35,7 +58,7 @@ export const SelectedInstanceConnector = ({
 
     // effect close to rendered element also catches dnd remounts
     // so actual state is always provided here
-    publishSelectedRect(element);
+    showOutline(element);
 
     // ResizeObserver does not work for inline elements
     const canObserve = getComputedStyle(element).display !== "inline";
@@ -43,14 +66,14 @@ export const SelectedInstanceConnector = ({
     const resizeObserver = new ResizeObserver(() => {
       // contentRect has wrong x/y values for absolutely positioned element.
       // getBoundingClientRect is used instead.
-      publishSelectedRect(element);
+      updateOutlineRect(element);
     });
     resizeObserver.observe(element);
 
     // detect movement of the element within same parent
     // React prevent remount when key stays the same
     const mutationObserver = new window.MutationObserver(() => {
-      publishSelectedRect(element);
+      updateOutlineRect(element);
     });
     const parent = element?.parentElement;
     if (parent) {
@@ -68,7 +91,7 @@ export const SelectedInstanceConnector = ({
           type === "deleteInstance" ||
           type === "reparentInstance"
         ) {
-          publishSelectedRect(element);
+          updateOutlineRect(element);
         }
       });
     }
@@ -77,15 +100,15 @@ export const SelectedInstanceConnector = ({
     // new rect will be send when new styles
     // will be written to instance css rules
     const unsubscribePreviewStyle = subscribe("previewStyle", () => {
-      hideSelectedRect();
+      hideOutline();
     });
 
     const unsubscribeScrollState = subscribeScrollState({
       onScrollStart() {
-        hideSelectedRect();
+        hideOutline();
       },
       onScrollEnd() {
-        publishSelectedRect(element);
+        showOutline(element);
       },
     });
 

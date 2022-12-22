@@ -18,11 +18,15 @@ export const useBreakpoints = () => useValue(breakpointsContainer);
 const isPreviewModeContainer = createValueContainer<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
 
-const selectedInstanceRectContainer = createValueContainer<
-  DOMRect | undefined
->();
-export const useSelectedInstanceRect = () =>
-  useValue(selectedInstanceRectContainer);
+const selectedInstanceOutlineContainer = createValueContainer<{
+  visible: boolean;
+  rect?: DOMRect;
+}>({
+  visible: false,
+  rect: undefined,
+});
+export const useSelectedInstanceOutline = () =>
+  useValue(selectedInstanceOutlineContainer);
 
 const hoveredInstanceRectContainer = createValueContainer<
   DOMRect | undefined
