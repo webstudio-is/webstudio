@@ -18,7 +18,6 @@ import store from "immerhin";
 import { useSelectedInstance } from "./nano-states";
 import {
   rootInstanceContainer,
-  useBreakpoints,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -36,7 +35,6 @@ declare module "~/shared/pubsub" {
       instance: Instance;
       dropTarget?: { parentId: Instance["id"]; position: number };
       props?: Array<UserProp>;
-      isPopulated?: boolean;
     };
     unselectInstance: undefined;
   }
@@ -80,39 +78,31 @@ export const findInsertLocation = (
 
 export const useInsertInstance = ({ treeId }: { treeId: string }) => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-  const [breakpoints] = useBreakpoints();
-
-  useSubscribe(
-    "insertInstance",
-    ({ instance, dropTarget, props, isPopulated }) => {
-      store.createTransaction(
-        [rootInstanceContainer, allUserPropsContainer],
-        (rootInstance, allUserProps) => {
-          if (rootInstance === undefined) {
-            return;
-          }
-          const populatedInstance = isPopulated
-            ? instance
-            : utils.tree.populateInstance(instance, breakpoints[0].id);
-          const hasInserted = utils.tree.insertInstanceMutable(
-            rootInstance,
-            populatedInstance,
-            dropTarget ?? findInsertLocation(rootInstance, selectedInstance?.id)
-          );
-          if (hasInserted) {
-            setSelectedInstance(instance);
-          }
-          if (props !== undefined) {
-            allUserProps[instance.id] = utils.props.createInstanceProps({
-              instanceId: instance.id,
-              treeId,
-              props,
-            });
-          }
+  useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
+    store.createTransaction(
+      [rootInstanceContainer, allUserPropsContainer],
+      (rootInstance, allUserProps) => {
+        if (rootInstance === undefined) {
+          return;
         }
-      );
-    }
-  );
+        const hasInserted = utils.tree.insertInstanceMutable(
+          rootInstance,
+          instance,
+          dropTarget ?? findInsertLocation(rootInstance, selectedInstance?.id)
+        );
+        if (hasInserted) {
+          setSelectedInstance(instance);
+        }
+        if (props !== undefined) {
+          allUserProps[instance.id] = utils.props.createInstanceProps({
+            instanceId: instance.id,
+            treeId,
+            props,
+          });
+        }
+      }
+    );
+  });
 };
 
 export const useReparentInstance = () => {

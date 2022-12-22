@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import {
+  useBreakpoints,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -63,6 +64,7 @@ const initialState: {
 export const useDragAndDrop = () => {
   const [rootInstance] = useRootInstance();
   const [textEditingInstanceId] = useTextEditingInstanceId();
+  const [breakpoints] = useBreakpoints();
 
   const state = useRef({ ...initialState });
 
@@ -286,12 +288,17 @@ export const useDragAndDrop = () => {
       const { dropTarget, dragItem } = state.current;
 
       if (dropTarget && dragItem && isCanceled === false) {
+        const instance = utils.tree.populateInstance(
+          utils.tree.createInstance({
+            component: dragItem.component,
+          }),
+          breakpoints[0].id
+        );
+
         publish({
           type: "insertInstance",
           payload: {
-            instance: utils.tree.createInstance({
-              component: dragItem.component,
-            }),
+            instance,
             dropTarget: {
               parentId: dropTarget.data.id,
               position: dropTarget.indexWithinChildren,

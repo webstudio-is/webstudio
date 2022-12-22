@@ -130,7 +130,7 @@ const useCopyPaste = (publish: Publish) => {
     onPaste: (instance, props) => {
       publish({
         type: "insertInstance",
-        payload: { instance, props, isPopulated: true },
+        payload: { instance, props },
       });
     },
   });
