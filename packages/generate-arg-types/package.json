@@ -31,6 +31,6 @@
     "generate-arg-types": "./src/index.ts"
   },
   "license": "MIT",
-  "private": false,
+  "private": true,
   "sideEffects": false
 }
