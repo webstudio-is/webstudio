@@ -11,7 +11,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Design System
-        run: yarn storybook:ds:build
+        run: pnpm storybook:ds:build
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v2.23.0

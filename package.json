@@ -1,14 +1,8 @@
 {
-  "packageManager": "yarn@1.22.19",
+  "packageManager": "pnpm@7.18.2",
   "name": "turbo",
   "version": "0.0.0",
   "private": true,
-  "workspaces": {
-    "packages": [
-      "apps/*",
-      "packages/*"
-    ]
-  },
   "scripts": {
     "build": "turbo run build",
     "checks": "turbo run checks",
@@ -19,8 +13,7 @@
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
-    "migrations": "cd apps/designer && migrations --dev",
-    "postinstall": "patch-package"
+    "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {
     "@changesets/get-dependents-graph": "^1.3.4",
@@ -31,20 +24,27 @@
     "chromatic": "^6.11.4",
     "husky": "8.0.1",
     "lint-staged": "^13.0.2",
-    "patch-package": "^6.5.0",
     "prettier": "2.7.1",
+    "tsx": "^3.9.0",
     "turbo": "1.3.1",
     "typescript": "4.7.4"
   },
   "engines": {
     "node": "16",
-    "yarn": "1.22"
+    "pnpm": "7.18",
+    "yarn": "This project is configured to use pnpm"
   },
   "lint-staged": {
     "*.{ts,tsx,js,json,css,md}": "prettier --write"
   },
   "prettier": {},
   "resolutions": {
-    "esbuild": "0.15.13"
+    "esbuild": "0.15.13",
+    "react-dom": "17.0.2"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@storybook/builder-webpack5@6.5.14": "patches/@storybook__builder-webpack5@6.5.14.patch"
+    }
   }
 }
