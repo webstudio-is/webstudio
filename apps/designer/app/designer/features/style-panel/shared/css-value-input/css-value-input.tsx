@@ -155,6 +155,11 @@ const useHandleKeyDown =
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.isDefaultPrevented()) {
+      // Underlying select like `unitSelect` can already prevent an event like up/down buttons
+      return;
+    }
+
     // Do not prevent downshift behaviour on item select
     if (ignoreEnter === false) {
       if (event.key === "Enter") {
@@ -384,6 +389,7 @@ export const CssValueInput = ({
     // In case of the menu is really open and the selection is inside it
     // we do not prevent the default downshift Enter key behavior
     ignoreEnter: isOpen && !menuProps.empty && highlightedIndex !== -1,
+    // Do not change the number value on the arrow up/down if any menu is opened
     ignoreUpDownNumeric: isUnitsOpen || isOpen,
     onChangeComplete: (value) => onChangeComplete(value, "enter"),
     value,
