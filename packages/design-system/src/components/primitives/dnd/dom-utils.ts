@@ -2,30 +2,25 @@ import {
   type Rect,
   type ChildrenOrientation,
   getRectsOrientation,
+  getTwoRectsOrientation,
 } from "./geometry-utils";
 
-// By looking at a specific child and it's neighbours,
-// determines their orientation relative to each other
-export const getLocalChildrenOrientation = (
+const getOrientaionUsingProbe = (
   parent: Element,
-  childrentRects: Rect[],
-  childIndex: number
+  relativeToChild?: Element
 ): ChildrenOrientation => {
-  const previous = childrentRects[childIndex - 1] as Rect | undefined;
-  const current = childrentRects[childIndex] as Rect | undefined;
-  const next = childrentRects[childIndex + 1] as Rect | undefined;
+  const probe = document.createElement("div");
+  if (relativeToChild) {
+    parent.insertBefore(probe, relativeToChild);
+  } else {
+    parent.appendChild(probe);
+  }
+  const probeRect = probe.getBoundingClientRect();
+  parent.removeChild(probe);
 
-  if (current === undefined || (next === undefined && previous === undefined)) {
-    const probe = document.createElement("div");
-    const { children } = parent;
-    if (childIndex > children.length - 1) {
-      parent.appendChild(probe);
-    } else {
-      parent.insertBefore(probe, children[childIndex]);
-    }
-    const probeRect = probe.getBoundingClientRect();
-    parent.removeChild(probe);
-
+  // If there's no child, see if one of the dimensions collapsed.
+  // If both or neither collapsed, fallback to vertical as the best guess.
+  if (relativeToChild === undefined) {
     return {
       type:
         probeRect.width === 0 && probeRect.height > 0
@@ -33,6 +28,33 @@ export const getLocalChildrenOrientation = (
           : "vertical",
       reverse: false,
     };
+  }
+
+  return getTwoRectsOrientation(
+    probeRect,
+    relativeToChild.getBoundingClientRect()
+  );
+};
+
+// By looking at a specific child and it's neighbours,
+// determines their orientation relative to each other
+export const getLocalChildrenOrientation = (
+  parent: Element,
+  getChildren: (parent: Element) => Element[] | HTMLCollection,
+  childrentRects: Rect[],
+  childIndex: number
+): ChildrenOrientation => {
+  const previous = childrentRects[childIndex - 1] as Rect | undefined;
+  const current = childrentRects[childIndex] as Rect | undefined;
+  const next = childrentRects[childIndex + 1] as Rect | undefined;
+
+  // If there are no two rects to compare, use a probe
+  if (current === undefined || (next === undefined && previous === undefined)) {
+    const children = getChildren(parent);
+    return getOrientaionUsingProbe(
+      parent,
+      childIndex < children.length ? children[childIndex] : undefined
+    );
   }
 
   return getRectsOrientation(previous, current, next);

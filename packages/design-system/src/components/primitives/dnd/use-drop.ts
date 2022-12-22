@@ -145,6 +145,7 @@ export const useDrop = <Data>(props: UseDropProps<Data>): UseDropHandlers => {
 
       const childrenOrientation = getLocalChildrenOrientation(
         partialDropTarget.element,
+        latestProps.current.getValidChildren ?? ((parent) => parent.children),
         childrenRects,
         closestChildIndex
       );
