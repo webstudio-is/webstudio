@@ -135,6 +135,9 @@ const useScrub = ({
   return [scrubRef, inputRef];
 };
 
+export const isNumericString = (input: string) =>
+  String(input).trim().length !== 0 && isNaN(Number(input)) === false;
+
 const useHandleKeyDown =
   ({
     ignoreEnter,
@@ -158,13 +161,18 @@ const useHandleKeyDown =
     }
 
     if (
-      value.type === "unit" &&
-      (event.key === "ArrowUp" || event.key === "ArrowDown") &&
-      event.currentTarget.value
+      (value.type === "unit" ||
+        (value.type === "intermediate" && isNumericString(value.value))) &&
+      value.unit !== undefined &&
+      (event.key === "ArrowUp" || event.key === "ArrowDown")
     ) {
+      const inputValue =
+        value.type === "unit" ? value.value : Number(value.value.trim());
+
       onChange({
-        ...value,
-        value: calcNumberChange(value.value, event),
+        type: "unit",
+        value: calcNumberChange(inputValue, event),
+        unit: value.unit,
       });
       // Prevent Downshift from opening menu on arrow up/down
       return;
