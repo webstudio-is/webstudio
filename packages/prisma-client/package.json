@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint",
-    "dev": "pnpm concurrently 'prisma generate --watch' 'build-package --watch'",
+    "dev": "prisma generate --watch & build-package --watch",
     "build": "prisma format && prisma generate && build-package"
   },
   "bin": {
@@ -20,7 +20,6 @@
     "@types/uuid": "^8.3.4",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "concurrently": "^7.6.0",
     "prisma": "^4.3.1",
     "typescript": "4.7.4",
     "zod": "^3.19.1"
