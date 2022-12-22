@@ -1,7 +1,7 @@
-diff --git a/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars b/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars
-index 30df5e4..e3261a9 100644
---- a/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars
-+++ b/node_modules/@storybook/builder-webpack5/templates/virtualModuleModernEntry.js.handlebars
+diff --git a/templates/virtualModuleModernEntry.js.handlebars b/templates/virtualModuleModernEntry.js.handlebars
+index 30df5e4c42489b58e5dbca0402bf1f5d35f27a61..13bc5ae24a8db553999a72dca3104b16086a732d 100644
+--- a/templates/virtualModuleModernEntry.js.handlebars
++++ b/templates/virtualModuleModernEntry.js.handlebars
 @@ -11,8 +11,9 @@ import { importFn } from './{{storiesFilename}}';
  
  const { SERVER_CHANNEL_URL } = global;

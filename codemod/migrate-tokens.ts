@@ -1,5 +1,5 @@
 /**
- * To run it go to the root: $ yarn tsx ./codemod/migrate-spacing.ts
+ * To run it go to the root: $ pnpm tsx ./codemod/migrate-spacing.ts
  */
 import fs from "fs/promises";
 import path from "path";

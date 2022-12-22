@@ -8,8 +8,25 @@ runs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
-        cache: "yarn"
+
+    - run: corepack enable
+      shell: bash
+
+    - name: Get pnpm cache directory path
+      id: pnpm-cache-dir-path
+      run: echo "dir=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - uses: actions/cache@v3
+      with:
+        path: ${{ steps.pnpm-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-
 
     - name: Install Dependencies
-      run: yarn install --frozen-lockfile
+      # funny thing
+      # build scripts fail because of node-linker=hoisted
+      # though fixed with double pnpm install
+      run: pnpm install --frozen-lockfile --ignore-scripts && pnpm install --frozen-lockfile --ignore-scripts
       shell: bash

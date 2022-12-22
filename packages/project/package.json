@@ -8,14 +8,13 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "yarn typecheck && yarn lint && yarn test",
+    "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
   },
   "dependencies": {
-    "@prisma/client": "^4.3.1",
     "@webstudio-is/asset-uploader": "*",
     "@webstudio-is/css-data": "*",
     "@webstudio-is/css-engine": "*",

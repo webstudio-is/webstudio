@@ -1,7 +1,10 @@
 import { type Tree, Instance } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma, type Prisma } from "@webstudio-is/prisma-client";
-import { Tree as DbTree } from "@prisma/client";
+import {
+  prisma,
+  type Prisma,
+  type Tree as DbTree,
+} from "@webstudio-is/prisma-client";
 import { utils } from "../index";
 import type { Breakpoint } from "@webstudio-is/css-data";
 
