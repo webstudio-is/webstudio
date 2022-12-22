@@ -11,17 +11,16 @@
     "checks": "pnpm typecheck && pnpm lint && pnpm test",
     "dev": "build-package --watch",
     "build": "build-package",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
-    "@webstudio-is/asset-uploader": "*",
-    "@webstudio-is/css-data": "*",
-    "@webstudio-is/css-engine": "*",
-    "@webstudio-is/design-tokens": "*",
-    "@webstudio-is/fonts": "*",
-    "@webstudio-is/prisma-client": "*",
-    "@webstudio-is/react-sdk": "*",
+    "@webstudio-is/asset-uploader": "workspace:^",
+    "@webstudio-is/css-data": "workspace:^",
+    "@webstudio-is/css-engine": "workspace:^",
+    "@webstudio-is/design-tokens": "workspace:^",
+    "@webstudio-is/fonts": "workspace:^",
+    "@webstudio-is/prisma-client": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
     "bson-objectid": "^2.0.2",
     "immer": "^9.0.12",
     "nanoid": "^3.2.0",
@@ -34,9 +33,9 @@
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@types/uuid": "^8.3.4",
-    "@webstudio-is/jest-config": "*",
-    "@webstudio-is/scripts": "*",
-    "@webstudio-is/tsconfig": "*",
+    "@webstudio-is/jest-config": "workspace:^",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
     "jest": "^29.3.1",
     "typescript": "4.7.4"
   },

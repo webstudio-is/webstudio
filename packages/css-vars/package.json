@@ -10,13 +10,12 @@
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "build-package --watch",
     "build": "build-package",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "publish-to-npm": "bash ../../bin/publish-to-npm.sh"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {},
   "devDependencies": {
-    "@webstudio-is/scripts": "*",
-    "@webstudio-is/tsconfig": "*",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
     "typescript": "4.7.4"
   },
   "module": "./lib/index.js",

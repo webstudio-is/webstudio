@@ -18,7 +18,7 @@
     "zod": "^3.19.1"
   },
   "devDependencies": {
-    "@webstudio-is/tsconfig": "*",
+    "@webstudio-is/tsconfig": "workspace:^",
     "typescript": "4.7.4",
     "esbuild": "^0.14.25"
   },
@@ -31,6 +31,6 @@
     "generate-arg-types": "./src/index.ts"
   },
   "license": "MIT",
-  "private": false,
+  "private": true,
   "sideEffects": false
 }
