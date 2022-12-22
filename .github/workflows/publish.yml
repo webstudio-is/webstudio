@@ -1,9 +1,9 @@
 name: Publish packages on NPM 📦
 
-on: push
-#  push:
-#    branches:
-#      - main
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   publish:
@@ -30,4 +30,4 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - run: pnpm -r publish --no-git-checks
+      - run: pnpm -r publish
