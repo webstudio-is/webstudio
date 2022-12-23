@@ -27,6 +27,7 @@ export { Tooltip, InputErrorsTooltip } from "./components/tooltip";
 export {
   EnhancedTooltip,
   EnhancedTooltipProvider,
+  useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
 export { Button } from "./components/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";

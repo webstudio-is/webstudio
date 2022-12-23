@@ -56,12 +56,9 @@ const Cell = ({
         onChange={onChange}
         onClose={onPopoverClose}
       />
-      <SpacingTooltip
-        property={property}
-        isOpen={
-          isActive && isPopoverOpen === false && scrubStatus.isActive === false
-        }
-      />
+      {isActive && isPopoverOpen === false && scrubStatus.isActive === false ? (
+        <SpacingTooltip property={property} />
+      ) : null}
       <ValueText
         css={{
           // We want value to have `default` cursor to indicate that it's clickable,
