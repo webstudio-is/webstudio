@@ -2,7 +2,7 @@ import * as process from "process";
 
 export const config = {
   storybookShots: {
-    storybookUrl: "packages/design-system/storybook-static",
+    storybookUrl: "apps/designer/storybook-static",
   },
   lostPixelProjectId: "cl8a8xmx714904901m9oce4vhqc",
   lostPixelUrl: "https://app.gitbased.lost-pixel.com/api/callback",
