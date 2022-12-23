@@ -27,6 +27,7 @@ if (typeof window === "object") {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
 type UseWindowResize = {
