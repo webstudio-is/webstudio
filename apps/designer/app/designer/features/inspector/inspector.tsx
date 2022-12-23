@@ -9,6 +9,7 @@ import {
   Paragraph,
   Box,
   Flex,
+  EnhancedTooltipProvider,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
@@ -42,34 +43,42 @@ export const Inspector = ({ publish }: InspectorProps) => {
   }
 
   return (
-    <FloatingPanelProvider container={tabsRef}>
-      <Flex as={Tabs} defaultValue="style" ref={tabsRef}>
-        <TabsList>
-          <TabsTrigger value="style">
-            <Text>Style</Text>
-          </TabsTrigger>
-          {/* @note: events would be part of props */}
-          <TabsTrigger value="props">
-            <Text>Props</Text>
-          </TabsTrigger>
-          <TabsTrigger value="inspect">
-            <Text>Inspect</Text>
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="style" css={contentStyle}>
-          <StylePanel
-            publish={publish}
-            selectedInstanceData={selectedInstanceData}
-          />
-        </TabsContent>
-        <TabsContent value="props" css={contentStyle}>
-          <PropsPanel
-            publish={publish}
-            key={selectedInstanceData.id /* Re-render when instance changes */}
-            selectedInstanceData={selectedInstanceData}
-          />
-        </TabsContent>
-      </Flex>
-    </FloatingPanelProvider>
+    <EnhancedTooltipProvider
+      delayDuration={1600}
+      disableHoverableContent={false}
+      skipDelayDuration={0}
+    >
+      <FloatingPanelProvider container={tabsRef}>
+        <Flex as={Tabs} defaultValue="style" ref={tabsRef}>
+          <TabsList>
+            <TabsTrigger value="style">
+              <Text>Style</Text>
+            </TabsTrigger>
+            {/* @note: events would be part of props */}
+            <TabsTrigger value="props">
+              <Text>Props</Text>
+            </TabsTrigger>
+            <TabsTrigger value="inspect">
+              <Text>Inspect</Text>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="style" css={contentStyle}>
+            <StylePanel
+              publish={publish}
+              selectedInstanceData={selectedInstanceData}
+            />
+          </TabsContent>
+          <TabsContent value="props" css={contentStyle}>
+            <PropsPanel
+              publish={publish}
+              key={
+                selectedInstanceData.id /* Re-render when instance changes */
+              }
+              selectedInstanceData={selectedInstanceData}
+            />
+          </TabsContent>
+        </Flex>
+      </FloatingPanelProvider>
+    </EnhancedTooltipProvider>
   );
 };

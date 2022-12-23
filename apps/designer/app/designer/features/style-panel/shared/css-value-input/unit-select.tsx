@@ -112,10 +112,6 @@ const StyledTrigger = styled(TextFieldIconButton, textStyles, {
   px: 3,
 });
 
-const handlePreventEvent = (event: React.FocusEvent<HTMLDivElement>) => {
-  event.preventDefault();
-};
-
 type UnitSelectProps = {
   options: Array<string>;
   value: string;
@@ -148,7 +144,7 @@ const UnitSelect = ({
       <SelectPrimitive.Portal>
         <SelectContent
           onCloseAutoFocus={onCloseAutoFocus}
-          onEscapeKeyDown={(event) => {
+          onEscapeKeyDown={() => {
             // We need to use onEscapeKeyDown and close explicitly as we prevented default at onKeyDown
             // We can't prevent this event here as it's too late and the non-prevented event is already dispatched
             // to the ancestors
@@ -166,19 +162,7 @@ const UnitSelect = ({
           </SelectScrollUpButton>
           <SelectViewport>
             {options.map((option) => (
-              <SelectItem
-                key={option}
-                value={option}
-                textValue={option}
-                /**
-                 * We prevent onFocus and onBlur events as they cause Tooltip to break Esc key logic
-                 * Selecting/hovering item change focus. Blur/Focus events cause Tooltip to open/close fast
-                 * Then Tooltip reopens it becomes the higher layer at DismissableLayer https://github.com/radix-ui/primitives/blob/e861c16f20fe8e2e440983355edf2ec78cc2a51c/packages/react/dismissable-layer/src/DismissableLayer.tsx#L105
-                 * that breaks the `onEscapeKeyDown` event to work at all.
-                 **/
-                onFocus={handlePreventEvent}
-                onBlur={handlePreventEvent}
-              >
+              <SelectItem key={option} value={option} textValue={option}>
                 {option}
               </SelectItem>
             ))}

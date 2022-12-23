@@ -141,6 +141,7 @@ importers:
       remix-utils: ^4.1.0
       slugify: ^1.6.5
       typescript: 4.7.4
+      use-debounce: ^9.0.2
       uuid: ^9.0.0
       warn-once: ^0.1.1
       zod: ^3.19.1
@@ -210,6 +211,7 @@ importers:
       remix-auth-google: 1.1.0_aokfpu2sgp732g5yz6iyiwi7l4
       remix-utils: 4.1.0_q73k56po2sths2cyphxvf2ziau
       slugify: 1.6.5
+      use-debounce: 9.0.2_react@17.0.2
       uuid: 9.0.0
       warn-once: 0.1.1
       zod: 3.19.1
@@ -421,6 +423,7 @@ importers:
       react-dom: 17.0.2
       react-hot-toast: ^2.3.0
       typescript: 4.7.4
+      use-debounce: ^9.0.2
     dependencies:
       '@radix-ui/colors': 0.1.8
       '@radix-ui/react-accessible-icon': 1.0.0_sfoxds7t5ydpegc3knd667wn6m
@@ -460,6 +463,7 @@ importers:
       lodash.merge: 4.6.2
       match-sorter: 6.3.1
       react-hot-toast: 2.3.0_sfoxds7t5ydpegc3knd667wn6m
+      use-debounce: 9.0.2_react@17.0.2
     devDependencies:
       '@jest/globals': 29.3.1
       '@storybook/jest': 0.0.10_sfoxds7t5ydpegc3knd667wn6m
@@ -21492,6 +21496,15 @@ packages:
       '@types/react': 17.0.47
       react: 17.0.2
       tslib: 2.4.0
+    dev: false
+
+  /use-debounce/9.0.2_react@17.0.2:
+    resolution: {integrity: sha512-QLyB0sxt9F5AisGDrUybCRJSLE60bTQR0yXc+IebNGUu1GCXwii1zsZl82mPGdWqDVQy7+1FKMLHQUixxf5Nbw==}
+    engines: {node: '>= 10.0.0'}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 17.0.2
     dev: false
 
   /use-isomorphic-layout-effect/1.1.2_sudpmbbyhqtxq6t4xf6jlicdem:
