@@ -1,5 +1,5 @@
 import {
-  useSelectedInstanceRect,
+  useSelectedInstanceOutline,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
@@ -7,7 +7,7 @@ import { Outline } from "./outline";
 import { Label } from "./label";
 
 export const SelectedInstanceOutline = () => {
-  const [instanceRect] = useSelectedInstanceRect();
+  const [{ rect, visible }] = useSelectedInstanceOutline();
   const [instanceData] = useSelectedInstanceData();
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
@@ -17,15 +17,16 @@ export const SelectedInstanceOutline = () => {
 
   if (
     instanceData === undefined ||
-    instanceRect === undefined ||
-    isEditingCurrentInstance
+    isEditingCurrentInstance ||
+    visible === false ||
+    rect === undefined
   ) {
     return null;
   }
 
   return (
-    <Outline rect={instanceRect}>
-      <Label component={instanceData.component} instanceRect={instanceRect} />
+    <Outline rect={rect}>
+      <Label component={instanceData.component} instanceRect={rect} />
     </Outline>
   );
 };
