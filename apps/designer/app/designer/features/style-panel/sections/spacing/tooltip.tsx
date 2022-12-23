@@ -1,5 +1,10 @@
-import { styled, Tooltip } from "@webstudio-is/design-system";
+import {
+  styled,
+  Tooltip,
+  useEnhancedTooltipProps,
+} from "@webstudio-is/design-system";
 import { SpacingStyleProperty } from "./types";
+import { useDebounce } from "use-debounce";
 
 // trigger is used only for positioning
 const Trigger = styled("div", {
@@ -39,13 +44,18 @@ export const SpacingTooltip = ({
 }: {
   property: SpacingStyleProperty;
   isOpen: boolean;
-}) => (
-  <Tooltip
-    open={isOpen}
-    content={labels[property]}
-    side={sides[property]}
-    disableHoverableContent
-  >
-    <Trigger />
-  </Tooltip>
-);
+}) => {
+  const { delayDuration } = useEnhancedTooltipProps();
+  const [open] = useDebounce(isOpen, delayDuration ?? 0);
+
+  return isOpen ? (
+    <Tooltip
+      open={open}
+      content={labels[property]}
+      side={sides[property]}
+      disableHoverableContent
+    >
+      <Trigger />
+    </Tooltip>
+  ) : null;
+};

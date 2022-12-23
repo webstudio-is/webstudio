@@ -45,6 +45,8 @@ export const EnhancedTooltipProvider = ({
   );
 };
 
+export const useEnhancedTooltipProps = () => useContext(EnhancedTooltipContext);
+
 /**
  * EnhancedTooltip has the following differences from the radix-ui
  * 1. Don't show the tooltip if any click or key-down was made inside Tooltip.Trigger
