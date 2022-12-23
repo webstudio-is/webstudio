@@ -40,50 +40,54 @@ const Arrow = styled(TooltipPrimitive.Arrow, {
   marginTop: -0.5,
 });
 
-export const Tooltip = React.forwardRef(function TooltipWrapper(
-  {
-    children,
-    content,
-    open,
-    defaultOpen,
-    onOpenChange,
-    multiline,
-    delayDuration,
-    disableHoverableContent,
-    ...props
-  }: TooltipProps,
-  ref: Ref<HTMLDivElement>
-) {
-  if (!content) {
-    return children;
+export const Tooltip = React.forwardRef(
+  (
+    {
+      children,
+      content,
+      open,
+      defaultOpen,
+      onOpenChange,
+      multiline,
+      delayDuration,
+      disableHoverableContent,
+      ...props
+    }: TooltipProps,
+    ref: Ref<HTMLDivElement>
+  ) => {
+    if (!content) {
+      return children;
+    }
+    return (
+      <TooltipPrimitive.Root
+        open={open}
+        defaultOpen={defaultOpen}
+        onOpenChange={onOpenChange}
+        delayDuration={delayDuration}
+        disableHoverableContent={disableHoverableContent}
+      >
+        <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+        <TooltipPrimitive.Portal>
+          <Content
+            ref={ref}
+            side="top"
+            align="center"
+            sideOffset={5}
+            {...props}
+            multiline={multiline}
+          >
+            <Paragraph>{content}</Paragraph>
+            <Box css={{ color: "$transparentExtreme" }}>
+              <Arrow offset={5} width={11} height={5} />
+            </Box>
+          </Content>
+        </TooltipPrimitive.Portal>
+      </TooltipPrimitive.Root>
+    );
   }
-  return (
-    <TooltipPrimitive.Root
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={onOpenChange}
-      delayDuration={delayDuration}
-      disableHoverableContent={disableHoverableContent}
-    >
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
-      <TooltipPrimitive.Portal>
-        <Content
-          ref={ref}
-          side="top"
-          align="center"
-          sideOffset={5}
-          {...props}
-          multiline={multiline}
-        >
-          <Paragraph>{content}</Paragraph>
-          <Box css={{ color: "$transparentExtreme" }}>
-            <Arrow offset={5} width={11} height={5} />
-          </Box>
-        </Content>
-      </TooltipPrimitive.Portal>
-    </TooltipPrimitive.Root>
-  );
-});
+);
+
+Tooltip.displayName = "Tooltip";
 
 export const InputErrorsTooltip = ({
   errors,
