@@ -3,8 +3,8 @@
   "extends": "../../packages/tsconfig/remix.json",
   "include": [
     "remix.env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "../../@types/**/*.d.ts"
   ],
   "compilerOptions": {
