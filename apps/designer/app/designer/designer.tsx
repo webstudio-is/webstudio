@@ -128,7 +128,10 @@ const useCopyPaste = (publish: Publish) => {
       publish({ type: "deleteInstance", payload: { id: instance.id } });
     },
     onPaste: (instance, props) => {
-      publish({ type: "insertInstance", payload: { instance, props } });
+      publish({
+        type: "insertInstance",
+        payload: { instance, props },
+      });
     },
   });
 };

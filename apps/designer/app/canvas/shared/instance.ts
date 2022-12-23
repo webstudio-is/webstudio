@@ -18,7 +18,6 @@ import store from "immerhin";
 import { useSelectedInstance } from "./nano-states";
 import {
   rootInstanceContainer,
-  useBreakpoints,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -79,8 +78,6 @@ export const findInsertLocation = (
 
 export const useInsertInstance = ({ treeId }: { treeId: string }) => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-  const [breakpoints] = useBreakpoints();
-
   useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
@@ -88,13 +85,9 @@ export const useInsertInstance = ({ treeId }: { treeId: string }) => {
         if (rootInstance === undefined) {
           return;
         }
-        const populatedInstance = utils.tree.populateInstance(
-          instance,
-          breakpoints[0].id
-        );
         const hasInserted = utils.tree.insertInstanceMutable(
           rootInstance,
-          populatedInstance,
+          instance,
           dropTarget ?? findInsertLocation(rootInstance, selectedInstance?.id)
         );
         if (hasInserted) {
