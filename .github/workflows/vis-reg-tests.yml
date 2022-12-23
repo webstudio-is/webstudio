@@ -11,7 +11,9 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build Storybook for Design System
-        run: pnpm storybook:ds:build
+        run: pnpm turbo run storybook:build --filter=@webstudio-is/design-system
+      - name: Build Storybook for Designer
+        run: pnpm turbo run storybook:build --filter=@webstudio-is/designer
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v2.23.0

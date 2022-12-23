@@ -12,7 +12,6 @@
     "build-storybook": "build-storybook",
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
-    "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
     "migrations": "cd apps/designer && migrations --dev"
   },
   "devDependencies": {
