@@ -2,7 +2,7 @@ import {
   styled,
   Flex,
   Tooltip,
-  ToggleGroupRoot,
+  ToggleGroup,
   ToggleGroupItem,
 } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-data";
@@ -23,7 +23,7 @@ export const ToggleGroupControl = ({
 }: ToggleGroupControlProps) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
   return (
-    <ToggleGroupRoot
+    <ToggleGroup
       type="single"
       value={value}
       onValueChange={onValueChange}
@@ -42,7 +42,7 @@ export const ToggleGroupControl = ({
           </ToggleGroupControlItem>
         );
       })}
-    </ToggleGroupRoot>
+    </ToggleGroup>
   );
 };
 

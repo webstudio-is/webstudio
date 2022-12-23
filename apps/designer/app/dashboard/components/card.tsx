@@ -7,7 +7,7 @@ import {
   Select,
   TextField,
   Button,
-  Heading,
+  DeprecatedHeading,
   Text,
 } from "@webstudio-is/design-system";
 import { designerPath } from "~/shared/router-utils";
@@ -35,9 +35,9 @@ export const SelectProjectCard = ({
   return (
     <Card size={2}>
       <Flex direction="column" gap="4">
-        <Heading size="2" css={{ textAlign: "center" }}>
+        <DeprecatedHeading size="2" css={{ textAlign: "center" }}>
           Select a project
-        </Heading>
+        </DeprecatedHeading>
         <Select
           name="project"
           options={options}

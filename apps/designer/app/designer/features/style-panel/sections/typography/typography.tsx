@@ -2,7 +2,7 @@ import type { RenderCategoryProps } from "../../style-sections";
 import {
   Flex,
   Grid,
-  IconButtonDeprecated,
+  DeprecatedIconButton,
   Tooltip,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
@@ -343,9 +343,9 @@ export const TypographySectionAdvancedPopover = (
     >
       <Flex>
         <Tooltip content="More typography options" delayDuration={0}>
-          <IconButtonDeprecated>
+          <DeprecatedIconButton>
             <EllipsesIcon />
-          </IconButtonDeprecated>
+          </DeprecatedIconButton>
         </Tooltip>
       </Flex>
     </FloatingPanel>

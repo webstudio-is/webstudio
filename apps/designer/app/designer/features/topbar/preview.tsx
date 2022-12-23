@@ -1,6 +1,6 @@
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { EyeOpenIcon } from "@webstudio-is/icons";
-import { SimpleToggle } from "@webstudio-is/design-system";
+import { Toggle } from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
 
 declare module "~/shared/pubsub" {
@@ -29,12 +29,12 @@ export const PreviewButton = ({ publish }: PreviewButtonProps) => {
   });
 
   return (
-    <SimpleToggle
+    <Toggle
       onPressedChange={setValue}
       pressed={isPreviewMode}
       aria-label="Toggle Preview"
     >
       <EyeOpenIcon />
-    </SimpleToggle>
+    </Toggle>
   );
 };

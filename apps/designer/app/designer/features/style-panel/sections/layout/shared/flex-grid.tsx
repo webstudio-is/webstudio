@@ -1,4 +1,4 @@
-import { Flex, Grid, IconButtonDeprecated } from "@webstudio-is/design-system";
+import { Flex, Grid, DeprecatedIconButton } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import { useIsFromCurrentBreakpoint } from "../../../shared/use-is-from-current-breakpoint";
@@ -88,7 +88,7 @@ export const FlexGrid = ({
             height: "100%",
           }}
         >
-          <IconButtonDeprecated
+          <DeprecatedIconButton
             css={{
               width: "100%",
               height: "100%",
@@ -113,7 +113,7 @@ export const FlexGrid = ({
             }}
           >
             <DotFilledIcon />
-          </IconButtonDeprecated>
+          </DeprecatedIconButton>
         </Flex>
       ))}
       <Flex

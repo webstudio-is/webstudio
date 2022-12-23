@@ -20,7 +20,7 @@ import {
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
-  IconButtonDeprecated,
+  DeprecatedIconButton,
 } from "@webstudio-is/design-system";
 import {
   PlusIcon,
@@ -90,9 +90,9 @@ const Combobox = ({
             readOnly={isReadonly}
             state={isInvalid ? "invalid" : undefined}
             suffix={
-              <IconButtonDeprecated {...getToggleButtonProps()}>
+              <DeprecatedIconButton {...getToggleButtonProps()}>
                 <ChevronDownIcon />
-              </IconButtonDeprecated>
+              </DeprecatedIconButton>
             }
           />
         </ComboboxPopperAnchor>

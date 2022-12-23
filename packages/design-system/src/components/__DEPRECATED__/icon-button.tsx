@@ -1,6 +1,6 @@
-import { styled } from "../stitches.config";
+import { styled } from "../../stitches.config";
 
-export const IconButtonDeprecated = styled("button", {
+export const DeprecatedIconButton = styled("button", {
   // Reset
   alignItems: "center",
   appearance: "none",
