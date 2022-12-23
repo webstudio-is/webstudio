@@ -28,7 +28,6 @@ export {
   EnhancedTooltip,
   EnhancedTooltipProvider,
 } from "./components/enhanced-tooltip";
-
 export { Button } from "./components/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export { IconButton } from "./components/icon-button";
