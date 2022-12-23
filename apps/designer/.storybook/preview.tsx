@@ -1,6 +1,6 @@
 import * as React from "react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { darkTheme, globalCss } from "@webstudio-is/design-system";
+import { globalCss } from "@webstudio-is/design-system";
 
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
@@ -22,7 +22,6 @@ const globalStyles = globalCss({
 
 export const decorators = [
   (StoryFn: any) => {
-    document.body.classList.add(darkTheme);
     globalStyles();
     return (
       <TooltipProvider>
