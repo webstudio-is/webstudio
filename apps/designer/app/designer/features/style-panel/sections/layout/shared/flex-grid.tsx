@@ -31,6 +31,8 @@ export const FlexGrid = ({
   const setJustifyContent = batchUpdate.setProperty("justifyContent");
   const alignment = ["start", "center", "end"];
   const gridSize = alignment.length;
+  const isFlexDirectionColumn =
+    flexDirection === "column" || flexDirection === "column-reverse";
 
   return (
     <Grid
@@ -51,6 +53,12 @@ export const FlexGrid = ({
       {Array.from(Array(gridSize * gridSize), (_, index) => {
         const x = index % gridSize;
         const y = Math.floor(index / gridSize);
+        // grid edges starts with 1
+        let gridColumn = `${x + 1} / ${x + 2}`;
+        let gridRow = `${y + 1} / ${y + 2}`;
+        if (isFlexDirectionColumn) {
+          [gridColumn, gridRow] = [gridRow, gridColumn];
+        }
         return (
           <Flex
             key={index}
@@ -59,9 +67,8 @@ export const FlexGrid = ({
             css={{
               width: "100%",
               height: "100%",
-              // grid edges starts with 1
-              gridColumn: `${x + 1} / ${x + 2}`,
-              gridRow: `${y + 1} / ${y + 2}`,
+              gridColumn,
+              gridRow,
             }}
           >
             <DeprecatedIconButton
@@ -114,8 +121,7 @@ export const FlexGrid = ({
             css={{
               borderRadius: "calc($borderRadius$4 / 2)",
               backgroundColor: "currentColor",
-              ...(flexDirection === "column" ||
-              flexDirection === "column-reverse"
+              ...(isFlexDirectionColumn
                 ? { minWidth: size, minHeight: 4 }
                 : { minWidth: 4, minHeight: size }),
             }}
