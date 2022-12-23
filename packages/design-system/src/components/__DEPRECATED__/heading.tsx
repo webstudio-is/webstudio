@@ -1,6 +1,6 @@
 import React from "react";
-import { DeprecatedText } from "./__DEPRECATED__/text";
-import { VariantProps, CSS } from "../stitches.config";
+import { DeprecatedText } from "./text";
+import { VariantProps, CSS } from "../../stitches.config";
 import merge from "lodash.merge";
 
 const DEFAULT_TAG = "h1";
@@ -14,7 +14,7 @@ type HeadingVariants = { size?: HeadingSizeVariants } & Omit<
 type HeadingProps = React.ComponentProps<typeof DEFAULT_TAG> &
   HeadingVariants & { css?: CSS; as?: string };
 
-export const Heading = React.forwardRef<
+export const DeprecatedHeading = React.forwardRef<
   React.ElementRef<typeof DEFAULT_TAG>,
   HeadingProps
 >((props, forwardedRef) => {
@@ -54,4 +54,4 @@ export const Heading = React.forwardRef<
   );
 });
 
-Heading.displayName = "Heading";
+DeprecatedHeading.displayName = "DeprecatedHeading";

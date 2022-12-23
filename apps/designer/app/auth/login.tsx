@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Card,
   Flex,
-  Heading,
+  DeprecatedHeading,
   Button,
   Text,
   TextField,
@@ -45,7 +45,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
     >
       <Card size={2}>
         <Flex direction="column" align="center" gap="3">
-          <Heading size="2">Login</Heading>
+          <DeprecatedHeading size="2">Login</DeprecatedHeading>
           <Flex direction="column" gap="4">
             {errorMessage.length ? (
               <Text align="center" color="error">

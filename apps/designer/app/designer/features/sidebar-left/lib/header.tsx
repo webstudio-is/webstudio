@@ -1,6 +1,6 @@
 import {
   Flex,
-  IconButtonDeprecated,
+  DeprecatedIconButton,
   Text,
   Tooltip,
 } from "@webstudio-is/design-system";
@@ -30,8 +30,8 @@ export const Header = ({ title, suffix }: HeaderProps) => {
 
 export const CloseButton = ({ onClick }: { onClick: () => void }) => (
   <Tooltip content="Close panel" side="bottom">
-    <IconButtonDeprecated onClick={onClick} size="2" aria-label="Close panel">
+    <DeprecatedIconButton onClick={onClick} size="2" aria-label="Close panel">
       <CrossIcon />
-    </IconButtonDeprecated>
+    </DeprecatedIconButton>
   </Tooltip>
 );

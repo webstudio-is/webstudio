@@ -5,7 +5,7 @@ import { ComponentStory } from "@storybook/react";
 import { RowGapIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Button } from "./button";
 import { Flex } from "./flex";
-import { IconButtonDeprecated } from "./icon-button-deprecated";
+import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { TextField } from "./text-field";
 import { Box } from "./box";
 import { Grid } from "./grid";
@@ -64,27 +64,27 @@ export const PrefixSuffix: ComponentStory<typeof TextField> = () => {
       <TextField
         prefix={<RowGapIcon />}
         suffix={
-          <IconButtonDeprecated>
+          <DeprecatedIconButton>
             <ChevronDownIcon />
-          </IconButtonDeprecated>
+          </DeprecatedIconButton>
         }
       />
       <TextField
         state="invalid"
         prefix={<RowGapIcon />}
         suffix={
-          <IconButtonDeprecated>
+          <DeprecatedIconButton>
             <ChevronDownIcon />
-          </IconButtonDeprecated>
+          </DeprecatedIconButton>
         }
       />
       <TextField
         disabled
         prefix={<RowGapIcon />}
         suffix={
-          <IconButtonDeprecated>
+          <DeprecatedIconButton>
             <ChevronDownIcon />
-          </IconButtonDeprecated>
+          </DeprecatedIconButton>
         }
       />
     </Flex>
@@ -99,9 +99,9 @@ export const Layout: ComponentStory<typeof TextField> = () => {
           value="Long content comes here and it doesn't wrap"
           prefix={<RowGapIcon />}
           suffix={
-            <IconButtonDeprecated>
+            <DeprecatedIconButton>
               <ChevronDownIcon />
-            </IconButtonDeprecated>
+            </DeprecatedIconButton>
           }
           css={{
             flexGrow: 1,
@@ -211,9 +211,9 @@ export const ClickCapture: ComponentStory<typeof TextField> = (args) => {
         </Flex>
       }
       suffix={
-        <IconButtonDeprecated>
+        <DeprecatedIconButton>
           <ChevronDownIcon />
-        </IconButtonDeprecated>
+        </DeprecatedIconButton>
       }
       {...args}
     />

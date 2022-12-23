@@ -1,7 +1,7 @@
 import { styled } from "../stitches.config";
 import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
 
-export const ToggleGroupRoot = styled(ToggleGroupPrimitive.Root, {
+export const ToggleGroup = styled(ToggleGroupPrimitive.Root, {
   display: "inline-flex",
   borderRadius: "$spacing$3",
   boxShadow: `0 0 0 $spacing$1 $colors$slate7`,

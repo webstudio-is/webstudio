@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Flex,
-  IconButtonDeprecated,
+  DeprecatedIconButton,
   Tooltip,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
@@ -52,9 +52,9 @@ export const Lock = ({
           justifyContent: "center",
         }}
       >
-        <IconButtonDeprecated onClick={() => setIsPaired((value) => !value)}>
+        <DeprecatedIconButton onClick={() => setIsPaired((value) => !value)}>
           {isPaired ? <LockCloseIcon /> : <LockOpenIcon />}
-        </IconButtonDeprecated>
+        </DeprecatedIconButton>
       </Flex>
     </Tooltip>
   );

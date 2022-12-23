@@ -17,7 +17,7 @@ import {
 } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled } from "../stitches.config";
-import { IconButtonDeprecated } from "./icon-button-deprecated";
+import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { itemCss } from "./menu";
 import { panelStyles } from "./panel";
 import { TextField } from "./text-field";
@@ -305,9 +305,9 @@ export const Combobox = <Item,>({
               placeholder,
             })}
             suffix={
-              <IconButtonDeprecated {...getToggleButtonProps()}>
+              <DeprecatedIconButton {...getToggleButtonProps()}>
                 <ChevronDownIcon />
-              </IconButtonDeprecated>
+              </DeprecatedIconButton>
             }
           />
         </PopperAnchor>
