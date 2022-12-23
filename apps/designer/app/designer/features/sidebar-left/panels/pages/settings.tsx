@@ -18,7 +18,8 @@ import { Header } from "../../lib/header";
 import { useState, useCallback, ComponentProps } from "react";
 import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
-import { useDebounce, useUnmount } from "react-use";
+import { useDebouncedCallback } from "use-debounce";
+import { useUnmount } from "react-use";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
   normalizeErrors,
@@ -357,34 +358,31 @@ export const PageSettings = ({
       : fieldNames,
   });
 
+  const handleSubmitDebounced = useDebouncedCallback(() => {
+    if (Object.keys(unsavedValues).length === 0) {
+      return;
+    }
+
+    // We're re-submitting the submittedValues because previous submit is going to be cancelled
+    // (normally, submittedValues are empty at this point)
+    const valuesToSubmit = { ...submittedValues, ...unsavedValues };
+
+    fetcher.submit(toFormData({ id: pageId, ...valuesToSubmit }), {
+      method: "post",
+      action: restPagesPath({ projectId }),
+    });
+
+    setSubmittedValues(valuesToSubmit);
+    setUnsavedValues({});
+  }, 1000);
+
   const handleChange = useCallback(
     <Name extends FieldName>(event: { field: Name; value: FormPage[Name] }) => {
       resetFieldError(event.field);
       setUnsavedValues((values) => ({ ...values, [event.field]: event.value }));
+      handleSubmitDebounced();
     },
-    [resetFieldError]
-  );
-
-  useDebounce(
-    () => {
-      if (Object.keys(unsavedValues).length === 0) {
-        return;
-      }
-
-      // We're re-submitting the submittedValues because previous submit is going to be cancelled
-      // (normally, submittedValues are empty at this point)
-      const valuesToSubmit = { ...submittedValues, ...unsavedValues };
-
-      fetcher.submit(toFormData({ id: pageId, ...valuesToSubmit }), {
-        method: "post",
-        action: restPagesPath({ projectId }),
-      });
-
-      setSubmittedValues(valuesToSubmit);
-      setUnsavedValues({});
-    },
-    1000,
-    [unsavedValues]
+    [handleSubmitDebounced, resetFieldError]
   );
 
   useUnmount(() => {

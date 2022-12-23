@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDebounce } from "react-use";
+import { useDebouncedCallback } from "use-debounce";
 import { type Breakpoint } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { Button, TextField, Flex, Text } from "@webstudio-is/design-system";
@@ -20,14 +20,13 @@ const BreakpointEditorItem = ({
 }: BreakpointEditorItemProps) => {
   const [breakpoint, setBreakpoint] = useState(initialBreakpoint);
 
-  useDebounce(
-    () => {
-      if (breakpoint !== initialBreakpoint) {
-        onChange(breakpoint);
+  const handleChangeBreakpointDebounced = useDebouncedCallback(
+    (nextBreakpoint: Breakpoint) => {
+      if (nextBreakpoint !== initialBreakpoint) {
+        onChange(nextBreakpoint);
       }
     },
-    500,
-    [breakpoint]
+    500
   );
 
   return (
@@ -48,6 +47,7 @@ const BreakpointEditorItem = ({
           minWidth: Number(data.get("minWidth")),
         };
         setBreakpoint(nextBreakpoint);
+        handleChangeBreakpointDebounced(nextBreakpoint);
       }}
     >
       <Flex

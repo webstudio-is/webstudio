@@ -6,7 +6,7 @@ import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { useState } from "react";
-import { Box, Tooltip } from "@webstudio-is/design-system";
+import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
 
 export const TextControl = ({
   currentStyle,
@@ -29,11 +29,7 @@ export const TextControl = ({
   >();
 
   return (
-    <Tooltip
-      content={styleConfig.label}
-      delayDuration={600}
-      disableHoverableContent={true}
-    >
+    <EnhancedTooltip content={styleConfig.label}>
       <Box>
         <CssValueInput
           icon={icon}
@@ -72,6 +68,6 @@ export const TextControl = ({
           }}
         />
       </Box>
-    </Tooltip>
+    </EnhancedTooltip>
   );
 };

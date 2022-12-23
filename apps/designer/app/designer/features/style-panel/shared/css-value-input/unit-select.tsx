@@ -142,7 +142,21 @@ const UnitSelect = ({
         </StyledTrigger>
       </SelectPrimitive.SelectTrigger>
       <SelectPrimitive.Portal>
-        <SelectContent onCloseAutoFocus={onCloseAutoFocus}>
+        <SelectContent
+          onCloseAutoFocus={onCloseAutoFocus}
+          onEscapeKeyDown={() => {
+            // We need to use onEscapeKeyDown and close explicitly as we prevented default at onKeyDown
+            // We can't prevent this event here as it's too late and the non-prevented event is already dispatched
+            // to the ancestors
+            onOpenChange(false);
+          }}
+          onKeyDown={(event) => {
+            // Prevent Esc key to be processed at the parent Component
+            if (event.key === "Escape") {
+              event.preventDefault();
+            }
+          }}
+        >
           <SelectScrollUpButton>
             <ChevronUpIcon />
           </SelectScrollUpButton>

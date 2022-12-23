@@ -1,11 +1,11 @@
-import React, { Ref, ComponentProps, Fragment } from "react";
+import React, { Ref, Fragment, type ComponentProps } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
 import { Paragraph } from "./paragraph";
 import type { CSS } from "../stitches.config";
 
-type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
+export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   ComponentProps<typeof TooltipPrimitive.Content> & {
     children: React.ReactElement;
     content: React.ReactNode;
@@ -45,19 +45,23 @@ export const Tooltip = React.forwardRef(
     {
       children,
       content,
-      open,
       defaultOpen,
-      onOpenChange,
       multiline,
       delayDuration,
       disableHoverableContent,
+      open,
+      onOpenChange,
+      triggerProps,
       ...props
-    }: TooltipProps,
+    }: TooltipProps & {
+      triggerProps?: ComponentProps<typeof TooltipPrimitive.Trigger>;
+    },
     ref: Ref<HTMLDivElement>
   ) => {
     if (!content) {
       return children;
     }
+
     return (
       <TooltipPrimitive.Root
         open={open}
@@ -66,7 +70,9 @@ export const Tooltip = React.forwardRef(
         delayDuration={delayDuration}
         disableHoverableContent={disableHoverableContent}
       >
-        <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+        <TooltipPrimitive.Trigger asChild {...triggerProps}>
+          {children}
+        </TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
           <Content
             ref={ref}
