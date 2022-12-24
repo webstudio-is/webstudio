@@ -6,7 +6,6 @@ import {
   ComboboxPopper,
   ComboboxPopperAnchor,
   ComboboxPopperContent,
-  Flex,
   TextField,
   useCombobox,
 } from "@webstudio-is/design-system";
@@ -17,10 +16,10 @@ export type Item = {
   type: "local" | "token";
 };
 
-type ChipProps = {
+type TokenProps = {
   label: string;
 };
-const Chip = ({ label }: ChipProps) => {
+const Token = ({ label }: TokenProps) => {
   return <Button variant="gray">{label}</Button>;
 };
 
@@ -34,13 +33,9 @@ const TextFieldWrapper = forwardRef<
   TextFieldWrapperProps
 >(({ value, inputValue, ...props }, ref) => {
   const prefix = value.map((item, index) => (
-    <Chip label={item.label} key={index} />
+    <Token label={item.label} key={index} />
   ));
-  return (
-    <Flex>
-      <TextField {...props} ref={ref} prefix={prefix} value={inputValue} />
-    </Flex>
-  );
+  return <TextField {...props} ref={ref} prefix={prefix} value={inputValue} />;
 });
 TextFieldWrapper.displayName = "TextFieldWrapper";
 
@@ -48,6 +43,7 @@ type StyleSourceInputProps = {
   items: Array<Item>;
   value: Array<Item>;
   onChangeComplete: (item: Item) => void;
+  onRemove: (item: Item) => void;
 };
 
 export const StyleSourceInput = (props: StyleSourceInputProps) => {
@@ -68,7 +64,12 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
     onItemSelect: props.onChangeComplete,
   });
   const inputProps = getInputProps({
-    onKeyPress: (event) => {
+    onKeyDown(event) {
+      if (event.key === "Backspace" && inputValue === "") {
+        props.onRemove(props.value[props.value.length - 1]);
+      }
+    },
+    onKeyPress(event) {
       if (event.key === "Enter") {
         //onSubmit(event.currentTarget.value);
       }

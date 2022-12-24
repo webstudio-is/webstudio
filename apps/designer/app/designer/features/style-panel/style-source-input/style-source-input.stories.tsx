@@ -20,6 +20,10 @@ export const Simple: ComponentStory<typeof StyleSourceInput> = () => {
       onChangeComplete={(item) => {
         setValue([...value, item]);
       }}
+      onRemove={(itemToRemove) => {
+        // @todo use id
+        setValue(value.filter((item) => item !== itemToRemove));
+      }}
     />
   );
 };
