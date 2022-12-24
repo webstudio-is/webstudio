@@ -9,9 +9,10 @@ import {
   TextField,
   useCombobox,
 } from "@webstudio-is/design-system";
-import { ElementRef, forwardRef } from "react";
+import { ElementRef, forwardRef, useState } from "react";
+import { v4 as uuid } from "uuid";
 
-export type Item = {
+export type StyleSource = {
   id: string;
   label: string;
   type: "local" | "token";
@@ -20,12 +21,12 @@ export type Item = {
 type TokenProps = {
   label: string;
 };
-const Token = ({ label }: TokenProps) => {
+const StyleSourceItem = ({ label }: TokenProps) => {
   return <Button variant="gray">{label}</Button>;
 };
 
 type TextFieldWrapperProps = typeof TextField & {
-  value: Array<Item>;
+  value: Array<StyleSource>;
   inputValue: string;
 };
 
@@ -34,21 +35,28 @@ const TextFieldWrapper = forwardRef<
   TextFieldWrapperProps
 >(({ value, inputValue, ...props }, ref) => {
   const prefix = value.map((item, index) => (
-    <Token label={item.label} key={index} />
+    <StyleSourceItem label={item.label} key={index} />
   ));
   return <TextField {...props} ref={ref} prefix={prefix} value={inputValue} />;
 });
 TextFieldWrapper.displayName = "TextFieldWrapper";
 
 type StyleSourceInputProps = {
-  items: Array<Item>;
-  value: Array<Item>;
-  onItemSelect: (item: Item) => void;
-  onItemRemove: (item: Item) => void;
+  items: Array<StyleSource>;
+  value: Array<StyleSource>;
+  onItemSelect: (item: StyleSource) => void;
+  onItemRemove: (item: StyleSource) => void;
   onItemCreate: (label: string) => void;
 };
 
+const initialValue: StyleSource = {
+  label: "",
+  id: uuid(),
+  type: "local",
+};
+
 export const StyleSourceInput = (props: StyleSourceInputProps) => {
+  const [inputValue, setInputValue] = useState(initialValue.label);
   const {
     items,
     getInputProps,
@@ -57,22 +65,29 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
     getMenuProps,
     getItemProps,
     isOpen,
-    inputValue,
   } = useCombobox({
     items: props.items,
-    value: null,
+    value: { ...initialValue, label: inputValue },
     selectedItem: undefined,
     itemToString: (item) => item?.label ?? "",
-    onItemSelect: props.onItemSelect,
+    onItemSelect(item) {
+      setInputValue("");
+      props.onItemSelect(item);
+    },
+    onInputChange(label) {
+      setInputValue(label ?? "");
+    },
   });
   const inputProps = getInputProps({
     onKeyDown(event) {
       if (event.key === "Backspace" && inputValue === "") {
         props.onItemRemove(props.value[props.value.length - 1]);
+        return;
       }
     },
     onKeyPress(event) {
       if (event.key === "Enter") {
+        setInputValue("");
         props.onItemCreate(inputValue);
       }
     },

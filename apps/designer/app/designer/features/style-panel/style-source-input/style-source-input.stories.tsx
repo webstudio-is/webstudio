@@ -1,19 +1,19 @@
 import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import React from "react";
-import { StyleSourceInput, type Item } from "./style-source-input";
+import { StyleSourceInput, type StyleSource } from "./style-source-input";
 
 export default {
   component: StyleSourceInput,
 };
 
 export const Simple: ComponentStory<typeof StyleSourceInput> = () => {
-  const items: Array<Item> = [
+  const items: Array<StyleSource> = [
     { id: "1", label: "Apple", type: "token" },
     { id: "2", label: "Banana", type: "token" },
     { id: "3", label: "Orange", type: "token" },
   ];
-  const [value, setValue] = React.useState<Array<Item>>([
+  const [value, setValue] = React.useState<Array<StyleSource>>([
     { id: "0", label: "Local", type: "local" },
   ]);
   return (
@@ -21,7 +21,7 @@ export const Simple: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onItemCreate={(label) => {
-        const item: Item = { id: uuid(), label: label, type: "token" };
+        const item: StyleSource = { id: uuid(), label: label, type: "token" };
         setValue([...value, item]);
       }}
       onItemSelect={(item) => {
