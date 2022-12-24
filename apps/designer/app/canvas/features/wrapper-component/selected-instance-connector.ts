@@ -2,7 +2,10 @@ import { useEffect } from "react";
 import type { Instance, InstanceProps } from "@webstudio-is/react-sdk";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
-import { subscribeScrollState } from "~/shared/dom-hooks";
+import {
+  subscribeScrollState,
+  subscribeWindowResize,
+} from "~/shared/dom-hooks";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -112,6 +115,15 @@ export const SelectedInstanceConnector = ({
       },
     });
 
+    const unsubscribeWindowResize = subscribeWindowResize({
+      onResizeStart() {
+        hideOutline();
+      },
+      onResizeEnd() {
+        showOutline(element);
+      },
+    });
+
     // trigger style recomputing every time instance styles are changed
     publish({
       type: "selectInstance",
@@ -130,6 +142,7 @@ export const SelectedInstanceConnector = ({
       unsubscribeTreeChange?.();
       unsubscribePreviewStyle();
       unsubscribeScrollState();
+      unsubscribeWindowResize();
     };
 
     // instance props may change dom element

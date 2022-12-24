@@ -4,14 +4,53 @@ import mitt from "mitt";
 const emitter = mitt();
 
 if (typeof window === "object") {
+  let timeoutId = 0;
+  let isResizing = false;
   window.addEventListener(
     "resize",
     () => {
+      if (isResizing === false) {
+        emitter.emit("resizeStart");
+      }
       emitter.emit("resize");
+      isResizing = true;
+      clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        if (isResizing === false) {
+          return;
+        }
+        isResizing = false;
+        emitter.emit("resizeEnd");
+      }, 150);
     },
     false
   );
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {};
+
+type UseWindowResize = {
+  onResizeStart?: () => void;
+  onResize?: () => void;
+  onResizeEnd?: () => void;
+};
+
+export const subscribeWindowResize = ({
+  onResizeStart = noop,
+  onResize = noop,
+  onResizeEnd = noop,
+}: UseWindowResize) => {
+  emitter.on("resizeStart", onResizeStart);
+  emitter.on("resize", onResize);
+  emitter.on("resizeEnd", onResizeEnd);
+
+  return () => {
+    emitter.off("resizeStart", onResizeStart);
+    emitter.off("resize", onResize);
+    emitter.off("resizeEnd", onResizeEnd);
+  };
+};
 
 /**
  * Subscribe to DOM resize event only once and then notify all listeners over js only.
