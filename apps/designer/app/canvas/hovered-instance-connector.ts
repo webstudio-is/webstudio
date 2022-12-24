@@ -32,21 +32,28 @@ const startHoveredInstanceConnection = (rootInstance: Instance) => {
     });
   }, 50);
 
+  let mouseOutTimeoutId: undefined | ReturnType<typeof setTimeout> = undefined;
+
   const handleMouseOver = (event: MouseEvent) => {
-    const element = event.target;
-    if (element instanceof Element) {
-      // store hovered element locally to update outline when scroll ends
-      hoveredElement = element;
-      publishHover(element);
+    if (event.target instanceof Element) {
+      const element = event.target.closest(`[${idAttribute}]`) ?? undefined;
+      if (element !== undefined) {
+        clearTimeout(mouseOutTimeoutId);
+        // store hovered element locally to update outline when scroll ends
+        hoveredElement = element;
+        publishHover(element);
+      }
     }
   };
 
   const handleMouseOut = () => {
-    hoveredElement = undefined;
-    publish({
-      type: "hoverInstance",
-      payload: undefined,
-    });
+    mouseOutTimeoutId = setTimeout(() => {
+      hoveredElement = undefined;
+      publish({
+        type: "hoverInstance",
+        payload: undefined,
+      });
+    }, 100);
   };
 
   const eventOptions = { passive: true };
@@ -90,6 +97,7 @@ const startHoveredInstanceConnection = (rootInstance: Instance) => {
     window.removeEventListener("mouseout", handleMouseOut);
     unsubscribeNavigatorHoveredInstance();
     unsubscribeScrollState();
+    clearTimeout(mouseOutTimeoutId);
   };
 };
 
