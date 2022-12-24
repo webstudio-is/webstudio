@@ -4,9 +4,13 @@ import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
 import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import { getInheritedStyle } from "./get-inherited-style";
+import {
+  getCascadedBreakpoints,
+  getCascadedStyle,
+  getInheritedStyle,
+} from "./style-source";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
-import { useRootInstance } from "~/shared/nano-states";
+import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 
@@ -47,6 +51,7 @@ export const useStyleData = ({
   publish,
 }: UseStyleData) => {
   const [rootInstance] = useRootInstance();
+  const [breakpoints] = useBreakpoints();
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const cssRule = useMemo(
     () =>
@@ -74,11 +79,37 @@ export const useStyleData = ({
   }, [cssRule?.style]);
 
   const inheritedStyle = useMemo(() => {
-    if (selectedInstanceData === undefined || rootInstance === undefined) {
+    if (
+      selectedInstanceData === undefined ||
+      rootInstance === undefined ||
+      selectedBreakpoint === undefined
+    ) {
       return;
     }
-    return getInheritedStyle(rootInstance, selectedInstanceData.id);
-  }, [selectedInstanceData, rootInstance]);
+    const cascadedAndSelectedBreakpoints = [
+      ...getCascadedBreakpoints(breakpoints, selectedBreakpoint.id),
+      selectedBreakpoint,
+    ];
+    return getInheritedStyle(
+      rootInstance,
+      selectedInstanceData.id,
+      cascadedAndSelectedBreakpoints
+    );
+  }, [selectedInstanceData, rootInstance, breakpoints, selectedBreakpoint]);
+
+  const cascadedStyle = useMemo(() => {
+    if (
+      selectedInstanceData === undefined ||
+      selectedBreakpoint === undefined
+    ) {
+      return;
+    }
+    const cascadedBreakpoints = getCascadedBreakpoints(
+      breakpoints,
+      selectedBreakpoint.id
+    );
+    return getCascadedStyle(selectedInstanceData.cssRules, cascadedBreakpoints);
+  }, [breakpoints, selectedBreakpoint, selectedInstanceData]);
 
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
@@ -220,6 +251,8 @@ export const useStyleData = ({
 
   return {
     currentStyle,
+    setStyle: cssRule?.style ?? ({} as Style),
+    cascadedStyle,
     inheritedStyle,
     setProperty,
     deleteProperty,

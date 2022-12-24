@@ -30,7 +30,15 @@ export const FlexChildSection = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionAlign = (props: RenderCategoryProps) => {
-  const { setProperty, deleteProperty, currentStyle, sectionStyle } = props;
+  const {
+    setProperty,
+    deleteProperty,
+    currentStyle,
+    setStyle,
+    cascadedStyle,
+    inheritedStyle,
+    sectionStyle,
+  } = props;
   const setAlignSelf = setProperty("alignSelf");
 
   return (
@@ -38,6 +46,9 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
       <PropertyName
         property="alignSelf"
         label="Align"
+        setStyle={setStyle}
+        cascadedStyle={cascadedStyle}
+        inheritedStyle={inheritedStyle}
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
@@ -82,7 +93,14 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionSizing = (props: RenderCategoryProps) => {
-  const { createBatchUpdate, currentStyle, sectionStyle } = props;
+  const {
+    createBatchUpdate,
+    currentStyle,
+    setStyle,
+    cascadedStyle,
+    inheritedStyle,
+    sectionStyle,
+  } = props;
   const setSizing = createBatchUpdate();
 
   return (
@@ -90,6 +108,9 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
       <PropertyName
         property={["flexGrow", "flexShrink"]}
         label="Sizing"
+        setStyle={setStyle}
+        cascadedStyle={cascadedStyle}
+        inheritedStyle={inheritedStyle}
         onReset={() => {
           setSizing.deleteProperty("flexGrow");
           setSizing.deleteProperty("flexShrink");
@@ -157,6 +178,9 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
 const FlexChildSectionSizingPopover = ({
   deleteProperty,
   sectionStyle,
+  setStyle,
+  cascadedStyle,
+  inheritedStyle,
 }: RenderCategoryProps) => {
   return (
     <FloatingPanel
@@ -173,6 +197,9 @@ const FlexChildSectionSizingPopover = ({
             <PropertyName
               property="flexBasis"
               label="Basis"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("flexBasis")}
             />
             <TextControl {...sectionStyle.flexBasis} />
@@ -181,6 +208,9 @@ const FlexChildSectionSizingPopover = ({
             <PropertyName
               property="flexGrow"
               label="Grow"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("flexGrow")}
             />
             <TextControl {...sectionStyle.flexGrow} />
@@ -189,6 +219,9 @@ const FlexChildSectionSizingPopover = ({
             <PropertyName
               property="flexShrink"
               label="Shrink"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("flexShrink")}
             />
             <TextControl {...sectionStyle.flexShrink} />
@@ -204,7 +237,15 @@ const FlexChildSectionSizingPopover = ({
 };
 
 const FlexChildSectionOrder = (props: RenderCategoryProps) => {
-  const { deleteProperty, setProperty, currentStyle, sectionStyle } = props;
+  const {
+    deleteProperty,
+    setProperty,
+    currentStyle,
+    setStyle,
+    cascadedStyle,
+    inheritedStyle,
+    sectionStyle,
+  } = props;
   const setOrder = setProperty("order");
 
   return (
@@ -212,6 +253,9 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
       <PropertyName
         property="order"
         label="Order"
+        setStyle={setStyle}
+        cascadedStyle={cascadedStyle}
+        inheritedStyle={inheritedStyle}
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
@@ -255,7 +299,13 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
-  const { deleteProperty, sectionStyle } = props;
+  const {
+    deleteProperty,
+    sectionStyle,
+    setStyle,
+    cascadedStyle,
+    inheritedStyle,
+  } = props;
   return (
     <FloatingPanel
       title="Order"
@@ -265,6 +315,9 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
             <PropertyName
               property="order"
               label="Order"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("order")}
             />
             <TextControl {...sectionStyle.order} />

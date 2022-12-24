@@ -1,6 +1,6 @@
 import type { Style, StyleValue, StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
-import type { InheritedStyle } from "./get-inherited-style";
+import type { InheritedStyle } from "./style-source";
 import { isValid } from "./parse-css-value";
 
 export const isNumericString = (input: string) =>
@@ -17,8 +17,7 @@ export const getFinalValue = ({
   property: StyleProperty;
 }): StyleValue | undefined => {
   const currentValue = currentStyle[property];
-  const inheritedValue =
-    property in inheritedStyle ? inheritedStyle[property].value : undefined;
+  const inheritedValue = inheritedStyle[property]?.value;
   if (toValue(currentValue) === "inherit" && inheritedValue !== undefined) {
     return inheritedValue;
   }

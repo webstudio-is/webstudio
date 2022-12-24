@@ -21,7 +21,9 @@ export const StylePanel = ({
 }: StylePanelProps) => {
   const {
     currentStyle,
+    setStyle,
     inheritedStyle,
+    cascadedStyle,
     setProperty,
     deleteProperty,
     createBatchUpdate,
@@ -36,6 +38,7 @@ export const StylePanel = ({
 
   if (
     currentStyle === undefined ||
+    cascadedStyle === undefined ||
     inheritedStyle === undefined ||
     selectedInstanceData === undefined ||
     breakpoint === undefined
@@ -81,6 +84,8 @@ export const StylePanel = ({
           search={search}
           selectedInstanceData={selectedInstanceData}
           currentStyle={currentStyle}
+          setStyle={setStyle}
+          cascadedStyle={cascadedStyle}
           inheritedStyle={inheritedStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}

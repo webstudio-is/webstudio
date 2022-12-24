@@ -46,7 +46,13 @@ export const TypographySection = (props: RenderCategoryProps) => {
 };
 
 export const TypographySectionFont = (props: RenderCategoryProps) => {
-  const { deleteProperty, sectionStyle } = props;
+  const {
+    deleteProperty,
+    sectionStyle,
+    setStyle,
+    cascadedStyle,
+    inheritedStyle,
+  } = props;
 
   return (
     <Grid
@@ -58,6 +64,9 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           label="Font"
           property="fontFamily"
+          setStyle={setStyle}
+          cascadedStyle={cascadedStyle}
+          inheritedStyle={inheritedStyle}
           onReset={() => deleteProperty("fontFamily")}
         />
         <FontFamilyControl {...sectionStyle.fontFamily} />
@@ -66,6 +75,9 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           label="Weight"
           property="fontWeight"
+          setStyle={setStyle}
+          cascadedStyle={cascadedStyle}
+          inheritedStyle={inheritedStyle}
           onReset={() => deleteProperty("fontWeight")}
         />
         <FontWeightControl {...sectionStyle.fontWeight} />
@@ -74,6 +86,9 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
         <PropertyName
           label="Color"
           property="color"
+          setStyle={setStyle}
+          cascadedStyle={cascadedStyle}
+          inheritedStyle={inheritedStyle}
           onReset={() => deleteProperty("color")}
         />
         <ColorControl {...sectionStyle.color} />
@@ -83,7 +98,13 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
 };
 
 export const TypographySectionSizing = (props: RenderCategoryProps) => {
-  const { deleteProperty, sectionStyle } = props;
+  const {
+    deleteProperty,
+    sectionStyle,
+    setStyle,
+    cascadedStyle,
+    inheritedStyle,
+  } = props;
 
   return (
     <Grid
@@ -96,6 +117,9 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
         <PropertyName
           property="fontSize"
           label="Size"
+          setStyle={setStyle}
+          cascadedStyle={cascadedStyle}
+          inheritedStyle={inheritedStyle}
           onReset={() => deleteProperty("fontSize")}
         />
         <TextControl {...sectionStyle.fontSize} />
@@ -104,6 +128,9 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
         <PropertyName
           property="lineHeight"
           label="Height"
+          setStyle={setStyle}
+          cascadedStyle={cascadedStyle}
+          inheritedStyle={inheritedStyle}
           onReset={() => deleteProperty("lineHeight")}
         />
         <TextControl {...sectionStyle.lineHeight} />
@@ -112,6 +139,9 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
         <PropertyName
           property="letterSpacing"
           label="Spacing"
+          setStyle={setStyle}
+          cascadedStyle={cascadedStyle}
+          inheritedStyle={inheritedStyle}
           onReset={() => deleteProperty("letterSpacing")}
         />
         <TextControl {...sectionStyle.letterSpacing} />
@@ -249,7 +279,15 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
 export const TypographySectionAdvancedPopover = (
   props: RenderCategoryProps
 ) => {
-  const { deleteProperty, setProperty, currentStyle, sectionStyle } = props;
+  const {
+    deleteProperty,
+    setProperty,
+    currentStyle,
+    setStyle,
+    cascadedStyle,
+    inheritedStyle,
+    sectionStyle,
+  } = props;
   const setDirection = setProperty("direction");
   const setTextOverflow = setProperty("textOverflow");
   const setHyphens = setProperty("hyphens");
@@ -262,6 +300,9 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="whiteSpace"
               label="White Space"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("whiteSpace")}
             />
             <SelectControl {...sectionStyle.whiteSpace} />
@@ -270,6 +311,9 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="direction"
               label="Direction"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("direction")}
             />
             <ToggleGroupControl
@@ -294,6 +338,9 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="hyphens"
               label="Hyphens"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("hyphens")}
             />
             <ToggleGroupControl
@@ -318,6 +365,9 @@ export const TypographySectionAdvancedPopover = (
             <PropertyName
               property="textOverflow"
               label="Text Overflow"
+              setStyle={setStyle}
+              cascadedStyle={cascadedStyle}
+              inheritedStyle={inheritedStyle}
               onReset={() => deleteProperty("textOverflow")}
             />
             <ToggleGroupControl

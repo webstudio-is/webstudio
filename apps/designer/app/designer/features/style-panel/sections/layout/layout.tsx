@@ -150,6 +150,9 @@ export const LayoutSection = ({
   createBatchUpdate,
   currentStyle,
   sectionStyle,
+  setStyle,
+  cascadedStyle,
+  inheritedStyle,
   styleConfigsByCategory,
 }: RenderCategoryProps) => {
   const displayValue = toValue(currentStyle.display);
@@ -163,6 +166,9 @@ export const LayoutSection = ({
           <PropertyName
             property="display"
             label={display.styleConfig.label}
+            setStyle={setStyle}
+            cascadedStyle={cascadedStyle}
+            inheritedStyle={inheritedStyle}
             onReset={() => deleteProperty("display")}
           />
           <SelectControl
