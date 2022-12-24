@@ -1,3 +1,4 @@
+import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import React from "react";
 import { StyleSourceInput, type Item } from "./style-source-input";
@@ -19,10 +20,14 @@ export const Simple: ComponentStory<typeof StyleSourceInput> = () => {
     <StyleSourceInput
       items={items}
       value={value}
-      onChangeComplete={(item) => {
+      onItemCreate={(label) => {
+        const item: Item = { id: uuid(), label: label, type: "token" };
         setValue([...value, item]);
       }}
-      onRemove={(itemToRemove) => {
+      onItemSelect={(item) => {
+        setValue([...value, item]);
+      }}
+      onItemRemove={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }

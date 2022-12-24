@@ -43,8 +43,9 @@ TextFieldWrapper.displayName = "TextFieldWrapper";
 type StyleSourceInputProps = {
   items: Array<Item>;
   value: Array<Item>;
-  onChangeComplete: (item: Item) => void;
-  onRemove: (item: Item) => void;
+  onItemSelect: (item: Item) => void;
+  onItemRemove: (item: Item) => void;
+  onItemCreate: (label: string) => void;
 };
 
 export const StyleSourceInput = (props: StyleSourceInputProps) => {
@@ -62,17 +63,17 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
     value: null,
     selectedItem: undefined,
     itemToString: (item) => item?.label ?? "",
-    onItemSelect: props.onChangeComplete,
+    onItemSelect: props.onItemSelect,
   });
   const inputProps = getInputProps({
     onKeyDown(event) {
       if (event.key === "Backspace" && inputValue === "") {
-        props.onRemove(props.value[props.value.length - 1]);
+        props.onItemRemove(props.value[props.value.length - 1]);
       }
     },
     onKeyPress(event) {
       if (event.key === "Enter") {
-        //onSubmit(event.currentTarget.value);
+        props.onItemCreate(inputValue);
       }
     },
   });
