@@ -152,10 +152,6 @@ export const PropertyName = ({
     });
   }, [property, setStyle, cascadedStyle, inheritedStyle]);
 
-  if (property === "fontWeight") {
-    console.log(styleSource);
-  }
-
   const isPopoverEnabled =
     isFeatureEnabled("propertyReset") &&
     (styleSource.type === "set" ||
