@@ -12,6 +12,7 @@ import {
 import { ElementRef, forwardRef } from "react";
 
 export type Item = {
+  id: string;
   label: string;
   type: "local" | "token";
 };

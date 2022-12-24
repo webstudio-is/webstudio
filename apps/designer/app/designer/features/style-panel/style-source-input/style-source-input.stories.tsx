@@ -8,11 +8,13 @@ export default {
 
 export const Simple: ComponentStory<typeof StyleSourceInput> = () => {
   const items: Array<Item> = [
-    { label: "Apple", type: "token" },
-    { label: "Banana", type: "token" },
-    { label: "Orange", type: "token" },
+    { id: "1", label: "Apple", type: "token" },
+    { id: "2", label: "Banana", type: "token" },
+    { id: "3", label: "Orange", type: "token" },
   ];
-  const [value, setValue] = React.useState<Array<Item>>([]);
+  const [value, setValue] = React.useState<Array<Item>>([
+    { id: "0", label: "Local", type: "local" },
+  ]);
   return (
     <StyleSourceInput
       items={items}
@@ -21,8 +23,10 @@ export const Simple: ComponentStory<typeof StyleSourceInput> = () => {
         setValue([...value, item]);
       }}
       onRemove={(itemToRemove) => {
-        // @todo use id
-        setValue(value.filter((item) => item !== itemToRemove));
+        if (itemToRemove.type === "local") {
+          return;
+        }
+        setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
     />
   );
