@@ -31,6 +31,7 @@ import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
+import { useDebouncedCallback } from "use-debounce";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -363,6 +364,16 @@ export const CssValueInput = ({
 
   const menuProps = getMenuProps();
 
+  /**
+   * useDebouncedCallback without wait param uses Request Animation Frame
+   * here we wait for 1 tick until the "blur" event will be completed by Downshift
+   **/
+  const callOnCompleteIfIntermediateValueExists = useDebouncedCallback(() => {
+    if (props.intermediateValue !== undefined) {
+      onChangeComplete(value, "blur");
+    }
+  });
+
   const handleOnBlur: KeyboardEventHandler = (event) => {
     inputProps.onBlur(event);
     // When unit select is open, onBlur is triggered,though we don't want a change event in this case.
@@ -372,7 +383,10 @@ export const CssValueInput = ({
 
     // If the menu is open and visible we don't want to trigger onChangeComplete
     // as it will be done by Downshift
-    if (isOpen && !menuProps.empty) {
+    // There is situation that Downshift will not call omCompleted if nothing is selected in menu
+    if (isOpen && menuProps.empty === false) {
+      // There is a situation that Downshift will not call onChangeComplete if nothing is selected in the menu
+      callOnCompleteIfIntermediateValueExists();
       return;
     }
 
