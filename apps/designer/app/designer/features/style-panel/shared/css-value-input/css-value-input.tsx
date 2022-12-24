@@ -384,7 +384,7 @@ export const CssValueInput = ({
     // If the menu is open and visible we don't want to trigger onChangeComplete
     // as it will be done by Downshift
     // There is situation that Downshift will not call omCompleted if nothing is selected in menu
-    if (isOpen && !menuProps.empty) {
+    if (isOpen && menuProps.empty === false) {
       // There is a situation that Downshift will not call onChangeComplete if nothing is selected in the menu
       callOnCompleteIfIntermediateValueExists();
       return;
