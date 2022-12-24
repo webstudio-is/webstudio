@@ -364,6 +364,10 @@ export const CssValueInput = ({
 
   const menuProps = getMenuProps();
 
+  /**
+   * useDebouncedCallback without wait param uses Request Animation Frame
+   * here we wait for 1 tick until the "blur" event will be completed by Downshift
+   **/
   const callOnCompleteIfIntermediateValueExists = useDebouncedCallback(() => {
     if (props.intermediateValue !== undefined) {
       onChangeComplete(value, "blur");
