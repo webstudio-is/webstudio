@@ -1,4 +1,4 @@
-import { LoaderFunction, redirect } from "@remix-run/node";
+import { type LoaderArgs, redirect } from "@remix-run/node";
 
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env.server";
@@ -9,7 +9,7 @@ import { dashboardPath } from "~/shared/router-utils";
 
 export { links };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }: LoaderArgs) => {
   const user = await findAuthenticatedUser(request);
   if (user) {
     return redirect(dashboardPath());

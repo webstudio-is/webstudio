@@ -1,4 +1,4 @@
-import { LoaderFunction, json } from "@remix-run/node";
+import { json, type LoaderArgs } from "@remix-run/node";
 import env from "~/env.server";
 import { db } from "@webstudio-is/project/server";
 import { sentryException } from "~/shared/sentry";
@@ -7,7 +7,7 @@ import type { CanvasData } from "@webstudio-is/project";
 
 type PagesDetails = Array<CanvasData | undefined>;
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+export const loader = async ({ params }: LoaderArgs) => {
   try {
     const projectId = params.projectId ?? undefined;
     const pages: PagesDetails = [];

@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from "@remix-run/node";
+import { type ActionArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
 import { dashboardPath, loginPath } from "~/shared/router-utils";
 import { AUTH_PROVIDERS } from "~/shared/session";
@@ -7,7 +7,7 @@ export default function Dev() {
   return null;
 }
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionArgs) => {
   try {
     return await authenticator.authenticate("dev", request, {
       successRedirect: dashboardPath(),

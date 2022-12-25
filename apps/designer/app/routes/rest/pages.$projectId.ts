@@ -1,4 +1,4 @@
-import { LoaderFunction, ActionFunction } from "@remix-run/node";
+import type { LoaderArgs, ActionArgs } from "@remix-run/node";
 import { db } from "@webstudio-is/project/server";
 import { type Pages, utils, pathValidators } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
@@ -125,10 +125,10 @@ const handleDelete = async (
   return { status: "ok" };
 };
 
-export const action: ActionFunction = async ({
+export const action = async ({
   request,
   params,
-}): Promise<FetcherData<unknown>> => {
+}: ActionArgs): Promise<FetcherData<unknown>> => {
   try {
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);
@@ -160,9 +160,9 @@ export type ErrorData = {
   errors: string;
 };
 
-export const loader: LoaderFunction = async ({
+export const loader = async ({
   params,
-}): Promise<Pages | ErrorData> => {
+}: LoaderArgs): Promise<Pages | ErrorData> => {
   try {
     if (params.projectId === undefined) {
       throw new Error(`Project ID required`);

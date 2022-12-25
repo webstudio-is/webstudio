@@ -1,9 +1,5 @@
-import { redirect, json } from "@remix-run/node";
-import type {
-  MetaFunction,
-  LoaderFunction,
-  ErrorBoundaryComponent,
-} from "@remix-run/node";
+import { redirect, json, LoaderArgs } from "@remix-run/node";
+import type { MetaFunction, ErrorBoundaryComponent } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import djb2a from "djb2a";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
@@ -51,7 +47,7 @@ export const meta: MetaFunction = ({ data }: { data: Data }) => {
   return { title: page.title, ...page.meta };
 };
 
-export const loader: LoaderFunction = async ({ request }): Promise<Data> => {
+export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
   const buildParams = getBuildParams(request);
 
   if (buildParams === undefined) {

@@ -1,9 +1,9 @@
-import { LoaderFunction, redirect } from "@remix-run/node";
+import { type LoaderArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
 import { dashboardPath, loginPath } from "~/shared/router-utils";
 import { AUTH_PROVIDERS } from "~/shared/session";
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }: LoaderArgs) => {
   const url = new URL(request.url);
   const error = url.searchParams.get("error");
   const errorDescription = url.searchParams.get("error_description");

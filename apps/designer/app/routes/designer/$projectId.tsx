@@ -1,5 +1,5 @@
 import { useLoaderData } from "@remix-run/react";
-import type { ErrorBoundaryComponent, LoaderFunction } from "@remix-run/node";
+import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
 import { type DesignerProps, Designer, links } from "~/designer";
 import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
@@ -8,10 +8,10 @@ import { getBuildOrigin } from "~/shared/router-utils";
 
 export { links };
 
-export const loader: LoaderFunction = async ({
+export const loader = async ({
   params,
   request,
-}): Promise<DesignerProps> => {
+}: LoaderArgs): Promise<DesignerProps> => {
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }
