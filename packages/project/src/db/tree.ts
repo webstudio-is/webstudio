@@ -27,6 +27,12 @@ const assetsLoader = new DataLoader<string, Asset | undefined>(
       },
     });
 
+    /**
+     * Dataloader docs:
+     * The Array of values must be the same length as the Array of keys.
+     * Each index in the Array of values must correspond to the same index in the Array of keys.
+     * (assets returned from DB can have a different order, some could not exist)
+     */
     return assetIds.map((assetId) =>
       assets.find((asset) => asset.id === assetId)
     );
