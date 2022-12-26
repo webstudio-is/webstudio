@@ -51,7 +51,6 @@ const RgbValue = z.object({
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
-// https://developer.mozilla.org/en-US/docs/Web/API/CSSImageValue
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.array(z.object({ type: z.literal("asset"), value: ImageAsset })),
@@ -82,8 +81,8 @@ export const validStaticValueTypes = [
 ] as const;
 
 /**
- * Shared types with DB types,
- * ImageValue in DB has different type
+ * Shared zod types with DB types.
+ * ImageValue in DB has a different type
  */
 const SharedStaticStyleValue = z.union([
   UnitValue,

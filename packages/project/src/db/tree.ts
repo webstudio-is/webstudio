@@ -33,6 +33,9 @@ const assetsLoader = new DataLoader<string, Asset | undefined>(
   }
 );
 
+/**
+ * Use zod + DataLoader to load/format assets from the Assets table.
+ */
 const ImageDBAsset = z.object({
   type: z.literal("asset"),
   value: z
@@ -53,7 +56,7 @@ const ImageDbValue = z.object({
   type: z.literal("image"),
   value: z
     .array(ImageDBAsset)
-    // Asset can be not present in DB, skip it
+    // an Asset can be not present in DB, skip it.
     .transform((assets) => assets.filter((asset) => asset.value !== undefined)),
 });
 
@@ -76,7 +79,9 @@ const InstanceDb = z.lazy(() =>
   })
 ) as z.ZodType<Instance>;
 
-// In the DB we hold only assetId as asset value
+/**
+ * In the DB we hold only assetId
+ **/
 const ImageValueDbIn = ImageValue.transform((imageStyle) => ({
   type: imageStyle.type,
   value: imageStyle.value.map((value) =>
@@ -101,7 +106,7 @@ const InstanceDbIn = z.lazy(() =>
     children: z.array(z.union([InstanceDbIn, Text])),
     cssRules: z.array(CssDbInRule),
   })
-) as /* Instance is wrong type here, ImageValue is different after transform, we don't use it anyway */ z.ZodType<Instance>;
+) as /* Instance is wrong type here, ImageValue is different after transform. We don't use it anyway */ z.ZodType<Instance>;
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -114,11 +119,13 @@ export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
 };
 
 export const create = async (
-  root: Instance,
+  clientRoot: Instance,
   client: Prisma.TransactionClient = prisma
 ): Promise<DbTree> => {
-  Instance.parse(root);
+  const root = InstanceDbIn.parse(clientRoot);
+
   const rootString = JSON.stringify(root);
+
   return await client.tree.create({
     data: { root: rootString },
   });
