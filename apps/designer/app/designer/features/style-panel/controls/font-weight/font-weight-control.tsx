@@ -67,11 +67,11 @@ const useLabels = (
 };
 
 export const FontWeightControl = ({
+  property,
   currentStyle,
   setProperty,
-  styleConfig,
 }: ControlProps) => {
-  const fontWeight = currentStyle[styleConfig.property];
+  const fontWeight = currentStyle[property];
 
   // We need the font family to determine which font weights are available
   const fontFamily = currentStyle.fontFamily;
@@ -84,7 +84,7 @@ export const FontWeightControl = ({
     toValue(fontWeight)
   );
 
-  const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(property);
 
   return (
     <Select

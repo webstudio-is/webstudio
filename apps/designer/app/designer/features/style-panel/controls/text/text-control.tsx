@@ -8,15 +8,16 @@ import { useState } from "react";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
 
 export const TextControl = ({
+  property,
   currentStyle,
   setProperty,
   deleteProperty,
   styleConfig,
   icon,
 }: ControlProps & { icon?: JSX.Element }) => {
-  const value = currentStyle[styleConfig.property];
+  const value = currentStyle[property];
 
-  const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(property);
 
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -27,7 +28,7 @@ export const TextControl = ({
       <Box>
         <CssValueInput
           icon={icon}
-          property={styleConfig.property}
+          property={property}
           value={value}
           intermediateValue={intermediateValue}
           keywords={styleConfig.items.map((item) => ({
@@ -38,7 +39,7 @@ export const TextControl = ({
             setIntermediateValue(styleValue);
 
             if (styleValue === undefined) {
-              deleteProperty(styleConfig.property, { isEphemeral: true });
+              deleteProperty(property, { isEphemeral: true });
               return;
             }
 
@@ -50,7 +51,7 @@ export const TextControl = ({
             if (styleValue !== undefined) {
               setValue(styleValue, { isEphemeral: true });
             } else {
-              deleteProperty(styleConfig.property, { isEphemeral: true });
+              deleteProperty(property, { isEphemeral: true });
             }
           }}
           onChangeComplete={({ value }) => {
@@ -58,7 +59,7 @@ export const TextControl = ({
             setIntermediateValue(undefined);
           }}
           onAbort={() => {
-            deleteProperty(styleConfig.property, { isEphemeral: true });
+            deleteProperty(property, { isEphemeral: true });
           }}
         />
       </Box>

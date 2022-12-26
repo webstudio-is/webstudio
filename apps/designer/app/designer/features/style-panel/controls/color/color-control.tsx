@@ -5,11 +5,11 @@ import { ColorPicker } from "../../shared/color-picker";
 import { colord } from "colord";
 
 export const ColorControl = ({
+  property,
   currentStyle,
   setProperty,
-  styleConfig,
 }: ControlProps) => {
-  let value = currentStyle[styleConfig.property] ?? {
+  let value = currentStyle[property] ?? {
     // provide default value to avoid control hiding
     // when value is recomputed
     type: "rgb" as const,
@@ -19,7 +19,7 @@ export const ColorControl = ({
     alpha: 0,
   };
 
-  const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(property);
 
   if (value.type !== "rgb") {
     // Support previously set colors
@@ -50,7 +50,7 @@ export const ColorControl = ({
   return (
     <Flex align="center" css={{ gridColumn: "2/4" }} gap="1">
       <ColorPicker
-        id={styleConfig.property}
+        id={property}
         value={value}
         onChange={(value) => {
           setValue(value, { isEphemeral: true });

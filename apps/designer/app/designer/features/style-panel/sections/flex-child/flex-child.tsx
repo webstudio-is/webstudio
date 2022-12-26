@@ -30,7 +30,7 @@ export const FlexChildSection = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionAlign = (props: RenderCategoryProps) => {
-  const { setProperty, deleteProperty, currentStyle, sectionStyle } = props;
+  const { setProperty, deleteProperty, currentStyle } = props;
   const setAlignSelf = setProperty("alignSelf");
 
   return (
@@ -41,7 +41,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
-        property={sectionStyle.alignSelf?.styleConfig.property}
+        property="alignSelf"
         onValueChange={(value) => setAlignSelf(value)}
         value={toValue(currentStyle.alignSelf)}
         items={[
@@ -82,7 +82,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionSizing = (props: RenderCategoryProps) => {
-  const { createBatchUpdate, currentStyle, sectionStyle } = props;
+  const { createBatchUpdate, currentStyle } = props;
   const setSizing = createBatchUpdate();
 
   return (
@@ -97,10 +97,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         }}
       />
       <ToggleGroupControl
-        property={[
-          sectionStyle.flexGrow?.styleConfig.property,
-          sectionStyle.flexShrink?.styleConfig.property,
-        ]}
+        property={["flexGrow", "flexShrink"]}
         onValueChange={(value) => {
           switch (value) {
             case "none": {
@@ -204,7 +201,7 @@ const FlexChildSectionSizingPopover = ({
 };
 
 const FlexChildSectionOrder = (props: RenderCategoryProps) => {
-  const { deleteProperty, setProperty, currentStyle, sectionStyle } = props;
+  const { deleteProperty, setProperty, currentStyle } = props;
   const setOrder = setProperty("order");
 
   return (
@@ -215,7 +212,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
-        property={sectionStyle.order?.styleConfig.property}
+        property="order"
         onValueChange={(value) => {
           switch (value) {
             case "0":
