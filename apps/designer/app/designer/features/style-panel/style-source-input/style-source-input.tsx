@@ -6,11 +6,20 @@ import {
   ComboboxPopper,
   ComboboxPopperAnchor,
   ComboboxPopperContent,
-  TextField,
+  TextFieldContainer,
+  TextFieldInput,
+  useTextFieldFocus,
   useCombobox,
+  type CSS,
 } from "@webstudio-is/design-system";
-import { ElementRef, forwardRef, useState } from "react";
-import { v4 as uuid } from "uuid";
+import {
+  ComponentProps,
+  ElementRef,
+  forwardRef,
+  RefObject,
+  useState,
+} from "react";
+import { mergeRefs } from "@react-aria/utils";
 
 export type StyleSource = {
   id: string;
@@ -18,28 +27,77 @@ export type StyleSource = {
   type: "local" | "token";
 };
 
-type TokenProps = {
+type StyleSourceItemProps = {
   label: string;
 };
-const StyleSourceItem = ({ label }: TokenProps) => {
+const StyleSourceItem = ({ label }: StyleSourceItemProps) => {
   return <Button variant="gray">{label}</Button>;
 };
 
-type TextFieldWrapperProps = typeof TextField & {
-  value: Array<StyleSource>;
-  inputValue: string;
-};
+type TextFieldWrapperProps = ComponentProps<"input"> &
+  Pick<
+    ComponentProps<typeof TextFieldContainer>,
+    "variant" | "state" | "css"
+  > & {
+    value: Array<StyleSource>;
+    inputValue: string;
+    disabled?: boolean;
+    css?: CSS;
+    containerRef?: RefObject<HTMLDivElement>;
+    inputRef?: RefObject<HTMLInputElement>;
+  };
 
-const TextFieldWrapper = forwardRef<
-  ElementRef<typeof Box>,
-  TextFieldWrapperProps
->(({ value, inputValue, ...props }, ref) => {
-  const prefix = value.map((item, index) => (
-    <StyleSourceItem label={item.label} key={index} />
-  ));
-  return <TextField {...props} ref={ref} prefix={prefix} value={inputValue} />;
-});
-TextFieldWrapper.displayName = "TextFieldWrapper";
+const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
+  (props, forwardedRef) => {
+    const {
+      css,
+      disabled,
+      containerRef,
+      inputRef,
+      state,
+      variant,
+      onFocus,
+      onBlur,
+      onClick,
+      type,
+      onKeyDown,
+      inputValue,
+      value,
+      ...textFieldProps
+    } = props;
+    const [internalInputRef, focusProps] = useTextFieldFocus({
+      disabled,
+      onFocus,
+      onBlur,
+    });
+
+    return (
+      <TextFieldContainer
+        {...focusProps}
+        aria-disabled={disabled}
+        ref={mergeRefs(forwardedRef, containerRef ?? null)}
+        state={state}
+        variant={variant}
+        css={css}
+        onKeyDown={onKeyDown}
+      >
+        {value.map((item, index) => (
+          <StyleSourceItem label={item.label} key={index} />
+        ))}
+        {/* We want input to be the first element in DOM so it receives the focus first */}
+        <TextFieldInput
+          {...textFieldProps}
+          value={inputValue}
+          type={type}
+          disabled={disabled}
+          onClick={onClick}
+          ref={mergeRefs(internalInputRef, inputRef ?? null)}
+        />
+      </TextFieldContainer>
+    );
+  }
+);
+TextField.displayName = "TextField";
 
 type StyleSourceInputProps = {
   items: Array<StyleSource>;
@@ -47,11 +105,12 @@ type StyleSourceInputProps = {
   onItemSelect: (item: StyleSource) => void;
   onItemRemove: (item: StyleSource) => void;
   onItemCreate: (label: string) => void;
+  css?: CSS;
 };
 
 const initialValue: StyleSource = {
   label: "",
-  id: uuid(),
+  id: "__INITIAL_ID__",
   type: "local",
 };
 
@@ -86,20 +145,22 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
       }
     },
     onKeyPress(event) {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" && inputValue.trim() !== "") {
         setInputValue("");
         props.onItemCreate(inputValue);
       }
     },
   });
+
   return (
     <ComboboxPopper>
       <Box {...getComboboxProps()}>
         <ComboboxPopperAnchor>
-          <TextFieldWrapper
+          <TextField
             {...inputProps}
             inputValue={inputValue}
             value={props.value}
+            css={props.css}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>
