@@ -22,6 +22,7 @@ const assetsLoader = new DataLoader<string, Asset | undefined>(
     const assets = await prisma.asset.findMany({
       where: {
         id: {
+          // Spread to remove readonly from assetIds, otherwise ts error.
           in: [...assetIds],
         },
       },
