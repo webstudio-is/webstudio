@@ -119,7 +119,7 @@ export const loadById = async (
 
   return {
     ...tree,
-    root,
+    root: instance,
   };
 };
 
