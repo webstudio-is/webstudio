@@ -52,7 +52,7 @@ const RgbValue = z.object({
 export type RgbValue = z.infer<typeof RgbValue>;
 
 // https://developer.mozilla.org/en-US/docs/Web/API/CSSImageValue
-const ImageValue = z.object({
+export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.array(z.object({ type: z.literal("asset"), value: ImageAsset })),
 });

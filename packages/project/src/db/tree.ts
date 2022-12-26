@@ -8,7 +8,11 @@ import {
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import { type Breakpoint, SharedStyleValue } from "@webstudio-is/css-data";
+import {
+  type Breakpoint,
+  SharedStyleValue,
+  ImageValue,
+} from "@webstudio-is/css-data";
 import { z } from "zod";
 import DataLoader from "dataloader";
 import warnOnce from "warn-once";
@@ -62,17 +66,42 @@ export const CssDbRule = z.object({
   breakpoint: z.optional(z.string()),
 });
 
-const InstanceDb = z.lazy(
-  () =>
-    z.object({
-      type: z.literal("instance"),
-      id: z.string(),
-      component: z.string(),
-      children: z.array(z.union([InstanceDb, Text])),
-      cssRules: z.array(CssDbRule),
-    })
-  // @todo can't figure out how to make component to be z.enum(Object.keys(components))
+const InstanceDb = z.lazy(() =>
+  z.object({
+    type: z.literal("instance"),
+    id: z.string(),
+    component: z.string(),
+    children: z.array(z.union([InstanceDb, Text])),
+    cssRules: z.array(CssDbRule),
+  })
 ) as z.ZodType<Instance>;
+
+// In the DB we hold only assetId as asset value
+const ImageValueDbIn = ImageValue.transform((imageStyle) => ({
+  type: imageStyle.type,
+  value: imageStyle.value.map((value) =>
+    value.type === "asset" ? { type: "asset", value: value.value.id } : value
+  ),
+}));
+
+const StyleDbValueIn = z.union([SharedStyleValue, ImageValueDbIn]);
+
+const StyleDbIn = z.record(z.string(), StyleDbValueIn);
+
+export const CssDbInRule = z.object({
+  style: StyleDbIn,
+  breakpoint: z.optional(z.string()),
+});
+
+const InstanceDbIn = z.lazy(() =>
+  z.object({
+    type: z.literal("instance"),
+    id: z.string(),
+    component: z.string(),
+    children: z.array(z.union([InstanceDbIn, Text])),
+    cssRules: z.array(CssDbInRule),
+  })
+) as /* Instance is wrong type here, ImageValue is different after transform, we don't use it anyway */ z.ZodType<Instance>;
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -111,15 +140,15 @@ export const loadById = async (
     return null;
   }
 
-  const root = JSON.parse(tree.root);
+  const dbRoot = JSON.parse(tree.root);
 
-  const instance = await InstanceDb.parseAsync(root);
+  const root = await InstanceDb.parseAsync(dbRoot);
 
-  Instance.parse(instance);
+  Instance.parse(root);
 
   return {
     ...tree,
-    root: instance,
+    root,
   };
 };
 
@@ -142,8 +171,10 @@ export const patch = async (
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
-  const root = applyPatches(tree.root, patches);
-  Instance.parse(root);
+  const clientRoot = applyPatches(tree.root, patches);
+
+  const root = InstanceDbIn.parse(clientRoot);
+
   await prisma.tree.update({
     data: { root: JSON.stringify(root) },
     where: { id: treeId },
