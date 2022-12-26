@@ -1,15 +1,16 @@
 import { IconButtonWithMenu } from "@webstudio-is/design-system";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { ControlProps } from "../../style-sections";
-import { iconConfigs } from "../../shared/configs";
+import { iconConfigs, styleConfigByName } from "../../shared/configs";
 import { toValue } from "@webstudio-is/css-engine";
 
 export const MenuControl = ({
   property,
+  items: passedItems,
   currentStyle,
   setProperty,
-  styleConfig,
 }: ControlProps) => {
+  const { label } = styleConfigByName[property];
   const value = currentStyle[property];
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
@@ -31,7 +32,7 @@ export const MenuControl = ({
               : 0
           }deg)`,
         };
-  const items = styleConfig.items
+  const items = passedItems
     .map((item) => {
       const ItemIcon = iconProps[item.name];
       return {
@@ -43,7 +44,7 @@ export const MenuControl = ({
   return (
     <IconButtonWithMenu
       icon={items.find(({ name }) => name === currentValue)?.icon}
-      label={styleConfig.label}
+      label={label}
       items={items}
       value={String(currentValue)}
       isActive={isFromCurrentBreakpoint}

@@ -1,5 +1,6 @@
 import { categories, type Category } from "@webstudio-is/react-sdk";
 import type { StyleProperty, AppliesTo } from "@webstudio-is/css-data";
+import { keywordValues, properties } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
 import {
   IconRecords,
@@ -32,7 +33,6 @@ import {
   RowGapIcon,
   ColumnGapIcon,
 } from "@webstudio-is/icons";
-import { keywordValues, properties } from "@webstudio-is/css-data";
 import type * as Controls from "../controls";
 
 type BaseStyleConfig = {
@@ -75,7 +75,7 @@ const getControl = (property: StyleProperty): Control => {
 const createStyleConfigs = () => {
   // We have same properties in different categories: alignSelf is in grid children and flex children
   // but this list has to contain only unique props
-  const map: { [prop in Property]?: StyleConfig } = {};
+  const styleConfigByName = {} as { [prop in StyleProperty]: StyleConfig };
 
   let category: Category;
 
@@ -87,7 +87,7 @@ const createStyleConfigs = () => {
       const keywords = keywordValues[property] || [];
       const label = humanizeString(property);
 
-      map[property] = {
+      styleConfigByName[property] = {
         label,
         property,
         appliesTo: properties[property].appliesTo,
@@ -100,10 +100,10 @@ const createStyleConfigs = () => {
     }
   }
 
-  return Object.values(map);
+  return { styleConfigs: Object.values(styleConfigByName), styleConfigByName };
 };
 
-export const styleConfigs: Array<StyleConfig> = createStyleConfigs();
+export const { styleConfigs, styleConfigByName } = createStyleConfigs();
 
 export const iconConfigs: IconRecords = {
   // layout

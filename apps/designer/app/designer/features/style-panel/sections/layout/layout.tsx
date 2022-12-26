@@ -7,6 +7,7 @@ import { renderProperty } from "../../style-sections";
 import { MenuControl, SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
+import { styleConfigByName } from "../../shared/configs";
 
 const LayoutSectionFlex = ({
   currentStyle,
@@ -63,26 +64,18 @@ const LayoutSectionFlex = ({
           <Box css={{ gridArea: "grid" }}>
             <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
           </Box>
-          {flexDirection?.styleConfig && (
-            <Box css={{ gridArea: "flexDirection" }}>
-              <MenuControl {...flexDirection} />
-            </Box>
-          )}
-          {flexWrap?.styleConfig && (
-            <Box css={{ gridArea: "flexWrap" }}>
-              <MenuControl {...flexWrap} />
-            </Box>
-          )}
-          {alignItems?.styleConfig && (
-            <Box css={{ gridArea: "alignItems" }}>
-              <MenuControl {...alignItems} />
-            </Box>
-          )}
-          {justifyContent?.styleConfig && (
-            <Box css={{ gridArea: "justifyContent" }}>
-              <MenuControl {...justifyContent} />
-            </Box>
-          )}
+          <Box css={{ gridArea: "flexDirection" }}>
+            <MenuControl {...flexDirection} />
+          </Box>
+          <Box css={{ gridArea: "flexWrap" }}>
+            <MenuControl {...flexWrap} />
+          </Box>
+          <Box css={{ gridArea: "alignItems" }}>
+            <MenuControl {...alignItems} />
+          </Box>
+          <Box css={{ gridArea: "justifyContent" }}>
+            <MenuControl {...justifyContent} />
+          </Box>
           {alignContent && showAlignContent && (
             <Box css={{ gridArea: "alignContent" }}>
               <MenuControl {...alignContent} />
@@ -101,25 +94,19 @@ const LayoutSectionFlex = ({
           alignItems: "center",
         }}
       >
-        {columnGap?.styleConfig && (
-          <Box css={{ gridArea: "columnGap" }}>
-            <TextControl icon={<ColumnGapIcon />} {...columnGap} />
-          </Box>
-        )}
-        {rowGap?.styleConfig && columnGap?.styleConfig && (
-          <Box css={{ gridArea: "lock", px: "$spacing$3" }}>
-            <Lock
-              pairedKeys={["columnGap", "rowGap"]}
-              currentStyle={currentStyle}
-              batchUpdate={batchUpdate}
-            />
-          </Box>
-        )}
-        {rowGap?.styleConfig && (
-          <Box css={{ gridArea: "rowGap" }}>
-            <TextControl icon={<RowGapIcon />} {...rowGap} />
-          </Box>
-        )}
+        <Box css={{ gridArea: "columnGap" }}>
+          <TextControl icon={<ColumnGapIcon />} {...columnGap} />
+        </Box>
+        <Box css={{ gridArea: "lock", px: "$spacing$3" }}>
+          <Lock
+            pairedKeys={["columnGap", "rowGap"]}
+            currentStyle={currentStyle}
+            batchUpdate={batchUpdate}
+          />
+        </Box>
+        <Box css={{ gridArea: "rowGap" }}>
+          <TextControl icon={<RowGapIcon />} {...rowGap} />
+        </Box>
       </Grid>
     </Flex>
   );
@@ -150,32 +137,27 @@ export const LayoutSection = ({
   const displayValue = toValue(currentStyle.display);
 
   const { display } = sectionStyle;
+  const { label, items } = styleConfigByName.display;
 
   return (
     <>
-      {display?.styleConfig && (
-        <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
-          <PropertyName
-            property="display"
-            label={display.styleConfig.label}
-            onReset={() => deleteProperty("display")}
-          />
-          <SelectControl
-            property="display"
-            category={display.category}
-            currentStyle={display.currentStyle}
-            setProperty={display.setProperty}
-            deleteProperty={display.deleteProperty}
-            // show only important values first and hide others with scroll
-            styleConfig={{
-              ...display.styleConfig,
-              items: display.styleConfig.items
-                .filter((item) => orderedDisplayValues.includes(item.name))
-                .sort(compareDisplayValues),
-            }}
-          />
-        </Grid>
-      )}
+      <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
+        <PropertyName
+          property="display"
+          label={label}
+          onReset={() => deleteProperty("display")}
+        />
+        <SelectControl
+          property="display"
+          currentStyle={display.currentStyle}
+          setProperty={display.setProperty}
+          deleteProperty={display.deleteProperty}
+          // show only important values first and hide others with scroll
+          items={items
+            .filter((item) => orderedDisplayValues.includes(item.name))
+            .sort(compareDisplayValues)}
+        />
+      </Grid>
 
       {displayValue === "flex" || displayValue === "inline-flex" ? (
         <LayoutSectionFlex
@@ -187,9 +169,7 @@ export const LayoutSection = ({
       ) : (
         styleConfigsByCategory.map((entry) =>
           // exclude display already rendered above
-          entry.styleConfig.property === "display"
-            ? null
-            : renderProperty(entry)
+          entry.property === "display" ? null : renderProperty(entry)
         )
       )}
     </>
