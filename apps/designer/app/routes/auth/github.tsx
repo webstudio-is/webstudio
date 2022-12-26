@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from "@remix-run/node";
+import { type ActionArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
 import { dashboardPath, loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
@@ -8,7 +8,7 @@ export default function GH() {
   return null;
 }
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionArgs) => {
   try {
     return await authenticator.authenticate("github", request, {
       successRedirect: dashboardPath(),

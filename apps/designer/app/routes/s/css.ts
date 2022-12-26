@@ -1,11 +1,11 @@
-import { ActionFunction, json } from "@remix-run/node";
+import { type ActionArgs, json } from "@remix-run/node";
 
 import { getBuildParams } from "~/shared/router-utils";
 import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { generateCssText } from "~/shared/css-utils";
 
-export const loader: ActionFunction = async ({ request }) => {
+export const loader = async ({ request }: ActionArgs) => {
   try {
     const buildParams = getBuildParams(request);
 

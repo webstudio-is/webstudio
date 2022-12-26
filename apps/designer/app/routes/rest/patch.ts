@@ -1,5 +1,5 @@
-import { type ActionFunction } from "@remix-run/node";
-import { type Build } from "@webstudio-is/project";
+import type { ActionArgs } from "@remix-run/node";
+import type { Build } from "@webstudio-is/project";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
 import { type SyncItem } from "immerhin";
@@ -11,7 +11,7 @@ type PatchData = {
   buildId: Build["id"];
 };
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionArgs) => {
   const { treeId, buildId, transactions }: PatchData = await request.json();
   if (treeId === undefined) {
     return { errors: "Tree id required" };

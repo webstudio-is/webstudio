@@ -1,4 +1,4 @@
-import { ActionFunction, LoaderFunction } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import {
@@ -16,19 +16,17 @@ const DeleteAssets = zfd.formData({
   assetId: zfd.repeatableOfType(zfd.text()),
 });
 
-export const loader: LoaderFunction = async ({
-  params,
-}): Promise<Array<Asset>> => {
+export const loader = async ({ params }: LoaderArgs): Promise<Array<Asset>> => {
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }
   return await loadByProject(params.projectId);
 };
 
-export const action: ActionFunction = async ({
+export const action = async ({
   request,
   params,
-}): Promise<ActionData | undefined> => {
+}: ActionArgs): Promise<ActionData | undefined> => {
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }

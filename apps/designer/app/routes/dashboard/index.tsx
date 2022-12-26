@@ -1,10 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
-import {
-  type ActionFunction,
-  json,
-  type LoaderFunction,
-  redirect,
-} from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
 import { db } from "@webstudio-is/project/server";
 import { ensureUserCookie } from "~/shared/session";
@@ -27,7 +23,7 @@ type Data = {
   user: User;
 };
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionArgs) => {
   const { project: title } = schema.parse(await request.formData());
 
   const { userId, headers } = await ensureUserCookie(request);
@@ -46,7 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
   return { errors: "Unexpected error" };
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }: LoaderArgs) => {
   const user = await findAuthenticatedUser(request);
   if (!user) {
     return redirect(loginPath({}));

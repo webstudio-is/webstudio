@@ -1,4 +1,4 @@
-import { type ActionFunction } from "@remix-run/node";
+import type { ActionArgs } from "@remix-run/node";
 import { zfd } from "zod-form-data";
 import * as db from "~/shared/db";
 
@@ -7,7 +7,7 @@ const schema = zfd.formData({
   projectId: zfd.text(),
 });
 
-export const action: ActionFunction = async ({ request }) => {
+export const action = async ({ request }: ActionArgs) => {
   const { domain, projectId } = schema.parse(await request.formData());
   try {
     await db.misc.publish({ projectId, domain });
