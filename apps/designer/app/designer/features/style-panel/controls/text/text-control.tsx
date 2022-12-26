@@ -2,7 +2,6 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import { getFinalValue } from "../../shared/get-final-value";
 import { ControlProps } from "../../style-sections";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { useState } from "react";
@@ -15,10 +14,7 @@ export const TextControl = ({
   styleConfig,
   icon,
 }: ControlProps & { icon?: JSX.Element }) => {
-  const value = getFinalValue({
-    currentStyle,
-    property: styleConfig.property,
-  });
+  const value = currentStyle[styleConfig.property];
 
   const setValue = setProperty(styleConfig.property);
 

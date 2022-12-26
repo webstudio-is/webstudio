@@ -1,8 +1,6 @@
-import type { UnitValue } from "@webstudio-is/css-data";
+import type { StyleValue, UnitValue } from "@webstudio-is/css-data";
 import { numericScrubControl } from "@webstudio-is/design-system";
 import { useState, useEffect, useRef } from "react";
-import { getFinalValue } from "../../shared/get-final-value";
-import type { RenderCategoryProps } from "../../style-sections";
 import type {
   StyleChangeHandler,
   SpacingStyleProperty,
@@ -14,7 +12,7 @@ type ScrubStatus =
   | { isActive: true; property: SpacingStyleProperty; value: UnitValue };
 
 export const useScrub = (props: {
-  currentStyle: RenderCategoryProps["currentStyle"];
+  value?: StyleValue;
   target: HoverTagret | undefined;
   onChange: StyleChangeHandler;
 }): ScrubStatus => {
@@ -43,11 +41,7 @@ export const useScrub = (props: {
           ? "horizontal"
           : "vertical",
       getValue() {
-        const { currentStyle } = latestProps.current;
-        const value = getFinalValue({
-          property: property,
-          currentStyle,
-        });
+        const { value } = latestProps.current;
         if (value?.type === "unit") {
           unitRef.current = value.unit;
           return value.value;

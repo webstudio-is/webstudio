@@ -1,6 +1,5 @@
 import { Flex } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 import { ColorPicker } from "../../shared/color-picker";
 import { colord } from "colord";
@@ -10,10 +9,7 @@ export const ColorControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  let value = getFinalValue({
-    currentStyle,
-    property: styleConfig.property,
-  }) ?? {
+  let value = currentStyle[styleConfig.property] ?? {
     // provide default value to avoid control hiding
     // when value is recomputed
     type: "rgb" as const,

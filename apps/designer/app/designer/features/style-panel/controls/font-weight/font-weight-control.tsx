@@ -3,7 +3,6 @@ import { FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
 import { useAssets } from "~/designer/shared/assets";
-import { getFinalValue } from "../../shared/get-final-value";
 import type { ControlProps } from "../../style-sections";
 
 type FontWeightItem = {
@@ -72,17 +71,10 @@ export const FontWeightControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  // @todo show which instance we inherited the value from
-  const fontWeight = getFinalValue({
-    currentStyle,
-    property: styleConfig.property,
-  });
+  const fontWeight = currentStyle[styleConfig.property];
 
   // We need the font family to determine which font weights are available
-  const fontFamily = getFinalValue({
-    currentStyle,
-    property: "fontFamily",
-  });
+  const fontFamily = currentStyle.fontFamily;
 
   const availableFontWeights = useAvailableFontWeights(
     toValue(fontFamily, { withFallback: false })
