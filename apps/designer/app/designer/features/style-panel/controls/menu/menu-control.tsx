@@ -1,5 +1,4 @@
 import { IconButtonWithMenu } from "@webstudio-is/design-system";
-import { getFinalValue } from "../../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { ControlProps } from "../../style-sections";
 import { iconConfigs } from "../../shared/configs";
@@ -10,10 +9,7 @@ export const MenuControl = ({
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const value = getFinalValue({
-    currentStyle,
-    property: styleConfig.property,
-  });
+  const value = currentStyle[styleConfig.property];
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(
     styleConfig.property
   );

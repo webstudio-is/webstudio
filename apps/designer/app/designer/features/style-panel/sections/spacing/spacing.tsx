@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { getFinalValue } from "../../shared/get-final-value";
 import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
@@ -34,10 +33,7 @@ const Cell = ({
 }) => {
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
-  const styleValue = getFinalValue({
-    property,
-    currentStyle,
-  });
+  const styleValue = currentStyle[property];
 
   const finalValue = scrubStatus.isActive ? scrubStatus.value : styleValue;
 
@@ -96,9 +92,12 @@ export const SpacingSection = ({
   };
 
   const scrubStatus = useScrub({
+    value:
+      hoverTarget === undefined
+        ? undefined
+        : currentStyle[hoverTarget.property],
     target: hoverTarget,
     onChange: handleChange,
-    currentStyle,
   });
 
   const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
