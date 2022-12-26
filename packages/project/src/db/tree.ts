@@ -85,6 +85,7 @@ const InstanceDb = z.lazy(() =>
 const ImageValueDbIn = ImageValue.transform((imageStyle) => ({
   type: imageStyle.type,
   value: imageStyle.value.map((value) =>
+    /* Now value.type is always equal to the "asset", but in the future, it will have additional types */
     value.type === "asset" ? { type: "asset", value: value.value.id } : value
   ),
 }));
