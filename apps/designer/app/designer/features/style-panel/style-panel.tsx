@@ -73,7 +73,6 @@ export const StylePanel = ({
       >
         <StyleSettings
           search={search}
-          selectedInstanceData={selectedInstanceData}
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}

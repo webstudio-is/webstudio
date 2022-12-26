@@ -1,5 +1,6 @@
 import { toValue } from "@webstudio-is/css-engine";
 import { Select } from "@webstudio-is/design-system";
+import { styleConfigByName } from "../../shared/configs";
 import type { ControlProps } from "../../style-sections";
 
 export const SelectControl = ({
@@ -8,6 +9,7 @@ export const SelectControl = ({
   setProperty,
   items,
 }: ControlProps) => {
+  const { items: defaultItems } = styleConfigByName[property];
   const value = currentStyle[property];
 
   const setValue = setProperty(property);
@@ -17,7 +19,7 @@ export const SelectControl = ({
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""
-      options={items.map(({ label }) => label)}
+      options={(items ?? defaultItems).map(({ label }) => label)}
       value={toValue(value)}
       onChange={setValue}
     />
