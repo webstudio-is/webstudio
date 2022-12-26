@@ -1,12 +1,78 @@
-import { type Tree, Instance } from "@webstudio-is/react-sdk";
+import { formatAsset } from "@webstudio-is/asset-uploader/server";
+import { type Tree, Instance, Text } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import {
+  Asset,
   prisma,
   type Prisma,
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import type { Breakpoint } from "@webstudio-is/css-data";
+import { type Breakpoint, SharedStyleValue } from "@webstudio-is/css-data";
+import { z } from "zod";
+import DataLoader from "dataloader";
+import warnOnce from "warn-once";
+
+const assetsLoader = new DataLoader<string, Asset | undefined>(
+  async (assetIds) => {
+    const assets = await prisma.asset.findMany({
+      where: {
+        id: {
+          in: [...assetIds],
+        },
+      },
+    });
+
+    return assetIds.map((assetId) =>
+      assets.find((asset) => asset.id === assetId)
+    );
+  }
+);
+
+const ImageDBAsset = z.object({
+  type: z.literal("asset"),
+  value: z
+    .string()
+    .uuid()
+    .transform(async (assetId) => {
+      const asset = await assetsLoader.load(assetId);
+      if (asset === undefined) {
+        warnOnce(true, `Asset with assetId "${assetId}" not found`);
+        return;
+      }
+
+      return formatAsset(asset);
+    }),
+});
+
+const ImageDbValue = z.object({
+  type: z.literal("image"),
+  value: z
+    .array(ImageDBAsset)
+    // Asset can be not present in DB, skip it
+    .transform((assets) => assets.filter((asset) => asset.value !== undefined)),
+});
+
+const StyleDbValue = z.union([SharedStyleValue, ImageDbValue]);
+
+const StyleDb = z.record(z.string(), StyleDbValue);
+
+export const CssDbRule = z.object({
+  style: StyleDb,
+  breakpoint: z.optional(z.string()),
+});
+
+const InstanceDb = z.lazy(
+  () =>
+    z.object({
+      type: z.literal("instance"),
+      id: z.string(),
+      component: z.string(),
+      children: z.array(z.union([InstanceDb, Text])),
+      cssRules: z.array(CssDbRule),
+    })
+  // @todo can't figure out how to make component to be z.enum(Object.keys(components))
+) as z.ZodType<Instance>;
 
 export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
   // Take the smallest breakpoint as default
@@ -46,7 +112,11 @@ export const loadById = async (
   }
 
   const root = JSON.parse(tree.root);
-  Instance.parse(root);
+
+  const instance = await InstanceDb.parseAsync(root);
+
+  Instance.parse(instance);
+
   return {
     ...tree,
     root,

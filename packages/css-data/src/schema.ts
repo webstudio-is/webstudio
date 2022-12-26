@@ -1,6 +1,7 @@
 import { units } from "./__generated__/units";
 import { properties } from "./__generated__/properties";
 import { z } from "zod";
+import { ImageAsset } from "@webstudio-is/asset-uploader";
 
 type Properties = typeof properties & {
   [custom: CustomProperty]: {
@@ -50,6 +51,14 @@ const RgbValue = z.object({
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
+// https://developer.mozilla.org/en-US/docs/Web/API/CSSImageValue
+const ImageValue = z.object({
+  type: z.literal("image"),
+  value: z.array(z.object({ type: z.literal("asset"), value: ImageAsset })),
+});
+
+export type ImageValue = z.infer<typeof ImageValue>;
+
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
 const InvalidValue = z.object({
@@ -69,14 +78,22 @@ export const validStaticValueTypes = [
   "keyword",
   "fontFamily",
   "rgb",
+  "image",
 ] as const;
 
-const ValidStaticStyleValue = z.union([
+/**
+ * Shared types with DB types,
+ * ImageValue in DB has different type
+ */
+const SharedStaticStyleValue = z.union([
   UnitValue,
   KeywordValue,
   FontFamilyValue,
   RgbValue,
 ]);
+
+const ValidStaticStyleValue = z.union([ImageValue, SharedStaticStyleValue]);
+
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
 
 const VarValue = z.object({
@@ -91,8 +108,18 @@ const StyleValue = z.union([
   InvalidValue,
   UnsetValue,
   VarValue,
-  RgbValue,
 ]);
+
+/**
+ * Shared types with DB types
+ */
+export const SharedStyleValue = z.union([
+  SharedStaticStyleValue,
+  InvalidValue,
+  UnsetValue,
+  VarValue,
+]);
+
 export type StyleValue = z.infer<typeof StyleValue>;
 
 const Style = z.record(z.string(), StyleValue);
