@@ -2,7 +2,7 @@ import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleConfig } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
-import type { Style } from "@webstudio-is/css-data";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import type {
   SetProperty,
   DeleteProperty,
@@ -25,6 +25,7 @@ import {
 import { PropertyName } from "./shared/property-name";
 
 export type ControlProps = {
+  property: StyleProperty;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   currentStyle: Style;
@@ -46,6 +47,7 @@ export type RenderCategoryProps = {
 };
 
 export type RenderPropertyProps = {
+  property: StyleProperty;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   currentStyle: Style;
@@ -54,6 +56,7 @@ export type RenderPropertyProps = {
 };
 
 export const renderProperty = ({
+  property,
   currentStyle,
   setProperty,
   deleteProperty,
@@ -61,7 +64,6 @@ export const renderProperty = ({
   category,
 }: RenderPropertyProps) => {
   const Control = controls[styleConfig.control];
-  const { property } = styleConfig;
   if (!Control) {
     return null;
   }
@@ -69,11 +71,12 @@ export const renderProperty = ({
   return (
     <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>
       <PropertyName
-        property={styleConfig.property}
+        property={property}
         label={styleConfig.label}
-        onReset={() => deleteProperty(styleConfig.property)}
+        onReset={() => deleteProperty(property)}
       />
       <Control
+        property={property}
         currentStyle={currentStyle}
         setProperty={setProperty}
         deleteProperty={deleteProperty}

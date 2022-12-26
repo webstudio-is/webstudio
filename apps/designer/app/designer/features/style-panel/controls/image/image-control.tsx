@@ -6,18 +6,18 @@ import { useAssets } from "~/designer/shared/assets";
 import { toValue } from "@webstudio-is/css-engine";
 
 export const ImageControl = ({
+  property,
   currentStyle,
   setProperty,
-  styleConfig,
 }: ControlProps) => {
   const { assetContainers } = useAssets("image");
-  const value = currentStyle[styleConfig.property];
+  const value = currentStyle[property];
 
   if (value === undefined) {
     return null;
   }
 
-  const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(property);
 
   const selectedAsset = assetContainers.find(
     (assetContainer) => assetContainer.asset.id === toValue(value)

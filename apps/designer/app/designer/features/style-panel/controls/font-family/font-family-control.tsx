@@ -6,14 +6,14 @@ import { useState } from "react";
 import { toValue } from "@webstudio-is/css-engine";
 
 export const FontFamilyControl = ({
+  property,
   currentStyle,
   setProperty,
-  styleConfig,
 }: ControlProps) => {
-  const value = currentStyle[styleConfig.property];
+  const value = currentStyle[property];
   const [isOpen, setIsOpen] = useState(false);
 
-  const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(property);
 
   return (
     <FloatingPanel

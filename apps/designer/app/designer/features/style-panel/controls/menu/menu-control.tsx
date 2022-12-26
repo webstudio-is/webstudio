@@ -5,30 +5,29 @@ import { iconConfigs } from "../../shared/configs";
 import { toValue } from "@webstudio-is/css-engine";
 
 export const MenuControl = ({
+  property,
   currentStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const value = currentStyle[styleConfig.property];
-  const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(
-    styleConfig.property
-  );
+  const value = currentStyle[property];
+  const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   if (value === undefined) {
     return null;
   }
 
-  const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(property);
   const currentValue = toValue(value);
 
-  const iconProps = iconConfigs[styleConfig.property];
+  const iconProps = iconConfigs[property];
   const iconStyle =
-    styleConfig.property === "flexDirection"
+    property === "flexDirection"
       ? {}
       : {
           transform: `rotate(${
             toValue(currentStyle.flexDirection) === "column"
-              ? 90 * (styleConfig.property === "alignItems" ? -1 : 1)
+              ? 90 * (property === "alignItems" ? -1 : 1)
               : 0
           }deg)`,
         };

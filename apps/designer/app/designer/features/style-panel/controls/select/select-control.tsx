@@ -3,13 +3,14 @@ import { Select } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 
 export const SelectControl = ({
+  property,
   currentStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
-  const value = currentStyle[styleConfig.property];
+  const value = currentStyle[property];
 
-  const setValue = setProperty(styleConfig.property);
+  const setValue = setProperty(property);
 
   return (
     <Select

@@ -117,7 +117,8 @@ export const StyleSettings = ({
     const moreStyleConfigsByCategory: Array<RenderPropertyProps> = [];
 
     for (const styleConfig of styleConfigs) {
-      const isInCategory = categoryProperties.includes(styleConfig.property);
+      const { property } = styleConfig;
+      const isInCategory = categoryProperties.includes(property);
       // We don't want to filter out inapplicable styles if user wants to apply them anyway
       const isApplicable = isSearchMode
         ? true
@@ -125,6 +126,7 @@ export const StyleSettings = ({
       const isRendered = didRender(category, styleConfig);
       const element = {
         ...rest,
+        property,
         setProperty,
         deleteProperty,
         currentStyle,
@@ -132,15 +134,14 @@ export const StyleSettings = ({
         category,
       };
 
-      sectionStyle[styleConfig.property] = element;
+      sectionStyle[property] = element;
 
       // @todo remove isRendered once spacing section is converted to a section
       if (isInCategory && isApplicable && isRendered === false) {
         // We are making a separate array of properties which come after the "moreFrom"
         // so we can make them collapsable
         if (
-          (styleConfig.property === moreFrom ||
-            moreStyleConfigsByCategory.length !== 0) &&
+          (property === moreFrom || moreStyleConfigsByCategory.length !== 0) &&
           isSearchMode === false
         ) {
           moreStyleConfigsByCategory.push(element);

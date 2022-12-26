@@ -36,7 +36,7 @@ const LayoutSectionFlex = ({
     alignContent,
   ].some((config) => config !== undefined);
 
-  const flexWrapValue = flexWrap.currentStyle[flexWrap.styleConfig.property];
+  const flexWrapValue = flexWrap.currentStyle.flexWrap;
 
   // From design: Notice that the align-content icon button is not visible by default.
   // This property only applies when flex-wrap is set to "wrap".
@@ -161,6 +161,7 @@ export const LayoutSection = ({
             onReset={() => deleteProperty("display")}
           />
           <SelectControl
+            property="display"
             category={display.category}
             currentStyle={display.currentStyle}
             setProperty={display.setProperty}
