@@ -22,7 +22,6 @@ const Cell = ({
   isActive,
   scrubStatus,
   currentStyle,
-  inheritedStyle,
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
@@ -31,13 +30,13 @@ const Cell = ({
   property: SpacingStyleProperty;
   isActive: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
-} & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">) => {
+  currentStyle: RenderCategoryProps["currentStyle"];
+}) => {
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   const styleValue = getFinalValue({
     property,
     currentStyle,
-    inheritedStyle,
   });
 
   const finalValue = scrubStatus.isActive ? scrubStatus.value : styleValue;
@@ -85,7 +84,6 @@ export const SpacingSection = ({
   setProperty,
   deleteProperty,
   currentStyle,
-  inheritedStyle,
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
 
@@ -101,7 +99,6 @@ export const SpacingSection = ({
     target: hoverTarget,
     onChange: handleChange,
     currentStyle,
-    inheritedStyle,
   });
 
   const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
@@ -133,7 +130,6 @@ export const SpacingSection = ({
           }
           isActive={activeProperty === property}
           currentStyle={currentStyle}
-          inheritedStyle={inheritedStyle}
         />
       )}
     />

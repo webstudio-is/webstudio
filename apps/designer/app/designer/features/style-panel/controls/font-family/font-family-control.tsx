@@ -8,14 +8,12 @@ import { toValue } from "@webstudio-is/css-engine";
 
 export const FontFamilyControl = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: styleConfig.property,
   });
   const [isOpen, setIsOpen] = useState(false);

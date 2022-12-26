@@ -4,9 +4,7 @@ import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
 import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import { getInheritedStyle } from "./get-inherited-style";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
-import { useRootInstance } from "~/shared/nano-states";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 
@@ -46,7 +44,6 @@ export const useStyleData = ({
   selectedInstanceData,
   publish,
 }: UseStyleData) => {
-  const [rootInstance] = useRootInstance();
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const cssRule = useMemo(
     () =>
@@ -72,13 +69,6 @@ export const useStyleData = ({
   useEffect(() => {
     setBreakpointStyle({ ...cssRule?.style });
   }, [cssRule?.style]);
-
-  const inheritedStyle = useMemo(() => {
-    if (selectedInstanceData === undefined || rootInstance === undefined) {
-      return;
-    }
-    return getInheritedStyle(rootInstance, selectedInstanceData.id);
-  }, [selectedInstanceData, rootInstance]);
 
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
@@ -220,7 +210,6 @@ export const useStyleData = ({
 
   return {
     currentStyle,
-    inheritedStyle,
     setProperty,
     deleteProperty,
     createBatchUpdate,

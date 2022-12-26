@@ -7,13 +7,11 @@ import { toValue } from "@webstudio-is/css-engine";
 
 export const MenuControl = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
   const value = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: styleConfig.property,
   });
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(

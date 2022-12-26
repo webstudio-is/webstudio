@@ -39,7 +39,6 @@ const LayoutSectionFlex = ({
 
   const flexWrapValue = getFinalValue({
     currentStyle: flexWrap.currentStyle,
-    inheritedStyle: flexWrap.inheritedStyle,
     property: flexWrap.styleConfig.property,
   });
 
@@ -168,7 +167,6 @@ export const LayoutSection = ({
           <SelectControl
             category={display.category}
             currentStyle={display.currentStyle}
-            inheritedStyle={display.inheritedStyle}
             setProperty={display.setProperty}
             deleteProperty={display.deleteProperty}
             // show only important values first and hide others with scroll

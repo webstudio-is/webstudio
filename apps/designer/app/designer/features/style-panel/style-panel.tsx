@@ -19,16 +19,11 @@ export const StylePanel = ({
   selectedInstanceData,
   publish,
 }: StylePanelProps) => {
-  const {
-    currentStyle,
-    inheritedStyle,
-    setProperty,
-    deleteProperty,
-    createBatchUpdate,
-  } = useStyleData({
-    selectedInstanceData,
-    publish,
-  });
+  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
+    useStyleData({
+      selectedInstanceData,
+      publish,
+    });
 
   const [breakpoint] = useSelectedBreakpoint();
   const [canvasWidth] = useCanvasWidth();
@@ -36,7 +31,6 @@ export const StylePanel = ({
 
   if (
     currentStyle === undefined ||
-    inheritedStyle === undefined ||
     selectedInstanceData === undefined ||
     breakpoint === undefined
   ) {
@@ -81,7 +75,6 @@ export const StylePanel = ({
           search={search}
           selectedInstanceData={selectedInstanceData}
           currentStyle={currentStyle}
-          inheritedStyle={inheritedStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
           createBatchUpdate={createBatchUpdate}
