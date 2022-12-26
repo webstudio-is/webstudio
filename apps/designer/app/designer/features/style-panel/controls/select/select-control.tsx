@@ -6,7 +6,7 @@ export const SelectControl = ({
   property,
   currentStyle,
   setProperty,
-  styleConfig,
+  items,
 }: ControlProps) => {
   const value = currentStyle[property];
 
@@ -17,7 +17,7 @@ export const SelectControl = ({
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""
-      options={styleConfig.items.map(({ label }) => label)}
+      options={items.map(({ label }) => label)}
       value={toValue(value)}
       onChange={setValue}
     />

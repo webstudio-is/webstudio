@@ -6,15 +6,17 @@ import { ControlProps } from "../../style-sections";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { useState } from "react";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
+import { styleConfigByName } from "../../shared/configs";
 
 export const TextControl = ({
   property,
+  items,
   currentStyle,
   setProperty,
   deleteProperty,
-  styleConfig,
   icon,
 }: ControlProps & { icon?: JSX.Element }) => {
+  const { label } = styleConfigByName[property];
   const value = currentStyle[property];
 
   const setValue = setProperty(property);
@@ -24,14 +26,14 @@ export const TextControl = ({
   >();
 
   return (
-    <EnhancedTooltip content={styleConfig.label}>
+    <EnhancedTooltip content={label}>
       <Box>
         <CssValueInput
           icon={icon}
           property={property}
           value={value}
           intermediateValue={intermediateValue}
-          keywords={styleConfig.items.map((item) => ({
+          keywords={items.map((item) => ({
             type: "keyword",
             value: item.name,
           }))}

@@ -3,7 +3,11 @@ import { categories, type Category } from "@webstudio-is/react-sdk";
 import type { CssRule, Style, StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 
-import { type StyleConfig, styleConfigs } from "./shared/configs";
+import {
+  type StyleConfig,
+  styleConfigs,
+  styleConfigByName,
+} from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
 import {
   renderCategory,
@@ -19,7 +23,10 @@ import { type SelectedInstanceData } from "@webstudio-is/project";
 import { type RenderPropertyProps } from "./style-sections";
 
 // Finds a property/value by using any available form: property, label, value
-const filterProperties = (properties: Array<string>, search: string) => {
+const filterProperties = (
+  properties: ReadonlyArray<StyleProperty>,
+  search: string
+) => {
   const searchParts = search.split(" ").map((part) => part.trim());
   const includes = (property: string) => {
     if (property.toLowerCase().includes(search)) {
@@ -34,20 +41,16 @@ const filterProperties = (properties: Array<string>, search: string) => {
     );
   };
   return properties.filter((property) => {
-    for (const styleConfig of styleConfigs) {
-      if (styleConfig.property !== property) {
-        continue;
-      }
-      if (includes(styleConfig.property)) {
+    const { label, items } = styleConfigByName[property];
+    if (includes(property)) {
+      return true;
+    }
+    if (includes(label)) {
+      return true;
+    }
+    for (const item of items) {
+      if (includes(item.name) || includes(item.label)) {
         return true;
-      }
-      if (includes(styleConfig.label)) {
-        return true;
-      }
-      for (const item of styleConfig.items) {
-        if (includes(item.name) || includes(item.label)) {
-          return true;
-        }
       }
     }
     return false;
@@ -76,7 +79,7 @@ const appliesTo = (styleConfig: StyleConfig, currentStyle: Style): boolean => {
   return true;
 };
 
-const didRender = (category: Category, { property }: StyleConfig): boolean => {
+const didRender = (category: Category, property: StyleProperty): boolean => {
   // We only want to render the first thing in spacing since the widget will be the way to set all margin and padding
   if (category === "spacing" && property !== categories.spacing.properties[0]) {
     return true;
@@ -108,7 +111,7 @@ export const StyleSettings = ({
   for (category in categories) {
     // @todo seems like properties are the exact strings and styleConfig.property is not?
     const categoryProperties = filterProperties(
-      categories[category].properties as unknown as Array<string>,
+      categories[category].properties,
       search
     );
     const { moreFrom } = categories[category];
@@ -123,14 +126,14 @@ export const StyleSettings = ({
       const isApplicable = isSearchMode
         ? true
         : appliesTo(styleConfig, currentStyle);
-      const isRendered = didRender(category, styleConfig);
+      const isRendered = didRender(category, property);
       const element = {
         ...rest,
         property,
+        items: styleConfig.items,
         setProperty,
         deleteProperty,
         currentStyle,
-        styleConfig,
         category,
       };
 
