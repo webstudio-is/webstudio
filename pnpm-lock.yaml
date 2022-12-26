@@ -298,6 +298,7 @@ importers:
   packages/css-data:
     specifiers:
       '@types/css-tree': ^2.0.0
+      '@webstudio-is/asset-uploader': workspace:^
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       camelcase: ^6.3.0
@@ -307,6 +308,7 @@ importers:
       zod: ^3.19.1
     devDependencies:
       '@types/css-tree': 2.0.0
+      '@webstudio-is/asset-uploader': link:../asset-uploader
       '@webstudio-is/scripts': link:../scripts
       '@webstudio-is/tsconfig': link:../tsconfig
       camelcase: 6.3.0
