@@ -33,7 +33,6 @@ import {
   useStyleData,
   type SetProperty,
 } from "../style-panel/shared/use-style-data";
-import type { Style } from "@webstudio-is/css-data";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -123,7 +122,6 @@ type PropertyProps = {
   onChangePropValue: (value: UserPropValue) => void;
   onDelete: (id: UserProp["id"]) => void;
   setCssProperty: SetProperty;
-  currentStyle: Style;
   required: boolean;
   existingProps: string[];
 };
@@ -135,7 +133,6 @@ const Property = ({
   onChangePropValue,
   onDelete,
   setCssProperty,
-  currentStyle,
   required,
   existingProps,
 }: PropertyProps) => {
@@ -201,7 +198,6 @@ const Property = ({
           userProp={userProp}
           onChangePropValue={onChangePropValue}
           setCssProperty={setCssProperty}
-          currentStyle={currentStyle}
         />
       )}
       {required ? (
@@ -238,7 +234,7 @@ export const PropsPanel = ({
     isRequired,
   } = usePropsLogic({ selectedInstanceData, publish });
 
-  const { setProperty: setCssProperty, currentStyle } = useStyleData({
+  const { setProperty: setCssProperty } = useStyleData({
     selectedInstanceData,
     publish,
   });
@@ -286,7 +282,6 @@ export const PropsPanel = ({
                 handleChangePropValue(userProp.id, value)
               }
               setCssProperty={setCssProperty}
-              currentStyle={currentStyle}
               onDelete={handleDeleteProp}
               required={isRequired(userProp)}
               existingProps={existingProps}

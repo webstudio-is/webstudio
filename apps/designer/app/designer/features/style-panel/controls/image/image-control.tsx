@@ -8,7 +8,8 @@ export const ImageControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const styleValue = currentStyle[property];
+  const styleValue = currentStyle[property]?.value;
+  const { assetContainers } = useAssets("image");
 
   if (styleValue === undefined) {
     return null;

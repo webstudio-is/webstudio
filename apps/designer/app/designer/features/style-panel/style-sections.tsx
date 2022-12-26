@@ -2,12 +2,14 @@ import { Grid } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "./shared/configs";
 import type { Category } from "@webstudio-is/react-sdk";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import type {
   SetProperty,
   DeleteProperty,
   CreateBatchUpdate,
 } from "./shared/use-style-data";
+import { PropertyName } from "./shared/property-name";
+import type { StyleInfo } from "./shared/style-info";
 import * as controls from "./controls";
 import {
   LayoutSection,
@@ -22,12 +24,11 @@ import {
   EffectsSection,
   OtherSection,
 } from "./sections";
-import { PropertyName } from "./shared/property-name";
 
 export type ControlProps = {
   property: StyleProperty;
   items?: Array<{ label: string; name: string }>;
-  currentStyle: Style;
+  currentStyle: StyleInfo;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
 };
@@ -36,7 +37,7 @@ export type RenderCategoryProps = {
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   createBatchUpdate: CreateBatchUpdate;
-  currentStyle: Style;
+  currentStyle: StyleInfo;
   category: Category;
   styleConfigsByCategory: Array<RenderPropertyProps>;
   moreStyleConfigsByCategory: Array<RenderPropertyProps>;
@@ -44,7 +45,7 @@ export type RenderCategoryProps = {
 
 export type RenderPropertyProps = {
   property: StyleProperty;
-  currentStyle: Style;
+  currentStyle: StyleInfo;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   category: Category;
@@ -110,9 +111,9 @@ export const shouldRenderCategory = ({
 }: RenderCategoryProps) => {
   switch (category) {
     case "flexChild":
-      return toValue(currentStyle.display).includes("flex");
+      return toValue(currentStyle.display?.value).includes("flex");
     case "gridChild":
-      return toValue(currentStyle.display).includes("grid");
+      return toValue(currentStyle.display?.value).includes("grid");
   }
 
   return true;
