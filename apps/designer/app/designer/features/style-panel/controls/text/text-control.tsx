@@ -10,7 +10,6 @@ import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
 
 export const TextControl = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   deleteProperty,
   styleConfig,
@@ -18,7 +17,6 @@ export const TextControl = ({
 }: ControlProps & { icon?: JSX.Element }) => {
   const value = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: styleConfig.property,
   });
 
@@ -59,7 +57,7 @@ export const TextControl = ({
               deleteProperty(styleConfig.property, { isEphemeral: true });
             }
           }}
-          onChangeComplete={({ value, reason }) => {
+          onChangeComplete={({ value }) => {
             setValue(value);
             setIntermediateValue(undefined);
           }}

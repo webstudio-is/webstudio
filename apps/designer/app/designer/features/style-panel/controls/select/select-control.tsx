@@ -5,14 +5,12 @@ import type { ControlProps } from "../../style-sections";
 
 export const SelectControl = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: styleConfig.property,
   });
 

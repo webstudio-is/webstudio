@@ -13,12 +13,11 @@ type ScrubStatus =
   | { isActive: false }
   | { isActive: true; property: SpacingStyleProperty; value: UnitValue };
 
-export const useScrub = (
-  props: {
-    target: HoverTagret | undefined;
-    onChange: StyleChangeHandler;
-  } & Pick<RenderCategoryProps, "currentStyle" | "inheritedStyle">
-): ScrubStatus => {
+export const useScrub = (props: {
+  currentStyle: RenderCategoryProps["currentStyle"];
+  target: HoverTagret | undefined;
+  onChange: StyleChangeHandler;
+}): ScrubStatus => {
   // we want to hold on to the target while scrub is active even if hover changes
   const [activeTarget, setActiveTarget] = useState<HoverTagret>();
   const finalTarget = activeTarget ?? props.target;
@@ -44,11 +43,10 @@ export const useScrub = (
           ? "horizontal"
           : "vertical",
       getValue() {
-        const { currentStyle, inheritedStyle } = latestProps.current;
+        const { currentStyle } = latestProps.current;
         const value = getFinalValue({
           property: property,
           currentStyle,
-          inheritedStyle,
         });
         if (value?.type === "unit") {
           unitRef.current = value.unit;

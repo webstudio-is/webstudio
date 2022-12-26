@@ -8,7 +8,6 @@ import { toValue } from "@webstudio-is/css-engine";
 
 export const ImageControl = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
@@ -16,7 +15,6 @@ export const ImageControl = ({
   // @todo show which instance we inherited the value from
   const value = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: styleConfig.property,
   });
 

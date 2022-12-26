@@ -11,7 +11,6 @@ import {
   shouldRenderCategory,
 } from "./style-sections";
 import { dependencies } from "./shared/dependencies";
-import { type InheritedStyle } from "./shared/get-inherited-style";
 import {
   type SetProperty,
   type CreateBatchUpdate,
@@ -87,7 +86,6 @@ const didRender = (category: Category, { property }: StyleConfig): boolean => {
 
 export type StyleSettingsProps = {
   currentStyle: Style;
-  inheritedStyle: InheritedStyle;
   cssRule?: CssRule;
   setProperty: SetProperty;
   deleteProperty: (property: StyleProperty) => void;

@@ -7,13 +7,11 @@ import { colord } from "colord";
 
 export const ColorControl = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
   let value = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: styleConfig.property,
   }) ?? {
     // provide default value to avoid control hiding

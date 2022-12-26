@@ -8,7 +8,6 @@ import type {
   DeleteProperty,
   CreateBatchUpdate,
 } from "./shared/use-style-data";
-import type { InheritedStyle } from "./shared/get-inherited-style";
 import * as controls from "./controls";
 import {
   LayoutSection,
@@ -29,7 +28,6 @@ export type ControlProps = {
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   currentStyle: Style;
-  inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
   category: Category;
 };
@@ -42,7 +40,6 @@ export type RenderCategoryProps = {
   sectionStyle: {
     [Property in Required<keyof Style>]: RenderPropertyProps;
   };
-  inheritedStyle: InheritedStyle;
   category: Category;
   styleConfigsByCategory: Array<RenderPropertyProps>;
   moreStyleConfigsByCategory: Array<RenderPropertyProps>;
@@ -52,14 +49,12 @@ export type RenderPropertyProps = {
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   currentStyle: Style;
-  inheritedStyle: InheritedStyle;
   styleConfig: StyleConfig;
   category: Category;
 };
 
 export const renderProperty = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   deleteProperty,
   styleConfig,
@@ -80,7 +75,6 @@ export const renderProperty = ({
       />
       <Control
         currentStyle={currentStyle}
-        inheritedStyle={inheritedStyle}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         styleConfig={styleConfig}
@@ -96,7 +90,6 @@ export const renderCategory = ({
   createBatchUpdate,
   currentStyle,
   sectionStyle,
-  inheritedStyle,
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
@@ -109,7 +102,6 @@ export const renderCategory = ({
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
       sectionStyle={sectionStyle}
-      inheritedStyle={inheritedStyle}
       category={category}
       styleConfigsByCategory={styleConfigsByCategory}
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}

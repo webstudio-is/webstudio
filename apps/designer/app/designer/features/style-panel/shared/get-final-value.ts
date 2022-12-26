@@ -1,6 +1,5 @@
 import type { Style, StyleValue, StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
-import type { InheritedStyle } from "./get-inherited-style";
 import { isValid } from "./parse-css-value";
 
 export const isNumericString = (input: string) =>
@@ -9,19 +8,12 @@ export const isNumericString = (input: string) =>
 // @todo expose which instance we inherited the value from
 export const getFinalValue = ({
   currentStyle,
-  inheritedStyle,
   property,
 }: {
   currentStyle: Style;
-  inheritedStyle: InheritedStyle;
   property: StyleProperty;
 }): StyleValue | undefined => {
   const currentValue = currentStyle[property];
-  const inheritedValue =
-    property in inheritedStyle ? inheritedStyle[property].value : undefined;
-  if (toValue(currentValue) === "inherit" && inheritedValue !== undefined) {
-    return inheritedValue;
-  }
   if (currentValue?.type !== "unit" && isNumericString(toValue(currentValue))) {
     return {
       value: Number(toValue(currentValue)),

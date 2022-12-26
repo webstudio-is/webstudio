@@ -69,21 +69,18 @@ const useLabels = (
 
 export const FontWeightControl = ({
   currentStyle,
-  inheritedStyle,
   setProperty,
   styleConfig,
 }: ControlProps) => {
   // @todo show which instance we inherited the value from
   const fontWeight = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: styleConfig.property,
   });
 
   // We need the font family to determine which font weights are available
   const fontFamily = getFinalValue({
     currentStyle,
-    inheritedStyle,
     property: "fontFamily",
   });
 
