@@ -26,7 +26,7 @@ import { PropertyName } from "./shared/property-name";
 
 export type ControlProps = {
   property: StyleProperty;
-  items: Array<{ label: string; name: string }>;
+  items?: Array<{ label: string; name: string }>;
   currentStyle: Style;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
@@ -37,9 +37,6 @@ export type RenderCategoryProps = {
   deleteProperty: DeleteProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: Style;
-  sectionStyle: {
-    [Property in Required<keyof Style>]: RenderPropertyProps;
-  };
   category: Category;
   styleConfigsByCategory: Array<RenderPropertyProps>;
   moreStyleConfigsByCategory: Array<RenderPropertyProps>;
@@ -47,10 +44,9 @@ export type RenderCategoryProps = {
 
 export type RenderPropertyProps = {
   property: StyleProperty;
-  items: Array<{ label: string; name: string }>;
+  currentStyle: Style;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
-  currentStyle: Style;
   category: Category;
 };
 
@@ -90,7 +86,6 @@ export const renderCategory = ({
   deleteProperty,
   createBatchUpdate,
   currentStyle,
-  sectionStyle,
   category,
   styleConfigsByCategory,
   moreStyleConfigsByCategory,
@@ -102,7 +97,6 @@ export const renderCategory = ({
       deleteProperty={deleteProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
-      sectionStyle={sectionStyle}
       category={category}
       styleConfigsByCategory={styleConfigsByCategory}
       moreStyleConfigsByCategory={moreStyleConfigsByCategory}

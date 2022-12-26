@@ -11,33 +11,16 @@ import { styleConfigByName } from "../../shared/configs";
 
 const LayoutSectionFlex = ({
   currentStyle,
-  sectionStyle,
   createBatchUpdate,
 }: {
-  deleteProperty: RenderCategoryProps["deleteProperty"];
   currentStyle: RenderCategoryProps["currentStyle"];
-  sectionStyle: RenderCategoryProps["sectionStyle"];
+  deleteProperty: RenderCategoryProps["deleteProperty"];
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
 }) => {
-  const {
-    flexDirection,
-    flexWrap,
-    alignItems,
-    justifyContent,
-    alignContent,
-    columnGap,
-    rowGap,
-  } = sectionStyle;
   const batchUpdate = createBatchUpdate();
-  const hasMenuItems = [
-    flexDirection,
-    flexWrap,
-    alignItems,
-    justifyContent,
-    alignContent,
-  ].some((config) => config !== undefined);
+  const { setProperty, deleteProperty } = batchUpdate;
 
-  const flexWrapValue = flexWrap.currentStyle.flexWrap;
+  const flexWrapValue = currentStyle.flexWrap;
 
   // From design: Notice that the align-content icon button is not visible by default.
   // This property only applies when flex-wrap is set to "wrap".
@@ -47,42 +30,64 @@ const LayoutSectionFlex = ({
 
   return (
     <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
-      {hasMenuItems && (
-        <Grid
-          css={{
-            gap: "$spacing$5",
-            gridTemplateColumns:
-              "repeat(2, $spacing$13) repeat(3, $spacing$13)",
-            gridTemplateRows: "repeat(2, $spacing$13)",
-            gridTemplateAreas: `
+      <Grid
+        css={{
+          gap: "$spacing$5",
+          gridTemplateColumns: "repeat(2, $spacing$13) repeat(3, $spacing$13)",
+          gridTemplateRows: "repeat(2, $spacing$13)",
+          gridTemplateAreas: `
             "grid grid flexDirection flexWrap ."
             "grid grid alignItems justifyContent alignContent"
           `,
-            alignItems: "center",
-          }}
-        >
-          <Box css={{ gridArea: "grid" }}>
-            <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
+          alignItems: "center",
+        }}
+      >
+        <Box css={{ gridArea: "grid" }}>
+          <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
+        </Box>
+        <Box css={{ gridArea: "flexDirection" }}>
+          <MenuControl
+            property="flexDirection"
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+          />
+        </Box>
+        <Box css={{ gridArea: "flexWrap" }}>
+          <MenuControl
+            property="flexWrap"
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+          />
+        </Box>
+        <Box css={{ gridArea: "alignItems" }}>
+          <MenuControl
+            property="alignItems"
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+          />
+        </Box>
+        <Box css={{ gridArea: "justifyContent" }}>
+          <MenuControl
+            property="justifyContent"
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+          />
+        </Box>
+        {showAlignContent && (
+          <Box css={{ gridArea: "alignContent" }}>
+            <MenuControl
+              property="alignContent"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
           </Box>
-          <Box css={{ gridArea: "flexDirection" }}>
-            <MenuControl {...flexDirection} />
-          </Box>
-          <Box css={{ gridArea: "flexWrap" }}>
-            <MenuControl {...flexWrap} />
-          </Box>
-          <Box css={{ gridArea: "alignItems" }}>
-            <MenuControl {...alignItems} />
-          </Box>
-          <Box css={{ gridArea: "justifyContent" }}>
-            <MenuControl {...justifyContent} />
-          </Box>
-          {alignContent && showAlignContent && (
-            <Box css={{ gridArea: "alignContent" }}>
-              <MenuControl {...alignContent} />
-            </Box>
-          )}
-        </Grid>
-      )}
+        )}
+      </Grid>
 
       <Grid
         css={{
@@ -95,7 +100,13 @@ const LayoutSectionFlex = ({
         }}
       >
         <Box css={{ gridArea: "columnGap" }}>
-          <TextControl icon={<ColumnGapIcon />} {...columnGap} />
+          <TextControl
+            icon={<ColumnGapIcon />}
+            property="columnGap"
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+          />
         </Box>
         <Box css={{ gridArea: "lock", px: "$spacing$3" }}>
           <Lock
@@ -105,7 +116,13 @@ const LayoutSectionFlex = ({
           />
         </Box>
         <Box css={{ gridArea: "rowGap" }}>
-          <TextControl icon={<RowGapIcon />} {...rowGap} />
+          <TextControl
+            icon={<RowGapIcon />}
+            property="rowGap"
+            currentStyle={currentStyle}
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+          />
         </Box>
       </Grid>
     </Flex>
@@ -128,15 +145,14 @@ const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
 };
 
 export const LayoutSection = ({
+  currentStyle,
+  setProperty,
   deleteProperty,
   createBatchUpdate,
-  currentStyle,
-  sectionStyle,
   styleConfigsByCategory,
 }: RenderCategoryProps) => {
   const displayValue = toValue(currentStyle.display);
 
-  const { display } = sectionStyle;
   const { label, items } = styleConfigByName.display;
 
   return (
@@ -149,9 +165,9 @@ export const LayoutSection = ({
         />
         <SelectControl
           property="display"
-          currentStyle={display.currentStyle}
-          setProperty={display.setProperty}
-          deleteProperty={display.deleteProperty}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
           // show only important values first and hide others with scroll
           items={items
             .filter((item) => orderedDisplayValues.includes(item.name))
@@ -164,7 +180,6 @@ export const LayoutSection = ({
           deleteProperty={deleteProperty}
           createBatchUpdate={createBatchUpdate}
           currentStyle={currentStyle}
-          sectionStyle={sectionStyle}
         />
       ) : (
         styleConfigsByCategory.map((entry) =>

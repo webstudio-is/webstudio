@@ -1,6 +1,6 @@
 import hyphenate from "hyphenate-style-name";
 import { categories, type Category } from "@webstudio-is/react-sdk";
-import type { CssRule, Style, StyleProperty } from "@webstudio-is/css-data";
+import type { Style, StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 
 import {
@@ -9,18 +9,13 @@ import {
   styleConfigByName,
 } from "./shared/configs";
 import { CollapsibleSection } from "~/designer/shared/inspector";
-import {
-  renderCategory,
-  RenderCategoryProps,
-  shouldRenderCategory,
-} from "./style-sections";
+import { renderCategory, shouldRenderCategory } from "./style-sections";
 import { dependencies } from "./shared/dependencies";
 import {
   type SetProperty,
   type CreateBatchUpdate,
 } from "./shared/use-style-data";
-import { type SelectedInstanceData } from "@webstudio-is/project";
-import { type RenderPropertyProps } from "./style-sections";
+import type { RenderPropertyProps } from "./style-sections";
 
 // Finds a property/value by using any available form: property, label, value
 const filterProperties = (
@@ -89,11 +84,9 @@ const didRender = (category: Category, property: StyleProperty): boolean => {
 
 export type StyleSettingsProps = {
   currentStyle: Style;
-  cssRule?: CssRule;
   setProperty: SetProperty;
   deleteProperty: (property: StyleProperty) => void;
   createBatchUpdate: CreateBatchUpdate;
-  selectedInstanceData: SelectedInstanceData;
   search: string;
 };
 
@@ -103,7 +96,6 @@ export const StyleSettings = ({
   createBatchUpdate,
   currentStyle,
   search,
-  ...rest
 }: StyleSettingsProps) => {
   const isSearchMode = search.length !== 0;
   const all = [];
@@ -115,7 +107,6 @@ export const StyleSettings = ({
       search
     );
     const { moreFrom } = categories[category];
-    const sectionStyle = {} as RenderCategoryProps["sectionStyle"];
     const styleConfigsByCategory: Array<RenderPropertyProps> = [];
     const moreStyleConfigsByCategory: Array<RenderPropertyProps> = [];
 
@@ -128,16 +119,12 @@ export const StyleSettings = ({
         : appliesTo(styleConfig, currentStyle);
       const isRendered = didRender(category, property);
       const element = {
-        ...rest,
         property,
-        items: styleConfig.items,
         setProperty,
         deleteProperty,
         currentStyle,
         category,
       };
-
-      sectionStyle[property] = element;
 
       // @todo remove isRendered once spacing section is converted to a section
       if (isInCategory && isApplicable && isRendered === false) {
@@ -159,13 +146,11 @@ export const StyleSettings = ({
       continue;
     }
     const categoryProps = {
-      ...rest,
       setProperty,
       deleteProperty,
       createBatchUpdate,
       currentStyle,
       category,
-      sectionStyle,
       styleConfigsByCategory,
       moreStyleConfigsByCategory,
     };

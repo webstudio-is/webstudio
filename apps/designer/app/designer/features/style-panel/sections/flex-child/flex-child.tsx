@@ -152,8 +152,9 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionSizingPopover = ({
+  currentStyle,
+  setProperty,
   deleteProperty,
-  sectionStyle,
 }: RenderCategoryProps) => {
   return (
     <FloatingPanel
@@ -172,7 +173,12 @@ const FlexChildSectionSizingPopover = ({
               label="Basis"
               onReset={() => deleteProperty("flexBasis")}
             />
-            <TextControl {...sectionStyle.flexBasis} />
+            <TextControl
+              property="flexBasis"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
@@ -180,7 +186,12 @@ const FlexChildSectionSizingPopover = ({
               label="Grow"
               onReset={() => deleteProperty("flexGrow")}
             />
-            <TextControl {...sectionStyle.flexGrow} />
+            <TextControl
+              property="flexGrow"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
@@ -188,7 +199,12 @@ const FlexChildSectionSizingPopover = ({
               label="Shrink"
               onReset={() => deleteProperty("flexShrink")}
             />
-            <TextControl {...sectionStyle.flexShrink} />
+            <TextControl
+              property="flexShrink"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
           </Grid>
         </Grid>
       }
@@ -252,7 +268,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
 };
 
 const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
-  const { deleteProperty, sectionStyle } = props;
+  const { currentStyle, setProperty, deleteProperty } = props;
   return (
     <FloatingPanel
       title="Order"
@@ -264,7 +280,12 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
               label="Order"
               onReset={() => deleteProperty("order")}
             />
-            <TextControl {...sectionStyle.order} />
+            <TextControl
+              property="order"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
           </Grid>
         </Grid>
       }

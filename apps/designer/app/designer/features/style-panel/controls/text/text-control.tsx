@@ -16,7 +16,7 @@ export const TextControl = ({
   deleteProperty,
   icon,
 }: ControlProps & { icon?: JSX.Element }) => {
-  const { label } = styleConfigByName[property];
+  const { label, items: defaultItems } = styleConfigByName[property];
   const value = currentStyle[property];
 
   const setValue = setProperty(property);
@@ -33,7 +33,7 @@ export const TextControl = ({
           property={property}
           value={value}
           intermediateValue={intermediateValue}
-          keywords={items.map((item) => ({
+          keywords={(items ?? defaultItems).map((item) => ({
             type: "keyword",
             value: item.name,
           }))}

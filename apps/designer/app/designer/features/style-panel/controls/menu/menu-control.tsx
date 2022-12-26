@@ -10,7 +10,7 @@ export const MenuControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const { label } = styleConfigByName[property];
+  const { label, items: defaultItems } = styleConfigByName[property];
   const value = currentStyle[property];
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
@@ -32,7 +32,7 @@ export const MenuControl = ({
               : 0
           }deg)`,
         };
-  const items = passedItems
+  const items = (passedItems ?? defaultItems)
     .map((item) => {
       const ItemIcon = iconProps[item.name];
       return {
