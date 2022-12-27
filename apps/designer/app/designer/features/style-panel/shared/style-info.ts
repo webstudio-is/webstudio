@@ -119,7 +119,8 @@ export const getCascadedInfo = (
 export const getInheritedInfo = (
   rootInstance: Instance,
   instanceId: string,
-  cascadedAndSelectedBreakpoints: string[]
+  cascadedBreakpointIds: string[],
+  selectedBreakpointId: string
 ) => {
   const inheritedStyle: InheritedProperties = {};
   const ancestors = utils.tree.getInstancePath(rootInstance, instanceId);
@@ -128,10 +129,10 @@ export const getInheritedInfo = (
     if (ancestorInstance.id === instanceId) {
       continue;
     }
-    const cascadedStyle = getCascadedInfo(
-      ancestorInstance.cssRules,
-      cascadedAndSelectedBreakpoints
-    );
+    const cascadedStyle = getCascadedInfo(ancestorInstance.cssRules, [
+      ...cascadedBreakpointIds,
+      selectedBreakpointId,
+    ]);
     for (const [property, cascaded] of Object.entries(cascadedStyle)) {
       if (cascaded !== undefined && inheritableProperties.has(property)) {
         inheritedStyle[property as StyleProperty] = {
@@ -175,10 +176,12 @@ export const useStyleInfo = ({
     ) {
       return {};
     }
-    return getInheritedInfo(rootInstance, selectedInstanceId, [
-      ...cascadedBreakpointIds,
-      selectedBreakpointId,
-    ]);
+    return getInheritedInfo(
+      rootInstance,
+      selectedInstanceId,
+      cascadedBreakpointIds,
+      selectedBreakpointId
+    );
   }, [
     rootInstance,
     cascadedBreakpointIds,

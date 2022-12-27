@@ -141,10 +141,12 @@ test("compute cascaded styles", () => {
 
 test("compute inherited styles", () => {
   expect(
-    getInheritedInfo(rootInstance, selectedInstanceId, [
-      ...cascadedBreakpointIds,
-      selectedBreakpointId,
-    ])
+    getInheritedInfo(
+      rootInstance,
+      selectedInstanceId,
+      cascadedBreakpointIds,
+      selectedBreakpointId
+    )
   ).toMatchInlineSnapshot(`
     {
       "fontSize": {
