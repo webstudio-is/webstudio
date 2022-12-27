@@ -396,6 +396,7 @@ describe("usePropsLogic", () => {
       result.current.handleChangePropValue("1", {
         type: "asset",
         value: {
+          type: "image",
           id: "string",
           projectId: "string",
           format: "string",
@@ -431,6 +432,7 @@ describe("usePropsLogic", () => {
             "path": "string",
             "projectId": "string",
             "size": 1111,
+            "type": "image",
           },
         },
       ]

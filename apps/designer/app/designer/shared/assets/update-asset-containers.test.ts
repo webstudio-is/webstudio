@@ -14,7 +14,7 @@ const getAssetId = (
 
 const createServerAsset = (id: string, name?: string): Asset => ({
   id,
-
+  type: "image",
   name: name ?? "test",
   location: "FS",
   projectId: "id",
