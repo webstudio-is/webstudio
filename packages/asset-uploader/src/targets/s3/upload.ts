@@ -23,6 +23,7 @@ const AssetsUploadedSuccess = z.object({
 });
 
 const Ids = z.array(z.string().uuid());
+const MAX_FILES_PER_REQUEST = 1;
 
 export const uploadToS3 = async ({
   request,
@@ -33,7 +34,7 @@ export const uploadToS3 = async ({
   projectId: string;
   maxSize: number;
 }): Promise<Array<Asset>> => {
-  const uploadHandler = createUploadHandler(1);
+  const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST);
 
   const formData = await unstableCreateFileUploadHandler(
     request,
@@ -51,12 +52,12 @@ export const uploadToS3 = async ({
   const fontsFormData = formData.getAll("font") as Array<string>;
   const ids = Ids.parse(formData.getAll(idsFormDataFieldName));
 
-  const assetsData = [...imagesFormData, ...fontsFormData].map(
-    (dataString, i) => {
+  const assetsData = [...imagesFormData, ...fontsFormData]
+    .slice(0, MAX_FILES_PER_REQUEST)
+    .map((dataString, i) => {
       // @todo validate with zod
       return { ...JSON.parse(dataString), id: ids[i] };
-    }
-  );
+    });
 
   return await createMany(projectId, assetsData);
 };
@@ -77,7 +78,9 @@ const createUploadHandler = (maxFiles: number) => {
     }
 
     if (count >= maxFiles) {
-      throw new Error("Only one file may be uploaded");
+      // Вo not throw, just ignore the file
+      // In case of throw we need to delete previously uploaded files
+      return;
     }
 
     count++;
