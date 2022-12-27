@@ -22,16 +22,16 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 
-export type StyleSource = {
+export type StyleSourceItem = {
   id: string;
   label: string;
   type: "local" | "token";
 };
 
-type StyleSourceItemProps = {
+type StyleSourceButtonProps = {
   label: string;
 };
-const StyleSourceItem = ({ label }: StyleSourceItemProps) => {
+const StyleSourceButton = ({ label }: StyleSourceButtonProps) => {
   return (
     <Button variant="gray" css={{ maxWidth: "100%" }}>
       <Text truncate>{label}</Text>
@@ -44,10 +44,9 @@ type TextFieldWrapperProps = Omit<ComponentProps<"input">, "value"> &
     ComponentProps<typeof TextFieldContainer>,
     "variant" | "state" | "css"
   > & {
-    value: Array<StyleSource>;
+    value: Array<StyleSourceItem>;
     inputValue: string;
     disabled?: boolean;
-    css?: CSS;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
   };
@@ -87,7 +86,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
         onKeyDown={onKeyDown}
       >
         {value.map((item, index) => (
-          <StyleSourceItem label={item.label} key={index} />
+          <StyleSourceButton label={item.label} key={index} />
         ))}
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <TextFieldInput
@@ -105,15 +104,15 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps = {
-  items?: Array<StyleSource>;
-  value?: Array<StyleSource>;
-  onItemSelect: (item: StyleSource) => void;
-  onItemRemove: (item: StyleSource) => void;
+  items?: Array<StyleSourceItem>;
+  value?: Array<StyleSourceItem>;
+  onItemSelect: (item: StyleSourceItem) => void;
+  onItemRemove: (item: StyleSourceItem) => void;
   onItemCreate: (label: string) => void;
   css?: CSS;
 };
 
-const initialValue: StyleSource = {
+const initialValue: StyleSourceItem = {
   label: "",
   id: "__INITIAL_ID__",
   type: "local",
