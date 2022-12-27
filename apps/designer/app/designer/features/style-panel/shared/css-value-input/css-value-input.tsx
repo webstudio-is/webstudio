@@ -26,12 +26,12 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
+import type { StyleValueInfo } from "../style-info";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -207,7 +207,7 @@ type ChangeReason =
 
 type CssValueInputProps = {
   property: StyleProperty;
-  value: StyleValue | undefined;
+  value: StyleValueInfo | undefined;
   intermediateValue: CssValueInputValue | undefined;
   /**
    * Selected item in the dropdown
@@ -266,7 +266,7 @@ export const CssValueInput = ({
   onAbort,
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
-  const value = props.intermediateValue ?? props.value ?? initialValue;
+  const value = props.intermediateValue ?? props.value?.value ?? initialValue;
 
   const onChange = (input: string | undefined) => {
     if (input === undefined) {
@@ -309,7 +309,7 @@ export const CssValueInput = ({
   } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
-    selectedItem: props.value,
+    selectedItem: props.value?.value,
     itemToString: (item) =>
       item === null
         ? ""
@@ -412,10 +412,10 @@ export const CssValueInput = ({
     onKeyDown: inputProps.onKeyDown,
   });
 
-  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const isLocalStyle = props.value?.local !== undefined;
   const prefix = icon && (
     <CssValueInputIconButton
-      state={isCurrentBreakpoint ? "set" : undefined}
+      state={isLocalStyle ? "set" : undefined}
       css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
     >
       {icon}

@@ -13,6 +13,7 @@ import {
 } from "../../shared/css-value-input";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import type { StyleChangeHandler } from "./types";
+import type { StyleValueInfo } from "../../shared/style-info";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -26,7 +27,7 @@ const Input = ({
   onClosePopover,
 }: {
   property: StyleProperty;
-  value: StyleValue;
+  value: StyleValueInfo;
   onChange: StyleChangeHandler;
   onClosePopover: () => void;
 }) => {
@@ -107,7 +108,7 @@ export const InputPopover = ({
   onClose,
 }: {
   property: StyleProperty;
-  value: StyleValue;
+  value: StyleValueInfo;
   onChange: StyleChangeHandler;
   isOpen: boolean;
   onClose: () => void;

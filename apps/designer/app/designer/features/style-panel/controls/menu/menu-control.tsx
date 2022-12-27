@@ -1,5 +1,4 @@
 import { IconButtonWithMenu } from "@webstudio-is/design-system";
-import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { ControlProps } from "../../style-sections";
 import { iconConfigs, styleConfigByName } from "../../shared/configs";
 import { toValue } from "@webstudio-is/css-engine";
@@ -12,7 +11,7 @@ export const MenuControl = ({
 }: ControlProps) => {
   const { label, items: defaultItems } = styleConfigByName[property];
   const value = currentStyle[property]?.value;
-  const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const isLocalStyle = currentStyle[property]?.local !== undefined;
 
   if (value === undefined) {
     return null;
@@ -47,7 +46,7 @@ export const MenuControl = ({
       label={label}
       items={items}
       value={String(currentValue)}
-      isActive={isFromCurrentBreakpoint}
+      isActive={isLocalStyle}
       onChange={setValue}
       onHover={(value) => setValue(value, { isEphemeral: true })}
     />

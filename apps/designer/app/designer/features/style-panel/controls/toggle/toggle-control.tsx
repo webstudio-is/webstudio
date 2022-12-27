@@ -6,9 +6,10 @@ import {
   ToggleGroupItem,
 } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-data";
-import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
+import type { StyleInfo } from "../../shared/style-info";
 
 export type ToggleGroupControlProps = {
+  currentStyle: StyleInfo;
   property: StyleProperty | StyleProperty[];
   value: string;
   items: { child: JSX.Element; label: string; value: string }[];
@@ -16,12 +17,16 @@ export type ToggleGroupControlProps = {
 };
 
 export const ToggleGroupControl = ({
+  currentStyle,
   property,
   value = "",
   items = [],
   onValueChange,
 }: ToggleGroupControlProps) => {
-  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const properties = Array.isArray(property) ? property : [property];
+  const isLocalStyle = properties.some(
+    (property) => currentStyle[property]?.local !== undefined
+  );
   return (
     <ToggleGroup
       type="single"
@@ -34,7 +39,7 @@ export const ToggleGroupControl = ({
           <ToggleGroupControlItem
             key={index}
             value={value}
-            state={isCurrentBreakpoint ? "set" : undefined}
+            state={isLocalStyle ? "set" : undefined}
           >
             <Tooltip content={label} delayDuration={0}>
               <Flex>{child}</Flex>

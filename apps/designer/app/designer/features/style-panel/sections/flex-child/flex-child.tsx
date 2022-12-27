@@ -36,11 +36,13 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
+        currentStyle={currentStyle}
         property="alignSelf"
         label="Align"
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
+        currentStyle={currentStyle}
         property="alignSelf"
         onValueChange={(value) => setAlignSelf(value)}
         value={toValue(currentStyle.alignSelf?.value)}
@@ -88,6 +90,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
+        currentStyle={currentStyle}
         property={["flexGrow", "flexShrink"]}
         label="Sizing"
         onReset={() => {
@@ -97,6 +100,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         }}
       />
       <ToggleGroupControl
+        currentStyle={currentStyle}
         property={["flexGrow", "flexShrink"]}
         onValueChange={(value) => {
           switch (value) {
@@ -169,6 +173,7 @@ const FlexChildSectionSizingPopover = ({
         >
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
+              currentStyle={currentStyle}
               property="flexBasis"
               label="Basis"
               onReset={() => deleteProperty("flexBasis")}
@@ -182,6 +187,7 @@ const FlexChildSectionSizingPopover = ({
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
+              currentStyle={currentStyle}
               property="flexGrow"
               label="Grow"
               onReset={() => deleteProperty("flexGrow")}
@@ -195,6 +201,7 @@ const FlexChildSectionSizingPopover = ({
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
+              currentStyle={currentStyle}
               property="flexShrink"
               label="Shrink"
               onReset={() => deleteProperty("flexShrink")}
@@ -223,11 +230,13 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
+        currentStyle={currentStyle}
         property="order"
         label="Order"
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
+        currentStyle={currentStyle}
         property="order"
         onValueChange={(value) => {
           switch (value) {
@@ -276,6 +285,7 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
         <Grid css={{ padding: "$spacing$9" }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
+              currentStyle={currentStyle}
               property="order"
               label="Order"
               onReset={() => deleteProperty("order")}

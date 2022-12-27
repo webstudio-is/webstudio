@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
@@ -31,11 +30,11 @@ const Cell = ({
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: RenderCategoryProps["currentStyle"];
 }) => {
-  const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  const isLocalStyle = currentStyle[property]?.local !== undefined;
 
-  const styleValue = currentStyle[property]?.value;
-
-  const finalValue = scrubStatus.isActive ? scrubStatus.value : styleValue;
+  const finalValue = scrubStatus.isActive
+    ? { value: scrubStatus.value }
+    : currentStyle[property];
 
   // for TypeScript
   if (finalValue === undefined) {
@@ -64,9 +63,9 @@ const Cell = ({
           // because SpacingLayout sets it to "none" for cells' content.
           pointerEvents: "all",
         }}
-        value={finalValue}
+        value={finalValue.value}
         isActive={isActive}
-        origin={isFromCurrentBreakpoint ? "set" : "unset"}
+        origin={isLocalStyle ? "set" : "unset"}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
         }

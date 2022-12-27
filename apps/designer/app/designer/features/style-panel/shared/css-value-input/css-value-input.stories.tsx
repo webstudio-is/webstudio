@@ -22,7 +22,7 @@ export const WithKeywords = () => {
   return (
     <CssValueInput
       property="width"
-      value={value}
+      value={{ value }}
       intermediateValue={intermediateValue}
       keywords={[
         { type: "keyword", value: "auto" },
@@ -62,7 +62,7 @@ export const WithIcons = () => {
   return (
     <CssValueInput
       property="alignItems"
-      value={value}
+      value={{ value }}
       intermediateValue={intermediateValue}
       keywords={[
         { type: "keyword", value: "normal" },
@@ -107,7 +107,7 @@ export const WithUnits = () => {
     <Flex css={{ gap: "$spacing$9" }}>
       <CssValueInput
         property="rowGap"
-        value={value}
+        value={{ value }}
         intermediateValue={intermediateValue}
         keywords={[
           { type: "keyword", value: "auto" },

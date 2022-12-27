@@ -67,6 +67,7 @@ export const renderProperty = ({
   return (
     <Grid key={category + property} css={{ gridTemplateColumns: "4fr 6fr" }}>
       <PropertyName
+        currentStyle={currentStyle}
         property={property}
         label={label}
         onReset={() => deleteProperty(property)}
