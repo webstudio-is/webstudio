@@ -177,7 +177,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         }}
       >
         <ToggleGroupControl
-          styleSource={getStyleSource(currentStyle["textAlign"])}
+          styleSource={getStyleSource(currentStyle.textAlign)}
           onValueChange={(value) => setTextAlign(value)}
           value={String(getTextAlign(toValue(currentStyle.textAlign?.value)))}
           items={[
@@ -204,7 +204,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           ]}
         />
         <ToggleGroupControl
-          styleSource={getStyleSource(currentStyle["textDecorationLine"])}
+          styleSource={getStyleSource(currentStyle.textDecorationLine)}
           onValueChange={(value) => setTextDecorationLine(value)}
           value={toValue(currentStyle.textDecorationLine?.value)}
           items={[
@@ -234,7 +234,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
         }}
       >
         <ToggleGroupControl
-          styleSource={getStyleSource(currentStyle["textTransform"])}
+          styleSource={getStyleSource(currentStyle.textTransform)}
           onValueChange={(value) => setTextTransform(value)}
           value={toValue(currentStyle.textTransform?.value)}
           items={[
@@ -261,7 +261,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
           ]}
         />
         <ToggleGroupControl
-          styleSource={getStyleSource(currentStyle["fontStyle"])}
+          styleSource={getStyleSource(currentStyle.fontStyle)}
           onValueChange={(value) => setFontStyle(value)}
           value={toValue(currentStyle.fontStyle?.value)}
           items={[
@@ -317,7 +317,7 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty("direction")}
             />
             <ToggleGroupControl
-              styleSource={getStyleSource(currentStyle["direction"])}
+              styleSource={getStyleSource(currentStyle.direction)}
               onValueChange={(value) => setDirection(value)}
               value={toValue(currentStyle.direction?.value)}
               items={[
@@ -342,7 +342,7 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty("hyphens")}
             />
             <ToggleGroupControl
-              styleSource={getStyleSource(currentStyle["hyphens"])}
+              styleSource={getStyleSource(currentStyle.hyphens)}
               onValueChange={(value) => setHyphens(value)}
               value={toValue(currentStyle.hyphens?.value)}
               items={[
@@ -367,7 +367,7 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty("textOverflow")}
             />
             <ToggleGroupControl
-              styleSource={getStyleSource(currentStyle["textOverflow"])}
+              styleSource={getStyleSource(currentStyle.textOverflow)}
               onValueChange={(value) => setTextOverflow(value)}
               value={toValue(currentStyle.textOverflow?.value)}
               items={[
