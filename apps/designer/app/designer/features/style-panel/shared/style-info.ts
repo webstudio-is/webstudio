@@ -72,9 +72,7 @@ export const getCascadedBreakpointIds = (
   breakpoints: Breakpoint[],
   selectedBreakpointId?: string
 ) => {
-  const sortedBreakpoints = breakpoints
-    .slice()
-    .sort((a, b) => a.minWidth - b.minWidth);
+  const sortedBreakpoints = utils.breakpoints.sort(breakpoints);
   const cascadedBreakpointIds: string[] = [];
   for (const breakpoint of sortedBreakpoints) {
     if (breakpoint.id === selectedBreakpointId) {
