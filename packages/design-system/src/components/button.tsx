@@ -21,6 +21,7 @@ export const Button = styled("button", {
   justifyContent: "center",
   lineHeight: 1,
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
+  minWidth: 0,
 
   // Custom
   height: "$spacing$11",
@@ -42,12 +43,12 @@ export const Button = styled("button", {
       "1": {
         borderRadius: "$borderRadius$4",
         height: "$spacing$11",
-        px: "$spacing$9",
+        px: "$spacing$4",
         fontSize: "$fontSize$3",
       },
       "2": {
         borderRadius: "$borderRadius$6",
-        height: 28, // @todo waiting for the sizing scale
+        height: "$spacing$12",
         px: "$spacing$9",
         fontSize: "$fontSize$4",
       },

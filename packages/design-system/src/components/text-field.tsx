@@ -1,5 +1,9 @@
 import { mergeRefs } from "@react-aria/utils";
-import React from "react";
+import React, {
+  type ComponentProps,
+  type RefObject,
+  type FocusEventHandler,
+} from "react";
 import { useFocusWithin } from "@react-aria/interactions";
 import { css, styled } from "../stitches.config";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
@@ -74,7 +78,7 @@ export const TextFieldIcon = styled("span", textFieldIconBaseStyle, {
   color: cssVars.use(colorVar),
 });
 
-const InputBase = styled("input", {
+export const TextFieldInput = styled("input", {
   // Reset
   appearance: "none",
   borderWidth: "0",
@@ -83,12 +87,12 @@ const InputBase = styled("input", {
   fontFamily: "inherit",
   fontSize: "inherit",
   color: "inherit",
-  margin: "0",
   padding: "0",
+  height: "$spacing$9",
   flexGrow: 1,
   flexShrink: 1,
+  flexBasis: "$spacing$10",
   minWidth: 0,
-  width: "100%",
   textOverflow: "ellipsis",
   outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
@@ -134,19 +138,21 @@ const InputBase = styled("input", {
   },
 });
 
-const TextFieldBase = styled("div", {
+export const TextFieldContainer = styled("div", {
   // Custom
   display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
   backgroundColor: "$loContrast",
   boxShadow: "inset 0 0 0 1px $colors$slate7",
   color: "$hiContrast",
   fontVariantNumeric: "tabular-nums",
   gap: "$spacing$3",
-  px: "$spacing$5",
+  px: "$spacing$4",
   borderRadius: "$borderRadius$4",
   fontFamily: "$sans",
   fontSize: "$fontSize$3",
-  height: 28, // @todo waiting for the sizing scale
+  minHeight: "$spacing$12",
   lineHeight: 1,
   minWidth: 0,
   "&:focus-within": {
@@ -245,12 +251,52 @@ const SuffixSlot = styled("div", {
   borderRadius: 2,
 });
 
+export const useTextFieldFocus = ({
+  disabled,
+  onFocus,
+  onBlur,
+}: {
+  disabled?: boolean;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
+  onBlur?: FocusEventHandler<HTMLInputElement>;
+}): [
+  RefObject<HTMLInputElement>,
+  ComponentProps<typeof TextFieldContainer>
+] => {
+  const ref = React.useRef<HTMLInputElement>(null);
+
+  const onClickCapture = React.useCallback(() => {
+    ref.current?.focus();
+  }, [ref]);
+
+  const { focusWithinProps } = useFocusWithin({
+    isDisabled: disabled,
+    // @ts-expect-error Type mismatch from react-aria
+    onFocusWithin: onFocus,
+    // @ts-expect-error Type mismatch from react-aria
+    onBlurWithin: onBlur,
+  });
+
+  return [
+    ref,
+    {
+      ...focusWithinProps,
+      onClickCapture,
+      // Setting tabIndex to -1 to allow this element to be focused via JavaScript.
+      // This is used when we need to hide the caret but want to:
+      //   1. keep the visual focused state of the component
+      //   2. keep focus somewhere insisde the component to not trigger some focus-trap logic
+      tabIndex: -1,
+    },
+  ];
+};
+
 export type TextFieldProps = Pick<
-  React.ComponentProps<typeof TextFieldBase>,
+  React.ComponentProps<typeof TextFieldContainer>,
   "variant" | "state" | "css"
 > &
   Omit<React.ComponentProps<"input">, "prefix" | "children"> & {
-    baseRef?: React.Ref<HTMLDivElement>;
+    containerRef?: React.Ref<HTMLDivElement>;
     inputRef?: React.Ref<HTMLInputElement>;
     prefix?: React.ReactNode;
     suffix?: React.ReactNode;
@@ -262,7 +308,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
       prefix,
       css,
       disabled,
-      baseRef,
+      containerRef,
       inputRef,
       state,
       variant: variantProp,
@@ -279,18 +325,10 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
     const variant =
       type === "button" && variantProp === undefined ? "button" : variantProp;
 
-    const internalInputRef = React.useRef<HTMLInputElement>(null);
-
-    const focusInnerInput = React.useCallback(() => {
-      internalInputRef.current?.focus();
-    }, [internalInputRef]);
-
-    const { focusWithinProps } = useFocusWithin({
-      isDisabled: disabled,
-      // @ts-expect-error Type mismatch from react-aria
-      onFocusWithin: onFocus,
-      // @ts-expect-error Type mismatch from react-aria
-      onBlurWithin: onBlur,
+    const [internalInputRef, focusProps] = useTextFieldFocus({
+      disabled,
+      onFocus,
+      onBlur,
     });
 
     if (type === "button" && suffix === undefined) {
@@ -305,25 +343,19 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
     }
 
     return (
-      <TextFieldBase
-        {...focusWithinProps}
+      <TextFieldContainer
+        {...focusProps}
         aria-disabled={disabled}
-        ref={mergeRefs(forwardedRef, baseRef ?? null)}
+        ref={mergeRefs(forwardedRef, containerRef ?? null)}
         state={state}
         variant={variant}
         css={css}
         withPrefix={Boolean(prefix)}
         withSuffix={Boolean(suffix)}
-        onClickCapture={focusInnerInput}
         onKeyDown={onKeyDown}
-        // Setting tabIndex to -1 to allow this element to be focused via JavaScript.
-        // This is used when we need to hide the caret but want to:
-        //   1. keep the visual focused state of the component
-        //   2. keep focus somewhere insisde the component to not trigger some focus-trap logic
-        tabIndex={-1}
       >
         {/* We want input to be the first element in DOM so it receives the focus first */}
-        <InputBase
+        <TextFieldInput
           {...textFieldProps}
           type={type}
           disabled={disabled}
@@ -333,7 +365,7 @@ export const TextField = React.forwardRef<HTMLDivElement, TextFieldProps>(
 
         {prefix && <PrefixSlot>{prefix}</PrefixSlot>}
         {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
-      </TextFieldBase>
+      </TextFieldContainer>
     );
   }
 );

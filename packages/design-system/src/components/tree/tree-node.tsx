@@ -47,6 +47,7 @@ const ItemButton = styled("button", {
   boxSizing: "border-box",
   userSelect: "none",
   height: ITEM_HEIGHT,
+  minWidth: 0,
   margin: 0,
   pt: 0,
   pb: 0,
