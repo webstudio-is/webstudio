@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import type { StyleInfo } from "./style-info";
+import { getStyleSource, StyleInfo } from "./style-info";
 
 type PropertyNameProps = {
   style: StyleInfo;
@@ -31,18 +31,19 @@ export const PropertyName = ({
   onReset,
 }: PropertyNameProps) => {
   const properties = Array.isArray(property) ? property : [property];
-  const isLocalStyle = properties.some(
-    (property) => currentStyle[property]?.local !== undefined
+  const styleSource = getStyleSource(
+    ...properties.map((property) => currentStyle[property])
   );
   const [isOpen, setIsOpen] = useState(false);
-  const isPopoverEnabled = isFeatureEnabled("propertyReset") && isLocalStyle;
+  const isPopoverEnabled =
+    isFeatureEnabled("propertyReset") && styleSource === "local";
 
   const labelElement = (
     <Label
       css={{
         fontWeight: "inherit",
         padding: "calc($spacing$3 / 2) $spacing$3",
-        ...(isLocalStyle
+        ...(styleSource === "local"
           ? {
               color: "$blue11",
               backgroundColor: "$colors$blue4",

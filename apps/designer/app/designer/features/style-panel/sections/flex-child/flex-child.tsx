@@ -18,6 +18,7 @@ import {
   EllipsesIcon,
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/designer/shared/floating-panel";
+import { getStyleSource } from "../../shared/style-info";
 
 export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
@@ -42,8 +43,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
-        currentStyle={currentStyle}
-        property="alignSelf"
+        styleSource={getStyleSource(currentStyle["alignSelf"])}
         onValueChange={(value) => setAlignSelf(value)}
         value={toValue(currentStyle.alignSelf?.value)}
         items={[
@@ -100,8 +100,10 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         }}
       />
       <ToggleGroupControl
-        currentStyle={currentStyle}
-        property={["flexGrow", "flexShrink"]}
+        styleSource={getStyleSource(
+          currentStyle["flexGrow"],
+          currentStyle["flexShrink"]
+        )}
         onValueChange={(value) => {
           switch (value) {
             case "none": {
@@ -236,8 +238,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
-        currentStyle={currentStyle}
-        property="order"
+        styleSource={getStyleSource(currentStyle["order"])}
         onValueChange={(value) => {
           switch (value) {
             case "0":

@@ -13,10 +13,12 @@ export type StyleInfo = {
 export type StyleSource = "local" | "preset";
 
 export const getStyleSource = (
-  styleValueInfo?: StyleValueInfo
+  ...styleValueInfos: (undefined | StyleValueInfo)[]
 ): StyleSource => {
-  if (styleValueInfo?.local) {
-    return "local";
+  for (const info of styleValueInfos) {
+    if (info?.local) {
+      return "local";
+    }
   }
   return "preset";
 };

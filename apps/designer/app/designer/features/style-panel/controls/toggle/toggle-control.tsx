@@ -5,28 +5,25 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@webstudio-is/design-system";
-import type { StyleProperty } from "@webstudio-is/css-data";
-import type { StyleInfo } from "../../shared/style-info";
+import type { StyleSource } from "../../shared/style-info";
 
 export type ToggleGroupControlProps = {
-  currentStyle: StyleInfo;
-  property: StyleProperty | StyleProperty[];
+  styleSource: StyleSource;
   value: string;
   items: { child: JSX.Element; label: string; value: string }[];
   onValueChange?: (value: string) => void;
 };
 
 export const ToggleGroupControl = ({
-  currentStyle,
-  property,
+  styleSource,
   value = "",
   items = [],
   onValueChange,
 }: ToggleGroupControlProps) => {
-  const properties = Array.isArray(property) ? property : [property];
-  const isLocalStyle = properties.some(
-    (property) => currentStyle[property]?.local !== undefined
-  );
+  let state: undefined | "set" = undefined;
+  if (styleSource === "local") {
+    state = "set";
+  }
   return (
     <ToggleGroup
       type="single"
@@ -36,11 +33,7 @@ export const ToggleGroupControl = ({
     >
       {items.map(({ child, label, value }, index) => {
         return (
-          <ToggleGroupControlItem
-            key={index}
-            value={value}
-            state={isLocalStyle ? "set" : undefined}
-          >
+          <ToggleGroupControlItem key={index} value={value} state={state}>
             <Tooltip content={label} delayDuration={0}>
               <Flex>{child}</Flex>
             </Tooltip>

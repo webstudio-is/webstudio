@@ -2,6 +2,7 @@ import { IconButtonWithMenu } from "@webstudio-is/design-system";
 import type { ControlProps } from "../../style-sections";
 import { iconConfigs, styleConfigByName } from "../../shared/configs";
 import { toValue } from "@webstudio-is/css-engine";
+import { getStyleSource } from "../../shared/style-info";
 
 export const MenuControl = ({
   property,
@@ -11,7 +12,7 @@ export const MenuControl = ({
 }: ControlProps) => {
   const { label, items: defaultItems } = styleConfigByName[property];
   const value = currentStyle[property]?.value;
-  const isLocalStyle = currentStyle[property]?.local !== undefined;
+  const styleSource = getStyleSource(currentStyle[property]);
 
   if (value === undefined) {
     return null;
@@ -46,7 +47,7 @@ export const MenuControl = ({
       label={label}
       items={items}
       value={String(currentValue)}
-      isActive={isLocalStyle}
+      isActive={styleSource === "local"}
       onChange={setValue}
       onHover={(value) => setValue(value, { isEphemeral: true })}
     />
