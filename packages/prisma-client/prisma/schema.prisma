@@ -23,8 +23,8 @@ enum Location {
 }
 
 enum UploadStatus {
-  uploading
-  uploaded
+  UPLOADING
+  UPLOADED
 }
 
 model Asset {
@@ -37,7 +37,7 @@ model Asset {
   location    Location
   createdAt   DateTime     @default(now())
   meta        String       @default("{}")
-  status      UploadStatus @default(uploaded)
+  status      UploadStatus @default(UPLOADED)
 }
 
 model User {

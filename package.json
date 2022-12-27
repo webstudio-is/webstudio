@@ -13,7 +13,7 @@
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
-    "migrations": "cd apps/designer && migrations --dev"
+    "migrations": "cd apps/designer && pnpm migrations --dev"
   },
   "devDependencies": {
     "@changesets/get-dependents-graph": "^1.3.4",
