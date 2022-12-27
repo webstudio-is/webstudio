@@ -43,7 +43,7 @@ const assetsLoader = new DataLoader<string, Asset | undefined>(
 /**
  * Use zod + DataLoader to load/format assets from the Assets table.
  */
-const ImageDBAsset = z.object({
+const ImageAssetDbOut = z.object({
   type: z.literal("asset"),
   value: z
     .string()
@@ -59,30 +59,33 @@ const ImageDBAsset = z.object({
     }),
 });
 
-const ImageDbValue = z.object({
+const ImageValueDbOut = z.object({
   type: z.literal("image"),
   value: z
-    .array(ImageDBAsset)
+    .array(ImageAssetDbOut)
     // an Asset can be not present in DB, skip it.
     .transform((assets) => assets.filter((asset) => asset.value !== undefined)),
 });
 
-const StyleDbValue = z.union([SharedStyleValue, ImageDbValue]);
+const StyleValueDbOut = z.union([SharedStyleValue, ImageValueDbOut]);
 
-const StyleDb = z.record(z.string(), StyleDbValue);
+const StyleDbOut = z.record(z.string(), StyleValueDbOut);
 
-export const CssDbRule = z.object({
-  style: StyleDb,
+export const CssRuleDbOut = z.object({
+  style: StyleDbOut,
   breakpoint: z.optional(z.string()),
 });
 
-const InstanceDb = z.lazy(() =>
+/**
+ * validate/transform DB data schema to the client schema.
+ */
+const InstanceDbOut = z.lazy(() =>
   z.object({
     type: z.literal("instance"),
     id: z.string(),
     component: z.string(),
-    children: z.array(z.union([InstanceDb, Text])),
-    cssRules: z.array(CssDbRule),
+    children: z.array(z.union([InstanceDbOut, Text])),
+    cssRules: z.array(CssRuleDbOut),
   })
 ) as z.ZodType<Instance>;
 
@@ -97,22 +100,25 @@ const ImageValueDbIn = ImageValue.transform((imageStyle) => ({
   ),
 }));
 
-const StyleDbValueIn = z.union([SharedStyleValue, ImageValueDbIn]);
+const StyleValueDbIn = z.union([SharedStyleValue, ImageValueDbIn]);
 
-const StyleDbIn = z.record(z.string(), StyleDbValueIn);
+const StyleDbIn = z.record(z.string(), StyleValueDbIn);
 
-export const CssDbInRule = z.object({
+export const CssRuleDbIn = z.object({
   style: StyleDbIn,
   breakpoint: z.optional(z.string()),
 });
 
+/**
+ * validate/transform client schema into DB data schema.
+ */
 const InstanceDbIn = z.lazy(() =>
   z.object({
     type: z.literal("instance"),
     id: z.string(),
     component: z.string(),
     children: z.array(z.union([InstanceDbIn, Text])),
-    cssRules: z.array(CssDbInRule),
+    cssRules: z.array(CssRuleDbIn),
   })
 ) as /* Instance is wrong type here, ImageValue is different after transform. We don't use it anyway */ z.ZodType<Instance>;
 
@@ -157,7 +163,7 @@ export const loadById = async (
 
   const dbRoot = JSON.parse(tree.root);
 
-  const root = await InstanceDb.parseAsync(dbRoot);
+  const root = await InstanceDbOut.parseAsync(dbRoot);
 
   Instance.parse(root);
 
