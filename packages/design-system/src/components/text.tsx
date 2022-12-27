@@ -80,10 +80,6 @@ export const textStyles = css({
 
         flexBasis: 0,
         flexGrow: 1,
-
-        // For some reason flexBasis:0 is not enough
-        // to stop it from growing past the container
-        width: 0,
       },
     },
   },

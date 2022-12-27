@@ -25,3 +25,10 @@ export const Mono: ComponentStory<typeof Text> = () => {
 export const Unit: ComponentStory<typeof Text> = () => {
   return <Text variant="unit">Unit text</Text>;
 };
+export const Truncated: ComponentStory<typeof Text> = () => {
+  return (
+    <Text truncate css={{ width: 200 }}>
+      Long long text asdf asdf asdfasdf asdfasdf asdfasdfasdfasf
+    </Text>
+  );
+};
