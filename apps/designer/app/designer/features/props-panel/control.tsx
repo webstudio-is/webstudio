@@ -19,7 +19,6 @@ import { Checkbox } from "@webstudio-is/design-system";
 import { Asset } from "@webstudio-is/asset-uploader";
 import type { UserPropValue } from "./use-props-logic";
 import { type SetProperty } from "../style-panel/shared/use-style-data";
-import type { Style } from "@webstudio-is/css-data";
 
 const textControlTypes = [
   "text",
@@ -183,7 +182,6 @@ type ControlProps = {
   userProp: UserProp;
   onChangePropValue: (value: UserPropValue) => void;
   setCssProperty: SetProperty;
-  currentStyle: Style;
 };
 
 // eslint-disable-next-line func-style

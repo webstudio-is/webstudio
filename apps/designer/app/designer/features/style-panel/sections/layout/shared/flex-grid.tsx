@@ -4,17 +4,17 @@ import {
   Grid,
   DeprecatedIconButton,
 } from "@webstudio-is/design-system";
-import type { Style } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import { useIsFromCurrentBreakpoint } from "../../../shared/use-is-from-current-breakpoint";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
+import type { StyleInfo } from "../../../shared/style-info";
 
 export const FlexGrid = ({
   currentStyle,
   batchUpdate,
 }: {
-  currentStyle: Style;
+  currentStyle: StyleInfo;
   batchUpdate: ReturnType<CreateBatchUpdate>;
 }) => {
   const isCurrentBreakpoint = useIsFromCurrentBreakpoint([
@@ -24,9 +24,9 @@ export const FlexGrid = ({
     "alignContent",
     "alignItems",
   ]);
-  const flexDirection = toValue(currentStyle.flexDirection);
-  const justifyContent = toValue(currentStyle.justifyContent);
-  const alignItems = toValue(currentStyle.alignItems);
+  const flexDirection = toValue(currentStyle.flexDirection?.value);
+  const justifyContent = toValue(currentStyle.justifyContent?.value);
+  const alignItems = toValue(currentStyle.alignItems?.value);
   const setAlignItems = batchUpdate.setProperty("alignItems");
   const setJustifyContent = batchUpdate.setProperty("justifyContent");
   const alignment = ["start", "center", "end"];

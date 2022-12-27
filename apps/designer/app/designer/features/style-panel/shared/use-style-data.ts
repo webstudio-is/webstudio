@@ -7,6 +7,7 @@ import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
+import { useStyleInfo } from "./style-info";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -58,13 +59,10 @@ export const useStyleData = ({
     () => cssRule?.style as Style
   );
 
-  const currentStyle = useMemo<Style>(
-    () => ({
-      ...selectedInstanceData?.browserStyle,
-      ...breakpointStyle,
-    }),
-    [selectedInstanceData?.browserStyle, breakpointStyle]
-  );
+  const currentStyle = useStyleInfo({
+    localStyle: breakpointStyle,
+    browserStyle: selectedInstanceData?.browserStyle,
+  });
 
   useEffect(() => {
     setBreakpointStyle({ ...cssRule?.style });

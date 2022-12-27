@@ -11,7 +11,7 @@ export const MenuControl = ({
   setProperty,
 }: ControlProps) => {
   const { label, items: defaultItems } = styleConfigByName[property];
-  const value = currentStyle[property];
+  const value = currentStyle[property]?.value;
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
   if (value === undefined) {
@@ -27,7 +27,7 @@ export const MenuControl = ({
       ? {}
       : {
           transform: `rotate(${
-            toValue(currentStyle.flexDirection) === "column"
+            toValue(currentStyle.flexDirection?.value) === "column"
               ? 90 * (property === "alignItems" ? -1 : 1)
               : 0
           }deg)`,

@@ -8,7 +8,7 @@ export const ImageControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const styleValue = currentStyle[property];
+  const styleValue = currentStyle[property]?.value;
 
   if (styleValue === undefined) {
     return null;

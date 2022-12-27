@@ -8,6 +8,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { LockOpenIcon, LockCloseIcon } from "@webstudio-is/icons";
 import type { Style } from "@webstudio-is/css-data";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
+import type { StyleInfo } from "../../../shared/style-info";
 
 export const Lock = ({
   pairedKeys,
@@ -15,13 +16,13 @@ export const Lock = ({
   batchUpdate,
 }: {
   pairedKeys: Array<keyof Style>;
-  currentStyle: Style;
+  currentStyle: StyleInfo;
   batchUpdate: ReturnType<CreateBatchUpdate>;
 }) => {
   const aKey = pairedKeys[0];
   const bKey = pairedKeys[1];
-  const a = currentStyle[aKey];
-  const b = currentStyle[bKey];
+  const a = currentStyle[aKey]?.value;
+  const b = currentStyle[bKey]?.value;
   const aVal =
     toValue(a) + (a?.type === "unit" && a.unit !== "number" ? a.unit : "");
   const bVal =
