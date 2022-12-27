@@ -17,6 +17,7 @@ const commonAsset: Asset = {
   format: "png",
   createdAt: new Date(),
   description: "",
+  status: "uploaded",
   meta: JSON.stringify({ width: 200, height: 200 }),
 };
 
