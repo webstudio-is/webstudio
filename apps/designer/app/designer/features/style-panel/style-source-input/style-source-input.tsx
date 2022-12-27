@@ -11,6 +11,7 @@ import {
   useTextFieldFocus,
   useCombobox,
   type CSS,
+  Text,
 } from "@webstudio-is/design-system";
 import {
   ComponentProps,
@@ -32,8 +33,8 @@ type StyleSourceItemProps = {
 };
 const StyleSourceItem = ({ label }: StyleSourceItemProps) => {
   return (
-    <Button variant="gray" truncate css={{ maxWidth: "100%" }}>
-      {label}
+    <Button variant="gray" css={{ maxWidth: "100%" }}>
+      <Text truncate>{label}</Text>
     </Button>
   );
 };

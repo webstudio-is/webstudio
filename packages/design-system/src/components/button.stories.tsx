@@ -5,10 +5,6 @@ export default {
   component: Button,
 };
 
-export const Truncate: ComponentStory<typeof Button> = () => {
-  return (
-    <Button truncate css={{ width: 200 }}>
-      Long long text asdf asdf asdfasdf asdfasdf asdfasdfasdfasf
-    </Button>
-  );
+export const Simple: ComponentStory<typeof Button> = () => {
+  return <Button>Simple</Button>;
 };

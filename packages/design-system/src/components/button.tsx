@@ -21,6 +21,7 @@ export const Button = styled("button", {
   justifyContent: "center",
   lineHeight: 1,
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
+  minWidth: 0,
 
   // Custom
   height: "$spacing$11",
@@ -219,14 +220,6 @@ export const Button = styled("button", {
       true: {
         backgroundColor: "transparent",
         boxShadow: "none",
-      },
-    },
-    truncate: {
-      true: {
-        display: "block",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
       },
     },
   },
