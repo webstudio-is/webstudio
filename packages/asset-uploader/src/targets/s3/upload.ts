@@ -78,7 +78,7 @@ const createUploadHandler = (maxFiles: number) => {
     }
 
     if (count >= maxFiles) {
-      // Вo not throw, just ignore the file
+      // Do not throw, just ignore the file
       // In case of throw we need to delete previously uploaded files
       return;
     }
