@@ -1,13 +1,13 @@
 import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { useMemo } from "react";
 
-export type StylePropertyInfo = {
+export type StyleValueInfo = {
   value: StyleValue;
   local?: StyleValue;
 };
 
 export type StyleInfo = {
-  [property in StyleProperty]?: StylePropertyInfo;
+  [property in StyleProperty]?: StyleValueInfo;
 };
 
 export const useStyleInfo = ({
