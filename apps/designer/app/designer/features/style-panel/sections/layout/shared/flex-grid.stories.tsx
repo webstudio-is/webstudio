@@ -52,15 +52,12 @@ const Base = ({ flexDirection }: { flexDirection: string }) => {
               <FlexGrid
                 currentStyle={{
                   flexDirection: {
-                    source: "external",
                     value: { type: "keyword", value: flexDirection },
                   },
                   justifyContent: {
-                    source: "external",
                     value: { type: "keyword", value: justifyContent },
                   },
                   alignItems: {
-                    source: "external",
                     value: { type: "keyword", value: alignItems },
                   },
                 }}

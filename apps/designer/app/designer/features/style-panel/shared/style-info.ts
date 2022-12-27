@@ -2,8 +2,8 @@ import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { useMemo } from "react";
 
 export type StylePropertyInfo = {
-  source: "local" | "external";
   value: StyleValue;
+  local?: StyleValue;
 };
 
 export type StyleInfo = {
@@ -21,14 +21,13 @@ export const useStyleInfo = ({
     const styleInfoData: StyleInfo = {};
     for (const [property, value] of Object.entries(browserStyle)) {
       styleInfoData[property as StyleProperty] = {
-        source: "external",
         value,
       };
     }
     for (const [property, value] of Object.entries(localStyle)) {
       styleInfoData[property as StyleProperty] = {
-        source: "local",
         value,
+        local: value,
       };
     }
     return styleInfoData;
