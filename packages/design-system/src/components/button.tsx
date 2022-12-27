@@ -16,7 +16,7 @@ export const Button = styled("button", {
   },
 
   // Custom reset?
-  display: "block",
+  display: "inline-flex",
   flexShrink: 0,
   justifyContent: "center",
   lineHeight: 1,
@@ -223,6 +223,7 @@ export const Button = styled("button", {
     },
     truncate: {
       true: {
+        display: "block",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
