@@ -61,6 +61,16 @@ export const toValue = (
     return `rgba(${value.r}, ${value.g}, ${value.b}, ${value.alpha})`;
   }
 
+  if (value.type === "image") {
+    // @todo image-set
+    return value.value
+      .map(
+        (imageAsset) =>
+          `url(${imageAsset.value.path}) /* id=${imageAsset.value.id} */`
+      )
+      .join(", ");
+  }
+
   // Will give ts error in case of missing type
   assertUnreachable(value, `Unknown value type`);
 
