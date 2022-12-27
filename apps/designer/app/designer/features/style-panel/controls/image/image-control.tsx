@@ -8,17 +8,17 @@ export const ImageControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const styleInfo = currentStyle[property];
+  const styleValue = currentStyle[property];
 
-  if (styleInfo === undefined) {
+  if (styleValue === undefined) {
     return null;
   }
 
   const setValue = setProperty(property);
 
   const valueAssets =
-    styleInfo.type === "image"
-      ? styleInfo.value.filter((image) => image.type === "asset")
+    styleValue.type === "image"
+      ? styleValue.value.filter((image) => image.type === "asset")
       : [];
 
   return (
