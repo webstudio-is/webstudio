@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type {
   Breakpoint,
   CssRule,
@@ -7,13 +8,12 @@ import type {
 } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
 import { utils } from "@webstudio-is/project";
-import { Instance } from "@webstudio-is/react-sdk";
-import { useMemo } from "react";
+import type { Instance } from "@webstudio-is/react-sdk";
+import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
 import {
   useSelectedBreakpoint,
   useSelectedInstanceData,
 } from "~/designer/shared/nano-states";
-import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
 
 type Cascaded = {
   breakpointId: string;
