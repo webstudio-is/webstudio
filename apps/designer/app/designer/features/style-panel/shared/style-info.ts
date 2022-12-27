@@ -15,29 +15,29 @@ import {
   useSelectedInstanceData,
 } from "~/designer/shared/nano-states";
 
-type Cascaded = {
+type CascadedValueInfo = {
   breakpointId: string;
   value: StyleValue;
 };
 
-type CascadedInfo = {
-  [property in StyleProperty]?: Cascaded;
+type CascadedProperties = {
+  [property in StyleProperty]?: CascadedValueInfo;
 };
 
-type Inherited = {
+type InheritedValueInfo = {
   instanceId: string;
   value: StyleValue;
 };
 
-type InheritedInfo = {
-  [property in StyleProperty]?: Inherited;
+type InheritedProperties = {
+  [property in StyleProperty]?: InheritedValueInfo;
 };
 
 export type StyleValueInfo = {
   value: StyleValue;
   local?: StyleValue;
-  cascaded?: Cascaded;
-  inherited?: Inherited;
+  cascaded?: CascadedValueInfo;
+  inherited?: InheritedValueInfo;
 };
 
 export type StyleInfo = {
@@ -99,7 +99,7 @@ export const getCascadedInfo = (
       styles.set(rule.breakpoint, rule.style);
     }
   }
-  const cascadedStyle: CascadedInfo = {};
+  const cascadedStyle: CascadedProperties = {};
   for (const breakpointId of cascadedBreakpointIds) {
     const style = styles.get(breakpointId);
     if (style !== undefined) {
@@ -123,7 +123,7 @@ export const getInheritedInfo = (
   instanceId: string,
   cascadedAndSelectedBreakpoints: string[]
 ) => {
-  const inheritedStyle: InheritedInfo = {};
+  const inheritedStyle: InheritedProperties = {};
   const parents = utils.tree.getInstancePath(rootInstance, instanceId);
   for (const parentInstance of parents) {
     // skip current element
