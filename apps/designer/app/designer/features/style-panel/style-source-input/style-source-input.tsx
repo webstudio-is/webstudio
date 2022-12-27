@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Text,
   ComboboxListbox,
   ComboboxListboxItem,
   ComboboxPopper,
@@ -11,7 +12,6 @@ import {
   useTextFieldFocus,
   useCombobox,
   type CSS,
-  Text,
 } from "@webstudio-is/design-system";
 import {
   ComponentProps,
@@ -22,15 +22,14 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 
-export type StyleSourceItem = {
-  id: string;
+type IntermediateItem = {
   label: string;
-  type: "local" | "token";
 };
 
 type StyleSourceButtonProps = {
   label: string;
 };
+
 const StyleSourceButton = ({ label }: StyleSourceButtonProps) => {
   return (
     <Button variant="gray" css={{ maxWidth: "100%" }}>
@@ -44,8 +43,8 @@ type TextFieldWrapperProps = Omit<ComponentProps<"input">, "value"> &
     ComponentProps<typeof TextFieldContainer>,
     "variant" | "state" | "css"
   > & {
-    value: Array<StyleSourceItem>;
-    inputValue: string;
+    value: Array<IntermediateItem>;
+    label: string;
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
@@ -65,7 +64,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
       onClick,
       type,
       onKeyDown,
-      inputValue,
+      label,
       value,
       ...textFieldProps
     } = props;
@@ -91,7 +90,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <TextFieldInput
           {...textFieldProps}
-          value={inputValue}
+          value={label}
           type={type}
           disabled={disabled}
           onClick={onClick}
@@ -103,24 +102,20 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
 );
 TextField.displayName = "TextField";
 
-type StyleSourceInputProps = {
-  items?: Array<StyleSourceItem>;
-  value?: Array<StyleSourceItem>;
-  onItemSelect: (item: StyleSourceItem) => void;
-  onItemRemove: (item: StyleSourceItem) => void;
+type StyleSourceInputProps<Item> = {
+  items?: Array<Item>;
+  value?: Array<Item>;
+  onItemSelect: (item: Item) => void;
+  onItemRemove: (item: Item) => void;
   onItemCreate: (label: string) => void;
   css?: CSS;
 };
 
-const initialValue: StyleSourceItem = {
-  label: "",
-  id: "__INITIAL_ID__",
-  type: "local",
-};
-
-export const StyleSourceInput = (props: StyleSourceInputProps) => {
+export const StyleSourceInput = <Item extends IntermediateItem>(
+  props: StyleSourceInputProps<Item>
+) => {
   const value = props.value ?? [];
-  const [inputValue, setInputValue] = useState(initialValue.label);
+  const [label, setLabel] = useState("");
   const {
     items,
     getInputProps,
@@ -130,28 +125,28 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
     isOpen,
   } = useCombobox({
     items: props.items ?? [],
-    value: { ...initialValue, label: inputValue },
+    value: { label },
     selectedItem: undefined,
-    itemToString: (item) => item?.label ?? "",
+    itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
-      setInputValue("");
-      props.onItemSelect(item);
+      setLabel("");
+      props.onItemSelect(item as Item);
     },
     onInputChange(label) {
-      setInputValue(label ?? "");
+      setLabel(label ?? "");
     },
   });
   const inputProps = getInputProps({
     onKeyDown(event) {
-      if (event.key === "Backspace" && inputValue === "") {
+      if (event.key === "Backspace" && label === "") {
         props.onItemRemove(value[value.length - 1]);
         return;
       }
     },
     onKeyPress(event) {
-      if (event.key === "Enter" && inputValue.trim() !== "") {
-        setInputValue("");
-        props.onItemCreate(inputValue);
+      if (event.key === "Enter" && label.trim() !== "") {
+        setLabel("");
+        props.onItemCreate(label);
       }
     },
   });
@@ -162,7 +157,7 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
-            inputValue={inputValue}
+            label={label}
             value={value}
             css={props.css}
           />

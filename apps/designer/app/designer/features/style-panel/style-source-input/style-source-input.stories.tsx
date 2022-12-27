@@ -1,20 +1,20 @@
 import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
-import { StyleSourceInput, type StyleSourceItem } from "./style-source-input";
+import { StyleSourceInput } from "./style-source-input";
 
 export default {
   component: StyleSourceInput,
 };
 
-const items: Array<StyleSourceItem> = [
+const items = [
   { id: "1", label: "Apple", type: "token" },
   { id: "2", label: "Banana", type: "token" },
   { id: "3", label: "Orange", type: "token" },
 ];
 
 export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState<Array<StyleSourceItem>>([
+  const [value, setValue] = useState([
     { id: "0", label: "Local", type: "local" },
   ]);
   return (
@@ -23,7 +23,7 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onItemCreate={(label) => {
-        const item: StyleSourceItem = { id: uuid(), label, type: "token" };
+        const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
       onItemSelect={(item) => {
@@ -40,7 +40,7 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
 };
 
 export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState<Array<StyleSourceItem>>([
+  const [value, setValue] = useState([
     { id: "0", label: "Local", type: "local" },
     ...items,
   ]);
@@ -50,7 +50,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onItemCreate={(label) => {
-        const item: StyleSourceItem = { id: uuid(), label, type: "token" };
+        const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
       onItemSelect={(item) => {
@@ -69,7 +69,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
 export const WithTruncatedItem: ComponentStory<
   typeof StyleSourceInput
 > = () => {
-  const [value, setValue] = useState<Array<StyleSourceItem>>([
+  const [value, setValue] = useState([
     {
       id: "0",
       label:
@@ -83,7 +83,7 @@ export const WithTruncatedItem: ComponentStory<
       items={items}
       value={value}
       onItemCreate={(label) => {
-        const item: StyleSourceItem = { id: uuid(), label, type: "token" };
+        const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
       onItemSelect={(item) => {
