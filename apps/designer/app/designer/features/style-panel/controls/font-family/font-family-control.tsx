@@ -10,7 +10,7 @@ export const FontFamilyControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const value = currentStyle[property];
+  const value = currentStyle[property]?.value;
   const [isOpen, setIsOpen] = useState(false);
 
   const setValue = setProperty(property);

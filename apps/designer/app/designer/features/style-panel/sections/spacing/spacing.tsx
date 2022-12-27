@@ -33,7 +33,7 @@ const Cell = ({
 }) => {
   const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
 
-  const styleValue = currentStyle[property];
+  const styleValue = currentStyle[property]?.value;
 
   const finalValue = scrubStatus.isActive ? scrubStatus.value : styleValue;
 
@@ -95,7 +95,7 @@ export const SpacingSection = ({
     value:
       hoverTarget === undefined
         ? undefined
-        : currentStyle[hoverTarget.property],
+        : currentStyle[hoverTarget.property]?.value,
     target: hoverTarget,
     onChange: handleChange,
   });

@@ -20,7 +20,7 @@ const LayoutSectionFlex = ({
   const batchUpdate = createBatchUpdate();
   const { setProperty, deleteProperty } = batchUpdate;
 
-  const flexWrapValue = currentStyle.flexWrap;
+  const flexWrapValue = currentStyle.flexWrap?.value;
 
   // From design: Notice that the align-content icon button is not visible by default.
   // This property only applies when flex-wrap is set to "wrap".
@@ -151,7 +151,7 @@ export const LayoutSection = ({
   createBatchUpdate,
   styleConfigsByCategory,
 }: RenderCategoryProps) => {
-  const displayValue = toValue(currentStyle.display);
+  const displayValue = toValue(currentStyle.display?.value);
 
   const { label, items } = styleConfigByName.display;
 

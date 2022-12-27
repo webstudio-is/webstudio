@@ -10,7 +10,7 @@ export const SelectControl = ({
   items,
 }: ControlProps) => {
   const { items: defaultItems } = styleConfigByName[property];
-  const value = currentStyle[property];
+  const value = currentStyle[property]?.value;
 
   const setValue = setProperty(property);
 

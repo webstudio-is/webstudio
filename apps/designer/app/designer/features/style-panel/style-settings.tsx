@@ -1,6 +1,6 @@
 import hyphenate from "hyphenate-style-name";
 import { categories, type Category } from "@webstudio-is/react-sdk";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 
 import {
@@ -15,6 +15,7 @@ import {
   type SetProperty,
   type CreateBatchUpdate,
 } from "./shared/use-style-data";
+import type { StyleInfo } from "./shared/style-info";
 import type { RenderPropertyProps } from "./style-sections";
 
 // Finds a property/value by using any available form: property, label, value
@@ -52,14 +53,17 @@ const filterProperties = (
   });
 };
 
-const appliesTo = (styleConfig: StyleConfig, currentStyle: Style): boolean => {
+const appliesTo = (
+  styleConfig: StyleConfig,
+  currentStyle: StyleInfo
+): boolean => {
   const { appliesTo } = styleConfig;
   if (appliesTo in dependencies) {
     const dependency = dependencies[appliesTo];
     if (dependency === undefined) {
       return false;
     }
-    const currentValue = toValue(currentStyle[dependency.property]);
+    const currentValue = toValue(currentStyle[dependency.property]?.value);
     if (currentValue === undefined) {
       return false;
     }
@@ -83,7 +87,7 @@ const didRender = (category: Category, property: StyleProperty): boolean => {
 };
 
 export type StyleSettingsProps = {
-  currentStyle: Style;
+  currentStyle: StyleInfo;
   setProperty: SetProperty;
   deleteProperty: (property: StyleProperty) => void;
   createBatchUpdate: CreateBatchUpdate;

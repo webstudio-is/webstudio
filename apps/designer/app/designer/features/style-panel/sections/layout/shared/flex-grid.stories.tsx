@@ -51,9 +51,15 @@ const Base = ({ flexDirection }: { flexDirection: string }) => {
             <Box key={justifyContent} css={{ width: 72, height: 72 }}>
               <FlexGrid
                 currentStyle={{
-                  flexDirection: { type: "keyword", value: flexDirection },
-                  justifyContent: { type: "keyword", value: justifyContent },
-                  alignItems: { type: "keyword", value: alignItems },
+                  flexDirection: {
+                    value: { type: "keyword", value: flexDirection },
+                  },
+                  justifyContent: {
+                    value: { type: "keyword", value: justifyContent },
+                  },
+                  alignItems: {
+                    value: { type: "keyword", value: alignItems },
+                  },
                 }}
                 batchUpdate={batchUpdate}
               />

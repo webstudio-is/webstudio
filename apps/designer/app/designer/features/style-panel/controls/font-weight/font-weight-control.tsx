@@ -71,10 +71,10 @@ export const FontWeightControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const fontWeight = currentStyle[property];
+  const fontWeight = currentStyle[property]?.value;
 
   // We need the font family to determine which font weights are available
-  const fontFamily = currentStyle.fontFamily;
+  const fontFamily = currentStyle.fontFamily?.value;
 
   const availableFontWeights = useAvailableFontWeights(
     toValue(fontFamily, { withFallback: false })

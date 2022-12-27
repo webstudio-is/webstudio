@@ -43,7 +43,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
       <ToggleGroupControl
         property="alignSelf"
         onValueChange={(value) => setAlignSelf(value)}
-        value={toValue(currentStyle.alignSelf)}
+        value={toValue(currentStyle.alignSelf?.value)}
         items={[
           {
             child: <CrossSmallIcon />,
@@ -121,8 +121,8 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
           }
         }}
         value={getSizingValue(
-          toValue(currentStyle.flexGrow),
-          toValue(currentStyle.flexShrink)
+          toValue(currentStyle.flexGrow?.value),
+          toValue(currentStyle.flexShrink?.value)
         )}
         items={[
           {
@@ -239,7 +239,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
             }
           }
         }}
-        value={toValue(currentStyle.order)}
+        value={toValue(currentStyle.order?.value)}
         items={[
           {
             child: <CrossSmallIcon />,

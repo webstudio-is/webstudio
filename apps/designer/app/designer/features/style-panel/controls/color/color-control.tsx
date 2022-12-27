@@ -9,7 +9,7 @@ export const ColorControl = ({
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  let value = currentStyle[property] ?? {
+  let value = currentStyle[property]?.value ?? {
     // provide default value to avoid control hiding
     // when value is recomputed
     type: "rgb" as const,
