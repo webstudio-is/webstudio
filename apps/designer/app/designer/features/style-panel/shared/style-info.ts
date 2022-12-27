@@ -11,10 +11,10 @@ export type StyleInfo = {
 };
 
 export const useStyleInfo = ({
-  breakpointStyle,
+  localStyle,
   browserStyle,
 }: {
-  breakpointStyle: Style;
+  localStyle: Style;
   browserStyle: Style;
 }) => {
   const styleInfoData = useMemo(() => {
@@ -25,14 +25,14 @@ export const useStyleInfo = ({
         value,
       };
     }
-    for (const [property, value] of Object.entries(breakpointStyle)) {
+    for (const [property, value] of Object.entries(localStyle)) {
       styleInfoData[property as StyleProperty] = {
         source: "local",
         value,
       };
     }
     return styleInfoData;
-  }, [browserStyle, breakpointStyle]);
+  }, [browserStyle, localStyle]);
 
   return styleInfoData;
 };

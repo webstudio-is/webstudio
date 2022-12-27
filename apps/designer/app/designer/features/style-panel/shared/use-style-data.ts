@@ -60,7 +60,7 @@ export const useStyleData = ({
   );
 
   const currentStyle = useStyleInfo({
-    breakpointStyle,
+    localStyle: breakpointStyle,
     browserStyle: selectedInstanceData?.browserStyle ?? {},
   });
 
