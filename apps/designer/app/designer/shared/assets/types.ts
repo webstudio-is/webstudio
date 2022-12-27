@@ -1,8 +1,8 @@
-import { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/asset-uploader";
 
 type PreviewAsset = Pick<
   Asset,
-  "path" | "name" | "id" | "format" | "description"
+  "path" | "name" | "id" | "format" | "description" | "type"
 >;
 
 export type UploadedAssetContainer = {

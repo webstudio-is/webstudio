@@ -48,11 +48,13 @@ const BaseAsset = z.object({
 export const FontAsset = BaseAsset.omit({ format: true }).extend({
   format: FontFormat,
   meta: FontMeta,
+  type: z.literal("font"),
 });
 export type FontAsset = z.infer<typeof FontAsset>;
 
 export const ImageAsset = BaseAsset.extend({
   meta: ImageMeta,
+  type: z.literal("image"),
 });
 export type ImageAsset = z.infer<typeof ImageAsset>;
 

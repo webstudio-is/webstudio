@@ -13,7 +13,6 @@ import {
   toBytes,
   type Asset,
 } from "@webstudio-is/asset-uploader";
-import { type FontFormat, FONT_FORMATS } from "@webstudio-is/fonts";
 import { toast } from "@webstudio-is/design-system";
 import { restAssetsPath } from "~/shared/router-utils";
 import { useAssetsContainer, useProject } from "../nano-states";
@@ -93,6 +92,7 @@ const toUploadingAssetsAndFormData = (
             {
               status: "uploading",
               asset: {
+                type,
                 format: file.type.split("/")[1],
                 path: String(dataUri),
                 name: file.name,
@@ -336,14 +336,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
 const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
   return assetContainers.filter((assetContainer) => {
-    const format = assetContainer.asset.format;
-
-    const isFont = FONT_FORMATS.has(format as FontFormat);
-    if (type === "font") {
-      return isFont;
-    }
-
-    return isFont === false;
+    return assetContainer.asset.type === type;
   });
 };
 
