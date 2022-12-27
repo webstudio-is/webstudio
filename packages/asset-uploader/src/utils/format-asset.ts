@@ -12,6 +12,7 @@ export const formatAsset = (asset: DbAsset): Asset => {
   if (isFont) {
     return {
       ...base,
+      type: "font",
       createdAt: base.createdAt.toISOString(),
       format: asset.format as FontFormat,
       meta: FontMeta.parse(JSON.parse(asset.meta)),
@@ -20,6 +21,7 @@ export const formatAsset = (asset: DbAsset): Asset => {
 
   return {
     ...base,
+    type: "image",
     createdAt: base.createdAt.toISOString(),
     meta: ImageMeta.parse(JSON.parse(asset.meta)),
   };

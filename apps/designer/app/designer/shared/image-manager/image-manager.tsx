@@ -9,7 +9,7 @@ import {
 import { useFilter } from "../assets/use-filter";
 import { ImageThumbnail } from "./image-thumbnail";
 import { matchSorter } from "match-sorter";
-import { Asset } from "@webstudio-is/asset-uploader";
+import { ImageAsset } from "@webstudio-is/asset-uploader";
 
 const filterItems = (search: string, items: AssetContainer[]) => {
   return matchSorter(items, search, {
@@ -17,7 +17,7 @@ const filterItems = (search: string, items: AssetContainer[]) => {
   });
 };
 
-const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
+const useLogic = ({ onChange }: { onChange?: (asset: ImageAsset) => void }) => {
   const { assetContainers, handleDelete } = useAssets("image");
 
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -43,7 +43,10 @@ const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
       if (direction === "current") {
         setSelectedIndex(selectedIndex);
         const assetContainer = filteredItems[selectedIndex];
-        if (assetContainer.status === "uploaded") {
+        if (
+          assetContainer.status === "uploaded" &&
+          assetContainer.asset.type === "image"
+        ) {
           onChange?.(assetContainer.asset);
         }
         return;
@@ -74,7 +77,7 @@ const useLogic = ({ onChange }: { onChange?: (asset: Asset) => void }) => {
 };
 
 type ImageManagerProps = {
-  onChange?: (asset: Asset) => void;
+  onChange?: (asset: ImageAsset) => void;
 };
 
 export const ImageManager = ({ onChange }: ImageManagerProps) => {
@@ -101,7 +104,10 @@ export const ImageManager = ({ onChange }: ImageManagerProps) => {
             onSelect={handleSelect}
             onChange={(assetContainer) => {
               // @todo we probably should not allow select uploading images too
-              if (assetContainer.status === "uploaded") {
+              if (
+                assetContainer.status === "uploaded" &&
+                assetContainer.asset.type === "image"
+              ) {
                 onChange?.(assetContainer.asset);
               }
             }}
