@@ -78,7 +78,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
         ref={mergeRefs(forwardedRef, containerRef ?? null)}
         state={state}
         variant={variant}
-        css={css}
+        css={{ ...css, padding: "$spacing$3" }}
         onKeyDown={onKeyDown}
       >
         {value.map((item, index) => (
