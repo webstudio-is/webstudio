@@ -107,7 +107,7 @@ type StyleSourceInputProps<Item> = {
   value?: Array<Item>;
   onItemSelect: (item: Item) => void;
   onItemRemove: (item: Item) => void;
-  onItemCreate: (label: string) => void;
+  onItemCreate: (item: IntermediateItem) => void;
   css?: CSS;
 };
 
@@ -146,7 +146,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onItemCreate(label);
+        props.onItemCreate({ label });
       }
     },
   });

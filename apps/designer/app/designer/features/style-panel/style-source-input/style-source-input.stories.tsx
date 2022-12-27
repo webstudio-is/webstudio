@@ -22,7 +22,7 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={items}
       value={value}
-      onItemCreate={(label) => {
+      onItemCreate={({ label }) => {
         const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
@@ -49,7 +49,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={items}
       value={value}
-      onItemCreate={(label) => {
+      onItemCreate={({ label }) => {
         const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
@@ -82,7 +82,7 @@ export const WithTruncatedItem: ComponentStory<
       css={{ width: 300 }}
       items={items}
       value={value}
-      onItemCreate={(label) => {
+      onItemCreate={({ label }) => {
         const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
