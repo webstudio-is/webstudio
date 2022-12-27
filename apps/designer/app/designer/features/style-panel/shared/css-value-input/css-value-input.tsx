@@ -31,7 +31,7 @@ import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
-import type { StyleValueInfo } from "../style-info";
+import type { StyleSource } from "../style-info";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -206,8 +206,9 @@ type ChangeReason =
   | "scrub-end";
 
 type CssValueInputProps = {
+  styleSource: StyleSource;
   property: StyleProperty;
-  value: StyleValueInfo | undefined;
+  value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;
   /**
    * Selected item in the dropdown
@@ -260,13 +261,14 @@ const initialValue: IntermediateStyleValue = {
  */
 export const CssValueInput = ({
   icon,
+  styleSource,
   property,
   keywords = [],
   onHighlight,
   onAbort,
   ...props
 }: CssValueInputProps & { icon?: JSX.Element }) => {
-  const value = props.intermediateValue ?? props.value?.value ?? initialValue;
+  const value = props.intermediateValue ?? props.value ?? initialValue;
 
   const onChange = (input: string | undefined) => {
     if (input === undefined) {
@@ -309,7 +311,7 @@ export const CssValueInput = ({
   } = useCombobox<CssValueInputValue>({
     items: keywords,
     value,
-    selectedItem: props.value?.value,
+    selectedItem: props.value,
     itemToString: (item) =>
       item === null
         ? ""
@@ -412,10 +414,13 @@ export const CssValueInput = ({
     onKeyDown: inputProps.onKeyDown,
   });
 
-  const isLocalStyle = props.value?.local !== undefined;
+  let state = undefined;
+  if (styleSource === "local") {
+    state = "set" as const;
+  }
   const prefix = icon && (
     <CssValueInputIconButton
-      state={isLocalStyle ? "set" : undefined}
+      state={state}
       css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
     >
       {icon}

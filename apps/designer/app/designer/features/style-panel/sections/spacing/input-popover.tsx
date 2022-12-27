@@ -13,7 +13,7 @@ import {
 } from "../../shared/css-value-input";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import type { StyleChangeHandler } from "./types";
-import type { StyleValueInfo } from "../../shared/style-info";
+import type { StyleSource } from "../../shared/style-info";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -21,13 +21,15 @@ const slideUpAndFade = keyframes({
 });
 
 const Input = ({
+  styleSource,
   value,
   property,
   onChange,
   onClosePopover,
 }: {
+  styleSource: StyleSource;
   property: StyleProperty;
-  value: StyleValueInfo;
+  value: StyleValue;
   onChange: StyleChangeHandler;
   onClosePopover: () => void;
 }) => {
@@ -37,6 +39,7 @@ const Input = ({
 
   return (
     <CssValueInput
+      styleSource={styleSource}
       property={property}
       value={value}
       intermediateValue={intermediateValue}
@@ -101,14 +104,16 @@ const PopoverContentStyled = styled(PopoverContent, {
 });
 
 export const InputPopover = ({
-  value,
+  styleSource,
   property,
+  value,
   onChange,
   isOpen,
   onClose,
 }: {
+  styleSource: StyleSource;
   property: StyleProperty;
-  value: StyleValueInfo;
+  value: StyleValue;
   onChange: StyleChangeHandler;
   isOpen: boolean;
   onClose: () => void;
@@ -128,6 +133,7 @@ export const InputPopover = ({
       <PopoverPortal>
         <PopoverContentStyled hideArrow sideOffset={-24}>
           <Input
+            styleSource={styleSource}
             value={value}
             property={property}
             onChange={onChange}

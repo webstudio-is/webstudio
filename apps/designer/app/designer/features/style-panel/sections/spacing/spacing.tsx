@@ -10,6 +10,7 @@ import type {
 } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpacingTooltip } from "./tooltip";
+import { getStyleSource } from "../../shared/style-info";
 
 const Cell = ({
   isPopoverOpen,
@@ -30,20 +31,26 @@ const Cell = ({
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: RenderCategoryProps["currentStyle"];
 }) => {
-  const isLocalStyle = currentStyle[property]?.local !== undefined;
-
+  const styleInfo = currentStyle[property];
   const finalValue = scrubStatus.isActive
-    ? { value: scrubStatus.value }
-    : currentStyle[property];
+    ? scrubStatus.value
+    : styleInfo?.value;
+  const styleSource = getStyleSource(styleInfo);
 
   // for TypeScript
   if (finalValue === undefined) {
     return null;
   }
 
+  let origin: "set" | "unset" = "unset";
+  if (styleSource === "local") {
+    origin = "set";
+  }
+
   return (
     <>
       <InputPopover
+        styleSource={styleSource}
         value={finalValue}
         isOpen={isPopoverOpen}
         property={property}
@@ -63,9 +70,9 @@ const Cell = ({
           // because SpacingLayout sets it to "none" for cells' content.
           pointerEvents: "all",
         }}
-        value={finalValue.value}
+        value={finalValue}
         isActive={isActive}
-        origin={isLocalStyle ? "set" : "unset"}
+        origin={origin}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
         }

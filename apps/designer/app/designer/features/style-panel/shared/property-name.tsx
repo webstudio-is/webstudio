@@ -17,19 +17,19 @@ import { UndoIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import type { StyleInfo } from "./style-info";
 
-type PropertyProps = {
-  currentStyle: StyleInfo;
+type PropertyNameProps = {
+  style: StyleInfo;
   property: StyleProperty | StyleProperty[];
   label: string;
   onReset: () => void;
 };
 
 export const PropertyName = ({
-  currentStyle,
+  style: currentStyle,
   property,
   label,
   onReset,
-}: PropertyProps) => {
+}: PropertyNameProps) => {
   const properties = Array.isArray(property) ? property : [property];
   const isLocalStyle = properties.some(
     (property) => currentStyle[property]?.local !== undefined
