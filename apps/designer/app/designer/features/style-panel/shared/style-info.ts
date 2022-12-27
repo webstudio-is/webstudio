@@ -122,20 +122,20 @@ export const getInheritedInfo = (
   cascadedAndSelectedBreakpoints: string[]
 ) => {
   const inheritedStyle: InheritedProperties = {};
-  const parents = utils.tree.getInstancePath(rootInstance, instanceId);
-  for (const parentInstance of parents) {
+  const ancestors = utils.tree.getInstancePath(rootInstance, instanceId);
+  for (const ancestorInstance of ancestors) {
     // skip current element
-    if (parentInstance.id === instanceId) {
+    if (ancestorInstance.id === instanceId) {
       continue;
     }
     const cascadedStyle = getCascadedInfo(
-      parentInstance.cssRules,
+      ancestorInstance.cssRules,
       cascadedAndSelectedBreakpoints
     );
     for (const [property, cascaded] of Object.entries(cascadedStyle)) {
       if (cascaded !== undefined && inheritableProperties.has(property)) {
         inheritedStyle[property as StyleProperty] = {
-          instanceId: parentInstance.id,
+          instanceId: ancestorInstance.id,
           value: cascaded.value,
         };
       }
