@@ -31,7 +31,11 @@ type StyleSourceItemProps = {
   label: string;
 };
 const StyleSourceItem = ({ label }: StyleSourceItemProps) => {
-  return <Button variant="gray">{label}</Button>;
+  return (
+    <Button variant="gray" truncate css={{ maxWidth: "100%" }}>
+      {label}
+    </Button>
+  );
 };
 
 type TextFieldWrapperProps = ComponentProps<"input"> &
@@ -120,7 +124,6 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
     items,
     getInputProps,
     getComboboxProps,
-    //getToggleButtonProps,
     getMenuProps,
     getItemProps,
     isOpen,
