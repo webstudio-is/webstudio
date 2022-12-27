@@ -159,6 +159,7 @@ export const LayoutSection = ({
     <>
       <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
         <PropertyName
+          style={currentStyle}
           property="display"
           label={label}
           onReset={() => deleteProperty("display")}

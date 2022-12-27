@@ -21,6 +21,7 @@ export const WithKeywords = () => {
 
   return (
     <CssValueInput
+      styleSource="preset"
       property="width"
       value={value}
       intermediateValue={intermediateValue}
@@ -61,6 +62,7 @@ export const WithIcons = () => {
 
   return (
     <CssValueInput
+      styleSource="preset"
       property="alignItems"
       value={value}
       intermediateValue={intermediateValue}
@@ -106,6 +108,7 @@ export const WithUnits = () => {
   return (
     <Flex css={{ gap: "$spacing$9" }}>
       <CssValueInput
+        styleSource="preset"
         property="rowGap"
         value={value}
         intermediateValue={intermediateValue}

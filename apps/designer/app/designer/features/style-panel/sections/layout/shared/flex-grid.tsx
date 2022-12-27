@@ -6,9 +6,8 @@ import {
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { DotFilledIcon } from "@webstudio-is/icons";
-import { useIsFromCurrentBreakpoint } from "../../../shared/use-is-from-current-breakpoint";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
-import type { StyleInfo } from "../../../shared/style-info";
+import { getStyleSource, StyleInfo } from "../../../shared/style-info";
 
 export const FlexGrid = ({
   currentStyle,
@@ -17,13 +16,13 @@ export const FlexGrid = ({
   currentStyle: StyleInfo;
   batchUpdate: ReturnType<CreateBatchUpdate>;
 }) => {
-  const isCurrentBreakpoint = useIsFromCurrentBreakpoint([
-    "flexDirection",
-    "justifyContent",
-    "justifyItems",
-    "alignContent",
-    "alignItems",
-  ]);
+  const styleSource = getStyleSource(
+    currentStyle.flexDirection,
+    currentStyle.justifyContent,
+    currentStyle.justifyItems,
+    currentStyle.alignContent,
+    currentStyle.alignItems
+  );
   const flexDirection = toValue(currentStyle.flexDirection?.value);
   const justifyContent = toValue(currentStyle.justifyContent?.value);
   const alignItems = toValue(currentStyle.alignItems?.value);
@@ -47,7 +46,7 @@ export const FlexGrid = ({
         gap: "$spacing$1",
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
-        color: isCurrentBreakpoint ? "$colors$blue9" : "$colors$slate8",
+        color: styleSource === "local" ? "$colors$blue9" : "$colors$slate8",
       }}
     >
       {Array.from(Array(gridSize * gridSize), (_, index) => {

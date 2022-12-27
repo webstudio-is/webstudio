@@ -14,27 +14,36 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import { useIsFromCurrentBreakpoint } from "./use-is-from-current-breakpoint";
 import { isFeatureEnabled } from "~/shared/feature-flags";
+import { getStyleSource, StyleInfo } from "./style-info";
 
-type PropertyProps = {
+type PropertyNameProps = {
+  style: StyleInfo;
   property: StyleProperty | StyleProperty[];
   label: string;
   onReset: () => void;
 };
 
-export const PropertyName = ({ property, label, onReset }: PropertyProps) => {
-  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+export const PropertyName = ({
+  style: currentStyle,
+  property,
+  label,
+  onReset,
+}: PropertyNameProps) => {
+  const properties = Array.isArray(property) ? property : [property];
+  const styleSource = getStyleSource(
+    ...properties.map((property) => currentStyle[property])
+  );
   const [isOpen, setIsOpen] = useState(false);
   const isPopoverEnabled =
-    isFeatureEnabled("propertyReset") && isCurrentBreakpoint;
+    isFeatureEnabled("propertyReset") && styleSource === "local";
 
   const labelElement = (
     <Label
       css={{
         fontWeight: "inherit",
         padding: "calc($spacing$3 / 2) $spacing$3",
-        ...(isCurrentBreakpoint
+        ...(styleSource === "local"
           ? {
               color: "$blue11",
               backgroundColor: "$colors$blue4",

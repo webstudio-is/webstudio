@@ -18,6 +18,7 @@ import {
   EllipsesIcon,
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/designer/shared/floating-panel";
+import { getStyleSource } from "../../shared/style-info";
 
 export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
@@ -36,12 +37,13 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
+        style={currentStyle}
         property="alignSelf"
         label="Align"
         onReset={() => deleteProperty("alignSelf")}
       />
       <ToggleGroupControl
-        property="alignSelf"
+        styleSource={getStyleSource(currentStyle.alignSelf)}
         onValueChange={(value) => setAlignSelf(value)}
         value={toValue(currentStyle.alignSelf?.value)}
         items={[
@@ -88,6 +90,7 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
+        style={currentStyle}
         property={["flexGrow", "flexShrink"]}
         label="Sizing"
         onReset={() => {
@@ -97,7 +100,10 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         }}
       />
       <ToggleGroupControl
-        property={["flexGrow", "flexShrink"]}
+        styleSource={getStyleSource(
+          currentStyle.flexGrow,
+          currentStyle.flexShrink
+        )}
         onValueChange={(value) => {
           switch (value) {
             case "none": {
@@ -169,6 +175,7 @@ const FlexChildSectionSizingPopover = ({
         >
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
+              style={currentStyle}
               property="flexBasis"
               label="Basis"
               onReset={() => deleteProperty("flexBasis")}
@@ -182,6 +189,7 @@ const FlexChildSectionSizingPopover = ({
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
+              style={currentStyle}
               property="flexGrow"
               label="Grow"
               onReset={() => deleteProperty("flexGrow")}
@@ -195,6 +203,7 @@ const FlexChildSectionSizingPopover = ({
           </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
             <PropertyName
+              style={currentStyle}
               property="flexShrink"
               label="Shrink"
               onReset={() => deleteProperty("flexShrink")}
@@ -223,12 +232,13 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
+        style={currentStyle}
         property="order"
         label="Order"
         onReset={() => deleteProperty("order")}
       />
       <ToggleGroupControl
-        property="order"
+        styleSource={getStyleSource(currentStyle.order)}
         onValueChange={(value) => {
           switch (value) {
             case "0":
@@ -276,6 +286,7 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
         <Grid css={{ padding: "$spacing$9" }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
+              style={currentStyle}
               property="order"
               label="Order"
               onReset={() => deleteProperty("order")}

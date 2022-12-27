@@ -26,12 +26,12 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { useIsFromCurrentBreakpoint } from "../use-is-from-current-breakpoint";
 import { useUnitSelect } from "./unit-select";
 import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
+import type { StyleSource } from "../style-info";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -206,6 +206,7 @@ type ChangeReason =
   | "scrub-end";
 
 type CssValueInputProps = {
+  styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
   intermediateValue: CssValueInputValue | undefined;
@@ -260,6 +261,7 @@ const initialValue: IntermediateStyleValue = {
  */
 export const CssValueInput = ({
   icon,
+  styleSource,
   property,
   keywords = [],
   onHighlight,
@@ -412,10 +414,13 @@ export const CssValueInput = ({
     onKeyDown: inputProps.onKeyDown,
   });
 
-  const isCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
+  let state = undefined;
+  if (styleSource === "local") {
+    state = "set" as const;
+  }
   const prefix = icon && (
     <CssValueInputIconButton
-      state={isCurrentBreakpoint ? "set" : undefined}
+      state={state}
       css={value.type === "unit" ? { cursor: "ew-resize" } : undefined}
     >
       {icon}

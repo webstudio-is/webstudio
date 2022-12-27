@@ -10,6 +10,19 @@ export type StyleInfo = {
   [property in StyleProperty]?: StyleValueInfo;
 };
 
+export type StyleSource = "local" | "preset";
+
+export const getStyleSource = (
+  ...styleValueInfos: (undefined | StyleValueInfo)[]
+): StyleSource => {
+  for (const info of styleValueInfos) {
+    if (info?.local) {
+      return "local";
+    }
+  }
+  return "preset";
+};
+
 export const useStyleInfo = ({
   localStyle,
   browserStyle,

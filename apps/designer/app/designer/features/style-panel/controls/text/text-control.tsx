@@ -7,6 +7,7 @@ import type { StyleValue } from "@webstudio-is/css-data";
 import { useState } from "react";
 import { Box, EnhancedTooltip } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
+import { getStyleSource } from "../../shared/style-info";
 
 export const TextControl = ({
   property,
@@ -17,7 +18,8 @@ export const TextControl = ({
   icon,
 }: ControlProps & { icon?: JSX.Element }) => {
   const { label, items: defaultItems } = styleConfigByName[property];
-  const value = currentStyle[property]?.value;
+  const styleInfo = currentStyle[property];
+  const value = styleInfo?.value;
 
   const setValue = setProperty(property);
 
@@ -29,6 +31,7 @@ export const TextControl = ({
     <EnhancedTooltip content={label}>
       <Box>
         <CssValueInput
+          styleSource={getStyleSource(styleInfo)}
           icon={icon}
           property={property}
           value={value}

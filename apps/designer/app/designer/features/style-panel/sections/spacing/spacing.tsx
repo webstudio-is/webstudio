@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useIsFromCurrentBreakpoint } from "../../shared/use-is-from-current-breakpoint";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
@@ -11,6 +10,7 @@ import type {
 } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpacingTooltip } from "./tooltip";
+import { getStyleSource } from "../../shared/style-info";
 
 const Cell = ({
   isPopoverOpen,
@@ -31,20 +31,26 @@ const Cell = ({
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: RenderCategoryProps["currentStyle"];
 }) => {
-  const isFromCurrentBreakpoint = useIsFromCurrentBreakpoint(property);
-
-  const styleValue = currentStyle[property]?.value;
-
-  const finalValue = scrubStatus.isActive ? scrubStatus.value : styleValue;
+  const styleInfo = currentStyle[property];
+  const finalValue = scrubStatus.isActive
+    ? scrubStatus.value
+    : styleInfo?.value;
+  const styleSource = getStyleSource(styleInfo);
 
   // for TypeScript
   if (finalValue === undefined) {
     return null;
   }
 
+  let origin: "set" | "unset" = "unset";
+  if (styleSource === "local") {
+    origin = "set";
+  }
+
   return (
     <>
       <InputPopover
+        styleSource={styleSource}
         value={finalValue}
         isOpen={isPopoverOpen}
         property={property}
@@ -66,7 +72,7 @@ const Cell = ({
         }}
         value={finalValue}
         isActive={isActive}
-        origin={isFromCurrentBreakpoint ? "set" : "unset"}
+        origin={origin}
         onMouseEnter={(event) =>
           onHover({ property, element: event.currentTarget })
         }
