@@ -52,7 +52,8 @@ NOTE: If this becomes a library there should be more istructions here.
 
 ### I've changed schema only, no data changes. How do I migrate database schema?
 
-- Create a schema migration by running `migrations create-schema <name>`.
+- Make changes to `schema.prisma`.
+- Create a schema migration by running `migrations create-schema <name> --dev`.
 - Apply the migration by running `migrations migrate --dev`.
 
 ### I want to change the data, without schema changes. How do I migrate data only?

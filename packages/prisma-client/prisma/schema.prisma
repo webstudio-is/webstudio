@@ -22,16 +22,22 @@ enum Location {
   REMOTE
 }
 
+enum UploadStatus {
+  UPLOADING
+  UPLOADED
+}
+
 model Asset {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   projectId   String
   format      String
   size        Int
   name        String
   description String?
   location    Location
-  createdAt   DateTime @default(now())
-  meta        String   @default("{}")
+  createdAt   DateTime     @default(now())
+  meta        String       @default("{}")
+  status      UploadStatus @default(UPLOADED)
 }
 
 model User {

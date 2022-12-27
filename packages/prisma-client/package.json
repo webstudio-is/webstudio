@@ -10,7 +10,8 @@
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "checks": "pnpm typecheck && pnpm lint",
     "dev": "prisma generate --watch & build-package --watch",
-    "build": "prisma format && prisma generate && build-package"
+    "build": "prisma format && prisma generate && build-package",
+    "migrations": "./migrations-cli/cli.ts"
   },
   "bin": {
     "migrations": "./migrations-cli/cli.ts"
