@@ -61,7 +61,7 @@ export const useStyleData = ({
 
   const currentStyle = useStyleInfo({
     localStyle: breakpointStyle,
-    browserStyle: selectedInstanceData?.browserStyle ?? {},
+    browserStyle: selectedInstanceData?.browserStyle,
   });
 
   useEffect(() => {
