@@ -22,14 +22,14 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={items}
       value={value}
-      onItemCreate={({ label }) => {
+      onCreate={({ label }) => {
         const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
-      onItemSelect={(item) => {
+      onSelect={(item) => {
         setValue([...value, item]);
       }}
-      onItemRemove={(itemToRemove) => {
+      onRemove={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }
@@ -49,14 +49,14 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={items}
       value={value}
-      onItemCreate={({ label }) => {
+      onCreate={({ label }) => {
         const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
-      onItemSelect={(item) => {
+      onSelect={(item) => {
         setValue([...value, item]);
       }}
-      onItemRemove={(itemToRemove) => {
+      onRemove={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }
@@ -82,14 +82,14 @@ export const WithTruncatedItem: ComponentStory<
       css={{ width: 300 }}
       items={items}
       value={value}
-      onItemCreate={({ label }) => {
+      onCreate={({ label }) => {
         const item = { id: uuid(), label, type: "token" };
         setValue([...value, item]);
       }}
-      onItemSelect={(item) => {
+      onSelect={(item) => {
         setValue([...value, item]);
       }}
-      onItemRemove={(itemToRemove) => {
+      onRemove={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }

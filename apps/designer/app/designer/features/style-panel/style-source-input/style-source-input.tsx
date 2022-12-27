@@ -105,9 +105,9 @@ TextField.displayName = "TextField";
 type StyleSourceInputProps<Item> = {
   items?: Array<Item>;
   value?: Array<Item>;
-  onItemSelect: (item: Item) => void;
-  onItemRemove: (item: Item) => void;
-  onItemCreate: (item: IntermediateItem) => void;
+  onSelect: (item: Item) => void;
+  onRemove: (item: Item) => void;
+  onCreate: (item: IntermediateItem) => void;
   css?: CSS;
 };
 
@@ -130,7 +130,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
       setLabel("");
-      props.onItemSelect(item as Item);
+      props.onSelect(item as Item);
     },
     onInputChange(label) {
       setLabel(label ?? "");
@@ -139,14 +139,14 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
   const inputProps = getInputProps({
     onKeyDown(event) {
       if (event.key === "Backspace" && label === "") {
-        props.onItemRemove(value[value.length - 1]);
+        props.onRemove(value[value.length - 1]);
         return;
       }
     },
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onItemCreate({ label });
+        props.onCreate({ label });
       }
     },
   });
