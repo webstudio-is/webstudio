@@ -39,7 +39,7 @@ const StyleSourceItem = ({ label }: StyleSourceItemProps) => {
   );
 };
 
-type TextFieldWrapperProps = ComponentProps<"input"> &
+type TextFieldWrapperProps = Omit<ComponentProps<"input">, "value"> &
   Pick<
     ComponentProps<typeof TextFieldContainer>,
     "variant" | "state" | "css"
@@ -83,7 +83,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
         ref={mergeRefs(forwardedRef, containerRef ?? null)}
         state={state}
         variant={variant}
-        css={{ ...css, padding: "$spacing$3" }}
+        css={{ ...css, px: "$spacing$3", py: "$spacing$2" }}
         onKeyDown={onKeyDown}
       >
         {value.map((item, index) => (
@@ -105,8 +105,8 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps = {
-  items: Array<StyleSource>;
-  value: Array<StyleSource>;
+  items?: Array<StyleSource>;
+  value?: Array<StyleSource>;
   onItemSelect: (item: StyleSource) => void;
   onItemRemove: (item: StyleSource) => void;
   onItemCreate: (label: string) => void;
@@ -120,6 +120,7 @@ const initialValue: StyleSource = {
 };
 
 export const StyleSourceInput = (props: StyleSourceInputProps) => {
+  const value = props.value ?? [];
   const [inputValue, setInputValue] = useState(initialValue.label);
   const {
     items,
@@ -129,7 +130,7 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
     getItemProps,
     isOpen,
   } = useCombobox({
-    items: props.items,
+    items: props.items ?? [],
     value: { ...initialValue, label: inputValue },
     selectedItem: undefined,
     itemToString: (item) => item?.label ?? "",
@@ -144,7 +145,7 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
   const inputProps = getInputProps({
     onKeyDown(event) {
       if (event.key === "Backspace" && inputValue === "") {
-        props.onItemRemove(props.value[props.value.length - 1]);
+        props.onItemRemove(value[value.length - 1]);
         return;
       }
     },
@@ -163,7 +164,7 @@ export const StyleSourceInput = (props: StyleSourceInputProps) => {
           <TextField
             {...inputProps}
             inputValue={inputValue}
-            value={props.value}
+            value={value}
             css={props.css}
           />
         </ComboboxPopperAnchor>
