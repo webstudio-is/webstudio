@@ -18,8 +18,9 @@ import { UndoIcon } from "@webstudio-is/icons";
 import type { Instance } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
+import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
+import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
 const PropertyPopoverContent = ({
   properties,
@@ -32,8 +33,10 @@ const PropertyPopoverContent = ({
   styleSource: StyleSource;
   onReset: () => void;
 }) => {
-  const [rootInstance] = useRootInstance();
   const [breakpoints] = useBreakpoints();
+  const [rootInstance] = useRootInstance();
+  const [selectedInstanceData] = useSelectedInstanceData();
+  const selectedInstanceId = selectedInstanceData?.id;
 
   // @todo replace with normalized data access
 
@@ -47,21 +50,18 @@ const PropertyPopoverContent = ({
 
   const instancesMap = useMemo(() => {
     const instancesMap: Record<string, Instance> = {};
-    if (rootInstance === undefined) {
+    if (rootInstance === undefined || selectedInstanceId === undefined) {
       return instancesMap;
     }
-    for (const property of properties) {
-      const styleValueInfo = style[property];
-      if (styleValueInfo?.inherited) {
-        const { instanceId } = styleValueInfo.inherited;
-        const instance = utils.tree.findInstanceById(rootInstance, instanceId);
-        if (instance) {
-          instancesMap[instanceId] = instance;
-        }
-      }
+    const ancestors = utils.tree.getInstancePath(
+      rootInstance,
+      selectedInstanceId
+    );
+    for (const ancestor of ancestors) {
+      instancesMap[ancestor.id] = ancestor;
     }
     return instancesMap;
-  }, [rootInstance, styleSource]);
+  }, [rootInstance, styleSource, selectedInstanceId]);
 
   if (styleSource === "local") {
     return (
