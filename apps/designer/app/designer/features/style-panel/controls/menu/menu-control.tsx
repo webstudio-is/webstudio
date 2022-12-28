@@ -41,13 +41,20 @@ export const MenuControl = ({
       };
     })
     .filter((item) => item.icon);
+  let variant: "default" | "set" | "inherited" = "default";
+  if (styleSource === "local") {
+    variant = "set";
+  }
+  if (styleSource === "remote") {
+    variant = "inherited";
+  }
   return (
     <IconButtonWithMenu
+      variant={variant}
       icon={items.find(({ name }) => name === currentValue)?.icon}
       label={label}
       items={items}
       value={String(currentValue)}
-      isActive={styleSource === "local"}
       onChange={setValue}
       onHover={(value) => setValue(value, { isEphemeral: true })}
     />

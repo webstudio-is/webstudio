@@ -418,6 +418,9 @@ export const CssValueInput = ({
   if (styleSource === "local") {
     state = "set" as const;
   }
+  if (styleSource === "remote") {
+    state = "inherited" as const;
+  }
   const prefix = icon && (
     <CssValueInputIconButton
       state={state}

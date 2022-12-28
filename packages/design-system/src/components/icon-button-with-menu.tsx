@@ -2,7 +2,7 @@ import { CheckIcon, IconComponent } from "@webstudio-is/icons";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { styled } from "../stitches.config";
 import { Tooltip } from "./tooltip";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
+import { IconButton } from "./icon-button";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   width: 192,
@@ -46,29 +46,6 @@ const itemIndicatorStyle = {
   justifyContent: "center",
 };
 
-const iconButtonStyle = {
-  width: "$spacing$11",
-  height: "$spacing$11",
-  color: "$colors$gray12",
-  backgroundColor: "$colors$loContrast",
-  "&:focus-visible": {
-    outline: "none",
-    boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
-  },
-};
-
-const iconButtonActiveStyle = {
-  color: "$colors$blue11",
-  backgroundColor: "$colors$blue4",
-  "&:hover,&:focus-visible": {
-    backgroundColor: "$colors$blue4",
-  },
-  "&:focus-visible": {
-    outline: "none",
-    boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
-  },
-};
-
 const arrowStyle = {
   "& *": {
     fill: "$colors$gray4",
@@ -86,14 +63,15 @@ const StyledItemIndicator = styled(
 const StyledArrow = styled(DropdownMenuPrimitive.Arrow, arrowStyle);
 
 export const IconButtonWithMenu = ({
+  variant,
   icon: Icon,
   label,
   value,
   items,
-  isActive,
   onChange,
   onHover,
 }: {
+  variant: "default" | "preset" | "set" | "inherited" | "active";
   icon?: JSX.Element;
   label?: string;
   value: string;
@@ -102,7 +80,6 @@ export const IconButtonWithMenu = ({
     name: string;
     icon?: ReturnType<IconComponent>;
   }>;
-  isActive?: boolean;
   onChange?: (value: string) => void;
   onHover?: (value: string) => void;
 }) => {
@@ -114,14 +91,7 @@ export const IconButtonWithMenu = ({
         disableHoverableContent={true}
       >
         <DropdownMenuPrimitive.Trigger asChild>
-          <DeprecatedIconButton
-            css={{
-              ...iconButtonStyle,
-              ...(isActive && iconButtonActiveStyle),
-            }}
-          >
-            {Icon}
-          </DeprecatedIconButton>
+          <IconButton variant={variant}>{Icon}</IconButton>
         </DropdownMenuPrimitive.Trigger>
       </Tooltip>
       <DropdownMenuPrimitive.Portal>

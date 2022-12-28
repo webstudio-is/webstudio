@@ -20,9 +20,12 @@ export const ToggleGroupControl = ({
   items = [],
   onValueChange,
 }: ToggleGroupControlProps) => {
-  let state: undefined | "set" = undefined;
+  let state: undefined | "set" | "inherited" = undefined;
   if (styleSource === "local") {
     state = "set";
+  }
+  if (styleSource === "remote") {
+    state = "inherited";
   }
   return (
     <ToggleGroup
@@ -55,7 +58,7 @@ const ToggleGroupControlItem = styled(ToggleGroupItem, {
       },
       inherited: {
         "&[data-state=on]": {
-          color: "$colors$orange4",
+          color: "$colors$orange11",
           backgroundColor: "$colors$orange4",
         },
       },

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import warnOnce from "warn-once";
 import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
-import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
@@ -55,9 +55,7 @@ export const useStyleData = ({
     [selectedInstanceData?.cssRules, selectedBreakpoint]
   );
 
-  const [breakpointStyle, setBreakpointStyle] = useState(
-    () => cssRule?.style as Style
-  );
+  const [breakpointStyle, setBreakpointStyle] = useState(() => cssRule?.style);
 
   const currentStyle = useStyleInfo({
     localStyle: breakpointStyle,
