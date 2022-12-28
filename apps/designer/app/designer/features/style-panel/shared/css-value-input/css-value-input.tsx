@@ -32,6 +32,7 @@ import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
+import { toPascalCaseNoDashes } from "./keyword-utils";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -228,20 +229,6 @@ const initialValue: IntermediateStyleValue = {
   value: "",
 };
 
-const keywordToLabel = (keyword: KeywordValue) => {
-  const { value } = keyword;
-
-  const label = value
-    .replace(/-/g, " ")
-    .split(" ")
-    .map((word) => {
-      return word[0].toUpperCase() + word.slice(1);
-    })
-    .join(" ");
-
-  return label;
-};
-
 /**
  * Common:
  * - Free text editing
@@ -317,7 +304,7 @@ export const CssValueInput = ({
     item === null
       ? ""
       : item.type === "keyword"
-      ? keywordToLabel(item)
+      ? toPascalCaseNoDashes(item.value)
       : item.type === "intermediate" || item.type === "unit"
       ? String(item.value)
       : toValue(item);

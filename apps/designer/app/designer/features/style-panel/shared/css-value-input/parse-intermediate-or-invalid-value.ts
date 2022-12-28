@@ -4,18 +4,15 @@ import type {
   InvalidValue,
 } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
-
 import { parseCssValue } from "../parse-css-value";
-
 import { evaluateMath } from "./evaluate-math";
 import { units } from "@webstudio-is/css-data";
+import { toKebabCase } from "./keyword-utils";
 
 export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
   value: IntermediateStyleValue | InvalidValue
 ): StyleValue => {
-  console.log(value);
-
   // Try value with existing or fallback unit
   const unit = "unit" in value ? value.unit ?? "px" : "px";
   let styleInput = parseCssValue(property, `${value.value}${unit}`);
@@ -26,6 +23,13 @@ export const parseIntermediateOrInvalidValue = (
 
   // Probably value is already valid, use it
   styleInput = parseCssValue(property, value.value);
+
+  if (styleInput.type !== "invalid") {
+    return styleInput;
+  }
+
+  // Probably in kebab-case value will be valid
+  styleInput = parseCssValue(property, toKebabCase(value.value));
 
   if (styleInput.type !== "invalid") {
     return styleInput;
