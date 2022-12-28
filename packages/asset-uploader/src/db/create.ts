@@ -54,6 +54,11 @@ export const createAssetWithLimit = async (
     });
 
     if (count >= env.MAX_ASSETS_PER_PROJECT) {
+      /**
+       * Here is right to write `Max ${MAX_ASSETS_PER_PROJECT}` but see the comment below,
+       * it's probable that the user can exceed the limit a little bit.
+       * So it can be a little bit strange that the limit is 5 but the user already has 7.
+       **/
       throw new Error(`Max ${count} assets per project reached`);
     }
 
