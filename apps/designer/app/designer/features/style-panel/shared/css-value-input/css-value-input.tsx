@@ -228,6 +228,20 @@ const initialValue: IntermediateStyleValue = {
   value: "",
 };
 
+const keywordToLabel = (keyword: KeywordValue) => {
+  const { value } = keyword;
+
+  const label = value
+    .replace(/-/g, " ")
+    .split(" ")
+    .map((word) => {
+      return word[0].toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+
+  return label;
+};
+
 /**
  * Common:
  * - Free text editing
@@ -299,6 +313,15 @@ export const CssValueInput = ({
     });
   };
 
+  const itemToString = (item: CssValueInputValue | null) =>
+    item === null
+      ? ""
+      : item.type === "keyword"
+      ? keywordToLabel(item)
+      : item.type === "intermediate" || item.type === "unit"
+      ? String(item.value)
+      : toValue(item);
+
   const {
     items,
     getInputProps,
@@ -312,12 +335,7 @@ export const CssValueInput = ({
     items: keywords,
     value,
     selectedItem: props.value,
-    itemToString: (item) =>
-      item === null
-        ? ""
-        : item.type === "intermediate" || item.type === "unit"
-        ? String(item.value)
-        : toValue(item),
+    itemToString,
     onInputChange: (inputValue) => {
       onChange(inputValue);
     },
@@ -487,7 +505,7 @@ export const CssValueInput = ({
                   {...getItemProps({ item, index })}
                   key={index}
                 >
-                  {item.type === "intermediate" ? item.value : toValue(item)}
+                  {itemToString(item)}
                 </ComboboxListboxItem>
               ))}
           </ComboboxListbox>
