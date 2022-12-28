@@ -11,14 +11,16 @@ import { styleConfigByName } from "../../shared/configs";
 
 const LayoutSectionFlex = ({
   currentStyle,
+  setProperty,
+  deleteProperty,
   createBatchUpdate,
 }: {
   currentStyle: RenderCategoryProps["currentStyle"];
+  setProperty: RenderCategoryProps["setProperty"];
   deleteProperty: RenderCategoryProps["deleteProperty"];
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
 }) => {
   const batchUpdate = createBatchUpdate();
-  const { setProperty, deleteProperty } = batchUpdate;
 
   const flexWrapValue = currentStyle.flexWrap?.value;
 
@@ -178,9 +180,10 @@ export const LayoutSection = ({
 
       {displayValue === "flex" || displayValue === "inline-flex" ? (
         <LayoutSectionFlex
+          currentStyle={currentStyle}
+          setProperty={setProperty}
           deleteProperty={deleteProperty}
           createBatchUpdate={createBatchUpdate}
-          currentStyle={currentStyle}
         />
       ) : (
         styleConfigsByCategory.map((entry) =>

@@ -33,6 +33,14 @@ export const FlexGrid = ({
   const isFlexDirectionColumn =
     flexDirection === "column" || flexDirection === "column-reverse";
 
+  let color = "$slate8";
+  if (styleSource === "local") {
+    color = "$blue9";
+  }
+  if (styleSource === "remote") {
+    color = "$orange9";
+  }
+
   return (
     <Grid
       css={{
@@ -46,7 +54,7 @@ export const FlexGrid = ({
         gap: "$spacing$1",
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
-        color: styleSource === "local" ? "$colors$blue9" : "$colors$slate8",
+        color,
       }}
     >
       {Array.from(Array(gridSize * gridSize), (_, index) => {

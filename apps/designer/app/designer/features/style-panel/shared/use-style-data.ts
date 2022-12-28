@@ -55,9 +55,7 @@ export const useStyleData = ({
     [selectedInstanceData?.cssRules, selectedBreakpoint]
   );
 
-  const [breakpointStyle, setBreakpointStyle] = useState(
-    () => cssRule?.style as Style
-  );
+  const [breakpointStyle, setBreakpointStyle] = useState(() => cssRule?.style);
 
   const currentStyle = useStyleInfo({
     localStyle: breakpointStyle,

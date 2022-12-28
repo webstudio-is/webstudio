@@ -43,15 +43,18 @@ export const PropertyName = ({
       css={{
         fontWeight: "inherit",
         padding: "calc($spacing$3 / 2) $spacing$3",
-        ...(styleSource === "local"
-          ? {
-              color: "$blue11",
-              backgroundColor: "$colors$blue4",
-              borderRadius: "$borderRadius$4",
-            }
-          : {
-              color: "$hiContrast",
-            }),
+        borderRadius: "$borderRadius$4",
+        ...(styleSource === "local" && {
+          color: "$blue11",
+          backgroundColor: "$blue4",
+        }),
+        ...(styleSource === "remote" && {
+          color: "$orange11",
+          backgroundColor: "$orange4",
+        }),
+        ...(styleSource === "preset" && {
+          color: "$hiContrast",
+        }),
       }}
       htmlFor={property.toString()}
     >

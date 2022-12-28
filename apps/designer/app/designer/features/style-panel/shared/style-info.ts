@@ -44,7 +44,7 @@ export type StyleInfo = {
   [property in StyleProperty]?: StyleValueInfo;
 };
 
-export type StyleSource = "local" | "preset";
+export type StyleSource = "local" | "remote" | "preset";
 
 export const getStyleSource = (
   ...styleValueInfos: (undefined | StyleValueInfo)[]
@@ -52,6 +52,11 @@ export const getStyleSource = (
   for (const info of styleValueInfos) {
     if (info?.local) {
       return "local";
+    }
+  }
+  for (const info of styleValueInfos) {
+    if (info?.cascaded !== undefined || info?.inherited !== undefined) {
+      return "remote";
     }
   }
   return "preset";
@@ -152,7 +157,7 @@ export const useStyleInfo = ({
   localStyle,
   browserStyle,
 }: {
-  localStyle: Style;
+  localStyle?: Style;
   browserStyle?: Style;
 }) => {
   const [breakpoints] = useBreakpoints();
@@ -203,7 +208,7 @@ export const useStyleInfo = ({
       const computed = browserStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
-      const local = localStyle[property];
+      const local = localStyle?.[property];
       const value = local ?? cascaded?.value ?? inherited?.value ?? computed;
       if (value) {
         styleInfoData[property] = {
