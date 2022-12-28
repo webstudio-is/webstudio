@@ -484,7 +484,7 @@ export const CssValueInput = ({
             }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
-            baseRef={scrubRef}
+            containerRef={scrubRef}
             inputRef={inputRef}
             name={property}
             state={value.type === "invalid" ? "invalid" : undefined}
