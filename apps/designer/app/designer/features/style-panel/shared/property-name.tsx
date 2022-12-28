@@ -61,7 +61,7 @@ const PropertyPopoverContent = ({
       instancesMap[ancestor.id] = ancestor;
     }
     return instancesMap;
-  }, [rootInstance, styleSource, selectedInstanceId]);
+  }, [rootInstance, selectedInstanceId]);
 
   if (styleSource === "local") {
     return (
