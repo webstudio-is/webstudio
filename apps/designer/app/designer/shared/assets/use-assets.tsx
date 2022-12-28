@@ -203,7 +203,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       load(action);
     }
 
-    if (data.status === "error") {
+    if (data.status === "error" || data.errors !== undefined) {
       // We don't know what's wrong, remove uploading asset and wait for the load to fix it
       setAssetContainers(
         assetContainers.filter(
@@ -213,7 +213,10 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
         )
       );
 
-      return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+      return toastUnknownFieldErrors(
+        normalizeErrors(data.errors ?? "Could not upload an asset"),
+        []
+      );
     }
 
     warnOnce(

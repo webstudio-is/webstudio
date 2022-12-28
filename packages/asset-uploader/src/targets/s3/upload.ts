@@ -11,7 +11,7 @@ import { Location } from "@webstudio-is/prisma-client";
 import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
 import { getAssetData } from "../../utils/get-asset-data";
-import { createMany } from "../../db";
+import { createAssetWithLimit } from "../../db";
 import { idsFormDataFieldName, type Asset } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
 import { getS3Client } from "./client";
@@ -23,6 +23,10 @@ const AssetsUploadedSuccess = z.object({
 });
 
 const Ids = z.array(z.string().uuid());
+
+/**
+ * Do not change. Upload code assumes its 1.
+ */
 const MAX_FILES_PER_REQUEST = 1;
 
 export const uploadToS3 = async ({
@@ -34,32 +38,36 @@ export const uploadToS3 = async ({
   projectId: string;
   maxSize: number;
 }): Promise<Array<Asset>> => {
-  const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST);
+  const asset = await createAssetWithLimit(projectId, async () => {
+    const uploadHandler = createUploadHandler(MAX_FILES_PER_REQUEST);
 
-  const formData = await unstableCreateFileUploadHandler(
-    request,
-    unstableComposeUploadHandlers(
-      (file: UploadHandlerPart) =>
-        uploadHandler({
-          file,
-          maxSize,
-        }),
-      uuidHandler
-    )
-  );
+    const formData = await unstableCreateFileUploadHandler(
+      request,
+      unstableComposeUploadHandlers(
+        (file: UploadHandlerPart) =>
+          uploadHandler({
+            file,
+            maxSize,
+          }),
+        uuidHandler
+      )
+    );
 
-  const imagesFormData = formData.getAll("image") as Array<string>;
-  const fontsFormData = formData.getAll("font") as Array<string>;
-  const ids = Ids.parse(formData.getAll(idsFormDataFieldName));
+    const imagesFormData = formData.getAll("image") as Array<string>;
+    const fontsFormData = formData.getAll("font") as Array<string>;
+    const ids = Ids.parse(formData.getAll(idsFormDataFieldName));
 
-  const assetsData = [...imagesFormData, ...fontsFormData]
-    .slice(0, MAX_FILES_PER_REQUEST)
-    .map((dataString, i) => {
-      // @todo validate with zod
-      return { ...JSON.parse(dataString), id: ids[i] };
-    });
+    const assetsData = [...imagesFormData, ...fontsFormData]
+      .slice(0, MAX_FILES_PER_REQUEST)
+      .map((dataString, i) => {
+        // @todo validate with zod
+        return { ...JSON.parse(dataString), id: ids[i] };
+      });
 
-  return await createMany(projectId, assetsData);
+    return assetsData[0];
+  });
+
+  return [asset];
 };
 
 const createUploadHandler = (maxFiles: number) => {

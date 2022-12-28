@@ -15,6 +15,10 @@ const maxSize = z
   .transform(toBytes)
   .default(MAX_UPLOAD_SIZE);
 
+export const Env = z.object({
+  MAX_ASSETS_PER_PROJECT: z.string().default("50").transform(Number.parseFloat),
+});
+
 export const S3Env = z.object({
   S3_ENDPOINT: z.string(),
   S3_REGION: z.string(),

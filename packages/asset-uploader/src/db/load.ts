@@ -10,7 +10,7 @@ export const loadByProject = async (
   }
 
   const assets = await prisma.asset.findMany({
-    where: { projectId },
+    where: { projectId, status: "UPLOADED" },
     orderBy: {
       createdAt: "desc",
     },
