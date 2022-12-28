@@ -49,6 +49,8 @@ export type StyleSource = "local" | "remote" | "preset";
 export const getStyleSource = (
   ...styleValueInfos: (undefined | StyleValueInfo)[]
 ): StyleSource => {
+  // show source to use if at least one of control properties matches
+  // so user could see if something is set or something is inherited
   for (const info of styleValueInfos) {
     if (info?.local) {
       return "local";
