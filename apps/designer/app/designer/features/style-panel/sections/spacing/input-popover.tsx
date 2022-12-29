@@ -74,7 +74,6 @@ const Input = ({
         setIntermediateValue(undefined);
         onChange({ operation: "set", property, value }, { isEphemeral: false });
 
-        // @todo: handle Esc
         if (reason === "blur" || reason === "enter") {
           onClosePopover();
         }
