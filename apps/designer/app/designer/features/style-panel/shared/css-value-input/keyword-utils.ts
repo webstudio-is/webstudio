@@ -2,7 +2,7 @@
  * Beautify a CSS keyword by capitalizing the first letter of each word,
  * and replacing dashes with spaces.
  */
-export const toPascalCaseNoDashes = (keyword: string) => {
+export const toPascalCase = (keyword: string) => {
   const label = keyword
     .replace(/-/g, " ")
     .split(" ")
