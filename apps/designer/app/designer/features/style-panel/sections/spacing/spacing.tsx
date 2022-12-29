@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
@@ -8,6 +8,7 @@ import type {
   SpacingStyleProperty,
   HoverTagret,
 } from "./types";
+import { toSpacingProperty } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpacingTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
@@ -88,6 +89,7 @@ const Cell = ({
 export const SpacingSection = ({
   setProperty,
   deleteProperty,
+  createBatchUpdate,
   currentStyle,
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
@@ -106,7 +108,18 @@ export const SpacingSection = ({
         ? undefined
         : currentStyle[hoverTarget.property]?.value,
     target: hoverTarget,
-    onChange: handleChange,
+    onChange: (update, options) => {
+      const group = getModifiersGroup(
+        toSpacingProperty(update.property),
+        modifiers
+      );
+      const batch = createBatchUpdate();
+      for (const property of group) {
+        batch.add({ ...update, property });
+        // handleChange({ ...update, property }, options);
+      }
+      batch.publish(options);
+    },
   });
 
   const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
@@ -119,7 +132,7 @@ export const SpacingSection = ({
     <SpacingLayout
       onClick={() => setOpenProperty(hoverTarget?.property)}
       onHover={setHoverTarget}
-      activeProperty={activeProperty}
+      activeProperties={activeProperty && [activeProperty]}
       renderCell={({ property }) => (
         <Cell
           isPopoverOpen={openProperty === property}

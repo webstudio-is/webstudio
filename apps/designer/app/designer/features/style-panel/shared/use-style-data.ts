@@ -38,7 +38,8 @@ export type CreateBatchUpdate = () => {
     property: StyleProperty
   ) => (style: string | StyleValue) => void;
   deleteProperty: (property: StyleProperty) => void;
-  publish: () => void;
+  add: (update: StyleUpdates["updates"][number]) => void;
+  publish: (options?: StyleUpdateOptions) => void;
 };
 
 export const useStyleData = ({
@@ -174,32 +175,41 @@ export const useStyleData = ({
       updates.push({ operation: "delete", property });
     };
 
-    const publish = () => {
+    const add = (update: StyleUpdates["updates"][number]) => {
+      updates.push(update);
+    };
+
+    const publish = (options = { isEphemeral: false }) => {
       if (!updates.length) {
         return;
       }
-      publishUpdates("update", updates);
-      setBreakpointStyle((prevStyle) => {
-        const nextStyle = updates.reduce(
-          (reduceStyle, update) => {
-            if (update.operation === "delete") {
-              delete reduceStyle[update.property];
-            }
-            if (update.operation === "set") {
-              reduceStyle[update.property] = update.value;
-            }
-            return reduceStyle;
-          },
-          { ...prevStyle }
-        );
-        updates = [];
-        return nextStyle;
-      });
+      const type = options.isEphemeral ? "preview" : "update";
+      publishUpdates(type, updates);
+
+      if (options.isEphemeral === false) {
+        setBreakpointStyle((prevStyle) => {
+          const nextStyle = updates.reduce(
+            (reduceStyle, update) => {
+              if (update.operation === "delete") {
+                delete reduceStyle[update.property];
+              }
+              if (update.operation === "set") {
+                reduceStyle[update.property] = update.value;
+              }
+              return reduceStyle;
+            },
+            { ...prevStyle }
+          );
+          updates = [];
+          return nextStyle;
+        });
+      }
     };
 
     return {
       setProperty,
       deleteProperty,
+      add,
       publish,
     };
   }, [publishUpdates]);
