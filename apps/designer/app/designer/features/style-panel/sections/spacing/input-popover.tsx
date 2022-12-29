@@ -51,7 +51,6 @@ const Input = ({
           return;
         }
 
-        setIntermediateValue(styleValue);
         if (styleValue.type !== "intermediate") {
           onChange(
             { operation: "set", property, value: styleValue },
