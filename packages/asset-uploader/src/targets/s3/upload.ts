@@ -59,9 +59,9 @@ export const uploadToS3 = async ({
 
     const assetsData = [...imagesFormData, ...fontsFormData]
       .slice(0, MAX_FILES_PER_REQUEST)
-      .map((dataString, i) => {
+      .map((dataString, index) => {
         // @todo validate with zod
-        return { ...JSON.parse(dataString), id: ids[i] };
+        return { ...JSON.parse(dataString), id: ids[index] };
       });
 
     return assetsData[0];
