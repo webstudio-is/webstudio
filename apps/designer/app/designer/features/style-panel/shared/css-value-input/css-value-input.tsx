@@ -1,3 +1,4 @@
+import { matchSorter } from "match-sorter";
 import {
   Box,
   TextField,
@@ -229,6 +230,24 @@ const initialValue: IntermediateStyleValue = {
   value: "",
 };
 
+const itemToString = (item: CssValueInputValue | null) =>
+  item === null
+    ? ""
+    : item.type === "keyword"
+    ? toPascalCase(item.value)
+    : item.type === "intermediate" || item.type === "unit"
+    ? String(item.value)
+    : toValue(item);
+
+const match = <Item,>(
+  search: string,
+  items: Array<Item>,
+  itemToString: (item: Item | null) => string
+) =>
+  matchSorter(items, search, {
+    keys: [itemToString, (item) => itemToString(item).replace(/\s/g, "-")],
+  });
+
 /**
  * Common:
  * - Free text editing
@@ -300,15 +319,6 @@ export const CssValueInput = ({
     });
   };
 
-  const itemToString = (item: CssValueInputValue | null) =>
-    item === null
-      ? ""
-      : item.type === "keyword"
-      ? toPascalCase(item.value)
-      : item.type === "intermediate" || item.type === "unit"
-      ? String(item.value)
-      : toValue(item);
-
   const {
     items,
     getInputProps,
@@ -323,6 +333,7 @@ export const CssValueInput = ({
     value,
     selectedItem: props.value,
     itemToString,
+    match,
     onInputChange: (inputValue) => {
       onChange(inputValue);
     },

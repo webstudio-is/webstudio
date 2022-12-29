@@ -94,7 +94,7 @@ const defaultMatch = <Item,>(
   itemToString: (item: Item | null) => string
 ) =>
   matchSorter(items, search, {
-    keys: [itemToString, (item) => itemToString(item).replace(/\s/g, "-")],
+    keys: [itemToString],
   });
 
 const useFilter = <Item,>({
