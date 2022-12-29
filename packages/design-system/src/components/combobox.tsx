@@ -6,6 +6,7 @@ import {
   type ForwardRefRenderFunction,
   useEffect,
   useRef,
+  type ChangeEvent,
 } from "react";
 import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
@@ -13,6 +14,7 @@ import {
   type DownshiftState,
   type UseComboboxStateChangeOptions,
   type UseComboboxProps as UseDownshiftComboboxProps,
+  type UseComboboxGetInputPropsOptions,
   useCombobox as useDownshiftCombobox,
 } from "downshift";
 import { matchSorter } from "match-sorter";
@@ -92,7 +94,7 @@ const defaultMatch = <Item,>(
   itemToString: (item: Item | null) => string
 ) =>
   matchSorter(items, search, {
-    keys: [(item) => itemToString(item)],
+    keys: [itemToString],
   });
 
 const useFilter = <Item,>({
@@ -198,7 +200,6 @@ export const useCombobox = <Item,>({
     onInputValueChange({ inputValue, type }) {
       if (type === comboboxStateChangeTypes.InputChange) {
         filter(inputValue);
-        onInputChange?.(inputValue);
       }
     },
     onSelectedItemChange({ selectedItem, type }) {
@@ -220,13 +221,30 @@ export const useCombobox = <Item,>({
     },
   });
 
-  const { getItemProps, highlightedIndex, getMenuProps } = downshiftProps;
+  const { getItemProps, highlightedIndex, getMenuProps, getInputProps } =
+    downshiftProps;
 
   useEffect(() => {
     if (isOpen === false) {
       resetFilter();
     }
   }, [isOpen, resetFilter]);
+
+  const enhancedGetInputProps = useCallback(
+    (options?: UseComboboxGetInputPropsOptions) => {
+      const inputProps = getInputProps(options);
+      return {
+        ...inputProps,
+        onChange: (event: ChangeEvent<HTMLInputElement>) => {
+          inputProps.onChange(event);
+          // If we want controllable input we need to call onInputChange here
+          // see https://github.com/downshift-js/downshift/issues/1108
+          onInputChange?.(event.target.value);
+        },
+      };
+    },
+    [getInputProps, onInputChange]
+  );
 
   const enhancedGetItemProps = useCallback(
     (options) => {
@@ -259,6 +277,7 @@ export const useCombobox = <Item,>({
     items: filteredItems,
     getItemProps: enhancedGetItemProps,
     getMenuProps: enhancedGetMenuProps,
+    getInputProps: enhancedGetInputProps,
     resetFilter,
   };
 };

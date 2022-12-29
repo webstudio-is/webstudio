@@ -1,3 +1,4 @@
+import { matchSorter } from "match-sorter";
 import {
   Box,
   TextField,
@@ -32,6 +33,7 @@ import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
+import { toPascalCase } from "./keyword-utils";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -228,6 +230,24 @@ const initialValue: IntermediateStyleValue = {
   value: "",
 };
 
+const itemToString = (item: CssValueInputValue | null) =>
+  item === null
+    ? ""
+    : item.type === "keyword"
+    ? toPascalCase(item.value)
+    : item.type === "intermediate" || item.type === "unit"
+    ? String(item.value)
+    : toValue(item);
+
+const match = <Item,>(
+  search: string,
+  items: Array<Item>,
+  itemToString: (item: Item | null) => string
+) =>
+  matchSorter(items, search, {
+    keys: [itemToString, (item) => itemToString(item).replace(/\s/g, "-")],
+  });
+
 /**
  * Common:
  * - Free text editing
@@ -312,12 +332,8 @@ export const CssValueInput = ({
     items: keywords,
     value,
     selectedItem: props.value,
-    itemToString: (item) =>
-      item === null
-        ? ""
-        : item.type === "intermediate" || item.type === "unit"
-        ? String(item.value)
-        : toValue(item),
+    itemToString,
+    match,
     onInputChange: (inputValue) => {
       onChange(inputValue);
     },
@@ -466,7 +482,7 @@ export const CssValueInput = ({
             }}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
-            baseRef={scrubRef}
+            containerRef={scrubRef}
             inputRef={inputRef}
             name={property}
             state={value.type === "invalid" ? "invalid" : undefined}
@@ -487,7 +503,7 @@ export const CssValueInput = ({
                   {...getItemProps({ item, index })}
                   key={index}
                 >
-                  {item.type === "intermediate" ? item.value : toValue(item)}
+                  {itemToString(item)}
                 </ComboboxListboxItem>
               ))}
           </ComboboxListbox>
