@@ -59,7 +59,7 @@ export const createAssetWithLimit = async (
        * it's probable that the user can exceed the limit a little bit.
        * So it can be a little bit strange that the limit is 5 but the user already has 7.
        **/
-      throw new Error(`Max ${count} assets per project reached`);
+      throw new Error(`The maximum number of assets per project is ${count}.`);
     }
 
     /**
@@ -88,7 +88,7 @@ export const createAssetWithLimit = async (
 
     const asset = await uploadAsset();
 
-    const size = asset.size || 0;
+    const size = asset.size ?? 0;
     const { id, meta, format, name, location } = asset;
 
     const dbAsset = await prisma.asset.update({
