@@ -57,15 +57,7 @@ const appliesTo = (
   styleConfig: StyleConfig,
   currentStyle: StyleInfo
 ): boolean => {
-  let { appliesTo } = styleConfig;
-
-  const { property } = styleConfig;
-
-  // see https://github.com/mdn/data/issues/585 alignItems and justifyItems have the wrong appliesTo
-  // moreover just flexContainersAndGridContainers not exists, we patch it here with the most similar appliesTo value
-  if (property === "alignItems" || property === "justifyItems") {
-    appliesTo = "multiColumnElementsFlexContainersGridContainers";
-  }
+  const { appliesTo } = styleConfig;
 
   if (appliesTo in dependencies) {
     const dependency = dependencies[appliesTo];
