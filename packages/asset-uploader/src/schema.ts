@@ -35,7 +35,8 @@ export const FsEnv = z.object({
   FILE_UPLOAD_PATH: z.string().default(DEFAULT_UPLOAD_PATH),
 });
 
-const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
+export const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
+export type Location = z.infer<typeof Location>;
 
 const BaseAsset = z.object({
   id: z.string(),

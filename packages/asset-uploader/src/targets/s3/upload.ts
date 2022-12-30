@@ -10,7 +10,7 @@ import { Upload } from "@aws-sdk/lib-storage";
 import { Location } from "@webstudio-is/prisma-client";
 import { S3Env } from "../../schema";
 import { toUint8Array } from "../../utils/to-uint8-array";
-import { getAssetData } from "../../utils/get-asset-data";
+import { getAssetData, AssetData } from "../../utils/get-asset-data";
 import { createAssetWithLimit } from "../../db";
 import { idsFormDataFieldName, type Asset } from "../../schema";
 import { getUniqueFilename } from "../../utils/get-unique-filename";
@@ -60,8 +60,7 @@ export const uploadToS3 = async ({
     const assetsData = [...imagesFormData, ...fontsFormData]
       .slice(0, MAX_FILES_PER_REQUEST)
       .map((dataString, index) => {
-        // @todo validate with zod
-        return { ...JSON.parse(dataString), id: ids[index] };
+        return AssetData.parse({ ...JSON.parse(dataString), id: ids[index] });
       });
 
     return assetsData[0];

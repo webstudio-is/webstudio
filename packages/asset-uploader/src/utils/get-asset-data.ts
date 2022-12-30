@@ -1,28 +1,31 @@
-import { Location } from "@webstudio-is/prisma-client";
+import { z } from "zod";
+
 import sharp from "sharp";
-import { type ImageMeta } from "../schema";
-import { type FontMeta } from "@webstudio-is/fonts";
+import { Location, ImageMeta } from "../schema";
+import { FontMeta } from "@webstudio-is/fonts";
 import { getFontData } from "@webstudio-is/fonts/server";
 
-type BaseData = {
-  id: string;
-  name: string;
-  size: number;
-  location: Location;
-  format: string;
-};
+const BaseData = z.object({
+  id: z.string(),
+  name: z.string(),
+  size: z.number(),
+  location: Location,
+  format: z.string(),
+});
 
-type ImageData = BaseData & {
-  type: "image";
-  meta: ImageMeta;
-};
+const ImageData = BaseData.extend({
+  type: z.literal("image"),
+  meta: ImageMeta,
+});
 
-type FontData = BaseData & {
-  type: "font";
-  meta: FontMeta;
-};
+const FontData = BaseData.extend({
+  type: z.literal("font"),
+  meta: FontMeta,
+});
 
-export type AssetData = ImageData | FontData;
+export const AssetData = z.union([ImageData, FontData]);
+
+export type AssetData = z.infer<typeof AssetData>;
 
 type BaseAssetOptions = {
   id: string;
