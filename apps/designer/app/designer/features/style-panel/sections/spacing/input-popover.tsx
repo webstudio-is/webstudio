@@ -1,4 +1,4 @@
-import { ComponentProps, useState } from "react";
+import { type ComponentProps, useState } from "react";
 import {
   keyframes,
   Popover,

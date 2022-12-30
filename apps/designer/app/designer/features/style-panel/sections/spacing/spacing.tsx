@@ -1,4 +1,4 @@
-import { ComponentProps, useState } from "react";
+import { type ComponentProps, useState } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";

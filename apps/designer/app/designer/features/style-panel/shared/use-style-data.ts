@@ -38,7 +38,6 @@ export type CreateBatchUpdate = () => {
     property: StyleProperty
   ) => (style: string | StyleValue) => void;
   deleteProperty: (property: StyleProperty) => void;
-  add: (update: StyleUpdates["updates"][number]) => void;
   publish: (options?: StyleUpdateOptions) => void;
 };
 
@@ -175,10 +174,6 @@ export const useStyleData = ({
       updates.push({ operation: "delete", property });
     };
 
-    const add = (update: StyleUpdates["updates"][number]) => {
-      updates.push(update);
-    };
-
     const publish = (options = { isEphemeral: false }) => {
       if (!updates.length) {
         return;
@@ -209,7 +204,6 @@ export const useStyleData = ({
     return {
       setProperty,
       deleteProperty,
-      add,
       publish,
     };
   }, [publishUpdates]);
