@@ -127,9 +127,9 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
           sideOffset={4}
           collisionPadding={4}
         >
-          {view === "confirmation" && (
+          {view === "confirmation" && breakpointToDelete && (
             <ConfirmationDialog
-              breakpoint={selectedBreakpoint}
+              breakpoint={breakpointToDelete}
               onAbort={() => {
                 setBreakpointToDelete(undefined);
                 setView("editor");
