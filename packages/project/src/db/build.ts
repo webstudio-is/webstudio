@@ -1,6 +1,5 @@
 import { v4 as uuid } from "uuid";
 import { prisma, Build as DbBuild, Prisma } from "@webstudio-is/prisma-client";
-import { type Breakpoint } from "@webstudio-is/css-data";
 import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
 import * as db from ".";
 import { Build, Page, Pages } from "./schema";
@@ -82,10 +81,7 @@ export const addPage = async (
     Partial<Omit<Page, "id" | "treeId" | "name" | "path">>
 ) => {
   return updatePages(buildId, async (currentPages) => {
-    const breakpoints = await db.breakpoints.load(buildId);
-    const tree = await db.tree.create(
-      db.tree.createRootInstance(breakpoints.values)
-    );
+    const tree = await db.tree.create(db.tree.createTree());
 
     return {
       homePage: currentPages.homePage,
@@ -157,14 +153,8 @@ export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
   });
 };
 
-const createPages = async (
-  breakpoints: Array<Breakpoint>,
-  client: Prisma.TransactionClient = prisma
-) => {
-  const tree = await db.tree.create(
-    db.tree.createRootInstance(breakpoints),
-    client
-  );
+const createPages = async (client: Prisma.TransactionClient = prisma) => {
+  const tree = await db.tree.create(db.tree.createTree(), client);
   return Pages.parse({
     homePage: {
       id: uuid(),
@@ -245,7 +235,7 @@ export async function create(
   await prisma.$transaction(async (client) => {
     const pages =
       sourceBuild === undefined
-        ? await createPages(breakpointsValues, client)
+        ? await createPages(client)
         : await clonePages(sourceBuild.pages, client);
 
     if (env === "prod") {

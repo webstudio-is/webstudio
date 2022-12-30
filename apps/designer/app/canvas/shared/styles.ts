@@ -7,7 +7,7 @@ import {
   rootInstanceContainer,
   useDesignTokens,
 } from "~/shared/nano-states";
-import { idAttribute } from "@webstudio-is/react-sdk";
+import { idAttribute, usePresetStyle } from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
   type Breakpoint,
@@ -71,23 +71,20 @@ const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
 const tokensCssEngine = createCssEngine({ name: "tokens" });
+const presetStyleEngine = createCssEngine();
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {
     for (const style of helperStyles) {
       helpersCssEngine.addPlaintextRule(style);
     }
-    if (typeof document !== "undefined") {
-      helpersCssEngine.render();
-    }
+    helpersCssEngine.render();
   }, []);
 
   useIsomorphicLayoutEffect(() => {
     fontsAndDefaultsCssEngine.clear();
     addGlobalRules(fontsAndDefaultsCssEngine, { assets });
-    if (typeof document !== "undefined") {
-      fontsAndDefaultsCssEngine.render();
-    }
+    fontsAndDefaultsCssEngine.render();
   }, [assets]);
 
   const [tokens] = useDesignTokens();
@@ -99,10 +96,27 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
       tokensCssEngine.addStyleRule(`:root`, { style });
     }
 
-    if (typeof document !== "undefined") {
-      tokensCssEngine.render();
-    }
+    tokensCssEngine.render();
   }, [tokens]);
+
+  const presetStyle = usePresetStyle();
+
+  useIsomorphicLayoutEffect(() => {
+    presetStyleEngine.clear();
+    const rules = new Map<string, StyleRule>();
+    for (const { component, property, value } of presetStyle) {
+      let rule = rules.get(component);
+      if (rule === undefined) {
+        rule = presetStyleEngine.addStyleRule(
+          `[data-ws-component=${component}]`,
+          { style: {} }
+        );
+        rules.set(component, rule);
+      }
+      rule.styleMap.set(property, value);
+    }
+    presetStyleEngine.render();
+  }, [presetStyle]);
 
   return null;
 };
