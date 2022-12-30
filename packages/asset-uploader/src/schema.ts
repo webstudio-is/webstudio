@@ -15,6 +15,10 @@ const maxSize = z
   .transform(toBytes)
   .default(MAX_UPLOAD_SIZE);
 
+export const Env = z.object({
+  MAX_ASSETS_PER_PROJECT: z.string().default("50").transform(Number.parseFloat),
+});
+
 export const S3Env = z.object({
   S3_ENDPOINT: z.string(),
   S3_REGION: z.string(),
@@ -31,7 +35,8 @@ export const FsEnv = z.object({
   FILE_UPLOAD_PATH: z.string().default(DEFAULT_UPLOAD_PATH),
 });
 
-const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
+export const Location = z.union([z.literal("FS"), z.literal("REMOTE")]);
+export type Location = z.infer<typeof Location>;
 
 const BaseAsset = z.object({
   id: z.string(),
