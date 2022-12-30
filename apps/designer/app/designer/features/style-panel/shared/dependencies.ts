@@ -43,6 +43,10 @@ export const dependencies: Dependencies = {
     property: "flexWrap",
     values: ["wrap", "wrap-reverse"],
   },
+  multiColumnElementsFlexContainersGridContainers: {
+    property: "display",
+    values: ["flex", "grid"],
+  },
 
   // Used by alignSelf
   // @todo needs to check parent to be display: flex or grid, position: absolute
