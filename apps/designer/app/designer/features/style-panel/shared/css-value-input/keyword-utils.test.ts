@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { toKebabCase } from "./keyword-utils";
+import { toKebabCase } from "../keyword-utils";
 
 describe("toKebabCase", () => {
   test("PascalCase", () => {
