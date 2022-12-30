@@ -1,7 +1,8 @@
 import type { StyleValue, UnitValue } from "@webstudio-is/css-data";
 import { numericScrubControl } from "@webstudio-is/design-system";
 import { useState, useEffect, useRef } from "react";
-import { StyleUpdateOptions } from "../../shared/use-style-data";
+import { useModifierKeys } from "../../shared/modifier-keys";
+import type { StyleUpdateOptions } from "../../shared/use-style-data";
 import type { SpacingStyleProperty, HoverTagret } from "./types";
 
 type Values = Partial<Record<SpacingStyleProperty, StyleValue>>;
@@ -16,8 +17,8 @@ type ScrubStatus = {
   // When scrub is active, this contains ephemeral values for all properties
   // that have been affected during current scrub.
   //
-  // When scrub is not active, this contains the final values of properties
-  // from the last scrub. (@todo: remove this if not used)
+  // Note that Object.keys(values) != properties above,
+  // because user can press and release modifier keys multiple times during scrub.
   values: Values;
 };
 
@@ -39,10 +40,9 @@ export const useScrub = (props: {
 
   const [values, setValues] = useState<Values>({});
 
-  // we need this in useEffect, but don't want it as a dependency
-  // @todo: better name or split
-  const ref = useRef({ props, values, properties });
-  ref.current = { props, values, properties };
+  // we need these in useEffect, but don't want as dependencies
+  const nonDependencies = useRef({ props, values, properties });
+  nonDependencies.current = { props, values, properties };
 
   const unitRef = useRef<UnitValue["unit"]>();
 
@@ -59,19 +59,22 @@ export const useScrub = (props: {
         return;
       }
 
+      const { values, properties, props } = nonDependencies.current;
+
       const value = {
         type: "unit",
         value: event.value,
         unit: unitRef.current,
       } as const;
 
-      const nextValues = { ...ref.current.values };
-      for (const property of ref.current.properties) {
+      const nextValues = { ...values };
+      for (const property of properties) {
         nextValues[property] = value;
       }
-      setValues(nextValues);
 
-      ref.current.props.onChange(nextValues, { isEphemeral });
+      props.onChange(nextValues, { isEphemeral });
+
+      setValues(isEphemeral ? nextValues : {});
     };
 
     const scrub = numericScrubControl(finalTarget.element, {
@@ -80,7 +83,7 @@ export const useScrub = (props: {
           ? "horizontal"
           : "vertical",
       getValue() {
-        const { value } = ref.current.props;
+        const { value } = nonDependencies.current.props;
         if (value?.type === "unit") {
           unitRef.current = value.unit;
           return value.value;
@@ -94,7 +97,9 @@ export const useScrub = (props: {
       },
       onStatusChange(status) {
         setActiveTarget(
-          status === "scrubbing" ? ref.current.props.target : undefined
+          status === "scrubbing"
+            ? nonDependencies.current.props.target
+            : undefined
         );
       },
     });
@@ -107,36 +112,6 @@ export const useScrub = (props: {
     properties,
     values,
   };
-};
-
-// @todo: move to shared? merge with getModifiersGroup?
-const useModifierKeys = () => {
-  const [state, setState] = useState({
-    shiftKey: false,
-    altKey: false,
-    ctrlKey: false,
-    metaKey: false,
-  });
-
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) =>
-      setState({
-        shiftKey: event.shiftKey,
-        altKey: event.altKey,
-        ctrlKey: event.ctrlKey,
-        metaKey: event.metaKey,
-      });
-
-    window.addEventListener("keydown", handler);
-    window.addEventListener("keyup", handler);
-
-    return () => {
-      window.removeEventListener("keydown", handler);
-      window.removeEventListener("keyup", handler);
-    };
-  }, []);
-
-  return state;
 };
 
 const getModifiersGroup = (

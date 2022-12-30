@@ -1,14 +1,10 @@
-import { useState } from "react";
+import { ComponentProps, useState } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
 import { spacingPropertiesNames } from "./types";
-import type {
-  StyleChangeHandler,
-  SpacingStyleProperty,
-  HoverTagret,
-} from "./types";
+import type { SpacingStyleProperty, HoverTagret } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpacingTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
@@ -25,7 +21,7 @@ const Cell = ({
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
-  onChange: StyleChangeHandler;
+  onChange: ComponentProps<typeof InputPopover>["onChange"];
   onHover: (target: HoverTagret | undefined) => void;
   property: SpacingStyleProperty;
   isActive: boolean;
@@ -93,15 +89,6 @@ export const SpacingSection = ({
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
 
-  // @todo: simplify if possible, as this is used only for InputPopover.onChange now
-  const handleChange: StyleChangeHandler = (update, options) => {
-    if (update.operation === "set") {
-      setProperty(update.property)(update.value, options);
-    } else {
-      deleteProperty(update.property, options);
-    }
-  };
-
   const scrubStatus = useScrub({
     value:
       hoverTarget === undefined
@@ -138,7 +125,13 @@ export const SpacingSection = ({
               setOpenProperty(undefined);
             }
           }}
-          onChange={handleChange}
+          onChange={(update, options) => {
+            if (update.operation === "set") {
+              setProperty(update.property)(update.value, options);
+            } else {
+              deleteProperty(update.property, options);
+            }
+          }}
           onHover={setHoverTarget}
           property={property}
           scrubStatus={scrubStatus}
