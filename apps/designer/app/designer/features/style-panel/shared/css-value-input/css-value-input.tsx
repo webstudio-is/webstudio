@@ -33,7 +33,7 @@ import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
-import { toPascalCase } from "./keyword-utils";
+import { toPascalCase } from "../keyword-utils";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (

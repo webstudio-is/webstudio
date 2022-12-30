@@ -7,7 +7,7 @@ import type { IntermediateStyleValue } from "./css-value-input";
 import { parseCssValue } from "../parse-css-value";
 import { evaluateMath } from "./evaluate-math";
 import { units } from "@webstudio-is/css-data";
-import { toKebabCase } from "./keyword-utils";
+import { toKebabCase } from "../keyword-utils";
 
 export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
