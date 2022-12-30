@@ -223,14 +223,14 @@ const getPath = (property: SpacingStyleProperty) => {
 type LayoutProps = {
   onClick: () => void;
   onHover: (hoverTarget: HoverTagret | undefined) => void;
-  activeProperty?: SpacingStyleProperty;
+  activeProperties?: ReadonlyArray<SpacingStyleProperty>;
   renderCell: (args: { property: SpacingStyleProperty }) => React.ReactNode;
 };
 
 export const SpacingLayout = ({
   onClick,
   onHover,
-  activeProperty,
+  activeProperties,
   renderCell,
 }: LayoutProps) => {
   const outerClipId = useId();
@@ -244,7 +244,7 @@ export const SpacingLayout = ({
         onHover({ element: event.currentTarget, property })
       }
       onMouseLeave={() => onHover(undefined)}
-      isActive={activeProperty === property}
+      isActive={activeProperties?.includes(property)}
     />
   );
 

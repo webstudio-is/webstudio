@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import {
   keyframes,
   Popover,
@@ -7,13 +7,14 @@ import {
   PopoverPortal,
   styled,
 } from "@webstudio-is/design-system";
+import { StyleUpdate } from "@webstudio-is/project";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
-import type { StyleChangeHandler } from "./types";
 import type { StyleSource } from "../../shared/style-info";
+import { StyleUpdateOptions } from "../../shared/use-style-data";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -30,7 +31,7 @@ const Input = ({
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue;
-  onChange: StyleChangeHandler;
+  onChange: (update: StyleUpdate, options: StyleUpdateOptions) => void;
   onClosePopover: () => void;
 }) => {
   const [intermediateValue, setIntermediateValue] = useState<
@@ -51,7 +52,6 @@ const Input = ({
           return;
         }
 
-        setIntermediateValue(styleValue);
         if (styleValue.type !== "intermediate") {
           onChange(
             { operation: "set", property, value: styleValue },
@@ -74,7 +74,6 @@ const Input = ({
         setIntermediateValue(undefined);
         onChange({ operation: "set", property, value }, { isEphemeral: false });
 
-        // @todo: handle Esc
         if (reason === "blur" || reason === "enter") {
           onClosePopover();
         }
@@ -114,7 +113,7 @@ export const InputPopover = ({
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue;
-  onChange: StyleChangeHandler;
+  onChange: ComponentProps<typeof Input>["onChange"];
   isOpen: boolean;
   onClose: () => void;
 }) => {

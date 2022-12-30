@@ -1,13 +1,10 @@
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
-import type {
-  StyleChangeHandler,
-  SpacingStyleProperty,
-  HoverTagret,
-} from "./types";
+import { spacingPropertiesNames } from "./types";
+import type { SpacingStyleProperty, HoverTagret } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpacingTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
@@ -24,7 +21,7 @@ const Cell = ({
 }: {
   isPopoverOpen: boolean;
   onPopoverClose: () => void;
-  onChange: StyleChangeHandler;
+  onChange: ComponentProps<typeof InputPopover>["onChange"];
   onHover: (target: HoverTagret | undefined) => void;
   property: SpacingStyleProperty;
   isActive: boolean;
@@ -32,9 +29,8 @@ const Cell = ({
   currentStyle: RenderCategoryProps["currentStyle"];
 }) => {
   const styleInfo = currentStyle[property];
-  const finalValue = scrubStatus.isActive
-    ? scrubStatus.value
-    : styleInfo?.value;
+  const finalValue =
+    (scrubStatus.isActive && scrubStatus.values[property]) || styleInfo?.value;
   const styleSource = getStyleSource(styleInfo);
 
   // for TypeScript
@@ -88,17 +84,10 @@ const Cell = ({
 export const SpacingSection = ({
   setProperty,
   deleteProperty,
+  createBatchUpdate,
   currentStyle,
 }: RenderCategoryProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTagret>();
-
-  const handleChange: StyleChangeHandler = (update, options) => {
-    if (update.operation === "set") {
-      setProperty(update.property)(update.value, options);
-    } else {
-      deleteProperty(update.property, options);
-    }
-  };
 
   const scrubStatus = useScrub({
     value:
@@ -106,20 +95,28 @@ export const SpacingSection = ({
         ? undefined
         : currentStyle[hoverTarget.property]?.value,
     target: hoverTarget,
-    onChange: handleChange,
+    onChange: (values, options) => {
+      const batch = createBatchUpdate();
+      for (const property of spacingPropertiesNames) {
+        const value = values[property];
+        if (value !== undefined) {
+          batch.setProperty(property)(value);
+        }
+      }
+      batch.publish(options);
+    },
   });
 
   const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
 
-  const activeProperty = scrubStatus.isActive
-    ? scrubStatus.property
-    : openProperty ?? hoverTarget?.property;
+  const activeProperties =
+    openProperty === undefined ? scrubStatus.properties : [openProperty];
 
   return (
     <SpacingLayout
       onClick={() => setOpenProperty(hoverTarget?.property)}
       onHover={setHoverTarget}
-      activeProperty={activeProperty}
+      activeProperties={activeProperties}
       renderCell={({ property }) => (
         <Cell
           isPopoverOpen={openProperty === property}
@@ -128,15 +125,17 @@ export const SpacingSection = ({
               setOpenProperty(undefined);
             }
           }}
-          onChange={handleChange}
+          onChange={(update, options) => {
+            if (update.operation === "set") {
+              setProperty(update.property)(update.value, options);
+            } else {
+              deleteProperty(update.property, options);
+            }
+          }}
           onHover={setHoverTarget}
           property={property}
-          scrubStatus={
-            scrubStatus.isActive && scrubStatus.property === property
-              ? scrubStatus
-              : { isActive: false }
-          }
-          isActive={activeProperty === property}
+          scrubStatus={scrubStatus}
+          isActive={activeProperties.includes(property)}
           currentStyle={currentStyle}
         />
       )}
