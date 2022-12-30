@@ -3,6 +3,7 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
+import { spacingPropertiesNames } from "./types";
 import type {
   StyleChangeHandler,
   SpacingStyleProperty,
@@ -11,7 +12,6 @@ import type {
 import { InputPopover } from "./input-popover";
 import { SpacingTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
-import { StyleProperty } from "@webstudio-is/css-data";
 
 const Cell = ({
   isPopoverOpen,
@@ -110,8 +110,11 @@ export const SpacingSection = ({
     target: hoverTarget,
     onChange: (values, options) => {
       const batch = createBatchUpdate();
-      for (const [property, value] of Object.entries(values)) {
-        batch.setProperty(property as StyleProperty)(value);
+      for (const property of spacingPropertiesNames) {
+        const value = values[property];
+        if (value !== undefined) {
+          batch.setProperty(property)(value);
+        }
       }
       batch.publish(options);
     },
