@@ -223,7 +223,7 @@ const getPath = (property: SpacingStyleProperty) => {
 type LayoutProps = {
   onClick: () => void;
   onHover: (hoverTarget: HoverTagret | undefined) => void;
-  activeProperties?: SpacingStyleProperty[];
+  activeProperties?: ReadonlyArray<SpacingStyleProperty>;
   renderCell: (args: { property: SpacingStyleProperty }) => React.ReactNode;
 };
 

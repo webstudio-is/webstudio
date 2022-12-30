@@ -12,7 +12,7 @@ type ScrubStatus = {
 
   // Properties that should be affected on the next pointer move.
   // We keep track of these properties even when scrub is not active.
-  properties: SpacingStyleProperty[];
+  properties: ReadonlyArray<SpacingStyleProperty>;
 
   // When scrub is active, this contains ephemeral values for all properties
   // that have been affected during current scrub.
@@ -114,24 +114,28 @@ export const useScrub = (props: {
   };
 };
 
+const opposingGroups = [
+  ["paddingTop", "paddingBottom"],
+  ["paddingRight", "paddingLeft"],
+  ["marginTop", "marginBottom"],
+  ["marginRight", "marginLeft"],
+] as const;
+
+const circleGroups = [
+  ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"],
+  ["marginTop", "marginRight", "marginBottom", "marginLeft"],
+] as const;
+
 const getModifiersGroup = (
   property: SpacingStyleProperty,
   modifiers: { shiftKey: boolean; altKey: boolean }
 ) => {
-  let groups: SpacingStyleProperty[][] = [];
+  let groups: ReadonlyArray<ReadonlyArray<SpacingStyleProperty>> = [];
 
   if (modifiers.shiftKey) {
-    groups = [
-      ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"],
-      ["marginTop", "marginRight", "marginBottom", "marginLeft"],
-    ];
+    groups = circleGroups;
   } else if (modifiers.altKey) {
-    groups = [
-      ["paddingTop", "paddingBottom"],
-      ["paddingRight", "paddingLeft"],
-      ["marginTop", "marginBottom"],
-      ["marginRight", "marginLeft"],
-    ];
+    groups = opposingGroups;
   }
 
   return groups.find((group) => group.includes(property)) ?? [property];
