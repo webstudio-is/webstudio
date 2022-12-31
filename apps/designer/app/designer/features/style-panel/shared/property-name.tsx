@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import type { Breakpoint, StyleProperty } from "@webstudio-is/css-data";
+import { useState } from "react";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
   Button,
@@ -15,10 +15,8 @@ import {
   Separator,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
-import type { Instance } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { isFeatureEnabled } from "~/shared/feature-flags";
-import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 
@@ -35,33 +33,6 @@ const PropertyPopoverContent = ({
 }) => {
   const [breakpoints] = useBreakpoints();
   const [rootInstance] = useRootInstance();
-  const [selectedInstanceData] = useSelectedInstanceData();
-  const selectedInstanceId = selectedInstanceData?.id;
-
-  // @todo replace with normalized data access
-
-  const breakpointsMap = useMemo(() => {
-    const breakpointsMap: Record<string, Breakpoint> = {};
-    for (const breakpoint of breakpoints) {
-      breakpointsMap[breakpoint.id] = breakpoint;
-    }
-    return breakpointsMap;
-  }, [breakpoints]);
-
-  const instancesMap = useMemo(() => {
-    const instancesMap: Record<string, Instance> = {};
-    if (rootInstance === undefined || selectedInstanceId === undefined) {
-      return instancesMap;
-    }
-    const ancestors = utils.tree.getInstancePath(
-      rootInstance,
-      selectedInstanceId
-    );
-    for (const ancestor of ancestors) {
-      instancesMap[ancestor.id] = ancestor;
-    }
-    return instancesMap;
-  }, [rootInstance, selectedInstanceId]);
 
   if (styleSource === "local") {
     return (
@@ -78,20 +49,27 @@ const PropertyPopoverContent = ({
 
             if (styleValueInfo?.cascaded) {
               const { value, breakpointId } = styleValueInfo.cascaded;
+              const breakpoint = breakpoints.find(
+                (item) => item.id === breakpointId
+              );
               return (
                 <Text key={property} color="hint">
                   Resetting will change {property} to cascaded {toValue(value)}{" "}
-                  from {breakpointsMap[breakpointId].label}
+                  from {breakpoint?.label}
                 </Text>
               );
             }
 
             if (styleValueInfo?.inherited) {
               const { value, instanceId } = styleValueInfo.inherited;
+              const instance =
+                rootInstance === undefined
+                  ? undefined
+                  : utils.tree.findInstanceById(rootInstance, instanceId);
               return (
                 <Text key={property} color="hint">
                   Resetting will change {property} to inherited {toValue(value)}{" "}
-                  from {instancesMap[instanceId].component}
+                  from {instance?.component}
                 </Text>
               );
             }
@@ -114,20 +92,25 @@ const PropertyPopoverContent = ({
 
         if (styleValueInfo?.cascaded) {
           const { breakpointId } = styleValueInfo.cascaded;
+          const breakpoint = breakpoints.find(
+            (item) => item.id === breakpointId
+          );
           return (
             <Text key={property} color="hint">
-              {property} value is cascaded from{" "}
-              {breakpointsMap[breakpointId].label}
+              {property} value is cascaded from {breakpoint?.label}
             </Text>
           );
         }
 
         if (styleValueInfo?.inherited) {
           const { instanceId } = styleValueInfo.inherited;
+          const instance =
+            rootInstance === undefined
+              ? undefined
+              : utils.tree.findInstanceById(rootInstance, instanceId);
           return (
             <Text key={property} color="hint">
-              {property} value is inherited from{" "}
-              {instancesMap[instanceId].component}
+              {property} value is inherited from {instance?.component}
             </Text>
           );
         }
