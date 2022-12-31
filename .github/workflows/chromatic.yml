@@ -53,7 +53,7 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       # only packages have to be built as they might be imported by Storybooks
-      - run: pnpm build --filter='!./apps/*'
+      - run: pnpm build-packages
 
       - name: Chromatic
         id: chromatic
