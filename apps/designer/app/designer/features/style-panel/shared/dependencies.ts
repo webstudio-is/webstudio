@@ -31,17 +31,25 @@ export const dependencies: Dependencies = {
   },
   flexContainers: {
     property: "display",
-    values: ["flex"],
+    values: ["flex", "inline-flex"],
   },
   // @todo this should actually check on parent
   flexItemsAndInFlowPseudos: {
     property: "display",
-    values: ["flex"],
+    values: ["flex", "inline-flex"],
   },
   // @todo needs to also check flex-wrap
   multilineFlexContainers: {
     property: "flexWrap",
     values: ["wrap", "wrap-reverse"],
+  },
+  multiColumnElementsFlexContainersGridContainers: {
+    property: "display",
+    values: ["flex", "inline-flex", "grid"],
+  },
+  flexContainersGridContainers: {
+    property: "display",
+    values: ["flex", "inline-flex", "grid"],
   },
 
   // Used by alignSelf

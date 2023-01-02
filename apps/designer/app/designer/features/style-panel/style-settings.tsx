@@ -58,6 +58,7 @@ const appliesTo = (
   currentStyle: StyleInfo
 ): boolean => {
   const { appliesTo } = styleConfig;
+
   if (appliesTo in dependencies) {
     const dependency = dependencies[appliesTo];
     if (dependency === undefined) {
