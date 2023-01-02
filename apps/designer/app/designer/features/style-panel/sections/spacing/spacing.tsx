@@ -1,4 +1,4 @@
-import { type ComponentProps, useState } from "react";
+import { type ComponentProps, useState, useRef } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
 import { SpacingLayout } from "./layout";
 import { ValueText } from "./value-text";
@@ -8,6 +8,7 @@ import type { SpacingStyleProperty, HoverTagret } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpacingTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
+import { useKeyboardNavigation } from "./keyboard";
 
 const Cell = ({
   isPopoverOpen,
@@ -109,13 +110,39 @@ export const SpacingSection = ({
 
   const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
 
-  const activeProperties =
-    openProperty === undefined ? scrubStatus.properties : [openProperty];
+  const layoutRef = useRef<HTMLDivElement>(null);
+
+  const keyboardNavigation = useKeyboardNavigation({
+    onOpen: setOpenProperty,
+  });
+
+  // by deafult highlight hovered or scrubbed properties
+  let activeProperties = scrubStatus.properties;
+
+  // if keyboard navigation is active, highlight its active property
+  if (keyboardNavigation.isActive) {
+    activeProperties = [keyboardNavigation.activeProperty];
+  }
+
+  // if popover is open, highlight its property and hovered properties
+  if (openProperty !== undefined) {
+    activeProperties = [openProperty, ...scrubStatus.properties];
+  }
+
+  const handleHover = (target: HoverTagret | undefined) => {
+    setHoverTarget(target);
+    keyboardNavigation.handleHover(target?.property);
+  };
 
   return (
     <SpacingLayout
+      ref={layoutRef}
       onClick={() => setOpenProperty(hoverTarget?.property)}
-      onHover={setHoverTarget}
+      onHover={handleHover}
+      onFocus={keyboardNavigation.hadnleFocus}
+      onBlur={keyboardNavigation.handleBlur}
+      onKeyDown={keyboardNavigation.handleKeyDown}
+      onMouseLeave={keyboardNavigation.handleMouseLeave}
       activeProperties={activeProperties}
       renderCell={({ property }) => (
         <Cell
@@ -123,6 +150,7 @@ export const SpacingSection = ({
           onPopoverClose={() => {
             if (openProperty === property) {
               setOpenProperty(undefined);
+              layoutRef.current?.focus();
             }
           }}
           onChange={(update, options) => {
@@ -132,7 +160,7 @@ export const SpacingSection = ({
               deleteProperty(update.property, options);
             }
           }}
-          onHover={setHoverTarget}
+          onHover={handleHover}
           property={property}
           scrubStatus={scrubStatus}
           isActive={activeProperties.includes(property)}
