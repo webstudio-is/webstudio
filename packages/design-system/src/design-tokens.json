@@ -303,7 +303,7 @@
     },
     "background": {
       "panel": {
-        "value": "#f8f8f8",
+        "value": "#f8f8f9",
         "type": "color",
         "description": "background color for all panels, titles, columns and rows."
       },
