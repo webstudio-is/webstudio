@@ -52,7 +52,7 @@ model User {
   projects  Project[]
 
   createdWorkspaces Workspace[] @relation("WorkspaceCreatedBy")
-  createdGroups     Group[]     @relation("GroupCreatedBy")
+  // createdGroups     Group[]     @relation("GroupCreatedBy")
 
   workspaceGroupPermissions WorkspaceGroupPermission[] @relation("WorkspaceGroupPermissionCreatedBy")
   workspaceUserPermissions  WorkspaceUserPermission[]  @relation("WorkspaceUserPermissionCreatedBy")
@@ -124,12 +124,12 @@ model Workspace {
   id   String @id @default(uuid()) @db.Uuid
   name String
 
-  workspaceId String @db.Uuid
-
   createdBy   User   @relation("WorkspaceCreatedBy", fields: [createdById], references: [id])
   createdById String
 
-  projects         Project[]                  @relation("ProjectWorkspace")
+  projects        Project[] @relation("ProjectWorkspace")
+  workspaceGroups Group[]   @relation("GroupOwnedBy")
+
   groupPermissions WorkspaceGroupPermission[]
   userPermissions  WorkspaceUserPermission[]
 
@@ -152,8 +152,9 @@ model Group {
   workspacePermissions WorkspaceGroupPermission[]
   projectPermissions   ProjectGroupPermission[]
 
-  createdBy   User   @relation("GroupCreatedBy", fields: [createdById], references: [id])
+  workspaceBy Workspace @relation("GroupOwnedBy", fields: [workspaceId, createdById], references: [id, createdById])
   createdById String
+  workspaceId String    @db.Uuid
 }
 
 model WorkspaceGroupPermission {
