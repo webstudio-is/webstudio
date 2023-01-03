@@ -1,7 +1,7 @@
+import { z } from "zod";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { SharedStyleValue } from "@webstudio-is/css-data";
 import { type ComponentName, getComponentMeta } from "../components";
-import { z } from "zod";
 
 export type PresetStylesItem = {
   component: ComponentName;

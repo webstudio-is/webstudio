@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { createValueContainer, useValue } from "react-nano-state";
+import type { StyleProperty } from "@webstudio-is/css-data";
 import type { PresetStyles } from "../db";
 import { getComponentMeta, getComponentNames } from "../components";
-import type { StyleProperty } from "@webstudio-is/css-data";
 
 const presetStylesContainer = createValueContainer<PresetStyles>([]);
 
