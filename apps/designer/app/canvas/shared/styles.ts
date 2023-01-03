@@ -32,7 +32,7 @@ import {
   updateTokenMutable,
 } from "~/designer/shared/design-tokens-manager";
 
-const cssEngine = createCssEngine();
+const cssEngine = createCssEngine({ name: "user-styles" });
 
 const voidElements =
   "area, base, br, col, embed, hr, img, input, link, meta, source, track, wbr";
@@ -66,9 +66,11 @@ export const useManageDesignModeStyles = () => {
   useRemoveSsrStyles();
 };
 
-const helpersCssEngine = createCssEngine();
-const fontsAndDefaultsCssEngine = createCssEngine();
-const tokensCssEngine = createCssEngine();
+const helpersCssEngine = createCssEngine({ name: "helpers" });
+const fontsAndDefaultsCssEngine = createCssEngine({
+  name: "fonts-and-defaults",
+});
+const tokensCssEngine = createCssEngine({ name: "tokens" });
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {

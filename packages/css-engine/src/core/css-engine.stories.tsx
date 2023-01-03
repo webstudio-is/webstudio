@@ -12,7 +12,7 @@ const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId = "0";
 
 export const Basic = () => {
-  const engine = new CssEngine();
+  const engine = new CssEngine({ name: "test" });
   engine.addMediaRule(mediaId, mediaRuleOptions0);
   const rule = engine.addStyleRule(".test", {
     style: style0,

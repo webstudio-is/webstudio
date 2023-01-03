@@ -23,7 +23,7 @@ export const generateCssText = async (buildParams: BuildParams) => {
     throw json("Page not found", { status: 404 });
   }
 
-  const engine = createCssEngine();
+  const engine = createCssEngine({ name: "ssr" });
 
   addGlobalRules(engine, canvasData);
 

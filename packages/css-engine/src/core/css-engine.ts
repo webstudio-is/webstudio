@@ -12,6 +12,8 @@ import { StyleSheet } from "./style-sheet";
 
 const defaultMediaRuleId = "__default-media-rule__";
 
+export type CssEngineOptions = { name?: string };
+
 export class CssEngine {
   #element;
   #mediaRules: Map<string, MediaRule> = new Map();
@@ -20,8 +22,8 @@ export class CssEngine {
   #sheet: StyleSheet;
   #isDirty = false;
   #cssText = "";
-  constructor() {
-    this.#element = new StyleElement();
+  constructor({ name }: CssEngineOptions) {
+    this.#element = new StyleElement(name);
     this.#sheet = new StyleSheet(this.#element);
   }
   addMediaRule(id: string, options?: MediaRuleOptions) {
