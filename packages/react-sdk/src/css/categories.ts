@@ -10,7 +10,6 @@ const layout = [
   "justifyContent",
   "alignContent",
   // Grid
-  "placeContent",
   "justifyItems",
   "rowGap",
   "columnGap",
