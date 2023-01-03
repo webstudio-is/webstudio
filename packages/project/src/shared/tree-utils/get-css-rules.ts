@@ -1,5 +1,5 @@
-import type { CssRule } from "@webstudio-is/css-data";
-import type { Instance } from "@webstudio-is/react-sdk";
+import type { CssRule, Style } from "@webstudio-is/css-data";
+import type { Instance, PresetStyles } from "@webstudio-is/react-sdk";
 
 const aggregateCssRules = (
   instance: Instance,
@@ -22,4 +22,20 @@ export const getCssRules = (instance?: Instance) => {
     aggregateCssRules(instance, result);
   }
   return result;
+};
+
+export const getPresetStylesMap = (presetStyles?: PresetStyles) => {
+  const presetStylesMap = new Map<string, Style>();
+  if (presetStyles === undefined) {
+    return presetStylesMap;
+  }
+  for (const { component, property, value } of presetStyles) {
+    let style = presetStylesMap.get(component);
+    if (style === undefined) {
+      style = {};
+      presetStylesMap.set(component, style);
+    }
+    style[property] = value;
+  }
+  return presetStylesMap;
 };
