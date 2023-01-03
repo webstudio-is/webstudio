@@ -50,3 +50,6 @@ packages/**/lib
 generated
 storybook-static
 tsconfig.tsbuildinfo
+
+# backup
+db.sql

@@ -50,6 +50,19 @@ model User {
   team      Team?     @relation(fields: [teamId], references: [id])
   teamId    String?
   projects  Project[]
+
+  createdWorkspaces Workspace[] @relation("WorkspaceCreatedBy")
+  createdGroups     Group[]     @relation("GroupCreatedBy")
+
+  workspaceGroupPermissions WorkspaceGroupPermission[] @relation("WorkspaceGroupPermissionCreatedBy")
+  workspaceUserPermissions  WorkspaceUserPermission[]  @relation("WorkspaceUserPermissionCreatedBy")
+  projectGroupPermission    ProjectGroupPermission[]   @relation("ProjectGroupPermissionCreatedBy")
+  projectUserPermission     ProjectUserPermission[]    @relation("ProjectUserPermissionCreatedBy")
+
+  groups UserGroup[]
+
+  projectPermissions   ProjectUserPermission[]
+  workspacePermissions WorkspaceUserPermission[]
 }
 
 model Project {
@@ -59,6 +72,13 @@ model Project {
   user   User?   @relation(fields: [userId], references: [id])
   userId String?
   build  Build[]
+
+  workspace   Workspace? @relation("ProjectWorkspace", fields: [workspaceId, createdById], references: [id, createdById])
+  workspaceId String?    @db.Uuid
+  createdById String?
+
+  groupPermissions ProjectGroupPermission[]
+  userPermissions  ProjectUserPermission[]
 }
 
 model Build {
@@ -98,4 +118,98 @@ model DesignTokens {
   build   Build  @relation(fields: [buildId], references: [id])
   buildId String @id
   value   String @default("[]")
+}
+
+model Workspace {
+  id   String @id @default(uuid()) @db.Uuid
+  name String
+
+  workspaceId String @db.Uuid
+
+  createdBy   User   @relation("WorkspaceCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  projects         Project[]                  @relation("ProjectWorkspace")
+  groupPermissions WorkspaceGroupPermission[]
+  userPermissions  WorkspaceUserPermission[]
+
+  @@unique([id, createdById])
+}
+
+model UserGroup {
+  user    User   @relation(fields: [userId], references: [id])
+  group   Group  @relation(fields: [groupId], references: [id])
+  userId  String
+  groupId String @db.Uuid
+
+  @@id([userId, groupId])
+}
+
+model Group {
+  id                   String                     @id @default(uuid()) @db.Uuid
+  name                 String
+  users                UserGroup[]
+  workspacePermissions WorkspaceGroupPermission[]
+  projectPermissions   ProjectGroupPermission[]
+
+  createdBy   User   @relation("GroupCreatedBy", fields: [createdById], references: [id])
+  createdById String
+}
+
+model WorkspaceGroupPermission {
+  access      Access
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  group       Group     @relation(fields: [groupId], references: [id])
+  workspaceId String    @db.Uuid
+  groupId     String    @db.Uuid
+
+  createdBy   User   @relation("WorkspaceGroupPermissionCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  @@id([workspaceId, groupId])
+}
+
+model ProjectGroupPermission {
+  access    Access
+  project   Project @relation(fields: [projectId], references: [id])
+  group     Group   @relation(fields: [groupId], references: [id])
+  projectId String
+  groupId   String  @db.Uuid
+
+  createdBy   User   @relation("ProjectGroupPermissionCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  @@id([projectId, groupId])
+}
+
+model WorkspaceUserPermission {
+  access      Access
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  workspaceId String    @db.Uuid
+  userId      String
+
+  createdBy   User   @relation("WorkspaceUserPermissionCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  @@id([workspaceId, userId])
+}
+
+model ProjectUserPermission {
+  access    Access
+  project   Project @relation(fields: [projectId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
+  projectId String
+  userId    String
+
+  createdBy   User   @relation("ProjectUserPermissionCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  @@id([projectId, userId])
+}
+
+enum Access {
+  WRITE
+  READ
+  COMMENT
 }
