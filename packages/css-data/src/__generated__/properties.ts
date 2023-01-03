@@ -45,11 +45,20 @@ export const properties = {
     popularity: 0,
     appliesTo: "gridContainersWithMasonryLayoutInTheirBlockAxis",
   },
+  animationComposition: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "replace",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
   animationDelay: {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "s",
       value: 0,
     },
     popularity: 0.27086537,
@@ -68,7 +77,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "s",
       value: 0,
     },
     popularity: 0.4062731,
@@ -119,6 +128,15 @@ export const properties = {
     },
     popularity: 0.41317969,
     appliesTo: "allElementsAndPseudos",
+  },
+  animationTimeline: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 4e-8,
+    appliesTo: "allElements",
   },
   appearance: {
     inherited: false,
@@ -214,8 +232,8 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      value: 0,
       unit: "%",
+      value: 0,
     },
     popularity: 0.08951679,
     appliesTo: "allElements",
@@ -224,8 +242,8 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      value: 0,
       unit: "%",
+      value: 0,
     },
     popularity: 0.06759137,
     appliesTo: "allElements",
@@ -446,7 +464,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "%",
       value: 100,
     },
     popularity: 0.0093669,
@@ -764,6 +782,15 @@ export const properties = {
     popularity: 0.05410129,
     appliesTo: "allElements",
   },
+  caretShape: {
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0,
+    appliesTo: "elementsThatAcceptInput",
+  },
   clear: {
     inherited: false,
     initial: {
@@ -798,9 +825,9 @@ export const properties = {
       value: "inherit",
     },
     popularity: 0.90791486,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
-  colorAdjust: {
+  printColorAdjust: {
     inherited: true,
     initial: {
       type: "keyword",
@@ -899,6 +926,42 @@ export const properties = {
     },
     popularity: 0.17189203,
     appliesTo: "allElements",
+  },
+  containIntrinsicBlockSize: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "elementsForWhichSizeContainmentCanApply",
+  },
+  containIntrinsicHeight: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "elementsForWhichSizeContainmentCanApply",
+  },
+  containIntrinsicInlineSize: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "elementsForWhichSizeContainmentCanApply",
+  },
+  containIntrinsicWidth: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "elementsForWhichSizeContainmentCanApply",
   },
   content: {
     inherited: false,
@@ -1334,6 +1397,15 @@ export const properties = {
     popularity: 0.93056784,
     appliesTo: "allElementsButNonReplacedAndTableColumns",
   },
+  hyphenateCharacter: {
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
   hyphens: {
     inherited: true,
     initial: {
@@ -1365,7 +1437,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "dppx",
       value: 1,
     },
     popularity: 0,
@@ -1398,23 +1470,14 @@ export const properties = {
     popularity: 0.00381706,
     appliesTo: "sameAsWidthAndHeight",
   },
-  inset: {
+  inputSecurity: {
     inherited: false,
     initial: {
       type: "keyword",
       value: "auto",
     },
-    popularity: 0.02156551,
-    appliesTo: "positionedElements",
-  },
-  insetBlock: {
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.00014881,
-    appliesTo: "positionedElements",
+    popularity: 0,
+    appliesTo: "sensitiveTextInputs",
   },
   insetBlockEnd: {
     inherited: false,
@@ -1432,15 +1495,6 @@ export const properties = {
       value: "auto",
     },
     popularity: 0.00036346,
-    appliesTo: "positionedElements",
-  },
-  insetInline: {
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.00021379,
     appliesTo: "positionedElements",
   },
   insetInlineEnd: {
@@ -1588,16 +1642,6 @@ export const properties = {
     popularity: 0.50305363,
     appliesTo: "listItems",
   },
-  marginBlock: {
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0.00120447,
-    appliesTo: "sameAsMargin",
-  },
   marginBlockEnd: {
     inherited: false,
     initial: {
@@ -1627,16 +1671,6 @@ export const properties = {
     },
     popularity: 0.84497162,
     appliesTo: "allElementsExceptTableDisplayTypes",
-  },
-  marginInline: {
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0.00136801,
-    appliesTo: "sameAsMargin",
   },
   marginInlineEnd: {
     inherited: false,
@@ -1811,7 +1845,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "no-repeat",
+      value: "repeat",
     },
     popularity: 0,
     appliesTo: "allElementsSVGContainerElements",
@@ -1843,6 +1877,25 @@ export const properties = {
     popularity: 0,
     appliesTo: "gridContainersWithMasonryLayout",
   },
+  mathDepth: {
+    inherited: true,
+    initial: {
+      type: "unit",
+      unit: "px",
+      value: 0,
+    },
+    popularity: 3e-8,
+    appliesTo: "allElements",
+  },
+  mathShift: {
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    popularity: 3e-8,
+    appliesTo: "allElements",
+  },
   mathStyle: {
     inherited: true,
     initial: {
@@ -1855,9 +1908,8 @@ export const properties = {
   maxBlockSize: {
     inherited: false,
     initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
+      type: "keyword",
+      value: "none",
     },
     popularity: 0.00064707,
     appliesTo: "sameAsWidthAndHeight",
@@ -1874,9 +1926,8 @@ export const properties = {
   maxInlineSize: {
     inherited: false,
     initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
+      type: "keyword",
+      value: "none",
     },
     popularity: 0.00062504,
     appliesTo: "sameAsWidthAndHeight",
@@ -2195,16 +2246,6 @@ export const properties = {
     popularity: 0,
     appliesTo: "nonReplacedBlockAndInlineBlockElements",
   },
-  paddingBlock: {
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0.00094479,
-    appliesTo: "allElements",
-  },
   paddingBlockEnd: {
     inherited: false,
     initial: {
@@ -2213,7 +2254,7 @@ export const properties = {
       value: 0,
     },
     popularity: 0.00269343,
-    appliesTo: "allElements",
+    appliesTo: "allElementsExceptInternalTableDisplayTypes",
   },
   paddingBlockStart: {
     inherited: false,
@@ -2223,7 +2264,7 @@ export const properties = {
       value: 0,
     },
     popularity: 0.00281718,
-    appliesTo: "allElements",
+    appliesTo: "allElementsExceptInternalTableDisplayTypes",
   },
   paddingBottom: {
     inherited: false,
@@ -2235,16 +2276,6 @@ export const properties = {
     popularity: 0.80249482,
     appliesTo: "allElementsExceptInternalTableDisplayTypes",
   },
-  paddingInline: {
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0.01735028,
-    appliesTo: "allElements",
-  },
   paddingInlineEnd: {
     inherited: false,
     initial: {
@@ -2253,7 +2284,7 @@ export const properties = {
       value: 0,
     },
     popularity: 0.02914235,
-    appliesTo: "allElements",
+    appliesTo: "allElementsExceptInternalTableDisplayTypes",
   },
   paddingInlineStart: {
     inherited: false,
@@ -2263,7 +2294,7 @@ export const properties = {
       value: 0,
     },
     popularity: 0.03734959,
-    appliesTo: "allElements",
+    appliesTo: "allElementsExceptInternalTableDisplayTypes",
   },
   paddingLeft: {
     inherited: false,
@@ -2348,15 +2379,6 @@ export const properties = {
     },
     popularity: 0.03597136,
     appliesTo: "transformableElements",
-  },
-  placeContent: {
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    popularity: 0.00389319,
-    appliesTo: "multilineFlexContainers",
   },
   pointerEvents: {
     inherited: true,
@@ -2494,26 +2516,6 @@ export const properties = {
     popularity: 0.06855196,
     appliesTo: "scrollingBoxes",
   },
-  scrollMargin: {
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0,
-    appliesTo: "allElements",
-  },
-  scrollMarginBlock: {
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0,
-    appliesTo: "allElements",
-  },
   scrollMarginBlockStart: {
     inherited: false,
     initial: {
@@ -2535,16 +2537,6 @@ export const properties = {
     appliesTo: "allElements",
   },
   scrollMarginBottom: {
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0,
-    appliesTo: "allElements",
-  },
-  scrollMarginInline: {
     inherited: false,
     initial: {
       type: "unit",
@@ -2604,24 +2596,6 @@ export const properties = {
     popularity: 0,
     appliesTo: "allElements",
   },
-  scrollPadding: {
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.00684182,
-    appliesTo: "scrollContainers",
-  },
-  scrollPaddingBlock: {
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.00011157,
-    appliesTo: "scrollContainers",
-  },
   scrollPaddingBlockStart: {
     inherited: false,
     initial: {
@@ -2647,15 +2621,6 @@ export const properties = {
       value: "auto",
     },
     popularity: 0.00046042,
-    appliesTo: "scrollContainers",
-  },
-  scrollPaddingInline: {
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.00030929,
     appliesTo: "scrollContainers",
   },
   scrollPaddingInlineStart: {
@@ -2729,6 +2694,24 @@ export const properties = {
     },
     popularity: 0.05778112,
     appliesTo: "allElements",
+  },
+  scrollTimelineAxis: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "block",
+    },
+    popularity: 0,
+    appliesTo: "scrollContainers",
+  },
+  scrollTimelineName: {
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "scrollContainers",
   },
   shapeImageThreshold: {
     inherited: false,
@@ -3036,7 +3019,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "s",
       value: 0,
     },
     popularity: 0.26633596,
@@ -3046,7 +3029,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "s",
       value: 0,
     },
     popularity: 0.27645681,

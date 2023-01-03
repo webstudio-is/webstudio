@@ -303,7 +303,7 @@ importers:
       '@webstudio-is/tsconfig': workspace:^
       camelcase: ^6.3.0
       css-tree: ^2.3.0
-      mdn-data: 2.0.23
+      mdn-data: 2.0.30
       typescript: 4.7.4
       zod: ^3.19.1
     devDependencies:
@@ -313,7 +313,7 @@ importers:
       '@webstudio-is/tsconfig': link:../tsconfig
       camelcase: 6.3.0
       css-tree: 2.3.0
-      mdn-data: 2.0.23
+      mdn-data: 2.0.30
       typescript: 4.7.4
       zod: 3.19.1
 
@@ -16853,10 +16853,6 @@ packages:
   /mdn-data/2.0.14:
     resolution: {integrity: sha512-dn6wd0uw5GsdswPFfsgMp5NSB0/aDe6fK94YJV/AJDYXL6HVLWBsxeq7js7Ad+mU2K9LAlwpk6kN2D5mwCPVow==}
     dev: false
-
-  /mdn-data/2.0.23:
-    resolution: {integrity: sha512-IonVb7pfla2U4zW8rc7XGrtgq11BvYeCxWN8HS+KFBnLDE7XDK9AAMVhRuG6fj9BBsjc69Fqsp6WEActEdNTDQ==}
-    dev: true
 
   /mdn-data/2.0.28:
     resolution: {integrity: sha512-aylIc7Z9y4yzHYAJNuESG3hfhC+0Ibp/MAMiaOZgNv4pmEdFyfZhhhny4MNiAfWdBQ1RQ2mfDWmM1x8SvGyp8g==}

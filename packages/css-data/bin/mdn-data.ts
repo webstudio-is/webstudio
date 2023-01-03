@@ -1,4 +1,4 @@
-import { definitionSyntax, type DSNode } from "css-tree";
+import { parse, definitionSyntax, type DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import units from "mdn-data/css/units.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
@@ -6,7 +6,7 @@ import { popularityIndex } from "../src/popularity-index";
 import camelCase from "camelcase";
 import * as fs from "fs";
 import * as path from "path";
-import type { StyleValue } from "../src";
+import type { StyleValue, Unit } from "../src";
 
 type Property = keyof typeof properties;
 type Value = typeof properties[Property] & { alsoAppliesTo?: Array<string> };
@@ -27,26 +27,6 @@ const normalizedValues = {
   "font-size": inheritValue,
   "line-height": inheritValue,
   color: inheritValue,
-  // https://github.com/mdn/data/issues/554
-  // @todo remove once fixed in mdn data
-  appearance: {
-    type: "keyword",
-    value: "none",
-  },
-  // https://github.com/mdn/data/issues/555
-  // @todo remove once fixed
-  "background-position-x": {
-    type: "unit",
-    value: 0,
-    unit: "%",
-  },
-  // https://github.com/mdn/data/issues/555
-  // @todo remove once fixed
-  "background-position-y": {
-    type: "unit",
-    value: 0,
-    unit: "%",
-  },
   "column-gap": {
     type: "unit",
     value: 0,
@@ -57,11 +37,61 @@ const normalizedValues = {
     value: 0,
     unit: "px",
   },
-  // https://github.com/mdn/data/issues/556
-  // @todo remove once fixed
   "background-size": autoValue,
   "text-size-adjust": autoValue,
 } as const;
+
+const parseInitialValue = (property: string, value: string): StyleValue => {
+  // Our default values hardcoded because no single standard
+  if (property in normalizedValues) {
+    return normalizedValues[property as keyof typeof normalizedValues];
+  }
+  const ast = parse(value, { context: "value" });
+  if (ast.type !== "Value") {
+    throw Error(`Unknown parsed type ${ast.type}`);
+  }
+
+  // more than 2 values consider as keyword
+  if (ast.children.first !== ast.children.last) {
+    return {
+      type: "keyword",
+      value: value,
+    };
+  }
+
+  const node = ast.children.first;
+  if (node?.type === "Identifier") {
+    return {
+      type: "keyword",
+      value: node.name,
+    };
+  }
+  if (node?.type === "Number") {
+    // @todo distinct unitless and 0px
+    const unit: Unit = "px";
+    return {
+      type: "unit",
+      unit,
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Percentage") {
+    return {
+      type: "unit",
+      unit: "%",
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Dimension") {
+    return {
+      type: "unit",
+      unit: node.unit as Unit,
+      value: Number(node.value),
+    };
+  }
+
+  throw Error(`Cannot find initial for ${property}`);
+};
 
 type FilteredProperties = { [property in Property]: Value };
 
@@ -125,38 +155,9 @@ let property: Property;
 
 for (property in filteredProperties) {
   const config = filteredProperties[property];
-  let initial: StyleValue;
-
-  // Our default values hardcoded because no single standard
-  if (property in normalizedValues) {
-    initial = normalizedValues[property as keyof typeof normalizedValues];
-  } else {
-    // @todo use css-tree instead of this custom logic which is likely wrong
-    // Complex initial values like "50% 50% 0" can't be parsed to a number
-    const number =
-      typeof config.initial === "string"
-        ? config.initial.includes(" ")
-          ? NaN
-          : parseFloat(config.initial)
-        : NaN;
-
-    if (isNaN(number) && typeof config.initial === "string") {
-      initial = {
-        type: "keyword",
-        value: config.initial,
-      };
-    } else {
-      initial = {
-        type: "unit",
-        unit: "px",
-        value: number,
-      };
-    }
-  }
-
   propertiesData[camelCase(property)] = {
     inherited: config.inherited,
-    initial,
+    initial: parseInitialValue(property, config.initial),
     popularity:
       popularityIndex.find((data) => data.property === property)
         ?.dayPercentage || 0,
