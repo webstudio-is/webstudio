@@ -96,7 +96,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 1,
     },
     popularity: 0.21759716,
@@ -445,7 +445,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 0,
     },
     popularity: 0.00458637,
@@ -483,7 +483,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 1,
     },
     popularity: 0.0072772,
@@ -1075,7 +1075,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 0,
     },
     popularity: 0.50511311,
@@ -1085,7 +1085,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 1,
     },
     popularity: 0.4809155,
@@ -1744,7 +1744,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 0,
     },
     popularity: 0,
@@ -1763,7 +1763,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 0,
     },
     popularity: 0,
@@ -1881,7 +1881,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 0,
     },
     popularity: 3e-8,
@@ -2065,7 +2065,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 1,
     },
     popularity: 0.87714344,
@@ -2075,7 +2075,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 0,
     },
     popularity: 0.28274872,
@@ -2085,7 +2085,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 2,
     },
     popularity: 0.03717837,
@@ -2717,7 +2717,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 0,
     },
     popularity: 0.00579108,
@@ -2746,7 +2746,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 8,
     },
     popularity: 0.03065152,
@@ -3111,7 +3111,7 @@ export const properties = {
     inherited: true,
     initial: {
       type: "unit",
-      unit: "px",
+      unit: "number",
       value: 2,
     },
     popularity: 0.03635817,
