@@ -1,7 +1,11 @@
 import { z } from "zod";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { SharedStyleValue } from "@webstudio-is/css-data";
-import { type ComponentName, getComponentMeta } from "../components";
+import {
+  type ComponentName,
+  getComponentMeta,
+  getComponentNames,
+} from "../components";
 
 export type PresetStylesItem = {
   component: ComponentName;
@@ -9,9 +13,9 @@ export type PresetStylesItem = {
   value: StyleValue;
 };
 
-// @todo can't figure out how to make component and property to be enum
+// @todo can't figure out how to make property to be enum
 export const zPresetStylesItem = z.object({
-  component: z.string(),
+  component: z.enum(getComponentNames() as [ComponentName]),
   property: z.string(),
   value: SharedStyleValue,
 }) as z.ZodType<PresetStylesItem>;
