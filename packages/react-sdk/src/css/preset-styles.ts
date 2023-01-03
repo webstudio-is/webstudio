@@ -1,26 +1,26 @@
 import { useMemo, useState } from "react";
 import { createValueContainer, useValue } from "react-nano-state";
-import type { PresetStyle } from "../db";
+import type { PresetStyles } from "../db";
 import { getComponentMeta, getComponentNames } from "../components";
 import type { StyleProperty } from "@webstudio-is/css-data";
 
-const presetStyleContainer = createValueContainer<PresetStyle>([]);
+const presetStylesContainer = createValueContainer<PresetStyles>([]);
 
-export const useSetPresetStyle = (presetStyle: PresetStyle) => {
+export const useSetPresetStyles = (presetStyles: PresetStyles) => {
   useState(() => {
-    presetStyleContainer.value = presetStyle;
+    presetStylesContainer.value = presetStyles;
   });
 };
 
-export const usePresetStyle = () => {
-  const [presetStyle] = useValue(presetStyleContainer);
+export const usePresetStyles = () => {
+  const [presetStyles] = useValue(presetStylesContainer);
 
   const result = useMemo(() => {
-    const result: PresetStyle = [];
+    const result: PresetStyles = [];
     const storedComponents = new Set<string>();
 
     // find all preset styles for component
-    for (const item of presetStyle) {
+    for (const item of presetStyles) {
       storedComponents.add(item.component);
       result.push(item);
     }
@@ -46,7 +46,7 @@ export const usePresetStyle = () => {
     }
 
     return result;
-  }, [presetStyle]);
+  }, [presetStyles]);
 
   return result;
 };

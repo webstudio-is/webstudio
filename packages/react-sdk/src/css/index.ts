@@ -1,4 +1,4 @@
 export * from "./get-browser-style";
 export * from "./categories";
 export * from "./breakpoints";
-export * from "./preset-style";
+export * from "./preset-styles";

@@ -10,7 +10,7 @@ import {
   setParams,
   type OnChangeChildren,
   type Tree,
-  useSetPresetStyle,
+  useSetPresetStyles,
 } from "@webstudio-is/react-sdk";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
@@ -175,7 +175,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
-  useSetPresetStyle(data.tree.presetStyle);
+  useSetPresetStyles(data.tree.presetStyles);
   usePopulateRootInstance(data.tree);
   setParams(data.params ?? null);
 

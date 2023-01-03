@@ -4,8 +4,8 @@ import {
   type ComponentName,
   Instance,
   Text,
-  zPresetStyle,
-  findMissingPresetStyle,
+  zPresetStyles,
+  findMissingPresetStyles,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import {
@@ -129,11 +129,11 @@ type TreeData = Omit<Tree, "id">;
 
 export const createTree = (): TreeData => {
   const root = utils.tree.createInstance({ component: "Body" });
-  const presetStyle = findMissingPresetStyle([], [root.component]);
+  const presetStyles = findMissingPresetStyles([], [root.component]);
 
   return {
     root,
-    presetStyle,
+    presetStyles,
   };
 };
 
@@ -147,7 +147,7 @@ export const create = async (
   return await client.tree.create({
     data: {
       root: JSON.stringify(root),
-      presetStyle: JSON.stringify(treeData.presetStyle),
+      presetStyles: JSON.stringify(treeData.presetStyles),
     },
   });
 };
@@ -174,12 +174,12 @@ export const loadById = async (
 
   Instance.parse(root);
 
-  const presetStyle = zPresetStyle.parse(JSON.parse(tree.presetStyle));
+  const presetStyles = zPresetStyles.parse(JSON.parse(tree.presetStyles));
 
   return {
     ...tree,
     root,
-    presetStyle,
+    presetStyles,
   };
 };
 
@@ -214,18 +214,18 @@ export const patch = async (
   const clientRoot = applyPatches(tree.root, patches);
   const components = new Set<ComponentName>();
   collectUsedComponents(tree.root, components);
-  const missingPresetStyle = findMissingPresetStyle(
-    tree.presetStyle,
+  const missingPresetStyles = findMissingPresetStyles(
+    tree.presetStyles,
     Array.from(components)
   );
-  const presetStyle = [...tree.presetStyle, ...missingPresetStyle];
+  const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
 
   const root = InstanceDbIn.parse(clientRoot);
 
   await prisma.tree.update({
     data: {
       root: JSON.stringify(root),
-      presetStyle: JSON.stringify(presetStyle),
+      presetStyles: JSON.stringify(presetStyles),
     },
     where: { id: treeId },
   });

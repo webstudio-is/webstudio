@@ -1,12 +1,12 @@
 import type { InstanceProps as DbInstanceProps } from "@webstudio-is/prisma-client";
 import type { UserProp } from "../user-props";
 import type { Instance } from "./instance";
-import type { PresetStyle } from "./style";
+import type { PresetStyles } from "./style";
 
 export type Tree = {
   id: string;
   root: Instance;
-  presetStyle: PresetStyle;
+  presetStyles: PresetStyles;
 };
 
 export type Props = {

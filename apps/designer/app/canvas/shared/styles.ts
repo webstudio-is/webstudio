@@ -7,7 +7,7 @@ import {
   rootInstanceContainer,
   useDesignTokens,
 } from "~/shared/nano-states";
-import { idAttribute, usePresetStyle } from "@webstudio-is/react-sdk";
+import { idAttribute, usePresetStyles } from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
   type Breakpoint,
@@ -72,6 +72,7 @@ const fontsAndDefaultsCssEngine = createCssEngine({
 });
 const tokensCssEngine = createCssEngine({ name: "tokens" });
 const presetStyleEngine = createCssEngine();
+const presetStylesEngine = createCssEngine();
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {
@@ -99,15 +100,15 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
     tokensCssEngine.render();
   }, [tokens]);
 
-  const presetStyle = usePresetStyle();
+  const presetStyles = usePresetStyles();
 
   useIsomorphicLayoutEffect(() => {
-    presetStyleEngine.clear();
+    presetStylesEngine.clear();
     const rules = new Map<string, StyleRule>();
-    for (const { component, property, value } of presetStyle) {
+    for (const { component, property, value } of presetStyles) {
       let rule = rules.get(component);
       if (rule === undefined) {
-        rule = presetStyleEngine.addStyleRule(
+        rule = presetStylesEngine.addStyleRule(
           `[data-ws-component=${component}]`,
           { style: {} }
         );
@@ -115,8 +116,8 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
       }
       rule.styleMap.set(property, value);
     }
-    presetStyleEngine.render();
-  }, [presetStyle]);
+    presetStylesEngine.render();
+  }, [presetStyles]);
 
   return null;
 };
