@@ -1,6 +1,6 @@
 import { CssRule } from "@webstudio-is/css-data";
 import { z } from "zod";
-import { ComponentName } from "../components";
+import { ComponentName, getComponentNames } from "../components";
 
 // This should be used when passing a lot of data is potentially costly.
 // For example, when passing data from an iframe.
@@ -35,14 +35,12 @@ export const Text = z.lazy(() =>
   })
 );
 
-export const Instance = z.lazy(
-  () =>
-    z.object({
-      type: z.literal("instance"),
-      id: z.string(),
-      component: z.string(),
-      children: z.array(z.union([Instance, Text])),
-      cssRules: z.array(CssRule),
-    })
-  // @todo can't figure out how to make component to be z.enum(Object.keys(components))
-) as z.ZodType<Instance>;
+export const Instance: z.ZodType<Instance> = z.lazy(() =>
+  z.object({
+    type: z.literal("instance"),
+    id: z.string(),
+    component: z.enum(getComponentNames() as [ComponentName]),
+    children: z.array(z.union([Instance, Text])),
+    cssRules: z.array(CssRule),
+  })
+);
