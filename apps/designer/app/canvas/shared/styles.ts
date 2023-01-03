@@ -6,8 +6,13 @@ import {
   designTokensContainer,
   rootInstanceContainer,
   useDesignTokens,
+  usePresetStyles,
 } from "~/shared/nano-states";
-import { idAttribute, usePresetStyles } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  getComponentNames,
+  idAttribute,
+} from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
   type Breakpoint,
@@ -100,21 +105,21 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
     tokensCssEngine.render();
   }, [tokens]);
 
-  const presetStyles = usePresetStyles();
+  const [presetStyles] = usePresetStyles();
 
   useIsomorphicLayoutEffect(() => {
     presetStylesEngine.clear();
-    const rules = new Map<string, StyleRule>();
-    for (const { component, property, value } of presetStyles) {
-      let rule = rules.get(component);
-      if (rule === undefined) {
-        rule = presetStylesEngine.addStyleRule(
-          `[data-ws-component=${component}]`,
-          { style: {} }
-        );
-        rules.set(component, rule);
+    const presetStylesMap = utils.tree.getPresetStylesMap(presetStyles);
+    for (const component of getComponentNames()) {
+      const meta = getComponentMeta(component);
+      // render preset style and fallback to hardcoded one
+      // because could not be added yet to db
+      const presetStyle = presetStylesMap.get(component) ?? meta.presetStyle;
+      if (presetStyle !== undefined) {
+        presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
+          style: presetStyle,
+        });
       }
-      rule.styleMap.set(property, value);
     }
     presetStylesEngine.render();
   }, [presetStyles]);

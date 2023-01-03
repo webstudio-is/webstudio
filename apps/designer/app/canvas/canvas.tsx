@@ -10,7 +10,6 @@ import {
   setParams,
   type OnChangeChildren,
   type Tree,
-  useSetPresetStyles,
 } from "@webstudio-is/react-sdk";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { useShortcuts } from "./shared/use-shortcuts";
@@ -35,6 +34,7 @@ import {
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
 import {
+  presetStylesContainer,
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
@@ -175,7 +175,11 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
-  useSetPresetStyles(data.tree.presetStyles);
+  useState(() => {
+    if (data.tree?.presetStyles) {
+      presetStylesContainer.value = data.tree.presetStyles;
+    }
+  });
   usePopulateRootInstance(data.tree);
   setParams(data.params ?? null);
 
