@@ -31,9 +31,6 @@ export const generateCssText = async (buildParams: BuildParams) => {
     engine.addMediaRule(breakpoint.id, breakpoint);
   }
 
-  if (canvasData.tree?.presetStyles) {
-  }
-
   const presetStylesMap = utils.tree.getPresetStylesMap(
     canvasData.tree?.presetStyles
   );
