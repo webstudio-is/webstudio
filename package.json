@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
+    "": "For some reason remix build does not finish when run with turbo or pnpm recursively",
+    "build-packages": "turbo run build  --filter='!./apps/*'",
+    "build": "pnpm build-packages && pnpm --filter=@webstudio-is/designer build",
     "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
