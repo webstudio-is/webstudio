@@ -41,6 +41,58 @@ const normalizedValues = {
   "text-size-adjust": autoValue,
 } as const;
 
+const parseInitialValue = (property: string, value: string): StyleValue => {
+  // Our default values hardcoded because no single standard
+  if (property in normalizedValues) {
+    return normalizedValues[property as keyof typeof normalizedValues];
+  }
+  const ast = parse(value, { context: "value" });
+  if (ast.type !== "Value") {
+    throw Error(`Unknown parsed type ${ast.type}`);
+  }
+
+  // more than 2 values consider as keyword
+  if (ast.children.first !== ast.children.last) {
+    return {
+      type: "keyword",
+      value: value,
+    };
+  }
+
+  const node = ast.children.first;
+  if (node?.type === "Identifier") {
+    return {
+      type: "keyword",
+      value: node.name,
+    };
+  }
+  if (node?.type === "Number") {
+    // @todo distinct unitless and 0px
+    const unit: Unit = "px";
+    return {
+      type: "unit",
+      unit,
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Percentage") {
+    return {
+      type: "unit",
+      unit: "%",
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Dimension") {
+    return {
+      type: "unit",
+      unit: node.unit as Unit,
+      value: Number(node.value),
+    };
+  }
+
+  throw Error(`Cannot find initial for ${property}`);
+};
+
 type FilteredProperties = { [property in Property]: Value };
 
 const filteredProperties: FilteredProperties = (() => {
@@ -103,62 +155,9 @@ let property: Property;
 
 for (property in filteredProperties) {
   const config = filteredProperties[property];
-  let initial: undefined | StyleValue = undefined;
-
-  // Our default values hardcoded because no single standard
-  if (property in normalizedValues) {
-    initial = normalizedValues[property as keyof typeof normalizedValues];
-  } else {
-    const ast = parse(config.initial, { context: "value" });
-    if (ast.type === "Value") {
-      // more than 2 values consider as keyword
-      if (ast.children.first !== ast.children.last) {
-        initial = {
-          type: "keyword",
-          value: config.initial,
-        };
-      } else {
-        const node = ast.children.first;
-        if (node?.type === "Identifier") {
-          initial = {
-            type: "keyword",
-            value: node.name,
-          };
-        }
-        if (node?.type === "Number") {
-          // @todo distinct unitless and 0px
-          const unit: Unit = "px";
-          initial = {
-            type: "unit",
-            unit,
-            value: Number(node.value),
-          };
-        }
-        if (node?.type === "Percentage") {
-          initial = {
-            type: "unit",
-            unit: "%",
-            value: Number(node.value),
-          };
-        }
-        if (node?.type === "Dimension") {
-          initial = {
-            type: "unit",
-            unit: node.unit as Unit,
-            value: Number(node.value),
-          };
-        }
-      }
-    }
-  }
-
-  if (initial === undefined) {
-    throw Error(`Cannot find initial for ${property}`);
-  }
-
   propertiesData[camelCase(property)] = {
     inherited: config.inherited,
-    initial,
+    initial: parseInitialValue(property, config.initial),
     popularity:
       popularityIndex.find((data) => data.property === property)
         ?.dayPercentage || 0,
