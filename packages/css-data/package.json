@@ -21,7 +21,7 @@
     "@webstudio-is/asset-uploader": "workspace:^",
     "camelcase": "^6.3.0",
     "css-tree": "^2.3.0",
-    "mdn-data": "2.0.23",
+    "mdn-data": "2.0.30",
     "typescript": "4.7.4",
     "zod": "^3.19.1"
   },
