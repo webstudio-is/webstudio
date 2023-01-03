@@ -93,6 +93,54 @@ const parseInitialValue = (property: string, value: string): StyleValue => {
   throw Error(`Cannot find initial for ${property}`);
 };
 
+const walkSyntax = (
+  syntax: string,
+  enter: (node: DSNode) => void,
+  parsedSyntaxes = new Set<string>()
+) => {
+  // fix cyclic syntaxes
+  if (parsedSyntaxes.has(syntax)) {
+    return;
+  }
+  parsedSyntaxes.add(syntax);
+  const parsed = definitionSyntax.parse(syntax);
+
+  const walk = (node: DSNode) => {
+    if (node.type === "Group") {
+      for (const term of node.terms) {
+        // skip functions and their content as complex values
+        if (term.type === "Function") {
+          break;
+        }
+        walk(term);
+      }
+      return;
+    }
+    if (node.type === "Multiplier") {
+      walk(node.term);
+      return;
+    }
+    if (node.type === "Type") {
+      const nestedSyntax = syntaxes[node.name]?.syntax;
+      if (nestedSyntax === undefined) {
+        enter(node);
+      } else {
+        // resolve nested syntaxes
+        walkSyntax(nestedSyntax, enter, parsedSyntaxes);
+      }
+      return;
+    }
+    if (node.type === "Property") {
+      // resolve other properties references
+      walkSyntax(properties[node.name].syntax, enter, parsedSyntaxes);
+      return;
+    }
+    enter(node);
+  };
+
+  walk(parsed);
+};
+
 type FilteredProperties = { [property in Property]: Value };
 
 const filteredProperties: FilteredProperties = (() => {
@@ -185,49 +233,17 @@ const writeToFile = (fileName: string, constant: string, data: unknown) => {
 
 const keywordValues = (() => {
   const result: { [prop: string]: Array<string> } = {};
-  let property: Property;
-  const parsedSyntaxes = new Map();
 
-  const getKeywords = (node: DSNode): Set<string> => {
-    let keywords: Set<string> = new Set();
-    if (node.type === "Type" || (node.type === "Property" && node.name)) {
-      const syntax =
-        syntaxes[node.name as keyof typeof syntaxes]?.syntax ||
-        properties[node.name as Property]?.syntax;
-
-      // When there is syntax - there are keyword references
-      if (syntax) {
-        if (parsedSyntaxes.has(syntax)) {
-          return parsedSyntaxes.get(syntax);
-        }
-        const ast = definitionSyntax.parse(syntax);
-        definitionSyntax.walk(ast, (node) => {
-          keywords = new Set([...keywords, ...getKeywords(node)]);
-          parsedSyntaxes.set(syntax, keywords);
-        });
-      }
-      return keywords;
-    }
-
-    if (node.type === "Keyword" && node.name) {
-      keywords.add(node.name);
-    }
-
-    return keywords;
-  };
-
-  for (property in filteredProperties) {
-    // if (property !== "flex-basis") continue;
-    const ast = definitionSyntax.parse(filteredProperties[property].syntax);
-    definitionSyntax.walk(ast, (node) => {
-      const keywords = getKeywords(node);
-      const camelCasedProperty = camelCase(property);
-      if (keywords.size !== 0) {
-        result[camelCasedProperty] = Array.from(
-          new Set([...(result[camelCasedProperty] || []), ...keywords])
-        );
+  for (let property in filteredProperties) {
+    const keywords = new Set<string>();
+    walkSyntax(filteredProperties[property].syntax, (node) => {
+      if (node.type === "Keyword") {
+        keywords.add(node.name);
       }
     });
+    if (keywords.size !== 0) {
+      result[camelCase(property)] = Array.from(keywords);
+    }
   }
 
   return result;
