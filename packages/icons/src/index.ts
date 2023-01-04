@@ -41,8 +41,6 @@ export * from "./justify-items-space-between";
 export * from "./justify-items-start";
 export * from "./gap-row";
 export * from "./gap-column";
-export * from "./lock-open";
-export * from "./lock-close";
 export * from "./aspect-ratio";
 export * from "./cloud";
 export * from "./trash";
