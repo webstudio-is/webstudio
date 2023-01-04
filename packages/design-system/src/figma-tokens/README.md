@@ -17,6 +17,22 @@ We use [Tokens Studio for Figma](https://docs.tokens.studio) plugin to sync desi
    - COPY THE TOKEN NOW AND SAVE IT SOMEWHERE SAFE (you won't be able to see it again)
 4. Ask Oleg to approve your token using [this instruction](https://docs.github.com/en/organizations/managing-programmatic-access-to-your-organization/managing-requests-for-personal-access-tokens-in-your-organization).
 
+### Syncing via plugin UI
+
+1. Open a Figma file with design tokens, such as: https://www.figma.com/file/xCBegXEWxROLqA1Y31z2Xo/%F0%9F%93%96-Webstudio-Design-Docs
+2. Click "Resources" in the topbar, then "Plugins" > "Tokens Studio for Figma" > Run <br/><img src="./documentation-assets/4.png" width="611" />
+3. You might be asked for an access token. You can generate one by following the instructions above, or ask someone to share theirs (not recommended).
+4. You should be able to sync with github using ↧ and ↥ buttons and the bottom of the plugin window. <br/><img src="./documentation-assets/5.png" width="420" />
+
+In case sync provider is not configured in the plugin, you can add one using these settings:
+
+- Name: up to you
+- Personal Access Token: token generated using the instructions above
+- Repository: `webstudio-is/webstudio-designer`
+- Branch: `figma-tokens`
+- File Path: `@todo`
+- baseUrl: leave empty
+
 ### Links
 
 - https://docs.tokens.studio/sync/github — documentation on sync with GitHub by plugin authors
