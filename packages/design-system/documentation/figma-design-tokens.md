@@ -22,7 +22,7 @@ We use [Tokens Studio for Figma](https://docs.tokens.studio) plugin to sync desi
 1. Open a Figma file with design tokens, such as: https://www.figma.com/file/xCBegXEWxROLqA1Y31z2Xo/%F0%9F%93%96-Webstudio-Design-Docs
 2. Click "Resources" in the topbar, then "Plugins" > "Tokens Studio for Figma" > Run <br/><img src="./assets/4.png" width="611" />
 3. You might be asked for an access token. You can generate one by following the instructions above, or ask someone to share theirs (not recommended).
-4. You should be able to sync with github using ↧ and ↥ buttons and the bottom of the plugin window. <br/><img src="./assets/5.png" width="420" />
+4. You should be able to sync with GitHub using ↧ and ↥ buttons at the bottom of the plugin window. <br/><img src="./assets/5.png" width="420" />
 
 In case sync provider is not configured in the plugin, you can add one using these settings:
 
