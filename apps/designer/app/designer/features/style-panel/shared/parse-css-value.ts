@@ -1,7 +1,12 @@
 import * as csstree from "css-tree";
 import hyphenate from "hyphenate-style-name";
-import type { StyleProperty, StyleValue, Unit } from "@webstudio-is/css-data";
-import { units } from "@webstudio-is/css-data";
+import type {
+  StyleProperty,
+  StyleValue,
+  Unit,
+  UnitGroup,
+} from "@webstudio-is/css-data";
+import { units, properties } from "@webstudio-is/css-data";
 import warnOnce from "warn-once";
 
 const cssTryParseValue = (input: string) => {
@@ -58,42 +63,45 @@ export const parseCssValue = (
     ast.children.first === ast.children.last
   ) {
     // Try extract units from 1st children
-    const singleChild = ast.children.filter(
-      (child) =>
-        child.type === "Number" ||
-        child.type === "Dimension" ||
-        child.type === "Percentage"
-    ).first;
+    const first = ast.children.first;
+    const unitGroups = properties[property as keyof typeof properties]
+      .unitGroups as ReadonlyArray<UnitGroup>;
 
-    if (singleChild?.type === "Number") {
-      return {
-        type: "unit",
-        unit: "number",
-        value: Number(singleChild.value),
-      };
-    }
-
-    if (singleChild?.type === "Dimension") {
-      const parsedUnit =
-        singleChild.unit != null && units.includes(singleChild.unit as never)
-          ? (singleChild.unit as never)
-          : undefined;
-
-      if (parsedUnit !== undefined) {
+    if (first?.type === "Number") {
+      if (unitGroups.includes("number")) {
         return {
           type: "unit",
-          unit: parsedUnit as Unit,
-          value: Number(singleChild.value),
+          unit: "number",
+          value: Number(first.value),
         };
       }
+      return invalidValue;
     }
 
-    if (singleChild?.type === "Percentage") {
-      return {
-        type: "unit",
-        unit: "%",
-        value: Number(singleChild.value),
-      };
+    if (first?.type === "Dimension") {
+      const unit = first.unit as typeof units[keyof typeof units][number];
+      for (const unitGroup of unitGroups) {
+        const possibleUnits = units[unitGroup] as ReadonlyArray<typeof unit>;
+        if (possibleUnits.includes(unit)) {
+          return {
+            type: "unit",
+            unit: unit as Unit,
+            value: Number(first.value),
+          };
+        }
+      }
+      return invalidValue;
+    }
+
+    if (first?.type === "Percentage") {
+      if (unitGroups.includes("percentage")) {
+        return {
+          type: "unit",
+          unit: "%",
+          value: Number(first.value),
+        };
+      }
+      return invalidValue;
     }
   }
 

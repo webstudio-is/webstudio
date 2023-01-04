@@ -17,13 +17,22 @@ type CustomProperty = `--${string}`;
 
 export type AppliesTo = Properties[StyleProperty]["appliesTo"];
 
-const Unit = z.union([z.enum(units), z.literal("number")]);
+export type UnitGroup = keyof typeof units;
 
-export type Unit = z.infer<typeof Unit>;
+type UnitEnum = typeof units[UnitGroup][number];
+
+const zUnit = z.union([
+  // expected tuple with at least single element
+  // so cast to tuple with single union element to get correct inference
+  z.enum(Object.values(units).flat() as [UnitEnum]),
+  z.literal("number"),
+]);
+
+export type Unit = z.infer<typeof zUnit>;
 
 const UnitValue = z.object({
   type: z.literal("unit"),
-  unit: Unit,
+  unit: zUnit,
   value: z.number(),
 });
 
