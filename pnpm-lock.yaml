@@ -424,6 +424,7 @@ importers:
       react: ^17.0.2
       react-dom: 17.0.2
       react-hot-toast: ^2.3.0
+      token-transformer: ^0.0.28
       typescript: 4.7.4
       use-debounce: ^9.0.2
     dependencies:
@@ -465,6 +466,7 @@ importers:
       lodash.merge: 4.6.2
       match-sorter: 6.3.1
       react-hot-toast: 2.3.0_sfoxds7t5ydpegc3knd667wn6m
+      token-transformer: 0.0.28
       use-debounce: 9.0.2_react@17.0.2
     devDependencies:
       '@jest/globals': 29.3.1
@@ -20832,6 +20834,13 @@ packages:
   /toidentifier/1.0.1:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
+
+  /token-transformer/0.0.28:
+    resolution: {integrity: sha512-DINP+5T3ruZwOWMNd5mJMiM3h5YvwZEoRL+NAKZf+e93/5Vy1P0R5eWeaynCWcqprPNm4ceV5CPgjqo1u48big==}
+    hasBin: true
+    dependencies:
+      yargs: 17.6.2
+    dev: false
 
   /toml/3.0.0:
     resolution: {integrity: sha512-y/mWCZinnvxjTKYhJ+pYxwD0mRLVvOtdS2Awbgxln6iEnt4rk0yBxeSBHkGJcPucRiG0e55mwWp+g/05rsrd6w==}
