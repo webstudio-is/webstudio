@@ -1,12 +1,20 @@
 import { parse, definitionSyntax, type DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
-import units from "mdn-data/css/units.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
+import unitsList from "mdn-data/css/units.json";
+import data from "css-tree/dist/data";
 import { popularityIndex } from "../src/popularity-index";
 import camelCase from "camelcase";
 import * as fs from "fs";
 import * as path from "path";
 import type { StyleValue, Unit } from "../src";
+
+const units = {
+  number: [],
+  // consider % as unit
+  percentage: ["%"],
+  ...data.units,
+};
 
 type Property = keyof typeof properties;
 type Value = typeof properties[Property] & { alsoAppliesTo?: Array<string> };
@@ -41,7 +49,11 @@ const normalizedValues = {
   "text-size-adjust": autoValue,
 } as const;
 
-const parseInitialValue = (property: string, value: string): StyleValue => {
+const parseInitialValue = (
+  property: string,
+  value: string,
+  unitGroups: Set<string>
+): StyleValue => {
   // Our default values hardcoded because no single standard
   if (property in normalizedValues) {
     return normalizedValues[property as keyof typeof normalizedValues];
@@ -67,8 +79,17 @@ const parseInitialValue = (property: string, value: string): StyleValue => {
     };
   }
   if (node?.type === "Number") {
-    // @todo distinct unitless and 0px
-    const unit: Unit = "px";
+    let unit: Unit = "number";
+    // set explicit unit when 0 initial is specified without unit
+    if (unitGroups.has("number") === false) {
+      if (unitGroups.has("length")) {
+        unit = "px";
+      } else {
+        throw Error(
+          `Cannot infer unit for "${value}" initial value of ${property} property`
+        );
+      }
+    }
     return {
       type: "unit",
       unit,
@@ -173,6 +194,7 @@ const filteredProperties: FilteredProperties = (() => {
 const propertiesData: {
   // It's string because we camel-cased it
   [property: string]: {
+    unitGroups: string[];
     inherited: boolean;
     initial: StyleValue;
     popularity: number;
@@ -203,9 +225,27 @@ let property: Property;
 
 for (property in filteredProperties) {
   const config = filteredProperties[property];
+
+  // collect node types to improve parsing of css values
+  const unitGroups = new Set<string>();
+  walkSyntax(config.syntax, (node) => {
+    if (node.type === "Type") {
+      if (node.name === "integer" || node.name === "number") {
+        unitGroups.add("number");
+        return;
+      }
+      // type names match unit groups
+      if (units[node.name]) {
+        unitGroups.add(node.name);
+        return;
+      }
+    }
+  });
+
   propertiesData[camelCase(property)] = {
+    unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
-    initial: parseInitialValue(property, config.initial),
+    initial: parseInitialValue(property, config.initial, unitGroups),
     popularity:
       popularityIndex.find((data) => data.property === property)
         ?.dayPercentage || 0,
@@ -252,5 +292,5 @@ const keywordValues = (() => {
 writeToFile("properties.ts", "properties", propertiesData);
 // @todo % is somehow not in the units list
 // https://github.com/mdn/data/issues/553
-writeToFile("units.ts", "units", [...Object.keys(units), "%"]);
+writeToFile("units.ts", "units", [...Object.keys(unitsList), "%"]);
 writeToFile("keyword-values.ts", "keywordValues", keywordValues);
