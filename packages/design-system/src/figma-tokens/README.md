@@ -1,0 +1,23 @@
+# Figma Design Tokens
+
+We use [Tokens Studio for Figma](https://docs.tokens.studio) plugin to sync design tokens between Figma and our code.
+
+- [`__generated__/tokens.json`](./__generated__/tokens.json) — this file is synced with Figma by the plugin.
+- [`__generated__/tokens.ts`](./__generated__/tokens.ts) — this file is generated from `tokens.json` by `transform.ts` and contains data in format ready to be used in code.
+
+### Generating Access Token for sync
+
+1. Create a GitHub account if you don't have one.
+2. Ask Oleg to add you to the `@webstudio-is/core` team if you are not already in it.
+3. Go to https://github.com/settings/personal-access-tokens/new
+   - Under "Resource owner" choose "webstudio-is" <br /><img src="./documentation-assets/1.png" width="349" />
+   - Under "Repository access" choose `webstudio-is/webstudio-designer` <br /><img src="./documentation-assets/2.png" width="514" />
+   - Set "Repository permissions" / "Contents" to "Read and write", and leave other permissions as is <br /><img src="./documentation-assets/3.png" width="806" />
+   - Press "Generate token and request access"
+   - COPY THE TOKEN NOW AND SAVE IT SOMEWHERE SAFE (you won't be able to see it again)
+4. Ask Oleg to approve your token using [this instruction](https://docs.github.com/en/organizations/managing-programmatic-access-to-your-organization/managing-requests-for-personal-access-tokens-in-your-organization).
+
+### Links
+
+- https://docs.tokens.studio/sync/github — documentation on sync with GitHub by plugin authors
+- https://github.com/tokens-studio/figma-plugin/issues/1285 — why we use fine-grained tokens unlike what the documentation above suggests
