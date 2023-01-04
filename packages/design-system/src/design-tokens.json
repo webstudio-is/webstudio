@@ -646,7 +646,7 @@
         "type": "color",
         "description": "foreground color for the category label element within the font item component"
       },
-      "spacing": {
+      "text-subtle": {
         "value": "#687076",
         "type": "color",
         "description": "foreground color for spacing controls text"
