@@ -194,6 +194,7 @@ const filteredProperties: FilteredProperties = (() => {
 const propertiesData: {
   // It's string because we camel-cased it
   [property: string]: {
+    unitGroups: string[];
     inherited: boolean;
     initial: StyleValue;
     popularity: number;
@@ -242,6 +243,7 @@ for (property in filteredProperties) {
   });
 
   propertiesData[camelCase(property)] = {
+    unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
     initial: parseInitialValue(property, config.initial, unitGroups),
     popularity:
