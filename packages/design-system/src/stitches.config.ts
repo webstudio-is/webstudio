@@ -117,9 +117,7 @@ import {
 } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
-
-// eslint-disable-next-line import/no-internal-modules
-import { color as figmaColors } from "./figma-tokens/__generated__/tokens";
+import { color as figmaColors } from "./__generated__/figma-design-tokens";
 
 const spacing = {
   0: "0px",

@@ -1,14 +1,11 @@
 /* eslint-disable no-console */
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { execSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync } from "fs";
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const SOURCE_FILE = path.join(dirname, "__generated__", "tokens.json");
-const TMP_OUTPUT_FILE = path.join(dirname, "__generated__", "tokens-tmp.json");
-const OUTPUT_FILE = path.join(dirname, "__generated__", "tokens.ts");
+const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";
+const TMP_OUTPUT_FILE = "./src/__generated__/figma-design-tokens.tmp";
+const OUTPUT_FILE = "./src/__generated__/figma-design-tokens.ts";
 
 const traverse = (
   node: unknown,

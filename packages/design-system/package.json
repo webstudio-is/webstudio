@@ -6,8 +6,8 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "tsx ./src/figma-tokens/transform.ts && build-package --watch",
-    "build": "tsx ./src/figma-tokens/transform.ts && build-package",
+    "dev": "tsx ./bin/transform-figma-tokens.ts && build-package --watch",
+    "build": "tsx ./bin/transform-figma-tokens.ts && build-package",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
