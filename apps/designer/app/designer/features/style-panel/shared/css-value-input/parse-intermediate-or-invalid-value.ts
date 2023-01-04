@@ -9,6 +9,8 @@ import { evaluateMath } from "./evaluate-math";
 import { units } from "@webstudio-is/css-data";
 import { toKebabCase } from "../keyword-utils";
 
+const unitsList = Object.values(units).flat();
+
 export const parseIntermediateOrInvalidValue = (
   property: StyleProperty,
   value: IntermediateStyleValue | InvalidValue
@@ -38,7 +40,7 @@ export const parseIntermediateOrInvalidValue = (
   // Try evaluate something like 10px + 4 or 13 + 4em
 
   // Try to extract/remove anything similar to unit value
-  const unitRegex = new RegExp(`(?:${units.join("|")})`, "g");
+  const unitRegex = new RegExp(`(?:${unitsList.join("|")})`, "g");
   const matchedUnit = value.value.match(unitRegex)?.[0];
   const unitlessValue = value.value.replace(unitRegex, "");
 

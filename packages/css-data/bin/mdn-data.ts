@@ -1,7 +1,6 @@
 import { parse, definitionSyntax, type DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
-import unitsList from "mdn-data/css/units.json";
 import data from "css-tree/dist/data";
 import { popularityIndex } from "../src/popularity-index";
 import camelCase from "camelcase";
@@ -289,8 +288,6 @@ const keywordValues = (() => {
   return result;
 })();
 
+writeToFile("units.ts", "units", units);
 writeToFile("properties.ts", "properties", propertiesData);
-// @todo % is somehow not in the units list
-// https://github.com/mdn/data/issues/553
-writeToFile("units.ts", "units", [...Object.keys(unitsList), "%"]);
 writeToFile("keyword-values.ts", "keywordValues", keywordValues);

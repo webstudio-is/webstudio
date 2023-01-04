@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import type { Unit, UnitValue, StyleValue } from "@webstudio-is/css-data";
-import { toValue } from "@webstudio-is/css-engine";
+import type { Unit } from "@webstudio-is/css-data";
+import { properties, units } from "@webstudio-is/css-data";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import {
   SelectScrollUpButton,
@@ -13,95 +13,62 @@ import {
   textStyles,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
-import { isValid } from "../parse-css-value";
-import type { IntermediateStyleValue } from "../css-value-input";
 
-const unitRenderMap: Map<Unit, string> = new Map([
-  ["px", "PX"],
-  ["%", "%"],
-  ["em", "EM"],
-  ["rem", "REM"],
-  ["ch", "CH"],
-  ["vw", "VW"],
-  ["vh", "VH"],
-  ["number", "—"],
-]);
+type UnitOption = {
+  id: Unit;
+  label: string;
+};
 
-const renderUnitMap: Map<string, Unit> = new Map();
-for (const [key, value] of unitRenderMap.entries()) {
-  renderUnitMap.set(value, key);
-}
-
-const defaultUnits = Array.from(unitRenderMap.keys());
+const visibleLengthUnits = ["px", "em", "rem", "ch", "vw", "vh"] as const;
 
 type UseUnitSelectType = {
   property: string;
-  value?: UnitValue | IntermediateStyleValue;
-  onChange: (value: StyleValue | IntermediateStyleValue) => void;
-  units?: Array<Unit>;
+  value?: Unit;
+  onChange: (value: Unit) => void;
   onCloseAutoFocus: (event: Event) => void;
 };
 
 export const useUnitSelect = ({
   property,
-  onChange,
   value,
-  units = defaultUnits,
-  ...props
+  onChange,
+  onCloseAutoFocus,
 }: UseUnitSelectType): [boolean, JSX.Element | null] => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const renderUnits = useMemo(
-    () =>
-      value &&
-      units
-        .filter((unit) => {
-          if (value.type === "intermediate") {
-            if (value.unit !== undefined) {
-              // check that property is valid for any positive number like 1 during editing
-              return isValid(
-                property,
-                toValue({ type: "unit", unit, value: 1 })
-              );
-            }
-            return false;
-          }
-
-          return isValid(property, toValue({ ...value, unit }));
-        })
-        .map((unit) => unitRenderMap.get(unit) ?? unit),
-    [units, property, value]
-  );
-
-  const renderValue =
-    value?.unit !== undefined ? unitRenderMap.get(value.unit) : undefined;
+  const options = useMemo(() => {
+    const options: UnitOption[] = [];
+    const { unitGroups } = properties[property as keyof typeof properties];
+    for (const unitGroup of unitGroups) {
+      if (unitGroup === "number") {
+        options.push({ id: "number", label: "—" });
+        continue;
+      }
+      const visibleUnits =
+        unitGroup === "length" ? visibleLengthUnits : units[unitGroup];
+      for (const unit of visibleUnits) {
+        options.push({ id: unit, label: unit.toLocaleUpperCase() });
+      }
+    }
+    return options;
+  }, [property]);
 
   if (
-    value === undefined ||
-    renderUnits === undefined ||
-    renderValue === undefined ||
-    renderUnits.length < 2
+    options.length === 0 ||
+    // hide unit select when value cannot have units
+    (options.length === 1 && options[0].id === "number")
   ) {
     return [isOpen, null];
   }
 
   const select = (
     <UnitSelect
-      {...props}
-      value={renderValue}
-      options={renderUnits}
+      value={value ?? options[0].id}
+      options={options}
       open={isOpen}
+      onCloseAutoFocus={onCloseAutoFocus}
       onOpenChange={setIsOpen}
-      onChange={(option) => {
-        const unit = renderUnitMap.get(option);
-        if (unit === undefined) {
-          return;
-        }
-        onChange?.({
-          ...value,
-          unit,
-        });
-      }}
+      onChange={onChange}
     />
   );
 
@@ -113,9 +80,9 @@ const StyledTrigger = styled(TextFieldIconButton, textStyles, {
 });
 
 type UnitSelectProps = {
-  options: Array<string>;
+  options: Array<UnitOption>;
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: Unit) => void;
   onOpenChange: (open: boolean) => void;
   onCloseAutoFocus: (event: Event) => void;
   open: boolean;
@@ -129,6 +96,7 @@ const UnitSelect = ({
   onCloseAutoFocus,
   open,
 }: UnitSelectProps) => {
+  const matchedOption = options.find((item) => item.id === value);
   return (
     <SelectPrimitive.Root
       value={value}
@@ -138,7 +106,10 @@ const UnitSelect = ({
     >
       <SelectPrimitive.SelectTrigger asChild>
         <StyledTrigger variant="unit">
-          <SelectPrimitive.Value>{value}</SelectPrimitive.Value>
+          <SelectPrimitive.Value>
+            {/* fallback to uppercased value for not listed units */}
+            {matchedOption?.label ?? value.toLocaleUpperCase()}
+          </SelectPrimitive.Value>
         </StyledTrigger>
       </SelectPrimitive.SelectTrigger>
       <SelectPrimitive.Portal>
@@ -161,9 +132,9 @@ const UnitSelect = ({
             <ChevronUpIcon />
           </SelectScrollUpButton>
           <SelectViewport>
-            {options.map((option) => (
-              <SelectItem key={option} value={option} textValue={option}>
-                {option}
+            {options.map(({ id, label }) => (
+              <SelectItem key={id} value={id}>
+                {label}
               </SelectItem>
             ))}
           </SelectViewport>
