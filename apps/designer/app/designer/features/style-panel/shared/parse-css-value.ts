@@ -6,7 +6,7 @@ import type {
   Unit,
   UnitGroup,
 } from "@webstudio-is/css-data";
-import { units, properties } from "@webstudio-is/css-data";
+import { units, properties, keywordValues } from "@webstudio-is/css-data";
 import warnOnce from "warn-once";
 
 const cssTryParseValue = (input: string) => {
@@ -103,40 +103,17 @@ export const parseCssValue = (
       }
       return invalidValue;
     }
-  }
-
-  const matchResult = csstree.lexer.matchProperty(hyphenate(property), ast);
-
-  if (
-    matchResult.matched != null &&
-    matchResult.matched.syntax != null &&
-    matchResult.matched.syntax.type === "Property"
-  ) {
-    const match =
-      "match" in matchResult.matched ? matchResult.matched.match : undefined;
-
-    if (match?.length === 1) {
-      const singleMatch = match[0];
-
-      if (singleMatch.syntax?.type === "Keyword") {
+    if (first?.type === "Identifier") {
+      const values = keywordValues[
+        property as keyof typeof keywordValues
+      ] as ReadonlyArray<string>;
+      if (values?.includes(input)) {
         return {
           type: "keyword",
           value: input,
-        } as const;
+        };
       }
-
-      if (singleMatch.syntax?.type === "Type") {
-        if ("match" in singleMatch && singleMatch.match.length === 1) {
-          const singleMatchMatch = singleMatch.match[0];
-
-          if (singleMatchMatch.syntax?.type === "Keyword") {
-            return {
-              type: "keyword",
-              value: input,
-            } as const;
-          }
-        }
-      }
+      return invalidValue;
     }
   }
 
