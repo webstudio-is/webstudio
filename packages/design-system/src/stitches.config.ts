@@ -118,6 +118,9 @@ import {
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
 
+// eslint-disable-next-line import/no-internal-modules
+import { color as figmaColors } from "./figma-tokens/__generated__/tokens";
+
 const spacing = {
   0: "0px",
   1: "1px",
@@ -170,6 +173,8 @@ const {
 } = createStitches({
   theme: {
     colors: {
+      ...figmaColors,
+
       ...gray,
       ...mauve,
       ...slate,
