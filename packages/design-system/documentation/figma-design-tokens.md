@@ -30,7 +30,7 @@ In case sync provider is not configured in the plugin, you can add one using the
 - Personal Access Token: token generated using the instructions above
 - Repository: `webstudio-is/webstudio-designer`
 - Branch: `figma-tokens`
-- File Path: `@todo`
+- File Path: `packages/design-system/src/__generated__/figma-design-tokens.json`
 - baseUrl: leave empty
 
 ### Links
