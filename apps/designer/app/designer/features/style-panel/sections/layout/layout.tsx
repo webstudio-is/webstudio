@@ -60,19 +60,17 @@ const GapInput = ({
   style,
   property,
   intermediateValue,
-  setIntermediateValue,
-  onPreviewSet,
-  onPreviewDelete,
-  onSet,
+  onIntermediateChange,
+  onPreviewChange,
+  onChange,
 }: {
   icon: JSX.Element;
   style: StyleInfo;
   property: StyleProperty;
   intermediateValue?: StyleValue | IntermediateStyleValue;
-  setIntermediateValue: (value?: StyleValue | IntermediateStyleValue) => void;
-  onPreviewSet: (value: StyleValue) => void;
-  onPreviewDelete: () => void;
-  onSet: (value: StyleValue) => void;
+  onIntermediateChange: (value?: StyleValue | IntermediateStyleValue) => void;
+  onPreviewChange: (value?: StyleValue) => void;
+  onChange: (value: StyleValue) => void;
 }) => {
   const { label, items } = styleConfigByName[property];
   return (
@@ -89,28 +87,28 @@ const GapInput = ({
             value: item.name,
           }))}
           onChange={(styleValue) => {
-            setIntermediateValue(styleValue);
+            onIntermediateChange(styleValue);
             if (styleValue === undefined) {
-              onPreviewDelete();
+              onPreviewChange();
               return;
             }
             if (styleValue.type !== "intermediate") {
-              onPreviewSet(styleValue);
+              onPreviewChange(styleValue);
             }
           }}
           onHighlight={(styleValue) => {
             if (styleValue !== undefined) {
-              onPreviewSet(styleValue);
+              onPreviewChange(styleValue);
             } else {
-              onPreviewDelete();
+              onPreviewChange();
             }
           }}
           onChangeComplete={({ value }) => {
-            onSet(value);
-            setIntermediateValue(undefined);
+            onChange(value);
+            onIntermediateChange(undefined);
           }}
           onAbort={() => {
-            onPreviewDelete();
+            onPreviewChange();
           }}
         />
       </Box>
@@ -155,27 +153,27 @@ const FlexGap = ({
           style={style}
           property="columnGap"
           intermediateValue={intermediateColumnGap}
-          setIntermediateValue={(value) => {
+          onIntermediateChange={(value) => {
             setIntermediateColumnGap(value);
             if (isLinked) {
               setIntermediateRowGap(value);
             }
           }}
-          onPreviewSet={(value) => {
-            batchUpdate.setProperty("columnGap")(value);
-            if (isLinked) {
-              batchUpdate.setProperty("rowGap")(value);
+          onPreviewChange={(value) => {
+            if (value === undefined) {
+              batchUpdate.deleteProperty("columnGap");
+              if (isLinked) {
+                batchUpdate.deleteProperty("rowGap");
+              }
+            } else {
+              batchUpdate.setProperty("columnGap")(value);
+              if (isLinked) {
+                batchUpdate.setProperty("rowGap")(value);
+              }
             }
             batchUpdate.publish({ isEphemeral: true });
           }}
-          onPreviewDelete={() => {
-            batchUpdate.deleteProperty("columnGap");
-            if (isLinked) {
-              batchUpdate.deleteProperty("rowGap");
-            }
-            batchUpdate.publish({ isEphemeral: true });
-          }}
-          onSet={(value) => {
+          onChange={(value) => {
             batchUpdate.setProperty("columnGap")(value);
             if (isLinked) {
               batchUpdate.setProperty("rowGap")(value);
@@ -204,27 +202,27 @@ const FlexGap = ({
           style={style}
           property="rowGap"
           intermediateValue={intermediateRowGap}
-          setIntermediateValue={(value) => {
+          onIntermediateChange={(value) => {
             setIntermediateRowGap(value);
             if (isLinked) {
               setIntermediateColumnGap(value);
             }
           }}
-          onPreviewSet={(value) => {
-            batchUpdate.setProperty("rowGap")(value);
-            if (isLinked) {
-              batchUpdate.setProperty("columnGap")(value);
+          onPreviewChange={(value) => {
+            if (value === undefined) {
+              batchUpdate.deleteProperty("rowGap");
+              if (isLinked) {
+                batchUpdate.deleteProperty("columnGap");
+              }
+            } else {
+              batchUpdate.setProperty("rowGap")(value);
+              if (isLinked) {
+                batchUpdate.setProperty("columnGap")(value);
+              }
             }
             batchUpdate.publish({ isEphemeral: true });
           }}
-          onPreviewDelete={() => {
-            batchUpdate.deleteProperty("rowGap");
-            if (isLinked) {
-              batchUpdate.deleteProperty("columnGap");
-            }
-            batchUpdate.publish({ isEphemeral: true });
-          }}
-          onSet={(value) => {
+          onChange={(value) => {
             batchUpdate.setProperty("rowGap")(value);
             if (isLinked) {
               batchUpdate.setProperty("columnGap")(value);
