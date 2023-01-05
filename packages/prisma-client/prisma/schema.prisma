@@ -99,3 +99,15 @@ model DesignTokens {
   buildId String @id
   value   String @default("[]")
 }
+
+model Auth {
+  id        String  @id @default(uuid())
+  namespace String
+  object    String
+  relation  String
+  subject   String?
+
+  subjectSetNamespace String?
+  subjectSetObject    String?
+  subjectSetRelation  String?
+}
