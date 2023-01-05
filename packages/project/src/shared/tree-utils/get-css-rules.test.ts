@@ -1,6 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { type Instance } from "@webstudio-is/react-sdk";
-import { getCssRules } from "./get-css-rules";
+import { getCssRules, getPresetStylesMap } from "./get-css-rules";
 
 describe("Get all cssRules from an instance including children", () => {
   test("getCssRules", () => {
@@ -85,4 +85,45 @@ describe("Get all cssRules from an instance including children", () => {
       ]
     `);
   });
+});
+
+test("get a map of preset style objects per component", () => {
+  expect(
+    getPresetStylesMap([
+      {
+        component: "Box",
+        property: "width",
+        value: { type: "keyword", value: "auto" },
+      },
+      {
+        component: "Box",
+        property: "height",
+        value: { type: "keyword", value: "auto" },
+      },
+      {
+        component: "Paragraph",
+        property: "width",
+        value: { type: "keyword", value: "auto" },
+      },
+    ])
+  ).toMatchInlineSnapshot(`
+    Map {
+      "Box" => {
+        "height": {
+          "type": "keyword",
+          "value": "auto",
+        },
+        "width": {
+          "type": "keyword",
+          "value": "auto",
+        },
+      },
+      "Paragraph" => {
+        "width": {
+          "type": "keyword",
+          "value": "auto",
+        },
+      },
+    }
+  `);
 });

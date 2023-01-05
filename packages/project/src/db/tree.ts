@@ -1,5 +1,12 @@
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import { type Tree, Instance, Text } from "@webstudio-is/react-sdk";
+import {
+  type Tree,
+  type ComponentName,
+  Instance,
+  Text,
+  PresetStyles,
+  findMissingPresetStyles,
+} from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import {
   Asset,
@@ -8,11 +15,7 @@ import {
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import {
-  type Breakpoint,
-  SharedStyleValue,
-  ImageValue,
-} from "@webstudio-is/css-data";
+import { SharedStyleValue, ImageValue } from "@webstudio-is/css-data";
 import { z } from "zod";
 import DataLoader from "dataloader";
 import warnOnce from "warn-once";
@@ -122,26 +125,30 @@ const InstanceDbIn = z.lazy(() =>
   })
 ) as /* Instance is wrong type here, ImageValue is different after transform. We don't use it anyway */ z.ZodType<Instance>;
 
-export const createRootInstance = (breakpoints: Array<Breakpoint>) => {
-  // Take the smallest breakpoint as default
-  const defaultBreakpoint = utils.breakpoints.sort(breakpoints)[0];
-  if (defaultBreakpoint === undefined) {
-    throw new Error("A breakpoint with minWidth 0 is required");
-  }
-  const instance = utils.tree.createInstance({ component: "Body" });
-  return utils.tree.populateInstance(instance, defaultBreakpoint.id);
+type TreeData = Omit<Tree, "id">;
+
+export const createTree = (): TreeData => {
+  const root = utils.tree.createInstance({ component: "Body" });
+  const presetStyles = findMissingPresetStyles([], [root.component]);
+
+  return {
+    root,
+    presetStyles,
+  };
 };
 
 export const create = async (
-  clientRoot: Instance,
+  treeData: TreeData,
   client: Prisma.TransactionClient = prisma
 ): Promise<DbTree> => {
-  const root = InstanceDbIn.parse(clientRoot);
-
-  const rootString = JSON.stringify(root);
+  treeData.root;
+  const root = InstanceDbIn.parse(treeData.root);
 
   return await client.tree.create({
-    data: { root: rootString },
+    data: {
+      root: JSON.stringify(root),
+      presetStyles: JSON.stringify(treeData.presetStyles),
+    },
   });
 };
 
@@ -167,9 +174,12 @@ export const loadById = async (
 
   Instance.parse(root);
 
+  const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
+
   return {
     ...tree,
     root,
+    presetStyles,
   };
 };
 
@@ -181,7 +191,16 @@ export const clone = async (
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
-  return await create(tree.root, client);
+  return await create(tree, client);
+};
+
+const collectUsedComponents = (instance: Instance, components: Set<string>) => {
+  components.add(instance.component);
+  for (const child of instance.children) {
+    if (child.type === "instance") {
+      collectUsedComponents(child, components);
+    }
+  }
 };
 
 export const patch = async (
@@ -193,11 +212,21 @@ export const patch = async (
     throw new Error(`Tree ${treeId} not found`);
   }
   const clientRoot = applyPatches(tree.root, patches);
+  const components = new Set<ComponentName>();
+  collectUsedComponents(tree.root, components);
+  const missingPresetStyles = findMissingPresetStyles(
+    tree.presetStyles,
+    Array.from(components)
+  );
+  const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
 
   const root = InstanceDbIn.parse(clientRoot);
 
   await prisma.tree.update({
-    data: { root: JSON.stringify(root) },
+    data: {
+      root: JSON.stringify(root),
+      presetStyles: JSON.stringify(presetStyles),
+    },
     where: { id: treeId },
   });
 };

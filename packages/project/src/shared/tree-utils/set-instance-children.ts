@@ -2,7 +2,6 @@ import type { Breakpoint } from "@webstudio-is/css-data";
 import type { ChildrenUpdates, Instance, Text } from "@webstudio-is/react-sdk";
 import { createInstance, createInstanceId } from "./create-instance";
 import { findInstanceById } from "./find-instance";
-import { populateInstance } from "./populate";
 
 type InstanceChild = Instance | Text;
 
@@ -27,7 +26,6 @@ const hydrateTree = (
         component: update.component,
         children: [],
       });
-      populateInstance(child, breakpoint);
     }
     children.push(child);
     hydrateTree(child, update.children, breakpoint);

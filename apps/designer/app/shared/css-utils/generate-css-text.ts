@@ -31,6 +31,13 @@ export const generateCssText = async (buildParams: BuildParams) => {
     engine.addMediaRule(breakpoint.id, breakpoint);
   }
 
+  const presetStylesMap = utils.tree.getPresetStylesMap(
+    canvasData.tree?.presetStyles
+  );
+  for (const [component, style] of presetStylesMap) {
+    engine.addStyleRule(`[data-ws-component="${component}"]`, { style });
+  }
+
   const cssRules = utils.tree.getCssRules(canvasData.tree?.root);
   for (const [instanceId, cssRule] of cssRules) {
     engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, cssRule);

@@ -6,8 +6,13 @@ import {
   designTokensContainer,
   rootInstanceContainer,
   useDesignTokens,
+  usePresetStyles,
 } from "~/shared/nano-states";
-import { idAttribute } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  getComponentNames,
+  idAttribute,
+} from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
   type Breakpoint,
@@ -71,23 +76,20 @@ const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
 const tokensCssEngine = createCssEngine({ name: "tokens" });
+const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {
     for (const style of helperStyles) {
       helpersCssEngine.addPlaintextRule(style);
     }
-    if (typeof document !== "undefined") {
-      helpersCssEngine.render();
-    }
+    helpersCssEngine.render();
   }, []);
 
   useIsomorphicLayoutEffect(() => {
     fontsAndDefaultsCssEngine.clear();
     addGlobalRules(fontsAndDefaultsCssEngine, { assets });
-    if (typeof document !== "undefined") {
-      fontsAndDefaultsCssEngine.render();
-    }
+    fontsAndDefaultsCssEngine.render();
   }, [assets]);
 
   const [tokens] = useDesignTokens();
@@ -99,10 +101,27 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
       tokensCssEngine.addStyleRule(`:root`, { style });
     }
 
-    if (typeof document !== "undefined") {
-      tokensCssEngine.render();
-    }
+    tokensCssEngine.render();
   }, [tokens]);
+
+  const [presetStyles] = usePresetStyles();
+
+  useIsomorphicLayoutEffect(() => {
+    presetStylesEngine.clear();
+    const presetStylesMap = utils.tree.getPresetStylesMap(presetStyles);
+    for (const component of getComponentNames()) {
+      const meta = getComponentMeta(component);
+      // render preset style and fallback to hardcoded one
+      // because could not be added yet to db
+      const presetStyle = presetStylesMap.get(component) ?? meta.presetStyle;
+      if (presetStyle !== undefined) {
+        presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
+          style: presetStyle,
+        });
+      }
+    }
+    presetStylesEngine.render();
+  }, [presetStyles]);
 
   return null;
 };

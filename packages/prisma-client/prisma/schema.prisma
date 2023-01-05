@@ -77,8 +77,9 @@ model Build {
 }
 
 model Tree {
-  id   String @id @default(uuid())
-  root String
+  id           String @id @default(uuid())
+  root         String
+  presetStyles String @default("[]")
 }
 
 model InstanceProps {

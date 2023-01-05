@@ -14,7 +14,6 @@ import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import { Header, CloseButton } from "../../lib/header";
-import { useBreakpoints } from "~/shared/nano-states";
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -85,7 +84,6 @@ const elementToComponentName = (
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
-  const [breakpoints] = useBreakpoints();
 
   const [canvasRect] = useCanvasRect();
   const [zoom] = useZoom();
@@ -167,12 +165,9 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             component={component}
             onClick={() => {
               onSetActiveTab("none");
-              const instance = utils.tree.populateInstance(
-                utils.tree.createInstance({
-                  component,
-                }),
-                breakpoints[0].id
-              );
+              const instance = utils.tree.createInstance({
+                component,
+              });
               publish({
                 type: "insertInstance",
                 payload: { instance },
