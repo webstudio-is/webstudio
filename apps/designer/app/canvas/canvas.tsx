@@ -34,10 +34,10 @@ import {
   useInitializeBreakpoints,
 } from "./shared/breakpoints";
 import {
-  presetStylesContainer,
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
+  useSetPresetStyles,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
@@ -175,11 +175,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
-  useState(() => {
-    if (data.tree?.presetStyles) {
-      presetStylesContainer.value = data.tree.presetStyles;
-    }
-  });
+  useSetPresetStyles(data.tree?.presetStyles);
   usePopulateRootInstance(data.tree);
   setParams(data.params ?? null);
 

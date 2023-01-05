@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createValueContainer, useValue } from "react-nano-state";
 import type { Instance, PresetStyles } from "@webstudio-is/react-sdk";
 import type {
@@ -14,6 +15,13 @@ export const useRootInstance = () => useValue(rootInstanceContainer);
 
 export const presetStylesContainer = createValueContainer<PresetStyles>([]);
 export const usePresetStyles = () => useValue(presetStylesContainer);
+export const useSetPresetStyles = (presetStyles?: PresetStyles) => {
+  useState(() => {
+    if (presetStyles) {
+      presetStylesContainer.value = presetStyles;
+    }
+  });
+};
 
 export const breakpointsContainer = createValueContainer<Array<Breakpoint>>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);
