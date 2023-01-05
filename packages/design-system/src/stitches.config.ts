@@ -117,6 +117,7 @@ import {
 } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
+import { color as figmaColors } from "./__generated__/figma-design-tokens";
 
 const spacing = {
   0: "0px",
@@ -170,6 +171,8 @@ const {
 } = createStitches({
   theme: {
     colors: {
+      ...figmaColors,
+
       ...gray,
       ...mauve,
       ...slate,
