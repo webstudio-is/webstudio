@@ -14,15 +14,15 @@ export type PresetStylesItem = {
 };
 
 // @todo can't figure out how to make property to be enum
-export const zPresetStylesItem = z.object({
+export const PresetStylesItem = z.object({
   component: z.enum(getComponentNames() as [ComponentName]),
   property: z.string(),
   value: SharedStyleValue,
 }) as z.ZodType<PresetStylesItem>;
 
-export const zPresetStyles = z.array(zPresetStylesItem);
+export const PresetStyles = z.array(PresetStylesItem);
 
-export type PresetStyles = z.infer<typeof zPresetStyles>;
+export type PresetStyles = z.infer<typeof PresetStyles>;
 
 export const findMissingPresetStyles = (
   presetStyles: PresetStyles,

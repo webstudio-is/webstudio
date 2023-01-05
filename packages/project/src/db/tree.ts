@@ -4,7 +4,7 @@ import {
   type ComponentName,
   Instance,
   Text,
-  zPresetStyles,
+  PresetStyles,
   findMissingPresetStyles,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
@@ -174,7 +174,7 @@ export const loadById = async (
 
   Instance.parse(root);
 
-  const presetStyles = zPresetStyles.parse(JSON.parse(tree.presetStyles));
+  const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
 
   return {
     ...tree,
