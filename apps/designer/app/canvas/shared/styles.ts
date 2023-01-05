@@ -76,8 +76,7 @@ const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
 const tokensCssEngine = createCssEngine({ name: "tokens" });
-const presetStyleEngine = createCssEngine();
-const presetStylesEngine = createCssEngine();
+const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {
