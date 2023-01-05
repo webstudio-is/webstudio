@@ -47,7 +47,7 @@ const GapLinked = ({
           justifyContent: "center",
         }}
       >
-        <DeprecatedIconButton onClick={() => onChange(!isLinked)}>
+        <DeprecatedIconButton onClick={() => onChange(isLinked === false)}>
           {isLinked ? <LinkedIcon /> : <UnlinkedIcon />}
         </DeprecatedIconButton>
       </Flex>
