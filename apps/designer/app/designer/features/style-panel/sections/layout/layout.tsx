@@ -1,13 +1,239 @@
-import { Box, Flex, Grid } from "@webstudio-is/design-system";
+import { useState } from "react";
+import {
+  Box,
+  DeprecatedIconButton,
+  EnhancedTooltip,
+  Flex,
+  Grid,
+  Tooltip,
+} from "@webstudio-is/design-system";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
+import {
+  ColumnGapIcon,
+  RowGapIcon,
+  LinkedIcon,
+  UnlinkedIcon,
+} from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
-import { Lock } from "./shared/lock";
 import { renderProperty } from "../../style-sections";
-import { MenuControl, SelectControl, TextControl } from "../../controls";
+import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
-import { ColumnGapIcon, RowGapIcon } from "@webstudio-is/icons";
 import { styleConfigByName } from "../../shared/configs";
+import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import {
+  type IntermediateStyleValue,
+  CssValueInput,
+} from "../../shared/css-value-input";
+
+const GapLinked = ({
+  isLinked,
+  onChange,
+}: {
+  isLinked: boolean;
+  onChange: (isLinked: boolean) => void;
+}) => {
+  return (
+    <Tooltip
+      content={isLinked ? "Unlink gap values" : "Link gap values"}
+      delayDuration={400}
+      disableHoverableContent={true}
+    >
+      <Flex
+        css={{
+          width: "100%",
+          justifyContent: "center",
+        }}
+      >
+        <DeprecatedIconButton onClick={() => onChange(isLinked === false)}>
+          {isLinked ? <LinkedIcon /> : <UnlinkedIcon />}
+        </DeprecatedIconButton>
+      </Flex>
+    </Tooltip>
+  );
+};
+
+const GapInput = ({
+  icon,
+  style,
+  property,
+  intermediateValue,
+  onIntermediateChange,
+  onPreviewChange,
+  onChange,
+}: {
+  icon: JSX.Element;
+  style: StyleInfo;
+  property: StyleProperty;
+  intermediateValue?: StyleValue | IntermediateStyleValue;
+  onIntermediateChange: (value?: StyleValue | IntermediateStyleValue) => void;
+  onPreviewChange: (value?: StyleValue) => void;
+  onChange: (value: StyleValue) => void;
+}) => {
+  const { label, items } = styleConfigByName[property];
+  return (
+    <EnhancedTooltip content={label}>
+      <Box>
+        <CssValueInput
+          styleSource={getStyleSource(style[property])}
+          icon={icon}
+          property="columnGap"
+          value={style[property]?.value}
+          intermediateValue={intermediateValue}
+          keywords={items.map((item) => ({
+            type: "keyword",
+            value: item.name,
+          }))}
+          onChange={(styleValue) => {
+            onIntermediateChange(styleValue);
+            if (styleValue === undefined) {
+              onPreviewChange();
+              return;
+            }
+            if (styleValue.type !== "intermediate") {
+              onPreviewChange(styleValue);
+            }
+          }}
+          onHighlight={(styleValue) => {
+            if (styleValue !== undefined) {
+              onPreviewChange(styleValue);
+            } else {
+              onPreviewChange();
+            }
+          }}
+          onChangeComplete={({ value }) => {
+            onChange(value);
+            onIntermediateChange(undefined);
+          }}
+          onAbort={() => {
+            onPreviewChange();
+          }}
+        />
+      </Box>
+    </EnhancedTooltip>
+  );
+};
+
+const FlexGap = ({
+  style,
+  createBatchUpdate,
+}: {
+  style: StyleInfo;
+  createBatchUpdate: CreateBatchUpdate;
+}) => {
+  const batchUpdate = createBatchUpdate();
+
+  const [isLinked, setIsLinked] = useState(() => {
+    return toValue(style.columnGap?.value) === toValue(style.rowGap?.value);
+  });
+
+  const [intermediateColumnGap, setIntermediateColumnGap] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+  const [intermediateRowGap, setIntermediateRowGap] = useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
+  return (
+    <Grid
+      css={{
+        gridTemplateColumns: "4fr 1fr 4fr",
+        gridTemplateRows: "auto",
+        gridTemplateAreas: `
+          "columnGap linked rowGap"
+        `,
+        alignItems: "center",
+      }}
+    >
+      <Box css={{ gridArea: "columnGap" }}>
+        <GapInput
+          icon={<ColumnGapIcon />}
+          style={style}
+          property="columnGap"
+          intermediateValue={intermediateColumnGap}
+          onIntermediateChange={(value) => {
+            setIntermediateColumnGap(value);
+            if (isLinked) {
+              setIntermediateRowGap(value);
+            }
+          }}
+          onPreviewChange={(value) => {
+            if (value === undefined) {
+              batchUpdate.deleteProperty("columnGap");
+              if (isLinked) {
+                batchUpdate.deleteProperty("rowGap");
+              }
+            } else {
+              batchUpdate.setProperty("columnGap")(value);
+              if (isLinked) {
+                batchUpdate.setProperty("rowGap")(value);
+              }
+            }
+            batchUpdate.publish({ isEphemeral: true });
+          }}
+          onChange={(value) => {
+            batchUpdate.setProperty("columnGap")(value);
+            if (isLinked) {
+              batchUpdate.setProperty("rowGap")(value);
+            }
+            batchUpdate.publish();
+          }}
+        />
+      </Box>
+
+      <Box css={{ gridArea: "linked", px: "$spacing$3" }}>
+        <GapLinked
+          isLinked={isLinked}
+          onChange={(isLinked) => {
+            setIsLinked(isLinked);
+            if (isLinked && style.columnGap?.value) {
+              batchUpdate.setProperty("rowGap")(style.columnGap.value);
+              batchUpdate.publish();
+            }
+          }}
+        />
+      </Box>
+
+      <Box css={{ gridArea: "rowGap" }}>
+        <GapInput
+          icon={<RowGapIcon />}
+          style={style}
+          property="rowGap"
+          intermediateValue={intermediateRowGap}
+          onIntermediateChange={(value) => {
+            setIntermediateRowGap(value);
+            if (isLinked) {
+              setIntermediateColumnGap(value);
+            }
+          }}
+          onPreviewChange={(value) => {
+            if (value === undefined) {
+              batchUpdate.deleteProperty("rowGap");
+              if (isLinked) {
+                batchUpdate.deleteProperty("columnGap");
+              }
+            } else {
+              batchUpdate.setProperty("rowGap")(value);
+              if (isLinked) {
+                batchUpdate.setProperty("columnGap")(value);
+              }
+            }
+            batchUpdate.publish({ isEphemeral: true });
+          }}
+          onChange={(value) => {
+            batchUpdate.setProperty("rowGap")(value);
+            if (isLinked) {
+              batchUpdate.setProperty("columnGap")(value);
+            }
+            batchUpdate.publish();
+          }}
+        />
+      </Box>
+    </Grid>
+  );
+};
 
 const LayoutSectionFlex = ({
   currentStyle,
@@ -91,42 +317,7 @@ const LayoutSectionFlex = ({
         )}
       </Grid>
 
-      <Grid
-        css={{
-          gridTemplateColumns: "4fr 1fr 4fr",
-          gridTemplateRows: "auto",
-          gridTemplateAreas: `
-            "columnGap lock rowGap"
-          `,
-          alignItems: "center",
-        }}
-      >
-        <Box css={{ gridArea: "columnGap" }}>
-          <TextControl
-            icon={<ColumnGapIcon />}
-            property="columnGap"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
-        </Box>
-        <Box css={{ gridArea: "lock", px: "$spacing$3" }}>
-          <Lock
-            pairedKeys={["columnGap", "rowGap"]}
-            currentStyle={currentStyle}
-            batchUpdate={batchUpdate}
-          />
-        </Box>
-        <Box css={{ gridArea: "rowGap" }}>
-          <TextControl
-            icon={<RowGapIcon />}
-            property="rowGap"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-          />
-        </Box>
-      </Grid>
+      <FlexGap style={currentStyle} createBatchUpdate={createBatchUpdate} />
     </Flex>
   );
 };

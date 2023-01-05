@@ -195,10 +195,10 @@ export const useStyleData = ({
             },
             { ...prevStyle }
           );
-          updates = [];
           return nextStyle;
         });
       }
+      updates = [];
     };
 
     return {
