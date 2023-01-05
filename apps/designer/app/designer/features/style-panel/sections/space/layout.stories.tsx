@@ -1,17 +1,17 @@
 import type { ComponentMeta } from "@storybook/react";
 import React from "react";
-import { SpacingLayout } from "./layout";
+import { SpaceLayout } from "./layout";
 
 export const Layout = (
-  args: Omit<React.ComponentProps<typeof SpacingLayout>, "renderCell">
+  args: Omit<React.ComponentProps<typeof SpaceLayout>, "renderCell">
 ) => (
-  <SpacingLayout
+  <SpaceLayout
     renderCell={() => <div style={{ color: "red" }}>·</div>}
     {...args}
   />
 );
 
 export default {
-  title: "Spacing/Layout",
+  title: "Space/Layout",
   component: Layout,
 } as ComponentMeta<typeof Layout>;

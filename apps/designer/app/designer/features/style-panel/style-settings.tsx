@@ -80,8 +80,8 @@ const appliesTo = (
 };
 
 const didRender = (category: Category, property: StyleProperty): boolean => {
-  // We only want to render the first thing in spacing since the widget will be the way to set all margin and padding
-  if (category === "spacing" && property !== categories.spacing.properties[0]) {
+  // We only want to render the first thing in space since the widget will be the way to set all margin and padding
+  if (category === "space" && property !== categories.space.properties[0]) {
     return true;
   }
   return false;

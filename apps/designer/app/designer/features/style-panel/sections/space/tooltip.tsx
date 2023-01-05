@@ -3,7 +3,7 @@ import {
   Tooltip,
   useEnhancedTooltipProps,
 } from "@webstudio-is/design-system";
-import { SpacingStyleProperty } from "./types";
+import { SpaceStyleProperty } from "./types";
 import { useDebounce } from "use-debounce";
 import { useState } from "react";
 
@@ -39,10 +39,10 @@ const sides = {
   marginLeft: "right",
 } as const;
 
-export const SpacingTooltip = ({
+export const SpaceTooltip = ({
   property,
 }: {
-  property: SpacingStyleProperty;
+  property: SpaceStyleProperty;
 }) => {
   const { delayDuration } = useEnhancedTooltipProps();
   const [initialOpen, setInitialOpen] = useState(false);

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FocusEvent, KeyboardEvent, MouseEvent } from "react";
-import type { SpacingStyleProperty } from "./types";
+import type { SpaceStyleProperty } from "./types";
 
 const movementKeys = [
   "ArrowUp",
@@ -23,10 +23,10 @@ const movementMap = {
 export const useKeyboardNavigation = ({
   onOpen,
 }: {
-  onOpen: (property: SpacingStyleProperty) => void;
+  onOpen: (property: SpaceStyleProperty) => void;
 }) => {
   const [activeProperty, setActiveProperty] =
-    useState<SpacingStyleProperty>("marginTop");
+    useState<SpaceStyleProperty>("marginTop");
 
   const [isActive, setIsActive] = useState(false);
 
@@ -40,7 +40,7 @@ export const useKeyboardNavigation = ({
     setIsActive(false);
   };
 
-  const handleHover = (property: SpacingStyleProperty | undefined) => {
+  const handleHover = (property: SpaceStyleProperty | undefined) => {
     // switch to mouse navigation if user starts to use mouse
     setIsActive(false);
 
