@@ -1,5 +1,5 @@
-import { CssEngine } from "./css-engine";
+import { CssEngine, type CssEngineOptions } from "./css-engine";
 
-export const createCssEngine = () => {
-  return new CssEngine();
+export const createCssEngine = (options: CssEngineOptions = {}) => {
+  return new CssEngine(options);
 };

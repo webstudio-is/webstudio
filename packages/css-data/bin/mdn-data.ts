@@ -1,12 +1,19 @@
-import { definitionSyntax, type DSNode } from "css-tree";
+import { parse, definitionSyntax, type DSNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
-import units from "mdn-data/css/units.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
+import data from "css-tree/dist/data";
 import { popularityIndex } from "../src/popularity-index";
 import camelCase from "camelcase";
 import * as fs from "fs";
 import * as path from "path";
-import type { StyleValue } from "../src";
+import type { StyleValue, Unit } from "../src";
+
+const units = {
+  number: [],
+  // consider % as unit
+  percentage: ["%"],
+  ...data.units,
+};
 
 type Property = keyof typeof properties;
 type Value = typeof properties[Property] & { alsoAppliesTo?: Array<string> };
@@ -27,26 +34,6 @@ const normalizedValues = {
   "font-size": inheritValue,
   "line-height": inheritValue,
   color: inheritValue,
-  // https://github.com/mdn/data/issues/554
-  // @todo remove once fixed in mdn data
-  appearance: {
-    type: "keyword",
-    value: "none",
-  },
-  // https://github.com/mdn/data/issues/555
-  // @todo remove once fixed
-  "background-position-x": {
-    type: "unit",
-    value: 0,
-    unit: "%",
-  },
-  // https://github.com/mdn/data/issues/555
-  // @todo remove once fixed
-  "background-position-y": {
-    type: "unit",
-    value: 0,
-    unit: "%",
-  },
   "column-gap": {
     type: "unit",
     value: 0,
@@ -57,11 +44,122 @@ const normalizedValues = {
     value: 0,
     unit: "px",
   },
-  // https://github.com/mdn/data/issues/556
-  // @todo remove once fixed
   "background-size": autoValue,
   "text-size-adjust": autoValue,
 } as const;
+
+const parseInitialValue = (
+  property: string,
+  value: string,
+  unitGroups: Set<string>
+): StyleValue => {
+  // Our default values hardcoded because no single standard
+  if (property in normalizedValues) {
+    return normalizedValues[property as keyof typeof normalizedValues];
+  }
+  const ast = parse(value, { context: "value" });
+  if (ast.type !== "Value") {
+    throw Error(`Unknown parsed type ${ast.type}`);
+  }
+
+  // more than 2 values consider as keyword
+  if (ast.children.first !== ast.children.last) {
+    return {
+      type: "keyword",
+      value: value,
+    };
+  }
+
+  const node = ast.children.first;
+  if (node?.type === "Identifier") {
+    return {
+      type: "keyword",
+      value: node.name,
+    };
+  }
+  if (node?.type === "Number") {
+    let unit: Unit = "number";
+    // set explicit unit when 0 initial is specified without unit
+    if (unitGroups.has("number") === false) {
+      if (unitGroups.has("length")) {
+        unit = "px";
+      } else {
+        throw Error(
+          `Cannot infer unit for "${value}" initial value of ${property} property`
+        );
+      }
+    }
+    return {
+      type: "unit",
+      unit,
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Percentage") {
+    return {
+      type: "unit",
+      unit: "%",
+      value: Number(node.value),
+    };
+  }
+  if (node?.type === "Dimension") {
+    return {
+      type: "unit",
+      unit: node.unit as Unit,
+      value: Number(node.value),
+    };
+  }
+
+  throw Error(`Cannot find initial for ${property}`);
+};
+
+const walkSyntax = (
+  syntax: string,
+  enter: (node: DSNode) => void,
+  parsedSyntaxes = new Set<string>()
+) => {
+  // fix cyclic syntaxes
+  if (parsedSyntaxes.has(syntax)) {
+    return;
+  }
+  parsedSyntaxes.add(syntax);
+  const parsed = definitionSyntax.parse(syntax);
+
+  const walk = (node: DSNode) => {
+    if (node.type === "Group") {
+      for (const term of node.terms) {
+        // skip functions and their content as complex values
+        if (term.type === "Function") {
+          break;
+        }
+        walk(term);
+      }
+      return;
+    }
+    if (node.type === "Multiplier") {
+      walk(node.term);
+      return;
+    }
+    if (node.type === "Type") {
+      const nestedSyntax = syntaxes[node.name]?.syntax;
+      if (nestedSyntax === undefined) {
+        enter(node);
+      } else {
+        // resolve nested syntaxes
+        walkSyntax(nestedSyntax, enter, parsedSyntaxes);
+      }
+      return;
+    }
+    if (node.type === "Property") {
+      // resolve other properties references
+      walkSyntax(properties[node.name].syntax, enter, parsedSyntaxes);
+      return;
+    }
+    enter(node);
+  };
+
+  walk(parsed);
+};
 
 type FilteredProperties = { [property in Property]: Value };
 
@@ -95,6 +193,7 @@ const filteredProperties: FilteredProperties = (() => {
 const propertiesData: {
   // It's string because we camel-cased it
   [property: string]: {
+    unitGroups: string[];
     inherited: boolean;
     initial: StyleValue;
     popularity: number;
@@ -125,38 +224,27 @@ let property: Property;
 
 for (property in filteredProperties) {
   const config = filteredProperties[property];
-  let initial: StyleValue;
 
-  // Our default values hardcoded because no single standard
-  if (property in normalizedValues) {
-    initial = normalizedValues[property as keyof typeof normalizedValues];
-  } else {
-    // @todo use css-tree instead of this custom logic which is likely wrong
-    // Complex initial values like "50% 50% 0" can't be parsed to a number
-    const number =
-      typeof config.initial === "string"
-        ? config.initial.includes(" ")
-          ? NaN
-          : parseFloat(config.initial)
-        : NaN;
-
-    if (isNaN(number) && typeof config.initial === "string") {
-      initial = {
-        type: "keyword",
-        value: config.initial,
-      };
-    } else {
-      initial = {
-        type: "unit",
-        unit: "px",
-        value: number,
-      };
+  // collect node types to improve parsing of css values
+  const unitGroups = new Set<string>();
+  walkSyntax(config.syntax, (node) => {
+    if (node.type === "Type") {
+      if (node.name === "integer" || node.name === "number") {
+        unitGroups.add("number");
+        return;
+      }
+      // type names match unit groups
+      if (units[node.name]) {
+        unitGroups.add(node.name);
+        return;
+      }
     }
-  }
+  });
 
   propertiesData[camelCase(property)] = {
+    unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
-    initial,
+    initial: parseInitialValue(property, config.initial, unitGroups),
     popularity:
       popularityIndex.find((data) => data.property === property)
         ?.dayPercentage || 0,
@@ -184,56 +272,22 @@ const writeToFile = (fileName: string, constant: string, data: unknown) => {
 
 const keywordValues = (() => {
   const result: { [prop: string]: Array<string> } = {};
-  let property: Property;
-  const parsedSyntaxes = new Map();
 
-  const getKeywords = (node: DSNode): Set<string> => {
-    let keywords: Set<string> = new Set();
-    if (node.type === "Type" || (node.type === "Property" && node.name)) {
-      const syntax =
-        syntaxes[node.name as keyof typeof syntaxes]?.syntax ||
-        properties[node.name as Property]?.syntax;
-
-      // When there is syntax - there are keyword references
-      if (syntax) {
-        if (parsedSyntaxes.has(syntax)) {
-          return parsedSyntaxes.get(syntax);
-        }
-        const ast = definitionSyntax.parse(syntax);
-        definitionSyntax.walk(ast, (node) => {
-          keywords = new Set([...keywords, ...getKeywords(node)]);
-          parsedSyntaxes.set(syntax, keywords);
-        });
-      }
-      return keywords;
-    }
-
-    if (node.type === "Keyword" && node.name) {
-      keywords.add(node.name);
-    }
-
-    return keywords;
-  };
-
-  for (property in filteredProperties) {
-    // if (property !== "flex-basis") continue;
-    const ast = definitionSyntax.parse(filteredProperties[property].syntax);
-    definitionSyntax.walk(ast, (node) => {
-      const keywords = getKeywords(node);
-      const camelCasedProperty = camelCase(property);
-      if (keywords.size !== 0) {
-        result[camelCasedProperty] = Array.from(
-          new Set([...(result[camelCasedProperty] || []), ...keywords])
-        );
+  for (let property in filteredProperties) {
+    const keywords = new Set<string>();
+    walkSyntax(filteredProperties[property].syntax, (node) => {
+      if (node.type === "Keyword") {
+        keywords.add(node.name);
       }
     });
+    if (keywords.size !== 0) {
+      result[camelCase(property)] = Array.from(keywords);
+    }
   }
 
   return result;
 })();
 
+writeToFile("units.ts", "units", units);
 writeToFile("properties.ts", "properties", propertiesData);
-// @todo % is somehow not in the units list
-// https://github.com/mdn/data/issues/553
-writeToFile("units.ts", "units", [...Object.keys(units), "%"]);
 writeToFile("keyword-values.ts", "keywordValues", keywordValues);

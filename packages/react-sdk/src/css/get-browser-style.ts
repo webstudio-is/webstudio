@@ -2,19 +2,20 @@ import { detectFont } from "detect-font";
 import type { Style, StyleValue, Unit } from "@webstudio-is/css-data";
 import { properties, units } from "@webstudio-is/css-data";
 
-const unitRegex = new RegExp(`${units.join("|")}`);
+const unitsList = Object.values(units).flat();
+const unitRegex = new RegExp(`${unitsList.join("|")}`);
 
 // @todo use a parser
 const parseValue = (
   property: keyof typeof properties,
   value: string
 ): StyleValue => {
-  const number = parseFloat(value);
+  const number = Number.parseFloat(value);
   const parsedUnit = unitRegex.exec(value);
   if (value === "rgba(0, 0, 0, 0)") {
     value = "transparent";
   }
-  if (isNaN(number) || parsedUnit === null) {
+  if (Number.isNaN(number)) {
     return {
       type: "keyword",
       value,
@@ -23,6 +24,14 @@ const parseValue = (
 
   if (number === 0 && property in properties) {
     return properties[property].initial;
+  }
+
+  if (parsedUnit === null) {
+    return {
+      type: "unit",
+      unit: "number",
+      value: number,
+    };
   }
 
   return {

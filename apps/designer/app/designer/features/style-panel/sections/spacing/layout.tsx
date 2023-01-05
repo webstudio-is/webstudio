@@ -1,5 +1,6 @@
 import { styled, useId } from "@webstudio-is/design-system";
-import type { ComponentProps } from "react";
+import { forwardRef } from "react";
+import type { ComponentProps, Ref } from "react";
 import type { HoverTagret, SpacingStyleProperty } from "./types";
 import { spacingPropertiesNames } from "./types";
 
@@ -121,13 +122,6 @@ const MostInnerRect = styled(
   { stroke: "$slate8", fill: "$loContrast" }
 );
 
-const Container = styled("div", {
-  userSelect: "none",
-  position: "relative",
-  width: TOTAL_WIDTH,
-  height: TOTAL_HEIGHT,
-});
-
 const gap = `${INNER_MARGIN + BORDER}px`;
 const Grid = styled("div", {
   position: "absolute",
@@ -142,6 +136,21 @@ const Grid = styled("div", {
   // gap is inserted manually because we don't want it around the "auto" row
   gridTemplateRows: `${VALUE_HEIGHT}px ${gap} ${VALUE_HEIGHT}px auto ${VALUE_HEIGHT}px ${gap} ${VALUE_HEIGHT}px`,
   pointerEvents: "none",
+});
+
+const Container = styled("div", {
+  userSelect: "none",
+  position: "relative",
+  width: TOTAL_WIDTH,
+  height: TOTAL_HEIGHT,
+  "&:focus-visible": { outline: "none" },
+
+  // Grid happens to be positioned perfectly for the focus outline
+  // (both in z-order and in top/left)
+  [`&:focus-visible > ${Grid}`]: {
+    borderRadius: "$borderRadius$3",
+    outline: "2px solid $colors$blue10",
+  },
 });
 
 const Cell = styled("div", {
@@ -221,81 +230,103 @@ const getPath = (property: SpacingStyleProperty) => {
 };
 
 type LayoutProps = {
-  onClick: () => void;
+  onFocus?: ComponentProps<"div">["onFocus"];
+  onBlur?: ComponentProps<"div">["onBlur"];
+  onKeyDown?: ComponentProps<"div">["onKeyDown"];
+  onClick?: ComponentProps<"div">["onClick"];
+  onMouseLeave?: ComponentProps<"div">["onMouseLeave"];
   onHover: (hoverTarget: HoverTagret | undefined) => void;
   activeProperties?: ReadonlyArray<SpacingStyleProperty>;
   renderCell: (args: { property: SpacingStyleProperty }) => React.ReactNode;
 };
 
-export const SpacingLayout = ({
-  onClick,
-  onHover,
-  activeProperties,
-  renderCell,
-}: LayoutProps) => {
-  const outerClipId = useId();
-  const innerClipId = useId();
+export const SpacingLayout = forwardRef(
+  (
+    {
+      onFocus,
+      onBlur,
+      onKeyDown,
+      onClick,
+      onHover,
+      onMouseLeave,
+      activeProperties,
+      renderCell,
+    }: LayoutProps,
+    ref: Ref<HTMLDivElement>
+  ) => {
+    const outerClipId = useId();
+    const innerClipId = useId();
 
-  const renderValueArea = (property: SpacingStyleProperty) => (
-    <ValueArea
-      side={getSide(property)}
-      d={getPath(property)}
-      onMouseEnter={(event) =>
-        onHover({ element: event.currentTarget, property })
-      }
-      onMouseLeave={() => onHover(undefined)}
-      isActive={activeProperties?.includes(property)}
-    />
-  );
+    const renderValueArea = (property: SpacingStyleProperty) => (
+      <ValueArea
+        side={getSide(property)}
+        d={getPath(property)}
+        onMouseEnter={(event) =>
+          onHover({ element: event.currentTarget, property })
+        }
+        onMouseLeave={() => onHover(undefined)}
+        isActive={activeProperties?.includes(property)}
+      />
+    );
 
-  return (
-    <Container onClick={onClick}>
-      <svg
-        width={TOTAL_WIDTH}
-        height={TOTAL_HEIGHT}
-        viewBox={`0 0 ${TOTAL_WIDTH} ${TOTAL_HEIGHT}`}
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    return (
+      <Container
+        onClick={onClick}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        onMouseLeave={onMouseLeave}
+        tabIndex={0}
+        ref={ref}
       >
-        <g clipPath={`url(#${outerClipId})`}>
-          {renderValueArea("marginTop")}
-          {renderValueArea("marginRight")}
-          {renderValueArea("marginBottom")}
-          {renderValueArea("marginLeft")}
-        </g>
+        <svg
+          width={TOTAL_WIDTH}
+          height={TOTAL_HEIGHT}
+          viewBox={`0 0 ${TOTAL_WIDTH} ${TOTAL_HEIGHT}`}
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <g clipPath={`url(#${outerClipId})`}>
+            {renderValueArea("marginTop")}
+            {renderValueArea("marginRight")}
+            {renderValueArea("marginBottom")}
+            {renderValueArea("marginLeft")}
+          </g>
 
-        <OuterRect />
-        <InnerOuterRect />
+          <OuterRect />
+          <InnerOuterRect />
 
-        <g clipPath={`url(#${innerClipId})`}>
-          {renderValueArea("paddingTop")}
-          {renderValueArea("paddingRight")}
-          {renderValueArea("paddingBottom")}
-          {renderValueArea("paddingLeft")}
-        </g>
+          <g clipPath={`url(#${innerClipId})`}>
+            {renderValueArea("paddingTop")}
+            {renderValueArea("paddingRight")}
+            {renderValueArea("paddingBottom")}
+            {renderValueArea("paddingLeft")}
+          </g>
 
-        <InnerRect />
-        <MostInnerRect />
+          <InnerRect />
+          <MostInnerRect />
 
-        <defs>
-          <clipPath id={outerClipId}>
-            <OuterRect />
-          </clipPath>
-          <clipPath id={innerClipId}>
-            <InnerRect />
-          </clipPath>
-        </defs>
-      </svg>
-      <Grid>
-        <Label>Margin</Label>
-        <Label inner>Padding</Label>
+          <defs>
+            <clipPath id={outerClipId}>
+              <OuterRect />
+            </clipPath>
+            <clipPath id={innerClipId}>
+              <InnerRect />
+            </clipPath>
+          </defs>
+        </svg>
+        <Grid>
+          <Label>Margin</Label>
+          <Label inner>Padding</Label>
 
-        {spacingPropertiesNames.map((property) => (
-          <Cell property={property} key={property}>
-            {renderCell({ property })}
-          </Cell>
-        ))}
-      </Grid>
-    </Container>
-  );
-};
+          {spacingPropertiesNames.map((property) => (
+            <Cell property={property} key={property}>
+              {renderCell({ property })}
+            </Cell>
+          ))}
+        </Grid>
+      </Container>
+    );
+  }
+);
+SpacingLayout.displayName = "SpacingLayout";

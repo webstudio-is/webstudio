@@ -24,7 +24,7 @@ describe("CssEngine", () => {
   let engine: CssEngine;
 
   const reset = () => {
-    engine = new CssEngine();
+    engine = new CssEngine({ name: "test" });
   };
 
   beforeEach(reset);

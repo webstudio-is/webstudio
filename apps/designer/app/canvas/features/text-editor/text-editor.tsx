@@ -129,7 +129,7 @@ export const TextEditor = ({
   const [italicClassName] = useState(() => nanoid());
 
   useLayoutEffect(() => {
-    const engine = createCssEngine();
+    const engine = createCssEngine({ name: "text-editor" });
     // reset paragraph styles and make it work inside <a>
     engine.addPlaintextRule(`
       .${paragraphClassName} { display: inline; margin: 0; }
