@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
 import { execSync } from "child_process";
+import camelCase from "camelcase";
 import { readFileSync, writeFileSync, existsSync, rmSync } from "fs";
 
 const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";
@@ -33,28 +34,17 @@ const traverse = (
   }
 };
 
-const toCamelCase = (text: string) =>
-  text
-    .split(/[^a-z0-9]+/i)
-    .map((word) => {
-      if (word.length === 0) {
-        return "";
-      }
-      return word[0].toUpperCase() + word.slice(1);
-    })
-    .join("");
+const pathToName = (path: string[], type: string) => {
+  const cleanedUp = path.join(" ").replace(/[^a-z0-9]+/gi, " ");
 
-const trimPrefix = (prefix: string, text: string) => {
-  if (text.toLocaleLowerCase().startsWith(prefix.toLocaleLowerCase())) {
-    return text.slice(prefix.length);
-  }
-  return text;
+  const withoutPrefix = cleanedUp
+    .toLocaleLowerCase()
+    .startsWith(type.toLocaleLowerCase())
+    ? cleanedUp.slice(type.length)
+    : cleanedUp;
+
+  return camelCase(withoutPrefix, { locale: false });
 };
-
-const deCapitalize = (text: string) => text[0].toLowerCase() + text.slice(1);
-
-const pathToName = (path: string[], type: string) =>
-  deCapitalize(trimPrefix(type, toCamelCase(path.join("-"))));
 
 const main = () => {
   execSync(`token-transformer ${SOURCE_FILE} ${TMP_OUTPUT_FILE}`, {

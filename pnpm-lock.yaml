@@ -416,6 +416,7 @@ importers:
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/storybook-config': workspace:^
       '@webstudio-is/tsconfig': workspace:^
+      camelcase: ^6.3.0
       downshift: ^6.1.7
       immer: ^9.0.12
       jest: ^29.3.1
@@ -461,6 +462,7 @@ importers:
       '@stitches/react': 1.2.8_react@17.0.2
       '@webstudio-is/css-vars': link:../css-vars
       '@webstudio-is/icons': link:../icons
+      camelcase: 6.3.0
       downshift: 6.1.7_react@17.0.2
       immer: 9.0.15
       lodash.merge: 4.6.2

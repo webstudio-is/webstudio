@@ -72,6 +72,7 @@
     "@stitches/react": "^1.2.8",
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
+    "camelcase": "^6.3.0",
     "downshift": "^6.1.7",
     "immer": "^9.0.12",
     "lodash.merge": "^4.6.2",
