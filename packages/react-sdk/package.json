@@ -20,9 +20,9 @@
     "@babel/core": "^7.20.2",
     "@esbuild-kit/esm-loader": "^2.4.2",
     "@jest/globals": "^29.3.1",
-    "@remix-run/node": "1.7.6",
-    "@remix-run/react": "1.7.6",
-    "@remix-run/server-runtime": "1.7.6",
+    "@remix-run/node": "1.9.0",
+    "@remix-run/react": "1.9.0",
+    "@remix-run/server-runtime": "1.9.0",
     "@storybook/react": "^6.5.14",
     "@storybook/testing-library": "^0.0.11",
     "@types/node": "^17.0.21",
@@ -45,8 +45,8 @@
     "zod": "^3.19.1"
   },
   "peerDependencies": {
-    "@remix-run/react": "1.7.6",
-    "@remix-run/server-runtime": "1.7.6",
+    "@remix-run/react": "1.9.0",
+    "@remix-run/server-runtime": "1.9.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "remix-utils": "^4.1.0",
