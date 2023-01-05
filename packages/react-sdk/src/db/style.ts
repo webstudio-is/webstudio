@@ -51,3 +51,22 @@ export const findMissingPresetStyles = (
   }
   return missingPresetStyles;
 };
+
+export type StylesItem = {
+  breakpointId: string;
+  instanceId: string;
+  property: StyleProperty;
+  value: StyleValue;
+};
+
+// @todo can't figure out how to make property to be enum
+export const StylesItem = z.object({
+  breakpointId: z.string(),
+  instanceId: z.string(),
+  property: z.string(),
+  value: SharedStyleValue,
+}) as z.ZodType<StylesItem>;
+
+export const Styles = z.array(StylesItem);
+
+export type Styles = z.infer<typeof Styles>;
