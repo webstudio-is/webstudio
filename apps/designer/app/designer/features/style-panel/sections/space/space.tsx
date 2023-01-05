@@ -3,7 +3,7 @@ import type { RenderCategoryProps } from "../../style-sections";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
-import { spacingPropertiesNames } from "./types";
+import { spacePropertiesNames } from "./types";
 import type { SpaceStyleProperty, HoverTagret } from "./types";
 import { InputPopover } from "./input-popover";
 import { SpaceTooltip } from "./tooltip";
@@ -98,7 +98,7 @@ export const SpaceSection = ({
     target: hoverTarget,
     onChange: (values, options) => {
       const batch = createBatchUpdate();
-      for (const property of spacingPropertiesNames) {
+      for (const property of spacePropertiesNames) {
         const value = values[property];
         if (value !== undefined) {
           batch.setProperty(property)(value);

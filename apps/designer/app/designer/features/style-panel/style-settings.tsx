@@ -131,7 +131,7 @@ export const StyleSettings = ({
         category,
       };
 
-      // @todo remove isRendered once spacing section is converted to a section
+      // @todo remove isRendered once space section is converted to a section
       if (isInCategory && isApplicable && isRendered === false) {
         // We are making a separate array of properties which come after the "moreFrom"
         // so we can make them collapsable

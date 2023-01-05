@@ -1,8 +1,8 @@
 import { categories } from "@webstudio-is/react-sdk";
 
-export const spacingPropertiesNames = categories.space.properties;
+export const spacePropertiesNames = categories.space.properties;
 
-export type SpaceStyleProperty = typeof spacingPropertiesNames[number];
+export type SpaceStyleProperty = typeof spacePropertiesNames[number];
 
 export type HoverTagret = {
   property: SpaceStyleProperty;
