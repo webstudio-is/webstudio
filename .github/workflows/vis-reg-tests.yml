@@ -19,15 +19,20 @@ jobs:
         run: pnpm turbo run storybook:build --filter=@webstudio-is/designer
 
       - name: Lost Pixel for Design System
-        uses: lost-pixel/lost-pixel@v2.23.0
+        uses: lost-pixel/lost-pixel@v2.24.1
         env:
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
           LOST_PIXEL_CONFIG_DIR: packages/design-system
 
       - name: Lost Pixel for Designer
-        uses: lost-pixel/lost-pixel@v2.23.0
+        uses: lost-pixel/lost-pixel@v2.24.1
         env:
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
           LOST_PIXEL_CONFIG_DIR: apps/designer
+          
+      - name: Lost Pixel
+        uses: lost-pixel/lost-pixel@v2.24.1
+        with:
+          FINALIZE: true
