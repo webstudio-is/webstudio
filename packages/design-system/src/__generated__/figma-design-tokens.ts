@@ -274,7 +274,7 @@ export const color = {
   foregroundMain: "#11181c",
   foregroundSubtle: "#7e868c",
   foregroundCategoryLabel: "#889096",
-  foregroundSpacing: "#687076",
+  foregroundTextSubtle: "#687076",
   foregroundDestructive: "#dc3d43",
   foregroundSuccess: "#30a46c",
   foregroundInfo: "#006adc",
