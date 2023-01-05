@@ -821,10 +821,24 @@
         "value": "#f9c6c6",
         "type": "color"
       }
+    },
+    "border-width": {
+      "1": {
+        "value": "1",
+        "type": "borderWidth",
+        "description": "sets border width value to 1"
+      },
+      "2": {
+        "value": "2",
+        "type": "borderWidth",
+        "description": "sets border width value to 2. Used for focus borders (among other things)"
+      }
     }
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }
