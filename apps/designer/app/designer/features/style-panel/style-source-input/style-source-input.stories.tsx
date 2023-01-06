@@ -2,7 +2,6 @@ import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
 import { StyleSourceInput } from "./style-source-input";
-import noop from "lodash.noop";
 
 export default {
   component: StyleSourceInput,
@@ -48,8 +47,6 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
-      onChangeItem={noop}
-      onDuplicate={noop}
     />
   );
 };
@@ -74,8 +71,6 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
-      onChangeItem={noop}
-      onDuplicate={noop}
     />
   );
 };
@@ -110,8 +105,6 @@ export const WithTruncatedItem: ComponentStory<
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
-      onChangeItem={noop}
-      onDuplicate={noop}
     />
   );
 };
@@ -138,7 +131,6 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
-      onDuplicate={noop}
       onChangeItem={(changedItem) => {
         setValue(
           value.map((item) => {

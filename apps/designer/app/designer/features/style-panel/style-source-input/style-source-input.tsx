@@ -12,11 +12,11 @@ import {
   type CSS,
 } from "@webstudio-is/design-system";
 import {
-  ComponentProps,
   forwardRef,
-  ForwardRefRenderFunction,
-  RefObject,
   useState,
+  type ComponentProps,
+  type ForwardRefRenderFunction,
+  type RefObject,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { StyleSource } from "./style-source";
@@ -117,17 +117,17 @@ const TextFieldBase: ForwardRefRenderFunction<
   );
 };
 
-export const TextField = forwardRef(TextFieldBase);
+const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps<Item> = {
   items?: Array<Item>;
   value?: Array<Item>;
-  onSelect: (item: Item) => void;
-  onRemove: (item: Item) => void;
-  onCreate: (item: Item) => void;
-  onChangeItem: (item: Item) => void;
-  onDuplicate: (item: Item) => void;
+  onSelect?: (item: Item) => void;
+  onRemove?: (item: Item) => void;
+  onCreate?: (item: Item) => void;
+  onChangeItem?: (item: Item) => void;
+  onDuplicate?: (item: Item) => void;
   css?: CSS;
 };
 
@@ -150,7 +150,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
       setLabel("");
-      props.onSelect(item as Item);
+      props.onSelect?.(item as Item);
     },
     onInputChange(label) {
       setLabel(label ?? "");
@@ -159,14 +159,14 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
   const inputProps = getInputProps({
     onKeyDown(event) {
       if (event.key === "Backspace" && label === "") {
-        props.onRemove(value[value.length - 1]);
+        props.onRemove?.(value[value.length - 1]);
         return;
       }
     },
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onCreate({ label, hasMenu: true } as Item);
+        props.onCreate?.({ label, hasMenu: true } as Item);
       }
     },
   });
@@ -175,7 +175,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     <ComboboxPopper>
       <Box {...getComboboxProps()}>
         <ComboboxPopperAnchor>
-          <TextFieldBase
+          <TextField
             {...inputProps}
             onRemove={props.onRemove}
             onChangeItem={props.onChangeItem}
