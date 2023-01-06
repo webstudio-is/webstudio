@@ -11,10 +11,12 @@ import {
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
-  KeyboardEventHandler,
   useEffect,
   useLayoutEffect,
   useRef,
+  type KeyboardEvent,
+  type KeyboardEventHandler,
+  type FocusEvent,
 } from "react";
 import { sanitize } from "./sanitize";
 
@@ -94,12 +96,18 @@ const EditableText = ({
     getSelection()?.selectAllChildren(ref.current);
   }, [isEditing]);
 
+  const handleFinishEditing = (
+    event: KeyboardEvent<Element> | FocusEvent<Element>
+  ) => {
+    event.preventDefault();
+    ref.current?.removeAttribute("contenteditable");
+    onEditingChange(false);
+    onChange(sanitize(ref.current?.textContent ?? ""));
+  };
+
   const handleKeyDown: KeyboardEventHandler = (event) => {
-    if (event.key === "Enter" && ref.current !== null) {
-      event.preventDefault();
-      ref.current.removeAttribute("contenteditable");
-      onEditingChange(false);
-      onChange(sanitize(ref.current.textContent ?? ""));
+    if (event.key === "Enter") {
+      handleFinishEditing(event);
     }
   };
 
@@ -108,6 +116,7 @@ const EditableText = ({
       truncate
       ref={ref}
       onKeyDown={handleKeyDown}
+      onBlur={handleFinishEditing}
       css={{ outline: "none", textOverflow: isEditing ? "clip" : "ellipsis" }}
     >
       {label}
