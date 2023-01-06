@@ -36,5 +36,7 @@ jobs:
         uses: lost-pixel/lost-pixel@v2.24.1
         env:
           LOST_PIXEL_CONFIG_DIR: apps/designer
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
         with:
           FINALIZE: true
