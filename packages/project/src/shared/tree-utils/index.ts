@@ -9,6 +9,5 @@ export * from "./find-parent-instance";
 export * from "./clone-instance";
 export * from "./reparent-instance";
 export * from "./find-closest-non-inline-parent";
-export * from "./get-css-rules";
 export * from "./set-instance-children";
 export * from "./find-instance";

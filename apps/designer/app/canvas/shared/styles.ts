@@ -1,6 +1,10 @@
 import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
-import { addGlobalRules, utils } from "@webstudio-is/project";
+import {
+  addGlobalRules,
+  getPresetStyleRules,
+  utils,
+} from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
 import {
   designTokensContainer,
@@ -108,12 +112,14 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
 
   useIsomorphicLayoutEffect(() => {
     presetStylesEngine.clear();
-    const presetStylesMap = utils.tree.getPresetStylesMap(presetStyles);
+    const presetStyleRules = getPresetStyleRules(presetStyles);
     for (const component of getComponentNames()) {
       const meta = getComponentMeta(component);
       // render preset style and fallback to hardcoded one
       // because could not be added yet to db
-      const presetStyle = presetStylesMap.get(component) ?? meta.presetStyle;
+      const presetStyle =
+        presetStyleRules.find((item) => item.component === component)?.style ??
+        meta.presetStyle;
       if (presetStyle !== undefined) {
         presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
           style: presetStyle,
