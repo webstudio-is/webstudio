@@ -132,27 +132,27 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const StyledButton = styled(Button, {
+const Item = styled(Button, {
   maxWidth: "100%",
   position: "relative",
   "& button": { display: "none" },
   "&:hover button": { display: "block" },
 });
 
-type EditableButtonProps = {
+type EditableItemProps = {
   children: Array<JSX.Element | false>;
   isEditing: boolean;
 };
 
-const EditableButton = ({ children, isEditing }: EditableButtonProps) => {
+const EditableItem = ({ children, isEditing }: EditableItemProps) => {
   const ref = useForceRecalcStyle<HTMLButtonElement>(
     "max-width",
     isEditing === false
   );
   return (
-    <StyledButton variant="gray" ref={ref}>
+    <Item variant="gray" ref={ref} as="div">
       {children}
-    </StyledButton>
+    </Item>
   );
 };
 
@@ -179,11 +179,11 @@ export const StyleSource = ({
   });
 
   return (
-    <EditableButton isEditing={isEditing}>
+    <EditableItem isEditing={isEditing}>
       {text}
       {hasMenu === true && isEditing === false && (
         <Menu {...menuProps} onEdit={handleEdit} />
       )}
-    </EditableButton>
+    </EditableItem>
   );
 };
