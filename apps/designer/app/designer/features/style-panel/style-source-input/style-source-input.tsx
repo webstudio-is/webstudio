@@ -1,7 +1,5 @@
 import {
   Box,
-  Button,
-  Text,
   ComboboxListbox,
   ComboboxListboxItem,
   ComboboxPopper,
@@ -21,21 +19,11 @@ import {
   useState,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
+import { StyleSource } from "./style-source";
 
 type IntermediateItem = {
   label: string;
-};
-
-type StyleSourceButtonProps = {
-  label: string;
-};
-
-const StyleSourceButton = ({ label }: StyleSourceButtonProps) => {
-  return (
-    <Button variant="gray" css={{ maxWidth: "100%" }}>
-      <Text truncate>{label}</Text>
-    </Button>
-  );
+  hasMenu: boolean;
 };
 
 type TextFieldWrapperProps = Omit<ComponentProps<"input">, "value"> &
@@ -48,6 +36,9 @@ type TextFieldWrapperProps = Omit<ComponentProps<"input">, "value"> &
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
+    onRemove: (item: IntermediateItem) => void;
+    onDuplicate: (item: IntermediateItem) => void;
+    onChangeItem: (item: IntermediateItem) => void;
   };
 
 const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
@@ -66,10 +57,14 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
       onKeyDown,
       label,
       value,
+      onRemove,
+      onDuplicate,
+      onChangeItem,
       ...textFieldProps
     } = props;
+    const [isDisabled, setIsDisabled] = useState(disabled);
     const [internalInputRef, focusProps] = useTextFieldFocus({
-      disabled,
+      disabled: isDisabled,
       onFocus,
       onBlur,
     });
@@ -77,7 +72,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
     return (
       <TextFieldContainer
         {...focusProps}
-        aria-disabled={disabled}
+        aria-disabled={isDisabled}
         ref={mergeRefs(forwardedRef, containerRef ?? null)}
         state={state}
         variant={variant}
@@ -85,7 +80,25 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
         onKeyDown={onKeyDown}
       >
         {value.map((item, index) => (
-          <StyleSourceButton label={item.label} key={index} />
+          <StyleSource
+            onChange={(label) => {
+              setIsDisabled(false);
+              internalInputRef.current?.focus();
+              onChangeItem({ ...item, label });
+            }}
+            onDuplicate={() => {
+              onDuplicate(item);
+            }}
+            onRemove={() => {
+              onRemove(item);
+            }}
+            onEdit={() => {
+              setIsDisabled(true);
+            }}
+            label={item.label}
+            hasMenu={item.hasMenu}
+            key={index}
+          />
         ))}
         {/* We want input to be the first element in DOM so it receives the focus first */}
         <TextFieldInput
@@ -108,6 +121,8 @@ type StyleSourceInputProps<Item> = {
   onSelect: (item: Item) => void;
   onRemove: (item: Item) => void;
   onCreate: (item: IntermediateItem) => void;
+  onChangeItem: (item: IntermediateItem) => void;
+  onDuplicate: (item: IntermediateItem) => void;
   css?: CSS;
 };
 
@@ -125,7 +140,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     isOpen,
   } = useCombobox({
     items: props.items ?? [],
-    value: { label },
+    value: { label, hasMenu: true },
     selectedItem: undefined,
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
@@ -146,7 +161,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onCreate({ label });
+        props.onCreate({ label, hasMenu: true });
       }
     },
   });
@@ -157,6 +172,8 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
+            onRemove={props.onRemove}
+            onChangeItem={props.onChangeItem}
             label={label}
             value={value}
             css={props.css}
