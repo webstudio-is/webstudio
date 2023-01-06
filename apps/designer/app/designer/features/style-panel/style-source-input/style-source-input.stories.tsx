@@ -34,14 +34,14 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={items}
       value={value}
-      onCreate={({ label }) => {
+      onCreateItem={({ label }) => {
         const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
         setValue([...value, item]);
       }}
-      onSelect={(item) => {
+      onSelectItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemove={(itemToRemove) => {
+      onRemoveItem={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }
@@ -58,14 +58,14 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={items}
       value={value}
-      onCreate={({ label }) => {
+      onCreateItem={({ label }) => {
         const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
         setValue([...value, item]);
       }}
-      onSelect={(item) => {
+      onSelectItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemove={(itemToRemove) => {
+      onRemoveItem={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }
@@ -92,14 +92,14 @@ export const WithTruncatedItem: ComponentStory<
       css={{ width: 300 }}
       items={items}
       value={value}
-      onCreate={({ label }) => {
+      onCreateItem={({ label }) => {
         const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
         setValue([...value, item]);
       }}
-      onSelect={(item) => {
+      onSelectItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemove={(itemToRemove) => {
+      onRemoveItem={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }
@@ -120,14 +120,14 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       editingIndex={editingIndex}
-      onCreate={({ label }) => {
+      onCreateItem={({ label }) => {
         const item: Item = { id: uuid(), label, type: "token", hasMenu: true };
         setValue([...value, item]);
       }}
-      onSelect={(item) => {
+      onSelectItem={(item) => {
         setValue([...value, item]);
       }}
-      onRemove={(itemToRemove) => {
+      onRemoveItem={(itemToRemove) => {
         if (itemToRemove.type === "local") {
           return;
         }
@@ -143,9 +143,10 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
           })
         );
       }}
-      onDuplicate={(itemToDuplicate) => {
+      onDuplicateItem={(itemToDuplicate) => {
         const duplicatedItem = {
           ...itemToDuplicate,
+          id: uuid(),
           label: itemToDuplicate.label + " Copy",
         };
         const nextValue = value.map((item) => {

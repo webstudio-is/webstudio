@@ -37,8 +37,8 @@ const useCallScheduler = () => {
 
 type MenuProps = {
   onEdit: () => void;
-  onDuplicate: () => void;
-  onRemove: () => void;
+  onDuplicateItem: () => void;
+  onRemoveItem: () => void;
 };
 
 const Menu = (props: MenuProps) => {
@@ -58,10 +58,12 @@ const Menu = (props: MenuProps) => {
           <DropdownMenuItem onSelect={scheduler.add(props.onEdit)}>
             Edit Name
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={props.onDuplicate}>
+          <DropdownMenuItem onSelect={scheduler.add(props.onDuplicateItem)}>
             Duplicate
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={props.onRemove}>Remove</DropdownMenuItem>
+          <DropdownMenuItem onSelect={scheduler.add(props.onRemoveItem)}>
+            Remove
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
@@ -126,9 +128,12 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
       return;
     }
     element.style.setProperty(property, "initial");
-    requestAnimationFrame(() => {
+    const requestId = requestAnimationFrame(() => {
       element.style.removeProperty(property);
     });
+    return () => {
+      cancelAnimationFrame(requestId);
+    };
   }, [calculate, property]);
   return ref;
 };
@@ -162,8 +167,8 @@ type StyleSourceProps = {
   hasMenu: boolean;
   isEditing: boolean;
   onEditingChange: (isEditing: boolean) => void;
-  onDuplicate: () => void;
-  onRemove: () => void;
+  onDuplicateItem: () => void;
+  onRemoveItem: () => void;
   onChange: (value: string) => void;
 };
 

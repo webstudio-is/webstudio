@@ -37,8 +37,8 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
-    onRemove: (item: Item) => void;
-    onDuplicate: (item: Item) => void;
+    onRemoveItem: (item: Item) => void;
+    onDuplicateItem: (item: Item) => void;
     onChangeItem: (item: Item) => void;
     editingIndex: number;
   };
@@ -61,8 +61,8 @@ const TextFieldBase: ForwardRefRenderFunction<
     onKeyDown,
     label,
     value,
-    onRemove,
-    onDuplicate,
+    onRemoveItem,
+    onDuplicateItem,
     onChangeItem,
     editingIndex: editingIndexProp,
     ...textFieldProps
@@ -96,11 +96,11 @@ const TextFieldBase: ForwardRefRenderFunction<
             setEditingIndex(-1);
             onChangeItem({ ...item, label });
           }}
-          onDuplicate={() => {
-            onDuplicate(item);
+          onDuplicateItem={() => {
+            onDuplicateItem(item);
           }}
-          onRemove={() => {
-            onRemove(item);
+          onRemoveItem={() => {
+            onRemoveItem(item);
           }}
           label={item.label}
           hasMenu={item.hasMenu}
@@ -130,11 +130,11 @@ type StyleSourceInputProps<Item> = {
   items?: Array<Item>;
   value?: Array<Item>;
   editingIndex?: number;
-  onSelect?: (item: Item) => void;
-  onRemove?: (item: Item) => void;
-  onCreate?: (item: Item) => void;
+  onSelectItem?: (item: Item) => void;
+  onRemoveItem?: (item: Item) => void;
+  onCreateItem?: (item: Item) => void;
   onChangeItem?: (item: Item) => void;
-  onDuplicate?: (item: Item) => void;
+  onDuplicateItem?: (item: Item) => void;
   css?: CSS;
 };
 
@@ -158,7 +158,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
       setLabel("");
-      props.onSelect?.(item as Item);
+      props.onSelectItem?.(item as Item);
     },
     onInputChange(label) {
       setLabel(label ?? "");
@@ -167,14 +167,13 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
   const inputProps = getInputProps({
     onKeyDown(event) {
       if (event.key === "Backspace" && label === "") {
-        props.onRemove?.(value[value.length - 1]);
-        return;
+        props.onRemoveItem?.(value[value.length - 1]);
       }
     },
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onCreate?.({ label, hasMenu: true } as Item);
+        props.onCreateItem?.({ label, hasMenu: true } as Item);
       }
     },
   });
@@ -185,9 +184,9 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
         <ComboboxPopperAnchor>
           <TextField
             {...inputProps}
-            onRemove={props.onRemove}
+            onRemoveItem={props.onRemoveItem}
             onChangeItem={props.onChangeItem}
-            onDuplicate={props.onDuplicate}
+            onDuplicateItem={props.onDuplicateItem}
             label={label}
             value={value}
             css={props.css}
