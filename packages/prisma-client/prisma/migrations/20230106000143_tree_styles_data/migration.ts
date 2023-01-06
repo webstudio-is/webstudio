@@ -55,28 +55,28 @@ export default async () => {
     // log: ["query", "info", "warn", "error"],
   });
 
-  let cursor: undefined | string = undefined;
-  let hasNext = true;
+  await client.$transaction(
+    async (prisma) => {
+      let cursor: undefined | string = undefined;
+      let hasNext = true;
 
-  while (hasNext) {
-    const chunkSize = 1000;
-    const trees = await client.tree.findMany({
-      take: chunkSize,
-      orderBy: {
-        id: "asc",
-      },
-      ...(cursor
-        ? {
-            skip: 1, // Skip the cursor
-            cursor: { id: cursor },
-          }
-        : null),
-    });
-    cursor = trees.at(-1)?.id;
-    hasNext = trees.length === chunkSize;
+      while (hasNext) {
+        const chunkSize = 1000;
+        const trees = await prisma.tree.findMany({
+          take: chunkSize,
+          orderBy: {
+            id: "asc",
+          },
+          ...(cursor
+            ? {
+                skip: 1, // Skip the cursor
+                cursor: { id: cursor },
+              }
+            : null),
+        });
+        cursor = trees.at(-1)?.id;
+        hasNext = trees.length === chunkSize;
 
-    await client.$transaction(
-      async (prisma) => {
         for (const tree of trees) {
           try {
             const root = JSON.parse(tree.root);
@@ -93,8 +93,8 @@ export default async () => {
             prisma.tree.update({ where: { id }, data: { root, styles } })
           )
         );
-      },
-      { timeout: 1000 * 60 }
-    );
-  }
+      }
+    },
+    { timeout: 1000 * 60 * 5 }
+  );
 };
