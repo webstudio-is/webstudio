@@ -10,8 +10,14 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import { KeyboardEventHandler, useEffect, useRef, useState } from "react";
-import { handle } from "~/routes";
+import {
+  KeyboardEventHandler,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { sanitize } from "./sanitize";
 
 type MenuProps = {
   onEdit: () => void;
@@ -34,7 +40,10 @@ const Menu = (props: MenuProps) => {
   return (
     <DropdownMenu modal>
       <DropdownMenuTrigger asChild>
-        <IconButton aria-label="Menu Button">
+        <IconButton
+          aria-label="Menu Button"
+          css={{ position: "absolute", right: 0 }}
+        >
           <ChevronDownIcon />
         </IconButton>
       </DropdownMenuTrigger>
@@ -61,24 +70,23 @@ type UseEditableTextProps = {
 
 const useEditableText = ({ onEdit, onChange, label }: UseEditableTextProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const textRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   const handleEdit = () => {
-    if (textRef.current === null) {
+    if (ref.current === null) {
       return;
     }
     onEdit();
     setIsEditing(true);
-    textRef.current.focus();
-    getSelection()?.selectAllChildren(textRef.current);
+    ref.current.focus();
+    getSelection()?.selectAllChildren(ref.current);
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
       setIsEditing(false);
-      // @todo sanitize
-      onChange(textRef.current?.textContent ?? "");
+      onChange(sanitize(ref.current?.textContent ?? ""));
     }
   };
 
@@ -86,9 +94,12 @@ const useEditableText = ({ onEdit, onChange, label }: UseEditableTextProps) => {
     <Text
       truncate
       contentEditable={isEditing ? "plaintext-only" : false}
-      ref={textRef}
+      ref={ref}
       onKeyDown={handleKeyDown}
-      css={{ outline: "none" }}
+      css={{
+        outline: "none",
+        textOverflow: isEditing ? "clip" : "ellipsis",
+      }}
     >
       {label}
     </Text>
@@ -101,9 +112,49 @@ const useEditableText = ({ onEdit, onChange, label }: UseEditableTextProps) => {
   };
 };
 
-const EditableButton = styled(Button, {
+// Forces layout to recalc max-width when editing is done, because otherwise,
+// layout will keep the value from before engaging content-editable.
+const useForceRecalcStyle = <Element extends HTMLElement>(
+  property: string,
+  calculate: boolean
+) => {
+  const ref = useRef<Element>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (calculate === false || element === null) {
+      return;
+    }
+    element.style.setProperty(property, "initial");
+    requestAnimationFrame(() => {
+      element.style.removeProperty(property);
+    });
+  }, [calculate]);
+  return ref;
+};
+
+const StyledButton = styled(Button, {
   maxWidth: "100%",
+  position: "relative",
+  "& button": { display: "none" },
+  "&:hover button": { display: "block" },
 });
+
+type EditableButtonProps = {
+  children: Array<JSX.Element | false>;
+  isEditing: boolean;
+};
+
+const EditableButton = ({ children, isEditing }: EditableButtonProps) => {
+  const ref = useForceRecalcStyle<HTMLButtonElement>(
+    "max-width",
+    isEditing === false
+  );
+  return (
+    <StyledButton variant="gray" ref={ref}>
+      {children}
+    </StyledButton>
+  );
+};
 
 type StyleSourceProps = {
   label: string;
@@ -126,8 +177,9 @@ export const StyleSource = ({
     onChange,
     label,
   });
+
   return (
-    <EditableButton variant="gray">
+    <EditableButton isEditing={isEditing}>
       {text}
       {hasMenu === true && isEditing === false && (
         <Menu {...menuProps} onEdit={handleEdit} />

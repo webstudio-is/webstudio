@@ -62,9 +62,9 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
       onChangeItem,
       ...textFieldProps
     } = props;
-    const [isDisabled, setIsDisabled] = useState(disabled);
+    const [isEditingSource, setIsEditingSource] = useState(false);
     const [internalInputRef, focusProps] = useTextFieldFocus({
-      disabled: isDisabled,
+      disabled,
       onFocus,
       onBlur,
     });
@@ -72,7 +72,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
     return (
       <TextFieldContainer
         {...focusProps}
-        aria-disabled={isDisabled}
+        aria-disabled={disabled}
         ref={mergeRefs(forwardedRef, containerRef ?? null)}
         state={state}
         variant={variant}
@@ -82,7 +82,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
         {value.map((item, index) => (
           <StyleSource
             onChange={(label) => {
-              setIsDisabled(false);
+              setIsEditingSource(false);
               internalInputRef.current?.focus();
               onChangeItem({ ...item, label });
             }}
@@ -93,7 +93,7 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
               onRemove(item);
             }}
             onEdit={() => {
-              setIsDisabled(true);
+              setIsEditingSource(true);
             }}
             label={item.label}
             hasMenu={item.hasMenu}
@@ -101,14 +101,16 @@ const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
           />
         ))}
         {/* We want input to be the first element in DOM so it receives the focus first */}
-        <TextFieldInput
-          {...textFieldProps}
-          value={label}
-          type={type}
-          disabled={disabled}
-          onClick={onClick}
-          ref={mergeRefs(internalInputRef, inputRef ?? null)}
-        />
+        {isEditingSource === false && (
+          <TextFieldInput
+            {...textFieldProps}
+            value={label}
+            type={type}
+            disabled={disabled}
+            onClick={onClick}
+            ref={mergeRefs(internalInputRef, inputRef ?? null)}
+          />
+        )}
       </TextFieldContainer>
     );
   }
