@@ -113,11 +113,13 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
     { id: "0", label: "Apple", type: "token", hasMenu: true },
   ]);
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
   return (
     <StyleSourceInput
       css={{ width: 300 }}
       items={items}
       value={value}
+      editingIndex={editingIndex}
       onCreate={({ label }) => {
         const item: Item = { id: uuid(), label, type: "token", hasMenu: true };
         setValue([...value, item]);
@@ -140,6 +142,20 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
             return item;
           })
         );
+      }}
+      onDuplicate={(itemToDuplicate) => {
+        const duplicatedItem = {
+          ...itemToDuplicate,
+          label: itemToDuplicate.label + " Copy",
+        };
+        const nextValue = value.map((item) => {
+          if (item.id === itemToDuplicate.id) {
+            return duplicatedItem;
+          }
+          return item;
+        });
+        setValue(nextValue);
+        setEditingIndex(nextValue.indexOf(duplicatedItem));
       }}
     />
   );

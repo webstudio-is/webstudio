@@ -13,6 +13,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   forwardRef,
+  useEffect,
   useState,
   type ComponentProps,
   type ForwardRefRenderFunction,
@@ -39,6 +40,7 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     onRemove: (item: Item) => void;
     onDuplicate: (item: Item) => void;
     onChangeItem: (item: Item) => void;
+    editingIndex: number;
   };
 
 const TextFieldBase: ForwardRefRenderFunction<
@@ -62,15 +64,18 @@ const TextFieldBase: ForwardRefRenderFunction<
     onRemove,
     onDuplicate,
     onChangeItem,
+    editingIndex: editingIndexProp,
     ...textFieldProps
   } = props;
-  const [isEditingSource, setIsEditingSource] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(editingIndexProp);
   const [internalInputRef, focusProps] = useTextFieldFocus({
     disabled,
     onFocus,
     onBlur,
   });
-
+  useEffect(() => {
+    setEditingIndex(editingIndexProp);
+  }, [editingIndexProp]);
   return (
     <TextFieldContainer
       {...focusProps}
@@ -83,8 +88,12 @@ const TextFieldBase: ForwardRefRenderFunction<
     >
       {value.map((item, index) => (
         <StyleSource
+          isEditing={index === editingIndex}
+          onEditingChange={(isEditing) => {
+            setEditingIndex(isEditing === true ? index : -1);
+          }}
           onChange={(label) => {
-            setIsEditingSource(false);
+            setEditingIndex(-1);
             onChangeItem({ ...item, label });
           }}
           onDuplicate={() => {
@@ -93,16 +102,13 @@ const TextFieldBase: ForwardRefRenderFunction<
           onRemove={() => {
             onRemove(item);
           }}
-          onEdit={() => {
-            setIsEditingSource(true);
-          }}
           label={item.label}
           hasMenu={item.hasMenu}
           key={index}
         />
       ))}
       {/* We want input to be the first element in DOM so it receives the focus first */}
-      {isEditingSource === false && (
+      {editingIndex === -1 && (
         <TextFieldInput
           {...textFieldProps}
           value={label}
@@ -123,6 +129,7 @@ TextField.displayName = "TextField";
 type StyleSourceInputProps<Item> = {
   items?: Array<Item>;
   value?: Array<Item>;
+  editingIndex?: number;
   onSelect?: (item: Item) => void;
   onRemove?: (item: Item) => void;
   onCreate?: (item: Item) => void;
@@ -135,6 +142,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
   props: StyleSourceInputProps<Item>
 ) => {
   const value = props.value ?? [];
+  const editingIndex = props.editingIndex ?? -1;
   const [label, setLabel] = useState("");
   const {
     items,
@@ -179,9 +187,11 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             {...inputProps}
             onRemove={props.onRemove}
             onChangeItem={props.onChangeItem}
+            onDuplicate={props.onDuplicate}
             label={label}
             value={value}
             css={props.css}
+            editingIndex={editingIndex}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>

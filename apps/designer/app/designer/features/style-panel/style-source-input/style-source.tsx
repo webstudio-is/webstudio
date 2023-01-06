@@ -10,7 +10,12 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import { KeyboardEventHandler, useLayoutEffect, useRef, useState } from "react";
+import {
+  KeyboardEventHandler,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import { sanitize } from "./sanitize";
 
 // Used to schedule function calls to be executed after at a later point in time.
@@ -63,37 +68,40 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-type UseEditableTextProps = {
+type EditableTextProps = {
   label: string;
-  onEdit: () => void;
   onChange: (value: string) => void;
+  isEditing: boolean;
+  onEditingChange: (isEditing: boolean) => void;
 };
 
-const useEditableText = ({ onEdit, onChange, label }: UseEditableTextProps) => {
+const EditableText = ({
+  onChange,
+  label,
+  isEditing,
+  onEditingChange,
+}: EditableTextProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [isEditing, setIsEditing] = useState(false);
 
-  const handleEdit = () => {
-    if (ref.current === null) {
+  useEffect(() => {
+    if (ref.current === null || isEditing === false) {
       return;
     }
     ref.current.setAttribute("contenteditable", "plaintext-only");
     ref.current.focus();
     getSelection()?.selectAllChildren(ref.current);
-    setIsEditing(true);
-    onEdit();
-  };
+  }, [isEditing]);
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
     if (event.key === "Enter" && ref.current !== null) {
       event.preventDefault();
       ref.current.removeAttribute("contenteditable");
-      setIsEditing(false);
+      onEditingChange(false);
       onChange(sanitize(ref.current.textContent ?? ""));
     }
   };
 
-  const text = (
+  return (
     <Text
       truncate
       ref={ref}
@@ -103,12 +111,6 @@ const useEditableText = ({ onEdit, onChange, label }: UseEditableTextProps) => {
       {label}
     </Text>
   );
-
-  return {
-    isEditing,
-    handleEdit,
-    text,
-  };
 };
 
 // Forces layout to recalc max-width when editing is done, because otherwise,
@@ -158,29 +160,36 @@ const EditableItem = ({ children, isEditing }: EditableItemProps) => {
 type StyleSourceProps = {
   label: string;
   hasMenu: boolean;
+  isEditing: boolean;
+  onEditingChange: (isEditing: boolean) => void;
   onDuplicate: () => void;
   onRemove: () => void;
-  onEdit: () => void;
   onChange: (value: string) => void;
 };
 
 export const StyleSource = ({
   label,
   hasMenu,
-  onEdit,
   onChange,
+  isEditing,
+  onEditingChange,
   ...menuProps
 }: StyleSourceProps) => {
-  const { text, isEditing, handleEdit } = useEditableText({
-    onEdit,
-    onChange,
-    label,
-  });
   return (
     <EditableItem isEditing={isEditing}>
-      {text}
+      <EditableText
+        isEditing={isEditing}
+        onEditingChange={onEditingChange}
+        onChange={onChange}
+        label={label}
+      />
       {hasMenu === true && isEditing === false && (
-        <Menu {...menuProps} onEdit={handleEdit} />
+        <Menu
+          {...menuProps}
+          onEdit={() => {
+            onEditingChange(true);
+          }}
+        />
       )}
     </EditableItem>
   );
