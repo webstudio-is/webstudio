@@ -2,28 +2,41 @@ import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
 import { StyleSourceInput } from "./style-source-input";
+import noop from "lodash.noop";
 
 export default {
   component: StyleSourceInput,
 };
 
-const localItem = { id: "0", label: "Local", type: "local", hasMenu: false };
+type Item = {
+  id: string;
+  label: string;
+  type: "token" | "local";
+  hasMenu: boolean;
+};
 
-const items = [
+const localItem: Item = {
+  id: "0",
+  label: "Local",
+  type: "local",
+  hasMenu: false,
+};
+
+const items: Array<Item> = [
   { id: "1", label: "Apple", type: "token", hasMenu: false },
   { id: "2", label: "Banana", type: "token", hasMenu: false },
   { id: "3", label: "Orange", type: "token", hasMenu: false },
 ];
 
 export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState([localItem]);
+  const [value, setValue] = useState<Array<Item>>([localItem]);
   return (
     <StyleSourceInput
       css={{ width: 300 }}
       items={items}
       value={value}
       onCreate={({ label }) => {
-        const item = { id: uuid(), label, type: "token", hasMenu: false };
+        const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
         setValue([...value, item]);
       }}
       onSelect={(item) => {
@@ -35,6 +48,8 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
+      onChangeItem={noop}
+      onDuplicate={noop}
     />
   );
 };
@@ -47,7 +62,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onCreate={({ label }) => {
-        const item = { id: uuid(), label, type: "token", hasMenu: false };
+        const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
         setValue([...value, item]);
       }}
       onSelect={(item) => {
@@ -59,6 +74,8 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
+      onChangeItem={noop}
+      onDuplicate={noop}
     />
   );
 };
@@ -66,7 +83,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
 export const WithTruncatedItem: ComponentStory<
   typeof StyleSourceInput
 > = () => {
-  const [value, setValue] = useState([
+  const [value, setValue] = useState<Array<Item>>([
     {
       id: "0",
       label:
@@ -81,7 +98,7 @@ export const WithTruncatedItem: ComponentStory<
       items={items}
       value={value}
       onCreate={({ label }) => {
-        const item = { id: uuid(), label, type: "token", hasMenu: false };
+        const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
         setValue([...value, item]);
       }}
       onSelect={(item) => {
@@ -93,12 +110,14 @@ export const WithTruncatedItem: ComponentStory<
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
+      onChangeItem={noop}
+      onDuplicate={noop}
     />
   );
 };
 
 export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState([
+  const [value, setValue] = useState<Array<Item>>([
     { id: "0", label: "Apple", type: "token", hasMenu: true },
   ]);
   return (
@@ -107,7 +126,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onCreate={({ label }) => {
-        const item = { id: uuid(), label, type: "token", hasMenu: true };
+        const item: Item = { id: uuid(), label, type: "token", hasMenu: true };
         setValue([...value, item]);
       }}
       onSelect={(item) => {
@@ -119,7 +138,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
-      onDuplicate={(itemToDuplicate) => {}}
+      onDuplicate={noop}
       onChangeItem={(changedItem) => {
         setValue(
           value.map((item) => {

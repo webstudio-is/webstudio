@@ -10,13 +10,7 @@ import {
   styled,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import {
-  KeyboardEventHandler,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { KeyboardEventHandler, useLayoutEffect, useRef, useState } from "react";
 import { sanitize } from "./sanitize";
 
 type MenuProps = {
@@ -69,37 +63,35 @@ type UseEditableTextProps = {
 };
 
 const useEditableText = ({ onEdit, onChange, label }: UseEditableTextProps) => {
-  const [isEditing, setIsEditing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleEdit = () => {
     if (ref.current === null) {
       return;
     }
-    onEdit();
-    setIsEditing(true);
+    ref.current.setAttribute("contenteditable", "plaintext-only");
     ref.current.focus();
     getSelection()?.selectAllChildren(ref.current);
+    setIsEditing(true);
+    onEdit();
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" && ref.current !== null) {
       event.preventDefault();
+      ref.current.removeAttribute("contenteditable");
       setIsEditing(false);
-      onChange(sanitize(ref.current?.textContent ?? ""));
+      onChange(sanitize(ref.current.textContent ?? ""));
     }
   };
 
   const text = (
     <Text
       truncate
-      contentEditable={isEditing ? "plaintext-only" : false}
       ref={ref}
       onKeyDown={handleKeyDown}
-      css={{
-        outline: "none",
-        textOverflow: isEditing ? "clip" : "ellipsis",
-      }}
+      css={{ outline: "none", textOverflow: isEditing ? "clip" : "ellipsis" }}
     >
       {label}
     </Text>
@@ -113,7 +105,7 @@ const useEditableText = ({ onEdit, onChange, label }: UseEditableTextProps) => {
 };
 
 // Forces layout to recalc max-width when editing is done, because otherwise,
-// layout will keep the value from before engaging content-editable.
+// layout will keep the value from before engaging contenteditable.
 const useForceRecalcStyle = <Element extends HTMLElement>(
   property: string,
   calculate: boolean
@@ -128,7 +120,7 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
     requestAnimationFrame(() => {
       element.style.removeProperty(property);
     });
-  }, [calculate]);
+  }, [calculate, property]);
   return ref;
 };
 
@@ -145,7 +137,7 @@ type EditableItemProps = {
 };
 
 const EditableItem = ({ children, isEditing }: EditableItemProps) => {
-  const ref = useForceRecalcStyle<HTMLButtonElement>(
+  const ref = useForceRecalcStyle<HTMLDivElement>(
     "max-width",
     isEditing === false
   );
@@ -177,7 +169,6 @@ export const StyleSource = ({
     onChange,
     label,
   });
-
   return (
     <EditableItem isEditing={isEditing}>
       {text}

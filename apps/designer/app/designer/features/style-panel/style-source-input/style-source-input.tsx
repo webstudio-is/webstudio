@@ -13,8 +13,8 @@ import {
 } from "@webstudio-is/design-system";
 import {
   ComponentProps,
-  ElementRef,
   forwardRef,
+  ForwardRefRenderFunction,
   RefObject,
   useState,
 } from "react";
@@ -26,95 +26,98 @@ type IntermediateItem = {
   hasMenu: boolean;
 };
 
-type TextFieldWrapperProps = Omit<ComponentProps<"input">, "value"> &
+type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
   Pick<
     ComponentProps<typeof TextFieldContainer>,
     "variant" | "state" | "css"
   > & {
-    value: Array<IntermediateItem>;
+    value: Array<Item>;
     label: string;
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
-    onRemove: (item: IntermediateItem) => void;
-    onDuplicate: (item: IntermediateItem) => void;
-    onChangeItem: (item: IntermediateItem) => void;
+    onRemove: (item: Item) => void;
+    onDuplicate: (item: Item) => void;
+    onChangeItem: (item: Item) => void;
   };
 
-const TextField = forwardRef<ElementRef<typeof Box>, TextFieldWrapperProps>(
-  (props, forwardedRef) => {
-    const {
-      css,
-      disabled,
-      containerRef,
-      inputRef,
-      state,
-      variant,
-      onFocus,
-      onBlur,
-      onClick,
-      type,
-      onKeyDown,
-      label,
-      value,
-      onRemove,
-      onDuplicate,
-      onChangeItem,
-      ...textFieldProps
-    } = props;
-    const [isEditingSource, setIsEditingSource] = useState(false);
-    const [internalInputRef, focusProps] = useTextFieldFocus({
-      disabled,
-      onFocus,
-      onBlur,
-    });
+const TextFieldBase: ForwardRefRenderFunction<
+  HTMLDivElement,
+  TextFieldBaseWrapperProps<IntermediateItem>
+> = (props, forwardedRef) => {
+  const {
+    css,
+    disabled,
+    containerRef,
+    inputRef,
+    state,
+    variant,
+    onFocus,
+    onBlur,
+    onClick,
+    type,
+    onKeyDown,
+    label,
+    value,
+    onRemove,
+    onDuplicate,
+    onChangeItem,
+    ...textFieldProps
+  } = props;
+  const [isEditingSource, setIsEditingSource] = useState(false);
+  const [internalInputRef, focusProps] = useTextFieldFocus({
+    disabled,
+    onFocus,
+    onBlur,
+  });
 
-    return (
-      <TextFieldContainer
-        {...focusProps}
-        aria-disabled={disabled}
-        ref={mergeRefs(forwardedRef, containerRef ?? null)}
-        state={state}
-        variant={variant}
-        css={{ ...css, px: "$spacing$3", py: "$spacing$2" }}
-        onKeyDown={onKeyDown}
-      >
-        {value.map((item, index) => (
-          <StyleSource
-            onChange={(label) => {
-              setIsEditingSource(false);
-              internalInputRef.current?.focus();
-              onChangeItem({ ...item, label });
-            }}
-            onDuplicate={() => {
-              onDuplicate(item);
-            }}
-            onRemove={() => {
-              onRemove(item);
-            }}
-            onEdit={() => {
-              setIsEditingSource(true);
-            }}
-            label={item.label}
-            hasMenu={item.hasMenu}
-            key={index}
-          />
-        ))}
-        {/* We want input to be the first element in DOM so it receives the focus first */}
-        {isEditingSource === false && (
-          <TextFieldInput
-            {...textFieldProps}
-            value={label}
-            type={type}
-            disabled={disabled}
-            onClick={onClick}
-            ref={mergeRefs(internalInputRef, inputRef ?? null)}
-          />
-        )}
-      </TextFieldContainer>
-    );
-  }
-);
+  return (
+    <TextFieldContainer
+      {...focusProps}
+      aria-disabled={disabled}
+      ref={mergeRefs(forwardedRef, containerRef ?? null)}
+      state={state}
+      variant={variant}
+      css={{ ...css, px: "$spacing$3", py: "$spacing$2" }}
+      onKeyDown={onKeyDown}
+    >
+      {value.map((item, index) => (
+        <StyleSource
+          onChange={(label) => {
+            setIsEditingSource(false);
+            onChangeItem({ ...item, label });
+          }}
+          onDuplicate={() => {
+            onDuplicate(item);
+          }}
+          onRemove={() => {
+            onRemove(item);
+          }}
+          onEdit={() => {
+            setIsEditingSource(true);
+          }}
+          label={item.label}
+          hasMenu={item.hasMenu}
+          key={index}
+        />
+      ))}
+      {/* We want input to be the first element in DOM so it receives the focus first */}
+      {isEditingSource === false && (
+        <TextFieldInput
+          {...textFieldProps}
+          value={label}
+          type={type}
+          disabled={disabled}
+          onClick={onClick}
+          ref={mergeRefs(internalInputRef, inputRef ?? null)}
+          autoFocus
+        />
+      )}
+    </TextFieldContainer>
+  );
+};
+
+export const TextField = forwardRef(TextFieldBase);
 TextField.displayName = "TextField";
 
 type StyleSourceInputProps<Item> = {
@@ -122,9 +125,9 @@ type StyleSourceInputProps<Item> = {
   value?: Array<Item>;
   onSelect: (item: Item) => void;
   onRemove: (item: Item) => void;
-  onCreate: (item: IntermediateItem) => void;
-  onChangeItem: (item: IntermediateItem) => void;
-  onDuplicate: (item: IntermediateItem) => void;
+  onCreate: (item: Item) => void;
+  onChangeItem: (item: Item) => void;
+  onDuplicate: (item: Item) => void;
   css?: CSS;
 };
 
@@ -163,7 +166,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onCreate({ label, hasMenu: true });
+        props.onCreate({ label, hasMenu: true } as Item);
       }
     },
   });
@@ -172,7 +175,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     <ComboboxPopper>
       <Box {...getComboboxProps()}>
         <ComboboxPopperAnchor>
-          <TextField
+          <TextFieldBase
             {...inputProps}
             onRemove={props.onRemove}
             onChangeItem={props.onChangeItem}
