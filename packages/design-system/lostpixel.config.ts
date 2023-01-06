@@ -4,7 +4,7 @@ export const config = {
   storybookShots: {
     storybookUrl: "packages/design-system/storybook-static",
   },
-  lostPixelProjectId: "cl8a8xmx714904901m9oce4vhqc",
+  lostPixelProjectId: "clckoyuix110903101s75d4s71fc",
   lostPixelUrl: "https://app.gitbased.lost-pixel.com/api/callback",
   s3: {
     endPoint: "ams3.digitaloceanspaces.com",
