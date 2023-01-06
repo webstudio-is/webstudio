@@ -13,6 +13,23 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import { KeyboardEventHandler, useLayoutEffect, useRef, useState } from "react";
 import { sanitize } from "./sanitize";
 
+// Used to schedule function calls to be executed after at a later point in time.
+// Since menu is managing focus, we need to execute that callback when the management is done.
+const useCallScheduler = () => {
+  const ref = useRef<Array<() => void>>([]);
+  const call = () => {
+    for (const fn of ref.current) {
+      fn();
+    }
+    ref.current = [];
+  };
+  const add = (fn: () => void) => () => {
+    ref.current.push(fn);
+  };
+
+  return { call, add };
+};
+
 type MenuProps = {
   onEdit: () => void;
   onDuplicate: () => void;
@@ -20,17 +37,7 @@ type MenuProps = {
 };
 
 const Menu = (props: MenuProps) => {
-  const scheduledCallsRef = useRef<Array<() => void>>([]);
-  const callScheduledCalls = () => {
-    for (const fn of scheduledCallsRef.current) {
-      fn();
-    }
-    scheduledCallsRef.current = [];
-  };
-  const scheduleCall = (fn: () => void) => () => {
-    scheduledCallsRef.current.push(fn);
-  };
-
+  const scheduler = useCallScheduler();
   return (
     <DropdownMenu modal>
       <DropdownMenuTrigger asChild>
@@ -42,8 +49,8 @@ const Menu = (props: MenuProps) => {
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent onCloseAutoFocus={callScheduledCalls}>
-          <DropdownMenuItem onSelect={scheduleCall(props.onEdit)}>
+        <DropdownMenuContent onCloseAutoFocus={scheduler.call}>
+          <DropdownMenuItem onSelect={scheduler.add(props.onEdit)}>
             Edit Name
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={props.onDuplicate}>
