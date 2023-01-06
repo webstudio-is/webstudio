@@ -34,5 +34,7 @@ jobs:
           
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v2.24.1
+        env:
+          LOST_PIXEL_CONFIG_DIR: apps/designer
         with:
           FINALIZE: true
