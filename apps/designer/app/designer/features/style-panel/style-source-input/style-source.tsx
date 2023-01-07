@@ -110,12 +110,17 @@ const EditableText = ({
     }
   };
 
+  const handleClick = () => {
+    onEditingChange(true);
+  };
+
   return (
     <Text
       truncate
       ref={ref}
       onKeyDown={handleKeyDown}
       onBlur={handleFinishEditing}
+      onClick={handleClick}
       css={{ outline: "none", textOverflow: isEditing ? "clip" : "ellipsis" }}
     >
       {label}
