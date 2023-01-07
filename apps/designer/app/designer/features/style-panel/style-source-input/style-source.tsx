@@ -18,7 +18,6 @@ import {
   type KeyboardEventHandler,
   type FocusEvent,
 } from "react";
-import { sanitize } from "./sanitize";
 
 // Used to schedule function calls to be executed after at a later point in time.
 // Since menu is managing focus, we need to execute that callback when the management is done.
@@ -102,7 +101,7 @@ const EditableText = ({
     event.preventDefault();
     ref.current?.removeAttribute("contenteditable");
     onEditingChange(false);
-    onChange(sanitize(ref.current?.textContent ?? ""));
+    onChange(ref.current?.textContent ?? "");
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
