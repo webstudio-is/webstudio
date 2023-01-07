@@ -7,18 +7,14 @@ import {
   getComponentNames,
 } from "../components";
 
-export type PresetStylesItem = {
-  component: ComponentName;
-  property: StyleProperty;
-  value: StyleValue;
-};
-
-// @todo can't figure out how to make property to be enum
 export const PresetStylesItem = z.object({
   component: z.enum(getComponentNames() as [ComponentName]),
-  property: z.string(),
-  value: SharedStyleValue,
-}) as z.ZodType<PresetStylesItem>;
+  // @todo can't figure out how to make property to be enum
+  property: z.string() as z.ZodType<StyleProperty>,
+  value: SharedStyleValue as z.ZodType<StyleValue>,
+});
+
+export type PresetStylesItem = z.infer<typeof PresetStylesItem>;
 
 export const PresetStyles = z.array(PresetStylesItem);
 
@@ -52,20 +48,15 @@ export const findMissingPresetStyles = (
   return missingPresetStyles;
 };
 
-export type StylesItem = {
-  breakpointId: string;
-  instanceId: string;
-  property: StyleProperty;
-  value: StyleValue;
-};
-
-// @todo can't figure out how to make property to be enum
 export const StylesItem = z.object({
   breakpointId: z.string(),
   instanceId: z.string(),
-  property: z.string(),
-  value: SharedStyleValue,
-}) as z.ZodType<StylesItem>;
+  // @todo can't figure out how to make property to be enum
+  property: z.string() as z.ZodType<StyleProperty>,
+  value: SharedStyleValue as z.ZodType<StyleValue>,
+});
+
+export type StylesItem = z.infer<typeof StylesItem>;
 
 export const Styles = z.array(StylesItem);
 

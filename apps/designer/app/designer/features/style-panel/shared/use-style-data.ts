@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import warnOnce from "warn-once";
 import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
-import { type Publish } from "~/shared/pubsub";
+import type { Publish } from "~/shared/pubsub";
+import type { StylesMessage } from "~/shared/stores";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 // @todo: must be removed, now it's only for compatibility with existing code
@@ -17,6 +18,7 @@ declare module "~/shared/pubsub" {
 }
 
 type UseStyleData = {
+  treeId: string;
   publish: Publish;
   selectedInstanceData?: SelectedInstanceData;
 };
@@ -42,6 +44,7 @@ export type CreateBatchUpdate = () => {
 };
 
 export const useStyleData = ({
+  treeId,
   selectedInstanceData,
   publish,
 }: UseStyleData) => {
@@ -83,8 +86,41 @@ export const useStyleData = ({
           breakpoint: selectedBreakpoint,
         },
       });
+      if (type === "update") {
+        publish({
+          type: "update",
+          payload: updates.map((update): StylesMessage => {
+            if (update.operation === "set") {
+              return {
+                store: "styles",
+                operation: update.operation,
+                treeId,
+                data: {
+                  breakpointId: selectedBreakpoint.id,
+                  instanceId: selectedInstanceData.id,
+                  property: update.property,
+                  value: update.value,
+                },
+              };
+            }
+            if (update.operation === "delete") {
+              return {
+                store: "styles",
+                operation: update.operation,
+                treeId,
+                data: {
+                  breakpointId: selectedBreakpoint.id,
+                  instanceId: selectedInstanceData.id,
+                  property: update.property,
+                },
+              };
+            }
+            throw Error("Unexpected operation");
+          }),
+        });
+      }
     },
-    [publish, selectedBreakpoint, selectedInstanceData]
+    [publish, treeId, selectedBreakpoint, selectedInstanceData]
   );
 
   // @deprecated should not be called

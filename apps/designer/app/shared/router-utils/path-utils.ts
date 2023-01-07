@@ -55,6 +55,8 @@ export const restThemePath = ({ setting }: { setting: ThemeSetting }) =>
 
 export const restPatchPath = () => "/rest/patch";
 
+export const restUpdatePath = () => "/rest/update";
+
 export const restPublishPath = () => "/rest/publish";
 
 export const getBuildUrl = ({

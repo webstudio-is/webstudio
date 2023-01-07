@@ -18,6 +18,7 @@ import { FloatingPanelProvider } from "~/designer/shared/floating-panel";
 import { useRef } from "react";
 
 type InspectorProps = {
+  treeId: string;
   publish: Publish;
 };
 
@@ -27,7 +28,7 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const Inspector = ({ publish }: InspectorProps) => {
+export const Inspector = ({ treeId, publish }: InspectorProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -64,12 +65,14 @@ export const Inspector = ({ publish }: InspectorProps) => {
           </TabsList>
           <TabsContent value="style" css={contentStyle}>
             <StylePanel
+              treeId={treeId}
               publish={publish}
               selectedInstanceData={selectedInstanceData}
             />
           </TabsContent>
           <TabsContent value="props" css={contentStyle}>
             <PropsPanel
+              treeId={treeId}
               publish={publish}
               key={
                 selectedInstanceData.id /* Re-render when instance changes */

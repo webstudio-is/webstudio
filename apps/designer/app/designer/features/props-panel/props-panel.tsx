@@ -217,11 +217,13 @@ const Property = ({
 };
 
 type PropsPanelProps = {
+  treeId: string;
   publish: Publish;
   selectedInstanceData: SelectedInstanceData;
 };
 
 export const PropsPanel = ({
+  treeId,
   selectedInstanceData,
   publish,
 }: PropsPanelProps) => {
@@ -235,6 +237,7 @@ export const PropsPanel = ({
   } = usePropsLogic({ selectedInstanceData, publish });
 
   const { setProperty: setCssProperty } = useStyleData({
+    treeId,
     selectedInstanceData,
     publish,
   });

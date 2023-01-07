@@ -11,16 +11,19 @@ import {
 } from "~/designer/shared/nano-states";
 
 type StylePanelProps = {
+  treeId: string;
   publish: Publish;
   selectedInstanceData?: SelectedInstanceData;
 };
 
 export const StylePanel = ({
+  treeId,
   selectedInstanceData,
   publish,
 }: StylePanelProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
     useStyleData({
+      treeId,
       selectedInstanceData,
       publish,
     });

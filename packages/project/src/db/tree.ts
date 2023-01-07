@@ -20,7 +20,6 @@ import {
   SharedStyleValue,
   ImageValue,
   type CssRule,
-  type StyleProperty,
 } from "@webstudio-is/css-data";
 import { z } from "zod";
 import DataLoader from "dataloader";
@@ -239,32 +238,6 @@ const collectUsedComponents = (instance: Instance, components: Set<string>) => {
   }
 };
 
-const extractStylesFromInstancesMutable = (
-  instance: Instance,
-  styles: Styles
-) => {
-  for (const rule of instance.cssRules) {
-    if (rule.breakpoint === undefined) {
-      continue;
-    }
-    for (const [property, value] of Object.entries(rule.style)) {
-      styles.push({
-        breakpointId: rule.breakpoint,
-        instanceId: instance.id,
-        property: property as StyleProperty,
-        value,
-      });
-    }
-  }
-  instance.cssRules = [];
-
-  for (const child of instance.children) {
-    if (child.type === "instance") {
-      extractStylesFromInstancesMutable(child, styles);
-    }
-  }
-};
-
 export const patch = async (
   { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
@@ -281,17 +254,13 @@ export const patch = async (
     Array.from(components)
   );
   const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
-  const styles: Styles = [];
 
   const root = InstanceDbIn.parse(clientRoot);
-
-  extractStylesFromInstancesMutable(root, styles);
 
   await prisma.tree.update({
     data: {
       root: JSON.stringify(root),
       presetStyles: JSON.stringify(presetStyles),
-      styles: JSON.stringify(styles),
     },
     where: { id: treeId },
   });

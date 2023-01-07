@@ -2,8 +2,9 @@ import { useInterval } from "react-use";
 import { sync } from "immerhin";
 import { enqueue } from "./queue";
 import type { Build } from "@webstudio-is/project";
-import { Tree } from "@webstudio-is/react-sdk";
-import { restPatchPath } from "~/shared/router-utils";
+import type { Tree } from "@webstudio-is/react-sdk";
+import { restPatchPath, restUpdatePath } from "~/shared/router-utils";
+import { syncMessages, useSubscribeMessages } from "~/shared/stores";
 
 export const useSync = ({
   treeId,
@@ -14,7 +15,8 @@ export const useSync = ({
 }) => {
   useInterval(() => {
     const entries = sync();
-    if (entries.length === 0) {
+    const messages = syncMessages();
+    if (entries.length === 0 && messages.length === 0) {
       return;
     }
 
@@ -22,15 +24,25 @@ export const useSync = ({
     // because prisma can't do atomic updates yet with sandbox documents
     // and backend fetches and updates big objects, so if we send quickly,
     // we end up overwriting things
-    enqueue(() =>
-      fetch(restPatchPath(), {
-        method: "post",
-        body: JSON.stringify({
-          transactions: entries,
-          treeId: treeId,
-          buildId: buildId,
-        }),
-      })
-    );
+    enqueue(async () => {
+      if (entries.length !== 0) {
+        await fetch(restPatchPath(), {
+          method: "post",
+          body: JSON.stringify({
+            transactions: entries,
+            treeId: treeId,
+            buildId: buildId,
+          }),
+        });
+      }
+      if (messages.length !== 0) {
+        await fetch(restUpdatePath(), {
+          method: "post",
+          body: JSON.stringify(messages),
+        });
+      }
+    });
   }, 1000);
+
+  useSubscribeMessages();
 };

@@ -378,7 +378,7 @@ export const Designer = ({
           {dragAndDropState.isDragging ? (
             <TreePrevew />
           ) : (
-            <Inspector publish={publish} />
+            <Inspector treeId={page.treeId} publish={publish} />
           )}
         </SidePanel>
         <Footer publish={publish} />
