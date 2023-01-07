@@ -6,6 +6,7 @@ import {
   Text,
   PresetStyles,
   findMissingPresetStyles,
+  Styles,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import {
@@ -15,7 +16,12 @@ import {
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import { SharedStyleValue, ImageValue } from "@webstudio-is/css-data";
+import {
+  SharedStyleValue,
+  ImageValue,
+  type CssRule,
+  type StyleProperty,
+} from "@webstudio-is/css-data";
 import { z } from "zod";
 import DataLoader from "dataloader";
 import warnOnce from "warn-once";
@@ -130,10 +136,12 @@ type TreeData = Omit<Tree, "id">;
 export const createTree = (): TreeData => {
   const root = utils.tree.createInstance({ component: "Body" });
   const presetStyles = findMissingPresetStyles([], [root.component]);
+  const styles: Styles = [];
 
   return {
     root,
     presetStyles,
+    styles,
   };
 };
 
@@ -141,19 +149,44 @@ export const create = async (
   treeData: TreeData,
   client: Prisma.TransactionClient = prisma
 ): Promise<DbTree> => {
-  treeData.root;
   const root = InstanceDbIn.parse(treeData.root);
 
   return await client.tree.create({
     data: {
       root: JSON.stringify(root),
       presetStyles: JSON.stringify(treeData.presetStyles),
+      styles: JSON.stringify(treeData.styles),
     },
   });
 };
 
 export const deleteById = async (treeId: string): Promise<void> => {
   await prisma.tree.delete({ where: { id: treeId } });
+};
+
+const addStylesToInstancesMutable = (instance: Instance, styles: Styles) => {
+  const cssRulesMap = new Map<string, CssRule>();
+  for (const style of styles) {
+    if (instance.id !== style.instanceId) {
+      continue;
+    }
+    let rule = cssRulesMap.get(style.breakpointId);
+    if (rule === undefined) {
+      rule = {
+        breakpoint: style.breakpointId,
+        style: {},
+      };
+      cssRulesMap.set(style.breakpointId, rule);
+    }
+    rule.style[style.property] = style.value;
+  }
+  instance.cssRules = Array.from(cssRulesMap.values());
+
+  for (const child of instance.children) {
+    if (child.type === "instance") {
+      addStylesToInstancesMutable(child, styles);
+    }
+  }
 };
 
 export const loadById = async (
@@ -175,11 +208,14 @@ export const loadById = async (
   Instance.parse(root);
 
   const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
+  const styles = Styles.parse(JSON.parse(tree.styles));
+  addStylesToInstancesMutable(root, styles);
 
   return {
     ...tree,
     root,
     presetStyles,
+    styles,
   };
 };
 
@@ -203,6 +239,32 @@ const collectUsedComponents = (instance: Instance, components: Set<string>) => {
   }
 };
 
+const extractStylesFromInstancesMutable = (
+  instance: Instance,
+  styles: Styles
+) => {
+  for (const rule of instance.cssRules) {
+    if (rule.breakpoint === undefined) {
+      continue;
+    }
+    for (const [property, value] of Object.entries(rule.style)) {
+      styles.push({
+        breakpointId: rule.breakpoint,
+        instanceId: instance.id,
+        property: property as StyleProperty,
+        value,
+      });
+    }
+  }
+  instance.cssRules = [];
+
+  for (const child of instance.children) {
+    if (child.type === "instance") {
+      extractStylesFromInstancesMutable(child, styles);
+    }
+  }
+};
+
 export const patch = async (
   { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
@@ -219,13 +281,17 @@ export const patch = async (
     Array.from(components)
   );
   const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
+  const styles: Styles = [];
 
   const root = InstanceDbIn.parse(clientRoot);
+
+  extractStylesFromInstancesMutable(root, styles);
 
   await prisma.tree.update({
     data: {
       root: JSON.stringify(root),
       presetStyles: JSON.stringify(presetStyles),
+      styles: JSON.stringify(styles),
     },
     where: { id: treeId },
   });
