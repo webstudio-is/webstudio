@@ -1,7 +1,6 @@
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import { z } from "zod";
 import { Acl } from "../types";
-// import { AclOut } from "./create";
 
 export const AclQuery = z.object({
   namespace: z.union([z.literal("Project"), z.literal("User")]),
