@@ -1,0 +1,35 @@
+{
+  "name": "@webstudio-is/preview",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "remix build",
+    "dev": "remix watch",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "typecheck": "tsc",
+    "prettier": "prettier \"*.{js,md,json,ts}\" \"{docs,app}/**/*.{js,md,json,ts}\"",
+    "checks": "pnpm typecheck && pnpm lint && pnpm prettier --check",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@remix-run/cloudflare": "1.9.0",
+    "@remix-run/node": "1.9.0",
+    "@remix-run/react": "1.9.0",
+    "@webstudio-is/css-engine": "workspace:^",
+    "@webstudio-is/project": "workspace:^",
+    "@webstudio-is/react-sdk": "workspace:^",
+    "djb2a": "^2.0.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "remix-utils": "^4.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20221111.1",
+    "@remix-run/dev": "1.9.0",
+    "@types/react": "^17.0.24",
+    "@types/react-dom": "^17.0.9",
+    "@webstudio-is/eslint-config-custom": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "typescript": "4.7.4"
+  }
+}
