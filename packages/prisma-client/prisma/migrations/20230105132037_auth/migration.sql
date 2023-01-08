@@ -5,7 +5,7 @@
 -- This table allows to create rows:
 -- - Namespace:Object#Relation@Subject
 -- - Namespace:Object#Relation@(SubjectSetNamespace:SubjectSetObject#SubjectSetRelation)
-CREATE TABLE "Auth" (
+CREATE TABLE "Acl" (
     "id" TEXT NOT NULL,
     "namespace" TEXT NOT NULL,
     "object" TEXT NOT NULL,
@@ -14,16 +14,16 @@ CREATE TABLE "Auth" (
     -- If subject is null, then subjectSetNamespace and subjectSetObject and subjectSetRelation must be non-null and vice versa
     "subjectSetNamespace" TEXT CHECK(("subjectSetNamespace" IS NULL) != (subject IS NULL)),
     "subjectSetObject" TEXT CHECK(("subjectSetNamespace" IS NULL) != (subject IS NULL)),
-    -- Zanzibar paper allows subjectSetrelation to be NULL meaning ANY relation, but we don't
+    -- Zanzibar paper allows subjectSetRelation to be NULL meaning ANY relation, but we don't
     "subjectSetRelation" TEXT CHECK(("subjectSetRelation" IS NULL) != (subject IS NULL)),
 
-    CONSTRAINT "Auth_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Acl_pkey" PRIMARY KEY ("id")
 );
 
 
 -- Zanzibar allows any depth of relations, and can expand them to any depth
 -- We resrict depth of SubjectSet relations to 1.
--- AuthExpandSubjectSet expands all Subject Sets on depth 1
+-- AclExpand expands all Subject Sets on depth 1
 --
 -- Example:
 -- In table we have:
@@ -36,7 +36,7 @@ CREATE TABLE "Auth" (
 -- Group:Project Alice Writers#member@Carol
 -- Project:Project Alice#writer@Bob'
 -- Project:Project Alice#writer@Carol'
-CREATE OR REPLACE VIEW "AuthExpandSubjectSet" AS
+CREATE OR REPLACE VIEW "AclExpand" AS
 SELECT
   a.id,
   a.namespace,
@@ -48,10 +48,10 @@ SELECT
     concat(a."subjectSetNamespace", ':', a."subjectSetObject", '#', a."subjectSetRelation")
   ELSE
     'direct-relation'
-  END AS source
+  END AS "debugSource"
 FROM
-  "Auth" a
-  LEFT JOIN "Auth" b ON a."subjectSetNamespace" = b.namespace
+  "Acl" a
+  LEFT JOIN "Acl" b ON a."subjectSetNamespace" = b.namespace
     AND a."subjectSetObject" = b.object
     AND a."subjectSetRelation" = b.relation;
 
@@ -63,11 +63,11 @@ FROM
 -- Example:
 -- In table we have:
 -- Project:Project Alice#owner@Alice
--- After "AuthApplyRewrites"
+-- After "AclExpandRewrites"
 -- Project:Project Alice#owner@Alice
 -- Project:Project Alice#writer@Alice
 -- Project:Project Alice#reader@Alice
-CREATE OR REPLACE VIEW "AuthApplyRewrites" AS
+CREATE OR REPLACE VIEW "AclExpandRewrites" AS
 SELECT
   id,
   namespace,
@@ -86,7 +86,7 @@ SELECT
     END) AS relation,
   subject,
   relation AS "originalRelation",
-  source
+  "debugSource"
 FROM
-  "AuthExpandSubjectSet";
+  "AclExpand";
 

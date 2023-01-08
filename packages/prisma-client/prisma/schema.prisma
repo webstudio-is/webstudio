@@ -100,7 +100,10 @@ model DesignTokens {
   value   String @default("[]")
 }
 
-model Auth {
+// Acces Control List (ACL) model, used for permissions,
+// allows subject to be a SubjectSet (a set of subjects described through same Acl model by fixing subjectSet* fields)
+// https://storage.googleapis.com/pub-tools-public-publication-data/pdf/10683a8987dbf0c6d4edcafb9b4f05cc9de5974a.pdf
+model Acl {
   id        String  @id @default(uuid())
   namespace String
   object    String
