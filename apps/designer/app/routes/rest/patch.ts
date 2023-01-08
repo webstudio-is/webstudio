@@ -28,6 +28,8 @@ export const action = async ({ request }: ActionArgs) => {
 
       if (namespace === "root") {
         await projectDb.tree.patch({ treeId }, patches);
+      } else if (namespace === "styles") {
+        await projectDb.styles.patch({ treeId }, patches);
       } else if (namespace === "props") {
         await projectDb.props.patch({ treeId }, patches);
       } else if (namespace === "breakpoints") {

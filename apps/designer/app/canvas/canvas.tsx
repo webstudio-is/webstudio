@@ -38,6 +38,7 @@ import {
   useBreakpoints,
   useRootInstance,
   useSetPresetStyles,
+  useSetStyles,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
 import { registerContainers } from "./shared/immerhin";
@@ -176,6 +177,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
   useSetPresetStyles(data.tree?.presetStyles);
+  useSetStyles(data.tree?.styles);
   usePopulateRootInstance(data.tree);
   setParams(data.params ?? null);
 

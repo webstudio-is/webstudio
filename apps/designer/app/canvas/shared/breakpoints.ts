@@ -6,6 +6,7 @@ import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
   breakpointsContainer,
   rootInstanceContainer,
+  stylesContainer,
   useBreakpoints,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
@@ -52,8 +53,8 @@ const useBreakpointChange = () => {
 const useBreakpointDelete = () => {
   useSubscribe("breakpointDelete", (breakpoint) => {
     store.createTransaction(
-      [breakpointsContainer, rootInstanceContainer],
-      (breakpoints, rootInstance) => {
+      [breakpointsContainer, rootInstanceContainer, stylesContainer],
+      (breakpoints, rootInstance, styles) => {
         if (rootInstance === undefined) {
           return;
         }
@@ -64,6 +65,15 @@ const useBreakpointDelete = () => {
         }
 
         deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
+
+        // delete breakpoint styles
+        // reversed order to splice without breaking index
+        for (let index = styles.length - 1; index >= 0; index -= 1) {
+          const style = styles[index];
+          if (style.breakpointId === breakpoint.id) {
+            styles.splice(index, 1);
+          }
+        }
       }
     );
   });
