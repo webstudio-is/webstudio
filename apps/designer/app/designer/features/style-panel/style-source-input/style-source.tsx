@@ -1,3 +1,4 @@
+import { cssVars } from "@webstudio-is/css-vars";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,12 @@ const useCallScheduler = () => {
   return { call, set };
 };
 
+const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
+
+const menuCssVars = ({ show }: { show: boolean }) => ({
+  [menuTriggerVisibilityVar]: show ? "visible" : "hidden",
+});
+
 type MenuProps = {
   onEdit: () => void;
   onDuplicateItem: () => void;
@@ -47,7 +54,11 @@ const Menu = (props: MenuProps) => {
         {/* Migrate to a Button component once implemented https://github.com/webstudio-is/webstudio-designer/issues/450 */}
         <IconButton
           aria-label="Menu Button"
-          css={{ position: "absolute", right: 0 }}
+          css={{
+            position: "absolute",
+            right: 0,
+            visibility: cssVars.use(menuTriggerVisibilityVar),
+          }}
         >
           <ChevronDownIcon />
         </IconButton>
@@ -159,8 +170,8 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
 const Item = styled(Button, {
   maxWidth: "100%",
   position: "relative",
-  "& button": { display: "none" },
-  "&:hover button": { display: "block" },
+  ...menuCssVars({ show: false }),
+  "&:hover": menuCssVars({ show: true }),
 });
 
 type EditableItemProps = {
