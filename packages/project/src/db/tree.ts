@@ -159,7 +159,7 @@ export const create = async (
   });
 };
 
-export const deleteById = async (treeId: string): Promise<void> => {
+export const deleteById = async (treeId: Tree["id"]): Promise<void> => {
   await prisma.tree.delete({ where: { id: treeId } });
 };
 
@@ -189,7 +189,7 @@ const addStylesToInstancesMutable = (instance: Instance, styles: Styles) => {
 };
 
 export const loadById = async (
-  treeId: string,
+  treeId: Tree["id"],
   client: Prisma.TransactionClient = prisma
 ): Promise<Tree | null> => {
   const tree = await client.tree.findUnique({
@@ -219,7 +219,7 @@ export const loadById = async (
 };
 
 export const clone = async (
-  treeId: string,
+  treeId: Tree["id"],
   client: Prisma.TransactionClient = prisma
 ) => {
   const tree = await loadById(treeId, client);
