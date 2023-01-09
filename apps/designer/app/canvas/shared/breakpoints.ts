@@ -12,6 +12,7 @@ import {
 import { publish } from "~/shared/pubsub";
 import { addMediaRules } from "./styles";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
+import { filterMutable } from "~/shared/array-utils";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
@@ -67,13 +68,7 @@ const useBreakpointDelete = () => {
         deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
 
         // delete breakpoint styles
-        // reversed order to splice without breaking index
-        for (let index = styles.length - 1; index >= 0; index -= 1) {
-          const style = styles[index];
-          if (style.breakpointId === breakpoint.id) {
-            styles.splice(index, 1);
-          }
-        }
+        filterMutable(styles, (style) => style.breakpointId !== breakpoint.id);
       }
     );
   });
