@@ -15,7 +15,7 @@ export const useRootInstance = () => useValue(rootInstanceContainer);
 
 export const presetStylesContainer = createValueContainer<PresetStyles>([]);
 export const usePresetStyles = () => useValue(presetStylesContainer);
-export const useSetPresetStyles = (presetStyles?: PresetStyles) => {
+export const useSetPresetStyles = (presetStyles: PresetStyles) => {
   useState(() => {
     if (presetStyles) {
       presetStylesContainer.value = presetStyles;
@@ -25,7 +25,7 @@ export const useSetPresetStyles = (presetStyles?: PresetStyles) => {
 
 export const stylesContainer = createValueContainer<Styles>([]);
 export const useStyles = () => useValue(stylesContainer);
-export const useSetStyles = (styles?: Styles) => {
+export const useSetStyles = (styles: Styles) => {
   useState(() => {
     if (styles) {
       stylesContainer.value = styles;

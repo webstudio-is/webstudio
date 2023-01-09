@@ -176,8 +176,8 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
   useAllUserProps(data.props);
-  useSetPresetStyles(data.tree?.presetStyles);
-  useSetStyles(data.tree?.styles);
+  useSetPresetStyles(data.tree.presetStyles);
+  useSetStyles(data.tree.styles);
   usePopulateRootInstance(data.tree);
   setParams(data.params ?? null);
 
