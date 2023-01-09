@@ -36,6 +36,7 @@ import {
   useIsPreviewMode,
   useRootInstance,
 } from "~/shared/nano-states";
+import { useSubscribeStyles } from "~/shared/stores/styles";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -299,6 +300,7 @@ export const Designer = ({
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSubscribeDesignTokens();
+  useSubscribeStyles();
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);

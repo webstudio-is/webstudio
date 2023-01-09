@@ -4,6 +4,7 @@ import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
+import { StylesMessage, useStyles } from "~/shared/stores/styles";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
@@ -45,6 +46,10 @@ export const useStyleData = ({
   selectedInstanceData,
   publish,
 }: UseStyleData) => {
+  const [styles] = useStyles();
+  useEffect(() => {
+    console.log(styles);
+  }, [styles]);
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const cssRule = useMemo(
     () =>
@@ -67,7 +72,7 @@ export const useStyleData = ({
   }, [cssRule?.style]);
 
   const publishUpdates = useCallback(
-    (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
+    (type: "update" | "preview", updates: StylesMessage[]) => {
       if (
         updates.length === 0 ||
         selectedInstanceData === undefined ||
@@ -83,6 +88,12 @@ export const useStyleData = ({
           breakpoint: selectedBreakpoint,
         },
       });
+      if (type === "update") {
+        publish({
+          type: "update",
+          payload: updates,
+        });
+      }
     },
     [publish, selectedBreakpoint, selectedInstanceData]
   );
@@ -110,8 +121,21 @@ export const useStyleData = ({
             : inputOrStyle;
 
         if (nextValue.type !== "invalid") {
-          const updates = [
-            { operation: "set" as const, property, value: nextValue },
+          if (
+            selectedInstanceData === undefined ||
+            selectedBreakpoint === undefined
+          ) {
+            return;
+          }
+          const updates: StylesMessage[] = [
+            {
+              store: "styles",
+              breakpointId: selectedBreakpoint?.id,
+              instanceId: selectedInstanceData?.id,
+              operation: "set",
+              property,
+              value: nextValue,
+            },
           ];
           const type = options.isEphemeral ? "preview" : "update";
 
@@ -126,12 +150,26 @@ export const useStyleData = ({
         }
       };
     },
-    [publishUpdates]
+    [publishUpdates, selectedBreakpoint, selectedInstanceData]
   );
 
   const deleteProperty = useCallback(
     (property: StyleProperty, options = { isEphemeral: false }) => {
-      const updates = [{ operation: "delete" as const, property }];
+      if (
+        selectedInstanceData === undefined ||
+        selectedBreakpoint === undefined
+      ) {
+        return;
+      }
+      const updates: StylesMessage[] = [
+        {
+          store: "styles",
+          breakpointId: selectedBreakpoint?.id,
+          instanceId: selectedInstanceData?.id,
+          operation: "delete",
+          property,
+        },
+      ];
       const type = options.isEphemeral ? "preview" : "update";
       publishUpdates(type, updates);
 
@@ -143,11 +181,11 @@ export const useStyleData = ({
         });
       }
     },
-    [publishUpdates]
+    [publishUpdates, selectedBreakpoint, selectedInstanceData]
   );
 
   const createBatchUpdate = useCallback(() => {
-    let updates: StyleUpdates["updates"] = [];
+    let updates: StylesMessage[] = [];
 
     const setProperty = (property: StyleProperty) => {
       const setValue = (inputOrStyle: string | StyleValue) => {
@@ -165,13 +203,39 @@ export const useStyleData = ({
           return;
         }
 
-        updates.push({ operation: "set", property, value });
+        if (
+          selectedInstanceData === undefined ||
+          selectedBreakpoint === undefined
+        ) {
+          return;
+        }
+
+        updates.push({
+          store: "styles",
+          breakpointId: selectedBreakpoint?.id,
+          instanceId: selectedInstanceData?.id,
+          operation: "set",
+          property,
+          value,
+        });
       };
       return setValue;
     };
 
     const deleteProperty = (property: StyleProperty) => {
-      updates.push({ operation: "delete", property });
+      if (
+        selectedInstanceData === undefined ||
+        selectedBreakpoint === undefined
+      ) {
+        return;
+      }
+      updates.push({
+        store: "styles",
+        breakpointId: selectedBreakpoint?.id,
+        instanceId: selectedInstanceData?.id,
+        operation: "delete",
+        property,
+      });
     };
 
     const publish = (options = { isEphemeral: false }) => {
@@ -206,7 +270,7 @@ export const useStyleData = ({
       deleteProperty,
       publish,
     };
-  }, [publishUpdates]);
+  }, [publishUpdates, selectedBreakpoint, selectedInstanceData]);
 
   return {
     currentStyle,

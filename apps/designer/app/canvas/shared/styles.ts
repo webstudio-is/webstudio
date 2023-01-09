@@ -10,12 +10,11 @@ import { useSelectedInstance } from "./nano-states";
 import {
   designTokensContainer,
   rootInstanceContainer,
-  stylesContainer,
   useBreakpoints,
   useDesignTokens,
   usePresetStyles,
-  useStyles,
 } from "~/shared/nano-states";
+import { useStyles } from "~/shared/stores/styles";
 import {
   getComponentMeta,
   getComponentNames,
@@ -271,37 +270,6 @@ const useUpdateStyle = () => {
         return;
       }
       utils.tree.setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
-    });
-
-    store.createTransaction([stylesContainer], (styles) => {
-      const instanceId = id;
-      const breakpointId = breakpoint.id;
-      for (const update of updates) {
-        const matchedIndex = styles.findIndex(
-          (item) =>
-            item.breakpointId === breakpointId &&
-            item.instanceId === instanceId &&
-            item.property === update.property
-        );
-
-        if (update.operation === "set") {
-          const newItem = {
-            breakpointId,
-            instanceId,
-            property: update.property,
-            value: update.value,
-          };
-          if (matchedIndex === -1) {
-            styles.push(newItem);
-          } else {
-            styles[matchedIndex] = newItem;
-          }
-        }
-
-        if (update.operation === "delete" && matchedIndex !== -1) {
-          styles.splice(matchedIndex, 1);
-        }
-      }
     });
   });
 };

@@ -4,8 +4,8 @@ import {
   rootInstanceContainer,
   breakpointsContainer,
   designTokensContainer,
-  stylesContainer,
 } from "~/shared/nano-states";
+import { stylesContainer } from "~/shared/stores/styles";
 
 export const registerContainers = () => {
   store.register("breakpoints", breakpointsContainer);

@@ -1,5 +1,5 @@
 import { createValueContainer, useValue } from "react-nano-state";
-import type { Instance, PresetStyles, Styles } from "@webstudio-is/react-sdk";
+import type { Instance, PresetStyles } from "@webstudio-is/react-sdk";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
@@ -18,14 +18,6 @@ export const usePresetStyles = () => useValue(presetStylesContainer);
 export const useSetPresetStyles = (presetStyles: PresetStyles) => {
   useSyncInitializeOnce(() => {
     presetStylesContainer.value = presetStyles;
-  });
-};
-
-export const stylesContainer = createValueContainer<Styles>([]);
-export const useStyles = () => useValue(stylesContainer);
-export const useSetStyles = (styles: Styles) => {
-  useSyncInitializeOnce(() => {
-    stylesContainer.value = styles;
   });
 };
 
