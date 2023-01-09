@@ -44,6 +44,7 @@ const Menu = (props: MenuProps) => {
   return (
     <DropdownMenu modal>
       <DropdownMenuTrigger asChild>
+        {/* Migrate to a Button component once implemented https://github.com/webstudio-is/webstudio-designer/issues/450 */}
         <IconButton
           aria-label="Menu Button"
           css={{ position: "absolute", right: 0 }}
