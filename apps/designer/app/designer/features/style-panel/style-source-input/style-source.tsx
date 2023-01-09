@@ -22,18 +22,15 @@ import {
 // Used to schedule function calls to be executed after at a later point in time.
 // Since menu is managing focus, we need to execute that callback when the management is done.
 const useCallScheduler = () => {
-  const ref = useRef<Array<() => void>>([]);
+  const ref = useRef<(() => void) | undefined>();
   const call = () => {
-    for (const fn of ref.current) {
-      fn();
-    }
-    ref.current = [];
+    ref.current?.();
+    ref.current = undefined;
   };
-  const add = (fn: () => void) => () => {
-    ref.current.push(fn);
+  const set = (fn: () => void) => () => {
+    ref.current = fn;
   };
-
-  return { call, add };
+  return { call, set };
 };
 
 type MenuProps = {
@@ -56,13 +53,13 @@ const Menu = (props: MenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent onCloseAutoFocus={scheduler.call}>
-          <DropdownMenuItem onSelect={scheduler.add(props.onEdit)}>
+          <DropdownMenuItem onSelect={scheduler.set(props.onEdit)}>
             Edit Name
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={scheduler.add(props.onDuplicateItem)}>
+          <DropdownMenuItem onSelect={scheduler.set(props.onDuplicateItem)}>
             Duplicate
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={scheduler.add(props.onRemoveItem)}>
+          <DropdownMenuItem onSelect={scheduler.set(props.onRemoveItem)}>
             Remove
           </DropdownMenuItem>
         </DropdownMenuContent>
