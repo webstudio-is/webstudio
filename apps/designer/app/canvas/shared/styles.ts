@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
 import {
@@ -9,8 +10,11 @@ import { useSelectedInstance } from "./nano-states";
 import {
   designTokensContainer,
   rootInstanceContainer,
+  stylesContainer,
+  useBreakpoints,
   useDesignTokens,
   usePresetStyles,
+  useStyles,
 } from "~/shared/nano-states";
 import {
   getComponentMeta,
@@ -26,7 +30,6 @@ import {
   type StyleProperty,
   type Style,
 } from "@webstudio-is/css-data";
-import { useEffect } from "react";
 import {
   createCssEngine,
   toValue,
@@ -186,23 +189,40 @@ const getRule = (id: string, breakpoint?: string) => {
   return wrappedRulesMap.get(key);
 };
 
-export const useCssRules = ({
-  id,
-  cssRules,
-}: {
-  id: string;
-  cssRules: Array<CssRule>;
-}) => {
+export const useCssRules = ({ instanceId }: { instanceId: string }) => {
+  const [styles] = useStyles();
+  const [breakpoints] = useBreakpoints();
+
+  const [key, instanceStyles] = useMemo(() => {
+    const instanceStyles = styles.filter(
+      (item) => item.instanceId === instanceId
+    );
+    const key = JSON.stringify(instanceStyles);
+    return [key, instanceStyles];
+  }, [styles, instanceId]);
+
   useIsomorphicLayoutEffect(() => {
-    for (const cssRule of cssRules) {
-      const rule = getRule(id, cssRule.breakpoint);
+    const stylePerBreakpoint = new Map<string, Style>();
+
+    for (const item of instanceStyles) {
+      let style = stylePerBreakpoint.get(item.breakpointId);
+      if (style === undefined) {
+        style = {};
+        stylePerBreakpoint.set(item.breakpointId, style);
+      }
+      style[item.property] = item.value;
+    }
+
+    for (const { id: breakpointId } of breakpoints) {
+      const style = stylePerBreakpoint.get(breakpointId) ?? {};
+      const rule = getRule(instanceId, breakpointId);
       // It's the first time the rule is being used
       if (rule === undefined) {
-        addRule(id, cssRule);
+        addRule(instanceId, { breakpoint: breakpointId, style });
         continue;
       }
       // It's an update to an existing rule
-      const dynamicStyle = toVarStyleWithFallback(id, cssRule.style);
+      const dynamicStyle = toVarStyleWithFallback(instanceId, style);
       let property: StyleProperty;
       for (property in dynamicStyle) {
         rule.styleMap.set(property, dynamicStyle[property]);
@@ -215,7 +235,9 @@ export const useCssRules = ({
       }
     }
     cssEngine.render();
-  }, [id, cssRules]);
+    // run effect only when serialized instanceStyles changed
+    // to avoid rerendering on other instances change
+  }, [instanceId, key, breakpoints]);
 };
 
 const toVarNamespace = (id: string, property: string) => {
@@ -249,6 +271,37 @@ const useUpdateStyle = () => {
         return;
       }
       utils.tree.setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
+    });
+
+    store.createTransaction([stylesContainer], (styles) => {
+      const instanceId = id;
+      const breakpointId = breakpoint.id;
+      for (const update of updates) {
+        const matchedIndex = styles.findIndex(
+          (item) =>
+            item.breakpointId === breakpointId &&
+            item.instanceId === instanceId &&
+            item.property === update.property
+        );
+
+        if (update.operation === "set") {
+          const newItem = {
+            breakpointId,
+            instanceId,
+            property: update.property,
+            value: update.value,
+          };
+          if (matchedIndex === -1) {
+            styles.push(newItem);
+          } else {
+            styles[matchedIndex] = newItem;
+          }
+        }
+
+        if (update.operation === "delete" && matchedIndex !== -1) {
+          styles.splice(matchedIndex, 1);
+        }
+      }
     });
   });
 };

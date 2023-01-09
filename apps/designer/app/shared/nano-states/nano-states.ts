@@ -1,12 +1,12 @@
-import { useState } from "react";
 import { createValueContainer, useValue } from "react-nano-state";
-import type { Instance, PresetStyles } from "@webstudio-is/react-sdk";
+import type { Instance, PresetStyles, Styles } from "@webstudio-is/react-sdk";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
+import { useSyncInitializeOnce } from "../hook-utils";
 
 export const rootInstanceContainer = createValueContainer<
   Instance | undefined
@@ -15,11 +15,17 @@ export const useRootInstance = () => useValue(rootInstanceContainer);
 
 export const presetStylesContainer = createValueContainer<PresetStyles>([]);
 export const usePresetStyles = () => useValue(presetStylesContainer);
-export const useSetPresetStyles = (presetStyles?: PresetStyles) => {
-  useState(() => {
-    if (presetStyles) {
-      presetStylesContainer.value = presetStyles;
-    }
+export const useSetPresetStyles = (presetStyles: PresetStyles) => {
+  useSyncInitializeOnce(() => {
+    presetStylesContainer.value = presetStyles;
+  });
+};
+
+export const stylesContainer = createValueContainer<Styles>([]);
+export const useStyles = () => useValue(stylesContainer);
+export const useSetStyles = (styles: Styles) => {
+  useSyncInitializeOnce(() => {
+    stylesContainer.value = styles;
   });
 };
 
