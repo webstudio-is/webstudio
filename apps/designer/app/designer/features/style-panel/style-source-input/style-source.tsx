@@ -143,11 +143,13 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
       return;
     }
     element.style.setProperty(property, "initial");
-    const requestId = requestAnimationFrame(() => {
+    const restore = () => {
       element.style.removeProperty(property);
-    });
+    };
+    const requestId = requestAnimationFrame(restore);
     return () => {
       cancelAnimationFrame(requestId);
+      restore();
     };
   }, [calculate, property]);
   return ref;
