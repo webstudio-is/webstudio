@@ -6,11 +6,13 @@ import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
   breakpointsContainer,
   rootInstanceContainer,
+  stylesContainer,
   useBreakpoints,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
 import { addMediaRules } from "./styles";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
+import { filterMutable } from "~/shared/array-utils";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
@@ -52,8 +54,8 @@ const useBreakpointChange = () => {
 const useBreakpointDelete = () => {
   useSubscribe("breakpointDelete", (breakpoint) => {
     store.createTransaction(
-      [breakpointsContainer, rootInstanceContainer],
-      (breakpoints, rootInstance) => {
+      [breakpointsContainer, rootInstanceContainer, stylesContainer],
+      (breakpoints, rootInstance, styles) => {
         if (rootInstance === undefined) {
           return;
         }
@@ -64,6 +66,9 @@ const useBreakpointDelete = () => {
         }
 
         deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
+
+        // delete breakpoint styles
+        filterMutable(styles, (style) => style.breakpointId !== breakpoint.id);
       }
     );
   });
