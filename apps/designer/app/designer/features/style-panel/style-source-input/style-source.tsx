@@ -84,19 +84,24 @@ const EditableText = ({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (ref.current === null || isEditing === false) {
+    if (ref.current === null) {
       return;
     }
-    ref.current.setAttribute("contenteditable", "plaintext-only");
-    ref.current.focus();
-    getSelection()?.selectAllChildren(ref.current);
+
+    if (isEditing === true) {
+      ref.current.setAttribute("contenteditable", "plaintext-only");
+      ref.current.focus();
+      getSelection()?.selectAllChildren(ref.current);
+      return;
+    }
+
+    ref.current?.removeAttribute("contenteditable");
   }, [isEditing]);
 
   const handleFinishEditing = (
     event: KeyboardEvent<Element> | FocusEvent<Element>
   ) => {
     event.preventDefault();
-    ref.current?.removeAttribute("contenteditable");
     onEditingChange(false);
     onChange(ref.current?.textContent ?? "");
   };
