@@ -4,7 +4,7 @@ import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import { StylesMessage, useStyles } from "~/shared/stores/styles";
+import type { StylesMessage } from "~/shared/stores/styles";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
@@ -46,10 +46,6 @@ export const useStyleData = ({
   selectedInstanceData,
   publish,
 }: UseStyleData) => {
-  const [styles] = useStyles();
-  useEffect(() => {
-    console.log(styles);
-  }, [styles]);
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const cssRule = useMemo(
     () =>
