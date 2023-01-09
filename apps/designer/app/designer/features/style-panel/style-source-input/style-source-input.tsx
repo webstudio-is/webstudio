@@ -37,9 +37,9 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     disabled?: boolean;
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
-    onRemoveItem: (item: Item) => void;
-    onDuplicateItem: (item: Item) => void;
-    onChangeItem: (item: Item) => void;
+    onRemoveItem?: (item: Item) => void;
+    onDuplicateItem?: (item: Item) => void;
+    onChangeItem?: (item: Item) => void;
     editingIndex: number;
   };
 
@@ -94,13 +94,13 @@ const TextFieldBase: ForwardRefRenderFunction<
           }}
           onChange={(label) => {
             setEditingIndex(-1);
-            onChangeItem({ ...item, label });
+            onChangeItem?.({ ...item, label });
           }}
           onDuplicateItem={() => {
-            onDuplicateItem(item);
+            onDuplicateItem?.(item);
           }}
           onRemoveItem={() => {
-            onRemoveItem(item);
+            onRemoveItem?.(item);
           }}
           label={item.label}
           hasMenu={item.hasMenu}
