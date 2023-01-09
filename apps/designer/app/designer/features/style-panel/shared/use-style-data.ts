@@ -126,8 +126,8 @@ export const useStyleData = ({
           const updates: StylesMessage[] = [
             {
               store: "styles",
-              breakpointId: selectedBreakpoint?.id,
-              instanceId: selectedInstanceData?.id,
+              breakpointId: selectedBreakpoint.id,
+              instanceId: selectedInstanceData.id,
               operation: "set",
               property,
               value: nextValue,
@@ -160,8 +160,8 @@ export const useStyleData = ({
       const updates: StylesMessage[] = [
         {
           store: "styles",
-          breakpointId: selectedBreakpoint?.id,
-          instanceId: selectedInstanceData?.id,
+          breakpointId: selectedBreakpoint.id,
+          instanceId: selectedInstanceData.id,
           operation: "delete",
           property,
         },
@@ -208,8 +208,8 @@ export const useStyleData = ({
 
         updates.push({
           store: "styles",
-          breakpointId: selectedBreakpoint?.id,
-          instanceId: selectedInstanceData?.id,
+          breakpointId: selectedBreakpoint.id,
+          instanceId: selectedInstanceData.id,
           operation: "set",
           property,
           value,
@@ -227,8 +227,8 @@ export const useStyleData = ({
       }
       updates.push({
         store: "styles",
-        breakpointId: selectedBreakpoint?.id,
-        instanceId: selectedInstanceData?.id,
+        breakpointId: selectedBreakpoint.id,
+        instanceId: selectedInstanceData.id,
         operation: "delete",
         property,
       });
