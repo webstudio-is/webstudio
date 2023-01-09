@@ -12,7 +12,7 @@ import { publish } from "~/shared/pubsub";
 import { addMediaRules } from "./styles";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { useStyles } from "~/shared/stores/styles";
-import type { Messages } from "~/shared/stores/messages";
+import type { Update } from "~/shared/stores/updates";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
@@ -71,7 +71,7 @@ const useBreakpointDelete = () => {
       }
     );
 
-    const messages: Messages = [];
+    const messages: Update[] = [];
     // delete breakpoint styles
     for (const style of styles) {
       if (style.breakpointId === breakpoint.id) {

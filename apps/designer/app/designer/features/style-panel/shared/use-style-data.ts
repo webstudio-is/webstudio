@@ -4,7 +4,7 @@ import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import type { StylesMessage } from "~/shared/stores/styles";
+import type { Update } from "~/shared/stores/updates";
 import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
@@ -68,7 +68,7 @@ export const useStyleData = ({
   }, [cssRule?.style]);
 
   const publishUpdates = useCallback(
-    (type: "update" | "preview", updates: StylesMessage[]) => {
+    (type: "update" | "preview", updates: Update[]) => {
       if (
         updates.length === 0 ||
         selectedInstanceData === undefined ||
@@ -123,7 +123,7 @@ export const useStyleData = ({
           ) {
             return;
           }
-          const updates: StylesMessage[] = [
+          const updates: Update[] = [
             {
               store: "styles",
               breakpointId: selectedBreakpoint.id,
@@ -157,7 +157,7 @@ export const useStyleData = ({
       ) {
         return;
       }
-      const updates: StylesMessage[] = [
+      const updates: Update[] = [
         {
           store: "styles",
           breakpointId: selectedBreakpoint.id,
@@ -181,7 +181,7 @@ export const useStyleData = ({
   );
 
   const createBatchUpdate = useCallback(() => {
-    let updates: StylesMessage[] = [];
+    let updates: Update[] = [];
 
     const setProperty = (property: StyleProperty) => {
       const setValue = (inputOrStyle: string | StyleValue) => {

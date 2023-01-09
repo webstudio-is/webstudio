@@ -10,7 +10,7 @@ export const stylesContainer = createValueContainer<Styles>([]);
 
 export const useStyles = () => useValue(stylesContainer);
 
-type SetStylesMessage = {
+type SetStylesUpdate = {
   store: "styles";
   operation: "set";
   breakpointId: string;
@@ -19,7 +19,7 @@ type SetStylesMessage = {
   value: StyleValue;
 };
 
-type DeleteStylesMessage = {
+type DeleteStylesUpdate = {
   store: "styles";
   operation: "delete";
   breakpointId: string;
@@ -27,7 +27,7 @@ type DeleteStylesMessage = {
   property: StyleProperty;
 };
 
-export type StylesMessage = SetStylesMessage | DeleteStylesMessage;
+export type StylesUpdate = SetStylesUpdate | DeleteStylesUpdate;
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -35,8 +35,8 @@ declare module "~/shared/pubsub" {
   }
 }
 
-export const updateStyles = (styles: Styles, message: StylesMessage) => {
-  const { breakpointId, instanceId, property } = message;
+export const updateStyles = (styles: Styles, update: StylesUpdate) => {
+  const { breakpointId, instanceId, property } = update;
   const matchedIndex = styles.findIndex(
     (item) =>
       item.breakpointId === breakpointId &&
@@ -44,12 +44,12 @@ export const updateStyles = (styles: Styles, message: StylesMessage) => {
       item.property === property
   );
 
-  if (message.operation === "set") {
+  if (update.operation === "set") {
     const newItem = {
       breakpointId,
       instanceId,
       property,
-      value: message.value,
+      value: update.value,
     };
     if (matchedIndex === -1) {
       styles.push(newItem);
@@ -58,7 +58,7 @@ export const updateStyles = (styles: Styles, message: StylesMessage) => {
     }
   }
 
-  if (message.operation === "delete" && matchedIndex !== -1) {
+  if (update.operation === "delete" && matchedIndex !== -1) {
     styles.splice(matchedIndex, 1);
   }
 };
@@ -86,11 +86,11 @@ export const useInitStyles = (styles: Styles) => {
 
   // subscribe to styles updates
   useEffect(() => {
-    return subscribe("update", (messages) => {
+    return subscribe("update", (updates) => {
       store.createTransaction([stylesContainer], (styles) => {
-        for (const message of messages) {
-          if (message.store === "styles") {
-            updateStyles(styles, message);
+        for (const update of updates) {
+          if (update.store === "styles") {
+            updateStyles(styles, update);
           }
         }
       });
