@@ -64,7 +64,7 @@ export const updateStylesMutable = (styles: Styles, update: StylesUpdate) => {
 };
 
 export const useInitStyles = (styles: Styles) => {
-  // set initial styles value
+  // set initial styles value loaded server side
   useSyncInitializeOnce(() => {
     stylesContainer.value = styles;
   });
