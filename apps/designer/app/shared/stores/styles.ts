@@ -35,7 +35,7 @@ declare module "~/shared/pubsub" {
   }
 }
 
-export const updateStyles = (styles: Styles, update: StylesUpdate) => {
+export const updateStylesMutable = (styles: Styles, update: StylesUpdate) => {
   const { breakpointId, instanceId, property } = update;
   const matchedIndex = styles.findIndex(
     (item) =>
@@ -90,7 +90,7 @@ export const useInitStyles = (styles: Styles) => {
       store.createTransaction([stylesContainer], (styles) => {
         for (const update of updates) {
           if (update.store === "styles") {
-            updateStyles(styles, update);
+            updateStylesMutable(styles, update);
           }
         }
       });
