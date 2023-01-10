@@ -71,11 +71,11 @@ const useBreakpointDelete = () => {
       }
     );
 
-    const messages: Update[] = [];
+    const updates: Update[] = [];
     // delete breakpoint styles
     for (const style of styles) {
       if (style.breakpointId === breakpoint.id) {
-        messages.push({
+        updates.push({
           store: "styles",
           operation: "delete",
           breakpointId: style.breakpointId,
@@ -86,7 +86,7 @@ const useBreakpointDelete = () => {
     }
     publish({
       type: "update",
-      payload: messages,
+      payload: updates,
     });
   });
 };
