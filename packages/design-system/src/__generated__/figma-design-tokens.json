@@ -343,7 +343,7 @@
       },
       "neutral": {
         "main": {
-          "value": "#687076",
+          "value": "#D7DBDF",
           "type": "color",
           "description": "used for neutral button"
         },
