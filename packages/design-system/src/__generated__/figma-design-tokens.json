@@ -407,11 +407,11 @@
       },
       "preset": {
         "main": {
-          "value": "#dfe3e6",
+          "value": "#E6E8EB",
           "type": "color"
         },
         "hover": {
-          "value": "#d7dbdf",
+          "value": "#DFE3E6",
           "type": "color"
         }
       },
