@@ -87,7 +87,7 @@ export const useCanvasStore = (publish: Publish) => {
     const unsubscribeChanges = syncChanges("canvas", publish);
 
     return unsubscribeChanges;
-  }, []);
+  }, [publish]);
 };
 
 export const useDesignerStore = (publish: Publish) => {
@@ -107,5 +107,5 @@ export const useDesignerStore = (publish: Publish) => {
       unsubscribeSendStoreData();
       unsubscribeChanges();
     };
-  }, []);
+  }, [publish]);
 };
