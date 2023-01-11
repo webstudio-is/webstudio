@@ -13,7 +13,7 @@ import {
 
 type StoreData = {
   namespace: string;
-  value: any;
+  value: unknown;
 };
 
 declare module "~/shared/pubsub" {
@@ -28,6 +28,7 @@ declare module "~/shared/pubsub" {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const containers = new Map<string, ValueContainer<any>>([
   ["breakpoints", breakpointsContainer],
   ["root", rootInstanceContainer],
