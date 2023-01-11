@@ -12,12 +12,12 @@ import {
   type Tree,
 } from "@webstudio-is/react-sdk";
 import { publish, useSubscribe } from "~/shared/pubsub";
+import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useDeleteInstance,
   useInsertInstance,
   usePopulateRootInstance,
-  usePublishRootInstance,
   usePublishSelectedInstanceData,
   usePublishTextEditingInstanceId,
   useReparentInstance,
@@ -41,16 +41,12 @@ import {
   useSetStyles,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
-import { registerContainers } from "./shared/immerhin";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import {
-  useInitializeDesignTokens,
-  usePublishDesignTokens,
-} from "./shared/design-tokens";
+import { useInitializeDesignTokens } from "./shared/design-tokens";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { useSelectedInstance } from "./shared/nano-states";
 import { customComponents } from "./custom-components";
@@ -140,14 +136,12 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageBreakpoints();
-  usePublishDesignTokens();
   useManageDesignModeStyles();
   useManageProps({ treeId });
   usePublishSelectedInstanceData();
   useInsertInstance({ treeId });
   useReparentInstance();
   useDeleteInstance();
-  usePublishRootInstance();
   useTrackSelectedElement();
   useSync({ buildId, treeId });
   useUpdateSelectedInstance();
@@ -180,6 +174,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useSetStyles(data.tree.styles);
   usePopulateRootInstance(data.tree);
   setParams(data.params ?? null);
+  useCanvasStore();
 
   registerComponents(customComponents);
 

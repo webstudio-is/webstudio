@@ -39,20 +39,15 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
-import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
+import { useSubscribeStores } from "~/shared/sync";
 
 export const links = () => {
   return [
     { rel: "stylesheet", href: interStyles },
     { rel: "stylesheet", href: designerStyles },
   ];
-};
-
-const useSubscribeRootInstance = () => {
-  const [, setValue] = useRootInstance();
-  useSubscribe("loadRootInstance", setValue);
 };
 
 const useSubscribeSelectedInstanceData = () => {
@@ -294,11 +289,10 @@ export const Designer = ({
   buildOrigin,
 }: DesignerProps) => {
   useSubscribeSyncStatus();
-  useSubscribeRootInstance();
+  useSubscribeStores();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
-  useSubscribeDesignTokens();
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);

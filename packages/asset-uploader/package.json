@@ -20,7 +20,7 @@
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "app-root-path": "^3.0.0",
-    "bson-objectid": "^2.0.2",
+    "bson-objectid": "^2.0.4",
     "sharp": "^0.30.7"
   },
   "devDependencies": {

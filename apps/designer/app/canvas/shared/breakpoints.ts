@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
@@ -9,7 +8,6 @@ import {
   stylesContainer,
   useBreakpoints,
 } from "~/shared/nano-states";
-import { publish } from "~/shared/pubsub";
 import { addMediaRules } from "./styles";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
 import { filterMutable } from "~/shared/array-utils";
@@ -20,16 +18,6 @@ export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
     setCurrentBreakpoints(breakpoints);
     addMediaRules(breakpoints);
   });
-};
-
-const usePublishBreakpoints = () => {
-  const [breakpoints] = useBreakpoints();
-  useEffect(() => {
-    publish({
-      type: "loadBreakpoints",
-      payload: breakpoints,
-    });
-  }, [breakpoints]);
 };
 
 const useBreakpointChange = () => {
@@ -75,7 +63,6 @@ const useBreakpointDelete = () => {
 };
 
 export const useManageBreakpoints = () => {
-  usePublishBreakpoints();
   useBreakpointChange();
   useBreakpointDelete();
 };
