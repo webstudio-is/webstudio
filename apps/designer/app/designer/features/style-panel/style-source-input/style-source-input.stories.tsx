@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
-import { StyleSourceInput } from "./style-source-input";
+import { StyleSourceInput, type ItemState } from "./";
 
 export default {
   component: StyleSourceInput,
@@ -12,6 +12,7 @@ type Item = {
   label: string;
   type: "token" | "local";
   hasMenu: boolean;
+  state: ItemState;
 };
 
 const localItem: Item = {
@@ -19,12 +20,25 @@ const localItem: Item = {
   label: "Local",
   type: "local",
   hasMenu: false,
+  state: "initial",
 };
 
 const items: Array<Item> = [
-  { id: "1", label: "Apple", type: "token", hasMenu: false },
-  { id: "2", label: "Banana", type: "token", hasMenu: false },
-  { id: "3", label: "Orange", type: "token", hasMenu: false },
+  { id: "1", label: "Apple", type: "token", hasMenu: false, state: "initial" },
+  {
+    id: "2",
+    label: "Banana",
+    type: "token",
+    hasMenu: false,
+    state: "initial",
+  },
+  {
+    id: "3",
+    label: "Orange",
+    type: "token",
+    hasMenu: false,
+    state: "initial",
+  },
 ];
 
 export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
@@ -35,7 +49,13 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
+        const item: Item = {
+          id: uuid(),
+          label,
+          type: "token",
+          hasMenu: false,
+          state: "initial",
+        };
         setValue([...value, item]);
       }}
       onSelectItem={(item) => {
@@ -59,7 +79,13 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
+        const item: Item = {
+          id: uuid(),
+          label,
+          type: "token",
+          hasMenu: false,
+          state: "initial",
+        };
         setValue([...value, item]);
       }}
       onSelectItem={(item) => {
@@ -85,6 +111,7 @@ export const WithTruncatedItem: ComponentStory<
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       type: "local",
       hasMenu: false,
+      state: "initial",
     },
   ]);
   return (
@@ -93,7 +120,13 @@ export const WithTruncatedItem: ComponentStory<
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = { id: uuid(), label, type: "token", hasMenu: false };
+        const item: Item = {
+          id: uuid(),
+          label,
+          type: "token",
+          hasMenu: false,
+          state: "initial",
+        };
         setValue([...value, item]);
       }}
       onSelectItem={(item) => {
@@ -111,7 +144,13 @@ export const WithTruncatedItem: ComponentStory<
 
 export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
-    { id: "0", label: "Apple", type: "token", hasMenu: true },
+    {
+      id: "0",
+      label: "Apple",
+      type: "token",
+      hasMenu: true,
+      state: "initial",
+    },
   ]);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
   return (
@@ -121,7 +160,13 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
       value={value}
       editingIndex={editingIndex}
       onCreateItem={({ label }) => {
-        const item: Item = { id: uuid(), label, type: "token", hasMenu: true };
+        const item: Item = {
+          id: uuid(),
+          label,
+          type: "token",
+          hasMenu: true,
+          state: "initial",
+        };
         setValue([...value, item]);
       }}
       onSelectItem={(item) => {
@@ -138,6 +183,26 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
           value.map((item) => {
             if (item.id === changedItem.id) {
               return changedItem;
+            }
+            return item;
+          })
+        );
+      }}
+      onDisableItem={(itemToDisable) => {
+        setValue(
+          value.map((item) => {
+            if (item.id === itemToDisable.id) {
+              return { ...item, state: "disabled" };
+            }
+            return item;
+          })
+        );
+      }}
+      onEnableItem={(itemToEnable) => {
+        setValue(
+          value.map((item) => {
+            if (item.id === itemToEnable.id) {
+              return { ...item, state: "initial" };
             }
             return item;
           })

@@ -41,9 +41,12 @@ const menuCssVars = ({ show }: { show: boolean }) => ({
 });
 
 type MenuProps = {
+  state: ItemState;
   onEdit: () => void;
-  onDuplicateItem: () => void;
-  onRemoveItem: () => void;
+  onDisable: () => void;
+  onEnable: () => void;
+  onDuplicate: () => void;
+  onRemove: () => void;
 };
 
 const Menu = (props: MenuProps) => {
@@ -68,10 +71,20 @@ const Menu = (props: MenuProps) => {
           <DropdownMenuItem onSelect={scheduler.set(props.onEdit)}>
             Edit Name
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={scheduler.set(props.onDuplicateItem)}>
+          {props.state === "disabled" && (
+            <DropdownMenuItem onSelect={scheduler.set(props.onEnable)}>
+              Enable
+            </DropdownMenuItem>
+          )}
+          {props.state !== "disabled" && (
+            <DropdownMenuItem onSelect={scheduler.set(props.onDisable)}>
+              Disable
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onSelect={scheduler.set(props.onDuplicate)}>
             Duplicate
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={scheduler.set(props.onRemoveItem)}>
+          <DropdownMenuItem onSelect={scheduler.set(props.onRemove)}>
             Remove
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -80,18 +93,20 @@ const Menu = (props: MenuProps) => {
   );
 };
 
+export type ItemState = "initial" | "editing" | "disabled";
+
 type EditableTextProps = {
   label: string;
   onChange: (value: string) => void;
-  isEditing: boolean;
-  onEditingChange: (isEditing: boolean) => void;
+  state: ItemState;
+  onStateChange: (state: ItemState) => void;
 };
 
 const EditableText = ({
   onChange,
   label,
-  isEditing,
-  onEditingChange,
+  state,
+  onStateChange,
 }: EditableTextProps) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -100,7 +115,7 @@ const EditableText = ({
       return;
     }
 
-    if (isEditing === true) {
+    if (state === "editing") {
       ref.current.setAttribute("contenteditable", "plaintext-only");
       ref.current.focus();
       getSelection()?.selectAllChildren(ref.current);
@@ -108,13 +123,13 @@ const EditableText = ({
     }
 
     ref.current?.removeAttribute("contenteditable");
-  }, [isEditing]);
+  }, [state]);
 
   const handleFinishEditing = (
     event: KeyboardEvent<Element> | FocusEvent<Element>
   ) => {
     event.preventDefault();
-    onEditingChange(false);
+    onStateChange("initial");
     onChange(ref.current?.textContent ?? "");
   };
 
@@ -125,7 +140,7 @@ const EditableText = ({
   };
 
   const handleClick = () => {
-    onEditingChange(true);
+    onStateChange("editing");
   };
 
   return (
@@ -135,7 +150,10 @@ const EditableText = ({
       onKeyDown={handleKeyDown}
       onBlur={handleFinishEditing}
       onClick={handleClick}
-      css={{ outline: "none", textOverflow: isEditing ? "clip" : "ellipsis" }}
+      css={{
+        outline: "none",
+        textOverflow: state === "editing" ? "clip" : "ellipsis",
+      }}
     >
       {label}
     </Text>
@@ -172,20 +190,30 @@ const Item = styled(Button, {
   position: "relative",
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
+  variants: {
+    state: {
+      disabled: {
+        // @todo styling
+        opacity: 0.5,
+      },
+      editing: {},
+      initial: {},
+    },
+  },
 });
 
 type EditableItemProps = {
   children: Array<JSX.Element | false>;
-  isEditing: boolean;
+  state: ItemState;
 };
 
-const EditableItem = ({ children, isEditing }: EditableItemProps) => {
+const EditableItem = ({ children, state }: EditableItemProps) => {
   const ref = useForceRecalcStyle<HTMLDivElement>(
     "max-width",
-    isEditing === false
+    state === "editing"
   );
   return (
-    <Item variant="gray" ref={ref} as="div">
+    <Item variant="gray" state={state} ref={ref} as="div">
       {children}
     </Item>
   );
@@ -194,34 +222,41 @@ const EditableItem = ({ children, isEditing }: EditableItemProps) => {
 type StyleSourceProps = {
   label: string;
   hasMenu: boolean;
-  isEditing: boolean;
-  onEditingChange: (isEditing: boolean) => void;
-  onDuplicateItem: () => void;
-  onRemoveItem: () => void;
+  state: ItemState;
+  onStateChange: (state: ItemState) => void;
+  onDuplicate: () => void;
+  onRemove: () => void;
   onChange: (value: string) => void;
 };
 
 export const StyleSource = ({
   label,
   hasMenu,
+  state,
   onChange,
-  isEditing,
-  onEditingChange,
+  onStateChange,
   ...menuProps
 }: StyleSourceProps) => {
   return (
-    <EditableItem isEditing={isEditing}>
+    <EditableItem state={state}>
       <EditableText
-        isEditing={isEditing}
-        onEditingChange={onEditingChange}
+        state={state}
+        onStateChange={onStateChange}
         onChange={onChange}
         label={label}
       />
-      {hasMenu === true && isEditing === false && (
+      {hasMenu === true && state !== "editing" && (
         <Menu
           {...menuProps}
+          state={state}
+          onEnable={() => {
+            onStateChange("initial");
+          }}
+          onDisable={() => {
+            onStateChange("disabled");
+          }}
           onEdit={() => {
-            onEditingChange(true);
+            onStateChange("editing");
           }}
         />
       )}
