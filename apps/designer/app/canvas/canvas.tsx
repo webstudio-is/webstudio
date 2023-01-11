@@ -174,7 +174,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useSetStyles(data.tree.styles);
   usePopulateRootInstance(data.tree);
   setParams(data.params ?? null);
-  useCanvasStore();
+  useCanvasStore(publish);
 
   registerComponents(customComponents);
 

@@ -1,9 +1,7 @@
-import { applyPatches } from "immer";
 import store, { type Change } from "immerhin";
-import type { ValueContainer } from "react-nano-state";
 import { useEffect } from "react";
 import { allUserPropsContainer } from "@webstudio-is/react-sdk";
-import { publish, subscribe } from "~/shared/pubsub";
+import { type Publish, subscribe } from "~/shared/pubsub";
 import {
   rootInstanceContainer,
   breakpointsContainer,
@@ -16,38 +14,66 @@ type StoreData = {
   value: unknown;
 };
 
+type SyncEventSource = "canvas" | "designer";
+
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     sendStoreData: StoreData[];
     sendStoreChanges: {
-      // distinct target to avoid infinite loop
-      // @todo implement two-way patches
-      target: "canvas" | "designer";
+      // distinct source to avoid infinite loop
+      source: SyncEventSource;
       changes: Change[];
     };
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const containers = new Map<string, ValueContainer<any>>([
-  ["breakpoints", breakpointsContainer],
-  ["root", rootInstanceContainer],
-  ["styles", stylesContainer],
-  ["props", allUserPropsContainer],
-  ["designTokens", designTokensContainer],
-]);
-
 export const registerContainers = () => {
-  for (const [namespace, container] of containers) {
-    store.register(namespace, container);
-  }
+  store.register("breakpoints", breakpointsContainer);
+  store.register("root", rootInstanceContainer);
+  store.register("styles", stylesContainer);
+  store.register("props", allUserPropsContainer);
+  store.register("designTokens", designTokensContainer);
 };
 
-export const useCanvasStore = () => {
+const syncChanges = (name: SyncEventSource, publish: Publish) => {
+  const unsubscribeRemoteChanges = subscribe(
+    "sendStoreChanges",
+    ({ source, changes }) => {
+      /// prevent reapplying own changes
+      if (source === name) {
+        return;
+      }
+      store.createTransactionFromChanges(changes, "remote");
+    }
+  );
+
+  const unsubscribeStoreChanges = store.subscribe(
+    (_transactionId, changes, source) => {
+      // prevent sending remote patches back
+      if (source === "remote") {
+        return;
+      }
+      publish({
+        type: "sendStoreChanges",
+        payload: {
+          source: name,
+          changes,
+        },
+      });
+    }
+  );
+
+  return () => {
+    unsubscribeRemoteChanges();
+    unsubscribeStoreChanges();
+  };
+};
+
+export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
     // expect data to be populated by the time effect is called
     const data = [];
-    for (const [namespace, container] of containers) {
+    for (const [namespace, container] of store.containers) {
       data.push({
         namespace,
         value: container.value,
@@ -57,48 +83,29 @@ export const useCanvasStore = () => {
       type: "sendStoreData",
       payload: data,
     });
-    const unsubscribeStore = store.subscribe((_transactionId, changes) => {
-      publish({
-        type: "sendStoreChanges",
-        payload: {
-          target: "designer",
-          changes,
-        },
-      });
-    });
-    return () => {
-      unsubscribeStore();
-    };
-  }, []);
+
+    const unsubscribeChanges = syncChanges("canvas", publish);
+
+    return unsubscribeChanges;
+  }, [publish]);
 };
 
-export const useDesignerStore = () => {
+export const useDesignerStore = (publish: Publish) => {
   useEffect(() => {
     const unsubscribeSendStoreData = subscribe("sendStoreData", (data) => {
       for (const { namespace, value } of data) {
-        const container = containers.get(namespace);
+        const container = store.containers.get(namespace);
         if (container) {
           container.dispatch(value);
         }
       }
     });
-    const unsubscribeSendStoreChanges = subscribe(
-      "sendStoreChanges",
-      ({ target, changes }) => {
-        if (target !== "designer") {
-          return;
-        }
-        for (const { namespace, patches } of changes) {
-          const container = containers.get(namespace);
-          if (container) {
-            container.dispatch(applyPatches(container.value, patches));
-          }
-        }
-      }
-    );
+
+    const unsubscribeChanges = syncChanges("designer", publish);
+
     return () => {
       unsubscribeSendStoreData();
-      unsubscribeSendStoreChanges();
+      unsubscribeChanges();
     };
-  }, []);
+  }, [publish]);
 };
