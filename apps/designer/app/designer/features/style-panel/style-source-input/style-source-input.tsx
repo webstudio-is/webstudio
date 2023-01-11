@@ -20,11 +20,12 @@ import {
   type RefObject,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { StyleSource } from "./style-source";
+import { StyleSource, type ItemState } from "./style-source";
 
 type IntermediateItem = {
   label: string;
   hasMenu: boolean;
+  state: ItemState;
 };
 
 type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
@@ -40,6 +41,8 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     onRemoveItem?: (item: Item) => void;
     onDuplicateItem?: (item: Item) => void;
     onChangeItem?: (item: Item) => void;
+    onDisableItem?: (item: Item) => void;
+    onEnableItem?: (item: Item) => void;
     editingIndex: number;
   };
 
@@ -64,6 +67,8 @@ const TextFieldBase: ForwardRefRenderFunction<
     onRemoveItem,
     onDuplicateItem,
     onChangeItem,
+    onDisableItem,
+    onEnableItem,
     editingIndex: editingIndexProp,
     ...textFieldProps
   } = props;
@@ -88,18 +93,24 @@ const TextFieldBase: ForwardRefRenderFunction<
     >
       {value.map((item, index) => (
         <StyleSource
-          isEditing={index === editingIndex}
-          onEditingChange={(isEditing) => {
-            setEditingIndex(isEditing === true ? index : -1);
+          state={index === editingIndex ? "editing" : item.state}
+          onStateChange={(state) => {
+            setEditingIndex(state === "editing" ? index : -1);
+            if (state === "disabled") {
+              onDisableItem?.(item);
+            }
+            if (state === "initial") {
+              onEnableItem?.(item);
+            }
           }}
           onChange={(label) => {
             setEditingIndex(-1);
             onChangeItem?.({ ...item, label });
           }}
-          onDuplicateItem={() => {
+          onDuplicate={() => {
             onDuplicateItem?.(item);
           }}
-          onRemoveItem={() => {
+          onRemove={() => {
             onRemoveItem?.(item);
           }}
           label={item.label}
@@ -135,6 +146,8 @@ type StyleSourceInputProps<Item> = {
   onCreateItem?: (item: Item) => void;
   onChangeItem?: (item: Item) => void;
   onDuplicateItem?: (item: Item) => void;
+  onDisableItem?: (item: Item) => void;
+  onEnableItem?: (item: Item) => void;
   css?: CSS;
 };
 
@@ -153,7 +166,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     isOpen,
   } = useCombobox({
     items: props.items ?? [],
-    value: { label, hasMenu: true },
+    value: { label, hasMenu: true, state: "initial" },
     selectedItem: undefined,
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
@@ -187,6 +200,8 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             onRemoveItem={props.onRemoveItem}
             onChangeItem={props.onChangeItem}
             onDuplicateItem={props.onDuplicateItem}
+            onDisableItem={props.onDisableItem}
+            onEnableItem={props.onEnableItem}
             label={label}
             value={value}
             css={props.css}
