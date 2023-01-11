@@ -6,6 +6,7 @@ import {
   utils as projectUtils,
 } from "@webstudio-is/project";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import { useDesignerStore } from "~/shared/sync";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -41,7 +42,6 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
-import { useSubscribeStores } from "~/shared/sync";
 
 export const links = () => {
   return [
@@ -289,7 +289,7 @@ export const Designer = ({
   buildOrigin,
 }: DesignerProps) => {
   useSubscribeSyncStatus();
-  useSubscribeStores();
+  useDesignerStore();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
