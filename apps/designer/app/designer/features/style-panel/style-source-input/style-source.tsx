@@ -200,6 +200,7 @@ const EditableText = ({
       css={{
         outline: "none",
         textOverflow: state === "editing" ? "clip" : "ellipsis",
+        cursor: state === "dragging" ? "grab" : "default",
       }}
       {...handlers}
     >
