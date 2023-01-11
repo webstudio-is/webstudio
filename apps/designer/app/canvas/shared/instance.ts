@@ -27,7 +27,6 @@ declare module "~/shared/pubsub" {
   export interface PubsubMap {
     hoveredInstanceRect: DOMRect;
     hoverInstance?: HoveredInstanceData;
-    loadRootInstance?: Instance;
     selectInstance?: SelectedInstanceData;
     textEditingInstanceId?: Instance["id"];
     insertInstance: {
@@ -180,16 +179,6 @@ export const usePublishSelectedInstanceData = () => {
       });
     }
   }, [instance]);
-};
-
-export const usePublishRootInstance = () => {
-  const [rootInstance] = useRootInstance();
-  useEffect(() => {
-    publish({
-      type: "loadRootInstance",
-      payload: rootInstance,
-    });
-  }, [rootInstance]);
 };
 
 /**

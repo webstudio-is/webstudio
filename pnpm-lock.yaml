@@ -96,7 +96,7 @@ importers:
       '@webstudio-is/storybook-config': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       babel-loader: ^8.2.5
-      bson-objectid: ^2.0.2
+      bson-objectid: ^2.0.4
       camelcase: ^6.3.0
       colord: ^2.9.3
       css-tree: ^2.3.0
@@ -109,7 +109,7 @@ importers:
       fast-deep-equal: 3.1.3
       hyphenate-style-name: ^1.0.4
       immer: ^9.0.12
-      immerhin: ^0.1.2
+      immerhin: ^0.2.1
       jest: ^29.3.1
       lexical: ^0.6.0
       lodash: 4.17.21
@@ -173,7 +173,7 @@ importers:
       '@webstudio-is/prisma-client': link:../../packages/prisma-client
       '@webstudio-is/project': link:../../packages/project
       '@webstudio-is/react-sdk': link:../../packages/react-sdk
-      bson-objectid: 2.0.3
+      bson-objectid: 2.0.4
       camelcase: 6.3.0
       colord: 2.9.3
       css-tree: 2.3.0
@@ -184,7 +184,7 @@ importers:
       fast-deep-equal: 3.1.3
       hyphenate-style-name: 1.0.4
       immer: 9.0.15
-      immerhin: 0.1.2
+      immerhin: 0.2.1
       lexical: 0.6.0
       lodash: 4.17.21
       lodash.capitalize: 4.2.1
@@ -269,7 +269,7 @@ importers:
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       app-root-path: ^3.0.0
-      bson-objectid: ^2.0.2
+      bson-objectid: ^2.0.4
       jest: ^29.3.1
       sharp: ^0.30.7
       typescript: 4.7.4
@@ -281,7 +281,7 @@ importers:
       '@webstudio-is/fonts': link:../fonts
       '@webstudio-is/prisma-client': link:../prisma-client
       app-root-path: 3.0.0
-      bson-objectid: 2.0.3
+      bson-objectid: 2.0.4
       sharp: 0.30.7
     devDependencies:
       '@jest/globals': 29.3.1
@@ -726,7 +726,7 @@ importers:
       '@webstudio-is/react-sdk': workspace:^
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
-      bson-objectid: ^2.0.2
+      bson-objectid: ^2.0.4
       dataloader: ^2.1.0
       immer: ^9.0.12
       jest: ^29.3.1
@@ -745,7 +745,7 @@ importers:
       '@webstudio-is/fonts': link:../fonts
       '@webstudio-is/prisma-client': link:../prisma-client
       '@webstudio-is/react-sdk': link:../react-sdk
-      bson-objectid: 2.0.3
+      bson-objectid: 2.0.4
       dataloader: 2.1.0
       immer: 9.0.15
       nanoid: 3.3.4
@@ -11397,8 +11397,8 @@ packages:
     dependencies:
       node-int64: 0.4.0
 
-  /bson-objectid/2.0.3:
-    resolution: {integrity: sha512-WYwVtY9yqk179EPMNuF3vcxufdrGLEo2XwqdRVbfLVe9X6jLt7WKZQgP+ObOcprakBGbHxzl76tgTaieqsH29g==}
+  /bson-objectid/2.0.4:
+    resolution: {integrity: sha512-vgnKAUzcDoa+AeyYwXCoHyF2q6u/8H46dxu5JN+4/TZeq/Dlinn0K6GvxsCLb3LHUJl0m/TLiEK31kUwtgocMQ==}
     dev: false
 
   /buffer-from/1.1.2:
@@ -12397,8 +12397,8 @@ packages:
     resolution: {integrity: sha512-qTcEYLen3r7ojZNgVUaRggOI+KM7jrKxXeSHhogh/TWxYMeONEMqY+hmkobiYQozsGIyg9OYVzO4ZIfoB4I0pQ==}
     dev: false
 
-  /deasync/0.1.26:
-    resolution: {integrity: sha512-YKw0BmJSWxkjtQsbgn6Q9CHSWB7DKMen8vKrgyC006zy0UZ6nWyGidB0IzZgqkVRkOglAeUaFtiRTeLyel72bg==}
+  /deasync/0.1.28:
+    resolution: {integrity: sha512-QqLF6inIDwiATrfROIyQtwOQxjZuek13WRYZ7donU5wJPLoP67MnYxA6QtqdvdBy2mMqv5m3UefBVdJjvevOYg==}
     engines: {node: '>=0.11.0'}
     requiresBuild: true
     dependencies:
@@ -14558,7 +14558,7 @@ packages:
       source-map: 0.6.1
       wordwrap: 1.0.0
     optionalDependencies:
-      uglify-js: 3.16.2
+      uglify-js: 3.17.4
 
   /has-bigints/1.0.2:
     resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
@@ -14942,10 +14942,10 @@ packages:
     resolution: {integrity: sha512-2eB/sswms9AEUSkOm4SbV5Y7Vmt/bKRwByd52jfLkW4OLYeaTP3EEiJ9agqU0O/tq6Dk62Zfj+TJSqfm1rLVGQ==}
     dev: false
 
-  /immerhin/0.1.2:
-    resolution: {integrity: sha512-4UfFIeq9sAgR5WR8xebUhrxBHn7yfNua2mflqxSYMkTwg/mjgr5HP22RdgNrWWZ2yZ8hGl2ipPKS8B+xQPA1Cw==}
+  /immerhin/0.2.1:
+    resolution: {integrity: sha512-f+pfXUlcguigFuLFWSeadkIzO3Uiyc5bJ0vfwP/0/XioTvHfT210RYaOS4D5EIRtEdq7acsENM8dcfLXE1lCkQ==}
     dependencies:
-      bson-objectid: 2.0.3
+      bson-objectid: 2.0.4
       immer: 9.0.15
     dev: false
 
@@ -21230,8 +21230,8 @@ packages:
     engines: {node: '>=4.2.0'}
     hasBin: true
 
-  /uglify-js/3.16.2:
-    resolution: {integrity: sha512-AaQNokTNgExWrkEYA24BTNMSjyqEXPSfhqoS0AxmHkCJ4U+Dyy5AvbGV/sqxuxficEfGGoX3zWw9R7QpLFfEsg==}
+  /uglify-js/3.17.4:
+    resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==}
     engines: {node: '>=0.8.0'}
     hasBin: true
     requiresBuild: true
@@ -22161,7 +22161,7 @@ packages:
       unist-util-visit: 4.1.0
       vfile: 5.3.4
     optionalDependencies:
-      deasync: 0.1.26
+      deasync: 0.1.28
     transitivePeerDependencies:
       - supports-color
     dev: true
