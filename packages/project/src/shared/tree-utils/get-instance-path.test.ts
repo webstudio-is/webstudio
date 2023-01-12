@@ -13,19 +13,16 @@ describe("Get instance path", () => {
       type: "instance",
       component: "Box",
       id: "1",
-      cssRules: [],
       children: [
         {
           type: "instance",
           component: "Box",
           id: "2",
-          cssRules: [],
           children: [
             {
               type: "instance",
               component: "Box",
               id: "3",
-              cssRules: [],
               children: [],
             },
           ],
@@ -41,19 +38,16 @@ describe("Get instance path", () => {
       type: "instance",
       component: "Box",
       id: "1",
-      cssRules: [],
       children: [
         {
           type: "instance",
           component: "Box",
           id: "2a",
-          cssRules: [],
           children: [
             {
               type: "instance",
               component: "Box",
               id: "3a",
-              cssRules: [],
               children: [],
             },
           ],
@@ -62,13 +56,11 @@ describe("Get instance path", () => {
           type: "instance",
           component: "Box",
           id: "2b",
-          cssRules: [],
           children: [
             {
               type: "instance",
               component: "Box",
               id: "3b",
-              cssRules: [],
               children: [],
             },
           ],
@@ -92,19 +84,16 @@ describe("Get instance path with positions", () => {
       type: "instance",
       component: "Box",
       id: "1",
-      cssRules: [],
       children: [
         {
           type: "instance",
           component: "Box",
           id: "2",
-          cssRules: [],
           children: [
             {
               type: "instance",
               component: "Box",
               id: "3",
-              cssRules: [],
               children: [],
             },
           ],
@@ -124,19 +113,16 @@ describe("Get instance path with positions", () => {
       type: "instance",
       component: "Box",
       id: "1",
-      cssRules: [],
       children: [
         {
           type: "instance",
           component: "Box",
           id: "2a",
-          cssRules: [],
           children: [
             {
               type: "instance",
               component: "Box",
               id: "3a",
-              cssRules: [],
               children: [],
             },
           ],
@@ -145,13 +131,11 @@ describe("Get instance path with positions", () => {
           type: "instance",
           component: "Box",
           id: "2b",
-          cssRules: [],
           children: [
             {
               type: "instance",
               component: "Box",
               id: "3b",
-              cssRules: [],
               children: [],
             },
           ],
