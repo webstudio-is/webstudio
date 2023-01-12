@@ -198,7 +198,10 @@ const Item = styled(Button, {
       },
       editing: {},
       initial: {},
-      dragging: {},
+      dragging: {
+        // @todo styling
+        opacity: 0.5,
+      },
     },
   },
 });
