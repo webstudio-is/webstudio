@@ -223,6 +223,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
         setValue(nextValue);
         setEditingIndex(nextValue.indexOf(duplicatedItem));
       }}
+      onSort={setValue}
     />
   );
 };

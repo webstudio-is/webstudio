@@ -165,6 +165,7 @@ type StyleSourceInputProps<Item> = {
   onDuplicateItem?: (item: Item) => void;
   onDisableItem?: (item: Item) => void;
   onEnableItem?: (item: Item) => void;
+  onSort?: (items: Array<Item>) => void;
   css?: CSS;
 };
 
@@ -219,6 +220,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             onDuplicateItem={props.onDuplicateItem}
             onDisableItem={props.onDisableItem}
             onEnableItem={props.onEnableItem}
+            onSort={props.onSort}
             label={label}
             value={value}
             css={props.css}
