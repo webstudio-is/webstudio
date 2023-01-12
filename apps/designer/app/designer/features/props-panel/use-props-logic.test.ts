@@ -16,7 +16,6 @@ const getSelectedInstanceData = (
   return {
     id: nanoid(8),
     component: componentName,
-    cssRules: [],
     browserStyle: {},
     props: {
       id: nanoid(8),

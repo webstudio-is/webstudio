@@ -132,7 +132,6 @@ export const SelectedInstanceConnector = ({
       payload: {
         id: instance.id,
         component: instance.component,
-        cssRules: instance.cssRules,
         browserStyle: getBrowserStyle(element),
         props: instanceProps,
       },
