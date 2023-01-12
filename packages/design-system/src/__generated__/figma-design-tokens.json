@@ -143,7 +143,21 @@
       },
       "type": "typography"
     },
-    "Labels-sentencecase": {
+    "Labels - Title Case": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-1}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.capitalize}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography"
+    },
+    "Labels - Sentence case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
@@ -903,20 +917,6 @@
         "value": "0px",
         "type": "dimension"
       }
-    },
-    "Labels": {
-      "value": {
-        "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.0}",
-        "fontSize": "{fontSize.2}",
-        "letterSpacing": "{letterSpacing.0}",
-        "paragraphSpacing": "{paragraphSpacing.0}",
-        "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.capitalize}",
-        "textDecoration": "{textDecoration.none}"
-      },
-      "type": "typography"
     }
   },
   "$themes": [],
