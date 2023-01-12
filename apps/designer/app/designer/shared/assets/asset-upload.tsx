@@ -1,5 +1,5 @@
 import { ChangeEvent, useRef } from "react";
-import { Button, Flex, Text } from "@webstudio-is/design-system";
+import { Button, Flex } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
