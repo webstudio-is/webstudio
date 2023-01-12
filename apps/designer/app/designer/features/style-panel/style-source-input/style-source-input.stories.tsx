@@ -62,31 +62,18 @@ const createItem = (
   setValue([...value, item]);
 };
 
-export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState<Array<Item>>([localItem]);
-  return (
-    <StyleSourceInput
-      css={{ width: 300 }}
-      items={items}
-      value={value}
-      onCreateItem={({ label }) => {
-        createItem(label, value, setValue);
-      }}
-      onSelectItem={(item) => {
-        setValue([...value, item]);
-      }}
-      onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.source === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
-      }}
-      onSort={setValue}
-    />
-  );
+const removeItem = (
+  itemToRemove: Item,
+  value: Array<Item>,
+  setValue: (value: Array<Item>) => void
+) => {
+  if (itemToRemove.source === "local") {
+    return;
+  }
+  setValue(value.filter((item) => item.id !== itemToRemove.id));
 };
 
-export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
+export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState([localItem, ...items]);
   return (
     <StyleSourceInput
@@ -100,10 +87,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.source === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
+        removeItem(itemToRemove, value, setValue);
       }}
       onSort={setValue}
     />
@@ -135,17 +119,14 @@ export const WithTruncatedItem: ComponentStory<
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.source === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
+        removeItem(itemToRemove, value, setValue);
       }}
       onSort={setValue}
     />
   );
 };
 
-export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
+export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
     {
       id: "0",
@@ -169,10 +150,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.source === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
+        removeItem(itemToRemove, value, setValue);
       }}
       onChangeItem={(changedItem) => {
         setValue(
