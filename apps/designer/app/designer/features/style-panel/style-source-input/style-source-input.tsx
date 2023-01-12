@@ -104,11 +104,11 @@ const TextFieldBase: ForwardRefRenderFunction<
         <StyleSource
           id={item.id}
           state={
-            dragItemId === undefined
-              ? index === editingIndex
-                ? "editing"
-                : item.state
-              : "dragging"
+            item.id === dragItemId
+              ? "dragging"
+              : index === editingIndex
+              ? "editing"
+              : item.state
           }
           onStateChange={(state) => {
             setEditingIndex(state === "editing" ? index : -1);
