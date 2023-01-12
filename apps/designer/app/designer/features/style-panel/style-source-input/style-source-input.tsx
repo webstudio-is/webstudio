@@ -46,8 +46,9 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     onDisableItem?: (item: Item) => void;
     onEnableItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
+    onChangeCurrent?: (index: string) => void;
     editingIndex: number;
-    currentIndex: number;
+    currentItemId?: string;
   };
 
 const TextFieldBase: ForwardRefRenderFunction<
@@ -74,12 +75,12 @@ const TextFieldBase: ForwardRefRenderFunction<
     onDisableItem,
     onEnableItem,
     onSort,
+    onChangeCurrent,
+    currentItemId,
     editingIndex: editingIndexProp,
-    currentIndex: currentIndexProp,
     ...textFieldProps
   } = props;
   const [editingIndex, setEditingIndex] = useState(editingIndexProp);
-  const [currentIndex, setCurrentIndex] = useState(currentIndexProp);
   const [internalInputRef, focusProps] = useTextFieldFocus({
     disabled,
     onFocus,
@@ -88,9 +89,6 @@ const TextFieldBase: ForwardRefRenderFunction<
   useEffect(() => {
     setEditingIndex(editingIndexProp);
   }, [editingIndexProp]);
-  useEffect(() => {
-    setEditingIndex(currentIndexProp);
-  }, [currentIndexProp]);
   const { sortableRefCallback, dragItemId, placementIndicator } = useSortable({
     items: value,
     onSort,
@@ -116,7 +114,7 @@ const TextFieldBase: ForwardRefRenderFunction<
               ? "editing"
               : item.state
           }
-          isCurrent={currentIndex === index}
+          isCurrent={item.id === currentItemId}
           onStateChange={(state) => {
             setEditingIndex(state === "editing" ? index : -1);
             if (state === "disabled") {
@@ -126,8 +124,8 @@ const TextFieldBase: ForwardRefRenderFunction<
               onEnableItem?.(item);
             }
           }}
-          onCurrentChange={() => {
-            setCurrentIndex(index);
+          onChangeCurrent={() => {
+            onChangeCurrent?.(item.id);
           }}
           onChange={(label) => {
             setEditingIndex(-1);
@@ -168,11 +166,12 @@ type StyleSourceInputProps<Item> = {
   items?: Array<Item>;
   value?: Array<Item>;
   editingIndex?: number;
-  currentIndex?: number;
+  currentItemId?: string;
   onSelectItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
   onCreateItem?: (item: Item) => void;
   onChangeItem?: (item: Item) => void;
+  onChangeCurrent?: (id: string) => void;
   onDuplicateItem?: (item: Item) => void;
   onDisableItem?: (item: Item) => void;
   onEnableItem?: (item: Item) => void;
@@ -185,7 +184,6 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
 ) => {
   const value = props.value ?? [];
   const editingIndex = props.editingIndex ?? -1;
-  const currentIndex = props.currentIndex ?? -1;
   const [label, setLabel] = useState("");
   const {
     items,
@@ -229,6 +227,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             {...inputProps}
             onRemoveItem={props.onRemoveItem}
             onChangeItem={props.onChangeItem}
+            onChangeCurrent={props.onChangeCurrent}
             onDuplicateItem={props.onDuplicateItem}
             onDisableItem={props.onDisableItem}
             onEnableItem={props.onEnableItem}
@@ -237,7 +236,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             value={value}
             css={props.css}
             editingIndex={editingIndex}
-            currentIndex={currentIndex}
+            currentItemId={props.currentItemId}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>

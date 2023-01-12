@@ -143,7 +143,7 @@ type EditableTextProps = {
   onChange: (value: string) => void;
   state: ItemState;
   onStateChange: (state: ItemState) => void;
-  onCurrentChange: () => void;
+  onChangeCurrent: () => void;
 };
 
 const EditableText = ({
@@ -151,7 +151,7 @@ const EditableText = ({
   label,
   state,
   onStateChange,
-  onCurrentChange,
+  onChangeCurrent,
 }: EditableTextProps) => {
   const { ref, handleKeyDown, handleFinishEditing } = useEditableText({
     state,
@@ -165,7 +165,7 @@ const EditableText = ({
       ref={ref}
       onKeyDown={handleKeyDown}
       onBlur={handleFinishEditing}
-      onClick={onCurrentChange}
+      onClick={onChangeCurrent}
       css={{
         outline: "none",
         textOverflow: state === "editing" ? "clip" : "ellipsis",
@@ -259,7 +259,7 @@ type StyleSourceProps = {
   state: ItemState;
   isCurrent: boolean;
   onStateChange: (state: ItemState) => void;
-  onCurrentChange: () => void;
+  onChangeCurrent: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
   onChange: (value: string) => void;
@@ -273,7 +273,7 @@ export const StyleSource = ({
   isCurrent,
   onChange,
   onStateChange,
-  onCurrentChange,
+  onChangeCurrent,
   onDuplicate,
   onRemove,
 }: StyleSourceProps) => {
@@ -282,7 +282,7 @@ export const StyleSource = ({
       <EditableText
         state={state}
         onStateChange={onStateChange}
-        onCurrentChange={onCurrentChange}
+        onChangeCurrent={onChangeCurrent}
         onChange={onChange}
         label={label}
       />

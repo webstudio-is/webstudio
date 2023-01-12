@@ -138,13 +138,17 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
     },
   ]);
   const [editingIndex, setEditingIndex] = useState<number>(-1);
+  const [currentItemId, setCurrentItemId] = useState<string | undefined>(
+    value.at(-1)?.id
+  );
   return (
     <StyleSourceInput
       css={{ width: 300 }}
       items={items}
       value={value}
       editingIndex={editingIndex}
-      currentIndex={value.length - 1}
+      currentItemId={currentItemId}
+      onChangeCurrent={setCurrentItemId}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
