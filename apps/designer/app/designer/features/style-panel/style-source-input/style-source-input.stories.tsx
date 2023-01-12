@@ -10,7 +10,7 @@ export default {
 type Item = {
   id: string;
   label: string;
-  type: "token" | "local";
+  source: "token" | "local";
   hasMenu: boolean;
   state: ItemState;
 };
@@ -18,24 +18,30 @@ type Item = {
 const localItem: Item = {
   id: "0",
   label: "Local",
-  type: "local",
+  source: "local",
   hasMenu: false,
   state: "initial",
 };
 
 const items: Array<Item> = [
-  { id: "1", label: "Apple", type: "token", hasMenu: false, state: "initial" },
+  {
+    id: "1",
+    label: "Apple",
+    source: "token",
+    hasMenu: false,
+    state: "initial",
+  },
   {
     id: "2",
     label: "Banana",
-    type: "token",
+    source: "token",
     hasMenu: false,
     state: "initial",
   },
   {
     id: "3",
     label: "Orange",
-    type: "token",
+    source: "token",
     hasMenu: false,
     state: "initial",
   },
@@ -52,7 +58,7 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
         const item: Item = {
           id: uuid(),
           label,
-          type: "token",
+          source: "token",
           hasMenu: false,
           state: "initial",
         };
@@ -62,7 +68,7 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
+        if (itemToRemove.source === "local") {
           return;
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
@@ -83,7 +89,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
         const item: Item = {
           id: uuid(),
           label,
-          type: "token",
+          source: "token",
           hasMenu: false,
           state: "initial",
         };
@@ -93,7 +99,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
+        if (itemToRemove.source === "local") {
           return;
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
@@ -111,7 +117,7 @@ export const WithTruncatedItem: ComponentStory<
       id: "0",
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
-      type: "local",
+      source: "local",
       hasMenu: false,
       state: "initial",
     },
@@ -125,7 +131,7 @@ export const WithTruncatedItem: ComponentStory<
         const item: Item = {
           id: uuid(),
           label,
-          type: "token",
+          source: "token",
           hasMenu: false,
           state: "initial",
         };
@@ -135,7 +141,7 @@ export const WithTruncatedItem: ComponentStory<
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
+        if (itemToRemove.source === "local") {
           return;
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
@@ -150,7 +156,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
     {
       id: "0",
       label: "Apple",
-      type: "token",
+      source: "token",
       hasMenu: true,
       state: "initial",
     },
@@ -166,7 +172,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
         const item: Item = {
           id: uuid(),
           label,
-          type: "token",
+          source: "token",
           hasMenu: true,
           state: "initial",
         };
@@ -176,7 +182,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
+        if (itemToRemove.source === "local") {
           return;
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
