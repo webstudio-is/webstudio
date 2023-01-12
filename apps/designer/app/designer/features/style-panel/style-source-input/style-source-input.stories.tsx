@@ -137,7 +137,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       state: "initial",
     },
   ]);
-  const [editingIndex, setEditingIndex] = useState<number>(-1);
+  const [editingItemId, setEditingItemId] = useState<string>();
   const [currentItemId, setCurrentItemId] = useState<string | undefined>(
     value.at(-1)?.id
   );
@@ -146,9 +146,10 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       css={{ width: 300 }}
       items={items}
       value={value}
-      editingIndex={editingIndex}
+      editingItemId={editingItemId}
       currentItemId={currentItemId}
       onChangeCurrent={setCurrentItemId}
+      onChangeEditing={setEditingItemId}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
@@ -201,7 +202,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
           return item;
         });
         setValue(nextValue);
-        setEditingIndex(nextValue.indexOf(duplicatedItem));
+        setEditingItemId(duplicatedItem.id);
       }}
       onSort={setValue}
     />
