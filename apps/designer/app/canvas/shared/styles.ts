@@ -10,7 +10,6 @@ import { useSelectedInstance } from "./nano-states";
 import {
   designTokensContainer,
   rootInstanceContainer,
-  stylesContainer,
   useBreakpoints,
   useDesignTokens,
   usePresetStyles,
@@ -193,7 +192,7 @@ export const useCssRules = ({ instanceId }: { instanceId: string }) => {
   const [styles] = useStyles();
   const [breakpoints] = useBreakpoints();
 
-  const [key, instanceStyles] = useMemo(() => {
+  const [instanceStylesKey, instanceStyles] = useMemo(() => {
     const instanceStyles = styles.filter(
       (item) => item.instanceId === instanceId
     );
@@ -237,7 +236,9 @@ export const useCssRules = ({ instanceId }: { instanceId: string }) => {
     cssEngine.render();
     // run effect only when serialized instanceStyles changed
     // to avoid rerendering on other instances change
-  }, [instanceId, key, breakpoints]);
+  }, [instanceId, instanceStylesKey, breakpoints]);
+
+  return instanceStylesKey;
 };
 
 const toVarNamespace = (id: string, property: string) => {
@@ -271,37 +272,6 @@ const useUpdateStyle = () => {
         return;
       }
       utils.tree.setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
-    });
-
-    store.createTransaction([stylesContainer], (styles) => {
-      const instanceId = id;
-      const breakpointId = breakpoint.id;
-      for (const update of updates) {
-        const matchedIndex = styles.findIndex(
-          (item) =>
-            item.breakpointId === breakpointId &&
-            item.instanceId === instanceId &&
-            item.property === update.property
-        );
-
-        if (update.operation === "set") {
-          const newItem = {
-            breakpointId,
-            instanceId,
-            property: update.property,
-            value: update.value,
-          };
-          if (matchedIndex === -1) {
-            styles.push(newItem);
-          } else {
-            styles[matchedIndex] = newItem;
-          }
-        }
-
-        if (update.operation === "delete" && matchedIndex !== -1) {
-          styles.splice(matchedIndex, 1);
-        }
-      }
     });
   });
 };
