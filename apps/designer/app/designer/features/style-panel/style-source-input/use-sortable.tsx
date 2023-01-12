@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import {
   PlacementIndicator,
   useDrag,
+  useDragCursor,
   useDrop,
   type DropTarget,
 } from "@webstudio-is/design-system";
@@ -21,6 +22,8 @@ export const useSortable = <Item extends { id: string }>({
   const [dropTarget, setDropTarget] = useState<DropTarget<true>>();
   const [dragItemId, setDragItemId] = useState<string>();
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useDragCursor(dragItemId !== undefined);
 
   // drop target is always root
   // we need useDrop only for dropTarget.placement & dropTarget.indexWithinChildren
