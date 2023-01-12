@@ -57,7 +57,10 @@ const StyledButton = styled("button", {
     // because type is already taken for type=submit etc.
     variant: {
       primary: { ...backgroundStyle("$colors$backgroundPrimary") },
-      neutral: { ...backgroundStyle("$colors$backgroundNeutralMain") },
+      neutral: {
+        ...backgroundStyle("$colors$backgroundNeutralMain"),
+        color: "$colors$foregroundMain",
+      },
       destructive: { ...backgroundStyle("$colors$backgroundDestructiveMain") },
       positive: { ...backgroundStyle("$colors$backgroundSuccessMain") },
       ghost: {
