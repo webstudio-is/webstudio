@@ -11,6 +11,9 @@ type UseSortable<Item> = {
   onSort?: (items: Array<Item>) => void;
 };
 
+const getItemId = (element: Element) =>
+  element instanceof HTMLElement ? element.dataset?.id : undefined;
+
 export const useSortable = <Item extends { id: string }>({
   items,
   onSort,
@@ -22,8 +25,8 @@ export const useSortable = <Item extends { id: string }>({
   // drop target is always root
   // we need useDrop only for dropTarget.placement & dropTarget.indexWithinChildren
   const useDropHandlers = useDrop<true>({
-    elementToData(element) {
-      return element === rootRef.current;
+    elementToData() {
+      return true;
     },
     swapDropTarget() {
       if (rootRef.current === null) {
@@ -34,6 +37,12 @@ export const useSortable = <Item extends { id: string }>({
     onDropTargetChange(dropTarget) {
       setDropTarget(dropTarget);
     },
+    getValidChildren(parent) {
+      return [...parent.children].filter(
+        (child) => getItemId(child) !== undefined
+      );
+    },
+    childrenOrientation: { type: "horizontal", reverse: false },
   });
 
   const useDragHandlers = useDrag<string>({
@@ -44,9 +53,11 @@ export const useSortable = <Item extends { id: string }>({
       }
 
       const closest = element.closest("[data-id]");
-      return closest && closest instanceof HTMLElement
-        ? closest.dataset?.id || false
-        : false;
+      if (closest === null) {
+        return false;
+      }
+
+      return getItemId(closest) || false;
     },
     onStart({ data }) {
       setDragItemId(data);
