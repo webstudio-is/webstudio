@@ -53,7 +53,7 @@ export const WrapperComponentDev = ({
   children,
   onChangeChildren,
 }: WrapperComponentDevProps) => {
-  useCssRules({ instanceId: instance.id });
+  const instanceStylesKey = useCssRules({ instanceId: instance.id });
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
@@ -110,6 +110,7 @@ export const WrapperComponentDev = ({
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
+          instanceStylesKey={instanceStylesKey}
           instanceProps={instanceProps}
         />
       )}

@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useMemo, useCallback } from "react";
+import store from "immerhin";
 import warnOnce from "warn-once";
 import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
+import { stylesContainer, useStyles } from "~/shared/nano-states";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-import { getCssRuleForBreakpoint } from "./get-css-rule-for-breakpoint";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 import { useStyleInfo } from "./style-info";
@@ -46,25 +47,26 @@ export const useStyleData = ({
   publish,
 }: UseStyleData) => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
-  const cssRule = useMemo(
-    () =>
-      getCssRuleForBreakpoint(
-        selectedInstanceData?.cssRules,
-        selectedBreakpoint
-      ),
-    [selectedInstanceData?.cssRules, selectedBreakpoint]
-  );
-
-  const [breakpointStyle, setBreakpointStyle] = useState(() => cssRule?.style);
+  const selectedBreakpointId = selectedBreakpoint?.id;
+  const selectedInstanceId = selectedInstanceData?.id;
+  const [styles] = useStyles();
+  const localStyle = useMemo(() => {
+    const style: Style = {};
+    for (const styleItem of styles) {
+      if (
+        styleItem.breakpointId === selectedBreakpointId &&
+        styleItem.instanceId === selectedInstanceId
+      ) {
+        style[styleItem.property] = styleItem.value;
+      }
+    }
+    return style;
+  }, [styles, selectedBreakpointId, selectedInstanceId]);
 
   const currentStyle = useStyleInfo({
-    localStyle: breakpointStyle,
+    localStyle,
     browserStyle: selectedInstanceData?.browserStyle,
   });
-
-  useEffect(() => {
-    setBreakpointStyle({ ...cssRule?.style });
-  }, [cssRule?.style]);
 
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
@@ -82,6 +84,41 @@ export const useStyleData = ({
           updates,
           breakpoint: selectedBreakpoint,
         },
+      });
+
+      if (type !== "update") {
+        return;
+      }
+
+      store.createTransaction([stylesContainer], (styles) => {
+        const instanceId = selectedInstanceData.id;
+        const breakpointId = selectedBreakpoint.id;
+        for (const update of updates) {
+          const matchedIndex = styles.findIndex(
+            (item) =>
+              item.breakpointId === breakpointId &&
+              item.instanceId === instanceId &&
+              item.property === update.property
+          );
+
+          if (update.operation === "set") {
+            const newItem = {
+              breakpointId,
+              instanceId,
+              property: update.property,
+              value: update.value,
+            };
+            if (matchedIndex === -1) {
+              styles.push(newItem);
+            } else {
+              styles[matchedIndex] = newItem;
+            }
+          }
+
+          if (update.operation === "delete" && matchedIndex !== -1) {
+            styles.splice(matchedIndex, 1);
+          }
+        }
       });
     },
     [publish, selectedBreakpoint, selectedInstanceData]
@@ -117,13 +154,6 @@ export const useStyleData = ({
 
           publishUpdates(type, updates);
         }
-
-        if (options.isEphemeral === false) {
-          setBreakpointStyle((prevStyle) => ({
-            ...prevStyle,
-            [property]: nextValue,
-          }));
-        }
       };
     },
     [publishUpdates]
@@ -134,14 +164,6 @@ export const useStyleData = ({
       const updates = [{ operation: "delete" as const, property }];
       const type = options.isEphemeral ? "preview" : "update";
       publishUpdates(type, updates);
-
-      if (options.isEphemeral === false) {
-        setBreakpointStyle((prevStyle) => {
-          const nextStyle = { ...prevStyle };
-          delete nextStyle[property];
-          return nextStyle;
-        });
-      }
     },
     [publishUpdates]
   );
@@ -180,24 +202,6 @@ export const useStyleData = ({
       }
       const type = options.isEphemeral ? "preview" : "update";
       publishUpdates(type, updates);
-
-      if (options.isEphemeral === false) {
-        setBreakpointStyle((prevStyle) => {
-          const nextStyle = updates.reduce(
-            (reduceStyle, update) => {
-              if (update.operation === "delete") {
-                delete reduceStyle[update.property];
-              }
-              if (update.operation === "set") {
-                reduceStyle[update.property] = update.value;
-              }
-              return reduceStyle;
-            },
-            { ...prevStyle }
-          );
-          return nextStyle;
-        });
-      }
       updates = [];
     };
 
