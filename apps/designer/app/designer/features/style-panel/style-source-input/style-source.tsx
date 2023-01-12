@@ -93,7 +93,7 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-export type ItemState = "initial" | "editing" | "disabled";
+export type ItemState = "initial" | "editing" | "disabled" | "dragging";
 
 type EditableTextProps = {
   label: string;
@@ -198,28 +198,34 @@ const Item = styled(Button, {
       },
       editing: {},
       initial: {},
+      dragging: {
+        // @todo styling
+        opacity: 0.5,
+      },
     },
   },
 });
 
 type EditableItemProps = {
+  id: string;
   children: Array<JSX.Element | false>;
   state: ItemState;
 };
 
-const EditableItem = ({ children, state }: EditableItemProps) => {
+const EditableItem = ({ children, state, id }: EditableItemProps) => {
   const ref = useForceRecalcStyle<HTMLDivElement>(
     "max-width",
     state === "editing"
   );
   return (
-    <Item variant="gray" state={state} ref={ref} as="div">
+    <Item variant="gray" state={state} ref={ref} as="div" data-id={id}>
       {children}
     </Item>
   );
 };
 
 type StyleSourceProps = {
+  id: string;
   label: string;
   hasMenu: boolean;
   state: ItemState;
@@ -230,15 +236,17 @@ type StyleSourceProps = {
 };
 
 export const StyleSource = ({
+  id,
   label,
   hasMenu,
   state,
   onChange,
   onStateChange,
-  ...menuProps
+  onDuplicate,
+  onRemove,
 }: StyleSourceProps) => {
   return (
-    <EditableItem state={state}>
+    <EditableItem state={state} id={id}>
       <EditableText
         state={state}
         onStateChange={onStateChange}
@@ -247,8 +255,9 @@ export const StyleSource = ({
       />
       {hasMenu === true && state !== "editing" && (
         <Menu
-          {...menuProps}
           state={state}
+          onDuplicate={onDuplicate}
+          onRemove={onRemove}
           onEnable={() => {
             onStateChange("initial");
           }}

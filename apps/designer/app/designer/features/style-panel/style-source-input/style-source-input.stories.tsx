@@ -67,6 +67,7 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
+      onSort={setValue}
     />
   );
 };
@@ -97,6 +98,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
+      onSort={setValue}
     />
   );
 };
@@ -138,6 +140,7 @@ export const WithTruncatedItem: ComponentStory<
         }
         setValue(value.filter((item) => item.id !== itemToRemove.id));
       }}
+      onSort={setValue}
     />
   );
 };
@@ -223,6 +226,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
         setValue(nextValue);
         setEditingIndex(nextValue.indexOf(duplicatedItem));
       }}
+      onSort={setValue}
     />
   );
 };

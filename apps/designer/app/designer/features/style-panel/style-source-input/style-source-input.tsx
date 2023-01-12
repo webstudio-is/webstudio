@@ -21,8 +21,10 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { StyleSource, type ItemState } from "./style-source";
+import { useSortable } from "./use-sortable";
 
 type IntermediateItem = {
+  id: string;
   label: string;
   hasMenu: boolean;
   state: ItemState;
@@ -43,6 +45,7 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     onChangeItem?: (item: Item) => void;
     onDisableItem?: (item: Item) => void;
     onEnableItem?: (item: Item) => void;
+    onSort?: (items: Array<Item>) => void;
     editingIndex: number;
   };
 
@@ -69,6 +72,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onChangeItem,
     onDisableItem,
     onEnableItem,
+    onSort,
     editingIndex: editingIndexProp,
     ...textFieldProps
   } = props;
@@ -81,11 +85,16 @@ const TextFieldBase: ForwardRefRenderFunction<
   useEffect(() => {
     setEditingIndex(editingIndexProp);
   }, [editingIndexProp]);
+  const { sortableRefCallback, dragItemId, placementIndicator } = useSortable({
+    items: value,
+    onSort,
+  });
+
   return (
     <TextFieldContainer
       {...focusProps}
       aria-disabled={disabled}
-      ref={mergeRefs(forwardedRef, containerRef ?? null)}
+      ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
       state={state}
       variant={variant}
       css={{ ...css, px: "$spacing$3", py: "$spacing$2" }}
@@ -93,7 +102,14 @@ const TextFieldBase: ForwardRefRenderFunction<
     >
       {value.map((item, index) => (
         <StyleSource
-          state={index === editingIndex ? "editing" : item.state}
+          id={item.id}
+          state={
+            item.id === dragItemId
+              ? "dragging"
+              : index === editingIndex
+              ? "editing"
+              : item.state
+          }
           onStateChange={(state) => {
             setEditingIndex(state === "editing" ? index : -1);
             if (state === "disabled") {
@@ -118,6 +134,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           key={index}
         />
       ))}
+      {placementIndicator}
       {/* We want input to be the first element in DOM so it receives the focus first */}
       {editingIndex === -1 && (
         <TextFieldInput
@@ -148,6 +165,7 @@ type StyleSourceInputProps<Item> = {
   onDuplicateItem?: (item: Item) => void;
   onDisableItem?: (item: Item) => void;
   onEnableItem?: (item: Item) => void;
+  onSort?: (items: Array<Item>) => void;
   css?: CSS;
 };
 
@@ -166,7 +184,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     isOpen,
   } = useCombobox({
     items: props.items ?? [],
-    value: { label, hasMenu: true, state: "initial" },
+    value: { label, hasMenu: true, state: "initial", id: "" },
     selectedItem: undefined,
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
@@ -202,6 +220,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             onDuplicateItem={props.onDuplicateItem}
             onDisableItem={props.onDisableItem}
             onEnableItem={props.onEnableItem}
+            onSort={props.onSort}
             label={label}
             value={value}
             css={props.css}
