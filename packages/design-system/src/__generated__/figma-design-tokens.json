@@ -26,12 +26,12 @@
         "value": "Inter",
         "type": "fontFamilies"
       },
-      "roboto": {
-        "value": "Roboto",
-        "type": "fontFamilies"
-      },
       "manrope": {
         "value": "Manrope",
+        "type": "fontFamilies"
+      },
+      "roboto-mono": {
+        "value": "Roboto Mono",
         "type": "fontFamilies"
       }
     },
@@ -70,16 +70,16 @@
         "value": "Bold",
         "type": "fontWeights"
       },
-      "roboto-3": {
-        "value": "Regular",
-        "type": "fontWeights"
-      },
       "inter-4": {
         "value": "Semi Bold",
         "type": "fontWeights"
       },
       "manrope-5": {
         "value": "SemiBold",
+        "type": "fontWeights"
+      },
+      "roboto-mono-3": {
+        "value": "Regular",
         "type": "fontWeights"
       }
     },
@@ -187,8 +187,8 @@
     },
     "Mono": {
       "value": {
-        "fontFamily": "{fontFamilies.roboto}",
-        "fontWeight": "{fontWeights.roboto-3}",
+        "fontFamily": "{fontFamilies.roboto-mono}",
+        "fontWeight": "{fontWeights.roboto-mono-3}",
         "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.2}",
