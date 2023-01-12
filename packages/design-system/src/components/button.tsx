@@ -46,6 +46,11 @@ const StyledButton = styled("button", {
   height: "$spacing$12",
   borderRadius: "$borderRadius$4",
 
+  "&:focus-visible": {
+    outline: "2px solid $colors$borderFocus",
+    outlineOffset: "1px",
+  },
+
   variants: {
     // "variant" is used instead of "type" as in Figma,
     // because type is already taken for type=submit etc.
@@ -101,7 +106,7 @@ export const Button = forwardRef(
     {
       icon,
       pending = false,
-      disabled,
+      disabled = false,
       iconPosition = "left",
       children,
       ...restProps
