@@ -99,22 +99,22 @@ export const SizeSection = ({
         items={[
           {
             child: <EyeconOpenIcon />,
-            label: "visible",
+            label: "Visible",
             value: "visible",
           },
           {
             child: <EyeconClosedIcon />,
-            label: "hidden",
+            label: "Hidden",
             value: "hidden",
           },
           {
             child: <ScrollIcon />,
-            label: "scroll",
+            label: "Scroll",
             value: "scroll",
           },
           {
             child: <AutoScrollIcon />,
-            label: "auto",
+            label: "Auto",
             value: "auto",
           },
         ]}
