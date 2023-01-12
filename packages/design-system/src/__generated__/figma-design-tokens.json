@@ -51,6 +51,10 @@
       "3": {
         "value": "AUTO",
         "type": "lineHeights"
+      },
+      "4": {
+        "value": "11",
+        "type": "lineHeights"
       }
     },
     "fontWeights": {
@@ -343,7 +347,7 @@
       },
       "neutral": {
         "main": {
-          "value": "#687076",
+          "value": "#D7DBDF",
           "type": "color",
           "description": "used for neutral button"
         },
@@ -407,11 +411,11 @@
       },
       "preset": {
         "main": {
-          "value": "#dfe3e6",
+          "value": "#E6E8EB",
           "type": "color"
         },
         "hover": {
-          "value": "#d7dbdf",
+          "value": "#DFE3E6",
           "type": "color"
         }
       },
@@ -528,6 +532,47 @@
         "contrast": {
           "value": "#ebfffc",
           "type": "color"
+        }
+      },
+      "style-source": {
+        "token": {
+          "value": "#0081f1",
+          "type": "color",
+          "description": "For the token variant of the Style Source component."
+        },
+        "tag": {
+          "value": "#d23197",
+          "type": "color",
+          "description": "For the HTML tag variant of the Style Source component."
+        },
+        "state": {
+          "value": "#299764",
+          "type": "color",
+          "description": "For the state variant of the Style Source component."
+        },
+        "neutral": {
+          "value": "#687076",
+          "type": "color",
+          "description": "For the inactive variant of the Style Source component."
+        },
+        "disabled": {
+          "value": "#9da2a6",
+          "type": "color",
+          "description": "For the disabled state of the token variant of the Style Source component."
+        },
+        "gradient": {
+          "token": {
+            "value": "linear-gradient(90deg, #0081f100 0%, #0081f1 31.87%)",
+            "type": "color"
+          },
+          "tag": {
+            "value": "linear-gradient(90deg, #d2319700 0%, #d23197 31.87%)",
+            "type": "color"
+          },
+          "state": {
+            "value": "linear-gradient(90deg, #29976400 0%, #299764 31.87%)",
+            "type": "color"
+          }
         }
       }
     },
@@ -821,10 +866,73 @@
         "value": "#f9c6c6",
         "type": "color"
       }
+    },
+    "border-width": {
+      "1": {
+        "value": "1",
+        "type": "borderWidth",
+        "description": "sets border width value to 1"
+      },
+      "2": {
+        "value": "2",
+        "type": "borderWidth",
+        "description": "sets border width value to 2. Used for focus borders (among other things)"
+      }
+    },
+    "Space Section Value Text": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-1}",
+        "lineHeight": "{lineHeights.2}",
+        "fontSize": "{fontSize.1}",
+        "letterSpacing": "{letterSpacing.2}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography"
+    },
+    "Space Section Unit Text": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-4}",
+        "lineHeight": "{lineHeights.1}",
+        "fontSize": "{fontSize.0}",
+        "letterSpacing": "{letterSpacing.1}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.uppercase}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography"
+    },
+    "Small": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-0}",
+        "lineHeight": "{lineHeights.4}",
+        "fontSize": "{fontSize.1}",
+        "letterSpacing": "{letterSpacing.2}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography",
+      "description": "When Regular is too big and Tiny is too tiny."
+    },
+    "paragraphIndent": {
+      "0": {
+        "value": "0px",
+        "type": "dimension"
+      }
     }
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }
