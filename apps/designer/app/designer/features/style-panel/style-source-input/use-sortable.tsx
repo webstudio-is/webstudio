@@ -19,19 +19,16 @@ export const useSortable = <Item extends { id: string }>({
   const [dragItemId, setDragItemId] = useState<string>();
   const rootRef = useRef<HTMLDivElement | null>(null);
 
+  // drop target is always root
+  // we need useDrop only for dropTarget.placement & dropTarget.indexWithinChildren
   const useDropHandlers = useDrop<true>({
     elementToData(element) {
-      return element instanceof HTMLDivElement;
+      return element === rootRef.current;
     },
-    swapDropTarget(dropTarget) {
-      if (dropTarget) {
-        return dropTarget;
-      }
-
+    swapDropTarget() {
       if (rootRef.current === null) {
         throw new Error("Unexpected empty rootRef during drag");
       }
-
       return { data: true, element: rootRef.current };
     },
     onDropTargetChange(dropTarget) {
@@ -41,15 +38,17 @@ export const useSortable = <Item extends { id: string }>({
 
   const useDragHandlers = useDrag<string>({
     elementToData(element) {
+      // disable drag unless there are at least 2 items
+      if (items.length < 2) {
+        return false;
+      }
+
       const closest = element.closest("[data-id]");
       return closest && closest instanceof HTMLElement
         ? closest.dataset?.id || false
         : false;
     },
     onStart({ data }) {
-      if (items.length < 2) {
-        return;
-      }
       setDragItemId(data);
       useDropHandlers.handleStart();
     },
@@ -57,29 +56,31 @@ export const useSortable = <Item extends { id: string }>({
       useDropHandlers.handleMove(point);
     },
     onEnd({ isCanceled }) {
-      if (dropTarget !== undefined && dragItemId !== undefined) {
-        const oldIndex = items.findIndex((item) => item.id === dragItemId);
-        if (oldIndex !== -1) {
-          let newIndex = dropTarget.indexWithinChildren;
-
-          // placement.index does not take into account the fact that the drag item will be removed.
-          // we need to do this to account for it.
-          if (oldIndex < newIndex) {
-            newIndex = Math.max(0, newIndex - 1);
-          }
-
-          if (oldIndex !== newIndex) {
-            const newItems = [...items];
-            newItems.splice(oldIndex, 1);
-            newItems.splice(newIndex, 0, newItems[oldIndex]);
-            onSort?.(newItems);
-          }
-        }
-      }
-
       useDropHandlers.handleEnd({ isCanceled });
       setDragItemId(undefined);
       setDropTarget(undefined);
+
+      if (isCanceled || dropTarget === undefined || dragItemId === undefined) {
+        return;
+      }
+
+      const oldIndex = items.findIndex((item) => item.id === dragItemId);
+      if (oldIndex !== -1) {
+        let newIndex = dropTarget.indexWithinChildren;
+
+        // placement.index does not take into account the fact that the drag item will be removed.
+        // we need to do this to account for it.
+        if (oldIndex < newIndex) {
+          newIndex = Math.max(0, newIndex - 1);
+        }
+
+        if (oldIndex !== newIndex) {
+          const newItems = [...items];
+          newItems.splice(oldIndex, 1);
+          newItems.splice(newIndex, 0, items[oldIndex]);
+          onSort?.(newItems);
+        }
+      }
     },
   });
 
