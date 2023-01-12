@@ -128,9 +128,10 @@ export const WithTruncatedItem: ComponentStory<
 
 export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
+    ...items,
     {
       id: "0",
-      label: "Apple",
+      label: "Grape",
       source: "token",
       hasMenu: true,
       state: "initial",
@@ -143,6 +144,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       editingIndex={editingIndex}
+      currentIndex={value.length - 1}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
