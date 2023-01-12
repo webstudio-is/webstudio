@@ -4,6 +4,7 @@
  */
 
 import React, { forwardRef, type Ref, type ComponentProps } from "react";
+import { Text } from "./text";
 import { styled } from "../stitches.config";
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
@@ -45,13 +46,6 @@ const StyledButton = styled("button", {
   height: "$spacing$12",
   borderRadius: "$borderRadius$4",
 
-  // @todo: this is `typography > labels`, it should be taken from tokens or from text.tsx
-  fontWeight: 500,
-  fontFamily: "$fonts$sans",
-  fontSize: "$fontSize$3",
-  lineHeight: "$lineHeight$3",
-  letterSpacing: "0.005em",
-
   variants: {
     // "variant" is used instead of "type" as in Figma,
     // because type is already taken for type=submit etc.
@@ -87,9 +81,13 @@ const StyledButton = styled("button", {
   },
 });
 
-const TextContainer = styled("span", {
-  display: "block",
+const TextContainer = styled(Text, {
   padding: "0 $spacing$2",
+  // <Text> incorrectly sets lineHeight to 1 for all variants
+  // here we set lineHeight as it's defined for "label" in Figma
+  // @todo: fix <Text>
+  lineHeight: "$lineHeight$3",
+  defaultVariants: { variant: "label" },
 });
 
 type ButtonProps = Omit<ComponentProps<typeof StyledButton>, "pending"> & {
