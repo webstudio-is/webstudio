@@ -47,6 +47,21 @@ const items: Array<Item> = [
   },
 ];
 
+const createItem = (
+  label: string,
+  value: Array<Item>,
+  setValue: (value: Array<Item>) => void
+) => {
+  const item: Item = {
+    id: uuid(),
+    label,
+    source: "token",
+    hasMenu: false,
+    state: "initial",
+  };
+  setValue([...value, item]);
+};
+
 export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([localItem]);
   return (
@@ -55,14 +70,7 @@ export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          source: "token",
-          hasMenu: false,
-          state: "initial",
-        };
-        setValue([...value, item]);
+        createItem(label, value, setValue);
       }}
       onSelectItem={(item) => {
         setValue([...value, item]);
@@ -86,14 +94,7 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          source: "token",
-          hasMenu: false,
-          state: "initial",
-        };
-        setValue([...value, item]);
+        createItem(label, value, setValue);
       }}
       onSelectItem={(item) => {
         setValue([...value, item]);
@@ -128,14 +129,7 @@ export const WithTruncatedItem: ComponentStory<
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          source: "token",
-          hasMenu: false,
-          state: "initial",
-        };
-        setValue([...value, item]);
+        createItem(label, value, setValue);
       }}
       onSelectItem={(item) => {
         setValue([...value, item]);
@@ -169,14 +163,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
       value={value}
       editingIndex={editingIndex}
       onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          source: "token",
-          hasMenu: true,
-          state: "initial",
-        };
-        setValue([...value, item]);
+        createItem(label, value, setValue);
       }}
       onSelectItem={(item) => {
         setValue([...value, item]);
