@@ -45,16 +45,12 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
           style={{ display: "none" }}
         />
         <Button
-          variant="blue"
           type="button"
           onClick={() => inputRef?.current?.click()}
-          size={2}
           css={{ flexGrow: 1 }}
+          icon={<UploadIcon />}
         >
-          <Flex align="center" gap={1}>
-            <UploadIcon />
-            <Text>Upload</Text>
-          </Flex>
+          Upload
         </Button>
       </Flex>
     </form>

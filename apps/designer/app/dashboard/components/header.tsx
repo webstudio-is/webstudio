@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  Button,
+  DeprecatedButton,
   Text,
   Flex,
 } from "@webstudio-is/design-system";
@@ -37,7 +37,7 @@ export const DashboardHeader = ({ user }: { user: User }) => {
       <Flex gap="1" align="center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="raw" aria-label="Menu Button">
+            <DeprecatedButton variant="raw" aria-label="Menu Button">
               <Flex gap="1" align="center" css={{ height: "$spacing$11" }}>
                 <Avatar
                   src={user?.image || undefined}
@@ -46,7 +46,7 @@ export const DashboardHeader = ({ user }: { user: User }) => {
 
                 <ChevronDownIcon width={15} height={15} color="white" />
               </Flex>
-            </Button>
+            </DeprecatedButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onSelect={() => navigate(logoutPath())}>

@@ -38,8 +38,8 @@ const PropertyPopoverContent = ({
     return (
       <>
         <Flex align="start" css={{ px: "$spacing$4", py: "$spacing$3" }}>
-          <Button onClick={onReset}>
-            <UndoIcon /> &nbsp; Reset
+          <Button onClick={onReset} icon={<UndoIcon />}>
+            Reset
           </Button>
         </Flex>
         <Separator />

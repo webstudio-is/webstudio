@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Button,
+  DeprecatedButton,
   Popover,
   PopoverContent,
   PopoverPortal,
@@ -29,7 +29,7 @@ export const ImageInfoTrigger = ({
   return (
     <Popover open={isInfoOpen} onOpenChange={setInfoOpen}>
       <PopoverTrigger asChild>
-        <Button
+        <DeprecatedButton
           variant="raw"
           title="Options"
           onClick={() => setInfoOpen(true)}
@@ -48,7 +48,7 @@ export const ImageInfoTrigger = ({
           }}
         >
           <GearIcon />
-        </Button>
+        </DeprecatedButton>
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent css={{ zIndex: "$1" }}>

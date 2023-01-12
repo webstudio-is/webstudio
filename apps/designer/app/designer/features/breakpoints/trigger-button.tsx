@@ -6,7 +6,7 @@ import {
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
 import { willRender } from "~/designer/shared/breakpoints";
-import { Button, Text } from "@webstudio-is/design-system";
+import { DeprecatedButton, Text } from "@webstudio-is/design-system";
 import {
   DesktopIcon,
   LaptopIcon,
@@ -14,7 +14,7 @@ import {
   TabletIcon,
 } from "@webstudio-is/icons";
 
-type TriggerButtonProps = ComponentProps<typeof Button>;
+type TriggerButtonProps = ComponentProps<typeof DeprecatedButton>;
 
 const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "hint") => {
   const color = variant === "contrast" ? "white" : "hint";
@@ -31,7 +31,7 @@ const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "hint") => {
 };
 
 export const TriggerButton = forwardRef<
-  ElementRef<typeof Button>,
+  ElementRef<typeof DeprecatedButton>,
   TriggerButtonProps
 >((props, ref) => {
   const [zoom] = useZoom();
@@ -43,7 +43,7 @@ export const TriggerButton = forwardRef<
   const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "hint";
 
   return (
-    <Button
+    <DeprecatedButton
       {...props}
       ref={ref}
       css={{ gap: "$spacing$3" }}
@@ -54,7 +54,7 @@ export const TriggerButton = forwardRef<
       <Text color={variant}>
         {`${breakpoint.label} ${canvasWidth}px / ${zoom}%`}
       </Text>
-    </Button>
+    </DeprecatedButton>
   );
 });
 

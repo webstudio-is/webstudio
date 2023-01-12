@@ -290,13 +290,8 @@ const NewPageSettingsView = ({
               </Tooltip>
             )}
             <ButtonContainer>
-              <Button
-                variant="blue"
-                disabled={isSubmitting}
-                onClick={onSubmit}
-                tabIndex={2}
-              >
-                {isSubmitting ? "Creating..." : "Create page"}
+              <Button pending={isSubmitting} onClick={onSubmit} tabIndex={2}>
+                {isSubmitting ? "Creating" : "Create page"}
               </Button>
             </ButtonContainer>
           </>
