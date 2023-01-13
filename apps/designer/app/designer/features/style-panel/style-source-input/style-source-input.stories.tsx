@@ -27,7 +27,7 @@ const items: Array<Item> = [
   },
   {
     id: uuid(),
-    label: "Apple",
+    label: "Token",
     source: "token",
     hasMenu: true,
     isEditable: true,
@@ -35,7 +35,7 @@ const items: Array<Item> = [
   },
   {
     id: uuid(),
-    label: "Banana",
+    label: "Tag",
     source: "tag",
     hasMenu: true,
     isEditable: true,
@@ -43,7 +43,7 @@ const items: Array<Item> = [
   },
   {
     id: uuid(),
-    label: "Orange",
+    label: "State",
     source: "state",
     hasMenu: true,
     isEditable: true,
@@ -137,11 +137,11 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
     ...items,
     {
       id: uuid(),
-      label: "Grape",
+      label: "Disabled",
       source: "token",
       hasMenu: true,
       isEditable: true,
-      state: "selected",
+      state: "disabled",
     },
   ]);
   const [editingItemId, setEditingItemId] = useState<string>();

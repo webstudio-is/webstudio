@@ -315,7 +315,7 @@ const StyledItem = styled("div", {
   variants: {
     source: {
       local: {
-        backgroundColor: "$colors$backgroundStyleSourceToken",
+        backgroundColor: "$colors$backgroundStyleSourceNeutral",
       },
       token: {
         backgroundColor: "$colors$backgroundStyleSourceToken",
@@ -329,15 +329,12 @@ const StyledItem = styled("div", {
     },
     state: {
       selected: {},
+      editing: {},
       unselected: {
         backgroundColor: "$colors$backgroundStyleSourceNeutral",
       },
+      dragging: {},
       disabled: {
-        // @todo styling
-        opacity: 0.5,
-      },
-      editing: {},
-      dragging: {
         backgroundColor: "$colors$backgroundStyleSourceDisabled",
       },
     },
@@ -394,6 +391,11 @@ export const StyleSource = ({
     "max-width",
     state === "editing"
   );
+  const showMenu =
+    hasMenu === true &&
+    state !== "editing" &&
+    state !== "disabled" &&
+    state !== "dragging";
   return (
     <Item state={state} source={source} id={id} ref={ref}>
       <EditableText
@@ -404,7 +406,7 @@ export const StyleSource = ({
         onChange={onChange}
         label={label}
       />
-      {hasMenu === true && state !== "editing" && (
+      {showMenu && (
         <Menu
           source={source}
           state={state}
