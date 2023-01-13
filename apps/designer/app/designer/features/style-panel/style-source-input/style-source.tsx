@@ -95,19 +95,15 @@ const Menu = (props: MenuProps) => {
 
 export type ItemState = "initial" | "editing" | "disabled" | "dragging";
 
-type EditableTextProps = {
-  label: string;
-  onChange: (value: string) => void;
-  state: ItemState;
-  onStateChange: (state: ItemState) => void;
-};
-
-const EditableText = ({
-  onChange,
-  label,
+const useEditableText = ({
   state,
   onStateChange,
-}: EditableTextProps) => {
+  onChange,
+}: {
+  state: ItemState;
+  onStateChange: (state: ItemState) => void;
+  onChange: (value: string) => void;
+}) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -139,9 +135,29 @@ const EditableText = ({
     }
   };
 
-  const handleClick = () => {
-    onStateChange("editing");
-  };
+  return { handleKeyDown, handleFinishEditing, ref };
+};
+
+type EditableTextProps = {
+  label: string;
+  onChange: (value: string) => void;
+  state: ItemState;
+  onStateChange: (state: ItemState) => void;
+  onChangeCurrent: () => void;
+};
+
+const EditableText = ({
+  onChange,
+  label,
+  state,
+  onStateChange,
+  onChangeCurrent,
+}: EditableTextProps) => {
+  const { ref, handleKeyDown, handleFinishEditing } = useEditableText({
+    state,
+    onStateChange,
+    onChange,
+  });
 
   return (
     <Text
@@ -149,7 +165,7 @@ const EditableText = ({
       ref={ref}
       onKeyDown={handleKeyDown}
       onBlur={handleFinishEditing}
-      onClick={handleClick}
+      onClick={onChangeCurrent}
       css={{
         outline: "none",
         textOverflow: state === "editing" ? "clip" : "ellipsis",
@@ -210,15 +226,27 @@ type EditableItemProps = {
   id: string;
   children: Array<JSX.Element | false>;
   state: ItemState;
+  isCurrent: boolean;
 };
 
-const EditableItem = ({ children, state, id }: EditableItemProps) => {
+const EditableItem = ({
+  children,
+  state,
+  id,
+  isCurrent,
+}: EditableItemProps) => {
   const ref = useForceRecalcStyle<HTMLDivElement>(
     "max-width",
     state === "editing"
   );
   return (
-    <Item variant="gray" state={state} ref={ref} as="div" data-id={id}>
+    <Item
+      variant={isCurrent ? "blue" : "gray"}
+      state={state}
+      ref={ref}
+      as="div"
+      data-id={id}
+    >
       {children}
     </Item>
   );
@@ -229,7 +257,9 @@ type StyleSourceProps = {
   label: string;
   hasMenu: boolean;
   state: ItemState;
+  isCurrent: boolean;
   onStateChange: (state: ItemState) => void;
+  onChangeCurrent: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
   onChange: (value: string) => void;
@@ -240,16 +270,19 @@ export const StyleSource = ({
   label,
   hasMenu,
   state,
+  isCurrent,
   onChange,
   onStateChange,
+  onChangeCurrent,
   onDuplicate,
   onRemove,
 }: StyleSourceProps) => {
   return (
-    <EditableItem state={state} id={id}>
+    <EditableItem state={state} id={id} isCurrent={isCurrent}>
       <EditableText
         state={state}
         onStateChange={onStateChange}
+        onChangeCurrent={onChangeCurrent}
         onChange={onChange}
         label={label}
       />

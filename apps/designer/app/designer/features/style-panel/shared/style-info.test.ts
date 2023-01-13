@@ -1,5 +1,5 @@
-import type { Breakpoint, CssRule } from "@webstudio-is/css-data";
-import type { Instance } from "@webstudio-is/react-sdk";
+import type { Breakpoint } from "@webstudio-is/css-data";
+import type { Instance, Styles } from "@webstudio-is/react-sdk";
 import {
   getCascadedBreakpointIds,
   getCascadedInfo,
@@ -30,37 +30,43 @@ const breakpoints: Breakpoint[] = [
 ];
 
 const selectedBreakpointId = "3";
+const selectedInstanceId = "3";
 const cascadedBreakpointIds = getCascadedBreakpointIds(
   breakpoints,
   selectedBreakpointId
 );
 
-const cssRules: CssRule[] = [
+const cascadingStyles: Styles = [
   {
-    breakpoint: "1",
-    style: {
-      width: { type: "unit", value: 100, unit: "px" },
-      height: { type: "unit", value: 50, unit: "px" },
-    },
+    breakpointId: "1",
+    instanceId: selectedInstanceId,
+    property: "width",
+    value: { type: "unit", value: 100, unit: "px" },
   },
   {
-    breakpoint: "2",
-    style: {
-      width: { type: "unit", value: 200, unit: "px" },
-    },
+    breakpointId: "1",
+    instanceId: selectedInstanceId,
+    property: "height",
+    value: { type: "unit", value: 50, unit: "px" },
   },
   {
-    breakpoint: "3",
-    style: {
-      // should not be computed because current breakpoint
-      height: { type: "unit", value: 150, unit: "px" },
-    },
+    breakpointId: "2",
+    instanceId: selectedInstanceId,
+    property: "width",
+    value: { type: "unit", value: 200, unit: "px" },
   },
   {
-    breakpoint: "4",
-    style: {
-      width: { type: "unit", value: 400, unit: "px" },
-    },
+    breakpointId: "3",
+    instanceId: selectedInstanceId,
+    // should not be computed because current breakpoint
+    property: "height",
+    value: { type: "unit", value: 150, unit: "px" },
+  },
+  {
+    breakpointId: "4",
+    instanceId: selectedInstanceId,
+    property: "width",
+    value: { type: "unit", value: 400, unit: "px" },
   },
 ];
 
@@ -68,56 +74,63 @@ const rootInstance: Instance = {
   type: "instance",
   id: "1",
   component: "Body",
-  cssRules: [
-    {
-      breakpoint: "1",
-      style: {
-        // should be inherited even from another breakpoint
-        fontSize: { type: "unit", value: 20, unit: "px" },
-      },
-    },
-  ],
+  cssRules: [],
   children: [
     {
       type: "instance",
       id: "2",
       component: "Box",
-      cssRules: [
-        {
-          breakpoint: "3",
-          style: {
-            // should not be inherited because width is not inheritable
-            width: { type: "unit", value: 100, unit: "px" },
-            // should be inherited from selected breakpoint
-            fontWeight: { type: "keyword", value: "600" },
-          },
-        },
-      ],
+      cssRules: [],
       children: [
         {
           type: "instance",
           id: "3",
           component: "Box",
-          cssRules: [
-            {
-              breakpoint: "3",
-              style: {
-                // should not show selected style as inherited
-                fontWeight: { type: "keyword", value: "500" },
-              },
-            },
-          ],
+          cssRules: [],
           children: [],
         },
       ],
     },
   ],
 };
-const selectedInstanceId = "3";
+
+const inheritingStyles: Styles = [
+  // should be inherited even from another breakpoint
+  {
+    breakpointId: "1",
+    instanceId: "1",
+    property: "fontSize",
+    value: { type: "unit", value: 20, unit: "px" },
+  },
+
+  // should not be inherited because width is not inheritable
+  {
+    breakpointId: "3",
+    instanceId: "2",
+    property: "width",
+    value: { type: "unit", value: 100, unit: "px" },
+  },
+  // should be inherited from selected breakpoint
+  {
+    breakpointId: "3",
+    instanceId: "2",
+    property: "fontWeight",
+    value: { type: "keyword", value: "600" },
+  },
+
+  // should not show selected style as inherited
+  {
+    breakpointId: "3",
+    instanceId: "3",
+    property: "fontWeight",
+    value: { type: "keyword", value: "500" },
+  },
+];
 
 test("compute cascaded styles", () => {
-  expect(getCascadedInfo(cssRules, cascadedBreakpointIds))
-    .toMatchInlineSnapshot(`
+  expect(
+    getCascadedInfo(cascadingStyles, selectedInstanceId, cascadedBreakpointIds)
+  ).toMatchInlineSnapshot(`
     {
       "height": {
         "breakpointId": "1",
@@ -143,6 +156,7 @@ test("compute inherited styles", () => {
   expect(
     getInheritedInfo(
       rootInstance,
+      inheritingStyles,
       selectedInstanceId,
       cascadedBreakpointIds,
       selectedBreakpointId

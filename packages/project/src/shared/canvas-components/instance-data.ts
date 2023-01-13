@@ -1,6 +1,5 @@
 import type { Instance, InstanceProps } from "@webstudio-is/react-sdk";
 import type {
-  CssRule,
   Style,
   StyleProperty,
   StyleValue,
@@ -10,7 +9,6 @@ import type {
 export type SelectedInstanceData = {
   id: Instance["id"];
   component: Instance["component"];
-  cssRules: Array<CssRule>;
   browserStyle: Style;
   props?: InstanceProps;
 };

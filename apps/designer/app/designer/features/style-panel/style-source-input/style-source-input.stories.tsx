@@ -10,7 +10,7 @@ export default {
 type Item = {
   id: string;
   label: string;
-  type: "token" | "local";
+  source: "token" | "local";
   hasMenu: boolean;
   state: ItemState;
 };
@@ -18,61 +18,62 @@ type Item = {
 const localItem: Item = {
   id: "0",
   label: "Local",
-  type: "local",
+  source: "local",
   hasMenu: false,
   state: "initial",
 };
 
 const items: Array<Item> = [
-  { id: "1", label: "Apple", type: "token", hasMenu: false, state: "initial" },
+  {
+    id: "1",
+    label: "Apple",
+    source: "token",
+    hasMenu: false,
+    state: "initial",
+  },
   {
     id: "2",
     label: "Banana",
-    type: "token",
+    source: "token",
     hasMenu: false,
     state: "initial",
   },
   {
     id: "3",
     label: "Orange",
-    type: "token",
+    source: "token",
     hasMenu: false,
     state: "initial",
   },
 ];
 
-export const Initial: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState<Array<Item>>([localItem]);
-  return (
-    <StyleSourceInput
-      css={{ width: 300 }}
-      items={items}
-      value={value}
-      onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          type: "token",
-          hasMenu: false,
-          state: "initial",
-        };
-        setValue([...value, item]);
-      }}
-      onSelectItem={(item) => {
-        setValue([...value, item]);
-      }}
-      onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
-      }}
-      onSort={setValue}
-    />
-  );
+const createItem = (
+  label: string,
+  value: Array<Item>,
+  setValue: (value: Array<Item>) => void
+) => {
+  const item: Item = {
+    id: uuid(),
+    label,
+    source: "token",
+    hasMenu: false,
+    state: "initial",
+  };
+  setValue([...value, item]);
 };
 
-export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
+const removeItem = (
+  itemToRemove: Item,
+  value: Array<Item>,
+  setValue: (value: Array<Item>) => void
+) => {
+  if (itemToRemove.source === "local") {
+    return;
+  }
+  setValue(value.filter((item) => item.id !== itemToRemove.id));
+};
+
+export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState([localItem, ...items]);
   return (
     <StyleSourceInput
@@ -80,23 +81,13 @@ export const WithItems: ComponentStory<typeof StyleSourceInput> = () => {
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          type: "token",
-          hasMenu: false,
-          state: "initial",
-        };
-        setValue([...value, item]);
+        createItem(label, value, setValue);
       }}
       onSelectItem={(item) => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
+        removeItem(itemToRemove, value, setValue);
       }}
       onSort={setValue}
     />
@@ -111,7 +102,7 @@ export const WithTruncatedItem: ComponentStory<
       id: "0",
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
-      type: "local",
+      source: "local",
       hasMenu: false,
       state: "initial",
     },
@@ -122,64 +113,51 @@ export const WithTruncatedItem: ComponentStory<
       items={items}
       value={value}
       onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          type: "token",
-          hasMenu: false,
-          state: "initial",
-        };
-        setValue([...value, item]);
+        createItem(label, value, setValue);
       }}
       onSelectItem={(item) => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
+        removeItem(itemToRemove, value, setValue);
       }}
       onSort={setValue}
     />
   );
 };
 
-export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
+export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
+    ...items,
     {
       id: "0",
-      label: "Apple",
-      type: "token",
+      label: "Grape",
+      source: "token",
       hasMenu: true,
       state: "initial",
     },
   ]);
-  const [editingIndex, setEditingIndex] = useState<number>(-1);
+  const [editingItemId, setEditingItemId] = useState<string>();
+  const [currentItemId, setCurrentItemId] = useState<string | undefined>(
+    value.at(-1)?.id
+  );
   return (
     <StyleSourceInput
       css={{ width: 300 }}
       items={items}
       value={value}
-      editingIndex={editingIndex}
+      editingItemId={editingItemId}
+      currentItemId={currentItemId}
+      onChangeCurrent={setCurrentItemId}
+      onChangeEditing={setEditingItemId}
       onCreateItem={({ label }) => {
-        const item: Item = {
-          id: uuid(),
-          label,
-          type: "token",
-          hasMenu: true,
-          state: "initial",
-        };
-        setValue([...value, item]);
+        createItem(label, value, setValue);
       }}
       onSelectItem={(item) => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
-        if (itemToRemove.type === "local") {
-          return;
-        }
-        setValue(value.filter((item) => item.id !== itemToRemove.id));
+        removeItem(itemToRemove, value, setValue);
       }}
       onChangeItem={(changedItem) => {
         setValue(
@@ -224,7 +202,7 @@ export const WithMenu: ComponentStory<typeof StyleSourceInput> = () => {
           return item;
         });
         setValue(nextValue);
-        setEditingIndex(nextValue.indexOf(duplicatedItem));
+        setEditingItemId(duplicatedItem.id);
       }}
       onSort={setValue}
     />

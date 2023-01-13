@@ -1,10 +1,10 @@
-import { useMemo, useCallback } from "react";
+import { useCallback } from "react";
 import store from "immerhin";
 import warnOnce from "warn-once";
 import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
-import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
-import { stylesContainer, useStyles } from "~/shared/nano-states";
+import { stylesContainer } from "~/shared/nano-states";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
@@ -47,26 +47,8 @@ export const useStyleData = ({
   publish,
 }: UseStyleData) => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
-  const selectedBreakpointId = selectedBreakpoint?.id;
-  const selectedInstanceId = selectedInstanceData?.id;
-  const [styles] = useStyles();
-  const localStyle = useMemo(() => {
-    const style: Style = {};
-    for (const styleItem of styles) {
-      if (
-        styleItem.breakpointId === selectedBreakpointId &&
-        styleItem.instanceId === selectedInstanceId
-      ) {
-        style[styleItem.property] = styleItem.value;
-      }
-    }
-    return style;
-  }, [styles, selectedBreakpointId, selectedInstanceId]);
 
-  const currentStyle = useStyleInfo({
-    localStyle,
-    browserStyle: selectedInstanceData?.browserStyle,
-  });
+  const currentStyle = useStyleInfo();
 
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
