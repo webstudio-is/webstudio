@@ -47,11 +47,12 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
         </Box>
       ) : null}
       <Box css={{ p: "$spacing$5 $spacing$9" }}>
-        <Button variant="red" size="2" onClick={() => onDelete([id])}>
-          <Flex align="center" css={{ gap: "$spacing$3" }}>
-            <TrashIcon />
-            Delete
-          </Flex>
+        <Button
+          variant="destructive"
+          onClick={() => onDelete([id])}
+          prefix={<TrashIcon />}
+        >
+          Delete
         </Button>
       </Box>
     </>

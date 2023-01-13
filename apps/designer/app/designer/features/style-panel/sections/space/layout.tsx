@@ -1,8 +1,8 @@
 import { styled, useId } from "@webstudio-is/design-system";
 import { forwardRef } from "react";
 import type { ComponentProps, Ref } from "react";
-import type { HoverTagret, SpacingStyleProperty } from "./types";
-import { spacingPropertiesNames } from "./types";
+import type { HoverTagret, SpaceStyleProperty } from "./types";
+import { spacePropertiesNames } from "./types";
 
 const VALUE_WIDTH = 34;
 const VALUE_HEIGHT = 24;
@@ -187,7 +187,7 @@ const Label = styled("div", {
   },
 });
 
-const getSide = (property: SpacingStyleProperty) => {
+const getSide = (property: SpaceStyleProperty) => {
   switch (property) {
     case "marginTop":
     case "paddingTop":
@@ -204,7 +204,7 @@ const getSide = (property: SpacingStyleProperty) => {
   }
 };
 
-const getPath = (property: SpacingStyleProperty) => {
+const getPath = (property: SpaceStyleProperty) => {
   const width = TOTAL_WIDTH;
   const height = TOTAL_HEIGHT;
   // distance between LeftValueArea's and RightValueArea's tips in the middle
@@ -236,11 +236,11 @@ type LayoutProps = {
   onClick?: ComponentProps<"div">["onClick"];
   onMouseLeave?: ComponentProps<"div">["onMouseLeave"];
   onHover: (hoverTarget: HoverTagret | undefined) => void;
-  activeProperties?: ReadonlyArray<SpacingStyleProperty>;
-  renderCell: (args: { property: SpacingStyleProperty }) => React.ReactNode;
+  activeProperties?: ReadonlyArray<SpaceStyleProperty>;
+  renderCell: (args: { property: SpaceStyleProperty }) => React.ReactNode;
 };
 
-export const SpacingLayout = forwardRef(
+export const SpaceLayout = forwardRef(
   (
     {
       onFocus,
@@ -257,7 +257,7 @@ export const SpacingLayout = forwardRef(
     const outerClipId = useId();
     const innerClipId = useId();
 
-    const renderValueArea = (property: SpacingStyleProperty) => (
+    const renderValueArea = (property: SpaceStyleProperty) => (
       <ValueArea
         side={getSide(property)}
         d={getPath(property)}
@@ -319,7 +319,7 @@ export const SpacingLayout = forwardRef(
           <Label>Margin</Label>
           <Label inner>Padding</Label>
 
-          {spacingPropertiesNames.map((property) => (
+          {spacePropertiesNames.map((property) => (
             <Cell property={property} key={property}>
               {renderCell({ property })}
             </Cell>
@@ -329,4 +329,4 @@ export const SpacingLayout = forwardRef(
     );
   }
 );
-SpacingLayout.displayName = "SpacingLayout";
+SpaceLayout.displayName = "SpaceLayout";

@@ -1,13 +1,25 @@
+import { useEffect, useMemo } from "react";
 import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
-import { addGlobalRules, utils } from "@webstudio-is/project";
+import {
+  addGlobalRules,
+  getPresetStyleRules,
+  utils,
+} from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
 import {
   designTokensContainer,
   rootInstanceContainer,
+  useBreakpoints,
   useDesignTokens,
+  usePresetStyles,
+  useStyles,
 } from "~/shared/nano-states";
-import { idAttribute } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  getComponentNames,
+  idAttribute,
+} from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
   type Breakpoint,
@@ -17,7 +29,6 @@ import {
   type StyleProperty,
   type Style,
 } from "@webstudio-is/css-data";
-import { useEffect } from "react";
 import {
   createCssEngine,
   toValue,
@@ -71,23 +82,20 @@ const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
 const tokensCssEngine = createCssEngine({ name: "tokens" });
+const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
   useIsomorphicLayoutEffect(() => {
     for (const style of helperStyles) {
       helpersCssEngine.addPlaintextRule(style);
     }
-    if (typeof document !== "undefined") {
-      helpersCssEngine.render();
-    }
+    helpersCssEngine.render();
   }, []);
 
   useIsomorphicLayoutEffect(() => {
     fontsAndDefaultsCssEngine.clear();
     addGlobalRules(fontsAndDefaultsCssEngine, { assets });
-    if (typeof document !== "undefined") {
-      fontsAndDefaultsCssEngine.render();
-    }
+    fontsAndDefaultsCssEngine.render();
   }, [assets]);
 
   const [tokens] = useDesignTokens();
@@ -99,10 +107,29 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
       tokensCssEngine.addStyleRule(`:root`, { style });
     }
 
-    if (typeof document !== "undefined") {
-      tokensCssEngine.render();
-    }
+    tokensCssEngine.render();
   }, [tokens]);
+
+  const [presetStyles] = usePresetStyles();
+
+  useIsomorphicLayoutEffect(() => {
+    presetStylesEngine.clear();
+    const presetStyleRules = getPresetStyleRules(presetStyles);
+    for (const component of getComponentNames()) {
+      const meta = getComponentMeta(component);
+      // render preset style and fallback to hardcoded one
+      // because could not be added yet to db
+      const presetStyle =
+        presetStyleRules.find((item) => item.component === component)?.style ??
+        meta.presetStyle;
+      if (presetStyle !== undefined) {
+        presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
+          style: presetStyle,
+        });
+      }
+    }
+    presetStylesEngine.render();
+  }, [presetStyles]);
 
   return null;
 };
@@ -161,23 +188,40 @@ const getRule = (id: string, breakpoint?: string) => {
   return wrappedRulesMap.get(key);
 };
 
-export const useCssRules = ({
-  id,
-  cssRules,
-}: {
-  id: string;
-  cssRules: Array<CssRule>;
-}) => {
+export const useCssRules = ({ instanceId }: { instanceId: string }) => {
+  const [styles] = useStyles();
+  const [breakpoints] = useBreakpoints();
+
+  const [instanceStylesKey, instanceStyles] = useMemo(() => {
+    const instanceStyles = styles.filter(
+      (item) => item.instanceId === instanceId
+    );
+    const key = JSON.stringify(instanceStyles);
+    return [key, instanceStyles];
+  }, [styles, instanceId]);
+
   useIsomorphicLayoutEffect(() => {
-    for (const cssRule of cssRules) {
-      const rule = getRule(id, cssRule.breakpoint);
+    const stylePerBreakpoint = new Map<string, Style>();
+
+    for (const item of instanceStyles) {
+      let style = stylePerBreakpoint.get(item.breakpointId);
+      if (style === undefined) {
+        style = {};
+        stylePerBreakpoint.set(item.breakpointId, style);
+      }
+      style[item.property] = item.value;
+    }
+
+    for (const { id: breakpointId } of breakpoints) {
+      const style = stylePerBreakpoint.get(breakpointId) ?? {};
+      const rule = getRule(instanceId, breakpointId);
       // It's the first time the rule is being used
       if (rule === undefined) {
-        addRule(id, cssRule);
+        addRule(instanceId, { breakpoint: breakpointId, style });
         continue;
       }
       // It's an update to an existing rule
-      const dynamicStyle = toVarStyleWithFallback(id, cssRule.style);
+      const dynamicStyle = toVarStyleWithFallback(instanceId, style);
       let property: StyleProperty;
       for (property in dynamicStyle) {
         rule.styleMap.set(property, dynamicStyle[property]);
@@ -190,7 +234,11 @@ export const useCssRules = ({
       }
     }
     cssEngine.render();
-  }, [id, cssRules]);
+    // run effect only when serialized instanceStyles changed
+    // to avoid rerendering on other instances change
+  }, [instanceId, instanceStylesKey, breakpoints]);
+
+  return instanceStylesKey;
 };
 
 const toVarNamespace = (id: string, property: string) => {

@@ -1,7 +1,7 @@
 import type { ComponentMeta } from "@storybook/react";
 import React from "react";
 import { parseCssValue } from "../../shared/parse-css-value";
-import { SpacingLayout } from "./layout";
+import { SpaceLayout } from "./layout";
 import { ValueText as ValueTextComponent } from "./value-text";
 
 export const ValueText = (
@@ -12,7 +12,7 @@ export const ValueText = (
 ) => {
   const [hovered, setHovered] = React.useState<{ property: string }>();
   return (
-    <SpacingLayout
+    <SpaceLayout
       onHover={setHovered}
       onClick={() => null}
       renderCell={({ property }) => (
@@ -31,7 +31,7 @@ ValueText.args = {
 };
 
 export default {
-  title: "Spacing/ValueText",
+  title: "Space/ValueText",
   component: ValueText,
   argTypes: {
     origin: {

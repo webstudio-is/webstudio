@@ -41,10 +41,16 @@ export const WrapperComponent = ({
 }: WrapperComponentProps) => {
   const Component = getComponent(instance.component);
   const userProps = useUserProps(instance.id);
-  const props = { ...userProps, ...rest, [idAttribute]: instance.id };
+  const props = {
+    ...userProps,
+    ...rest,
+    [idAttribute]: instance.id,
+    [componentAttribute]: instance.component,
+  };
   return (
     <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
   );
 };
 
 export const idAttribute = "data-ws-id";
+export const componentAttribute = "data-ws-component";

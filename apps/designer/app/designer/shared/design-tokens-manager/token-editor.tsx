@@ -148,14 +148,13 @@ export const TokenEditor = ({
       >
         {trigger ?? (
           <Button
-            ghost
+            variant="ghost"
             onClick={(event) => {
               event.preventDefault();
               onOpenChange(true);
             }}
-          >
-            <PlusIcon />
-          </Button>
+            prefix={<PlusIcon />}
+          />
         )}
       </PopoverTrigger>
       <PopoverPortal>
@@ -186,11 +185,7 @@ export const TokenEditor = ({
                 name="description"
                 defaultValue={token?.description}
               />
-              {token === undefined && (
-                <Button type="submit" variant="blue">
-                  Create
-                </Button>
-              )}
+              {token === undefined && <Button type="submit">Create</Button>}
             </Flex>
           </form>
           <PopoverHeader title={token?.name ?? "New Token"} />

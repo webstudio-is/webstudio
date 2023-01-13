@@ -1,12 +1,12 @@
 import { type ComponentProps, useState, useRef } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
-import { SpacingLayout } from "./layout";
+import { SpaceLayout } from "./layout";
 import { ValueText } from "./value-text";
 import { useScrub } from "./scrub";
-import { spacingPropertiesNames } from "./types";
-import type { SpacingStyleProperty, HoverTagret } from "./types";
+import { spacePropertiesNames } from "./types";
+import type { SpaceStyleProperty, HoverTagret } from "./types";
 import { InputPopover } from "./input-popover";
-import { SpacingTooltip } from "./tooltip";
+import { SpaceTooltip } from "./tooltip";
 import { getStyleSource } from "../../shared/style-info";
 import { useKeyboardNavigation } from "./keyboard";
 
@@ -24,7 +24,7 @@ const Cell = ({
   onPopoverClose: () => void;
   onChange: ComponentProps<typeof InputPopover>["onChange"];
   onHover: (target: HoverTagret | undefined) => void;
-  property: SpacingStyleProperty;
+  property: SpaceStyleProperty;
   isActive: boolean;
   scrubStatus: ReturnType<typeof useScrub>;
   currentStyle: RenderCategoryProps["currentStyle"];
@@ -58,7 +58,7 @@ const Cell = ({
         onClose={onPopoverClose}
       />
       {isActive && isPopoverOpen === false && scrubStatus.isActive === false ? (
-        <SpacingTooltip property={property} />
+        <SpaceTooltip property={property} />
       ) : null}
       <ValueText
         css={{
@@ -67,7 +67,7 @@ const Cell = ({
           // Click and scrub works everywhere anyway, but we want cursors to be different.
           //
           // In order to have control over cursor we're setting pointerEvents to "all" here
-          // because SpacingLayout sets it to "none" for cells' content.
+          // because SpaceLayout sets it to "none" for cells' content.
           pointerEvents: "all",
         }}
         value={finalValue}
@@ -82,7 +82,7 @@ const Cell = ({
   );
 };
 
-export const SpacingSection = ({
+export const SpaceSection = ({
   setProperty,
   deleteProperty,
   createBatchUpdate,
@@ -98,7 +98,7 @@ export const SpacingSection = ({
     target: hoverTarget,
     onChange: (values, options) => {
       const batch = createBatchUpdate();
-      for (const property of spacingPropertiesNames) {
+      for (const property of spacePropertiesNames) {
         const value = values[property];
         if (value !== undefined) {
           batch.setProperty(property)(value);
@@ -108,7 +108,7 @@ export const SpacingSection = ({
     },
   });
 
-  const [openProperty, setOpenProperty] = useState<SpacingStyleProperty>();
+  const [openProperty, setOpenProperty] = useState<SpaceStyleProperty>();
 
   const layoutRef = useRef<HTMLDivElement>(null);
 
@@ -135,7 +135,7 @@ export const SpacingSection = ({
   };
 
   return (
-    <SpacingLayout
+    <SpaceLayout
       ref={layoutRef}
       onClick={() => setOpenProperty(hoverTarget?.property)}
       onHover={handleHover}

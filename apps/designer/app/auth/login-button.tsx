@@ -23,7 +23,6 @@ export const LoginButton = ({
   const button = (
     <Button
       {...props}
-      size={3}
       type="submit"
       disabled={disabled}
       css={{ width: "100%" }}

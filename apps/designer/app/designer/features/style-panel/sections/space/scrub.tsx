@@ -3,16 +3,16 @@ import { numericScrubControl } from "@webstudio-is/design-system";
 import { useState, useEffect, useRef } from "react";
 import { useModifierKeys } from "../../shared/modifier-keys";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
-import type { SpacingStyleProperty, HoverTagret } from "./types";
+import type { SpaceStyleProperty, HoverTagret } from "./types";
 
-type Values = Partial<Record<SpacingStyleProperty, StyleValue>>;
+type Values = Partial<Record<SpaceStyleProperty, StyleValue>>;
 
 type ScrubStatus = {
   isActive: boolean;
 
   // Properties that should be affected on the next pointer move.
   // We keep track of these properties even when scrub is not active.
-  properties: ReadonlyArray<SpacingStyleProperty>;
+  properties: ReadonlyArray<SpaceStyleProperty>;
 
   // When scrub is active, this contains ephemeral values for all properties
   // that have been affected during current scrub.
@@ -127,10 +127,10 @@ const circleGroups = [
 ] as const;
 
 const getModifiersGroup = (
-  property: SpacingStyleProperty,
+  property: SpaceStyleProperty,
   modifiers: { shiftKey: boolean; altKey: boolean }
 ) => {
-  let groups: ReadonlyArray<ReadonlyArray<SpacingStyleProperty>> = [];
+  let groups: ReadonlyArray<ReadonlyArray<SpaceStyleProperty>> = [];
 
   if (modifiers.shiftKey) {
     groups = circleGroups;

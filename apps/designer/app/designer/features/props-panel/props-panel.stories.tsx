@@ -12,7 +12,6 @@ export const NoProps: ComponentStoryObj<typeof PropsPanel> = {
     selectedInstanceData: {
       id: "1",
       component: "Button",
-      cssRules: [],
       browserStyle: {},
       props: {
         id: "1",
@@ -36,7 +35,6 @@ export const RequiredProps: ComponentStoryObj<typeof PropsPanel> = {
     selectedInstanceData: {
       id: "1",
       component: "Link",
-      cssRules: [],
       browserStyle: {},
       props: {
         id: "1",
@@ -53,7 +51,6 @@ export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
     selectedInstanceData: {
       id: "1",
       component: "Button",
-      cssRules: [],
       browserStyle: {},
       props: {
         id: "1",
@@ -72,7 +69,6 @@ export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
     selectedInstanceData: {
       id: "3",
       component: "Heading",
-      cssRules: [],
       browserStyle: {},
       props: {
         id: "2",

@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
@@ -6,11 +5,12 @@ import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
   breakpointsContainer,
   rootInstanceContainer,
+  stylesContainer,
   useBreakpoints,
 } from "~/shared/nano-states";
-import { publish } from "~/shared/pubsub";
 import { addMediaRules } from "./styles";
 import { useSyncInitializeOnce } from "~/shared/hook-utils";
+import { filterMutable } from "~/shared/array-utils";
 
 export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
   const [, setCurrentBreakpoints] = useBreakpoints();
@@ -18,16 +18,6 @@ export const useInitializeBreakpoints = (breakpoints: Array<Breakpoint>) => {
     setCurrentBreakpoints(breakpoints);
     addMediaRules(breakpoints);
   });
-};
-
-const usePublishBreakpoints = () => {
-  const [breakpoints] = useBreakpoints();
-  useEffect(() => {
-    publish({
-      type: "loadBreakpoints",
-      payload: breakpoints,
-    });
-  }, [breakpoints]);
 };
 
 const useBreakpointChange = () => {
@@ -52,8 +42,8 @@ const useBreakpointChange = () => {
 const useBreakpointDelete = () => {
   useSubscribe("breakpointDelete", (breakpoint) => {
     store.createTransaction(
-      [breakpointsContainer, rootInstanceContainer],
-      (breakpoints, rootInstance) => {
+      [breakpointsContainer, rootInstanceContainer, stylesContainer],
+      (breakpoints, rootInstance, styles) => {
         if (rootInstance === undefined) {
           return;
         }
@@ -64,13 +54,15 @@ const useBreakpointDelete = () => {
         }
 
         deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
+
+        // delete breakpoint styles
+        filterMutable(styles, (style) => style.breakpointId !== breakpoint.id);
       }
     );
   });
 };
 
 export const useManageBreakpoints = () => {
-  usePublishBreakpoints();
   useBreakpointChange();
   useBreakpointDelete();
 };

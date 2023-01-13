@@ -47,10 +47,12 @@ const hideOutline = () => {
 export const SelectedInstanceConnector = ({
   instanceElementRef,
   instance,
+  instanceStylesKey,
   instanceProps,
 }: {
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
+  instanceStylesKey: unknown;
   instanceProps: undefined | InstanceProps;
 }) => {
   useEffect(() => {
@@ -130,7 +132,6 @@ export const SelectedInstanceConnector = ({
       payload: {
         id: instance.id,
         component: instance.component,
-        cssRules: instance.cssRules,
         browserStyle: getBrowserStyle(element),
         props: instanceProps,
       },
@@ -146,7 +147,7 @@ export const SelectedInstanceConnector = ({
     };
 
     // instance props may change dom element
-  }, [instanceElementRef, instance, instanceProps]);
+  }, [instanceElementRef, instance, instanceStylesKey, instanceProps]);
 
   return null;
 };

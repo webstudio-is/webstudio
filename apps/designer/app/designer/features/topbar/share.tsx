@@ -43,7 +43,7 @@ const Content = ({ url }: ShareButtonProps) => {
               event?.target.select();
             }}
           />
-          <Button aria-label="Open in a new tab" variant="blue" type="submit">
+          <Button aria-label="Open in a new tab" type="submit">
             Open
           </Button>
         </Flex>

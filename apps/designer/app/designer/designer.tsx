@@ -6,6 +6,7 @@ import {
   utils as projectUtils,
 } from "@webstudio-is/project";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import { registerContainers, useDesignerStore } from "~/shared/sync";
 import interStyles from "~/shared/font-faces/inter.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
@@ -39,20 +40,16 @@ import {
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
-import { useSubscribeDesignTokens } from "./shared/design-tokens-manager";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
+
+registerContainers();
 
 export const links = () => {
   return [
     { rel: "stylesheet", href: interStyles },
     { rel: "stylesheet", href: designerStyles },
   ];
-};
-
-const useSubscribeRootInstance = () => {
-  const [, setValue] = useRootInstance();
-  useSubscribe("loadRootInstance", setValue);
 };
 
 const useSubscribeSelectedInstanceData = () => {
@@ -294,15 +291,14 @@ export const Designer = ({
   buildOrigin,
 }: DesignerProps) => {
   useSubscribeSyncStatus();
-  useSubscribeRootInstance();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
-  useSubscribeDesignTokens();
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
+  useDesignerStore(publish);
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);

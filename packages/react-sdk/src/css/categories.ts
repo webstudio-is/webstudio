@@ -39,7 +39,7 @@ const gridChild = [
   "order",
 ] as const;
 
-const spacing = [
+const space = [
   "marginTop",
   "marginRight",
   "marginBottom",
@@ -217,7 +217,7 @@ export const categories = {
     properties: gridChild,
     moreFrom: "",
   },
-  spacing: { label: "Spacing", properties: spacing, moreFrom: "" },
+  space: { label: "Space", properties: space, moreFrom: "" },
   size: { label: "Size", properties: size, moreFrom: "" },
   position: { label: "Position", properties: position, moreFrom: "" },
   typography: {
