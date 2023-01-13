@@ -204,13 +204,12 @@ const Property = ({
         <Box />
       ) : (
         <Button
-          ghost
+          variant="ghost"
           onClick={() => {
             onDelete(userProp.id);
           }}
-        >
-          <TrashIcon />
-        </Button>
+          prefix={<TrashIcon />}
+        />
       )}
     </>
   );
@@ -241,14 +240,13 @@ export const PropsPanel = ({
 
   const addButton = (
     <Button
-      ghost
+      variant="ghost"
       onClick={(event) => {
         event.preventDefault();
         addEmptyProp();
       }}
-    >
-      <PlusIcon />
-    </Button>
+      prefix={<PlusIcon />}
+    />
   );
 
   const existingProps = userProps.map((userProp) => userProp.prop);

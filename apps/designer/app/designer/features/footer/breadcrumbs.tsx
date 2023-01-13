@@ -1,5 +1,5 @@
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import { Button, Flex, Text } from "@webstudio-is/design-system";
+import { DeprecatedButton, Flex, Text } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
@@ -12,7 +12,7 @@ type BreadcrumbProps = {
 const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
   return (
     <>
-      <Button
+      <DeprecatedButton
         ghost
         onClick={onClick}
         css={{
@@ -23,7 +23,7 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
         }}
       >
         {children}
-      </Button>
+      </DeprecatedButton>
       <ChevronRightIcon color="white" />
     </>
   );

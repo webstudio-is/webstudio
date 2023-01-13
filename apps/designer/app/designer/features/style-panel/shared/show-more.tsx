@@ -15,8 +15,11 @@ export const ShowMore = ({
     <Collapsible.Root asChild onOpenChange={setIsOpen}>
       <Flex direction="column" gap="3">
         <Collapsible.Trigger asChild>
-          <Button css={{ width: "100%", gap: "$spacing$3" }}>
-            {isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}Show more
+          <Button
+            css={{ width: "100%" }}
+            prefix={isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}
+          >
+            Show more
           </Button>
         </Collapsible.Trigger>
         <Collapsible.Content asChild>

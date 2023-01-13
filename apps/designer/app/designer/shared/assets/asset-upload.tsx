@@ -1,5 +1,5 @@
 import { ChangeEvent, useRef } from "react";
-import { Button, Flex, Text } from "@webstudio-is/design-system";
+import { Button, Flex } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
@@ -45,16 +45,12 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
           style={{ display: "none" }}
         />
         <Button
-          variant="blue"
           type="button"
           onClick={() => inputRef?.current?.click()}
-          size={2}
           css={{ flexGrow: 1 }}
+          prefix={<UploadIcon />}
         >
-          <Flex align="center" gap={1}>
-            <UploadIcon />
-            <Text>Upload</Text>
-          </Flex>
+          Upload
         </Button>
       </Flex>
     </form>

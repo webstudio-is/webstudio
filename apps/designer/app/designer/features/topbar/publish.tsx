@@ -4,6 +4,7 @@ import { ExternalLinkIcon, RocketIcon } from "@webstudio-is/icons";
 import {
   Text,
   Button,
+  DeprecatedButton,
   Flex,
   Label,
   Link,
@@ -73,13 +74,9 @@ const Content = ({ project }: PublishButtonProps) => {
           {fetcher.data?.errors !== undefined && (
             <Text color="error">{fetcher.data?.errors}</Text>
           )}
-          {fetcher.state === "idle" ? (
-            <Button variant="blue" type="submit">
-              Publish
-            </Button>
-          ) : (
-            <Button disabled>Publishing…</Button>
-          )}
+          <Button pending={fetcher.state !== "idle"} type="submit">
+            {fetcher.state !== "idle" ? "Publishing" : "Publish"}
+          </Button>
         </Flex>
       </fetcher.Form>
     </PopoverContent>
@@ -91,10 +88,10 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild aria-label="Publish">
-        <Button ghost css={{ display: "flex", gap: "$spacing$3" }}>
+        <DeprecatedButton ghost css={{ display: "flex", gap: "$spacing$3" }}>
           <RocketIcon />
           <Text>Publish</Text>
-        </Button>
+        </DeprecatedButton>
       </PopoverTrigger>
       <PopoverPortal>
         <Content project={project} />

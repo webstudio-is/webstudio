@@ -6,7 +6,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
   IconButton,
-  Button,
+  DeprecatedButton,
   Text,
   styled,
 } from "@webstudio-is/design-system";
@@ -201,7 +201,7 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const Item = styled(Button, {
+const Item = styled(DeprecatedButton, {
   maxWidth: "100%",
   position: "relative",
   ...menuCssVars({ show: false }),

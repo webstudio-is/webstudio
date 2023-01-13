@@ -75,13 +75,12 @@ const BreakpointEditorItem = ({
         />
         <Button
           type="button"
-          ghost
+          variant="ghost"
           onClick={() => {
             onDelete(breakpoint);
           }}
-        >
-          <TrashIcon />
-        </Button>
+          prefix={<TrashIcon />}
+        />
       </Flex>
     </form>
   );
@@ -112,7 +111,7 @@ export const BreakpointsEditor = ({
       >
         <Text>Breakpoints</Text>
         <Button
-          ghost
+          variant="ghost"
           onClick={() => {
             setBreakpoints([
               ...breakpoints,
@@ -123,9 +122,8 @@ export const BreakpointsEditor = ({
               },
             ]);
           }}
-        >
-          <PlusIcon />
-        </Button>
+          prefix={<PlusIcon />}
+        />
       </Flex>
       {breakpoints.map((breakpoint) => {
         return (

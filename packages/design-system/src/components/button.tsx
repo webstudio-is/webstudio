@@ -1,328 +1,138 @@
+/**
+ * Implementation of the "Button" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=0%3A1
+ */
+
+import React, { forwardRef, type Ref, type ComponentProps } from "react";
+import { Text } from "./text";
 import { styled } from "../stitches.config";
 
-export const Button = styled("button", {
-  // Reset
+// CSS supports multiple gradients as backgrounds but not multiple colors
+const backgroundColors = ({
+  overlay,
+  base,
+}: {
+  overlay: string;
+  base: string;
+}) =>
+  `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
+
+const backgroundStyle = (baseColor: string) => ({
+  background: baseColor,
+  "&:hover": {
+    background: backgroundColors({
+      base: baseColor,
+      overlay: "$colors$backgroundButtonHover",
+    }),
+  },
+  "&:active": {
+    background: backgroundColors({
+      base: baseColor,
+      overlay: "$colors$backgroundButtonPressed",
+    }),
+  },
+});
+
+const StyledButton = styled("button", {
   all: "unset",
-  alignItems: "center",
   boxSizing: "border-box",
-  border: "none",
-  userSelect: "none",
-  transition: "all 150ms ease-out",
-  "&::before": {
-    boxSizing: "border-box",
-  },
-  "&::after": {
-    boxSizing: "border-box",
-  },
-
-  // Custom reset?
-  display: "inline-flex",
-  flexShrink: 0,
-  justifyContent: "center",
-  lineHeight: 1,
-  WebkitTapHighlightColor: "rgba(0,0,0,0)",
   minWidth: 0,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "$spacing$2",
+  color: "$colors$foregroundContrastMain",
+  padding: "0 $spacing$4",
+  height: "$spacing$12",
+  borderRadius: "$borderRadius$4",
 
-  // Custom
-  height: "$spacing$11",
-  px: "$spacing$5",
-  fontFamily: "$sans",
-  fontSize: "$fontSize$3",
-  fontWeight: 500,
-  fontVariantNumeric: "tabular-nums",
-
-  "&:disabled": {
-    backgroundColor: "$slate2",
-    boxShadow: "inset 0 0 0 1px $colors$slate7",
-    color: "$slate8",
-    pointerEvents: "none",
+  "&:focus-visible": {
+    outline: "2px solid $colors$borderFocus",
+    outlineOffset: "1px",
   },
 
   variants: {
-    size: {
-      "1": {
-        borderRadius: "$borderRadius$4",
-        height: "$spacing$11",
-        px: "$spacing$4",
-        fontSize: "$fontSize$3",
-      },
-      "2": {
-        borderRadius: "$borderRadius$6",
-        height: "$spacing$12",
-        px: "$spacing$9",
-        fontSize: "$fontSize$4",
-      },
-      "3": {
-        borderRadius: "$borderRadius$6",
-        height: "$spacing$17",
-        px: "$spacing$10",
-        fontSize: "$fontSize$4",
-      },
-    },
+    // "variant" is used instead of "type" as in Figma,
+    // because type is already taken for type=submit etc.
     variant: {
-      gray: {
-        backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$slate7",
-        color: "$hiContrast",
-        "@hover": {
-          "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$slate8",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$slate2",
-          boxShadow: "inset 0 0 0 1px $colors$slate8",
-        },
-        "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
-        },
-        '&[data-state="open"]': {
-          backgroundColor: "$slate4",
-          boxShadow: "inset 0 0 0 1px $colors$slate8",
-        },
+      primary: { ...backgroundStyle("$colors$backgroundPrimary") },
+      neutral: {
+        ...backgroundStyle("$colors$backgroundNeutralMain"),
+        color: "$colors$foregroundMain",
       },
-      blue: {
-        backgroundColor: "$blue10",
-        color: "white",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "$loContrast",
-            color: "$blue10",
-            boxShadow: "inset 0 0 0 1.5px $colors$blue10",
-          },
-        },
-        "&:active": {
-          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
-        },
-        "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1.5px $colors$blue8, 0 0 0 1.5px $colors$blue8",
-        },
-        '&[data-state="open"]': {
-          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
-        },
-      },
-      green: {
-        backgroundColor: "$green2",
-        boxShadow: "inset 0 0 0 1px $colors$green7",
-        color: "$green11",
-        "@hover": {
-          "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$green8",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$green3",
-          boxShadow: "inset 0 0 0 1px $colors$green8",
-        },
-        "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$green8, 0 0 0 1px $colors$green8",
-        },
-        '&[data-state="open"]': {
-          backgroundColor: "$green4",
-          boxShadow: "inset 0 0 0 1px $colors$green8",
-        },
-      },
-      red: {
-        backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$red10",
-        color: "$red10",
-        "@hover": {
-          "&:hover": {
-            background: "$red10",
-            color: "$loContrast",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$red11",
-          color: "$loContrast",
-        },
-        "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$red8, 0 0 0 1px $colors$red8",
-        },
-        '&[data-state="open"]': {
-          backgroundColor: "$red4",
-          boxShadow: "inset 0 0 0 1px $colors$red8",
-        },
-      },
-      transparentWhite: {
-        backgroundColor: "hsla(0,100%,100%,.2)",
-        color: "white",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "hsla(0,100%,100%,.25)",
-          },
-        },
-        "&:active": {
-          backgroundColor: "hsla(0,100%,100%,.3)",
-        },
-        "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1px hsla(0,100%,100%,.35), 0 0 0 1px hsla(0,100%,100%,.35)",
-        },
-      },
-      raw: {
+      destructive: { ...backgroundStyle("$colors$backgroundDestructiveMain") },
+      positive: { ...backgroundStyle("$colors$backgroundSuccessMain") },
+      ghost: {
+        ...backgroundStyle("$colors$backgroundHover"),
         background: "transparent",
-        color: "inherit",
-        padding: 0,
-        borderRadius: 0,
-        height: "auto",
-      },
-      transparentBlack: {
-        backgroundColor: "hsla(0,0%,0%,.2)",
-        color: "black",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "hsla(0,0%,0%,.25)",
-          },
-        },
-        "&:active": {
-          backgroundColor: "hsla(0,0%,0%,.3)",
-        },
-        "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1px hsla(0,0%,0%,.35), 0 0 0 1px hsla(0,0%,0%,.35)",
-        },
+        color: "$colors$foregroundMain",
       },
     },
-    state: {
-      active: {
-        backgroundColor: "$slate4",
-        boxShadow: "inset 0 0 0 1px $colors$slate8",
-        color: "$slate11",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "$slate6",
-            boxShadow: "inset 0 0 0 1px $colors$slate8",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$slate6",
-        },
-        "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
-        },
-      },
-      waiting: {
-        backgroundColor: "$slate4",
-        boxShadow: "inset 0 0 0 1px $colors$slate8",
-        color: "$colors$slate9",
-        cursor: "wait",
-        "&:hover, &:active": {
-          color: "$colors$slate9",
-        },
-        "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$slate8",
-        },
-      },
-    },
-    ghost: {
+    pending: {
       true: {
-        backgroundColor: "transparent",
-        boxShadow: "none",
+        cursor: "wait",
+      },
+      false: {
+        "&[disabled]": {
+          background: "$colors$backgroundButtonDisabled",
+          color: "$colors$foregroundDisabled",
+        },
       },
     },
   },
-  compoundVariants: [
-    {
-      variant: "gray",
-      ghost: "true",
-      css: {
-        backgroundColor: "transparent",
-        color: "$hiContrast",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "$slateA3",
-            boxShadow: "none",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$slateA4",
-        },
-        "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1px $colors$slateA8, 0 0 0 1px $colors$slateA8",
-        },
-        '&[data-state="open"]': {
-          backgroundColor: "$slateA4",
-          boxShadow: "none",
-        },
-      },
-    },
-    {
-      variant: "blue",
-      ghost: "true",
-      css: {
-        backgroundColor: "transparent",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "$blueA3",
-            boxShadow: "none",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$blueA4",
-        },
-        "&:focus": {
-          boxShadow:
-            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
-        },
-        '&[data-state="open"]': {
-          backgroundColor: "$blueA4",
-          boxShadow: "none",
-        },
-      },
-    },
-    {
-      variant: "green",
-      ghost: "true",
-      css: {
-        backgroundColor: "transparent",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "$greenA3",
-            boxShadow: "none",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$greenA4",
-        },
-        "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1px $colors$greenA8, 0 0 0 1px $colors$greenA8",
-        },
-        '&[data-state="open"]': {
-          backgroundColor: "$greenA4",
-          boxShadow: "none",
-        },
-      },
-    },
-    {
-      variant: "red",
-      ghost: "true",
-      css: {
-        backgroundColor: "transparent",
-        "@hover": {
-          "&:hover": {
-            backgroundColor: "$redA3",
-            boxShadow: "none",
-          },
-        },
-        "&:active": {
-          backgroundColor: "$redA4",
-        },
-        "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$redA8, 0 0 0 1px $colors$redA8",
-        },
-        '&[data-state="open"]': {
-          backgroundColor: "$redA4",
-          boxShadow: "none",
-        },
-      },
-    },
-  ],
+
   defaultVariants: {
-    size: "1",
-    variant: "gray",
+    variant: "primary",
   },
 });
+
+const TextContainer = styled(Text, {
+  padding: "0 $spacing$2",
+  // <Text> incorrectly sets lineHeight to 1 for all variants
+  // here we set lineHeight as it's defined for "label" in Figma
+  // @todo: fix <Text>
+  lineHeight: "$lineHeight$3",
+  defaultVariants: { variant: "label" },
+});
+
+type ButtonProps = {
+  pending?: boolean;
+
+  // prefix/suffix is primarily for Icons
+  // this is a replacement for icon/icon-left/icon-right in Figma
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+} & Omit<ComponentProps<typeof StyledButton>, "pending" | "prefix">;
+
+export const Button = forwardRef(
+  (
+    {
+      pending = false,
+      disabled = false,
+      prefix,
+      suffix,
+      children,
+      ...restProps
+    }: ButtonProps,
+    ref: Ref<HTMLButtonElement>
+  ) => {
+    return (
+      <StyledButton
+        {...restProps}
+        pending={pending}
+        disabled={disabled || pending}
+        ref={ref}
+      >
+        {prefix}
+        {children && (
+          <TextContainer>
+            {children}
+            {pending ? "…" : ""}
+          </TextContainer>
+        )}
+        {suffix}
+      </StyledButton>
+    );
+  }
+);
+Button.displayName = "Button";
