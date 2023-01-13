@@ -38,8 +38,13 @@ export const useSetStyles = (styles: Styles) => {
   });
 };
 
-export const breakpointsContainer = atom<Array<Breakpoint>>([]);
+export const breakpointsContainer = atom<Breakpoint[]>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);
+export const useSetBreakpoints = (breakpoints: Breakpoint[]) => {
+  useSyncInitializeOnce(() => {
+    breakpointsContainer.set(breakpoints);
+  });
+};
 
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);

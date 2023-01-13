@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import store from "immerhin";
 import { type Breakpoint } from "@webstudio-is/css-data";
-import { type Publish, useSubscribe } from "~/shared/pubsub";
+import { useSubscribe } from "~/shared/pubsub";
 import {
   Text,
   DropdownMenu,
@@ -23,16 +24,13 @@ import {
   useSubscribeZoomFromShortcut,
 } from "./use-subscribe-shortcuts";
 import { ConfirmationDialog } from "./confirmation-dialog";
-import { useBreakpoints } from "~/shared/nano-states";
+import {
+  breakpointsContainer,
+  stylesContainer,
+  useBreakpoints,
+} from "~/shared/nano-states";
 import { utils } from "@webstudio-is/project";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    breakpointDelete: Breakpoint;
-    breakpointChange: Breakpoint;
-    loadBreakpoints: Array<Breakpoint>;
-  }
-}
+import { removeByMutable } from "~/shared/array-utils";
 
 type BreakpointSelectorItemProps = {
   breakpoint: Breakpoint;
@@ -56,18 +54,14 @@ const menuItemCss = {
   minWidth: 180,
 };
 
-type BreakpointsProps = {
-  publish: Publish;
-};
-
-export const Breakpoints = ({ publish }: BreakpointsProps) => {
+export const Breakpoints = () => {
   const [view, setView] = useState<
     "selector" | "editor" | "confirmation" | undefined
   >();
   const [breakpointToDelete, setBreakpointToDelete] = useState<
     Breakpoint | undefined
   >();
-  const [breakpoints, setBreakpoints] = useBreakpoints();
+  const [breakpoints] = useBreakpoints();
   const [selectedBreakpoint, setSelectedBreakpoint] = useSelectedBreakpoint();
   const [breakpointPreview, setBreakpointPreview] =
     useState(selectedBreakpoint);
@@ -94,17 +88,20 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
     if (breakpointToDelete === undefined) {
       return;
     }
-    const nextBreakpoints = [...breakpoints];
-    const index = breakpoints.indexOf(breakpointToDelete);
-    nextBreakpoints.splice(index, 1);
-    setBreakpoints(nextBreakpoints);
+    const [updatedBreakpoints] = store.createTransaction(
+      [breakpointsContainer, stylesContainer],
+      (breakpoints, styles) => {
+        removeByMutable(breakpoints, ({ id }) => id === breakpointToDelete.id);
+        removeByMutable(
+          styles,
+          (style) => style.breakpointId === breakpointToDelete.id
+        );
+      }
+    );
     if (breakpointToDelete === selectedBreakpoint) {
-      setSelectedBreakpoint(utils.breakpoints.sort(nextBreakpoints)[0]);
+      setSelectedBreakpoint(utils.breakpoints.sort(updatedBreakpoints)[0]);
     }
-    publish({
-      type: "breakpointDelete",
-      payload: breakpointToDelete,
-    });
+
     setBreakpointToDelete(undefined);
     setView("editor");
   };
@@ -140,8 +137,6 @@ export const Breakpoints = ({ publish }: BreakpointsProps) => {
           {view === "editor" && (
             <>
               <BreakpointsEditor
-                breakpoints={breakpoints}
-                publish={publish}
                 onDelete={(breakpoint) => {
                   setBreakpointToDelete(breakpoint);
                   setView("confirmation");

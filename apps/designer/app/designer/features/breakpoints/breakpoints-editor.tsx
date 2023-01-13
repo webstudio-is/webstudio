@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { type Breakpoint } from "@webstudio-is/css-data";
-import { type Publish } from "~/shared/pubsub";
+import ObjectId from "bson-objectid";
+import store from "immerhin";
+import type { Breakpoint } from "@webstudio-is/css-data";
 import { Button, TextField, Flex, Text } from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
-import ObjectId from "bson-objectid";
-import { useBreakpoints } from "~/shared/nano-states";
+import { breakpointsContainer, useBreakpoints } from "~/shared/nano-states";
+import { replaceByOrAppendMutable } from "~/shared/array-utils";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -87,16 +88,23 @@ const BreakpointEditorItem = ({
 };
 
 type BreakpointsEditorProps = {
-  breakpoints: Array<Breakpoint>;
-  publish: Publish;
   onDelete: (breakpoint: Breakpoint) => void;
 };
 
-export const BreakpointsEditor = ({
-  publish,
-  onDelete,
-}: BreakpointsEditorProps) => {
-  const [breakpoints, setBreakpoints] = useBreakpoints();
+export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
+  const [breakpoints] = useBreakpoints();
+  const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
+  const storedBreakpoints = new Set<string>();
+  for (const breakpoint of breakpoints) {
+    storedBreakpoints.add(breakpoint.id);
+  }
+  // filter out new breakpoints which are already store
+  // instead of deleting from state to avoid the case
+  // when both states do not have such breakpoint
+  // and focused input remounts
+  const newBreakpoints = addedBreakpoints.filter(
+    (breakpoint) => storedBreakpoints.has(breakpoint.id) === false
+  );
   return (
     <Flex gap="2" direction="column">
       <Flex
@@ -113,8 +121,8 @@ export const BreakpointsEditor = ({
         <Button
           variant="ghost"
           onClick={() => {
-            setBreakpoints([
-              ...breakpoints,
+            setAddedBreakpoints((prev) => [
+              ...prev,
               {
                 id: ObjectId().toString(),
                 label: "",
@@ -125,20 +133,19 @@ export const BreakpointsEditor = ({
           prefix={<PlusIcon />}
         />
       </Flex>
-      {breakpoints.map((breakpoint) => {
+      {[...breakpoints, ...newBreakpoints].map((breakpoint) => {
         return (
           <BreakpointEditorItem
             key={breakpoint.id}
             breakpoint={breakpoint}
             onChange={(updatedBreakpoint) => {
-              publish({ type: "breakpointChange", payload: updatedBreakpoint });
-              const nextBreakpoints = breakpoints.map((breakpoint) => {
-                if (breakpoint.id === updatedBreakpoint.id) {
-                  return updatedBreakpoint;
-                }
-                return breakpoint;
+              store.createTransaction([breakpointsContainer], (breakpoints) => {
+                replaceByOrAppendMutable(
+                  breakpoints,
+                  updatedBreakpoint,
+                  ({ id }) => id === updatedBreakpoint.id
+                );
               });
-              setBreakpoints(nextBreakpoints);
             }}
             onDelete={onDelete}
           />
