@@ -1,4 +1,3 @@
-import { CssRule } from "@webstudio-is/css-data";
 import { z } from "zod";
 import { ComponentName, getComponentNames } from "../components";
 
@@ -7,7 +6,6 @@ import { ComponentName, getComponentNames } from "../components";
 export type BaseInstance = {
   id: string;
   component: ComponentName;
-  cssRules: Array<CssRule>;
 };
 
 export type Text = {
@@ -24,7 +22,6 @@ export const toBaseInstance = (instance: Instance): BaseInstance => {
   return {
     id: instance.id,
     component: instance.component,
-    cssRules: instance.cssRules,
   };
 };
 
@@ -41,6 +38,5 @@ export const Instance: z.ZodType<Instance> = z.lazy(() =>
     id: z.string(),
     component: z.enum(getComponentNames() as [ComponentName]),
     children: z.array(z.union([Instance, Text])),
-    cssRules: z.array(CssRule),
   })
 );

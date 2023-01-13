@@ -16,11 +16,7 @@ import {
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import {
-  SharedStyleValue,
-  ImageValue,
-  type CssRule,
-} from "@webstudio-is/css-data";
+import { SharedStyleValue, ImageValue } from "@webstudio-is/css-data";
 import { z } from "zod";
 import DataLoader from "dataloader";
 import warnOnce from "warn-once";
@@ -126,7 +122,6 @@ const InstanceDbIn = z.lazy(() =>
     id: z.string(),
     component: z.string(),
     children: z.array(z.union([InstanceDbIn, Text])),
-    cssRules: z.array(CssRuleDbIn),
   })
 ) as /* Instance is wrong type here, ImageValue is different after transform. We don't use it anyway */ z.ZodType<Instance>;
 
@@ -163,27 +158,14 @@ export const deleteById = async (treeId: Tree["id"]): Promise<void> => {
   await prisma.tree.delete({ where: { id: treeId } });
 };
 
-const addStylesToInstancesMutable = (instance: Instance, styles: Styles) => {
-  const cssRulesMap = new Map<string, CssRule>();
-  for (const style of styles) {
-    if (instance.id !== style.instanceId) {
-      continue;
-    }
-    let rule = cssRulesMap.get(style.breakpointId);
-    if (rule === undefined) {
-      rule = {
-        breakpoint: style.breakpointId,
-        style: {},
-      };
-      cssRulesMap.set(style.breakpointId, rule);
-    }
-    rule.style[style.property] = style.value;
-  }
-  instance.cssRules = Array.from(cssRulesMap.values());
+const deleteCssRulesFromInstancesMutable = (instance: Instance) => {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  delete instance.cssRules;
 
   for (const child of instance.children) {
     if (child.type === "instance") {
-      addStylesToInstancesMutable(child, styles);
+      deleteCssRulesFromInstancesMutable(child);
     }
   }
 };
@@ -204,11 +186,12 @@ export const loadById = async (
 
   const root = await InstanceDbOut.parseAsync(dbRoot);
 
+  deleteCssRulesFromInstancesMutable(root);
+
   Instance.parse(root);
 
   const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
   const styles = Styles.parse(JSON.parse(tree.styles));
-  addStylesToInstancesMutable(root, styles);
 
   return {
     ...tree,
