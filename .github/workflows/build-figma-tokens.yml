@@ -13,12 +13,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.ACCESS_TOKEN_FOR_FIGMA_TOKENS }}
+
       - uses: ./.github/actions/ci-setup
 
       - name: Configure git
         run: |
           git config --global user.name 'Bot'
-          git config --global user.email 'rpominov@users.noreply.github.com'
+          git config --global user.email 'bot@localhost'
 
       # @todo: different branch
       - name: Switch branch
