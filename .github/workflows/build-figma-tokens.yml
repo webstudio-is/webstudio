@@ -33,5 +33,5 @@ jobs:
 
       - name: Commit and push
         run: |
-          git commit -m "Update figma-design-tokens.ts" packages/design-system/src/__generated__/figma-design-tokens.ts
+          [[ -z `git status | grep figma-design-tokens.ts` ]] || git commit -m "Update figma-design-tokens.ts" packages/design-system/src/__generated__/figma-design-tokens.ts
           git push
