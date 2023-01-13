@@ -516,6 +516,11 @@
           "value": "#7e868c",
           "type": "color",
           "description": "color for the hidden current item in the navigator item component"
+        },
+        "menu-item-hover": {
+          "value": "#c9c9c9",
+          "type": "color",
+          "description": "The hover state on menu item components."
         }
       },
       "tooltip": {
@@ -921,6 +926,8 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }
