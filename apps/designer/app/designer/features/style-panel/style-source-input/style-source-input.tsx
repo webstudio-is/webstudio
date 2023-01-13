@@ -19,7 +19,7 @@ import {
   type RefObject,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { StyleSource, type ItemState } from "./style-source";
+import { ItemSource, StyleSource, type ItemState } from "./style-source";
 import { useSortable } from "./use-sortable";
 
 type IntermediateItem = {
@@ -27,6 +27,7 @@ type IntermediateItem = {
   label: string;
   hasMenu: boolean;
   state: ItemState;
+  source: ItemSource;
 };
 
 type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
@@ -45,7 +46,7 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     onDisableItem?: (item: Item) => void;
     onEnableItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
-    onChangeCurrent?: (id: string) => void;
+    onSelectItem?: (id: string) => void;
     onChangeEditing?: (id?: string) => void;
     editingItemId?: string;
     currentItemId?: string;
@@ -61,7 +62,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     containerRef,
     inputRef,
     state,
-    variant,
+    variant: textFieldVariant,
     onFocus,
     onBlur,
     onClick,
@@ -75,7 +76,7 @@ const TextFieldBase: ForwardRefRenderFunction<
     onDisableItem,
     onEnableItem,
     onSort,
-    onChangeCurrent,
+    onSelectItem,
     onChangeEditing,
     currentItemId,
     editingItemId,
@@ -97,7 +98,7 @@ const TextFieldBase: ForwardRefRenderFunction<
       aria-disabled={disabled}
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
       state={state}
-      variant={variant}
+      variant={textFieldVariant}
       css={{ ...css, px: "$spacing$3", py: "$spacing$2" }}
       onKeyDown={onKeyDown}
     >
@@ -111,18 +112,18 @@ const TextFieldBase: ForwardRefRenderFunction<
               ? "editing"
               : item.state
           }
-          isCurrent={item.id === currentItemId}
+          source={item.source}
           onStateChange={(state) => {
             onChangeEditing?.(state === "editing" ? item.id : undefined);
             if (state === "disabled") {
               onDisableItem?.(item);
             }
-            if (state === "initial") {
+            if (state === "unselected") {
               onEnableItem?.(item);
             }
           }}
-          onChangeCurrent={() => {
-            onChangeCurrent?.(item.id);
+          onSelect={() => {
+            onSelectItem?.(item.id);
           }}
           onChange={(label) => {
             onChangeEditing?.();
@@ -164,11 +165,11 @@ type StyleSourceInputProps<Item> = {
   value?: Array<Item>;
   editingItemId?: string;
   currentItemId?: string;
-  onSelectItem?: (item: Item) => void;
+  onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
   onCreateItem?: (item: Item) => void;
   onChangeItem?: (item: Item) => void;
-  onChangeCurrent?: (id: string) => void;
+  onSelectItem?: (id: string) => void;
   onChangeEditing?: (id?: string) => void;
   onDuplicateItem?: (item: Item) => void;
   onDisableItem?: (item: Item) => void;
@@ -191,12 +192,18 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     isOpen,
   } = useCombobox({
     items: props.items ?? [],
-    value: { label, hasMenu: true, state: "initial", id: "" },
+    value: {
+      label,
+      hasMenu: true,
+      state: "unselected",
+      id: "",
+      source: "local",
+    },
     selectedItem: undefined,
     itemToString: (item) => (item ? item.label : ""),
     onItemSelect(item) {
       setLabel("");
-      props.onSelectItem?.(item as Item);
+      props.onSelectAutocompleteItem?.(item as Item);
     },
     onInputChange(label) {
       setLabel(label ?? "");
@@ -224,7 +231,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             {...inputProps}
             onRemoveItem={props.onRemoveItem}
             onChangeItem={props.onChangeItem}
-            onChangeCurrent={props.onChangeCurrent}
+            onSelectItem={props.onSelectItem}
             onChangeEditing={props.onChangeEditing}
             onDuplicateItem={props.onDuplicateItem}
             onDisableItem={props.onDisableItem}

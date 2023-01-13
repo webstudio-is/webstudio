@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
-import { StyleSourceInput, type ItemState } from "./";
+import { StyleSourceInput, type ItemState, type ItemSource } from "./";
 
 export default {
   component: StyleSourceInput,
@@ -10,40 +10,39 @@ export default {
 type Item = {
   id: string;
   label: string;
-  source: "token" | "local";
+  source: ItemSource;
   hasMenu: boolean;
   state: ItemState;
 };
 
-const localItem: Item = {
-  id: "0",
-  label: "Local",
-  source: "local",
-  hasMenu: false,
-  state: "initial",
-};
-
 const items: Array<Item> = [
   {
-    id: "1",
+    id: uuid(),
+    label: "Local",
+    source: "local",
+    hasMenu: false,
+    state: "unselected",
+  },
+  {
+    id: uuid(),
     label: "Apple",
     source: "token",
     hasMenu: false,
-    state: "initial",
+    state: "unselected",
   },
   {
-    id: "2",
+    id: uuid(),
     label: "Banana",
-    source: "token",
+    source: "tag",
     hasMenu: false,
-    state: "initial",
+    state: "unselected",
   },
   {
-    id: "3",
+    id: uuid(),
     label: "Orange",
-    source: "token",
+    source: "state",
     hasMenu: false,
-    state: "initial",
+    state: "unselected",
   },
 ];
 
@@ -56,8 +55,8 @@ const createItem = (
     id: uuid(),
     label,
     source: "token",
-    hasMenu: false,
-    state: "initial",
+    hasMenu: true,
+    state: "unselected",
   };
   setValue([...value, item]);
 };
@@ -74,7 +73,7 @@ const removeItem = (
 };
 
 export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState([localItem, ...items]);
+  const [value, setValue] = useState(items);
   return (
     <StyleSourceInput
       css={{ width: 300 }}
@@ -83,7 +82,7 @@ export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
-      onSelectItem={(item) => {
+      onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
@@ -99,12 +98,12 @@ export const WithTruncatedItem: ComponentStory<
 > = () => {
   const [value, setValue] = useState<Array<Item>>([
     {
-      id: "0",
+      id: uuid(),
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
       hasMenu: false,
-      state: "initial",
+      state: "unselected",
     },
   ]);
   return (
@@ -115,7 +114,7 @@ export const WithTruncatedItem: ComponentStory<
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
-      onSelectItem={(item) => {
+      onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
@@ -130,11 +129,11 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
     ...items,
     {
-      id: "0",
+      id: uuid(),
       label: "Grape",
       source: "token",
       hasMenu: true,
-      state: "initial",
+      state: "selected",
     },
   ]);
   const [editingItemId, setEditingItemId] = useState<string>();
@@ -148,12 +147,12 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       value={value}
       editingItemId={editingItemId}
       currentItemId={currentItemId}
-      onChangeCurrent={setCurrentItemId}
+      onSelectItem={setCurrentItemId}
       onChangeEditing={setEditingItemId}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
-      onSelectItem={(item) => {
+      onSelectAutocompleteItem={(item) => {
         setValue([...value, item]);
       }}
       onRemoveItem={(itemToRemove) => {
@@ -183,7 +182,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
         setValue(
           value.map((item) => {
             if (item.id === itemToEnable.id) {
-              return { ...item, state: "initial" };
+              return { ...item, state: "unselected" };
             }
             return item;
           })
