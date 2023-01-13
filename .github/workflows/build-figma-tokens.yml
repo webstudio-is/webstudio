@@ -1,0 +1,33 @@
+name: Build and commit Figma tokens
+
+on:
+  push:
+    branches:
+      - ignore_tokens_ts # @todo: different branch
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/ci-setup
+
+      - name: Configure git
+        run: |
+          git config --global user.name 'Bot'
+          git config --global user.email 'rpominov@users.noreply.github.com'
+
+      # @todo: different branch
+      - name: Switch branch
+        run: git checkout ignore_tokens_ts
+
+      # @todo: don't build everyting
+      - name: Build tokens
+        run: pnpm build
+
+      # @todo: commit only 1 file
+      - name: Commit and push
+        run: |
+          git commit -am "Automated report"
+          git push
