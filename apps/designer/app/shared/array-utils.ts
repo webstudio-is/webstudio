@@ -1,6 +1,9 @@
-type Predicate<T> = (value: T) => boolean;
+type Predicate<Item> = (value: Item) => boolean;
 
-export const removeByMutable = <T>(array: T[], predicate: Predicate<T>) => {
+export const removeByMutable = <Item>(
+  array: Item[],
+  predicate: Predicate<Item>
+) => {
   // reversed order to splice without breaking index
   for (let index = array.length - 1; index >= 0; index -= 1) {
     if (predicate(array[index])) {
@@ -9,10 +12,10 @@ export const removeByMutable = <T>(array: T[], predicate: Predicate<T>) => {
   }
 };
 
-export const replaceByOrAppendMutable = <T>(
-  array: T[],
-  item: T,
-  predicate: Predicate<T>
+export const replaceByOrAppendMutable = <Item>(
+  array: Item[],
+  item: Item,
+  predicate: Predicate<Item>
 ) => {
   const matchedIndex = array.findIndex(predicate);
   if (matchedIndex === -1) {
