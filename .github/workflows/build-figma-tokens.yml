@@ -22,9 +22,8 @@ jobs:
       - name: Switch branch
         run: git checkout ignore_tokens_ts
 
-      # @todo: don't build everyting
       - name: Build tokens
-        run: pnpm build
+        run: pnpm build-figma-tokens
 
       # @todo: commit only 1 file
       - name: Commit and push
