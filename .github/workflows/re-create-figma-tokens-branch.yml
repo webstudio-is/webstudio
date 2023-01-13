@@ -1,0 +1,23 @@
+name: Re-create branch for Figma tokens
+
+on: delete
+
+permissions:
+  contents: write
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    # run if figma-tokens was deleted
+    if: ${{ github.event.ref == 'figma-tokens'}}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Re-create branch
+        run: |
+          git checkout main
+          git checkout -b figma-tokens
+          git push --set-upstream origin figma-tokens
