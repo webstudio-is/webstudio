@@ -103,11 +103,13 @@ export type ItemSource = "token" | "tag" | "state" | "local";
 
 const useEditableText = ({
   state,
+  isEditable,
   onStateChange,
   onChange,
   onClick,
 }: {
   state: ItemState;
+  isEditable: boolean;
   onStateChange: (state: ItemState) => void;
   onChange: (value: string) => void;
   onClick: () => void;
@@ -158,7 +160,9 @@ const useEditableText = ({
   };
 
   const handleDoubleClick = () => {
-    onStateChange("editing");
+    if (isEditable) {
+      onStateChange("editing");
+    }
   };
 
   const handlers = {
@@ -173,6 +177,7 @@ const useEditableText = ({
 
 type EditableTextProps = {
   label: string;
+  isEditable: boolean;
   onChange: (value: string) => void;
   state: ItemState;
   onStateChange: (state: ItemState) => void;
@@ -183,11 +188,13 @@ const EditableText = ({
   onChange,
   label,
   state,
+  isEditable,
   onStateChange,
   onClick,
 }: EditableTextProps) => {
   const { ref, handlers } = useEditableText({
     state,
+    isEditable,
     onStateChange,
     onChange,
     onClick,
@@ -282,6 +289,7 @@ type StyleSourceProps = {
   id: string;
   label: string;
   hasMenu: boolean;
+  isEditable: boolean;
   state: ItemState;
   source: ItemSource;
   onStateChange: (state: ItemState) => void;
@@ -296,6 +304,7 @@ export const StyleSource = ({
   label,
   hasMenu,
   state,
+  isEditable,
   source,
   onChange,
   onStateChange,
@@ -311,6 +320,7 @@ export const StyleSource = ({
     <Item state={state} source={source} data-id={id} ref={ref}>
       <EditableText
         state={state}
+        isEditable={isEditable}
         onStateChange={onStateChange}
         onClick={onSelect}
         onChange={onChange}

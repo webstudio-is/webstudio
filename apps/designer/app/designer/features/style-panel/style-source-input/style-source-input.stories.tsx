@@ -12,6 +12,7 @@ type Item = {
   label: string;
   source: ItemSource;
   hasMenu: boolean;
+  isEditable: boolean;
   state: ItemState;
 };
 
@@ -21,6 +22,7 @@ const items: Array<Item> = [
     label: "Local",
     source: "local",
     hasMenu: false,
+    isEditable: false,
     state: "unselected",
   },
   {
@@ -28,6 +30,7 @@ const items: Array<Item> = [
     label: "Apple",
     source: "token",
     hasMenu: false,
+    isEditable: true,
     state: "unselected",
   },
   {
@@ -35,6 +38,7 @@ const items: Array<Item> = [
     label: "Banana",
     source: "tag",
     hasMenu: false,
+    isEditable: true,
     state: "unselected",
   },
   {
@@ -42,6 +46,7 @@ const items: Array<Item> = [
     label: "Orange",
     source: "state",
     hasMenu: false,
+    isEditable: true,
     state: "unselected",
   },
 ];
@@ -56,6 +61,7 @@ const createItem = (
     label,
     source: "token",
     hasMenu: true,
+    isEditable: true,
     state: "unselected",
   };
   setValue([...value, item]);
@@ -103,6 +109,7 @@ export const WithTruncatedItem: ComponentStory<
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
       hasMenu: false,
+      isEditable: true,
       state: "unselected",
     },
   ]);
@@ -133,6 +140,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       label: "Grape",
       source: "token",
       hasMenu: true,
+      isEditable: true,
       state: "selected",
     },
   ]);

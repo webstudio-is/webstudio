@@ -26,6 +26,7 @@ type IntermediateItem = {
   id: string;
   label: string;
   hasMenu: boolean;
+  isEditable: boolean;
   state: ItemState;
   source: ItemSource;
 };
@@ -113,6 +114,7 @@ const TextFieldBase: ForwardRefRenderFunction<
               : item.state
           }
           source={item.source}
+          isEditable={item.isEditable}
           onStateChange={(state) => {
             onChangeEditing?.(state === "editing" ? item.id : undefined);
             if (state === "disabled") {
@@ -198,6 +200,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
       state: "unselected",
       id: "",
       source: "local",
+      isEditable: true,
     },
     selectedItem: undefined,
     itemToString: (item) => (item ? item.label : ""),
