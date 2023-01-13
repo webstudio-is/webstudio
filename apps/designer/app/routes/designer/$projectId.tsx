@@ -20,7 +20,7 @@ export const loader = async ({
   const { allowed } = await trpcClient.authorize.check.query({ name: "hello" });
 
   // eslint-disable-next-line no-console
-  console.log(allowed);
+  console.log("===================", { allowed });
 
   const url = new URL(request.url);
   const pageIdParam = url.searchParams.get("pageId");
