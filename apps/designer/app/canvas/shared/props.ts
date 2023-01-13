@@ -6,10 +6,10 @@ import {
   deletePropMutable,
 } from "~/shared/props-utils";
 
-export const useManageProps = ({ treeId }: { treeId: string }) => {
+export const useManageProps = () => {
   useSubscribe("updateProps", (userPropsUpdates) => {
     store.createTransaction([allUserPropsContainer], (allUserProps) => {
-      updateAllUserPropsMutable(treeId, allUserProps, userPropsUpdates);
+      updateAllUserPropsMutable(allUserProps, userPropsUpdates);
     });
   });
 

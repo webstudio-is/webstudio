@@ -13,19 +13,14 @@ export const NoProps: ComponentStoryObj<typeof PropsPanel> = {
       id: "1",
       component: "Button",
       browserStyle: {},
-      props: {
-        id: "1",
-        props: [
-          {
-            id: "disabled",
-            prop: "disabled",
-            type: "boolean",
-            value: true,
-          },
-        ],
-        instanceId: "2",
-        treeId: "1",
-      },
+      props: [
+        {
+          id: "disabled",
+          prop: "disabled",
+          type: "boolean",
+          value: true,
+        },
+      ],
     },
   },
 };
@@ -36,12 +31,7 @@ export const RequiredProps: ComponentStoryObj<typeof PropsPanel> = {
       id: "1",
       component: "Link",
       browserStyle: {},
-      props: {
-        id: "1",
-        props: [],
-        instanceId: "2",
-        treeId: "1",
-      },
+      props: [],
     },
   },
 };
@@ -52,12 +42,7 @@ export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
       id: "1",
       component: "Button",
       browserStyle: {},
-      props: {
-        id: "1",
-        props: [],
-        instanceId: "2",
-        treeId: "1",
-      },
+      props: [],
     },
   },
 };
@@ -70,18 +55,13 @@ export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
       id: "3",
       component: "Heading",
       browserStyle: {},
-      props: {
-        id: "2",
-        instanceId: "2",
-        treeId: "1",
-        props: Object.entries(meta).map(([prop, value]) => {
-          return {
-            id: prop,
-            prop,
-            value: value?.defaultValue ?? "",
-          } as UserProp;
-        }),
-      },
+      props: Object.entries(meta).map(([prop, value]) => {
+        return {
+          id: prop,
+          prop,
+          value: value?.defaultValue ?? "",
+        } as UserProp;
+      }),
     },
   },
 };

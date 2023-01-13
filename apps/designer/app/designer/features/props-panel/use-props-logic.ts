@@ -63,11 +63,7 @@ const getRequiredProps = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
 
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
+  const props = selectedInstanceData.props ?? [];
 
   return Object.entries(meta)
     .filter(([_, value]) => value?.required)
@@ -101,11 +97,7 @@ const getPropsWithDefaultValue = (
   const { component } = selectedInstanceData;
   const meta = getComponentMetaProps(component);
 
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
+  const props = selectedInstanceData.props ?? [];
 
   return Object.entries(meta)
     .filter(([_, value]) => value?.defaultValue != null)
@@ -129,11 +121,7 @@ const getPropsWithDefaultValue = (
 const getInitialProps = (
   selectedInstanceData: SelectedInstanceData
 ): UserProp[] => {
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
+  const props = selectedInstanceData.props ?? [];
 
   const { component } = selectedInstanceData;
   const meta = getComponentMeta(component);
@@ -179,11 +167,7 @@ export const usePropsLogic = ({
   selectedInstanceData,
   publish,
 }: UsePropsLogic) => {
-  const props =
-    selectedInstanceData.props === undefined ||
-    selectedInstanceData.props.props.length === 0
-      ? []
-      : selectedInstanceData.props.props;
+  const props = selectedInstanceData.props ?? [];
 
   const [requiredProps] = useState<Array<UserProp>>(() =>
     uniqBy(
@@ -204,7 +188,6 @@ export const usePropsLogic = ({
     publish({
       type: "updateProps",
       payload: {
-        propsId: selectedInstanceData.props?.id,
         instanceId: selectedInstanceData.id,
         updates,
       },

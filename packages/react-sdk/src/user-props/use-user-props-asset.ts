@@ -18,7 +18,7 @@ export const useUserPropsAsset = (
     if (propsData == null) {
       return undefined;
     }
-    const prop = propsData.props.find((prop) => prop.prop === propName);
+    const prop = propsData.find((prop) => prop.prop === propName);
 
     if (prop == null) {
       return undefined;
