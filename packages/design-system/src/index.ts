@@ -29,7 +29,7 @@ export {
   EnhancedTooltipProvider,
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
-export { Button } from "./components/button";
+export { Button, baseButtonStyle } from "./components/button";
 export { DeprecatedButton } from "./components/__DEPRECATED__/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export { IconButton } from "./components/icon-button";

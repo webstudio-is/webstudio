@@ -5,9 +5,9 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuTrigger,
-  IconButton,
   Text,
   styled,
+  baseButtonStyle,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -17,6 +17,8 @@ import {
   type KeyboardEvent,
   type KeyboardEventHandler,
   type FocusEvent,
+  ComponentProps,
+  forwardRef,
 } from "react";
 
 // Used to schedule function calls to be executed after at a later point in time.
@@ -39,7 +41,74 @@ const menuCssVars = ({ show }: { show: boolean }) => ({
   [menuTriggerVisibilityVar]: show ? "visible" : "hidden",
 });
 
+const MenuTrigger = styled("button", baseButtonStyle, {
+  position: "absolute",
+  right: 0,
+  top: 0,
+  height: "100%",
+  padding: 0,
+  borderTopLeftRadius: 0,
+  borderBottomLeftRadius: 0,
+  visibility: cssVars.use(menuTriggerVisibilityVar),
+  variants: {
+    source: {
+      local: {
+        background: "$colors$backgroundStyleSourceToken",
+        "&:hover": {
+          background: "$colors$backgroundButtonHover",
+        },
+      },
+      token: {
+        background: "$colors$backgroundStyleSourceToken",
+        "&:hover": {
+          background: "$colors$backgroundButtonHover",
+        },
+      },
+      tag: {
+        background: "$colors$backgroundStyleSourceTag",
+        "&:hover": {
+          background: "$colors$backgroundButtonHover",
+        },
+      },
+      state: {
+        background: "$colors$backgroundStyleSourceState",
+        "&:hover": {
+          background: "$colors$backgroundButtonHover",
+        },
+      },
+    },
+  },
+});
+
+const MenuTriggerGradient = styled("div", {
+  position: "absolute",
+  top: 0,
+  right: 0,
+  width: "$spacing$11",
+  height: "100%",
+  visibility: cssVars.use(menuTriggerVisibilityVar),
+  borderTopRightRadius: "$borderRadius$4",
+  borderBottomRightRadius: "$borderRadius$4",
+  variants: {
+    source: {
+      local: {
+        background: "$colors$backgroundStyleSourceGradientToken",
+      },
+      token: {
+        background: "$colors$backgroundStyleSourceGradientToken",
+      },
+      tag: {
+        background: "$colors$backgroundStyleSourceGradientTag",
+      },
+      state: {
+        background: "$colors$backgroundStyleSourceGradientState",
+      },
+    },
+  },
+});
+
 type MenuProps = {
+  source: ItemSource;
   state: ItemState;
   onEdit: () => void;
   onDisable: () => void;
@@ -52,18 +121,11 @@ const Menu = (props: MenuProps) => {
   const scheduler = useCallScheduler();
   return (
     <DropdownMenu modal>
+      <MenuTriggerGradient source={props.source} />
       <DropdownMenuTrigger asChild>
-        {/* Migrate to a Button component once implemented https://github.com/webstudio-is/webstudio-designer/issues/450 */}
-        <IconButton
-          aria-label="Menu Button"
-          css={{
-            position: "absolute",
-            right: 0,
-            visibility: cssVars.use(menuTriggerVisibilityVar),
-          }}
-        >
+        <MenuTrigger aria-label="Menu Button" source={props.source}>
           <ChevronDownIcon />
-        </IconButton>
+        </MenuTrigger>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent onCloseAutoFocus={scheduler.call}>
@@ -240,7 +302,7 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const Item = styled("div", {
+const StyledItem = styled("div", {
   display: "inline-flex",
   borderRadius: "$borderRadius$3",
   padding: "$spacing$4",
@@ -285,6 +347,22 @@ const Item = styled("div", {
   },
 });
 
+const Item = forwardRef<HTMLDivElement, ComponentProps<typeof StyledItem>>(
+  ({ id, state, ...props }, ref) => {
+    return (
+      <StyledItem
+        data-id={id}
+        aria-current={state === "selected"}
+        role="button"
+        state={state}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Item.displayName = "Item";
+
 type StyleSourceProps = {
   id: string;
   label: string;
@@ -317,7 +395,7 @@ export const StyleSource = ({
     state === "editing"
   );
   return (
-    <Item state={state} source={source} data-id={id} ref={ref}>
+    <Item state={state} source={source} id={id} ref={ref}>
       <EditableText
         state={state}
         isEditable={isEditable}
@@ -328,6 +406,7 @@ export const StyleSource = ({
       />
       {hasMenu === true && state !== "editing" && (
         <Menu
+          source={source}
           state={state}
           onDuplicate={onDuplicate}
           onRemove={onRemove}

@@ -153,6 +153,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
           autoFocus
+          aria-label="New Style Source Input"
         />
       )}
     </TextFieldContainer>

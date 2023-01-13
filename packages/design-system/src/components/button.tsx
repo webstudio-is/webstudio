@@ -5,7 +5,7 @@
 
 import React, { forwardRef, type Ref, type ComponentProps } from "react";
 import { Text } from "./text";
-import { styled } from "../stitches.config";
+import { css, styled } from "../stitches.config";
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
 const backgroundColors = ({
@@ -33,7 +33,7 @@ const backgroundStyle = (baseColor: string) => ({
   },
 });
 
-const StyledButton = styled("button", {
+export const baseButtonStyle = css({
   all: "unset",
   boxSizing: "border-box",
   minWidth: 0,
@@ -50,7 +50,9 @@ const StyledButton = styled("button", {
     outline: "2px solid $colors$borderFocus",
     outlineOffset: "1px",
   },
+});
 
+const StyledButton = styled("button", baseButtonStyle, {
   variants: {
     // "variant" is used instead of "type" as in Figma,
     // because type is already taken for type=submit etc.
@@ -60,7 +62,9 @@ const StyledButton = styled("button", {
         ...backgroundStyle("$colors$backgroundNeutralMain"),
         color: "$colors$foregroundMain",
       },
-      destructive: { ...backgroundStyle("$colors$backgroundDestructiveMain") },
+      destructive: {
+        ...backgroundStyle("$colors$backgroundDestructiveMain"),
+      },
       positive: { ...backgroundStyle("$colors$backgroundSuccessMain") },
       ghost: {
         ...backgroundStyle("$colors$backgroundHover"),
