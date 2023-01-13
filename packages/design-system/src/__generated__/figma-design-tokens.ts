@@ -49,19 +49,25 @@ export const boxShadow = {
 
 export const fontFamilies = {
   inter: "Inter",
-  roboto: "Roboto",
   manrope: "Manrope",
+  robotoMono: "Roboto Mono",
 } as const;
 
-export const lineHeights = { "0": 16, "1": 8, "2": 10, "3": "AUTO" } as const;
+export const lineHeights = {
+  "0": 16,
+  "1": 8,
+  "2": 10,
+  "3": "AUTO",
+  "4": 11,
+} as const;
 
 export const fontWeights = {
   inter0: "Regular",
   inter1: "Medium",
   inter2: "Bold",
-  roboto3: "Regular",
   inter4: "Semi Bold",
   manrope5: "SemiBold",
+  robotoMono3: "Regular",
 } as const;
 
 export const fontSizes = {
@@ -89,18 +95,29 @@ export const typography = {
     fontSize: 12,
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
     textCase: "none",
     textDecoration: "none",
   },
-  labels: {
+  labelsTitleCase: {
     fontFamily: "Inter",
     fontWeight: "Medium",
     lineHeight: 16,
     fontSize: 12,
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
+    textCase: "capitalize",
+    textDecoration: "none",
+  },
+  labelsSentenceCase: {
+    fontFamily: "Inter",
+    fontWeight: "Medium",
+    lineHeight: 16,
+    fontSize: 12,
+    letterSpacing: "0.5%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
     textCase: "none",
     textDecoration: "none",
   },
@@ -111,18 +128,40 @@ export const typography = {
     fontSize: 12,
     letterSpacing: "1%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
     textCase: "none",
     textDecoration: "none",
   },
   mono: {
-    fontFamily: "Roboto",
+    fontFamily: "Roboto Mono",
     fontWeight: "Regular",
     lineHeight: 16,
     fontSize: 12,
     letterSpacing: "0%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
+    textCase: "none",
+    textDecoration: "none",
+  },
+  bigTitle: {
+    fontFamily: "Inter",
+    fontWeight: "Medium",
+    lineHeight: "AUTO",
+    fontSize: 32,
+    letterSpacing: "0.5%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
+    textCase: "none",
+    textDecoration: "none",
+  },
+  small: {
+    fontFamily: "Inter",
+    fontWeight: "Regular",
+    lineHeight: 11,
+    fontSize: 10,
+    letterSpacing: "0%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
     textCase: "none",
     textDecoration: "none",
   },
@@ -133,7 +172,7 @@ export const typography = {
     fontSize: 8,
     letterSpacing: "1%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
     textCase: "none",
     textDecoration: "none",
   },
@@ -144,40 +183,29 @@ export const typography = {
     fontSize: 10,
     letterSpacing: 0,
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
     textCase: "uppercase",
     textDecoration: "none",
   },
-  spacingSectionValueText: {
-    fontFamily: "Inter",
-    fontWeight: "Medium",
-    lineHeight: 10,
-    fontSize: 10,
-    letterSpacing: "0%",
-    paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
-    textCase: "none",
-    textDecoration: "none",
-  },
-  spacingSectionUnitText: {
+  spaceSectionUnitText: {
     fontFamily: "Inter",
     fontWeight: "Semi Bold",
     lineHeight: 8,
     fontSize: 8,
     letterSpacing: "1%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
     textCase: "uppercase",
     textDecoration: "none",
   },
-  bigTitle: {
+  spaceSectionValueText: {
     fontFamily: "Inter",
     fontWeight: "Medium",
-    lineHeight: "AUTO",
-    fontSize: 32,
-    letterSpacing: "0.5%",
+    lineHeight: 10,
+    fontSize: 10,
+    letterSpacing: "0%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
     textCase: "none",
     textDecoration: "none",
   },
@@ -188,13 +216,17 @@ export const typography = {
     fontSize: 20,
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
-    paragraphIndent: "{paragraphIndent.0}",
+    paragraphIndent: "0px",
     textCase: "none",
     textDecoration: "none",
   },
 } as const;
 
-export const textCase = { none: "none", uppercase: "uppercase" } as const;
+export const textCase = {
+  none: "none",
+  uppercase: "uppercase",
+  capitalize: "capitalize",
+} as const;
 
 export const textDecoration = { none: "none" } as const;
 
@@ -218,7 +250,7 @@ export const color = {
   backgroundControls: "#ffffff",
   backgroundAssetcardHover: "#e6e8eb",
   backgroundBrandGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
-  backgroundNeutralMain: "#687076",
+  backgroundNeutralMain: "#D7DBDF",
   backgroundNeutralAccent: "#11181c",
   backgroundNeutralNotification: "#ffffff",
   backgroundDestructiveMain: "#dc3d43",
@@ -229,8 +261,8 @@ export const color = {
   backgroundAlertNotification: "#fffbd1",
   backgroundInfoMain: "#006adc",
   backgroundInfoNotification: "#edf6ff",
-  backgroundPresetMain: "#dfe3e6",
-  backgroundPresetHover: "#d7dbdf",
+  backgroundPresetMain: "#E6E8EB",
+  backgroundPresetHover: "#DFE3E6",
   backgroundSetMain: "#e1f0ff",
   backgroundSetHover: "#cee7fe",
   backgroundInheritedMain: "#ffe8d7",
@@ -253,6 +285,17 @@ export const color = {
   backgroundProjectCardTextArea: "#ffffffe6",
   backgroundPublishedMain: "#39fbbb",
   backgroundPublishedContrast: "#ebfffc",
+  backgroundStyleSourceToken: "#0081f1",
+  backgroundStyleSourceTag: "#d23197",
+  backgroundStyleSourceState: "#299764",
+  backgroundStyleSourceNeutral: "#687076",
+  backgroundStyleSourceDisabled: "#9da2a6",
+  backgroundStyleSourceGradientToken:
+    "linear-gradient(90deg, #0081f100 0%, #0081f1 31.87%)",
+  backgroundStyleSourceGradientTag:
+    "linear-gradient(90deg, #d2319700 0%, #d23197 31.87%)",
+  backgroundStyleSourceGradientState:
+    "linear-gradient(90deg, #29976400 0%, #299764 31.87%)",
   borderMain: "#c1c8cd",
   borderFocus: "#0081f1",
   borderMenuInner: "#fcfcfc",
@@ -294,5 +337,9 @@ export const color = {
   maintenanceDark: "#858585",
   maintenanceSpacerViz: "#f9c6c6",
 } as const;
+
+export const borderWidth = { borderWidth1: 1, borderWidth2: 2 } as const;
+
+export const dimension = { paragraphIndent0: "0px" } as const;
 
 export const other = { tokenSetOrder0: "global" } as const;
