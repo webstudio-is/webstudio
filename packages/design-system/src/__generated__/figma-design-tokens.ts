@@ -107,7 +107,6 @@ export const typography = {
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
-<<<<<<< HEAD
     textCase: "capitalize",
     textDecoration: "none",
   },
@@ -119,8 +118,6 @@ export const typography = {
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
-=======
->>>>>>> main
     textCase: "none",
     textDecoration: "none",
   },
@@ -143,7 +140,6 @@ export const typography = {
     letterSpacing: "0%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
-<<<<<<< HEAD
     textCase: "none",
     textDecoration: "none",
   },
@@ -166,8 +162,6 @@ export const typography = {
     letterSpacing: "0%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
-=======
->>>>>>> main
     textCase: "none",
     textDecoration: "none",
   },
@@ -193,22 +187,7 @@ export const typography = {
     textCase: "uppercase",
     textDecoration: "none",
   },
-<<<<<<< HEAD
   spaceSectionUnitText: {
-=======
-  spacingSectionValueText: {
-    fontFamily: "Inter",
-    fontWeight: "Medium",
-    lineHeight: 10,
-    fontSize: 10,
-    letterSpacing: "0%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
-    textCase: "none",
-    textDecoration: "none",
-  },
-  spacingSectionUnitText: {
->>>>>>> main
     fontFamily: "Inter",
     fontWeight: "Semi Bold",
     lineHeight: 8,
@@ -238,42 +217,6 @@ export const typography = {
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
-<<<<<<< HEAD
-=======
-    textCase: "none",
-    textDecoration: "none",
-  },
-  spaceSectionValueText: {
-    fontFamily: "Inter",
-    fontWeight: "Medium",
-    lineHeight: 10,
-    fontSize: 10,
-    letterSpacing: "0%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
-    textCase: "none",
-    textDecoration: "none",
-  },
-  spaceSectionUnitText: {
-    fontFamily: "Inter",
-    fontWeight: "Semi Bold",
-    lineHeight: 8,
-    fontSize: 8,
-    letterSpacing: "1%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
-    textCase: "uppercase",
-    textDecoration: "none",
-  },
-  small: {
-    fontFamily: "Inter",
-    fontWeight: "Regular",
-    lineHeight: 11,
-    fontSize: 10,
-    letterSpacing: "0%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
->>>>>>> main
     textCase: "none",
     textDecoration: "none",
   },
