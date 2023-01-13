@@ -97,6 +97,9 @@ const TextContainer = styled(Text, {
 
 type ButtonProps = {
   pending?: boolean;
+
+  // prefix/suffix is primarily for Icons
+  // this is a replacement for icon/icon-left/icon-right in Figma
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
 } & Omit<ComponentProps<typeof StyledButton>, "pending" | "prefix">;
