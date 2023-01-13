@@ -17,7 +17,6 @@ import {
 } from "@webstudio-is/react-sdk";
 import {
   validStaticValueTypes,
-  type Breakpoint,
   type ValidStaticStyleValue,
   type StyleValue,
   type CssRule,
@@ -80,6 +79,14 @@ const tokensCssEngine = createCssEngine({ name: "tokens" });
 const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
+  const [breakpoints] = useBreakpoints();
+
+  useIsomorphicLayoutEffect(() => {
+    for (const breakpoint of breakpoints) {
+      cssEngine.addMediaRule(breakpoint.id, breakpoint);
+    }
+  }, [breakpoints]);
+
   useIsomorphicLayoutEffect(() => {
     for (const style of helperStyles) {
       helpersCssEngine.addPlaintextRule(style);
@@ -157,12 +164,6 @@ const toVarStyleWithFallback = (instanceId: string, style: Style): Style => {
     }
   }
   return dynamicStyle;
-};
-
-export const addMediaRules = (breakpoints: Array<Breakpoint>) => {
-  for (const breakpoint of breakpoints) {
-    cssEngine.addMediaRule(breakpoint.id, breakpoint);
-  }
 };
 
 const wrappedRulesMap = new Map<string, StyleRule | PlaintextRule>();

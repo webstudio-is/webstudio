@@ -41,7 +41,7 @@ export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
       }}
     >
       <Menu publish={publish} />
-      <Breakpoints publish={publish} />
+      <Breakpoints />
       <Flex
         align="center"
         css={{
