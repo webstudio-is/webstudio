@@ -3,7 +3,7 @@
     "menu drop shadow": {
       "value": [
         {
-          "color": "#00000026",
+          "color": "#00000027",
           "type": "dropShadow",
           "x": "0",
           "y": "5",
@@ -931,8 +931,6 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": [
-      "global"
-    ]
+    "tokenSetOrder": ["global"]
   }
 }
