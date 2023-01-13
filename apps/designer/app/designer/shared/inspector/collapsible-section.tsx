@@ -1,4 +1,5 @@
-import { createValueContainer, useValue } from "react-nano-state";
+import { atom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import { Box, Flex, Text, Collapsible } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ChevronRightIcon } from "@webstudio-is/icons";
 
@@ -10,17 +11,17 @@ type CollapsibleSectionProps = {
   rightSlot?: JSX.Element;
 };
 
-const stateContainer = createValueContainer<{ [label: string]: boolean }>({});
+const stateContainer = atom<{ [label: string]: boolean }>({});
 
 // Preserves the open/close state even when component gets unmounted
 const useOpenState = (
   label: string,
   initialValue: boolean
 ): [boolean, (value: boolean) => void] => {
-  const [state, setState] = useValue(stateContainer);
+  const state = useStore(stateContainer);
   const isOpen = label in state ? state[label] : initialValue;
   const setIsOpen = (isOpen: boolean) => {
-    setState({ ...state, [label]: isOpen });
+    stateContainer.set({ ...state, [label]: isOpen });
   };
   return [isOpen, setIsOpen];
 };

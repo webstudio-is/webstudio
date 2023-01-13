@@ -76,7 +76,7 @@ export const useCanvasStore = (publish: Publish) => {
     for (const [namespace, container] of store.containers) {
       data.push({
         namespace,
-        value: container.value,
+        value: container.get(),
       });
     }
     publish({
@@ -96,7 +96,7 @@ export const useDesignerStore = (publish: Publish) => {
       for (const { namespace, value } of data) {
         const container = store.containers.get(namespace);
         if (container) {
-          container.dispatch(value);
+          container.set(value);
         }
       }
     });

@@ -89,7 +89,7 @@ const InstanceDbOut = z.lazy(() =>
     id: z.string(),
     component: z.string(),
     children: z.array(z.union([InstanceDbOut, Text])),
-    cssRules: z.array(CssRuleDbOut),
+    cssRules: z.optional(z.array(CssRuleDbOut)),
   })
 ) as z.ZodType<Instance>;
 

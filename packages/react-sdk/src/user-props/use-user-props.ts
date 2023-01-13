@@ -10,7 +10,7 @@ type UserProps = { [prop: UserProp["prop"]]: string | number | boolean };
  * up to date with props panel.
  */
 export const useUserProps = (instanceId: Instance["id"]) => {
-  const [allUserProps] = useAllUserProps();
+  const allUserProps = useAllUserProps();
 
   const propsData = allUserProps[instanceId];
   const props = useMemo(() => {
