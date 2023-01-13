@@ -79,7 +79,7 @@ const BreakpointEditorItem = ({
           onClick={() => {
             onDelete(breakpoint);
           }}
-          icon={<TrashIcon />}
+          prefix={<TrashIcon />}
         />
       </Flex>
     </form>
@@ -122,7 +122,7 @@ export const BreakpointsEditor = ({
               },
             ]);
           }}
-          icon={<PlusIcon />}
+          prefix={<PlusIcon />}
         />
       </Flex>
       {breakpoints.map((breakpoint) => {

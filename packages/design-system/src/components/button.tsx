@@ -95,19 +95,19 @@ const TextContainer = styled(Text, {
   defaultVariants: { variant: "label" },
 });
 
-type ButtonProps = Omit<ComponentProps<typeof StyledButton>, "pending"> & {
+type ButtonProps = {
   pending?: boolean;
-  icon?: React.ReactNode;
-  iconPosition?: "left" | "right";
-};
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+} & Omit<ComponentProps<typeof StyledButton>, "pending" | "prefix">;
 
 export const Button = forwardRef(
   (
     {
-      icon,
       pending = false,
       disabled = false,
-      iconPosition = "left",
+      prefix,
+      suffix,
       children,
       ...restProps
     }: ButtonProps,
@@ -120,14 +120,14 @@ export const Button = forwardRef(
         disabled={disabled || pending}
         ref={ref}
       >
-        {iconPosition === "left" && icon}
+        {prefix}
         {children && (
           <TextContainer>
             {children}
             {pending ? "…" : ""}
           </TextContainer>
         )}
-        {iconPosition === "right" && icon}
+        {suffix}
       </StyledButton>
     );
   }

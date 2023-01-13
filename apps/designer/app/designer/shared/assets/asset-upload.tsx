@@ -48,7 +48,7 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
           type="button"
           onClick={() => inputRef?.current?.click()}
           css={{ flexGrow: 1 }}
-          icon={<UploadIcon />}
+          prefix={<UploadIcon />}
         >
           Upload
         </Button>

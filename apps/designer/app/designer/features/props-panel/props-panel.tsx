@@ -208,7 +208,7 @@ const Property = ({
           onClick={() => {
             onDelete(userProp.id);
           }}
-          icon={<TrashIcon />}
+          prefix={<TrashIcon />}
         />
       )}
     </>
@@ -245,7 +245,7 @@ export const PropsPanel = ({
         event.preventDefault();
         addEmptyProp();
       }}
-      icon={<PlusIcon />}
+      prefix={<PlusIcon />}
     />
   );
 

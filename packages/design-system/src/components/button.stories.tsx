@@ -27,14 +27,20 @@ const Section = ({
 );
 
 export const Button = ({
-  icon,
+  prefix,
+  suffix,
   ...rest
-}: Omit<ComponentProps<typeof ButtonComponent>, "icon"> & {
-  icon?: keyof typeof iconsMap;
+}: Omit<ComponentProps<typeof ButtonComponent>, "prefix" | "suffix"> & {
+  prefix?: keyof typeof iconsMap;
+  suffix?: keyof typeof iconsMap;
 }) => (
   <>
     <Section title="Configurable">
-      <ButtonComponent icon={icon && iconsMap[icon]} {...rest} />
+      <ButtonComponent
+        prefix={prefix && iconsMap[prefix]}
+        suffix={suffix && iconsMap[suffix]}
+        {...rest}
+      />
     </Section>
 
     <Section title="Variants">
@@ -46,27 +52,25 @@ export const Button = ({
     </Section>
 
     <Section title="With Icon">
-      <ButtonComponent icon={<TrashIcon />}>Button</ButtonComponent>
-      <ButtonComponent icon={<TrashIcon />} iconPosition="right">
-        Button
-      </ButtonComponent>
-      <ButtonComponent icon={<TrashIcon />} />
+      <ButtonComponent prefix={<TrashIcon />}>Button</ButtonComponent>
+      <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
+      <ButtonComponent prefix={<TrashIcon />} />
     </Section>
 
     <Section title="Disabled">
       <ButtonComponent disabled>Button</ButtonComponent>
-      <ButtonComponent disabled icon={<TrashIcon />}>
+      <ButtonComponent disabled prefix={<TrashIcon />}>
         Button
       </ButtonComponent>
-      <ButtonComponent disabled icon={<TrashIcon />} />
+      <ButtonComponent disabled prefix={<TrashIcon />} />
     </Section>
 
     <Section title="Pending">
       <ButtonComponent pending>Button</ButtonComponent>
-      <ButtonComponent pending icon={<TrashIcon />}>
+      <ButtonComponent pending prefix={<TrashIcon />}>
         Button
       </ButtonComponent>
-      <ButtonComponent pending icon={<TrashIcon />} />
+      <ButtonComponent pending prefix={<TrashIcon />} />
     </Section>
   </>
 );
@@ -81,11 +85,11 @@ Button.argTypes = {
     defaultValue: "primary",
     control: { type: "inline-radio", options: variants },
   },
-  iconPosition: {
-    defaultValue: "left",
-    control: { type: "inline-radio", options: ["left", "right"] },
+  prefix: {
+    defaultValue: "undefined",
+    control: { type: "inline-radio", options: Object.keys(iconsMap) },
   },
-  icon: {
+  suffix: {
     defaultValue: "undefined",
     control: { type: "inline-radio", options: Object.keys(iconsMap) },
   },

@@ -17,7 +17,7 @@ export const ShowMore = ({
         <Collapsible.Trigger asChild>
           <Button
             css={{ width: "100%" }}
-            icon={isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}
+            prefix={isOpen ? <TriangleDownIcon /> : <TriangleRightIcon />}
           >
             Show more
           </Button>

@@ -153,7 +153,7 @@ export const TokenEditor = ({
               event.preventDefault();
               onOpenChange(true);
             }}
-            icon={<PlusIcon />}
+            prefix={<PlusIcon />}
           />
         )}
       </PopoverTrigger>

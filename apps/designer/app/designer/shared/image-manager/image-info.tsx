@@ -50,7 +50,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
         <Button
           variant="destructive"
           onClick={() => onDelete([id])}
-          icon={<TrashIcon />}
+          prefix={<TrashIcon />}
         >
           Delete
         </Button>
