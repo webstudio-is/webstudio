@@ -3,7 +3,7 @@
     "menu drop shadow": {
       "value": [
         {
-          "color": "#00000027",
+          "color": "#00000026",
           "type": "dropShadow",
           "x": "0",
           "y": "5",
