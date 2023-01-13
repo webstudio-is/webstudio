@@ -29,7 +29,7 @@
   "exports": {
     "./server": "./server.js"
   },
-  "types": "src/index.ts",
+  "types": "src/index.server.ts",
   "files": [
     "lib/*",
     "src/*",
