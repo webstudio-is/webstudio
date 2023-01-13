@@ -1,15 +1,10 @@
 import { useEffect, useMemo } from "react";
 import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
-import {
-  addGlobalRules,
-  getPresetStyleRules,
-  utils,
-} from "@webstudio-is/project";
+import { addGlobalRules, getPresetStyleRules } from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
 import {
   designTokensContainer,
-  rootInstanceContainer,
   useBreakpoints,
   useDesignTokens,
   usePresetStyles,
@@ -256,7 +251,7 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
 
 const useUpdateStyle = () => {
   const [selectedInstance] = useSelectedInstance();
-  useSubscribe("updateStyle", ({ id, updates, breakpoint }) => {
+  useSubscribe("updateStyle", ({ id, updates }) => {
     // Only update styles if they match the selected instance
     // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
     if (id !== selectedInstance?.id) {
@@ -266,13 +261,6 @@ const useUpdateStyle = () => {
     for (const update of updates) {
       setCssVar(id, update.property, undefined);
     }
-
-    store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance === undefined) {
-        return;
-      }
-      utils.tree.setInstanceStyleMutable(rootInstance, id, updates, breakpoint);
-    });
   });
 };
 

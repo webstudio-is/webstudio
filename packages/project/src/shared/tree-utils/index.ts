@@ -2,7 +2,6 @@ export * from "./create-instance";
 export * from "./delete-instance";
 export * from "./insert-instance";
 export * from "./find-instance";
-export * from "./set-instance-style";
 export * from "./get-instance-path";
 export * from "./find-closest-sibling-instance";
 export * from "./find-parent-instance";

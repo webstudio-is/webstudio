@@ -74,19 +74,16 @@ const rootInstance: Instance = {
   type: "instance",
   id: "1",
   component: "Body",
-  cssRules: [],
   children: [
     {
       type: "instance",
       id: "2",
       component: "Box",
-      cssRules: [],
       children: [
         {
           type: "instance",
           id: "3",
           component: "Box",
-          cssRules: [],
           children: [],
         },
       ],

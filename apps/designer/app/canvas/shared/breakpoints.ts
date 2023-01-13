@@ -1,7 +1,6 @@
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
-import { deleteCssRulesByBreakpoint } from "~/shared/css-utils";
 import {
   breakpointsContainer,
   rootInstanceContainer,
@@ -52,8 +51,6 @@ const useBreakpointDelete = () => {
         if (index !== -1) {
           breakpoints.splice(index, 1);
         }
-
-        deleteCssRulesByBreakpoint(rootInstance, breakpoint.id);
 
         // delete breakpoint styles
         filterMutable(styles, (style) => style.breakpointId !== breakpoint.id);

@@ -6,40 +6,34 @@ const tree: Instance = {
   type: "instance",
   component: "Body",
   id: "root",
-  cssRules: [],
   children: [
     {
       type: "instance",
       component: "Heading",
       id: "heading1",
-      cssRules: [],
       children: [],
     },
     {
       type: "instance",
       component: "Box",
       id: "box1",
-      cssRules: [],
       children: [
         {
           type: "instance",
           component: "Box",
           id: "box2",
-          cssRules: [],
           children: [],
         },
         {
           type: "instance",
           component: "Heading",
           id: "heading2",
-          cssRules: [],
           children: [],
         },
         {
           type: "instance",
           component: "Heading",
           id: "heading3",
-          cssRules: [],
           children: [],
         },
       ],
