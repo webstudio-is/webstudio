@@ -59,7 +59,7 @@ export const WrapperComponentDev = ({
     useTextEditingInstanceId();
   const [selectedInstance] = useSelectedInstance();
 
-  const [allUserProps] = useAllUserProps();
+  const allUserProps = useAllUserProps();
   const instanceProps = allUserProps[instance.id];
   const userProps = useMemo(() => {
     const result: UserProps = {};

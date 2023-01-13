@@ -11,7 +11,7 @@ export const useUserPropsAsset = (
   instanceId: Instance["id"],
   propName: UserProp["prop"]
 ): Asset | undefined => {
-  const [allUserProps] = useAllUserProps();
+  const allUserProps = useAllUserProps();
 
   const propsData = allUserProps[instanceId];
   const asset = useMemo(() => {

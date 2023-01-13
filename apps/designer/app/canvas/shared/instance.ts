@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   type Instance,
   type UserProp,
-  type Tree,
   getComponentMeta,
   allUserPropsContainer,
 } from "@webstudio-is/react-sdk";
@@ -37,12 +36,6 @@ declare module "~/shared/pubsub" {
     unselectInstance: undefined;
   }
 }
-
-export const usePopulateRootInstance = (tree: Tree) => {
-  useState(() => {
-    rootInstanceContainer.value = tree.root;
-  });
-};
 
 export const findInsertLocation = (
   rootInstance: Instance,
@@ -119,13 +112,11 @@ export const useReparentInstance = () => {
       );
     });
 
+    const rootInstance = rootInstanceContainer.get();
     // Make the drag item the selected instance
-    if (
-      selectedInstance?.id !== instanceId &&
-      rootInstanceContainer.value !== undefined
-    ) {
+    if (selectedInstance?.id !== instanceId && rootInstance !== undefined) {
       setSelectedInstance(
-        utils.tree.findInstanceById(rootInstanceContainer.value, instanceId)
+        utils.tree.findInstanceById(rootInstance, instanceId)
       );
     }
   });

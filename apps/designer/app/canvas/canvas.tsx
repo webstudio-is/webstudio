@@ -17,7 +17,6 @@ import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useDeleteInstance,
   useInsertInstance,
-  usePopulateRootInstance,
   usePublishSelectedInstanceData,
   usePublishTextEditingInstanceId,
   useReparentInstance,
@@ -38,6 +37,7 @@ import {
   useBreakpoints,
   useRootInstance,
   useSetPresetStyles,
+  useSetRootInstance,
   useSetStyles,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
@@ -105,7 +105,7 @@ const useAssets = (initialAssets: Array<Asset>) => {
 
 const useCopyPaste = () => {
   const [instance] = useSelectedInstance();
-  const [allUserProps] = useAllUserProps();
+  const allUserProps = useAllUserProps();
 
   const selectedInstanceData = useMemo(
     () => instance && { instance, props: allUserProps[instance.id]?.props },
@@ -172,7 +172,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useAllUserProps(data.props);
   useSetPresetStyles(data.tree.presetStyles);
   useSetStyles(data.tree.styles);
-  usePopulateRootInstance(data.tree);
+  useSetRootInstance(data.tree.root);
   setParams(data.params ?? null);
   useCanvasStore(publish);
 

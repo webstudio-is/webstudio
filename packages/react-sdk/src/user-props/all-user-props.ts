@@ -1,10 +1,11 @@
 import { useRef } from "react";
-import { createValueContainer, useValue } from "react-nano-state";
+import { atom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import type { InstanceProps, Instance } from "../db";
 
 export type AllUserProps = { [id: Instance["id"]]: InstanceProps };
 
-export const allUserPropsContainer = createValueContainer<AllUserProps>({});
+export const allUserPropsContainer = atom<AllUserProps>({});
 
 export const useAllUserProps = (initialUserProps?: Array<InstanceProps>) => {
   // @todo ssr workaround for https://github.com/webstudio-is/webstudio-designer/issues/213
@@ -15,8 +16,8 @@ export const useAllUserProps = (initialUserProps?: Array<InstanceProps>) => {
       propsMap[props.instanceId] = props;
     }
     //We don't need to trigger rerender when setting the initial value
-    allUserPropsContainer.value = propsMap;
+    allUserPropsContainer.set(propsMap);
     ref.current = true;
   }
-  return useValue(allUserPropsContainer);
+  return useStore(allUserPropsContainer);
 };

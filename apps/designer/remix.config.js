@@ -12,7 +12,13 @@ module.exports = {
   // This makes sure remix bundles monorepo packages which are always
   // sym-linked and can't be hoisted. You could also manually name packages
   // e.g. ["@webstudio-is/ui", ...]
-  serverDependenciesToBundle: [/@webstudio-is\/.*/, "pretty-bytes", "djb2a"],
+  serverDependenciesToBundle: [
+    /@webstudio-is\/.*/,
+    "pretty-bytes",
+    "djb2a",
+    "nanostores",
+    "@nanostores/react",
+  ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
   serverBuildPath: "api/index.js",

@@ -53,6 +53,7 @@
     "zod": "^3.19.1"
   },
   "dependencies": {
+    "@nanostores/react": "^0.4.1",
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/design-tokens": "workspace:^",
@@ -60,9 +61,8 @@
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "detect-font": "^0.1.5",
-    "immer": "^9.0.12",
     "mitt": "^3.0.0",
-    "react-nano-state": "^0.4.0",
+    "nanostores": "^0.7.1",
     "warn-once": "^0.1.1"
   },
   "exports": {

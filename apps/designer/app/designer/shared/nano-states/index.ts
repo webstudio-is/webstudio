@@ -1,4 +1,5 @@
-import { createValueContainer, useValue } from "react-nano-state";
+import { atom, type WritableAtom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import { type Breakpoint } from "@webstudio-is/css-data";
 import {
   type SelectedInstanceData,
@@ -8,55 +9,54 @@ import { type SyncStatus } from "~/shared/sync";
 import { type Pages, type Project } from "@webstudio-is/project";
 import type { AssetContainer, DeletingAssetContainer } from "../assets";
 
-const selectedInstanceDataContainer = createValueContainer<
-  SelectedInstanceData | undefined
->();
+const useValue = <T>(atom: WritableAtom<T>) => {
+  const value = useStore(atom);
+  return [value, atom.set] as const;
+};
+
+const selectedInstanceDataContainer = atom<SelectedInstanceData | undefined>();
 export const useSelectedInstanceData = () =>
   useValue(selectedInstanceDataContainer);
 
-const hoveredInstanceDataContainer = createValueContainer<
-  HoveredInstanceData | undefined
->();
+const hoveredInstanceDataContainer = atom<HoveredInstanceData | undefined>();
 export const useHoveredInstanceData = () =>
   useValue(hoveredInstanceDataContainer);
 
-const isShareDialogOpenContainer = createValueContainer<boolean>(false);
+const isShareDialogOpenContainer = atom<boolean>(false);
 export const useIsShareDialogOpen = () => useValue(isShareDialogOpenContainer);
 
-const isPublishDialogOpenContainer = createValueContainer<boolean>(false);
+const isPublishDialogOpenContainer = atom<boolean>(false);
 export const useIsPublishDialogOpen = () =>
   useValue(isPublishDialogOpenContainer);
 
-const selectedBreakpointContainer = createValueContainer<
-  Breakpoint | undefined
->();
+const selectedBreakpointContainer = atom<Breakpoint | undefined>();
 export const useSelectedBreakpoint = () =>
   useValue(selectedBreakpointContainer);
 
-const zoomContainer = createValueContainer<number>(100);
+const zoomContainer = atom<number>(100);
 export const useZoom = () => useValue(zoomContainer);
 
-const canvasWidthContainer = createValueContainer<number>(0);
+const canvasWidthContainer = atom<number>(0);
 export const useCanvasWidth = () => useValue(canvasWidthContainer);
 
-const canvasRectContainer = createValueContainer<DOMRect | undefined>();
+const canvasRectContainer = atom<DOMRect | undefined>();
 export const useCanvasRect = () => useValue(canvasRectContainer);
 
-const syncStatusContainer = createValueContainer<SyncStatus>("idle");
+const syncStatusContainer = atom<SyncStatus>("idle");
 export const useSyncStatus = () => useValue(syncStatusContainer);
 
-const assetsContainer = createValueContainer<
-  Array<AssetContainer | DeletingAssetContainer>
->([]);
+const assetsContainer = atom<Array<AssetContainer | DeletingAssetContainer>>(
+  []
+);
 export const useAssetsContainer = () => useValue(assetsContainer);
 
-const pagesContainer = createValueContainer<Pages | undefined>();
+const pagesContainer = atom<Pages | undefined>();
 export const usePages = () => useValue(pagesContainer);
 
-const currentPageIdContainer = createValueContainer<string | undefined>();
+const currentPageIdContainer = atom<string | undefined>();
 export const useCurrentPageId = () => useValue(currentPageIdContainer);
 
-const projectContainer = createValueContainer<Project | undefined>();
+const projectContainer = atom<Project | undefined>();
 export const useProject = () => useValue(projectContainer);
 
 export type TextToolbarState = {
@@ -68,5 +68,5 @@ export type TextToolbarState = {
   isLink: boolean;
   isSpan: boolean;
 };
-const textToolbarState = createValueContainer<undefined | TextToolbarState>();
+const textToolbarState = atom<undefined | TextToolbarState>();
 export const useTextToolbarState = () => useValue(textToolbarState);
