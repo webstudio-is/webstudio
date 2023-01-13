@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - ignore_tokens_ts # @todo: different branch
+    paths:
+      - packages/design-system/src/__generated__/figma-design-tokens.json
 
 jobs:
   main:
@@ -25,8 +27,7 @@ jobs:
       - name: Build tokens
         run: pnpm build-figma-tokens
 
-      # @todo: commit only 1 file
       - name: Commit and push
         run: |
-          git commit -am "Automated report"
+          git commit -m "Update figma-design-tokens.ts" packages/design-system/src/__generated__/figma-design-tokens.ts
           git push
