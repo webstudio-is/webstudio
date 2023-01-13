@@ -6,6 +6,6 @@ export const authorize = router({
     .input(z.object({ name: z.string() }))
     .output(z.object({ allowed: z.boolean() }))
     .query(async ({ input, ctx }) => {
-      return await { allowed: true };
+      return { allowed: false };
     }),
 });

@@ -5,6 +5,7 @@ import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
+import { trpcClient } from "~/services/trpc.server";
 
 export { links };
 
@@ -15,6 +16,11 @@ export const loader = async ({
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }
+
+  const { allowed } = await trpcClient.authorize.check.query({ name: "hello" });
+
+  // eslint-disable-next-line no-console
+  console.log(allowed);
 
   const url = new URL(request.url);
   const pageIdParam = url.searchParams.get("pageId");
