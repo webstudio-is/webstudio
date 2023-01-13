@@ -6,7 +6,6 @@ import {
   DropdownMenuPortal,
   DropdownMenuTrigger,
   IconButton,
-  DeprecatedButton,
   Text,
   styled,
 } from "@webstudio-is/design-system";
@@ -93,49 +92,83 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-export type ItemState = "initial" | "editing" | "disabled" | "dragging";
+export type ItemState =
+  | "unselected"
+  | "selected"
+  | "editing"
+  | "disabled"
+  | "dragging";
+
+export type ItemSource = "token" | "tag" | "state" | "local";
 
 const useEditableText = ({
   state,
   onStateChange,
   onChange,
+  onClick,
 }: {
   state: ItemState;
   onStateChange: (state: ItemState) => void;
   onChange: (value: string) => void;
+  onClick: () => void;
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null);
+  const lastValueRef = useRef<string>("");
+  const lastStateRef = useRef<ItemState>(state);
+  const getValue = () => elementRef.current?.textContent ?? "";
 
   useEffect(() => {
-    if (ref.current === null) {
+    if (elementRef.current === null) {
       return;
     }
 
     if (state === "editing") {
-      ref.current.setAttribute("contenteditable", "plaintext-only");
-      ref.current.focus();
-      getSelection()?.selectAllChildren(ref.current);
+      elementRef.current.setAttribute("contenteditable", "plaintext-only");
+      elementRef.current.focus();
+      getSelection()?.selectAllChildren(elementRef.current);
+      lastValueRef.current = getValue();
       return;
     }
 
-    ref.current?.removeAttribute("contenteditable");
+    elementRef.current?.removeAttribute("contenteditable");
+    lastStateRef.current = state;
   }, [state]);
 
   const handleFinishEditing = (
     event: KeyboardEvent<Element> | FocusEvent<Element>
   ) => {
+    if (state !== "editing" || elementRef.current === null) {
+      return;
+    }
     event.preventDefault();
-    onStateChange("initial");
-    onChange(ref.current?.textContent ?? "");
+    onStateChange(lastStateRef.current);
+    // Reverting to the previous value when user hits Escape
+    if ("key" in event && event.key === "Escape") {
+      elementRef.current.textContent = lastValueRef.current;
+      return;
+    }
+    onChange(getValue());
+    lastValueRef.current = "";
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" || event.key === "Escape") {
       handleFinishEditing(event);
     }
   };
 
-  return { handleKeyDown, handleFinishEditing, ref };
+  const handleDoubleClick = () => {
+    onStateChange("editing");
+  };
+
+  const handlers = {
+    onKeyDown: handleKeyDown,
+    onBlur: handleFinishEditing,
+    onClick,
+    onDoubleClick: handleDoubleClick,
+  };
+
+  return { ref: elementRef, handlers };
 };
 
 type EditableTextProps = {
@@ -143,7 +176,7 @@ type EditableTextProps = {
   onChange: (value: string) => void;
   state: ItemState;
   onStateChange: (state: ItemState) => void;
-  onChangeCurrent: () => void;
+  onClick: () => void;
 };
 
 const EditableText = ({
@@ -151,25 +184,24 @@ const EditableText = ({
   label,
   state,
   onStateChange,
-  onChangeCurrent,
+  onClick,
 }: EditableTextProps) => {
-  const { ref, handleKeyDown, handleFinishEditing } = useEditableText({
+  const { ref, handlers } = useEditableText({
     state,
     onStateChange,
     onChange,
+    onClick,
   });
 
   return (
     <Text
       truncate
       ref={ref}
-      onKeyDown={handleKeyDown}
-      onBlur={handleFinishEditing}
-      onClick={onChangeCurrent}
       css={{
         outline: "none",
         textOverflow: state === "editing" ? "clip" : "ellipsis",
       }}
+      {...handlers}
     >
       {label}
     </Text>
@@ -201,65 +233,59 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const Item = styled(DeprecatedButton, {
+const Item = styled("div", {
+  display: "inline-flex",
+  borderRadius: "$borderRadius$3",
+  padding: "$spacing$4",
   maxWidth: "100%",
+  minWidth: 0,
   position: "relative",
+  color: "$colors$foregroundContrastMain",
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
   variants: {
+    source: {
+      local: {
+        backgroundColor: "$colors$backgroundStyleSourceToken",
+      },
+      token: {
+        backgroundColor: "$colors$backgroundStyleSourceToken",
+      },
+      tag: {
+        backgroundColor: "$colors$backgroundStyleSourceTag",
+      },
+      state: {
+        backgroundColor: "$colors$backgroundStyleSourceState",
+      },
+    },
     state: {
+      selected: {},
+      unselected: {
+        backgroundColor: "$colors$backgroundStyleSourceNeutral",
+      },
       disabled: {
         // @todo styling
         opacity: 0.5,
       },
       editing: {},
-      initial: {},
       dragging: {
-        // @todo styling
-        opacity: 0.5,
+        backgroundColor: "$colors$backgroundStyleSourceDisabled",
       },
     },
   },
+  defaultVariants: {
+    state: "unselected",
+  },
 });
-
-type EditableItemProps = {
-  id: string;
-  children: Array<JSX.Element | false>;
-  state: ItemState;
-  isCurrent: boolean;
-};
-
-const EditableItem = ({
-  children,
-  state,
-  id,
-  isCurrent,
-}: EditableItemProps) => {
-  const ref = useForceRecalcStyle<HTMLDivElement>(
-    "max-width",
-    state === "editing"
-  );
-  return (
-    <Item
-      variant={isCurrent ? "blue" : "gray"}
-      state={state}
-      ref={ref}
-      as="div"
-      data-id={id}
-    >
-      {children}
-    </Item>
-  );
-};
 
 type StyleSourceProps = {
   id: string;
   label: string;
   hasMenu: boolean;
   state: ItemState;
-  isCurrent: boolean;
+  source: ItemSource;
   onStateChange: (state: ItemState) => void;
-  onChangeCurrent: () => void;
+  onSelect: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
   onChange: (value: string) => void;
@@ -270,19 +296,23 @@ export const StyleSource = ({
   label,
   hasMenu,
   state,
-  isCurrent,
+  source,
   onChange,
   onStateChange,
-  onChangeCurrent,
+  onSelect,
   onDuplicate,
   onRemove,
 }: StyleSourceProps) => {
+  const ref = useForceRecalcStyle<HTMLDivElement>(
+    "max-width",
+    state === "editing"
+  );
   return (
-    <EditableItem state={state} id={id} isCurrent={isCurrent}>
+    <Item state={state} source={source} data-id={id} ref={ref}>
       <EditableText
         state={state}
         onStateChange={onStateChange}
-        onChangeCurrent={onChangeCurrent}
+        onClick={onSelect}
         onChange={onChange}
         label={label}
       />
@@ -292,7 +322,7 @@ export const StyleSource = ({
           onDuplicate={onDuplicate}
           onRemove={onRemove}
           onEnable={() => {
-            onStateChange("initial");
+            onStateChange("unselected");
           }}
           onDisable={() => {
             onStateChange("disabled");
@@ -302,6 +332,6 @@ export const StyleSource = ({
           }}
         />
       )}
-    </EditableItem>
+    </Item>
   );
 };

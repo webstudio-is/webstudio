@@ -1,2 +1,2 @@
 export * from "./style-source-input";
-export { type ItemState } from "./style-source";
+export { type ItemState, type ItemSource } from "./style-source";
