@@ -2,7 +2,7 @@
 
 export const boxShadow = {
   menuDropShadow: [
-    { color: "#00000027", type: "dropShadow", x: 0, y: 5, blur: 17, spread: 0 },
+    { color: "#00000026", type: "dropShadow", x: 0, y: 5, blur: 17, spread: 0 },
     { color: "#0000001a", type: "dropShadow", x: 0, y: 2, blur: 7, spread: 0 },
   ],
   brandElevationSmall: {
