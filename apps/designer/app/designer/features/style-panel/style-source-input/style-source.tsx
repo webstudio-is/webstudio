@@ -55,28 +55,25 @@ const MenuTrigger = styled("button", {
   borderBottomRightRadius: "$borderRadius$4",
   color: "$colors$foregroundContrastMain",
   visibility: cssVars.use(menuTriggerVisibilityVar),
+  background: "transparent",
   variants: {
     source: {
       local: {
-        background: "$colors$backgroundStyleSourceToken",
         "&:hover": {
           background: "$colors$backgroundButtonHover",
         },
       },
       token: {
-        background: "$colors$backgroundStyleSourceToken",
         "&:hover": {
           background: "$colors$backgroundButtonHover",
         },
       },
       tag: {
-        background: "$colors$backgroundStyleSourceTag",
         "&:hover": {
           background: "$colors$backgroundButtonHover",
         },
       },
       state: {
-        background: "$colors$backgroundStyleSourceState",
         "&:hover": {
           background: "$colors$backgroundButtonHover",
         },
