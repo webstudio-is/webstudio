@@ -11,7 +11,6 @@ type Item = {
   id: string;
   label: string;
   source: ItemSource;
-  hasMenu: boolean;
   isEditable: boolean;
   state: ItemState;
 };
@@ -21,7 +20,6 @@ const items: Array<Item> = [
     id: uuid(),
     label: "Local",
     source: "local",
-    hasMenu: false,
     isEditable: false,
     state: "selected",
   },
@@ -29,7 +27,6 @@ const items: Array<Item> = [
     id: uuid(),
     label: "Token",
     source: "token",
-    hasMenu: true,
     isEditable: true,
     state: "unselected",
   },
@@ -37,7 +34,6 @@ const items: Array<Item> = [
     id: uuid(),
     label: "Tag",
     source: "tag",
-    hasMenu: true,
     isEditable: true,
     state: "unselected",
   },
@@ -45,7 +41,6 @@ const items: Array<Item> = [
     id: uuid(),
     label: "State",
     source: "state",
-    hasMenu: true,
     isEditable: true,
     state: "unselected",
   },
@@ -60,7 +55,6 @@ const createItem = (
     id: uuid(),
     label,
     source: "token",
-    hasMenu: true,
     isEditable: true,
     state: "selected",
   };
@@ -117,7 +111,6 @@ export const WithTruncatedItem: ComponentStory<
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
-      hasMenu: false,
       isEditable: true,
       state: "selected",
     },
@@ -148,7 +141,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       id: uuid(),
       label: "Disabled",
       source: "token",
-      hasMenu: true,
+
       isEditable: true,
       state: "disabled",
     },

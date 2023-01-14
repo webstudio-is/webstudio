@@ -360,7 +360,6 @@ Item.displayName = "Item";
 type StyleSourceProps = {
   id: string;
   label: string;
-  hasMenu: boolean;
   isEditable: boolean;
   isEditing: boolean;
   isDragging: boolean;
@@ -377,7 +376,6 @@ type StyleSourceProps = {
 export const StyleSource = ({
   id,
   label,
-  hasMenu,
   state,
   isEditable,
   isEditing,
@@ -391,8 +389,7 @@ export const StyleSource = ({
   onRemove,
 }: StyleSourceProps) => {
   const ref = useForceRecalcStyle<HTMLDivElement>("max-width", isEditing);
-  const showMenu =
-    hasMenu === true && isEditing === false && isDragging === false;
+  const showMenu = isEditing === false && isDragging === false;
 
   return (
     <Item state={state} source={source} id={id} ref={ref}>

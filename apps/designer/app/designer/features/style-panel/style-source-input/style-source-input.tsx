@@ -25,7 +25,6 @@ import { useSortable } from "./use-sortable";
 type IntermediateItem = {
   id: string;
   label: string;
-  hasMenu: boolean;
   isEditable: boolean;
   state: ItemState;
   source: ItemSource;
@@ -134,7 +133,6 @@ const TextFieldBase: ForwardRefRenderFunction<
             onRemoveItem?.(item);
           }}
           label={item.label}
-          hasMenu={item.hasMenu}
           key={index}
         />
       ))}
@@ -192,7 +190,6 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     items: props.items ?? [],
     value: {
       label,
-      hasMenu: true,
       state: "unselected",
       id: "",
       source: "local",
@@ -217,7 +214,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onCreateItem?.({ label, hasMenu: true } as Item);
+        props.onCreateItem?.({ label } as Item);
       }
     },
   });
