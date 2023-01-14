@@ -47,10 +47,9 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     onDisableItem?: (item: Item) => void;
     onEnableItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
-    onSelectItem?: (id: string) => void;
-    onChangeEditing?: (id?: string) => void;
-    editingItemId?: string;
-    currentItemId?: string;
+    onSelectItem?: (item?: Item) => void;
+    onEditItem?: (item?: Item) => void;
+    editingItem?: Item;
   };
 
 const TextFieldBase: ForwardRefRenderFunction<
@@ -78,9 +77,8 @@ const TextFieldBase: ForwardRefRenderFunction<
     onEnableItem,
     onSort,
     onSelectItem,
-    onChangeEditing,
-    currentItemId,
-    editingItemId,
+    onEditItem,
+    editingItem,
     ...textFieldProps
   } = props;
   const [internalInputRef, focusProps] = useTextFieldFocus({
@@ -106,17 +104,15 @@ const TextFieldBase: ForwardRefRenderFunction<
       {value.map((item, index) => (
         <StyleSource
           id={item.id}
-          state={
-            item.id === dragItemId
-              ? "dragging"
-              : item.id === editingItemId
-              ? "editing"
-              : item.state
-          }
+          isDragging={item.id === dragItemId}
+          isEditing={item.id === editingItem?.id}
+          state={item.state}
           source={item.source}
           isEditable={item.isEditable}
-          onStateChange={(state) => {
-            onChangeEditing?.(state === "editing" ? item.id : undefined);
+          onChangeEditing={(isEditing) => {
+            onEditItem?.(isEditing ? item : undefined);
+          }}
+          onChangeState={(state) => {
             if (state === "disabled") {
               onDisableItem?.(item);
             }
@@ -125,10 +121,10 @@ const TextFieldBase: ForwardRefRenderFunction<
             }
           }}
           onSelect={() => {
-            onSelectItem?.(item.id);
+            onSelectItem?.(item.state === "selected" ? undefined : item);
           }}
-          onChange={(label) => {
-            onChangeEditing?.();
+          onChangeValue={(label) => {
+            onEditItem?.();
             onChangeItem?.({ ...item, label });
           }}
           onDuplicate={() => {
@@ -144,7 +140,7 @@ const TextFieldBase: ForwardRefRenderFunction<
       ))}
       {placementIndicator}
       {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItemId === undefined && (
+      {editingItem?.id === undefined && (
         <TextFieldInput
           {...textFieldProps}
           value={label}
@@ -166,14 +162,13 @@ TextField.displayName = "TextField";
 type StyleSourceInputProps<Item> = {
   items?: Array<Item>;
   value?: Array<Item>;
-  editingItemId?: string;
-  currentItemId?: string;
+  editingItem?: Item;
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
   onCreateItem?: (item: Item) => void;
   onChangeItem?: (item: Item) => void;
-  onSelectItem?: (id: string) => void;
-  onChangeEditing?: (id?: string) => void;
+  onSelectItem?: (item?: Item) => void;
+  onEditItem?: (item?: Item) => void;
   onDuplicateItem?: (item: Item) => void;
   onDisableItem?: (item: Item) => void;
   onEnableItem?: (item: Item) => void;
@@ -236,7 +231,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             onRemoveItem={props.onRemoveItem}
             onChangeItem={props.onChangeItem}
             onSelectItem={props.onSelectItem}
-            onChangeEditing={props.onChangeEditing}
+            onEditItem={props.onEditItem}
             onDuplicateItem={props.onDuplicateItem}
             onDisableItem={props.onDisableItem}
             onEnableItem={props.onEnableItem}
@@ -244,8 +239,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             label={label}
             value={value}
             css={props.css}
-            editingItemId={props.editingItemId}
-            currentItemId={props.currentItemId}
+            editingItem={props.editingItem}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>

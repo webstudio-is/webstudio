@@ -47,7 +47,7 @@ const items: Array<Item> = [
     source: "state",
     hasMenu: true,
     isEditable: true,
-    state: "unselected",
+    state: "selected",
   },
 ];
 
@@ -62,9 +62,18 @@ const createItem = (
     source: "token",
     hasMenu: true,
     isEditable: true,
-    state: "unselected",
+    state: "selected",
   };
-  setValue([...value, item]);
+  const nextValue = value.map((item) => {
+    if (item.state === "selected") {
+      return {
+        ...item,
+        state: "unselected" as const,
+      };
+    }
+    return item;
+  });
+  setValue([...nextValue, item]);
 };
 
 const removeItem = (
@@ -144,19 +153,28 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       state: "disabled",
     },
   ]);
-  const [editingItemId, setEditingItemId] = useState<string>();
-  const [currentItemId, setCurrentItemId] = useState<string | undefined>(
-    value.at(-1)?.id
-  );
+  const [editingItem, setEditingItem] = useState<Item>();
+
   return (
     <StyleSourceInput
       css={{ width: 300 }}
       items={items}
       value={value}
-      editingItemId={editingItemId}
-      currentItemId={currentItemId}
-      onSelectItem={setCurrentItemId}
-      onChangeEditing={setEditingItemId}
+      editingItem={editingItem}
+      onSelectItem={(itemToSelect) => {
+        setValue(
+          value.map((item) => {
+            if (item.id === itemToSelect?.id) {
+              return { ...item, state: "selected" };
+            }
+            if (item.state === "selected") {
+              return { ...item, state: "unselected" };
+            }
+            return item;
+          })
+        );
+      }}
+      onEditItem={setEditingItem}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
@@ -209,7 +227,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
           return item;
         });
         setValue(nextValue);
-        setEditingItemId(duplicatedItem.id);
+        setEditingItem(duplicatedItem);
       }}
       onSort={setValue}
     />

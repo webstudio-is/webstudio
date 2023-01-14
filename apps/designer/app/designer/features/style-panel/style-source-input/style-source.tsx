@@ -89,6 +89,7 @@ const MenuTriggerGradient = styled("div", {
   visibility: cssVars.use(menuTriggerVisibilityVar),
   borderTopRightRadius: "$borderRadius$4",
   borderBottomRightRadius: "$borderRadius$4",
+  pointerEvents: "none",
   variants: {
     source: {
       local: {
@@ -154,31 +155,25 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-export type ItemState =
-  | "unselected"
-  | "selected"
-  | "editing"
-  | "disabled"
-  | "dragging";
+export type ItemState = "unselected" | "selected" | "disabled";
 
 export type ItemSource = "token" | "tag" | "state" | "local";
 
 const useEditableText = ({
-  state,
   isEditable,
-  onStateChange,
-  onChange,
+  isEditing,
+  onChangeEditing,
+  onChangeValue,
   onClick,
 }: {
-  state: ItemState;
   isEditable: boolean;
-  onStateChange: (state: ItemState) => void;
-  onChange: (value: string) => void;
+  isEditing: boolean;
+  onChangeEditing: (isEditing: boolean) => void;
+  onChangeValue: (value: string) => void;
   onClick: () => void;
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef<string>("");
-  const lastStateRef = useRef<ItemState>(state);
   const getValue = () => elementRef.current?.textContent ?? "";
 
   useEffect(() => {
@@ -186,7 +181,7 @@ const useEditableText = ({
       return;
     }
 
-    if (state === "editing") {
+    if (isEditing) {
       elementRef.current.setAttribute("contenteditable", "plaintext-only");
       elementRef.current.focus();
       getSelection()?.selectAllChildren(elementRef.current);
@@ -195,35 +190,31 @@ const useEditableText = ({
     }
 
     elementRef.current?.removeAttribute("contenteditable");
-    lastStateRef.current = state;
-  }, [state]);
+  }, [isEditing]);
 
   const handleFinishEditing = (
     event: KeyboardEvent<Element> | FocusEvent<Element>
   ) => {
-    if (state !== "editing" || elementRef.current === null) {
-      return;
-    }
     event.preventDefault();
-    onStateChange(lastStateRef.current);
-    // Reverting to the previous value when user hits Escape
-    if ("key" in event && event.key === "Escape") {
-      elementRef.current.textContent = lastValueRef.current;
-      return;
-    }
-    onChange(getValue());
+    if (isEditing) onChangeEditing(false);
+    onChangeValue(getValue());
     lastValueRef.current = "";
   };
 
   const handleKeyDown: KeyboardEventHandler = (event) => {
-    if (event.key === "Enter" || event.key === "Escape") {
+    if (event.key === "Enter") {
+      handleFinishEditing(event);
+      return;
+    }
+    if (event.key === "Escape" && elementRef.current !== null) {
+      elementRef.current.textContent = lastValueRef.current;
       handleFinishEditing(event);
     }
   };
 
   const handleDoubleClick = () => {
     if (isEditable) {
-      onStateChange("editing");
+      onChangeEditing(true);
     }
   };
 
@@ -240,25 +231,25 @@ const useEditableText = ({
 type EditableTextProps = {
   label: string;
   isEditable: boolean;
-  onChange: (value: string) => void;
-  state: ItemState;
-  onStateChange: (state: ItemState) => void;
+  isEditing: boolean;
+  onChangeEditing: (isEditing: boolean) => void;
+  onChangeValue: (value: string) => void;
   onClick: () => void;
 };
 
 const EditableText = ({
-  onChange,
   label,
-  state,
   isEditable,
-  onStateChange,
+  isEditing,
+  onChangeEditing,
+  onChangeValue,
   onClick,
 }: EditableTextProps) => {
   const { ref, handlers } = useEditableText({
-    state,
     isEditable,
-    onStateChange,
-    onChange,
+    isEditing,
+    onChangeEditing,
+    onChangeValue,
     onClick,
   });
 
@@ -268,7 +259,7 @@ const EditableText = ({
       ref={ref}
       css={{
         outline: "none",
-        textOverflow: state === "editing" ? "clip" : "ellipsis",
+        textOverflow: isEditing ? "clip" : "ellipsis",
       }}
       {...handlers}
     >
@@ -315,7 +306,7 @@ const StyledItem = styled("div", {
   variants: {
     source: {
       local: {
-        backgroundColor: "$colors$backgroundStyleSourceNeutral",
+        backgroundColor: "$colors$backgroundStyleSourceToken",
       },
       token: {
         backgroundColor: "$colors$backgroundStyleSourceToken",
@@ -329,13 +320,15 @@ const StyledItem = styled("div", {
     },
     state: {
       selected: {},
-      editing: {},
       unselected: {
-        backgroundColor: "$colors$backgroundStyleSourceNeutral",
+        "&:not(:hover)": {
+          backgroundColor: "$colors$backgroundStyleSourceNeutral",
+        },
       },
-      dragging: {},
       disabled: {
-        backgroundColor: "$colors$backgroundStyleSourceDisabled",
+        "&:not(:hover)": {
+          backgroundColor: "$colors$backgroundStyleSourceDisabled",
+        },
       },
     },
   },
@@ -365,13 +358,16 @@ type StyleSourceProps = {
   label: string;
   hasMenu: boolean;
   isEditable: boolean;
+  isEditing: boolean;
+  isDragging: boolean;
   state: ItemState;
   source: ItemSource;
-  onStateChange: (state: ItemState) => void;
+  onChangeState: (state: ItemState) => void;
   onSelect: () => void;
   onDuplicate: () => void;
   onRemove: () => void;
-  onChange: (value: string) => void;
+  onChangeValue: (value: string) => void;
+  onChangeEditing: (isEditing: boolean) => void;
 };
 
 export const StyleSource = ({
@@ -380,30 +376,32 @@ export const StyleSource = ({
   hasMenu,
   state,
   isEditable,
+  isEditing,
+  isDragging,
   source,
-  onChange,
-  onStateChange,
+  onChangeValue,
+  onChangeEditing,
+  onChangeState,
   onSelect,
   onDuplicate,
   onRemove,
 }: StyleSourceProps) => {
-  const ref = useForceRecalcStyle<HTMLDivElement>(
-    "max-width",
-    state === "editing"
-  );
+  const ref = useForceRecalcStyle<HTMLDivElement>("max-width", isEditing);
   const showMenu =
-    hasMenu === true &&
-    state !== "editing" &&
-    state !== "disabled" &&
-    state !== "dragging";
+    hasMenu === true && isEditing === false && isDragging === false;
+
   return (
     <Item state={state} source={source} id={id} ref={ref}>
       <EditableText
-        state={state}
         isEditable={isEditable}
-        onStateChange={onStateChange}
-        onClick={onSelect}
-        onChange={onChange}
+        isEditing={isEditing}
+        onChangeEditing={onChangeEditing}
+        onClick={() => {
+          if (state !== "disabled" && isEditing === false) {
+            onSelect();
+          }
+        }}
+        onChangeValue={onChangeValue}
         label={label}
       />
       {showMenu && (
@@ -413,13 +411,13 @@ export const StyleSource = ({
           onDuplicate={onDuplicate}
           onRemove={onRemove}
           onEnable={() => {
-            onStateChange("unselected");
+            onChangeState("unselected");
           }}
           onDisable={() => {
-            onStateChange("disabled");
+            onChangeState("disabled");
           }}
           onEdit={() => {
-            onStateChange("editing");
+            onChangeEditing(true);
           }}
         />
       )}
