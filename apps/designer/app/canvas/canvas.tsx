@@ -27,7 +27,6 @@ import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
-import { useManageProps } from "./shared/props";
 import {
   rootInstanceContainer,
   useBreakpoints,
@@ -133,7 +132,6 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageDesignModeStyles();
-  useManageProps();
   usePublishSelectedInstanceData();
   useInsertInstance();
   useReparentInstance();

@@ -1,10 +1,4 @@
-import type {
-  DeleteProp,
-  UserProp,
-  UserPropsUpdates,
-  MetaProps,
-} from "@webstudio-is/react-sdk";
-import { type Publish } from "~/shared/pubsub";
+import { UserProp, MetaProps } from "@webstudio-is/react-sdk";
 import {
   getComponentMeta,
   getComponentMetaProps,
@@ -16,13 +10,6 @@ import uniqBy from "lodash/uniqBy"; // eslint-disable-line
 import { useState } from "react";
 import type { SelectedInstanceData } from "@webstudio-is/project";
 import warnOnce from "warn-once";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    deleteProp: DeleteProp;
-    updateProps: UserPropsUpdates;
-  }
-}
 
 export type UserPropValue = UserProp extends infer T
   ? T extends { value: unknown; type: unknown }
@@ -156,8 +143,9 @@ const getInitialProps = (
 };
 
 type UsePropsLogic = {
-  publish: Publish;
   selectedInstanceData: SelectedInstanceData;
+  updateProps: (updates: Array<UserProp>) => void;
+  deleteProp: (id: UserProp["id"]) => void;
 };
 
 /**
@@ -165,7 +153,8 @@ type UsePropsLogic = {
  */
 export const usePropsLogic = ({
   selectedInstanceData,
-  publish,
+  updateProps,
+  deleteProp,
 }: UsePropsLogic) => {
   const props = selectedInstanceData.props ?? [];
 
@@ -183,26 +172,6 @@ export const usePropsLogic = ({
   const [userProps, setUserProps] = useState<Array<UserProp>>(() =>
     uniqBy([...requiredProps, ...props], "prop")
   );
-
-  const updateProps = (updates: UserPropsUpdates["updates"]) => {
-    publish({
-      type: "updateProps",
-      payload: {
-        instanceId: selectedInstanceData.id,
-        updates,
-      },
-    });
-  };
-
-  const deleteProp = (id: UserProp["id"]) => {
-    publish({
-      type: "deleteProp",
-      payload: {
-        instanceId: selectedInstanceData.id,
-        propId: id,
-      },
-    });
-  };
 
   const handleChangePropName: HandleChangePropName = (id, name) => {
     const nextUserProps = produce((draft: Array<UserProp>) => {

@@ -90,8 +90,6 @@ export const SelectedInstanceConnector = ({
       // recompute inline elements on tree changes
       unsubscribeTreeChange = subscribeAll((type) => {
         if (
-          type === "updateProps" ||
-          type === "deleteProp" ||
           type === "insertInstance" ||
           type === "deleteInstance" ||
           type === "reparentInstance"

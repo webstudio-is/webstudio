@@ -26,7 +26,8 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Link", []),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
@@ -40,13 +41,15 @@ describe("usePropsLogic", () => {
     const { result: res1 } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Heading", []),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     const { result: res2 } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Button", []),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(res1.current.userProps[0]).toMatchObject({
@@ -63,7 +66,8 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Button", []),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
@@ -84,7 +88,8 @@ describe("usePropsLogic", () => {
             value: "submit",
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
@@ -98,7 +103,8 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Box", []),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -130,7 +136,8 @@ describe("usePropsLogic", () => {
             value: true,
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -170,7 +177,8 @@ describe("usePropsLogic", () => {
             value: true,
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -223,7 +231,8 @@ describe("usePropsLogic", () => {
             required: true,
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -273,7 +282,8 @@ describe("usePropsLogic", () => {
             required: true,
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -320,7 +330,8 @@ describe("usePropsLogic", () => {
             required: true,
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -363,7 +374,8 @@ describe("usePropsLogic", () => {
             required: true,
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -492,7 +504,8 @@ describe("usePropsLogic", () => {
             required: true,
           },
         ]),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -517,7 +530,8 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Image", []),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
@@ -536,7 +550,8 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         selectedInstanceData: getSelectedInstanceData("Image", []),
-        publish: jest.fn(),
+        updateProps: jest.fn(),
+        deleteProp: jest.fn(),
       })
     );
 
