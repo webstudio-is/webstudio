@@ -122,6 +122,11 @@ type MenuProps = {
 
 const Menu = (props: MenuProps) => {
   const scheduler = useCallScheduler();
+  const canEdit = props.source !== "local";
+  const canDisable = props.state !== "disabled";
+  const canEnable = props.state === "disabled";
+  const canDuplicate = props.source !== "local";
+  const canRemove = props.source !== "local";
   return (
     <DropdownMenu modal>
       <MenuTriggerGradient source={props.source} />
@@ -132,25 +137,31 @@ const Menu = (props: MenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent onCloseAutoFocus={scheduler.call}>
-          <DropdownMenuItem onSelect={scheduler.set(props.onEdit)}>
-            Edit Name
-          </DropdownMenuItem>
-          {props.state === "disabled" && (
+          {canEdit && (
+            <DropdownMenuItem onSelect={scheduler.set(props.onEdit)}>
+              Edit Name
+            </DropdownMenuItem>
+          )}
+          {canEnable && (
             <DropdownMenuItem onSelect={scheduler.set(props.onEnable)}>
               Enable
             </DropdownMenuItem>
           )}
-          {props.state !== "disabled" && (
+          {canDisable && (
             <DropdownMenuItem onSelect={scheduler.set(props.onDisable)}>
               Disable
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onSelect={scheduler.set(props.onDuplicate)}>
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={scheduler.set(props.onRemove)}>
-            Remove
-          </DropdownMenuItem>
+          {canDuplicate && (
+            <DropdownMenuItem onSelect={scheduler.set(props.onDuplicate)}>
+              Duplicate
+            </DropdownMenuItem>
+          )}
+          {canRemove && (
+            <DropdownMenuItem onSelect={scheduler.set(props.onRemove)}>
+              Remove
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
