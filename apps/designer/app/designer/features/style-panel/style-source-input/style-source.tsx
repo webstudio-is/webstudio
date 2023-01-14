@@ -198,7 +198,9 @@ const useEditableText = ({
     event: KeyboardEvent<Element> | FocusEvent<Element>
   ) => {
     event.preventDefault();
-    if (isEditing) onChangeEditing(false);
+    if (isEditing) {
+      onChangeEditing(false);
+    }
     onChangeValue(getValue());
     lastValueRef.current = "";
   };
