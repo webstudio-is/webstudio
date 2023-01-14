@@ -1,0 +1,37 @@
+name: Build and commit Figma tokens
+
+on:
+  push:
+    branches:
+      - figma-tokens
+    paths:
+      - packages/design-system/src/__generated__/figma-design-tokens.json
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # We don't need a token to push from an action,
+          # but we need it if want the commit to trigger other workflows as normal
+          token: ${{ secrets.ACCESS_TOKEN_FOR_FIGMA_TOKENS }}
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Configure git
+        run: |
+          git config --global user.name 'Bot (build-figma-tokens.yml)'
+          git config --global user.email 'bot@localhost'
+
+      - name: Switch branch
+        run: git checkout figma-tokens
+
+      - name: Build tokens
+        run: pnpm build-figma-tokens
+
+      - name: Commit and push
+        run: |
+          [[ -z `git status | grep figma-design-tokens.ts` ]] || git commit -m "Update figma-design-tokens.ts" packages/design-system/src/__generated__/figma-design-tokens.ts
+          git push
