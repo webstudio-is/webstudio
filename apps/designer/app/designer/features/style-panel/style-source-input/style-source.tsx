@@ -7,17 +7,17 @@ import {
   DropdownMenuTrigger,
   Text,
   styled,
+  Box,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
   useEffect,
   useLayoutEffect,
   useRef,
+  forwardRef,
   type KeyboardEvent,
   type KeyboardEventHandler,
   type FocusEvent,
-  ComponentProps,
-  forwardRef,
 } from "react";
 
 // Used to schedule function calls to be executed after at a later point in time.
@@ -82,7 +82,7 @@ const MenuTrigger = styled("button", {
   },
 });
 
-const MenuTriggerGradient = styled("div", {
+const MenuTriggerGradient = styled(Box, {
   position: "absolute",
   top: 0,
   right: 0,
@@ -308,12 +308,11 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const StyledItem = styled("div", {
+const StyledBadge = styled(Box, {
   display: "inline-flex",
   borderRadius: "$borderRadius$3",
   padding: "$spacing$4",
   maxWidth: "100%",
-  minWidth: 0,
   position: "relative",
   color: "$colors$foregroundContrastMain",
   ...menuCssVars({ show: false }),
@@ -352,21 +351,30 @@ const StyledItem = styled("div", {
   },
 });
 
-const Item = forwardRef<HTMLDivElement, ComponentProps<typeof StyledItem>>(
-  ({ id, state, ...props }, ref) => {
+type BadgeProps = {
+  id: string;
+  state: ItemState;
+  source: ItemSource;
+  children: Array<JSX.Element | boolean>;
+};
+
+const Badge = forwardRef<HTMLDivElement, BadgeProps>(
+  ({ id, state, source, children }, ref) => {
     return (
-      <StyledItem
+      <StyledBadge
+        state={state}
+        source={source}
         data-id={id}
         aria-current={state === "selected"}
         role="button"
-        state={state}
         ref={ref}
-        {...props}
-      />
+      >
+        {children}
+      </StyledBadge>
     );
   }
 );
-Item.displayName = "Item";
+Badge.displayName = "Badge";
 
 type StyleSourceProps = {
   id: string;
@@ -403,7 +411,7 @@ export const StyleSource = ({
   const showMenu = isEditing === false && isDragging === false;
 
   return (
-    <Item state={state} source={source} id={id} ref={ref}>
+    <Badge state={state} source={source} id={id} ref={ref}>
       <EditableText
         isEditable={isEditable}
         isEditing={isEditing}
@@ -433,6 +441,6 @@ export const StyleSource = ({
           }}
         />
       )}
-    </Item>
+    </Badge>
   );
 };
