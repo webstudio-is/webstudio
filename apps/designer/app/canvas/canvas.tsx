@@ -105,7 +105,7 @@ const useCopyPaste = () => {
   const allUserProps = useAllUserProps();
 
   const selectedInstanceData = useMemo(
-    () => instance && { instance, props: allUserProps[instance.id]?.props },
+    () => instance && { instance, props: allUserProps[instance.id] },
     [allUserProps, instance]
   );
 
@@ -133,9 +133,9 @@ type DesignModeProps = {
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
   useManageDesignModeStyles();
-  useManageProps({ treeId });
+  useManageProps();
   usePublishSelectedInstanceData();
-  useInsertInstance({ treeId });
+  useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   useTrackSelectedElement();

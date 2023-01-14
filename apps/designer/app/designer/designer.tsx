@@ -111,9 +111,7 @@ const useCopyPaste = (publish: Publish) => {
         rootInstance,
         selectedInstance.id
       );
-      return (
-        instance && { instance, props: selectedInstance.props?.props ?? [] }
-      );
+      return instance && { instance, props: selectedInstance.props ?? [] };
     }
   }, [rootInstance, selectedInstance]);
 

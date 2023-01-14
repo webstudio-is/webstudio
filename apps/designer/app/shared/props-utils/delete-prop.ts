@@ -4,14 +4,14 @@ export const deletePropMutable = (
   allProps: AllUserProps,
   deleteProp: DeleteProp
 ) => {
-  const prop = allProps[deleteProp.instanceId];
-  if (prop === undefined) {
+  const props = allProps[deleteProp.instanceId];
+  if (props === undefined) {
     return false;
   }
-  const index = prop.props.findIndex(({ id }) => id === deleteProp.propId);
+  const index = props.findIndex(({ id }) => id === deleteProp.propId);
   if (index === -1) {
     return false;
   }
-  prop.props.splice(index, 1);
+  props.splice(index, 1);
   return true;
 };

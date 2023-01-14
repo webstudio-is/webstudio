@@ -67,7 +67,7 @@ export const findInsertLocation = (
   };
 };
 
-export const useInsertInstance = ({ treeId }: { treeId: string }) => {
+export const useInsertInstance = () => {
   const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
     store.createTransaction(
@@ -85,11 +85,7 @@ export const useInsertInstance = ({ treeId }: { treeId: string }) => {
           setSelectedInstance(instance);
         }
         if (props !== undefined) {
-          allUserProps[instance.id] = utils.props.createInstanceProps({
-            instanceId: instance.id,
-            treeId,
-            props,
-          });
+          allUserProps[instance.id] = props;
         }
       }
     );

@@ -2,67 +2,47 @@
 
 exports[`Update props with added prop 1`] = `
 {
-  "instanceId": {
-    "id": "id",
-    "instanceId": "instanceId",
-    "props": [
-      {
-        "id": "propId",
-        "prop": "a",
-        "type": "string",
-        "value": "1",
-      },
-    ],
-    "treeId": "treeId",
-  },
+  "instanceId": [
+    {
+      "id": "propId",
+      "prop": "a",
+      "type": "string",
+      "value": "1",
+    },
+  ],
 }
 `;
 
 exports[`Update props with empty updates 1`] = `
 {
-  "instanceId": {
-    "id": "id",
-    "instanceId": "instanceId",
-    "props": [],
-    "treeId": "treeId",
-  },
+  "instanceId": [],
 }
 `;
 
 exports[`Update props with renamed prop name 1`] = `
 {
-  "instanceId": {
-    "id": "id",
-    "instanceId": "instanceId",
-    "props": [
-      {
-        "id": "propId",
-        "prop": "b",
-        "required": undefined,
-        "type": "string",
-        "value": "1",
-      },
-    ],
-    "treeId": "treeId",
-  },
+  "instanceId": [
+    {
+      "id": "propId",
+      "prop": "b",
+      "required": undefined,
+      "type": "string",
+      "value": "1",
+    },
+  ],
 }
 `;
 
 exports[`Update props with updated prop value 1`] = `
 {
-  "instanceId": {
-    "id": "id",
-    "instanceId": "instanceId",
-    "props": [
-      {
-        "id": "propId",
-        "prop": "a",
-        "required": undefined,
-        "type": "string",
-        "value": "2",
-      },
-    ],
-    "treeId": "treeId",
-  },
+  "instanceId": [
+    {
+      "id": "propId",
+      "prop": "a",
+      "required": undefined,
+      "type": "string",
+      "value": "2",
+    },
+  ],
 }
 `;
