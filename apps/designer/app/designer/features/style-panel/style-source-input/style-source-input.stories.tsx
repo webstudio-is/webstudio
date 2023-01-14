@@ -23,7 +23,7 @@ const items: Array<Item> = [
     source: "local",
     hasMenu: false,
     isEditable: false,
-    state: "unselected",
+    state: "selected",
   },
   {
     id: uuid(),
@@ -47,7 +47,7 @@ const items: Array<Item> = [
     source: "state",
     hasMenu: true,
     isEditable: true,
-    state: "selected",
+    state: "unselected",
   },
 ];
 
@@ -119,7 +119,7 @@ export const WithTruncatedItem: ComponentStory<
       source: "local",
       hasMenu: false,
       isEditable: true,
-      state: "unselected",
+      state: "selected",
     },
   ]);
   return (
