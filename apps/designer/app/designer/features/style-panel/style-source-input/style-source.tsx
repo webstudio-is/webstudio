@@ -7,7 +7,6 @@ import {
   DropdownMenuTrigger,
   Text,
   styled,
-  baseButtonStyle,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -41,14 +40,20 @@ const menuCssVars = ({ show }: { show: boolean }) => ({
   [menuTriggerVisibilityVar]: show ? "visible" : "hidden",
 });
 
-const MenuTrigger = styled("button", baseButtonStyle, {
+const MenuTrigger = styled("button", {
+  display: "inline-flex",
+  border: "none",
+  boxSizing: "border-box",
+  minWidth: 0,
+  alignItems: "center",
   position: "absolute",
   right: 0,
   top: 0,
   height: "100%",
   padding: 0,
-  borderTopLeftRadius: 0,
-  borderBottomLeftRadius: 0,
+  borderTopRightRadius: "$borderRadius$4",
+  borderBottomRightRadius: "$borderRadius$4",
+  color: "$colors$foregroundContrastMain",
   visibility: cssVars.use(menuTriggerVisibilityVar),
   variants: {
     source: {
