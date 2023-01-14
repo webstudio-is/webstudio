@@ -1,5 +1,7 @@
 import { useState } from "react";
+import store from "immerhin";
 import {
+  allUserPropsContainer,
   getComponentMetaProps,
   type Instance,
   type UserProp,
@@ -28,6 +30,10 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
+import {
+  removeByMutable,
+  replaceByOrAppendMutable,
+} from "~/shared/array-utils";
 import { usePropsLogic, type UserPropValue } from "./use-props-logic";
 import {
   useStyleData,
@@ -231,7 +237,36 @@ export const PropsPanel = ({
     handleChangePropValue,
     handleDeleteProp,
     isRequired,
-  } = usePropsLogic({ selectedInstanceData, publish });
+  } = usePropsLogic({
+    selectedInstanceData,
+
+    updateProps: (updates) => {
+      store.createTransaction([allUserPropsContainer], (allUserProps) => {
+        const instanceId = selectedInstanceData.id;
+        let props = allUserProps[instanceId];
+        if (props === undefined) {
+          props = [];
+          allUserProps[instanceId] = props;
+        }
+        for (const update of updates) {
+          replaceByOrAppendMutable(
+            props,
+            update,
+            (item) => item.id === update.id
+          );
+        }
+      });
+    },
+
+    deleteProp: (id) => {
+      store.createTransaction([allUserPropsContainer], (allUserProps) => {
+        const props = allUserProps[selectedInstanceData.id];
+        if (props) {
+          removeByMutable(props, (prop) => prop.id === id);
+        }
+      });
+    },
+  });
 
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstanceData,

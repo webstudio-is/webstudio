@@ -27,15 +27,11 @@ import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import { useSync } from "./shared/sync";
-import { useManageProps } from "./shared/props";
-import {
-  useManageBreakpoints,
-  useInitializeBreakpoints,
-} from "./shared/breakpoints";
 import {
   rootInstanceContainer,
   useBreakpoints,
   useRootInstance,
+  useSetBreakpoints,
   useSetPresetStyles,
   useSetRootInstance,
   useSetStyles,
@@ -108,7 +104,7 @@ const useCopyPaste = () => {
   const allUserProps = useAllUserProps();
 
   const selectedInstanceData = useMemo(
-    () => instance && { instance, props: allUserProps[instance.id]?.props },
+    () => instance && { instance, props: allUserProps[instance.id] },
     [allUserProps, instance]
   );
 
@@ -135,11 +131,9 @@ type DesignModeProps = {
 };
 
 const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
-  useManageBreakpoints();
   useManageDesignModeStyles();
-  useManageProps({ treeId });
   usePublishSelectedInstanceData();
-  useInsertInstance({ treeId });
+  useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   useTrackSelectedElement();
@@ -166,9 +160,9 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
     throw new Error("Tree is null");
   }
   const isDesignerReady = useSubscribeDesignerReady();
-  useInitializeBreakpoints(data.breakpoints);
   useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
+  useSetBreakpoints(data.breakpoints);
   useAllUserProps(data.props);
   useSetPresetStyles(data.tree.presetStyles);
   useSetStyles(data.tree.styles);

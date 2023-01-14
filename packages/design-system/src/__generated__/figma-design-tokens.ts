@@ -49,8 +49,8 @@ export const boxShadow = {
 
 export const fontFamilies = {
   inter: "Inter",
-  roboto: "Roboto",
   manrope: "Manrope",
+  robotoMono: "Roboto Mono",
 } as const;
 
 export const lineHeights = {
@@ -65,9 +65,9 @@ export const fontWeights = {
   inter0: "Regular",
   inter1: "Medium",
   inter2: "Bold",
-  roboto3: "Regular",
   inter4: "Semi Bold",
   manrope5: "SemiBold",
+  robotoMono3: "Regular",
 } as const;
 
 export const fontSizes = {
@@ -99,7 +99,18 @@ export const typography = {
     textCase: "none",
     textDecoration: "none",
   },
-  labels: {
+  labelsTitleCase: {
+    fontFamily: "Inter",
+    fontWeight: "Medium",
+    lineHeight: 16,
+    fontSize: 12,
+    letterSpacing: "0.5%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
+    textCase: "capitalize",
+    textDecoration: "none",
+  },
+  labelsSentenceCase: {
     fontFamily: "Inter",
     fontWeight: "Medium",
     lineHeight: 16,
@@ -122,10 +133,32 @@ export const typography = {
     textDecoration: "none",
   },
   mono: {
-    fontFamily: "Roboto",
+    fontFamily: "Roboto Mono",
     fontWeight: "Regular",
     lineHeight: 16,
     fontSize: 12,
+    letterSpacing: "0%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
+    textCase: "none",
+    textDecoration: "none",
+  },
+  bigTitle: {
+    fontFamily: "Inter",
+    fontWeight: "Medium",
+    lineHeight: "AUTO",
+    fontSize: 32,
+    letterSpacing: "0.5%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
+    textCase: "none",
+    textDecoration: "none",
+  },
+  small: {
+    fontFamily: "Inter",
+    fontWeight: "Regular",
+    lineHeight: 11,
+    fontSize: 10,
     letterSpacing: "0%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
@@ -154,18 +187,7 @@ export const typography = {
     textCase: "uppercase",
     textDecoration: "none",
   },
-  spacingSectionValueText: {
-    fontFamily: "Inter",
-    fontWeight: "Medium",
-    lineHeight: 10,
-    fontSize: 10,
-    letterSpacing: "0%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
-    textCase: "none",
-    textDecoration: "none",
-  },
-  spacingSectionUnitText: {
+  spaceSectionUnitText: {
     fontFamily: "Inter",
     fontWeight: "Semi Bold",
     lineHeight: 8,
@@ -176,12 +198,12 @@ export const typography = {
     textCase: "uppercase",
     textDecoration: "none",
   },
-  bigTitle: {
+  spaceSectionValueText: {
     fontFamily: "Inter",
     fontWeight: "Medium",
-    lineHeight: "AUTO",
-    fontSize: 32,
-    letterSpacing: "0.5%",
+    lineHeight: 10,
+    fontSize: 10,
+    letterSpacing: "0%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
     textCase: "none",
@@ -198,42 +220,13 @@ export const typography = {
     textCase: "none",
     textDecoration: "none",
   },
-  spaceSectionValueText: {
-    fontFamily: "Inter",
-    fontWeight: "Medium",
-    lineHeight: 10,
-    fontSize: 10,
-    letterSpacing: "0%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
-    textCase: "none",
-    textDecoration: "none",
-  },
-  spaceSectionUnitText: {
-    fontFamily: "Inter",
-    fontWeight: "Semi Bold",
-    lineHeight: 8,
-    fontSize: 8,
-    letterSpacing: "1%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
-    textCase: "uppercase",
-    textDecoration: "none",
-  },
-  small: {
-    fontFamily: "Inter",
-    fontWeight: "Regular",
-    lineHeight: 11,
-    fontSize: 10,
-    letterSpacing: "0%",
-    paragraphSpacing: 0,
-    paragraphIndent: "0px",
-    textCase: "none",
-    textDecoration: "none",
-  },
 } as const;
 
-export const textCase = { none: "none", uppercase: "uppercase" } as const;
+export const textCase = {
+  none: "none",
+  uppercase: "uppercase",
+  capitalize: "capitalize",
+} as const;
 
 export const textDecoration = { none: "none" } as const;
 
@@ -282,6 +275,7 @@ export const color = {
   backgroundItemCurrent: "#0081f1",
   backgroundItemCurrentChild: "#e1f0ff",
   backgroundItemCurrentHidden: "#7e868c",
+  backgroundItemMenuItemHover: "#c9c9c9",
   backgroundTooltipMain: "#11181c",
   backgroundTooltipDesigner: "#ffffff",
   backgroundSpacingTopBottom: "#f1f3f5",

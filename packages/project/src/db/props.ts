@@ -1,3 +1,4 @@
+import { v4 as uuid } from "uuid";
 import { z } from "zod";
 
 import warnOnce from "warn-once";
@@ -151,7 +152,7 @@ export const patch = async (
   // model instead of the instanceId map.
   // The map is handy for accessing props, but probably should be just cached interface, not the main data structure.
   const allPropsMapByInstanceId = allProps.reduce((acc, prop) => {
-    acc[prop.instanceId] = prop;
+    acc[prop.instanceId] = prop.props;
     return acc;
   }, {} as AllUserProps);
   const nextProps = applyPatches<AllUserProps>(
@@ -160,7 +161,7 @@ export const patch = async (
   );
 
   await Promise.all(
-    Object.values(nextProps).map(({ id, instanceId, treeId, props }) => {
+    Object.entries(nextProps).map(async ([instanceId, props]) => {
       const propsDb: UserDbProp[] = UserProps.parse(props).map((prop) => {
         if (prop.type === "asset") {
           return {
@@ -174,13 +175,22 @@ export const patch = async (
 
       const propsString = JSON.stringify(propsDb);
 
-      return prisma.instanceProps.upsert({
-        where: { id: id },
-        create: { id: id, instanceId, treeId, props: propsString },
-        update: {
+      const { count } = await prisma.instanceProps.updateMany({
+        where: { instanceId, treeId },
+        data: {
           props: propsString,
         },
       });
+      if (count === 0) {
+        await prisma.instanceProps.create({
+          data: {
+            id: uuid(),
+            instanceId,
+            treeId,
+            props: propsString,
+          },
+        });
+      }
     })
   );
 };

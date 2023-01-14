@@ -66,7 +66,7 @@ export const WrapperComponentDev = ({
     if (instanceProps === undefined) {
       return result;
     }
-    for (const item of instanceProps.props) {
+    for (const item of instanceProps) {
       if (item.type !== "asset") {
         result[item.prop] = item.value;
       }

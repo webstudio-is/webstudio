@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Instance, InstanceProps } from "@webstudio-is/react-sdk";
+import type { Instance, UserProp } from "@webstudio-is/react-sdk";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
 import {
@@ -53,7 +53,7 @@ export const SelectedInstanceConnector = ({
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
   instanceStylesKey: unknown;
-  instanceProps: undefined | InstanceProps;
+  instanceProps: undefined | UserProp[];
 }) => {
   useEffect(() => {
     const element = instanceElementRef.current;
@@ -90,8 +90,6 @@ export const SelectedInstanceConnector = ({
       // recompute inline elements on tree changes
       unsubscribeTreeChange = subscribeAll((type) => {
         if (
-          type === "updateProps" ||
-          type === "deleteProp" ||
           type === "insertInstance" ||
           type === "deleteInstance" ||
           type === "reparentInstance"

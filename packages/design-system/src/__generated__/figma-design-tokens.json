@@ -26,12 +26,12 @@
         "value": "Inter",
         "type": "fontFamilies"
       },
-      "roboto": {
-        "value": "Roboto",
-        "type": "fontFamilies"
-      },
       "manrope": {
         "value": "Manrope",
+        "type": "fontFamilies"
+      },
+      "roboto-mono": {
+        "value": "Roboto Mono",
         "type": "fontFamilies"
       }
     },
@@ -70,16 +70,16 @@
         "value": "Bold",
         "type": "fontWeights"
       },
-      "roboto-3": {
-        "value": "Regular",
-        "type": "fontWeights"
-      },
       "inter-4": {
         "value": "Semi Bold",
         "type": "fontWeights"
       },
       "manrope-5": {
         "value": "SemiBold",
+        "type": "fontWeights"
+      },
+      "roboto-mono-3": {
+        "value": "Regular",
         "type": "fontWeights"
       }
     },
@@ -143,7 +143,21 @@
       },
       "type": "typography"
     },
-    "Labels": {
+    "Labels - Title Case": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-1}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.capitalize}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography"
+    },
+    "Labels - Sentence case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
@@ -173,8 +187,8 @@
     },
     "Mono": {
       "value": {
-        "fontFamily": "{fontFamilies.roboto}",
-        "fontWeight": "{fontWeights.roboto-3}",
+        "fontFamily": "{fontFamilies.roboto-mono}",
+        "fontWeight": "{fontWeights.roboto-mono-3}",
         "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.2}",
@@ -184,6 +198,35 @@
         "textDecoration": "{textDecoration.none}"
       },
       "type": "typography"
+    },
+    "Big Title": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-1}",
+        "lineHeight": "{lineHeights.3}",
+        "fontSize": "{fontSize.4}",
+        "letterSpacing": "{letterSpacing.0}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography"
+    },
+    "Small": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-0}",
+        "lineHeight": "{lineHeights.4}",
+        "fontSize": "{fontSize.1}",
+        "letterSpacing": "{letterSpacing.2}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography",
+      "description": "When Regular is too big and Tiny is too tiny."
     },
     "Tiny": {
       "value": {
@@ -213,21 +256,7 @@
       },
       "type": "typography"
     },
-    "Spacing Section Value Text": {
-      "value": {
-        "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.2}",
-        "fontSize": "{fontSize.1}",
-        "letterSpacing": "{letterSpacing.2}",
-        "paragraphSpacing": "{paragraphSpacing.0}",
-        "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.none}",
-        "textDecoration": "{textDecoration.none}"
-      },
-      "type": "typography"
-    },
-    "Spacing Section Unit Text": {
+    "Space Section Unit Text": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-4}",
@@ -241,13 +270,13 @@
       },
       "type": "typography"
     },
-    "Big Title": {
+    "Space Section Value Text": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.3}",
-        "fontSize": "{fontSize.4}",
-        "letterSpacing": "{letterSpacing.0}",
+        "lineHeight": "{lineHeights.2}",
+        "fontSize": "{fontSize.1}",
+        "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -262,6 +291,10 @@
       },
       "uppercase": {
         "value": "uppercase",
+        "type": "textCase"
+      },
+      "capitalize": {
+        "value": "capitalize",
         "type": "textCase"
       }
     },
@@ -483,6 +516,11 @@
           "value": "#7e868c",
           "type": "color",
           "description": "color for the hidden current item in the navigator item component"
+        },
+        "menu-item-hover": {
+          "value": "#c9c9c9",
+          "type": "color",
+          "description": "The hover state on menu item components."
         }
       },
       "tooltip": {
@@ -878,49 +916,6 @@
         "type": "borderWidth",
         "description": "sets border width value to 2. Used for focus borders (among other things)"
       }
-    },
-    "Space Section Value Text": {
-      "value": {
-        "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.2}",
-        "fontSize": "{fontSize.1}",
-        "letterSpacing": "{letterSpacing.2}",
-        "paragraphSpacing": "{paragraphSpacing.0}",
-        "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.none}",
-        "textDecoration": "{textDecoration.none}"
-      },
-      "type": "typography"
-    },
-    "Space Section Unit Text": {
-      "value": {
-        "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-4}",
-        "lineHeight": "{lineHeights.1}",
-        "fontSize": "{fontSize.0}",
-        "letterSpacing": "{letterSpacing.1}",
-        "paragraphSpacing": "{paragraphSpacing.0}",
-        "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.uppercase}",
-        "textDecoration": "{textDecoration.none}"
-      },
-      "type": "typography"
-    },
-    "Small": {
-      "value": {
-        "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-0}",
-        "lineHeight": "{lineHeights.4}",
-        "fontSize": "{fontSize.1}",
-        "letterSpacing": "{letterSpacing.2}",
-        "paragraphSpacing": "{paragraphSpacing.0}",
-        "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.none}",
-        "textDecoration": "{textDecoration.none}"
-      },
-      "type": "typography",
-      "description": "When Regular is too big and Tiny is too tiny."
     },
     "paragraphIndent": {
       "0": {

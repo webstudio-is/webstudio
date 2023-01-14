@@ -19,7 +19,7 @@ export const useUserProps = (instanceId: Instance["id"]) => {
     }
     const result: UserProps = {};
 
-    for (const userProp of propsData.props) {
+    for (const userProp of propsData) {
       if (userProp.type !== "asset") {
         result[userProp.prop] = userProp.value;
       }
