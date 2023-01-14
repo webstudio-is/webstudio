@@ -19,6 +19,11 @@ export const textStyles = css({
         fontSize: "$fontSize$3",
         letterSpacing: "0.005em",
       },
+      small: {
+        fontWeight: 400,
+        fontSize: "$fontSize$2",
+        letterSpacing: "0.01em",
+      },
       tiny: {
         fontWeight: 400,
         fontSize: "$fontSize$1",

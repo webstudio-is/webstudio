@@ -308,7 +308,7 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
   return ref;
 };
 
-const StyledBadge = styled(Box, {
+const StyledSourceButton = styled(Box, {
   display: "inline-flex",
   borderRadius: "$borderRadius$3",
   padding: "$spacing$4",
@@ -351,17 +351,17 @@ const StyledBadge = styled(Box, {
   },
 });
 
-type BadgeProps = {
+type SourceButtonProps = {
   id: string;
   state: ItemState;
   source: ItemSource;
   children: Array<JSX.Element | boolean>;
 };
 
-const Badge = forwardRef<HTMLDivElement, BadgeProps>(
+const SourceButton = forwardRef<HTMLDivElement, SourceButtonProps>(
   ({ id, state, source, children }, ref) => {
     return (
-      <StyledBadge
+      <StyledSourceButton
         state={state}
         source={source}
         data-id={id}
@@ -370,11 +370,11 @@ const Badge = forwardRef<HTMLDivElement, BadgeProps>(
         ref={ref}
       >
         {children}
-      </StyledBadge>
+      </StyledSourceButton>
     );
   }
 );
-Badge.displayName = "Badge";
+SourceButton.displayName = "SourceButton";
 
 type StyleSourceProps = {
   id: string;
@@ -411,7 +411,7 @@ export const StyleSource = ({
   const showMenu = isEditing === false && isDragging === false;
 
   return (
-    <Badge state={state} source={source} id={id} ref={ref}>
+    <SourceButton state={state} source={source} id={id} ref={ref}>
       <EditableText
         isEditable={isEditable}
         isEditing={isEditing}
@@ -441,6 +441,6 @@ export const StyleSource = ({
           }}
         />
       )}
-    </Badge>
+    </SourceButton>
   );
 };
