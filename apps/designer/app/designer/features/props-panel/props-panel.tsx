@@ -3,6 +3,7 @@ import store from "immerhin";
 import {
   allUserPropsContainer,
   getComponentMetaProps,
+  useAllUserProps,
   type Instance,
   type UserProp,
 } from "@webstudio-is/react-sdk";
@@ -230,6 +231,9 @@ export const PropsPanel = ({
   selectedInstanceData,
   publish,
 }: PropsPanelProps) => {
+  const allUserProps = useAllUserProps();
+  const props = allUserProps[selectedInstanceData.id] ?? [];
+
   const {
     userProps,
     addEmptyProp,
@@ -238,6 +242,7 @@ export const PropsPanel = ({
     handleDeleteProp,
     isRequired,
   } = usePropsLogic({
+    props,
     selectedInstanceData,
 
     updateProps: (updates) => {

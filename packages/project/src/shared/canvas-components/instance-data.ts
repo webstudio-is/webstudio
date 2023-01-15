@@ -1,4 +1,4 @@
-import type { Instance, UserProp } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/react-sdk";
 import type {
   Style,
   StyleProperty,
@@ -10,7 +10,6 @@ export type SelectedInstanceData = {
   id: Instance["id"];
   component: Instance["component"];
   browserStyle: Style;
-  props?: UserProp[];
 };
 
 export type HoveredInstanceData = {
