@@ -42,6 +42,7 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
+import { useAllUserProps } from "@webstudio-is/react-sdk";
 
 registerContainers();
 
@@ -104,6 +105,7 @@ const useSubscribeCanvasReady = (publish: Publish) => {
 const useCopyPaste = (publish: Publish) => {
   const [selectedInstance] = useSelectedInstanceData();
   const [rootInstance] = useRootInstance();
+  const allUserProps = useAllUserProps();
 
   const selectedInstanceData = useMemo(() => {
     if (selectedInstance && rootInstance) {
@@ -111,9 +113,11 @@ const useCopyPaste = (publish: Publish) => {
         rootInstance,
         selectedInstance.id
       );
-      return instance && { instance, props: selectedInstance.props ?? [] };
+      return (
+        instance && { instance, props: allUserProps[selectedInstance.id] ?? [] }
+      );
     }
-  }, [rootInstance, selectedInstance]);
+  }, [rootInstance, selectedInstance, allUserProps]);
 
   // We need to initialize this in both canvas and designer,
   // because the events will fire in either one, depending on where the focus is

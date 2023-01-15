@@ -131,7 +131,6 @@ export const SelectedInstanceConnector = ({
         id: instance.id,
         component: instance.component,
         browserStyle: getBrowserStyle(element),
-        props: instanceProps,
       },
     });
 
