@@ -1,15 +1,16 @@
-import type { UserProp, MetaProps } from "@webstudio-is/react-sdk";
+import { useMemo, useState } from "react";
+import ObjectId from "bson-objectid";
+import warnOnce from "warn-once";
+import type {
+  UserProp,
+  MetaProps,
+  ComponentName,
+} from "@webstudio-is/react-sdk";
 import {
   getComponentMeta,
   getComponentMetaProps,
 } from "@webstudio-is/react-sdk";
-import ObjectId from "bson-objectid";
-import produce from "immer";
-// @todo: importing normally doesn't work in Jest for some reason
-import uniqBy from "lodash/uniqBy"; // eslint-disable-line
-import { useState } from "react";
 import type { SelectedInstanceData } from "@webstudio-is/project";
-import warnOnce from "warn-once";
 
 export type UserPropValue = UserProp extends infer T
   ? T extends { value: unknown; type: unknown }
@@ -17,11 +18,7 @@ export type UserPropValue = UserProp extends infer T
     : never
   : never;
 
-type HandleChangePropName = (id: UserProp["id"], name: string) => void;
-
-type HandleChangePropValue = (id: UserProp["id"], value: UserPropValue) => void;
-
-export const getValueFromPropMeta = (propValue: MetaProps[string]) => {
+export const getValueFromPropMeta = (propValue?: MetaProps[string]) => {
   let typedValue: UserPropValue = {
     type: "string",
     value: `${propValue?.defaultValue ?? ""}`,
@@ -44,106 +41,54 @@ export const getValueFromPropMeta = (propValue: MetaProps[string]) => {
   return typedValue;
 };
 
-const getRequiredProps = (
-  selectedInstanceData: SelectedInstanceData,
-  props: UserProp[]
-): UserProp[] => {
-  const { component } = selectedInstanceData;
-  const meta = getComponentMetaProps(component);
-
-  return Object.entries(meta)
-    .filter(([_, value]) => value?.required)
-    .map(([requiredProp, requiredPropValue]) => {
-      warnOnce(
-        requiredPropValue?.defaultValue == null,
-        `Default value for required "${requiredProp}" is required`
-      );
-      const userProp = props.find((prop) => prop.prop === requiredProp);
-
-      if (userProp !== undefined) {
-        return userProp;
-      }
-
-      const typedValue = getValueFromPropMeta(requiredPropValue);
-
-      return {
-        id: ObjectId().toString(),
-        prop: requiredProp,
-        ...typedValue,
-        required: true,
-      };
-    });
-};
-
-// @todo: This returns same props for all instances.
-// See the failing test in use-props-logic.test.ts
-const getPropsWithDefaultValue = (
-  selectedInstanceData: SelectedInstanceData,
-  props: UserProp[]
-): UserProp[] => {
-  const { component } = selectedInstanceData;
-  const meta = getComponentMetaProps(component);
-
-  return Object.entries(meta)
-    .filter(([_, value]) => value?.defaultValue != null)
-    .map(([defaultProp, defaultPropValue]) => {
-      const userProp = props.find((prop) => prop.prop === defaultProp);
-
-      if (userProp !== undefined) {
-        return userProp;
-      }
-
-      const typedValue = getValueFromPropMeta(defaultPropValue);
-
-      return {
-        id: ObjectId().toString(),
-        prop: defaultProp,
-        ...typedValue,
-      };
-    });
-};
-
-const getInitialProps = (
-  selectedInstanceData: SelectedInstanceData,
-  props: UserProp[]
-): UserProp[] => {
-  const { component } = selectedInstanceData;
+const getRequiredPropsList = (component: ComponentName) => {
   const meta = getComponentMeta(component);
   const metaProps = getComponentMetaProps(component);
 
   const initialProps = meta.initialProps ?? [];
+  const requiredProps = [];
+  const propsWithDefaultValue = [];
 
-  const userProps: UserProp[] = [];
-
-  // Preserve ordering from `initialProps` getting values from DB props or default values
-  for (const initialProp of initialProps) {
-    const userProp = props.find((prop) => prop.prop === initialProp);
-    if (userProp !== undefined) {
-      userProps.push(userProp);
-      continue;
+  for (const [prop, value] of Object.entries(metaProps)) {
+    if (value?.required) {
+      warnOnce(
+        value.defaultValue == null,
+        `Default value for required "${prop}" is required`
+      );
+      requiredProps.push(prop);
     }
-
-    const metaPropValue = metaProps[initialProp];
-    if (metaPropValue !== undefined) {
-      const typedValue = getValueFromPropMeta(metaPropValue);
-
-      userProps.push({
-        id: ObjectId().toString(),
-        prop: initialProp,
-        ...typedValue,
-      });
-
-      continue;
+    if (value?.defaultValue != null) {
+      propsWithDefaultValue.push(prop);
     }
   }
-  return userProps;
+
+  // deduplicate required props
+  return Array.from(
+    new Set<string>([
+      ...initialProps,
+      ...requiredProps,
+      ...propsWithDefaultValue,
+    ])
+  );
 };
 
 type UsePropsLogic = {
   props: UserProp[];
   selectedInstanceData: SelectedInstanceData;
-  updateProps: (updates: Array<UserProp>) => void;
+  updateProps: (update: UserProp) => void;
   deleteProp: (id: UserProp["id"]) => void;
+};
+
+const getPropsItemFromMetaProps = (metaProps: MetaProps, name: string) => {
+  const metaPropValue = metaProps[name];
+  if (metaPropValue === undefined) {
+    return undefined;
+  }
+  return {
+    id: ObjectId().toString(),
+    prop: name,
+    ...getValueFromPropMeta(metaPropValue),
+  };
 };
 
 /**
@@ -155,89 +100,77 @@ export const usePropsLogic = ({
   updateProps,
   deleteProp,
 }: UsePropsLogic) => {
-  const [requiredProps] = useState<Array<UserProp>>(() =>
-    uniqBy(
-      [
-        ...getInitialProps(selectedInstanceData, props),
-        ...getRequiredProps(selectedInstanceData, props),
-        ...getPropsWithDefaultValue(selectedInstanceData, props),
-      ],
-      "prop"
-    )
+  const { component } = selectedInstanceData;
+
+  const metaProps = useMemo(
+    () => getComponentMetaProps(component),
+    [component]
   );
-  // Prefer ordering from `initialProps`
-  const [userProps, setUserProps] = useState<Array<UserProp>>(() =>
-    uniqBy([...requiredProps, ...props], "prop")
+  const requiredPropsList = useMemo(
+    () => getRequiredPropsList(component),
+    [component]
   );
+  const requiredPropsByName = new Map<string, UserProp>();
+  for (const name of requiredPropsList) {
+    const propsItem = getPropsItemFromMetaProps(metaProps, name);
+    if (propsItem) {
+      requiredPropsByName.set(name, propsItem);
+    }
+  }
 
-  const handleChangePropName: HandleChangePropName = (id, name) => {
-    const nextUserProps = produce((draft: Array<UserProp>) => {
-      const index = draft.findIndex((item) => item.id === id);
+  const [addedProps, setAddedProps] = useState<UserProp[]>([]);
+  const addedPropsById = new Map<string, UserProp>();
+  for (const propsItem of addedProps) {
+    addedPropsById.set(propsItem.id, propsItem);
+  }
 
-      const isPropRequired = draft[index].required;
+  const propsById = new Map<string, UserProp>();
+  for (const propsItem of props) {
+    if (requiredPropsByName.has(propsItem.prop)) {
+      requiredPropsByName.set(propsItem.prop, propsItem);
+      continue;
+    }
+    if (addedPropsById.has(propsItem.id)) {
+      addedPropsById.set(propsItem.id, propsItem);
+      continue;
+    }
+    propsById.set(propsItem.id, propsItem);
+  }
 
-      if (isPropRequired !== true) {
-        const { component } = selectedInstanceData;
-        const meta = getComponentMetaProps(component);
+  // maintain added props order until panel is closed
+  // to prevent inputs jumping while user typing
+  const userProps = [
+    ...requiredPropsByName.values(),
+    ...propsById.values(),
+    ...addedPropsById.values(),
+  ];
 
-        let typedValue: UserPropValue = { type: "string", value: "" };
-        if (name in meta) {
-          typedValue = getValueFromPropMeta(meta[name]);
-        }
-
-        // @todo we need to not allow changing non required on required prop too
-        draft[index] = {
-          id: draft[index].id,
-          prop: name,
-          ...typedValue,
-        };
-      }
-    })(userProps);
-
-    // Optimistically update the state (what if publish fails?)
-    setUserProps(nextUserProps);
-
-    const updatedProps = nextUserProps.filter((item) => item.id === id);
-
-    updateProps(updatedProps);
-  };
-
-  const handleChangePropValue: HandleChangePropValue = (id, value) => {
-    const nextUserProps = produce((draft: Array<UserProp>) => {
-      const index = draft.findIndex((item) => item.id === id);
-
-      draft[index] = {
-        ...draft[index],
-        ...value,
-      };
-    })(userProps);
-
-    // Optimistically update the state (what if publish fails?)
-    setUserProps(nextUserProps);
-
-    const updatedProps = nextUserProps.filter((item) => item.id === id);
-
-    updateProps(updatedProps);
-  };
-
-  const handleDeleteProp = (id: UserProp["id"]) => {
-    const nextUserProps = [...userProps];
-    const prop = userProps.find((prop) => prop.id === id);
-
-    // Required prop should never be deleted
-    if (prop === undefined || prop.required) {
+  const handleChangePropName = (propsItem: UserProp, name: string) => {
+    // prevent changing name of required props
+    if (isRequired(propsItem)) {
       return;
     }
+    const typedValue = getValueFromPropMeta(metaProps[name]);
+    updateProps({ id: propsItem.id, prop: name, ...typedValue });
+  };
 
-    const index = nextUserProps.indexOf(prop);
-    nextUserProps.splice(index, 1);
-    setUserProps(nextUserProps);
+  const handleChangePropValue = (propsItem: UserProp, value: UserPropValue) => {
+    updateProps({ ...propsItem, ...value });
+  };
+
+  const handleDeleteProp = (propsItem: UserProp) => {
+    // required prop should never be deleted
+    if (isRequired(propsItem)) {
+      return;
+    }
+    const id = propsItem.id;
     deleteProp(id);
+    setAddedProps((prev) => prev.filter((propsItem) => propsItem.id !== id));
   };
 
   const addEmptyProp = () => {
-    setUserProps([
-      ...userProps,
+    setAddedProps((prev) => [
+      ...prev,
       {
         id: ObjectId().toString(),
         prop: "",
@@ -247,22 +180,16 @@ export const usePropsLogic = ({
     ]);
   };
 
-  const isRequired = (prop: UserProp) => {
-    if (prop.required) {
-      return true;
-    }
-
-    return requiredProps.some(
-      (requiredProp) => requiredProp.prop === prop.prop
-    );
+  const isRequired = (propsItem: UserProp) => {
+    return propsItem.required || requiredPropsList.includes(propsItem.prop);
   };
 
   return {
-    addEmptyProp,
     userProps,
     handleChangePropName,
     handleChangePropValue,
     handleDeleteProp,
+    addEmptyProp,
     isRequired,
   };
 };
