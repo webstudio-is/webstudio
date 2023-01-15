@@ -127,7 +127,7 @@ type PropertyProps = {
   component: Instance["component"];
   onChangePropName: (name: string) => void;
   onChangePropValue: (value: UserPropValue) => void;
-  onDelete: (id: UserProp["id"]) => void;
+  onDelete: () => void;
   setCssProperty: SetProperty;
   required: boolean;
   existingProps: string[];
@@ -210,13 +210,7 @@ const Property = ({
       {required ? (
         <Box />
       ) : (
-        <Button
-          variant="ghost"
-          onClick={() => {
-            onDelete(userProp.id);
-          }}
-          prefix={<TrashIcon />}
-        />
+        <Button variant="ghost" onClick={onDelete} prefix={<TrashIcon />} />
       )}
     </>
   );
@@ -231,8 +225,9 @@ export const PropsPanel = ({
   selectedInstanceData,
   publish,
 }: PropsPanelProps) => {
+  const instanceId = selectedInstanceData.id;
   const allUserProps = useAllUserProps();
-  const props = allUserProps[selectedInstanceData.id] ?? [];
+  const props = allUserProps[instanceId] ?? [];
 
   const {
     userProps,
@@ -245,27 +240,24 @@ export const PropsPanel = ({
     props,
     selectedInstanceData,
 
-    updateProps: (updates) => {
+    updateProps: (update) => {
       store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        const instanceId = selectedInstanceData.id;
         let props = allUserProps[instanceId];
         if (props === undefined) {
           props = [];
           allUserProps[instanceId] = props;
         }
-        for (const update of updates) {
-          replaceByOrAppendMutable(
-            props,
-            update,
-            (item) => item.id === update.id
-          );
-        }
+        replaceByOrAppendMutable(
+          props,
+          update,
+          (item) => item.id === update.id
+        );
       });
     },
 
     deleteProp: (id) => {
       store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        const props = allUserProps[selectedInstanceData.id];
+        const props = allUserProps[instanceId];
         if (props) {
           removeByMutable(props, (prop) => prop.id === id);
         }
@@ -313,14 +305,12 @@ export const PropsPanel = ({
               key={userProp.id}
               userProp={userProp}
               component={selectedInstanceData.component}
-              onChangePropName={(name) =>
-                handleChangePropName(userProp.id, name)
-              }
+              onChangePropName={(name) => handleChangePropName(userProp, name)}
               onChangePropValue={(value) =>
-                handleChangePropValue(userProp.id, value)
+                handleChangePropValue(userProp, value)
               }
               setCssProperty={setCssProperty}
-              onDelete={handleDeleteProp}
+              onDelete={() => handleDeleteProp(userProp)}
               required={isRequired(userProp)}
               existingProps={existingProps}
             />
