@@ -1,6 +1,6 @@
 import { type ActionArgs, type LoaderArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { dashboardPath, loginPath } from "~/shared/router-utils";
+import { returnToPath, loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 
@@ -11,9 +11,11 @@ export default function Google() {
 export const loader = (_args: LoaderArgs) => redirect("/login");
 
 export const action = async ({ request }: ActionArgs) => {
+  const returnTo = await returnToPath(request);
+
   try {
     return await authenticator.authenticate("google", request, {
-      successRedirect: dashboardPath(),
+      successRedirect: returnTo,
       throwOnError: true,
     });
   } catch (error: unknown) {
@@ -32,6 +34,7 @@ export const action = async ({ request }: ActionArgs) => {
         loginPath({
           error: AUTH_PROVIDERS.LOGIN_GOOGLE,
           message: error?.message,
+          returnTo,
         })
       );
     }
