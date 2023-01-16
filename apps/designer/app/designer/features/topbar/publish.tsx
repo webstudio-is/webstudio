@@ -59,7 +59,6 @@ const Content = ({ project }: PublishButtonProps) => {
               target="_blank"
               css={{
                 display: "flex",
-                // @todo: check that this works as before
                 gap: variables.spacing[0],
               }}
             >

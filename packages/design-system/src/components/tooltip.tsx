@@ -36,8 +36,6 @@ const Content = styled(TooltipPrimitive.Content, {
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
   fill: "$hiContrast",
-  // @todo: check that this works as before
-  strokeWidth: variables.spacing[1],
   marginTop: -0.5,
 });
 

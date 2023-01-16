@@ -8,7 +8,6 @@ import {
 } from "@webstudio-is/icons";
 import { Box } from "./box";
 
-// @todo: check that this works as before
 const VIEWPORT_PADDING = variables.spacing[2];
 
 const hide = keyframes({
@@ -51,7 +50,7 @@ const StyledToast = styled(ToastPrimitive.Root, {
   maxWidth: 250,
   gap: "$spacing$9",
   alignItems: "center",
-  color: "$highContrast",
+  color: "$hiContrast",
   fontWeight: 500,
   fontSize: "$fontSize$3",
   background: "$loContrast",
