@@ -1,16 +1,19 @@
 import { type ActionArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { dashboardPath, loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/router-utils";
 import { AUTH_PROVIDERS } from "~/shared/session";
+import { returnToPath } from "~/services/cookie.server";
 
 export default function Dev() {
   return null;
 }
 
 export const action = async ({ request }: ActionArgs) => {
+  const returnTo = await returnToPath(request);
+
   try {
     return await authenticator.authenticate("dev", request, {
-      successRedirect: dashboardPath(),
+      successRedirect: returnTo,
       throwOnError: true,
     });
   } catch (error: unknown) {
@@ -20,7 +23,11 @@ export const action = async ({ request }: ActionArgs) => {
     }
     if (error instanceof Error) {
       return redirect(
-        loginPath({ error: AUTH_PROVIDERS.LOGIN_DEV, message: error?.message })
+        loginPath({
+          error: AUTH_PROVIDERS.LOGIN_DEV,
+          message: error?.message,
+          returnTo,
+        })
       );
     }
   }

@@ -14,22 +14,6 @@ export const createDemoUser = async (userId: string) => {
   });
 };
 
-export const ensureUser = async ({ userId }: { userId: string }) => {
-  // Always check if the account userId exists because account could have been deleted
-  // or we could be in a demo mode with a generated user
-  const isUserCreated = Boolean(
-    await prisma.user.findUnique({
-      where: { id: userId },
-    })
-  );
-  if (isUserCreated) {
-    return userId;
-  }
-  await createDemoUser(userId);
-
-  return userId;
-};
-
 const genericCreateAccount = async (userData: {
   email: string;
   username: string;

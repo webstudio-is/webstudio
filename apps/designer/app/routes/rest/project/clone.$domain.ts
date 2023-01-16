@@ -2,10 +2,8 @@ import { redirect, type LoaderArgs } from "@remix-run/node";
 import type { User } from "@webstudio-is/prisma-client";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
-import * as userDb from "~/shared/db";
-import { ensureUserCookie } from "~/shared/session";
 import { findAuthenticatedUser } from "~/services/auth.server";
-import { designerPath } from "~/shared/router-utils";
+import { designerPath, loginPath } from "~/shared/router-utils";
 
 const ensureProject = async ({
   userId,
@@ -34,17 +32,25 @@ export const loader = async ({ request, params }: LoaderArgs) => {
   if (params.domain === undefined) {
     return { errors: "Domain required" };
   }
+
   const user = await findAuthenticatedUser(request);
-  const { headers, userId: generatedUserId } = await ensureUserCookie(request);
+
+  if (user === null) {
+    const url = new URL(request.url);
+    return redirect(
+      loginPath({
+        returnTo: url.pathname,
+      })
+    );
+  }
+
   try {
-    const userId = await userDb.user.ensureUser({
-      userId: user ? user.id : generatedUserId,
-    });
     const project = await ensureProject({
-      userId,
+      userId: user.id,
       domain: params.domain,
     });
-    return redirect(designerPath({ projectId: project.id }), { headers });
+
+    return redirect(designerPath({ projectId: project.id }));
   } catch (error: unknown) {
     if (error instanceof Error) {
       return { errors: error.message };

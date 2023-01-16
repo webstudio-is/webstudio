@@ -3,7 +3,6 @@ import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Dashboard, links } from "~/dashboard";
 import { db } from "@webstudio-is/project/server";
-import { ensureUserCookie } from "~/shared/session";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { zfd } from "zod-form-data";
 import { type Project, User as DbUser } from "@webstudio-is/prisma-client";
@@ -26,14 +25,17 @@ type Data = {
 export const action = async ({ request }: ActionArgs) => {
   const { project: title } = schema.parse(await request.formData());
 
-  const { userId, headers } = await ensureUserCookie(request);
   const authenticatedUser = await findAuthenticatedUser(request);
+  if (authenticatedUser === null) {
+    throw new Error("Not authenticated");
+  }
+
   try {
     const project = await db.project.create({
       title,
-      userId: authenticatedUser?.id || userId,
+      userId: authenticatedUser?.id,
     });
-    return redirect(designerPath({ projectId: project.id }), { headers });
+    return redirect(designerPath({ projectId: project.id }));
   } catch (error) {
     if (error instanceof Error) {
       return { errors: error.message };
@@ -45,11 +47,16 @@ export const action = async ({ request }: ActionArgs) => {
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await findAuthenticatedUser(request);
   if (!user) {
-    return redirect(loginPath({}));
+    const url = new URL(request.url);
+    return redirect(
+      loginPath({
+        returnTo: url.pathname,
+      })
+    );
   }
-  const { headers } = await ensureUserCookie(request);
+
   const projects = await db.project.loadManyByUserId(user.id);
-  return json({ projects, user }, headers);
+  return json({ projects, user });
 };
 
 const DashboardRoute = () => {
