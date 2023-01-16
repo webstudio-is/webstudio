@@ -26,7 +26,6 @@ type InstancesItem = {
 };
 
 const convertTree = (instance: Instance, instances: InstancesItem[]) => {
-  //delete instance.cssRules;
   const instancesItem: InstancesItem = {
     type: "instance",
     id: instance.id,
