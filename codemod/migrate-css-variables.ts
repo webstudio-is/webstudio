@@ -74,14 +74,14 @@ const guessGroupName = (variableName: string) => {
   return undefined;
 };
 
-const migrateVariables = (originalCode: string, filePath: string) => {
+const migrateVariables = (originalCode: string) => {
   let code = originalCode;
 
   // "$bar$1" -> variables.bar[1]
   code = code.replaceAll(
     /"\$([a-z0-9]+)(?:\$([a-z0-9]+))?"/gi,
     (orig, match1, match2) => {
-      if (match2 && match2) {
+      if (match2) {
         return printVariable(match2, match1);
       }
       const groupName = guessGroupName(match1);
@@ -99,7 +99,7 @@ const migrateVariables = (originalCode: string, filePath: string) => {
     const stringContent = originalStringContent.replaceAll(
       /\$([a-z0-9]+)(?:\$([a-z0-9]+))?/gi,
       (orig, match1, match2) => {
-        if (match2 && match2) {
+        if (match2) {
           return `\${${printVariable(match2, match1)}}`;
         }
         const groupName = guessGroupName(match1);
@@ -125,6 +125,36 @@ const migrateVariables = (originalCode: string, filePath: string) => {
   return code;
 };
 
+const addImport = (code: string, filePath: string) => {
+  let importCode = `import { variables } from "@webstudio-is/design-system";`;
+
+  const pathParts = filePath.split(path.sep);
+  const designSystemIndex = pathParts.indexOf("design-system");
+
+  if (designSystemIndex !== -1) {
+    importCode = `import { variables } from "${"../".repeat(
+      pathParts.length - designSystemIndex - 3
+    )}stitches.config";`;
+  }
+
+  const lines = code.split("\n");
+
+  // while looking from the bottom up,
+  // insert our import code before the first import we find
+  const nextLinesReverse: string[] = [];
+  let inserted = false;
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i];
+    if (line.startsWith("import") && inserted === false) {
+      nextLinesReverse.push(importCode);
+      inserted = true;
+    }
+    nextLinesReverse.push(line);
+  }
+
+  return nextLinesReverse.reverse().join("\n");
+};
+
 const update = async ({ filePath, buffer }) => {
   if (filePath.endsWith("stitches.config.ts") || filePath.endsWith(".d.ts")) {
     return;
@@ -132,13 +162,13 @@ const update = async ({ filePath, buffer }) => {
 
   const originalCode = buffer.toString("utf-8");
 
-  let code = originalCode;
-
-  code = migrateVariables(originalCode, filePath);
+  let code = migrateVariables(originalCode);
 
   if (code === originalCode) {
     return;
   }
+
+  code = addImport(code, filePath);
 
   await fs.writeFile(filePath, code);
 };
