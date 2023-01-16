@@ -45,6 +45,7 @@
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/trpc-interface": "workspace:^",
     "bson-objectid": "^2.0.4",
     "camelcase": "^6.3.0",
     "colord": "^2.9.3",

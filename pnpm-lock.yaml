@@ -95,6 +95,7 @@ importers:
       '@webstudio-is/project': workspace:^
       '@webstudio-is/react-sdk': workspace:^
       '@webstudio-is/storybook-config': workspace:^
+      '@webstudio-is/trpc-interface': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       babel-loader: ^8.2.5
       bson-objectid: ^2.0.4
@@ -175,6 +176,7 @@ importers:
       '@webstudio-is/prisma-client': link:../../packages/prisma-client
       '@webstudio-is/project': link:../../packages/project
       '@webstudio-is/react-sdk': link:../../packages/react-sdk
+      '@webstudio-is/trpc-interface': link:../../packages/trpc-interface
       bson-objectid: 2.0.4
       camelcase: 6.3.0
       colord: 2.9.3
@@ -874,6 +876,29 @@ importers:
       '@storybook/addon-links': 6.5.14
       '@storybook/builder-webpack5': 6.5.14_u3szbfbwz52ckww23jbmu3kdiy
       '@storybook/manager-webpack5': 6.5.14
+
+  packages/trpc-interface:
+    specifiers:
+      '@trpc/client': ^10.9.0
+      '@trpc/server': ^10.9.0
+      '@types/node': ^17.0.21
+      '@webstudio-is/jest-config': workspace:^
+      '@webstudio-is/prisma-client': workspace:^
+      '@webstudio-is/scripts': workspace:^
+      '@webstudio-is/tsconfig': workspace:^
+      typescript: 4.7.4
+      zod: ^3.19.1
+    dependencies:
+      '@trpc/client': 10.9.0_@trpc+server@10.9.0
+      '@trpc/server': 10.9.0
+      '@webstudio-is/prisma-client': link:../prisma-client
+      zod: 3.19.1
+    devDependencies:
+      '@types/node': 17.0.45
+      '@webstudio-is/jest-config': link:../jest-config
+      '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
+      typescript: 4.7.4
 
   packages/tsconfig:
     specifiers: {}
@@ -9541,6 +9566,18 @@ packages:
     resolution: {integrity: sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==}
     engines: {node: '>= 6'}
     dev: true
+
+  /@trpc/client/10.9.0_@trpc+server@10.9.0:
+    resolution: {integrity: sha512-id6318qpgqllNOuBp7nuciXFPXCe+zae5d4r1hze6Eyp5fFFNO58TqA+4Q44KIcHgpfWyW2egs6iPeql3PrdKA==}
+    peerDependencies:
+      '@trpc/server': 10.9.0
+    dependencies:
+      '@trpc/server': 10.9.0
+    dev: false
+
+  /@trpc/server/10.9.0:
+    resolution: {integrity: sha512-5psyZgbvy29pJND32hwkWTMbv6s86IbsPOeDopsgNF0VegZT6Dsijmb7Ub/TDhuJVQVq5u4u5briMXi3SxmBkw==}
+    dev: false
 
   /@trysound/sax/0.2.0:
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
