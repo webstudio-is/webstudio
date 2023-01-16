@@ -155,6 +155,10 @@ const addImport = (code: string, filePath: string) => {
     nextLinesReverse.push(line);
   }
 
+  if (inserted === false) {
+    nextLinesReverse.push(importCode);
+  }
+
   return nextLinesReverse.reverse().join("\n");
 };
 
