@@ -10,12 +10,12 @@ type Id = {
   value: string;
 };
 
-type instance = {
+type Instance = {
   type: "instance";
   id: string;
   component: string;
   cssRules: Array<any>;
-  children: Array<instance | Text>;
+  children: Array<Instance | Text>;
 };
 
 type InstancesItem = {
@@ -25,7 +25,7 @@ type InstancesItem = {
   children: Array<Id | Text>;
 };
 
-const convertTree = (instance: instance, instances: InstancesItem[]) => {
+const convertTree = (instance: Instance, instances: InstancesItem[]) => {
   //delete instance.cssRules;
   const instancesItem: InstancesItem = {
     type: "instance",
