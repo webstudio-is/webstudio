@@ -1,0 +1,8 @@
+{
+  "name": "@webstudio-is/remix-config",
+  "version": "0.1.0",
+  "license": "MIT",
+  "devDependencies": {
+    "@remix-run/dev": "1.9.0"
+  }
+}
