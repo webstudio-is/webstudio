@@ -248,6 +248,7 @@ const {
       shadowDark: "hsl(206 22% 7% / 20%)",
       background: "$slate1",
       text: "$slate12",
+      transparentExtreme: "transparent",
     },
     fonts: {
       sans: "Inter, -apple-system, system-ui, sans-serif",
