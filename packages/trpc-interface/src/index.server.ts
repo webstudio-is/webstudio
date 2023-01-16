@@ -1,2 +1,2 @@
-export type { SharedRouter } from "./shared/router";
-export { createTRPCProxyServiceClient } from "./shared/client";
+export type { SharedRouter } from "./shared/shared-router";
+export { createTrpcProxyServiceClient } from "./shared/client";

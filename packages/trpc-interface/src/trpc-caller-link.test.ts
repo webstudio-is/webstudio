@@ -14,11 +14,11 @@ export const { router, procedure, middleware } = initTRPC
 
 const authorize = router({
   noInput: procedure.query(async () => "hello"),
-  strInput: procedure.input(z.string()).query(({ input }) => input),
-  objInput: procedure
+  stringInput: procedure.input(z.string()).query(({ input }) => input),
+  objectInput: procedure
     .input(z.object({ hello: z.string() }))
     .query(({ input }) => input),
-  objInputTransform: procedure
+  objectInputTransform: procedure
     .input(
       z
         .object({ hello: z.string() })
@@ -26,11 +26,11 @@ const authorize = router({
     )
     .query(({ input }) => input),
 
-  objInputWContext: procedure
+  objectInputWithContext: procedure
     .input(z.object({ hello: z.string() }))
     .query(({ input, ctx }) => ({ ...ctx, ...input })),
 
-  objInputWTOutputTransform: procedure
+  objectInputWithTransformedOutput: procedure
     .input(z.object({ hello: z.string() }))
     .output(
       z
@@ -72,39 +72,41 @@ describe("trpc-caller-link", () => {
   });
 
   test("namespace input string call", async () => {
-    const res = await client.authorize.strInput.query("world");
-    expect(res).toEqual(await caller.authorize.strInput("world"));
+    const res = await client.authorize.stringInput.query("world");
+    expect(res).toEqual(await caller.authorize.stringInput("world"));
   });
 
   test("namespace input object call", async () => {
-    const res = await client.authorize.objInput.query({ hello: "world" });
-    expect(res).toEqual(await caller.authorize.objInput({ hello: "world" }));
+    const res = await client.authorize.objectInput.query({ hello: "world" });
+    expect(res).toEqual(await caller.authorize.objectInput({ hello: "world" }));
   });
 
   test("namespace transformed input object call", async () => {
-    const res = await client.authorize.objInputTransform.query({
+    const res = await client.authorize.objectInputTransform.query({
       hello: "world",
     });
     expect(res).toEqual(
-      await caller.authorize.objInputTransform({ hello: "world" })
+      await caller.authorize.objectInputTransform({ hello: "world" })
     );
   });
 
   test("namespace input object with context call", async () => {
-    const res = await client.authorize.objInputWContext.query({
+    const res = await client.authorize.objectInputWithContext.query({
       hello: "world",
     });
     expect(res).toEqual(
-      await caller.authorize.objInputWContext({ hello: "world" })
+      await caller.authorize.objectInputWithContext({ hello: "world" })
     );
   });
 
   test("namespace input object with output transform", async () => {
-    const res = await client.authorize.objInputWTOutputTransform.query({
+    const res = await client.authorize.objectInputWithTransformedOutput.query({
       hello: "world",
     });
     expect(res).toEqual(
-      await caller.authorize.objInputWTOutputTransform({ hello: "world" })
+      await caller.authorize.objectInputWithTransformedOutput({
+        hello: "world",
+      })
     );
   });
 

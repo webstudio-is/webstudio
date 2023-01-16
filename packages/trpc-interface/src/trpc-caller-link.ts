@@ -3,9 +3,9 @@ import { AnyRouter } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { TRPCClientError, TRPCLink } from "@trpc/client";
 
-type MemoryLinkOptions<TRouter extends AnyRouter> = {
-  appRouter: TRouter;
-  createContext?: () => TRouter["_def"]["_config"]["$types"]["ctx"];
+type MemoryLinkOptions<TemplateRouter extends AnyRouter> = {
+  appRouter: TemplateRouter;
+  createContext?: () => TemplateRouter["_def"]["_config"]["$types"]["ctx"];
 };
 
 /**
@@ -16,9 +16,9 @@ type MemoryLinkOptions<TRouter extends AnyRouter> = {
  * Allowing us to call router api without http but through createTRPCProxyClient interface
  * See trpc-caller-link.test.ts for details
  **/
-export const callerLink = <TRouter extends AnyRouter>(
-  opts: MemoryLinkOptions<TRouter>
-): TRPCLink<TRouter> => {
+export const callerLink = <TemplateRouter extends AnyRouter>(
+  opts: MemoryLinkOptions<TemplateRouter>
+): TRPCLink<TemplateRouter> => {
   const { appRouter, createContext } = opts;
 
   return (runtime) =>

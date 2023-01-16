@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { router, procedure } from "./trpc";
 
-export const authorize = router({
+export const authorizationRouter = router({
   check: procedure
     .input(z.object({ name: z.string() }))
     .output(z.object({ allowed: z.boolean() }))
-    .query(async ({ input, ctx }) => {
+    .query(async () => {
       return { allowed: false };
     }),
 });

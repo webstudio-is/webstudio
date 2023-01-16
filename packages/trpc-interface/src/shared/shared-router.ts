@@ -1,8 +1,8 @@
 import { router } from "./trpc";
-import { authorize } from "./authorize";
+import { authorizationRouter } from "./authorization-router";
 
 export const sharedRouter = router({
-  authorize,
+  authorize: authorizationRouter,
 });
 
 export type SharedRouter = typeof sharedRouter;

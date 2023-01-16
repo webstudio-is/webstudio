@@ -1,7 +1,7 @@
 {
   "name": "@webstudio-is/trpc-interface",
   "version": "0.20.0",
-  "description": "Webstudio Trpc Interface",
+  "description": "Webstudio TRPC Interface",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
