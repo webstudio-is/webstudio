@@ -145,7 +145,10 @@ const addImport = (code: string, filePath: string) => {
   let inserted = false;
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i];
-    if (line.startsWith("import") && inserted === false) {
+    if (
+      (line.startsWith("import") || line.startsWith("} from")) &&
+      inserted === false
+    ) {
       nextLinesReverse.push(importCode);
       inserted = true;
     }
