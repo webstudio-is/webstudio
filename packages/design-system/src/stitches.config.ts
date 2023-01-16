@@ -387,6 +387,29 @@ const {
   },
 });
 
+type VariblesValues = typeof config.theme;
+
+type VariblesNames = {
+  [GroupKey in keyof VariblesValues]: {
+    [VariableKey in keyof VariblesValues[GroupKey]]: string;
+  };
+};
+
+const toVariblesNames = (values: VariblesValues): VariblesNames => {
+  const result: Record<string, Record<string, string>> = {};
+  for (const groupKey in values) {
+    const group = values[groupKey as keyof VariblesValues];
+    const groupResult: Record<string, string> = {};
+    for (const variableKey in group) {
+      groupResult[variableKey] = `$${groupKey}$${variableKey}`;
+    }
+    result[groupKey] = groupResult;
+  }
+  return result as VariblesNames;
+};
+
+export const variables = toVariblesNames(config.theme);
+
 export type CSS = Stitches.CSS<typeof config>;
 
 export { styled, css, theme, globalCss, keyframes, config };
