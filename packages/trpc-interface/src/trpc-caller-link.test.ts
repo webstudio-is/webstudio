@@ -60,7 +60,7 @@ const client = createTRPCProxyClient<typeof appRouter>({
 
 const caller = appRouter.createCaller(contextValue);
 
-describe("memory-link", () => {
+describe("trpc-caller-link", () => {
   test("direct call works", async () => {
     const res = await client.test.query();
     expect(res).toEqual(await caller.test());
