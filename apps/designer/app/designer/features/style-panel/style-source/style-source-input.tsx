@@ -1,3 +1,16 @@
+/*
+ * Style Source Input functionality
+ * - Type a new input with autocomplete
+ * - Select an existing source from a list
+ * - Enter a new source
+ * - Hover the source to see the menu
+ * - Menu provides: Remove, Duplicate, Disable, Edit name
+ * - Drag and drop to reorder
+ * - Click to toggle select/unselect
+ * - Double click to edit name
+ * - Local source can only be disabled, nothing else should be possible
+ */
+
 import {
   Box,
   ComboboxListbox,

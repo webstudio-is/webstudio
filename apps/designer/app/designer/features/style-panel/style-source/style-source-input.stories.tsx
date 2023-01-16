@@ -157,7 +157,6 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
       value={value}
       editingItem={editingItem}
       onSelectItem={(itemToSelect) => {
-        console.log(value, itemToSelect);
         setValue(
           value.map((item) => {
             if (item.id === itemToSelect?.id) {
