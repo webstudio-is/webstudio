@@ -23,7 +23,7 @@ const localItem: Item = {
   state: "selected",
 };
 
-const items: Array<Item> = [
+const getItems = (): Array<Item> => [
   {
     id: uuid(),
     label: "Token",
@@ -83,11 +83,11 @@ const removeItem = (
 };
 
 export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState([localItem, ...items]);
+  const [value, setValue] = useState([localItem, ...getItems()]);
   return (
     <StyleSourceInput
       css={{ width: 300 }}
-      items={items}
+      items={getItems()}
       value={value}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
@@ -119,7 +119,7 @@ export const WithTruncatedItem: ComponentStory<
   return (
     <StyleSourceInput
       css={{ width: 300 }}
-      items={items}
+      items={getItems()}
       value={value}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
@@ -138,7 +138,7 @@ export const WithTruncatedItem: ComponentStory<
 export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
     localItem,
-    ...items,
+    ...getItems(),
     {
       id: uuid(),
       label: "Disabled",
@@ -153,10 +153,11 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   return (
     <StyleSourceInput
       css={{ width: 300 }}
-      items={items}
+      items={getItems()}
       value={value}
       editingItem={editingItem}
       onSelectItem={(itemToSelect) => {
+        console.log(value, itemToSelect);
         setValue(
           value.map((item) => {
             if (item.id === itemToSelect?.id) {
