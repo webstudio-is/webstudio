@@ -32,6 +32,7 @@ import {
   useBreakpoints,
   useRootInstance,
   useSetBreakpoints,
+  useSetDesignTokens,
   useSetPresetStyles,
   useSetRootInstance,
   useSetStyles,
@@ -42,7 +43,6 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { useInitializeDesignTokens } from "./shared/design-tokens";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { useSelectedInstance } from "./shared/nano-states";
 import { customComponents } from "./custom-components";
@@ -160,9 +160,9 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
     throw new Error("Tree is null");
   }
   const isDesignerReady = useSubscribeDesignerReady();
-  useInitializeDesignTokens(data.designTokens);
   const assets = useAssets(data.assets);
   useSetBreakpoints(data.breakpoints);
+  useSetDesignTokens(data.designTokens);
   useAllUserProps(data.props);
   useSetPresetStyles(data.tree.presetStyles);
   useSetStyles(data.tree.styles);

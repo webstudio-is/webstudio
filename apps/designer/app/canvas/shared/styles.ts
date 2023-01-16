@@ -1,10 +1,8 @@
 import { useEffect, useMemo } from "react";
-import store from "immerhin";
 import { useSubscribe } from "~/shared/pubsub";
 import { addGlobalRules, getPresetStyleRules } from "@webstudio-is/project";
 import { useSelectedInstance } from "./nano-states";
 import {
-  designTokensContainer,
   useBreakpoints,
   useDesignTokens,
   usePresetStyles,
@@ -31,11 +29,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import {
-  deleteTokenMutable,
-  tokensToStyle,
-  updateTokenMutable,
-} from "~/designer/shared/design-tokens-manager";
+import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
@@ -63,9 +57,6 @@ const helperStyles = [
 ];
 
 export const useManageDesignModeStyles = () => {
-  useUpdateToken();
-  useCreateToken();
-  useDeleteToken();
   useUpdateStyle();
   usePreviewStyle();
   useRemoveSsrStyles();
@@ -262,30 +253,6 @@ const useUpdateStyle = () => {
     for (const update of updates) {
       setCssVar(id, update.property, undefined);
     }
-  });
-};
-
-const useUpdateToken = () => {
-  useSubscribe("updateToken", (update) => {
-    store.createTransaction([designTokensContainer], (tokens) => {
-      updateTokenMutable(tokens, update.token, update.name);
-    });
-  });
-};
-
-const useCreateToken = () => {
-  useSubscribe("createToken", (token) => {
-    store.createTransaction([designTokensContainer], (tokens) => {
-      tokens.push(token);
-    });
-  });
-};
-
-const useDeleteToken = () => {
-  useSubscribe("deleteToken", (name) => {
-    store.createTransaction([designTokensContainer], (tokens) => {
-      deleteTokenMutable(tokens, name);
-    });
   });
 };
 
