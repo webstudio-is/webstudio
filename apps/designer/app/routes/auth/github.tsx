@@ -1,8 +1,9 @@
 import { type ActionArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { returnToPath, loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
+import { returnToPath } from "~/services/cookie.server";
 
 export default function GH() {
   return null;

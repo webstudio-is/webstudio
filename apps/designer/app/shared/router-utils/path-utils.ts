@@ -3,7 +3,6 @@ import type { Page, Project } from "@webstudio-is/project";
 import type { BuildMode } from "./build-params";
 import type { ThemeSetting } from "~/shared/theme";
 import env from "~/shared/env";
-import { returnToCookie } from "~/services/cookie.server";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
   const searchParams = new URLSearchParams();
@@ -25,14 +24,6 @@ export const designerPath = ({
 }) => `/designer/${projectId}${searchParams({ pageId })}`;
 
 export const dashboardPath = () => "/dashboard";
-
-export const returnToPath = async (request: Request) => {
-  const returnTo =
-    (await returnToCookie.parse(request.headers.get("Cookie"))) ??
-    dashboardPath();
-
-  return returnTo;
-};
 
 export const loginPath = (params: {
   error?: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];

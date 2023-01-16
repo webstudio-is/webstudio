@@ -1,7 +1,8 @@
 import { type LoaderArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { returnToPath, loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/router-utils";
 import { AUTH_PROVIDERS } from "~/shared/session";
+import { returnToPath } from "~/services/cookie.server";
 
 export const loader = async ({ request }: LoaderArgs) => {
   const returnTo = await returnToPath(request);
