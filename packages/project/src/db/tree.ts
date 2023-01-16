@@ -1,41 +1,49 @@
+import { applyPatches, type Patch } from "immer";
+import { z } from "zod";
 import {
   type Tree,
   type ComponentName,
+  type InstancesItem,
   Instance,
-  Text,
   PresetStyles,
   findMissingPresetStyles,
   Styles,
+  Instances,
 } from "@webstudio-is/react-sdk";
-import { applyPatches, type Patch } from "immer";
 import {
   prisma,
   type Prisma,
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import { z } from "zod";
 import { StylesDbIn, StylesDbOut } from "./styles";
 
-/**
- * validate/transform DB data schema to the client schema.
- */
-const InstanceDbOut = z.lazy(() =>
-  z.object({
-    type: z.literal("instance"),
-    id: z.string(),
-    component: z.string(),
-    children: z.array(z.union([InstanceDbOut, Text])),
-    cssRules: z.optional(z.unknown()),
-  })
-) as z.ZodType<Instance>;
-
 type TreeData = Omit<Tree, "id">;
+
+const normalizeTree = (instance: Instance, instances: InstancesItem[]) => {
+  const instancesItem: InstancesItem = {
+    type: "instance",
+    id: instance.id,
+    component: instance.component,
+    children: [],
+  };
+  instances.push(instancesItem);
+  for (const child of instance.children) {
+    if (child.type === "instance") {
+      normalizeTree(child, instances);
+      instancesItem.children.push({ type: "id", value: child.id });
+    } else {
+      instancesItem.children.push(child);
+    }
+  }
+};
 
 export const createTree = (): TreeData => {
   const root = utils.tree.createInstance({ component: "Body" });
   const presetStyles = findMissingPresetStyles([], [root.component]);
   const styles: Styles = [];
+  const instances: Instances = [];
+  normalizeTree(root, instances);
 
   return {
     root,
@@ -49,10 +57,13 @@ export const create = async (
   client: Prisma.TransactionClient = prisma
 ): Promise<DbTree> => {
   const root = Instance.parse(treeData.root);
+  const instances: Instances = [];
+  normalizeTree(root, instances);
 
   return await client.tree.create({
     data: {
-      root: JSON.stringify(root),
+      root: "",
+      instances: JSON.stringify(instances),
       presetStyles: JSON.stringify(treeData.presetStyles),
       styles: JSON.stringify(await StylesDbIn.parseAsync(treeData.styles)),
     },
@@ -63,16 +74,28 @@ export const deleteById = async (treeId: Tree["id"]): Promise<void> => {
   await prisma.tree.delete({ where: { id: treeId } });
 };
 
-const deleteCssRulesFromInstancesMutable = (instance: Instance) => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  delete instance.cssRules;
-
-  for (const child of instance.children) {
-    if (child.type === "instance") {
-      deleteCssRulesFromInstancesMutable(child);
-    }
+const denormalizeTree = (instances: z.infer<typeof Instances>) => {
+  const instancesMap: Record<string, z.infer<typeof InstancesItem>> = {};
+  for (const instance of instances) {
+    instancesMap[instance.id] = instance;
   }
+  const convertTree = (instance: z.infer<typeof InstancesItem>) => {
+    const legacyInstance: Instance = {
+      type: "instance",
+      id: instance.id,
+      component: instance.component as ComponentName,
+      children: [],
+    };
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        legacyInstance.children.push(convertTree(instancesMap[child.value]));
+      } else {
+        legacyInstance.children.push(child);
+      }
+    }
+    return legacyInstance;
+  };
+  return convertTree(instances[0]);
 };
 
 export const loadById = async (
@@ -87,13 +110,8 @@ export const loadById = async (
     return null;
   }
 
-  const dbRoot = JSON.parse(tree.root);
-
-  const root = InstanceDbOut.parse(dbRoot);
-
-  deleteCssRulesFromInstancesMutable(root);
-
-  Instance.parse(root);
+  const instances = Instances.parse(JSON.parse(tree.instances));
+  const root = Instance.parse(denormalizeTree(instances));
 
   const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
   const styles = Styles.parse(
@@ -146,10 +164,13 @@ export const patch = async (
   const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
 
   const root = Instance.parse(clientRoot);
+  const instances: Instances = [];
+  normalizeTree(root, instances);
 
   await prisma.tree.update({
     data: {
-      root: JSON.stringify(root),
+      root: "",
+      instances: JSON.stringify(instances),
       presetStyles: JSON.stringify(presetStyles),
     },
     where: { id: treeId },
