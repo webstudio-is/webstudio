@@ -15,14 +15,15 @@ type Item = {
   state: ItemState;
 };
 
+const localItem: Item = {
+  id: uuid(),
+  label: "Local",
+  source: "local",
+  isEditable: false,
+  state: "selected",
+};
+
 const items: Array<Item> = [
-  {
-    id: uuid(),
-    label: "Local",
-    source: "local",
-    isEditable: false,
-    state: "selected",
-  },
   {
     id: uuid(),
     label: "Token",
@@ -82,7 +83,7 @@ const removeItem = (
 };
 
 export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState(items);
+  const [value, setValue] = useState([localItem, ...items]);
   return (
     <StyleSourceInput
       css={{ width: 300 }}
@@ -136,6 +137,7 @@ export const WithTruncatedItem: ComponentStory<
 
 export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
+    localItem,
     ...items,
     {
       id: uuid(),
