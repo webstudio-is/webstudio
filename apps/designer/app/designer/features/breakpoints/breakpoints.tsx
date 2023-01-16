@@ -120,7 +120,7 @@ export const Breakpoints = () => {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent
-          css={{ zIndex: "$1" }}
+          css={{ zIndex: variables.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
         >

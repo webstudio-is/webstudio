@@ -20,7 +20,7 @@ const Content = styled(TooltipPrimitive.Content, {
   color: "$loContrast",
   borderRadius: "$borderRadius$4",
   padding: "$spacing$3 $spacing$5",
-  zIndex: "$1",
+  zIndex: variables.zIndices[1],
   position: "relative",
 
   variants: {
@@ -36,7 +36,8 @@ const Content = styled(TooltipPrimitive.Content, {
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
   fill: "$hiContrast",
-  strokeWidth: "$1",
+  // @todo: check that this works as before
+  strokeWidth: variables.spacing[1],
   marginTop: -0.5,
 });
 
