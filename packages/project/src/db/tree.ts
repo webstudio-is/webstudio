@@ -1,4 +1,3 @@
-import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import {
   type Tree,
   type ComponentName,
@@ -10,75 +9,13 @@ import {
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import {
-  Asset,
   prisma,
   type Prisma,
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import { SharedStyleValue, ImageValue } from "@webstudio-is/css-data";
 import { z } from "zod";
-import DataLoader from "dataloader";
-import warnOnce from "warn-once";
-
-const assetsLoader = new DataLoader<string, Asset | undefined>(
-  async (assetIds) => {
-    const assets = await prisma.asset.findMany({
-      where: {
-        id: {
-          // Spread to remove readonly from assetIds, otherwise ts error.
-          in: [...assetIds],
-        },
-      },
-    });
-
-    /**
-     * Dataloader docs:
-     * The Array of values must be the same length as the Array of keys.
-     * Each index in the Array of values must correspond to the same index in the Array of keys.
-     * (assets returned from DB can have a different order, some could not exist)
-     */
-    return assetIds.map((assetId) =>
-      assets.find((asset) => asset.id === assetId)
-    );
-  }
-);
-
-/**
- * Use zod + DataLoader to load/format assets from the Assets table.
- */
-const ImageAssetDbOut = z.object({
-  type: z.literal("asset"),
-  value: z
-    .string()
-    .uuid()
-    .transform(async (assetId) => {
-      const asset = await assetsLoader.load(assetId);
-      if (asset === undefined) {
-        warnOnce(true, `Asset with assetId "${assetId}" not found`);
-        return;
-      }
-
-      return formatAsset(asset);
-    }),
-});
-
-const ImageValueDbOut = z.object({
-  type: z.literal("image"),
-  value: z
-    .array(ImageAssetDbOut)
-    // an Asset can be not present in DB, skip it.
-    .transform((assets) => assets.filter((asset) => asset.value !== undefined)),
-});
-
-const StyleValueDbOut = z.union([SharedStyleValue, ImageValueDbOut]);
-
-const StyleDbOut = z.record(z.string(), StyleValueDbOut);
-
-export const CssRuleDbOut = z.object({
-  style: StyleDbOut,
-  breakpoint: z.optional(z.string()),
-});
+import { StylesDbIn, StylesDbOut } from "./styles";
 
 /**
  * validate/transform DB data schema to the client schema.
@@ -89,41 +26,9 @@ const InstanceDbOut = z.lazy(() =>
     id: z.string(),
     component: z.string(),
     children: z.array(z.union([InstanceDbOut, Text])),
-    cssRules: z.optional(z.array(CssRuleDbOut)),
+    cssRules: z.optional(z.unknown()),
   })
 ) as z.ZodType<Instance>;
-
-/**
- * In the DB we hold only assetId
- **/
-const ImageValueDbIn = ImageValue.transform((imageStyle) => ({
-  type: imageStyle.type,
-  value: imageStyle.value.map((value) =>
-    /* Now value.type is always equal to the "asset", but in the future, it will have additional types */
-    value.type === "asset" ? { type: "asset", value: value.value.id } : value
-  ),
-}));
-
-const StyleValueDbIn = z.union([SharedStyleValue, ImageValueDbIn]);
-
-const StyleDbIn = z.record(z.string(), StyleValueDbIn);
-
-export const CssRuleDbIn = z.object({
-  style: StyleDbIn,
-  breakpoint: z.optional(z.string()),
-});
-
-/**
- * validate/transform client schema into DB data schema.
- */
-const InstanceDbIn = z.lazy(() =>
-  z.object({
-    type: z.literal("instance"),
-    id: z.string(),
-    component: z.string(),
-    children: z.array(z.union([InstanceDbIn, Text])),
-  })
-) as /* Instance is wrong type here, ImageValue is different after transform. We don't use it anyway */ z.ZodType<Instance>;
 
 type TreeData = Omit<Tree, "id">;
 
@@ -143,13 +48,13 @@ export const create = async (
   treeData: TreeData,
   client: Prisma.TransactionClient = prisma
 ): Promise<DbTree> => {
-  const root = InstanceDbIn.parse(treeData.root);
+  const root = Instance.parse(treeData.root);
 
   return await client.tree.create({
     data: {
       root: JSON.stringify(root),
       presetStyles: JSON.stringify(treeData.presetStyles),
-      styles: JSON.stringify(treeData.styles),
+      styles: JSON.stringify(await StylesDbIn.parseAsync(treeData.styles)),
     },
   });
 };
@@ -184,14 +89,16 @@ export const loadById = async (
 
   const dbRoot = JSON.parse(tree.root);
 
-  const root = await InstanceDbOut.parseAsync(dbRoot);
+  const root = InstanceDbOut.parse(dbRoot);
 
   deleteCssRulesFromInstancesMutable(root);
 
   Instance.parse(root);
 
   const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
-  const styles = Styles.parse(JSON.parse(tree.styles));
+  const styles = Styles.parse(
+    await StylesDbOut.parseAsync(JSON.parse(tree.styles))
+  );
 
   return {
     ...tree,
@@ -238,7 +145,7 @@ export const patch = async (
   );
   const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
 
-  const root = InstanceDbIn.parse(clientRoot);
+  const root = Instance.parse(clientRoot);
 
   await prisma.tree.update({
     data: {
