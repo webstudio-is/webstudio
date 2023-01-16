@@ -21,7 +21,6 @@ import { StylesDbIn, StylesDbOut } from "./styles";
 type TreeData = Omit<Tree, "id">;
 
 const normalizeTree = (instance: Instance, instances: InstancesItem[]) => {
-  //delete instance.cssRules;
   const instancesItem: InstancesItem = {
     type: "instance",
     id: instance.id,
