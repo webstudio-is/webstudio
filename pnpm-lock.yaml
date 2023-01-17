@@ -64,6 +64,7 @@ importers:
       '@webstudio-is/design-system': workspace:^
       '@webstudio-is/design-tokens': workspace:^
       '@webstudio-is/eslint-config-custom': workspace:^
+      '@webstudio-is/feature-flags': workspace:^
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/prisma-client': workspace:^
       '@webstudio-is/project': workspace:^
@@ -92,6 +93,7 @@ importers:
       '@webstudio-is/css-vars': link:../../packages/css-vars
       '@webstudio-is/design-system': link:../../packages/design-system
       '@webstudio-is/design-tokens': link:../../packages/design-tokens
+      '@webstudio-is/feature-flags': link:../../packages/feature-flags
       '@webstudio-is/prisma-client': link:../../packages/prisma-client
       '@webstudio-is/project': link:../../packages/project
       '@webstudio-is/remix': link:../../packages/remix
