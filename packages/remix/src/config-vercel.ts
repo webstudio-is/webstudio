@@ -1,7 +1,6 @@
-/**
- * @type {import('@remix-run/dev').AppConfig}
- */
-module.exports = {
+import { type AppConfig } from "@remix-run/dev";
+
+export default {
   serverBuildTarget: "vercel",
   // When running locally in development mode, we use the built in remix
   // server. This does not understand the vercel lambda module format,
@@ -24,4 +23,4 @@ module.exports = {
   watchPaths: () => {
     return ["../../packages/**/lib/**.js"];
   },
-};
+} as AppConfig;
