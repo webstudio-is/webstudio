@@ -117,7 +117,6 @@ type MenuProps = {
   onEdit: () => void;
   onDisable: () => void;
   onEnable: () => void;
-  onDuplicate: () => void;
   onRemove: () => void;
 };
 
@@ -126,7 +125,6 @@ const Menu = (props: MenuProps) => {
   const canEdit = props.source !== "local";
   const canDisable = props.state !== "disabled";
   const canEnable = props.state === "disabled";
-  const canDuplicate = props.source !== "local";
   const canRemove = props.source !== "local";
   return (
     <DropdownMenu modal>
@@ -151,11 +149,6 @@ const Menu = (props: MenuProps) => {
           {canDisable && (
             <DropdownMenuItem onSelect={scheduler.set(props.onDisable)}>
               Disable
-            </DropdownMenuItem>
-          )}
-          {canDuplicate && (
-            <DropdownMenuItem onSelect={scheduler.set(props.onDuplicate)}>
-              Duplicate
             </DropdownMenuItem>
           )}
           {canRemove && (
@@ -387,7 +380,6 @@ type StyleSourceProps = {
   source: ItemSource;
   onChangeState: (state: ItemState) => void;
   onSelect: () => void;
-  onDuplicate: () => void;
   onRemove: () => void;
   onChangeValue: (value: string) => void;
   onChangeEditing: (isEditing: boolean) => void;
@@ -405,7 +397,6 @@ export const StyleSource = ({
   onChangeEditing,
   onChangeState,
   onSelect,
-  onDuplicate,
   onRemove,
 }: StyleSourceProps) => {
   const ref = useForceRecalcStyle<HTMLDivElement>("max-width", isEditing);
@@ -429,7 +420,6 @@ export const StyleSource = ({
         <Menu
           source={source}
           state={state}
-          onDuplicate={onDuplicate}
           onRemove={onRemove}
           onEnable={() => {
             onChangeState("unselected");

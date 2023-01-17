@@ -209,21 +209,6 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
           })
         );
       }}
-      onDuplicateItem={(itemToDuplicate) => {
-        const duplicatedItem = {
-          ...itemToDuplicate,
-          id: uuid(),
-          label: itemToDuplicate.label + " Copy",
-        };
-        const nextValue = value.map((item) => {
-          if (item.id === itemToDuplicate.id) {
-            return duplicatedItem;
-          }
-          return item;
-        });
-        setValue(nextValue);
-        setEditingItem(duplicatedItem);
-      }}
       onSort={setValue}
     />
   );
