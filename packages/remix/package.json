@@ -21,8 +21,11 @@
     "@types/react-dom": "^17.0.9",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/feature-flags": "workspace:^",
     "typescript": "4.7.4",
-    "@remix-run/dev": "1.9.0"
+    "@remix-run/dev": "1.9.0",
+    "@sentry/remix": "^7.5.0",
+    "@sentry/types": "7.5.0"
   },
   "exports": "./lib/index.js",
   "types": "src/index.ts",

@@ -28,7 +28,7 @@ import {
 } from "~/designer/shared/nano-states";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import { designerPath } from "~/shared/router-utils";
+import { designerPath } from "@webstudio-is/remix";
 import { theme } from "@webstudio-is/design-system";
 
 type TabContentProps = {

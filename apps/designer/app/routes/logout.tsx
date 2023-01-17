@@ -1,6 +1,6 @@
 import type { ActionArgs } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/build-utils";
 
 export default function Logout() {
   return null;

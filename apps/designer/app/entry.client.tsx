@@ -1,6 +1,6 @@
 import { hydrate } from "react-dom";
 import { RemixBrowser } from "@remix-run/react";
-import { initSentry } from "./shared/sentry";
+import { initSentry } from "@webstudio-is/remix";
 
 import { useLocation, useMatches } from "@remix-run/react";
 import { BrowserTracing, remixRouterInstrumentation } from "@sentry/remix";
@@ -17,6 +17,7 @@ initSentry({
       ),
     }),
   ],
+  env,
 });
 
 // Forward DEBUG env variable defined on the server to the client-side debug() utility.

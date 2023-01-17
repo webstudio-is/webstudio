@@ -4,7 +4,7 @@ import { type DesignerProps, Designer, links } from "~/designer";
 import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
-import { getBuildOrigin } from "~/shared/router-utils";
+import { getBuildOrigin } from "~/shared/build-utils";
 
 export { links };
 

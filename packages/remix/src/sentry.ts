@@ -1,18 +1,27 @@
 import * as Sentry from "@sentry/remix";
 import { Extras, Integration } from "@sentry/types";
-import env from "~/shared/env";
+
+type Env = { SENTRY_DSN?: string; VERCEL_ENV?: string };
+
+let env: Env;
 
 export const initSentry = ({
   integrations = [],
-}: { integrations?: Integration[] } = {}) =>
-  env.SENTRY_DSN
-    ? Sentry.init({
-        dsn: env.SENTRY_DSN,
-        tracesSampleRate: 1.0,
-        environment: env.VERCEL_ENV || "development",
-        integrations: integrations,
-      })
-    : () => null;
+  env: _env,
+}: {
+  integrations?: Integration[];
+  env?: Env;
+} = {}) => {
+  if (_env?.SENTRY_DSN) {
+    Sentry.init({
+      dsn: _env.SENTRY_DSN,
+      tracesSampleRate: 1.0,
+      environment: _env.VERCEL_ENV || "development",
+      integrations: integrations,
+    });
+    env = _env;
+  }
+};
 
 type SentryHelperProps = {
   extras?: Extras;

@@ -39,7 +39,7 @@ import {
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { getBuildUrl } from "~/shared/router-utils";
+import { getBuildUrl } from "~/shared/build-utils";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
 import { useAllUserProps } from "@webstudio-is/react-sdk";

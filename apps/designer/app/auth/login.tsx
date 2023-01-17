@@ -6,7 +6,7 @@ import interStyles from "~/shared/font-faces/inter.css";
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./login-button";
 import loginStyles from "./login.css";
-import { authPath } from "~/shared/router-utils";
+import { authPath } from "@webstudio-is/remix";
 import { theme } from "@webstudio-is/design-system";
 
 export const links: LinksFunction = () => {

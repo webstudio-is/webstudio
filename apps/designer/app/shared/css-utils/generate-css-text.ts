@@ -8,7 +8,7 @@ import {
 import { loadCanvasData } from "~/shared/db";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { idAttribute } from "@webstudio-is/react-sdk";
-import type { BuildParams } from "../router-utils";
+import type { BuildParams } from "../build-utils";
 
 export const generateCssText = async (buildParams: BuildParams) => {
   const project = await db.project.loadByParams(buildParams);

@@ -1,5 +1,5 @@
 import { createCookie } from "@remix-run/node";
-import { dashboardPath } from "~/shared/router-utils";
+import { dashboardPath } from "~/shared/build-utils";
 
 export const returnToCookie = createCookie("returnTo", {
   path: "/",

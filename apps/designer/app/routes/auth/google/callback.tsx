@@ -1,6 +1,6 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/build-utils";
 import { returnToPath } from "~/services/cookie.server";
 
 export const loader = async ({ request }: LoaderArgs) => {

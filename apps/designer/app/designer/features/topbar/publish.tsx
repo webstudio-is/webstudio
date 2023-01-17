@@ -16,9 +16,9 @@ import {
   useId,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
-import env from "~/shared/env";
+import env from "~/env";
 import type { Project } from "@webstudio-is/project";
-import { restPublishPath } from "~/shared/router-utils";
+import { restPublishPath } from "@webstudio-is/remix";
 import { theme } from "@webstudio-is/design-system";
 type PublishButtonProps = { project: Project };
 

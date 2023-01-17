@@ -7,7 +7,7 @@ import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
-import { authCallbackPath } from "~/shared/router-utils";
+import { authCallbackPath } from "~/shared/build-utils";
 
 const url =
   process.env.DEPLOYMENT_ENVIRONMENT === "production"

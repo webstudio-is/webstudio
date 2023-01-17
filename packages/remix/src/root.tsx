@@ -1,6 +1,6 @@
 import { Links, LiveReload, Meta, Outlet, Scripts } from "@remix-run/react";
-import { Env } from "~/shared/env";
-import { useThemeProps } from "~/shared/theme";
+import { Env } from "./env";
+import { useThemeProps } from "./theme";
 import { CRITICAL_CSS_MARKER } from "./constants";
 
 export const Root = () => {

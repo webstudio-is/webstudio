@@ -21,13 +21,13 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
 } from "~/designer/shared/nano-states";
+import { useClientSettings } from "~/designer/shared/client-settings";
 import {
+  dashboardPath,
   getThemeSetting,
   setThemeSetting,
   type ThemeSetting,
-} from "~/shared/theme";
-import { useClientSettings } from "~/designer/shared/client-settings";
-import { dashboardPath } from "~/shared/router-utils";
+} from "@webstudio-is/remix";
 import { theme } from "@webstudio-is/design-system";
 
 const menuItemCss = {

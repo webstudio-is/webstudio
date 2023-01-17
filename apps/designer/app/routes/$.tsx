@@ -12,7 +12,7 @@ import {
   type BuildMode,
   getBuildParams,
   dashboardPath,
-} from "~/shared/router-utils";
+} from "~/shared/build-utils";
 import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";

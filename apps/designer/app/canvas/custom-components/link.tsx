@@ -6,7 +6,7 @@ import type {
   RefAttributes,
 } from "react";
 import { forwardRef } from "react";
-import { preserveSearchBuildParams } from "~/shared/router-utils";
+import { preserveSearchBuildParams } from "~/shared/build-utils";
 
 const isAbsoluteUrl = (href: string) => {
   try {

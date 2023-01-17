@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
-import env from "~/shared/env";
+import env from "~/env";
 import { theme } from "@webstudio-is/design-system";
 
 const isPreviewEnvironment = env.VERCEL_ENV === "preview";

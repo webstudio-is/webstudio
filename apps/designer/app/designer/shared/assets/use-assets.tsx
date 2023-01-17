@@ -14,7 +14,7 @@ import {
   type Asset,
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
-import { restAssetsPath } from "~/shared/router-utils";
+import { restAssetsPath } from "~/shared/build-utils";
 import { useAssetsContainer, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import type {
