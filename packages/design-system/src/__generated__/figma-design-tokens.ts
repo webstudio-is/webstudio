@@ -275,7 +275,7 @@ export const color = {
   backgroundItemCurrent: "#0081f1",
   backgroundItemCurrentChild: "#e1f0ff",
   backgroundItemCurrentHidden: "#7e868c",
-  backgroundItemMenuItemHover: "#c9c9c9",
+  backgroundItemMenuItemHover: "#c5c5c5",
   backgroundTooltipMain: "#11181c",
   backgroundTooltipDesigner: "#ffffff",
   backgroundSpacingTopBottom: "#f1f3f5",
