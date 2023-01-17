@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { sentryMessage } from "~/shared/sentry";
+import { sentryMessage } from "@webstudio-is/remix";
 import * as config from "./config";
 
 type Name = keyof typeof config;

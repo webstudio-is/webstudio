@@ -3,7 +3,7 @@ import { db } from "@webstudio-is/project/server";
 import { type Pages, utils, pathValidators } from "@webstudio-is/project";
 import { zfd } from "zod-form-data";
 import { z } from "zod";
-import { sentryException } from "~/shared/sentry";
+import { sentryException } from "@webstudio-is/remix";
 import type {
   CreatePageData,
   DeletePageData,

@@ -10,7 +10,7 @@ import { toast } from "@webstudio-is/design-system";
 import { useEffect } from "react";
 import { zfd } from "zod-form-data";
 import type { ActionData } from "~/designer/shared/assets";
-import { sentryException } from "~/shared/sentry";
+import { sentryException } from "@webstudio-is/remix";
 
 const DeleteAssets = zfd.formData({
   assetId: zfd.repeatableOfType(zfd.text()),

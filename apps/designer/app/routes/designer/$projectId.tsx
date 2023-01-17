@@ -3,7 +3,7 @@ import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
 import { type DesignerProps, Designer, links } from "~/designer";
 import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
-import { sentryException } from "~/shared/sentry";
+import { sentryException } from "@webstudio-is/remix";
 import { getBuildOrigin } from "~/shared/build-utils";
 
 export { links };

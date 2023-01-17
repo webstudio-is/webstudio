@@ -5,14 +5,14 @@ import djb2a from "djb2a";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData } from "~/shared/db";
 import env, { type Env } from "~/env.server";
-import { sentryException } from "~/shared/sentry";
+import { sentryException } from "@webstudio-is/remix";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import {
   type BuildMode,
   getBuildParams,
   dashboardPath,
-} from "~/shared/build-utils";
+} from "@webstudio-is/remix";
 import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";

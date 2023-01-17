@@ -5,7 +5,7 @@ import env from "~/env.server";
 
 import { Login, links } from "~/auth";
 import { useLoginErrorMessage } from "~/shared/session";
-import { dashboardPath } from "~/shared/build-utils";
+import { dashboardPath } from "@webstudio-is/remix";
 import { returnToCookie } from "~/services/cookie.server";
 
 export { links };

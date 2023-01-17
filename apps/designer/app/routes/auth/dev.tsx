@@ -1,6 +1,6 @@
 import { type ActionArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { loginPath } from "~/shared/build-utils";
+import { loginPath } from "@webstudio-is/remix";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { returnToPath } from "~/services/cookie.server";
 

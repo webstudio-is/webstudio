@@ -3,7 +3,7 @@ import type { User } from "@webstudio-is/prisma-client";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
 import { findAuthenticatedUser } from "~/services/auth.server";
-import { designerPath, loginPath } from "~/shared/build-utils";
+import { designerPath, loginPath } from "@webstudio-is/remix";
 
 const ensureProject = async ({
   userId,

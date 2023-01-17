@@ -32,7 +32,7 @@ import type {
   EditPageData,
   CreatePageData,
 } from "~/shared/pages";
-import { restPagesPath } from "~/shared/build-utils";
+import { restPagesPath } from "@webstudio-is/remix";
 import slugify from "slugify";
 import { theme } from "@webstudio-is/design-system";
 

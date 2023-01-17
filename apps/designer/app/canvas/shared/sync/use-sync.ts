@@ -3,7 +3,7 @@ import { sync } from "immerhin";
 import { enqueue } from "./queue";
 import type { Build } from "@webstudio-is/project";
 import { Tree } from "@webstudio-is/react-sdk";
-import { restPatchPath } from "~/shared/build-utils";
+import { restPatchPath } from "@webstudio-is/remix";
 
 export const useSync = ({
   treeId,

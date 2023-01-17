@@ -20,6 +20,7 @@ import env from "~/env";
 import type { Project } from "@webstudio-is/project";
 import { restPublishPath } from "@webstudio-is/remix";
 import { theme } from "@webstudio-is/design-system";
+
 type PublishButtonProps = { project: Project };
 
 const getHost = () => {

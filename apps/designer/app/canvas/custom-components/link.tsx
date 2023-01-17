@@ -6,7 +6,7 @@ import type {
   RefAttributes,
 } from "react";
 import { forwardRef } from "react";
-import { preserveSearchBuildParams } from "~/shared/build-utils";
+import { preserveSearchBuildParams } from "@webstudio-is/remix";
 
 const isAbsoluteUrl = (href: string) => {
   try {

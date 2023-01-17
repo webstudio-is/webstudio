@@ -1,7 +1,7 @@
 import { json, type LoaderArgs } from "@remix-run/node";
 import env from "~/env.server";
 import { db } from "@webstudio-is/project/server";
-import { sentryException } from "~/shared/sentry";
+import { sentryException } from "@webstudio-is/remix";
 import { loadCanvasData } from "~/shared/db";
 import type { CanvasData } from "@webstudio-is/project";
 

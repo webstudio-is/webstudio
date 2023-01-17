@@ -2,7 +2,7 @@ import { type ActionArgs, json } from "@remix-run/node";
 
 import { getBuildParams } from "~/shared/build-utils";
 import env from "~/env.server";
-import { sentryException } from "~/shared/sentry";
+import { sentryException } from "@webstudio-is/remix";
 import { generateCssText } from "~/shared/css-utils";
 
 export const loader = async ({ request }: ActionArgs) => {

@@ -5,9 +5,9 @@ import { GitHubStrategy, type GitHubProfile } from "remix-auth-github";
 import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
-import { sentryException } from "~/shared/sentry";
+import { sentryException } from "@webstudio-is/remix";
 import { AUTH_PROVIDERS } from "~/shared/session";
-import { authCallbackPath } from "~/shared/build-utils";
+import { authCallbackPath } from "@webstudio-is/remix";
 
 const url =
   process.env.DEPLOYMENT_ENVIRONMENT === "production"
