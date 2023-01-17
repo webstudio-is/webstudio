@@ -2,6 +2,11 @@ import * as Sentry from "@sentry/remix";
 import { Extras, Integration } from "@sentry/types";
 import env from "./env";
 
+export interface Env {
+  SENTRY_DSN?: string;
+  VERCEL_ENV?: string;
+}
+
 export const initSentry = ({
   integrations = [],
 }: {
