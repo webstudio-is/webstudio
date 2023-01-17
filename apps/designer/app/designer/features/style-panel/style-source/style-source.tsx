@@ -8,6 +8,7 @@ import {
   Text,
   styled,
   Box,
+  theme,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import {
@@ -19,7 +20,6 @@ import {
   type KeyboardEventHandler,
   type FocusEvent,
 } from "react";
-import { theme } from "@webstudio-is/design-system";
 
 // Used to schedule function calls to be executed after at a later point in time.
 // Since menu is managing focus, we need to execute that callback when the management is done.
@@ -52,31 +52,31 @@ const MenuTrigger = styled("button", {
   top: 0,
   height: "100%",
   padding: 0,
-  borderTopRightRadius: "$borderRadius$4",
-  borderBottomRightRadius: "$borderRadius$4",
-  color: "$colors$foregroundContrastMain",
+  borderTopRightRadius: theme.borderRadius[4],
+  borderBottomRightRadius: theme.borderRadius[4],
+  color: theme.colors.foregroundContrastMain,
   visibility: cssVars.use(menuTriggerVisibilityVar),
   background: "transparent",
   variants: {
     source: {
       local: {
         "&:hover": {
-          background: "$colors$backgroundButtonHover",
+          background: theme.colors.backgroundButtonHover,
         },
       },
       token: {
         "&:hover": {
-          background: "$colors$backgroundButtonHover",
+          background: theme.colors.backgroundButtonHover,
         },
       },
       tag: {
         "&:hover": {
-          background: "$colors$backgroundButtonHover",
+          background: theme.colors.backgroundButtonHover,
         },
       },
       state: {
         "&:hover": {
-          background: "$colors$backgroundButtonHover",
+          background: theme.colors.backgroundButtonHover,
         },
       },
     },
@@ -87,25 +87,25 @@ const MenuTriggerGradient = styled(Box, {
   position: "absolute",
   top: 0,
   right: 0,
-  width: "$spacing$11",
+  width: theme.spacing[11],
   height: "100%",
   visibility: cssVars.use(menuTriggerVisibilityVar),
-  borderTopRightRadius: "$borderRadius$4",
-  borderBottomRightRadius: "$borderRadius$4",
+  borderTopRightRadius: theme.borderRadius[4],
+  borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",
   variants: {
     source: {
       local: {
-        background: "$colors$backgroundStyleSourceGradientToken",
+        background: theme.colors.backgroundStyleSourceGradientToken,
       },
       token: {
-        background: "$colors$backgroundStyleSourceGradientToken",
+        background: theme.colors.backgroundStyleSourceGradientToken,
       },
       tag: {
-        background: "$colors$backgroundStyleSourceGradientTag",
+        background: theme.colors.backgroundStyleSourceGradientTag,
       },
       state: {
-        background: "$colors$backgroundStyleSourceGradientState",
+        background: theme.colors.backgroundStyleSourceGradientState,
       },
     },
   },
@@ -337,12 +337,12 @@ const StyledSourceButton = styled(Box, {
       selected: {},
       unselected: {
         "&:not(:hover)": {
-          backgroundColor: "$colors$backgroundStyleSourceNeutral",
+          backgroundColor: theme.colors.backgroundStyleSourceNeutral,
         },
       },
       disabled: {
         "&:not(:hover)": {
-          backgroundColor: "$colors$backgroundStyleSourceDisabled",
+          backgroundColor: theme.colors.backgroundStyleSourceDisabled,
         },
       },
     },
