@@ -79,6 +79,7 @@ model Build {
 model Tree {
   id           String @id @default(uuid())
   root         String
+  instances    String @default("[]")
   presetStyles String @default("[]")
   styles       String @default("[]")
 }

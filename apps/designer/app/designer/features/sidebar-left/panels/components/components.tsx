@@ -14,6 +14,7 @@ import type { TabName } from "../../types";
 import { ComponentThumb } from "./component-thumb";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import { Header, CloseButton } from "../../lib/header";
+import { theme } from "@webstudio-is/design-system";
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -156,7 +157,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       <Flex
         gap="1"
         wrap="wrap"
-        css={{ padding: "$spacing$3", overflow: "auto" }}
+        css={{ padding: theme.spacing[3], overflow: "auto" }}
         ref={useDragHandlers.rootRef}
       >
         {listedComponentNames.map((component: Instance["component"]) => (

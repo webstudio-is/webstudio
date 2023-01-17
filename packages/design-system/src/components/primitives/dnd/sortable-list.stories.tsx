@@ -6,13 +6,14 @@ import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
 import { PlacementIndicator } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
+import { theme } from "../../../stitches.config";
 
 type ItemData = { id: string; text: string };
 
 const ListItem = styled("li", {
   display: "block",
   margin: 10,
-  background: "$mint5",
+  background: theme.colors.mint5,
   padding: 10,
   userSelect: "none",
 });

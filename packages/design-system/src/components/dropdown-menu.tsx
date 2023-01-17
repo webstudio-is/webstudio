@@ -5,11 +5,12 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { menuCss, separatorCss, itemCss, labelCss } from "./menu";
 import { Box } from "./box";
 import { panelStyles } from "./panel";
+import { theme } from "../stitches.config";
 
 export const DropdownMenu = DropdownMenuPrimitive.Root;
 export const DropdownMenuArrow = styled(DropdownMenuPrimitive.Arrow, {
-  fill: "$colors$slate4",
-  stroke: "$colors$slate1",
+  fill: theme.colors.slate4,
+  stroke: theme.colors.slate1,
 });
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
@@ -54,7 +55,7 @@ export const DropdownMenuRadioItem = React.forwardRef<
   DialogMenuRadioItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledDropdownMenuRadioItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
+    <Box as="span" css={{ position: "absolute", left: theme.spacing[3] }}>
       <DropdownMenuPrimitive.ItemIndicator>
         <CheckIcon />
       </DropdownMenuPrimitive.ItemIndicator>
@@ -82,7 +83,7 @@ export const DropdownMenuCheckboxItem = React.forwardRef<
   DialogMenuCheckboxItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledDropdownMenuCheckboxItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
+    <Box as="span" css={{ position: "absolute", left: theme.spacing[3] }}>
       <DropdownMenuPrimitive.ItemIndicator>
         <CheckIcon />
       </DropdownMenuPrimitive.ItemIndicator>

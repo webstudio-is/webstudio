@@ -13,14 +13,15 @@ import {
 import { TextField } from "./text-field";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 const SearchIcon = styled(MagnifyingGlassIcon, {
-  color: "$hint",
-  padding: "$spacing$3",
+  color: theme.colors.hint,
+  padding: theme.spacing[3],
 });
 
 const AbortButton = styled(DeprecatedIconButton, {
-  marginRight: "$spacing$3",
+  marginRight: theme.spacing[3],
 });
 
 const SearchFieldBase: ForwardRefRenderFunction<

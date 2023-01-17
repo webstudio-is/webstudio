@@ -15,6 +15,7 @@ import {
 } from "../../shared/css-value-input";
 import type { StyleSource } from "../../shared/style-info";
 import { StyleUpdateOptions } from "../../shared/use-style-data";
+import { theme } from "@webstudio-is/design-system";
 
 const slideUpAndFade = keyframes({
   "0%": { opacity: 0, transform: "scale(0.8)" },
@@ -91,14 +92,14 @@ const Trigger = styled("div", { position: "absolute", width: 0, height: 0 });
 const PopoverContentStyled = styled(PopoverContent, {
   minWidth: 0,
   minHeight: 0,
-  width: "$spacing$20",
-  border: "1px solid $colors$slate8",
-  borderRadius: "$borderRadius$7",
-  background: "$colors$gray2",
-  padding: "$spacing$5",
+  width: theme.spacing[20],
+  border: `1px solid ${theme.colors.slate8}`,
+  borderRadius: theme.borderRadius[7],
+  background: theme.colors.gray2,
+  padding: theme.spacing[5],
   boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
   animationDuration: "200ms",
-  animationTimingFunction: "$easing$easeOut",
+  animationTimingFunction: theme.easing.easeOut,
   '&[data-state="open"]': { animationName: slideUpAndFade },
 });
 

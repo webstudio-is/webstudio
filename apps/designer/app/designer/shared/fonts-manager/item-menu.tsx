@@ -10,11 +10,12 @@ import {
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
+import { theme } from "@webstudio-is/design-system";
 
 const MenuButton = styled(DeprecatedIconButton, {
-  color: "$hint",
+  color: theme.colors.hint,
   "&:hover, &:focus-visible": {
-    color: "$hiContrast",
+    color: theme.colors.hiContrast,
   },
 });
 

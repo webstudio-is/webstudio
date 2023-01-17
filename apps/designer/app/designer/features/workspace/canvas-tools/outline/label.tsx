@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { styled, type Rect } from "@webstudio-is/design-system";
 import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import { theme } from "@webstudio-is/design-system";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -39,30 +40,30 @@ const LabelContainer = styled(
   {
     position: "absolute",
     display: "flex",
-    padding: "0 $spacing$3",
-    height: "$spacing$10",
+    padding: `0 ${theme.spacing[3]}`,
+    height: theme.spacing[10],
     color: "white",
     alignItems: "center",
     justifyContent: "center",
-    gap: "$spacing$3",
-    fontSize: "$fontSize$3",
-    fontFamily: "$sans",
+    gap: theme.spacing[3],
+    fontSize: theme.fontSize[3],
+    fontFamily: theme.fonts.sans,
     lineHeight: 1,
-    minWidth: "$spacing$13",
+    minWidth: theme.spacing[13],
     whiteSpace: "nowrap",
-    backgroundColor: "$blue9",
+    backgroundColor: theme.colors.blue9,
   },
   {
     variants: {
       position: {
         top: {
-          top: "-$spacing$10",
+          top: `-${theme.spacing[10]}`,
         },
         inside: {
           top: 0,
         },
         bottom: {
-          bottom: "-$spacing$10",
+          bottom: `-${theme.spacing[10]}`,
         },
       },
     },

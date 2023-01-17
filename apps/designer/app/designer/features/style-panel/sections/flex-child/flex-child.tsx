@@ -19,10 +19,11 @@ import {
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/designer/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
+import { theme } from "@webstudio-is/design-system";
 
 export const FlexChildSection = (props: RenderCategoryProps) => {
   return (
-    <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
+    <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
       <FlexChildSectionAlign {...props} />
       <FlexChildSectionSizing {...props} />
       <FlexChildSectionOrder {...props} />
@@ -169,11 +170,11 @@ const FlexChildSectionSizingPopover = ({
         <Grid
           css={{
             gridTemplateColumns: "1.5fr 1fr 1fr",
-            gap: "$spacing$9",
-            padding: "$spacing$9",
+            gap: theme.spacing[9],
+            padding: theme.spacing[9],
           }}
         >
-          <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
+          <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyName
               style={currentStyle}
               property="flexBasis"
@@ -187,7 +188,7 @@ const FlexChildSectionSizingPopover = ({
               deleteProperty={deleteProperty}
             />
           </Grid>
-          <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
+          <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyName
               style={currentStyle}
               property="flexGrow"
@@ -201,7 +202,7 @@ const FlexChildSectionSizingPopover = ({
               deleteProperty={deleteProperty}
             />
           </Grid>
-          <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
+          <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyName
               style={currentStyle}
               property="flexShrink"
@@ -283,7 +284,7 @@ const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
     <FloatingPanel
       title="Order"
       content={
-        <Grid css={{ padding: "$spacing$9" }}>
+        <Grid css={{ padding: theme.spacing[9] }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
               style={currentStyle}

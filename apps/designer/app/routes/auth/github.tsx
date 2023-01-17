@@ -1,17 +1,20 @@
 import { type ActionArgs, redirect } from "@remix-run/node";
 import { authenticator } from "~/services/auth.server";
-import { dashboardPath, loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
+import { returnToPath } from "~/services/cookie.server";
 
 export default function GH() {
   return null;
 }
 
 export const action = async ({ request }: ActionArgs) => {
+  const returnTo = await returnToPath(request);
+
   try {
     return await authenticator.authenticate("github", request, {
-      successRedirect: dashboardPath(),
+      successRedirect: returnTo,
       throwOnError: true,
     });
   } catch (error: unknown) {
@@ -30,6 +33,7 @@ export const action = async ({ request }: ActionArgs) => {
         loginPath({
           error: AUTH_PROVIDERS.LOGIN_GITHUB,
           message: error?.message,
+          returnTo,
         })
       );
     }

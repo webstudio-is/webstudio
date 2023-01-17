@@ -46,6 +46,14 @@ export const useSetBreakpoints = (breakpoints: Breakpoint[]) => {
   });
 };
 
+export const designTokensContainer = atom<DesignToken[]>([]);
+export const useDesignTokens = () => useValue(designTokensContainer);
+export const useSetDesignTokens = (designTokens: DesignToken[]) => {
+  useSyncInitializeOnce(() => {
+    designTokensContainer.set(designTokens);
+  });
+};
+
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
 
@@ -81,6 +89,3 @@ const dragAndDropStateContainer = atom<DragAndDropState>({
   isDragging: false,
 });
 export const useDragAndDropState = () => useValue(dragAndDropStateContainer);
-
-export const designTokensContainer = atom<Array<DesignToken>>([]);
-export const useDesignTokens = () => useValue(designTokensContainer);

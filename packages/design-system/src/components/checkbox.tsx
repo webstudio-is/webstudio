@@ -2,6 +2,7 @@ import React from "react";
 import { styled, CSS, VariantProps } from "../stitches.config";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { CheckIcon } from "@webstudio-is/icons";
+import { theme } from "../stitches.config";
 
 const StyledCheckbox = styled(CheckboxPrimitive.Root, {
   all: "unset",
@@ -24,31 +25,31 @@ const StyledCheckbox = styled(CheckboxPrimitive.Root, {
   padding: "0",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
-  color: "$hiContrast",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  color: theme.colors.hiContrast,
+  boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
   overflow: "hidden",
   "@hover": {
     "&:hover": {
-      boxShadow: "inset 0 0 0 1px $colors$slate8",
+      boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
     },
   },
   "&:focus": {
     outline: "none",
-    borderColor: "$red7",
-    boxShadow: "inset 0 0 0 1px $colors$blue9, 0 0 0 1px $colors$blue9",
+    borderColor: theme.colors.red7,
+    boxShadow: `inset 0 0 0 1px ${theme.colors.blue9}, 0 0 0 1px ${theme.colors.blue9}`,
   },
 
   variants: {
     size: {
       "1": {
-        width: "$spacing$9",
-        height: "$spacing$9",
-        borderRadius: "$borderRadius$4",
+        width: theme.spacing[9],
+        height: theme.spacing[9],
+        borderRadius: theme.borderRadius[4],
       },
       "2": {
-        width: "$spacing$11",
-        height: "$spacing$11",
-        borderRadius: "$borderRadius$6",
+        width: theme.spacing[11],
+        height: theme.spacing[11],
+        borderRadius: theme.borderRadius[6],
       },
     },
   },

@@ -1,5 +1,6 @@
 import { type Breakpoint } from "@webstudio-is/css-data";
 import { Button, Flex, Paragraph } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 type ConfirmationDialogProps = {
   onAbort: () => void;
@@ -16,7 +17,7 @@ export const ConfirmationDialog = ({
     <Flex
       gap="2"
       direction="column"
-      css={{ px: "$spacing$11", py: "$spacing$5", width: 300 }}
+      css={{ px: theme.spacing[11], py: theme.spacing[5], width: 300 }}
     >
       <Paragraph>{`Are you sure you want to delete "${breakpoint.label}"?`}</Paragraph>
       <Paragraph>

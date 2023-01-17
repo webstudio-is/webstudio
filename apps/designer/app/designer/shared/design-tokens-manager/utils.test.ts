@@ -1,13 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import type { DesignToken } from "@webstudio-is/design-tokens";
-import produce from "immer";
-import {
-  deleteTokenMutable,
-  filterByType,
-  findByName,
-  tokensToStyle,
-  updateTokenMutable,
-} from "./utils";
+import { filterByType, findByName, tokensToStyle } from "./utils";
 
 const tokens: Array<DesignToken> = [
   { name: "a", type: "color", value: "red", group: "Color" },
@@ -16,77 +9,6 @@ const tokens: Array<DesignToken> = [
 ];
 
 describe("design tokens manager utils", () => {
-  test("deleteTokenMutable", () => {
-    let updated = [...tokens];
-    deleteTokenMutable(updated, "a");
-    expect(updated).toMatchInlineSnapshot(`
-      [
-        {
-          "group": "Color",
-          "name": "b",
-          "type": "color",
-          "value": "green",
-        },
-        {
-          "group": "Sizing",
-          "name": "c",
-          "type": "sizing",
-          "value": "20px",
-        },
-      ]
-    `);
-    updated = [...tokens];
-    deleteTokenMutable(updated, "b");
-    expect(updated).toMatchInlineSnapshot(`
-      [
-        {
-          "group": "Color",
-          "name": "a",
-          "type": "color",
-          "value": "red",
-        },
-        {
-          "group": "Sizing",
-          "name": "c",
-          "type": "sizing",
-          "value": "20px",
-        },
-      ]
-    `);
-  });
-
-  test("updateTokenMutable", () => {
-    const updated = produce(tokens, (draft) => {
-      updateTokenMutable(
-        draft,
-        { name: "c", type: "color", value: "blue", group: "Color" },
-        "a"
-      );
-    });
-    expect(updated).toMatchInlineSnapshot(`
-      [
-        {
-          "group": "Color",
-          "name": "c",
-          "type": "color",
-          "value": "blue",
-        },
-        {
-          "group": "Color",
-          "name": "b",
-          "type": "color",
-          "value": "green",
-        },
-        {
-          "group": "Sizing",
-          "name": "c",
-          "type": "sizing",
-          "value": "20px",
-        },
-      ]
-    `);
-  });
-
   test("tokensToStyle", () => {
     expect(tokensToStyle(tokens)).toMatchInlineSnapshot(`
       {

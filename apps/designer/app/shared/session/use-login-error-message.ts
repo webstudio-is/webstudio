@@ -31,7 +31,12 @@ export const useLoginErrorMessage = (): string => {
       sentryMessage({ message });
       setMessageToReturn(message);
 
-      setSearchParams({});
+      setSearchParams((prevSearchParams) => {
+        const nextSearchParams = new URLSearchParams(prevSearchParams);
+        nextSearchParams.delete("error");
+        nextSearchParams.delete("message");
+        return nextSearchParams;
+      });
       return;
     }
 
@@ -49,8 +54,6 @@ export const useLoginErrorMessage = (): string => {
       default:
         break;
     }
-
-    setSearchParams({});
   }, [searchParams, setSearchParams]);
 
   return messageToReturn;

@@ -2,34 +2,6 @@ import type { GitHubProfile } from "remix-auth-github";
 import type { GoogleProfile } from "remix-auth-google";
 import { prisma, User } from "@webstudio-is/prisma-client";
 
-export const createDemoUser = async (userId: string) => {
-  await prisma.team.create({
-    data: {
-      users: {
-        create: {
-          id: userId,
-        },
-      },
-    },
-  });
-};
-
-export const ensureUser = async ({ userId }: { userId: string }) => {
-  // Always check if the account userId exists because account could have been deleted
-  // or we could be in a demo mode with a generated user
-  const isUserCreated = Boolean(
-    await prisma.user.findUnique({
-      where: { id: userId },
-    })
-  );
-  if (isUserCreated) {
-    return userId;
-  }
-  await createDemoUser(userId);
-
-  return userId;
-};
-
 const genericCreateAccount = async (userData: {
   email: string;
   username: string;

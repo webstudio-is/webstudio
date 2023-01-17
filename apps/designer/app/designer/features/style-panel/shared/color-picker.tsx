@@ -13,15 +13,16 @@ import {
   css,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
+import { theme } from "@webstudio-is/design-system";
 
 const pickerStyle = css({
-  padding: "$spacing$5",
-  background: "$panel",
+  padding: theme.spacing[5],
+  background: theme.colors.panel,
   // @todo this lib doesn't have another way to define styles for inputs
   // we should either submit a PR or replace it
   "& input": {
-    color: "$hiContrast",
-    background: "$loContrast",
+    color: theme.colors.hiContrast,
+    background: theme.colors.loContrast,
   },
 });
 
@@ -132,9 +133,9 @@ export const ColorPicker = ({
       >
         <Box
           css={{
-            margin: "$spacing$3",
-            width: "$spacing$10",
-            height: "$spacing$10",
+            margin: theme.spacing[3],
+            width: theme.spacing[10],
+            height: theme.spacing[10],
             borderRadius: 2,
             background: toValue(value),
           }}

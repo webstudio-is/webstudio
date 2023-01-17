@@ -1,4 +1,5 @@
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 export const IconButton = styled("button", {
   // reset styles
@@ -16,10 +17,10 @@ export const IconButton = styled("button", {
   // set size and shape
   width: 28,
   height: 28,
-  borderRadius: "$borderRadius$3",
+  borderRadius: theme.borderRadius[3],
 
   "&:focus-visible": {
-    outline: "2px solid $blue10",
+    outline: `2px solid ${theme.colors.blue10}`,
   },
   "&:disabled": {
     borderColor: "transparent",
@@ -29,49 +30,49 @@ export const IconButton = styled("button", {
   variants: {
     variant: {
       default: {
-        color: "$slate12",
+        color: theme.colors.slate12,
         "&:hover": {
-          backgroundColor: "$slate6",
+          backgroundColor: theme.colors.slate6,
         },
         "&:disabled": {
-          color: "$slate8",
+          color: theme.colors.slate8,
         },
       },
       preset: {
-        backgroundColor: "$slate6",
-        borderColor: "$slate8",
-        color: "$slate12",
+        backgroundColor: theme.colors.slate6,
+        borderColor: theme.colors.slate8,
+        color: theme.colors.slate12,
         "&:hover": {
-          backgroundColor: "$slate8",
+          backgroundColor: theme.colors.slate8,
         },
         "&:disabled": {
-          color: "$slate8",
+          color: theme.colors.slate8,
         },
       },
       set: {
-        backgroundColor: "$blue4",
-        borderColor: "$blue6",
-        color: "$blue11",
+        backgroundColor: theme.colors.blue4,
+        borderColor: theme.colors.blue6,
+        color: theme.colors.blue11,
         "&:hover": {
-          backgroundColor: "$blue6",
+          backgroundColor: theme.colors.blue6,
         },
         "&:disabled": {
-          color: "$blue6",
+          color: theme.colors.blue6,
         },
       },
       inherited: {
-        backgroundColor: "$orange4",
-        borderColor: "$orange6",
-        color: "$orange11",
+        backgroundColor: theme.colors.orange4,
+        borderColor: theme.colors.orange6,
+        color: theme.colors.orange11,
         "&:hover": {
-          backgroundColor: "$orange6",
+          backgroundColor: theme.colors.orange6,
         },
         "&:disabled": {
-          color: "$orange6",
+          color: theme.colors.orange6,
         },
       },
       active: {
-        backgroundColor: "$blue10",
+        backgroundColor: theme.colors.blue10,
         color: "White",
         // non-interactive state because usually covered with overlay
       },

@@ -8,6 +8,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { DotFilledIcon } from "@webstudio-is/icons";
 import type { CreateBatchUpdate } from "../../../shared/use-style-data";
 import { getStyleSource, StyleInfo } from "../../../shared/style-info";
+import { theme } from "@webstudio-is/design-system";
 
 export const FlexGrid = ({
   currentStyle,
@@ -33,12 +34,12 @@ export const FlexGrid = ({
   const isFlexDirectionColumn =
     flexDirection === "column" || flexDirection === "column-reverse";
 
-  let color = "$slate8";
+  let color = theme.colors.slate8;
   if (styleSource === "local") {
-    color = "$blue9";
+    color = theme.colors.blue9;
   }
   if (styleSource === "remote") {
-    color = "$orange9";
+    color = theme.colors.orange9;
   }
 
   return (
@@ -46,12 +47,12 @@ export const FlexGrid = ({
       css={{
         width: "100%",
         aspectRatio: "1 / 1",
-        padding: "$spacing$4",
+        padding: theme.spacing[4],
         borderRadius: "4px",
-        background: "$loContrast",
+        background: theme.colors.loContrast,
         border: "2px solid currentColor",
         alignItems: "center",
-        gap: "$spacing$1",
+        gap: theme.spacing[1],
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         color,
@@ -82,9 +83,9 @@ export const FlexGrid = ({
               css={{
                 width: "100%",
                 height: "100%",
-                color: "$colors$gray8",
+                color: theme.colors.gray8,
                 "&:hover": {
-                  bc: "$colors$slate4",
+                  bc: theme.colors.slate4,
                 },
                 "&:focus": {
                   background: "none",
@@ -126,7 +127,7 @@ export const FlexGrid = ({
           <Box
             key={size}
             css={{
-              borderRadius: "calc($borderRadius$4 / 2)",
+              borderRadius: `calc(${theme.borderRadius[4]} / 2)`,
               backgroundColor: "currentColor",
               ...(isFlexDirectionColumn
                 ? { minWidth: size, minHeight: 4 }

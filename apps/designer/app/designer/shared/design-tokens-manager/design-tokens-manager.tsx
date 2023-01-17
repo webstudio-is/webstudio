@@ -1,32 +1,23 @@
 import { useState } from "react";
+import store from "immerhin";
 import { Flex, List, ListItem, useList } from "@webstudio-is/design-system";
 import { CheckIcon } from "@webstudio-is/icons";
 import type { DesignToken } from "@webstudio-is/design-tokens";
 import { designTokensGroups } from "@webstudio-is/design-tokens";
-import { useDesignTokens } from "~/shared/nano-states";
-import type { Publish } from "~/shared/pubsub";
+import { designTokensContainer, useDesignTokens } from "~/shared/nano-states";
+import {
+  removeByMutable,
+  replaceByOrAppendMutable,
+} from "~/shared/array-utils";
 // @todo this is temporary, we need to either make that collapsible reusable or copy it over
 // This wasn't properly designed, so this is mostly temp
 import { CollapsibleSection } from "../inspector";
-import { deleteTokenMutable, filterByType, updateTokenMutable } from "./utils";
+import { filterByType } from "./utils";
 import { useMenu } from "./item-menu";
-import produce from "immer";
 import { type DesignTokenSeed, TokenEditor } from "./token-editor";
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    updateToken: {
-      // Previously known token name in case token name has changed
-      name: DesignToken["name"];
-      token: DesignToken;
-    };
-    createToken: DesignToken;
-    deleteToken: DesignToken["name"];
-  }
-}
-
-const useLogic = ({ publish }: { publish: Publish }) => {
-  const [tokens, setTokens] = useDesignTokens();
+const useLogic = () => {
+  const [tokens] = useDesignTokens();
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const { getItemProps, getListProps } = useList({
@@ -44,39 +35,26 @@ const useLogic = ({ publish }: { publish: Publish }) => {
     onSelect: setSelectedIndex,
     onDelete: () => {
       const { name } = tokens[selectedIndex];
-      publish({ type: "deleteToken", payload: name });
-      const updatedTokens = produce(tokens, (draft) => {
-        deleteTokenMutable(draft, name);
+      store.createTransaction([designTokensContainer], (tokens) => {
+        removeByMutable(tokens, (item) => item.name === name);
       });
-      setTokens(updatedTokens);
     },
     onEdit: (index) => {
       setEditingToken(tokens[index]);
     },
   });
 
-  const createToken = (token: DesignToken) => {
-    publish({ type: "createToken", payload: token });
-    setTokens([...tokens, token]);
-  };
-
-  const updateToken = (previousToken: DesignToken, nextToken: DesignToken) => {
-    publish({
-      type: "updateToken",
-      payload: { name: previousToken.name, token: nextToken },
+  const setToken = (name: undefined | string, token: DesignToken) => {
+    store.createTransaction([designTokensContainer], (tokens) => {
+      replaceByOrAppendMutable(tokens, token, (item) => item.name === name);
     });
-    const updatedTokens = produce(tokens, (draft) => {
-      updateTokenMutable(draft, nextToken, previousToken.name);
-    });
-    setTokens(updatedTokens);
   };
 
   return {
     isMenuOpen,
     getListProps,
     getItemProps,
-    createToken,
-    updateToken,
+    setToken,
     setEditingToken,
     editingToken,
     tokens,
@@ -84,18 +62,17 @@ const useLogic = ({ publish }: { publish: Publish }) => {
   };
 };
 
-export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
+export const DesignTokensManager = () => {
   const {
     getListProps,
     getItemProps,
-    createToken,
-    updateToken,
+    setToken,
     setEditingToken,
     isMenuOpen,
     editingToken,
     tokens,
     renderMenu,
-  } = useLogic({ publish });
+  } = useLogic();
 
   const renderEditor = ({
     token,
@@ -115,11 +92,8 @@ export const DesignTokensManager = ({ publish }: { publish: Publish }) => {
         isOpen={isOpen}
         trigger={trigger}
         onChangeComplete={(updatedToken) => {
-          if (token === undefined) {
-            return createToken(updatedToken);
-          }
-
-          updateToken(token, updatedToken);
+          // Previously known token name in case token name has changed
+          setToken(token?.name, updatedToken);
         }}
         onOpenChange={(isOpen) => {
           if (isOpen === false) {

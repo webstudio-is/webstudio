@@ -19,6 +19,7 @@ import {
   type KeyboardEventHandler,
   type FocusEvent,
 } from "react";
+import { theme } from "@webstudio-is/design-system";
 
 // Used to schedule function calls to be executed after at a later point in time.
 // Since menu is managing focus, we need to execute that callback when the management is done.
@@ -310,26 +311,26 @@ const useForceRecalcStyle = <Element extends HTMLElement>(
 
 const StyledSourceButton = styled(Box, {
   display: "inline-flex",
-  borderRadius: "$borderRadius$3",
-  padding: "$spacing$4",
+  borderRadius: theme.borderRadius[3],
+  padding: theme.spacing[4],
   maxWidth: "100%",
   position: "relative",
-  color: "$colors$foregroundContrastMain",
+  color: theme.colors.foregroundContrastMain,
   ...menuCssVars({ show: false }),
   "&:hover": menuCssVars({ show: true }),
   variants: {
     source: {
       local: {
-        backgroundColor: "$colors$backgroundStyleSourceToken",
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
       },
       token: {
-        backgroundColor: "$colors$backgroundStyleSourceToken",
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
       },
       tag: {
-        backgroundColor: "$colors$backgroundStyleSourceTag",
+        backgroundColor: theme.colors.backgroundStyleSourceTag,
       },
       state: {
-        backgroundColor: "$colors$backgroundStyleSourceState",
+        backgroundColor: theme.colors.backgroundStyleSourceState,
       },
     },
     state: {

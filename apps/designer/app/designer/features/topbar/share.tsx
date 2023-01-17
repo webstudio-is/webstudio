@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
+import { theme } from "@webstudio-is/design-system";
 
 type ShareButtonProps = {
   url: string;
@@ -21,7 +22,7 @@ const Content = ({ url }: ShareButtonProps) => {
   }
   return (
     <PopoverContent
-      css={{ padding: "$spacing$9" }}
+      css={{ padding: theme.spacing[9] }}
       hideArrow={true}
       onFocusOutside={(event) => {
         // Used to prevent closing when opened from the main dropdown menu

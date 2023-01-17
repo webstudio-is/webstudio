@@ -1,6 +1,7 @@
 import { styled } from "../../stitches.config";
 import { Box } from "../box";
 import { Placement } from "../primitives/dnd";
+import { theme } from "../../stitches.config";
 
 const CIRCLE_SIZE = 8;
 const LINE_THICKNESS = 2;
@@ -16,14 +17,14 @@ const CircleOutline = styled(Box, {
   position: "absolute",
   borderRadius: "50%",
   pointerEvents: "none",
-  bc: "$loContrast",
+  bc: theme.colors.loContrast,
 });
 
 const Circle = styled(Box, {
   width: CIRCLE_SIZE,
   height: CIRCLE_SIZE,
   position: "absolute",
-  border: "solid $blue10",
+  border: `solid ${theme.colors.blue10}`,
   borderWidth: 2,
   borderRadius: "50%",
   pointerEvents: "none",
@@ -32,9 +33,9 @@ const Circle = styled(Box, {
 const Line = styled(Box, {
   boxSizing: "content-box",
   position: "absolute",
-  background: "$blue10",
+  background: theme.colors.blue10,
   pointerEvents: "none",
-  outline: "solid $loContrast",
+  outline: `solid ${theme.colors.loContrast}`,
   outlineWidth: OUTLINE_WIDTH,
 });
 

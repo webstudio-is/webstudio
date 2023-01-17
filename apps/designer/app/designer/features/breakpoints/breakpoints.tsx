@@ -31,6 +31,7 @@ import {
 } from "~/shared/nano-states";
 import { utils } from "@webstudio-is/project";
 import { removeByMutable } from "~/shared/array-utils";
+import { theme } from "@webstudio-is/design-system";
 
 type BreakpointSelectorItemProps = {
   breakpoint: Breakpoint;
@@ -48,7 +49,7 @@ const BreakpointSelectorItem = ({
 };
 const menuItemCss = {
   display: "flex",
-  gap: "$spacing$9",
+  gap: theme.spacing[9],
   justifyContent: "start",
   flexGrow: 1,
   minWidth: 180,
@@ -120,7 +121,7 @@ export const Breakpoints = () => {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent
-          css={{ zIndex: "$1" }}
+          css={{ zIndex: theme.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
         >

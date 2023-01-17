@@ -1,7 +1,7 @@
 import { useLoaderData } from "@remix-run/react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { darkTheme } from "@webstudio-is/design-system";
 import { restThemePath } from "~/shared/router-utils";
-import { isFeatureEnabled } from "../feature-flags";
 import type { ColorScheme, ThemeSetting } from "./types";
 
 // User selected theme setting.
