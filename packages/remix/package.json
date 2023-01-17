@@ -11,25 +11,16 @@
     "dev": "build-package --watch",
     "build": "build-package",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
-    "storybook:run": "start-storybook -p 6006",
-    "storybook:build": "build-storybook"
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
   },
   "dependencies": {
-    "@webstudio-is/fonts": "workspace:^",
-    "hyphenate-style-name": "^1.0.4",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",
-    "@storybook/jest": "^0.0.10",
-    "@storybook/react": "^6.5.14",
-    "@storybook/testing-library": "^0.0.13",
-    "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
-    "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/storybook-config": "workspace:^",

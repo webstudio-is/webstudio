@@ -947,38 +947,24 @@ importers:
     specifiers:
       '@jest/globals': ^29.3.1
       '@remix-run/dev': 1.9.0
-      '@storybook/jest': ^0.0.10
-      '@storybook/react': ^6.5.14
-      '@storybook/testing-library': ^0.0.13
-      '@types/hyphenate-style-name': ^1.0.0
       '@types/react': ^17.0.24
       '@types/react-dom': ^17.0.9
-      '@webstudio-is/css-data': workspace:^
-      '@webstudio-is/fonts': workspace:^
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/storybook-config': workspace:^
       '@webstudio-is/tsconfig': workspace:^
-      hyphenate-style-name: ^1.0.4
       jest: ^29.3.1
       react: ^17.0.2
       react-dom: 17.0.2
       typescript: 4.7.4
     dependencies:
-      '@webstudio-is/fonts': link:../fonts
-      hyphenate-style-name: 1.0.4
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
       '@jest/globals': 29.3.1
       '@remix-run/dev': 1.9.0_sfoxds7t5ydpegc3knd667wn6m
-      '@storybook/jest': 0.0.10_sfoxds7t5ydpegc3knd667wn6m
-      '@storybook/react': 6.5.14_3tgeifm2vmwrlpqlopppsnjtcu
-      '@storybook/testing-library': 0.0.13_sfoxds7t5ydpegc3knd667wn6m
-      '@types/hyphenate-style-name': 1.0.0
       '@types/react': 17.0.47
       '@types/react-dom': 17.0.17
-      '@webstudio-is/css-data': link:../css-data
       '@webstudio-is/jest-config': link:../jest-config
       '@webstudio-is/scripts': link:../scripts
       '@webstudio-is/storybook-config': link:../storybook-config
