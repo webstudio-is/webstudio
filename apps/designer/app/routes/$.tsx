@@ -4,7 +4,7 @@ import { useLoaderData } from "@remix-run/react";
 import djb2a from "djb2a";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData } from "~/shared/db";
-import env, { type Env } from "~/env";
+import env from "~/env";
 import { sentryException } from "@webstudio-is/remix";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
@@ -15,7 +15,7 @@ import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
 import { customComponents } from "~/canvas/custom-components";
 
-type Data = CanvasData & { env: Env; mode: BuildMode };
+type Data = CanvasData & { env: typeof env; mode: BuildMode };
 
 export const dynamicLinks: DynamicLinksFunction<CanvasData> = ({
   data,
