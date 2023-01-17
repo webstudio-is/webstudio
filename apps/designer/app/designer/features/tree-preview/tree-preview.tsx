@@ -5,6 +5,7 @@ import { Flex } from "@webstudio-is/design-system";
 import { useRootInstance, useDragAndDropState } from "~/shared/nano-states";
 import { InstanceTreeNode } from "~/designer/shared/tree";
 import { utils } from "@webstudio-is/project";
+import { theme } from "@webstudio-is/design-system";
 
 export const TreePrevew = () => {
   const [rootInstance] = useRootInstance();
@@ -70,7 +71,7 @@ export const TreePrevew = () => {
     treeProps && (
       <Flex
         direction="column"
-        css={{ pt: "$spacing$3", pb: "$spacing$3", width: "100%" }}
+        css={{ pt: theme.spacing[3], pb: theme.spacing[3], width: "100%" }}
       >
         <InstanceTreeNode {...treeProps} />
       </Flex>

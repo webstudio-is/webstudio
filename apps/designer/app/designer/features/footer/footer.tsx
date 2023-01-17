@@ -1,6 +1,7 @@
 import { Box, Flex, darkTheme } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import { Breadcrumbs } from "./breadcrumbs";
+import { theme } from "@webstudio-is/design-system";
 
 export const Footer = ({ publish }: { publish: Publish }) => {
   return (
@@ -10,12 +11,12 @@ export const Footer = ({ publish }: { publish: Publish }) => {
       align="center"
       css={{
         gridArea: "footer",
-        height: "$spacing$11",
-        background: "$loContrast",
-        boxShadow: "inset 0 1px 0 0 $colors$panelOutline",
+        height: theme.spacing[11],
+        background: theme.colors.loContrast,
+        boxShadow: `inset 0 1px 0 0 ${theme.colors.panelOutline}`,
       }}
     >
-      <Box css={{ height: "100%", p: "$spacing$3" }}>
+      <Box css={{ height: "100%", p: theme.spacing[3] }}>
         <Breadcrumbs publish={publish} />
       </Box>
     </Flex>

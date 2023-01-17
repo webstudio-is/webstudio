@@ -6,6 +6,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { Flex } from "../flex";
 import { Text } from "../text";
 import { keyframes, styled } from "../../stitches.config";
+import { theme } from "../../stitches.config";
 
 export const INDENT = 16;
 const ITEM_HEIGHT = 32;
@@ -64,9 +65,9 @@ const NestingLine = styled(Box, {
   height: ITEM_HEIGHT,
   borderRight: "solid",
   borderRightWidth: 1,
-  borderColor: "$slate9",
+  borderColor: theme.colors.slate9,
   variants: {
-    isSelected: { true: { borderColor: "$blue7" } },
+    isSelected: { true: { borderColor: theme.colors.blue7 } },
   },
 });
 
@@ -118,8 +119,8 @@ const CollapsibleTrigger = styled(Collapsible.Trigger, {
   position: "absolute",
 
   // We want the button to take extra space so it's easier to hit
-  ml: "-$spacing$3",
-  pl: "$spacing$3",
+  ml: `-${theme.spacing[3]}`,
+  pl: theme.spacing[3],
 });
 
 const TriggerPlaceholder = styled(Box, { width: INDENT });
@@ -164,15 +165,15 @@ const hoverStyle = {
   left: 2,
   right: 2,
   height: ITEM_HEIGHT,
-  border: "solid $blue10",
+  border: `solid ${theme.colors.blue10}`,
   borderWidth: 2,
-  borderRadius: "$borderRadius$6",
+  borderRadius: theme.borderRadius[6],
   pointerEvents: "none",
   boxSizing: "border-box",
 };
 
 const ItemContainer = styled(Flex, {
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   alignItems: "center",
   position: "relative",
   ...getItemButtonCssVars({ suffixVisible: false }),
@@ -180,10 +181,10 @@ const ItemContainer = styled(Flex, {
 
   variants: {
     isSelected: {
-      true: { color: "$loContrast", bc: "$blue10" },
+      true: { color: theme.colors.loContrast, bc: theme.colors.blue10 },
     },
     parentIsSelected: {
-      true: { bc: "$blue4" },
+      true: { bc: theme.colors.blue4 },
     },
     suffixVisible: {
       true: {
@@ -236,7 +237,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   isExpanded,
   children,
   suffix,
-  suffixWidth = suffix ? "$spacing$11" : "0",
+  suffixWidth = suffix ? theme.spacing[11] : "0",
   alwaysShowSuffix = false,
   forceFocus = false,
   selectionEvent = "click",
@@ -340,7 +341,7 @@ export const TreeItemLabel = ({
 }) => (
   <>
     {prefix}
-    <Text truncate css={{ ml: prefix ? "$spacing$3" : 0 }}>
+    <Text truncate css={{ ml: prefix ? theme.spacing[3] : 0 }}>
       {children}
     </Text>
   </>

@@ -8,6 +8,7 @@ import { useFocusWithin } from "@react-aria/interactions";
 import { css, styled } from "../stitches.config";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
 import { cssVars } from "@webstudio-is/css-vars";
+import { theme } from "../stitches.config";
 
 const backgroundColorVar = cssVars.define("background-color");
 const colorVar = cssVars.define("color");
@@ -15,20 +16,20 @@ const colorVar = cssVars.define("color");
 const getTextFieldSuffixCssVars = (state: "focus" | "hover") => {
   if (state === "focus") {
     return {
-      [backgroundColorVar]: "$colors$blue10",
+      [backgroundColorVar]: theme.colors.blue10,
       [colorVar]: "white",
     };
   }
 
   return {
-    [backgroundColorVar]: "$colors$slate7",
-    [colorVar]: "$colors$hiContrast",
+    [backgroundColorVar]: theme.colors.slate7,
+    [colorVar]: theme.colors.hiContrast,
   };
 };
 
 const textFieldIconBaseStyle = css({
-  height: "$spacing$11",
-  minWidth: "$spacing$5",
+  height: theme.spacing[11],
+  minWidth: theme.spacing[5],
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -49,20 +50,20 @@ export const TextFieldIconButton = styled(
     padding: 0,
     margin: 0,
     "&:hover": {
-      backgroundColor: "$slate7",
-      color: "$hiContrast",
+      backgroundColor: theme.colors.slate7,
+      color: theme.colors.hiContrast,
     },
     "&:focus": {
-      backgroundColor: "$blue10",
+      backgroundColor: theme.colors.blue10,
       color: "white",
     },
     variants: {
       state: {
         active: {
-          backgroundColor: "$blue10",
+          backgroundColor: theme.colors.blue10,
           color: "white",
           "&:hover": {
-            backgroundColor: "$blue10",
+            backgroundColor: theme.colors.blue10,
             color: "white",
           },
         },
@@ -88,10 +89,10 @@ export const TextFieldInput = styled("input", {
   fontSize: "inherit",
   color: "inherit",
   padding: "0",
-  height: "$spacing$9",
+  height: theme.spacing[9],
   flexGrow: 1,
   flexShrink: 1,
-  flexBasis: "$spacing$10",
+  flexBasis: theme.spacing[10],
   minWidth: 0,
   textOverflow: "ellipsis",
   outline: "none",
@@ -121,19 +122,19 @@ export const TextFieldInput = styled("input", {
   },
 
   "&:-webkit-autofill::first-line": {
-    fontFamily: "$sans",
-    color: "$hiContrast",
+    fontFamily: theme.fonts.sans,
+    color: theme.colors.hiContrast,
   },
 
   "&::placeholder": {
-    color: "$hint",
+    color: theme.colors.hint,
   },
 
   "&:disabled": {
-    color: "$slate8",
+    color: theme.colors.slate8,
     cursor: "not-allowed",
     "&::placeholder": {
-      color: "$slate7",
+      color: theme.colors.slate7,
     },
   },
 });
@@ -143,30 +144,29 @@ export const TextFieldContainer = styled("div", {
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
-  backgroundColor: "$loContrast",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
-  color: "$hiContrast",
+  backgroundColor: theme.colors.loContrast,
+  boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
+  color: theme.colors.hiContrast,
   fontVariantNumeric: "tabular-nums",
-  gap: "$spacing$3",
-  px: "$spacing$4",
-  borderRadius: "$borderRadius$4",
-  fontFamily: "$sans",
-  fontSize: "$fontSize$3",
-  minHeight: "$spacing$12",
+  gap: theme.spacing[3],
+  px: theme.spacing[4],
+  borderRadius: theme.borderRadius[4],
+  fontFamily: theme.fonts.sans,
+  fontSize: theme.fontSize[3],
+  minHeight: theme.spacing[12],
   lineHeight: 1,
   minWidth: 0,
   "&:focus-within": {
-    boxShadow:
-      "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+    boxShadow: `inset 0px 0px 0px 1px ${theme.colors.blue10}, 0px 0px 0px 1px ${theme.colors.blue10}`,
   },
   "&[aria-disabled=true]": {
     pointerEvents: "none",
-    backgroundColor: "$slate2",
+    backgroundColor: theme.colors.slate2,
   },
   "&:has(input:read-only)": {
-    backgroundColor: "$slate2",
+    backgroundColor: theme.colors.slate2,
     "&:focus": {
-      boxShadow: "inset 0px 0px 0px 1px $colors$slate7",
+      boxShadow: `inset 0px 0px 0px 1px ${theme.colors.slate7}`,
     },
   },
   variants: {
@@ -176,13 +176,12 @@ export const TextFieldContainer = styled("div", {
         backgroundColor: "transparent",
         "@hover": {
           "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$slateA7",
+            boxShadow: `inset 0 0 0 1px ${theme.colors.slateA7}`,
           },
         },
         "&:focus": {
-          backgroundColor: "$loContrast",
-          boxShadow:
-            "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+          backgroundColor: theme.colors.loContrast,
+          boxShadow: `inset 0px 0px 0px 1px ${theme.colors.blue10}, 0px 0px 0px 1px ${theme.colors.blue10}`,
         },
         "&:disabled": {
           backgroundColor: "transparent",
@@ -198,22 +197,19 @@ export const TextFieldContainer = styled("div", {
     },
     state: {
       invalid: {
-        boxShadow: "inset 0 0 0 1px $colors$red8",
+        boxShadow: `inset 0 0 0 1px ${theme.colors.red8}`,
         "&:focus-within": {
-          boxShadow:
-            "inset 0px 0px 0px 1px $colors$red8, 0px 0px 0px 1px $colors$red8",
+          boxShadow: `inset 0px 0px 0px 1px ${theme.colors.red8}, 0px 0px 0px 1px ${theme.colors.red8}`,
         },
       },
       valid: {
-        boxShadow: "inset 0 0 0 1px $colors$green7",
+        boxShadow: `inset 0 0 0 1px ${theme.colors.green7}`,
         "&:focus-within": {
-          boxShadow:
-            "inset 0px 0px 0px 1px $colors$green8, 0px 0px 0px 1px $colors$green8",
+          boxShadow: `inset 0px 0px 0px 1px ${theme.colors.green8}, 0px 0px 0px 1px ${theme.colors.green8}`,
         },
       },
       active: {
-        boxShadow:
-          "inset 0px 0px 0px 1px $colors$blue10, 0px 0px 0px 1px $colors$blue10",
+        boxShadow: `inset 0px 0px 0px 1px ${theme.colors.blue10}, 0px 0px 0px 1px ${theme.colors.blue10}`,
         ...getTextFieldSuffixCssVars("focus"),
       },
     },

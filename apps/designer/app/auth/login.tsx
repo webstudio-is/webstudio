@@ -7,6 +7,7 @@ import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./login-button";
 import loginStyles from "./login.css";
 import { authPath } from "~/shared/router-utils";
+import { theme } from "@webstudio-is/design-system";
 
 export const links: LinksFunction = () => {
   return [
@@ -68,7 +69,7 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
                   method="post"
                   css={{
                     flexDirection: "row",
-                    gap: "$spacing$5",
+                    gap: theme.spacing[5],
                   }}
                 >
                   <TextField

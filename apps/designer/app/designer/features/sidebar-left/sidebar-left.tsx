@@ -12,6 +12,7 @@ import type { TabName } from "./types";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 const none = { TabContent: () => null };
 
@@ -64,8 +65,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
-            zIndex: "$1",
-            width: "$spacing$30",
+            zIndex: theme.zIndices[1],
+            width: theme.spacing[30],
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility:

@@ -4,49 +4,50 @@ import { CheckIcon } from "@webstudio-is/icons";
 import { styled, css, CSS } from "../stitches.config";
 import { Box } from "./box";
 import { panelStyles } from "./panel";
+import { theme } from "../stitches.config";
 
 export const baseItemCss = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  fontFamily: "$sans",
-  fontSize: "$fontSize$3",
+  fontFamily: theme.fonts.sans,
+  fontSize: theme.fontSize[3],
   fontVariantNumeric: "tabular-nums",
   lineHeight: "1",
   cursor: "default",
   userSelect: "none",
   whiteSpace: "nowrap",
-  height: "$spacing$11",
-  px: "$spacing$11",
+  height: theme.spacing[11],
+  px: theme.spacing[11],
 });
 
 export const itemCss = css(baseItemCss, {
   position: "relative",
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   "&:focus, &[data-found], &[aria-selected=true]": {
     outline: "none",
-    backgroundColor: "$blue10",
+    backgroundColor: theme.colors.blue10,
     color: "white",
   },
   "&[data-disabled], &[aria-disabled]": {
-    color: "$slate9",
+    color: theme.colors.slate9,
   },
 });
 
 export const labelCss = css(baseItemCss, {
-  color: "$slate11",
+  color: theme.colors.slate11,
 });
 
 export const menuCss = css({
   boxSizing: "border-box",
   minWidth: 120,
-  py: "$spacing$3",
+  py: theme.spacing[3],
 });
 
 export const separatorCss = css({
   height: 1,
-  my: "$spacing$3",
-  backgroundColor: "$slate6",
+  my: theme.spacing[3],
+  backgroundColor: theme.colors.slate6,
 });
 
 export const Menu = styled(MenuPrimitive.Root, menuCss);
@@ -68,7 +69,7 @@ export const MenuRadioItem = React.forwardRef<
   MenuRadioItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledMenuRadioItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
+    <Box as="span" css={{ position: "absolute", left: theme.spacing[3] }}>
       <MenuPrimitive.ItemIndicator>
         <CheckIcon />
       </MenuPrimitive.ItemIndicator>
@@ -90,7 +91,7 @@ export const MenuCheckboxItem = React.forwardRef<
   MenuCheckboxItemProps
 >(({ children, ...props }, forwardedRef) => (
   <StyledMenuCheckboxItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: "$spacing$3" }}>
+    <Box as="span" css={{ position: "absolute", left: theme.spacing[3] }}>
       <MenuPrimitive.ItemIndicator>
         <CheckIcon />
       </MenuPrimitive.ItemIndicator>

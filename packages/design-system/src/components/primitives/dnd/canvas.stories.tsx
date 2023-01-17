@@ -5,6 +5,7 @@ import { useDrop, type DropTarget } from "./use-drop";
 import { useDrag } from "./use-drag";
 import { PlacementIndicator } from "./placement-indicator";
 import { useAutoScroll } from "./use-auto-scroll";
+import { theme } from "../../../stitches.config";
 
 const ROOT_ID = "root";
 
@@ -30,8 +31,8 @@ const Item = ({
         minHeight: 100,
         margin: 10,
         padding: 10,
-        background: "$mint5",
-        border: "1px solid $mint9",
+        background: theme.colors.mint5,
+        border: `1px solid ${theme.colors.mint9}`,
       }}
       style={data.style}
       data-id={data.id}

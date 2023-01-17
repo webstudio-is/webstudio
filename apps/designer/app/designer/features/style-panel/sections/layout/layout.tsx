@@ -27,6 +27,7 @@ import {
   type IntermediateStyleValue,
   CssValueInput,
 } from "../../shared/css-value-input";
+import { theme } from "@webstudio-is/design-system";
 
 const GapLinked = ({
   isLinked,
@@ -183,7 +184,7 @@ const FlexGap = ({
         />
       </Box>
 
-      <Box css={{ gridArea: "linked", px: "$spacing$3" }}>
+      <Box css={{ gridArea: "linked", px: theme.spacing[3] }}>
         <GapLinked
           isLinked={isLinked}
           onChange={(isLinked) => {
@@ -257,12 +258,12 @@ const LayoutSectionFlex = ({
     (flexWrapValue.value === "wrap" || flexWrapValue.value === "wrap-reverse");
 
   return (
-    <Flex css={{ flexDirection: "column", gap: "$spacing$5" }}>
+    <Flex css={{ flexDirection: "column", gap: theme.spacing[5] }}>
       <Grid
         css={{
-          gap: "$spacing$5",
-          gridTemplateColumns: "repeat(2, $spacing$13) repeat(3, $spacing$13)",
-          gridTemplateRows: "repeat(2, $spacing$13)",
+          gap: theme.spacing[5],
+          gridTemplateColumns: `repeat(2, ${theme.spacing[13]}) repeat(3, ${theme.spacing[13]})`,
+          gridTemplateRows: `repeat(2, ${theme.spacing[13]})`,
           gridTemplateAreas: `
             "grid grid flexDirection flexWrap ."
             "grid grid alignItems justifyContent alignContent"

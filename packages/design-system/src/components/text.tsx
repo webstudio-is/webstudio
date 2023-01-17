@@ -1,58 +1,59 @@
 import { css, styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 export const textStyles = css({
   // Reset
   margin: 0,
   lineHeight: 1,
   userSelect: "none",
-  fontFamily: "$sans",
+  fontFamily: theme.fonts.sans,
 
   variants: {
     variant: {
       regular: {
         fontWeight: 400,
-        fontSize: "$fontSize$3",
+        fontSize: theme.fontSize[3],
         letterSpacing: "0.005em",
       },
       label: {
         fontWeight: 500,
-        fontSize: "$fontSize$3",
+        fontSize: theme.fontSize[3],
         letterSpacing: "0.005em",
       },
       tiny: {
         fontWeight: 400,
-        fontSize: "$fontSize$1",
+        fontSize: theme.fontSize[1],
         letterSpacing: "0.01em",
       },
       title: {
         fontWeight: 700,
-        fontSize: "$fontSize$3",
+        fontSize: theme.fontSize[3],
         letterSpacing: "0.01em",
       },
       mono: {
-        fontFamily: "$mono",
+        fontFamily: theme.fonts.mono,
         fontWeight: 400,
-        fontSize: "$fontSize$3",
+        fontSize: theme.fontSize[3],
         textTransform: "uppercase",
       },
       unit: {
         fontWeight: 500,
-        fontSize: "$fontSize$2",
+        fontSize: theme.fontSize[2],
         textTransform: "uppercase",
       },
     },
     color: {
       contrast: {
-        color: "$hiContrast",
+        color: theme.colors.hiContrast,
       },
       loContrast: {
-        color: "$loContrast",
+        color: theme.colors.loContrast,
       },
       hint: {
-        color: "$hint",
+        color: theme.colors.hint,
       },
       error: {
-        color: "$red10",
+        color: theme.colors.red10,
       },
     },
     align: {

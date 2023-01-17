@@ -28,10 +28,11 @@ import {
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { isFeatureEnabled } from "~/shared/feature-flags";
+import { theme } from "@webstudio-is/design-system";
 
 const menuItemCss = {
   display: "flex",
-  gap: "$spacing$9",
+  gap: theme.spacing[9],
   justifyContent: "space-between",
   flexGrow: 1,
   minWidth: 140,
@@ -116,7 +117,7 @@ export const Menu = ({ publish }: MenuProps) => {
       <DropdownMenuTrigger asChild>
         <Box
           css={{
-            width: "$spacing$17",
+            width: theme.spacing[17],
             height: "100%",
             borderRadius: "0",
             outline: "none",
@@ -134,7 +135,7 @@ export const Menu = ({ publish }: MenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent
-          css={{ zIndex: "$1" }}
+          css={{ zIndex: theme.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
         >

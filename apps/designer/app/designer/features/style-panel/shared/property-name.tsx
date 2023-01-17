@@ -19,6 +19,7 @@ import { utils } from "@webstudio-is/project";
 import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
+import { theme } from "@webstudio-is/design-system";
 
 const PropertyPopoverContent = ({
   properties,
@@ -37,13 +38,16 @@ const PropertyPopoverContent = ({
   if (styleSource === "local") {
     return (
       <>
-        <Flex align="start" css={{ px: "$spacing$4", py: "$spacing$3" }}>
+        <Flex
+          align="start"
+          css={{ px: theme.spacing[4], py: theme.spacing[3] }}
+        >
           <Button onClick={onReset} prefix={<UndoIcon />}>
             Reset
           </Button>
         </Flex>
         <Separator />
-        <Box css={{ px: "$spacing$4", py: "$spacing$3" }}>
+        <Box css={{ px: theme.spacing[4], py: theme.spacing[3] }}>
           {properties.map((property) => {
             const styleValueInfo = style[property];
 
@@ -86,7 +90,7 @@ const PropertyPopoverContent = ({
   }
 
   return (
-    <Box css={{ px: "$spacing$4", py: "$spacing$3" }}>
+    <Box css={{ px: theme.spacing[4], py: theme.spacing[3] }}>
       {properties.map((property) => {
         const styleValueInfo = style[property];
 
@@ -145,18 +149,18 @@ export const PropertyName = ({
     <Label
       css={{
         fontWeight: "inherit",
-        padding: "calc($spacing$3 / 2) $spacing$3",
-        borderRadius: "$borderRadius$4",
+        padding: `calc(${theme.spacing[3]} / 2) ${theme.spacing[3]}`,
+        borderRadius: theme.borderRadius[4],
         ...(styleSource === "local" && {
-          color: "$blue11",
-          backgroundColor: "$blue4",
+          color: theme.colors.blue11,
+          backgroundColor: theme.colors.blue4,
         }),
         ...(styleSource === "remote" && {
-          color: "$orange11",
-          backgroundColor: "$orange4",
+          color: theme.colors.orange11,
+          backgroundColor: theme.colors.orange4,
         }),
         ...(styleSource === "preset" && {
-          color: "$hiContrast",
+          color: theme.colors.hiContrast,
         }),
       }}
       htmlFor={property.toString()}

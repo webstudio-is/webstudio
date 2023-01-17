@@ -17,6 +17,7 @@ import {
   CrossSmallIcon,
 } from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
+import { theme } from "@webstudio-is/design-system";
 
 type Format =
   | "bold"
@@ -99,10 +100,10 @@ const Toolbar = ({ state, onToggle }: ToolbarProps) => {
         top: 0,
         left: 0,
         pointerEvents: "auto",
-        background: "$loContrast",
-        padding: "$spacing$3",
-        borderRadius: "$borderRadius$6",
-        border: "1px solid $slate8",
+        background: theme.colors.loContrast,
+        padding: theme.spacing[3],
+        borderRadius: theme.borderRadius[6],
+        border: `1px solid ${theme.colors.slate8}`,
         filter:
           "drop-shadow(0px 2px 7px rgba(0, 0, 0, 0.1)) drop-shadow(0px 5px 17px rgba(0, 0, 0, 0.15))",
       }}

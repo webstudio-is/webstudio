@@ -1,4 +1,5 @@
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 export const Status = styled("div", {
   borderRadius: "50%",
@@ -17,19 +18,19 @@ export const Status = styled("div", {
     },
     variant: {
       gray: {
-        backgroundColor: "$slate7",
+        backgroundColor: theme.colors.slate7,
       },
       blue: {
-        backgroundColor: "$blue9",
+        backgroundColor: theme.colors.blue9,
       },
       green: {
-        backgroundColor: "$green9",
+        backgroundColor: theme.colors.green9,
       },
       yellow: {
-        backgroundColor: "$yellow9",
+        backgroundColor: theme.colors.yellow9,
       },
       red: {
-        backgroundColor: "$red9",
+        backgroundColor: theme.colors.red9,
       },
     },
   },

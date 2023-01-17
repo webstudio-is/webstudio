@@ -13,6 +13,7 @@ import {
   MobileIcon,
   TabletIcon,
 } from "@webstudio-is/icons";
+import { theme } from "@webstudio-is/design-system";
 
 type TriggerButtonProps = ComponentProps<typeof DeprecatedButton>;
 
@@ -46,7 +47,7 @@ export const TriggerButton = forwardRef<
     <DeprecatedButton
       {...props}
       ref={ref}
-      css={{ gap: "$spacing$3" }}
+      css={{ gap: theme.spacing[3] }}
       ghost
       aria-label="Show breakpoints"
     >

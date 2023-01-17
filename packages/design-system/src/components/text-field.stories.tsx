@@ -10,6 +10,7 @@ import { TextField } from "./text-field";
 import { Box } from "./box";
 import { Grid } from "./grid";
 import { Text } from "./text";
+import { theme } from "../stitches.config";
 
 export default {
   component: TextField,
@@ -108,7 +109,7 @@ export const Layout: ComponentStory<typeof TextField> = () => {
             maxWidth: "25%",
           }}
         />
-        <Box css={{ background: "$muted" }}>Content</Box>
+        <Box css={{ background: theme.colors.muted }}>Content</Box>
         <TextField
           state="invalid"
           value="Long content comes here and it doesn't wrap"
@@ -123,19 +124,19 @@ export const Layout: ComponentStory<typeof TextField> = () => {
           border: "1px solid",
         }}
       >
-        <Box css={{ background: "$muted" }}>
+        <Box css={{ background: theme.colors.muted }}>
           <Text as="label" htmlFor="field">
             This is a label
           </Text>
         </Box>
-        <Box css={{ background: "$muted" }}>
+        <Box css={{ background: theme.colors.muted }}>
           <TextField
             id="field"
             value="Long content comes here and it doesn't wrap"
             prefix={<RowGapIcon />}
           />
         </Box>
-        <Box css={{ background: "$muted" }}>
+        <Box css={{ background: theme.colors.muted }}>
           <Text as="label" htmlFor="field2">
             This is a label
           </Text>

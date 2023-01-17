@@ -1,5 +1,6 @@
 import { useZoom } from "~/designer/shared/nano-states";
 import { Slider, Text, Flex } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 export const minZoom = 10;
 
@@ -7,7 +8,7 @@ export const ZoomSetting = () => {
   const [value, setValue] = useZoom();
   return (
     <Flex
-      css={{ px: "$spacing$11", py: "$spacing$3" }}
+      css={{ px: theme.spacing[11], py: theme.spacing[3] }}
       gap="1"
       direction="column"
     >

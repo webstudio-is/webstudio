@@ -2,6 +2,7 @@ import React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { Text } from "./text";
+import { theme } from "../stitches.config";
 
 export const Tabs = styled(TabsPrimitive.Root, {
   display: "flex",
@@ -12,12 +13,12 @@ export const Tabs = styled(TabsPrimitive.Root, {
 
 export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   flexShrink: 0,
-  height: "$spacing$17",
+  height: theme.spacing[17],
   display: "inline-flex",
   lineHeight: 1,
   fontFamily: "inherit",
-  fontSize: "$fontSize$3",
-  px: "$spacing$5",
+  fontSize: theme.fontSize[3],
+  px: theme.spacing[5],
   userSelect: "none",
   outline: "none",
   alignItems: "center",
@@ -25,22 +26,22 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   border: "none",
   backgroundColor: "transparent",
   ["&:first-child"]: {
-    paddingLeft: "$spacing$9",
+    paddingLeft: theme.spacing[9],
   },
   [`& > ${Text}`]: {
-    color: "$gray9",
-    fontSize: "$fontSize$3",
+    color: theme.colors.gray9,
+    fontSize: theme.fontSize[3],
     fontWeight: "500",
   },
   "@hover": {
     "&:hover": {
-      color: "$hiContrast",
+      color: theme.colors.hiContrast,
     },
   },
 
   '&[data-state="active"]': {
     [`& > ${Text}`]: {
-      color: "$hiContrast",
+      color: theme.colors.hiContrast,
     },
   },
 

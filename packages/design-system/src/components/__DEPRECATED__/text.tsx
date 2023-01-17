@@ -1,4 +1,5 @@
 import { styled } from "../../stitches.config";
+import { theme } from "../../stitches.config";
 
 export const DeprecatedText = styled("div", {
   // Reset
@@ -12,95 +13,95 @@ export const DeprecatedText = styled("div", {
   variants: {
     size: {
       "1": {
-        fontSize: "$fontSize$3",
+        fontSize: theme.fontSize[3],
       },
       "2": {
-        fontSize: "$fontSize$3",
+        fontSize: theme.fontSize[3],
       },
       "3": {
-        fontSize: "$fontSize$4",
+        fontSize: theme.fontSize[4],
       },
       "4": {
-        fontSize: "$fontSize$4",
+        fontSize: theme.fontSize[4],
       },
       "5": {
-        fontSize: "$fontSize$5",
+        fontSize: theme.fontSize[5],
         letterSpacing: "-.015em",
       },
       "6": {
-        fontSize: "$fontSize$6",
+        fontSize: theme.fontSize[6],
         letterSpacing: "-.016em",
       },
       "7": {
-        fontSize: "$fontSize$7",
+        fontSize: theme.fontSize[7],
         letterSpacing: "-.031em",
         textIndent: "-.005em",
       },
       "8": {
-        fontSize: "$fontSize$8",
+        fontSize: theme.fontSize[8],
         letterSpacing: "-.034em",
         textIndent: "-.018em",
       },
       "9": {
-        fontSize: "$fontSize$9",
+        fontSize: theme.fontSize[9],
         letterSpacing: "-.055em",
         textIndent: "-.025em",
       },
     },
     variant: {
       red: {
-        color: "$red11",
+        color: theme.colors.red11,
       },
       crimson: {
-        color: "$crimson11",
+        color: theme.colors.crimson11,
       },
       pink: {
-        color: "$pink11",
+        color: theme.colors.pink11,
       },
       purple: {
-        color: "$purple11",
+        color: theme.colors.purple11,
       },
       violet: {
-        color: "$violet11",
+        color: theme.colors.violet11,
       },
       indigo: {
-        color: "$indigo11",
+        color: theme.colors.indigo11,
       },
       blue: {
-        color: "$blue11",
+        color: theme.colors.blue11,
       },
       cyan: {
-        color: "$cyan11",
+        color: theme.colors.cyan11,
       },
       teal: {
-        color: "$teal11",
+        color: theme.colors.teal11,
       },
       green: {
-        color: "$green11",
+        color: theme.colors.green11,
       },
       lime: {
-        color: "$lime11",
+        color: theme.colors.lime11,
       },
       yellow: {
-        color: "$yellow11",
+        color: theme.colors.yellow11,
       },
       orange: {
-        color: "$orange11",
+        color: theme.colors.orange11,
       },
       gold: {
-        color: "$gold11",
+        color: theme.colors.gold11,
       },
       bronze: {
-        color: "$bronze11",
+        color: theme.colors.bronze11,
       },
       gray: {
-        color: "$slate11",
+        color: theme.colors.slate11,
       },
       contrast: {
-        color: "$hiContrast",
+        color: theme.colors.hiContrast,
       },
       loContrast: {
-        color: "$loContrast",
+        color: theme.colors.loContrast,
       },
     },
     gradient: {
@@ -115,119 +116,119 @@ export const DeprecatedText = styled("div", {
       variant: "red",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $red11, $crimson11)",
+        background: `linear-gradient(to right, ${theme.colors.red11}, ${theme.colors.crimson11})`,
       },
     },
     {
       variant: "crimson",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $crimson11, $pink11)",
+        background: `linear-gradient(to right, ${theme.colors.crimson11}, ${theme.colors.pink11})`,
       },
     },
     {
       variant: "pink",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $pink11, $purple11)",
+        background: `linear-gradient(to right, ${theme.colors.pink11}, ${theme.colors.purple11})`,
       },
     },
     {
       variant: "purple",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $purple11, $violet11)",
+        background: `linear-gradient(to right, ${theme.colors.purple11}, ${theme.colors.violet11})`,
       },
     },
     {
       variant: "violet",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $violet11, $indigo11)",
+        background: `linear-gradient(to right, ${theme.colors.violet11}, ${theme.colors.indigo11})`,
       },
     },
     {
       variant: "indigo",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $indigo11, $blue11)",
+        background: `linear-gradient(to right, ${theme.colors.indigo11}, ${theme.colors.blue11})`,
       },
     },
     {
       variant: "blue",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $blue11, $cyan11)",
+        background: `linear-gradient(to right, ${theme.colors.blue11}, ${theme.colors.cyan11})`,
       },
     },
     {
       variant: "cyan",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $cyan11, $teal11)",
+        background: `linear-gradient(to right, ${theme.colors.cyan11}, ${theme.colors.teal11})`,
       },
     },
     {
       variant: "teal",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $teal11, $green11)",
+        background: `linear-gradient(to right, ${theme.colors.teal11}, ${theme.colors.green11})`,
       },
     },
     {
       variant: "green",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $green11, $lime11)",
+        background: `linear-gradient(to right, ${theme.colors.green11}, ${theme.colors.lime11})`,
       },
     },
     {
       variant: "lime",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $lime11, $yellow11)",
+        background: `linear-gradient(to right, ${theme.colors.lime11}, ${theme.colors.yellow11})`,
       },
     },
     {
       variant: "yellow",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $yellow11, $orange11)",
+        background: `linear-gradient(to right, ${theme.colors.yellow11}, ${theme.colors.orange11})`,
       },
     },
     {
       variant: "orange",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $orange11, $red11)",
+        background: `linear-gradient(to right, ${theme.colors.orange11}, ${theme.colors.red11})`,
       },
     },
     {
       variant: "gold",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $gold11, $gold9)",
+        background: `linear-gradient(to right, ${theme.colors.gold11}, ${theme.colors.gold9})`,
       },
     },
     {
       variant: "bronze",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $bronze11, $bronze9)",
+        background: `linear-gradient(to right, ${theme.colors.bronze11}, ${theme.colors.bronze9})`,
       },
     },
     {
       variant: "gray",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $gray11, $gray12)",
+        background: `linear-gradient(to right, ${theme.colors.gray11}, ${theme.colors.gray12})`,
       },
     },
     {
       variant: "contrast",
       gradient: "true",
       css: {
-        background: "linear-gradient(to right, $hiContrast, $gray12)",
+        background: `linear-gradient(to right, ${theme.colors.hiContrast}, ${theme.colors.gray12})`,
       },
     },
   ],

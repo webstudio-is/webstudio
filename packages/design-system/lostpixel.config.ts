@@ -6,7 +6,7 @@ export const config: CustomProjectConfig = {
     storybookUrl: "packages/design-system/storybook-static",
   },
   lostPixelProjectId: "cl8a8xmx714904901m9oce4vhqc",
-  lostPixelUrl: 'https://app.gitbased.lost-pixel.com/api/callback',
+  lostPixelUrl: "https://app.gitbased.lost-pixel.com/api/callback",
   s3: {
     endPoint: "ams3.digitaloceanspaces.com",
     accessKey: process.env.S3_ACCESS_KEY,

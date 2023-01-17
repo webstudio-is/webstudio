@@ -34,10 +34,11 @@ import type {
 } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
 import slugify from "slugify";
+import { theme } from "@webstudio-is/design-system";
 
 const Group = styled(Flex, {
-  marginBottom: "$spacing$9",
-  gap: "$spacing$4",
+  marginBottom: theme.spacing[9],
+  gap: theme.spacing[4],
   defaultVariants: { direction: "column" },
 });
 
@@ -254,7 +255,7 @@ export const NewPageSettings = ({
 };
 
 const ButtonContainer = styled("div", {
-  ml: "$spacing$5",
+  ml: theme.spacing[5],
   display: "flex",
   alignItems: "center",
 });
@@ -297,7 +298,12 @@ const NewPageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
+      <Box
+        css={{
+          overflow: "auto",
+          padding: `${theme.spacing[5]} ${theme.spacing[9]}`,
+        }}
+      >
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -478,7 +484,12 @@ const PageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto", padding: "$spacing$5 $spacing$9" }}>
+      <Box
+        css={{
+          overflow: "auto",
+          padding: `${theme.spacing[5]} ${theme.spacing[9]}`,
+        }}
+      >
         <form
           onSubmit={(event) => {
             event.preventDefault();

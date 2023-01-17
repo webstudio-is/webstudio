@@ -13,6 +13,7 @@ import {
   useState,
 } from "react";
 import { FloatingPanelContext } from "./floating-panel-provider";
+import { theme } from "@webstudio-is/design-system";
 
 const useSideOffset = ({
   isOpen,
@@ -83,7 +84,7 @@ export const FloatingPanel = ({
           side="left"
           hideArrow
           align="start"
-          css={{ width: "$spacing$30" }}
+          css={{ width: theme.spacing[30] }}
         >
           {content}
           <PopoverHeader title={title} />

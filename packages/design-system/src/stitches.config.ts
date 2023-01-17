@@ -161,7 +161,6 @@ const spacing = {
 const {
   styled,
   css,
-  theme,
   createTheme,
   getCssText,
   globalCss,
@@ -248,6 +247,7 @@ const {
       shadowDark: "hsl(206 22% 7% / 20%)",
       background: "$slate1",
       text: "$slate12",
+      transparentExtreme: "transparent",
     },
     fonts: {
       sans: "Inter, -apple-system, system-ui, sans-serif",
@@ -387,9 +387,32 @@ const {
   },
 });
 
+type VariblesValues = typeof config.theme;
+
+type VariblesNames = {
+  [GroupKey in keyof VariblesValues]: {
+    [VariableKey in keyof VariblesValues[GroupKey]]: string;
+  };
+};
+
+const toVariblesNames = (values: VariblesValues): VariblesNames => {
+  const result: Record<string, Record<string, string>> = {};
+  for (const groupKey in values) {
+    const group = values[groupKey as keyof VariblesValues];
+    const groupResult: Record<string, string> = {};
+    for (const variableKey in group) {
+      groupResult[variableKey] = `$${groupKey}$${variableKey}`;
+    }
+    result[groupKey] = groupResult;
+  }
+  return result as VariblesNames;
+};
+
+export const theme = toVariblesNames(config.theme);
+
 export type CSS = Stitches.CSS<typeof config>;
 
-export { styled, css, theme, globalCss, keyframes, config };
+export { styled, css, globalCss, keyframes, config };
 
 export const flushCss = () => {
   const css = getCssText();

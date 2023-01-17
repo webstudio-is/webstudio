@@ -21,6 +21,7 @@ import {
 import { mergeRefs } from "@react-aria/utils";
 import { ItemSource, StyleSource, type ItemState } from "./style-source";
 import { useSortable } from "./use-sortable";
+import { theme } from "@webstudio-is/design-system";
 
 type IntermediateItem = {
   id: string;
@@ -99,7 +100,7 @@ const TextFieldBase: ForwardRefRenderFunction<
       ref={mergeRefs(forwardedRef, containerRef ?? null, sortableRefCallback)}
       state={state}
       variant={textFieldVariant}
-      css={{ ...css, px: "$spacing$3", py: "$spacing$2" }}
+      css={{ ...css, px: theme.spacing[3], py: theme.spacing[2] }}
       onKeyDown={onKeyDown}
     >
       {value.map((item, index) => (

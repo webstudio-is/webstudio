@@ -6,6 +6,7 @@ import {
   ToggleGroupItem,
 } from "@webstudio-is/design-system";
 import type { StyleSource } from "../../shared/style-info";
+import { theme } from "@webstudio-is/design-system";
 
 export type ToggleGroupControlProps = {
   styleSource: StyleSource;
@@ -52,14 +53,14 @@ const ToggleGroupControlItem = styled(ToggleGroupItem, {
     state: {
       set: {
         "&[data-state=on]": {
-          color: "$colors$blue11",
-          backgroundColor: "$colors$blue4",
+          color: theme.colors.blue11,
+          backgroundColor: theme.colors.blue4,
         },
       },
       inherited: {
         "&[data-state=on]": {
-          color: "$colors$orange11",
-          backgroundColor: "$colors$orange4",
+          color: theme.colors.orange11,
+          backgroundColor: theme.colors.orange4,
         },
       },
     },

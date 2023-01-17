@@ -16,6 +16,7 @@ import {
   useEffect,
   type MouseEventHandler,
 } from "react";
+import { theme } from "@webstudio-is/design-system";
 
 const stopPropagation: MouseEventHandler = (event) => {
   // Prevent setting the current font to the item.
@@ -23,9 +24,9 @@ const stopPropagation: MouseEventHandler = (event) => {
 };
 
 const MenuButton = styled(DeprecatedIconButton, {
-  color: "$hint",
+  color: theme.colors.hint,
   "&:hover, &:focus-visible": {
-    color: "$hiContrast",
+    color: theme.colors.hiContrast,
   },
 });
 
@@ -78,7 +79,7 @@ const ItemMenu = ({
         </MenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuContent align="start" css={{ zIndex: "$zIndices$1" }}>
+        <DropdownMenuContent align="start" css={{ zIndex: theme.zIndices[1] }}>
           <DropdownMenuItem
             onClick={stopPropagation}
             onSelect={() => {
