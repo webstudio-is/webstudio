@@ -36,10 +36,25 @@ const useCallScheduler = () => {
 };
 
 const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
+const menuTriggerVisibilityOverrideVar = cssVars.define(
+  "menu-trigger-visibility-override"
+);
 
-const menuCssVars = ({ show }: { show: boolean }) => ({
-  [menuTriggerVisibilityVar]: show ? "visible" : "hidden",
-});
+export const menuCssVars = ({
+  show,
+  override = false,
+}: {
+  show: boolean;
+  override: boolean;
+}) => {
+  const property = override
+    ? menuTriggerVisibilityOverrideVar
+    : menuTriggerVisibilityVar;
+
+  return {
+    [property]: show ? "visible" : "hidden",
+  };
+};
 
 const MenuTrigger = styled("button", {
   display: "inline-flex",
@@ -55,7 +70,10 @@ const MenuTrigger = styled("button", {
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   color: theme.colors.foregroundContrastMain,
-  visibility: cssVars.use(menuTriggerVisibilityVar),
+  visibility: cssVars.use(
+    menuTriggerVisibilityOverrideVar,
+    cssVars.use(menuTriggerVisibilityVar)
+  ),
   background: "transparent",
   variants: {
     source: {
@@ -89,7 +107,10 @@ const MenuTriggerGradient = styled(Box, {
   right: 0,
   width: theme.spacing[11],
   height: "100%",
-  visibility: cssVars.use(menuTriggerVisibilityVar),
+  visibility: cssVars.use(
+    menuTriggerVisibilityOverrideVar,
+    cssVars.use(menuTriggerVisibilityVar)
+  ),
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",

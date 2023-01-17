@@ -33,7 +33,12 @@ import {
   type RefObject,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { ItemSource, StyleSource, type ItemState } from "./style-source";
+import {
+  ItemSource,
+  menuCssVars,
+  StyleSource,
+  type ItemState,
+} from "./style-source";
 import { useSortable } from "./use-sortable";
 import { theme } from "@webstudio-is/design-system";
 
@@ -111,6 +116,9 @@ const TextFieldBase: ForwardRefRenderFunction<
       state={state}
       variant={textFieldVariant}
       css={{ ...css, px: theme.spacing[3], py: theme.spacing[2] }}
+      style={
+        dragItemId ? menuCssVars({ show: false, override: true }) : undefined
+      }
       onKeyDown={onKeyDown}
     >
       {value.map((item, index) => (
