@@ -1,7 +1,7 @@
 import { type ActionArgs, json } from "@remix-run/node";
 
 import { getBuildParams } from "~/shared/build-utils";
-import env from "~/env.server";
+import env from "~/env";
 import { sentryException } from "@webstudio-is/remix";
 import { generateCssText } from "~/shared/css-utils";
 

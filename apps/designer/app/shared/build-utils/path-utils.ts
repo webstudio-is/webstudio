@@ -1,6 +1,6 @@
 import type { Page, Project } from "@webstudio-is/project";
 import type { BuildMode } from "./build-params";
-import { env } from "@webstudio-is/remix";
+import env from "~/env";
 
 export const getBuildUrl = ({
   buildOrigin,

@@ -4,7 +4,6 @@
   "description": "Remix utilities",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
-  "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "checks": "pnpm typecheck && pnpm lint",

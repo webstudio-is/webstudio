@@ -1,7 +1,7 @@
 import { type LoaderArgs, redirect, json } from "@remix-run/node";
 
 import { findAuthenticatedUser } from "~/services/auth.server";
-import env from "~/env.server";
+import env from "~/env";
 
 import { Login, links } from "~/auth";
 import { useLoginErrorMessage } from "~/shared/session";

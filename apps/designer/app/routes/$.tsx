@@ -4,7 +4,7 @@ import { useLoaderData } from "@remix-run/react";
 import djb2a from "djb2a";
 import { InstanceRoot, Root } from "@webstudio-is/react-sdk";
 import { loadCanvasData } from "~/shared/db";
-import env, { type Env } from "~/env.server";
+import env, { type Env } from "~/env";
 import { sentryException } from "@webstudio-is/remix";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";

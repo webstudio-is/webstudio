@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { styled } from "@webstudio-is/design-system";
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
-import { env } from "@webstudio-is/remix";
+import env from "~/env";
 import type { AssetContainer } from "../assets";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 
