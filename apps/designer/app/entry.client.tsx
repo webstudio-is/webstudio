@@ -6,6 +6,7 @@ import { useLocation, useMatches } from "@remix-run/react";
 import { BrowserTracing, remixRouterInstrumentation } from "@sentry/remix";
 import { useEffect } from "react";
 import env from "./shared/env";
+import "~/env";
 
 initSentry({
   integrations: [
