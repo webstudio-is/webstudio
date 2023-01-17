@@ -518,7 +518,7 @@
           "description": "color for the hidden current item in the navigator item component"
         },
         "menu-item-hover": {
-          "value": "#c9c9c9",
+          "value": "#c5c5c5",
           "type": "color",
           "description": "The hover state on menu item components."
         }
