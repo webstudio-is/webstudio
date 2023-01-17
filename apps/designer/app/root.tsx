@@ -5,7 +5,7 @@ import { setEnv } from "@webstudio-is/feature-flags";
 import { withSentryRouteTracing } from "@sentry/remix";
 import { ErrorBoundary } from "@sentry/remix";
 import { OutletProps } from "react-router-dom";
-import env from "./shared/env";
+import env from "./env";
 import { PersistentFetcherProvider } from "./shared/fetcher";
 
 setEnv(env.FEATURES as string);

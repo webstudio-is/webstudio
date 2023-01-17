@@ -47,7 +47,6 @@
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
-    "@webstudio-is/feature-flags": "workspace:^",
     "@webstudio-is/remix": "workspace:^",
     "bson-objectid": "^2.0.4",
     "camelcase": "^6.3.0",
