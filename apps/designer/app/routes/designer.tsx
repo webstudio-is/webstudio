@@ -1,7 +1,7 @@
 import type { LoaderArgs, MetaFunction } from "@remix-run/node";
-import { Root } from "~/shared/remix";
+import { Root } from "@webstudio-is/remix";
 import env from "~/env.server";
-import { getThemeData } from "~/shared/theme";
+import { getThemeData } from "@webstudio-is/remix";
 
 export const loader = async ({ request }: LoaderArgs) => {
   return {

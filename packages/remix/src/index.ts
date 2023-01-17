@@ -4,3 +4,4 @@ export * from "./handle-request.server";
 export * from "./root";
 export * as env from "./env";
 export * from "./path-utils";
+export * from "./theme";

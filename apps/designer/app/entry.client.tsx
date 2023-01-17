@@ -5,7 +5,7 @@ import { initSentry } from "@webstudio-is/remix";
 import { useLocation, useMatches } from "@remix-run/react";
 import { BrowserTracing, remixRouterInstrumentation } from "@sentry/remix";
 import { useEffect } from "react";
-import env from "./shared/env";
+import { env } from "@webstudio-is/remix";
 
 initSentry({
   integrations: [
@@ -17,7 +17,6 @@ initSentry({
       ),
     }),
   ],
-  env,
 });
 
 // Forward DEBUG env variable defined on the server to the client-side debug() utility.

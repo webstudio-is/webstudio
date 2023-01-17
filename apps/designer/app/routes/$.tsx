@@ -8,11 +8,8 @@ import env, { type Env } from "~/env.server";
 import { sentryException } from "@webstudio-is/remix";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-import {
-  type BuildMode,
-  getBuildParams,
-  dashboardPath,
-} from "@webstudio-is/remix";
+import { dashboardPath } from "@webstudio-is/remix";
+import { type BuildMode, getBuildParams } from "~/shared/build-utils";
 import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";

@@ -1,8 +1,10 @@
 import type { EntryContext } from "@remix-run/node";
 import * as Sentry from "@sentry/remix";
-import { initSentry } from "@webstudio-is/remix";
+import {
+  initSentry,
+  handleRequest as handleRequestDesigner,
+} from "@webstudio-is/remix";
 import { prisma } from "@webstudio-is/prisma-client";
-import { handleRequest as handleRequestDesigner } from "@webstudio-is/remix/src/remix";
 import { handleRequest as handleRequestCanvas } from "@webstudio-is/react-sdk";
 import { getBuildParams } from "./shared/build-utils";
 

@@ -1,5 +1,5 @@
 import { json, type LoaderArgs } from "@remix-run/node";
-import { themeCookieParser } from "~/shared/theme";
+import { themeCookieParser } from "@webstudio-is/remix";
 
 export const loader = async ({ params }: LoaderArgs) => {
   const { setting } = params;
