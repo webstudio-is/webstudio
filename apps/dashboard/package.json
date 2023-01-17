@@ -29,6 +29,7 @@
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/remix": "workspace:^",
+    "@webstudio-is/feature-flags": "workspace:^",
     "nanostores": "^0.7.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

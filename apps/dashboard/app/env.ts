@@ -1,4 +1,5 @@
 import { env } from "@webstudio-is/remix";
+import { setEnv } from "@webstudio-is/feature-flags";
 
 // Environment variables we want to send to the UI inlined in the document.
 // Never use a private key here, because it will become public.
@@ -9,3 +10,5 @@ export default {
   FEATURES: env.FEATURES,
   DESIGNER_HOST: env.DESIGNER_HOST,
 } as const;
+
+setEnv(env.FEATURES);

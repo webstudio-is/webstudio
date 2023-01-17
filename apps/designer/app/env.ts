@@ -1,3 +1,4 @@
+import { setEnv } from "@webstudio-is/feature-flags";
 import { env } from "@webstudio-is/remix";
 
 // Environment variables we want to send to the UI inlined in the document.
@@ -14,3 +15,5 @@ export default {
   // Must be set for Vercel deployments
   RESIZE_ORIGIN: env.RESIZE_ORIGIN,
 } as const;
+
+setEnv(env.FEATURES);
