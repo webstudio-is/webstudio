@@ -14,4 +14,4 @@ export default new Proxy(
       return prop in env ? env[prop as unknown as number] : undefined;
     },
   }
-) as unknown;
+) as any;
