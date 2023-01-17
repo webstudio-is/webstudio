@@ -45,7 +45,7 @@ export const menuCssVars = ({
   override = false,
 }: {
   show: boolean;
-  override: boolean;
+  override?: boolean;
 }) => {
   const property = override
     ? menuTriggerVisibilityOverrideVar
