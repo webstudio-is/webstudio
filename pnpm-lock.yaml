@@ -87,6 +87,7 @@ importers:
       '@webstudio-is/design-system': workspace:^
       '@webstudio-is/design-tokens': workspace:^
       '@webstudio-is/eslint-config-custom': workspace:^
+      '@webstudio-is/feature-flags': workspace:^
       '@webstudio-is/fonts': workspace:^
       '@webstudio-is/icons': workspace:^
       '@webstudio-is/image': workspace:^
@@ -170,6 +171,7 @@ importers:
       '@webstudio-is/css-vars': link:../../packages/css-vars
       '@webstudio-is/design-system': link:../../packages/design-system
       '@webstudio-is/design-tokens': link:../../packages/design-tokens
+      '@webstudio-is/feature-flags': link:../../packages/feature-flags
       '@webstudio-is/fonts': link:../../packages/fonts
       '@webstudio-is/icons': link:../../packages/icons
       '@webstudio-is/image': link:../../packages/image
@@ -533,6 +535,14 @@ importers:
       eslint-plugin-storybook: 0.5.13_sorwav4hsh5vncerguqybud76i
       eslint-plugin-unicorn: 43.0.2_eslint@8.23.0
       typescript: 4.7.4
+
+  packages/feature-flags:
+    specifiers:
+      '@webstudio-is/scripts': workspace:^
+      '@webstudio-is/tsconfig': workspace:^
+    devDependencies:
+      '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
 
   packages/fonts:
     specifiers:
