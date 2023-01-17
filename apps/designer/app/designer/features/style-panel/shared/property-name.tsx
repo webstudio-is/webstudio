@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
@@ -16,7 +17,6 @@ import {
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
 import { utils } from "@webstudio-is/project";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
 import { theme } from "@webstudio-is/design-system";

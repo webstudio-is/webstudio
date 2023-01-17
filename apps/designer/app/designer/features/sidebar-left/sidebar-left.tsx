@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   SidebarTabs,
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "@webstudio-is/design-system";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useDragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";

@@ -39,6 +39,7 @@
     "@webstudio-is/css-vars": "workspace:^",
     "@webstudio-is/design-system": "workspace:^",
     "@webstudio-is/design-tokens": "workspace:^",
+    "@webstudio-is/feature-flags": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",

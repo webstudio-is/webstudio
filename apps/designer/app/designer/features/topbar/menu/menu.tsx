@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { type Publish } from "~/shared/pubsub";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, ChevronRightIcon } from "@webstudio-is/icons";
+import { type Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
@@ -27,7 +28,6 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import { theme } from "@webstudio-is/design-system";
 
 const menuItemCss = {

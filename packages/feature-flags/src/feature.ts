@@ -1,5 +1,6 @@
 import * as flags from "./flags";
-import env from "~/shared/env";
+
+let env = "";
 
 type Name = keyof typeof flags;
 
@@ -17,6 +18,10 @@ const readLocal = (): Array<Name> => {
   return [];
 };
 
+export const setEnv = (features: string) => {
+  env = features;
+};
+
 /**
  * Returns true/false if the feature is turned on.
  * A feature can be turned on:
@@ -25,11 +30,11 @@ const readLocal = (): Array<Name> => {
  * - by setting it in the browser console: localStorage.features = 'something1, something2', browser defined flag will override server-side flag
  */
 export const isFeatureEnabled = (name: Name): boolean => {
-  if (env.FEATURES === "*") {
+  if (env === "*") {
     return true;
   }
   const defaultValue = flags[name];
-  const envValue = parse(env.FEATURES).includes(name);
+  const envValue = parse(env).includes(name);
   const localValue = readLocal().includes(name);
   // Any source can enable feature, first `true` value will result in enabling a feature.
   // This also means you can't disable a feature if its already enabled in default value.
