@@ -8,6 +8,7 @@ import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { Text } from "./text";
 import { Separator } from "./separator";
 import { styled, CSS } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 type PopoverProps = React.ComponentProps<typeof PopoverPrimitive.Root> & {
   children: React.ReactNode;
@@ -20,7 +21,7 @@ export const Popover = ({ children, ...props }: PopoverProps) => {
 const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
   backgroundColor: "white",
   minWidth: 200,
-  minHeight: "$spacing$13",
+  minHeight: theme.spacing[13],
   maxWidth: 265,
   "&:focus": {
     outline: "none",
@@ -50,7 +51,7 @@ export const PopoverContent = React.forwardRef<
   >
     {children}
     {!hideArrow && (
-      <Box css={{ color: "$panel" }}>
+      <Box css={{ color: theme.colors.panel }}>
         <PopoverPrimitive.Arrow
           width={11}
           height={5}
@@ -71,7 +72,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
   return (
     <Box css={{ order: -1 }}>
       <Flex
-        css={{ height: 40, paddingLeft: "$spacing$9" }}
+        css={{ height: 40, paddingLeft: theme.spacing[9] }}
         align="center"
         justify="between"
       >
@@ -80,7 +81,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
           <DeprecatedIconButton
             size="2"
             css={{
-              marginRight: "$spacing$5",
+              marginRight: theme.spacing[5],
             }}
             aria-label="Close"
           >

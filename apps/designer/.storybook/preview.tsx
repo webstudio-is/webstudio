@@ -1,6 +1,7 @@
 import * as React from "react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { globalCss } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
@@ -14,9 +15,9 @@ export const parameters = {
 
 const globalStyles = globalCss({
   body: {
-    backgroundColor: "$background",
-    color: "$hiContrast",
-    fontFamily: "$sans",
+    backgroundColor: theme.colors.background,
+    color: theme.colors.hiContrast,
+    fontFamily: theme.fonts.sans,
   },
 });
 

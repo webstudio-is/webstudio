@@ -3,6 +3,7 @@ import { forwardRef } from "react";
 import type { ComponentProps, Ref } from "react";
 import type { HoverTagret, SpaceStyleProperty } from "./types";
 import { spacePropertiesNames } from "./types";
+import { theme } from "@webstudio-is/design-system";
 
 const VALUE_WIDTH = 34;
 const VALUE_HEIGHT = 24;
@@ -40,15 +41,15 @@ const emulateInnerStroke = ({
 });
 
 const ValueArea = styled("path", {
-  fill: "$slate2",
+  fill: theme.colors.slate2,
   variants: {
     side: {
       top: { cursor: "n-resize" },
       bottom: { cursor: "s-resize" },
-      right: { cursor: "e-resize", fill: "$slate3" },
-      left: { cursor: "w-resize", fill: "$slate3" },
+      right: { cursor: "e-resize", fill: theme.colors.slate3 },
+      left: { cursor: "w-resize", fill: theme.colors.slate3 },
     },
-    isActive: { true: { fill: "$slate5" } },
+    isActive: { true: { fill: theme.colors.slate5 } },
   },
 });
 
@@ -65,7 +66,7 @@ const OuterRect = styled(
       {...props}
     />
   ),
-  { stroke: "$slate8" }
+  { stroke: theme.colors.slate8 }
 );
 
 const InnerOuterRect = styled(
@@ -85,7 +86,7 @@ const InnerOuterRect = styled(
       />
     );
   },
-  { stroke: "$slate8", fill: "$loContrast" }
+  { stroke: theme.colors.slate8, fill: theme.colors.loContrast }
 );
 
 const InnerRect = styled(
@@ -101,7 +102,7 @@ const InnerRect = styled(
       {...props}
     />
   ),
-  { stroke: "$slate8" }
+  { stroke: theme.colors.slate8 }
 );
 
 const MostInnerRect = styled(
@@ -119,7 +120,7 @@ const MostInnerRect = styled(
       />
     );
   },
-  { stroke: "$slate8", fill: "$loContrast" }
+  { stroke: theme.colors.slate8, fill: theme.colors.loContrast }
 );
 
 const gap = `${INNER_MARGIN + BORDER}px`;
@@ -148,8 +149,8 @@ const Container = styled("div", {
   // Grid happens to be positioned perfectly for the focus outline
   // (both in z-order and in top/left)
   [`&:focus-visible > ${Grid}`]: {
-    borderRadius: "$borderRadius$3",
-    outline: "2px solid $colors$blue10",
+    borderRadius: theme.borderRadius[3],
+    outline: `2px solid ${theme.colors.blue10}`,
   },
 });
 
@@ -174,9 +175,9 @@ const Cell = styled("div", {
 });
 
 const Label = styled("div", {
-  color: "$colors$slate11",
+  color: theme.colors.slate11,
   textTransform: "uppercase",
-  fontSize: "$fontSize$1",
+  fontSize: theme.fontSize[1],
   lineHeight: 1,
   marginTop: 3,
   marginLeft: 4,

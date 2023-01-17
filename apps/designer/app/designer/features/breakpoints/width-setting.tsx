@@ -5,6 +5,7 @@ import {
 import { Text, Flex, Slider } from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
 import { useNextBreakpoint } from "./use-next-breakpoint";
+import { theme } from "@webstudio-is/design-system";
 
 // Doesn't make sense to allow resizing the canvas lower/higher than this.
 export const minWidth = 360;
@@ -33,7 +34,7 @@ export const WidthSetting = () => {
 
   return (
     <Flex
-      css={{ px: "$spacing$11", py: "$spacing$3" }}
+      css={{ px: theme.spacing[11], py: theme.spacing[3] }}
       gap="1"
       direction="column"
     >

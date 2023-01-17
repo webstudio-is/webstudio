@@ -1,6 +1,7 @@
 import { styled } from "@webstudio-is/design-system";
 import type { StyleValue } from "@webstudio-is/css-data";
 import { useLayoutEffect, useMemo, useRef, type ComponentProps } from "react";
+import { theme } from "@webstudio-is/design-system";
 
 const Container = styled("span", {
   boxSizing: "border-box",
@@ -10,15 +11,15 @@ const Container = styled("span", {
   alignItems: "end",
   justifyContent: "center",
   border: "1px solid transparent",
-  borderRadius: "$borderRadius$3",
-  padding: "0 $spacing$1",
+  borderRadius: theme.borderRadius[3],
+  padding: `0 ${theme.spacing[1]}`,
   variants: {
     origin: {
-      unset: { color: "$colors$slate11" },
+      unset: { color: theme.colors.slate11 },
       set: {
-        color: "$colors$blue11",
-        backgroundColor: "$colors$blue4",
-        borderColor: "$colors$blue6",
+        color: theme.colors.blue11,
+        backgroundColor: theme.colors.blue4,
+        borderColor: theme.colors.blue6,
       },
       preset: {
         // as I'm adding this Figma already uses new colors system,
@@ -28,28 +29,30 @@ const Container = styled("span", {
         borderColor: "#C1C8CD", // border/main
       },
       inherited: {
-        color: "$colors$orange11",
-        backgroundColor: "$colors$orange4",
-        borderColor: "$colors$orange6",
+        color: theme.colors.orange11,
+        backgroundColor: theme.colors.orange4,
+        borderColor: theme.colors.orange6,
       },
     },
     isActive: { true: {} },
   },
   compoundVariants: [
-    { origin: "unset", isActive: true, css: { color: "$colors$slate12" } },
+    { origin: "unset", isActive: true, css: { color: theme.colors.slate12 } },
   ],
 });
 
 const Span = styled("span", {
   display: "block",
-  fontSize: "$fontSize$2",
+  fontSize: theme.fontSize[2],
   lineHeight: 1,
   overflow: "hidden",
   maxWidth: "100%",
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
   variants: {
-    keyword: { true: { fontSize: "$fontSize$1", textTransform: "uppercase" } },
+    keyword: {
+      true: { fontSize: theme.fontSize[1], textTransform: "uppercase" },
+    },
   },
 });
 

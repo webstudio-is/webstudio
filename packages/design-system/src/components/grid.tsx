@@ -1,4 +1,5 @@
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 export const Grid = styled("div", {
   boxSizing: "border-box",
@@ -69,89 +70,89 @@ export const Grid = styled("div", {
     },
     gap: {
       1: {
-        gap: "$spacing$3",
+        gap: theme.spacing[3],
       },
       2: {
-        gap: "$spacing$5",
+        gap: theme.spacing[5],
       },
       3: {
-        gap: "$spacing$9",
+        gap: theme.spacing[9],
       },
       4: {
-        gap: "$spacing$10",
+        gap: theme.spacing[10],
       },
       5: {
-        gap: "$spacing$11",
+        gap: theme.spacing[11],
       },
       6: {
-        gap: "$spacing$13",
+        gap: theme.spacing[13],
       },
       7: {
-        gap: "$spacing$17",
+        gap: theme.spacing[17],
       },
       8: {
-        gap: "$spacing$19",
+        gap: theme.spacing[19],
       },
       9: {
-        gap: "$spacing$20",
+        gap: theme.spacing[20],
       },
     },
     gapX: {
       1: {
-        columnGap: "$spacing$3",
+        columnGap: theme.spacing[3],
       },
       2: {
-        columnGap: "$spacing$5",
+        columnGap: theme.spacing[5],
       },
       3: {
-        columnGap: "$spacing$9",
+        columnGap: theme.spacing[9],
       },
       4: {
-        columnGap: "$spacing$10",
+        columnGap: theme.spacing[10],
       },
       5: {
-        columnGap: "$spacing$11",
+        columnGap: theme.spacing[11],
       },
       6: {
-        columnGap: "$spacing$13",
+        columnGap: theme.spacing[13],
       },
       7: {
-        columnGap: "$spacing$17",
+        columnGap: theme.spacing[17],
       },
       8: {
-        columnGap: "$spacing$19",
+        columnGap: theme.spacing[19],
       },
       9: {
-        columnGap: "$spacing$20",
+        columnGap: theme.spacing[20],
       },
     },
     gapY: {
       1: {
-        rowGap: "$spacing$3",
+        rowGap: theme.spacing[3],
       },
       2: {
-        rowGap: "$spacing$5",
+        rowGap: theme.spacing[5],
       },
       3: {
-        rowGap: "$spacing$9",
+        rowGap: theme.spacing[9],
       },
       4: {
-        rowGap: "$spacing$10",
+        rowGap: theme.spacing[10],
       },
       5: {
-        rowGap: "$spacing$11",
+        rowGap: theme.spacing[11],
       },
       6: {
-        rowGap: "$spacing$13",
+        rowGap: theme.spacing[13],
       },
       7: {
-        rowGap: "$spacing$17",
+        rowGap: theme.spacing[17],
       },
       8: {
-        rowGap: "$spacing$19",
+        rowGap: theme.spacing[19],
       },
       9: {
-        rowGap: "$spacing$20",
+        rowGap: theme.spacing[20],
       },
     },
   },

@@ -7,14 +7,15 @@ import {
 } from "@webstudio-is/design-system";
 import { CheckIcon, DotsHorizontalIcon } from "@webstudio-is/icons";
 import { useSyncStatus } from "../../shared/nano-states";
+import { theme } from "@webstudio-is/design-system";
 
 const iconSize = 15;
 
 const StyledCheckIcon = styled(CheckIcon, {
   width: iconSize,
   height: iconSize,
-  background: "$green9",
-  borderRadius: "$borderRadius$round",
+  background: theme.colors.green9,
+  borderRadius: theme.borderRadius.round,
 });
 
 const ellipsisKeyframes = keyframes({

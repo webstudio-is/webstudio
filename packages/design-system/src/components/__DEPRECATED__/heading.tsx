@@ -2,6 +2,7 @@ import React from "react";
 import { DeprecatedText } from "./text";
 import { VariantProps, CSS } from "../../stitches.config";
 import merge from "lodash.merge";
+import { theme } from "../../stitches.config";
 
 const DEFAULT_TAG = "h1";
 
@@ -32,7 +33,7 @@ export const DeprecatedHeading = React.forwardRef<
   const textCss: Record<HeadingSizeVariants, CSS> = {
     1: {
       fontWeight: 500,
-      lineHeight: "$lineHeight$4",
+      lineHeight: theme.lineHeight[4],
       "@bp2": { lineHeight: "23px" },
     },
     2: { fontWeight: 500, lineHeight: "25px", "@bp2": { lineHeight: "30px" } },

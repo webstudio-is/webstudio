@@ -2,6 +2,7 @@
 import React from "react";
 import { CSS, styled } from "../stitches.config";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { theme } from "../stitches.config";
 
 export const SidebarTabs = styled(TabsPrimitive.Root, {
   display: "flex",
@@ -13,27 +14,27 @@ export const SidebarTabs = styled(TabsPrimitive.Root, {
 export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
   flexShrink: 0,
   display: "flex",
-  size: "$spacing$17",
+  size: theme.spacing[17],
   m: 0,
   userSelect: "none",
   outline: "none",
   alignItems: "center",
   justifyContent: "center",
-  color: "$slate11",
+  color: theme.colors.slate11,
   border: "1px solid transparent",
   backgroundColor: "transparent",
 
   "@hover": {
     "&:hover": {
-      backgroundColor: "$slateA3",
-      color: "$hiContrast",
+      backgroundColor: theme.colors.slateA3,
+      color: theme.colors.hiContrast,
     },
   },
 
   '&[data-state="active"]': {
-    color: "$hiContrast",
-    backgroundColor: "$slateA4",
-    borderColor: "$slate6",
+    color: theme.colors.hiContrast,
+    backgroundColor: theme.colors.slateA4,
+    borderColor: theme.colors.slate6,
   },
 });
 
@@ -44,7 +45,7 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   alignItems: "center",
   outline: "none",
   '&[data-state="active"]': {
-    borderRight: "1px solid $slate7",
+    borderRight: `1px solid ${theme.colors.slate7}`,
   },
 });
 
@@ -68,9 +69,9 @@ export const SidebarTabsContent = styled(TabsPrimitive.Content, {
   top: 0,
   left: "100%",
   height: "100%",
-  bc: "$loContrast",
+  bc: theme.colors.loContrast,
   outline: "none",
   '&[data-state="active"]': {
-    borderRight: "1px solid $slate7",
+    borderRight: `1px solid ${theme.colors.slate7}`,
   },
 });

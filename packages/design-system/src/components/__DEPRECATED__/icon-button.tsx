@@ -1,4 +1,5 @@
 import { styled } from "../../stitches.config";
+import { theme } from "../../stitches.config";
 
 export const DeprecatedIconButton = styled("button", {
   // Reset
@@ -9,14 +10,14 @@ export const DeprecatedIconButton = styled("button", {
   display: "inline-flex",
   flexShrink: 0,
   fontFamily: "inherit",
-  fontSize: "$fontSize$4",
+  fontSize: theme.fontSize[4],
   justifyContent: "center",
   lineHeight: "1",
   padding: 0,
   textDecoration: "none",
   userSelect: "none",
   WebkitTapHighlightColor: "transparent",
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   background: "none",
   outline: "2px solid transparent",
   outlineOffset: 2,
@@ -24,46 +25,46 @@ export const DeprecatedIconButton = styled("button", {
     boxSizing: "border-box",
   },
   "&:hover, &:active": {
-    backgroundColor: "$slate6",
+    backgroundColor: theme.colors.slate6,
     outline: "none",
   },
   "&:focus-visible": {
-    backgroundColor: "$slate6",
+    backgroundColor: theme.colors.slate6,
     outline: "none",
     border: "2px solid white",
-    boxShadow: "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
+    boxShadow: `0px 0px 0px 2px ${theme.colors.blue10}, 0px 0px 0px 2px ${theme.colors.blue10}`,
   },
   "&:disabled": {
     pointerEvents: "none",
     backgroundColor: "transparent",
-    color: "$slate6",
+    color: theme.colors.slate6,
   },
 
   variants: {
     size: {
       "1": {
         borderRadius: 2,
-        height: "$spacing$9",
-        width: "$spacing$9",
+        height: theme.spacing[9],
+        width: theme.spacing[9],
         "&:hover, &:focus-visible": {
           background: "none",
           border: "none",
         },
       },
       "2": {
-        borderRadius: "$borderRadius$4",
-        height: "$spacing$13",
-        width: "$spacing$13",
+        borderRadius: theme.borderRadius[4],
+        height: theme.spacing[13],
+        width: theme.spacing[13],
       },
       "3": {
-        borderRadius: "$borderRadius$4",
-        height: "$spacing$17",
-        width: "$spacing$17",
+        borderRadius: theme.borderRadius[4],
+        height: theme.spacing[17],
+        width: theme.spacing[17],
       },
       "4": {
-        borderRadius: "$borderRadius$6",
-        height: "$spacing$19",
-        width: "$spacing$19",
+        borderRadius: theme.borderRadius[6],
+        height: theme.spacing[19],
+        width: theme.spacing[19],
       },
     },
   },

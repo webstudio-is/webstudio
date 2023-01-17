@@ -1,22 +1,23 @@
 import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { Flex, Text, styled } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
-  px: "$spacing$3",
+  px: theme.spacing[3],
   width: 72,
   height: 72,
-  border: "1px solid $slate6",
+  border: `1px solid ${theme.colors.slate6}`,
   userSelect: "none",
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   cursor: "grab",
   "&:hover": {
-    background: "$slate3",
+    background: theme.colors.slate3,
   },
   variants: {
     state: {
       dragging: {
-        background: "$slate3",
+        background: theme.colors.slate3,
       },
     },
   },

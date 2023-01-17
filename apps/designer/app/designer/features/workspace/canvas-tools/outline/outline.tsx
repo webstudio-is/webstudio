@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { styled, type Rect } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 const OutlineContainer = styled("div", {
   position: "absolute",
   pointerEvents: "none",
-  outline: "1px solid $blue9",
+  outline: `1px solid ${theme.colors.blue9}`,
   outlineOffset: -1,
   top: 0,
   left: 0,

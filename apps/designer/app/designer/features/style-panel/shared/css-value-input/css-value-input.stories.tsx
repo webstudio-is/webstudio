@@ -4,6 +4,7 @@ import type { StyleValue } from "@webstudio-is/css-data";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
 import { toValue } from "@webstudio-is/css-engine";
+import { theme } from "@webstudio-is/design-system";
 
 export default {
   component: CssValueInput,
@@ -106,7 +107,7 @@ export const WithUnits = () => {
   >();
 
   return (
-    <Flex css={{ gap: "$spacing$9" }}>
+    <Flex css={{ gap: theme.spacing[9] }}>
       <CssValueInput
         styleSource="preset"
         property="rowGap"

@@ -43,6 +43,7 @@ import { getBuildUrl } from "~/shared/router-utils";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
 import { useAllUserProps } from "@webstudio-is/react-sdk";
+import { theme } from "@webstudio-is/design-system";
 
 registerContainers();
 
@@ -162,13 +163,15 @@ const SidePanel = ({
         fg: 0,
         // Left sidebar tabs won't be able to pop out to the right if we set overflowX to auto.
         //overflowY: "auto",
-        bc: "$loContrast",
+        bc: theme.colors.loContrast,
         height: "100%",
         ...css,
         "&:first-of-type": {
-          boxShadow: "inset -1px 0 0 0 $colors$panelOutline",
+          boxShadow: `inset -1px 0 0 0 ${theme.colors.panelOutline}`,
         },
-        "&:last-of-type": { boxShadow: "inset 1px 0 0 0 $colors$panelOutline" },
+        "&:last-of-type": {
+          boxShadow: `inset 1px 0 0 0 ${theme.colors.panelOutline}`,
+        },
       }}
     >
       {children}
@@ -214,7 +217,7 @@ const getChromeLayout = ({
 
   if (navigatorLayout === "undocked") {
     return {
-      gridTemplateColumns: `auto $spacing$30 1fr $spacing$30`,
+      gridTemplateColumns: `auto ${theme.spacing[30]} 1fr ${theme.spacing[30]}`,
       gridTemplateAreas: `
             "header header header header"
             "sidebar navigator main inspector"
@@ -224,7 +227,7 @@ const getChromeLayout = ({
   }
 
   return {
-    gridTemplateColumns: `auto 1fr $spacing$30`,
+    gridTemplateColumns: `auto 1fr ${theme.spacing[30]}`,
     gridTemplateAreas: `
           "header header header"
           "sidebar main inspector"
@@ -268,8 +271,8 @@ const NavigatorPanel = ({ publish, isPreviewMode }: NavigatorPanelProps) => {
     <SidePanel gridArea="navigator" isPreviewMode={isPreviewMode}>
       <Box
         css={{
-          borderRight: "1px solid $slate7",
-          width: "$spacing$30",
+          borderRight: `1px solid ${theme.colors.slate7}`,
+          width: theme.spacing[30],
           height: "100%",
         }}
       >

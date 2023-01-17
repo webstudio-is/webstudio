@@ -35,10 +35,11 @@ import {
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/designer/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
+import { theme } from "@webstudio-is/design-system";
 
 export const TypographySection = (props: RenderCategoryProps) => {
   return (
-    <Flex css={{ gap: "$spacing$7" }} direction="column">
+    <Flex css={{ gap: theme.spacing[7] }} direction="column">
       <TypographySectionFont {...props} />
       <TypographySectionSizing {...props} />
       <TypographySectionAdvanced {...props} />
@@ -52,7 +53,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
   return (
     <Grid
       css={{
-        gap: "$spacing$5",
+        gap: theme.spacing[5],
       }}
     >
       <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
@@ -108,10 +109,10 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
     <Grid
       css={{
         gridTemplateColumns: "1fr 1fr 1fr",
-        gap: "$spacing$5",
+        gap: theme.spacing[5],
       }}
     >
-      <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
+      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
         <PropertyName
           style={currentStyle}
           property="fontSize"
@@ -125,7 +126,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Grid>
-      <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
+      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
         <PropertyName
           style={currentStyle}
           property="lineHeight"
@@ -139,7 +140,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Grid>
-      <Grid css={{ gridTemplateColumns: "auto", gap: "$spacing$3" }}>
+      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
         <PropertyName
           style={currentStyle}
           property="letterSpacing"
@@ -167,13 +168,13 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
   return (
     <Grid
       css={{
-        gap: "$spacing$5",
+        gap: theme.spacing[5],
       }}
     >
       <Grid
         css={{
           gridTemplateColumns: "1fr 1fr",
-          gap: "$spacing$9",
+          gap: theme.spacing[9],
         }}
       >
         <ToggleGroupControl
@@ -229,7 +230,7 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
       <Grid
         css={{
           gridTemplateColumns: "1fr 1fr auto",
-          gap: "$spacing$9",
+          gap: theme.spacing[9],
           alignItems: "center",
         }}
       >
@@ -294,7 +295,7 @@ export const TypographySectionAdvancedPopover = (
     <FloatingPanel
       title="Advanced Typography"
       content={
-        <Grid css={{ padding: "$spacing$9", gap: "$spacing$9" }}>
+        <Grid css={{ padding: theme.spacing[9], gap: theme.spacing[9] }}>
           <Grid css={{ gridTemplateColumns: "4fr 6fr" }}>
             <PropertyName
               style={currentStyle}

@@ -4,6 +4,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
 import { Paragraph } from "./paragraph";
 import type { CSS } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   ComponentProps<typeof TooltipPrimitive.Content> & {
@@ -16,10 +17,10 @@ export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   };
 
 const Content = styled(TooltipPrimitive.Content, {
-  backgroundColor: "$hiContrast",
-  color: "$loContrast",
-  borderRadius: "$borderRadius$4",
-  padding: "$spacing$3 $spacing$5",
+  backgroundColor: theme.colors.hiContrast,
+  color: theme.colors.loContrast,
+  borderRadius: theme.borderRadius[4],
+  padding: `${theme.spacing[3]} ${theme.spacing[5]}`,
   zIndex: theme.zIndices[1],
   position: "relative",
 
@@ -35,7 +36,7 @@ const Content = styled(TooltipPrimitive.Content, {
 });
 
 const Arrow = styled(TooltipPrimitive.Arrow, {
-  fill: "$hiContrast",
+  fill: theme.colors.hiContrast,
   marginTop: -0.5,
 });
 
@@ -82,7 +83,7 @@ export const Tooltip = React.forwardRef(
             multiline={multiline}
           >
             <Paragraph>{content}</Paragraph>
-            <Box css={{ color: "$transparentExtreme" }}>
+            <Box css={{ color: theme.colors.transparentExtreme }}>
               <Arrow offset={5} width={11} height={5} />
             </Box>
           </Content>

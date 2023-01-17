@@ -6,6 +6,7 @@ import {
 } from "@webstudio-is/design-system";
 import { Separator } from "@webstudio-is/design-system";
 import { CrossIcon } from "@webstudio-is/icons";
+import { theme } from "@webstudio-is/design-system";
 
 type HeaderProps = {
   title: string;
@@ -16,12 +17,14 @@ export const Header = ({ title, suffix }: HeaderProps) => {
   return (
     <>
       <Flex
-        css={{ height: 40, paddingLeft: "$spacing$9", flexShrink: 0 }}
+        css={{ height: 40, paddingLeft: theme.spacing[9], flexShrink: 0 }}
         align="center"
         justify="between"
       >
         <Text variant="title">{title}</Text>
-        {suffix && <Flex css={{ marginRight: "$spacing$5" }}>{suffix}</Flex>}
+        {suffix && (
+          <Flex css={{ marginRight: theme.spacing[5] }}>{suffix}</Flex>
+        )}
       </Flex>
       <Separator css={{ height: 2 }} />
     </>

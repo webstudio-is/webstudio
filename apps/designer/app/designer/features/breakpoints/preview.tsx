@@ -1,5 +1,6 @@
 import { type Breakpoint } from "@webstudio-is/css-data";
 import { Paragraph, Flex, Text } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 type PreviewProps = {
   breakpoint?: Breakpoint;
@@ -8,7 +9,7 @@ type PreviewProps = {
 export const Preview = ({ breakpoint }: PreviewProps) => {
   return (
     <Flex
-      css={{ px: "$spacing$11", py: "$spacing$3" }}
+      css={{ px: theme.spacing[11], py: theme.spacing[3] }}
       gap="1"
       direction="column"
     >

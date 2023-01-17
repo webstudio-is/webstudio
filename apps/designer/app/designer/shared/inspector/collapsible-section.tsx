@@ -2,6 +2,7 @@ import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { Box, Flex, Text, Collapsible } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ChevronRightIcon } from "@webstudio-is/icons";
+import { theme } from "@webstudio-is/design-system";
 
 type CollapsibleSectionProps = {
   label: string;
@@ -39,7 +40,7 @@ export const CollapsibleSection = ({
     <Collapsible.Root open={isOpenFinal} onOpenChange={setIsOpenByUser}>
       <Box
         css={{
-          boxShadow: "0px 1px 0 $colors$panelOutline",
+          boxShadow: `0px 1px 0 ${theme.colors.panelOutline}`,
         }}
       >
         <Collapsible.Trigger asChild>
@@ -48,9 +49,9 @@ export const CollapsibleSection = ({
             gap="1"
             justify="between"
             css={{
-              py: "$spacing$9",
-              px: "$spacing$9",
-              color: "$hiContrast",
+              py: theme.spacing[9],
+              px: theme.spacing[9],
+              color: theme.colors.hiContrast,
               cursor: "default",
               userSelect: "none",
             }}
@@ -59,7 +60,10 @@ export const CollapsibleSection = ({
             <Flex
               align="center"
               justify="center"
-              css={{ marginRight: "-$spacing$3", color: "$slate9" }}
+              css={{
+                marginRight: `-${theme.spacing[3]}`,
+                color: theme.colors.slate9,
+              }}
             >
               {rightSlot}
               {isOpenFinal ? <ChevronLeftIcon /> : <ChevronRightIcon />}
@@ -71,7 +75,7 @@ export const CollapsibleSection = ({
             gap="3"
             direction="column"
             css={{
-              p: "$spacing$9",
+              p: theme.spacing[9],
               paddingTop: 0,
               "&:empty": {
                 display: "none",

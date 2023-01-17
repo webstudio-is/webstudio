@@ -40,6 +40,7 @@ import {
   useStyleData,
   type SetProperty,
 } from "../style-panel/shared/use-style-data";
+import { theme } from "@webstudio-is/design-system";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -285,7 +286,7 @@ export const PropsPanel = ({
 
   return (
     <Box>
-      <Box css={{ p: "$spacing$9" }}>
+      <Box css={{ p: theme.spacing[9] }}>
         <ComponentInfo selectedInstanceData={selectedInstanceData} />
       </Box>
       <CollapsibleSection

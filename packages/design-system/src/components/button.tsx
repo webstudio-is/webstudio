@@ -6,6 +6,7 @@
 import React, { forwardRef, type Ref, type ComponentProps } from "react";
 import { Text } from "./text";
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
 const backgroundColors = ({
@@ -22,13 +23,13 @@ const backgroundStyle = (baseColor: string) => ({
   "&:hover": {
     background: backgroundColors({
       base: baseColor,
-      overlay: "$colors$backgroundButtonHover",
+      overlay: theme.colors.backgroundButtonHover,
     }),
   },
   "&:active": {
     background: backgroundColors({
       base: baseColor,
-      overlay: "$colors$backgroundButtonPressed",
+      overlay: theme.colors.backgroundButtonPressed,
     }),
   },
 });
@@ -40,14 +41,14 @@ const StyledButton = styled("button", {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: "$spacing$2",
-  color: "$colors$foregroundContrastMain",
-  padding: "0 $spacing$4",
-  height: "$spacing$12",
-  borderRadius: "$borderRadius$4",
+  gap: theme.spacing[2],
+  color: theme.colors.foregroundContrastMain,
+  padding: `0 ${theme.spacing[4]}`,
+  height: theme.spacing[12],
+  borderRadius: theme.borderRadius[4],
 
   "&:focus-visible": {
-    outline: "2px solid $colors$borderFocus",
+    outline: `2px solid ${theme.colors.borderFocus}`,
     outlineOffset: "1px",
   },
 
@@ -55,17 +56,19 @@ const StyledButton = styled("button", {
     // "variant" is used instead of "type" as in Figma,
     // because type is already taken for type=submit etc.
     variant: {
-      primary: { ...backgroundStyle("$colors$backgroundPrimary") },
+      primary: { ...backgroundStyle(theme.colors.backgroundPrimary) },
       neutral: {
-        ...backgroundStyle("$colors$backgroundNeutralMain"),
-        color: "$colors$foregroundMain",
+        ...backgroundStyle(theme.colors.backgroundNeutralMain),
+        color: theme.colors.foregroundMain,
       },
-      destructive: { ...backgroundStyle("$colors$backgroundDestructiveMain") },
-      positive: { ...backgroundStyle("$colors$backgroundSuccessMain") },
+      destructive: {
+        ...backgroundStyle(theme.colors.backgroundDestructiveMain),
+      },
+      positive: { ...backgroundStyle(theme.colors.backgroundSuccessMain) },
       ghost: {
-        ...backgroundStyle("$colors$backgroundHover"),
+        ...backgroundStyle(theme.colors.backgroundHover),
         background: "transparent",
-        color: "$colors$foregroundMain",
+        color: theme.colors.foregroundMain,
       },
     },
     pending: {
@@ -74,8 +77,8 @@ const StyledButton = styled("button", {
       },
       false: {
         "&[disabled]": {
-          background: "$colors$backgroundButtonDisabled",
-          color: "$colors$foregroundDisabled",
+          background: theme.colors.backgroundButtonDisabled,
+          color: theme.colors.foregroundDisabled,
         },
       },
     },
@@ -87,11 +90,11 @@ const StyledButton = styled("button", {
 });
 
 const TextContainer = styled(Text, {
-  padding: "0 $spacing$2",
+  padding: `0 ${theme.spacing[2]}`,
   // <Text> incorrectly sets lineHeight to 1 for all variants
   // here we set lineHeight as it's defined for "label" in Figma
   // @todo: fix <Text>
-  lineHeight: "$lineHeight$3",
+  lineHeight: theme.lineHeight[3],
   defaultVariants: { variant: "label" },
 });
 

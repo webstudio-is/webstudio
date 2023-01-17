@@ -1,4 +1,5 @@
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 export const Card = styled("div", {
   appearance: "none",
@@ -10,12 +11,12 @@ export const Card = styled("div", {
   textAlign: "inherit",
   verticalAlign: "middle",
   WebkitTapHighlightColor: "rgba(0, 0, 0, 0)",
-  backgroundColor: "$panel",
+  backgroundColor: theme.colors.panel,
   display: "block",
   textDecoration: "none",
   color: "inherit",
   flexShrink: 0,
-  borderRadius: "$borderRadius$7",
+  borderRadius: theme.borderRadius[7],
   position: "relative",
 
   "&::before": {
@@ -27,19 +28,19 @@ export const Card = styled("div", {
     bottom: 0,
     left: 0,
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,.1)",
-    borderRadius: "$borderRadius$7",
+    borderRadius: theme.borderRadius[7],
     pointerEvents: "none",
   },
 
   variants: {
     size: {
       1: {
-        width: "$spacing$30",
-        padding: "$spacing$11",
+        width: theme.spacing[30],
+        padding: theme.spacing[11],
       },
       2: {
-        width: "$spacing$34",
-        padding: "$spacing$17",
+        width: theme.spacing[34],
+        padding: theme.spacing[17],
       },
     },
     variant: {
@@ -53,7 +54,7 @@ export const Card = styled("div", {
         },
         "&:focus": {
           "&::before": {
-            boxShadow: "inset 0 0 0 1px $colors$blue8, 0 0 0 1px $colors$blue8",
+            boxShadow: `inset 0 0 0 1px ${theme.colors.blue8}, 0 0 0 1px ${theme.colors.blue8}`,
           },
         },
       },
@@ -70,8 +71,8 @@ export const Card = styled("div", {
         },
         "@hover": {
           "&:hover": {
-            backgroundColor: "$panel",
-            transform: "translateY(-$spacing$2)",
+            backgroundColor: theme.colors.panel,
+            transform: `translateY(-${theme.spacing[2]})`,
             "&::before": {
               opacity: "1",
             },
@@ -87,7 +88,7 @@ export const Card = styled("div", {
           },
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$blue8, 0 0 0 1px $colors$blue8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.blue8}, 0 0 0 1px ${theme.colors.blue8}`,
         },
       },
       active: {
@@ -99,7 +100,7 @@ export const Card = styled("div", {
           opacity: "1",
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$blue8, 0 0 0 1px $colors$blue8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.blue8}, 0 0 0 1px ${theme.colors.blue8}`,
         },
       },
     },

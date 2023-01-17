@@ -13,6 +13,7 @@ import {
   AutoScrollIcon,
 } from "@webstudio-is/icons";
 import { getStyleSource } from "../../shared/style-info";
+import { theme } from "@webstudio-is/design-system";
 
 const SizeField = ({
   property,
@@ -50,7 +51,10 @@ export const SizeSection = ({
   deleteProperty,
 }: RenderCategoryProps) => {
   return (
-    <Grid columns={2} css={{ columnGap: "$spacing$5", rowGap: "$spacing$7" }}>
+    <Grid
+      columns={2}
+      css={{ columnGap: theme.spacing[5], rowGap: theme.spacing[7] }}
+    >
       <SizeField
         property="width"
         style={style}

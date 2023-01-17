@@ -7,6 +7,7 @@ import {
   InfoCircledIcon,
 } from "@webstudio-is/icons";
 import { Box } from "./box";
+import { theme } from "../stitches.config";
 
 const VIEWPORT_PADDING = theme.spacing[2];
 
@@ -45,15 +46,15 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
 const StyledToast = styled(ToastPrimitive.Root, {
   borderRadius: 6,
   boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
-  padding: "$spacing$9",
+  padding: theme.spacing[9],
   display: "flex",
   maxWidth: 250,
-  gap: "$spacing$9",
+  gap: theme.spacing[9],
   alignItems: "center",
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   fontWeight: 500,
-  fontSize: "$fontSize$3",
-  background: "$loContrast",
+  fontSize: theme.fontSize[3],
+  background: theme.colors.loContrast,
 
   "@media (prefers-reduced-motion: no-preference)": {
     '&[data-state="open"]': {
@@ -76,16 +77,16 @@ const StyledToast = styled(ToastPrimitive.Root, {
   variants: {
     variant: {
       error: {
-        background: "$red9",
-        color: "$loContrast",
+        background: theme.colors.red9,
+        color: theme.colors.loContrast,
       },
       success: {
-        background: "$green10",
-        color: "$loContrast",
+        background: theme.colors.green10,
+        color: theme.colors.loContrast,
       },
       blank: {
-        background: "$blue11",
-        color: "$loContrast",
+        background: theme.colors.blue11,
+        color: theme.colors.loContrast,
       },
       custom: {},
       loading: {},
@@ -94,7 +95,7 @@ const StyledToast = styled(ToastPrimitive.Root, {
 });
 
 const StyledTitle = styled(ToastPrimitive.Title, {
-  marginBottom: "$spacing$3",
+  marginBottom: theme.spacing[3],
 });
 
 export const Toaster = () => {
@@ -112,8 +113,8 @@ export const Toaster = () => {
           <Box
             css={{
               svg: {
-                width: "$spacing$11",
-                height: "$spacing$11",
+                width: theme.spacing[11],
+                height: theme.spacing[11],
               },
             }}
           >

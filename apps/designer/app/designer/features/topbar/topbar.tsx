@@ -7,6 +7,7 @@ import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
 import type { Project } from "@webstudio-is/project";
+import { theme } from "@webstudio-is/design-system";
 
 type TopbarProps = {
   css: CSS;
@@ -22,10 +23,10 @@ export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
       align="center"
       justify="between"
       css={{
-        bc: "$loContrast",
-        height: "$spacing$17",
+        bc: theme.colors.loContrast,
+        height: theme.spacing[17],
         "[data-theme=dark] &": {
-          boxShadow: "inset 0 -1px 0 0 $colors$panelOutline",
+          boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
         },
         // @todo: uhh, setting this on any focused child element? lets see what's the use case and why its necessary to override vs. not having it in the first place
         "& :focus": {
@@ -48,7 +49,7 @@ export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
           "& > *": {
             height: "inherit",
             width: "auto",
-            padding: "0 $spacing$5",
+            padding: `0 ${theme.spacing[5]}`,
           },
         }}
       >

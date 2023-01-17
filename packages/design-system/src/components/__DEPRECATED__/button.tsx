@@ -1,4 +1,5 @@
 import { styled } from "../../stitches.config";
+import { theme } from "../../stitches.config";
 
 export const DeprecatedButton = styled("button", {
   // Reset
@@ -24,125 +25,124 @@ export const DeprecatedButton = styled("button", {
   minWidth: 0,
 
   // Custom
-  height: "$spacing$11",
-  px: "$spacing$5",
-  fontFamily: "$sans",
-  fontSize: "$fontSize$3",
+  height: theme.spacing[11],
+  px: theme.spacing[5],
+  fontFamily: theme.fonts.sans,
+  fontSize: theme.fontSize[3],
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",
 
   "&:disabled": {
-    backgroundColor: "$slate2",
-    boxShadow: "inset 0 0 0 1px $colors$slate7",
-    color: "$slate8",
+    backgroundColor: theme.colors.slate2,
+    boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
+    color: theme.colors.slate8,
     pointerEvents: "none",
   },
 
   variants: {
     size: {
       "1": {
-        borderRadius: "$borderRadius$4",
-        height: "$spacing$11",
-        px: "$spacing$4",
-        fontSize: "$fontSize$3",
+        borderRadius: theme.borderRadius[4],
+        height: theme.spacing[11],
+        px: theme.spacing[4],
+        fontSize: theme.fontSize[3],
       },
       "2": {
-        borderRadius: "$borderRadius$6",
-        height: "$spacing$12",
-        px: "$spacing$9",
-        fontSize: "$fontSize$4",
+        borderRadius: theme.borderRadius[6],
+        height: theme.spacing[12],
+        px: theme.spacing[9],
+        fontSize: theme.fontSize[4],
       },
       "3": {
-        borderRadius: "$borderRadius$6",
-        height: "$spacing$17",
-        px: "$spacing$10",
-        fontSize: "$fontSize$4",
+        borderRadius: theme.borderRadius[6],
+        height: theme.spacing[17],
+        px: theme.spacing[10],
+        fontSize: theme.fontSize[4],
       },
     },
     variant: {
       gray: {
-        backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$slate7",
-        color: "$hiContrast",
+        backgroundColor: theme.colors.loContrast,
+        boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
+        color: theme.colors.hiContrast,
         "@hover": {
           "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$slate8",
+            boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
           },
         },
         "&:active": {
-          backgroundColor: "$slate2",
-          boxShadow: "inset 0 0 0 1px $colors$slate8",
+          backgroundColor: theme.colors.slate2,
+          boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}, 0 0 0 1px ${theme.colors.slate8}`,
         },
         '&[data-state="open"]': {
-          backgroundColor: "$slate4",
-          boxShadow: "inset 0 0 0 1px $colors$slate8",
+          backgroundColor: theme.colors.slate4,
+          boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
         },
       },
       blue: {
-        backgroundColor: "$blue10",
+        backgroundColor: theme.colors.blue10,
         color: "white",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$loContrast",
-            color: "$blue10",
-            boxShadow: "inset 0 0 0 1.5px $colors$blue10",
+            backgroundColor: theme.colors.loContrast,
+            color: theme.colors.blue10,
+            boxShadow: `inset 0 0 0 1.5px ${theme.colors.blue10}`,
           },
         },
         "&:active": {
-          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
+          boxShadow: `inset 0 0 0 1.5px ${theme.colors.blue8}`,
         },
         "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1.5px $colors$blue8, 0 0 0 1.5px $colors$blue8",
+          boxShadow: `inset 0 0 0 1.5px ${theme.colors.blue8}, 0 0 0 1.5px ${theme.colors.blue8}`,
         },
         '&[data-state="open"]': {
-          boxShadow: "inset 0 0 0 1.5px $colors$blue8",
+          boxShadow: `inset 0 0 0 1.5px ${theme.colors.blue8}`,
         },
       },
       green: {
-        backgroundColor: "$green2",
-        boxShadow: "inset 0 0 0 1px $colors$green7",
-        color: "$green11",
+        backgroundColor: theme.colors.green2,
+        boxShadow: `inset 0 0 0 1px ${theme.colors.green7}`,
+        color: theme.colors.green11,
         "@hover": {
           "&:hover": {
-            boxShadow: "inset 0 0 0 1px $colors$green8",
+            boxShadow: `inset 0 0 0 1px ${theme.colors.green8}`,
           },
         },
         "&:active": {
-          backgroundColor: "$green3",
-          boxShadow: "inset 0 0 0 1px $colors$green8",
+          backgroundColor: theme.colors.green3,
+          boxShadow: `inset 0 0 0 1px ${theme.colors.green8}`,
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$green8, 0 0 0 1px $colors$green8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.green8}, 0 0 0 1px ${theme.colors.green8}`,
         },
         '&[data-state="open"]': {
-          backgroundColor: "$green4",
-          boxShadow: "inset 0 0 0 1px $colors$green8",
+          backgroundColor: theme.colors.green4,
+          boxShadow: `inset 0 0 0 1px ${theme.colors.green8}`,
         },
       },
       red: {
-        backgroundColor: "$loContrast",
-        boxShadow: "inset 0 0 0 1px $colors$red10",
-        color: "$red10",
+        backgroundColor: theme.colors.loContrast,
+        boxShadow: `inset 0 0 0 1px ${theme.colors.red10}`,
+        color: theme.colors.red10,
         "@hover": {
           "&:hover": {
-            background: "$red10",
-            color: "$loContrast",
+            background: theme.colors.red10,
+            color: theme.colors.loContrast,
           },
         },
         "&:active": {
-          backgroundColor: "$red11",
-          color: "$loContrast",
+          backgroundColor: theme.colors.red11,
+          color: theme.colors.loContrast,
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$red8, 0 0 0 1px $colors$red8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.red8}, 0 0 0 1px ${theme.colors.red8}`,
         },
         '&[data-state="open"]': {
-          backgroundColor: "$red4",
-          boxShadow: "inset 0 0 0 1px $colors$red8",
+          backgroundColor: theme.colors.red4,
+          boxShadow: `inset 0 0 0 1px ${theme.colors.red8}`,
         },
       },
       transparentWhite: {
@@ -187,32 +187,32 @@ export const DeprecatedButton = styled("button", {
     },
     state: {
       active: {
-        backgroundColor: "$slate4",
-        boxShadow: "inset 0 0 0 1px $colors$slate8",
-        color: "$slate11",
+        backgroundColor: theme.colors.slate4,
+        boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
+        color: theme.colors.slate11,
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slate6",
-            boxShadow: "inset 0 0 0 1px $colors$slate8",
+            backgroundColor: theme.colors.slate6,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
           },
         },
         "&:active": {
-          backgroundColor: "$slate6",
+          backgroundColor: theme.colors.slate6,
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$slate8, 0 0 0 1px $colors$slate8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}, 0 0 0 1px ${theme.colors.slate8}`,
         },
       },
       waiting: {
-        backgroundColor: "$slate4",
-        boxShadow: "inset 0 0 0 1px $colors$slate8",
-        color: "$colors$slate9",
+        backgroundColor: theme.colors.slate4,
+        boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
+        color: theme.colors.slate9,
         cursor: "wait",
         "&:hover, &:active": {
-          color: "$colors$slate9",
+          color: theme.colors.slate9,
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$slate8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.slate8}`,
         },
       },
     },
@@ -229,22 +229,21 @@ export const DeprecatedButton = styled("button", {
       ghost: "true",
       css: {
         backgroundColor: "transparent",
-        color: "$hiContrast",
+        color: theme.colors.hiContrast,
         "@hover": {
           "&:hover": {
-            backgroundColor: "$slateA3",
+            backgroundColor: theme.colors.slateA3,
             boxShadow: "none",
           },
         },
         "&:active": {
-          backgroundColor: "$slateA4",
+          backgroundColor: theme.colors.slateA4,
         },
         "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1px $colors$slateA8, 0 0 0 1px $colors$slateA8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.slateA8}, 0 0 0 1px ${theme.colors.slateA8}`,
         },
         '&[data-state="open"]': {
-          backgroundColor: "$slateA4",
+          backgroundColor: theme.colors.slateA4,
           boxShadow: "none",
         },
       },
@@ -256,19 +255,18 @@ export const DeprecatedButton = styled("button", {
         backgroundColor: "transparent",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$blueA3",
+            backgroundColor: theme.colors.blueA3,
             boxShadow: "none",
           },
         },
         "&:active": {
-          backgroundColor: "$blueA4",
+          backgroundColor: theme.colors.blueA4,
         },
         "&:focus": {
-          boxShadow:
-            "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
+          boxShadow: `0px 0px 0px 2px ${theme.colors.blue10}, 0px 0px 0px 2px ${theme.colors.blue10}`,
         },
         '&[data-state="open"]': {
-          backgroundColor: "$blueA4",
+          backgroundColor: theme.colors.blueA4,
           boxShadow: "none",
         },
       },
@@ -280,19 +278,18 @@ export const DeprecatedButton = styled("button", {
         backgroundColor: "transparent",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$greenA3",
+            backgroundColor: theme.colors.greenA3,
             boxShadow: "none",
           },
         },
         "&:active": {
-          backgroundColor: "$greenA4",
+          backgroundColor: theme.colors.greenA4,
         },
         "&:focus": {
-          boxShadow:
-            "inset 0 0 0 1px $colors$greenA8, 0 0 0 1px $colors$greenA8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.greenA8}, 0 0 0 1px ${theme.colors.greenA8}`,
         },
         '&[data-state="open"]': {
-          backgroundColor: "$greenA4",
+          backgroundColor: theme.colors.greenA4,
           boxShadow: "none",
         },
       },
@@ -304,18 +301,18 @@ export const DeprecatedButton = styled("button", {
         backgroundColor: "transparent",
         "@hover": {
           "&:hover": {
-            backgroundColor: "$redA3",
+            backgroundColor: theme.colors.redA3,
             boxShadow: "none",
           },
         },
         "&:active": {
-          backgroundColor: "$redA4",
+          backgroundColor: theme.colors.redA4,
         },
         "&:focus": {
-          boxShadow: "inset 0 0 0 1px $colors$redA8, 0 0 0 1px $colors$redA8",
+          boxShadow: `inset 0 0 0 1px ${theme.colors.redA8}, 0 0 0 1px ${theme.colors.redA8}`,
         },
         '&[data-state="open"]': {
-          backgroundColor: "$redA4",
+          backgroundColor: theme.colors.redA4,
           boxShadow: "none",
         },
       },

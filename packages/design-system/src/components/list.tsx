@@ -7,6 +7,7 @@ import {
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
 import { Text } from "./text";
+import { theme } from "../stitches.config";
 
 const ListBase = styled("ul", {
   display: "flex",
@@ -17,13 +18,13 @@ const ListBase = styled("ul", {
 
 const ListItemBase = styled("li", {
   display: "grid",
-  gridTemplateColumns: "$spacing$10 1fr",
+  gridTemplateColumns: `${theme.spacing[10]} 1fr`,
   alignItems: "center",
   justifyContent: "space-between",
-  height: "$spacing$11",
-  px: "$spacing$3",
+  height: theme.spacing[11],
+  px: theme.spacing[3],
   listStyle: "none",
-  borderRadius: "$borderRadius$4",
+  borderRadius: theme.borderRadius[4],
   outline: 0,
   variants: {
     state: {
@@ -31,8 +32,7 @@ const ListItemBase = styled("li", {
         pointerEvents: "none",
       },
       selected: {
-        boxShadow:
-          "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
+        boxShadow: `0px 0px 0px 2px ${theme.colors.blue10}, 0px 0px 0px 2px ${theme.colors.blue10}`,
       },
     },
   },

@@ -2,10 +2,11 @@ import { Box, Flex, Toaster } from "@webstudio-is/design-system";
 import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { type Publish } from "~/shared/pubsub";
+import { theme } from "@webstudio-is/design-system";
 
 const workspaceStyle = {
   flexGrow: 1,
-  background: "$gray3",
+  background: theme.colors.gray3,
   // scroll behaviour should be derived from the iframe
   overflow: "hidden",
   scrollbarGutter: "stable",
