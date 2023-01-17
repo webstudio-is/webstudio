@@ -67,7 +67,7 @@ importers:
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/prisma-client': workspace:^
       '@webstudio-is/project': workspace:^
-      '@webstudio-is/remix-config': workspace:^
+      '@webstudio-is/remix': workspace:^
       '@webstudio-is/storybook-config': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       babel-loader: ^8.2.5
@@ -94,7 +94,7 @@ importers:
       '@webstudio-is/design-tokens': link:../../packages/design-tokens
       '@webstudio-is/prisma-client': link:../../packages/prisma-client
       '@webstudio-is/project': link:../../packages/project
-      '@webstudio-is/remix-config': link:../../packages/remix-config
+      '@webstudio-is/remix': link:../../packages/remix
       nanostores: 0.7.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -180,7 +180,7 @@ importers:
       '@webstudio-is/prisma-client': workspace:^
       '@webstudio-is/project': workspace:^
       '@webstudio-is/react-sdk': workspace:^
-      '@webstudio-is/remix-config': workspace:^
+      '@webstudio-is/remix': workspace:^
       '@webstudio-is/storybook-config': workspace:^
       '@webstudio-is/trpc-interface': workspace:^
       '@webstudio-is/tsconfig': workspace:^
@@ -264,7 +264,7 @@ importers:
       '@webstudio-is/prisma-client': link:../../packages/prisma-client
       '@webstudio-is/project': link:../../packages/project
       '@webstudio-is/react-sdk': link:../../packages/react-sdk
-      '@webstudio-is/remix-config': link:../../packages/remix-config
+      '@webstudio-is/remix': link:../../packages/remix
       '@webstudio-is/trpc-interface': link:../../packages/trpc-interface
       bson-objectid: 2.0.4
       camelcase: 6.3.0
@@ -943,7 +943,7 @@ importers:
       typescript: 4.7.4
       zod: 3.19.1
 
-  packages/remix-config:
+  packages/remix:
     specifiers:
       '@remix-run/dev': 1.9.0
     devDependencies:

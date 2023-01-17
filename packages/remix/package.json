@@ -1,5 +1,5 @@
 {
-  "name": "@webstudio-is/remix-config",
+  "name": "@webstudio-is/remix",
   "version": "0.1.0",
   "license": "MIT",
   "devDependencies": {
