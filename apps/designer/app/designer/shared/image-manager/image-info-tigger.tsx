@@ -51,7 +51,7 @@ export const ImageInfoTrigger = ({
         </DeprecatedButton>
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent css={{ zIndex: variables.zIndices[1] }}>
+        <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
           <PopoverHeader title="Asset Details" />
           <ImageInfo
             onDelete={(ids) => {

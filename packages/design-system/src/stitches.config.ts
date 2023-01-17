@@ -161,7 +161,6 @@ const spacing = {
 const {
   styled,
   css,
-  theme,
   createTheme,
   getCssText,
   globalCss,
@@ -409,11 +408,11 @@ const toVariblesNames = (values: VariblesValues): VariblesNames => {
   return result as VariblesNames;
 };
 
-export const variables = toVariblesNames(config.theme);
+export const theme = toVariblesNames(config.theme);
 
 export type CSS = Stitches.CSS<typeof config>;
 
-export { styled, css, theme, globalCss, keyframes, config };
+export { styled, css, globalCss, keyframes, config };
 
 export const flushCss = () => {
   const css = getCssText();

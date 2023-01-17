@@ -1,6 +1,6 @@
 /**
  * To run it go to the root:
- *    $ pnpm tsx ./codemod/migrate-css-variables.ts
+ *    $ pnpm tsx ./codemod/migrate-css-theme.ts
  *    $ pnpm run format
  *    $ pnpm run checks
  */
@@ -48,7 +48,7 @@ const printProperty = (name: string) => {
 };
 
 const printVariable = (variableName: string, groupName: string) =>
-  `variables${printProperty(groupName)}${printProperty(variableName)}`;
+  `theme${printProperty(groupName)}${printProperty(variableName)}`;
 
 const guessGroupName = (variableName: string) => {
   if (
@@ -77,7 +77,7 @@ const guessGroupName = (variableName: string) => {
 const migrateVariables = (originalCode: string) => {
   let code = originalCode;
 
-  // "$bar$1" -> variables.bar[1]
+  // "$bar$1" -> theme.bar[1]
   code = code.replaceAll(
     /"\$([a-z0-9]+)(?:\$([a-z0-9]+))?"/gi,
     (orig, match1, match2) => {
@@ -93,7 +93,7 @@ const migrateVariables = (originalCode: string) => {
   );
 
   const replaceStringContent = (
-    string: string,
+    originalString: string,
     originalStringContent: string
   ) => {
     const stringContent = originalStringContent.replaceAll(
@@ -111,28 +111,28 @@ const migrateVariables = (originalCode: string) => {
     );
 
     if (stringContent === originalStringContent) {
-      return string;
+      return originalString;
     }
     return `\`${stringContent}\``;
   };
 
-  // "something $bar$1" -> `something ${variables.bar[1]}`
+  // "something $bar$1" -> `something ${theme.bar[1]}`
   code = code.replaceAll(/"([^"]*)"/g, replaceStringContent);
 
-  // `something $bar$1` -> `something ${variables.bar[1]}`
+  // `something $bar$1` -> `something ${theme.bar[1]}`
   code = code.replaceAll(/`([^`]*)`/g, replaceStringContent);
 
   return code;
 };
 
 const addImport = (code: string, filePath: string) => {
-  let importCode = `import { variables } from "@webstudio-is/design-system";`;
+  let importCode = `import { theme } from "@webstudio-is/design-system";`;
 
   const pathParts = filePath.split(path.sep);
   const designSystemIndex = pathParts.indexOf("design-system");
 
   if (designSystemIndex !== -1) {
-    importCode = `import { variables } from "${"../".repeat(
+    importCode = `import { theme } from "${"../".repeat(
       pathParts.length - designSystemIndex - 3
     )}stitches.config";`;
   }

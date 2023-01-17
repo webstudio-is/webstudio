@@ -134,7 +134,7 @@ export const Menu = ({ publish }: MenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent
-          css={{ zIndex: variables.zIndices[1] }}
+          css={{ zIndex: theme.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
         >

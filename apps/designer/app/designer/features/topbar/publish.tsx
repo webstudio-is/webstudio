@@ -59,7 +59,7 @@ const Content = ({ project }: PublishButtonProps) => {
               target="_blank"
               css={{
                 display: "flex",
-                gap: variables.spacing[0],
+                gap: theme.spacing[0],
               }}
             >
               <Text truncate>{`${domain}.${getHost()}`}</Text>

@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/icons";
 import { Box } from "./box";
 
-const VIEWPORT_PADDING = variables.spacing[2];
+const VIEWPORT_PADDING = theme.spacing[2];
 
 const hide = keyframes({
   "0%": { opacity: 1 },
@@ -38,7 +38,7 @@ const StyledViewport = styled(ToastPrimitive.Viewport, {
   maxWidth: "100vw",
   margin: 0,
   listStyle: "none",
-  zIndex: variables.zIndices.max,
+  zIndex: theme.zIndices.max,
   outline: "none",
 });
 
