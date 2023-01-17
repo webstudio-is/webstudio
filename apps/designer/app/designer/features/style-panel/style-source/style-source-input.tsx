@@ -1,3 +1,17 @@
+/*
+ * Style Source Input functionality
+ * - Type a new input with autocomplete
+ * - Select an existing source from a list
+ * - Enter a new source
+ * - Hover the source to see the menu
+ * - Menu provides: Remove, Duplicate, Disable, Edit name
+ * - Drag and drop to reorder
+ * - Click to toggle select/unselect
+ * - Double click to edit name
+ * - Local source can only be disabled, nothing else should be possible
+ * - Hit Backspace to delete the last Source item when you are in the input
+ */
+
 import {
   Box,
   ComboboxListbox,
@@ -19,14 +33,19 @@ import {
   type RefObject,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { ItemSource, StyleSource, type ItemState } from "./style-source";
+import {
+  ItemSource,
+  menuCssVars,
+  StyleSource,
+  type ItemState,
+} from "./style-source";
 import { useSortable } from "./use-sortable";
 import { theme } from "@webstudio-is/design-system";
 
 type IntermediateItem = {
   id: string;
   label: string;
-  hasMenu: boolean;
+  isEditable: boolean;
   state: ItemState;
   source: ItemSource;
 };
@@ -42,15 +61,13 @@ type TextFieldBaseWrapperProps<Item> = Omit<ComponentProps<"input">, "value"> &
     containerRef?: RefObject<HTMLDivElement>;
     inputRef?: RefObject<HTMLInputElement>;
     onRemoveItem?: (item: Item) => void;
-    onDuplicateItem?: (item: Item) => void;
     onChangeItem?: (item: Item) => void;
     onDisableItem?: (item: Item) => void;
     onEnableItem?: (item: Item) => void;
     onSort?: (items: Array<Item>) => void;
-    onSelectItem?: (id: string) => void;
-    onChangeEditing?: (id?: string) => void;
-    editingItemId?: string;
-    currentItemId?: string;
+    onSelectItem?: (item?: Item) => void;
+    onEditItem?: (item?: Item) => void;
+    editingItem?: Item;
   };
 
 const TextFieldBase: ForwardRefRenderFunction<
@@ -72,15 +89,13 @@ const TextFieldBase: ForwardRefRenderFunction<
     label,
     value,
     onRemoveItem,
-    onDuplicateItem,
     onChangeItem,
     onDisableItem,
     onEnableItem,
     onSort,
     onSelectItem,
-    onChangeEditing,
-    currentItemId,
-    editingItemId,
+    onEditItem,
+    editingItem,
     ...textFieldProps
   } = props;
   const [internalInputRef, focusProps] = useTextFieldFocus({
@@ -101,21 +116,23 @@ const TextFieldBase: ForwardRefRenderFunction<
       state={state}
       variant={textFieldVariant}
       css={{ ...css, px: theme.spacing[3], py: theme.spacing[2] }}
+      style={
+        dragItemId ? menuCssVars({ show: false, override: true }) : undefined
+      }
       onKeyDown={onKeyDown}
     >
       {value.map((item, index) => (
         <StyleSource
           id={item.id}
-          state={
-            item.id === dragItemId
-              ? "dragging"
-              : item.id === editingItemId
-              ? "editing"
-              : item.state
-          }
+          isDragging={item.id === dragItemId}
+          isEditing={item.id === editingItem?.id}
+          state={item.state}
           source={item.source}
-          onStateChange={(state) => {
-            onChangeEditing?.(state === "editing" ? item.id : undefined);
+          isEditable={item.isEditable}
+          onChangeEditing={(isEditing) => {
+            onEditItem?.(isEditing ? item : undefined);
+          }}
+          onChangeState={(state) => {
             if (state === "disabled") {
               onDisableItem?.(item);
             }
@@ -124,26 +141,22 @@ const TextFieldBase: ForwardRefRenderFunction<
             }
           }}
           onSelect={() => {
-            onSelectItem?.(item.id);
+            onSelectItem?.(item.state === "selected" ? undefined : item);
           }}
-          onChange={(label) => {
-            onChangeEditing?.();
+          onChangeValue={(label) => {
+            onEditItem?.();
             onChangeItem?.({ ...item, label });
-          }}
-          onDuplicate={() => {
-            onDuplicateItem?.(item);
           }}
           onRemove={() => {
             onRemoveItem?.(item);
           }}
           label={item.label}
-          hasMenu={item.hasMenu}
           key={index}
         />
       ))}
       {placementIndicator}
       {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItemId === undefined && (
+      {editingItem?.id === undefined && (
         <TextFieldInput
           {...textFieldProps}
           value={label}
@@ -152,6 +165,7 @@ const TextFieldBase: ForwardRefRenderFunction<
           onClick={onClick}
           ref={mergeRefs(internalInputRef, inputRef ?? null)}
           autoFocus
+          aria-label="New Style Source Input"
         />
       )}
     </TextFieldContainer>
@@ -164,15 +178,13 @@ TextField.displayName = "TextField";
 type StyleSourceInputProps<Item> = {
   items?: Array<Item>;
   value?: Array<Item>;
-  editingItemId?: string;
-  currentItemId?: string;
+  editingItem?: Item;
   onSelectAutocompleteItem?: (item: Item) => void;
   onRemoveItem?: (item: Item) => void;
   onCreateItem?: (item: Item) => void;
   onChangeItem?: (item: Item) => void;
-  onSelectItem?: (id: string) => void;
-  onChangeEditing?: (id?: string) => void;
-  onDuplicateItem?: (item: Item) => void;
+  onSelectItem?: (item?: Item) => void;
+  onEditItem?: (item?: Item) => void;
   onDisableItem?: (item: Item) => void;
   onEnableItem?: (item: Item) => void;
   onSort?: (items: Array<Item>) => void;
@@ -195,10 +207,10 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     items: props.items ?? [],
     value: {
       label,
-      hasMenu: true,
       state: "unselected",
       id: "",
       source: "local",
+      isEditable: true,
     },
     selectedItem: undefined,
     itemToString: (item) => (item ? item.label : ""),
@@ -219,7 +231,7 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
     onKeyPress(event) {
       if (event.key === "Enter" && label.trim() !== "") {
         setLabel("");
-        props.onCreateItem?.({ label, hasMenu: true } as Item);
+        props.onCreateItem?.({ label } as Item);
       }
     },
   });
@@ -233,16 +245,14 @@ export const StyleSourceInput = <Item extends IntermediateItem>(
             onRemoveItem={props.onRemoveItem}
             onChangeItem={props.onChangeItem}
             onSelectItem={props.onSelectItem}
-            onChangeEditing={props.onChangeEditing}
-            onDuplicateItem={props.onDuplicateItem}
+            onEditItem={props.onEditItem}
             onDisableItem={props.onDisableItem}
             onEnableItem={props.onEnableItem}
             onSort={props.onSort}
             label={label}
             value={value}
             css={props.css}
-            editingItemId={props.editingItemId}
-            currentItemId={props.currentItemId}
+            editingItem={props.editingItem}
           />
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="start" sideOffset={5}>

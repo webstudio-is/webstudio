@@ -11,37 +11,38 @@ type Item = {
   id: string;
   label: string;
   source: ItemSource;
-  hasMenu: boolean;
+  isEditable: boolean;
   state: ItemState;
 };
 
-const items: Array<Item> = [
+const localItem: Item = {
+  id: uuid(),
+  label: "Local",
+  source: "local",
+  isEditable: false,
+  state: "selected",
+};
+
+const getItems = (): Array<Item> => [
   {
     id: uuid(),
-    label: "Local",
-    source: "local",
-    hasMenu: false,
-    state: "unselected",
-  },
-  {
-    id: uuid(),
-    label: "Apple",
+    label: "Token",
     source: "token",
-    hasMenu: false,
+    isEditable: true,
     state: "unselected",
   },
   {
     id: uuid(),
-    label: "Banana",
+    label: "Tag",
     source: "tag",
-    hasMenu: false,
+    isEditable: true,
     state: "unselected",
   },
   {
     id: uuid(),
-    label: "Orange",
+    label: "State",
     source: "state",
-    hasMenu: false,
+    isEditable: true,
     state: "unselected",
   },
 ];
@@ -55,10 +56,19 @@ const createItem = (
     id: uuid(),
     label,
     source: "token",
-    hasMenu: true,
-    state: "unselected",
+    isEditable: true,
+    state: "selected",
   };
-  setValue([...value, item]);
+  const nextValue = value.map((item) => {
+    if (item.state === "selected") {
+      return {
+        ...item,
+        state: "unselected" as const,
+      };
+    }
+    return item;
+  });
+  setValue([...nextValue, item]);
 };
 
 const removeItem = (
@@ -73,11 +83,11 @@ const removeItem = (
 };
 
 export const Basic: ComponentStory<typeof StyleSourceInput> = () => {
-  const [value, setValue] = useState(items);
+  const [value, setValue] = useState([localItem, ...getItems()]);
   return (
     <StyleSourceInput
       css={{ width: 300 }}
-      items={items}
+      items={getItems()}
       value={value}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
@@ -102,14 +112,14 @@ export const WithTruncatedItem: ComponentStory<
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
-      hasMenu: false,
-      state: "unselected",
+      isEditable: true,
+      state: "selected",
     },
   ]);
   return (
     <StyleSourceInput
       css={{ width: 300 }}
-      items={items}
+      items={getItems()}
       value={value}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
@@ -127,28 +137,39 @@ export const WithTruncatedItem: ComponentStory<
 
 export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
   const [value, setValue] = useState<Array<Item>>([
-    ...items,
+    localItem,
+    ...getItems(),
     {
       id: uuid(),
-      label: "Grape",
+      label: "Disabled",
       source: "token",
-      hasMenu: true,
-      state: "selected",
+
+      isEditable: true,
+      state: "disabled",
     },
   ]);
-  const [editingItemId, setEditingItemId] = useState<string>();
-  const [currentItemId, setCurrentItemId] = useState<string | undefined>(
-    value.at(-1)?.id
-  );
+  const [editingItem, setEditingItem] = useState<Item>();
+
   return (
     <StyleSourceInput
       css={{ width: 300 }}
-      items={items}
+      items={getItems()}
       value={value}
-      editingItemId={editingItemId}
-      currentItemId={currentItemId}
-      onSelectItem={setCurrentItemId}
-      onChangeEditing={setEditingItemId}
+      editingItem={editingItem}
+      onSelectItem={(itemToSelect) => {
+        setValue(
+          value.map((item) => {
+            if (item.id === itemToSelect?.id) {
+              return { ...item, state: "selected" };
+            }
+            if (item.state === "selected") {
+              return { ...item, state: "unselected" };
+            }
+            return item;
+          })
+        );
+      }}
+      onEditItem={setEditingItem}
       onCreateItem={({ label }) => {
         createItem(label, value, setValue);
       }}
@@ -187,21 +208,6 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
             return item;
           })
         );
-      }}
-      onDuplicateItem={(itemToDuplicate) => {
-        const duplicatedItem = {
-          ...itemToDuplicate,
-          id: uuid(),
-          label: itemToDuplicate.label + " Copy",
-        };
-        const nextValue = value.map((item) => {
-          if (item.id === itemToDuplicate.id) {
-            return duplicatedItem;
-          }
-          return item;
-        });
-        setValue(nextValue);
-        setEditingItemId(duplicatedItem.id);
       }}
       onSort={setValue}
     />

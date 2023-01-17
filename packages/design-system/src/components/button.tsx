@@ -5,8 +5,7 @@
 
 import React, { forwardRef, type Ref, type ComponentProps } from "react";
 import { Text } from "./text";
-import { styled } from "../stitches.config";
-import { theme } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
 const backgroundColors = ({

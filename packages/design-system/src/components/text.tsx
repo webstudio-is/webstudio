@@ -1,5 +1,4 @@
-import { css, styled } from "../stitches.config";
-import { theme } from "../stitches.config";
+import { css, styled, theme } from "../stitches.config";
 
 export const textStyles = css({
   // Reset
@@ -19,6 +18,11 @@ export const textStyles = css({
         fontWeight: 500,
         fontSize: theme.fontSize[3],
         letterSpacing: "0.005em",
+      },
+      small: {
+        fontWeight: 400,
+        fontSize: theme.fontSize[2],
+        letterSpacing: "0.01em",
       },
       tiny: {
         fontWeight: 400,
