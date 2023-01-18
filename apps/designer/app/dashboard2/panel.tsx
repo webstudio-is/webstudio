@@ -5,6 +5,7 @@ export const Panel = styled(Box, {
   padding: theme.spacing[13],
   margin: theme.spacing[13],
   borderRadius: theme.borderRadius[6],
+  minWidth: 550,
   // @todo - use theme
   //boxShadow: theme.boxShadow.brandElevationBig
 });
