@@ -2,7 +2,8 @@ import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { Flex, Button, Text, TextField } from "@webstudio-is/design-system";
-import interStyles from "~/shared/font-faces/inter.css";
+// eslint-disable-next-line import/no-internal-modules
+import interFont from "@fontsource/inter/index.css";
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./login-button";
 import loginStyles from "./login.css";
@@ -13,7 +14,7 @@ export const links: LinksFunction = () => {
   return [
     {
       rel: "stylesheet",
-      href: interStyles,
+      href: interFont,
     },
     {
       rel: "stylesheet",

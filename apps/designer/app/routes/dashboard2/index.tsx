@@ -8,6 +8,8 @@ import { zfd } from "zod-form-data";
 import { type Project, User as DbUser } from "@webstudio-is/prisma-client";
 import { designerPath, loginPath } from "~/shared/router-utils";
 
+export { links } from "~/dashboard2";
+
 type User = Omit<DbUser, "createdAt"> & {
   createdAt: string;
 };
