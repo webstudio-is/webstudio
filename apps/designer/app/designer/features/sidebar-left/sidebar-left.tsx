@@ -1,17 +1,18 @@
 import { useState } from "react";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   SidebarTabs,
   SidebarTabsContent,
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "@webstudio-is/design-system";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useDragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
-import { isFeatureEnabled } from "~/shared/feature-flags";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 const none = { TabContent: () => null };
 
@@ -64,8 +65,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
-            zIndex: "$1",
-            width: "$spacing$30",
+            zIndex: theme.zIndices[1],
+            width: theme.spacing[30],
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.
             visibility:

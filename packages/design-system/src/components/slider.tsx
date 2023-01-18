@@ -1,12 +1,13 @@
 import React from "react";
 import { styled, CSS } from "../stitches.config";
 import * as SliderPrimitive from "@radix-ui/react-slider";
+import { theme } from "../stitches.config";
 
 const SliderTrack = styled(SliderPrimitive.Track, {
   position: "relative",
   flexGrow: 1,
-  backgroundColor: "$slate7",
-  borderRadius: "$borderRadius$pill",
+  backgroundColor: theme.colors.slate7,
+  borderRadius: theme.borderRadius.pill,
   '&[data-orientation="horizontal"]': {
     height: 2,
   },
@@ -18,7 +19,7 @@ const SliderTrack = styled(SliderPrimitive.Track, {
 
 const SliderRange = styled(SliderPrimitive.Range, {
   position: "absolute",
-  background: "$blue9",
+  background: theme.colors.blue9,
   borderRadius: "inherit",
   '&[data-orientation="horizontal"]': {
     height: "100%",
@@ -36,7 +37,7 @@ const SliderThumb = styled(SliderPrimitive.Thumb, {
   outline: "none",
   backgroundColor: "white",
   boxShadow: "0 0 1px rgba(0,0,0,.3), 0 1px 4px rgba(0,0,0,.15)",
-  borderRadius: "$borderRadius$round",
+  borderRadius: theme.borderRadius.round,
 
   "&::after": {
     content: '""',
@@ -48,7 +49,7 @@ const SliderThumb = styled(SliderPrimitive.Thumb, {
     zIndex: -2,
     backgroundColor: "hsla(0,0%,0%,.035)",
     transform: "scale(1)",
-    borderRadius: "$borderRadius$round",
+    borderRadius: theme.borderRadius.round,
     transition: "transform 200ms cubic-bezier(0.22, 1, 0.36, 1)",
   },
 
@@ -77,7 +78,7 @@ export const StyledSlider = styled(SliderPrimitive.Root, {
   "@hover": {
     "&:hover": {
       [`& ${SliderTrack}`]: {
-        backgroundColor: "$slate8",
+        backgroundColor: theme.colors.slate8,
       },
     },
   },

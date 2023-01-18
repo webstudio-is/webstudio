@@ -3,37 +3,37 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { styled } from "../stitches.config";
 import { Tooltip } from "./tooltip";
 import { IconButton } from "./icon-button";
+import { theme } from "../stitches.config";
 
 const StyledContent = styled(DropdownMenuPrimitive.Content, {
   width: 192,
   maxHeight: 238,
   overflow: "auto",
-  backgroundColor: "$colors$slate4",
-  borderRadius: "$borderRadius$4",
-  padding: "$spacing$5",
-  boxShadow:
-    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$gray1, 0 0 0 1px $colors$gray8",
+  backgroundColor: theme.colors.slate4,
+  borderRadius: theme.borderRadius[4],
+  padding: theme.spacing[5],
+  boxShadow: `0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px ${theme.colors.gray1}, 0 0 0 1px ${theme.colors.gray8}`,
 });
 
 const itemStyles = {
   all: "unset",
-  fontSize: "$fontSize$3",
+  fontSize: theme.fontSize[3],
   lineHeight: 1,
-  color: "$colors$slate12",
-  borderRadius: "$borderRadius$4",
+  color: theme.colors.slate12,
+  borderRadius: theme.borderRadius[4],
   display: "flex",
   alignItems: "center",
-  height: "$spacing$11",
-  padding: "0 $spacing$11",
+  height: theme.spacing[11],
+  padding: `0 ${theme.spacing[11]}`,
   position: "relative",
-  paddingLeft: "$spacing$11",
-  paddingRight: "$spacing$11",
+  paddingLeft: theme.spacing[11],
+  paddingRight: theme.spacing[11],
   userSelect: "none",
-  gap: "$spacing$5",
+  gap: theme.spacing[5],
   "&[data-highlighted]": {
-    background: "$colors$blue10",
-    color: "$colors$blue1",
-    "& *": { fill: "$colors$blue1" },
+    background: theme.colors.blue10,
+    color: theme.colors.blue1,
+    "& *": { fill: theme.colors.blue1 },
   },
 };
 
@@ -48,8 +48,8 @@ const itemIndicatorStyle = {
 
 const arrowStyle = {
   "& *": {
-    fill: "$colors$gray4",
-    stroke: "$colors$gray8",
+    fill: theme.colors.gray4,
+    stroke: theme.colors.gray8,
   },
 };
 

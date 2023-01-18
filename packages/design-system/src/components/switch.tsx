@@ -1,6 +1,7 @@
 import React from "react";
 import { styled, VariantProps, CSS } from "../stitches.config";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
+import { theme } from "../stitches.config";
 
 const StyledThumb = styled(SwitchPrimitive.Thumb, {
   position: "absolute",
@@ -8,14 +9,14 @@ const StyledThumb = styled(SwitchPrimitive.Thumb, {
   width: 13,
   height: 13,
   backgroundColor: "white",
-  borderRadius: "$borderRadius$round",
+  borderRadius: theme.borderRadius.round,
   boxShadow: "rgba(0, 0, 0, 0.3) 0px 0px 1px, rgba(0, 0, 0, 0.2) 0px 1px 2px;",
   transition: "transform 100ms cubic-bezier(0.22, 1, 0.36, 1)",
-  transform: "translateX($spacing$1)",
+  transform: `translateX(${theme.spacing[1]})`,
   willChange: "transform",
 
   '&[data-state="checked"]': {
-    transform: "translateX($spacing$6)",
+    transform: `translateX(${theme.spacing[6]})`,
   },
 });
 
@@ -40,35 +41,35 @@ const StyledSwitch = styled(SwitchPrimitive.Root, {
   outline: "none",
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
 
-  backgroundColor: "$slate6",
-  borderRadius: "$borderRadius$pill",
+  backgroundColor: theme.colors.slate6,
+  borderRadius: theme.borderRadius.pill,
   position: "relative",
   "&:focus": {
-    boxShadow: "0 0 0 2px $colors$slate8",
+    boxShadow: `0 0 0 2px ${theme.colors.slate8}`,
   },
 
   '&[data-state="checked"]': {
-    backgroundColor: "$blue9",
+    backgroundColor: theme.colors.blue9,
     "&:focus": {
-      boxShadow: "0 0 0 2px $colors$blue8",
+      boxShadow: `0 0 0 2px ${theme.colors.blue8}`,
     },
   },
 
   variants: {
     size: {
       "1": {
-        width: "$spacing$11",
-        height: "$spacing$9",
+        width: theme.spacing[11],
+        height: theme.spacing[9],
       },
       "2": {
-        width: "$spacing$17",
-        height: "$spacing$11",
+        width: theme.spacing[17],
+        height: theme.spacing[11],
         [`& ${StyledThumb}`]: {
           width: 21,
           height: 21,
-          transform: "translateX($spacing$2)",
+          transform: `translateX(${theme.spacing[2]})`,
           '&[data-state="checked"]': {
-            transform: "translateX(2$spacing$2)",
+            transform: `translateX(2${theme.spacing[2]})`,
           },
         },
       },

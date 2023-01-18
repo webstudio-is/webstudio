@@ -3,6 +3,7 @@ import { DeprecatedButton, Flex, Text } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
+import { theme } from "@webstudio-is/design-system";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -16,8 +17,8 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
         ghost
         onClick={onClick}
         css={{
-          color: "$hiContrast",
-          px: "$spacing$5",
+          color: theme.colors.hiContrast,
+          px: theme.spacing[5],
           borderRadius: "100vh",
           height: "100%",
         }}

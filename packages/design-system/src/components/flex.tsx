@@ -1,4 +1,5 @@
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 export const Flex = styled("div", {
   boxSizing: "border-box",
@@ -65,31 +66,31 @@ export const Flex = styled("div", {
     },
     gap: {
       1: {
-        gap: "$spacing$3",
+        gap: theme.spacing[3],
       },
       2: {
-        gap: "$spacing$5",
+        gap: theme.spacing[5],
       },
       3: {
-        gap: "$spacing$9",
+        gap: theme.spacing[9],
       },
       4: {
-        gap: "$spacing$10",
+        gap: theme.spacing[10],
       },
       5: {
-        gap: "$spacing$11",
+        gap: theme.spacing[11],
       },
       6: {
-        gap: "$spacing$13",
+        gap: theme.spacing[13],
       },
       7: {
-        gap: "$spacing$17",
+        gap: theme.spacing[17],
       },
       8: {
-        gap: "$spacing$19",
+        gap: theme.spacing[19],
       },
       9: {
-        gap: "$spacing$20",
+        gap: theme.spacing[20],
       },
     },
     shrink: {

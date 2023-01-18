@@ -3,6 +3,7 @@ import { styled, VariantProps, CSS } from "../stitches.config";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { Box } from "./box";
 import { Status } from "./status";
+import { theme } from "../stitches.config";
 
 const StyledAvatar = styled(AvatarPrimitive.Root, {
   alignItems: "center",
@@ -21,7 +22,7 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
   outline: "none",
   padding: "0",
   fontWeight: "500",
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
 
   "&::before": {
     content: '""',
@@ -37,108 +38,108 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
   variants: {
     size: {
       "1": {
-        width: "$spacing$9",
-        height: "$spacing$9",
+        width: theme.spacing[9],
+        height: theme.spacing[9],
       },
       "2": {
-        width: "$spacing$11",
-        height: "$spacing$11",
+        width: theme.spacing[11],
+        height: theme.spacing[11],
       },
       "3": {
-        width: "$spacing$13",
-        height: "$spacing$13",
+        width: theme.spacing[13],
+        height: theme.spacing[13],
       },
       "4": {
-        width: "$spacing$17",
-        height: "$spacing$17",
+        width: theme.spacing[17],
+        height: theme.spacing[17],
       },
       "5": {
-        width: "$spacing$19",
-        height: "$spacing$19",
+        width: theme.spacing[19],
+        height: theme.spacing[19],
       },
       "6": {
-        width: "$spacing$20",
-        height: "$spacing$20",
+        width: theme.spacing[20],
+        height: theme.spacing[20],
       },
     },
     variant: {
       hiContrast: {
-        backgroundColor: "$hiContrast",
-        color: "$loContrast",
+        backgroundColor: theme.colors.hiContrast,
+        color: theme.colors.loContrast,
       },
       gray: {
-        backgroundColor: "$slate6",
+        backgroundColor: theme.colors.slate6,
       },
       tomato: {
-        backgroundColor: "$tomato5",
+        backgroundColor: theme.colors.tomato5,
       },
       red: {
-        backgroundColor: "$red5",
+        backgroundColor: theme.colors.red5,
       },
       crimson: {
-        backgroundColor: "$crimson5",
+        backgroundColor: theme.colors.crimson5,
       },
       pink: {
-        backgroundColor: "$pink5",
+        backgroundColor: theme.colors.pink5,
       },
       plum: {
-        backgroundColor: "$plum5",
+        backgroundColor: theme.colors.plum5,
       },
       purple: {
-        backgroundColor: "$purple5",
+        backgroundColor: theme.colors.purple5,
       },
       violet: {
-        backgroundColor: "$violet5",
+        backgroundColor: theme.colors.violet5,
       },
       indigo: {
-        backgroundColor: "$indigo5",
+        backgroundColor: theme.colors.indigo5,
       },
       blue: {
-        backgroundColor: "$blue5",
+        backgroundColor: theme.colors.blue5,
       },
       cyan: {
-        backgroundColor: "$cyan5",
+        backgroundColor: theme.colors.cyan5,
       },
       teal: {
-        backgroundColor: "$teal5",
+        backgroundColor: theme.colors.teal5,
       },
       green: {
-        backgroundColor: "$green5",
+        backgroundColor: theme.colors.green5,
       },
       grass: {
-        backgroundColor: "$grass5",
+        backgroundColor: theme.colors.grass5,
       },
       brown: {
-        backgroundColor: "$brown5",
+        backgroundColor: theme.colors.brown5,
       },
       bronze: {
-        backgroundColor: "$bronze5",
+        backgroundColor: theme.colors.bronze5,
       },
       gold: {
-        backgroundColor: "$gold5",
+        backgroundColor: theme.colors.gold5,
       },
       sky: {
-        backgroundColor: "$sky5",
+        backgroundColor: theme.colors.sky5,
       },
       mint: {
-        backgroundColor: "$mint5",
+        backgroundColor: theme.colors.mint5,
       },
       lime: {
-        backgroundColor: "$lime5",
+        backgroundColor: theme.colors.lime5,
       },
       yellow: {
-        backgroundColor: "$yellow5",
+        backgroundColor: theme.colors.yellow5,
       },
       amber: {
-        backgroundColor: "$amber5",
+        backgroundColor: theme.colors.amber5,
       },
       orange: {
-        backgroundColor: "$orange5",
+        backgroundColor: theme.colors.orange5,
       },
     },
     shape: {
       square: {
-        borderRadius: "$borderRadius$6",
+        borderRadius: theme.borderRadius[6],
       },
       circle: {
         borderRadius: "50%",
@@ -201,23 +202,23 @@ const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
   variants: {
     size: {
       "1": {
-        fontSize: "$fontSize$2",
-        lineHeight: "$lineHeight$3",
+        fontSize: theme.fontSize[2],
+        lineHeight: theme.lineHeight[3],
       },
       "2": {
-        fontSize: "$fontSize$4",
+        fontSize: theme.fontSize[4],
       },
       "3": {
-        fontSize: "$fontSize$6",
+        fontSize: theme.fontSize[6],
       },
       "4": {
-        fontSize: "$fontSize$7",
+        fontSize: theme.fontSize[7],
       },
       "5": {
-        fontSize: "$fontSize$8",
+        fontSize: theme.fontSize[8],
       },
       "6": {
-        fontSize: "$fontSize$9",
+        fontSize: theme.fontSize[9],
       },
     },
   },
@@ -227,7 +228,7 @@ const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
 });
 
 export const AvatarNestedItem = styled("div", {
-  boxShadow: "0 0 0 2px $colors$loContrast",
+  boxShadow: `0 0 0 2px ${theme.colors.loContrast}`,
   borderRadius: "50%",
 });
 
@@ -235,7 +236,7 @@ export const AvatarGroup = styled("div", {
   display: "flex",
   flexDirection: "row-reverse",
   [`& ${AvatarNestedItem}:nth-child(n+2)`]: {
-    marginRight: "-$spacing$3",
+    marginRight: `-${theme.spacing[3]}`,
   },
 });
 
@@ -286,10 +287,10 @@ export const Avatar = React.forwardRef<
               position: "absolute",
               bottom: "0",
               right: "0",
-              boxShadow: "0 0 0 3px $colors$loContrast",
-              borderRadius: "$borderRadius$round",
-              mr: "-$spacing$2",
-              mb: "-$spacing$2",
+              boxShadow: `0 0 0 3px ${theme.colors.loContrast}`,
+              borderRadius: theme.borderRadius.round,
+              mr: `-${theme.spacing[2]}`,
+              mb: `-${theme.spacing[2]}`,
             }}
           >
             <Status size={size && size > 2 ? "2" : "1"} variant={status} />

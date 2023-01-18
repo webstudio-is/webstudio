@@ -17,6 +17,7 @@ import { PlusIcon } from "@webstudio-is/icons";
 import { DesignToken } from "@webstudio-is/design-tokens";
 import { useDesignTokens } from "~/shared/nano-states";
 import { findByName } from "./utils";
+import { theme } from "@webstudio-is/design-system";
 
 const validate = (
   tokens: Array<DesignToken>,
@@ -158,20 +159,24 @@ export const TokenEditor = ({
         )}
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent align="end" css={{ zIndex: "$zIndices$1" }}>
+        <PopoverContent align="end" css={{ zIndex: theme.zIndices[1] }}>
           <form onChange={handleChange} onSubmit={handleSubmit} ref={formRef}>
-            <Flex direction="column" gap="2" css={{ padding: "$spacing$7" }}>
+            <Flex
+              direction="column"
+              gap="2"
+              css={{ padding: theme.spacing[7] }}
+            >
               <Label htmlFor="name">Name</Label>
               <InputErrorsTooltip
                 errors={getErrors("name", validationResult)}
-                css={{ zIndex: "$zIndices$2" }}
+                css={{ zIndex: theme.zIndices[2] }}
               >
                 <TextField id="name" name="name" defaultValue={token?.name} />
               </InputErrorsTooltip>
               <Label htmlFor="value">Value</Label>
               <InputErrorsTooltip
                 errors={getErrors("value", validationResult)}
-                css={{ zIndex: "$zIndices$2" }}
+                css={{ zIndex: theme.zIndices[2] }}
               >
                 <TextField
                   id="value"

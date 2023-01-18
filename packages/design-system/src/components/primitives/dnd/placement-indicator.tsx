@@ -1,10 +1,11 @@
 import { Box } from "../../box";
 import { type Placement } from "./geometry-utils";
+import { theme } from "../../../stitches.config";
 
 const placementStyle = {
   boxSizing: "content-box",
   position: "absolute",
-  background: "$blue10",
+  background: theme.colors.blue10,
   pointerEvents: "none",
 };
 

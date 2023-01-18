@@ -1,0 +1,41 @@
+{
+  "name": "@webstudio-is/trpc-interface",
+  "version": "0.20.0",
+  "description": "Webstudio TRPC Interface",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "checks": "pnpm typecheck && pnpm lint",
+    "dev": "build-package --watch",
+    "build": "build-package",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0"
+  },
+  "dependencies": {
+    "@trpc/client": "^10.9.0",
+    "@trpc/server": "^10.9.0",
+    "@webstudio-is/prisma-client": "workspace:^",
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.21",
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "@webstudio-is/jest-config": "workspace:^",
+    "typescript": "4.7.4"
+  },
+  "exports": {
+    "./server": "./server.js"
+  },
+  "types": "src/index.server.ts",
+  "files": [
+    "lib/*",
+    "src/*",
+    "!*.test.*"
+  ],
+  "license": "MIT",
+  "private": false,
+  "sideEffects": false
+}

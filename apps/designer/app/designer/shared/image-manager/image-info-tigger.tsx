@@ -11,6 +11,7 @@ import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import { ImageInfo } from "./image-info";
 import { cssVars } from "@webstudio-is/css-vars";
 import { Asset } from "@webstudio-is/asset-uploader";
+import { theme } from "@webstudio-is/design-system";
 
 const triggerVisibilityVar = cssVars.define("trigger-visibility");
 
@@ -36,22 +37,22 @@ export const ImageInfoTrigger = ({
           css={{
             visibility: cssVars.use(triggerVisibilityVar, "hidden"),
             position: "absolute",
-            color: "$slate11",
-            top: "$spacing$3",
-            right: "$spacing$3",
+            color: theme.colors.slate11,
+            top: theme.spacing[3],
+            right: theme.spacing[3],
             cursor: "pointer",
             transition: "opacity 100ms ease",
             "&:hover": {
-              color: "$hiContrast",
+              color: theme.colors.hiContrast,
             },
-            ...gearIconCssVars({ fill: "$colors$loContrast" }),
+            ...gearIconCssVars({ fill: theme.colors.loContrast }),
           }}
         >
           <GearIcon />
         </DeprecatedButton>
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent css={{ zIndex: "$1" }}>
+        <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
           <PopoverHeader title="Asset Details" />
           <ImageInfo
             onDelete={(ids) => {

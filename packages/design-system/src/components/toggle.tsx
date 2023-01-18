@@ -1,5 +1,6 @@
 import { styled } from "../stitches.config";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
+import { theme } from "../stitches.config";
 
 export const Toggle = styled(TogglePrimitive.Root, {
   // Reset
@@ -10,7 +11,7 @@ export const Toggle = styled(TogglePrimitive.Root, {
   display: "inline-flex",
   flexShrink: 0,
   fontFamily: "inherit",
-  fontSize: "$fontSize$4",
+  fontSize: theme.fontSize[4],
   justifyContent: "center",
   lineHeight: "1",
   outline: "none",
@@ -18,48 +19,48 @@ export const Toggle = styled(TogglePrimitive.Root, {
   textDecoration: "none",
   userSelect: "none",
   WebkitTapHighlightColor: "transparent",
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   "&::before": {
     boxSizing: "border-box",
   },
   "&::after": {
     boxSizing: "border-box",
   },
-  height: "$spacing$11",
-  width: "$spacing$11",
+  height: theme.spacing[11],
+  width: theme.spacing[11],
   backgroundColor: "transparent",
   "@hover": {
     "&:hover": {
-      backgroundColor: "$slateA3",
+      backgroundColor: theme.colors.slateA3,
     },
   },
   "&:active": {
-    backgroundColor: "$slateA4",
+    backgroundColor: theme.colors.slateA4,
   },
   "&:focus": {
-    boxShadow: "inset 0 0 0 1px $slateA8, 0 0 0 1px $slateA8",
+    boxShadow: `inset 0 0 0 1px ${theme.colors.slateA8}, 0 0 0 1px ${theme.colors.slateA8}`,
     zIndex: 1,
   },
 
   '&[data-state="on"]': {
-    backgroundColor: "$slateA5",
+    backgroundColor: theme.colors.slateA5,
     "@hover": {
       "&:hover": {
-        backgroundColor: "$slateA5",
+        backgroundColor: theme.colors.slateA5,
       },
     },
     "&:active": {
-      backgroundColor: "$slateA7",
+      backgroundColor: theme.colors.slateA7,
     },
   },
 
   variants: {
     shape: {
       circle: {
-        borderRadius: "$borderRadius$round",
+        borderRadius: theme.borderRadius.round,
       },
       square: {
-        borderRadius: "$borderRadius$4",
+        borderRadius: theme.borderRadius[4],
       },
     },
   },

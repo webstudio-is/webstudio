@@ -7,6 +7,7 @@ import { useSubscribe, publish } from "~/shared/pubsub";
 import { utils } from "@webstudio-is/project";
 import type { TextToolbarState } from "~/designer/shared/nano-states";
 import { TextEditor } from "./text-editor";
+import { theme } from "@webstudio-is/design-system";
 
 export default {
   component: TextEditor,
@@ -89,7 +90,7 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
       <Box
         css={{
           "& > div": {
-            padding: "0 $spacing$5",
+            padding: `0 ${theme.spacing[5]}`,
             border: "1px solid #999",
             color: "black",
           },

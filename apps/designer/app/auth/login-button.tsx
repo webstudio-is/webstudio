@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
 import env from "~/shared/env";
+import { theme } from "@webstudio-is/design-system";
 
 const isPreviewEnvironment = env.VERCEL_ENV === "preview";
 
@@ -25,10 +26,11 @@ export const LoginButton = ({
       {...props}
       type="submit"
       disabled={disabled}
+      variant="neutral"
       css={{ width: "100%" }}
     >
       <Flex gap="2" align="center">
-        <Flex css={{ size: "$spacing$10" }}>{icon}</Flex>
+        <Flex css={{ size: theme.spacing[10] }}>{icon}</Flex>
         {children}
       </Flex>
     </Button>

@@ -28,6 +28,7 @@ export const dashboardPath = () => "/dashboard";
 export const loginPath = (params: {
   error?: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
   message?: string;
+  returnTo?: string;
 }) => `/login${searchParams(params)}`;
 
 export const logoutPath = () => "/logout";

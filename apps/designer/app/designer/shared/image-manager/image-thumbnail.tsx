@@ -5,6 +5,7 @@ import { ImageInfoTrigger, imageInfoTriggerCssVars } from "./image-info-tigger";
 import type { AssetContainer } from "~/designer/shared/assets";
 import { Filename } from "./filename";
 import { Image } from "./image";
+import { theme } from "@webstudio-is/design-system";
 
 const ThumbnailContainer = styled(Box, {
   position: "relative",
@@ -12,13 +13,13 @@ const ThumbnailContainer = styled(Box, {
   justifyContent: "center",
   alignItems: "center",
   flexDirection: "column",
-  margin: "$spacing$2",
+  margin: theme.spacing[2],
   border: "2px solid transparent",
-  borderRadius: "$borderRadius$4",
+  borderRadius: theme.borderRadius[4],
   outline: 0,
-  gap: "$spacing$3",
+  gap: theme.spacing[3],
   overflow: "hidden",
-  backgroundColor: "$slate4",
+  backgroundColor: theme.colors.slate4,
   "&:hover": imageInfoTriggerCssVars({ show: true }),
   variants: {
     status: {
@@ -28,8 +29,7 @@ const ThumbnailContainer = styled(Box, {
     },
     state: {
       selected: {
-        boxShadow:
-          "0px 0px 0px 2px $colors$blue10, 0px 0px 0px 2px $colors$blue10",
+        boxShadow: `0px 0px 0px 2px ${theme.colors.blue10}, 0px 0px 0px 2px ${theme.colors.blue10}`,
       },
     },
   },
@@ -37,7 +37,7 @@ const ThumbnailContainer = styled(Box, {
 
 const Thumbnail = styled(Box, {
   width: "100%",
-  height: "$spacing$19",
+  height: theme.spacing[19],
   flexShrink: 0,
   position: "relative",
 });

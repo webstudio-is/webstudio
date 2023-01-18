@@ -34,6 +34,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
+import { theme } from "@webstudio-is/design-system";
 
 // We increment by 10 when shift is pressed, by 0.1 when alt/option is pressed and by 1 by default.
 const calcNumberChange = (
@@ -517,20 +518,20 @@ const CssValueInputIconButton = styled(TextFieldIcon, {
   variants: {
     state: {
       set: {
-        backgroundColor: "$blue4",
-        color: "$blue11",
+        backgroundColor: theme.colors.blue4,
+        color: theme.colors.blue11,
         "&:hover": {
-          backgroundColor: "$blue4",
-          color: "$blue11",
+          backgroundColor: theme.colors.blue4,
+          color: theme.colors.blue11,
         },
       },
 
       inherited: {
-        backgroundColor: "$orange4",
-        color: "$orange11",
+        backgroundColor: theme.colors.orange4,
+        color: theme.colors.orange11,
         "&:hover": {
-          backgroundColor: "$orange4",
-          color: "$orange11",
+          backgroundColor: theme.colors.orange4,
+          color: theme.colors.orange11,
         },
       },
     },

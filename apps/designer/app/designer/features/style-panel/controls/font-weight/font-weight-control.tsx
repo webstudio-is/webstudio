@@ -4,6 +4,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
 import { useAssets } from "~/designer/shared/assets";
 import type { ControlProps } from "../../style-sections";
+import { theme } from "@webstudio-is/design-system";
 
 type FontWeightItem = {
   label: string;
@@ -105,10 +106,10 @@ export const FontWeightControl = ({
       ghost
       css={{
         // @todo this shouldn't be in design system by default
-        gap: "calc($spacing$3 / 2)",
-        paddingLeft: "calc($spacing$10 / 2)",
-        height: "calc($spacing$11 + $spacing$3)",
-        boxShadow: "inset 0 0 0 1px $colors$slate7",
+        gap: `calc(${theme.spacing[3]} / 2)`,
+        paddingLeft: `calc(${theme.spacing[10]} / 2)`,
+        height: `calc(${theme.spacing[11]} + ${theme.spacing[3]})`,
+        boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
         textTransform: "capitalize",
         fontWeight: "inherit",
         "&:hover": { background: "none" },

@@ -4,6 +4,7 @@ import { Flex, SearchField } from "@webstudio-is/design-system";
 import { AssetUpload } from "./asset-upload";
 import { NotFound } from "./not-found";
 import { Separator } from "./separator";
+import { theme } from "@webstudio-is/design-system";
 
 type AssetsShellProps = {
   searchProps: ComponentProps<typeof SearchField>;
@@ -23,11 +24,11 @@ export const AssetsShell = ({
       direction="column"
       css={{
         overflow: "hidden",
-        py: "$spacing$5",
+        py: theme.spacing[5],
       }}
     >
       <Flex
-        css={{ py: "$spacing$5", px: "$spacing$9" }}
+        css={{ py: theme.spacing[5], px: theme.spacing[9] }}
         gap="2"
         direction="column"
         shrink={false}
@@ -40,7 +41,7 @@ export const AssetsShell = ({
       <Flex
         css={{
           flexDirection: "column",
-          px: "$spacing$9",
+          px: theme.spacing[9],
           overflow: "auto",
         }}
       >

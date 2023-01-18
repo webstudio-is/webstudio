@@ -1,14 +1,15 @@
 import { styled } from "../stitches.config";
 import { DeprecatedText } from "./__DEPRECATED__/text";
+import { theme } from "../stitches.config";
 
 export const Link = styled("a", {
   alignItems: "center",
-  gap: "$spacing$3",
+  gap: theme.spacing[3],
   flexShrink: 0,
   outline: "none",
   textDecorationLine: "none",
   textUnderlineOffset: "3px",
-  textDecorationColor: "$slate4",
+  textDecorationColor: theme.colors.slate4,
   WebkitTapHighlightColor: "rgba(0,0,0,0)",
   lineHeight: "inherit",
   "@hover": {
@@ -28,30 +29,30 @@ export const Link = styled("a", {
   variants: {
     variant: {
       blue: {
-        color: "$blue11",
-        textDecorationColor: "$blue4",
+        color: theme.colors.blue11,
+        textDecorationColor: theme.colors.blue4,
         "&:focus": {
-          outlineColor: "$blue8",
+          outlineColor: theme.colors.blue8,
         },
       },
       subtle: {
-        color: "$slate11",
-        textDecorationColor: "$slate4",
+        color: theme.colors.slate11,
+        textDecorationColor: theme.colors.slate4,
         "&:focus": {
-          outlineColor: "$slate8",
+          outlineColor: theme.colors.slate8,
         },
       },
       contrast: {
-        color: "$hiContrast",
+        color: theme.colors.hiContrast,
         textDecoration: "underline",
-        textDecorationColor: "$slate4",
+        textDecorationColor: theme.colors.slate4,
         "@hover": {
           "&:hover": {
-            textDecorationColor: "$slate7",
+            textDecorationColor: theme.colors.slate7,
           },
         },
         "&:focus": {
-          outlineColor: "$slate8",
+          outlineColor: theme.colors.slate8,
         },
       },
     },

@@ -29,6 +29,7 @@ import {
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
 import { designerPath } from "~/shared/router-utils";
+import { theme } from "@webstudio-is/design-system";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -73,13 +74,13 @@ const staticTreeProps = {
 };
 
 const MenuButton = styled(DeprecatedIconButton, {
-  color: "$hint",
-  "&:hover, &:focus-visible": { color: "$hiContrast" },
+  color: theme.colors.hint,
+  "&:hover, &:focus-visible": { color: theme.colors.hiContrast },
   variants: {
     isParentSelected: {
       true: {
-        color: "$loContrast",
-        "&:hover, &:focus-visible": { color: "$slate7" },
+        color: theme.colors.loContrast,
+        "&:hover, &:focus-visible": { color: theme.colors.slate7 },
       },
     },
   },
@@ -116,7 +117,7 @@ const ItemSuffix = ({
   }, [editingItemId, itemId]);
 
   return (
-    <Flex css={{ mr: "$spacing$5" }} align="center">
+    <Flex css={{ mr: theme.spacing[5] }} align="center">
       <Tooltip content={menuLabel} disableHoverableContent>
         <MenuButton
           aria-label={menuLabel}
@@ -194,7 +195,7 @@ const PagesPanel = ({
         // z-index needed for page settings animation
         zIndex: 1,
         flexGrow: 1,
-        background: "$loContrast",
+        background: theme.colors.loContrast,
       }}
     >
       <Header

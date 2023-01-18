@@ -1,5 +1,9 @@
-import { ComponentStoryObj } from "@storybook/react";
-import { getComponentMetaProps, type UserProp } from "@webstudio-is/react-sdk";
+import type { ComponentStory } from "@storybook/react";
+import {
+  allUserPropsContainer,
+  getComponentMetaProps,
+  type UserProp,
+} from "@webstudio-is/react-sdk";
 import { PropsPanel } from "./props-panel";
 
 export default {
@@ -7,61 +11,85 @@ export default {
   component: PropsPanel,
 };
 
-export const NoProps: ComponentStoryObj<typeof PropsPanel> = {
-  args: {
-    selectedInstanceData: {
-      id: "1",
-      component: "Button",
-      browserStyle: {},
-      props: [
-        {
-          id: "disabled",
-          prop: "disabled",
-          type: "boolean",
-          value: true,
-        },
-      ],
-    },
-  },
+export const NoProps: ComponentStory<typeof PropsPanel> = () => {
+  allUserPropsContainer.set({
+    "1": [
+      {
+        id: "disabled",
+        prop: "disabled",
+        type: "boolean",
+        value: true,
+      },
+    ],
+  });
+  return (
+    <PropsPanel
+      selectedInstanceData={{
+        id: "1",
+        component: "Button",
+        browserStyle: {},
+      }}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      publish={() => {}}
+    />
+  );
 };
 
-export const RequiredProps: ComponentStoryObj<typeof PropsPanel> = {
-  args: {
-    selectedInstanceData: {
-      id: "1",
-      component: "Link",
-      browserStyle: {},
-      props: [],
-    },
-  },
+export const RequiredProps: ComponentStory<typeof PropsPanel> = () => {
+  allUserPropsContainer.set({
+    "1": [],
+  });
+  return (
+    <PropsPanel
+      selectedInstanceData={{
+        id: "1",
+        component: "Link",
+        browserStyle: {},
+      }}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      publish={() => {}}
+    />
+  );
 };
 
-export const DefaultProps: ComponentStoryObj<typeof PropsPanel> = {
-  args: {
-    selectedInstanceData: {
-      id: "1",
-      component: "Button",
-      browserStyle: {},
-      props: [],
-    },
-  },
+export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
+  allUserPropsContainer.set({
+    "1": [],
+  });
+  return (
+    <PropsPanel
+      selectedInstanceData={{
+        id: "1",
+        component: "Button",
+        browserStyle: {},
+      }}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      publish={() => {}}
+    />
+  );
 };
 
 const meta = getComponentMetaProps("Button");
 
-export const AllProps: ComponentStoryObj<typeof PropsPanel> = {
-  args: {
-    selectedInstanceData: {
-      id: "3",
-      component: "Heading",
-      browserStyle: {},
-      props: Object.entries(meta).map(([prop, value]) => {
-        return {
-          id: prop,
-          prop,
-          value: value?.defaultValue ?? "",
-        } as UserProp;
-      }),
-    },
-  },
+export const AllProps: ComponentStory<typeof PropsPanel> = () => {
+  allUserPropsContainer.set({
+    "3": Object.entries(meta).map(([prop, value]) => {
+      return {
+        id: prop,
+        prop,
+        value: value?.defaultValue ?? "",
+      } as UserProp;
+    }),
+  });
+  return (
+    <PropsPanel
+      selectedInstanceData={{
+        id: "3",
+        component: "Heading",
+        browserStyle: {},
+      }}
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      publish={() => {}}
+    />
+  );
 };

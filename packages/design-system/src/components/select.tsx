@@ -4,6 +4,7 @@ import { Grid } from "./grid";
 import { Box } from "./box";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
+import { theme } from "../stitches.config";
 
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   all: "unset",
@@ -11,21 +12,20 @@ const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
   alignItems: "center",
   justifyContent: "space-between",
   fontVariantNumeric: "tabular-nums",
-  gap: "$spacing$5",
+  gap: theme.spacing[5],
   flexShrink: 0,
-  borderRadius: "$borderRadius$4",
-  backgroundColor: "$loContrast",
-  color: "$hiContrast",
-  boxShadow: "inset 0 0 0 1px $colors$slate7",
+  borderRadius: theme.borderRadius[4],
+  backgroundColor: theme.colors.loContrast,
+  color: theme.colors.hiContrast,
+  boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
   height: 28, // @todo waiting for the sizing scale
-  px: "$spacing$5",
-  fontSize: "$fontSize$3",
+  px: theme.spacing[5],
+  fontSize: theme.fontSize[3],
   "&:focus": {
-    boxShadow:
-      "inset 0px 0px 0px 1px $colors$blue8, 0px 0px 0px 1px $colors$blue8",
+    boxShadow: `inset 0px 0px 0px 1px ${theme.colors.blue8}, 0px 0px 0px 1px ${theme.colors.blue8}`,
   },
   paddingRight: 0,
-  paddingLeft: "$spacing$5",
+  paddingLeft: theme.spacing[5],
   textTransform: "capitalize",
   fontWeight: "inherit",
 
@@ -56,41 +56,40 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
   alignItems: "center",
   justifyContent: "center",
   height: "100%",
-  padding: "$spacing$2 $spacing$2 $spacing$2 0px",
+  padding: `${theme.spacing[2]} ${theme.spacing[2]} ${theme.spacing[2]} 0px`,
 });
 
 export const SelectContent = styled(SelectPrimitive.Content, {
   overflow: "hidden",
-  backgroundColor: "$colors$slate4",
-  borderRadius: "$borderRadius$4",
-  boxShadow:
-    "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px $colors$slate1, 0 0 0 1px $colors$slate8",
+  backgroundColor: theme.colors.slate4,
+  borderRadius: theme.borderRadius[4],
+  boxShadow: `0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px ${theme.colors.slate1}, 0 0 0 1px ${theme.colors.slate8}`,
 });
 
 export const SelectViewport = styled(SelectPrimitive.Viewport, {
-  p: "$spacing$3",
+  p: theme.spacing[3],
 });
 
 const StyledItem = styled(SelectPrimitive.Item, {
   all: "unset",
-  fontSize: "$fontSize$3",
+  fontSize: theme.fontSize[3],
   lineHeight: 1,
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   display: "flex",
   alignItems: "center",
-  height: "$spacing$11",
-  padding: "0 $spacing$5",
+  height: theme.spacing[11],
+  padding: `0 ${theme.spacing[5]}`,
   position: "relative",
   userSelect: "none",
-  borderRadius: "$borderRadius$4",
+  borderRadius: theme.borderRadius[4],
 
   "&[data-disabled]": {
-    color: "$muted",
+    color: theme.colors.muted,
     pointerEvents: "none",
   },
 
   "&:focus": {
-    backgroundColor: "$blue10",
+    backgroundColor: theme.colors.blue10,
     color: "white",
   },
 });
@@ -100,7 +99,7 @@ const scrollButtonStyles = {
   alignItems: "center",
   justifyContent: "center",
   height: 25,
-  color: "$hiContrast",
+  color: theme.colors.hiContrast,
   cursor: "default",
 };
 
@@ -120,7 +119,10 @@ const SelectItemBase = (
 ) => {
   return (
     <StyledItem {...props} ref={forwardedRef}>
-      <Grid align="center" css={{ gridTemplateColumns: "$spacing$10 1fr" }}>
+      <Grid
+        align="center"
+        css={{ gridTemplateColumns: `${theme.spacing[10]} 1fr` }}
+      >
         <SelectPrimitive.ItemIndicator>
           <CheckIcon />
         </SelectPrimitive.ItemIndicator>

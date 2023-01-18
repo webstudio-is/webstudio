@@ -19,6 +19,7 @@ import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import env from "~/shared/env";
 import type { Project } from "@webstudio-is/project";
 import { restPublishPath } from "~/shared/router-utils";
+import { theme } from "@webstudio-is/design-system";
 type PublishButtonProps = { project: Project };
 
 const getHost = () => {
@@ -44,7 +45,7 @@ const Content = ({ project }: PublishButtonProps) => {
 
   return (
     <PopoverContent
-      css={{ padding: "$spacing$9" }}
+      css={{ padding: theme.spacing[9] }}
       hideArrow={true}
       onFocusOutside={(event) => {
         // Used to prevent closing when opened from the main dropdown menu
@@ -59,7 +60,7 @@ const Content = ({ project }: PublishButtonProps) => {
               target="_blank"
               css={{
                 display: "flex",
-                gap: "$0",
+                gap: theme.spacing[0],
               }}
             >
               <Text truncate>{`${domain}.${getHost()}`}</Text>
@@ -88,7 +89,10 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild aria-label="Publish">
-        <DeprecatedButton ghost css={{ display: "flex", gap: "$spacing$3" }}>
+        <DeprecatedButton
+          ghost
+          css={{ display: "flex", gap: theme.spacing[3] }}
+        >
           <RocketIcon />
           <Text>Publish</Text>
         </DeprecatedButton>

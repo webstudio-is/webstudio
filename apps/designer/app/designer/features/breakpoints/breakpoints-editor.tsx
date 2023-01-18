@@ -7,6 +7,7 @@ import { Button, TextField, Flex, Text } from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { breakpointsContainer, useBreakpoints } from "~/shared/nano-states";
 import { replaceByOrAppendMutable } from "~/shared/array-utils";
+import { theme } from "@webstudio-is/design-system";
 
 type BreakpointEditorItemProps = {
   breakpoint: Breakpoint;
@@ -53,7 +54,7 @@ const BreakpointEditorItem = ({
     >
       <Flex
         gap="1"
-        css={{ paddingLeft: "$spacing$10", paddingRight: "$spacing$9" }}
+        css={{ paddingLeft: theme.spacing[10], paddingRight: theme.spacing[9] }}
       >
         <TextField
           css={{ width: 100, flexGrow: 1 }}
@@ -112,9 +113,9 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
         gap="1"
         justify="between"
         css={{
-          paddingLeft: "$spacing$11",
-          paddingRight: "$spacing$9",
-          py: "$spacing$3",
+          paddingLeft: theme.spacing[11],
+          paddingRight: theme.spacing[9],
+          py: theme.spacing[3],
         }}
       >
         <Text>Breakpoints</Text>

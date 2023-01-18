@@ -11,6 +11,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { designerPath } from "~/shared/router-utils";
+import { theme } from "@webstudio-is/design-system";
 
 type SelectProjectProjectCardProps = {
   projects: Array<{ id: string; title: string }>;
@@ -73,7 +74,7 @@ export const SelectProjectCard = ({
               </Button>
             </Flex>
             {errors ? (
-              <Text color="error" css={{ marginTop: "$spacing$3" }}>
+              <Text color="error" css={{ marginTop: theme.spacing[3] }}>
                 {errors}
               </Text>
             ) : null}

@@ -4,6 +4,7 @@ import {
   Collapsible,
   Box,
 } from "@webstudio-is/design-system";
+import { theme } from "@webstudio-is/design-system";
 
 const CollapsibleRoot = styled(Collapsible.Root, {
   position: "absolute",
@@ -18,7 +19,7 @@ const CollapsibleRoot = styled(Collapsible.Root, {
 const openKeyframes = keyframes({
   from: {
     opacity: 0.5,
-    transform: "translateX(-$spacing$30)",
+    transform: `translateX(-${theme.spacing[30]})`,
   },
   to: {
     transform: "translateX(0)",
@@ -33,7 +34,7 @@ const closeKeyframes = keyframes({
   },
   to: {
     opacity: 0.2,
-    transform: "translateX(-$spacing$30)",
+    transform: `translateX(-${theme.spacing[30]})`,
   },
 });
 
@@ -43,10 +44,10 @@ const CollapsibleContent = styled(Collapsible.Content, {
   display: "flex",
   flexDirection: "column",
   '&[data-state="open"]': {
-    animation: `${openKeyframes} 200ms $easing$easeOutQuart`,
+    animation: `${openKeyframes} 200ms ${theme.easing.easeOutQuart}`,
   },
   '&[data-state="closed"]': {
-    animation: `${closeKeyframes} 200ms $easing$easeOutQuart`,
+    animation: `${closeKeyframes} 200ms ${theme.easing.easeOutQuart}`,
   },
 });
 
@@ -63,9 +64,9 @@ export const SettingsPanel = ({
         <Box
           css={{
             flexGrow: 1,
-            width: "$spacing$35",
-            background: "$loContrast",
-            borderRight: "1px solid $slate7",
+            width: theme.spacing[35],
+            background: theme.colors.loContrast,
+            borderRight: `1px solid ${theme.colors.slate7}`,
             position: "relative",
           }}
         >

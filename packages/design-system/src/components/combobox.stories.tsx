@@ -9,6 +9,7 @@ import {
   comboboxStateChangeTypes,
 } from "./combobox";
 import { Flex } from "./flex";
+import { theme } from "../stitches.config";
 
 export default {
   component: Combobox,
@@ -82,7 +83,7 @@ export const Complex: ComponentStory<typeof Combobox> = () => {
   return (
     <Flex
       {...getComboboxProps()}
-      css={{ flexDirection: "column", gap: "$spacing$9" }}
+      css={{ flexDirection: "column", gap: theme.spacing[9] }}
     >
       <TextField
         type="search"
