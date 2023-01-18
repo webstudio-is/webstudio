@@ -4,6 +4,7 @@
   "description": "Webstudio HTTP Client",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
+  "type": "module",
   "scripts": {
     "dev": "build-package --watch",
     "build": "build-package",
