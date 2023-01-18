@@ -33,6 +33,24 @@ In case sync provider is not configured in the plugin, you can add one using the
 - File Path: `packages/design-system/src/__generated__/figma-design-tokens.json`
 - baseUrl: leave empty
 
+### Creating a Pull Request
+
+After you've synced the tokens, the updates will be applied in the `figma-tokens` branch but not in the `main` branch yet. To merge the changes into `main`, you need to create a Pull Request.
+
+You don't have to create the Pull Request after every sync, you can do a bunch of syncs and then create a single PR with all the changes.
+
+Only one PR can be open at a time. If a PR is already open, you can continue to do syncs and the changes will be added to the existing PR.
+
+The process:
+
+1. At the last step of the sync you should see a "Create Pull Request" button. Click it. <br/><img src="./assets/11.png" width="418" />
+2. You'll be redirected to GitHub. Enter any title and description. You can describe the changes if they are not obvious.
+3. Assign some reviewers. Feel free to always assign me (@rpominov). A Pull Request can't be merged without at least one review. Also you might need a developer's help if you've renamed or removed a token that was used in code. <br/><img src="./assets/10.png" width="329" />
+4. Click "Create pull request" button. (It might be hidden behind "Draft pull request") <br/><img src="./assets/12.png" width="372" />
+5. In the PR you can already see the changes in the deployed app <br/><img src="./assets/8.png" width="926" />
+6. Also, you can see the cnahges in a Storybook using this link https://figma-tokens--638affb61acca1e593c6e558.chromatic.com/ or by going to the bottom of PR page > "Show all checks" > "Storybook Publish: !webstudio-is/webstudio-designer" > "Details" <br/><img src="./assets/9.png" width="924" />
+7. If you see "This branch is out-of-date with the base branch" message at the bottom, this means that when you look at the changes with the links above, you see all your changes applied, but some of the changes made by developers might not be applied. To fix that, click "Update branch" button, but make sure to choose "Update with merge commit" <br/><img src="./assets/7.png" width="1029" />
+
 ### Links
 
 - https://docs.tokens.studio/sync/github — documentation on sync with GitHub by plugin authors
