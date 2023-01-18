@@ -7,7 +7,7 @@ import {
   Flex,
   Box,
   Text,
-  Label,
+  DeprecatedLabel,
   Tooltip,
   Popover,
   PopoverContent,
@@ -146,7 +146,7 @@ export const PropertyName = ({
     (styleSource === "local" || styleSource === "remote");
 
   const labelElement = (
-    <Label
+    <DeprecatedLabel
       css={{
         fontWeight: "inherit",
         padding: `calc(${theme.spacing[3]} / 2) ${theme.spacing[3]}`,
@@ -166,7 +166,7 @@ export const PropertyName = ({
       htmlFor={property.toString()}
     >
       {label}
-    </Label>
+    </DeprecatedLabel>
   );
 
   if (isPopoverEnabled) {

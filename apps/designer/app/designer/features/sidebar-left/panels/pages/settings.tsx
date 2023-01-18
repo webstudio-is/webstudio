@@ -2,7 +2,7 @@ import {
   DeprecatedIconButton,
   Button,
   Box,
-  Label,
+  DeprecatedLabel,
   TextArea,
   TextField,
   styled,
@@ -83,7 +83,7 @@ const FormFields = ({
   return (
     <>
       <Group>
-        <Label htmlFor={fieldIds.name}>Page Name</Label>
+        <DeprecatedLabel htmlFor={fieldIds.name}>Page Name</DeprecatedLabel>
         <InputErrorsTooltip errors={fieldErrors.name}>
           <TextField
             tabIndex={1}
@@ -103,7 +103,7 @@ const FormFields = ({
       </Group>
       {isHomePage !== true && (
         <Group>
-          <Label htmlFor={fieldIds.path}>Path</Label>
+          <DeprecatedLabel htmlFor={fieldIds.path}>Path</DeprecatedLabel>
           <InputErrorsTooltip errors={fieldErrors.path}>
             <TextField
               tabIndex={1}
@@ -121,7 +121,7 @@ const FormFields = ({
         </Group>
       )}
       <Group>
-        <Label htmlFor={fieldIds.title}>Title</Label>
+        <DeprecatedLabel htmlFor={fieldIds.title}>Title</DeprecatedLabel>
         <InputErrorsTooltip errors={fieldErrors.title}>
           <TextField
             tabIndex={1}
@@ -138,7 +138,9 @@ const FormFields = ({
         </InputErrorsTooltip>
       </Group>
       <Group>
-        <Label htmlFor={fieldIds.description}>Description</Label>
+        <DeprecatedLabel htmlFor={fieldIds.description}>
+          Description
+        </DeprecatedLabel>
         <InputErrorsTooltip errors={fieldErrors.description}>
           <TextArea
             tabIndex={1}

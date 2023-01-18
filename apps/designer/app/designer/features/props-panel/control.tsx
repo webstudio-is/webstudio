@@ -6,7 +6,7 @@ import {
 import warnOnce from "warn-once";
 import {
   Flex,
-  Label,
+  DeprecatedLabel,
   Radio,
   RadioGroup,
   Select,
@@ -71,7 +71,7 @@ const CheckboxControl = ({
     {options.map((option) => (
       <Flex align="center" gap="1" key={option}>
         <Checkbox value={option} />
-        <Label>{option}</Label>
+        <DeprecatedLabel>{option}</DeprecatedLabel>
       </Flex>
     ))}
   </RadioGroup>
@@ -102,7 +102,7 @@ const RadioControl = ({
     {options.map((value) => (
       <Flex align="center" gap="1" key={value}>
         <Radio value={value} id={value} />
-        <Label htmlFor={value}>{value}</Label>
+        <DeprecatedLabel htmlFor={value}>{value}</DeprecatedLabel>
       </Flex>
     ))}
   </RadioGroup>
