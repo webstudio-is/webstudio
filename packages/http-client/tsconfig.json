@@ -6,7 +6,6 @@
     "module": "commonjs",
     "target": "ES2020",
     "baseUrl": ".",
-    "paths": { "~/*": ["./src/*"] },
     "outDir": "./lib",
     "rootDir": "./src"
   }
