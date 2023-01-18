@@ -175,22 +175,19 @@ export const patch = async (
 
       const propsString = JSON.stringify(propsDb);
 
-      const { count } = await prisma.instanceProps.updateMany({
-        where: { instanceId, treeId },
-        data: {
+      await prisma.instanceProps.upsert({
+        // eslint-disable-next-line camelcase
+        where: { instanceId_treeId: { instanceId, treeId } },
+        create: {
+          id: uuid(),
+          instanceId,
+          treeId,
+          props: propsString,
+        },
+        update: {
           props: propsString,
         },
       });
-      if (count === 0) {
-        await prisma.instanceProps.create({
-          data: {
-            id: uuid(),
-            instanceId,
-            treeId,
-            props: propsString,
-          },
-        });
-      }
     })
   );
 };
