@@ -42,7 +42,7 @@ export const authCallbackPath = ({
 export const authPath = ({
   provider,
 }: {
-  provider: "google" | "github" | "dev";
+  provider: "google" | "github" | "dev" | "link";
 }) => `/auth/${provider}`;
 
 export const restPagesPath = ({ projectId }: { projectId: string }) =>

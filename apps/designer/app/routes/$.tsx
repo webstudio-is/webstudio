@@ -17,6 +17,7 @@ import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
 import { customComponents } from "~/canvas/custom-components";
+import { findAuthenticatedUser } from "~/services/auth.server";
 
 type Data = CanvasData & { env: Env; mode: BuildMode };
 
@@ -60,6 +61,14 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
 
   if (project === null) {
     throw json("Project not found", { status: 404 });
+  }
+
+  if (buildParams.mode === "edit") {
+    // @todo checks if user has access to project, do preview and edit checks
+    const user = await findAuthenticatedUser(request);
+    if (user === null) {
+      throw new Error("Only authenticated users can edit");
+    }
   }
 
   const canvasData = await loadCanvasData(

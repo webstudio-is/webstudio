@@ -4,10 +4,14 @@ import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy, type GitHubProfile } from "remix-auth-github";
 import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import * as db from "~/shared/db";
-import { sessionStorage } from "~/services/session.server";
+import {
+  canvasSessionStorage,
+  sessionStorage,
+} from "~/services/session.server";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { authCallbackPath } from "~/shared/router-utils";
+import { LinkStrategy } from "~/shared/auth/link-strategy.server";
 
 const url =
   process.env.DEPLOYMENT_ENVIRONMENT === "production"
@@ -41,6 +45,14 @@ export const authenticator = new Authenticator<User>(sessionStorage, {
   throwOnError: true,
 });
 
+// Must be used only to set session inside canvas iframe
+export const canvasAuthenticator = new Authenticator<User>(
+  canvasSessionStorage,
+  {
+    throwOnError: true,
+  }
+);
+
 if (process.env.GH_CLIENT_ID && process.env.GH_CLIENT_SECRET) {
   const github = new GitHubStrategy(
     {
@@ -64,6 +76,26 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
   authenticator.use(google, "google");
 }
+
+export const linkStrategy = new LinkStrategy(
+  {
+    secret: process.env.AUTH_SECRET ?? "NO-SECRET",
+    tokenSearchParamName: "token",
+  },
+  async ({ userId }) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (user == null) {
+      throw new Error("User not found");
+    }
+
+    return user;
+  }
+);
+
+canvasAuthenticator.use(linkStrategy, "link");
 
 if (process.env.DEV_LOGIN === "true") {
   authenticator.use(

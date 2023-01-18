@@ -287,6 +287,7 @@ export type DesignerProps = {
   pages: Pages;
   pageId: string;
   buildOrigin: string;
+  canvasEditSecureUrl: string;
 };
 
 export const Designer = ({
@@ -294,6 +295,7 @@ export const Designer = ({
   pages,
   pageId,
   buildOrigin,
+  canvasEditSecureUrl,
 }: DesignerProps) => {
   useSubscribeSyncStatus();
   useSubscribeSelectedInstanceData();
@@ -330,7 +332,11 @@ export const Designer = ({
     return page;
   }, [pages, pageId]);
 
-  const canvasUrl = getBuildUrl({ buildOrigin, project, page, mode: "edit" });
+  const canvasUrl = new URL(canvasEditSecureUrl);
+  canvasUrl.searchParams.set(
+    "returnTo",
+    getBuildUrl({ buildOrigin, project, page, mode: "edit" })
+  );
 
   const previewUrl = getBuildUrl({
     buildOrigin,
@@ -352,7 +358,7 @@ export const Designer = ({
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
             <CanvasIframe
               ref={iframeRefCallback}
-              src={canvasUrl}
+              src={canvasUrl.href}
               pointerEvents={
                 dragAndDropState.isDragging &&
                 dragAndDropState.origin === "panel"
