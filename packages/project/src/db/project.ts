@@ -67,15 +67,19 @@ export const create = async ({
     throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
   }
 
-  const project = await prisma.project.create({
-    data: {
-      userId,
-      title,
-      domain: generateDomain(title),
-    },
-  });
+  const project = await prisma.$transaction(async (client) => {
+    const project = await client.project.create({
+      data: {
+        userId,
+        title,
+        domain: generateDomain(title),
+      },
+    });
 
-  await db.build.create(project.id, "dev");
+    await db.build.create(project.id, "dev", undefined, client);
+
+    return project;
+  });
 
   return project;
 };
@@ -92,15 +96,19 @@ export const clone = async (clonableDomain: string, userId: string) => {
     throw new Error("Expected project to be published first");
   }
 
-  const project = await prisma.project.create({
-    data: {
-      userId,
-      title: clonableProject.title,
-      domain: generateDomain(clonableProject.title),
-    },
-  });
+  const project = await prisma.$transaction(async (client) => {
+    const project = await client.project.create({
+      data: {
+        userId,
+        title: clonableProject.title,
+        domain: generateDomain(clonableProject.title),
+      },
+    });
 
-  await db.build.create(project.id, "dev", prodBuild);
+    await db.build.create(project.id, "dev", prodBuild, client);
+
+    return project;
+  });
 
   return project;
 };

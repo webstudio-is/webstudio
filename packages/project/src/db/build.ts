@@ -201,21 +201,24 @@ const clonePages = async (
 export async function create(
   projectId: Build["projectId"],
   env: "prod",
-  sourceBuild: Build
+  sourceBuild: Build | undefined,
+  client: Prisma.TransactionClient
 ): Promise<void>;
 export async function create(
   projectId: Build["projectId"],
   env: "dev",
-  sourceBuild?: Build
+  sourceBuild: Build | undefined,
+  client: Prisma.TransactionClient
 ): Promise<void>;
 // eslint-disable-next-line func-style
 export async function create(
   projectId: Build["projectId"],
   env: "dev" | "prod",
-  sourceBuild?: Build
+  sourceBuild: Build | undefined,
+  client: Prisma.TransactionClient
 ): Promise<void> {
   if (env === "dev") {
-    const count = await prisma.build.count({
+    const count = await client.build.count({
       where: { projectId, isDev: true },
     });
 
@@ -232,31 +235,29 @@ export async function create(
     ? (await db.breakpoints.load(sourceBuild.id)).values
     : db.breakpoints.createValues();
 
-  await prisma.$transaction(async (client) => {
-    const pages =
-      sourceBuild === undefined
-        ? await createPages(client)
-        : await clonePages(sourceBuild.pages, client);
+  const pages =
+    sourceBuild === undefined
+      ? await createPages(client)
+      : await clonePages(sourceBuild.pages, client);
 
-    if (env === "prod") {
-      await client.build.updateMany({
-        where: { projectId: projectId, isProd: true },
-        data: { isProd: false },
-      });
-    }
-
-    const build = await client.build.create({
-      data: {
-        projectId,
-        pages: JSON.stringify(pages),
-        isDev: env === "dev",
-        isProd: env === "prod",
-      },
+  if (env === "prod") {
+    await client.build.updateMany({
+      where: { projectId: projectId, isProd: true },
+      data: { isProd: false },
     });
+  }
 
-    await db.breakpoints.create(build.id, breakpointsValues, client);
-    if (sourceBuild) {
-      await designTokensDb.clone(sourceBuild.id, build.id, client);
-    }
+  const build = await client.build.create({
+    data: {
+      projectId,
+      pages: JSON.stringify(pages),
+      isDev: env === "dev",
+      isProd: env === "prod",
+    },
   });
+
+  await db.breakpoints.create(build.id, breakpointsValues, client);
+  if (sourceBuild) {
+    await designTokensDb.clone(sourceBuild.id, build.id, client);
+  }
 }
