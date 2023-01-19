@@ -1,6 +1,13 @@
-import { Flex, theme } from "@webstudio-is/design-system";
+import { css, Flex, theme } from "@webstudio-is/design-system";
 import { type ComponentProps } from "react";
 import { Heading } from "./heading";
+
+const containerStyle = css({
+  background: "linear-gradient(180deg, #E63CFE 0%, #FFAE3C 100%)",
+  color: theme.colors.foregroundContrastMain,
+  borderRadius: theme.borderRadius[4],
+  height: theme.spacing[29],
+});
 
 const EmptyStateContainer = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -8,12 +15,7 @@ const EmptyStateContainer = (props: ComponentProps<typeof Flex>) => (
     justify="center"
     direction="column"
     gap="3"
-    css={{
-      background: "linear-gradient(180deg, #E63CFE 0%, #FFAE3C 100%)",
-      color: theme.colors.foregroundContrastMain,
-      borderRadius: theme.borderRadius[4],
-      height: theme.spacing[29],
-    }}
+    className={containerStyle()}
     {...props}
   />
 );

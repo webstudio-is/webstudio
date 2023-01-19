@@ -1,5 +1,5 @@
 import { ChevronDownIcon, WebstudioIcon } from "@webstudio-is/icons";
-import { Avatar, rawTheme } from "@webstudio-is/design-system";
+import { Avatar, css, rawTheme } from "@webstudio-is/design-system";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -13,6 +13,13 @@ import { User as DbUser } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
 import { logoutPath } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
+
+const containerStyle = css({
+  px: theme.spacing[13],
+  bc: theme.colors.backgroundPanel,
+  borderBottom: `${theme.spacing[1]} solid ${theme.colors.slate8}`,
+  height: theme.spacing[17],
+});
 
 type User = Omit<DbUser, "createdAt"> & {
   createdAt: string;
@@ -29,12 +36,7 @@ export const Header = ({ user }: { user: User }) => {
       as="header"
       align="center"
       justify="between"
-      css={{
-        px: theme.spacing[13],
-        bc: theme.colors.backgroundPanel,
-        borderBottom: `${theme.spacing[1]} solid ${theme.colors.slate8}`,
-        height: theme.spacing[17],
-      }}
+      className={containerStyle()}
     >
       <WebstudioIcon width={30} height={23} />
       <Flex gap="1" align="center">
