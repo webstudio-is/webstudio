@@ -21,15 +21,16 @@ const containerStyle = css({
   height: theme.spacing[17],
 });
 
+const getAvatarLetter = (user: User) => {
+  return (user?.username || user?.email || "X").charAt(0).toLocaleUpperCase();
+};
+
 type User = Omit<DbUser, "createdAt"> & {
   createdAt: string;
 };
 
 export const Header = ({ user }: { user: User }) => {
   const navigate = useNavigate();
-  const userNameFallback = (user?.username || user?.email || "X")
-    .charAt(0)
-    .toLocaleUpperCase();
 
   return (
     <Flex
@@ -46,7 +47,7 @@ export const Header = ({ user }: { user: User }) => {
               <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
                 <Avatar
                   src={user?.image || undefined}
-                  fallback={userNameFallback}
+                  fallback={getAvatarLetter(user)}
                 />
                 <ChevronDownIcon
                   width={15}
