@@ -60,7 +60,7 @@ The process:
 4. Click on "Start review". You'll be presented with series of before/after screenshots of our demos <br/><img src="./assets/15.png" width="1222" />
 5. Approve each screenshot unless there's something wrong
 6. If everything is fine, click "Update baselines" <br/><img src="./assets/16.png" width="1222" />
-7. An update "update lost pixel baseline" commit should appear in the PR and the failed check should pass <br/><img src="./assets/17.png" width="867" />
+7. An "update lost pixel baseline" commit should appear in the PR and the failed check should pass <br/><img src="./assets/17.png" width="867" />
 
 ### Links
 
