@@ -9,6 +9,9 @@ import {
   type ChangeEvent,
 } from "react";
 import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
+// @todo:
+//   react-popper "is an internal utility, not intended for public usage"
+//   probably need to switch to @radix-ui/react-popover
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import {
   type DownshiftState,
@@ -18,66 +21,62 @@ import {
   useCombobox as useDownshiftCombobox,
 } from "downshift";
 import { matchSorter } from "match-sorter";
-import { styled } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
-import { itemCss } from "./menu";
-import { panelStyles } from "./panel";
+import { itemCss, menuCss, itemIndicatorCss } from "./menu";
 import { TextField } from "./text-field";
 import { Box } from "./box";
-import { Grid } from "./grid";
-import { theme } from "../stitches.config";
 
-const Listbox = styled("ul", panelStyles, {
-  p: theme.spacing[3],
-  margin: 0,
-  overflow: "auto",
-  // @todo need some non-hardcoded value
-  maxHeight: 400,
-  minWidth: 214,
-  variants: {
-    state: {
-      open: {},
-      closed: {
-        display: "none",
-      },
-    },
-    empty: {
-      true: {
-        display: "none",
-      },
+const Listbox = styled(
+  "ul",
+  {
+    margin: "unset", // reset <ul>
+    overflow: "auto",
+    maxHeight: theme.spacing[34],
+    variants: {
+      state: { closed: { display: "none" } },
+      empty: { true: { display: "none" } },
     },
   },
-});
+  menuCss
+);
 
-const ListboxItem = styled("li", itemCss, {
-  padding: `0 ${theme.spacing[5]}`,
-  margin: 0,
-  borderRadius: theme.borderRadius[4],
-});
+const ListboxItem = styled("li", itemCss);
+
+const Indicator = styled("span", itemIndicatorCss);
 
 const ListboxItemBase: ForwardRefRenderFunction<
   HTMLLIElement,
   ComponentProps<typeof ListboxItem> & {
     disabled?: boolean;
     selected?: boolean;
+    selectable?: boolean;
     highlighted?: boolean;
   }
 > = (props, ref) => {
-  const { disabled, selected, highlighted, children, ...rest } = props;
+  const {
+    disabled,
+    selected,
+    selectable = true,
+    highlighted,
+    children,
+    ...rest
+  } = props;
   return (
     <ListboxItem
       ref={ref}
       {...(disabled ? { "aria-disabled": true, disabled: true } : {})}
       {...(selected ? { "aria-current": true } : {})}
       {...rest}
+      withIndicator={selectable}
     >
-      <Grid
-        align="center"
-        css={{ gridTemplateColumns: `${theme.spacing[10]} 1fr` }}
-      >
-        {selected && <CheckIcon />}
-        <Box css={{ gridColumn: 2 }}>{children}</Box>
-      </Grid>
+      {selectable && selected && (
+        <Indicator>
+          {/* @todo: use "check mark" icon */}
+          <CheckIcon />
+        </Indicator>
+      )}
+      {children}
     </ListboxItem>
   );
 };
