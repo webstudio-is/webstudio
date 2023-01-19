@@ -1,4 +1,5 @@
 import { db } from "@webstudio-is/project/server";
+import { prisma } from "@webstudio-is/prisma-client";
 
 /**
  * Conceptually publishing is cloning all data that affects user site
@@ -24,7 +25,10 @@ export const publish = async ({
   }
 
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
-  await db.build.create(project.id, "prod", devBuild);
+
+  await prisma.$transaction(async (client) => {
+    await db.build.create(project.id, "prod", devBuild, client);
+  });
 
   const updatedProject = await db.project.update({
     id: projectId,
