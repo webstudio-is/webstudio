@@ -55,6 +55,10 @@
       "4": {
         "value": "11",
         "type": "lineHeights"
+      },
+      "5": {
+        "value": "120%",
+        "type": "lineHeights"
       }
     },
     "fontWeights": {
@@ -75,10 +79,14 @@
         "type": "fontWeights"
       },
       "manrope-5": {
-        "value": "SemiBold",
+        "value": "Bold",
         "type": "fontWeights"
       },
       "roboto-mono-3": {
+        "value": "Regular",
+        "type": "fontWeights"
+      },
+      "manrope-6": {
         "value": "Regular",
         "type": "fontWeights"
       }
@@ -97,11 +105,19 @@
         "type": "fontSizes"
       },
       "3": {
-        "value": "20",
+        "value": "16",
         "type": "fontSizes"
       },
       "4": {
         "value": "32",
+        "type": "fontSizes"
+      },
+      "5": {
+        "value": "20",
+        "type": "fontSizes"
+      },
+      "6": {
+        "value": "48",
         "type": "fontSizes"
       }
     },
@@ -120,6 +136,10 @@
       },
       "3": {
         "value": "0",
+        "type": "letterSpacing"
+      },
+      "4": {
+        "value": "-2%",
         "type": "letterSpacing"
       }
     },
@@ -374,10 +394,6 @@
         "type": "color",
         "description": "used only for the hover state for the asset card component"
       },
-      "brand-gradient": {
-        "value": "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
-        "type": "color"
-      },
       "neutral": {
         "main": {
           "value": "#D7DBDF",
@@ -614,6 +630,12 @@
         }
       }
     },
+    "brand": {
+      "gradient": {
+        "value": "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
+        "type": "color"
+      }
+    },
     "border": {
       "main": {
         "value": "#c1c8cd",
@@ -837,13 +859,41 @@
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
       },
-      "Title": {
+      "H2": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
           "lineHeight": "{lineHeights.3}",
+          "fontSize": "{fontSize.5}",
+          "letterSpacing": "{letterSpacing.2}",
+          "paragraphSpacing": "{paragraphSpacing.0}",
+          "paragraphIndent": "{paragraphIndent.0}",
+          "textCase": "{textCase.none}",
+          "textDecoration": "{textDecoration.none}"
+        },
+        "type": "typography"
+      },
+      "H1": {
+        "value": {
+          "fontFamily": "{fontFamilies.manrope}",
+          "fontWeight": "{fontWeights.manrope-5}",
+          "lineHeight": "{lineHeights.5}",
+          "fontSize": "{fontSize.6}",
+          "letterSpacing": "{letterSpacing.4}",
+          "paragraphSpacing": "{paragraphSpacing.0}",
+          "paragraphIndent": "{paragraphIndent.0}",
+          "textCase": "{textCase.none}",
+          "textDecoration": "{textDecoration.none}"
+        },
+        "type": "typography"
+      },
+      "regular": {
+        "value": {
+          "fontFamily": "{fontFamilies.manrope}",
+          "fontWeight": "{fontWeights.manrope-6}",
+          "lineHeight": "{lineHeights.3}",
           "fontSize": "{fontSize.3}",
-          "letterSpacing": "{letterSpacing.0}",
+          "letterSpacing": "{letterSpacing.2}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
           "textCase": "{textCase.none}",
