@@ -280,9 +280,3 @@ export const useCombobox = <Item,>({
     resetFilter,
   };
 };
-
-type ComboboxProps<Item> = UseComboboxProps<Item> & {
-  name: string;
-  label?: string;
-  placeholder?: string;
-};
