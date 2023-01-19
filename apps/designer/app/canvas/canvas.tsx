@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import store from "immerhin";
-import type { Build, CanvasData } from "@webstudio-is/project";
+import type { CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
   useAllUserProps,
@@ -9,7 +9,6 @@ import {
   customComponentsMeta,
   setParams,
   type OnChangeChildren,
-  type Tree,
 } from "@webstudio-is/react-sdk";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
@@ -26,7 +25,6 @@ import {
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
-import { useSync } from "./shared/sync";
 import {
   rootInstanceContainer,
   useBreakpoints,
@@ -125,19 +123,13 @@ const useCopyPaste = () => {
   });
 };
 
-type DesignModeProps = {
-  treeId: Tree["id"];
-  buildId: Build["id"];
-};
-
-const DesignMode = ({ treeId, buildId }: DesignModeProps) => {
+const DesignMode = () => {
   useManageDesignModeStyles();
   usePublishSelectedInstanceData();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   useTrackSelectedElement();
-  useSync({ buildId, treeId });
   useUpdateSelectedInstance();
   useUnselectInstance();
   usePublishScrollState();
@@ -195,7 +187,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   return (
     <>
       <GlobalStyles assets={assets} />
-      <DesignMode treeId={data.tree.id} buildId={data.buildId} />
+      <DesignMode />
       {elements}
     </>
   );

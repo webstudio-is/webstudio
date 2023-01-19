@@ -27,10 +27,16 @@ export const loader = async ({
 
   const devBuild = await db.build.loadByProjectId(project.id, "dev");
 
+  const pages = devBuild.pages;
+  const page =
+    pages.pages.find((page) => page.id === pageIdParam) ?? pages.homePage;
+
   return {
     project,
-    pages: devBuild.pages,
+    pages,
     pageId: pageIdParam || devBuild.pages.homePage.id,
+    treeId: page.treeId,
+    buildId: devBuild.id,
     buildOrigin: getBuildOrigin(request),
   };
 };
