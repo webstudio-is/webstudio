@@ -75,5 +75,5 @@ export const useSyncServer = ({
     return () => {
       clearInterval(intervalId);
     };
-  }, []);
+  }, [treeId, buildId]);
 };
