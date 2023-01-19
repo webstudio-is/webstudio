@@ -19,7 +19,6 @@ type User = Omit<DbUser, "createdAt"> & {
 const globalStyles = globalCss({
   body: {
     margin: 0,
-    // @todo: use theme
     background: theme.colors.maintenanceLight,
   },
 });

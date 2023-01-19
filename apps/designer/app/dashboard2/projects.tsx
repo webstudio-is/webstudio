@@ -9,9 +9,7 @@ export const Projects = () => {
     <Panel>
       <Flex direction="column" gap="3">
         <Flex justify="between">
-          <Heading variant="small" as="h2">
-            Projects
-          </Heading>
+          <Heading variant="small">Projects</Heading>
           <Button prefix={<PlusIcon />}>New Project</Button>
         </Flex>
         <EmptyState />
