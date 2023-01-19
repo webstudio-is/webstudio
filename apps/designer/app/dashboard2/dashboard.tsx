@@ -1,4 +1,4 @@
-import { globalCss, theme } from "@webstudio-is/design-system";
+import { globalCss } from "@webstudio-is/design-system";
 import { User as DbUser } from "@webstudio-is/prisma-client";
 import { Header } from "./header";
 /* eslint-disable import/no-internal-modules */
@@ -19,16 +19,16 @@ type User = Omit<DbUser, "createdAt"> & {
 const globalStyles = globalCss({
   body: {
     margin: 0,
-    background: theme.colors.maintenanceLight,
+    // @todo need a token
+    background: "#ababab",
   },
 });
 
 type DashboardProps = {
-  projects?: Array<{ id: string; title: string }>;
   user: User;
 };
 
-export const Dashboard = ({ projects = [], user }: DashboardProps) => {
+export const Dashboard = ({ user }: DashboardProps) => {
   globalStyles();
   return (
     <>
