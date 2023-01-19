@@ -8,7 +8,7 @@ import {
   useRef,
   type ChangeEvent,
 } from "react";
-import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
+import { CheckIcon } from "@webstudio-is/icons";
 // @todo:
 //   react-popper "is an internal utility, not intended for public usage"
 //   probably need to switch to @radix-ui/react-popover
@@ -22,10 +22,7 @@ import {
 } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled, theme } from "../stitches.config";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { itemCss, menuCss, itemIndicatorCss } from "./menu";
-import { TextField } from "./text-field";
-import { Box } from "./box";
 
 const Listbox = styled(
   "ul",
@@ -290,68 +287,3 @@ type ComboboxProps<Item> = UseComboboxProps<Item> & {
   label?: string;
   placeholder?: string;
 };
-
-export const Combobox = <Item,>({
-  items,
-  value = null,
-  name,
-  selectedItem,
-  placeholder,
-  itemToString,
-  onItemSelect,
-  onItemHighlight,
-}: ComboboxProps<Item>) => {
-  const {
-    items: foundItems,
-    getInputProps,
-    getComboboxProps,
-    getToggleButtonProps,
-    getMenuProps,
-    getItemProps,
-    isOpen,
-  } = useCombobox({
-    items,
-    value,
-    selectedItem,
-    itemToString,
-    onItemSelect,
-    onItemHighlight,
-  });
-  return (
-    <Popper>
-      <Box {...getComboboxProps()}>
-        <PopperAnchor>
-          <TextField
-            {...getInputProps({
-              name,
-              placeholder,
-            })}
-            suffix={
-              <DeprecatedIconButton {...getToggleButtonProps()}>
-                <ChevronDownIcon />
-              </DeprecatedIconButton>
-            }
-          />
-        </PopperAnchor>
-        <PopperContent>
-          <Listbox {...getMenuProps()}>
-            {isOpen &&
-              foundItems.map((item, index) => {
-                return (
-                  // eslint-disable-next-line react/jsx-key
-                  <ComboboxListboxItem
-                    key={index}
-                    {...getItemProps({ item, index })}
-                  >
-                    {itemToString(item)}
-                  </ComboboxListboxItem>
-                );
-              })}
-          </Listbox>
-        </PopperContent>
-      </Box>
-    </Popper>
-  );
-};
-
-Combobox.displayName = "Combobox";
