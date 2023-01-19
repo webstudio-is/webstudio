@@ -5,7 +5,6 @@ import {
   type SelectedInstanceData,
   type HoveredInstanceData,
 } from "@webstudio-is/project";
-import { type SyncStatus } from "~/shared/sync";
 import { type Pages, type Project } from "@webstudio-is/project";
 import type { AssetContainer, DeletingAssetContainer } from "../assets";
 
@@ -41,9 +40,6 @@ export const useCanvasWidth = () => useValue(canvasWidthContainer);
 
 const canvasRectContainer = atom<DOMRect | undefined>();
 export const useCanvasRect = () => useValue(canvasRectContainer);
-
-const syncStatusContainer = atom<SyncStatus>("idle");
-export const useSyncStatus = () => useValue(syncStatusContainer);
 
 const assetsContainer = atom<Array<AssetContainer | DeletingAssetContainer>>(
   []

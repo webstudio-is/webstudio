@@ -1,4 +1,6 @@
+import { useStore } from "@nanostores/react";
 import {
+  theme,
   Flex,
   keyframes,
   AccessibleIcon,
@@ -6,8 +8,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { CheckIcon, DotsHorizontalIcon } from "@webstudio-is/icons";
-import { useSyncStatus } from "../../shared/nano-states";
-import { theme } from "@webstudio-is/design-system";
+import { syncStatus } from "~/designer/shared/sync-server";
 
 const iconSize = 15;
 
@@ -39,7 +40,7 @@ const AnimatedDotsIcon = () => {
 };
 
 export const SyncStatus = () => {
-  const [status] = useSyncStatus();
+  const status = useStore(syncStatus);
   return (
     <Flex align="center" justify="center">
       <AccessibleIcon label={`Sync status: ${status}`}>
