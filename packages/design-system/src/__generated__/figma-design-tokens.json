@@ -578,16 +578,6 @@
           "type": "color"
         }
       },
-      "published": {
-        "main": {
-          "value": "#39fbbb",
-          "type": "color"
-        },
-        "contrast": {
-          "value": "#ebfffc",
-          "type": "color"
-        }
-      },
       "style-source": {
         "token": {
           "value": "#0081f1",
@@ -631,9 +621,23 @@
       }
     },
     "brand": {
-      "gradient": {
-        "value": "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
-        "type": "color"
+      "background": {
+        "published-main": {
+          "value": "#39fbbb",
+          "type": "color"
+        },
+        "gradient": {
+          "value": "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
+          "type": "color"
+        },
+        "published-contrast": {
+          "value": "#ebfffc",
+          "type": "color"
+        },
+        "dashboard": {
+          "value": "#ededed",
+          "type": "color"
+        }
       }
     },
     "border": {
