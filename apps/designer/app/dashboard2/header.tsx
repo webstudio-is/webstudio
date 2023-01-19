@@ -1,5 +1,4 @@
 import { ChevronDownIcon, WebstudioIcon } from "@webstudio-is/icons";
-import { Avatar, css, rawTheme } from "@webstudio-is/design-system";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -8,11 +7,14 @@ import {
   DeprecatedButton,
   Text,
   Flex,
+  Avatar,
+  css,
+  rawTheme,
+  theme,
 } from "@webstudio-is/design-system";
 import { User as DbUser } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
 import { logoutPath } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
 
 const containerStyle = css({
   px: theme.spacing[13],
