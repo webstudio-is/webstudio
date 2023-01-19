@@ -8,7 +8,8 @@ import {
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import { registerContainers, useDesignerStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync-server";
-import interStyles from "~/shared/font-faces/inter.css";
+// eslint-disable-next-line import/no-internal-modules
+import interFont from "@fontsource/inter/index.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
@@ -46,10 +47,9 @@ import { useAllUserProps } from "@webstudio-is/react-sdk";
 import { theme } from "@webstudio-is/design-system";
 
 registerContainers();
-
 export const links = () => {
   return [
-    { rel: "stylesheet", href: interStyles },
+    { rel: "stylesheet", href: interFont },
     { rel: "stylesheet", href: designerStyles },
   ];
 };

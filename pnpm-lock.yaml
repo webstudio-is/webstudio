@@ -43,6 +43,8 @@ importers:
     specifiers:
       '@babel/core': ^7.20.2
       '@floating-ui/dom': ^1.0.6
+      '@fontsource/inter': ^4.5.15
+      '@fontsource/manrope': ^4.5.13
       '@jest/globals': ^29.3.1
       '@lexical/link': ^0.6.0
       '@lexical/react': ^0.6.0
@@ -151,6 +153,8 @@ importers:
       zod-form-data: ^1.2.1
     dependencies:
       '@floating-ui/dom': 1.0.6
+      '@fontsource/inter': 4.5.15
+      '@fontsource/manrope': 4.5.13
       '@lexical/link': 0.6.0_lexical@0.6.0
       '@lexical/react': 0.6.0_p7mvqmjvwf4nexue7sv3sfptum
       '@lexical/selection': 0.6.0_lexical@0.6.0
@@ -4272,6 +4276,14 @@ packages:
       use-isomorphic-layout-effect: 1.1.2_sudpmbbyhqtxq6t4xf6jlicdem
     transitivePeerDependencies:
       - '@types/react'
+    dev: false
+
+  /@fontsource/inter/4.5.15:
+    resolution: {integrity: sha512-FzleM9AxZQK2nqsTDtBiY0PMEVWvnKnuu2i09+p6DHvrHsuucoV2j0tmw+kAT3L4hvsLdAIDv6MdGehsPIdT+Q==}
+    dev: false
+
+  /@fontsource/manrope/4.5.13:
+    resolution: {integrity: sha512-UFN5DMGBp8nFpwhPQXfpSbsEm4OVISqUKQy+rA+pb1zYGoH+OGN1woKEND8VLx+pC7rY3nrPRCJvSuuOaNdW7Q==}
     dev: false
 
   /@gar/promisify/1.1.3:
