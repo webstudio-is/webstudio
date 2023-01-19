@@ -8,7 +8,7 @@ import {
   useRef,
   type ChangeEvent,
 } from "react";
-import { CheckIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon } from "@webstudio-is/icons";
 // @todo:
 //   react-popper "is an internal utility, not intended for public usage"
 //   probably need to switch to @radix-ui/react-popover
@@ -69,8 +69,7 @@ const ListboxItemBase: ForwardRefRenderFunction<
     >
       {selectable && selected && (
         <Indicator>
-          {/* @todo: use "check mark" icon */}
-          <CheckIcon />
+          <CheckMarkIcon />
         </Indicator>
       )}
       {children}

@@ -181,10 +181,10 @@ export const Menu = () => (
         </div>
       </div>
     </Section>
-    <Section title="Select menu (<Combobox>)">
+    <Section title="Select menu (Combobox component)">
       <ComboboxDemo />
     </Section>
-    <Section title="Select menu (<Select>)">
+    <Section title="Select menu (Select component)">
       <SelectDemo />
     </Section>
   </>

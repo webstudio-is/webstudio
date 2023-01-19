@@ -1,5 +1,9 @@
 import { forwardRef, type ComponentProps, type ElementRef } from "react";
-import { CheckIcon, ChevronRightIcon } from "@webstudio-is/icons";
+import {
+  CheckMarkIcon,
+  ChevronFilledRightIcon,
+  DotIcon,
+} from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
@@ -61,8 +65,7 @@ export const DropdownMenuSubTrigger = forwardRef<
   <SubTriggerStyled {...props} ref={forwardedRef}>
     {children}
     <DropdownMenuItemRightSlot>
-      {/* @todo: use "chevron filled right" icon */}
-      <ChevronRightIcon />
+      <ChevronFilledRightIcon />
     </DropdownMenuItemRightSlot>
   </SubTriggerStyled>
 ));
@@ -77,8 +80,7 @@ export const DropdownMenuRadioItem = forwardRef<
 >(({ children, ...props }, forwardedRef) => (
   <StyledRadioItem withIndicator {...props} ref={forwardedRef}>
     <Indicator>
-      {/* @todo: use "check mark" icon */}
-      <CheckIcon />
+      <DotIcon />
     </Indicator>
     {children}
   </StyledRadioItem>
@@ -92,8 +94,7 @@ export const DropdownMenuCheckboxItem = forwardRef<
 >(({ children, ...props }, forwardedRef) => (
   <StyledCheckboxItem withIndicator {...props} ref={forwardedRef}>
     <Indicator>
-      {/* @todo: use "dot" icon */}
-      <CheckIcon />
+      <CheckMarkIcon />
     </Indicator>
     {children}
   </StyledCheckboxItem>

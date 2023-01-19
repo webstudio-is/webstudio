@@ -3,7 +3,11 @@ import React, { ReactNode, Ref } from "react";
 import { menuCss, itemCss, itemIndicatorCss } from "./menu";
 import { Grid } from "./grid";
 import { Box } from "./box";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import {
+  CheckMarkIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 
 const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
@@ -97,8 +101,7 @@ const SelectItemBase = (
         css={{ gridTemplateColumns: `${theme.spacing[10]} 1fr` }}
       >
         <StyledIndicator>
-          {/* @todo: use "check mark" icon */}
-          <CheckIcon />
+          <CheckMarkIcon />
         </StyledIndicator>
         <Box css={{ gridColumn: 2 }}>
           <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
