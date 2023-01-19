@@ -6,6 +6,7 @@ export const Panel = styled(Box, {
   margin: theme.spacing[13],
   borderRadius: theme.borderRadius[6],
   minWidth: 550,
+  color: theme.colors.foregroundMain,
   // @todo - use theme
   //boxShadow: theme.boxShadow.brandElevationBig
 });

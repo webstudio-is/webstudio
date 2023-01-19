@@ -36,7 +36,7 @@ export const Header = ({ user }: { user: User }) => {
         height: theme.spacing[17],
       }}
     >
-      <WebstudioIcon width={32} height={32} />
+      <WebstudioIcon width={30} height={23} />
       <Flex gap="1" align="center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -49,7 +49,7 @@ export const Header = ({ user }: { user: User }) => {
                 <ChevronDownIcon
                   width={15}
                   height={15}
-                  color={rawTheme.colors.slate10}
+                  color={rawTheme.colors.foregroundMain}
                 />
               </Flex>
             </DeprecatedButton>
