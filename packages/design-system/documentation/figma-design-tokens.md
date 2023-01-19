@@ -50,6 +50,17 @@ The process:
 5. In the PR you can already see the changes in the deployed app <br/><img src="./assets/8.png" width="926" />
 6. Also, you can see the cnahges in a Storybook using this link https://figma-tokens--638affb61acca1e593c6e558.chromatic.com/ or by going to the bottom of PR page > "Show all checks" > "Storybook Publish: !webstudio-is/webstudio-designer" > "Details" <br/><img src="./assets/9.png" width="924" />
 7. If you see "This branch is out-of-date with the base branch" message at the bottom, this means that when you look at the changes with the links above, you see all your changes applied, but some of the changes made by developers might not be applied. To fix that, click "Update branch" button, but make sure to choose "Update with merge commit" <br/><img src="./assets/7.png" width="1029" />
+8. Sometimes a visual regression test may fail in the PR. Next sections describes how to fix it.
+
+### Reviewing failed visual regression tests
+
+1. At the bottom of the PR you may see a failed "Lost Pixel" check. Click on "Details" <br/><img src="./assets/13.png" width="922" />
+2. You'll be redirected to lost-pixel.com and it should ask you to login with your GitHub account.
+3. After you login you should see a page like this, if not, repeat step 1 <br/><img src="./assets/14.png" width="1222" />
+4. Click on "Start review". You'll be presented with series of before/after screenshots of our demos <br/><img src="./assets/15.png" width="1222" />
+5. Approve each screenshot unless there's something wrong
+6. If everything is fine, click "Update baselines" <br/><img src="./assets/16.png" width="1222" />
+7. An "update lost pixel baseline" commit should appear in the PR and the failed check should pass <br/><img src="./assets/17.png" width="867" />
 
 ### Links
 
