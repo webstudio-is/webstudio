@@ -4,7 +4,7 @@ import {
   Button,
   Flex,
   InputErrorsTooltip,
-  Label,
+  DeprecatedLabel,
   Popover,
   PopoverContent,
   PopoverHeader,
@@ -166,14 +166,14 @@ export const TokenEditor = ({
               gap="2"
               css={{ padding: theme.spacing[7] }}
             >
-              <Label htmlFor="name">Name</Label>
+              <DeprecatedLabel htmlFor="name">Name</DeprecatedLabel>
               <InputErrorsTooltip
                 errors={getErrors("name", validationResult)}
                 css={{ zIndex: theme.zIndices[2] }}
               >
                 <TextField id="name" name="name" defaultValue={token?.name} />
               </InputErrorsTooltip>
-              <Label htmlFor="value">Value</Label>
+              <DeprecatedLabel htmlFor="value">Value</DeprecatedLabel>
               <InputErrorsTooltip
                 errors={getErrors("value", validationResult)}
                 css={{ zIndex: theme.zIndices[2] }}
@@ -184,7 +184,9 @@ export const TokenEditor = ({
                   defaultValue={token?.value}
                 />
               </InputErrorsTooltip>
-              <Label htmlFor="description">Description</Label>
+              <DeprecatedLabel htmlFor="description">
+                Description
+              </DeprecatedLabel>
               <TextArea
                 id="description"
                 name="description"

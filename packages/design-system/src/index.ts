@@ -5,7 +5,7 @@ export * as Collapsible from "@radix-ui/react-collapsible";
 export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * as Portal from "@radix-ui/react-portal";
 export * from "@radix-ui/react-id";
-export { Label } from "./components/label";
+export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
 export * from "./components/toggle-group";
 export * from "./components/progress-radial";
 export * from "./components/select";

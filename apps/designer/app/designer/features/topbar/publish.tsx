@@ -6,7 +6,7 @@ import {
   Button,
   DeprecatedButton,
   Flex,
-  Label,
+  DeprecatedLabel,
   Link,
   Popover,
   PopoverContent,
@@ -69,7 +69,7 @@ const Content = ({ project }: PublishButtonProps) => {
           )}
           <Flex gap="2" align="center">
             <input type="hidden" name="projectId" value={project.id} />
-            <Label htmlFor={id}>Domain:</Label>
+            <DeprecatedLabel htmlFor={id}>Domain:</DeprecatedLabel>
             <TextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
