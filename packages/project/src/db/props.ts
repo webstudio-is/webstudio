@@ -137,9 +137,9 @@ export const clone = async (
     treeId: nextTreeId,
   }));
 
-  for (const prop of data) {
-    await client.instanceProps.create({ data: prop });
-  }
+  await client.instanceProps.createMany({
+    data,
+  });
 };
 
 export const patch = async (
