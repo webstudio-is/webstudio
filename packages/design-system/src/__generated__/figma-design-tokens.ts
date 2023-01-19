@@ -59,6 +59,7 @@ export const lineHeights = {
   "2": 10,
   "3": "AUTO",
   "4": 11,
+  "5": "120%",
 } as const;
 
 export const fontWeights = {
@@ -66,16 +67,19 @@ export const fontWeights = {
   inter1: "Medium",
   inter2: "Bold",
   inter4: "Semi Bold",
-  manrope5: "SemiBold",
+  manrope5: "Bold",
   robotoMono3: "Regular",
+  manrope6: "Regular",
 } as const;
 
 export const fontSizes = {
   fontSize0: 8,
   fontSize1: 10,
   fontSize2: 12,
-  fontSize3: 20,
+  fontSize3: 16,
   fontSize4: 32,
+  fontSize5: 20,
+  fontSize6: 48,
 } as const;
 
 export const letterSpacing = {
@@ -83,6 +87,7 @@ export const letterSpacing = {
   "1": "1%",
   "2": "0%",
   "3": 0,
+  "4": "-2%",
 } as const;
 
 export const paragraphSpacing = { "0": 0 } as const;
@@ -209,12 +214,34 @@ export const typography = {
     textCase: "none",
     textDecoration: "none",
   },
-  brandTitle: {
+  brandH2: {
     fontFamily: "Manrope",
-    fontWeight: "SemiBold",
+    fontWeight: "Bold",
     lineHeight: "AUTO",
     fontSize: 20,
-    letterSpacing: "0.5%",
+    letterSpacing: "0%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
+    textCase: "none",
+    textDecoration: "none",
+  },
+  brandH1: {
+    fontFamily: "Manrope",
+    fontWeight: "Bold",
+    lineHeight: "120%",
+    fontSize: 48,
+    letterSpacing: "-2%",
+    paragraphSpacing: 0,
+    paragraphIndent: "0px",
+    textCase: "none",
+    textDecoration: "none",
+  },
+  brandRegular: {
+    fontFamily: "Manrope",
+    fontWeight: "Regular",
+    lineHeight: "AUTO",
+    fontSize: 16,
+    letterSpacing: "0%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
     textCase: "none",
@@ -249,7 +276,6 @@ export const color = {
   backgroundMenu: "#ededed",
   backgroundControls: "#ffffff",
   backgroundAssetcardHover: "#e6e8eb",
-  backgroundBrandGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   backgroundNeutralMain: "#D7DBDF",
   backgroundNeutralAccent: "#11181c",
   backgroundNeutralNotification: "#ffffff",
@@ -297,6 +323,7 @@ export const color = {
     "linear-gradient(90deg, #d2319700 0%, #d23197 31.87%)",
   backgroundStyleSourceGradientState:
     "linear-gradient(90deg, #29976400 0%, #299764 31.87%)",
+  brandGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   borderMain: "#c1c8cd",
   borderFocus: "#0081f1",
   borderMenuInner: "#fcfcfc",
