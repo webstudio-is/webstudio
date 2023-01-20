@@ -9,7 +9,6 @@ import {
   Flex,
   Text,
   theme,
-  Link,
 } from "@webstudio-is/design-system";
 import { EmptyState } from "./empty-state";
 import { Panel } from "./panel";
