@@ -9,6 +9,7 @@ import {
   Flex,
   Text,
   theme,
+  Link,
 } from "@webstudio-is/design-system";
 import { EmptyState } from "./empty-state";
 import { Panel } from "./panel";
@@ -16,6 +17,8 @@ import { Heading } from "./heading";
 import { MenuIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { useState } from "react";
+import { designerPath } from "~/shared/router-utils";
+import { Link as RemixLink } from "@remix-run/react";
 
 const projectCardContainerStyle = css({
   overflow: "hidden",
@@ -54,9 +57,8 @@ const projectNameAvatarStyle = css({
   backgroundClip: "text",
   textFillColor: "transparent",
   // @todo use theme
-  textShadow: "5px 3px 0px rgba(251, 248, 255, 1) inset",
-
-  cursor: "default",
+  textShadow: "5px 3px 0px rgba(251, 248 255, 1) inset",
+  userSelect: "none",
   "&:hover": {
     fontWeight: 800,
     transition: "100ms",
@@ -118,6 +120,7 @@ const Menu = () => {
         <IconButton
           variant={isOpen ? "active" : "default"}
           aria-label="Menu Button"
+          css={{ alignSelf: "center" }}
         >
           <MenuIcon width={15} height={15} />
         </IconButton>
@@ -141,7 +144,7 @@ const Menu = () => {
 };
 
 // @todo make it clickable to open designer
-const ProjectCard = ({ title, domain, isPublished }: DashboardProject) => {
+const ProjectCard = ({ id, title, domain, isPublished }: DashboardProject) => {
   return (
     <Flex
       direction="column"
@@ -149,7 +152,13 @@ const ProjectCard = ({ title, domain, isPublished }: DashboardProject) => {
       as="article"
       className={projectCardContainerStyle()}
     >
-      <Flex grow align="center" className={projectNameAvatarStyle()}>
+      <Flex
+        grow
+        align="center"
+        as={RemixLink}
+        to={designerPath({ projectId: id })}
+        className={projectNameAvatarStyle()}
+      >
         {getAbbreviation(title)}
       </Flex>
       <Flex
