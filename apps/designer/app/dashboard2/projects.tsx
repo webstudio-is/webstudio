@@ -79,6 +79,9 @@ const domainStyle = css({
   },
 });
 
+// @todo
+// - check if published, render "Not Published"
+// - build publish url
 const Domain = ({ domain }: { domain: string }) => {
   return (
     <Text as="a" href={domain} target="_blank" className={domainStyle()}>
@@ -117,6 +120,7 @@ const Menu = () => {
   );
 };
 
+// @todo make it clickable to open designer
 const ProjectCard = ({ title, domain }: Project) => {
   return (
     <Flex direction="column" className={projectCardContainerStyle()}>
