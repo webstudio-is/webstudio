@@ -8,6 +8,7 @@ const panelStyle = css({
   borderRadius: theme.borderRadius[6],
   color: theme.colors.foregroundMain,
   minWidth: "min-content",
+  maxWidth: "max-content",
   // @todo - use theme
   //boxShadow: theme.boxShadow.brandElevationBig
 });

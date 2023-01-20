@@ -1,4 +1,4 @@
-import { globalCss } from "@webstudio-is/design-system";
+import { Flex, globalCss } from "@webstudio-is/design-system";
 import type { Project, User as DbUser } from "@webstudio-is/prisma-client";
 import { Header } from "./header";
 // eslint-disable-next-line import/no-internal-modules
@@ -34,7 +34,9 @@ export const Dashboard = ({ user, projects }: DashboardProps) => {
   return (
     <>
       <Header user={user} />
-      <Projects projects={projects} />
+      <Flex justify="center" css={{ minWidth: "min-content" }}>
+        <Projects projects={projects} />
+      </Flex>
     </>
   );
 };
