@@ -14,7 +14,7 @@ import { EmptyState } from "./empty-state";
 import { Panel } from "./panel";
 import { Heading } from "./heading";
 import { MenuIcon, PlusIcon } from "@webstudio-is/icons";
-import type { Project } from "@webstudio-is/prisma-client";
+import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { useState } from "react";
 
 const projectCardContainerStyle = css({
@@ -34,7 +34,7 @@ const projectCardContainerStyle = css({
 });
 
 const projectCardFooterStyle = css({
-  background: theme.colors.backgroundProjectCardTextArea,
+  background: theme.colors.brandBackgroundProjectCardTextArea,
   height: theme.spacing[17],
   py: theme.spacing[5],
   px: theme.spacing[7],
@@ -73,21 +73,41 @@ const getAbbreviation = (title: string) =>
 
 const domainStyle = css({
   color: theme.colors.foregroundSubtle,
-  textDecoration: "none",
-  "&:hover": {
-    textDecoration: "underline",
+  variants: {
+    isPublished: {
+      true: {
+        textDecoration: "none",
+        "&:hover": {
+          textDecoration: "underline",
+        },
+      },
+    },
   },
 });
 
 // @todo
 // - check if published, render "Not Published"
 // - build publish url
-const Domain = ({ domain }: { domain: string }) => {
-  return (
-    <Text as="a" href={domain} target="_blank" className={domainStyle()}>
-      {domain}
-    </Text>
-  );
+const Domain = ({
+  domain,
+  isPublished,
+}: {
+  domain: string;
+  isPublished: boolean;
+}) => {
+  if (isPublished) {
+    return (
+      <Text
+        as="a"
+        href={domain}
+        target="_blank"
+        className={domainStyle({ isPublished })}
+      >
+        {domain}
+      </Text>
+    );
+  }
+  return <Text className={domainStyle({ isPublished })}>Not Published</Text>;
 };
 
 const Menu = () => {
@@ -121,7 +141,7 @@ const Menu = () => {
 };
 
 // @todo make it clickable to open designer
-const ProjectCard = ({ title, domain }: Project) => {
+const ProjectCard = ({ title, domain, isPublished }: DashboardProject) => {
   return (
     <Flex
       direction="column"
@@ -139,7 +159,7 @@ const ProjectCard = ({ title, domain }: Project) => {
       >
         <Flex direction="column" justify="around">
           <Text variant="title">{title}</Text>
-          <Domain domain={domain} />
+          <Domain domain={domain} isPublished={isPublished} />
         </Flex>
         <Menu />
       </Flex>
@@ -148,7 +168,7 @@ const ProjectCard = ({ title, domain }: Project) => {
 };
 
 type ProjectsProps = {
-  projects: Array<Project>;
+  projects: Array<DashboardProject>;
 };
 
 export const Projects = ({ projects }: ProjectsProps) => {

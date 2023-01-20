@@ -1,5 +1,8 @@
 import { Flex, globalCss } from "@webstudio-is/design-system";
-import type { Project, User as DbUser } from "@webstudio-is/prisma-client";
+import type {
+  DashboardProject,
+  User as DbUser,
+} from "@webstudio-is/prisma-client";
 import { Header } from "./header";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
@@ -26,7 +29,7 @@ const globalStyles = globalCss({
 
 type DashboardProps = {
   user: User;
-  projects: Array<Project>;
+  projects: Array<DashboardProject>;
 };
 
 export const Dashboard = ({ user, projects }: DashboardProps) => {

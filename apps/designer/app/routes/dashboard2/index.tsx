@@ -4,8 +4,8 @@ import { json, redirect } from "@remix-run/node";
 import { Dashboard } from "~/dashboard2";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
-import { db } from "@webstudio-is/project/server";
 import { ComponentProps } from "react";
+import { prisma } from "@webstudio-is/prisma-client";
 
 export { links } from "~/dashboard2";
 
@@ -22,7 +22,13 @@ export const loader = async ({ request }: LoaderArgs) => {
       })
     );
   }
-  const projects = await db.project.loadManyByUserId(user.id);
+
+  const projects = await prisma.dashboardProject.findMany({
+    where: {
+      userId: user.id,
+    },
+  });
+
   return json({ user, projects });
 };
 
