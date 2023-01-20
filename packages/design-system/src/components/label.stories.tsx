@@ -13,10 +13,11 @@ const Section = ({
   title: string;
   children: ReactNode;
 }) => (
-  <>
+  // @todo remove fontFamily from wrapping component
+  <div style={{ fontFamily: "sans-serif" }}>
     <h3 style={{ fontFamily: "sans-serif" }}>{title}</h3>
     <div style={{ display: "flex", gap: 12 }}>{children}</div>
-  </>
+  </div>
 );
 
 const colors = ["default", "preset", "local", "remote"] as const;

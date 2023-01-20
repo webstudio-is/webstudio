@@ -9,10 +9,3 @@ export const parameters = {
     },
   },
 };
-
-export const decorators = [
-  (StoryFn) => {
-    document.body.style.fontFamily = "sans-serif";
-    return <StoryFn />;
-  },
-];
