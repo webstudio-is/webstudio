@@ -1,14 +1,9 @@
-import { z } from "zod";
 import warnOnce from "warn-once";
 import DataLoader from "dataloader";
 import { type Patch, applyPatches } from "immer";
 import { type Asset, prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import {
-  type StyleProperty,
-  ImageValue,
-  SharedStyleValue,
-} from "@webstudio-is/css-data";
+import { StoredStyles, Styles } from "@webstudio-is/react-sdk";
 
 const assetsLoader = new DataLoader<string, Asset | undefined>(
   async (assetIds) => {
@@ -34,89 +29,108 @@ const assetsLoader = new DataLoader<string, Asset | undefined>(
 );
 
 /**
- * Use zod + DataLoader to load/format assets from the Assets table.
+ * Use DataLoader to load/format assets from the Assets table.
  */
-const ImageAssetDbOut = z.object({
-  type: z.literal("asset"),
-  value: z
-    .string()
-    .uuid()
-    .transform(async (assetId) => {
-      const asset = await assetsLoader.load(assetId);
-      if (asset === undefined) {
-        warnOnce(true, `Asset with assetId "${assetId}" not found`);
-        return;
-      }
-
-      return formatAsset(asset);
-    }),
-});
-
-const ImageValueDbOut = z.object({
-  type: z.literal("image"),
-  value: z
-    .array(ImageAssetDbOut)
-    // an Asset can be not present in DB, skip it.
-    .transform((assets) => assets.filter((asset) => asset.value !== undefined)),
-});
-
-const StyleValueDbOut = z.union([SharedStyleValue, ImageValueDbOut]);
-
-const StylesItemDbOut = z.object({
-  breakpointId: z.string(),
-  instanceId: z.string(),
-  // @todo can't figure out how to make property to be enum
-  property: z.string() as z.ZodType<StyleProperty>,
-  value: StyleValueDbOut,
-});
-
-export const StylesDbOut = z.array(StylesItemDbOut);
-
-/**
- * In the DB we hold only assetId
- **/
-const ImageValueDbIn = ImageValue.transform((imageStyle) => ({
-  type: imageStyle.type,
-  value: imageStyle.value.map((value) =>
-    /* Now value.type is always equal to the "asset", but in the future, it will have additional types */
-    value.type === "asset" ? { type: "asset", value: value.value.id } : value
-  ),
-}));
-
-const StyleValueDbIn = z.union([SharedStyleValue, ImageValueDbIn]);
-
-const StylesItemDbIn = z.object({
-  breakpointId: z.string(),
-  instanceId: z.string(),
-  // @todo can't figure out how to make property to be enum
-  property: z.string() as z.ZodType<StyleProperty>,
-  value: StyleValueDbIn,
-});
-
-export const StylesDbIn = z.array(StylesItemDbIn);
-
-const loadStylesByTreeId = async (treeId: string) => {
-  const tree = await prisma.tree.findUnique({
-    where: { id: treeId },
-  });
-
-  if (tree === null) {
-    return [];
+const loadAsset = async (assetId: string) => {
+  const asset = await assetsLoader.load(assetId);
+  if (asset === undefined) {
+    warnOnce(true, `Asset with assetId "${assetId}" not found`);
+    return;
   }
 
-  return StylesDbOut.parse(JSON.parse(tree.styles));
+  return formatAsset(asset);
+};
+
+const loadValue = async (styleValue: StoredStyles[number]["value"]) => {
+  if (styleValue.type === "image") {
+    return {
+      type: "image" as const,
+      value: (
+        await Promise.all(
+          styleValue.value.map(async (item) => {
+            const asset = await loadAsset(item.value);
+            if (asset?.type === "image") {
+              return [
+                {
+                  type: "asset" as const,
+                  value: asset,
+                },
+              ];
+            }
+            return [];
+          })
+        )
+      ).flat(),
+    };
+  } else {
+    return styleValue;
+  }
+};
+
+export const parseStyles = async (stylesString: string) => {
+  const storedStyles = StoredStyles.parse(JSON.parse(stylesString));
+  const styles: Styles = await Promise.all(
+    storedStyles.map(async (stylesItem) => {
+      return {
+        breakpointId: stylesItem.breakpointId,
+        instanceId: stylesItem.instanceId,
+        property: stylesItem.property,
+        value: await loadValue(stylesItem.value),
+      };
+    })
+  );
+
+  return styles;
+};
+
+/**
+ * prepare value to store in db
+ */
+const prepareValue = (styleValue: Styles[number]["value"]) => {
+  if (styleValue.type === "image") {
+    return {
+      type: "image" as const,
+      value: styleValue.value.map((asset) => ({
+        type: asset.type,
+        /**
+         * In the DB we hold only assetId
+         **/
+        value: asset.value.id,
+      })),
+    };
+  } else {
+    return styleValue;
+  }
+};
+
+export const serializeStyles = (styles: Styles) => {
+  const storedStyles: StoredStyles = styles.map((stylesItem) => {
+    return {
+      breakpointId: stylesItem.breakpointId,
+      instanceId: stylesItem.instanceId,
+      property: stylesItem.property,
+      value: prepareValue(stylesItem.value),
+    };
+  });
+  return JSON.stringify(storedStyles);
 };
 
 export const patch = async (
   { treeId }: { treeId: string },
   patches: Array<Patch>
 ) => {
-  const styles = await loadStylesByTreeId(treeId);
-  const patchedStyles = StylesDbIn.parse(applyPatches(styles, patches));
+  const tree = await prisma.tree.findUnique({
+    where: { id: treeId },
+  });
+  if (tree === null) {
+    return;
+  }
+  const styles = await parseStyles(tree.styles);
+  const patchedStyles = Styles.parse(applyPatches(styles, patches));
 
   await prisma.tree.update({
     data: {
-      styles: JSON.stringify(patchedStyles),
+      styles: serializeStyles(patchedStyles),
     },
     where: { id: treeId },
   });
