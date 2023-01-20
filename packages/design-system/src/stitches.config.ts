@@ -120,6 +120,7 @@ export type { VariantProps } from "@stitches/react";
 import {
   color as figmaColors,
   boxShadow as figmaShadows,
+  typography as figmaTypography,
 } from "./__generated__/figma-design-tokens";
 
 const spacing = {

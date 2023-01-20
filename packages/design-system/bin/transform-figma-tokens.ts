@@ -14,6 +14,18 @@ const TreeLeaf = z.object({
   value: z.unknown(),
 });
 
+const parse = <T>(path: string[], value: unknown, schema: ZodType<T>) => {
+  const result = schema.safeParse(value);
+  if (result.success === false) {
+    throw new Error(
+      `Could not parse ${path.join(" > ")}. Got a error: ${
+        result.error.message
+      }`
+    );
+  }
+  return result.data;
+};
+
 const SingleShadow = z.object({
   color: z.string(),
   type: z.enum(["dropShadow", "innerShadow"]),
@@ -23,21 +35,9 @@ const SingleShadow = z.object({
   spread: z.number(),
 });
 const Shadow = z.union([SingleShadow, z.array(SingleShadow)]);
-
-const parse = <T>(path: string[], value: unknown, schema: ZodType<T>) => {
-  const result = schema.safeParse(value);
-  if (result.success === false) {
-    throw new Error(
-      `Could not parse ${path.join(".")}. Got a error: ${result.error.message}`
-    );
-  }
-  return result.data;
-};
-
 const printShadow = (path: string[], value: unknown) => {
   const shadow = parse(path, value, Shadow);
-
-  const printSingleShadow = (shadow: z.infer<typeof SingleShadow>) => {
+  const printSingle = (shadow: z.infer<typeof SingleShadow>) => {
     return [
       shadow.type === "innerShadow" ? "inset" : "",
       `${shadow.x}px`,
@@ -49,12 +49,92 @@ const printShadow = (path: string[], value: unknown) => {
       .join(" ")
       .trim();
   };
+  return Array.isArray(shadow)
+    ? shadow.map(printSingle).join(", ")
+    : printSingle(shadow);
+};
 
-  if (Array.isArray(shadow)) {
-    return shadow.map(printSingleShadow).join(", ");
+// https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#common_weight_name_mapping
+// (hopefully the fonts we use, Figma, Tokens plugin — all follow this convention)
+const fontWeightMapping = {
+  Thin: 100,
+  Hairline: 100,
+  "Extra Light": 200,
+  "Ultra Light": 200,
+  Light: 300,
+  Normal: 400,
+  Regular: 400,
+  Medium: 500,
+  "Semi Bold": 600,
+  "Demi Bold": 600,
+  Bold: 700,
+  "Extra Bold": 800,
+  "Ultra Bold": 800,
+  Black: 900,
+  Heavy: 900,
+  "Extra Black": 950,
+  "Ultra Black": 950,
+} as const;
+const fontFamilies = {
+  Inter: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+  Manrope: "ManropeVariable, Manrope, sans-serif",
+  Roboto: "Roboto, menlo, monospace",
+} as const;
+const fontFamilyMapping = {
+  ...fontFamilies,
+  InterVariable: fontFamilies.Inter,
+  "Inter Variable": fontFamilies.Inter,
+  ManropeVariable: fontFamilies.Manrope,
+  "Manrope Variable": fontFamilies.Manrope,
+  "Roboto Mono": fontFamilies.Roboto,
+};
+const Typography = z.object({
+  fontFamily: z.string(),
+  fontWeight: z.enum(
+    Object.keys(fontWeightMapping) as [keyof typeof fontWeightMapping]
+  ),
+  lineHeight: z.union([z.string(), z.number()]),
+  fontSize: z.number(),
+  letterSpacing: z.union([z.string(), z.number()]),
+});
+const printLineHeight = (path: string[], value: number | string) => {
+  if (typeof value === "number") {
+    return `${value}px`;
   }
-
-  return printSingleShadow(shadow);
+  // @todo: figure out how to convert AUTO to pixels or something
+  // https://discord.com/channels/955905230107738152/1065939291479478343
+  if (value === "AUTO") {
+    return undefined;
+  }
+  if (value.endsWith("%")) {
+    return value;
+  }
+  throw new Error(
+    `Could not parse "${path.join(" > ")} > lineHeight": ${value}`
+  );
+};
+const printLetterSpacing = (path: string[], value: number | string) => {
+  if (typeof value === "number") {
+    return `${value}px`;
+  }
+  if (/^-?[0-9]+(.[0-9]+)?%$/.test(value)) {
+    const fraction = parseFloat(value) / 100;
+    return `${fraction}em`;
+  }
+  throw new Error(
+    `Could not parse "${path.join(" > ")} > letterSpacing": ${value}`
+  );
+};
+const printTypography = (path: string[], value: unknown) => {
+  const typography = parse(path, value, Typography);
+  return {
+    fontFamily:
+      fontFamilyMapping[typography.fontFamily] ?? typography.fontFamily,
+    fontWeight: fontWeightMapping[typography.fontWeight],
+    fontSize: `${typography.fontSize}px`,
+    lineHeight: printLineHeight(path, typography.lineHeight),
+    letterSpacing: printLetterSpacing(path, typography.letterSpacing),
+  };
 };
 
 const traverse = (
@@ -107,6 +187,10 @@ const main = () => {
 
     if (type === "boxShadow") {
       printedValue = printShadow(path, value);
+    }
+
+    if (type === "typography") {
+      printedValue = printTypography(path, value);
     }
 
     // no need to check for __proto__ (prototype polution)

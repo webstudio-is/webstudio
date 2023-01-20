@@ -4,7 +4,7 @@
  */
 
 import React, { forwardRef, type Ref, type ComponentProps } from "react";
-import { Text } from "./text";
+import { typography } from "./typography";
 import { styled, theme } from "../stitches.config";
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
@@ -88,12 +88,8 @@ const StyledButton = styled("button", {
   },
 });
 
-const TextContainer = styled(Text, {
+const TextContainer = styled("span", typography.labelsSentenceCase, {
   padding: `0 ${theme.spacing[2]}`,
-  // <Text> incorrectly sets lineHeight to 1 for all variants
-  // here we set lineHeight as it's defined for "label" in Figma
-  // @todo: fix <Text>
-  lineHeight: theme.lineHeight[3],
   defaultVariants: { variant: "label" },
 });
 
