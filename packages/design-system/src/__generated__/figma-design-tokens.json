@@ -638,6 +638,12 @@
           "value": "#ededed",
           "type": "color"
         }
+      },
+      "foreground": {
+        "published": {
+          "value": "#005406",
+          "type": "color"
+        }
       }
     },
     "border": {
@@ -785,10 +791,6 @@
         "type": "color",
         "description": "color for hidden item element within navigator item component"
       },
-      "published": {
-        "value": "#005406",
-        "type": "color"
-      },
       "flex-ui": {
         "main": {
           "value": "#c7c7c7",
@@ -863,7 +865,7 @@
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
       },
-      "H2": {
+      "Section Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
@@ -877,7 +879,7 @@
         },
         "type": "typography"
       },
-      "H1": {
+      "Large Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
