@@ -54,13 +54,14 @@ export const fontFamilies = {
 } as const;
 
 export const lineHeights = {
-  "0": "AUTO",
-  "1": 8,
-  "2": 10,
-  "3": 11,
-  "4": 12,
-  "5": 16,
-  "6": "120%",
+  "0": 8,
+  "1": 10,
+  "2": 11,
+  "3": 12,
+  "4": 16,
+  "5": 39,
+  "10": "120%",
+  "11": "135%",
 } as const;
 
 export const fontWeights = {
@@ -184,7 +185,7 @@ export const typography = {
   bigTitle: {
     fontFamily: "Inter",
     fontWeight: "Medium",
-    lineHeight: "AUTO",
+    lineHeight: 39,
     fontSize: 32,
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
@@ -217,7 +218,7 @@ export const typography = {
   brandSectionTitle: {
     fontFamily: "Manrope",
     fontWeight: "Bold",
-    lineHeight: "AUTO",
+    lineHeight: "135%",
     fontSize: 20,
     letterSpacing: "0%",
     paragraphSpacing: 0,
@@ -239,7 +240,7 @@ export const typography = {
   brandRegular: {
     fontFamily: "Manrope",
     fontWeight: "Regular",
-    lineHeight: "AUTO",
+    lineHeight: "135%",
     fontSize: 16,
     letterSpacing: "1%",
     paragraphSpacing: 0,
