@@ -34,9 +34,11 @@ export const Dashboard = ({ user, projects }: DashboardProps) => {
   return (
     <>
       <Header user={user} />
-      <Flex justify="center" css={{ minWidth: "min-content" }}>
-        <Projects projects={projects} />
-      </Flex>
+      <main>
+        <Flex justify="center" as="section" css={{ minWidth: "min-content" }}>
+          <Projects projects={projects} />
+        </Flex>
+      </main>
     </>
   );
 };

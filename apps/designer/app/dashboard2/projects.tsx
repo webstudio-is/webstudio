@@ -126,6 +126,7 @@ const ProjectCard = ({ title, domain }: Project) => {
     <Flex
       direction="column"
       shrink={false}
+      as="article"
       className={projectCardContainerStyle()}
     >
       <Flex grow align="center" className={projectNameAvatarStyle()}>
