@@ -408,7 +408,7 @@
       },
       "neutral": {
         "main": {
-          "value": "#D7DBDF",
+          "value": "#d7dbdf",
           "type": "color",
           "description": "used for neutral button"
         },
@@ -472,11 +472,11 @@
       },
       "preset": {
         "main": {
-          "value": "#E6E8EB",
+          "value": "#e6e8eb",
           "type": "color"
         },
         "hover": {
-          "value": "#DFE3E6",
+          "value": "#dfe3e6",
           "type": "color"
         }
       },
@@ -786,9 +786,9 @@
         "description": "destructive foreground color. Used in input field, text field, search area, & toast"
       },
       "success": {
-        "value": "#008444",
+        "value": "#008846",
         "type": "color",
-        "description": "success foreground color. Used in toast and on sucess messages"
+        "description": "success foreground color. Used in toast"
       },
       "info": {
         "value": "#006adc",
