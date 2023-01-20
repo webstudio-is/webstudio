@@ -786,9 +786,9 @@
         "description": "destructive foreground color. Used in input field, text field, search area, & toast"
       },
       "success": {
-        "value": "#30a46c",
+        "value": "#008444",
         "type": "color",
-        "description": "success foreground color. Used in toast"
+        "description": "success foreground color. Used in toast and on sucess messages"
       },
       "info": {
         "value": "#006adc",
