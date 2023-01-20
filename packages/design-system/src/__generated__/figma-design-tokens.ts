@@ -352,7 +352,7 @@ export const color = {
   foregroundCategoryLabel: "#889096",
   foregroundTextSubtle: "#687076",
   foregroundDestructive: "#dc3d43",
-  foregroundSuccess: "#30a46c",
+  foregroundSuccess: "#008444",
   foregroundInfo: "#006adc",
   foregroundDisabled: "#c1c8cd",
   foregroundHiddenItem: "#7e868c",
