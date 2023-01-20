@@ -17,7 +17,8 @@
     "@trpc/client": "^10.9.0",
     "@trpc/server": "^10.9.0",
     "@webstudio-is/prisma-client": "workspace:^",
-    "zod": "^3.19.1"
+    "zod": "^3.19.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.21",

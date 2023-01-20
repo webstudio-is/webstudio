@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["views"]
+  previewFeatures = ["views", "clientExtensions"]
   // <output-placeholder-for-migrations>
 }
 
@@ -92,6 +92,20 @@ model Breakpoints {
   build   Build  @relation(fields: [buildId], references: [id])
   buildId String @id
   values  String @default("[]")
+}
+
+enum AuthorizationPermit {
+  VIEW
+  EDIT
+}
+
+model AuthorizationTokens {
+  id        String              @id @default(uuid())
+  // No relation to Project, as Authorization system is not tied to a project
+  projectId String
+  token     String
+  permit    AuthorizationPermit
+  createdAt DateTime            @default(now())
 }
 
 // Dashboard

@@ -118,6 +118,7 @@ importers:
       immer: ^9.0.12
       immerhin: ^0.4.0
       jest: ^29.3.1
+      jose: ^4.11.2
       lexical: ^0.6.0
       lodash: 4.17.21
       lodash.capitalize: ^4.2.1
@@ -200,6 +201,7 @@ importers:
       hyphenate-style-name: 1.0.4
       immer: 9.0.15
       immerhin: 0.4.0
+      jose: 4.11.2
       lexical: 0.6.0
       lodash: 4.17.21
       lodash.capitalize: 4.2.1
@@ -752,6 +754,7 @@ importers:
       '@webstudio-is/project-build': workspace:^
       '@webstudio-is/react-sdk': workspace:^
       '@webstudio-is/scripts': workspace:^
+      '@webstudio-is/trpc-interface': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       bson-objectid: ^2.0.4
       immer: ^9.0.12
@@ -772,6 +775,7 @@ importers:
       '@webstudio-is/prisma-client': link:../prisma-client
       '@webstudio-is/project-build': link:../project-build
       '@webstudio-is/react-sdk': link:../react-sdk
+      '@webstudio-is/trpc-interface': link:../trpc-interface
       bson-objectid: 2.0.4
       immer: 9.0.15
       nanoid: 3.3.4
@@ -932,11 +936,13 @@ importers:
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       typescript: 4.7.4
+      uuid: ^9.0.0
       zod: ^3.19.1
     dependencies:
       '@trpc/client': 10.9.0_@trpc+server@10.9.0
       '@trpc/server': 10.9.0
       '@webstudio-is/prisma-client': link:../prisma-client
+      uuid: 9.0.0
       zod: 3.19.1
     devDependencies:
       '@types/node': 17.0.45
@@ -16231,6 +16237,10 @@ packages:
       - supports-color
       - ts-node
     dev: true
+
+  /jose/4.11.2:
+    resolution: {integrity: sha512-njj0VL2TsIxCtgzhO+9RRobBvws4oYyCM8TpvoUQwl/MbIM3NFJRR9+e6x0sS5xXaP1t6OCBkaBME98OV9zU5A==}
+    dev: false
 
   /js-cookie/2.2.1:
     resolution: {integrity: sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ==}

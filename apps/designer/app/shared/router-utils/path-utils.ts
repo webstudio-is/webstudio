@@ -68,11 +68,13 @@ export const getBuildUrl = ({
   project,
   page,
   mode,
+  readToken,
 }: {
   buildOrigin: string;
   project: Project;
   page: Page;
   mode?: BuildMode;
+  readToken?: string;
 }) => {
   const url = new URL(buildOrigin);
   url.pathname = page.path;
@@ -85,6 +87,10 @@ export const getBuildUrl = ({
 
   if (mode) {
     url.searchParams.set("mode", mode);
+  }
+
+  if (readToken) {
+    url.searchParams.set("readToken", readToken);
   }
 
   return url.toString();

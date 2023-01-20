@@ -267,6 +267,8 @@ export type DesignerProps = {
   treeId: string;
   buildId: string;
   buildOrigin: string;
+  readToken: string;
+  sharedTokens: { token: string; relation: "viewer" | "editor" }[];
 };
 
 export const Designer = ({
@@ -276,6 +278,7 @@ export const Designer = ({
   treeId,
   buildId,
   buildOrigin,
+  readToken,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -310,7 +313,13 @@ export const Designer = ({
     return page;
   }, [pages, pageId]);
 
-  const canvasUrl = getBuildUrl({ buildOrigin, project, page, mode: "edit" });
+  const canvasUrl = getBuildUrl({
+    buildOrigin,
+    project,
+    page,
+    mode: "edit",
+    readToken: readToken,
+  });
 
   const previewUrl = getBuildUrl({
     buildOrigin,
