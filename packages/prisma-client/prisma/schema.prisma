@@ -89,6 +89,8 @@ model InstanceProps {
   instanceId String
   treeId     String
   props      String @default("[]")
+
+  @@unique([instanceId, treeId])
 }
 
 model Breakpoints {

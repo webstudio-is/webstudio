@@ -7,7 +7,9 @@ import {
 } from "@webstudio-is/project";
 import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import { registerContainers, useDesignerStore } from "~/shared/sync";
-import interStyles from "~/shared/font-faces/inter.css";
+import { useSyncServer } from "./shared/sync-server";
+// eslint-disable-next-line import/no-internal-modules
+import interFont from "@fontsource/inter/index.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {
@@ -16,7 +18,6 @@ import {
   useProject,
   useCurrentPageId,
   useSelectedInstanceData,
-  useSyncStatus,
 } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
@@ -46,10 +47,9 @@ import { useAllUserProps } from "@webstudio-is/react-sdk";
 import { theme } from "@webstudio-is/design-system";
 
 registerContainers();
-
 export const links = () => {
   return [
-    { rel: "stylesheet", href: interStyles },
+    { rel: "stylesheet", href: interFont },
     { rel: "stylesheet", href: designerStyles },
   ];
 };
@@ -62,11 +62,6 @@ const useSubscribeSelectedInstanceData = () => {
 const useSubscribeHoveredInstanceData = () => {
   const [, setValue] = useHoveredInstanceData();
   useSubscribe("hoverInstance", setValue);
-};
-
-const useSubscribeSyncStatus = () => {
-  const [, setValue] = useSyncStatus();
-  useSubscribe("syncStatus", setValue);
 };
 
 const useSetProject = (project: Project) => {
@@ -286,6 +281,8 @@ export type DesignerProps = {
   project: Project;
   pages: Pages;
   pageId: string;
+  treeId: string;
+  buildId: string;
   buildOrigin: string;
 };
 
@@ -293,9 +290,10 @@ export const Designer = ({
   project,
   pages,
   pageId,
+  treeId,
+  buildId,
   buildOrigin,
 }: DesignerProps) => {
-  useSubscribeSyncStatus();
   useSubscribeSelectedInstanceData();
   useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
@@ -304,6 +302,7 @@ export const Designer = ({
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
+  useSyncServer({ buildId, treeId });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);

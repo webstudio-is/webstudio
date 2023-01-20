@@ -1,7 +1,8 @@
 import { useActionData } from "@remix-run/react";
 
 import { Flex } from "@webstudio-is/design-system";
-import interStyles from "~/shared/font-faces/inter.css";
+// eslint-disable-next-line import/no-internal-modules
+import interFont from "@fontsource/inter/index.css";
 import dashboardStyles from "./dashboard.css";
 import { User as DbUser } from "@webstudio-is/prisma-client";
 import { DashboardHeader } from "./components/header";
@@ -11,7 +12,7 @@ export const links = () => {
   return [
     {
       rel: "stylesheet",
-      href: interStyles,
+      href: interFont,
     },
     {
       rel: "stylesheet",

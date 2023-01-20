@@ -410,6 +410,8 @@ const toVariblesNames = (values: VariblesValues): VariblesNames => {
 
 export const theme = toVariblesNames(config.theme);
 
+export const rawTheme = config.theme;
+
 export type CSS = Stitches.CSS<typeof config>;
 
 export { styled, css, globalCss, keyframes, config };
