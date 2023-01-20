@@ -563,21 +563,6 @@
           "type": "color"
         }
       },
-      "project-card": {
-        "front": {
-          "value": "linear-gradient(0deg, #fbf8ff 25%, #e2e2e2 66%)",
-          "type": "color",
-          "description": "big text color in the project card component"
-        },
-        "back": {
-          "value": "linear-gradient(0deg, #fbf8ff 0%, #c7c7c7 100%)",
-          "type": "color"
-        },
-        "text-area": {
-          "value": "#ffffffe6",
-          "type": "color"
-        }
-      },
       "style-source": {
         "token": {
           "value": "#0081f1",
@@ -622,6 +607,21 @@
     },
     "brand": {
       "background": {
+        "project-card": {
+          "front": {
+            "value": "linear-gradient(0deg, #fbf8ff 25%, #e2e2e2 66%)",
+            "type": "color",
+            "description": "big text color in the project card component"
+          },
+          "back": {
+            "value": "linear-gradient(0deg, #fbf8ff 0%, #c7c7c7 100%)",
+            "type": "color"
+          },
+          "text-area": {
+            "value": "#ffffffe6",
+            "type": "color"
+          }
+        },
         "published-main": {
           "value": "#39fbbb",
           "type": "color"
@@ -642,6 +642,12 @@
       "foreground": {
         "published": {
           "value": "#005406",
+          "type": "color"
+        }
+      },
+      "border": {
+        "published": {
+          "value": "#ebfffc",
           "type": "color"
         }
       }
@@ -691,10 +697,6 @@
         "value": "#ffffff",
         "type": "color",
         "description": "border color to create contrast on dark/colored elements. Used in button, new position indicator for navigator"
-      },
-      "published": {
-        "value": "#ebfffc",
-        "type": "color"
       },
       "item": {
         "child-line": {
