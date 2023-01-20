@@ -21,7 +21,7 @@ export const boxShadow = {
     blur: 16,
     spread: 0,
   },
-  innerGlow01: {
+  brandInnerGlow1: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -29,7 +29,7 @@ export const boxShadow = {
     blur: 1,
     spread: 0,
   },
-  innerGlow03: {
+  brandInnerGlow2: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -37,7 +37,7 @@ export const boxShadow = {
     blur: 3,
     spread: 0,
   },
-  innerGlow05: {
+  brandInnerGlow3: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
