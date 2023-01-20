@@ -3,7 +3,7 @@ import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { Flex, Button, Text, TextField } from "@webstudio-is/design-system";
 // eslint-disable-next-line import/no-internal-modules
-import interFont from "@fontsource/inter/index.css";
+import interFont from "@fontsource/inter/variable.css";
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
 import { LoginButton } from "./login-button";
 import loginStyles from "./login.css";
