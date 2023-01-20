@@ -143,7 +143,6 @@ export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
       throw new Error(`Page with id "${pageId}" not found`);
     }
 
-    await db.props.deleteByTreeId(page.treeId);
     await db.tree.deleteById(page.treeId);
 
     return {
@@ -174,7 +173,6 @@ const clonePage = async (
 ) => {
   const treeId = source.treeId;
   const tree = await db.tree.clone(treeId, client);
-  await db.props.clone({ previousTreeId: treeId, nextTreeId: tree.id }, client);
   return { ...source, id: uuid(), treeId: tree.id };
 };
 
