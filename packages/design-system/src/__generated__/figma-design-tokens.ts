@@ -214,7 +214,7 @@ export const typography = {
     textCase: "none",
     textDecoration: "none",
   },
-  brandH2: {
+  brandSectionTitle: {
     fontFamily: "Manrope",
     fontWeight: "Bold",
     lineHeight: "AUTO",
@@ -225,7 +225,7 @@ export const typography = {
     textCase: "none",
     textDecoration: "none",
   },
-  brandH1: {
+  brandLargeTitle: {
     fontFamily: "Manrope",
     fontWeight: "Bold",
     lineHeight: "120%",
@@ -325,6 +325,7 @@ export const color = {
   brandBackgroundGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   brandBackgroundPublishedContrast: "#ebfffc",
   brandBackgroundDashboard: "#ededed",
+  brandForegroundPublished: "#005406",
   borderMain: "#c1c8cd",
   borderFocus: "#0081f1",
   borderMenuInner: "#fcfcfc",
@@ -352,7 +353,6 @@ export const color = {
   foregroundInfo: "#006adc",
   foregroundDisabled: "#c1c8cd",
   foregroundHiddenItem: "#7e868c",
-  foregroundPublished: "#005406",
   foregroundFlexUiMain: "#c7c7c7",
   foregroundFlexUiHover: "#96c7f2",
   foregroundContrastMain: "#ffffff",
