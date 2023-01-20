@@ -123,7 +123,11 @@ const Menu = () => {
 // @todo make it clickable to open designer
 const ProjectCard = ({ title, domain }: Project) => {
   return (
-    <Flex direction="column" className={projectCardContainerStyle()}>
+    <Flex
+      direction="column"
+      shrink={false}
+      className={projectCardContainerStyle()}
+    >
       <Flex grow align="center" className={projectNameAvatarStyle()}>
         {getAbbreviation(title)}
       </Flex>
@@ -155,7 +159,7 @@ export const Projects = ({ projects }: ProjectsProps) => {
           <Button prefix={<PlusIcon />}>New Project</Button>
         </Flex>
         {projects.length === 0 && <EmptyState />}
-        <Flex gap="6">
+        <Flex gap="6" wrap="wrap">
           {projects.map((project) => {
             return <ProjectCard {...project} key={project.id} />;
           })}

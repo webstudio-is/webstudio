@@ -6,8 +6,8 @@ const panelStyle = css({
   padding: theme.spacing[13],
   margin: theme.spacing[13],
   borderRadius: theme.borderRadius[6],
-  minWidth: 600,
   color: theme.colors.foregroundMain,
+  minWidth: "min-content",
   // @todo - use theme
   //boxShadow: theme.boxShadow.brandElevationBig
 });

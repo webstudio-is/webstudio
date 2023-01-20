@@ -7,6 +7,7 @@ const containerStyle = css({
   color: theme.colors.foregroundContrastMain,
   borderRadius: theme.borderRadius[4],
   height: theme.spacing[29],
+  minWidth: 600,
 });
 
 const EmptyStateContainer = (props: ComponentProps<typeof Flex>) => (
