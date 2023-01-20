@@ -16,7 +16,7 @@ import { Heading } from "./heading";
 import { MenuIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { useState } from "react";
-import { designerPath } from "~/shared/router-utils";
+import { designerPath, getPublishedUrl } from "~/shared/router-utils";
 import { Link as RemixLink } from "@remix-run/react";
 
 const projectCardContainerStyle = css({
@@ -74,6 +74,8 @@ const getAbbreviation = (title: string) =>
 
 const domainStyle = css({
   color: theme.colors.foregroundSubtle,
+  flexBasis: "auto",
+  flexGrow: 0,
   variants: {
     isPublished: {
       true: {
@@ -97,18 +99,28 @@ const Domain = ({
   isPublished: boolean;
 }) => {
   if (isPublished) {
+    const url = new URL(getPublishedUrl(domain));
     return (
       <Text
         as="a"
-        href={domain}
+        href={url.href}
         target="_blank"
-        className={domainStyle({ isPublished })}
+        truncate
+        css={{
+          color: theme.colors.foregroundSubtle,
+          flexBasis: "auto",
+          flexGrow: 0,
+          textDecoration: "none",
+          "&:hover": {
+            textDecoration: "underline",
+          },
+        }}
       >
-        {domain}
+        {url.hostname}
       </Text>
     );
   }
-  return <Text className={domainStyle({ isPublished })}>Not Published</Text>;
+  return <Text color="hint">Not Published</Text>;
 };
 
 const Menu = () => {

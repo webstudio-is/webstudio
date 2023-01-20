@@ -31,7 +31,6 @@ const Content = ({ project }: PublishButtonProps) => {
     if (typeof location !== "object" || !domain) {
       return;
     }
-    console.log(getPublishedUrl(domain));
     setUrl(getPublishedUrl(domain));
   }, [domain]);
 
