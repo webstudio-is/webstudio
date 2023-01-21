@@ -31,6 +31,15 @@ export const useSetPresetStyles = (presetStyles: PresetStyles) => {
 };
 
 export const stylesContainer = atom<Styles>([]);
+/**
+ * Indexed styles data is recomputed on every styles update
+ * Compumer should use shallow-equal to check all items in the list
+ * are the same to avoid unnecessary rerenders
+ *
+ * Potential optimization can be maintaining the index as separate state
+ * though will require to move away from running immer patches on array
+ * of styles
+ */
 export const stylesIndexStore = computed(stylesContainer, (styles) => {
   const stylesByInstanceId = new Map<Instance["id"], Styles>();
   for (const stylesItem of styles) {
