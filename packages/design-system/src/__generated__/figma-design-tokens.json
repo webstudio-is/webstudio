@@ -337,27 +337,27 @@
       }
     },
     "radius": {
-      "1": {
+      "0": {
         "value": "1px",
         "type": "borderRadius"
       },
-      "2": {
+      "1": {
         "value": "2px",
         "type": "borderRadius"
       },
-      "3": {
+      "2": {
         "value": "3px",
         "type": "borderRadius"
       },
-      "4": {
+      "3": {
         "value": "4px",
         "type": "borderRadius"
       },
-      "5": {
+      "4": {
         "value": "5px",
         "type": "borderRadius"
       },
-      "6": {
+      "5": {
         "value": "6px",
         "type": "borderRadius"
       }
@@ -913,7 +913,7 @@
           "fontWeight": "{fontWeights.manrope-6}",
           "lineHeight": "{lineHeights.11}",
           "fontSize": "{fontSize.3}",
-          "letterSpacing": "{letterSpacing.3}",
+          "letterSpacing": "{letterSpacing.1}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
           "textCase": "{textCase.none}",
@@ -922,7 +922,7 @@
         "type": "typography"
       },
       "inner-glow": {
-        "1": {
+        "0": {
           "value": {
             "color": "#fbf8ff",
             "type": "innerShadow",
@@ -933,7 +933,7 @@
           },
           "type": "boxShadow"
         },
-        "2": {
+        "1": {
           "value": {
             "color": "#fbf8ff",
             "type": "innerShadow",
@@ -944,7 +944,7 @@
           },
           "type": "boxShadow"
         },
-        "3": {
+        "2": {
           "value": {
             "color": "#fbf8ff",
             "type": "innerShadow",
@@ -976,12 +976,12 @@
       }
     },
     "border-width": {
-      "1": {
+      "0": {
         "value": "1",
         "type": "borderWidth",
         "description": "sets border width value to 1"
       },
-      "2": {
+      "1": {
         "value": "2",
         "type": "borderWidth",
         "description": "sets border width value to 2. Used for focus borders (among other things)"
