@@ -38,43 +38,39 @@
     "lineHeights": {
       "0": {
         "value": "8",
-        "type": "lineHeights",
-        "description": "lineheights.<10 are for pixel values"
+        "type": "lineHeights"
       },
       "1": {
         "value": "10",
-        "type": "lineHeights",
-        "description": "lineheights.<10 are for pixel values"
+        "type": "lineHeights"
       },
       "2": {
         "value": "11",
-        "type": "lineHeights",
-        "description": "lineheights.<10 are for pixel values"
+        "type": "lineHeights"
       },
       "3": {
         "value": "12",
-        "type": "lineHeights",
-        "description": "lineheights.<10 are for pixel values"
+        "type": "lineHeights"
       },
       "4": {
         "value": "16",
-        "type": "lineHeights",
-        "description": "lineheights.<10 are for pixel values"
+        "type": "lineHeights"
       },
       "5": {
+        "value": "22",
+        "type": "lineHeights"
+      },
+      "6": {
+        "value": "27",
+        "type": "lineHeights"
+      },
+      "7": {
         "value": "39",
-        "type": "lineHeights",
-        "description": "lineheights.<10 are for pixel values"
+        "type": "lineHeights"
       },
-      "10": {
-        "value": "120%",
-        "type": "lineHeights",
-        "description": "lineheights.>10 are for percentage values"
-      },
-      "11": {
-        "value": "135%",
-        "type": "lineHeights",
-        "description": "lineheights.>10 are for percentage values"
+      "8": {
+        "value": "58",
+        "type": "lineHeights"
       }
     },
     "fontWeights": {
@@ -278,7 +274,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.5}",
+        "lineHeight": "{lineHeights.7}",
         "fontSize": "{fontSize.5}",
         "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -883,7 +879,7 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
-          "lineHeight": "{lineHeights.11}",
+          "lineHeight": "{lineHeights.6}",
           "fontSize": "{fontSize.4}",
           "letterSpacing": "{letterSpacing.1}",
           "paragraphSpacing": "{paragraphSpacing.0}",
@@ -897,7 +893,7 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
-          "lineHeight": "{lineHeights.10}",
+          "lineHeight": "{lineHeights.8}",
           "fontSize": "{fontSize.6}",
           "letterSpacing": "{letterSpacing.0}",
           "paragraphSpacing": "{paragraphSpacing.0}",
@@ -911,7 +907,7 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-6}",
-          "lineHeight": "{lineHeights.11}",
+          "lineHeight": "{lineHeights.5}",
           "fontSize": "{fontSize.3}",
           "letterSpacing": "{letterSpacing.1}",
           "paragraphSpacing": "{paragraphSpacing.0}",
