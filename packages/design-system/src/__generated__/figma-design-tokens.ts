@@ -59,9 +59,10 @@ export const lineHeights = {
   "2": 11,
   "3": 12,
   "4": 16,
-  "5": 39,
-  "10": "120%",
-  "11": "135%",
+  "5": 22,
+  "6": 27,
+  "7": 39,
+  "8": 58,
 } as const;
 
 export const fontWeights = {
@@ -218,7 +219,7 @@ export const typography = {
   brandSectionTitle: {
     fontFamily: "Manrope",
     fontWeight: "Bold",
-    lineHeight: "135%",
+    lineHeight: 27,
     fontSize: 20,
     letterSpacing: "0%",
     paragraphSpacing: 0,
@@ -229,7 +230,7 @@ export const typography = {
   brandLargeTitle: {
     fontFamily: "Manrope",
     fontWeight: "Bold",
-    lineHeight: "120%",
+    lineHeight: 58,
     fontSize: 48,
     letterSpacing: "-2%",
     paragraphSpacing: 0,
@@ -240,7 +241,7 @@ export const typography = {
   brandRegular: {
     fontFamily: "Manrope",
     fontWeight: "Regular",
-    lineHeight: "135%",
+    lineHeight: 22,
     fontSize: 16,
     letterSpacing: "0%",
     paragraphSpacing: 0,
