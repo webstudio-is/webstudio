@@ -28,7 +28,7 @@ const projectCardContainerStyle = css({
   borderColor: theme.colors.borderMain,
   borderRadius: theme.borderRadius[4],
   background: "linear-gradient(0deg, #FBF8FF 0%, #C7C7C7 100%)",
-  "&:hover": {
+  "&:hover, &:focus-within": {
     boxShadow: theme.shadows.brandElevationBig,
   },
 });
@@ -54,7 +54,7 @@ const projectNameAvatarStyle = css({
   // @todo figure out the effect from figma in text-shadow
   //textShadow: "0px 5px 3px rgba(251, 248, 255, 1)",
   userSelect: "none",
-  "&:hover": {
+  "&:hover, &:focus": {
     fontWeight: 800,
     transition: "100ms",
   },
