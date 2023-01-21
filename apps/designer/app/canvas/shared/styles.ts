@@ -218,8 +218,6 @@ export const useCssRules = ({
       }
     }
     cssEngine.render();
-    // run effect only when serialized instanceStyles changed
-    // to avoid rerendering on other instances change
   }, [instanceId, instanceStyles, breakpoints]);
 };
 
