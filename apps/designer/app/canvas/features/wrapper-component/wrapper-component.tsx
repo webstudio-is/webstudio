@@ -13,7 +13,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { shallowComputed } from "~/shared/store-utils";
 import {
-  stylesContainer,
+  stylesIndexStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useSelectedInstance } from "~/canvas/shared/nano-states";
@@ -60,11 +60,10 @@ export const WrapperComponentDev = ({
   const instanceId = instance.id;
 
   const instanceStylesStore = useMemo(() => {
-    return shallowComputed([stylesContainer], (styles) => {
-      return styles.filter(
-        (stylesItem) => stylesItem.instanceId === instanceId
-      );
-    });
+    return shallowComputed(
+      [stylesIndexStore],
+      (stylesIndex) => stylesIndex.stylesByInstanceId.get(instanceId) ?? []
+    );
   }, [instanceId]);
   const instanceStyles = useStore(instanceStylesStore);
   useCssRules({ instanceId: instance.id, instanceStyles });
