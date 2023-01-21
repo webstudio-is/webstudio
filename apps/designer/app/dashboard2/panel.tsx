@@ -9,8 +9,7 @@ const panelStyle = css({
   color: theme.colors.foregroundMain,
   minWidth: "min-content",
   maxWidth: "max-content",
-  // @todo - use theme
-  //boxShadow: theme.boxShadow.brandElevationBig
+  boxShadow: theme.shadows.brandElevationBig,
 });
 
 export const Panel = (props: ComponentProps<typeof Box>) => (

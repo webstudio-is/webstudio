@@ -29,9 +29,7 @@ const projectCardContainerStyle = css({
   borderRadius: theme.borderRadius[4],
   background: "linear-gradient(0deg, #FBF8FF 0%, #C7C7C7 100%)",
   "&:hover": {
-    // @todo use theme
-    boxShadow: "0px 8px 16px 0px rgba(23, 23, 23, 0.1)",
-    //boxShadow: theme.boxShadow.brandElevationBig,
+    boxShadow: theme.shadows.brandElevationBig,
   },
 });
 
@@ -43,8 +41,7 @@ const projectCardFooterStyle = css({
 });
 
 const projectNameAvatarStyle = css({
-  // @todo use theme
-  fontFamily: "ManropeVariable, sans-serif",
+  fontFamily: theme.fonts.manrope,
   fontWeight: 200,
   fontSize: 360,
   alignSelf: "center",
@@ -52,11 +49,12 @@ const projectNameAvatarStyle = css({
   marginLeft: "-0.5em",
   background: "linear-gradient(0deg, #FBF8FF 25%, #E2E2E2 66%)",
   WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
   backgroundClip: "text",
+  WebkitTextFillColor: "transparent",
   textFillColor: "transparent",
-  // @todo use theme
-  textShadow: "5px 3px 0px rgba(251, 248 255, 1) inset",
+  // @todo use theme, the problem is figma is generating boxShadow instead of textShadow
+  // CSS textShadow has only 3 positions and no inset.
+  //textShadow: theme.shadows.brandInnerGlow2,
   userSelect: "none",
   "&:hover": {
     fontWeight: 800,

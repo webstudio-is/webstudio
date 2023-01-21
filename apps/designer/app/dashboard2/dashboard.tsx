@@ -1,4 +1,4 @@
-import { Flex, globalCss } from "@webstudio-is/design-system";
+import { Flex, globalCss, theme } from "@webstudio-is/design-system";
 import type {
   DashboardProject,
   User as DbUser,
@@ -22,8 +22,7 @@ type User = Omit<DbUser, "createdAt"> & {
 const globalStyles = globalCss({
   body: {
     margin: 0,
-    // @todo need a token
-    background: "#ababab",
+    background: theme.colors.brandBackgroundDashboard,
   },
 });
 
