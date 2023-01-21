@@ -72,22 +72,6 @@ const getAbbreviation = (title: string) =>
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
 
-const domainStyle = css({
-  color: theme.colors.foregroundSubtle,
-  flexBasis: "auto",
-  flexGrow: 0,
-  variants: {
-    isPublished: {
-      true: {
-        textDecoration: "none",
-        "&:hover": {
-          textDecoration: "underline",
-        },
-      },
-    },
-  },
-});
-
 // @todo
 // - check if published, render "Not Published"
 // - build publish url
