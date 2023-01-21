@@ -72,9 +72,6 @@ const getAbbreviation = (title: string) =>
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
 
-// @todo
-// - check if published, render "Not Published"
-// - build publish url
 const Domain = ({
   domain,
   isPublished,
@@ -138,7 +135,6 @@ const Menu = () => {
   );
 };
 
-// @todo make it clickable to open designer
 const ProjectCard = ({ id, title, domain, isPublished }: DashboardProject) => {
   return (
     <Flex
