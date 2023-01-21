@@ -3,10 +3,139 @@
 import { execSync } from "child_process";
 import camelCase from "camelcase";
 import { readFileSync, writeFileSync, existsSync, rmSync } from "fs";
+import { z, type ZodType } from "zod";
 
 const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";
 const TMP_OUTPUT_FILE = "./src/__generated__/figma-design-tokens.tmp";
 const OUTPUT_FILE = "./src/__generated__/figma-design-tokens.ts";
+
+const TreeLeaf = z.object({
+  type: z.string(),
+  value: z.unknown(),
+});
+
+const parse = <T>(path: string[], value: unknown, schema: ZodType<T>) => {
+  const result = schema.safeParse(value);
+  if (result.success === false) {
+    throw new Error(
+      `Could not parse ${path.join(" > ")}. Got a error: ${
+        result.error.message
+      }`
+    );
+  }
+  return result.data;
+};
+
+const SingleShadow = z.object({
+  color: z.string(),
+  type: z.enum(["dropShadow", "innerShadow"]),
+  x: z.number(),
+  y: z.number(),
+  blur: z.number(),
+  spread: z.number(),
+});
+const Shadow = z.union([SingleShadow, z.array(SingleShadow)]);
+const printShadow = (path: string[], value: unknown) => {
+  const shadow = parse(path, value, Shadow);
+  const printSingle = (shadow: z.infer<typeof SingleShadow>) => {
+    return [
+      shadow.type === "innerShadow" ? "inset" : "",
+      `${shadow.x}px`,
+      `${shadow.y}px`,
+      `${shadow.blur}px`,
+      `${shadow.spread}px`,
+      `${shadow.color}`,
+    ]
+      .join(" ")
+      .trim();
+  };
+  return Array.isArray(shadow)
+    ? shadow.map(printSingle).join(", ")
+    : printSingle(shadow);
+};
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#common_weight_name_mapping
+// (hopefully the fonts we use, Figma, Tokens plugin — all follow this convention)
+const fontWeightMapping = {
+  Thin: 100,
+  Hairline: 100,
+  "Extra Light": 200,
+  "Ultra Light": 200,
+  Light: 300,
+  Normal: 400,
+  Regular: 400,
+  Medium: 500,
+  "Semi Bold": 600,
+  "Demi Bold": 600,
+  Bold: 700,
+  "Extra Bold": 800,
+  "Ultra Bold": 800,
+  Black: 900,
+  Heavy: 900,
+  "Extra Black": 950,
+  "Ultra Black": 950,
+} as const;
+const fontFamilies = {
+  Inter: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+  Manrope: "ManropeVariable, Manrope, sans-serif",
+  Roboto: "Roboto, menlo, monospace",
+} as const;
+const fontFamilyMapping = {
+  ...fontFamilies,
+  InterVariable: fontFamilies.Inter,
+  "Inter Variable": fontFamilies.Inter,
+  ManropeVariable: fontFamilies.Manrope,
+  "Manrope Variable": fontFamilies.Manrope,
+  "Roboto Mono": fontFamilies.Roboto,
+};
+const Typography = z.object({
+  fontFamily: z.string(),
+  fontWeight: z.enum(
+    Object.keys(fontWeightMapping) as [keyof typeof fontWeightMapping]
+  ),
+  lineHeight: z.union([z.string(), z.number()]),
+  fontSize: z.number(),
+  letterSpacing: z.union([z.string(), z.number()]),
+});
+const printLineHeight = (path: string[], value: number | string) => {
+  if (typeof value === "number") {
+    return `${value}px`;
+  }
+  // @todo: figure out how to convert AUTO to pixels or something
+  // https://discord.com/channels/955905230107738152/1065939291479478343
+  if (value === "AUTO") {
+    return undefined;
+  }
+  if (value.endsWith("%")) {
+    return value;
+  }
+  throw new Error(
+    `Could not parse "${path.join(" > ")} > lineHeight": ${value}`
+  );
+};
+const printLetterSpacing = (path: string[], value: number | string) => {
+  if (typeof value === "number") {
+    return `${value}px`;
+  }
+  if (/^-?[0-9]+(.[0-9]+)?%$/.test(value)) {
+    const fraction = parseFloat(value) / 100;
+    return `${fraction}em`;
+  }
+  throw new Error(
+    `Could not parse "${path.join(" > ")} > letterSpacing": ${value}`
+  );
+};
+const printTypography = (path: string[], value: unknown) => {
+  const typography = parse(path, value, Typography);
+  return {
+    fontFamily:
+      fontFamilyMapping[typography.fontFamily] ?? typography.fontFamily,
+    fontWeight: fontWeightMapping[typography.fontWeight],
+    fontSize: `${typography.fontSize}px`,
+    lineHeight: printLineHeight(path, typography.lineHeight),
+    letterSpacing: printLetterSpacing(path, typography.letterSpacing),
+  };
+};
 
 const traverse = (
   node: unknown,
@@ -17,20 +146,14 @@ const traverse = (
     return;
   }
 
-  const entries = Object.entries(node);
+  const asLeaf = TreeLeaf.safeParse(node);
+  if (asLeaf.success && asLeaf.data.value !== undefined) {
+    fn(nodePath, asLeaf.data.type, asLeaf.data.value);
+    return;
+  }
 
-  // TypeScript forces us to use entries to read properties of an unknown object
-  const type = entries.find(([key]) => key === "type");
-  const value = entries.find(([key]) => key === "value");
-
-  // if there's a `type` and `value` properties, treat it as a tree leaf
-  if (type && value && typeof type[1] === "string") {
-    fn(nodePath, type[1], value[1]);
-    // otherwise, traverse deeper
-  } else {
-    for (const [key, value] of entries) {
-      traverse(value, [...nodePath, key], fn);
-    }
+  for (const [key, value] of Object.entries(node)) {
+    traverse(value, [...nodePath, key], fn);
   }
 };
 
@@ -60,9 +183,19 @@ const main = () => {
     const record = byType.get(type) ?? {};
     byType.set(type, record);
 
+    let printedValue = value;
+
+    if (type === "boxShadow") {
+      printedValue = printShadow(path, value);
+    }
+
+    if (type === "typography") {
+      printedValue = printTypography(path, value);
+    }
+
     // no need to check for __proto__ (prototype polution)
     // because we know pathToName returns a string without "_"
-    record[pathToName(path, type)] = value;
+    record[pathToName(path, type)] = printedValue;
   });
 
   writeFileSync(

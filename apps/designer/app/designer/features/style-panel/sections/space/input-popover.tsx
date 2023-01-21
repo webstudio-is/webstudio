@@ -97,7 +97,7 @@ const PopoverContentStyled = styled(PopoverContent, {
   borderRadius: theme.borderRadius[7],
   background: theme.colors.gray2,
   padding: theme.spacing[5],
-  boxShadow: "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)",
+  boxShadow: theme.shadows.menuDropShadow,
   animationDuration: "200ms",
   animationTimingFunction: theme.easing.easeOut,
   '&[data-state="open"]': { animationName: slideUpAndFade },

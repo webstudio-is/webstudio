@@ -117,7 +117,10 @@ import {
 } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
-import { color as figmaColors } from "./__generated__/figma-design-tokens";
+import {
+  color as figmaColors,
+  boxShadow as figmaShadows,
+} from "./__generated__/figma-design-tokens";
 
 const spacing = {
   0: "0px",
@@ -299,6 +302,7 @@ const {
       easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
       easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
     },
+    shadows: figmaShadows,
   },
   media: {
     bp1: "(min-width: 520px)",
