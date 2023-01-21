@@ -4,13 +4,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DeprecatedButton,
+  DropdownMenuLabel,
   Text,
   Flex,
   Avatar,
   css,
   rawTheme,
   theme,
+  Button,
 } from "@webstudio-is/design-system";
 import { User as DbUser } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
@@ -32,7 +33,7 @@ const Menu = ({ user }: { user: User }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <DeprecatedButton variant="raw" aria-label="Menu Button">
+        <Button variant="ghost" aria-label="Menu Button">
           <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
             <Avatar
               src={user?.image || undefined}
@@ -44,9 +45,10 @@ const Menu = ({ user }: { user: User }) => {
               color={rawTheme.colors.foregroundMain}
             />
           </Flex>
-        </DeprecatedButton>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
+        <DropdownMenuLabel>{user?.username || user?.email}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
           <Text>Logout</Text>
         </DropdownMenuItem>
