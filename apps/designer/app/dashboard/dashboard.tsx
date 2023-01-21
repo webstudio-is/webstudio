@@ -2,7 +2,7 @@ import { useActionData } from "@remix-run/react";
 
 import { Flex } from "@webstudio-is/design-system";
 // eslint-disable-next-line import/no-internal-modules
-import interFont from "@fontsource/inter/index.css";
+import interFont from "@fontsource/inter/variable.css";
 import dashboardStyles from "./dashboard.css";
 import { User as DbUser } from "@webstudio-is/prisma-client";
 import { DashboardHeader } from "./components/header";

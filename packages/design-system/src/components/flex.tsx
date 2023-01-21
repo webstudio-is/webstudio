@@ -52,6 +52,9 @@ export const Flex = styled("div", {
       between: {
         justifyContent: "space-between",
       },
+      around: {
+        justifyContent: "space-around",
+      },
     },
     wrap: {
       noWrap: {

@@ -3,8 +3,14 @@ import { EmptyState } from "./empty-state";
 import { Panel } from "./panel";
 import { Heading } from "./heading";
 import { PlusIcon } from "@webstudio-is/icons";
+import type { DashboardProject } from "@webstudio-is/prisma-client";
+import { ProjectCard } from "./project-card";
 
-export const Projects = () => {
+type ProjectsProps = {
+  projects: Array<DashboardProject>;
+};
+
+export const Projects = ({ projects }: ProjectsProps) => {
   return (
     <Panel>
       <Flex direction="column" gap="3">
@@ -12,7 +18,12 @@ export const Projects = () => {
           <Heading variant="small">Projects</Heading>
           <Button prefix={<PlusIcon />}>New Project</Button>
         </Flex>
-        <EmptyState />
+        {projects.length === 0 && <EmptyState />}
+        <Flex gap="6" wrap="wrap">
+          {projects.map((project) => {
+            return <ProjectCard {...project} key={project.id} />;
+          })}
+        </Flex>
       </Flex>
     </Panel>
   );

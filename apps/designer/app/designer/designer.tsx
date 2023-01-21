@@ -9,7 +9,7 @@ import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import { registerContainers, useDesignerStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync-server";
 // eslint-disable-next-line import/no-internal-modules
-import interFont from "@fontsource/inter/index.css";
+import interFont from "@fontsource/inter/variable.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import {

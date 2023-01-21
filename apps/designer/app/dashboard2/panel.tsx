@@ -6,10 +6,10 @@ const panelStyle = css({
   padding: theme.spacing[13],
   margin: theme.spacing[13],
   borderRadius: theme.borderRadius[6],
-  minWidth: 600,
   color: theme.colors.foregroundMain,
-  // @todo - use theme
-  //boxShadow: theme.boxShadow.brandElevationBig
+  minWidth: "min-content",
+  maxWidth: "max-content",
+  boxShadow: theme.shadows.brandElevationBig,
 });
 
 export const Panel = (props: ComponentProps<typeof Box>) => (

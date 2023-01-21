@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["interactiveTransactions"]
+  previewFeatures = ["views"]
   // <output-placeholder-for-migrations>
 }
 
@@ -104,4 +104,13 @@ model DesignTokens {
   build   Build  @relation(fields: [buildId], references: [id])
   buildId String @id
   value   String @default("[]")
+}
+
+// Dashboard
+view DashboardProject {
+  id          String  @id @default(uuid())
+  title       String
+  domain      String
+  userId      String?
+  isPublished Boolean
 }
