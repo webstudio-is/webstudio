@@ -21,7 +21,7 @@ export const boxShadow = {
     blur: 16,
     spread: 0,
   },
-  brandInnerGlow1: {
+  brandInnerGlow0: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -29,7 +29,7 @@ export const boxShadow = {
     blur: 1,
     spread: 0,
   },
-  brandInnerGlow2: {
+  brandInnerGlow1: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -37,7 +37,7 @@ export const boxShadow = {
     blur: 3,
     spread: 0,
   },
-  brandInnerGlow3: {
+  brandInnerGlow2: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -242,7 +242,7 @@ export const typography = {
     fontWeight: "Regular",
     lineHeight: "135%",
     fontSize: 16,
-    letterSpacing: "1%",
+    letterSpacing: "0%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
     textCase: "none",
@@ -259,12 +259,12 @@ export const textCase = {
 export const textDecoration = { none: "none" } as const;
 
 export const borderRadius = {
-  radius1: "1px",
-  radius2: "2px",
-  radius3: "3px",
-  radius4: "4px",
-  radius5: "5px",
-  radius6: "6px",
+  radius0: "1px",
+  radius1: "2px",
+  radius2: "3px",
+  radius3: "4px",
+  radius4: "5px",
+  radius5: "6px",
 } as const;
 
 export const color = {
@@ -370,7 +370,7 @@ export const color = {
   maintenanceSpacerViz: "#f9c6c6",
 } as const;
 
-export const borderWidth = { borderWidth1: 1, borderWidth2: 2 } as const;
+export const borderWidth = { borderWidth0: 1, borderWidth1: 2 } as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
 
