@@ -37,31 +37,39 @@
     },
     "lineHeights": {
       "0": {
-        "value": "AUTO",
-        "type": "lineHeights"
-      },
-      "1": {
         "value": "8",
         "type": "lineHeights"
       },
-      "2": {
+      "1": {
         "value": "10",
         "type": "lineHeights"
       },
-      "3": {
+      "2": {
         "value": "11",
         "type": "lineHeights"
       },
-      "4": {
+      "3": {
         "value": "12",
         "type": "lineHeights"
       },
-      "5": {
+      "4": {
         "value": "16",
         "type": "lineHeights"
       },
+      "5": {
+        "value": "22",
+        "type": "lineHeights"
+      },
       "6": {
-        "value": "120%",
+        "value": "27",
+        "type": "lineHeights"
+      },
+      "7": {
+        "value": "39",
+        "type": "lineHeights"
+      },
+      "8": {
+        "value": "58",
         "type": "lineHeights"
       }
     },
@@ -153,7 +161,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-0}",
-        "lineHeight": "{lineHeights.5}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -167,7 +175,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.5}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -181,7 +189,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.5}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -195,7 +203,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-2}",
-        "lineHeight": "{lineHeights.5}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -209,7 +217,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-0}",
-        "lineHeight": "{lineHeights.3}",
+        "lineHeight": "{lineHeights.2}",
         "fontSize": "{fontSize.1}",
         "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -224,7 +232,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.1}",
+        "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.0}",
         "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -238,7 +246,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.4}",
+        "lineHeight": "{lineHeights.3}",
         "fontSize": "{fontSize.1}",
         "letterSpacing": "{letterSpacing.1}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -252,7 +260,7 @@
       "value": {
         "fontFamily": "{fontFamilies.roboto-mono}",
         "fontWeight": "{fontWeights.roboto-mono-3}",
-        "lineHeight": "{lineHeights.5}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -266,7 +274,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.0}",
+        "lineHeight": "{lineHeights.7}",
         "fontSize": "{fontSize.5}",
         "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -280,7 +288,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-4}",
-        "lineHeight": "{lineHeights.1}",
+        "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.0}",
         "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -294,7 +302,7 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.2}",
+        "lineHeight": "{lineHeights.1}",
         "fontSize": "{fontSize.1}",
         "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
@@ -325,27 +333,27 @@
       }
     },
     "radius": {
-      "1": {
+      "0": {
         "value": "1px",
         "type": "borderRadius"
       },
-      "2": {
+      "1": {
         "value": "2px",
         "type": "borderRadius"
       },
-      "3": {
+      "2": {
         "value": "3px",
         "type": "borderRadius"
       },
-      "4": {
+      "3": {
         "value": "4px",
         "type": "borderRadius"
       },
-      "5": {
+      "4": {
         "value": "5px",
         "type": "borderRadius"
       },
-      "6": {
+      "5": {
         "value": "6px",
         "type": "borderRadius"
       }
@@ -396,7 +404,7 @@
       },
       "neutral": {
         "main": {
-          "value": "#D7DBDF",
+          "value": "#d7dbdf",
           "type": "color",
           "description": "used for neutral button"
         },
@@ -460,11 +468,11 @@
       },
       "preset": {
         "main": {
-          "value": "#E6E8EB",
+          "value": "#e6e8eb",
           "type": "color"
         },
         "hover": {
-          "value": "#DFE3E6",
+          "value": "#dfe3e6",
           "type": "color"
         }
       },
@@ -774,7 +782,7 @@
         "description": "destructive foreground color. Used in input field, text field, search area, & toast"
       },
       "success": {
-        "value": "#30a46c",
+        "value": "#008846",
         "type": "color",
         "description": "success foreground color. Used in toast"
       },
@@ -871,7 +879,7 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
-          "lineHeight": "{lineHeights.0}",
+          "lineHeight": "{lineHeights.6}",
           "fontSize": "{fontSize.4}",
           "letterSpacing": "{letterSpacing.1}",
           "paragraphSpacing": "{paragraphSpacing.0}",
@@ -885,7 +893,7 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-5}",
-          "lineHeight": "{lineHeights.6}",
+          "lineHeight": "{lineHeights.8}",
           "fontSize": "{fontSize.6}",
           "letterSpacing": "{letterSpacing.0}",
           "paragraphSpacing": "{paragraphSpacing.0}",
@@ -899,9 +907,9 @@
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
           "fontWeight": "{fontWeights.manrope-6}",
-          "lineHeight": "{lineHeights.0}",
+          "lineHeight": "{lineHeights.5}",
           "fontSize": "{fontSize.3}",
-          "letterSpacing": "{letterSpacing.3}",
+          "letterSpacing": "{letterSpacing.1}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
           "textCase": "{textCase.none}",
@@ -910,7 +918,7 @@
         "type": "typography"
       },
       "inner-glow": {
-        "1": {
+        "0": {
           "value": {
             "color": "#fbf8ff",
             "type": "innerShadow",
@@ -921,7 +929,7 @@
           },
           "type": "boxShadow"
         },
-        "2": {
+        "1": {
           "value": {
             "color": "#fbf8ff",
             "type": "innerShadow",
@@ -932,7 +940,7 @@
           },
           "type": "boxShadow"
         },
-        "3": {
+        "2": {
           "value": {
             "color": "#fbf8ff",
             "type": "innerShadow",
@@ -964,12 +972,12 @@
       }
     },
     "border-width": {
-      "1": {
+      "0": {
         "value": "1",
         "type": "borderWidth",
         "description": "sets border width value to 1"
       },
-      "2": {
+      "1": {
         "value": "2",
         "type": "borderWidth",
         "description": "sets border width value to 2. Used for focus borders (among other things)"
