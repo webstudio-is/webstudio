@@ -50,11 +50,9 @@ const projectNameAvatarStyle = css({
   background: "linear-gradient(0deg, #FBF8FF 25%, #E2E2E2 66%)",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  textFillColor: "transparent",
-  // @todo use theme, the problem is figma is generating boxShadow instead of textShadow
-  // CSS textShadow has only 3 positions and no inset.
-  //textShadow: theme.shadows.brandInnerGlow2,
+  color: "transparent",
+  // @todo figure out the effect from figma in text-shadow
+  //textShadow: "0px 5px 3px rgba(251, 248, 255, 1)",
   userSelect: "none",
   "&:hover": {
     fontWeight: 800,
