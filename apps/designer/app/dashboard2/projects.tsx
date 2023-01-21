@@ -83,17 +83,14 @@ const Domain = ({
         href={url.href}
         target="_blank"
         truncate
+        color="hint"
         css={{
-          color: theme.colors.foregroundSubtle,
-          flexBasis: "auto",
-          flexGrow: 0,
-          textDecoration: "none",
-          "&:hover": {
-            textDecoration: "underline",
+          "&:not(:hover)": {
+            textDecoration: "none",
           },
         }}
       >
-        {url.hostname}
+        {url.host}
       </Text>
     );
   }
@@ -151,10 +148,13 @@ const ProjectCard = ({ id, title, domain, isPublished }: DashboardProject) => {
       <Flex
         justify="between"
         shrink={false}
+        gap="1"
         className={projectCardFooterStyle()}
       >
         <Flex direction="column" justify="around">
-          <Text variant="title">{title}</Text>
+          <Text variant="title" truncate>
+            {title}
+          </Text>
           <Domain domain={domain} isPublished={isPublished} />
         </Flex>
         <Menu />
