@@ -21,7 +21,7 @@ export const boxShadow = {
     blur: 16,
     spread: 0,
   },
-  brandInnerGlow1: {
+  brandInnerGlow0: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -29,7 +29,7 @@ export const boxShadow = {
     blur: 1,
     spread: 0,
   },
-  brandInnerGlow2: {
+  brandInnerGlow1: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -37,7 +37,7 @@ export const boxShadow = {
     blur: 3,
     spread: 0,
   },
-  brandInnerGlow3: {
+  brandInnerGlow2: {
     color: "#fbf8ff",
     type: "innerShadow",
     x: 0,
@@ -54,13 +54,15 @@ export const fontFamilies = {
 } as const;
 
 export const lineHeights = {
-  "0": "AUTO",
-  "1": 8,
-  "2": 10,
-  "3": 11,
-  "4": 12,
-  "5": 16,
-  "6": "120%",
+  "0": 8,
+  "1": 10,
+  "2": 11,
+  "3": 12,
+  "4": 16,
+  "5": 22,
+  "6": 27,
+  "7": 39,
+  "8": 58,
 } as const;
 
 export const fontWeights = {
@@ -184,7 +186,7 @@ export const typography = {
   bigTitle: {
     fontFamily: "Inter",
     fontWeight: "Medium",
-    lineHeight: "AUTO",
+    lineHeight: 39,
     fontSize: 32,
     letterSpacing: "0.5%",
     paragraphSpacing: 0,
@@ -217,7 +219,7 @@ export const typography = {
   brandSectionTitle: {
     fontFamily: "Manrope",
     fontWeight: "Bold",
-    lineHeight: "AUTO",
+    lineHeight: 27,
     fontSize: 20,
     letterSpacing: "0%",
     paragraphSpacing: 0,
@@ -228,7 +230,7 @@ export const typography = {
   brandLargeTitle: {
     fontFamily: "Manrope",
     fontWeight: "Bold",
-    lineHeight: "120%",
+    lineHeight: 58,
     fontSize: 48,
     letterSpacing: "-2%",
     paragraphSpacing: 0,
@@ -239,9 +241,9 @@ export const typography = {
   brandRegular: {
     fontFamily: "Manrope",
     fontWeight: "Regular",
-    lineHeight: "AUTO",
+    lineHeight: 22,
     fontSize: 16,
-    letterSpacing: "1%",
+    letterSpacing: "0%",
     paragraphSpacing: 0,
     paragraphIndent: "0px",
     textCase: "none",
@@ -258,12 +260,12 @@ export const textCase = {
 export const textDecoration = { none: "none" } as const;
 
 export const borderRadius = {
-  radius1: "1px",
-  radius2: "2px",
-  radius3: "3px",
-  radius4: "4px",
-  radius5: "5px",
-  radius6: "6px",
+  radius0: "1px",
+  radius1: "2px",
+  radius2: "3px",
+  radius3: "4px",
+  radius4: "5px",
+  radius5: "6px",
 } as const;
 
 export const color = {
@@ -276,7 +278,7 @@ export const color = {
   backgroundMenu: "#ededed",
   backgroundControls: "#ffffff",
   backgroundAssetcardHover: "#e6e8eb",
-  backgroundNeutralMain: "#D7DBDF",
+  backgroundNeutralMain: "#d7dbdf",
   backgroundNeutralAccent: "#11181c",
   backgroundNeutralNotification: "#ffffff",
   backgroundDestructiveMain: "#dc3d43",
@@ -287,8 +289,8 @@ export const color = {
   backgroundAlertNotification: "#fffbd1",
   backgroundInfoMain: "#006adc",
   backgroundInfoNotification: "#edf6ff",
-  backgroundPresetMain: "#E6E8EB",
-  backgroundPresetHover: "#DFE3E6",
+  backgroundPresetMain: "#e6e8eb",
+  backgroundPresetHover: "#dfe3e6",
   backgroundSetMain: "#e1f0ff",
   backgroundSetHover: "#cee7fe",
   backgroundInheritedMain: "#ffe8d7",
@@ -351,7 +353,7 @@ export const color = {
   foregroundCategoryLabel: "#889096",
   foregroundTextSubtle: "#687076",
   foregroundDestructive: "#dc3d43",
-  foregroundSuccess: "#30a46c",
+  foregroundSuccess: "#008846",
   foregroundInfo: "#006adc",
   foregroundDisabled: "#c1c8cd",
   foregroundHiddenItem: "#7e868c",
@@ -369,7 +371,7 @@ export const color = {
   maintenanceSpacerViz: "#f9c6c6",
 } as const;
 
-export const borderWidth = { borderWidth1: 1, borderWidth2: 2 } as const;
+export const borderWidth = { borderWidth0: 1, borderWidth1: 2 } as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
 

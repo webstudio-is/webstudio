@@ -1,69 +1,35 @@
-import { v4 as uuid } from "uuid";
-import { z } from "zod";
-
 import warnOnce from "warn-once";
 import {
   type Tree,
   type AllUserProps,
-  type UserProp,
-  UserProps,
+  type InstanceProps,
+  type PropsItem,
+  Props,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
-import { prisma, Prisma } from "@webstudio-is/prisma-client";
+import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 
-const baseUserProps = {
-  id: z.string(),
-  prop: z.string(),
-  required: z.optional(z.boolean()),
-};
-
-export const UserDbProp = z.discriminatedUnion("type", [
-  z.object({
-    ...baseUserProps,
-    type: z.literal("number"),
-    value: z.number(),
-  }),
-  z.object({
-    ...baseUserProps,
-    type: z.literal("string"),
-    value: z.string(),
-  }),
-  z.object({
-    ...baseUserProps,
-    type: z.literal("boolean"),
-    value: z.boolean(),
-  }),
-  z.object({
-    ...baseUserProps,
-    type: z.literal("asset"),
-    // In database we hold asset.id
-    value: z.string(),
-  }),
-]);
-
-const UserDbProps = z.array(UserDbProp);
-
-type UserDbProp = z.infer<typeof UserDbProp>;
-
 export const loadByTreeId = async (treeId: Tree["id"]) => {
-  const instancePropsEntries = await prisma.instanceProps.findMany({
-    where: { treeId },
+  const tree = await prisma.tree.findUnique({
+    where: { id: treeId },
   });
+
+  if (tree === null) {
+    return [];
+  }
+
+  const props = Props.parse(JSON.parse(tree.props));
 
   // Fin all assetId in all props
   const assetIds: string[] = [];
 
-  for (const instanceProps of instancePropsEntries) {
-    const props = JSON.parse(instanceProps.props);
-    const dbProps = UserDbProps.parse(props);
-
-    for (const dbProp of dbProps) {
-      if (dbProp.type === "asset") {
-        assetIds.push(dbProp.value);
-      }
+  for (const propsItem of props) {
+    if (propsItem.type === "asset") {
+      assetIds.push(propsItem.value);
     }
   }
+
   // Load all assets
   const assets = await prisma.asset.findMany({
     where: {
@@ -77,69 +43,50 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
     assets.map((asset) => [asset.id, formatAsset(asset)])
   );
 
-  return instancePropsEntries.map((instanceProps) => {
-    const props = JSON.parse(instanceProps.props);
-    const userProps: UserProp[] = [];
+  const instancePropsMap = new Map<string, InstanceProps>();
 
-    // Can be changed onto `props as ` having that above is already checked, no optmizations now
-    const dpProps = UserDbProps.parse(props);
+  for (const propsItem of props) {
+    let instanceProps = instancePropsMap.get(propsItem.instanceId);
+    if (instanceProps === undefined) {
+      instanceProps = {
+        id: "",
+        instanceId: propsItem.instanceId,
+        treeId,
+        props: [],
+      };
+      instancePropsMap.set(propsItem.instanceId, instanceProps);
+    }
 
-    for (const dbProp of dpProps) {
-      if (dbProp.type === "asset") {
-        const assetId = dbProp.value;
-        const asset = assetsMap.get(assetId);
+    if (propsItem.type === "asset") {
+      const assetId = propsItem.value;
+      const asset = assetsMap.get(assetId);
 
-        if (asset) {
-          userProps.push({
-            ...dbProp,
-            value: asset,
-          });
-          continue;
-        }
+      if (asset) {
+        instanceProps.props.push({
+          id: propsItem.id,
+          prop: propsItem.name,
+          required: propsItem.required,
+          type: propsItem.type,
+          value: asset,
+        });
 
-        warnOnce(true, `Asset with assetId "${assetId}" not found`);
         continue;
       }
 
-      userProps.push(dbProp);
+      warnOnce(true, `Asset with assetId "${assetId}" not found`);
+      continue;
     }
 
-    return {
-      ...instanceProps,
-      props: userProps,
-    };
-  });
-};
-
-export const deleteByTreeId = async (treeId: Tree["id"]) => {
-  await prisma.instanceProps.deleteMany({ where: { treeId } });
-};
-
-export const clone = async (
-  {
-    previousTreeId,
-    nextTreeId,
-  }: {
-    previousTreeId: string;
-    nextTreeId: string;
-  },
-  client: Prisma.TransactionClient | typeof prisma = prisma
-) => {
-  const props = await client.instanceProps.findMany({
-    where: { treeId: previousTreeId },
-  });
-
-  if (props.length === 0) {
-    return;
+    instanceProps.props.push({
+      id: propsItem.id,
+      prop: propsItem.name,
+      required: propsItem.required,
+      type: propsItem.type,
+      value: propsItem.value,
+    } as InstanceProps["props"][number]);
   }
-  const data = props.map(({ id: _id, treeId: _treeId, ...rest }) => ({
-    ...rest,
-    treeId: nextTreeId,
-  }));
 
-  await client.instanceProps.createMany({
-    data,
-  });
+  return Array.from(instancePropsMap.values());
 };
 
 export const patch = async (
@@ -160,34 +107,35 @@ export const patch = async (
     patches
   );
 
-  await Promise.all(
-    Object.entries(nextProps).map(async ([instanceId, props]) => {
-      const propsDb: UserDbProp[] = UserProps.parse(props).map((prop) => {
-        if (prop.type === "asset") {
-          return {
-            ...prop,
-            value: prop.value.id,
-          };
-        }
-
-        return prop;
-      });
-
-      const propsString = JSON.stringify(propsDb);
-
-      await prisma.instanceProps.upsert({
-        // eslint-disable-next-line camelcase
-        where: { instanceId_treeId: { instanceId, treeId } },
-        create: {
-          id: uuid(),
+  const props: Props = [];
+  for (const [instanceId, instanceProps] of Object.entries(nextProps)) {
+    for (const prop of instanceProps) {
+      if (prop.type === "asset") {
+        props.push({
+          id: prop.id,
           instanceId,
-          treeId,
-          props: propsString,
-        },
-        update: {
-          props: propsString,
-        },
-      });
-    })
-  );
+          name: prop.prop,
+          required: prop.required,
+          type: prop.type,
+          value: prop.value.id,
+        });
+        continue;
+      }
+      props.push({
+        id: prop.id,
+        instanceId,
+        name: prop.prop,
+        required: prop.required,
+        type: prop.type,
+        value: prop.value,
+      } as PropsItem);
+    }
+  }
+
+  await prisma.tree.update({
+    data: {
+      props: JSON.stringify(props),
+    },
+    where: { id: treeId },
+  });
 };

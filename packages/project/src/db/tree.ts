@@ -9,6 +9,7 @@ import {
   findMissingPresetStyles,
   Styles,
   Instances,
+  Props,
 } from "@webstudio-is/react-sdk";
 import {
   prisma,
@@ -44,9 +45,11 @@ export const createTree = (): TreeData => {
   const styles: Styles = [];
   const instances: Instances = [];
   normalizeTree(root, instances);
+  const props: Props = [];
 
   return {
     root,
+    props,
     presetStyles,
     styles,
   };
@@ -64,6 +67,7 @@ export const create = async (
     data: {
       root: "",
       instances: JSON.stringify(instances),
+      props: JSON.stringify(treeData.props),
       presetStyles: JSON.stringify(treeData.presetStyles),
       styles: JSON.stringify(await StylesDbIn.parseAsync(treeData.styles)),
     },
@@ -113,6 +117,7 @@ export const loadById = async (
   const instances = Instances.parse(JSON.parse(tree.instances));
   const root = Instance.parse(denormalizeTree(instances));
 
+  const props = Props.parse(JSON.parse(tree.props));
   const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
   const styles = Styles.parse(
     await StylesDbOut.parseAsync(JSON.parse(tree.styles))
@@ -121,6 +126,7 @@ export const loadById = async (
   return {
     ...tree,
     root,
+    props,
     presetStyles,
     styles,
   };
