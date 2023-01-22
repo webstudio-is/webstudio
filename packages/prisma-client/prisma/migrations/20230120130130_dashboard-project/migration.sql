@@ -9,6 +9,7 @@ SELECT
       "Build"
     WHERE
       "Build"."projectId" = "Project".id
+      AND "Build"."isProd" = true
   ) AS "isPublished"
 FROM
   "Project";
