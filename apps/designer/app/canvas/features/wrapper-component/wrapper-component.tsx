@@ -1,6 +1,6 @@
-import { type MouseEvent, type FormEvent, useMemo } from "react";
-import { useRef } from "react";
-import { Suspense, lazy, useCallback } from "react";
+import type { MouseEvent, FormEvent } from "react";
+import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
+import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   type Instance,
@@ -11,7 +11,11 @@ import {
   idAttribute,
   useAllUserProps,
 } from "@webstudio-is/react-sdk";
-import { useTextEditingInstanceId } from "~/shared/nano-states";
+import { shallowComputed } from "~/shared/store-utils";
+import {
+  stylesIndexStore,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import { useSelectedInstance } from "~/canvas/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { publish } from "~/shared/pubsub";
@@ -53,7 +57,16 @@ export const WrapperComponentDev = ({
   children,
   onChangeChildren,
 }: WrapperComponentDevProps) => {
-  const instanceStylesKey = useCssRules({ instanceId: instance.id });
+  const instanceId = instance.id;
+
+  const instanceStylesStore = useMemo(() => {
+    return shallowComputed(
+      [stylesIndexStore],
+      (stylesIndex) => stylesIndex.stylesByInstanceId.get(instanceId) ?? []
+    );
+  }, [instanceId]);
+  const instanceStyles = useStore(instanceStylesStore);
+  useCssRules({ instanceId: instance.id, instanceStyles });
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
@@ -110,7 +123,7 @@ export const WrapperComponentDev = ({
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
-          instanceStylesKey={instanceStylesKey}
+          instanceStyles={instanceStyles}
           instanceProps={instanceProps}
         />
       )}

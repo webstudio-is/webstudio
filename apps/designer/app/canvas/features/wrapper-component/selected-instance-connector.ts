@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Instance, UserProp } from "@webstudio-is/react-sdk";
+import type { Instance, Styles, UserProp } from "@webstudio-is/react-sdk";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
 import {
@@ -47,12 +47,12 @@ const hideOutline = () => {
 export const SelectedInstanceConnector = ({
   instanceElementRef,
   instance,
-  instanceStylesKey,
+  instanceStyles,
   instanceProps,
 }: {
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
-  instanceStylesKey: unknown;
+  instanceStyles: Styles;
   instanceProps: undefined | UserProp[];
 }) => {
   useEffect(() => {
@@ -144,7 +144,7 @@ export const SelectedInstanceConnector = ({
     };
 
     // instance props may change dom element
-  }, [instanceElementRef, instance, instanceStylesKey, instanceProps]);
+  }, [instanceElementRef, instance, instanceStyles, instanceProps]);
 
   return null;
 };
