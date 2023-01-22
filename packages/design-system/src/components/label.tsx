@@ -1,3 +1,8 @@
+/**
+ * Implementation of the "Label" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A3274
+ */
+
 import type { LabelHTMLAttributes, ReactNode, Ref } from "react";
 import { forwardRef } from "react";
 import { typography } from "../__generated__/figma-design-tokens";
