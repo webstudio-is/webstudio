@@ -1,17 +1,14 @@
 import type { LabelHTMLAttributes, ReactNode, Ref } from "react";
 import { forwardRef } from "react";
-import { styled } from "../stitches.config";
-import { theme } from "../stitches.config";
+import { typography } from "../__generated__/figma-design-tokens";
+import { styled, theme } from "../stitches.config";
 
-const StyledLabel = styled("label", {
+const StyledLabel = styled("label", typography.labelsSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
-
-  // shared style
   py: 2,
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
-  fontSize: theme.fontSize[3],
 
   "&:focus-visible": {
     outline: `2px solid ${theme.colors.blue10}`,

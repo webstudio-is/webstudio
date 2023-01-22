@@ -179,6 +179,7 @@ const main = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byType = new Map<string, Record<string, any>>();
 
+  console.log(data)
   traverse(data, [], (path, type, value) => {
     const record = byType.get(type) ?? {};
     byType.set(type, record);
