@@ -5,7 +5,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
   type Instance,
   type OnChangeChildren,
-  type UserProp,
+  type PropsItem,
   renderWrapperComponentChildren,
   getComponent,
   idAttribute,
@@ -44,7 +44,7 @@ const ContentEditable = ({
   return <Component ref={ref} {...props} contentEditable={true} />;
 };
 
-type UserProps = Record<UserProp["prop"], string | number | boolean>;
+type UserProps = Record<PropsItem["name"], string | number | boolean>;
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -81,7 +81,7 @@ export const WrapperComponentDev = ({
     }
     for (const item of instanceProps) {
       if (item.type !== "asset") {
-        result[item.prop] = item.value;
+        result[item.name] = item.value;
       }
     }
     return result;

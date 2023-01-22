@@ -3,8 +3,7 @@ import {
   type Tree,
   type AllUserProps,
   type InstanceProps,
-  type PropsItem,
-  Props,
+  StoredProps,
 } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
@@ -19,7 +18,7 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
     return [];
   }
 
-  const props = Props.parse(JSON.parse(tree.props));
+  const props = StoredProps.parse(JSON.parse(tree.props));
 
   // Fin all assetId in all props
   const assetIds: string[] = [];
@@ -64,7 +63,8 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
       if (asset) {
         instanceProps.props.push({
           id: propsItem.id,
-          prop: propsItem.name,
+          instanceId: propsItem.instanceId,
+          name: propsItem.name,
           required: propsItem.required,
           type: propsItem.type,
           value: asset,
@@ -77,13 +77,7 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
       continue;
     }
 
-    instanceProps.props.push({
-      id: propsItem.id,
-      prop: propsItem.name,
-      required: propsItem.required,
-      type: propsItem.type,
-      value: propsItem.value,
-    } as InstanceProps["props"][number]);
+    instanceProps.props.push(propsItem);
   }
 
   return Array.from(instancePropsMap.values());
@@ -107,28 +101,21 @@ export const patch = async (
     patches
   );
 
-  const props: Props = [];
+  const props: StoredProps = [];
   for (const [instanceId, instanceProps] of Object.entries(nextProps)) {
-    for (const prop of instanceProps) {
-      if (prop.type === "asset") {
+    for (const propsItem of instanceProps) {
+      if (propsItem.type === "asset") {
         props.push({
-          id: prop.id,
+          id: propsItem.id,
           instanceId,
-          name: prop.prop,
-          required: prop.required,
-          type: prop.type,
-          value: prop.value.id,
+          name: propsItem.name,
+          required: propsItem.required,
+          type: propsItem.type,
+          value: propsItem.value.id,
         });
         continue;
       }
-      props.push({
-        id: prop.id,
-        instanceId,
-        name: prop.prop,
-        required: prop.required,
-        type: prop.type,
-        value: prop.value,
-      } as PropsItem);
+      props.push(propsItem);
     }
   }
 

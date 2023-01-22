@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import {
   type Instance,
-  type UserProp,
+  type PropsItem,
   getComponentMeta,
   allUserPropsContainer,
 } from "@webstudio-is/react-sdk";
@@ -31,7 +31,7 @@ declare module "~/shared/pubsub" {
     insertInstance: {
       instance: Instance;
       dropTarget?: { parentId: Instance["id"]; position: number };
-      props?: Array<UserProp>;
+      props?: Array<PropsItem>;
     };
     unselectInstance: undefined;
   }

@@ -1,7 +1,6 @@
 import type { InstanceProps as DbInstanceProps } from "@webstudio-is/prisma-client";
-import type { UserProp } from "../user-props";
 import type { Instance } from "./instance";
-import type { Props } from "./props";
+import type { Props, PropsItem } from "./props";
 import type { PresetStyles, Styles } from "./style";
 
 export type Tree = {
@@ -13,5 +12,5 @@ export type Tree = {
 };
 
 export type InstanceProps = Omit<DbInstanceProps, "props"> & {
-  props: Array<UserProp>;
+  props: Array<PropsItem>;
 };
