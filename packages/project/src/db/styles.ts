@@ -1,84 +1,72 @@
 import warnOnce from "warn-once";
-import DataLoader from "dataloader";
 import { type Patch, applyPatches } from "immer";
-import { type Asset, prisma } from "@webstudio-is/prisma-client";
+import { prisma } from "@webstudio-is/prisma-client";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import { StoredStyles, Styles } from "@webstudio-is/react-sdk";
 
-const assetsLoader = new DataLoader<string, Asset | undefined>(
-  async (assetIds) => {
-    const assets = await prisma.asset.findMany({
-      where: {
-        id: {
-          // Spread to remove readonly from assetIds, otherwise ts error.
-          in: [...assetIds],
-        },
-      },
-    });
-
-    /**
-     * Dataloader docs:
-     * The Array of values must be the same length as the Array of keys.
-     * Each index in the Array of values must correspond to the same index in the Array of keys.
-     * (assets returned from DB can have a different order, some could not exist)
-     */
-    return assetIds.map((assetId) =>
-      assets.find((asset) => asset.id === assetId)
-    );
-  }
-);
-
-/**
- * Use DataLoader to load/format assets from the Assets table.
- */
-const loadAsset = async (assetId: string) => {
-  const asset = await assetsLoader.load(assetId);
-  if (asset === undefined) {
-    warnOnce(true, `Asset with assetId "${assetId}" not found`);
-    return;
-  }
-
-  return formatAsset(asset);
-};
-
-const loadValue = async (styleValue: StoredStyles[number]["value"]) => {
+const parseValue = (
+  styleValue: StoredStyles[number]["value"],
+  assetsMap: Map<string, Asset>
+) => {
   if (styleValue.type === "image") {
     return {
       type: "image" as const,
-      value: (
-        await Promise.all(
-          styleValue.value.map(async (item) => {
-            const asset = await loadAsset(item.value);
-            if (asset?.type === "image") {
-              return [
-                {
-                  type: "asset" as const,
-                  value: asset,
-                },
-              ];
-            }
-            return [];
-          })
-        )
-      ).flat(),
+      value: styleValue.value.flatMap((item) => {
+        const asset = assetsMap.get(item.value);
+        if (asset === undefined) {
+          warnOnce(true, `Asset with assetId "${item.value}" not found`);
+          return [];
+        }
+        if (asset.type === "image") {
+          return [
+            {
+              type: "asset" as const,
+              value: asset,
+            },
+          ];
+        }
+        return [];
+      }),
     };
-  } else {
-    return styleValue;
   }
+  return styleValue;
 };
 
 export const parseStyles = async (stylesString: string) => {
   const storedStyles = StoredStyles.parse(JSON.parse(stylesString));
-  const styles: Styles = await Promise.all(
-    storedStyles.map(async (stylesItem) => {
-      return {
-        breakpointId: stylesItem.breakpointId,
-        instanceId: stylesItem.instanceId,
-        property: stylesItem.property,
-        value: await loadValue(stylesItem.value),
-      };
-    })
-  );
+
+  const assetIds: string[] = [];
+  for (const { value: styleValue } of storedStyles) {
+    if (styleValue.type === "image") {
+      for (const item of styleValue.value)
+        if (item.type === "asset") {
+          assetIds.push(item.value);
+        }
+    }
+  }
+
+  // Load all assets
+  const assets = await prisma.asset.findMany({
+    where: {
+      id: {
+        in: assetIds,
+      },
+    },
+  });
+  const assetsMap = new Map<string, Asset>();
+  for (const asset of assets) {
+    assetsMap.set(asset.id, formatAsset(asset));
+  }
+
+  const styles: Styles = storedStyles.map((stylesItem) => {
+    return {
+      breakpointId: stylesItem.breakpointId,
+      instanceId: stylesItem.instanceId,
+      property: stylesItem.property,
+      value: parseValue(stylesItem.value, assetsMap),
+    };
+  });
 
   return styles;
 };
@@ -86,21 +74,18 @@ export const parseStyles = async (stylesString: string) => {
 /**
  * prepare value to store in db
  */
-const prepareValue = (styleValue: Styles[number]["value"]) => {
+const serializeValue = (styleValue: Styles[number]["value"]) => {
   if (styleValue.type === "image") {
     return {
       type: "image" as const,
       value: styleValue.value.map((asset) => ({
         type: asset.type,
-        /**
-         * In the DB we hold only assetId
-         **/
+        // only asset id is stored in db
         value: asset.value.id,
       })),
     };
-  } else {
-    return styleValue;
   }
+  return styleValue;
 };
 
 export const serializeStyles = (styles: Styles) => {
@@ -109,7 +94,7 @@ export const serializeStyles = (styles: Styles) => {
       breakpointId: stylesItem.breakpointId,
       instanceId: stylesItem.instanceId,
       property: stylesItem.property,
-      value: prepareValue(stylesItem.value),
+      value: serializeValue(stylesItem.value),
     };
   });
   return JSON.stringify(storedStyles);
