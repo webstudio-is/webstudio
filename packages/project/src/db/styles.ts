@@ -39,10 +39,11 @@ export const parseStyles = async (stylesString: string) => {
   const assetIds: string[] = [];
   for (const { value: styleValue } of storedStyles) {
     if (styleValue.type === "image") {
-      for (const item of styleValue.value)
+      for (const item of styleValue.value) {
         if (item.type === "asset") {
           assetIds.push(item.value);
         }
+      }
     }
   }
 
