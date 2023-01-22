@@ -64,7 +64,7 @@ export const create = async ({
   title: string;
 }) => {
   if (title.length < MIN_TITLE_LENGTH) {
-    throw new Error(`Minimum ${MIN_TITLE_LENGTH} characters required`);
+    return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
   }
 
   const project = await prisma.$transaction(async (client) => {

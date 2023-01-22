@@ -11,9 +11,10 @@ import {
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { designerPath, getPublishedUrl } from "~/shared/router-utils";
 import { Link as RemixLink } from "@remix-run/react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const projectCardContainerStyle = css({
   overflow: "hidden",
@@ -71,12 +72,18 @@ const Domain = ({
   domain: string;
   isPublished: boolean;
 }) => {
+  const [url, setUrl] = useState<URL>();
+
+  useEffect(() => {
+    // It uses `location` to detect the default values at localhost.
+    setUrl(new URL(getPublishedUrl(domain)));
+  }, [domain]);
+
   if (isPublished) {
-    const url = new URL(getPublishedUrl(domain));
     return (
       <Text
         as="a"
-        href={url.href}
+        href={url?.href}
         target="_blank"
         truncate
         color="hint"
@@ -86,7 +93,7 @@ const Domain = ({
           },
         }}
       >
-        {url.host}
+        {url?.host}
       </Text>
     );
   }
@@ -158,7 +165,7 @@ export const ProjectCard = ({
           </Text>
           <Domain domain={domain} isPublished={isPublished} />
         </Flex>
-        <Menu />
+        {isFeatureEnabled("dashboard2") && <Menu />}
       </Flex>
     </Flex>
   );
