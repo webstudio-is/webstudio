@@ -2,7 +2,7 @@ import type { ComponentStory } from "@storybook/react";
 import {
   allUserPropsContainer,
   getComponentMetaProps,
-  type UserProp,
+  type PropsItem,
 } from "@webstudio-is/react-sdk";
 import { PropsPanel } from "./props-panel";
 
@@ -16,7 +16,8 @@ export const NoProps: ComponentStory<typeof PropsPanel> = () => {
     "1": [
       {
         id: "disabled",
-        prop: "disabled",
+        instanceId: "instanceId",
+        name: "disabled",
         type: "boolean",
         value: true,
       },
@@ -73,12 +74,12 @@ const meta = getComponentMetaProps("Button");
 
 export const AllProps: ComponentStory<typeof PropsPanel> = () => {
   allUserPropsContainer.set({
-    "3": Object.entries(meta).map(([prop, value]) => {
+    "3": Object.entries(meta).map(([name, value]) => {
       return {
-        id: prop,
-        prop,
+        id: name,
+        name,
         value: value?.defaultValue ?? "",
-      } as UserProp;
+      } as PropsItem;
     }),
   });
   return (

@@ -5,7 +5,7 @@ import {
   getComponentMetaProps,
   useAllUserProps,
   type Instance,
-  type UserProp,
+  type PropsItem,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
@@ -124,7 +124,7 @@ const Combobox = ({
 };
 
 type PropertyProps = {
-  userProp: UserProp;
+  userProp: PropsItem;
   component: Instance["component"];
   onChangePropName: (name: string) => void;
   onChangePropValue: (value: UserPropValue) => void;
@@ -146,12 +146,12 @@ const Property = ({
 }: PropertyProps) => {
   const metaProps = getComponentMetaProps(component);
 
-  const argType = metaProps[userProp.prop as keyof typeof metaProps];
+  const argType = metaProps[userProp.name as keyof typeof metaProps];
   const isInvalid =
-    userProp.prop != null &&
-    userProp.prop.length > 0 &&
+    userProp.name != null &&
+    userProp.name.length > 0 &&
     typeof argType === "undefined" &&
-    !userProp.prop.match(/^data-(.)+/);
+    !userProp.name.match(/^data-(.)+/);
 
   const allProps = Object.keys(metaProps).filter(
     (propName) => existingProps.includes(propName) === false
@@ -167,12 +167,12 @@ const Property = ({
           placeholder="Property"
           readOnly={true}
           state={isInvalid ? "invalid" : undefined}
-          value={userProp.prop}
+          value={userProp.name}
         />
       ) : (
         <Combobox
           items={allProps}
-          value={userProp.prop}
+          value={userProp.name}
           onItemSelect={(name) => {
             if (name != null) {
               setError(undefined);
@@ -195,7 +195,7 @@ const Property = ({
         />
       )}
       {isInvalid || error !== undefined ? (
-        <Tooltip content={error ?? `Invalid property name: ${userProp.prop}`}>
+        <Tooltip content={error ?? `Invalid property name: ${userProp.name}`}>
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>
       ) : (
@@ -282,7 +282,7 @@ export const PropsPanel = ({
     />
   );
 
-  const existingProps = userProps.map((userProp) => userProp.prop);
+  const existingProps = userProps.map((userProp) => userProp.name);
 
   return (
     <Box>
