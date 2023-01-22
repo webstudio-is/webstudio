@@ -6,7 +6,7 @@ import { styled, theme } from "../stitches.config";
 const StyledLabel = styled("label", typography.labelsSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
-  py: 2,
+  py: theme.spacing[2],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
 
@@ -23,7 +23,7 @@ const StyledLabel = styled("label", typography.labelsSentenceCase, {
         },
       },
       preset: {
-        px: 4,
+        px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundPresetMain,
         borderColor: theme.colors.borderMain,
         color: theme.colors.foregroundMain,
@@ -32,7 +32,7 @@ const StyledLabel = styled("label", typography.labelsSentenceCase, {
         },
       },
       local: {
-        px: 4,
+        px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundSetMain,
         borderColor: theme.colors.borderSetMain,
         color: theme.colors.foregroundSetMain,
@@ -41,7 +41,7 @@ const StyledLabel = styled("label", typography.labelsSentenceCase, {
         },
       },
       remote: {
-        px: 4,
+        px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundInheritedMain,
         borderColor: theme.colors.borderInheritedMain,
         color: theme.colors.foregroundInheritedMain,
