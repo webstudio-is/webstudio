@@ -10,8 +10,6 @@ jobs:
       NODE_ENV: test
       DATABASE_URL: postgres://
       AUTH_SECRET: test
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       TURBO_REMOTE_ONLY: true
 
     runs-on: ubuntu-latest
@@ -21,4 +19,11 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - run: pnpm build
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
       - run: pnpm checks
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
