@@ -1,7 +1,7 @@
 import {
   getComponentMetaProps,
   type Instance,
-  type UserProp,
+  type PropsItem,
 } from "@webstudio-is/react-sdk";
 import warnOnce from "warn-once";
 import {
@@ -179,7 +179,7 @@ const assertUnreachable = (_arg: never, errorMessage: string) => {
 
 type ControlProps = {
   component: Instance["component"];
-  userProp: UserProp;
+  userProp: PropsItem;
   onChangePropValue: (value: UserPropValue) => void;
   setCssProperty: SetProperty;
 };
@@ -193,7 +193,7 @@ export function Control({
 }: ControlProps) {
   const meta = getComponentMetaProps(component);
 
-  const argType = meta[userProp.prop];
+  const argType = meta[userProp.name];
 
   // argType can be undefined in case of new property created
   const defaultValue = argType?.defaultValue ?? "";
@@ -202,7 +202,7 @@ export function Control({
   if (type == null) {
     warnOnce(
       true,
-      `No control type for prop "${userProp.prop}" component "${component}" found`
+      `No control type for prop "${userProp.name}" component "${component}" found`
     );
     return <NotImplemented />;
   }
@@ -211,14 +211,14 @@ export function Control({
     warnOnce(
       true,
       `Control type "${typeof type}" for prop "${
-        userProp.prop
+        userProp.name
       }" component "${component}" is not a string`
     );
 
     return <NotImplemented />;
   }
 
-  if (component === "Image" && userProp.prop === "src") {
+  if (component === "Image" && userProp.name === "src") {
     const asset = userProp.type === "asset" ? userProp.value : null;
 
     return (
@@ -298,7 +298,7 @@ export function Control({
 
     warnOnce(
       options == null,
-      `options is not an array of strings for prop: ${userProp.prop} component: ${component}`
+      `options is not an array of strings for prop: ${userProp.name} component: ${component}`
     );
 
     const DEFAULT_OPTIONS: string[] = [];
@@ -356,7 +356,7 @@ export function Control({
 
   warnOnce(
     true,
-    `Control type "${type}" is not implemented for prop: "${userProp.prop}" in component "${component}"`
+    `Control type "${type}" is not implemented for prop: "${userProp.name}" in component "${component}"`
   );
 
   return <NotImplemented />;
