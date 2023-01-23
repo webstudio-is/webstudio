@@ -1,6 +1,6 @@
 /**
  * Implementation of the "Button" component from:
- * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=0%3A1
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A2709
  */
 
 import React, { forwardRef, type Ref, type ComponentProps } from "react";
