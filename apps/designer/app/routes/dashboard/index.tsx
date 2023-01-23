@@ -1,17 +1,11 @@
 import { useLoaderData } from "@remix-run/react";
-import type {
-  ActionArgs,
-  ErrorBoundaryComponent,
-  LoaderArgs,
-} from "@remix-run/node";
+import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
-import { designerPath, loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/router-utils";
 import { ComponentProps } from "react";
 import { prisma } from "@webstudio-is/prisma-client";
-import { zfd } from "zod-form-data";
-import { db } from "@webstudio-is/project/server";
 import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 
@@ -34,35 +28,11 @@ export const loader = async ({ request }: LoaderArgs) => {
   const projects = await prisma.dashboardProject.findMany({
     where: {
       userId: user.id,
+      isDeleted: false,
     },
   });
 
   return json({ user, projects });
-};
-
-const projectTitleSchema = zfd.formData({
-  project: zfd.text(),
-});
-
-export const action = async ({ request }: ActionArgs) => {
-  const { project: title } = projectTitleSchema.parse(await request.formData());
-
-  const authenticatedUser = await findAuthenticatedUser(request);
-
-  if (authenticatedUser === null) {
-    throw new Error("Not authenticated");
-  }
-
-  const project = await db.project.create({
-    title,
-    userId: authenticatedUser?.id,
-  });
-
-  if ("errors" in project) {
-    return project;
-  }
-
-  return redirect(designerPath({ projectId: project.id }));
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {

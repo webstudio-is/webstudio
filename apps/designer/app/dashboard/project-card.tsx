@@ -8,12 +8,13 @@ import {
   Flex,
   Text,
   theme,
+  toast,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { designerPath, getPublishedUrl } from "~/shared/router-utils";
-import { Link as RemixLink } from "@remix-run/react";
+import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const projectCardContainerStyle = css({
@@ -104,7 +105,13 @@ const PublishedLink = ({
   );
 };
 
-const Menu = ({ tabIndex }: { tabIndex: number }) => {
+const Menu = ({
+  tabIndex,
+  onDelete,
+}: {
+  tabIndex: number;
+  onDelete: () => void;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -128,7 +135,7 @@ const Menu = ({ tabIndex }: { tabIndex: number }) => {
         <DropdownMenuItem>
           <Text>Share</Text>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={onDelete}>
           <Text>Delete</Text>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -137,6 +144,7 @@ const Menu = ({ tabIndex }: { tabIndex: number }) => {
 };
 
 const useProjectCard = () => {
+  const fetcher = useFetcher();
   const designerLinkRef = useRef<HTMLAnchorElement>(null);
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     const elements: Array<HTMLElement> = Array.from(
@@ -164,16 +172,32 @@ const useProjectCard = () => {
       }
     }
   };
-  return { designerLinkRef, handleKeyDown };
+
+  const handleDelete = (projectId: string) => {
+    fetcher.submit(
+      { projectId },
+      { method: "delete", action: "/dashboard/projects/delete" }
+    );
+  };
+
+  // @todo with dialog it can be displayed in the dialog
+  useEffect(() => {
+    if (fetcher.data?.errors) {
+      toast.error(fetcher.data.errors);
+    }
+  }, [fetcher.data]);
+
+  return { designerLinkRef, handleKeyDown, handleDelete };
 };
 
+type ProjectCardProps = DashboardProject;
 export const ProjectCard = ({
   id,
   title,
   domain,
   isPublished,
-}: DashboardProject) => {
-  const { designerLinkRef, handleKeyDown } = useProjectCard();
+}: ProjectCardProps) => {
+  const { designerLinkRef, handleKeyDown, handleDelete } = useProjectCard();
   return (
     <Flex
       direction="column"
@@ -210,7 +234,14 @@ export const ProjectCard = ({
             <Text color="hint">Not Published</Text>
           )}
         </Flex>
-        {isFeatureEnabled("dashboard2") && <Menu tabIndex={-1} />}
+        {isFeatureEnabled("dashboard2") && (
+          <Menu
+            tabIndex={-1}
+            onDelete={() => {
+              handleDelete(id);
+            }}
+          />
+        )}
       </Flex>
     </Flex>
   );

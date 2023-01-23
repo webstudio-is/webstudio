@@ -53,12 +53,13 @@ model User {
 }
 
 model Project {
-  id     String  @id @default(uuid())
-  title  String
-  domain String  @unique
-  user   User?   @relation(fields: [userId], references: [id])
-  userId String?
-  build  Build[]
+  id        String  @id @default(uuid())
+  title     String
+  domain    String  @unique
+  user      User?   @relation(fields: [userId], references: [id])
+  userId    String?
+  build     Build[]
+  isDeleted Boolean @default(false)
 }
 
 model Build {
@@ -112,5 +113,6 @@ view DashboardProject {
   title       String
   domain      String
   userId      String?
+  isDeleted   Boolean @default(false)
   isPublished Boolean
 }

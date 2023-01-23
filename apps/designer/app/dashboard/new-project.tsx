@@ -3,7 +3,7 @@ import { Button, toast } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
 
-export const CreateProject = () => {
+const useNewProject = () => {
   const fetcher = useFetcher();
 
   const handleCreate = () => {
@@ -13,15 +13,24 @@ export const CreateProject = () => {
     if (project === null) {
       return;
     }
-    fetcher.submit({ project }, { method: "post" });
+    fetcher.submit(
+      { project },
+      { method: "post", action: "/dashboard/projects/new" }
+    );
   };
 
+  // @todo with dialog it can be displayed in the dialog
   useEffect(() => {
-    // @todo with dialog it can be displayed in the dialog
     if (fetcher.data?.errors) {
       toast.error(fetcher.data.errors);
     }
   }, [fetcher.data]);
+
+  return handleCreate;
+};
+
+export const NewProject = () => {
+  const handleCreate = useNewProject();
 
   return (
     <Button prefix={<PlusIcon />} onClick={handleCreate}>

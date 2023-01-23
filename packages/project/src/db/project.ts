@@ -84,6 +84,13 @@ export const create = async ({
   return project;
 };
 
+export const markAsDeleted = async (projectId: Project["id"]) => {
+  return await prisma.project.update({
+    where: { id: projectId },
+    data: { isDeleted: true },
+  });
+};
+
 export const clone = async (clonableDomain: string, userId: string) => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {

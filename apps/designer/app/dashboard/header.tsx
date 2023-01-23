@@ -24,12 +24,13 @@ const containerStyle = css({
   height: theme.spacing[17],
 });
 
-const getAvatarLetter = (user: User) => {
-  return (user?.username || user?.email || "X").charAt(0).toLocaleUpperCase();
+const getAvatarLetter = (title?: string) => {
+  return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
 const Menu = ({ user }: { user: User }) => {
   const navigate = useNavigate();
+  const title = user?.username ?? user?.email ?? undefined;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,8 +38,8 @@ const Menu = ({ user }: { user: User }) => {
           <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
             <Avatar
               src={user?.image || undefined}
-              fallback={getAvatarLetter(user)}
-              alt={user?.username || user?.email || "User Avatar"}
+              fallback={getAvatarLetter(title)}
+              alt={title || "User Avatar"}
             />
             <ChevronDownIcon
               width={15}
@@ -49,7 +50,7 @@ const Menu = ({ user }: { user: User }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuLabel>{user?.username || user?.email}</DropdownMenuLabel>
+        <DropdownMenuLabel>{title}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
           <Text>Logout</Text>
         </DropdownMenuItem>
