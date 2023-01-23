@@ -11,7 +11,7 @@ import {
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
-import { useEffect, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { designerPath, getPublishedUrl } from "~/shared/router-utils";
 import { Link as RemixLink } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -51,6 +51,7 @@ const projectNameAvatarStyle = css({
   // @todo figure out the effect from figma in text-shadow
   //textShadow: "0px 5px 3px rgba(251, 248, 255, 1)",
   userSelect: "none",
+  outline: "none",
   "&:hover, &:focus": {
     fontWeight: 800,
     transition: "100ms",
@@ -65,13 +66,7 @@ const getAbbreviation = (title: string) =>
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
 
-const Domain = ({
-  domain,
-  isPublished,
-}: {
-  domain: string;
-  isPublished: boolean;
-}) => {
+const usePublishedLink = ({ domain }: { domain: string }) => {
   const [url, setUrl] = useState<URL>();
 
   useEffect(() => {
@@ -79,28 +74,37 @@ const Domain = ({
     setUrl(new URL(getPublishedUrl(domain)));
   }, [domain]);
 
-  if (isPublished) {
-    return (
-      <Text
-        as="a"
-        href={url?.href}
-        target="_blank"
-        truncate
-        color="hint"
-        css={{
-          "&:not(:hover)": {
-            textDecoration: "none",
-          },
-        }}
-      >
-        {url?.host}
-      </Text>
-    );
-  }
-  return <Text color="hint">Not Published</Text>;
+  return { url };
 };
 
-const Menu = () => {
+const PublishedLink = ({
+  domain,
+  tabIndex,
+}: {
+  domain: string;
+  tabIndex: number;
+}) => {
+  const { url } = usePublishedLink({ domain });
+  return (
+    <Text
+      as="a"
+      href={url?.href}
+      target="_blank"
+      truncate
+      color="hint"
+      tabIndex={tabIndex}
+      css={{
+        "&:not(:hover)": {
+          textDecoration: "none",
+        },
+      }}
+    >
+      {url?.host}
+    </Text>
+  );
+};
+
+const Menu = ({ tabIndex }: { tabIndex: number }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -108,6 +112,7 @@ const Menu = () => {
         <IconButton
           variant={isOpen ? "active" : "default"}
           aria-label="Menu Button"
+          tabIndex={tabIndex}
           css={{ alignSelf: "center" }}
         >
           <MenuIcon width={15} height={15} />
@@ -131,25 +136,61 @@ const Menu = () => {
   );
 };
 
+const useProjectCard = () => {
+  const designerLinkRef = useRef<HTMLAnchorElement>(null);
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    const elements: Array<HTMLElement> = Array.from(
+      event.currentTarget.querySelectorAll(`[tabIndex='-1']`)
+    );
+    const currentIndex = elements.indexOf(
+      document.activeElement as HTMLElement
+    );
+    switch (event.key) {
+      case "Enter": {
+        designerLinkRef.current?.click();
+        break;
+      }
+      case "ArrowUp":
+      case "ArrowRight": {
+        const nextElement = elements.at(currentIndex + 1) ?? elements[0];
+        nextElement?.focus();
+        break;
+      }
+      case "ArrowDown":
+      case "ArrowLeft": {
+        const nextElement = elements.at(currentIndex - 1) ?? elements[0];
+        nextElement?.focus();
+        break;
+      }
+    }
+  };
+  return { designerLinkRef, handleKeyDown };
+};
+
 export const ProjectCard = ({
   id,
   title,
   domain,
   isPublished,
 }: DashboardProject) => {
+  const { designerLinkRef, handleKeyDown } = useProjectCard();
   return (
     <Flex
       direction="column"
       shrink={false}
       as="article"
       className={projectCardContainerStyle()}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
     >
       <Flex
         grow
         align="center"
         as={RemixLink}
+        ref={designerLinkRef}
         to={designerPath({ projectId: id })}
         className={projectNameAvatarStyle()}
+        tabIndex={-1}
       >
         {getAbbreviation(title)}
       </Flex>
@@ -163,9 +204,13 @@ export const ProjectCard = ({
           <Text variant="title" truncate>
             {title}
           </Text>
-          <Domain domain={domain} isPublished={isPublished} />
+          {isPublished ? (
+            <PublishedLink domain={domain} tabIndex={-1} />
+          ) : (
+            <Text color="hint">Not Published</Text>
+          )}
         </Flex>
-        {isFeatureEnabled("dashboard2") && <Menu />}
+        {isFeatureEnabled("dashboard2") && <Menu tabIndex={-1} />}
       </Flex>
     </Flex>
   );
