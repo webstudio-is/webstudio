@@ -7,7 +7,7 @@ import { ProjectCard } from "./project-card";
 import { NewProject } from "./new-project";
 
 const projectsContainerStyle = {
-  "@bp2": { minWidth: 900 },
+  "@laptop": { minWidth: 900 },
 };
 
 type ProjectsProps = {
