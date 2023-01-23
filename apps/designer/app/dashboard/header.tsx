@@ -38,6 +38,7 @@ const Menu = ({ user }: { user: User }) => {
             <Avatar
               src={user?.image || undefined}
               fallback={getAvatarLetter(user)}
+              alt={user?.username || user?.email || "User Avatar"}
             />
             <ChevronDownIcon
               width={15}
