@@ -20,7 +20,7 @@ import {
 } from "~/shared/router-utils";
 import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { createTrpcRemixProxy } from "../shared/remix/create-trpc-remix-proxy";
+import { createTrpcRemixProxy } from "../shared/remix/create-trpc-remix-trpc";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 
 const projectCardContainerStyle = css({
@@ -158,6 +158,9 @@ const Menu = ({
 const useProjectCard = () => {
   const fetcher = useFetcher();
   const designerLinkRef = useRef<HTMLAnchorElement>(null);
+  const { submit: deleteProject } = trpc.delete.useMutation();
+  const { submit: rename } = trpc.rename.useMutation();
+  const { submit: duplicate } = trpc.duplicate.useMutation();
 
   // @todo with dialog it can be displayed in the dialog
   useEffect(() => {
@@ -192,9 +195,6 @@ const useProjectCard = () => {
       }
     }
   };
-  const { submit: deleteProject } = proxy.delete.useMutation();
-  const { submit: rename } = proxy.rename.useMutation();
-  const { submit: duplicate } = proxy.duplicate.useMutation();
 
   const handleDelete = (projectId: string) => {
     deleteProject({ projectId });
@@ -223,8 +223,7 @@ const useProjectCard = () => {
   };
 };
 
-const proxy =
-  createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
+const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
 type ProjectCardProps = DashboardProject;
 
