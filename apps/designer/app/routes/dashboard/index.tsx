@@ -7,7 +7,7 @@ import { loginPath } from "~/shared/router-utils";
 import { ComponentProps } from "react";
 import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
-import { dashboardProjectRouter } from "./_router";
+import { dashboardProjectRouter } from "@webstudio-is/dashboard/server";
 
 export { links } from "~/dashboard";
 

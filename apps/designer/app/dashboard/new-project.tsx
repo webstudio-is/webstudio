@@ -1,8 +1,8 @@
+import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import { Button, toast } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { DashboardProjectRouter } from "~/routes/dashboard/_router";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "../shared/remix/create-trpc-remix-proxy";
 

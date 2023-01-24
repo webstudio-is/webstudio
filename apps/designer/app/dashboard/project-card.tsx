@@ -20,8 +20,8 @@ import {
 } from "~/shared/router-utils";
 import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { DashboardProjectRouter } from "~/routes/dashboard/_router";
 import { createTrpcRemixProxy } from "../shared/remix/create-trpc-remix-proxy";
+import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 
 const projectCardContainerStyle = css({
   overflow: "hidden",

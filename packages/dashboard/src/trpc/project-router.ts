@@ -1,10 +1,10 @@
-import { prisma } from "@webstudio-is/prisma-client";
 import {
   mergeRouters,
   router,
   procedure,
   projectRouter as baseProjectRouter,
 } from "@webstudio-is/project/server";
+import { db } from "../db";
 import { z } from "zod";
 
 const projectRouter = router({
@@ -15,13 +15,7 @@ const projectRouter = router({
       })
     )
     .query(async ({ input }) => {
-      // @todo find a better place for db operations specific to dashboard
-      return await prisma.dashboardProject.findMany({
-        where: {
-          userId: input.userId,
-          isDeleted: false,
-        },
-      });
+      return await db.findMany(input.userId);
     }),
 });
 
