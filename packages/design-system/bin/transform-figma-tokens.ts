@@ -57,23 +57,23 @@ const printShadow = (path: string[], value: unknown) => {
 // https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#common_weight_name_mapping
 // (hopefully the fonts we use, Figma, Tokens plugin — all follow this convention)
 const fontWeightMapping = {
-  Thin: 100,
-  Hairline: 100,
-  "Extra Light": 200,
-  "Ultra Light": 200,
-  Light: 300,
-  Normal: 400,
-  Regular: 400,
-  Medium: 500,
-  "Semi Bold": 600,
-  "Demi Bold": 600,
-  Bold: 700,
-  "Extra Bold": 800,
-  "Ultra Bold": 800,
-  Black: 900,
-  Heavy: 900,
-  "Extra Black": 950,
-  "Ultra Black": 950,
+  thin: 100,
+  hairline: 100,
+  extralight: 200,
+  ultralight: 200,
+  light: 300,
+  normal: 400,
+  regular: 400,
+  medium: 500,
+  semibold: 600,
+  demibold: 600,
+  bold: 700,
+  extrabold: 800,
+  ultrabold: 800,
+  black: 900,
+  heavy: 900,
+  extrablack: 950,
+  ultrablack: 950,
 } as const;
 const fontFamilies = {
   Inter: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
@@ -90,8 +90,9 @@ const fontFamilyMapping = {
 };
 const Typography = z.object({
   fontFamily: z.string(),
-  fontWeight: z.enum(
-    Object.keys(fontWeightMapping) as [keyof typeof fontWeightMapping]
+  fontWeight: z.preprocess(
+    (x) => (typeof x === "string" ? x.toLowerCase().replace(/\s+/g, "") : x),
+    z.enum(Object.keys(fontWeightMapping) as [keyof typeof fontWeightMapping])
   ),
   lineHeight: z.union([z.string(), z.number()]),
   fontSize: z.number(),
