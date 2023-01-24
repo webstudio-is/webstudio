@@ -37,7 +37,6 @@ import {
   useDragAndDropState,
   useIsPreviewMode,
   useRootInstance,
-  useSubscribeSelectedInstance,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
@@ -312,7 +311,6 @@ export const Designer = ({
   const [dragAndDropState] = useDragAndDropState();
   useSubscribeCanvasReady(publish);
   useCopyPaste(publish);
-  useSubscribeSelectedInstance();
 
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -383,7 +381,7 @@ export const Designer = ({
             <Inspector publish={publish} />
           )}
         </SidePanel>
-        <Footer publish={publish} />
+        <Footer />
       </ChromeWrapper>
     </AssetsProvider>
   );

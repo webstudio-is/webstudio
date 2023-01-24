@@ -36,7 +36,6 @@ import {
   useSetRootInstance,
   useSetStyles,
   useSubscribeScrollState,
-  useSubscribeSelectedInstance,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -127,7 +126,6 @@ const useCopyPaste = () => {
 const DesignMode = () => {
   useManageDesignModeStyles();
   usePublishSelectedInstanceData();
-  useSubscribeSelectedInstance();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();

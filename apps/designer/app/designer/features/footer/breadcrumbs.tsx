@@ -1,9 +1,9 @@
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { DeprecatedButton, Flex, Text } from "@webstudio-is/design-system";
-import { type Publish } from "~/shared/pubsub";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { theme } from "@webstudio-is/design-system";
+import { selectedInstanceIdStore } from "~/shared/nano-states";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -30,10 +30,7 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
   );
 };
 
-type BreadcrumbsProps = {
-  publish: Publish;
-};
-export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
+export const Breadcrumbs = () => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const selectedInstancePath = useSelectedInstancePath(
     selectedInstanceData?.id
@@ -49,10 +46,7 @@ export const Breadcrumbs = ({ publish }: BreadcrumbsProps) => {
           <Breadcrumb
             key={instance.id}
             onClick={() => {
-              publish({
-                type: "selectInstanceById",
-                payload: instance.id,
-              });
+              selectedInstanceIdStore.set(instance.id);
             }}
           >
             {instance.component}
