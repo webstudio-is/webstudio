@@ -8,13 +8,13 @@ const useNewProject = () => {
 
   const handleCreate = () => {
     // @todo replace with the new dialog UI, waiting for dialog component
-    const project = prompt("Project Title");
+    const title = prompt("Project Title");
     // User has aborted
-    if (project === null) {
+    if (title === null) {
       return;
     }
     fetcher.submit(
-      { project },
+      { title },
       { method: "post", action: "/dashboard/projects/new" }
     );
   };

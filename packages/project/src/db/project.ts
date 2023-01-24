@@ -91,6 +91,17 @@ export const markAsDeleted = async (projectId: Project["id"]) => {
   });
 };
 
+export const rename = async (projectId: Project["id"], title: string) => {
+  if (title.length < MIN_TITLE_LENGTH) {
+    return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
+  }
+
+  return await prisma.project.update({
+    where: { id: projectId },
+    data: { title },
+  });
+};
+
 export const clone = async (clonableDomain: string, userId: string) => {
   const clonableProject = await loadByDomain(clonableDomain);
   if (clonableProject === null) {

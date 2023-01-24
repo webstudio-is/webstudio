@@ -108,9 +108,11 @@ const PublishedLink = ({
 const Menu = ({
   tabIndex,
   onDelete,
+  onRename,
 }: {
   tabIndex: number;
   onDelete: () => void;
+  onRename: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -129,7 +131,7 @@ const Menu = ({
         <DropdownMenuItem>
           <Text>Duplicate</Text>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={onRename}>
           <Text>Rename</Text>
         </DropdownMenuItem>
         <DropdownMenuItem>
@@ -146,6 +148,14 @@ const Menu = ({
 const useProjectCard = () => {
   const fetcher = useFetcher();
   const designerLinkRef = useRef<HTMLAnchorElement>(null);
+
+  // @todo with dialog it can be displayed in the dialog
+  useEffect(() => {
+    if (fetcher.data?.errors) {
+      toast.error(fetcher.data.errors);
+    }
+  }, [fetcher.data]);
+
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     const elements: Array<HTMLElement> = Array.from(
       event.currentTarget.querySelectorAll(`[tabIndex='-1']`)
@@ -180,24 +190,32 @@ const useProjectCard = () => {
     );
   };
 
-  // @todo with dialog it can be displayed in the dialog
-  useEffect(() => {
-    if (fetcher.data?.errors) {
-      toast.error(fetcher.data.errors);
+  const handleRename = (projectId: string) => {
+    // @todo replace with the new dialog UI, waiting for dialog component
+    const title = prompt();
+    // User has aborted
+    if (title === null) {
+      return;
     }
-  }, [fetcher.data]);
+    fetcher.submit(
+      { projectId, title },
+      { method: "post", action: "/dashboard/projects/rename" }
+    );
+  };
 
-  return { designerLinkRef, handleKeyDown, handleDelete };
+  return { designerLinkRef, handleKeyDown, handleDelete, handleRename };
 };
 
 type ProjectCardProps = DashboardProject;
+
 export const ProjectCard = ({
   id,
   title,
   domain,
   isPublished,
 }: ProjectCardProps) => {
-  const { designerLinkRef, handleKeyDown, handleDelete } = useProjectCard();
+  const { designerLinkRef, handleKeyDown, handleDelete, handleRename } =
+    useProjectCard();
   return (
     <Flex
       direction="column"
@@ -239,6 +257,9 @@ export const ProjectCard = ({
             tabIndex={-1}
             onDelete={() => {
               handleDelete(id);
+            }}
+            onRename={() => {
+              handleRename(id);
             }}
           />
         )}
