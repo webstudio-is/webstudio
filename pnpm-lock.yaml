@@ -747,7 +747,6 @@ importers:
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       bson-objectid: ^2.0.4
-      dataloader: ^2.1.0
       immer: ^9.0.12
       jest: ^29.3.1
       nanoid: ^3.2.0
@@ -766,7 +765,6 @@ importers:
       '@webstudio-is/prisma-client': link:../prisma-client
       '@webstudio-is/react-sdk': link:../react-sdk
       bson-objectid: 2.0.4
-      dataloader: 2.1.0
       immer: 9.0.15
       nanoid: 3.3.4
       react: 17.0.2
@@ -12458,10 +12456,6 @@ packages:
   /data-uri-to-buffer/3.0.1:
     resolution: {integrity: sha512-WboRycPNsVw3B3TL559F7kuBUM4d8CgMEvk6xEJlOp7OBPjt6G7z8WMWlD2rOFZLk6OYfFIUGsCOWzcQH9K2og==}
     engines: {node: '>= 6'}
-
-  /dataloader/2.1.0:
-    resolution: {integrity: sha512-qTcEYLen3r7ojZNgVUaRggOI+KM7jrKxXeSHhogh/TWxYMeONEMqY+hmkobiYQozsGIyg9OYVzO4ZIfoB4I0pQ==}
-    dev: false
 
   /deasync/0.1.28:
     resolution: {integrity: sha512-QqLF6inIDwiATrfROIyQtwOQxjZuek13WRYZ7donU5wJPLoP67MnYxA6QtqdvdBy2mMqv5m3UefBVdJjvevOYg==}

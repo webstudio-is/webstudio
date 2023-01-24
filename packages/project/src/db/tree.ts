@@ -17,7 +17,7 @@ import {
   type Tree as DbTree,
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import { StylesDbIn, StylesDbOut } from "./styles";
+import { parseStyles, serializeStyles } from "./styles";
 
 type TreeData = Omit<Tree, "id">;
 
@@ -69,7 +69,7 @@ export const create = async (
       instances: JSON.stringify(instances),
       props: JSON.stringify(treeData.props),
       presetStyles: JSON.stringify(treeData.presetStyles),
-      styles: JSON.stringify(await StylesDbIn.parseAsync(treeData.styles)),
+      styles: serializeStyles(treeData.styles),
     },
   });
 };
@@ -119,9 +119,7 @@ export const loadById = async (
 
   const props = Props.parse(JSON.parse(tree.props));
   const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
-  const styles = Styles.parse(
-    await StylesDbOut.parseAsync(JSON.parse(tree.styles))
-  );
+  const styles = await parseStyles(tree.styles);
 
   return {
     ...tree,
