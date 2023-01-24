@@ -6,6 +6,9 @@ import type {
   inferRouterOutputs,
 } from "@trpc/server";
 
+const proxy = (get: (method: string) => void) =>
+  new Proxy({}, { get: (_target, method: string) => get(method) });
+
 export const createTrpcRemixProxy = <Router extends AnyRouter>(
   getPath: (method: string) => string
 ): {
@@ -23,27 +26,15 @@ export const createTrpcRemixProxy = <Router extends AnyRouter>(
         };
       };
 } =>
-  new Proxy(
-    {},
-    {
-      get(_target, method: string) {
-        return new Proxy(
-          {},
-          {
-            get(_target, prop) {
-              return () => {
-                const fetcher = useFetcher();
-                const submit = (input: never) => {
-                  return fetcher.submit(input, {
-                    method: prop === "useMutation" ? "post" : "get",
-                    action: getPath(method),
-                  });
-                };
-                return { submit, data: fetcher.data };
-              };
-            },
-          }
-        );
-      },
-    }
+  proxy((method: string) =>
+    proxy((prop) => {
+      const fetcher = useFetcher();
+      const submit = (input: never) => {
+        return fetcher.submit(input, {
+          method: prop === "useMutation" ? "post" : "get",
+          action: getPath(method),
+        });
+      };
+      return { submit, data: fetcher.data };
+    })
   ) as never;
