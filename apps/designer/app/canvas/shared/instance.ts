@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import {
   type Instance,
   type PropsItem,
@@ -14,9 +15,9 @@ import {
   type SelectedInstanceData,
 } from "@webstudio-is/project";
 import store from "immerhin";
-import { useSelectedInstance } from "./nano-states";
 import {
   rootInstanceContainer,
+  selectedInstanceIdStore,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -68,8 +69,8 @@ export const findInsertLocation = (
 };
 
 export const useInsertInstance = () => {
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
+    const selectedInstanceId = selectedInstanceIdStore.get();
     store.createTransaction(
       [rootInstanceContainer, allUserPropsContainer],
       (rootInstance, allUserProps) => {
@@ -79,10 +80,10 @@ export const useInsertInstance = () => {
         const hasInserted = utils.tree.insertInstanceMutable(
           rootInstance,
           instance,
-          dropTarget ?? findInsertLocation(rootInstance, selectedInstance?.id)
+          dropTarget ?? findInsertLocation(rootInstance, selectedInstanceId)
         );
         if (hasInserted) {
-          setSelectedInstance(instance);
+          selectedInstanceIdStore.set(instance.id);
         }
         if (props !== undefined) {
           allUserProps[instance.id] = props;
@@ -93,9 +94,8 @@ export const useInsertInstance = () => {
 };
 
 export const useReparentInstance = () => {
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-
   useSubscribe("reparentInstance", ({ instanceId, dropTarget }) => {
+    const selectedInstanceId = selectedInstanceIdStore.get();
     store.createTransaction([rootInstanceContainer], (rootInstance) => {
       if (rootInstance === undefined) {
         return;
@@ -110,19 +110,17 @@ export const useReparentInstance = () => {
 
     const rootInstance = rootInstanceContainer.get();
     // Make the drag item the selected instance
-    if (selectedInstance?.id !== instanceId && rootInstance !== undefined) {
-      setSelectedInstance(
-        utils.tree.findInstanceById(rootInstance, instanceId)
-      );
+    if (selectedInstanceId !== instanceId && rootInstance !== undefined) {
+      selectedInstanceIdStore.set(instanceId);
     }
   });
 };
 
 export const useDeleteInstance = () => {
   const [rootInstance] = useRootInstance();
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   useSubscribe("deleteInstance", ({ id }) => {
-    if (rootInstance !== undefined && selectedInstance !== undefined) {
+    const selectedInstanceId = selectedInstanceIdStore.get();
+    if (rootInstance !== undefined && selectedInstanceId !== undefined) {
       // @todo tell user they can't delete root
       if (id === rootInstance.id) {
         return;
@@ -134,7 +132,7 @@ export const useDeleteInstance = () => {
           parentInstance,
           id
         );
-        setSelectedInstance(siblingInstance || parentInstance);
+        selectedInstanceIdStore.set(siblingInstance?.id ?? parentInstance.id);
       }
     }
     // @todo deleting instance should involve also deleting it's props
@@ -155,45 +153,22 @@ export const useDeleteInstance = () => {
 };
 
 export const usePublishSelectedInstanceData = () => {
-  const [instance] = useSelectedInstance();
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
 
   useEffect(() => {
     // Unselects the instance by `undefined`
-    if (instance === undefined) {
+    if (selectedInstanceId === undefined) {
       publish({
         type: "selectInstance",
         payload: undefined,
       });
     }
-  }, [instance]);
-};
-
-/**
- *  We need to set the selected instance after a any root instance update,
- *  because anything that we change on the selected instance is actually done on the root, so
- *  when we run "undo", root is going to be undone but not the selected instance, unless we update it here.
- */
-export const useUpdateSelectedInstance = () => {
-  const [rootInstance] = useRootInstance();
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
-
-  // When selected instance or root instance changes - we want to make sure the instance with that id still exists in the root.
-  useEffect(() => {
-    let instance;
-    if (rootInstance !== undefined && selectedInstance?.id) {
-      instance = utils.tree.findInstanceById(rootInstance, selectedInstance.id);
-    }
-    // When it's a new inserted instance, it will be undefined, so we can't set it to undefined and remove it.
-    if (instance !== undefined) {
-      setSelectedInstance(instance);
-    }
-  }, [rootInstance, selectedInstance, setSelectedInstance]);
+  }, [selectedInstanceId]);
 };
 
 export const useUnselectInstance = () => {
-  const [, setSelectedInstance] = useSelectedInstance();
   useSubscribe("unselectInstance", () => {
-    setSelectedInstance(undefined);
+    selectedInstanceIdStore.set(undefined);
   });
 };
 
