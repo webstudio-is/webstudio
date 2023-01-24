@@ -25,16 +25,19 @@ export const lineHeights = {
   "6": 27,
   "7": 39,
   "8": 58,
+  "9": 492,
 } as const;
 
 export const fontWeights = {
   inter0: "Regular",
   inter1: "Medium",
-  inter2: "Bold",
-  inter4: "Semi Bold",
-  manrope5: "Bold",
-  robotoMono3: "Regular",
+  inter2: "Semi Bold",
+  inter3: "Bold",
+  robotoMono4: "Regular",
+  manrope5: "ExtraLight",
   manrope6: "Regular",
+  manrope7: "Bold",
+  manrope8: "ExtraBold",
 } as const;
 
 export const fontSizes = {
@@ -45,13 +48,15 @@ export const fontSizes = {
   fontSize4: 20,
   fontSize5: 32,
   fontSize6: 48,
+  fontSize7: 360,
 } as const;
 
 export const letterSpacing = {
-  "0": "-2%",
-  "1": "0%",
-  "2": "0.5%",
-  "3": "1%",
+  "0": "-5%",
+  "1": "-2%",
+  "2": "0%",
+  "3": "0.5%",
+  "4": "1%",
 } as const;
 
 export const paragraphSpacing = { "0": 0 } as const;
@@ -64,21 +69,21 @@ export const typography = {
     lineHeight: "16px",
     letterSpacing: "0.005em",
   },
-  labelsTitleCase: {
+  labelTitleCase: {
     fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
   },
-  labelsSentenceCase: {
+  labelSentenceCase: {
     fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
   },
-  titles: {
+  title: {
     fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 700,
     fontSize: "12px",
@@ -154,6 +159,34 @@ export const typography = {
     fontSize: "16px",
     lineHeight: "22px",
     letterSpacing: "0em",
+  },
+  brandThumbnailLargeDefault: {
+    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontWeight: 200,
+    fontSize: "360px",
+    lineHeight: "492px",
+    letterSpacing: "-0.05em",
+  },
+  brandThumbnailLargeHover: {
+    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontWeight: 800,
+    fontSize: "360px",
+    lineHeight: "492px",
+    letterSpacing: "-0.05em",
+  },
+  brandThumbnailSmallDefault: {
+    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontWeight: 400,
+    fontSize: "48px",
+    lineHeight: "58px",
+    letterSpacing: "-0.02em",
+  },
+  brandThumbnailSmallHover: {
+    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontWeight: 800,
+    fontSize: "48px",
+    lineHeight: "58px",
+    letterSpacing: "-0.02em",
   },
 } as const;
 
