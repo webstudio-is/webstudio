@@ -3,7 +3,7 @@
 import { execSync } from "child_process";
 import camelCase from "camelcase";
 import { readFileSync, writeFileSync, existsSync, rmSync } from "fs";
-import { z, type ZodType } from "zod";
+import { z, type ZodType, type ZodTypeDef } from "zod";
 
 const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";
 const TMP_OUTPUT_FILE = "./src/__generated__/figma-design-tokens.tmp";
@@ -14,7 +14,11 @@ const TreeLeaf = z.object({
   value: z.unknown(),
 });
 
-const parse = <T>(path: string[], value: unknown, schema: ZodType<T>) => {
+const parse = <Output, Def extends ZodTypeDef, Input>(
+  path: string[],
+  value: unknown,
+  schema: ZodType<Output, Def, Input>
+) => {
   const result = schema.safeParse(value);
   if (result.success === false) {
     throw new Error(
