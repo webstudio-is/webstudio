@@ -136,9 +136,11 @@ const Menu = ({
         <DropdownMenuItem onSelect={onRename}>
           <Text>Rename</Text>
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Text>Share</Text>
-        </DropdownMenuItem>
+        {isFeatureEnabled("share2") && (
+          <DropdownMenuItem>
+            <Text>Share</Text>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={onDelete}>
           <Text>Delete</Text>
         </DropdownMenuItem>
@@ -272,20 +274,18 @@ export const ProjectCard = ({
             <Text color="hint">Not Published</Text>
           )}
         </Flex>
-        {isFeatureEnabled("dashboard2") && (
-          <Menu
-            tabIndex={-1}
-            onDelete={() => {
-              handleDelete(id);
-            }}
-            onRename={() => {
-              handleRename(id);
-            }}
-            onDuplicate={() => {
-              handleDuplicate(id);
-            }}
-          />
-        )}
+        <Menu
+          tabIndex={-1}
+          onDelete={() => {
+            handleDelete(id);
+          }}
+          onRename={() => {
+            handleRename(id);
+          }}
+          onDuplicate={() => {
+            handleDuplicate(id);
+          }}
+        />
       </Flex>
     </Flex>
   );
