@@ -56,13 +56,10 @@ const generateDomain = (title: string) => {
   return domain;
 };
 
-export const create = async ({
-  userId,
-  title,
-}: {
-  userId: string;
-  title: string;
-}) => {
+export const create = async (
+  { title }: { title: string },
+  { userId }: { userId: string }
+) => {
   if (title.length < MIN_TITLE_LENGTH) {
     return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
   }
@@ -91,7 +88,13 @@ export const markAsDeleted = async (projectId: Project["id"]) => {
   });
 };
 
-export const rename = async (projectId: Project["id"], title: string) => {
+export const rename = async ({
+  projectId,
+  title,
+}: {
+  projectId: Project["id"];
+  title: string;
+}) => {
   if (title.length < MIN_TITLE_LENGTH) {
     return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
   }

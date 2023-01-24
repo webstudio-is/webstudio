@@ -13,9 +13,15 @@ import {
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
-import { designerPath, getPublishedUrl } from "~/shared/router-utils";
+import {
+  dashboardProjectPath,
+  designerPath,
+  getPublishedUrl,
+} from "~/shared/router-utils";
 import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { DashboardProjectRouter } from "~/routes/dashboard/_router";
+import { createTrpcRemixProxy } from "../shared/remix/create-trpc-remix-proxy";
 
 const projectCardContainerStyle = css({
   overflow: "hidden",
@@ -186,12 +192,12 @@ const useProjectCard = () => {
       }
     }
   };
+  const { submit: deleteProject } = proxy.delete.useMutation();
+  const { submit: rename } = proxy.rename.useMutation();
+  const { submit: duplicate } = proxy.duplicate.useMutation();
 
   const handleDelete = (projectId: string) => {
-    fetcher.submit(
-      { projectId },
-      { method: "delete", action: "/dashboard/projects/delete" }
-    );
+    deleteProject({ projectId });
   };
 
   const handleRename = (projectId: string) => {
@@ -201,17 +207,11 @@ const useProjectCard = () => {
     if (title === null) {
       return;
     }
-    fetcher.submit(
-      { projectId, title },
-      { method: "post", action: "/dashboard/projects/rename" }
-    );
+    rename({ projectId, title });
   };
 
   const handleDuplicate = (projectId: string) => {
-    fetcher.submit(
-      { projectId },
-      { method: "post", action: "/dashboard/projects/duplicate" }
-    );
+    duplicate({ projectId });
   };
 
   return {
@@ -222,6 +222,9 @@ const useProjectCard = () => {
     handleDuplicate,
   };
 };
+
+const proxy =
+  createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
 type ProjectCardProps = DashboardProject;
 

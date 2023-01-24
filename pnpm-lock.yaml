@@ -65,6 +65,7 @@ importers:
       '@storybook/testing-library': ^0.0.13
       '@testing-library/react': ^12.1.5
       '@testing-library/react-hooks': ^8.0.1
+      '@trpc/server': ^10.9.0
       '@types/css-tree': ^2.0.0
       '@types/hoist-non-react-statics': ^3.3.1
       '@types/hyphenate-style-name': ^1.0.0
@@ -169,6 +170,7 @@ importers:
       '@remix-run/vercel': 1.9.0_hlxpekux3uuzuytqwu73gmyvry
       '@sentry/remix': 7.5.0_u5gs4jhw3fwvojiab4cbbaz4ki
       '@sentry/types': 7.5.0
+      '@trpc/server': 10.9.0
       '@vercel/node': 2.4.1
       '@webstudio-is/asset-uploader': link:../../packages/asset-uploader
       '@webstudio-is/css-data': link:../../packages/css-data
@@ -735,6 +737,7 @@ importers:
   packages/project:
     specifiers:
       '@jest/globals': ^29.3.1
+      '@trpc/server': ^10.9.0
       '@types/uuid': ^8.3.4
       '@webstudio-is/asset-uploader': workspace:^
       '@webstudio-is/css-data': workspace:^
@@ -757,6 +760,7 @@ importers:
       warn-once: ^0.1.1
       zod: ^3.19.1
     dependencies:
+      '@trpc/server': 10.9.0
       '@webstudio-is/asset-uploader': link:../asset-uploader
       '@webstudio-is/css-data': link:../css-data
       '@webstudio-is/css-engine': link:../css-engine

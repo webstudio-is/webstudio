@@ -1,10 +1,16 @@
-import { useFetcher } from "@remix-run/react";
 import { Button, toast } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import type { DashboardProjectRouter } from "~/routes/dashboard/_router";
+import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
+import { createTrpcRemixProxy } from "../shared/remix/create-trpc-remix-proxy";
+
+const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
 const useNewProject = () => {
-  const fetcher = useFetcher();
+  const { submit, data } = trpc.create.useMutation();
+  const navigate = useNavigate();
 
   const handleCreate = () => {
     // @todo replace with the new dialog UI, waiting for dialog component
@@ -13,18 +19,22 @@ const useNewProject = () => {
     if (title === null) {
       return;
     }
-    fetcher.submit(
-      { title },
-      { method: "put", action: "/dashboard/projects/new" }
-    );
+
+    submit({ title });
   };
 
   // @todo with dialog it can be displayed in the dialog
   useEffect(() => {
-    if (fetcher.data?.errors) {
-      toast.error(fetcher.data.errors);
+    if (data === undefined) {
+      return;
     }
-  }, [fetcher.data]);
+    if ("errors" in data) {
+      toast.error(data.errors);
+      return;
+    }
+
+    navigate(designerPath({ projectId: data.id }));
+  }, [data, navigate]);
 
   return handleCreate;
 };

@@ -5,9 +5,9 @@ import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import { ComponentProps } from "react";
-import { prisma } from "@webstudio-is/prisma-client";
 import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
+import { dashboardProjectRouter } from "./_router";
 
 export { links } from "~/dashboard";
 
@@ -25,12 +25,10 @@ export const loader = async ({
     );
   }
 
-  const projects = await prisma.dashboardProject.findMany({
-    where: {
-      userId: user.id,
-      isDeleted: false,
-    },
-  });
+  const projects = await dashboardProjectRouter
+    // @todo pass authorization context
+    .createCaller({ userId: user.id })
+    .findMany({ userId: user.id });
 
   return { user, projects };
 };
