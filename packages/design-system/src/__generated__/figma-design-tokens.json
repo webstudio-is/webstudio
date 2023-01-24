@@ -439,7 +439,7 @@
           "description": "background color on neutral toast"
         },
         "dark": {
-          "value": "#7E868C",
+          "value": "#7e868c",
           "type": "color"
         }
       },
@@ -863,7 +863,7 @@
       },
       "inherited": {
         "main": {
-          "value": "#bd4b00",
+          "value": "#b74900",
           "type": "color",
           "description": "foreground color for inherited elements"
         },
