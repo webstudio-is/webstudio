@@ -107,7 +107,7 @@ export const selectedInstanceIdStore = atom<undefined | Instance["id"]>(
 export const selectedInstanceStore = computed(
   [instancesIndexStore, selectedInstanceIdStore],
   (instancesIndex, selectedInstanceId) => {
-    if (selectedInstanceId == undefined) {
+    if (selectedInstanceId === undefined) {
       return undefined;
     }
     return instancesIndex.instancesById.get(selectedInstanceId);
