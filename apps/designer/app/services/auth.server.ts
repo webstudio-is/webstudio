@@ -1,4 +1,3 @@
-import { type User, prisma } from "@webstudio-is/prisma-client";
 import { Authenticator } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
 import { GitHubStrategy, type GitHubProfile } from "remix-auth-github";
@@ -8,6 +7,7 @@ import { sessionStorage } from "~/services/session.server";
 import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { authCallbackPath } from "~/shared/router-utils";
+import { getUserById, User } from "~/shared/db/user.server";
 
 const url =
   process.env.DEPLOYMENT_ENVIRONMENT === "production"
@@ -95,11 +95,8 @@ if (process.env.DEV_LOGIN === "true") {
 
 export const findAuthenticatedUser = async (request: Request) => {
   const user = await authenticator.isAuthenticated(request);
-  if (user != null) {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-    });
-    return dbUser;
+  if (user == null) {
+    return null;
   }
-  return null;
+  return await getUserById(user.id);
 };

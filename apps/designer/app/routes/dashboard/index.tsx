@@ -1,6 +1,6 @@
 import { useLoaderData } from "@remix-run/react";
 import type { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
@@ -11,14 +11,14 @@ import { ErrorMessage } from "~/shared/error";
 
 export { links } from "~/dashboard";
 
-type Data = ComponentProps<typeof Dashboard>;
-
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({
+  request,
+}: LoaderArgs): Promise<ComponentProps<typeof Dashboard>> => {
   const user = await findAuthenticatedUser(request);
 
-  if (!user) {
+  if (user === null) {
     const url = new URL(request.url);
-    return redirect(
+    throw redirect(
       loginPath({
         returnTo: url.pathname,
       })
@@ -32,7 +32,7 @@ export const loader = async ({ request }: LoaderArgs) => {
     },
   });
 
-  return json({ user, projects });
+  return { user, projects };
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
@@ -42,7 +42,7 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
 };
 
 const DashboardRoute = () => {
-  const data = useLoaderData<Data>();
+  const data = useLoaderData<ReturnType<typeof loader>>();
   return <Dashboard {...data} />;
 };
 

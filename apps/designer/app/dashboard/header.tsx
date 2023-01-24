@@ -13,9 +13,9 @@ import {
   theme,
   Button,
 } from "@webstudio-is/design-system";
-import { User as DbUser } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
 import { logoutPath } from "~/shared/router-utils";
+import type { User } from "~/shared/db/user.server";
 
 const containerStyle = css({
   px: theme.spacing[13],
@@ -57,10 +57,6 @@ const Menu = ({ user }: { user: User }) => {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
-
-type User = Omit<DbUser, "createdAt"> & {
-  createdAt: string;
 };
 
 export const Header = ({ user }: { user: User }) => {
