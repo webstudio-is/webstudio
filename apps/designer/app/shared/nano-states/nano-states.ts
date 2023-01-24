@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { Instance, PresetStyles, Styles } from "@webstudio-is/react-sdk";
@@ -7,6 +8,7 @@ import type {
 } from "~/canvas/shared/use-drag-drop";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
+import { subscribe } from "~/shared/pubsub";
 import { useSyncInitializeOnce } from "../hook-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
@@ -21,6 +23,26 @@ export const useSetRootInstance = (root: Instance) => {
     rootInstanceContainer.set(root);
   });
 };
+export const instancesIndexStore = computed(
+  rootInstanceContainer,
+  (rootInstance) => {
+    const instancesById = new Map<Instance["id"], Instance>();
+    const traverseInstances = (instance: Instance) => {
+      instancesById.set(instance.id, instance);
+      for (const child of instance.children) {
+        if (child.type === "instance") {
+          traverseInstances(child);
+        }
+      }
+    };
+    if (rootInstance !== undefined) {
+      traverseInstances(rootInstance);
+    }
+    return {
+      instancesById,
+    };
+  }
+);
 
 export const presetStylesContainer = atom<PresetStyles>([]);
 export const usePresetStyles = () => useValue(presetStylesContainer);
@@ -77,6 +99,26 @@ export const useSetDesignTokens = (designTokens: DesignToken[]) => {
   useSyncInitializeOnce(() => {
     designTokensContainer.set(designTokens);
   });
+};
+
+export const selectedInstanceIdStore = atom<undefined | Instance["id"]>(
+  undefined
+);
+export const selectedInstanceStore = computed(
+  [instancesIndexStore, selectedInstanceIdStore],
+  (instancesIndex, selectedInstanceId) => {
+    if (selectedInstanceId === undefined) {
+      return;
+    }
+    return instancesIndex.instancesById.get(selectedInstanceId);
+  }
+);
+export const useSubscribeSelectedInstance = () => {
+  useEffect(() => {
+    return subscribe("selectInstanceById", (id) => {
+      selectedInstanceIdStore.set(id);
+    });
+  }, []);
 };
 
 const isPreviewModeContainer = atom<boolean>(false);
