@@ -20,7 +20,7 @@ export const action = async ({ request }: ActionArgs) => {
 
   const project = await db.project.create({
     title,
-    userId: authenticatedUser?.id,
+    userId: authenticatedUser.id,
   });
 
   if ("errors" in project) {
