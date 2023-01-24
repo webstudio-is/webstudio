@@ -108,7 +108,7 @@ export const selectedInstanceStore = computed(
   [instancesIndexStore, selectedInstanceIdStore],
   (instancesIndex, selectedInstanceId) => {
     if (selectedInstanceId === undefined) {
-      return undefined;
+      return;
     }
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
