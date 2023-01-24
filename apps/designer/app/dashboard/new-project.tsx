@@ -15,7 +15,7 @@ const useNewProject = () => {
     }
     fetcher.submit(
       { title },
-      { method: "post", action: "/dashboard/projects/new" }
+      { method: "put", action: "/dashboard/projects/new" }
     );
   };
 

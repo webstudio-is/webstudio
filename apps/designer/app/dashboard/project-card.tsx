@@ -109,10 +109,12 @@ const Menu = ({
   tabIndex,
   onDelete,
   onRename,
+  onDuplicate,
 }: {
   tabIndex: number;
   onDelete: () => void;
   onRename: () => void;
+  onDuplicate: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -128,7 +130,7 @@ const Menu = ({
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem>
+        <DropdownMenuItem onSelect={onDuplicate}>
           <Text>Duplicate</Text>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onRename}>
@@ -203,7 +205,20 @@ const useProjectCard = () => {
     );
   };
 
-  return { designerLinkRef, handleKeyDown, handleDelete, handleRename };
+  const handleDuplicate = (projectId: string) => {
+    fetcher.submit(
+      { projectId },
+      { method: "post", action: "/dashboard/projects/duplicate" }
+    );
+  };
+
+  return {
+    designerLinkRef,
+    handleKeyDown,
+    handleDelete,
+    handleRename,
+    handleDuplicate,
+  };
 };
 
 type ProjectCardProps = DashboardProject;
@@ -214,8 +229,13 @@ export const ProjectCard = ({
   domain,
   isPublished,
 }: ProjectCardProps) => {
-  const { designerLinkRef, handleKeyDown, handleDelete, handleRename } =
-    useProjectCard();
+  const {
+    designerLinkRef,
+    handleKeyDown,
+    handleDelete,
+    handleRename,
+    handleDuplicate,
+  } = useProjectCard();
   return (
     <Flex
       direction="column"
@@ -260,6 +280,9 @@ export const ProjectCard = ({
             }}
             onRename={() => {
               handleRename(id);
+            }}
+            onDuplicate={() => {
+              handleDuplicate(id);
             }}
           />
         )}

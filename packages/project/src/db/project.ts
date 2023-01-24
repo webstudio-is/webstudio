@@ -102,33 +102,44 @@ export const rename = async (projectId: Project["id"], title: string) => {
   });
 };
 
-export const clone = async (clonableDomain: string, userId: string) => {
-  const clonableProject = await loadByDomain(clonableDomain);
-  if (clonableProject === null) {
-    throw new Error(`Not found project "${clonableDomain}"`);
-  }
-
-  const prodBuild = await db.build.loadByProjectId(clonableProject.id, "prod");
-
-  if (prodBuild === undefined) {
-    throw new Error("Expected project to be published first");
-  }
+const clone = async (
+  originalProject: Project,
+  userId: string,
+  title?: string
+) => {
+  const build = await db.build.loadByProjectId(originalProject.id, "dev");
 
   const project = await prisma.$transaction(async (client) => {
     const project = await client.project.create({
       data: {
         userId,
-        title: clonableProject.title,
-        domain: generateDomain(clonableProject.title),
+        title: title ?? originalProject.title,
+        domain: generateDomain(originalProject.title),
       },
     });
 
-    await db.build.create(project.id, "dev", prodBuild, client);
+    await db.build.create(project.id, "dev", build, client);
 
     return project;
   });
 
   return project;
+};
+
+export const duplicate = async (projectId: string, userId: string) => {
+  const project = await loadById(projectId);
+  if (project === null) {
+    throw new Error(`Not found project "${projectId}"`);
+  }
+  return await clone(project, userId, `${project.title} (copy)`);
+};
+
+export const cloneByDomain = async (domain: string, userId: string) => {
+  const project = await loadByDomain(domain);
+  if (project === null) {
+    throw new Error(`Not found project "${domain}"`);
+  }
+  return await clone(project, userId);
 };
 
 export const update = async ({

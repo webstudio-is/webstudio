@@ -17,7 +17,7 @@ const ensureProject = async ({
     return projects[0];
   }
 
-  return await projectDb.project.clone(domain, userId);
+  return await projectDb.project.cloneByDomain(domain, userId);
 };
 
 /**
