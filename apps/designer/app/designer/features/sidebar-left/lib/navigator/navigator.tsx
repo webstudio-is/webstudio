@@ -3,13 +3,12 @@ import { type Instance } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
 import { useCallback } from "react";
 import { useSelectedInstanceData } from "~/designer/shared/nano-states";
-import { useRootInstance } from "~/shared/nano-states";
+import { selectedInstanceIdStore, useRootInstance } from "~/shared/nano-states";
 import { Header, CloseButton } from "../header";
 import { InstanceTree } from "~/designer/shared/tree";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    selectInstanceById: Instance["id"];
     reparentInstance: {
       instanceId: Instance["id"];
       dropTarget: { instanceId: Instance["id"]; position: number | "end" };
@@ -29,15 +28,9 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
   const [selectedInstanceData] = useSelectedInstanceData();
   const [rootInstance] = useRootInstance();
 
-  const handleSelect = useCallback(
-    (instanceId: Instance["id"]) => {
-      publish({
-        type: "selectInstanceById",
-        payload: instanceId,
-      });
-    },
-    [publish]
-  );
+  const handleSelect = useCallback((instanceId: Instance["id"]) => {
+    selectedInstanceIdStore.set(instanceId);
+  }, []);
 
   const handleDragEnd = useCallback(
     (payload: {
