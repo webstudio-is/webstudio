@@ -264,7 +264,7 @@ export const color = {
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
     "linear-gradient(0deg, #fbf8ff 0%, #c7c7c7 100%)",
-  brandBackgroundProjectCardTextArea: "#ffffffe6",
+  brandBackgroundProjectCardTextArea: "#ffffff",
   brandBackgroundPublishedMain: "#39fbbb",
   brandBackgroundGradient: "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
   brandBackgroundPublishedContrast: "#ebfffc",
