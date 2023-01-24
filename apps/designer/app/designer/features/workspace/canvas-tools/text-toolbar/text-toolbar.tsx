@@ -1,8 +1,8 @@
 import { useRef, useEffect } from "react";
+import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { type Publish } from "~/shared/pubsub";
 import {
-  useSelectedInstanceData,
   type TextToolbarState,
   useTextToolbarState,
 } from "~/designer/shared/nano-states";
@@ -18,6 +18,7 @@ import {
 } from "@webstudio-is/icons";
 import { useSubscribe } from "~/shared/pubsub";
 import { theme } from "@webstudio-is/design-system";
+import { selectedInstanceIdStore } from "~/shared/nano-states";
 
 type Format =
   | "bold"
@@ -190,9 +191,9 @@ type TextToolbarProps = {
 
 export const TextToolbar = ({ publish }: TextToolbarProps) => {
   const [textToolbar] = useTextToolbarState();
-  const [selectedIntsanceData] = useSelectedInstanceData();
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
 
-  if (textToolbar == null || selectedIntsanceData === undefined) {
+  if (textToolbar == null || selectedInstanceId === undefined) {
     return null;
   }
 

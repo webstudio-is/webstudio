@@ -1,17 +1,19 @@
 import { jest, describe, test, expect } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
-import { ComponentName, getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  type ComponentName,
+  type Instance,
+} from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
-import type { SelectedInstanceData } from "@webstudio-is/project";
 import { usePropsLogic } from "./use-props-logic";
 
-const getSelectedInstanceData = (
-  componentName: ComponentName
-): SelectedInstanceData => {
+const getSelectedInstance = (componentName: ComponentName): Instance => {
   return {
+    type: "instance",
     id: nanoid(8),
     component: componentName,
-    browserStyle: {},
+    children: [],
   };
 };
 
@@ -20,7 +22,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Link"),
+        selectedInstance: getSelectedInstance("Link"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -36,7 +38,7 @@ describe("usePropsLogic", () => {
     const { result: res1 } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Heading"),
+        selectedInstance: getSelectedInstance("Heading"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -44,7 +46,7 @@ describe("usePropsLogic", () => {
     const { result: res2 } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Button"),
+        selectedInstance: getSelectedInstance("Button"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -63,7 +65,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Button"),
+        selectedInstance: getSelectedInstance("Button"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -87,7 +89,7 @@ describe("usePropsLogic", () => {
             value: "submit",
           },
         ],
-        selectedInstanceData: getSelectedInstanceData("Button"),
+        selectedInstance: getSelectedInstance("Button"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -103,7 +105,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Box"),
+        selectedInstance: getSelectedInstance("Box"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -164,7 +166,7 @@ describe("usePropsLogic", () => {
             required: true,
           },
         ],
-        selectedInstanceData: getSelectedInstanceData("Image"),
+        selectedInstance: getSelectedInstance("Image"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -191,7 +193,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Image"),
+        selectedInstance: getSelectedInstance("Image"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -213,7 +215,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Image"),
+        selectedInstance: getSelectedInstance("Image"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })

@@ -6,6 +6,7 @@ import {
   subscribeScrollState,
   subscribeWindowResize,
 } from "~/shared/dom-hooks";
+import { selectedInstanceBrowserStyleStore } from "~/shared/nano-states";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -125,14 +126,7 @@ export const SelectedInstanceConnector = ({
     });
 
     // trigger style recomputing every time instance styles are changed
-    publish({
-      type: "selectInstance",
-      payload: {
-        id: instance.id,
-        component: instance.component,
-        browserStyle: getBrowserStyle(element),
-      },
-    });
+    selectedInstanceBrowserStyleStore.set(getBrowserStyle(element));
 
     return () => {
       resizeObserver.disconnect();

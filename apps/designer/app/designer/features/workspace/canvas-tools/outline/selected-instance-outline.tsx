@@ -1,22 +1,23 @@
+import { useStore } from "@nanostores/react";
 import {
+  selectedInstanceStore,
   useSelectedInstanceOutline,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { Outline } from "./outline";
 import { Label } from "./label";
 
 export const SelectedInstanceOutline = () => {
   const [{ rect, visible }] = useSelectedInstanceOutline();
-  const [instanceData] = useSelectedInstanceData();
+  const selectedInstance = useStore(selectedInstanceStore);
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const isEditingCurrentInstance =
     textEditingInstanceId !== undefined &&
-    textEditingInstanceId === instanceData?.id;
+    textEditingInstanceId === selectedInstance?.id;
 
   if (
-    instanceData === undefined ||
+    selectedInstance === undefined ||
     isEditingCurrentInstance ||
     visible === false ||
     rect === undefined
@@ -26,7 +27,7 @@ export const SelectedInstanceOutline = () => {
 
   return (
     <Outline rect={rect}>
-      <Label component={instanceData.component} instanceRect={rect} />
+      <Label component={selectedInstance.component} instanceRect={rect} />
     </Outline>
   );
 };

@@ -17,10 +17,8 @@ import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useDeleteInstance,
   useInsertInstance,
-  usePublishSelectedInstanceData,
   usePublishTextEditingInstanceId,
   useReparentInstance,
-  useUnselectInstance,
 } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
@@ -125,12 +123,10 @@ const useCopyPaste = () => {
 
 const DesignMode = () => {
   useManageDesignModeStyles();
-  usePublishSelectedInstanceData();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   useTrackSelectedElement();
-  useUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
