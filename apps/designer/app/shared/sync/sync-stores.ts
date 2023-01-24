@@ -33,7 +33,7 @@ declare module "~/shared/pubsub" {
   }
 }
 
-const clientOnlyStores = new Map<string, WritableAtom<unknown>>();
+const clientStores = new Map<string, WritableAtom<unknown>>();
 
 export const registerContainers = () => {
   // synchronize patches
@@ -43,7 +43,7 @@ export const registerContainers = () => {
   store.register("props", allUserPropsContainer);
   store.register("designTokens", designTokensContainer);
   // synchronize whole states
-  clientOnlyStores.set("selectedInstanceId", selectedInstanceIdStore);
+  clientStores.set("selectedInstanceId", selectedInstanceIdStore);
 };
 
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
@@ -97,7 +97,7 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
           container.set(value);
         }
         // apply state stores data
-        const stateStore = clientOnlyStores.get(namespace);
+        const stateStore = clientStores.get(namespace);
         if (stateStore) {
           // should be called before store set
           // to be accessible in listen callback
@@ -109,7 +109,7 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   );
 
   const unsubscribes: Array<() => void> = [];
-  for (const [namespace, store] of clientOnlyStores) {
+  for (const [namespace, store] of clientStores) {
     unsubscribes.push(
       // use listen to not invoke initially
       store.listen((value) => {
