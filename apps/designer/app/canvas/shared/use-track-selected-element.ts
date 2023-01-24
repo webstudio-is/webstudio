@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useStore } from "@nanostores/react";
 import {
   type Instance,
   getComponentMeta,
   getComponentNames,
 } from "@webstudio-is/react-sdk";
-import { useSubscribe } from "~/shared/pubsub";
-import { useSelectedInstance } from "./nano-states";
 import {
+  selectedInstanceIdStore,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -24,32 +24,20 @@ const eventOptions = {
 };
 
 export const useTrackSelectedElement = () => {
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
   const editingInstanceIdRef = useRef(editingInstanceId);
   editingInstanceIdRef.current = editingInstanceId;
   const [rootInstance] = useRootInstance();
-  const selectInstance = useCallback(
-    (id) => {
-      if (rootInstance === undefined) {
-        return;
-      }
-      const instance = utils.tree.findInstanceById(rootInstance, id);
-      setSelectedInstance(instance);
-    },
-    [setSelectedInstance, rootInstance]
-  );
-
-  useSubscribe("selectInstanceById", selectInstance);
 
   useEffect(() => {
     if (
       editingInstanceIdRef.current !== undefined &&
-      selectedInstance?.id !== editingInstanceIdRef.current
+      selectedInstanceId !== editingInstanceIdRef.current
     ) {
       setEditingInstanceId(undefined);
     }
-  }, [selectedInstance, setEditingInstanceId]);
+  }, [selectedInstanceId, setEditingInstanceId]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -95,7 +83,7 @@ export const useTrackSelectedElement = () => {
             parent &&
             getComponentMeta(parent.component).type === "rich-text"
           ) {
-            selectInstance(parent.id);
+            selectedInstanceIdStore.set(parent.id);
             setEditingInstanceId(parent.id);
           }
           return;
@@ -106,7 +94,7 @@ export const useTrackSelectedElement = () => {
         }
       }
 
-      selectInstance(id);
+      selectedInstanceIdStore.set(id);
     };
 
     window.addEventListener("click", handleClick, eventOptions);
@@ -114,5 +102,5 @@ export const useTrackSelectedElement = () => {
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [selectInstance, setEditingInstanceId, rootInstance]);
+  }, [setEditingInstanceId, rootInstance]);
 };

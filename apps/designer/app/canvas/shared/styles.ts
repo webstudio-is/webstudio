@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
 import { addGlobalRules, getPresetStyleRules } from "@webstudio-is/project";
 import {
+  selectedInstanceIdStore,
   useBreakpoints,
   useDesignTokens,
   usePresetStyles,
@@ -29,7 +30,6 @@ import {
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
-import { useSelectedInstance } from "./nano-states";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
@@ -235,11 +235,11 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
 };
 
 const useUpdateStyle = () => {
-  const [selectedInstance] = useSelectedInstance();
   useSubscribe("updateStyle", ({ id, updates }) => {
+    const selectedInstanceId = selectedInstanceIdStore.get();
     // Only update styles if they match the selected instance
     // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
-    if (id !== selectedInstance?.id) {
+    if (id !== selectedInstanceId) {
       return;
     }
 

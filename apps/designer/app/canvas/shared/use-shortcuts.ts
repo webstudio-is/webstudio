@@ -3,8 +3,11 @@ import store from "immerhin";
 import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
-import { useSelectedInstance } from "./nano-states";
-import { useTextEditingInstanceId } from "~/shared/nano-states";
+import {
+  selectedInstanceIdStore,
+  selectedInstanceStore,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import { type SelectedInstanceData } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
@@ -68,16 +71,16 @@ const publishCancelCurrentDrag = () => {
 };
 
 export const useShortcuts = () => {
-  const [selectedInstance, setSelectedInstance] = useSelectedInstance();
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
 
   const publishDeleteInstance = () => {
-    if (selectedInstance === undefined) {
+    const selectedInstanceId = selectedInstanceIdStore.get();
+    if (selectedInstanceId === undefined) {
       return;
     }
     publish({
       type: "deleteInstance",
-      payload: { id: selectedInstance.id },
+      payload: { id: selectedInstanceId },
     });
   };
 
@@ -102,7 +105,8 @@ export const useShortcuts = () => {
   useHotkeys(
     "esc",
     () => {
-      if (selectedInstance === undefined) {
+      const selectedInstanceId = selectedInstanceIdStore.get();
+      if (selectedInstanceId === undefined) {
         return;
       }
       // Since we are in text editing mode, we want to first exit that mode without unselecting the instance.
@@ -110,16 +114,17 @@ export const useShortcuts = () => {
         setEditingInstanceId(undefined);
         return;
       }
-      setSelectedInstance(undefined);
+      selectedInstanceIdStore.set(undefined);
       publish({ type: "selectInstance" });
     },
     { ...options, enableOnContentEditable: true, enableOnTags: [...inputTags] },
-    [selectedInstance, editingInstanceId]
+    [editingInstanceId]
   );
 
   useHotkeys(
     "enter",
     (event) => {
+      const selectedInstance = selectedInstanceStore.get();
       if (selectedInstance === undefined) {
         return;
       }
@@ -131,7 +136,7 @@ export const useShortcuts = () => {
       }
     },
     options,
-    [selectedInstance, setEditingInstanceId]
+    [setEditingInstanceId]
   );
 
   useHotkeys(shortcuts.undo, shortcutHandlerMap.undo, options, []);
