@@ -16,6 +16,6 @@ export const action = async ({ request }: ActionArgs) => {
     throw new Error("Not authenticated");
   }
 
-  const result = await db.project.duplicate(projectId, authenticatedUser.id);
+  const result = await db.project.duplicate(projectId);
   return result;
 };

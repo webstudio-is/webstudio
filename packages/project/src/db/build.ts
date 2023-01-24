@@ -56,7 +56,7 @@ export async function loadByProjectId(
   });
 
   if (build === null) {
-    return undefined;
+    return;
   }
 
   return parseBuild(build);

@@ -102,36 +102,48 @@ export const rename = async (projectId: Project["id"], title: string) => {
   });
 };
 
-const clone = async (
-  originalProject: Project,
-  userId: string,
-  title?: string
-) => {
-  const build = await db.build.loadByProjectId(originalProject.id, "dev");
+const clone = async ({
+  project,
+  userId,
+  title,
+  env = "dev",
+}: {
+  project: Project;
+  userId?: string;
+  title?: string;
+  env?: "dev" | "prod";
+}) => {
+  const build =
+    env === "dev"
+      ? await db.build.loadByProjectId(project.id, "dev")
+      : await db.build.loadByProjectId(project.id, "prod");
 
-  const project = await prisma.$transaction(async (client) => {
-    const project = await client.project.create({
+  const clonedProject = await prisma.$transaction(async (client) => {
+    const clonedProject = await client.project.create({
       data: {
-        userId,
-        title: title ?? originalProject.title,
-        domain: generateDomain(originalProject.title),
+        userId: userId ?? project.userId,
+        title: title ?? project.title,
+        domain: generateDomain(project.title),
       },
     });
 
-    await db.build.create(project.id, "dev", build, client);
+    await db.build.create(clonedProject.id, "dev", build, client);
 
-    return project;
+    return clonedProject;
   });
 
-  return project;
+  return clonedProject;
 };
 
-export const duplicate = async (projectId: string, userId: string) => {
+export const duplicate = async (projectId: string) => {
   const project = await loadById(projectId);
   if (project === null) {
     throw new Error(`Not found project "${projectId}"`);
   }
-  return await clone(project, userId, `${project.title} (copy)`);
+  return await clone({
+    project,
+    title: `${project.title} (copy)`,
+  });
 };
 
 export const cloneByDomain = async (domain: string, userId: string) => {
@@ -139,7 +151,7 @@ export const cloneByDomain = async (domain: string, userId: string) => {
   if (project === null) {
     throw new Error(`Not found project "${domain}"`);
   }
-  return await clone(project, userId);
+  return await clone({ project, userId, env: "prod" });
 };
 
 export const update = async ({
