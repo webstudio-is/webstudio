@@ -25,7 +25,7 @@ export const lineHeights = {
   "6": 27,
   "7": 39,
   "8": 58,
-  "9": 492,
+  "9": 360,
 } as const;
 
 export const fontWeights = {
@@ -164,14 +164,14 @@ export const typography = {
     fontFamily: "ManropeVariable, Manrope, sans-serif",
     fontWeight: 200,
     fontSize: "360px",
-    lineHeight: "492px",
+    lineHeight: "360px",
     letterSpacing: "-0.05em",
   },
   brandThumbnailLargeHover: {
     fontFamily: "ManropeVariable, Manrope, sans-serif",
     fontWeight: 800,
     fontSize: "360px",
-    lineHeight: "492px",
+    lineHeight: "360px",
     letterSpacing: "-0.05em",
   },
   brandThumbnailSmallDefault: {
@@ -261,7 +261,7 @@ export const color = {
   backgroundStyleSourceGradientState:
     "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
   brandBackgroundProjectCardFront:
-    "linear-gradient(0deg, #fbf8ff 25%, #e2e2e2 66%)",
+    "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
     "linear-gradient(0deg, #fbf8ff 0%, #c7c7c7 100%)",
   brandBackgroundProjectCardTextArea: "#ffffffe6",
