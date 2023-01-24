@@ -1,6 +1,10 @@
 import { z } from "zod";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
-import { SharedStyleValue } from "@webstudio-is/css-data";
+import {
+  type StyleProperty,
+  StyleValue,
+  SharedStyleValue,
+  ImageValue,
+} from "@webstudio-is/css-data";
 import {
   type ComponentName,
   getComponentMeta,
@@ -48,12 +52,31 @@ export const findMissingPresetStyles = (
   return missingPresetStyles;
 };
 
+const StoredImageValue = z.object({
+  type: z.literal("image"),
+  value: z.array(z.object({ type: z.literal("asset"), value: z.string() })),
+});
+
+export const StoredStylesItem = z.object({
+  breakpointId: z.string(),
+  instanceId: z.string(),
+  // @todo can't figure out how to make property to be enum
+  property: z.string() as z.ZodType<StyleProperty>,
+  value: z.union([StoredImageValue, SharedStyleValue]),
+});
+
+export type StoredStylesItem = z.infer<typeof StoredStylesItem>;
+
+export const StoredStyles = z.array(StoredStylesItem);
+
+export type StoredStyles = z.infer<typeof StoredStyles>;
+
 export const StylesItem = z.object({
   breakpointId: z.string(),
   instanceId: z.string(),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
-  value: SharedStyleValue as z.ZodType<StyleValue>,
+  value: z.union([ImageValue, SharedStyleValue]),
 });
 
 export type StylesItem = z.infer<typeof StylesItem>;

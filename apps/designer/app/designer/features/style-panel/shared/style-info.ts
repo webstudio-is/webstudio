@@ -47,7 +47,7 @@ export type StyleInfo = {
   [property in StyleProperty]?: StyleValueInfo;
 };
 
-export type StyleSource = "local" | "remote" | "preset";
+export type StyleSource = "local" | "remote" | "preset" | "default";
 
 export const getStyleSource = (
   ...styleValueInfos: (undefined | StyleValueInfo)[]
@@ -64,7 +64,7 @@ export const getStyleSource = (
       return "remote";
     }
   }
-  return "preset";
+  return "default";
 };
 
 const styleProperties = Object.keys(properties) as StyleProperty[];

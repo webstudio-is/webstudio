@@ -6,6 +6,7 @@ export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * as Portal from "@radix-ui/react-portal";
 export * from "@radix-ui/react-id";
 export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
+export { Label } from "./components/label";
 export * from "./components/toggle-group";
 export * from "./components/progress-radial";
 export * from "./components/select";

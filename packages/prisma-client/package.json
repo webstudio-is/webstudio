@@ -21,7 +21,7 @@
     "@types/uuid": "^8.3.4",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "prisma": "^4.3.1",
+    "prisma": "^4.9.0",
     "typescript": "4.7.4",
     "zod": "^3.19.1"
   },
@@ -31,7 +31,7 @@
   "private": false,
   "dependencies": {
     "@inquirer/confirm": "^0.0.25-alpha.0",
-    "@prisma/client": "^4.3.1",
+    "@prisma/client": "^4.9.0",
     "@types/minimist": "^1.2.2",
     "dotenv": "^16.0.0",
     "execa": "^6.1.0",

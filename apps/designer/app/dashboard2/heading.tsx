@@ -8,14 +8,12 @@ const variantTagMap = {
 } as const;
 
 const headingStyle = css({
-  // @todo use theme
-  fontFamily: "ManropeVariable, sans-serif",
+  fontFamily: theme.fonts.manrope,
   lineHeight: 1,
   margin: 0,
   variants: {
     variant: {
       large: {
-        // @todo use theme and ask Mark to add it to tokens
         fontSize: 48,
         fontWeight: 700,
       },
@@ -35,7 +33,7 @@ type HeadingProps = ComponentProps<typeof Box> & {
   variant: "large" | "small" | "tiny";
 };
 
-// @todo decide if this should be in design system
+// @todo this thing should be gone and we would just use text component or styles from text component
 export const Heading = (props: HeadingProps) => {
   return (
     <Box

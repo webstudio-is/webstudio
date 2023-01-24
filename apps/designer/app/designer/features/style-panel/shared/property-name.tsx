@@ -3,11 +3,12 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { StyleProperty } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import {
+  theme,
   Button,
   Flex,
   Box,
   Text,
-  DeprecatedLabel,
+  Label,
   Tooltip,
   Popover,
   PopoverContent,
@@ -19,7 +20,6 @@ import { UndoIcon } from "@webstudio-is/icons";
 import { utils } from "@webstudio-is/project";
 import { useBreakpoints, useRootInstance } from "~/shared/nano-states";
 import { type StyleInfo, type StyleSource, getStyleSource } from "./style-info";
-import { theme } from "@webstudio-is/design-system";
 
 const PropertyPopoverContent = ({
   properties,
@@ -145,29 +145,7 @@ export const PropertyName = ({
     isFeatureEnabled("propertyReset") &&
     (styleSource === "local" || styleSource === "remote");
 
-  const labelElement = (
-    <DeprecatedLabel
-      css={{
-        fontWeight: "inherit",
-        padding: `calc(${theme.spacing[3]} / 2) ${theme.spacing[3]}`,
-        borderRadius: theme.borderRadius[4],
-        ...(styleSource === "local" && {
-          color: theme.colors.blue11,
-          backgroundColor: theme.colors.blue4,
-        }),
-        ...(styleSource === "remote" && {
-          color: theme.colors.orange11,
-          backgroundColor: theme.colors.orange4,
-        }),
-        ...(styleSource === "preset" && {
-          color: theme.colors.hiContrast,
-        }),
-      }}
-      htmlFor={property.toString()}
-    >
-      {label}
-    </DeprecatedLabel>
-  );
+  const labelElement = <Label color={styleSource}>{label}</Label>;
 
   if (isPopoverEnabled) {
     return (

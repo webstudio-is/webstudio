@@ -3,21 +3,17 @@ import type { LoaderArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Dashboard } from "~/dashboard2";
 import { findAuthenticatedUser } from "~/services/auth.server";
-import { User as DbUser } from "@webstudio-is/prisma-client";
 import { loginPath } from "~/shared/router-utils";
+import { ComponentProps } from "react";
+import { prisma } from "@webstudio-is/prisma-client";
 
 export { links } from "~/dashboard2";
 
-type User = Omit<DbUser, "createdAt"> & {
-  createdAt: string;
-};
-
-type Data = {
-  user: User;
-};
+type Data = ComponentProps<typeof Dashboard>;
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await findAuthenticatedUser(request);
+
   if (!user) {
     const url = new URL(request.url);
     return redirect(
@@ -26,12 +22,19 @@ export const loader = async ({ request }: LoaderArgs) => {
       })
     );
   }
-  return json({ user });
+
+  const projects = await prisma.dashboardProject.findMany({
+    where: {
+      userId: user.id,
+    },
+  });
+
+  return json({ user, projects });
 };
 
 const DashboardRoute = () => {
-  const { user } = useLoaderData<Data>();
-  return <Dashboard user={user} />;
+  const data = useLoaderData<Data>();
+  return <Dashboard {...data} />;
 };
 
 export default DashboardRoute;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Asset } from "@webstudio-is/asset-uploader";
 
 const basePropsItem = {
   id: z.string(),
@@ -7,7 +8,7 @@ const basePropsItem = {
   required: z.optional(z.boolean()),
 };
 
-export const PropsItem = z.discriminatedUnion("type", [
+const SharedPropsItem = z.union([
   z.object({
     ...basePropsItem,
     type: z.literal("number"),
@@ -23,11 +24,30 @@ export const PropsItem = z.discriminatedUnion("type", [
     type: z.literal("boolean"),
     value: z.boolean(),
   }),
+]);
+
+export const StoredPropsItem = z.union([
+  SharedPropsItem,
   z.object({
     ...basePropsItem,
     type: z.literal("asset"),
-    // In database we hold asset.id
+    // asset.id is stored in database
     value: z.string(),
+  }),
+]);
+
+export type StoredPropsItem = z.infer<typeof StoredPropsItem>;
+
+export const StoredProps = z.array(StoredPropsItem);
+
+export type StoredProps = z.infer<typeof StoredProps>;
+
+export const PropsItem = z.union([
+  SharedPropsItem,
+  z.object({
+    ...basePropsItem,
+    type: z.literal("asset"),
+    value: Asset,
   }),
 ]);
 

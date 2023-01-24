@@ -4,13 +4,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DeprecatedButton,
+  DropdownMenuLabel,
   Text,
   Flex,
   Avatar,
   css,
   rawTheme,
   theme,
+  Button,
 } from "@webstudio-is/design-system";
 import { User as DbUser } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
@@ -27,13 +28,40 @@ const getAvatarLetter = (user: User) => {
   return (user?.username || user?.email || "X").charAt(0).toLocaleUpperCase();
 };
 
+const Menu = ({ user }: { user: User }) => {
+  const navigate = useNavigate();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" aria-label="Menu Button">
+          <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
+            <Avatar
+              src={user?.image || undefined}
+              fallback={getAvatarLetter(user)}
+            />
+            <ChevronDownIcon
+              width={15}
+              height={15}
+              color={rawTheme.colors.foregroundMain}
+            />
+          </Flex>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>{user?.username || user?.email}</DropdownMenuLabel>
+        <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
+          <Text>Logout</Text>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 type User = Omit<DbUser, "createdAt"> & {
   createdAt: string;
 };
 
 export const Header = ({ user }: { user: User }) => {
-  const navigate = useNavigate();
-
   return (
     <Flex
       as="header"
@@ -43,28 +71,7 @@ export const Header = ({ user }: { user: User }) => {
     >
       <WebstudioIcon width={30} height={23} />
       <Flex gap="1" align="center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <DeprecatedButton variant="raw" aria-label="Menu Button">
-              <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
-                <Avatar
-                  src={user?.image || undefined}
-                  fallback={getAvatarLetter(user)}
-                />
-                <ChevronDownIcon
-                  width={15}
-                  height={15}
-                  color={rawTheme.colors.foregroundMain}
-                />
-              </Flex>
-            </DeprecatedButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-              <Text>Logout</Text>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Menu user={user} />
       </Flex>
     </Flex>
   );

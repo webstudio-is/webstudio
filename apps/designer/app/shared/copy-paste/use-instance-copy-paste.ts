@@ -1,5 +1,5 @@
 import { utils } from "@webstudio-is/project";
-import type { Instance, UserProp } from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem } from "@webstudio-is/react-sdk";
 import { useEffect, useMemo } from "react";
 import { type InstanceCopyData, serialize, deserialize } from "./serialize";
 
@@ -38,7 +38,7 @@ const isInstanceClipboardEvent = (
 type Props = {
   selectedInstanceData?: InstanceCopyData | undefined;
   allowAnyTarget?: boolean;
-  onPaste: (instance: Instance, props?: UserProp[]) => void;
+  onPaste: (instance: Instance, props?: PropsItem[]) => void;
   onCut: (instance: Instance) => void;
 };
 

@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { type Instance } from "../db";
-import { type UserProp } from "./schema";
+import { PropsItem, type Instance } from "../db";
 import { useAllUserProps } from "./all-user-props";
 import type { Asset } from "@webstudio-is/asset-uploader";
 
@@ -9,7 +8,7 @@ import type { Asset } from "@webstudio-is/asset-uploader";
  */
 export const useUserPropsAsset = (
   instanceId: Instance["id"],
-  propName: UserProp["prop"]
+  propName: PropsItem["name"]
 ): Asset | undefined => {
   const allUserProps = useAllUserProps();
 
@@ -18,7 +17,7 @@ export const useUserPropsAsset = (
     if (propsData == null) {
       return undefined;
     }
-    const prop = propsData.find((prop) => prop.prop === propName);
+    const prop = propsData.find((prop) => prop.name === propName);
 
     if (prop == null) {
       return undefined;

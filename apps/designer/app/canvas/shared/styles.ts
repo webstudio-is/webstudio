@@ -1,14 +1,13 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
 import { addGlobalRules, getPresetStyleRules } from "@webstudio-is/project";
-import { useSelectedInstance } from "./nano-states";
 import {
   useBreakpoints,
   useDesignTokens,
   usePresetStyles,
-  useStyles,
 } from "~/shared/nano-states";
 import {
+  type Styles,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -30,6 +29,7 @@ import {
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
+import { useSelectedInstance } from "./nano-states";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
@@ -175,17 +175,14 @@ const getRule = (id: string, breakpoint?: string) => {
   return wrappedRulesMap.get(key);
 };
 
-export const useCssRules = ({ instanceId }: { instanceId: string }) => {
-  const [styles] = useStyles();
+export const useCssRules = ({
+  instanceId,
+  instanceStyles,
+}: {
+  instanceId: string;
+  instanceStyles: Styles;
+}) => {
   const [breakpoints] = useBreakpoints();
-
-  const [instanceStylesKey, instanceStyles] = useMemo(() => {
-    const instanceStyles = styles.filter(
-      (item) => item.instanceId === instanceId
-    );
-    const key = JSON.stringify(instanceStyles);
-    return [key, instanceStyles];
-  }, [styles, instanceId]);
 
   useIsomorphicLayoutEffect(() => {
     const stylePerBreakpoint = new Map<string, Style>();
@@ -221,11 +218,7 @@ export const useCssRules = ({ instanceId }: { instanceId: string }) => {
       }
     }
     cssEngine.render();
-    // run effect only when serialized instanceStyles changed
-    // to avoid rerendering on other instances change
-  }, [instanceId, instanceStylesKey, breakpoints]);
-
-  return instanceStylesKey;
+  }, [instanceId, instanceStyles, breakpoints]);
 };
 
 const toVarNamespace = (id: string, property: string) => {

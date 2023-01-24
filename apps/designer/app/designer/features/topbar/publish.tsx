@@ -16,19 +16,10 @@ import {
   useId,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
-import env from "~/shared/env";
 import type { Project } from "@webstudio-is/project";
-import { restPublishPath } from "~/shared/router-utils";
+import { getPublishedUrl, restPublishPath } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 type PublishButtonProps = { project: Project };
-
-const getHost = () => {
-  if (env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST) {
-    return env.PUBLISHER_HOST;
-  }
-  // We use location.host to get the hostname and port in development mode and to not break local testing.
-  return env.DESIGNER_HOST || location.host;
-};
 
 const Content = ({ project }: PublishButtonProps) => {
   const id = useId();
@@ -40,7 +31,7 @@ const Content = ({ project }: PublishButtonProps) => {
     if (typeof location !== "object" || !domain) {
       return;
     }
-    setUrl(`${location.protocol}//${domain}.${getHost()}`);
+    setUrl(getPublishedUrl(domain));
   }, [domain]);
 
   return (
@@ -63,7 +54,7 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: theme.spacing[0],
               }}
             >
-              <Text truncate>{`${domain}.${getHost()}`}</Text>
+              <Text truncate>{new URL(getPublishedUrl(domain)).host}</Text>
               <ExternalLinkIcon />
             </Link>
           )}

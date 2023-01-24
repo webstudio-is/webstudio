@@ -253,8 +253,9 @@ const {
       transparentExtreme: "transparent",
     },
     fonts: {
-      sans: "Inter, -apple-system, system-ui, sans-serif",
+      sans: "InterVariable, -apple-system, system-ui, sans-serif",
       mono: "Roboto, menlo, monospace",
+      manrope: "ManropeVariable, sans-serif",
     },
     opacity: {
       1: "0.4",

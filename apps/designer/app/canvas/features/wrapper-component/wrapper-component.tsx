@@ -1,17 +1,21 @@
-import { type MouseEvent, type FormEvent, useMemo } from "react";
-import { useRef } from "react";
-import { Suspense, lazy, useCallback } from "react";
+import type { MouseEvent, FormEvent } from "react";
+import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
+import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   type Instance,
   type OnChangeChildren,
-  type UserProp,
+  type PropsItem,
   renderWrapperComponentChildren,
   getComponent,
   idAttribute,
   useAllUserProps,
 } from "@webstudio-is/react-sdk";
-import { useTextEditingInstanceId } from "~/shared/nano-states";
+import { shallowComputed } from "~/shared/store-utils";
+import {
+  stylesIndexStore,
+  useTextEditingInstanceId,
+} from "~/shared/nano-states";
 import { useSelectedInstance } from "~/canvas/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import { publish } from "~/shared/pubsub";
@@ -40,7 +44,7 @@ const ContentEditable = ({
   return <Component ref={ref} {...props} contentEditable={true} />;
 };
 
-type UserProps = Record<UserProp["prop"], string | number | boolean>;
+type UserProps = Record<PropsItem["name"], string | number | boolean>;
 
 type WrapperComponentDevProps = {
   instance: Instance;
@@ -53,7 +57,16 @@ export const WrapperComponentDev = ({
   children,
   onChangeChildren,
 }: WrapperComponentDevProps) => {
-  const instanceStylesKey = useCssRules({ instanceId: instance.id });
+  const instanceId = instance.id;
+
+  const instanceStylesStore = useMemo(() => {
+    return shallowComputed(
+      [stylesIndexStore],
+      (stylesIndex) => stylesIndex.stylesByInstanceId.get(instanceId) ?? []
+    );
+  }, [instanceId]);
+  const instanceStyles = useStore(instanceStylesStore);
+  useCssRules({ instanceId: instance.id, instanceStyles });
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
@@ -68,7 +81,7 @@ export const WrapperComponentDev = ({
     }
     for (const item of instanceProps) {
       if (item.type !== "asset") {
-        result[item.prop] = item.value;
+        result[item.name] = item.value;
       }
     }
     return result;
@@ -110,7 +123,7 @@ export const WrapperComponentDev = ({
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
-          instanceStylesKey={instanceStylesKey}
+          instanceStyles={instanceStyles}
           instanceProps={instanceProps}
         />
       )}
