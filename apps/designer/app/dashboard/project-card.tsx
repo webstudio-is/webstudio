@@ -9,7 +9,6 @@ import {
   Text,
   theme,
   toast,
-  typography,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
@@ -45,8 +44,12 @@ const projectCardFooterStyle = css({
   px: theme.spacing[7],
 });
 
+// @todo use typography from figma tokens
 const projectNameAvatarStyle = css({
-  ...typography.brandThumbnailLargeDefault,
+  fontFamily: theme.fonts.manrope,
+  fontWeight: 200,
+  fontSize: 360,
+  letterSpacing: "-0.05em",
   alignSelf: "center",
   marginLeft: "-0.5em",
   background: "linear-gradient(0deg, #FBF8FF 25%, #E2E2E2 66%)",
@@ -56,7 +59,7 @@ const projectNameAvatarStyle = css({
   userSelect: "none",
   outline: "none",
   "&:hover, &:focus": {
-    ...typography.brandThumbnailLargeHover,
+    fontWeight: 800,
     transition: "100ms",
   },
 });
