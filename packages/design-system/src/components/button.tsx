@@ -88,9 +88,8 @@ const StyledButton = styled("button", {
   },
 });
 
-const TextContainer = styled("span", typography.labelsSentenceCase, {
+const TextContainer = styled("span", typography.labelTitleCase, {
   padding: `0 ${theme.spacing[2]}`,
-  defaultVariants: { variant: "label" },
 });
 
 type ButtonProps = {
