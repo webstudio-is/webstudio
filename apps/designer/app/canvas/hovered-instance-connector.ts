@@ -58,7 +58,7 @@ const startHoveredInstanceConnection = () => {
     });
   }, 50);
 
-  // remove hover rect when scroll starts
+  // remove hover outline when scroll starts
   // and show it with new rect when scroll ends
   const unsubscribeScrollState = subscribeScrollState({
     onScrollStart() {

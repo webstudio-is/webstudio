@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import {
-  hoveredInstanceStore,
+  hoveredInstanceIdStore,
   hoveredInstanceOutlineStore,
   selectedInstanceIdStore,
   useTextEditingInstanceId,
@@ -10,15 +10,15 @@ import { Label } from "./label";
 
 export const HoveredInstanceOutline = () => {
   const selectedInstanceId = useStore(selectedInstanceIdStore);
-  const hoveredInstance = useStore(hoveredInstanceStore);
+  const hoveredInstanceId = useStore(hoveredInstanceIdStore);
   const instanceOutline = useStore(hoveredInstanceOutlineStore);
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const isEditingText = textEditingInstanceId !== undefined;
-  const isHoveringSelectedInstance = selectedInstanceId === hoveredInstance?.id;
+  const isHoveringSelectedInstance = selectedInstanceId === hoveredInstanceId;
 
   if (
-    hoveredInstance === undefined ||
+    hoveredInstanceId === undefined ||
     instanceOutline === undefined ||
     isHoveringSelectedInstance ||
     isEditingText

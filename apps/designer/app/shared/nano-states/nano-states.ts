@@ -121,15 +121,6 @@ export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
   undefined
 );
-export const hoveredInstanceStore = computed(
-  [instancesIndexStore, hoveredInstanceIdStore],
-  (instancesIndex, hoveredInstanceId) => {
-    if (hoveredInstanceId === undefined) {
-      return;
-    }
-    return instancesIndex.instancesById.get(hoveredInstanceId);
-  }
-);
 export const hoveredInstanceOutlineStore = atom<
   undefined | { component: ComponentName; rect: DOMRect }
 >(undefined);
