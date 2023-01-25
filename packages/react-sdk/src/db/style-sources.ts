@@ -36,11 +36,13 @@ export const StyleSourceStyles = z.array(StyleSourceStylesItem);
 
 const StyleRefsLocal = z.object({
   type: z.literal("local"),
+  instanceId: z.string(),
 });
 
 const StyleRefsRemote = z.object({
   type: z.literal("remote"),
   styleSourceId: z.string(),
+  instanceId: z.string(),
 });
 
 export const StyleRefsItem = z.union([StyleRefsLocal, StyleRefsRemote]);
