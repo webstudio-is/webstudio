@@ -1,9 +1,9 @@
-import { Context } from "../context/context.server";
+import { AppContext } from "../context/context.server";
 import { v4 as uuid } from "uuid";
 
 export const beforeProjectCreate = async (
   props: { projectId: string; userId: string },
-  context: Context
+  context: AppContext
 ) => {
   const { authorization } = context;
   const { authorizeTrpc } = authorization;
@@ -37,7 +37,7 @@ export const hasProjectPermit = async (
     projectId: string;
     permit: "view" | "edit";
   },
-  context: Context
+  context: AppContext
 ) => {
   const { authorization } = context;
   const { authorizeTrpc } = authorization;

@@ -1,7 +1,4 @@
-import type {
-  Context as SharedContext,
-  AuthorizationContext,
-} from "@webstudio-is/trpc-interface/server";
+import type { AppContext } from "@webstudio-is/trpc-interface/server";
 import { z } from "zod";
 import * as cryptoJson from "./crypto/crypto-json.server";
 import { authenticator } from "~/services/auth.server";
@@ -11,13 +8,11 @@ const ReadToken = z.object({
   projectId: z.string(),
 });
 
-export type Context = SharedContext;
-
 export type ReadToken = z.infer<typeof ReadToken>;
 
 const createAuthorizationContext = async (
   request: Request
-): Promise<AuthorizationContext> => {
+): Promise<AppContext["authorization"]> => {
   const url = new URL(request.url);
   const readTokenRaw = url.searchParams.get("readToken") ?? undefined;
   const token = url.searchParams.get("token") ?? url.hostname;
@@ -35,7 +30,7 @@ const createAuthorizationContext = async (
     );
   }
 
-  const context: AuthorizationContext = {
+  const context: AppContext["authorization"] = {
     userId: user?.id,
     readToken,
     token,
@@ -49,7 +44,7 @@ export const createReadToken = async (tokenData: ReadToken) => {
   return cryptoJson.encode(tokenData, process.env.AUTH_SECRET ?? "NO-SECRET");
 };
 
-export const createContext = async (request: Request): Promise<Context> => {
+export const createContext = async (request: Request): Promise<AppContext> => {
   const authorization = await createAuthorizationContext(request);
 
   return {
