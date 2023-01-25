@@ -5,8 +5,6 @@ import {
   type ComponentName,
   type InstancesItem,
   Instance,
-  PresetStyles,
-  findMissingPresetStyles,
   Styles,
   Instances,
   Props,
@@ -41,7 +39,6 @@ const normalizeTree = (instance: Instance, instances: InstancesItem[]) => {
 
 export const createTree = (): TreeData => {
   const root = utils.tree.createInstance({ component: "Body" });
-  const presetStyles = findMissingPresetStyles([], [root.component]);
   const styles: Styles = [];
   const instances: Instances = [];
   normalizeTree(root, instances);
@@ -50,7 +47,6 @@ export const createTree = (): TreeData => {
   return {
     root,
     props,
-    presetStyles,
     styles,
   };
 };
@@ -68,7 +64,6 @@ export const create = async (
       root: "",
       instances: JSON.stringify(instances),
       props: JSON.stringify(treeData.props),
-      presetStyles: JSON.stringify(treeData.presetStyles),
       styles: serializeStyles(treeData.styles),
     },
   });
@@ -118,14 +113,12 @@ export const loadById = async (
   const root = Instance.parse(denormalizeTree(instances));
 
   const props = Props.parse(JSON.parse(tree.props));
-  const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
   const styles = await parseStyles(tree.styles);
 
   return {
     ...tree,
     root,
     props,
-    presetStyles,
     styles,
   };
 };
@@ -141,15 +134,6 @@ export const clone = async (
   return await create(tree, client);
 };
 
-const collectUsedComponents = (instance: Instance, components: Set<string>) => {
-  components.add(instance.component);
-  for (const child of instance.children) {
-    if (child.type === "instance") {
-      collectUsedComponents(child, components);
-    }
-  }
-};
-
 export const patch = async (
   { treeId }: { treeId: Tree["id"] },
   patches: Array<Patch>
@@ -159,13 +143,6 @@ export const patch = async (
     throw new Error(`Tree ${treeId} not found`);
   }
   const clientRoot = applyPatches(tree.root, patches);
-  const components = new Set<ComponentName>();
-  collectUsedComponents(tree.root, components);
-  const missingPresetStyles = findMissingPresetStyles(
-    tree.presetStyles,
-    Array.from(components)
-  );
-  const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
 
   const root = Instance.parse(clientRoot);
   const instances: Instances = [];
@@ -175,7 +152,6 @@ export const patch = async (
     data: {
       root: "",
       instances: JSON.stringify(instances),
-      presetStyles: JSON.stringify(presetStyles),
     },
     where: { id: treeId },
   });

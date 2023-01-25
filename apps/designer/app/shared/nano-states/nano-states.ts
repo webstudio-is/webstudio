@@ -1,11 +1,6 @@
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type {
-  ComponentName,
-  Instance,
-  PresetStyles,
-  Styles,
-} from "@webstudio-is/react-sdk";
+import type { ComponentName, Instance, Styles } from "@webstudio-is/react-sdk";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
@@ -46,14 +41,6 @@ export const instancesIndexStore = computed(
     };
   }
 );
-
-export const presetStylesContainer = atom<PresetStyles>([]);
-export const usePresetStyles = () => useValue(presetStylesContainer);
-export const useSetPresetStyles = (presetStyles: PresetStyles) => {
-  useSyncInitializeOnce(() => {
-    presetStylesContainer.set(presetStyles);
-  });
-};
 
 export const stylesContainer = atom<Styles>([]);
 /**
