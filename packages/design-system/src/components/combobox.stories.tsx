@@ -1,9 +1,7 @@
-import type { ComponentStory } from "@storybook/react";
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
 import React, { useCallback } from "react";
 import { TextField } from "./text-field";
 import {
-  Combobox,
   ComboboxListboxItem,
   useCombobox,
   comboboxStateChangeTypes,
@@ -11,32 +9,7 @@ import {
 import { Flex } from "./flex";
 import { theme } from "../stitches.config";
 
-export default {
-  component: Combobox,
-};
-
-export const Simple: ComponentStory<typeof Combobox> = () => {
-  const items = [{ label: "Apple" }, { label: "Banana" }, { label: "Orange" }];
-  const [value, setValue] = React.useState<typeof items[number] | null>(null);
-  return (
-    <Combobox
-      name="fruit"
-      placeholder="Select a fruit"
-      items={items}
-      value={value}
-      selectedItem={value}
-      onItemSelect={(value) => {
-        // If the value is cleared, we revert to previous state
-        if (value !== null) {
-          setValue(value);
-        }
-      }}
-      itemToString={(item) => item?.label ?? ""}
-    />
-  );
-};
-
-export const Complex: ComponentStory<typeof Combobox> = () => {
+export const Complex = () => {
   const [value, setValue] = React.useState<string | null>(null);
 
   const stateReducer = useCallback((state, actionAndChanges) => {
@@ -107,4 +80,8 @@ export const Complex: ComponentStory<typeof Combobox> = () => {
       </fieldset>
     </Flex>
   );
+};
+
+export default {
+  component: Complex,
 };

@@ -1,6 +1,6 @@
 import { test, expect } from "@jest/globals";
 import type { Styles } from "@webstudio-is/react-sdk";
-import { getStyleRules, getPresetStyleRules } from "./style-rules";
+import { getStyleRules } from "./style-rules";
 
 test("get a list of style rules grouped by instance and breakpoint", () => {
   const styles: Styles = [
@@ -54,53 +54,6 @@ test("get a list of style rules grouped by instance and breakpoint", () => {
           "color": {
             "type": "keyword",
             "value": "red",
-          },
-        },
-      },
-    ]
-  `);
-});
-
-test("get a list of preset styles grouped by component", () => {
-  expect(
-    getPresetStyleRules([
-      {
-        component: "Box",
-        property: "width",
-        value: { type: "keyword", value: "auto" },
-      },
-      {
-        component: "Box",
-        property: "height",
-        value: { type: "keyword", value: "auto" },
-      },
-      {
-        component: "Paragraph",
-        property: "width",
-        value: { type: "keyword", value: "auto" },
-      },
-    ])
-  ).toMatchInlineSnapshot(`
-    [
-      {
-        "component": "Box",
-        "style": {
-          "height": {
-            "type": "keyword",
-            "value": "auto",
-          },
-          "width": {
-            "type": "keyword",
-            "value": "auto",
-          },
-        },
-      },
-      {
-        "component": "Paragraph",
-        "style": {
-          "width": {
-            "type": "keyword",
-            "value": "auto",
           },
         },
       },

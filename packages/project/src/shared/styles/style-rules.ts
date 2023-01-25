@@ -1,5 +1,5 @@
 import type { Style } from "@webstudio-is/css-data";
-import type { PresetStyles, Styles } from "@webstudio-is/react-sdk";
+import type { Styles } from "@webstudio-is/react-sdk";
 
 type StyleRule = {
   instanceId: string;
@@ -22,25 +22,4 @@ export const getStyleRules = (styles?: Styles) => {
     styleRule.style[property] = value;
   }
   return Array.from(stylesMap.values());
-};
-
-type PresetStyleRule = {
-  component: string;
-  style: Style;
-};
-
-export const getPresetStyleRules = (presetStyles?: PresetStyles) => {
-  const presetStylesMap = new Map<string, PresetStyleRule>();
-  if (presetStyles === undefined) {
-    return [];
-  }
-  for (const { component, property, value } of presetStyles) {
-    let presetStyleRule = presetStylesMap.get(component);
-    if (presetStyleRule === undefined) {
-      presetStyleRule = { component, style: {} };
-      presetStylesMap.set(component, presetStyleRule);
-    }
-    presetStyleRule.style[property] = value;
-  }
-  return Array.from(presetStylesMap.values());
 };
