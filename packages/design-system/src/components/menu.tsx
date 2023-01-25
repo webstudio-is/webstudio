@@ -15,35 +15,14 @@
  */
 
 import { css, styled, theme } from "../stitches.config";
+import { typography } from "./typography";
 import {
   Arrow as BaseDropdownMenuArrow,
   SubContent,
 } from "@radix-ui/react-dropdown-menu";
 import { type ComponentProps } from "react";
 
-// @todo: this should come from `boxShadow.menuDropShadow`
-const menuDropShadow =
-  "0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15)";
-
-// @todo: this should come from `typography.labelsTitleCase`
-const labelsTitleCase = css({
-  fontFamily: theme.fonts.sans,
-  fontWeight: 500,
-  fontSize: theme.fontSize[3],
-  lineHeight: theme.lineHeight[3],
-  letterSpacing: "0.005em",
-});
-
-// @todo: this should come from `typography.titles`
-const titles = css({
-  fontFamily: theme.fonts.sans,
-  fontWeight: 700,
-  fontSize: theme.fontSize[3],
-  lineHeight: theme.lineHeight[3],
-  letterSpacing: "0.01em",
-});
-
-export const labelCss = css(titles, {
+export const labelCss = css(typography.title, {
   color: theme.colors.foregroundMain,
   mx: theme.spacing[3],
   padding: theme.spacing[3],
@@ -60,7 +39,7 @@ export const itemIndicatorCss = css({
   height: indicatorSize,
 });
 
-export const itemCss = css(labelsTitleCase, {
+export const itemCss = css(typography.labelTitleCase, {
   outline: "none",
   cursor: "default",
   position: "relative",
@@ -105,7 +84,7 @@ export const menuCss = css({
   // in Figma there are 2 borders on two rectangles,
   // but we have only one element to work with,
   // so we implement borders using shadows
-  boxShadow: `${menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMain}, inset 0 0 0 2px ${theme.colors.borderMenuInner}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMain}, inset 0 0 0 2px ${theme.colors.borderMenuInner}`,
 
   // extra 1px padding to account for one of the shadow-borders above
   padding: `calc(1px + ${theme.spacing[3]}) 1px`,
