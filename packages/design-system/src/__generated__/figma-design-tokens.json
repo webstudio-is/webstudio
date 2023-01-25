@@ -941,41 +941,6 @@
         },
         "type": "typography"
       },
-      "inner-glow": {
-        "0": {
-          "value": {
-            "color": "#fbf8ff",
-            "type": "innerShadow",
-            "x": "0",
-            "y": "2",
-            "blur": "1",
-            "spread": "0"
-          },
-          "type": "boxShadow"
-        },
-        "1": {
-          "value": {
-            "color": "#fbf8ff",
-            "type": "innerShadow",
-            "x": "0",
-            "y": "5",
-            "blur": "3",
-            "spread": "0"
-          },
-          "type": "boxShadow"
-        },
-        "2": {
-          "value": {
-            "color": "#fbf8ff",
-            "type": "innerShadow",
-            "x": "0",
-            "y": "8",
-            "blur": "5",
-            "spread": "0"
-          },
-          "type": "boxShadow"
-        }
-      },
       "Thumbnail Large": {
         "Default": {
           "value": {
