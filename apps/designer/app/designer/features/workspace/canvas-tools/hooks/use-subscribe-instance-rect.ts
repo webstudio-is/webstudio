@@ -1,8 +1,5 @@
 import { useSubscribe } from "~/shared/pubsub";
-import {
-  useSelectedInstanceOutline,
-  useHoveredInstanceRect,
-} from "~/shared/nano-states";
+import { useSelectedInstanceOutline } from "~/shared/nano-states";
 
 export const useSubscribeInstanceRect = () => {
   const [selectedInstanceOutline, setSelectedInstanceOutline] =
@@ -10,6 +7,4 @@ export const useSubscribeInstanceRect = () => {
   useSubscribe("updateSelectedInstanceOutline", (value) => {
     setSelectedInstanceOutline({ ...selectedInstanceOutline, ...value });
   });
-  const [, setHoveredRect] = useHoveredInstanceRect();
-  useSubscribe("hoveredInstanceRect", setHoveredRect);
 };

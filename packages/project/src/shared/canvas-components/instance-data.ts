@@ -5,11 +5,6 @@ import type {
   Breakpoint,
 } from "@webstudio-is/css-data";
 
-export type HoveredInstanceData = {
-  id: Instance["id"];
-  component: Instance["component"];
-};
-
 export type StyleUpdate =
   | {
       operation: "delete";

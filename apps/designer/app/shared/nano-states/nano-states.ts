@@ -1,6 +1,11 @@
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { Instance, PresetStyles, Styles } from "@webstudio-is/react-sdk";
+import type {
+  ComponentName,
+  Instance,
+  PresetStyles,
+  Styles,
+} from "@webstudio-is/react-sdk";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
@@ -113,6 +118,22 @@ export const selectedInstanceStore = computed(
 );
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
+export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
+  undefined
+);
+export const hoveredInstanceStore = computed(
+  [instancesIndexStore, hoveredInstanceIdStore],
+  (instancesIndex, hoveredInstanceId) => {
+    if (hoveredInstanceId === undefined) {
+      return;
+    }
+    return instancesIndex.instancesById.get(hoveredInstanceId);
+  }
+);
+export const hoveredInstanceOutlineStore = atom<
+  undefined | { component: ComponentName; rect: DOMRect }
+>(undefined);
+
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
 
@@ -125,10 +146,6 @@ const selectedInstanceOutlineContainer = atom<{
 });
 export const useSelectedInstanceOutline = () =>
   useValue(selectedInstanceOutlineContainer);
-
-const hoveredInstanceRectContainer = atom<DOMRect | undefined>();
-export const useHoveredInstanceRect = () =>
-  useValue(hoveredInstanceRectContainer);
 
 const isScrollingContainer = atom<boolean>(false);
 export const useIsScrolling = () => useValue(isScrollingContainer);
