@@ -4,9 +4,6 @@ export const boxShadow = {
   menuDropShadow: "0px 5px 17px 0px #00000026, 0px 2px 7px 0px #0000001a",
   brandElevationSmall: "0px 4px 4px 0px #1717171a",
   brandElevationBig: "0px 8px 16px 0px #1717171a",
-  brandInnerGlow0: "inset 0px 2px 1px 0px #fbf8ff",
-  brandInnerGlow1: "inset 0px 5px 3px 0px #fbf8ff",
-  brandInnerGlow2: "inset 0px 8px 5px 0px #fbf8ff",
 } as const;
 
 export const fontFamilies = {
