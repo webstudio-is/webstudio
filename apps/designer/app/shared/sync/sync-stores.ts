@@ -10,6 +10,8 @@ import {
   stylesContainer,
   selectedInstanceIdStore,
   selectedInstanceBrowserStyleStore,
+  hoveredInstanceIdStore,
+  hoveredInstanceOutlineStore,
 } from "~/shared/nano-states";
 
 type StoreData = {
@@ -49,6 +51,8 @@ export const registerContainers = () => {
     "selectedInstanceBrowserStyle",
     selectedInstanceBrowserStyleStore
   );
+  clientStores.set("hoveredInstanceIdStore", hoveredInstanceIdStore);
+  clientStores.set("hoveredInstanceOutlineStore", hoveredInstanceOutlineStore);
 };
 
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
