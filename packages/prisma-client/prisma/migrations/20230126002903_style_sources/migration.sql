@@ -1,7 +1,6 @@
--- AlterTable
-ALTER TABLE "Build" ADD COLUMN     "styleSources" TEXT NOT NULL DEFAULT '[]',
-ADD COLUMN     "styles" TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE "Build"
+  ADD COLUMN "styleSources" TEXT NOT NULL DEFAULT '[]',
+  ADD COLUMN "styles" TEXT NOT NULL DEFAULT '[]';
 
--- AlterTable
-ALTER TABLE "Tree" ADD COLUMN     "presetStyles" TEXT NOT NULL DEFAULT '[]',
-ADD COLUMN     "styleRefs" TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE "Tree"
+  ADD COLUMN "styleRefs" TEXT NOT NULL DEFAULT '[]';
