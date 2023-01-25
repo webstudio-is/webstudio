@@ -395,7 +395,6 @@ importers:
       '@radix-ui/react-dropdown-menu': ^1.0.0
       '@radix-ui/react-id': ^1.0.0
       '@radix-ui/react-label': ^1.0.0
-      '@radix-ui/react-menu': ^1.0.0
       '@radix-ui/react-popover': ^1.0.0
       '@radix-ui/react-popper': ^1.0.0
       '@radix-ui/react-portal': ^1.0.0
@@ -453,7 +452,6 @@ importers:
       '@radix-ui/react-dropdown-menu': 1.0.0_nn45z5sr7igu7sfun6tiae5hx4
       '@radix-ui/react-id': 1.0.0_react@17.0.2
       '@radix-ui/react-label': 1.0.0_sfoxds7t5ydpegc3knd667wn6m
-      '@radix-ui/react-menu': 1.0.0_nn45z5sr7igu7sfun6tiae5hx4
       '@radix-ui/react-popover': 1.0.0_nn45z5sr7igu7sfun6tiae5hx4
       '@radix-ui/react-popper': 1.0.0_nn45z5sr7igu7sfun6tiae5hx4
       '@radix-ui/react-portal': 1.0.0_sfoxds7t5ydpegc3knd667wn6m

@@ -7,8 +7,12 @@ import {
   useEffect,
   useRef,
   type ChangeEvent,
+  type ReactNode,
 } from "react";
-import { CheckIcon, ChevronDownIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon } from "@webstudio-is/icons";
+// @todo:
+//   react-popper "is an internal utility, not intended for public usage"
+//   probably need to switch to @radix-ui/react-popover
 import { Popper, PopperContent, PopperAnchor } from "@radix-ui/react-popper";
 import {
   type DownshiftState,
@@ -18,66 +22,66 @@ import {
   useCombobox as useDownshiftCombobox,
 } from "downshift";
 import { matchSorter } from "match-sorter";
-import { styled } from "../stitches.config";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
-import { itemCss } from "./menu";
-import { panelStyles } from "./panel";
-import { TextField } from "./text-field";
-import { Box } from "./box";
-import { Grid } from "./grid";
-import { theme } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
+import {
+  itemCss,
+  menuCss,
+  itemIndicatorCss,
+  labelCss,
+  separatorCss,
+} from "./menu";
 
-const Listbox = styled("ul", panelStyles, {
-  p: theme.spacing[3],
-  margin: 0,
-  overflow: "auto",
-  // @todo need some non-hardcoded value
-  maxHeight: 400,
-  minWidth: 214,
-  variants: {
-    state: {
-      open: {},
-      closed: {
-        display: "none",
-      },
-    },
-    empty: {
-      true: {
-        display: "none",
-      },
+const Listbox = styled(
+  "ul",
+  {
+    margin: "unset", // reset <ul>
+    overflow: "auto",
+    maxHeight: theme.spacing[34],
+    variants: {
+      state: { closed: { display: "none" } },
+      empty: { true: { display: "none" } },
     },
   },
-});
+  menuCss
+);
 
-const ListboxItem = styled("li", itemCss, {
-  padding: `0 ${theme.spacing[5]}`,
-  margin: 0,
-  borderRadius: theme.borderRadius[4],
-});
+const ListboxItem = styled("li", itemCss);
+
+const Indicator = styled("span", itemIndicatorCss);
+
+export const ComboboxLabel = styled("li", labelCss);
+
+export const ComboboxSeparator = styled("li", separatorCss);
 
 const ListboxItemBase: ForwardRefRenderFunction<
   HTMLLIElement,
   ComponentProps<typeof ListboxItem> & {
     disabled?: boolean;
     selected?: boolean;
+    selectable?: boolean;
     highlighted?: boolean;
+    icon?: ReactNode;
   }
 > = (props, ref) => {
-  const { disabled, selected, highlighted, children, ...rest } = props;
+  const {
+    disabled,
+    selected,
+    selectable = true,
+    highlighted,
+    children,
+    icon = <CheckMarkIcon />,
+    ...rest
+  } = props;
   return (
     <ListboxItem
       ref={ref}
       {...(disabled ? { "aria-disabled": true, disabled: true } : {})}
       {...(selected ? { "aria-current": true } : {})}
-      {...rest}
+      {...(disabled ? {} : rest)}
+      withIndicator={selectable}
     >
-      <Grid
-        align="center"
-        css={{ gridTemplateColumns: `${theme.spacing[10]} 1fr` }}
-      >
-        {selected && <CheckIcon />}
-        <Box css={{ gridColumn: 2 }}>{children}</Box>
-      </Grid>
+      {selectable && selected && <Indicator>{icon}</Indicator>}
+      {children}
     </ListboxItem>
   );
 };
@@ -285,74 +289,3 @@ export const useCombobox = <Item,>({
     resetFilter,
   };
 };
-
-type ComboboxProps<Item> = UseComboboxProps<Item> & {
-  name: string;
-  label?: string;
-  placeholder?: string;
-};
-
-export const Combobox = <Item,>({
-  items,
-  value = null,
-  name,
-  selectedItem,
-  placeholder,
-  itemToString,
-  onItemSelect,
-  onItemHighlight,
-}: ComboboxProps<Item>) => {
-  const {
-    items: foundItems,
-    getInputProps,
-    getComboboxProps,
-    getToggleButtonProps,
-    getMenuProps,
-    getItemProps,
-    isOpen,
-  } = useCombobox({
-    items,
-    value,
-    selectedItem,
-    itemToString,
-    onItemSelect,
-    onItemHighlight,
-  });
-  return (
-    <Popper>
-      <Box {...getComboboxProps()}>
-        <PopperAnchor>
-          <TextField
-            {...getInputProps({
-              name,
-              placeholder,
-            })}
-            suffix={
-              <DeprecatedIconButton {...getToggleButtonProps()}>
-                <ChevronDownIcon />
-              </DeprecatedIconButton>
-            }
-          />
-        </PopperAnchor>
-        <PopperContent>
-          <Listbox {...getMenuProps()}>
-            {isOpen &&
-              foundItems.map((item, index) => {
-                return (
-                  // eslint-disable-next-line react/jsx-key
-                  <ComboboxListboxItem
-                    key={index}
-                    {...getItemProps({ item, index })}
-                  >
-                    {itemToString(item)}
-                  </ComboboxListboxItem>
-                );
-              })}
-          </Listbox>
-        </PopperContent>
-      </Box>
-    </Popper>
-  );
-};
-
-Combobox.displayName = "Combobox";

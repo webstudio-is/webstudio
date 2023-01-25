@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuItemRightSlot,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuTrigger,
@@ -14,7 +15,7 @@ import {
   DeprecatedIconButton,
   Box,
 } from "@webstudio-is/design-system";
-import { HamburgerMenuIcon, ChevronRightIcon } from "@webstudio-is/icons";
+import { HamburgerMenuIcon } from "@webstudio-is/icons";
 import { type Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
 import {
@@ -29,14 +30,6 @@ import {
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
-
-const menuItemCss = {
-  display: "flex",
-  gap: theme.spacing[9],
-  justifyContent: "space-between",
-  flexGrow: 1,
-  minWidth: 140,
-};
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -53,16 +46,12 @@ const ThemeMenuItem = () => {
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
-        Theme
-        <ChevronRightIcon />
-      </DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
       <DropdownMenuSubContent>
         {settings.map((setting) => (
           <DropdownMenuCheckboxItem
             key={setting}
             checked={currentSetting === setting}
-            css={menuItemCss}
             onSelect={() => {
               setThemeSetting(setting);
             }}
@@ -80,14 +69,10 @@ const ViewMenuItem = () => {
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
-        View
-        <ChevronRightIcon />
-      </DropdownMenuSubTrigger>
+      <DropdownMenuSubTrigger>View</DropdownMenuSubTrigger>
       <DropdownMenuSubContent>
         <DropdownMenuCheckboxItem
           checked={clientSettings.navigatorLayout === "undocked"}
-          css={menuItemCss}
           onSelect={() => {
             const setting =
               clientSettings.navigatorLayout === "undocked"
@@ -140,7 +125,6 @@ export const Menu = ({ publish }: MenuProps) => {
           collisionPadding={4}
         >
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               navigate(dashboardPath());
             }}
@@ -149,7 +133,6 @@ export const Menu = ({ publish }: MenuProps) => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               publish({
                 type: "shortcut",
@@ -158,10 +141,11 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Undo
-            <ShortcutHint value={["cmd", "z"]} />
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["cmd", "z"]} />
+            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               publish({
                 type: "shortcut",
@@ -170,33 +154,32 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Redo
-            <ShortcutHint value={["shift", "cmd", "z"]} />
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["shift", "cmd", "z"]} />
+            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {/* https://github.com/webstudio-is/webstudio-designer/issues/499
           
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               // TODO
             }}
           >
             Copy
-            <ShortcutHint value={["cmd", "c"]} />
+            <DropdownMenuItemRightSlot><ShortcutHint value={["cmd", "c"]} /></DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               // TODO
             }}
           >
             Paste
-            <ShortcutHint value={["cmd", "v"]} />
+            <DropdownMenuItemRightSlot><ShortcutHint value={["cmd", "v"]} /></DropdownMenuItemRightSlot>
           </DropdownMenuItem> 
           
           */}
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               publish({
                 type: "shortcut",
@@ -205,20 +188,22 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Delete
-            <ShortcutHint value={["backspace"]} />
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["backspace"]} />
+            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               publish({ type: "openBreakpointsMenu" });
             }}
           >
             Breakpoints
-            <ShortcutHint value={["cmd", "b"]} />
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["cmd", "b"]} />
+            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               publish({
                 type: "zoom",
@@ -227,10 +212,11 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Zoom in
-            <ShortcutHint value={["+"]} />
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["+"]} />
+            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               publish({
                 type: "zoom",
@@ -239,13 +225,14 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Zoom out
-            <ShortcutHint value={["-"]} />
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["-"]} />
+            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <ThemeMenuItem />
           <ViewMenuItem />
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               publish({
                 type: "togglePreviewMode",
@@ -253,10 +240,11 @@ export const Menu = ({ publish }: MenuProps) => {
             }}
           >
             Preview
-            <ShortcutHint value={["cmd", "shift", "p"]} />
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["cmd", "shift", "p"]} />
+            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               setIsShareOpen(true);
             }}
@@ -264,7 +252,6 @@ export const Menu = ({ publish }: MenuProps) => {
             Share
           </DropdownMenuItem>
           <DropdownMenuItem
-            css={menuItemCss}
             onSelect={() => {
               setIsPublishOpen(true);
             }}
