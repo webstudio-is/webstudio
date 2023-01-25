@@ -83,6 +83,7 @@ model Tree {
   props        String @default("[]")
   presetStyles String @default("[]")
   styles       String @default("[]")
+  styleRefs    String @default("[]")
 }
 
 model InstanceProps {
@@ -98,6 +99,12 @@ model Breakpoints {
   build   Build  @relation(fields: [buildId], references: [id])
   buildId String @id
   values  String @default("[]")
+}
+
+model StyleSources {
+  buildIda     String @id
+  styleSources String @default("[]")
+  styles       String @default("[]")
 }
 
 model DesignTokens {

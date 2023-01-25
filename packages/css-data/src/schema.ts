@@ -13,6 +13,9 @@ type Properties = typeof properties & {
 
 export type StyleProperty = keyof Properties;
 
+// @todo can't figure out how to make property to be enum
+export const StyleProperty = z.string() as z.ZodType<StyleProperty>;
+
 type CustomProperty = `--${string}`;
 
 export type AppliesTo = Properties[StyleProperty]["appliesTo"];
@@ -59,6 +62,11 @@ const RgbValue = z.object({
   alpha: z.number(),
 });
 export type RgbValue = z.infer<typeof RgbValue>;
+
+export const StoredImageValue = z.object({
+  type: z.literal("image"),
+  value: z.array(z.object({ type: z.literal("asset"), value: z.string() })),
+});
 
 export const ImageValue = z.object({
   type: z.literal("image"),
