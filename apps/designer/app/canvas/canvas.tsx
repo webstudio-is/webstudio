@@ -17,10 +17,8 @@ import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useDeleteInstance,
   useInsertInstance,
-  usePublishSelectedInstanceData,
   usePublishTextEditingInstanceId,
   useReparentInstance,
-  useUnselectInstance,
 } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
@@ -36,7 +34,6 @@ import {
   useSetRootInstance,
   useSetStyles,
   useSubscribeScrollState,
-  useSubscribeSelectedInstance,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -126,13 +123,10 @@ const useCopyPaste = () => {
 
 const DesignMode = () => {
   useManageDesignModeStyles();
-  usePublishSelectedInstanceData();
-  useSubscribeSelectedInstance();
   useInsertInstance();
   useReparentInstance();
   useDeleteInstance();
   useTrackSelectedElement();
-  useUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();

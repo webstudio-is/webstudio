@@ -25,10 +25,11 @@ export const NoProps: ComponentStory<typeof PropsPanel> = () => {
   });
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "1",
         component: "Button",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}
@@ -42,10 +43,11 @@ export const RequiredProps: ComponentStory<typeof PropsPanel> = () => {
   });
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "1",
         component: "Link",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}
@@ -59,10 +61,11 @@ export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
   });
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "1",
         component: "Button",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}
@@ -84,10 +87,11 @@ export const AllProps: ComponentStory<typeof PropsPanel> = () => {
   });
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "3",
         component: "Heading",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}

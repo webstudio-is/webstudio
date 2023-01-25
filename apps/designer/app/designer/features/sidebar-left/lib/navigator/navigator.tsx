@@ -1,15 +1,14 @@
+import { useCallback } from "react";
+import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
-import { useCallback } from "react";
-import { useSelectedInstanceData } from "~/designer/shared/nano-states";
-import { useRootInstance } from "~/shared/nano-states";
+import { selectedInstanceIdStore, useRootInstance } from "~/shared/nano-states";
 import { Header, CloseButton } from "../header";
 import { InstanceTree } from "~/designer/shared/tree";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    selectInstanceById: Instance["id"];
     reparentInstance: {
       instanceId: Instance["id"];
       dropTarget: { instanceId: Instance["id"]; position: number | "end" };
@@ -26,18 +25,12 @@ type NavigatorProps = {
 };
 
 export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
-  const [selectedInstanceData] = useSelectedInstanceData();
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
   const [rootInstance] = useRootInstance();
 
-  const handleSelect = useCallback(
-    (instanceId: Instance["id"]) => {
-      publish({
-        type: "selectInstanceById",
-        payload: instanceId,
-      });
-    },
-    [publish]
-  );
+  const handleSelect = useCallback((instanceId: Instance["id"]) => {
+    selectedInstanceIdStore.set(instanceId);
+  }, []);
 
   const handleDragEnd = useCallback(
     (payload: {
@@ -90,7 +83,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
       <Flex css={{ flexGrow: 1, flexDirection: "column" }}>
         <InstanceTree
           root={rootInstance}
-          selectedItemId={selectedInstanceData?.id}
+          selectedItemId={selectedInstanceId}
           onSelect={handleSelect}
           onHover={handleHover}
           onDragEnd={handleDragEnd}

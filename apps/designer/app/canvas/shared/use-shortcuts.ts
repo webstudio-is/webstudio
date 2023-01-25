@@ -8,7 +8,6 @@ import {
   selectedInstanceStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { type SelectedInstanceData } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -18,7 +17,6 @@ declare module "~/shared/pubsub" {
     };
     openBreakpointsMenu: undefined;
     selectBreakpointFromShortcut: number;
-    selectInstance?: SelectedInstanceData;
     togglePreviewMode: undefined;
     zoom: "zoomOut" | "zoomIn";
   }
@@ -115,7 +113,6 @@ export const useShortcuts = () => {
         return;
       }
       selectedInstanceIdStore.set(undefined);
-      publish({ type: "selectInstance" });
     },
     { ...options, enableOnContentEditable: true, enableOnTags: [...inputTags] },
     [editingInstanceId]

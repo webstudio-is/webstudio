@@ -18,7 +18,6 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
-import { publish } from "~/shared/pubsub";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 
 const TextEditor = lazy(() => import("../text-editor"));
@@ -155,10 +154,7 @@ export const WrapperComponentDev = ({
         }}
         onSelectInstance={(instanceId) => {
           setTextEditingInstanceId(undefined);
-          publish({
-            type: "selectInstanceById",
-            payload: instanceId,
-          });
+          selectedInstanceIdStore.set(instanceId);
         }}
       />
     </Suspense>

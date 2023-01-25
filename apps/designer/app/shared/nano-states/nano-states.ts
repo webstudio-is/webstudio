@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { Instance, PresetStyles, Styles } from "@webstudio-is/react-sdk";
@@ -6,9 +5,8 @@ import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
-import type { Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
-import { subscribe } from "~/shared/pubsub";
 import { useSyncInitializeOnce } from "../hook-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
@@ -113,13 +111,7 @@ export const selectedInstanceStore = computed(
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
 );
-export const useSubscribeSelectedInstance = () => {
-  useEffect(() => {
-    return subscribe("selectInstanceById", (id) => {
-      selectedInstanceIdStore.set(id);
-    });
-  }, []);
-};
+export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);

@@ -1,9 +1,8 @@
 import { Box, Flex, darkTheme } from "@webstudio-is/design-system";
-import { type Publish } from "~/shared/pubsub";
 import { Breadcrumbs } from "./breadcrumbs";
 import { theme } from "@webstudio-is/design-system";
 
-export const Footer = ({ publish }: { publish: Publish }) => {
+export const Footer = () => {
   return (
     <Flex
       className={darkTheme}
@@ -17,7 +16,7 @@ export const Footer = ({ publish }: { publish: Publish }) => {
       }}
     >
       <Box css={{ height: "100%", p: theme.spacing[3] }}>
-        <Breadcrumbs publish={publish} />
+        <Breadcrumbs />
       </Box>
     </Flex>
   );
