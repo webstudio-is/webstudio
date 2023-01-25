@@ -5,8 +5,7 @@
     "remix.env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "../../@types/**/*.d.ts",
-    "../../packages/dashboard/src/trpc/_router.ts"
+    "../../@types/**/*.d.ts"
   ],
   "compilerOptions": {
     "paths": { "~/*": ["app/*"] },

@@ -10,5 +10,9 @@ export const action = async ({ request, params }: ActionArgs) => {
   const data = Object.fromEntries(await request.formData()) as never;
   // @todo pass authorization context
   const caller = projectRouter.createCaller({ userId: authenticatedUser.id });
-  return await caller[params.method as keyof typeof caller](data);
+  const fn = caller[params.method as keyof typeof caller];
+  if (typeof fn === "function") {
+    return await fn(data);
+  }
+  throw new Error(`Unknown RPC method "${params.method}"`);
 };

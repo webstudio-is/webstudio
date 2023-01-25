@@ -20,8 +20,8 @@ import {
 } from "~/shared/router-utils";
 import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { createTrpcRemixProxy } from "../shared/remix/create-trpc-remix-trpc";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
+import { createTrpcRemixProxy } from "~/shared/remix/create-trpc-remix-proxy";
 
 const projectCardContainerStyle = css({
   overflow: "hidden",
@@ -77,7 +77,8 @@ const usePublishedLink = ({ domain }: { domain: string }) => {
   const [url, setUrl] = useState<URL>();
 
   useEffect(() => {
-    // It uses `location` to detect the default values at localhost.
+    // It uses `window.location` to detect the default values when running locally localhost,
+    // so it needs an effect to avoid hydration errors.
     setUrl(new URL(getPublishedUrl(domain)));
   }, [domain]);
 
