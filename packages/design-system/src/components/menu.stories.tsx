@@ -27,12 +27,13 @@ import {
 import { Select } from "./select";
 import { TextField } from "./text-field";
 import { Button } from "./button";
-import { ChevronDownIcon, MenuIcon } from "@webstudio-is/icons";
+import { ChevronDownIcon, TrashIcon, MenuIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 
 const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
-  const [isTogglableChecked, setIsTogglableChecked] = useState(true);
+  const [isApple, setIsApple] = useState(true);
+  const [isOrange, setIsOrange] = useState(true);
   const [radioValue, setRadioValue] = useState("apple");
 
   return (
@@ -41,13 +42,17 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
         <Button prefix={<MenuIcon />} />
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuLabel>Basic</DropdownMenuLabel>
+        <DropdownMenuLabel>Not choosable</DropdownMenuLabel>
 
         <DropdownMenuItem withIndicator={withIndicator}>
-          Regular
+          Create
         </DropdownMenuItem>
-        <DropdownMenuItem withIndicator={withIndicator} destructive>
-          Destructive
+        <DropdownMenuItem
+          withIndicator={withIndicator}
+          icon={withIndicator ? <TrashIcon /> : null}
+          destructive
+        >
+          Delete
         </DropdownMenuItem>
         <DropdownMenuItem withIndicator={withIndicator} disabled>
           Disabled
@@ -73,19 +78,23 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
         {withIndicator && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Checkbox</DropdownMenuLabel>
+            <DropdownMenuLabel>Choose many</DropdownMenuLabel>
 
             <DropdownMenuCheckboxItem
-              checked={isTogglableChecked}
-              onSelect={() =>
-                setIsTogglableChecked(isTogglableChecked === false)
-              }
+              checked={isApple}
+              onSelect={() => setIsApple(isApple === false)}
             >
-              Togglable
+              Apple
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={isOrange}
+              onSelect={() => setIsOrange(isOrange === false)}
+            >
+              Orange
             </DropdownMenuCheckboxItem>
 
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Radio (choose one)</DropdownMenuLabel>
+            <DropdownMenuLabel>Choose one</DropdownMenuLabel>
 
             <DropdownMenuRadioGroup
               value={radioValue}

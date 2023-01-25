@@ -1,6 +1,6 @@
 /**
  * Implementation of the "Menu" and "Menu Item" components from:
- * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=6%3A2104&t=xHSB8rNf2VXrwLAU-0
  *
  * Only CSS is implemented here, and intended to be used with:
  *  - @radix-ui/react-dropdown-menu
