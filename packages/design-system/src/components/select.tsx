@@ -1,8 +1,12 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import React, { ReactNode, Ref } from "react";
-import { menuCss, itemCss, itemIndicatorCss } from "./menu";
-import { Grid } from "./grid";
-import { Box } from "./box";
+import React, { ReactNode, Ref, type ComponentProps } from "react";
+import {
+  menuCss,
+  itemCss,
+  itemIndicatorCss,
+  labelCss,
+  separatorCss,
+} from "./menu";
 import {
   CheckMarkIcon,
   ChevronDownIcon,
@@ -10,7 +14,7 @@ import {
 } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 
-const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
+const StyledTrigger = styled(SelectPrimitive.Trigger, {
   all: "unset",
   display: "inline-flex",
   alignItems: "center",
@@ -67,6 +71,12 @@ export const SelectContent = styled(SelectPrimitive.Content, menuCss);
 
 export const SelectViewport = SelectPrimitive.Viewport;
 
+export const SelectLabel = styled(SelectPrimitive.Label, labelCss);
+
+export const SelectSeparator = styled(SelectPrimitive.Separator, separatorCss);
+
+export const SelectGroup = SelectPrimitive.Group;
+
 const StyledItem = styled(SelectPrimitive.Item, itemCss);
 
 const StyledIndicator = styled(SelectPrimitive.ItemIndicator, itemIndicatorCss);
@@ -91,35 +101,27 @@ export const SelectScrollDownButton = styled(
 );
 
 const SelectItemBase = (
-  { children, ...props }: SelectItemProps,
+  { children, icon = <CheckMarkIcon />, ...props }: SelectItemProps,
   forwardedRef: Ref<HTMLDivElement>
 ) => {
   return (
-    <StyledItem {...props} ref={forwardedRef}>
-      <Grid
-        align="center"
-        css={{ gridTemplateColumns: `${theme.spacing[10]} 1fr` }}
-      >
-        <StyledIndicator>
-          <CheckMarkIcon />
-        </StyledIndicator>
-        <Box css={{ gridColumn: 2 }}>
-          <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-        </Box>
-      </Grid>
+    <StyledItem {...props} withIndicator ref={forwardedRef}>
+      <StyledIndicator>{icon}</StyledIndicator>
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </StyledItem>
   );
 };
 
-type SelectItemProps = SelectPrimitive.SelectItemProps & {
+type SelectItemProps = ComponentProps<typeof StyledItem> & {
   children: ReactNode;
+  icon?: ReactNode;
 };
 export const SelectItem = React.forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
 export type SelectProps<Option = SelectOption> = Omit<
-  React.ComponentProps<typeof StyledTrigger>,
+  ComponentProps<typeof StyledTrigger>,
   "onChange" | "value" | "defaultValue"
 > & {
   options: Option[];
@@ -131,6 +133,7 @@ export type SelectProps<Option = SelectOption> = Omit<
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
   getValue?: (option: Option) => string | undefined;
+  children?: ReactNode;
 };
 
 const SelectBase = (
@@ -145,6 +148,7 @@ const SelectBase = (
     getLabel = (option) => option,
     getValue = (option) => option,
     name,
+    children,
     ...props
   }: SelectProps,
   forwardedRef: Ref<HTMLButtonElement>
@@ -172,15 +176,16 @@ const SelectBase = (
             <ChevronUpIcon />
           </SelectScrollUpButton>
           <SelectViewport>
-            {options.map((option) => (
-              <SelectItem
-                key={getValue(option)}
-                value={getValue(option) ?? ""}
-                textValue={getLabel(option)}
-              >
-                {getLabel(option)}
-              </SelectItem>
-            ))}
+            {children ||
+              options.map((option) => (
+                <SelectItem
+                  key={getValue(option)}
+                  value={getValue(option) ?? ""}
+                  textValue={getLabel(option)}
+                >
+                  {getLabel(option)}
+                </SelectItem>
+              ))}
           </SelectViewport>
           <SelectScrollDownButton>
             <ChevronDownIcon />

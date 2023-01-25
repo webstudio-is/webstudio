@@ -1,4 +1,4 @@
-// We're demoing dropdown-menu/combobox/etc instead of menu.tsx here,
+// We demonstrate dropdown-menu/combobox/etc instead of menu.tsx,
 // because what menu.tsx exports is not intended to be used directly
 
 import {
@@ -24,10 +24,21 @@ import {
   ComboboxListbox,
   ComboboxListboxItem,
 } from "./combobox";
-import { Select } from "./select";
+import {
+  Select,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectGroup,
+} from "./select";
 import { TextField } from "./text-field";
 import { Button } from "./button";
-import { ChevronDownIcon, TrashIcon, MenuIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  TrashIcon,
+  MenuIcon,
+  DotIcon,
+} from "@webstudio-is/icons";
 import { useState } from "react";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 
@@ -165,7 +176,7 @@ const ComboboxDemo = () => {
   );
 };
 
-const SelectDemo = () => {
+const BasicSelectDemo = () => {
   const [value, setValue] = useState<Fruit>("Apple");
   return (
     <Select
@@ -175,6 +186,39 @@ const SelectDemo = () => {
         setValue(value as Fruit);
       }}
     />
+  );
+};
+
+const ComplexSelectDemo = () => {
+  const [value, setValue] = useState<Fruit>("Orange");
+  return (
+    <Select
+      options={fruits}
+      value={value}
+      onChange={(value) => {
+        setValue(value as Fruit);
+      }}
+    >
+      <SelectGroup>
+        <SelectLabel>Round</SelectLabel>
+        <SelectItem destructive value="Orange" textValue="Orange">
+          Orange (destructive)
+        </SelectItem>
+        <SelectItem icon={<DotIcon />} value="Apple" textValue="Apple">
+          Apple (custom icon)
+        </SelectItem>
+        <SelectItem disabled value="Peach" textValue="Peach">
+          Peach (disabled)
+        </SelectItem>
+      </SelectGroup>
+      <SelectSeparator />
+      <SelectGroup>
+        <SelectLabel>Long</SelectLabel>
+        <SelectItem value="Banana" textValue="Banana">
+          Banana
+        </SelectItem>
+      </SelectGroup>
+    </Select>
   );
 };
 
@@ -193,8 +237,11 @@ export const Menu = () => (
     <Section title="Select menu (Combobox component)">
       <ComboboxDemo />
     </Section>
-    <Section title="Select menu (Select component)">
-      <SelectDemo />
+    <Section title="Basic select menu (Select component)">
+      <BasicSelectDemo />
+    </Section>
+    <Section title="Complex select menu (Select component)">
+      <ComplexSelectDemo />
     </Section>
   </>
 );
