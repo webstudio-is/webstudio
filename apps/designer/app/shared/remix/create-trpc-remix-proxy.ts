@@ -27,7 +27,7 @@ export const createTrpcRemixProxy = <Router extends AnyRouter>(
       };
 } =>
   proxy((method: string) =>
-    proxy((prop) => {
+    proxy((prop) => () => {
       const fetcher = useFetcher();
       const submit = (input: never) => {
         return fetcher.submit(input, {
