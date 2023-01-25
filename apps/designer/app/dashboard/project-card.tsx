@@ -9,6 +9,7 @@ import {
   Text,
   theme,
   toast,
+  typography,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
@@ -45,22 +46,17 @@ const projectCardFooterStyle = css({
 });
 
 const projectNameAvatarStyle = css({
-  fontFamily: theme.fonts.manrope,
-  fontWeight: 200,
-  fontSize: 360,
+  ...typography.brandThumbnailLargeDefault,
   alignSelf: "center",
-  letterSpacing: "-0.05em",
   marginLeft: "-0.5em",
   background: "linear-gradient(0deg, #FBF8FF 25%, #E2E2E2 66%)",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   color: "transparent",
-  // @todo figure out the effect from figma in text-shadow
-  //textShadow: "0px 5px 3px rgba(251, 248, 255, 1)",
   userSelect: "none",
   outline: "none",
   "&:hover, &:focus": {
-    fontWeight: 800,
+    ...typography.brandThumbnailLargeHover,
     transition: "100ms",
   },
 });
