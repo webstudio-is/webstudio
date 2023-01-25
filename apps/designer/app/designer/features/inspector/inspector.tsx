@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
 import {
   Text,
@@ -13,10 +15,9 @@ import {
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/designer/features/style-panel";
 import { PropsPanel } from "~/designer/features/props-panel";
-import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { FloatingPanelProvider } from "~/designer/shared/floating-panel";
-import { useRef } from "react";
 import { theme } from "@webstudio-is/design-system";
+import { selectedInstanceStore } from "~/shared/nano-states";
 
 type InspectorProps = {
   publish: Publish;
@@ -29,10 +30,10 @@ const contentStyle = {
 };
 
 export const Inspector = ({ publish }: InspectorProps) => {
-  const [selectedInstanceData] = useSelectedInstanceData();
+  const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
 
-  if (selectedInstanceData === undefined) {
+  if (selectedInstance === undefined) {
     return (
       <Box css={{ p: theme.spacing[5], flexBasis: "100%" }}>
         {/* @todo: use this space for something more usefull: a-la figma's no instance selected sate, maybe create an issue with a more specific proposal? */}
@@ -66,18 +67,13 @@ export const Inspector = ({ publish }: InspectorProps) => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="style" css={contentStyle}>
-            <StylePanel
-              publish={publish}
-              selectedInstanceData={selectedInstanceData}
-            />
+            <StylePanel publish={publish} selectedInstance={selectedInstance} />
           </TabsContent>
           <TabsContent value="props" css={contentStyle}>
             <PropsPanel
               publish={publish}
-              key={
-                selectedInstanceData.id /* Re-render when instance changes */
-              }
-              selectedInstanceData={selectedInstanceData}
+              key={selectedInstance.id /* Re-render when instance changes */}
+              selectedInstance={selectedInstance}
             />
           </TabsContent>
         </Flex>

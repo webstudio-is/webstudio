@@ -1,7 +1,7 @@
 import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
 import { Box, Card, Paragraph, SearchField } from "@webstudio-is/design-system";
-import type { SelectedInstanceData } from "@webstudio-is/project";
+import type { Instance } from "@webstudio-is/react-sdk";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 import { useState } from "react";
@@ -13,16 +13,13 @@ import { theme } from "@webstudio-is/design-system";
 
 type StylePanelProps = {
   publish: Publish;
-  selectedInstanceData?: SelectedInstanceData;
+  selectedInstance: Instance;
 };
 
-export const StylePanel = ({
-  selectedInstanceData,
-  publish,
-}: StylePanelProps) => {
+export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
     useStyleData({
-      selectedInstanceData,
+      selectedInstance,
       publish,
     });
 
@@ -32,7 +29,7 @@ export const StylePanel = ({
 
   if (
     currentStyle === undefined ||
-    selectedInstanceData === undefined ||
+    selectedInstance === undefined ||
     breakpoint === undefined
   ) {
     return null;

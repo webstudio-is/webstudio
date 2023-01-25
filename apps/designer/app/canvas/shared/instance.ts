@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useStore } from "@nanostores/react";
 import {
   type Instance,
   type PropsItem,
@@ -12,7 +11,6 @@ import {
   utils,
   type HoveredInstanceData,
   type InstanceInsertionSpec,
-  type SelectedInstanceData,
 } from "@webstudio-is/project";
 import store from "immerhin";
 import {
@@ -27,14 +25,12 @@ declare module "~/shared/pubsub" {
   export interface PubsubMap {
     hoveredInstanceRect: DOMRect;
     hoverInstance?: HoveredInstanceData;
-    selectInstance?: SelectedInstanceData;
     textEditingInstanceId?: Instance["id"];
     insertInstance: {
       instance: Instance;
       dropTarget?: { parentId: Instance["id"]; position: number };
       props?: Array<PropsItem>;
     };
-    unselectInstance: undefined;
   }
 }
 
@@ -149,26 +145,6 @@ export const useDeleteInstance = () => {
         utils.tree.deleteInstanceMutable(rootInstance, id);
       }
     });
-  });
-};
-
-export const usePublishSelectedInstanceData = () => {
-  const selectedInstanceId = useStore(selectedInstanceIdStore);
-
-  useEffect(() => {
-    // Unselects the instance by `undefined`
-    if (selectedInstanceId === undefined) {
-      publish({
-        type: "selectInstance",
-        payload: undefined,
-      });
-    }
-  }, [selectedInstanceId]);
-};
-
-export const useUnselectInstance = () => {
-  useSubscribe("unselectInstance", () => {
-    selectedInstanceIdStore.set(undefined);
   });
 };
 

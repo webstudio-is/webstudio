@@ -5,7 +5,7 @@ import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
-import type { Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
 import { useSyncInitializeOnce } from "../hook-utils";
 
@@ -111,6 +111,7 @@ export const selectedInstanceStore = computed(
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
 );
+export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);

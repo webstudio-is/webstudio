@@ -1,23 +1,22 @@
+import { useStore } from "@nanostores/react";
 import {
+  selectedInstanceIdStore,
   useHoveredInstanceRect,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import {
-  useHoveredInstanceData,
-  useSelectedInstanceData,
-} from "~/designer/shared/nano-states";
+import { useHoveredInstanceData } from "~/designer/shared/nano-states";
 import { Outline } from "./outline";
 import { Label } from "./label";
 
 export const HoveredInstanceOutline = () => {
-  const [selectedInstanceData] = useSelectedInstanceData();
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
   const [instanceRect] = useHoveredInstanceRect();
   const [hoveredInstanceData] = useHoveredInstanceData();
   const [textEditingInstanceId] = useTextEditingInstanceId();
 
   const isEditingText = textEditingInstanceId !== undefined;
   const isHoveringSelectedInstance =
-    selectedInstanceData?.id === hoveredInstanceData?.id;
+    selectedInstanceId === hoveredInstanceData?.id;
 
   if (
     hoveredInstanceData === undefined ||

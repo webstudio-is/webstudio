@@ -9,6 +9,7 @@ import {
   designTokensContainer,
   stylesContainer,
   selectedInstanceIdStore,
+  selectedInstanceBrowserStyleStore,
 } from "~/shared/nano-states";
 
 type StoreData = {
@@ -44,6 +45,10 @@ export const registerContainers = () => {
   store.register("designTokens", designTokensContainer);
   // synchronize whole states
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
+  clientStores.set(
+    "selectedInstanceBrowserStyle",
+    selectedInstanceBrowserStyleStore
+  );
 };
 
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {

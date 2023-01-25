@@ -1,9 +1,9 @@
+import { useStore } from "@nanostores/react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
 import { DeprecatedButton, Flex, Text } from "@webstudio-is/design-system";
-import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
-import { useSelectedInstanceData } from "~/designer/shared/nano-states";
 import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceIdStore } from "~/shared/nano-states";
+import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
 
 type BreadcrumbProps = {
   children: JSX.Element | string;
@@ -31,10 +31,8 @@ const Breadcrumb = ({ children, onClick }: BreadcrumbProps) => {
 };
 
 export const Breadcrumbs = () => {
-  const [selectedInstanceData] = useSelectedInstanceData();
-  const selectedInstancePath = useSelectedInstancePath(
-    selectedInstanceData?.id
-  );
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const selectedInstancePath = useSelectedInstancePath(selectedInstanceId);
   return (
     <Flex align="center" css={{ height: "100%" }}>
       {selectedInstancePath.length === 0 ? (
