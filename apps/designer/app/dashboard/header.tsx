@@ -20,8 +20,8 @@ import type { User } from "~/shared/db/user.server";
 const containerStyle = css({
   px: theme.spacing[13],
   bc: theme.colors.backgroundPanel,
-  borderBottom: `${theme.spacing[1]} solid ${theme.colors.slate8}`,
   height: theme.spacing[17],
+  boxShadow: theme.shadows.brandElevationBig,
 });
 
 const getAvatarLetter = (title?: string) => {
