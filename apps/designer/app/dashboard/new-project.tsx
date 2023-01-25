@@ -4,7 +4,7 @@ import { PlusIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
-import { createTrpcRemixProxy } from "~/shared/remix/create-trpc-remix-proxy";
+import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 
 const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 const useNewProject = () => {
