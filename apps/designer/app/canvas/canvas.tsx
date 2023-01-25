@@ -30,7 +30,6 @@ import {
   useRootInstance,
   useSetBreakpoints,
   useSetDesignTokens,
-  useSetPresetStyles,
   useSetRootInstance,
   useSetStyles,
   useSubscribeScrollState,
@@ -151,7 +150,6 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useSetBreakpoints(data.breakpoints);
   useSetDesignTokens(data.designTokens);
   useAllUserProps(data.props);
-  useSetPresetStyles(data.tree.presetStyles);
   useSetStyles(data.tree.styles);
   useSetRootInstance(data.tree.root);
   setParams(data.params ?? null);
