@@ -13,9 +13,9 @@ import {
   theme,
   Button,
 } from "@webstudio-is/design-system";
-import { User as DbUser } from "@webstudio-is/prisma-client";
 import { useNavigate } from "react-router-dom";
 import { logoutPath } from "~/shared/router-utils";
+import type { User } from "~/shared/db/user.server";
 
 const containerStyle = css({
   px: theme.spacing[13],
@@ -24,12 +24,13 @@ const containerStyle = css({
   height: theme.spacing[17],
 });
 
-const getAvatarLetter = (user: User) => {
-  return (user?.username || user?.email || "X").charAt(0).toLocaleUpperCase();
+const getAvatarLetter = (title?: string) => {
+  return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
 const Menu = ({ user }: { user: User }) => {
   const navigate = useNavigate();
+  const title = user?.username ?? user?.email ?? undefined;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,7 +38,8 @@ const Menu = ({ user }: { user: User }) => {
           <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
             <Avatar
               src={user?.image || undefined}
-              fallback={getAvatarLetter(user)}
+              fallback={getAvatarLetter(title)}
+              alt={title || "User Avatar"}
             />
             <ChevronDownIcon
               width={15}
@@ -48,17 +50,13 @@ const Menu = ({ user }: { user: User }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuLabel>{user?.username || user?.email}</DropdownMenuLabel>
+        <DropdownMenuLabel>{title}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
           <Text>Logout</Text>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
-
-type User = Omit<DbUser, "createdAt"> & {
-  createdAt: string;
 };
 
 export const Header = ({ user }: { user: User }) => {

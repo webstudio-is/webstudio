@@ -23,7 +23,12 @@ export const designerPath = ({
   pageId?: string;
 }) => `/designer/${projectId}${searchParams({ pageId })}`;
 
-export const dashboardPath = () => "/dashboard";
+export const dashboardPath = () => {
+  return "/dashboard";
+};
+
+export const dashboardProjectPath = (method: string) =>
+  `/dashboard/projects/${method}`;
 
 export const loginPath = (params: {
   error?: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];

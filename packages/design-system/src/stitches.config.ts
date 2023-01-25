@@ -306,10 +306,9 @@ const {
     shadows: figmaShadows,
   },
   media: {
-    bp1: "(min-width: 520px)",
-    bp2: "(min-width: 900px)",
-    bp3: "(min-width: 1200px)",
-    bp4: "(min-width: 1800px)",
+    tablet: "(min-width: 768px)",
+    laptop: "(min-width: 1024px)",
+    desktop: "(min-width: 1280px)",
     motion: "(prefers-reduced-motion)",
     hover: "(any-hover: hover)",
     dark: "(prefers-color-scheme: dark)",

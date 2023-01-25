@@ -65,6 +65,7 @@ importers:
       '@storybook/testing-library': ^0.0.13
       '@testing-library/react': ^12.1.5
       '@testing-library/react-hooks': ^8.0.1
+      '@trpc/server': ^10.9.0
       '@types/css-tree': ^2.0.0
       '@types/hoist-non-react-statics': ^3.3.1
       '@types/hyphenate-style-name': ^1.0.0
@@ -86,6 +87,7 @@ importers:
       '@webstudio-is/css-data': workspace:^
       '@webstudio-is/css-engine': workspace:^
       '@webstudio-is/css-vars': workspace:^
+      '@webstudio-is/dashboard': workspace:^
       '@webstudio-is/design-system': workspace:^
       '@webstudio-is/design-tokens': workspace:^
       '@webstudio-is/eslint-config-custom': workspace:^
@@ -169,11 +171,13 @@ importers:
       '@remix-run/vercel': 1.9.0_hlxpekux3uuzuytqwu73gmyvry
       '@sentry/remix': 7.5.0_u5gs4jhw3fwvojiab4cbbaz4ki
       '@sentry/types': 7.5.0
+      '@trpc/server': 10.9.0
       '@vercel/node': 2.4.1
       '@webstudio-is/asset-uploader': link:../../packages/asset-uploader
       '@webstudio-is/css-data': link:../../packages/css-data
       '@webstudio-is/css-engine': link:../../packages/css-engine
       '@webstudio-is/css-vars': link:../../packages/css-vars
+      '@webstudio-is/dashboard': link:../../packages/dashboard
       '@webstudio-is/design-system': link:../../packages/design-system
       '@webstudio-is/design-tokens': link:../../packages/design-tokens
       '@webstudio-is/feature-flags': link:../../packages/feature-flags
@@ -378,6 +382,29 @@ importers:
     devDependencies:
       '@webstudio-is/scripts': link:../scripts
       '@webstudio-is/tsconfig': link:../tsconfig
+      typescript: 4.7.4
+
+  packages/dashboard:
+    specifiers:
+      '@jest/globals': ^29.3.1
+      '@webstudio-is/jest-config': workspace:^
+      '@webstudio-is/prisma-client': workspace:^
+      '@webstudio-is/project': workspace:^
+      '@webstudio-is/scripts': workspace:^
+      '@webstudio-is/tsconfig': workspace:^
+      jest: ^29.3.1
+      typescript: 4.7.4
+      zod: ^3.19.1
+    dependencies:
+      '@webstudio-is/prisma-client': link:../prisma-client
+      '@webstudio-is/project': link:../project
+      zod: 3.19.1
+    devDependencies:
+      '@jest/globals': 29.3.1
+      '@webstudio-is/jest-config': link:../jest-config
+      '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
+      jest: 29.3.1
       typescript: 4.7.4
 
   packages/design-system:
@@ -733,6 +760,7 @@ importers:
   packages/project:
     specifiers:
       '@jest/globals': ^29.3.1
+      '@trpc/server': ^10.9.0
       '@types/uuid': ^8.3.4
       '@webstudio-is/asset-uploader': workspace:^
       '@webstudio-is/css-data': workspace:^
@@ -755,6 +783,7 @@ importers:
       warn-once: ^0.1.1
       zod: ^3.19.1
     dependencies:
+      '@trpc/server': 10.9.0
       '@webstudio-is/asset-uploader': link:../asset-uploader
       '@webstudio-is/css-data': link:../css-data
       '@webstudio-is/css-engine': link:../css-engine
