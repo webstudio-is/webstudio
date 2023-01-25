@@ -31,7 +31,7 @@ const projectCardContainerStyle = css({
   borderStyle: "solid",
   borderColor: theme.colors.borderMain,
   borderRadius: theme.borderRadius[4],
-  background: "linear-gradient(0deg, #FBF8FF 0%, #C7C7C7 100%)",
+  background: theme.colors.brandBackgroundProjectCardBack,
   "&:hover, &:focus-within": {
     boxShadow: theme.shadows.brandElevationBig,
   },
@@ -44,15 +44,20 @@ const projectCardFooterStyle = css({
   px: theme.spacing[7],
 });
 
+const projectThumbnailStyle = css({
+  background: theme.colors.brandBackgroundProjectCardBack,
+  outline: "none",
+});
+
 // @todo use typography from figma tokens
-const projectNameAvatarStyle = css({
+const projectThumbnailTextStyle = css({
   fontFamily: theme.fonts.manrope,
   fontWeight: 200,
   fontSize: 360,
   letterSpacing: "-0.05em",
   alignSelf: "center",
   marginLeft: "-0.5em",
-  background: "linear-gradient(0deg, #FBF8FF 25%, #E2E2E2 66%)",
+  background: theme.colors.brandBackgroundProjectCardFront,
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   color: "transparent",
@@ -255,10 +260,12 @@ export const ProjectCard = ({
         as={RemixLink}
         ref={designerLinkRef}
         to={designerPath({ projectId: id })}
-        className={projectNameAvatarStyle()}
+        className={projectThumbnailStyle()}
         tabIndex={-1}
       >
-        {getAbbreviation(title)}
+        <span className={projectThumbnailTextStyle()}>
+          {getAbbreviation(title)}
+        </span>
       </Flex>
       <Flex
         justify="between"
