@@ -7,11 +7,7 @@ import {
 } from "@webstudio-is/react-sdk";
 
 import { useSubscribe } from "~/shared/pubsub";
-import {
-  utils,
-  type HoveredInstanceData,
-  type InstanceInsertionSpec,
-} from "@webstudio-is/project";
+import { utils, type InstanceInsertionSpec } from "@webstudio-is/project";
 import store from "immerhin";
 import {
   rootInstanceContainer,
@@ -23,8 +19,6 @@ import { publish } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    hoveredInstanceRect: DOMRect;
-    hoverInstance?: HoveredInstanceData;
     textEditingInstanceId?: Instance["id"];
     insertInstance: {
       instance: Instance;

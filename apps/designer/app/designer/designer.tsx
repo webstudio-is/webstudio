@@ -13,12 +13,7 @@ import { useSyncServer } from "./shared/sync-server";
 import interFont from "@fontsource/inter/variable.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import {
-  useHoveredInstanceData,
-  usePages,
-  useProject,
-  useCurrentPageId,
-} from "./shared/nano-states";
+import { usePages, useProject, useCurrentPageId } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Footer } from "./features/footer";
@@ -52,11 +47,6 @@ export const links = () => {
     { rel: "stylesheet", href: interFont },
     { rel: "stylesheet", href: designerStyles },
   ];
-};
-
-const useSubscribeHoveredInstanceData = () => {
-  const [, setValue] = useHoveredInstanceData();
-  useSubscribe("hoverInstance", setValue);
 };
 
 const useSetProject = (project: Project) => {
@@ -285,7 +275,6 @@ export const Designer = ({
   buildId,
   buildOrigin,
 }: DesignerProps) => {
-  useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSetProject(project);
   useSetPages(pages);

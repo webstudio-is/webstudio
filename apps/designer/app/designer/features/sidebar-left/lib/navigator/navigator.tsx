@@ -3,7 +3,11 @@ import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
 import { type Instance } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
-import { selectedInstanceIdStore, useRootInstance } from "~/shared/nano-states";
+import {
+  selectedInstanceIdStore,
+  hoveredInstanceIdStore,
+  useRootInstance,
+} from "~/shared/nano-states";
 import { Header, CloseButton } from "../header";
 import { InstanceTree } from "~/designer/shared/tree";
 
@@ -14,7 +18,6 @@ declare module "~/shared/pubsub" {
       dropTarget: { instanceId: Instance["id"]; position: number | "end" };
     };
     deleteInstance: { id: Instance["id"] };
-    navigatorHoveredInstance: { id: Instance["id"] } | undefined;
   }
 }
 
@@ -61,15 +64,9 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
     [publish]
   );
 
-  const handleHover = useCallback(
-    (instance: Instance | undefined) => {
-      publish({
-        type: "navigatorHoveredInstance",
-        payload: instance && { id: instance.id },
-      });
-    },
-    [publish]
-  );
+  const handleHover = useCallback((instance: Instance | undefined) => {
+    hoveredInstanceIdStore.set(instance?.id);
+  }, []);
 
   if (rootInstance === undefined) {
     return null;
