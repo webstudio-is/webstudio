@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { CanvasData } from "@webstudio-is/project";
 import {
@@ -20,13 +21,13 @@ import {
   usePublishTextEditingInstanceId,
   useReparentInstance,
   useUnselectInstance,
-  useUpdateSelectedInstance,
 } from "./shared/instance";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import {
   rootInstanceContainer,
+  selectedInstanceStore,
   useBreakpoints,
   useRootInstance,
   useSetBreakpoints,
@@ -42,7 +43,6 @@ import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
-import { useSelectedInstance } from "./shared/nano-states";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 
@@ -98,7 +98,7 @@ const useAssets = (initialAssets: Array<Asset>) => {
 };
 
 const useCopyPaste = () => {
-  const [instance] = useSelectedInstance();
+  const instance = useStore(selectedInstanceStore);
   const allUserProps = useAllUserProps();
 
   const selectedInstanceData = useMemo(
@@ -130,7 +130,6 @@ const DesignMode = () => {
   useReparentInstance();
   useDeleteInstance();
   useTrackSelectedElement();
-  useUpdateSelectedInstance();
   useUnselectInstance();
   usePublishScrollState();
   useSubscribeScrollState();

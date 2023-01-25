@@ -381,7 +381,7 @@ export const Designer = ({
             <Inspector publish={publish} />
           )}
         </SidePanel>
-        <Footer publish={publish} />
+        <Footer />
       </ChromeWrapper>
     </AssetsProvider>
   );

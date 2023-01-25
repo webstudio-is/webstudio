@@ -13,12 +13,11 @@ import {
 } from "@webstudio-is/react-sdk";
 import { shallowComputed } from "~/shared/store-utils";
 import {
+  selectedInstanceIdStore,
   stylesIndexStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { useSelectedInstance } from "~/canvas/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
-import { publish } from "~/shared/pubsub";
 import { SelectedInstanceConnector } from "./selected-instance-connector";
 
 const TextEditor = lazy(() => import("../text-editor"));
@@ -70,7 +69,7 @@ export const WrapperComponentDev = ({
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
-  const [selectedInstance] = useSelectedInstance();
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
 
   const allUserProps = useAllUserProps();
   const instanceProps = allUserProps[instance.id];
@@ -119,7 +118,7 @@ export const WrapperComponentDev = ({
 
   const instanceElement = (
     <>
-      {selectedInstance?.id === instance.id && (
+      {selectedInstanceId === instance.id && (
         <SelectedInstanceConnector
           instanceElementRef={instanceElementRef}
           instance={instance}
@@ -155,10 +154,7 @@ export const WrapperComponentDev = ({
         }}
         onSelectInstance={(instanceId) => {
           setTextEditingInstanceId(undefined);
-          publish({
-            type: "selectInstanceById",
-            payload: instanceId,
-          });
+          selectedInstanceIdStore.set(instanceId);
         }}
       />
     </Suspense>

@@ -21,6 +21,26 @@ export const useSetRootInstance = (root: Instance) => {
     rootInstanceContainer.set(root);
   });
 };
+export const instancesIndexStore = computed(
+  rootInstanceContainer,
+  (rootInstance) => {
+    const instancesById = new Map<Instance["id"], Instance>();
+    const traverseInstances = (instance: Instance) => {
+      instancesById.set(instance.id, instance);
+      for (const child of instance.children) {
+        if (child.type === "instance") {
+          traverseInstances(child);
+        }
+      }
+    };
+    if (rootInstance !== undefined) {
+      traverseInstances(rootInstance);
+    }
+    return {
+      instancesById,
+    };
+  }
+);
 
 export const presetStylesContainer = atom<PresetStyles>([]);
 export const usePresetStyles = () => useValue(presetStylesContainer);
@@ -78,6 +98,19 @@ export const useSetDesignTokens = (designTokens: DesignToken[]) => {
     designTokensContainer.set(designTokens);
   });
 };
+
+export const selectedInstanceIdStore = atom<undefined | Instance["id"]>(
+  undefined
+);
+export const selectedInstanceStore = computed(
+  [instancesIndexStore, selectedInstanceIdStore],
+  (instancesIndex, selectedInstanceId) => {
+    if (selectedInstanceId === undefined) {
+      return;
+    }
+    return instancesIndex.instancesById.get(selectedInstanceId);
+  }
+);
 
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
