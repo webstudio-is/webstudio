@@ -1,38 +1,26 @@
 import { useEffect } from "react";
 import debounce from "lodash.debounce";
-import { type Instance, idAttribute } from "@webstudio-is/react-sdk";
-import { utils } from "@webstudio-is/project";
-import { publish, subscribe } from "~/shared/pubsub";
-import { useRootInstance } from "~/shared/nano-states";
+import { type ComponentName, idAttribute } from "@webstudio-is/react-sdk";
+import {
+  hoveredInstanceIdStore,
+  hoveredInstanceOutlineStore,
+} from "~/shared/nano-states";
 import { subscribeScrollState } from "~/shared/dom-hooks";
 
-const startHoveredInstanceConnection = (rootInstance: Instance) => {
+type TimeoutId = undefined | ReturnType<typeof setTimeout>;
+
+const startHoveredInstanceConnection = () => {
   let hoveredElement: undefined | Element = undefined;
 
-  // debounce is used to avoid laggy hover because of iframe message delay
-  const publishHover = debounce((element: Element) => {
+  const updateHoveredInstance = (element: Element) => {
     const id = element.getAttribute(idAttribute) ?? undefined;
     if (id === undefined) {
       return;
     }
-    const instance = utils.tree.findInstanceById(rootInstance, id);
-    if (instance === undefined) {
-      return;
-    }
-    publish({
-      type: "hoveredInstanceRect",
-      payload: element.getBoundingClientRect(),
-    });
-    publish({
-      type: "hoverInstance",
-      payload: {
-        id: instance.id,
-        component: instance.component,
-      },
-    });
-  }, 50);
+    hoveredInstanceIdStore.set(id);
+  };
 
-  let mouseOutTimeoutId: undefined | ReturnType<typeof setTimeout> = undefined;
+  let mouseOutTimeoutId: TimeoutId = undefined;
 
   const handleMouseOver = (event: MouseEvent) => {
     if (event.target instanceof Element) {
@@ -41,7 +29,7 @@ const startHoveredInstanceConnection = (rootInstance: Instance) => {
         clearTimeout(mouseOutTimeoutId);
         // store hovered element locally to update outline when scroll ends
         hoveredElement = element;
-        publishHover(element);
+        updateHoveredInstance(element);
       }
     }
   };
@@ -49,10 +37,7 @@ const startHoveredInstanceConnection = (rootInstance: Instance) => {
   const handleMouseOut = () => {
     mouseOutTimeoutId = setTimeout(() => {
       hoveredElement = undefined;
-      publish({
-        type: "hoverInstance",
-        payload: undefined,
-      });
+      hoveredInstanceIdStore.set(undefined);
     }, 100);
   };
 
@@ -60,56 +45,56 @@ const startHoveredInstanceConnection = (rootInstance: Instance) => {
   window.addEventListener("mouseover", handleMouseOver, eventOptions);
   window.addEventListener("mouseout", handleMouseOut, eventOptions);
 
-  const unsubscribeNavigatorHoveredInstance = subscribe(
-    "navigatorHoveredInstance",
-    (navigatorHoveredInstance) => {
-      if (navigatorHoveredInstance === undefined) {
-        return;
-      }
-      const id = navigatorHoveredInstance.id;
-      const element =
-        document.querySelector(`[${idAttribute}="${id}"]`) ?? undefined;
-      if (element !== undefined) {
-        publishHover(element);
-      }
+  // debounce is used to avoid laggy hover because of iframe message delay
+  const updateHoveredRect = debounce((element: Element) => {
+    const component = element.getAttribute("data-ws-component") ?? undefined;
+    if (component === undefined) {
+      return;
     }
-  );
+    hoveredInstanceOutlineStore.set({
+      // store component in outline to show correct label when hover over elements fast
+      component: component as ComponentName,
+      rect: element.getBoundingClientRect(),
+    });
+  }, 50);
 
   // remove hover outline when scroll starts
   // and show it with new rect when scroll ends
   const unsubscribeScrollState = subscribeScrollState({
     onScrollStart() {
-      publish({
-        type: "hoverInstance",
-        payload: undefined,
-      });
+      hoveredInstanceOutlineStore.set(undefined);
     },
     onScrollEnd() {
       if (hoveredElement !== undefined) {
-        publishHover(hoveredElement);
+        updateHoveredRect(hoveredElement);
       }
     },
   });
 
+  // update rect whenever hovered instance is changed
+  const unsubscribeHoveredInstanceId = hoveredInstanceIdStore.subscribe(
+    (id) => {
+      const element =
+        document.querySelector(`[${idAttribute}="${id}"]`) ?? undefined;
+      if (element !== undefined) {
+        updateHoveredRect(element);
+      }
+    }
+  );
+
   return () => {
-    publishHover.cancel();
+    updateHoveredRect.cancel();
     window.removeEventListener("mouseover", handleMouseOver);
     window.removeEventListener("mouseout", handleMouseOut);
-    unsubscribeNavigatorHoveredInstance();
     unsubscribeScrollState();
     clearTimeout(mouseOutTimeoutId);
+    unsubscribeHoveredInstanceId();
   };
 };
 
 export const useHoveredInstanceConnector = () => {
-  const [rootInstance] = useRootInstance();
-
   useEffect(() => {
-    if (rootInstance === undefined) {
-      return;
-    }
-
-    const disconnect = startHoveredInstanceConnection(rootInstance);
+    const disconnect = startHoveredInstanceConnection();
     return disconnect;
-  }, [rootInstance]);
+  }, []);
 };

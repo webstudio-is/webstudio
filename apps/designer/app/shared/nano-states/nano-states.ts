@@ -1,11 +1,16 @@
-import { atom, type WritableAtom } from "nanostores";
+import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance, PresetStyles, Styles } from "@webstudio-is/react-sdk";
+import type {
+  ComponentName,
+  Instance,
+  PresetStyles,
+  Styles,
+} from "@webstudio-is/react-sdk";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
-import type { Breakpoint } from "@webstudio-is/css-data";
+import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
 import { useSyncInitializeOnce } from "../hook-utils";
 
@@ -21,6 +26,26 @@ export const useSetRootInstance = (root: Instance) => {
     rootInstanceContainer.set(root);
   });
 };
+export const instancesIndexStore = computed(
+  rootInstanceContainer,
+  (rootInstance) => {
+    const instancesById = new Map<Instance["id"], Instance>();
+    const traverseInstances = (instance: Instance) => {
+      instancesById.set(instance.id, instance);
+      for (const child of instance.children) {
+        if (child.type === "instance") {
+          traverseInstances(child);
+        }
+      }
+    };
+    if (rootInstance !== undefined) {
+      traverseInstances(rootInstance);
+    }
+    return {
+      instancesById,
+    };
+  }
+);
 
 export const presetStylesContainer = atom<PresetStyles>([]);
 export const usePresetStyles = () => useValue(presetStylesContainer);
@@ -31,6 +56,31 @@ export const useSetPresetStyles = (presetStyles: PresetStyles) => {
 };
 
 export const stylesContainer = atom<Styles>([]);
+/**
+ * Indexed styles data is recomputed on every styles update
+ * Compumer should use shallow-equal to check all items in the list
+ * are the same to avoid unnecessary rerenders
+ *
+ * Potential optimization can be maintaining the index as separate state
+ * though will require to move away from running immer patches on array
+ * of styles
+ */
+export const stylesIndexStore = computed(stylesContainer, (styles) => {
+  const stylesByInstanceId = new Map<Instance["id"], Styles>();
+  for (const stylesItem of styles) {
+    const { instanceId } = stylesItem;
+    let instanceStyles = stylesByInstanceId.get(instanceId);
+    if (instanceStyles === undefined) {
+      instanceStyles = [];
+      stylesByInstanceId.set(instanceId, instanceStyles);
+    }
+    instanceStyles.push(stylesItem);
+  }
+  return {
+    stylesByInstanceId,
+  };
+});
+
 export const useStyles = () => useValue(stylesContainer);
 export const useSetStyles = (styles: Styles) => {
   useSyncInitializeOnce(() => {
@@ -54,6 +104,27 @@ export const useSetDesignTokens = (designTokens: DesignToken[]) => {
   });
 };
 
+export const selectedInstanceIdStore = atom<undefined | Instance["id"]>(
+  undefined
+);
+export const selectedInstanceStore = computed(
+  [instancesIndexStore, selectedInstanceIdStore],
+  (instancesIndex, selectedInstanceId) => {
+    if (selectedInstanceId === undefined) {
+      return;
+    }
+    return instancesIndex.instancesById.get(selectedInstanceId);
+  }
+);
+export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
+
+export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
+  undefined
+);
+export const hoveredInstanceOutlineStore = atom<
+  undefined | { component: ComponentName; rect: DOMRect }
+>(undefined);
+
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
 
@@ -66,10 +137,6 @@ const selectedInstanceOutlineContainer = atom<{
 });
 export const useSelectedInstanceOutline = () =>
   useValue(selectedInstanceOutlineContainer);
-
-const hoveredInstanceRectContainer = atom<DOMRect | undefined>();
-export const useHoveredInstanceRect = () =>
-  useValue(hoveredInstanceRectContainer);
 
 const isScrollingContainer = atom<boolean>(false);
 export const useIsScrolling = () => useValue(isScrollingContainer);

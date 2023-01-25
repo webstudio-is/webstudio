@@ -5,12 +5,11 @@ import {
   getComponentMetaProps,
   useAllUserProps,
   type Instance,
-  type UserProp,
+  type PropsItem,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import type { SelectedInstanceData } from "@webstudio-is/project";
 import {
   Box,
   Button,
@@ -124,7 +123,7 @@ const Combobox = ({
 };
 
 type PropertyProps = {
-  userProp: UserProp;
+  userProp: PropsItem;
   component: Instance["component"];
   onChangePropName: (name: string) => void;
   onChangePropValue: (value: UserPropValue) => void;
@@ -146,12 +145,12 @@ const Property = ({
 }: PropertyProps) => {
   const metaProps = getComponentMetaProps(component);
 
-  const argType = metaProps[userProp.prop as keyof typeof metaProps];
+  const argType = metaProps[userProp.name as keyof typeof metaProps];
   const isInvalid =
-    userProp.prop != null &&
-    userProp.prop.length > 0 &&
+    userProp.name != null &&
+    userProp.name.length > 0 &&
     typeof argType === "undefined" &&
-    !userProp.prop.match(/^data-(.)+/);
+    !userProp.name.match(/^data-(.)+/);
 
   const allProps = Object.keys(metaProps).filter(
     (propName) => existingProps.includes(propName) === false
@@ -167,12 +166,12 @@ const Property = ({
           placeholder="Property"
           readOnly={true}
           state={isInvalid ? "invalid" : undefined}
-          value={userProp.prop}
+          value={userProp.name}
         />
       ) : (
         <Combobox
           items={allProps}
-          value={userProp.prop}
+          value={userProp.name}
           onItemSelect={(name) => {
             if (name != null) {
               setError(undefined);
@@ -195,7 +194,7 @@ const Property = ({
         />
       )}
       {isInvalid || error !== undefined ? (
-        <Tooltip content={error ?? `Invalid property name: ${userProp.prop}`}>
+        <Tooltip content={error ?? `Invalid property name: ${userProp.name}`}>
           <ExclamationTriangleIcon width={12} height={12} />
         </Tooltip>
       ) : (
@@ -219,14 +218,11 @@ const Property = ({
 
 type PropsPanelProps = {
   publish: Publish;
-  selectedInstanceData: SelectedInstanceData;
+  selectedInstance: Instance;
 };
 
-export const PropsPanel = ({
-  selectedInstanceData,
-  publish,
-}: PropsPanelProps) => {
-  const instanceId = selectedInstanceData.id;
+export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
+  const instanceId = selectedInstance.id;
   const allUserProps = useAllUserProps();
   const props = allUserProps[instanceId] ?? [];
 
@@ -239,7 +235,7 @@ export const PropsPanel = ({
     isRequired,
   } = usePropsLogic({
     props,
-    selectedInstanceData,
+    selectedInstance,
 
     updateProps: (update) => {
       store.createTransaction([allUserPropsContainer], (allUserProps) => {
@@ -267,7 +263,7 @@ export const PropsPanel = ({
   });
 
   const { setProperty: setCssProperty } = useStyleData({
-    selectedInstanceData,
+    selectedInstance,
     publish,
   });
 
@@ -282,12 +278,12 @@ export const PropsPanel = ({
     />
   );
 
-  const existingProps = userProps.map((userProp) => userProp.prop);
+  const existingProps = userProps.map((userProp) => userProp.name);
 
   return (
     <Box>
       <Box css={{ p: theme.spacing[9] }}>
-        <ComponentInfo selectedInstanceData={selectedInstanceData} />
+        <ComponentInfo selectedInstance={selectedInstance} />
       </Box>
       <CollapsibleSection
         label="Properties"
@@ -305,7 +301,7 @@ export const PropsPanel = ({
             <Property
               key={userProp.id}
               userProp={userProp}
-              component={selectedInstanceData.component}
+              component={selectedInstance.component}
               onChangePropName={(name) => handleChangePropName(userProp, name)}
               onChangePropValue={(value) =>
                 handleChangePropValue(userProp, value)

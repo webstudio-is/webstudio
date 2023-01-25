@@ -1,9 +1,8 @@
 import { useMemo } from "react";
-import { type Instance } from "../db";
-import { type UserProp } from "./schema";
+import type { Instance, PropsItem } from "../db";
 import { useAllUserProps } from "./all-user-props";
 
-type UserProps = { [prop: UserProp["prop"]]: string | number | boolean };
+type UserProps = { [name: PropsItem["name"]]: string | number | boolean };
 
 /**
  * User props mapped in prop:value format,
@@ -21,7 +20,7 @@ export const useUserProps = (instanceId: Instance["id"]) => {
 
     for (const userProp of propsData) {
       if (userProp.type !== "asset") {
-        result[userProp.prop] = userProp.value;
+        result[userProp.name] = userProp.value;
       }
     }
 

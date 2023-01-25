@@ -4,6 +4,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "dependencies": {
+    "@fontsource/inter": "^4.5.15",
+    "@fontsource/manrope": "^4.5.13",
+    "@fontsource/roboto": "^4.5.8",
     "@storybook/addon-essentials": "^6.5.14",
     "@storybook/addon-interactions": "^6.5.14",
     "@storybook/addon-links": "^6.5.14",

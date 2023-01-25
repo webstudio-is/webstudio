@@ -84,3 +84,17 @@ export const getBuildUrl = ({
 
   return url.toString();
 };
+
+export const getPublishedUrl = (domain: string) => {
+  const protocol = typeof location === "object" ? location.protocol : "https:";
+
+  const publisherHost =
+    env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST ? env.PUBLISHER_HOST : "";
+
+  // We use location.host to get the hostname and port in development mode and to not break local testing.
+  const localhost = typeof location === "object" ? location.host : "";
+
+  const host = publisherHost || env.DESIGNER_HOST || localhost;
+
+  return `${protocol}//${domain}.${host}`;
+};

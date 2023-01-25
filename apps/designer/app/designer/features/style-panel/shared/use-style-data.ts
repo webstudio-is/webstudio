@@ -1,7 +1,8 @@
 import { useCallback } from "react";
 import store from "immerhin";
 import warnOnce from "warn-once";
-import type { SelectedInstanceData, StyleUpdates } from "@webstudio-is/project";
+import type { Instance } from "@webstudio-is/react-sdk";
+import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import { stylesContainer } from "~/shared/nano-states";
@@ -19,7 +20,7 @@ declare module "~/shared/pubsub" {
 
 type UseStyleData = {
   publish: Publish;
-  selectedInstanceData?: SelectedInstanceData;
+  selectedInstance: Instance;
 };
 
 export type StyleUpdateOptions = { isEphemeral: boolean };
@@ -42,27 +43,20 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = ({
-  selectedInstanceData,
-  publish,
-}: UseStyleData) => {
+export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
 
   const currentStyle = useStyleInfo();
 
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
-      if (
-        updates.length === 0 ||
-        selectedInstanceData === undefined ||
-        selectedBreakpoint === undefined
-      ) {
+      if (updates.length === 0 || selectedBreakpoint === undefined) {
         return;
       }
       publish({
         type: type === "update" ? "updateStyle" : "previewStyle",
         payload: {
-          id: selectedInstanceData.id,
+          id: selectedInstance.id,
           updates,
           breakpoint: selectedBreakpoint,
         },
@@ -73,7 +67,7 @@ export const useStyleData = ({
       }
 
       store.createTransaction([stylesContainer], (styles) => {
-        const instanceId = selectedInstanceData.id;
+        const instanceId = selectedInstance.id;
         const breakpointId = selectedBreakpoint.id;
         for (const update of updates) {
           const matchedIndex = styles.findIndex(
@@ -103,7 +97,7 @@ export const useStyleData = ({
         }
       });
     },
-    [publish, selectedBreakpoint, selectedInstanceData]
+    [publish, selectedBreakpoint, selectedInstance]
   );
 
   // @deprecated should not be called

@@ -3,6 +3,7 @@ import { useCanvasWidth, useZoom } from "~/designer/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { type Publish } from "~/shared/pubsub";
 import { theme } from "@webstudio-is/design-system";
+import { selectedInstanceIdStore } from "~/shared/nano-states";
 
 const workspaceStyle = {
   flexGrow: 1,
@@ -40,7 +41,7 @@ export const Workspace = ({
   const [canvasWidth] = useCanvasWidth();
 
   const handleWorkspaceClick = () => {
-    publish({ type: "unselectInstance" });
+    selectedInstanceIdStore.set(undefined);
   };
 
   return (

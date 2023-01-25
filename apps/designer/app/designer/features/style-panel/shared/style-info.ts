@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import type {
   Breakpoint,
   Style,
@@ -9,14 +10,13 @@ import { properties } from "@webstudio-is/css-data";
 import { utils } from "@webstudio-is/project";
 import type { Instance, Styles } from "@webstudio-is/react-sdk";
 import {
+  selectedInstanceBrowserStyleStore,
+  selectedInstanceIdStore,
   useBreakpoints,
   useRootInstance,
   useStyles,
 } from "~/shared/nano-states";
-import {
-  useSelectedBreakpoint,
-  useSelectedInstanceData,
-} from "~/designer/shared/nano-states";
+import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -47,7 +47,7 @@ export type StyleInfo = {
   [property in StyleProperty]?: StyleValueInfo;
 };
 
-export type StyleSource = "local" | "remote" | "preset";
+export type StyleSource = "local" | "remote" | "preset" | "default";
 
 export const getStyleSource = (
   ...styleValueInfos: (undefined | StyleValueInfo)[]
@@ -64,7 +64,7 @@ export const getStyleSource = (
       return "remote";
     }
   }
-  return "preset";
+  return "default";
 };
 
 const styleProperties = Object.keys(properties) as StyleProperty[];
@@ -185,9 +185,8 @@ export const useStyleInfo = () => {
   const [breakpoints] = useBreakpoints();
   const [selectedBreakpoint] = useSelectedBreakpoint();
   const selectedBreakpointId = selectedBreakpoint?.id;
-  const [selectedInstanceData] = useSelectedInstanceData();
-  const selectedInstanceId = selectedInstanceData?.id;
-  const browserStyle = selectedInstanceData?.browserStyle;
+  const selectedInstanceId = useStore(selectedInstanceIdStore);
+  const browserStyle = useStore(selectedInstanceBrowserStyleStore);
   const [rootInstance] = useRootInstance();
   const [styles] = useStyles();
 

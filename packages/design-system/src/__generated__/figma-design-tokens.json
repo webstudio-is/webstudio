@@ -37,23 +37,43 @@
     },
     "lineHeights": {
       "0": {
-        "value": "16",
-        "type": "lineHeights"
-      },
-      "1": {
         "value": "8",
         "type": "lineHeights"
       },
-      "2": {
+      "1": {
         "value": "10",
         "type": "lineHeights"
       },
+      "2": {
+        "value": "11",
+        "type": "lineHeights"
+      },
       "3": {
-        "value": "AUTO",
+        "value": "12",
         "type": "lineHeights"
       },
       "4": {
-        "value": "11",
+        "value": "16",
+        "type": "lineHeights"
+      },
+      "5": {
+        "value": "22",
+        "type": "lineHeights"
+      },
+      "6": {
+        "value": "27",
+        "type": "lineHeights"
+      },
+      "7": {
+        "value": "39",
+        "type": "lineHeights"
+      },
+      "8": {
+        "value": "58",
+        "type": "lineHeights"
+      },
+      "9": {
+        "value": "360",
         "type": "lineHeights"
       }
     },
@@ -67,19 +87,31 @@
         "type": "fontWeights"
       },
       "inter-2": {
-        "value": "Bold",
-        "type": "fontWeights"
-      },
-      "inter-4": {
         "value": "Semi Bold",
         "type": "fontWeights"
       },
-      "manrope-5": {
-        "value": "SemiBold",
+      "inter-3": {
+        "value": "Bold",
         "type": "fontWeights"
       },
-      "roboto-mono-3": {
+      "roboto-mono-4": {
         "value": "Regular",
+        "type": "fontWeights"
+      },
+      "manrope-5": {
+        "value": "ExtraLight",
+        "type": "fontWeights"
+      },
+      "manrope-6": {
+        "value": "Regular",
+        "type": "fontWeights"
+      },
+      "manrope-7": {
+        "value": "Bold",
+        "type": "fontWeights"
+      },
+      "manrope-8": {
+        "value": "ExtraBold",
         "type": "fontWeights"
       }
     },
@@ -97,21 +129,33 @@
         "type": "fontSizes"
       },
       "3": {
-        "value": "20",
+        "value": "16",
         "type": "fontSizes"
       },
       "4": {
+        "value": "20",
+        "type": "fontSizes"
+      },
+      "5": {
         "value": "32",
+        "type": "fontSizes"
+      },
+      "6": {
+        "value": "48",
+        "type": "fontSizes"
+      },
+      "7": {
+        "value": "360",
         "type": "fontSizes"
       }
     },
     "letterSpacing": {
       "0": {
-        "value": "0.5%",
+        "value": "-5%",
         "type": "letterSpacing"
       },
       "1": {
-        "value": "1%",
+        "value": "-2%",
         "type": "letterSpacing"
       },
       "2": {
@@ -119,7 +163,11 @@
         "type": "letterSpacing"
       },
       "3": {
-        "value": "0",
+        "value": "0.5%",
+        "type": "letterSpacing"
+      },
+      "4": {
+        "value": "1%",
         "type": "letterSpacing"
       }
     },
@@ -133,9 +181,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-0}",
-        "lineHeight": "{lineHeights.0}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
-        "letterSpacing": "{letterSpacing.0}",
+        "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -143,13 +191,13 @@
       },
       "type": "typography"
     },
-    "Labels - Title Case": {
+    "Label - Title Case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.0}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
-        "letterSpacing": "{letterSpacing.0}",
+        "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.capitalize}",
@@ -157,13 +205,13 @@
       },
       "type": "typography"
     },
-    "Labels - Sentence case": {
+    "Label - Sentence case": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.0}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
-        "letterSpacing": "{letterSpacing.0}",
+        "letterSpacing": "{letterSpacing.3}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -171,41 +219,13 @@
       },
       "type": "typography"
     },
-    "Titles": {
+    "Title": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-2}",
-        "lineHeight": "{lineHeights.0}",
+        "fontWeight": "{fontWeights.inter-3}",
+        "lineHeight": "{lineHeights.4}",
         "fontSize": "{fontSize.2}",
-        "letterSpacing": "{letterSpacing.1}",
-        "paragraphSpacing": "{paragraphSpacing.0}",
-        "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.none}",
-        "textDecoration": "{textDecoration.none}"
-      },
-      "type": "typography"
-    },
-    "Mono": {
-      "value": {
-        "fontFamily": "{fontFamilies.roboto-mono}",
-        "fontWeight": "{fontWeights.roboto-mono-3}",
-        "lineHeight": "{lineHeights.0}",
-        "fontSize": "{fontSize.2}",
-        "letterSpacing": "{letterSpacing.2}",
-        "paragraphSpacing": "{paragraphSpacing.0}",
-        "paragraphIndent": "{paragraphIndent.0}",
-        "textCase": "{textCase.none}",
-        "textDecoration": "{textDecoration.none}"
-      },
-      "type": "typography"
-    },
-    "Big Title": {
-      "value": {
-        "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.3}",
-        "fontSize": "{fontSize.4}",
-        "letterSpacing": "{letterSpacing.0}",
+        "letterSpacing": "{letterSpacing.4}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -217,9 +237,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-0}",
-        "lineHeight": "{lineHeights.4}",
+        "lineHeight": "{lineHeights.2}",
         "fontSize": "{fontSize.1}",
-        "letterSpacing": "{letterSpacing.2}",
+        "letterSpacing": "{letterSpacing.4}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -232,9 +252,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.1}",
+        "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.0}",
-        "letterSpacing": "{letterSpacing.1}",
+        "letterSpacing": "{letterSpacing.4}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -246,9 +266,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.2}",
+        "lineHeight": "{lineHeights.3}",
         "fontSize": "{fontSize.1}",
-        "letterSpacing": "{letterSpacing.3}",
+        "letterSpacing": "{letterSpacing.2}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.uppercase}",
@@ -256,13 +276,41 @@
       },
       "type": "typography"
     },
+    "Mono": {
+      "value": {
+        "fontFamily": "{fontFamilies.roboto-mono}",
+        "fontWeight": "{fontWeights.roboto-mono-4}",
+        "lineHeight": "{lineHeights.4}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.4}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography"
+    },
+    "Big Title": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-1}",
+        "lineHeight": "{lineHeights.7}",
+        "fontSize": "{fontSize.5}",
+        "letterSpacing": "{letterSpacing.3}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.none}"
+      },
+      "type": "typography"
+    },
     "Space Section Unit Text": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
-        "fontWeight": "{fontWeights.inter-4}",
-        "lineHeight": "{lineHeights.1}",
+        "fontWeight": "{fontWeights.inter-2}",
+        "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.0}",
-        "letterSpacing": "{letterSpacing.1}",
+        "letterSpacing": "{letterSpacing.4}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.uppercase}",
@@ -274,9 +322,9 @@
       "value": {
         "fontFamily": "{fontFamilies.inter}",
         "fontWeight": "{fontWeights.inter-1}",
-        "lineHeight": "{lineHeights.2}",
+        "lineHeight": "{lineHeights.1}",
         "fontSize": "{fontSize.1}",
-        "letterSpacing": "{letterSpacing.2}",
+        "letterSpacing": "{letterSpacing.4}",
         "paragraphSpacing": "{paragraphSpacing.0}",
         "paragraphIndent": "{paragraphIndent.0}",
         "textCase": "{textCase.none}",
@@ -305,27 +353,27 @@
       }
     },
     "radius": {
-      "1": {
+      "0": {
         "value": "1px",
         "type": "borderRadius"
       },
-      "2": {
+      "1": {
         "value": "2px",
         "type": "borderRadius"
       },
-      "3": {
+      "2": {
         "value": "3px",
         "type": "borderRadius"
       },
-      "4": {
+      "3": {
         "value": "4px",
         "type": "borderRadius"
       },
-      "5": {
+      "4": {
         "value": "5px",
         "type": "borderRadius"
       },
-      "6": {
+      "5": {
         "value": "6px",
         "type": "borderRadius"
       }
@@ -345,7 +393,7 @@
         "description": "background color for all panels, titles, columns and rows."
       },
       "primary": {
-        "value": "#0081f1",
+        "value": "#0175dc",
         "type": "color",
         "description": "primary color, used in button"
       },
@@ -355,7 +403,7 @@
         "description": "hover color for toggle group button, icon button, toggle button, small icon button, small toggle button, nested select button, menu item large"
       },
       "active": {
-        "value": "#0081f1",
+        "value": "#0175dc",
         "type": "color",
         "description": "color for active elements"
       },
@@ -374,13 +422,9 @@
         "type": "color",
         "description": "used only for the hover state for the asset card component"
       },
-      "brand-gradient": {
-        "value": "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
-        "type": "color"
-      },
       "neutral": {
         "main": {
-          "value": "#D7DBDF",
+          "value": "#d7dbdf",
           "type": "color",
           "description": "used for neutral button"
         },
@@ -393,11 +437,15 @@
           "value": "#ffffff",
           "type": "color",
           "description": "background color on neutral toast"
+        },
+        "dark": {
+          "value": "#7e868c",
+          "type": "color"
         }
       },
       "destructive": {
         "main": {
-          "value": "#dc3d43",
+          "value": "#de3339",
           "type": "color",
           "description": "used for destructive button and accent color on destructive toast"
         },
@@ -409,7 +457,7 @@
       },
       "success": {
         "main": {
-          "value": "#299764",
+          "value": "#00894a",
           "type": "color",
           "description": "used for success button and accent color on success toast"
         },
@@ -433,7 +481,7 @@
       },
       "info": {
         "main": {
-          "value": "#006adc",
+          "value": "#0175dc",
           "type": "color"
         },
         "notification": {
@@ -444,11 +492,11 @@
       },
       "preset": {
         "main": {
-          "value": "#E6E8EB",
+          "value": "#e6e8eb",
           "type": "color"
         },
         "hover": {
-          "value": "#DFE3E6",
+          "value": "#dfe3e6",
           "type": "color"
         }
       },
@@ -503,7 +551,7 @@
       },
       "item": {
         "current": {
-          "value": "#0081f1",
+          "value": "#0175dc",
           "type": "color",
           "description": "color for current item in the navigator item, menu item, pages panel item components"
         },
@@ -518,7 +566,7 @@
           "description": "color for the hidden current item in the navigator item component"
         },
         "menu-item-hover": {
-          "value": "#c9c9c9",
+          "value": "#d3d3d3",
           "type": "color",
           "description": "The hover state on menu item components."
         }
@@ -547,34 +595,9 @@
           "type": "color"
         }
       },
-      "project-card": {
-        "front": {
-          "value": "linear-gradient(0deg, #fbf8ff 25%, #e2e2e2 66%)",
-          "type": "color",
-          "description": "big text color in the project card component"
-        },
-        "back": {
-          "value": "linear-gradient(0deg, #fbf8ff 0%, #c7c7c7 100%)",
-          "type": "color"
-        },
-        "text-area": {
-          "value": "#ffffffe6",
-          "type": "color"
-        }
-      },
-      "published": {
-        "main": {
-          "value": "#39fbbb",
-          "type": "color"
-        },
-        "contrast": {
-          "value": "#ebfffc",
-          "type": "color"
-        }
-      },
       "style-source": {
         "token": {
-          "value": "#0081f1",
+          "value": "#0175dc",
           "type": "color",
           "description": "For the token variant of the Style Source component."
         },
@@ -584,7 +607,7 @@
           "description": "For the HTML tag variant of the Style Source component."
         },
         "state": {
-          "value": "#299764",
+          "value": "#00894a",
           "type": "color",
           "description": "For the state variant of the Style Source component."
         },
@@ -600,7 +623,7 @@
         },
         "gradient": {
           "token": {
-            "value": "linear-gradient(90deg, #0081f100 0%, #0081f1 31.87%)",
+            "value": "linear-gradient(90deg, #0175dc00 0%, #0175dc 31.87%)",
             "type": "color"
           },
           "tag": {
@@ -608,9 +631,56 @@
             "type": "color"
           },
           "state": {
-            "value": "linear-gradient(90deg, #29976400 0%, #299764 31.87%)",
+            "value": "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
             "type": "color"
           }
+        }
+      }
+    },
+    "brand": {
+      "background": {
+        "project-card": {
+          "front": {
+            "value": "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
+            "type": "color",
+            "description": "big text color in the project card component"
+          },
+          "back": {
+            "value": "linear-gradient(0deg, #fbf8ff 0%, #c7c7c7 100%)",
+            "type": "color"
+          },
+          "text-area": {
+            "value": "#ffffff",
+            "type": "color"
+          }
+        },
+        "published-main": {
+          "value": "#39fbbb",
+          "type": "color"
+        },
+        "gradient": {
+          "value": "linear-gradient(180deg, #e63cfe 0%, #ffae3c 100%)",
+          "type": "color"
+        },
+        "published-contrast": {
+          "value": "#ebfffc",
+          "type": "color"
+        },
+        "dashboard": {
+          "value": "#ededed",
+          "type": "color"
+        }
+      },
+      "foreground": {
+        "published": {
+          "value": "#00894a",
+          "type": "color"
+        }
+      },
+      "border": {
+        "published": {
+          "value": "#ebfffc",
+          "type": "color"
         }
       }
     },
@@ -621,7 +691,7 @@
         "description": "color for separators, panel borders, preset borders, input fields, select buttons, panel buttons, text area, search field, menu, select menu, spacing controls, "
       },
       "focus": {
-        "value": "#0081f1",
+        "value": "#0175dc",
         "type": "color",
         "description": "border color for all focus elements"
       },
@@ -641,7 +711,7 @@
         "description": "border color for neutral toast"
       },
       "success": {
-        "value": "#30a46c",
+        "value": "#00894a",
         "type": "color",
         "description": "border color for success banner & toast"
       },
@@ -651,7 +721,7 @@
         "description": "border color for alert banner & toast"
       },
       "info": {
-        "value": "#0091ff",
+        "value": "#0175dc",
         "type": "color",
         "description": "border color for info banner & toast"
       },
@@ -659,10 +729,6 @@
         "value": "#ffffff",
         "type": "color",
         "description": "border color to create contrast on dark/colored elements. Used in button, new position indicator for navigator"
-      },
-      "published": {
-        "value": "#ebfffc",
-        "type": "color"
       },
       "item": {
         "child-line": {
@@ -683,7 +749,7 @@
           "description": "border color of set elements"
         },
         "flex-ui": {
-          "value": "#0091ff",
+          "value": "#0175dc",
           "type": "color",
           "description": "border color of set elements within the flex controls ui"
         }
@@ -702,7 +768,7 @@
       },
       "destructive": {
         "main": {
-          "value": "#dc3d43",
+          "value": "#de3339",
           "type": "color",
           "description": "border color for destructive input field, text area and search field"
         },
@@ -720,7 +786,7 @@
         "description": "default color for all text and icons"
       },
       "subtle": {
-        "value": "#7e868c",
+        "value": "#707375",
         "type": "color",
         "description": "color for less prominent elements. Used in small icon button, nested select button, input field, color input, select button, panel button, text area, search field & toast"
       },
@@ -735,17 +801,17 @@
         "description": "foreground color for spacing controls text"
       },
       "destructive": {
-        "value": "#dc3d43",
+        "value": "#de3339",
         "type": "color",
         "description": "destructive foreground color. Used in input field, text field, search area, & toast"
       },
       "success": {
-        "value": "#30a46c",
+        "value": "#00894a",
         "type": "color",
         "description": "success foreground color. Used in toast"
       },
       "info": {
-        "value": "#006adc",
+        "value": "#0175dc",
         "type": "color",
         "description": "info foreground color. Used in toast"
       },
@@ -758,10 +824,6 @@
         "value": "#7e868c",
         "type": "color",
         "description": "color for hidden item element within navigator item component"
-      },
-      "published": {
-        "value": "#005406",
-        "type": "color"
       },
       "flex-ui": {
         "main": {
@@ -789,19 +851,19 @@
       },
       "set": {
         "main": {
-          "value": "#006adc",
+          "value": "#016ccc",
           "type": "color",
           "description": "foreground color for set elements"
         },
         "flex-ui": {
-          "value": "#0091ff",
+          "value": "#0d84ed",
           "type": "color",
           "description": "foreground color for flex-ui set elements"
         }
       },
       "inherited": {
         "main": {
-          "value": "#bd4b00",
+          "value": "#b74900",
           "type": "color",
           "description": "foreground color for inherited elements"
         },
@@ -837,54 +899,107 @@
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
       },
-      "Title": {
+      "Section Title": {
         "value": {
           "fontFamily": "{fontFamilies.manrope}",
-          "fontWeight": "{fontWeights.manrope-5}",
-          "lineHeight": "{lineHeights.3}",
-          "fontSize": "{fontSize.3}",
-          "letterSpacing": "{letterSpacing.0}",
+          "fontWeight": "{fontWeights.manrope-7}",
+          "lineHeight": "{lineHeights.6}",
+          "fontSize": "{fontSize.4}",
+          "letterSpacing": "{letterSpacing.2}",
           "paragraphSpacing": "{paragraphSpacing.0}",
           "paragraphIndent": "{paragraphIndent.0}",
           "textCase": "{textCase.none}",
           "textDecoration": "{textDecoration.none}"
         },
         "type": "typography"
-      }
-    },
-    "inner-glow": {
-      "01": {
-        "value": {
-          "color": "#fbf8ff",
-          "type": "innerShadow",
-          "x": "0",
-          "y": "2",
-          "blur": "1",
-          "spread": "0"
-        },
-        "type": "boxShadow"
       },
-      "03": {
+      "Large Title": {
         "value": {
-          "color": "#fbf8ff",
-          "type": "innerShadow",
-          "x": "0",
-          "y": "5",
-          "blur": "3",
-          "spread": "0"
+          "fontFamily": "{fontFamilies.manrope}",
+          "fontWeight": "{fontWeights.manrope-7}",
+          "lineHeight": "{lineHeights.8}",
+          "fontSize": "{fontSize.6}",
+          "letterSpacing": "{letterSpacing.1}",
+          "paragraphSpacing": "{paragraphSpacing.0}",
+          "paragraphIndent": "{paragraphIndent.0}",
+          "textCase": "{textCase.none}",
+          "textDecoration": "{textDecoration.none}"
         },
-        "type": "boxShadow"
+        "type": "typography"
       },
-      "05": {
+      "regular": {
         "value": {
-          "color": "#fbf8ff",
-          "type": "innerShadow",
-          "x": "0",
-          "y": "8",
-          "blur": "5",
-          "spread": "0"
+          "fontFamily": "{fontFamilies.manrope}",
+          "fontWeight": "{fontWeights.manrope-6}",
+          "lineHeight": "{lineHeights.5}",
+          "fontSize": "{fontSize.3}",
+          "letterSpacing": "{letterSpacing.2}",
+          "paragraphSpacing": "{paragraphSpacing.0}",
+          "paragraphIndent": "{paragraphIndent.0}",
+          "textCase": "{textCase.none}",
+          "textDecoration": "{textDecoration.none}"
         },
-        "type": "boxShadow"
+        "type": "typography"
+      },
+      "Thumbnail Large": {
+        "Default": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-5}",
+            "lineHeight": "{lineHeights.9}",
+            "fontSize": "{fontSize.7}",
+            "letterSpacing": "{letterSpacing.0}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        },
+        "Hover": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-8}",
+            "lineHeight": "{lineHeights.9}",
+            "fontSize": "{fontSize.7}",
+            "letterSpacing": "{letterSpacing.0}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        }
+      },
+      "Thumbnail Small": {
+        "Default": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-6}",
+            "lineHeight": "{lineHeights.8}",
+            "fontSize": "{fontSize.6}",
+            "letterSpacing": "{letterSpacing.1}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        },
+        "Hover": {
+          "value": {
+            "fontFamily": "{fontFamilies.manrope}",
+            "fontWeight": "{fontWeights.manrope-8}",
+            "lineHeight": "{lineHeights.8}",
+            "fontSize": "{fontSize.6}",
+            "letterSpacing": "{letterSpacing.1}",
+            "paragraphSpacing": "{paragraphSpacing.0}",
+            "paragraphIndent": "{paragraphIndent.0}",
+            "textCase": "{textCase.none}",
+            "textDecoration": "{textDecoration.none}"
+          },
+          "type": "typography"
+        }
       }
     },
     "maintenance": {
@@ -906,12 +1021,12 @@
       }
     },
     "border-width": {
-      "1": {
+      "0": {
         "value": "1",
         "type": "borderWidth",
         "description": "sets border width value to 1"
       },
-      "2": {
+      "1": {
         "value": "2",
         "type": "borderWidth",
         "description": "sets border width value to 2. Used for focus borders (among other things)"

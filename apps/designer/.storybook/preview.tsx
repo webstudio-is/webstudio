@@ -2,6 +2,7 @@ import * as React from "react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { globalCss } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
+import "@webstudio-is/storybook-config/setup-fonts";
 
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },

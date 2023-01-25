@@ -1,17 +1,19 @@
 import { jest, describe, test, expect } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
-import { ComponentName, getComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  type ComponentName,
+  type Instance,
+} from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
-import type { SelectedInstanceData } from "@webstudio-is/project";
 import { usePropsLogic } from "./use-props-logic";
 
-const getSelectedInstanceData = (
-  componentName: ComponentName
-): SelectedInstanceData => {
+const getSelectedInstance = (componentName: ComponentName): Instance => {
   return {
+    type: "instance",
     id: nanoid(8),
     component: componentName,
-    browserStyle: {},
+    children: [],
   };
 };
 
@@ -20,14 +22,14 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Link"),
+        selectedInstance: getSelectedInstance("Link"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
     expect(result.current.userProps[0]).toMatchObject({
-      prop: "href",
+      name: "href",
       value: "",
     });
   });
@@ -36,7 +38,7 @@ describe("usePropsLogic", () => {
     const { result: res1 } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Heading"),
+        selectedInstance: getSelectedInstance("Heading"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -44,17 +46,17 @@ describe("usePropsLogic", () => {
     const { result: res2 } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Button"),
+        selectedInstance: getSelectedInstance("Button"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
     );
     expect(res1.current.userProps[0]).toMatchObject({
-      prop: "tag",
+      name: "tag",
       value: "h1",
     });
     expect(res2.current.userProps[0]).toMatchObject({
-      prop: "type",
+      name: "type",
       value: "submit",
     });
   });
@@ -63,14 +65,14 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Button"),
+        selectedInstance: getSelectedInstance("Button"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
     expect(result.current.userProps[0]).toMatchObject({
-      prop: "type",
+      name: "type",
       value: "submit",
     });
   });
@@ -81,19 +83,20 @@ describe("usePropsLogic", () => {
         props: [
           {
             id: "default",
-            prop: "type",
+            instanceId: "instanceId",
+            name: "type",
             type: "string",
             value: "submit",
           },
         ],
-        selectedInstanceData: getSelectedInstanceData("Button"),
+        selectedInstance: getSelectedInstance("Button"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
     );
     expect(result.current.userProps.length).toEqual(1);
     expect(result.current.userProps[0]).toMatchObject({
-      prop: "type",
+      name: "type",
       value: "submit",
     });
   });
@@ -102,7 +105,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Box"),
+        selectedInstance: getSelectedInstance("Box"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -115,7 +118,7 @@ describe("usePropsLogic", () => {
     });
 
     expect(result.current.userProps.length).toEqual(2);
-    expect(result.current.userProps[1]).toMatchObject({ prop: "", value: "" });
+    expect(result.current.userProps[1]).toMatchObject({ name: "", value: "" });
   });
 
   test("should respect initialProps ordering", () => {
@@ -124,41 +127,46 @@ describe("usePropsLogic", () => {
         props: [
           {
             id: "22",
-            prop: "aria-label",
+            instanceId: "instanceId",
+            name: "aria-label",
             type: "string",
             value: "https://example.com",
             required: false,
           },
           {
             id: "0",
-            prop: "alt",
+            instanceId: "instanceId",
+            name: "alt",
             type: "string",
             value: "alt text",
             required: true,
           },
           {
             id: "1",
-            prop: "width",
+            instanceId: "instanceId",
+            name: "width",
             type: "number",
             value: 101,
             required: false,
           },
           {
             id: "33",
-            prop: "title",
+            instanceId: "instanceId",
+            name: "title",
             type: "string",
             value: "title text",
             required: true,
           },
           {
             id: "2",
-            prop: "src",
+            instanceId: "instanceId",
+            name: "src",
             type: "string",
             value: "https://example.com",
             required: true,
           },
         ],
-        selectedInstanceData: getSelectedInstanceData("Image"),
+        selectedInstance: getSelectedInstance("Image"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -166,7 +174,7 @@ describe("usePropsLogic", () => {
 
     const imgMeta = getComponentMeta("Image");
 
-    const propNames = result.current.userProps.map((userProp) => userProp.prop);
+    const propNames = result.current.userProps.map((userProp) => userProp.name);
 
     expect(imgMeta.initialProps).toEqual(
       propNames.slice(0, imgMeta.initialProps?.length ?? 0)
@@ -175,9 +183,9 @@ describe("usePropsLogic", () => {
     expect(propNames.slice(imgMeta.initialProps?.length ?? 0)).toEqual(
       result.current.userProps
         .filter(
-          (userProp) => imgMeta.initialProps?.includes(userProp.prop) === false
+          (userProp) => imgMeta.initialProps?.includes(userProp.name) === false
         )
-        .map((userProp) => userProp.prop)
+        .map((userProp) => userProp.name)
     );
   });
 
@@ -185,7 +193,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Image"),
+        selectedInstance: getSelectedInstance("Image"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -194,7 +202,8 @@ describe("usePropsLogic", () => {
     expect(
       result.current.isRequired({
         id: "2",
-        prop: "src",
+        instanceId: "instanceId",
+        name: "src",
         type: "string",
         value: "https://example.com",
         required: false,
@@ -206,7 +215,7 @@ describe("usePropsLogic", () => {
     const { result } = renderHook(() =>
       usePropsLogic({
         props: [],
-        selectedInstanceData: getSelectedInstanceData("Image"),
+        selectedInstance: getSelectedInstance("Image"),
         updateProps: jest.fn(),
         deleteProp: jest.fn(),
       })
@@ -215,7 +224,8 @@ describe("usePropsLogic", () => {
     expect(
       result.current.isRequired({
         id: "2",
-        prop: "arial-label",
+        instanceId: "instanceId",
+        name: "arial-label",
         type: "string",
         value: "https://example.com",
         required: true,
@@ -225,7 +235,8 @@ describe("usePropsLogic", () => {
     expect(
       result.current.isRequired({
         id: "2",
-        prop: "arial-label",
+        instanceId: "instanceId",
+        name: "arial-label",
         type: "string",
         value: "https://example.com",
         required: false,

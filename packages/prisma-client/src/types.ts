@@ -8,4 +8,5 @@ export type {
   Project,
   Asset,
   Tree,
+  DashboardProject,
 } from "@prisma/client";

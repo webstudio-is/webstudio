@@ -1,14 +1,14 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
 import { addGlobalRules, getPresetStyleRules } from "@webstudio-is/project";
-import { useSelectedInstance } from "./nano-states";
 import {
+  selectedInstanceIdStore,
   useBreakpoints,
   useDesignTokens,
   usePresetStyles,
-  useStyles,
 } from "~/shared/nano-states";
 import {
+  type Styles,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -175,17 +175,14 @@ const getRule = (id: string, breakpoint?: string) => {
   return wrappedRulesMap.get(key);
 };
 
-export const useCssRules = ({ instanceId }: { instanceId: string }) => {
-  const [styles] = useStyles();
+export const useCssRules = ({
+  instanceId,
+  instanceStyles,
+}: {
+  instanceId: string;
+  instanceStyles: Styles;
+}) => {
   const [breakpoints] = useBreakpoints();
-
-  const [instanceStylesKey, instanceStyles] = useMemo(() => {
-    const instanceStyles = styles.filter(
-      (item) => item.instanceId === instanceId
-    );
-    const key = JSON.stringify(instanceStyles);
-    return [key, instanceStyles];
-  }, [styles, instanceId]);
 
   useIsomorphicLayoutEffect(() => {
     const stylePerBreakpoint = new Map<string, Style>();
@@ -221,11 +218,7 @@ export const useCssRules = ({ instanceId }: { instanceId: string }) => {
       }
     }
     cssEngine.render();
-    // run effect only when serialized instanceStyles changed
-    // to avoid rerendering on other instances change
-  }, [instanceId, instanceStylesKey, breakpoints]);
-
-  return instanceStylesKey;
+  }, [instanceId, instanceStyles, breakpoints]);
 };
 
 const toVarNamespace = (id: string, property: string) => {
@@ -242,11 +235,11 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
 };
 
 const useUpdateStyle = () => {
-  const [selectedInstance] = useSelectedInstance();
   useSubscribe("updateStyle", ({ id, updates }) => {
+    const selectedInstanceId = selectedInstanceIdStore.get();
     // Only update styles if they match the selected instance
     // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
-    if (id !== selectedInstance?.id) {
+    if (id !== selectedInstanceId) {
       return;
     }
 

@@ -1,11 +1,10 @@
 import { useRef } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { InstanceProps, Instance } from "../db";
-import { UserProp } from "./schema";
+import type { InstanceProps, Instance, PropsItem } from "../db";
 
 export type AllUserProps = {
-  [id: Instance["id"]]: UserProp[];
+  [id: Instance["id"]]: PropsItem[];
 };
 
 export const allUserPropsContainer = atom<AllUserProps>({});

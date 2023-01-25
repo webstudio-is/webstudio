@@ -117,7 +117,10 @@ import {
 } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
-import { color as figmaColors } from "./__generated__/figma-design-tokens";
+import {
+  color as figmaColors,
+  boxShadow as figmaShadows,
+} from "./__generated__/figma-design-tokens";
 
 const spacing = {
   0: "0px",
@@ -250,8 +253,9 @@ const {
       transparentExtreme: "transparent",
     },
     fonts: {
-      sans: "Inter, -apple-system, system-ui, sans-serif",
+      sans: "InterVariable, -apple-system, system-ui, sans-serif",
       mono: "Roboto, menlo, monospace",
+      manrope: "ManropeVariable, sans-serif",
     },
     opacity: {
       1: "0.4",
@@ -299,6 +303,7 @@ const {
       easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
       easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
     },
+    shadows: figmaShadows,
   },
   media: {
     bp1: "(min-width: 520px)",
@@ -409,6 +414,8 @@ const toVariblesNames = (values: VariblesValues): VariblesNames => {
 };
 
 export const theme = toVariblesNames(config.theme);
+
+export const rawTheme = config.theme;
 
 export type CSS = Stitches.CSS<typeof config>;
 

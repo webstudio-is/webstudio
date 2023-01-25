@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import type { Instance, UserProp } from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem, Styles } from "@webstudio-is/react-sdk";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
 import {
   subscribeScrollState,
   subscribeWindowResize,
 } from "~/shared/dom-hooks";
+import { selectedInstanceBrowserStyleStore } from "~/shared/nano-states";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -47,13 +48,13 @@ const hideOutline = () => {
 export const SelectedInstanceConnector = ({
   instanceElementRef,
   instance,
-  instanceStylesKey,
+  instanceStyles,
   instanceProps,
 }: {
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
-  instanceStylesKey: unknown;
-  instanceProps: undefined | UserProp[];
+  instanceStyles: Styles;
+  instanceProps: undefined | PropsItem[];
 }) => {
   useEffect(() => {
     const element = instanceElementRef.current;
@@ -125,14 +126,7 @@ export const SelectedInstanceConnector = ({
     });
 
     // trigger style recomputing every time instance styles are changed
-    publish({
-      type: "selectInstance",
-      payload: {
-        id: instance.id,
-        component: instance.component,
-        browserStyle: getBrowserStyle(element),
-      },
-    });
+    selectedInstanceBrowserStyleStore.set(getBrowserStyle(element));
 
     return () => {
       resizeObserver.disconnect();
@@ -144,7 +138,7 @@ export const SelectedInstanceConnector = ({
     };
 
     // instance props may change dom element
-  }, [instanceElementRef, instance, instanceStylesKey, instanceProps]);
+  }, [instanceElementRef, instance, instanceStyles, instanceProps]);
 
   return null;
 };
