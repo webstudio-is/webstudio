@@ -1037,6 +1037,12 @@
         "value": "0px",
         "type": "dimension"
       }
+    },
+    "Icon Border": {
+      "1": {
+        "value": "1.33",
+        "type": "borderWidth"
+      }
     }
   },
   "$themes": [],
