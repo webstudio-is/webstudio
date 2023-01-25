@@ -1,9 +1,5 @@
 import { forwardRef, type ComponentProps, type ElementRef } from "react";
-import {
-  CheckMarkIcon,
-  ChevronFilledRightIcon,
-  DotIcon,
-} from "@webstudio-is/icons";
+import { CheckMarkIcon, ChevronFilledRightIcon } from "@webstudio-is/icons";
 import { styled } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
@@ -81,7 +77,7 @@ export const DropdownMenuRadioItem = forwardRef<
 >(({ children, ...props }, forwardedRef) => (
   <StyledRadioItem withIndicator {...props} ref={forwardedRef}>
     <Indicator>
-      <DotIcon />
+      <CheckMarkIcon />
     </Indicator>
     {children}
   </StyledRadioItem>
