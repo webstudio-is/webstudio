@@ -8,6 +8,7 @@ import { styled } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
   menuCss,
+  subMenuCss,
   separatorCss,
   itemCss,
   labelCss,
@@ -28,7 +29,7 @@ export const DropdownMenuContent = styled(
   { defaultVariants: { width: "regular" } }
 );
 
-const SubContentStyled = styled(DropdownMenuPrimitive.SubContent, menuCss, {
+const SubContentStyled = styled(DropdownMenuPrimitive.SubContent, subMenuCss, {
   defaultVariants: { width: "regular" },
 });
 export const DropdownMenuSubContent = forwardRef<

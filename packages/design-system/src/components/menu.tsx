@@ -75,6 +75,9 @@ export const separatorCss = css({
   backgroundColor: theme.colors.borderMain,
 });
 
+const menuPadding = theme.spacing[3];
+const menuBorderWidth = "1px";
+
 export const menuCss = css({
   boxSizing: "border-box",
 
@@ -87,13 +90,19 @@ export const menuCss = css({
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMain}, inset 0 0 0 2px ${theme.colors.borderMenuInner}`,
 
   // extra 1px padding to account for one of the shadow-borders above
-  padding: `calc(1px + ${theme.spacing[3]}) 1px`,
+  padding: `calc(${menuBorderWidth} + ${menuPadding}) ${menuBorderWidth}`,
 
   variants: {
     width: {
       regular: { width: theme.spacing[26] },
     },
   },
+});
+
+export const subMenuCss = css(menuCss, {
+  // the goal is to align the top menu item in a sub menu
+  // with the menu item in the parent menu that opened it
+  marginTop: `calc((${menuPadding} + ${menuBorderWidth}) * -1)`,
 });
 
 export const subContentProps: Partial<ComponentProps<typeof SubContent>> = {
