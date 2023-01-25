@@ -7,12 +7,28 @@ export const action = async ({ request, params }: ActionArgs) => {
   if (authenticatedUser === null) {
     throw new Error("Not authenticated");
   }
+
+  const { method } = params;
+
+  if (method === undefined) {
+    throw new Error("Missing method");
+  }
+
   const data = Object.fromEntries(await request.formData()) as never;
   // @todo pass authorization context
   const caller = projectRouter.createCaller({ userId: authenticatedUser.id });
-  const fn = caller[params.method as keyof typeof caller];
+
+  const allowedProcedures = Object.keys(projectRouter["_def"].record);
+
+  if (!allowedProcedures.includes(method)) {
+    throw new Error(`Unknown RPC method "${method}"`);
+  }
+
+  const fn = caller[method as keyof typeof caller];
+
   if (typeof fn === "function") {
     return await fn(data);
   }
-  throw new Error(`Unknown RPC method "${params.method}"`);
+
+  throw new Error(`Unknown RPC method "${method}"`);
 };
