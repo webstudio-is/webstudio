@@ -75,6 +75,9 @@ model Build {
 
   breakpoints  Breakpoints?
   designTokens DesignTokens?
+
+  styles       String @default("[]")
+  styleSources String @default("[]")
 }
 
 model Tree {
@@ -84,6 +87,7 @@ model Tree {
   props        String @default("[]")
   presetStyles String @default("[]")
   styles       String @default("[]")
+  styleRefs    String @default("[]")
 }
 
 model InstanceProps {
