@@ -5,9 +5,8 @@ import type {
   inferRouterInputs,
   inferRouterOutputs,
 } from "@trpc/server";
-
-const proxy = (get: (method: string) => void) =>
-  new Proxy({}, { get: (_target, method: string) => get(method) });
+// eslint-disable-next-line import/no-internal-modules
+import { createRecursiveProxy } from "@trpc/server/shared";
 
 export const createTrpcRemixProxy = <Router extends AnyRouter>(
   getPath: (method: string) => string
@@ -26,15 +25,24 @@ export const createTrpcRemixProxy = <Router extends AnyRouter>(
         };
       };
 } =>
-  proxy((method: string) =>
-    proxy((prop) => () => {
-      const fetcher = useFetcher();
-      const submit = (input: never) => {
-        return fetcher.submit(input, {
-          method: prop === "useMutation" ? "post" : "get",
-          action: getPath(method),
-        });
-      };
-      return { submit, data: fetcher.data };
-    })
-  ) as never;
+  createRecursiveProxy((options) => {
+    const path = [...options.path];
+    const hook = path.pop();
+
+    if (hook !== "useMutation" && hook !== "useQuery") {
+      throw new Error(`Invalid hook ${hook}`);
+    }
+
+    const fetcher = useFetcher();
+
+    const method = path.join(".");
+
+    const submit = (input: never) => {
+      return fetcher.submit(input, {
+        method: hook === "useMutation" ? "post" : "get",
+        action: getPath(method),
+      });
+    };
+
+    return { submit, data: fetcher.data };
+  }) as never;
