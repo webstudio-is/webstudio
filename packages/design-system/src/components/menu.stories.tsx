@@ -23,6 +23,8 @@ import {
   ComboboxPopperAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
+  ComboboxLabel,
+  ComboboxSeparator,
 } from "./combobox";
 import {
   Select,
@@ -125,8 +127,8 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   );
 };
 
-type Fruit = "Apple" | "Banana" | "Orange";
-const fruits: Fruit[] = ["Apple", "Banana", "Orange"];
+type Fruit = "Apple" | "Banana" | "Orange" | "Peach";
+const fruits: Fruit[] = ["Orange", "Apple", "Peach", "Banana"];
 
 const ComboboxDemo = () => {
   const [selectedItem, onItemSelect] = useState<Fruit>();
@@ -146,15 +148,24 @@ const ComboboxDemo = () => {
     onItemSelect,
   });
 
-  const renderItem = (item: Fruit, index: number) => (
-    <ComboboxListboxItem {...getItemProps({ item, index })} key={index}>
+  const renderItem = (item: Fruit) => (
+    <ComboboxListboxItem
+      {...getItemProps({ item, index: items.indexOf(item) })}
+      key={item}
+      destructive={item === "Orange"}
+      disabled={item === "Peach"}
+      icon={item === "Apple" ? <DotIcon /> : undefined}
+    >
       {item}
     </ComboboxListboxItem>
   );
 
+  const roundItems = items.filter((item) => item !== "Banana");
+  const longItems = items.filter((item) => item === "Banana");
+
   return (
     <ComboboxPopper>
-      <div data-test {...getComboboxProps()}>
+      <div {...getComboboxProps()}>
         <ComboboxPopperAnchor>
           <TextField
             {...getInputProps()}
@@ -168,7 +179,21 @@ const ComboboxDemo = () => {
         </ComboboxPopperAnchor>
         <ComboboxPopperContent align="end" sideOffset={5}>
           <ComboboxListbox {...getMenuProps()}>
-            {items.map(renderItem)}
+            {roundItems.length > 0 && (
+              <>
+                <ComboboxLabel>Round</ComboboxLabel>
+                {roundItems.map(renderItem)}
+              </>
+            )}
+            {roundItems.length > 0 && longItems.length > 0 && (
+              <ComboboxSeparator />
+            )}
+            {longItems.length > 0 && (
+              <>
+                <ComboboxLabel>Long</ComboboxLabel>
+                {longItems.map(renderItem)}
+              </>
+            )}
           </ComboboxListbox>
         </ComboboxPopperContent>
       </div>

@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
   type ChangeEvent,
+  type ReactNode,
 } from "react";
 import { CheckMarkIcon } from "@webstudio-is/icons";
 // @todo:
@@ -22,7 +23,13 @@ import {
 } from "downshift";
 import { matchSorter } from "match-sorter";
 import { styled, theme } from "../stitches.config";
-import { itemCss, menuCss, itemIndicatorCss } from "./menu";
+import {
+  itemCss,
+  menuCss,
+  itemIndicatorCss,
+  labelCss,
+  separatorCss,
+} from "./menu";
 
 const Listbox = styled(
   "ul",
@@ -42,6 +49,10 @@ const ListboxItem = styled("li", itemCss);
 
 const Indicator = styled("span", itemIndicatorCss);
 
+export const ComboboxLabel = styled("li", labelCss);
+
+export const ComboboxSeparator = styled("li", separatorCss);
+
 const ListboxItemBase: ForwardRefRenderFunction<
   HTMLLIElement,
   ComponentProps<typeof ListboxItem> & {
@@ -49,6 +60,7 @@ const ListboxItemBase: ForwardRefRenderFunction<
     selected?: boolean;
     selectable?: boolean;
     highlighted?: boolean;
+    icon?: ReactNode;
   }
 > = (props, ref) => {
   const {
@@ -57,6 +69,7 @@ const ListboxItemBase: ForwardRefRenderFunction<
     selectable = true,
     highlighted,
     children,
+    icon = <CheckMarkIcon />,
     ...rest
   } = props;
   return (
@@ -64,14 +77,10 @@ const ListboxItemBase: ForwardRefRenderFunction<
       ref={ref}
       {...(disabled ? { "aria-disabled": true, disabled: true } : {})}
       {...(selected ? { "aria-current": true } : {})}
-      {...rest}
+      {...(disabled ? {} : rest)}
       withIndicator={selectable}
     >
-      {selectable && selected && (
-        <Indicator>
-          <CheckMarkIcon />
-        </Indicator>
-      )}
+      {selectable && selected && <Indicator>{icon}</Indicator>}
       {children}
     </ListboxItem>
   );
