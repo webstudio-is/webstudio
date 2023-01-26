@@ -1,8 +1,11 @@
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
-import { User, prisma, Prisma, Project } from "@webstudio-is/prisma-client";
+import { prisma, Prisma, Project } from "@webstudio-is/prisma-client";
 import * as db from "./index";
-import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
@@ -19,8 +22,14 @@ export const loadById = async (
   projectId: Project["id"],
   context: AppContext
 ) => {
-  if (typeof projectId !== "string") {
-    throw new Error("Project ID required");
+  // ensure user or token has access to project
+  const canRead = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "view" },
+    context
+  );
+
+  if (canRead === false) {
+    throw new Error("You don't have access to this project");
   }
 
   return await prisma.project.findUnique({
@@ -32,15 +41,33 @@ export const loadByDomain = async (
   domain: string,
   context: AppContext
 ): Promise<Project | null> => {
-  return await prisma.project.findUnique({
+  // Authorization system needs project id to check if user has access to project
+  const projectWithId = await prisma.project.findUnique({
     where: { domain: domain.toLowerCase() },
   });
+
+  if (projectWithId === null) {
+    return null;
+  }
+
+  // Edge case for webstudiois project
+  if (projectWithId.domain === "webstudiois") {
+    // Hardcode for now that everyone can duplicate webstudiois project
+    return projectWithId;
+  }
+
+  // Otherwise check if user has access to project
+  return await loadById(projectWithId.id, context);
 };
 
-export const loadManyByUserId = async (
-  userId: User["id"],
+export const loadManyByCurrentUserId = async (
   context: AppContext
 ): Promise<Array<Project>> => {
+  const userId = context.authorization.userId;
+  if (userId === undefined) {
+    throw new Error("User must be authenticated to list projects");
+  }
+
   return await prisma.project.findMany({
     where: {
       user: {
@@ -76,7 +103,7 @@ export const create = async (
   const userId = context.authorization.userId;
 
   if (userId === undefined) {
-    throw new Error("User ID is required to create project");
+    throw new Error("User must be authenticated to create project");
   }
 
   const project = await prisma.$transaction(async (client) => {
@@ -100,6 +127,15 @@ export const markAsDeleted = async (
   projectId: Project["id"],
   context: AppContext
 ) => {
+  const canDelete = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "own" },
+    context
+  );
+
+  if (canDelete === false) {
+    throw new Error("Only owner can delete the project");
+  }
+
   return await prisma.project.update({
     where: { id: projectId },
     data: { isDeleted: true },
@@ -120,6 +156,15 @@ export const rename = async (
     return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
   }
 
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error("Only token or user with edit permission can edit project");
+  }
+
   return await prisma.project.update({
     where: { id: projectId },
     data: { title },
@@ -129,17 +174,21 @@ export const rename = async (
 const clone = async (
   {
     project,
-    userId,
     title,
     env = "dev",
   }: {
     project: Project;
-    userId?: string;
     title?: string;
     env?: "dev" | "prod";
   },
   context: AppContext
 ) => {
+  const userId = context.authorization.userId;
+
+  if (userId === undefined) {
+    throw new Error("User must be authenticated to clone project");
+  }
+
   const build =
     env === "dev"
       ? await db.build.loadByProjectId(project.id, "dev")
@@ -148,7 +197,7 @@ const clone = async (
   const clonedProject = await prisma.$transaction(async (client) => {
     const clonedProject = await client.project.create({
       data: {
-        userId: userId ?? project.userId,
+        userId: userId,
         title: title ?? project.title,
         domain: generateDomain(project.title),
       },
@@ -176,39 +225,42 @@ export const duplicate = async (projectId: string, context: AppContext) => {
   );
 };
 
-export const cloneByDomain = async (
-  domain: string,
-  userId: string,
-  context: AppContext
-) => {
+export const cloneByDomain = async (domain: string, context: AppContext) => {
   const project = await loadByDomain(domain, context);
+
   if (project === null) {
     throw new Error(`Not found project "${domain}"`);
   }
-  return await clone({ project, userId, env: "prod" }, context);
+
+  return await clone({ project, env: "prod" }, context);
 };
 
-export const update = async (
-  {
-    id,
-    ...data
-  }: {
+export const updateDomain = async (
+  input: {
     id: string;
-    domain?: string;
+    domain: string;
   },
   context: AppContext
 ) => {
-  if (data.domain) {
-    data.domain = slugify(data.domain, slugifyOptions);
-    if (data.domain.length < MIN_DOMAIN_LENGTH) {
-      throw new Error(`Minimum ${MIN_DOMAIN_LENGTH} characters required`);
-    }
+  const domain = slugify(input.domain, slugifyOptions);
+
+  if (domain.length < MIN_DOMAIN_LENGTH) {
+    throw new Error(`Minimum ${MIN_DOMAIN_LENGTH} characters required`);
+  }
+
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId: input.id, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error("Only token or user with edit permission can edit project");
   }
 
   try {
     const project = await prisma.project.update({
-      data,
-      where: { id },
+      data: { domain },
+      where: { id: input.id },
     });
     return project;
   } catch (error) {
@@ -216,7 +268,7 @@ export const update = async (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      throw new Error(`Domain "${data.domain}" is already used`);
+      throw new Error(`Domain "${domain}" is already used`);
     }
     throw error;
   }

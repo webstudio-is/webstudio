@@ -34,7 +34,7 @@ export const publish = async (
     await db.build.create(project.id, "prod", devBuild, client);
   });
 
-  const updatedProject = await db.project.update(
+  const updatedProject = await db.project.updateDomain(
     {
       id: projectId,
       domain,

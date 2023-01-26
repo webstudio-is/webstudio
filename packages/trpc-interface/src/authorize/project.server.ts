@@ -35,7 +35,7 @@ export const beforeProjectCreate = async (
 export const hasProjectPermit = async (
   props: {
     projectId: string;
-    permit: "view" | "edit";
+    permit: "view" | "edit" | "own";
   },
   context: AppContext
 ) => {
@@ -44,6 +44,11 @@ export const hasProjectPermit = async (
 
   const checks = [];
   const namespace = "Project";
+
+  // Allow load production build env i.e. "published" site
+  if (props.permit === "view" && context.authorization.buildEnv === "prod") {
+    return true;
+  }
 
   // Edge case to allow access on canvas
   if (

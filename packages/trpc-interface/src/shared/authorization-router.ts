@@ -124,6 +124,61 @@ export const authorizationRouter = router({
       }
     }),
 
+  delete: procedure
+    .input(
+      z.discriminatedUnion("namespace", [
+        z.object({
+          namespace: z.literal("Project"),
+          id: z.string(),
+          relation: z.enum(["viewers", "editors", "owner"]),
+
+          subjectSet: z.discriminatedUnion("namespace", [
+            z.object({
+              namespace: z.literal("User"),
+              id: z.string(),
+            }),
+            z.object({
+              namespace: z.literal("Token"),
+              id: z.string(),
+            }),
+            z.object({
+              namespace: z.literal("Email"),
+              id: z.string(),
+              relation: z.literal("owner"),
+            }),
+          ]),
+        }),
+
+        z.object({
+          namespace: z.literal("Email"),
+          id: z.string(),
+          relation: z.enum(["owner"]),
+          subjectSet: z.object({
+            namespace: z.literal("User"),
+            id: z.string(),
+          }),
+        }),
+      ])
+    )
+    .mutation(async ({ input }) => {
+      const { namespace, id, relation, subjectSet } = input;
+      if (namespace === "Project") {
+        if (subjectSet.namespace === "Token") {
+          if (relation === "owner") {
+            throw new Error("Token relation owner is prohibited");
+          }
+
+          await prisma.authorizationTokens.deleteMany({
+            where: {
+              projectId: id,
+              token: subjectSet.id,
+              permit: relation === "viewers" ? "VIEW" : "EDIT",
+            },
+          });
+        }
+      }
+    }),
+
   check: procedure
     .input(
       z.object({

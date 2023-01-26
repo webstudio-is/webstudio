@@ -7,6 +7,8 @@ type AuthorizationContext = {
   userId: string | undefined;
   // Check if special link with token allows to access the project
   token: string | undefined;
+  // buildEnv see prisma Build isDev isProd
+  buildEnv: "dev" | "prod";
   // Pass trpcClient through context as only main app can initialize it
   authorizeTrpc: TrpcInterfaceClient["authorize"];
 };

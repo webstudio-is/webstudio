@@ -1,5 +1,4 @@
 import { redirect, type LoaderArgs } from "@remix-run/node";
-import type { User } from "@webstudio-is/prisma-client";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
 import { findAuthenticatedUser } from "~/services/auth.server";
@@ -9,20 +8,18 @@ import { createContext } from "~/shared/context.server";
 
 const ensureProject = async (
   {
-    userId,
     domain,
   }: {
-    userId: User["id"];
     domain: string;
   },
   context: AppContext
 ): Promise<Project> => {
-  const projects = await projectDb.project.loadManyByUserId(userId, context);
+  const projects = await projectDb.project.loadManyByCurrentUserId(context);
   if (projects.length !== 0) {
     return projects[0];
   }
 
-  return await projectDb.project.cloneByDomain(domain, userId, context);
+  return await projectDb.project.cloneByDomain(domain, context);
 };
 
 /**
@@ -54,7 +51,6 @@ export const loader = async ({ request, params }: LoaderArgs) => {
   try {
     const project = await ensureProject(
       {
-        userId: user.id,
         domain: params.domain,
       },
       context

@@ -3,6 +3,7 @@ import { z } from "zod";
 import * as cryptoJson from "./crypto/crypto-json.server";
 import { authenticator } from "~/services/auth.server";
 import { trpcClient } from "~/services/trpc.server";
+import { getMode } from "./router-utils/build-params";
 
 const ReadToken = z.object({
   projectId: z.string(),
@@ -14,6 +15,9 @@ const createAuthorizationContext = async (
   request: Request
 ): Promise<AppContext["authorization"]> => {
   const url = new URL(request.url);
+
+  const buildMode = getMode(url);
+
   const readTokenRaw = url.searchParams.get("readToken") ?? undefined;
   const token = url.searchParams.get("token") ?? url.hostname;
 
@@ -34,6 +38,7 @@ const createAuthorizationContext = async (
     userId: user?.id,
     readToken,
     token,
+    buildEnv: buildMode === "published" ? "prod" : "dev",
     authorizeTrpc: trpcClient.authorize,
   };
 
