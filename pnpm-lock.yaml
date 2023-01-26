@@ -146,7 +146,7 @@ importers:
       remix-auth-github: ^1.1.1
       remix-auth-google: ^1.1.0
       remix-utils: ^4.1.0
-      shallow-equal: ^1.2.1
+      shallow-equal: ^3.0.0
       slugify: ^1.6.5
       typescript: 4.7.4
       use-debounce: ^9.0.2
@@ -225,7 +225,7 @@ importers:
       remix-auth-github: 1.1.1_xwzgzw5pppjvklzjkjpfcyhkre
       remix-auth-google: 1.1.0_vfjkmpgf2kafw3snxw2uyzxrma
       remix-utils: 4.1.0_p7gsab2odbjrdioff2iqwg35mm
-      shallow-equal: 1.2.1
+      shallow-equal: 3.0.0
       slugify: 1.6.5
       use-debounce: 9.0.2_react@17.0.2
       uuid: 9.0.0
@@ -19947,8 +19947,8 @@ packages:
     dependencies:
       kind-of: 6.0.3
 
-  /shallow-equal/1.2.1:
-    resolution: {integrity: sha512-S4vJDjHHMBaiZuT9NPb616CSmLf618jawtv3sufLl6ivK8WocjAo58cXwbRV1cgqxH0Qbv+iUt6m05eqEa2IRA==}
+  /shallow-equal/3.0.0:
+    resolution: {integrity: sha512-RQCWw09DuoLI8FSuACf3Pba1MJWCXMVXOuGQlZ5pmhxwq1KawCOIwggrIlUTtFyHkyc9aJMBb7nA4X19Tmv8qw==}
     dev: false
 
   /sharp/0.30.7:
