@@ -7,30 +7,53 @@ import React, { forwardRef, type Ref, type ComponentProps } from "react";
 import { typography } from "./typography";
 import { styled, theme } from "../stitches.config";
 
+const variants = [
+  "primary",
+  "destructive",
+  "positive",
+  "neutral",
+  "ghost",
+] as const;
+
+type Variant = typeof variants[number];
+
+const bg: Record<Variant, string> = {
+  primary: theme.colors.backgroundPrimary,
+  neutral: theme.colors.backgroundNeutralMain,
+  destructive: theme.colors.backgroundDestructiveMain,
+  positive: theme.colors.backgroundSuccessMain,
+  ghost: theme.colors.backgroundHover,
+};
+
+const fg: Record<Variant, string> = {
+  primary: theme.colors.foregroundContrastMain,
+  destructive: theme.colors.foregroundContrastMain,
+  positive: theme.colors.foregroundContrastMain,
+  neutral: theme.colors.foregroundMain,
+  ghost: theme.colors.foregroundMain,
+} as const;
+
 // CSS supports multiple gradients as backgrounds but not multiple colors
-const backgroundColors = ({
-  overlay,
-  base,
-}: {
-  overlay: string;
-  base: string;
-}) =>
+const backgroundColors = (base: string, overlay: string) =>
   `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
 
-const backgroundStyle = (baseColor: string) => ({
-  background: baseColor,
+const presedStyle = (variant: Variant) => ({
+  background: backgroundColors(
+    bg[variant],
+    theme.colors.backgroundButtonPressed
+  ),
+});
+
+const varianStyle = (variant: Variant) => ({
+  background: bg[variant],
+  color: fg[variant],
   "&:hover": {
-    background: backgroundColors({
-      base: baseColor,
-      overlay: theme.colors.backgroundButtonHover,
-    }),
+    background: backgroundColors(
+      bg[variant],
+      theme.colors.backgroundButtonHover
+    ),
   },
-  "&:active": {
-    background: backgroundColors({
-      base: baseColor,
-      overlay: theme.colors.backgroundButtonPressed,
-    }),
-  },
+  "&:active": presedStyle(variant),
 });
 
 const StyledButton = styled("button", {
@@ -41,7 +64,6 @@ const StyledButton = styled("button", {
   alignItems: "center",
   justifyContent: "center",
   gap: theme.spacing[2],
-  color: theme.colors.foregroundContrastMain,
   padding: `0 ${theme.spacing[4]}`,
   height: theme.spacing[12],
   borderRadius: theme.borderRadius[4],
@@ -55,25 +77,14 @@ const StyledButton = styled("button", {
     // "variant" is used instead of "type" as in Figma,
     // because type is already taken for type=submit etc.
     variant: {
-      primary: { ...backgroundStyle(theme.colors.backgroundPrimary) },
-      neutral: {
-        ...backgroundStyle(theme.colors.backgroundNeutralMain),
-        color: theme.colors.foregroundMain,
-      },
-      destructive: {
-        ...backgroundStyle(theme.colors.backgroundDestructiveMain),
-      },
-      positive: { ...backgroundStyle(theme.colors.backgroundSuccessMain) },
-      ghost: {
-        ...backgroundStyle(theme.colors.backgroundHover),
-        background: "transparent",
-        color: theme.colors.foregroundMain,
-      },
+      primary: varianStyle("primary"),
+      destructive: varianStyle("destructive"),
+      positive: varianStyle("positive"),
+      neutral: varianStyle("neutral"),
+      ghost: { ...varianStyle("ghost"), background: "transparent" },
     },
     pending: {
-      true: {
-        cursor: "wait",
-      },
+      true: { cursor: "wait" },
       false: {
         "&[disabled]": {
           background: theme.colors.backgroundButtonDisabled,
@@ -81,7 +92,16 @@ const StyledButton = styled("button", {
         },
       },
     },
+
+    // styles are defined in "compoundVariants"
+    pressed: { true: {} },
   },
+
+  compoundVariants: variants.map((variant) => ({
+    pressed: true,
+    variant,
+    css: { ...presedStyle(variant), "&:hover": presedStyle(variant) },
+  })),
 
   defaultVariants: {
     variant: "primary",

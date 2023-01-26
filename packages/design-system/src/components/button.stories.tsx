@@ -95,4 +95,5 @@ Button.argTypes = {
   },
   disabled: { defaultValue: false, control: "boolean" },
   pending: { defaultValue: false, control: "boolean" },
+  pressed: { defaultValue: false, control: "boolean" },
 };
