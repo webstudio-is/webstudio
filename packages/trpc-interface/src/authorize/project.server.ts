@@ -23,7 +23,7 @@ export const beforeProjectCreate = async (
   await authorizeTrpc.create.mutate({
     namespace: "Project",
     id: props.projectId,
-    relation: "viewer",
+    relation: "viewers",
     subjectSet: {
       namespace: "Token",
       // Random token

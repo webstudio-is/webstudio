@@ -16,22 +16,13 @@ export const authorizationRouter = router({
     )
     .output(
       z.array(
-        z.union([
-          z.object({
-            // top level relation
-            relation: z.enum(["owner", "editor", "viewer"]),
-            // subjectSet
-            namespace: z.enum(["Email", "User"]),
-            id: z.string(),
-          }),
-          z.object({
-            // top level relation
-            relation: z.enum(["editor", "viewer"]),
-            // subjectSet
-            namespace: z.enum(["Token"]),
-            id: z.string(),
-          }),
-        ])
+        z.object({
+          // top level relation
+          relation: z.enum(["owner", "editors", "viewers"]),
+          // subjectSet
+          namespace: z.enum(["Email", "User", "Token"]),
+          id: z.string(),
+        })
       )
     )
     .query(async ({ input }) => {
@@ -71,7 +62,7 @@ export const authorizationRouter = router({
         leafSubjectSets.push({
           namespace: "Token",
           id: tokenRow.token,
-          relation: tokenRow.permit === "EDIT" ? "editor" : "viewer",
+          relation: tokenRow.permit === "EDIT" ? "editors" : "viewers",
         } as const);
       }
 
@@ -84,7 +75,7 @@ export const authorizationRouter = router({
         z.object({
           namespace: z.literal("Project"),
           id: z.string(),
-          relation: z.enum(["viewer", "editor", "owner"]),
+          relation: z.enum(["viewers", "editors", "owner"]),
 
           subjectSet: z.discriminatedUnion("namespace", [
             z.object({
@@ -126,7 +117,7 @@ export const authorizationRouter = router({
             data: {
               projectId: id,
               token: subjectSet.id,
-              permit: relation === "viewer" ? "VIEW" : "EDIT",
+              permit: relation === "viewers" ? "VIEW" : "EDIT",
             },
           });
         }

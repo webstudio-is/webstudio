@@ -268,7 +268,7 @@ export type DesignerProps = {
   buildId: string;
   buildOrigin: string;
   readToken: string;
-  sharedTokens: { token: string; relation: "viewer" | "editor" }[];
+  sharedTokens: { token: string; relation: "viewers" | "editors" | "owner" }[];
 };
 
 export const Designer = ({
