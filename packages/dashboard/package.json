@@ -16,6 +16,7 @@
   "dependencies": {
     "@webstudio-is/project": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
+    "@webstudio-is/trpc-interface": "workspace:^",
     "zod": "^3.19.1"
   },
   "devDependencies": {

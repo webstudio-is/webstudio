@@ -2,18 +2,23 @@ import slugify from "slugify";
 import { customAlphabet } from "nanoid";
 import { User, prisma, Prisma, Project } from "@webstudio-is/prisma-client";
 import * as db from "./index";
+import type { AppContext } from "@webstudio-is/trpc-interface/server";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
 export const loadByParams = async (
-  params: { projectId: string } | { projectDomain: string }
+  params: { projectId: string } | { projectDomain: string },
+  context: AppContext
 ) => {
   return "projectId" in params
-    ? await loadById(params.projectId)
-    : await loadByDomain(params.projectDomain);
+    ? await loadById(params.projectId, context)
+    : await loadByDomain(params.projectDomain, context);
 };
 
-export const loadById = async (projectId?: Project["id"]) => {
+export const loadById = async (
+  projectId: Project["id"],
+  context: AppContext
+) => {
   if (typeof projectId !== "string") {
     throw new Error("Project ID required");
   }
@@ -23,14 +28,18 @@ export const loadById = async (projectId?: Project["id"]) => {
   });
 };
 
-export const loadByDomain = async (domain: string): Promise<Project | null> => {
+export const loadByDomain = async (
+  domain: string,
+  context: AppContext
+): Promise<Project | null> => {
   return await prisma.project.findUnique({
     where: { domain: domain.toLowerCase() },
   });
 };
 
 export const loadManyByUserId = async (
-  userId: User["id"]
+  userId: User["id"],
+  context: AppContext
 ): Promise<Array<Project>> => {
   return await prisma.project.findMany({
     where: {
@@ -58,10 +67,16 @@ const generateDomain = (title: string) => {
 
 export const create = async (
   { title }: { title: string },
-  { userId }: { userId: string }
+  context: AppContext
 ) => {
   if (title.length < MIN_TITLE_LENGTH) {
     return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
+  }
+
+  const userId = context.authorization.userId;
+
+  if (userId === undefined) {
+    throw new Error("User ID is required to create project");
   }
 
   const project = await prisma.$transaction(async (client) => {
@@ -81,20 +96,26 @@ export const create = async (
   return project;
 };
 
-export const markAsDeleted = async (projectId: Project["id"]) => {
+export const markAsDeleted = async (
+  projectId: Project["id"],
+  context: AppContext
+) => {
   return await prisma.project.update({
     where: { id: projectId },
     data: { isDeleted: true },
   });
 };
 
-export const rename = async ({
-  projectId,
-  title,
-}: {
-  projectId: Project["id"];
-  title: string;
-}) => {
+export const rename = async (
+  {
+    projectId,
+    title,
+  }: {
+    projectId: Project["id"];
+    title: string;
+  },
+  context: AppContext
+) => {
   if (title.length < MIN_TITLE_LENGTH) {
     return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
   }
@@ -105,17 +126,20 @@ export const rename = async ({
   });
 };
 
-const clone = async ({
-  project,
-  userId,
-  title,
-  env = "dev",
-}: {
-  project: Project;
-  userId?: string;
-  title?: string;
-  env?: "dev" | "prod";
-}) => {
+const clone = async (
+  {
+    project,
+    userId,
+    title,
+    env = "dev",
+  }: {
+    project: Project;
+    userId?: string;
+    title?: string;
+    env?: "dev" | "prod";
+  },
+  context: AppContext
+) => {
   const build =
     env === "dev"
       ? await db.build.loadByProjectId(project.id, "dev")
@@ -138,32 +162,42 @@ const clone = async ({
   return clonedProject;
 };
 
-export const duplicate = async (projectId: string) => {
-  const project = await loadById(projectId);
+export const duplicate = async (projectId: string, context: AppContext) => {
+  const project = await loadById(projectId, context);
   if (project === null) {
     throw new Error(`Not found project "${projectId}"`);
   }
-  return await clone({
-    project,
-    title: `${project.title} (copy)`,
-  });
+  return await clone(
+    {
+      project,
+      title: `${project.title} (copy)`,
+    },
+    context
+  );
 };
 
-export const cloneByDomain = async (domain: string, userId: string) => {
-  const project = await loadByDomain(domain);
+export const cloneByDomain = async (
+  domain: string,
+  userId: string,
+  context: AppContext
+) => {
+  const project = await loadByDomain(domain, context);
   if (project === null) {
     throw new Error(`Not found project "${domain}"`);
   }
-  return await clone({ project, userId, env: "prod" });
+  return await clone({ project, userId, env: "prod" }, context);
 };
 
-export const update = async ({
-  id,
-  ...data
-}: {
-  id: string;
-  domain?: string;
-}) => {
+export const update = async (
+  {
+    id,
+    ...data
+  }: {
+    id: string;
+    domain?: string;
+  },
+  context: AppContext
+) => {
   if (data.domain) {
     data.domain = slugify(data.domain, slugifyOptions);
     if (data.domain.length < MIN_DOMAIN_LENGTH) {

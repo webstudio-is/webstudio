@@ -10,20 +10,20 @@ export const projectRouter = router({
         projectId: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       // @todo pass ctx for authorization
-      return await db.project.rename(input);
+      return await db.project.rename(input, ctx);
     }),
   delete: procedure
     .input(z.object({ projectId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       // @todo pass ctx for authorization
-      return await db.project.markAsDeleted(input.projectId);
+      return await db.project.markAsDeleted(input.projectId, ctx);
     }),
   duplicate: procedure
     .input(z.object({ projectId: z.string() }))
-    .mutation(async ({ input }) => {
-      return await db.project.duplicate(input.projectId);
+    .mutation(async ({ input, ctx }) => {
+      return await db.project.duplicate(input.projectId, ctx);
     }),
   create: procedure
     .input(z.object({ title: z.string() }))

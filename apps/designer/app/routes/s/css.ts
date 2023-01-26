@@ -4,16 +4,18 @@ import { getBuildParams } from "~/shared/router-utils";
 import env from "~/env.server";
 import { sentryException } from "~/shared/sentry";
 import { generateCssText } from "~/shared/css-utils";
+import { createContext } from "~/shared/context.server";
 
 export const loader = async ({ request }: ActionArgs) => {
   try {
     const buildParams = getBuildParams(request);
+    const context = await createContext(request);
 
     if (buildParams === undefined) {
       throw json("Required project info", { status: 400 });
     }
 
-    const cssText = await generateCssText(buildParams);
+    const cssText = await generateCssText(buildParams, context);
 
     return new Response(cssText, {
       headers: {

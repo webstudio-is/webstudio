@@ -4,20 +4,25 @@ import { db as projectDb } from "@webstudio-is/project/server";
 import { type Project } from "@webstudio-is/project";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { designerPath, loginPath } from "~/shared/router-utils";
+import type { AppContext } from "@webstudio-is/trpc-interface/server";
+import { createContext } from "~/shared/context.server";
 
-const ensureProject = async ({
-  userId,
-  domain,
-}: {
-  userId: User["id"];
-  domain: string;
-}): Promise<Project> => {
-  const projects = await projectDb.project.loadManyByUserId(userId);
+const ensureProject = async (
+  {
+    userId,
+    domain,
+  }: {
+    userId: User["id"];
+    domain: string;
+  },
+  context: AppContext
+): Promise<Project> => {
+  const projects = await projectDb.project.loadManyByUserId(userId, context);
   if (projects.length !== 0) {
     return projects[0];
   }
 
-  return await projectDb.project.cloneByDomain(domain, userId);
+  return await projectDb.project.cloneByDomain(domain, userId, context);
 };
 
 /**
@@ -44,11 +49,16 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     );
   }
 
+  const context = await createContext(request);
+
   try {
-    const project = await ensureProject({
-      userId: user.id,
-      domain: params.domain,
-    });
+    const project = await ensureProject(
+      {
+        userId: user.id,
+        domain: params.domain,
+      },
+      context
+    );
 
     return redirect(designerPath({ projectId: project.id }));
   } catch (error: unknown) {

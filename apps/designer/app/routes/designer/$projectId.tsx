@@ -5,7 +5,7 @@ import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
-import { createReadToken } from "~/shared/context.server";
+import { createContext, createReadToken } from "~/shared/context.server";
 import { trpcClient } from "~/services/trpc.server";
 
 export { links };
@@ -18,10 +18,12 @@ export const loader = async ({
     throw new Error("Project id undefined");
   }
 
+  const context = await createContext(request);
+
   const url = new URL(request.url);
   const pageIdParam = url.searchParams.get("pageId");
 
-  const project = await db.project.loadById(params.projectId);
+  const project = await db.project.loadById(params.projectId, context);
 
   if (project === null) {
     throw new Error(`Project "${params.projectId}" not found`);
