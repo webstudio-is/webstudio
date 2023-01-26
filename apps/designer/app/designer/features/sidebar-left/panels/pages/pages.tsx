@@ -8,6 +8,8 @@ import {
   Flex,
   Tooltip,
   Box,
+  Button,
+  theme,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import {
@@ -29,7 +31,6 @@ import {
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
 import { designerPath } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -204,13 +205,12 @@ const PagesPanel = ({
           <>
             {onCreateNewPage && (
               <Tooltip content="New page" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
-                >
-                  <NewPageIcon />
-                </DeprecatedIconButton>
+                  prefix={<NewPageIcon />}
+                  variant="ghost"
+                />
               </Tooltip>
             )}
             {onClose && <CloseButton onClick={onClose} />}

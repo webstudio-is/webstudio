@@ -1,5 +1,4 @@
 import {
-  DeprecatedIconButton,
   Button,
   Box,
   DeprecatedLabel,
@@ -14,7 +13,7 @@ import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { type Pages, utils as projectUtils } from "@webstudio-is/project";
 import type { ZodError } from "zod";
-import { Header } from "../../lib/header";
+import { Header, HeaderSuffixSpacer } from "../../lib/header";
 import { useState, useCallback, ComponentProps } from "react";
 import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
@@ -256,12 +255,6 @@ export const NewPageSettings = ({
   );
 };
 
-const ButtonContainer = styled("div", {
-  ml: theme.spacing[5],
-  display: "flex",
-  alignItems: "center",
-});
-
 const NewPageSettingsView = ({
   onSubmit,
   isSubmitting,
@@ -280,23 +273,21 @@ const NewPageSettingsView = ({
           <>
             {onClose && (
               <Tooltip content="Cancel" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
                   onClick={onClose}
                   aria-label="Cancel"
+                  prefix={<ChevronDoubleLeftIcon />}
+                  variant="ghost"
                   // Tab should go:
                   //   trought form fields -> create button -> cancel button
                   tabIndex={3}
-                >
-                  <ChevronDoubleLeftIcon />
-                </DeprecatedIconButton>
+                />
               </Tooltip>
             )}
-            <ButtonContainer>
-              <Button pending={isSubmitting} onClick={onSubmit} tabIndex={2}>
-                {isSubmitting ? "Creating" : "Create page"}
-              </Button>
-            </ButtonContainer>
+            <HeaderSuffixSpacer />
+            <Button pending={isSubmitting} onClick={onSubmit} tabIndex={2}>
+              {isSubmitting ? "Creating" : "Create page"}
+            </Button>
           </>
         }
       />
@@ -461,26 +452,24 @@ const PageSettingsView = ({
           <>
             {isHomePage === false && (
               <Tooltip content="Delete page" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
+                  variant="ghost"
+                  prefix={<TrashIcon />}
                   onClick={onDelete}
                   aria-label="Delete page"
                   tabIndex={2}
-                >
-                  <TrashIcon />
-                </DeprecatedIconButton>
+                />
               </Tooltip>
             )}
             {onClose && (
               <Tooltip content="Close page settings" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
+                  variant="ghost"
+                  prefix={<ChevronDoubleLeftIcon />}
                   onClick={onClose}
                   aria-label="Close page settings"
                   tabIndex={2}
-                >
-                  <ChevronDoubleLeftIcon />
-                </DeprecatedIconButton>
+                />
               </Tooltip>
             )}
           </>

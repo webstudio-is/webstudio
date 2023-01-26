@@ -56,3 +56,4 @@ export * from "./components/__DEPRECATED__/text";
 export * from "./components/text";
 export * from "./components/list";
 export * from "./components/typography";
+export * from "./components/title";
