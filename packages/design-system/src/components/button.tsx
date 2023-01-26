@@ -31,29 +31,17 @@ const fg: Record<Variant, string> = {
   positive: theme.colors.foregroundContrastMain,
   neutral: theme.colors.foregroundMain,
   ghost: theme.colors.foregroundMain,
-} as const;
+};
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
 const backgroundColors = (base: string, overlay: string) =>
   `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
 
-const presedStyle = (variant: Variant) => ({
+const pressedStyle = (variant: Variant) => ({
   background: backgroundColors(
     bg[variant],
     theme.colors.backgroundButtonPressed
   ),
-});
-
-const varianStyle = (variant: Variant) => ({
-  background: bg[variant],
-  color: fg[variant],
-  "&:hover": {
-    background: backgroundColors(
-      bg[variant],
-      theme.colors.backgroundButtonHover
-    ),
-  },
-  "&:active": presedStyle(variant),
 });
 
 const StyledButton = styled("button", {
@@ -74,34 +62,45 @@ const StyledButton = styled("button", {
   },
 
   variants: {
-    // "variant" is used instead of "type" as in Figma,
-    // because type is already taken for type=submit etc.
+    // in Figma this property is called "color"
     variant: {
-      primary: varianStyle("primary"),
-      destructive: varianStyle("destructive"),
-      positive: varianStyle("positive"),
-      neutral: varianStyle("neutral"),
-      ghost: { ...varianStyle("ghost"), background: "transparent" },
+      primary: { background: bg.primary, color: fg.primary },
+      destructive: { background: bg.destructive, color: fg.destructive },
+      positive: { background: bg.positive, color: fg.positive },
+      neutral: { background: bg.neutral, color: fg.neutral },
+      ghost: { background: "transparent", color: fg.ghost },
     },
-    pending: {
-      true: { cursor: "wait" },
-      false: {
+    pending: { true: { cursor: "wait" } },
+    pressed: { true: {} },
+  },
+
+  compoundVariants: [
+    ...variants.map((variant) => ({
+      pressed: true,
+      variant,
+      css: {
+        ...pressedStyle(variant),
+        "&:not([disabled]):hover": pressedStyle(variant),
+      },
+    })),
+    ...variants.map((variant) => ({
+      pending: false,
+      variant,
+      css: {
+        "&:hover": {
+          background: backgroundColors(
+            bg[variant],
+            theme.colors.backgroundButtonHover
+          ),
+        },
+        "&:active": pressedStyle(variant),
         "&[disabled]": {
           background: theme.colors.backgroundButtonDisabled,
           color: theme.colors.foregroundDisabled,
         },
       },
-    },
-
-    // styles are defined in "compoundVariants"
-    pressed: { true: {} },
-  },
-
-  compoundVariants: variants.map((variant) => ({
-    pressed: true,
-    variant,
-    css: { ...presedStyle(variant), "&:hover": presedStyle(variant) },
-  })),
+    })),
+  ],
 
   defaultVariants: {
     variant: "primary",
@@ -126,6 +125,7 @@ export const Button = forwardRef(
     {
       pending = false,
       disabled = false,
+      pressed = false,
       prefix,
       suffix,
       children,
@@ -138,6 +138,7 @@ export const Button = forwardRef(
         {...restProps}
         pending={pending}
         disabled={disabled || pending}
+        pressed={pressed}
         ref={ref}
       >
         {prefix}
