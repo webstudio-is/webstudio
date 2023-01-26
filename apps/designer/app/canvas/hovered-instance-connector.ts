@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import debounce from "lodash.debounce";
-import { type ComponentName, idAttribute } from "@webstudio-is/react-sdk";
+import { idAttribute } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceIdStore,
   hoveredInstanceOutlineStore,
@@ -53,7 +53,7 @@ const startHoveredInstanceConnection = () => {
     }
     hoveredInstanceOutlineStore.set({
       // store component in outline to show correct label when hover over elements fast
-      component: component as ComponentName,
+      component: component,
       rect: element.getBoundingClientRect(),
     });
   }, 50);

@@ -1,14 +1,10 @@
 import { jest, describe, test, expect } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
-import {
-  getComponentMeta,
-  type ComponentName,
-  type Instance,
-} from "@webstudio-is/react-sdk";
+import { getComponentMeta, type Instance } from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
 import { usePropsLogic } from "./use-props-logic";
 
-const getSelectedInstance = (componentName: ComponentName): Instance => {
+const getSelectedInstance = (componentName: string): Instance => {
   return {
     type: "instance",
     id: nanoid(8),
@@ -176,14 +172,14 @@ describe("usePropsLogic", () => {
 
     const propNames = result.current.userProps.map((userProp) => userProp.name);
 
-    expect(imgMeta.initialProps).toEqual(
-      propNames.slice(0, imgMeta.initialProps?.length ?? 0)
+    expect(imgMeta?.initialProps).toEqual(
+      propNames.slice(0, imgMeta?.initialProps?.length ?? 0)
     );
 
-    expect(propNames.slice(imgMeta.initialProps?.length ?? 0)).toEqual(
+    expect(propNames.slice(imgMeta?.initialProps?.length ?? 0)).toEqual(
       result.current.userProps
         .filter(
-          (userProp) => imgMeta.initialProps?.includes(userProp.name) === false
+          (userProp) => imgMeta?.initialProps?.includes(userProp.name) === false
         )
         .map((userProp) => userProp.name)
     );

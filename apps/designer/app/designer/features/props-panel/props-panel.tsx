@@ -143,7 +143,7 @@ const Property = ({
   required,
   existingProps,
 }: PropertyProps) => {
-  const metaProps = getComponentMetaProps(component);
+  const metaProps = getComponentMetaProps(component) ?? {};
 
   const argType = metaProps[userProp.name as keyof typeof metaProps];
   const isInvalid =

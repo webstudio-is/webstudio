@@ -1,10 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  type Instance,
-  getComponentMeta,
-  getComponentNames,
-} from "@webstudio-is/react-sdk";
+import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
 import {
   selectedInstanceIdStore,
   useRootInstance,
@@ -63,25 +59,24 @@ export const useTrackSelectedElement = () => {
       if (editingInstanceIdRef.current === id) {
         return;
       }
-      const components = getComponentNames();
 
       // It's the second click in a double click.
       if (event.detail === 2) {
         const component = dataset.wsComponent as Instance["component"];
-        if (component === undefined || !components.includes(component)) {
+        if (component === undefined) {
           return;
         }
-        const { type } = getComponentMeta(component);
+        const meta = getComponentMeta(component);
 
         // When user double clicks on an inline instance, we need to select the parent instance and put it indo text editing mode.
         // Inline instances are not editable directly, only through parent instance.
-        if (type === "rich-text-child") {
+        if (meta?.type === "rich-text-child") {
           const parent =
             rootInstance &&
             utils.tree.findClosestNonInlineParent(rootInstance, id);
           if (
             parent &&
-            getComponentMeta(parent.component).type === "rich-text"
+            getComponentMeta(parent.component)?.type === "rich-text"
           ) {
             selectedInstanceIdStore.set(parent.id);
             setEditingInstanceId(parent.id);
@@ -89,7 +84,7 @@ export const useTrackSelectedElement = () => {
           return;
         }
 
-        if (type === "rich-text") {
+        if (meta?.type === "rich-text") {
           setEditingInstanceId(id);
         }
       }

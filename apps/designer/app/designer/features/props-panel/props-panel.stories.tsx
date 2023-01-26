@@ -73,7 +73,7 @@ export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
   );
 };
 
-const meta = getComponentMetaProps("Button");
+const meta = getComponentMetaProps("Button") ?? {};
 
 export const AllProps: ComponentStory<typeof PropsPanel> = () => {
   allUserPropsContainer.set({

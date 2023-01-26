@@ -125,8 +125,8 @@ export const useShortcuts = () => {
       if (selectedInstance === undefined) {
         return;
       }
-      const { type } = getComponentMeta(selectedInstance.component);
-      if (type === "rich-text") {
+      const meta = getComponentMeta(selectedInstance.component);
+      if (meta?.type === "rich-text") {
         // Prevents inserting a newline when entering text-editing mode
         event.preventDefault();
         setEditingInstanceId(selectedInstance.id);

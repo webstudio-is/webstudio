@@ -77,11 +77,14 @@ type LabelProps = {
 
 export const Label = ({ component, instanceRect }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
-  const { Icon, label } = getComponentMeta(component);
+  const meta = getComponentMeta(component);
+  if (meta === undefined) {
+    return <></>;
+  }
   return (
     <LabelContainer position={position} ref={labelRef}>
-      <Icon width="1em" height="1em" />
-      {label}
+      <meta.Icon width="1em" height="1em" />
+      {meta.label}
     </LabelContainer>
   );
 };

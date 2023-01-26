@@ -37,7 +37,7 @@ export const generateCssText = async (buildParams: BuildParams) => {
 
   for (const component of getComponentNames()) {
     const meta = getComponentMeta(component);
-    const presetStyle = meta.presetStyle;
+    const presetStyle = meta?.presetStyle;
     if (presetStyle !== undefined) {
       engine.addStyleRule(`[data-ws-component=${component}]`, {
         style: presetStyle,

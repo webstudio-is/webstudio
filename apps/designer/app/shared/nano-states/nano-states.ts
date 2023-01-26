@@ -1,6 +1,6 @@
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { ComponentName, Instance, Styles } from "@webstudio-is/react-sdk";
+import type { Instance, Styles } from "@webstudio-is/react-sdk";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
@@ -109,7 +109,7 @@ export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
   undefined
 );
 export const hoveredInstanceOutlineStore = atom<
-  undefined | { component: ComponentName; rect: DOMRect }
+  undefined | { component: string; rect: DOMRect }
 >(undefined);
 
 const isPreviewModeContainer = atom<boolean>(false);

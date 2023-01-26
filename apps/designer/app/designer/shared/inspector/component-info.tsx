@@ -16,7 +16,7 @@ export const ComponentInfo = ({
           fontWeight: "500",
         }}
       >{`Selected: ${
-        getComponentMeta(selectedInstance.component).label
+        getComponentMeta(selectedInstance.component)?.label
       }`}</Text>
     </Flex>
   );

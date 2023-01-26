@@ -31,7 +31,10 @@ export const ComponentThumb = forwardRef<
   ElementRef<typeof Thumb>,
   ComponentThumbProps
 >(({ component, ...rest }, ref) => {
-  const { Icon, label } = getComponentMeta(component);
+  const meta = getComponentMeta(component);
+  if (meta === undefined) {
+    return null;
+  }
   return (
     <Thumb
       direction="column"
@@ -41,8 +44,8 @@ export const ComponentThumb = forwardRef<
       ref={ref}
       {...rest}
     >
-      <Icon width={30} height={30} />
-      <Text>{label}</Text>
+      <meta.Icon width={30} height={30} />
+      <Text>{meta.label}</Text>
     </Thumb>
   );
 });

@@ -40,6 +40,9 @@ export const WrapperComponent = ({
   ...rest
 }: WrapperComponentProps) => {
   const Component = getComponent(instance.component);
+  if (Component === undefined) {
+    return <></>;
+  }
   const userProps = useUserProps(instance.id);
   const props = {
     ...userProps,
