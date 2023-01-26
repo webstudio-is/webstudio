@@ -1,26 +1,44 @@
 import type { ComponentStory } from "@storybook/react";
 import { Panel } from "@webstudio-is/design-system";
+import { useState } from "react";
 import { ShareProject } from "./share-project2";
 
 export default {
   component: ShareProject,
 };
 
-const links = [
+const initialLinks = [
   {
-    url: "https://www.google.com",
-    name: "Custom link 1",
+    url: "https://url1.com",
+    name: "View Only",
+    permission: "view" as const,
   },
   {
-    url: "https://www.google.com",
-    name: "Custom link 2",
+    url: "https://url2.com",
+    name: "View and Edit",
+    permission: "edit" as const,
+  },
+  {
+    url: "https://url3.com",
+    name: "Build",
+    permission: "build" as const,
   },
 ];
 
 export const Share: ComponentStory<typeof ShareProject> = () => {
+  const [links, setLinks] = useState(initialLinks);
   return (
     <Panel css={{ width: "max-content" }}>
-      <ShareProject links={links} />
+      <ShareProject
+        links={links}
+        onChange={(updatedLink) => {
+          setLinks(
+            links.map((link) =>
+              link.url === updatedLink.url ? updatedLink : link
+            )
+          );
+        }}
+      />
     </Panel>
   );
 };
