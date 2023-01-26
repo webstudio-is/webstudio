@@ -13,6 +13,14 @@ const iconsMap = {
   "<TrashIcon>": <TrashIcon />,
 } as const;
 
+const variants: ReadonlyArray<
+  Extract<ComponentProps<typeof ButtonComponent>["variant"], string>
+> = ["primary", "neutral", "destructive", "positive", "ghost"];
+
+const states: ReadonlyArray<
+  Extract<ComponentProps<typeof ButtonComponent>["state"], string>
+> = ["auto", "hover", "focus", "pressed", "pending"];
+
 const Section = ({
   title,
   children,
@@ -43,15 +51,26 @@ export const Button = ({
       />
     </Section>
 
-    <Section title="Variants">
-      {variants.map((variant) => (
-        <ButtonComponent variant={variant} key={variant}>
-          {variant}
-        </ButtonComponent>
-      ))}
+    <Section title="Variants & States">
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {variants.map((variant) => (
+          <div key={variant} style={{ display: "flex", gap: 12 }}>
+            {states.map((state) => (
+              <ButtonComponent
+                prefix={<TrashIcon />}
+                state={state}
+                variant={variant}
+                key={state}
+              >
+                {variant} {state}
+              </ButtonComponent>
+            ))}
+          </div>
+        ))}
+      </div>
     </Section>
 
-    <Section title="With Icon">
+    <Section title="Icon">
       <ButtonComponent prefix={<TrashIcon />}>Button</ButtonComponent>
       <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
       <ButtonComponent prefix={<TrashIcon />} />
@@ -64,20 +83,8 @@ export const Button = ({
       </ButtonComponent>
       <ButtonComponent disabled prefix={<TrashIcon />} />
     </Section>
-
-    <Section title="Pending">
-      <ButtonComponent pending>Button</ButtonComponent>
-      <ButtonComponent pending prefix={<TrashIcon />}>
-        Button
-      </ButtonComponent>
-      <ButtonComponent pending prefix={<TrashIcon />} />
-    </Section>
   </>
 );
-
-const variants: ReadonlyArray<
-  Extract<ComponentProps<typeof ButtonComponent>["variant"], string>
-> = ["primary", "neutral", "destructive", "positive", "ghost"];
 
 Button.argTypes = {
   children: { defaultValue: "Button", control: "text" },
@@ -94,6 +101,11 @@ Button.argTypes = {
     control: { type: "inline-radio", options: Object.keys(iconsMap) },
   },
   disabled: { defaultValue: false, control: "boolean" },
-  pending: { defaultValue: false, control: "boolean" },
-  pressed: { defaultValue: false, control: "boolean" },
+  state: {
+    defaultValue: "auto",
+    control: {
+      type: "inline-radio",
+      options: states,
+    },
+  },
 };

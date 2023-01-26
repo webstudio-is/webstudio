@@ -7,6 +7,8 @@ import React, { forwardRef, type Ref, type ComponentProps } from "react";
 import { typography } from "./typography";
 import { styled, theme } from "../stitches.config";
 
+type State = "auto" | "hover" | "focus" | "pressed" | "pending";
+
 const variants = [
   "primary",
   "destructive",
@@ -37,11 +39,40 @@ const fg: Record<Variant, string> = {
 const backgroundColors = (base: string, overlay: string) =>
   `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
 
-const pressedStyle = (variant: Variant) => ({
-  background: backgroundColors(
-    bg[variant],
-    theme.colors.backgroundButtonPressed
-  ),
+const variantStyle = (variant: Variant) => ({
+  background: variant === "ghost" ? "transparent" : bg[variant],
+  color: fg[variant],
+
+  "&[data-button-state=auto]:hover:not([disabled]), &[data-button-state=hover]:not([disabled])":
+    {
+      background: backgroundColors(
+        bg[variant],
+        theme.colors.backgroundButtonHover
+      ),
+    },
+
+  "&[data-button-state=auto]:focus-visible:not([disabled]), &[data-button-state=focus]:not([disabled])":
+    {
+      outline: `2px solid ${theme.colors.borderFocus}`,
+      outlineOffset: "1px",
+    },
+
+  "&[data-button-state=auto]:active:not([disabled]), &[data-button-state=pressed]:not([disabled])":
+    {
+      background: backgroundColors(
+        bg[variant],
+        theme.colors.backgroundButtonPressed
+      ),
+    },
+
+  "&[disabled]:not([data-button-state=pending])": {
+    background: theme.colors.backgroundButtonDisabled,
+    color: theme.colors.foregroundDisabled,
+  },
+
+  "&[data-button-state=pending]": {
+    cursor: "wait",
+  },
 });
 
 const StyledButton = styled("button", {
@@ -56,51 +87,16 @@ const StyledButton = styled("button", {
   height: theme.spacing[12],
   borderRadius: theme.borderRadius[4],
 
-  "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: "1px",
-  },
-
   variants: {
     // in Figma this property is called "color"
     variant: {
-      primary: { background: bg.primary, color: fg.primary },
-      destructive: { background: bg.destructive, color: fg.destructive },
-      positive: { background: bg.positive, color: fg.positive },
-      neutral: { background: bg.neutral, color: fg.neutral },
-      ghost: { background: "transparent", color: fg.ghost },
+      primary: variantStyle("primary"),
+      destructive: variantStyle("destructive"),
+      positive: variantStyle("positive"),
+      neutral: variantStyle("neutral"),
+      ghost: variantStyle("ghost"),
     },
-    pending: { true: { cursor: "wait" } },
-    pressed: { true: {} },
   },
-
-  compoundVariants: [
-    ...variants.map((variant) => ({
-      pressed: true,
-      variant,
-      css: {
-        ...pressedStyle(variant),
-        "&:not([disabled]):hover": pressedStyle(variant),
-      },
-    })),
-    ...variants.map((variant) => ({
-      pending: false,
-      variant,
-      css: {
-        "&:hover": {
-          background: backgroundColors(
-            bg[variant],
-            theme.colors.backgroundButtonHover
-          ),
-        },
-        "&:active": pressedStyle(variant),
-        "&[disabled]": {
-          background: theme.colors.backgroundButtonDisabled,
-          color: theme.colors.foregroundDisabled,
-        },
-      },
-    })),
-  ],
 
   defaultVariants: {
     variant: "primary",
@@ -112,20 +108,22 @@ const TextContainer = styled("span", typography.labelTitleCase, {
 });
 
 type ButtonProps = {
-  pending?: boolean;
+  state?: State;
 
   // prefix/suffix is primarily for Icons
   // this is a replacement for icon/icon-left/icon-right in Figma
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
-} & Omit<ComponentProps<typeof StyledButton>, "pending" | "prefix">;
+} & Omit<
+  ComponentProps<typeof StyledButton>,
+  "pending" | "prefix" | "data-button-state"
+>;
 
 export const Button = forwardRef(
   (
     {
-      pending = false,
-      disabled = false,
-      pressed = false,
+      disabled,
+      state = "auto",
       prefix,
       suffix,
       children,
@@ -136,16 +134,15 @@ export const Button = forwardRef(
     return (
       <StyledButton
         {...restProps}
-        pending={pending}
-        disabled={disabled || pending}
-        pressed={pressed}
+        disabled={disabled || state === "pending"}
+        data-button-state={state}
         ref={ref}
       >
         {prefix}
         {children && (
           <TextContainer>
             {children}
-            {pending ? "…" : ""}
+            {state === "pending" ? "…" : ""}
           </TextContainer>
         )}
         {suffix}

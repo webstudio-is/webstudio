@@ -285,7 +285,11 @@ const NewPageSettingsView = ({
               </Tooltip>
             )}
             <HeaderSuffixSpacer />
-            <Button pending={isSubmitting} onClick={onSubmit} tabIndex={2}>
+            <Button
+              state={isSubmitting ? "pending" : "auto"}
+              onClick={onSubmit}
+              tabIndex={2}
+            >
               {isSubmitting ? "Creating" : "Create page"}
             </Button>
           </>
