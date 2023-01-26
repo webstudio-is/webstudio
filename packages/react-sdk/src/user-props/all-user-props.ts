@@ -1,7 +1,8 @@
 import { useRef } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { InstanceProps, Instance, PropsItem } from "../db";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import type { InstanceProps } from "../db";
 
 export type AllUserProps = {
   [id: Instance["id"]]: PropsItem[];

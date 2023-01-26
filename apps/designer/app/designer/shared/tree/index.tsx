@@ -7,7 +7,8 @@ import {
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
-import { getComponentMeta, Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 
 const instanceRelatedProps = {

@@ -1,7 +1,7 @@
 import { type ComponentProps, Fragment } from "react";
-import type { Instance } from "../db";
-import { WrapperComponent } from "./wrapper-component";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
+import type { Instance } from "@webstudio-is/project-build";
+import { WrapperComponent } from "./wrapper-component";
 import { SessionStoragePolyfill } from "./session-storage-polyfill";
 
 export type ChildrenUpdates = Array<

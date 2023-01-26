@@ -1,7 +1,7 @@
 import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
+import type { Instance } from "@webstudio-is/project-build";
 import {
-  type Instance,
   type ComponentName,
   getComponentMeta,
   getComponentNames,

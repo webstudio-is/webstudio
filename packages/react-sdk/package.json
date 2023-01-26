@@ -60,6 +60,7 @@
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
     "detect-font": "^0.1.5",
     "mitt": "^3.0.0",
     "nanostores": "^0.7.1",

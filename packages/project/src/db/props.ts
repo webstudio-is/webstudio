@@ -1,10 +1,6 @@
 import warnOnce from "warn-once";
-import {
-  type Tree,
-  type AllUserProps,
-  type InstanceProps,
-  StoredProps,
-} from "@webstudio-is/react-sdk";
+import { type Tree, StoredProps } from "@webstudio-is/project-build";
+import { type AllUserProps, type InstanceProps } from "@webstudio-is/react-sdk";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";

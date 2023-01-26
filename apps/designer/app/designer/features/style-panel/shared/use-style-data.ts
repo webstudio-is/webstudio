@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import store from "immerhin";
 import warnOnce from "warn-once";
-import type { Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
 import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";

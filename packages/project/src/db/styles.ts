@@ -3,7 +3,7 @@ import { type Patch, applyPatches } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import { StoredStyles, Styles } from "@webstudio-is/react-sdk";
+import { StoredStyles, Styles } from "@webstudio-is/project-build";
 
 const parseValue = (
   styleValue: StoredStyles[number]["value"],

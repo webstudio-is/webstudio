@@ -1,4 +1,5 @@
-import { Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { getInstancePath } from "./get-instance-path";
 
 export const findClosestNonInlineParent = (

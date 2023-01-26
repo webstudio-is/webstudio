@@ -1,14 +1,15 @@
+import type { ComponentProps } from "react";
+import type { Breakpoint } from "@webstudio-is/css-data";
+import type { DesignToken } from "@webstudio-is/design-tokens";
+import type { Tree } from "@webstudio-is/project-build";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import { useAllUserProps } from "../user-props/";
-import type { Tree, InstanceProps } from "../db";
+import type { InstanceProps } from "../db";
 import { createElementsTree } from "./create-elements-tree";
 import { WrapperComponent } from "./wrapper-component";
-import type { Asset } from "@webstudio-is/asset-uploader";
-import { type ComponentProps } from "react";
-import type { Breakpoint } from "@webstudio-is/css-data";
 import { registerComponents } from "../components";
 import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
-import type { DesignToken } from "@webstudio-is/design-tokens";
 
 export type Data = {
   tree: Tree | null;

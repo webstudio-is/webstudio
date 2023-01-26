@@ -6,8 +6,8 @@ import {
   useBreakpoints,
   useDesignTokens,
 } from "~/shared/nano-states";
+import type { Styles } from "@webstudio-is/project-build";
 import {
-  type Styles,
   getComponentMeta,
   getComponentNames,
   idAttribute,

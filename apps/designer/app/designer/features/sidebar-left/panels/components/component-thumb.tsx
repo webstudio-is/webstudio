@@ -1,4 +1,5 @@
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
 import { Flex, Text, styled } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";

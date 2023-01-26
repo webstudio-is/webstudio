@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Instance, PropsItem, Styles } from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem, Styles } from "@webstudio-is/project-build";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
 import {

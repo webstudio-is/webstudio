@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import {
   selectedInstanceIdStore,
   useRootInstance,

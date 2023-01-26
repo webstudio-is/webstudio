@@ -11,7 +11,8 @@ import {
   $isLineBreakNode,
 } from "lexical";
 import { $createLinkNode, $isLinkNode } from "@lexical/link";
-import type { ChildrenUpdates, Instance, Text } from "@webstudio-is/react-sdk";
+import type { Instance, Text } from "@webstudio-is/project-build";
+import type { ChildrenUpdates } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 import { $isSpanNode, $setNodeSpan } from "./toolbar-connector";
 

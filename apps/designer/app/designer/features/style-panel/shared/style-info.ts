@@ -8,7 +8,7 @@ import type {
 } from "@webstudio-is/css-data";
 import { properties } from "@webstudio-is/css-data";
 import { utils } from "@webstudio-is/project";
-import type { Instance, Styles } from "@webstudio-is/react-sdk";
+import type { Instance, Styles } from "@webstudio-is/project-build";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceIdStore,

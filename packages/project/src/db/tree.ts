@@ -7,7 +7,7 @@ import {
   Styles,
   Instances,
   Props,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/project-build";
 import {
   prisma,
   type Prisma,

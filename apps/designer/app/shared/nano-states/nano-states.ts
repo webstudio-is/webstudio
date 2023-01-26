@@ -1,6 +1,6 @@
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance, Styles } from "@webstudio-is/react-sdk";
+import type { Instance, Styles } from "@webstudio-is/project-build";
 import type {
   DropTargetChangePayload,
   DragStartPayload,

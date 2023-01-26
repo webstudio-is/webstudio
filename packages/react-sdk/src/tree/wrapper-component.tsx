@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import type { Instance } from "../db";
+import type { Instance } from "@webstudio-is/project-build";
 import { getComponent } from "../components";
 import { useUserProps } from "../user-props/use-user-props";
 import type { OnChangeChildren } from "./create-elements-tree";
