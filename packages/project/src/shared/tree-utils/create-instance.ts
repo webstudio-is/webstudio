@@ -21,7 +21,7 @@ export const createInstance = ({
     id: id === undefined ? createInstanceId() : id,
     children:
       children === undefined
-        ? componentMeta.children?.map((value) => ({ type: "text", value })) ??
+        ? componentMeta?.children?.map((value) => ({ type: "text", value })) ??
           []
         : children,
   };

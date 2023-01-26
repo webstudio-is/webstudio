@@ -1,11 +1,10 @@
 import { z } from "zod";
-import { type ComponentName, getComponentNames } from "../components";
 
 // This should be used when passing a lot of data is potentially costly.
 // For example, when passing data from an iframe.
 export type BaseInstance = {
   id: string;
-  component: ComponentName;
+  component: string;
 };
 
 export type Instance = BaseInstance & {
@@ -36,7 +35,7 @@ export type Id = z.infer<typeof Id>;
 export const InstancesItem = z.object({
   type: z.literal("instance"),
   id: z.string(),
-  component: z.enum(getComponentNames() as [ComponentName]),
+  component: z.string(),
   children: z.array(z.union([Id, Text])),
 });
 
@@ -50,7 +49,7 @@ export const Instance: z.ZodType<Instance> = z.lazy(() =>
   z.object({
     type: z.literal("instance"),
     id: z.string(),
-    component: z.enum(getComponentNames() as [ComponentName]),
+    component: z.string(),
     children: z.array(z.union([Instance, Text])),
   })
 );

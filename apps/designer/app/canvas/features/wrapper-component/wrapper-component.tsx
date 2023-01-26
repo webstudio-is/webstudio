@@ -27,7 +27,7 @@ const ContentEditable = ({
   elementRef,
   ...props
 }: {
-  Component: ReturnType<typeof getComponent>;
+  Component: NonNullable<ReturnType<typeof getComponent>>;
   elementRef: { current: undefined | HTMLElement };
 }) => {
   const [editor] = useLexicalComposerContext();
@@ -92,6 +92,10 @@ export const WrapperComponentDev = ({
     instance.component === "Input" ? { readOnly: true } : undefined;
 
   const Component = getComponent(instance.component);
+
+  if (Component === undefined) {
+    return <></>;
+  }
 
   const props = {
     ...userProps,

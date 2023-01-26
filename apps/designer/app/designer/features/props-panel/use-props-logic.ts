@@ -1,12 +1,7 @@
 import { useMemo, useState } from "react";
 import ObjectId from "bson-objectid";
 import warnOnce from "warn-once";
-import type {
-  Instance,
-  PropsItem,
-  MetaProps,
-  ComponentName,
-} from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem, MetaProps } from "@webstudio-is/react-sdk";
 import {
   getComponentMeta,
   getComponentMetaProps,
@@ -41,11 +36,11 @@ export const getValueFromPropMeta = (propValue?: MetaProps[string]) => {
   return typedValue;
 };
 
-const getRequiredPropsList = (component: ComponentName) => {
+const getRequiredPropsList = (component: string) => {
   const meta = getComponentMeta(component);
-  const metaProps = getComponentMetaProps(component);
+  const metaProps = getComponentMetaProps(component) ?? {};
 
-  const initialProps = meta.initialProps ?? [];
+  const initialProps = meta?.initialProps ?? [];
   const requiredProps = [];
   const propsWithDefaultValue = [];
 
@@ -108,7 +103,7 @@ export const usePropsLogic = ({
   const { id: instanceId, component } = selectedInstance;
 
   const metaProps = useMemo(
-    () => getComponentMetaProps(component),
+    () => getComponentMetaProps(component) ?? {},
     [component]
   );
   const requiredPropsList = useMemo(

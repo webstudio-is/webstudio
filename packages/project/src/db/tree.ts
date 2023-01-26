@@ -2,7 +2,6 @@ import { applyPatches, type Patch } from "immer";
 import { z } from "zod";
 import {
   type Tree,
-  type ComponentName,
   type InstancesItem,
   Instance,
   Styles,
@@ -82,7 +81,7 @@ const denormalizeTree = (instances: z.infer<typeof Instances>) => {
     const legacyInstance: Instance = {
       type: "instance",
       id: instance.id,
-      component: instance.component as ComponentName,
+      component: instance.component,
       children: [],
     };
     for (const child of instance.children) {

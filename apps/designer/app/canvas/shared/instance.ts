@@ -43,8 +43,8 @@ export const findInsertLocation = (
   path.reverse();
 
   const parentIndex = path.findIndex(({ item }) => {
-    const { type } = getComponentMeta(item.component);
-    return type === "body" || type === "container";
+    const meta = getComponentMeta(item.component);
+    return meta?.type === "body" || meta?.type === "container";
   });
 
   // Just in case selected Instance is not in the tree for some reason.

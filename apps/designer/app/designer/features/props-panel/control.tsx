@@ -193,7 +193,7 @@ export function Control({
 }: ControlProps) {
   const meta = getComponentMetaProps(component);
 
-  const argType = meta[userProp.name];
+  const argType = meta?.[userProp.name];
 
   // argType can be undefined in case of new property created
   const defaultValue = argType?.defaultValue ?? "";
