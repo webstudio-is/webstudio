@@ -54,7 +54,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
       <DropdownMenuTrigger asChild>
         <Button prefix={<MenuIcon />} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent width="regular">
         <DropdownMenuLabel>Not choosable</DropdownMenuLabel>
 
         <DropdownMenuItem withIndicator={withIndicator}>
@@ -78,7 +78,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
           <DropdownMenuSubTrigger withIndicator={withIndicator}>
             Open sub-menu
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
+          <DropdownMenuSubContent width="regular">
             <DropdownMenuItem withIndicator={withIndicator}>
               Regular
             </DropdownMenuItem>

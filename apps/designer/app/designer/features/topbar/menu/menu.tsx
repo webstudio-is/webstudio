@@ -47,7 +47,7 @@ const ThemeMenuItem = () => {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
-      <DropdownMenuSubContent>
+      <DropdownMenuSubContent width="regular">
         {settings.map((setting) => (
           <DropdownMenuCheckboxItem
             key={setting}
@@ -70,7 +70,7 @@ const ViewMenuItem = () => {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>View</DropdownMenuSubTrigger>
-      <DropdownMenuSubContent>
+      <DropdownMenuSubContent width="regular">
         <DropdownMenuCheckboxItem
           checked={clientSettings.navigatorLayout === "undocked"}
           onSelect={() => {
@@ -123,6 +123,7 @@ export const Menu = ({ publish }: MenuProps) => {
           css={{ zIndex: theme.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
+          width="regular"
         >
           <DropdownMenuItem
             onSelect={() => {
