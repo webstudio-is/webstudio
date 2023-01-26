@@ -1,16 +1,14 @@
 import {
-  Button,
-  Flex,
   DeprecatedIconButton,
   Popover,
   PopoverContent,
   PopoverPortal,
   PopoverTrigger,
-  TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 import { theme } from "@webstudio-is/design-system";
+import { ShareProject } from "~/shared/share-project/share-project";
 
 type ShareButtonProps = {
   url: string;
@@ -29,26 +27,7 @@ const Content = ({ url }: ShareButtonProps) => {
         event.preventDefault();
       }}
     >
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          window.open(url, "_blank");
-        }}
-      >
-        <Flex gap="2">
-          <TextField
-            variant="ghost"
-            readOnly
-            defaultValue={url}
-            onFocus={(event) => {
-              event?.target.select();
-            }}
-          />
-          <Button aria-label="Open in a new tab" type="submit">
-            Open
-          </Button>
-        </Flex>
-      </form>
+      <ShareProject url={url} />
     </PopoverContent>
   );
 };
