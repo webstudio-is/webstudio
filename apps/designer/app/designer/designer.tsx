@@ -279,6 +279,7 @@ export const Designer = ({
   buildId,
   buildOrigin,
   readToken,
+  sharedTokens,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -326,6 +327,8 @@ export const Designer = ({
     project,
     page,
     mode: "preview",
+    // At least 1 token should be present as we create view token on project creation
+    token: sharedTokens.find((t) => t.relation === "viewers")?.token,
   });
 
   return (
