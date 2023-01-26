@@ -37,7 +37,6 @@ export { IconButton } from "./components/icon-button";
 export { Box } from "./components/box";
 export * from "./components/popover";
 export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";
-export { MenuContent, MenuItem, Menu, MenuAnchor } from "./components/menu";
 export { Paragraph } from "./components/paragraph";
 export { Link } from "./components/link";
 export { Panel } from "./components/panel";

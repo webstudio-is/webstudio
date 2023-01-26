@@ -1,48 +1,41 @@
-import { useActionData } from "@remix-run/react";
-
-import { Flex } from "@webstudio-is/design-system";
+import { Flex, globalCss, theme, Toaster } from "@webstudio-is/design-system";
+import type { DashboardProject } from "@webstudio-is/prisma-client";
+import { Header } from "./header";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
-import dashboardStyles from "./dashboard.css";
-import { User as DbUser } from "@webstudio-is/prisma-client";
-import { DashboardHeader } from "./components/header";
-import { SelectProjectCard } from "./components/card";
+// eslint-disable-next-line import/no-internal-modules
+import manropeVariableFont from "@fontsource/manrope/variable.css";
+import { Projects } from "./projects";
+import type { User } from "~/shared/db/user.server";
 
-export const links = () => {
-  return [
-    {
-      rel: "stylesheet",
-      href: interFont,
-    },
-    {
-      rel: "stylesheet",
-      href: dashboardStyles,
-    },
-  ];
-};
+export const links = () => [
+  { rel: "stylesheet", href: interFont },
+  { rel: "stylesheet", href: manropeVariableFont },
+];
 
-type User = Omit<DbUser, "createdAt"> & {
-  createdAt: string;
-};
+const globalStyles = globalCss({
+  body: {
+    margin: 0,
+    background: theme.colors.brandBackgroundDashboard,
+  },
+});
 
 type DashboardProps = {
-  projects?: Array<{ id: string; title: string }>;
   user: User;
+  projects: Array<DashboardProject>;
 };
 
-export const Dashboard = ({ projects = [], user }: DashboardProps) => {
-  const actionData = useActionData();
+export const Dashboard = ({ user, projects }: DashboardProps) => {
+  globalStyles();
   return (
     <>
-      <DashboardHeader user={user} />
-      <Flex
-        css={{ height: "100vh" }}
-        direction="column"
-        align="center"
-        justify="center"
-      >
-        <SelectProjectCard projects={projects} errors={actionData?.errors} />
-      </Flex>
+      <Header user={user} />
+      <main>
+        <Flex justify="center" as="section" css={{ minWidth: "min-content" }}>
+          <Projects projects={projects} />
+        </Flex>
+      </main>
+      <Toaster />
     </>
   );
 };

@@ -1,12 +1,11 @@
-import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { getComponentMeta, type Instance } from "@webstudio-is/react-sdk";
 import { Flex, Text } from "@webstudio-is/design-system";
-import type { SelectedInstanceData } from "@webstudio-is/project";
 import { theme } from "@webstudio-is/design-system";
 
 export const ComponentInfo = ({
-  selectedInstanceData,
+  selectedInstance,
 }: {
-  selectedInstanceData: SelectedInstanceData;
+  selectedInstance: Instance;
 }) => {
   return (
     <Flex justify="between" align="center">
@@ -17,7 +16,7 @@ export const ComponentInfo = ({
           fontWeight: "500",
         }}
       >{`Selected: ${
-        getComponentMeta(selectedInstanceData.component).label
+        getComponentMeta(selectedInstance.component).label
       }`}</Text>
     </Flex>
   );

@@ -3,7 +3,6 @@ import store from "immerhin";
 import { type Breakpoint } from "@webstudio-is/css-data";
 import { useSubscribe } from "~/shared/pubsub";
 import {
-  Text,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -11,7 +10,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Flex,
+  DropdownMenuItemRightSlot,
 } from "@webstudio-is/design-system";
 import { useSelectedBreakpoint } from "../../shared/nano-states";
 import { BreakpointsEditor } from "./breakpoints-editor";
@@ -32,28 +31,6 @@ import {
 import { utils } from "@webstudio-is/project";
 import { removeByMutable } from "~/shared/array-utils";
 import { theme } from "@webstudio-is/design-system";
-
-type BreakpointSelectorItemProps = {
-  breakpoint: Breakpoint;
-};
-
-const BreakpointSelectorItem = ({
-  breakpoint,
-}: BreakpointSelectorItemProps) => {
-  return (
-    <Flex align="center" justify="between" gap="3" css={{ flexGrow: 1 }}>
-      <Text>{breakpoint.label}</Text>
-      <Text>{breakpoint.minWidth}</Text>
-    </Flex>
-  );
-};
-const menuItemCss = {
-  display: "flex",
-  gap: theme.spacing[9],
-  justifyContent: "start",
-  flexGrow: 1,
-  minWidth: 180,
-};
 
 export const Breakpoints = () => {
   const [view, setView] = useState<
@@ -162,7 +139,6 @@ export const Breakpoints = () => {
                   <DropdownMenuCheckboxItem
                     checked={breakpoint === selectedBreakpoint}
                     key={breakpoint.id}
-                    css={menuItemCss}
                     onMouseEnter={() => {
                       setBreakpointPreview(breakpoint);
                     }}
@@ -173,7 +149,10 @@ export const Breakpoints = () => {
                       setSelectedBreakpoint(breakpoint);
                     }}
                   >
-                    <BreakpointSelectorItem breakpoint={breakpoint} />
+                    {breakpoint.label}
+                    <DropdownMenuItemRightSlot>
+                      {breakpoint.minWidth}
+                    </DropdownMenuItemRightSlot>
                   </DropdownMenuCheckboxItem>
                 );
               })}
@@ -192,7 +171,7 @@ export const Breakpoints = () => {
                   setView("editor");
                 }}
               >
-                {"Edit breakpoints"}
+                Edit breakpoints
               </DropdownMenuItem>
             </>
           )}

@@ -23,10 +23,10 @@ export const DeprecatedHeading = React.forwardRef<
   const { size = "1", ...textProps } = props;
   // This is the mapping of Heading Variants to Text variants
   const textSize: Record<HeadingSizeVariants, TextSizeVariants["size"]> = {
-    1: { "@initial": "4", "@bp2": "5" },
-    2: { "@initial": "6", "@bp2": "7" },
-    3: { "@initial": "7", "@bp2": "8" },
-    4: { "@initial": "8", "@bp2": "9" },
+    1: { "@initial": "4", "@laptop": "5" },
+    2: { "@initial": "6", "@laptop": "7" },
+    3: { "@initial": "7", "@laptop": "8" },
+    4: { "@initial": "8", "@laptop": "9" },
   };
 
   // This is the mapping of Heading Variants to Text css
@@ -34,11 +34,23 @@ export const DeprecatedHeading = React.forwardRef<
     1: {
       fontWeight: 500,
       lineHeight: theme.lineHeight[4],
-      "@bp2": { lineHeight: "23px" },
+      "@laptop": { lineHeight: "23px" },
     },
-    2: { fontWeight: 500, lineHeight: "25px", "@bp2": { lineHeight: "30px" } },
-    3: { fontWeight: 500, lineHeight: "33px", "@bp2": { lineHeight: "41px" } },
-    4: { fontWeight: 500, lineHeight: "35px", "@bp2": { lineHeight: "55px" } },
+    2: {
+      fontWeight: 500,
+      lineHeight: "25px",
+      "@laptop": { lineHeight: "30px" },
+    },
+    3: {
+      fontWeight: 500,
+      lineHeight: "33px",
+      "@laptop": { lineHeight: "41px" },
+    },
+    4: {
+      fontWeight: 500,
+      lineHeight: "35px",
+      "@laptop": { lineHeight: "55px" },
+    },
   };
 
   return (

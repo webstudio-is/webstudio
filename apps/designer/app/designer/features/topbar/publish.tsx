@@ -28,9 +28,6 @@ const Content = ({ project }: PublishButtonProps) => {
   const domain = fetcher.data?.domain || project.domain;
 
   useEffect(() => {
-    if (typeof location !== "object" || !domain) {
-      return;
-    }
     setUrl(getPublishedUrl(domain));
   }, [domain]);
 

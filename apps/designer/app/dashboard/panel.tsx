@@ -8,8 +8,8 @@ const panelStyle = css({
   borderRadius: theme.borderRadius[6],
   color: theme.colors.foregroundMain,
   minWidth: "min-content",
-  maxWidth: "max-content",
   boxShadow: theme.shadows.brandElevationBig,
+  flexGrow: 1,
 });
 
 export const Panel = (props: ComponentProps<typeof Box>) => (

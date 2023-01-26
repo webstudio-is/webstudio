@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
-import { addGlobalRules, getPresetStyleRules } from "@webstudio-is/project";
+import { addGlobalRules } from "@webstudio-is/project";
 import {
+  selectedInstanceIdStore,
   useBreakpoints,
   useDesignTokens,
-  usePresetStyles,
 } from "~/shared/nano-states";
 import {
   type Styles,
@@ -29,7 +29,6 @@ import {
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
-import { useSelectedInstance } from "./nano-states";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
@@ -103,18 +102,11 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
     tokensCssEngine.render();
   }, [tokens]);
 
-  const [presetStyles] = usePresetStyles();
-
   useIsomorphicLayoutEffect(() => {
     presetStylesEngine.clear();
-    const presetStyleRules = getPresetStyleRules(presetStyles);
     for (const component of getComponentNames()) {
       const meta = getComponentMeta(component);
-      // render preset style and fallback to hardcoded one
-      // because could not be added yet to db
-      const presetStyle =
-        presetStyleRules.find((item) => item.component === component)?.style ??
-        meta.presetStyle;
+      const presetStyle = meta.presetStyle;
       if (presetStyle !== undefined) {
         presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
           style: presetStyle,
@@ -122,7 +114,7 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
       }
     }
     presetStylesEngine.render();
-  }, [presetStyles]);
+  }, []);
 
   return null;
 };
@@ -235,11 +227,11 @@ const setCssVar = (id: string, property: string, value?: StyleValue) => {
 };
 
 const useUpdateStyle = () => {
-  const [selectedInstance] = useSelectedInstance();
   useSubscribe("updateStyle", ({ id, updates }) => {
+    const selectedInstanceId = selectedInstanceIdStore.get();
     // Only update styles if they match the selected instance
     // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
-    if (id !== selectedInstance?.id) {
+    if (id !== selectedInstanceId) {
       return;
     }
 

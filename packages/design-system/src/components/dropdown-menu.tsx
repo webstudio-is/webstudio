@@ -1,103 +1,122 @@
-import React from "react";
-import { CheckIcon } from "@webstudio-is/icons";
-import { styled, CSS } from "../stitches.config";
+import {
+  forwardRef,
+  type ComponentProps,
+  type ElementRef,
+  type ReactNode,
+} from "react";
+import { CheckMarkIcon, ChevronFilledRightIcon } from "@webstudio-is/icons";
+import { styled } from "../stitches.config";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { menuCss, separatorCss, itemCss, labelCss } from "./menu";
-import { Box } from "./box";
-import { panelStyles } from "./panel";
-import { theme } from "../stitches.config";
+import {
+  menuCss,
+  subMenuCss,
+  separatorCss,
+  itemCss,
+  labelCss,
+  itemIndicatorCss,
+  subContentProps,
+} from "./menu";
+export { DropdownMenuArrow } from "./menu";
 
 export const DropdownMenu = DropdownMenuPrimitive.Root;
-export const DropdownMenuArrow = styled(DropdownMenuPrimitive.Arrow, {
-  fill: theme.colors.slate4,
-  stroke: theme.colors.slate1,
-});
+
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 
 export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
-export const DropdownMenuSubTrigger = styled(
-  DropdownMenuPrimitive.SubTrigger,
-  itemCss
-);
-
 export const DropdownMenuContent = styled(
   DropdownMenuPrimitive.Content,
-  menuCss,
-  panelStyles
+  menuCss
 );
 
-export const DropdownMenuSubContent = styled(
-  DropdownMenuPrimitive.SubContent,
-  menuCss,
-  panelStyles
-);
+const SubContentStyled = styled(DropdownMenuPrimitive.SubContent, subMenuCss);
+export const DropdownMenuSubContent = forwardRef<
+  ElementRef<typeof SubContentStyled>,
+  ComponentProps<typeof SubContentStyled>
+>((props, forwardedRef) => (
+  <SubContentStyled {...subContentProps} {...props} ref={forwardedRef} />
+));
+DropdownMenuSubContent.displayName = "DropdownMenuSubContent";
+
 export const DropdownMenuSeparator = styled(
   DropdownMenuPrimitive.Separator,
   separatorCss
 );
-export const DropdownMenuItem = styled(DropdownMenuPrimitive.Item, itemCss);
-
-const StyledDropdownMenuRadioItem = styled(
-  DropdownMenuPrimitive.RadioItem,
-  itemCss
-);
-
-type DialogMenuRadioItemPrimitiveProps = React.ComponentProps<
-  typeof DropdownMenuPrimitive.RadioItem
->;
-type DialogMenuRadioItemProps = DialogMenuRadioItemPrimitiveProps & {
-  css?: CSS;
-};
-
-export const DropdownMenuRadioItem = React.forwardRef<
-  React.ElementRef<typeof StyledDropdownMenuRadioItem>,
-  DialogMenuRadioItemProps
->(({ children, ...props }, forwardedRef) => (
-  <StyledDropdownMenuRadioItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: theme.spacing[3] }}>
-      <DropdownMenuPrimitive.ItemIndicator>
-        <CheckIcon />
-      </DropdownMenuPrimitive.ItemIndicator>
-    </Box>
-    {children}
-  </StyledDropdownMenuRadioItem>
-));
-
-DropdownMenuRadioItem.displayName = "DropdownMenuRadioItem";
-
-const StyledDropdownMenuCheckboxItem = styled(
-  DropdownMenuPrimitive.CheckboxItem,
-  itemCss
-);
-
-type DialogMenuCheckboxItemPrimitiveProps = React.ComponentProps<
-  typeof DropdownMenuPrimitive.CheckboxItem
->;
-type DialogMenuCheckboxItemProps = DialogMenuCheckboxItemPrimitiveProps & {
-  css?: CSS;
-};
-
-export const DropdownMenuCheckboxItem = React.forwardRef<
-  React.ElementRef<typeof StyledDropdownMenuCheckboxItem>,
-  DialogMenuCheckboxItemProps
->(({ children, ...props }, forwardedRef) => (
-  <StyledDropdownMenuCheckboxItem {...props} ref={forwardedRef}>
-    <Box as="span" css={{ position: "absolute", left: theme.spacing[3] }}>
-      <DropdownMenuPrimitive.ItemIndicator>
-        <CheckIcon />
-      </DropdownMenuPrimitive.ItemIndicator>
-    </Box>
-    {children}
-  </StyledDropdownMenuCheckboxItem>
-));
-
-DropdownMenuCheckboxItem.displayName = "DropdownMenuCheckboxItem";
 
 export const DropdownMenuLabel = styled(DropdownMenuPrimitive.Label, labelCss);
-export const DropdownMenuRadioGroup = styled(
-  DropdownMenuPrimitive.RadioGroup,
-  {}
-);
-export const DropdownMenuGroup = styled(DropdownMenuPrimitive.Group, {});
+
+export const StyledMenuItem = styled(DropdownMenuPrimitive.Item, itemCss, {
+  defaultVariants: { withIndicator: true },
+});
+export const DropdownMenuItem = forwardRef<
+  ElementRef<typeof StyledMenuItem>,
+  ComponentProps<typeof StyledMenuItem> & { icon?: ReactNode }
+>(({ icon, children, withIndicator, ...props }, forwardedRef) => (
+  <StyledMenuItem
+    withIndicator={withIndicator || Boolean(icon)}
+    {...props}
+    ref={forwardedRef}
+  >
+    {icon && <div className={itemIndicatorCss()}>{icon}</div>}
+    {children}
+  </StyledMenuItem>
+));
+DropdownMenuItem.displayName = "DropdownMenuItem";
+
+export const DropdownMenuItemRightSlot = styled("span", {
+  marginLeft: "auto",
+  display: "flex",
+});
+
+const SubTriggerStyled = styled(DropdownMenuPrimitive.SubTrigger, itemCss, {
+  defaultVariants: { withIndicator: true },
+});
+export const DropdownMenuSubTrigger = forwardRef<
+  ElementRef<typeof SubTriggerStyled>,
+  ComponentProps<typeof SubTriggerStyled> & { icon?: ReactNode }
+>(({ children, withIndicator, icon, ...props }, forwardedRef) => (
+  <SubTriggerStyled
+    withIndicator={withIndicator || Boolean(icon)}
+    {...props}
+    ref={forwardedRef}
+  >
+    {icon && <div className={itemIndicatorCss()}>{icon}</div>}
+    {children}
+    <DropdownMenuItemRightSlot>
+      <ChevronFilledRightIcon />
+    </DropdownMenuItemRightSlot>
+  </SubTriggerStyled>
+));
+DropdownMenuSubTrigger.displayName = "DropdownMenuSubTrigger";
+
+const Indicator = styled(DropdownMenuPrimitive.ItemIndicator, itemIndicatorCss);
+
+const StyledRadioItem = styled(DropdownMenuPrimitive.RadioItem, itemCss);
+export const DropdownMenuRadioItem = forwardRef<
+  ElementRef<typeof StyledRadioItem>,
+  ComponentProps<typeof StyledRadioItem> & { icon?: ReactNode }
+>(({ children, icon = <CheckMarkIcon />, ...props }, forwardedRef) => (
+  <StyledRadioItem withIndicator {...props} ref={forwardedRef}>
+    <Indicator>{icon}</Indicator>
+    {children}
+  </StyledRadioItem>
+));
+DropdownMenuRadioItem.displayName = "DropdownMenuRadioItem";
+
+const StyledCheckboxItem = styled(DropdownMenuPrimitive.CheckboxItem, itemCss);
+export const DropdownMenuCheckboxItem = forwardRef<
+  ElementRef<typeof StyledCheckboxItem>,
+  ComponentProps<typeof StyledCheckboxItem> & { icon?: ReactNode }
+>(({ children, icon = <CheckMarkIcon />, ...props }, forwardedRef) => (
+  <StyledCheckboxItem withIndicator {...props} ref={forwardedRef}>
+    <Indicator>{icon}</Indicator>
+    {children}
+  </StyledCheckboxItem>
+));
+DropdownMenuCheckboxItem.displayName = "DropdownMenuCheckboxItem";
+
+export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
+
+export const DropdownMenuGroup = DropdownMenuPrimitive.Group;
+
 export const DropdownMenuPortal = DropdownMenuPrimitive.Portal;

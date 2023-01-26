@@ -8,7 +8,7 @@ import { forwardRef } from "react";
 import { typography } from "../__generated__/figma-design-tokens";
 import { styled, theme } from "../stitches.config";
 
-const StyledLabel = styled("label", typography.labelsSentenceCase, {
+const StyledLabel = styled("label", typography.labelSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
   py: theme.spacing[2],

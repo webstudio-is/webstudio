@@ -14,3 +14,4 @@ export * from "./shared/styles";
 export * from "./db/schema";
 export * from "./shared/canvas-components";
 export type { InstanceInsertionSpec } from "./shared/tree-utils";
+export type { ProjectRouter } from "./trpc";

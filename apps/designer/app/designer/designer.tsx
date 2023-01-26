@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import {
   type Pages,
@@ -12,13 +13,7 @@ import { useSyncServer } from "./shared/sync-server";
 import interFont from "@fontsource/inter/variable.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import {
-  useHoveredInstanceData,
-  usePages,
-  useProject,
-  useCurrentPageId,
-  useSelectedInstanceData,
-} from "./shared/nano-states";
+import { usePages, useProject, useCurrentPageId } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Footer } from "./features/footer";
@@ -34,9 +29,9 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  selectedInstanceStore,
   useDragAndDropState,
   useIsPreviewMode,
-  useRootInstance,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
@@ -52,16 +47,6 @@ export const links = () => {
     { rel: "stylesheet", href: interFont },
     { rel: "stylesheet", href: designerStyles },
   ];
-};
-
-const useSubscribeSelectedInstanceData = () => {
-  const [, setValue] = useSelectedInstanceData();
-  useSubscribe("selectInstance", setValue);
-};
-
-const useSubscribeHoveredInstanceData = () => {
-  const [, setValue] = useHoveredInstanceData();
-  useSubscribe("hoverInstance", setValue);
 };
 
 const useSetProject = (project: Project) => {
@@ -99,21 +84,17 @@ const useSubscribeCanvasReady = (publish: Publish) => {
 };
 
 const useCopyPaste = (publish: Publish) => {
-  const [selectedInstance] = useSelectedInstanceData();
-  const [rootInstance] = useRootInstance();
+  const selectedInstance = useStore(selectedInstanceStore);
   const allUserProps = useAllUserProps();
 
   const selectedInstanceData = useMemo(() => {
-    if (selectedInstance && rootInstance) {
-      const instance = projectUtils.tree.findInstanceById(
-        rootInstance,
-        selectedInstance.id
-      );
-      return (
-        instance && { instance, props: allUserProps[selectedInstance.id] ?? [] }
-      );
+    if (selectedInstance) {
+      return {
+        instance: selectedInstance,
+        props: allUserProps[selectedInstance.id] ?? [],
+      };
     }
-  }, [rootInstance, selectedInstance, allUserProps]);
+  }, [selectedInstance, allUserProps]);
 
   // We need to initialize this in both canvas and designer,
   // because the events will fire in either one, depending on where the focus is
@@ -294,8 +275,6 @@ export const Designer = ({
   buildId,
   buildOrigin,
 }: DesignerProps) => {
-  useSubscribeSelectedInstanceData();
-  useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSetProject(project);
   useSetPages(pages);
@@ -381,7 +360,7 @@ export const Designer = ({
             <Inspector publish={publish} />
           )}
         </SidePanel>
-        <Footer publish={publish} />
+        <Footer />
       </ChromeWrapper>
     </AssetsProvider>
   );
