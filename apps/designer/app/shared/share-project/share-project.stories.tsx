@@ -9,7 +9,11 @@ export default {
 const links = [
   {
     url: "https://www.google.com",
-    name: "Google",
+    name: "Custom link 1",
+  },
+  {
+    url: "https://www.google.com",
+    name: "Custom link 2",
   },
 ];
 
