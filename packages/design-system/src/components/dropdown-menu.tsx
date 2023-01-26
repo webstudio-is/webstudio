@@ -26,13 +26,10 @@ export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
 export const DropdownMenuContent = styled(
   DropdownMenuPrimitive.Content,
-  menuCss,
-  { defaultVariants: { width: "regular" } }
+  menuCss
 );
 
-const SubContentStyled = styled(DropdownMenuPrimitive.SubContent, subMenuCss, {
-  defaultVariants: { width: "regular" },
-});
+const SubContentStyled = styled(DropdownMenuPrimitive.SubContent, subMenuCss);
 export const DropdownMenuSubContent = forwardRef<
   ElementRef<typeof SubContentStyled>,
   ComponentProps<typeof SubContentStyled>

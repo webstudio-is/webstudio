@@ -52,7 +52,7 @@ const Menu = ({ user }: { user: User }) => {
       <DropdownMenuContent>
         <DropdownMenuLabel>{title}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-          <Text>Logout</Text>
+          Logout
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

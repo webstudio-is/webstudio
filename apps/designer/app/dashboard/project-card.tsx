@@ -141,20 +141,12 @@ const Menu = ({
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={onDuplicate}>
-          <Text>Duplicate</Text>
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onRename}>
-          <Text>Rename</Text>
-        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
         {isFeatureEnabled("share2") && (
-          <DropdownMenuItem>
-            <Text>Share</Text>
-          </DropdownMenuItem>
+          <DropdownMenuItem>Share</DropdownMenuItem>
         )}
-        <DropdownMenuItem onSelect={onDelete}>
-          <Text>Delete</Text>
-        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
