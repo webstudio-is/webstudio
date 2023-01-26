@@ -10,13 +10,16 @@
     "checks": "turbo run checks",
     "dev": "turbo run dev --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prepare": "husky install",
     "build-storybook": "build-storybook",
     "storybook": "turbo run storybook:run",
     "storybook:build": "npm run build && turbo run storybook:build",
     "storybook:ds:build": "turbo run storybook:build --filter=@webstudio-is/design-system",
     "migrations": "cd apps/designer && pnpm migrations --dev",
-    "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens"
+    "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
+    "prepare": "git config core.hooksPath .git/hooks/ && simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm lint-staged"
   },
   "devDependencies": {
     "@changesets/get-dependents-graph": "^1.3.4",
@@ -25,9 +28,9 @@
     "@types/css-tree": "^2.0.0",
     "@webstudio-is/eslint-config-custom": "workspace:^",
     "chromatic": "^6.11.4",
-    "husky": "8.0.1",
     "lint-staged": "^13.0.2",
     "prettier": "2.7.1",
+    "simple-git-hooks": "^2.8.1",
     "tsx": "^3.9.0",
     "turbo": "1.3.1",
     "typescript": "4.7.4"
