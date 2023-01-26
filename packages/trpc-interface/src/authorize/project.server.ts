@@ -1,12 +1,23 @@
 import { AppContext } from "../context/context.server";
 import { v4 as uuid } from "uuid";
 
-export const beforeProjectCreate = async (
-  props: { projectId: string; userId: string },
+/**
+ * For 3rd party authorize system like Ory we need to register project owner
+ * and create initial read token for the project.
+ *
+ * We do that before project create (and out of transaction),
+ * so in case of error we will have just stale records of non existed project in authorize system.
+ */
+export const registerProjectOwnerAndReadToken = async (
+  props: { projectId: string },
   context: AppContext
 ) => {
   const { authorization } = context;
-  const { authorizeTrpc } = authorization;
+  const { userId, authorizeTrpc } = authorization;
+
+  if (userId === undefined) {
+    throw new Error("User must be authenticated to create project");
+  }
 
   // Tell authorization service that user is owner of the project
   await authorizeTrpc.create.mutate({
@@ -15,7 +26,7 @@ export const beforeProjectCreate = async (
     relation: "owner",
     subjectSet: {
       namespace: "User",
-      id: props.userId,
+      id: userId,
     },
   });
 

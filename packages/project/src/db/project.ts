@@ -6,6 +6,7 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
+import { v4 as uuid } from "uuid";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
@@ -106,9 +107,13 @@ export const create = async (
     throw new Error("User must be authenticated to create project");
   }
 
+  const projectId = uuid();
+  authorizeProject.registerProjectOwnerAndReadToken({ projectId }, context);
+
   const project = await prisma.$transaction(async (client) => {
     const project = await client.project.create({
       data: {
+        id: projectId,
         userId,
         title,
         domain: generateDomain(title),
@@ -194,9 +199,13 @@ const clone = async (
       ? await db.build.loadByProjectId(project.id, "dev")
       : await db.build.loadByProjectId(project.id, "prod");
 
+  const projectId = uuid();
+  authorizeProject.registerProjectOwnerAndReadToken({ projectId }, context);
+
   const clonedProject = await prisma.$transaction(async (client) => {
     const clonedProject = await client.project.create({
       data: {
+        id: projectId,
         userId: userId,
         title: title ?? project.title,
         domain: generateDomain(project.title),

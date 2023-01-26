@@ -212,12 +212,7 @@ export const authorizationRouter = router({
         return { allowed: row !== null };
       }
 
-      if (subjectSet.namespace === "Token") {
-        if (input.permit === "own") {
-          throw new Error(`Token permit "own" is not implemented`);
-        }
-
-        // throw new Error("Not implemented");
+      if (subjectSet.namespace === "Token" && input.permit !== "own") {
         const row = await prisma.authorizationTokens.findFirst({
           where: {
             token: subjectSet.id,
