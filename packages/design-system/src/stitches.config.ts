@@ -159,7 +159,7 @@ const spacing = {
   33: "320px",
   34: "384px",
   35: "448px",
-};
+} as const;
 
 const {
   styled,
