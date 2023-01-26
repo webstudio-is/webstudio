@@ -3,7 +3,12 @@
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A2709
  */
 
-import React, { forwardRef, type Ref, type ComponentProps } from "react";
+import {
+  forwardRef,
+  type Ref,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { typography } from "./typography";
 import { styled, theme } from "../stitches.config";
 
@@ -109,15 +114,13 @@ const TextContainer = styled("span", typography.labelTitleCase, {
 
 type ButtonProps = {
   state?: State;
+  variant?: Variant;
 
-  // prefix/suffix is primarily for Icons
+  // prefix/suffix are primarily for Icons
   // this is a replacement for icon/icon-left/icon-right in Figma
-  prefix?: React.ReactNode;
-  suffix?: React.ReactNode;
-} & Omit<
-  ComponentProps<typeof StyledButton>,
-  "pending" | "prefix" | "data-button-state"
->;
+  prefix?: ReactNode;
+  suffix?: ReactNode;
+} & Omit<ComponentProps<"button">, "prefix">;
 
 export const Button = forwardRef(
   (
