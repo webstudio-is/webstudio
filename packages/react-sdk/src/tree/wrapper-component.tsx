@@ -39,10 +39,6 @@ export const WrapperComponent = ({
   children,
   ...rest
 }: WrapperComponentProps) => {
-  const Component = getComponent(instance.component);
-  if (Component === undefined) {
-    return <></>;
-  }
   const userProps = useUserProps(instance.id);
   const props = {
     ...userProps,
@@ -50,6 +46,10 @@ export const WrapperComponent = ({
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
   };
+  const Component = getComponent(instance.component);
+  if (Component === undefined) {
+    return <></>;
+  }
   return (
     <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
   );
