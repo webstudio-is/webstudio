@@ -23,7 +23,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 
-const projectCardContainerStyle = css({
+const containerStyle = css({
   overflow: "hidden",
   width: theme.spacing[31],
   height: theme.spacing[29],
@@ -37,26 +37,16 @@ const projectCardContainerStyle = css({
   },
 });
 
-const projectCardFooterStyle = css({
-  background: theme.colors.brandBackgroundProjectCardTextArea,
-  height: theme.spacing[17],
-  py: theme.spacing[5],
-  px: theme.spacing[7],
-});
-
-const projectThumbnailStyle = css({
-  background: theme.colors.brandBackgroundProjectCardBack,
-  outline: "none",
-});
-
 // @todo use typography from figma tokens
-const projectThumbnailTextStyle = css({
+const thumbnailStyle = css({
+  display: "flex",
+  alignItems: "center",
+  alignSelf: "center",
+  minHeight: 0,
   fontFamily: theme.fonts.manrope,
   fontWeight: 200,
   fontSize: 360,
   letterSpacing: "-0.05em",
-  alignSelf: "center",
-  marginLeft: "-0.5em",
   background: theme.colors.brandBackgroundProjectCardFront,
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
@@ -69,13 +59,12 @@ const projectThumbnailTextStyle = css({
   },
 });
 
-// My Next Project > MN
-const getAbbreviation = (title: string) =>
-  title
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word.charAt(0).toUpperCase())
-    .join("");
+const footerStyle = css({
+  background: theme.colors.brandBackgroundProjectCardTextArea,
+  height: theme.spacing[17],
+  py: theme.spacing[5],
+  px: theme.spacing[7],
+});
 
 const usePublishedLink = ({ domain }: { domain: string }) => {
   const [url, setUrl] = useState<URL>();
@@ -154,7 +143,7 @@ const Menu = ({
 
 const useProjectCard = () => {
   const fetcher = useFetcher();
-  const designerLinkRef = useRef<HTMLAnchorElement>(null);
+  const thumbnailRef = useRef<HTMLAnchorElement>(null);
   const { submit: deleteProject } = trpc.delete.useMutation();
   const { submit: rename } = trpc.rename.useMutation();
   const { submit: duplicate } = trpc.duplicate.useMutation();
@@ -175,7 +164,7 @@ const useProjectCard = () => {
     );
     switch (event.key) {
       case "Enter": {
-        designerLinkRef.current?.click();
+        thumbnailRef.current?.click();
         break;
       }
       case "ArrowUp":
@@ -212,7 +201,7 @@ const useProjectCard = () => {
   };
 
   return {
-    designerLinkRef,
+    thumbnailRef,
     handleKeyDown,
     handleDelete,
     handleRename,
@@ -221,6 +210,14 @@ const useProjectCard = () => {
 };
 
 const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
+
+// My Next Project > MN
+const getThumbnailAbbreviation = (title: string) =>
+  title
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
 
 type ProjectCardProps = DashboardProject;
 
@@ -231,7 +228,7 @@ export const ProjectCard = ({
   isPublished,
 }: ProjectCardProps) => {
   const {
-    designerLinkRef,
+    thumbnailRef,
     handleKeyDown,
     handleDelete,
     handleRename,
@@ -242,29 +239,19 @@ export const ProjectCard = ({
       direction="column"
       shrink={false}
       as="article"
-      className={projectCardContainerStyle()}
+      className={containerStyle()}
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      <Flex
-        grow
-        align="center"
-        as={RemixLink}
-        ref={designerLinkRef}
+      <RemixLink
+        ref={thumbnailRef}
         to={designerPath({ projectId: id })}
-        className={projectThumbnailStyle()}
+        className={thumbnailStyle()}
         tabIndex={-1}
       >
-        <span className={projectThumbnailTextStyle()}>
-          {getAbbreviation(title)}
-        </span>
-      </Flex>
-      <Flex
-        justify="between"
-        shrink={false}
-        gap="1"
-        className={projectCardFooterStyle()}
-      >
+        {getThumbnailAbbreviation(title)}
+      </RemixLink>
+      <Flex justify="between" shrink={false} gap="1" className={footerStyle()}>
         <Flex direction="column" justify="around">
           <Text variant="title" truncate>
             {title}
