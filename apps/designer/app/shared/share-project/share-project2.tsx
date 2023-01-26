@@ -5,13 +5,15 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  rawTheme,
   Separator,
   Switch,
   TextField,
   theme,
+  Tooltip,
   useId,
 } from "@webstudio-is/design-system";
-import { CopyIcon, MenuIcon } from "@webstudio-is/icons";
+import { CopyIcon, InfoIcon, MenuIcon } from "@webstudio-is/icons";
 import { ComponentProps } from "react";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
@@ -23,10 +25,27 @@ const Item = (props: ComponentProps<typeof Flex>) => (
   />
 );
 
+type PermissionProps = {
+  title: string;
+  name: string;
+  defaultChecked?: boolean;
+  info: string;
+};
+const Permission = ({ title, name, defaultChecked, info }: PermissionProps) => {
+  const id = useId();
+
+  return (
+    <Flex align="center" gap="1">
+      <Switch defaultChecked={defaultChecked} id={id} name={name} />
+      <Label htmlFor={id}>{title}</Label>
+      <Tooltip content={info} delayDuration={0} variant="wrapped">
+        <InfoIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+      </Tooltip>
+    </Flex>
+  );
+};
+
 const Menu = () => {
-  const viewId = useId();
-  const editId = useId();
-  const buildId = useId();
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -44,18 +63,22 @@ const Menu = () => {
         <Separator />
         <Item>
           <Label>Permissions</Label>
-          <Flex align="center" gap="2">
-            <Switch defaultChecked id={viewId} />
-            <Label htmlFor={viewId}>View</Label>
-          </Flex>
-          <Flex align="center" gap="2">
-            <Switch id={editId} />
-            <Label htmlFor={editId}>Edit Content</Label>
-          </Flex>
-          <Flex align="center" gap="2">
-            <Switch id={buildId} />
-            <Label htmlFor={buildId}>Build</Label>
-          </Flex>
+          <Permission
+            defaultChecked
+            title="View"
+            name="view"
+            info="Recipients can only view the site"
+          />
+          <Permission
+            title="Edit Content"
+            name="edit"
+            info="Recipients can view the site and edit content like text and images, but they will not be able to change the styles or structure of your site."
+          />
+          <Permission
+            title="Build"
+            name="build"
+            info="Recipients can view the site and edit content like text and images and change the styles or structure of your site."
+          />
         </Item>
         <Separator />
         <Item>
