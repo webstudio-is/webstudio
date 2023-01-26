@@ -1,8 +1,5 @@
-import {
-  getComponentMetaProps,
-  type Instance,
-  type PropsItem,
-} from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import warnOnce from "warn-once";
 import {
   Flex,

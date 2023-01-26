@@ -1,4 +1,4 @@
-import type { Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
 import type {
   StyleProperty,
   StyleValue,

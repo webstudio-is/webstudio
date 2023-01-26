@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Instance, PropsItem } from "../db";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import { useAllUserProps } from "./all-user-props";
 
 type UserProps = { [name: PropsItem["name"]]: string | number | boolean };

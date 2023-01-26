@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { PropsItem, type Instance } from "../db";
-import { useAllUserProps } from "./all-user-props";
 import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import { useAllUserProps } from "./all-user-props";
 
 /**
  * Get asset for prop, like src on the Image component

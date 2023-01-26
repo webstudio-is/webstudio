@@ -18,10 +18,10 @@ import {
 } from "@webstudio-is/design-system";
 import {
   type Instance,
-  getComponentMeta,
-  BaseInstance,
+  type BaseInstance,
   toBaseInstance,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { publish, useSubscribe } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {

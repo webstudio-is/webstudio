@@ -1,5 +1,5 @@
 import type { Breakpoint } from "@webstudio-is/css-data";
-import type { Instance, Styles } from "@webstudio-is/react-sdk";
+import type { Instance, Styles } from "@webstudio-is/project-build";
 import {
   getCascadedBreakpointIds,
   getCascadedInfo,

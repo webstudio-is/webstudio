@@ -49,6 +49,7 @@
     "@webstudio-is/image": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/trpc-interface": "workspace:^",
     "bson-objectid": "^2.0.4",

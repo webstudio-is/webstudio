@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import ObjectId from "bson-objectid";
 import warnOnce from "warn-once";
-import type { Instance, PropsItem, MetaProps } from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import type { MetaProps } from "@webstudio-is/react-sdk";
 import {
   getComponentMeta,
   getComponentMetaProps,

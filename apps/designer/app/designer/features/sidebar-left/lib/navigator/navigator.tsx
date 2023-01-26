@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import { Flex } from "@webstudio-is/design-system";
-import { type Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
 import { type Publish } from "~/shared/pubsub";
 import {
   selectedInstanceIdStore,

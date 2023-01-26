@@ -98,6 +98,7 @@ importers:
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/prisma-client': workspace:^
       '@webstudio-is/project': workspace:^
+      '@webstudio-is/project-build': workspace:^
       '@webstudio-is/react-sdk': workspace:^
       '@webstudio-is/storybook-config': workspace:^
       '@webstudio-is/trpc-interface': workspace:^
@@ -186,6 +187,7 @@ importers:
       '@webstudio-is/image': link:../../packages/image
       '@webstudio-is/prisma-client': link:../../packages/prisma-client
       '@webstudio-is/project': link:../../packages/project
+      '@webstudio-is/project-build': link:../../packages/project-build
       '@webstudio-is/react-sdk': link:../../packages/react-sdk
       '@webstudio-is/trpc-interface': link:../../packages/trpc-interface
       bson-objectid: 2.0.4
@@ -769,6 +771,7 @@ importers:
       '@webstudio-is/fonts': workspace:^
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/prisma-client': workspace:^
+      '@webstudio-is/project-build': workspace:^
       '@webstudio-is/react-sdk': workspace:^
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
@@ -790,6 +793,7 @@ importers:
       '@webstudio-is/design-tokens': link:../design-tokens
       '@webstudio-is/fonts': link:../fonts
       '@webstudio-is/prisma-client': link:../prisma-client
+      '@webstudio-is/project-build': link:../project-build
       '@webstudio-is/react-sdk': link:../react-sdk
       bson-objectid: 2.0.4
       immer: 9.0.15
@@ -806,6 +810,23 @@ importers:
       '@webstudio-is/scripts': link:../scripts
       '@webstudio-is/tsconfig': link:../tsconfig
       jest: 29.3.1
+      typescript: 4.7.4
+
+  packages/project-build:
+    specifiers:
+      '@webstudio-is/asset-uploader': workspace:^
+      '@webstudio-is/css-data': workspace:^
+      '@webstudio-is/scripts': workspace:^
+      '@webstudio-is/tsconfig': workspace:^
+      typescript: 4.7.4
+      zod: ^3.19.1
+    dependencies:
+      '@webstudio-is/asset-uploader': link:../asset-uploader
+      '@webstudio-is/css-data': link:../css-data
+      zod: 3.19.1
+    devDependencies:
+      '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
       typescript: 4.7.4
 
   packages/react-sdk:
@@ -830,6 +851,7 @@ importers:
       '@webstudio-is/image': workspace:^
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/prisma-client': workspace:^
+      '@webstudio-is/project-build': workspace:^
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/storybook-config': workspace:^
       '@webstudio-is/tsconfig': workspace:^
@@ -855,6 +877,7 @@ importers:
       '@webstudio-is/icons': link:../icons
       '@webstudio-is/image': link:../image
       '@webstudio-is/prisma-client': link:../prisma-client
+      '@webstudio-is/project-build': link:../project-build
       detect-font: 0.1.5
       mitt: 3.0.0
       nanostores: 0.7.1

@@ -1,11 +1,10 @@
 import { useState } from "react";
 import store from "immerhin";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import {
   allUserPropsContainer,
   getComponentMetaProps,
   useAllUserProps,
-  type Instance,
-  type PropsItem,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
 import { Control } from "./control";

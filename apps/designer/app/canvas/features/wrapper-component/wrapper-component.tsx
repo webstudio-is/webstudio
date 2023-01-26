@@ -2,10 +2,9 @@ import type { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import {
-  type Instance,
   type OnChangeChildren,
-  type PropsItem,
   renderWrapperComponentChildren,
   getComponent,
   idAttribute,

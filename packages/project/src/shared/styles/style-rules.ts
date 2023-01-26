@@ -1,5 +1,5 @@
 import type { Style } from "@webstudio-is/css-data";
-import type { Styles } from "@webstudio-is/react-sdk";
+import type { Styles } from "@webstudio-is/project-build";
 
 type StyleRule = {
   instanceId: string;

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import {
-  type Instance,
-  type PropsItem,
   getComponentMeta,
   allUserPropsContainer,
 } from "@webstudio-is/react-sdk";

@@ -1,6 +1,7 @@
 import { jest, describe, test, expect } from "@jest/globals";
 import { renderHook, act } from "@testing-library/react-hooks";
-import { getComponentMeta, type Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { nanoid } from "nanoid";
 import { usePropsLogic } from "./use-props-logic";
 

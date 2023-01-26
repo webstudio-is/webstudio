@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { styled, type Rect } from "@webstudio-is/design-system";
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { theme } from "@webstudio-is/design-system";
 
 type LabelPosition = "top" | "inside" | "bottom";

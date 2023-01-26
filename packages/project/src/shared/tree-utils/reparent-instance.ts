@@ -1,4 +1,4 @@
-import { type Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
 import { findInstanceById } from "./find-instance";
 import { findParentInstance } from "./find-parent-instance";
 import { deleteInstanceMutable } from "./delete-instance";
