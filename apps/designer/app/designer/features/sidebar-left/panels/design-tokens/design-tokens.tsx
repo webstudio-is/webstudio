@@ -1,8 +1,8 @@
 import { TokensIcon } from "@webstudio-is/icons";
+import { Flex } from "@webstudio-is/design-system";
 import { DesignTokensManager } from "~/designer/shared/design-tokens-manager";
 import { TabName } from "../../types";
-import { Header, CloseButton } from "../../lib/header";
-import { Flex } from "@webstudio-is/design-system";
+import { Header, CloseButton } from "../../header";
 
 export const TabContent = ({
   onSetActiveTab,
