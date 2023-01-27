@@ -1,34 +1,34 @@
 import { z } from "zod";
 
-const StyleSourcesToken = z.object({
+const StyleSourceToken = z.object({
   type: z.literal("token"),
   id: z.string(),
   treeId: z.string().optional(),
   name: z.string(),
 });
 
-const StyleSourcesLocal = z.object({
+const StyleSourceLocal = z.object({
   type: z.literal("local"),
   id: z.string(),
   treeId: z.string(),
   name: z.string(),
 });
 
-export const StyleSourcesItem = z.union([StyleSourcesToken, StyleSourcesLocal]);
+export const StyleSource = z.union([StyleSourceToken, StyleSourceLocal]);
 
-export type StyleSourcesItem = z.infer<typeof StyleSourcesItem>;
+export type StyleSource = z.infer<typeof StyleSource>;
 
-export const StyleSources = z.array(StyleSourcesItem);
+export const StyleSources = z.array(StyleSource);
 
 export type StyleSources = z.infer<typeof StyleSources>;
 
-export const StyleRefsItem = z.object({
+export const StyleSourceSelection = z.object({
   instanceId: z.string(),
   values: z.array(z.string()),
 });
 
-export type StyleRefsItem = z.infer<typeof StyleRefsItem>;
+export type StyleSourceSelection = z.infer<typeof StyleSourceSelection>;
 
-export const StyleRefs = z.array(StyleRefsItem);
+export const StyleSourceSelections = z.array(StyleSourceSelection);
 
-export type StyleRefs = z.infer<typeof StyleRefs>;
+export type StyleSourceSelections = z.infer<typeof StyleSourceSelections>;
