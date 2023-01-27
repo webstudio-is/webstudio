@@ -1,12 +1,12 @@
 import React from "react";
 import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { Box } from "./box";
-import { panelStyles } from "./panel";
-import { Button } from "./button";
-import { Separator } from "./separator";
-import { Title } from "./title";
-import { styled, CSS, theme } from "../stitches.config";
+import { Box } from "../box";
+import { panelStyles } from "../panel";
+import { Button } from "../button";
+import { Separator } from "../separator";
+import { Title } from "../title";
+import { styled, CSS, theme } from "../../stitches.config";
 
 type PopoverProps = React.ComponentProps<typeof PopoverPrimitive.Root> & {
   children: React.ReactNode;

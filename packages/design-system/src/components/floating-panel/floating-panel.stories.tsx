@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-} from "./dialog";
+} from "./floating-panel-dialog";
 import { CrossIcon } from "@webstudio-is/icons";
 
 export default {
