@@ -5,7 +5,15 @@ import { prisma } from "@webstudio-is/prisma-client";
 
 export const authorizationRouter = router({
   /**
-   * Instead of expand tree we extract leaf nodes
+   * Relation expansion in authorize looks like a tree
+   *
+   * :#@Project:AliceProjectUUID#viewers
+   *   :#@Email:bob@bob.com#owner
+   *     :#@User:BobUUID️
+   *   :#@Token:LinkRandomSequence️
+   *
+   * We don't need the whole tree in UI and need only the leaf nodes.
+   * i.e. @User:BobUUID️, @Token:LinkRandomSequence️ and the root relation i.e "viewers"
    */
   expandLeafNodes: procedure
     .input(
@@ -69,6 +77,62 @@ export const authorizationRouter = router({
       return leafSubjectSets;
     }),
 
+  /**
+   * Check if subject has permit on the resource
+   */
+  check: procedure
+    .input(
+      z.object({
+        namespace: z.enum(["Project"]),
+        id: z.string(),
+
+        permit: z.enum(["view", "edit", "own"]),
+
+        subjectSet: z.object({
+          namespace: z.enum(["User", "Token"]),
+          id: z.string(),
+        }),
+      })
+    )
+    .output(z.object({ allowed: z.boolean() }))
+    .query(async ({ input }) => {
+      const { subjectSet } = input;
+
+      if (subjectSet.namespace === "User") {
+        // We check only if the user is the owner of the project
+        const row = await prisma.project.findFirst({
+          where: {
+            id: input.id,
+            userId: subjectSet.id,
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        return { allowed: row !== null };
+      }
+
+      if (subjectSet.namespace === "Token" && input.permit !== "own") {
+        const row = await prisma.authorizationTokens.findFirst({
+          where: {
+            token: subjectSet.id,
+            permit: {
+              // Token with EDIT permit can also VIEW
+              in: input.permit === "view" ? ["VIEW", "EDIT"] : ["VIEW"],
+            },
+          },
+          select: { id: true },
+        });
+
+        return { allowed: row !== null };
+      }
+
+      return { allowed: false };
+    }),
+  /**
+   * In OSS we extract owner relation from the Project table, and the rest from the authorizationTokens table
+   */
   create: procedure
     .input(
       z.discriminatedUnion("namespace", [
@@ -177,56 +241,5 @@ export const authorizationRouter = router({
           });
         }
       }
-    }),
-
-  check: procedure
-    .input(
-      z.object({
-        namespace: z.enum(["Project"]),
-        id: z.string(),
-
-        permit: z.enum(["view", "edit", "own"]),
-
-        subjectSet: z.object({
-          namespace: z.enum(["User", "Token"]),
-          id: z.string(),
-        }),
-      })
-    )
-    .output(z.object({ allowed: z.boolean() }))
-    .query(async ({ input }) => {
-      const { subjectSet } = input;
-
-      if (subjectSet.namespace === "User") {
-        // We check only if the user is the owner of the project
-        const row = await prisma.project.findFirst({
-          where: {
-            id: input.id,
-            userId: subjectSet.id,
-          },
-          select: {
-            id: true,
-          },
-        });
-
-        return { allowed: row !== null };
-      }
-
-      if (subjectSet.namespace === "Token" && input.permit !== "own") {
-        const row = await prisma.authorizationTokens.findFirst({
-          where: {
-            token: subjectSet.id,
-            permit: {
-              // Token with EDIT permit can also VIEW
-              in: input.permit === "view" ? ["VIEW", "EDIT"] : ["VIEW"],
-            },
-          },
-          select: { id: true },
-        });
-
-        return { allowed: row !== null };
-      }
-
-      return { allowed: false };
     }),
 });
