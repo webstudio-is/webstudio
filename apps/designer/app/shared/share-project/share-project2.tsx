@@ -45,7 +45,7 @@ const Permission = ({
     <Flex align="center" gap="1">
       <Switch checked={checked} id={id} onCheckedChange={onCheckedChange} />
       <Label htmlFor={id}>{title}</Label>
-      <Tooltip content={info} delayDuration={0} variant="wrapped">
+      <Tooltip content={info} variant="wrapped">
         <InfoIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
     </Flex>
