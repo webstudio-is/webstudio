@@ -81,13 +81,13 @@ model Build {
 }
 
 model Tree {
-  id           String @id @default(uuid())
-  root         String
-  instances    String @default("[]")
-  props        String @default("[]")
-  presetStyles String @default("[]")
-  styles       String @default("[]")
-  styleRefs    String @default("[]")
+  id              String @id @default(uuid())
+  root            String
+  instances       String @default("[]")
+  props           String @default("[]")
+  presetStyles    String @default("[]")
+  styles          String @default("[]")
+  styleSelections String @default("[]")
 }
 
 model InstanceProps {
