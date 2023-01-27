@@ -35,11 +35,16 @@ export const getPropsByInstanceId = (props: Props) => {
 // so there is no need to use computed to optimize rerenders
 export const useInstanceProps = (instanceId: Instance["id"]) => {
   const propsByInstanceId = useStore(propsByInstanceIdStore);
-  return (
-    propsByInstanceId
-      .get(instanceId)
-      ?.filter((item) => item.type !== "asset") ?? []
-  );
+  const instanceProps = propsByInstanceId.get(instanceId);
+  let instancePropsObject: Record<string, number | string | boolean> = {};
+  if (instanceProps) {
+    for (const prop of instanceProps) {
+      if (prop.type !== "asset") {
+        instancePropsObject[prop.name] = prop.value;
+      }
+    }
+  }
+  return instancePropsObject;
 };
 
 // this utility is be used for image component in both designer and preview
