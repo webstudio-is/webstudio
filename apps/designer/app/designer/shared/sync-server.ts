@@ -1,7 +1,7 @@
 import { atom } from "nanostores";
 import { sync } from "immerhin";
 import type { Build } from "@webstudio-is/project";
-import type { Tree } from "@webstudio-is/react-sdk";
+import type { Tree } from "@webstudio-is/project-build";
 import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
 

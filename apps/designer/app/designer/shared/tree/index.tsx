@@ -7,7 +7,8 @@ import {
   type TreeProps,
   type TreeItemRenderProps,
 } from "@webstudio-is/design-system";
-import { getComponentMeta, Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { utils } from "@webstudio-is/project";
 
 const instanceRelatedProps = {
@@ -15,23 +16,23 @@ const instanceRelatedProps = {
   getItemPath: utils.tree.getInstancePath,
   getItemPathWithPositions: utils.tree.getInstancePathWithPositions,
   canLeaveParent(item: Instance) {
-    const { type } = getComponentMeta(item.component);
-    return type !== "rich-text-child";
+    const meta = getComponentMeta(item.component);
+    return meta?.type !== "rich-text-child";
   },
   canAcceptChild(item: Instance) {
-    const { type } = getComponentMeta(item.component);
-    return type === "body" || type === "container";
+    const meta = getComponentMeta(item.component);
+    return meta?.type === "body" || meta?.type === "container";
   },
   getItemChildren(item: Instance) {
-    const { type } = getComponentMeta(item.component);
+    const meta = getComponentMeta(item.component);
 
     // We want to avoid calling .filter() unnecessarily, because this is a hot path for performance.
     // We rely on the fact that only rich-text or rich-text-child components may have `string` children.
     if (
-      type === "body" ||
-      type === "container" ||
-      type === "control" ||
-      type === "embed"
+      meta?.type === "body" ||
+      meta?.type === "container" ||
+      meta?.type === "control" ||
+      meta?.type === "embed"
     ) {
       return item.children as Instance[];
     }
@@ -41,10 +42,13 @@ const instanceRelatedProps = {
     );
   },
   renderItem(props: TreeItemRenderProps<Instance>) {
-    const { Icon, label } = getComponentMeta(props.itemData.component);
+    const meta = getComponentMeta(props.itemData.component);
+    if (meta === undefined) {
+      return <></>;
+    }
     return (
       <TreeItemBody {...props} selectionEvent="focus">
-        <TreeItemLabel prefix={<Icon />}>{label}</TreeItemLabel>
+        <TreeItemLabel prefix={<meta.Icon />}>{meta.label}</TreeItemLabel>
       </TreeItemBody>
     );
   },

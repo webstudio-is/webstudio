@@ -1,5 +1,5 @@
 import { test, expect } from "@jest/globals";
-import type { Styles } from "@webstudio-is/react-sdk";
+import type { Styles } from "@webstudio-is/project-build";
 import { getStyleRules } from "./style-rules";
 
 test("get a list of style rules grouped by instance and breakpoint", () => {

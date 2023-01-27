@@ -18,10 +18,10 @@ import {
 } from "@webstudio-is/design-system";
 import {
   type Instance,
-  getComponentMeta,
-  BaseInstance,
+  type BaseInstance,
   toBaseInstance,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { publish, useSubscribe } from "~/shared/pubsub";
 
 declare module "~/shared/pubsub" {
@@ -116,8 +116,8 @@ export const useDragAndDrop = () => {
       }
 
       const data = path.find((instance) => {
-        const { type } = getComponentMeta(instance.component);
-        return type === "body" || type === "container";
+        const meta = getComponentMeta(instance.component);
+        return meta?.type === "body" || meta?.type === "container";
       });
 
       if (data === undefined) {
@@ -180,7 +180,7 @@ export const useDragAndDrop = () => {
       }
 
       // When trying to drag an inline instance, drag its parent instead
-      if (getComponentMeta(instance.component).type === "rich-text-child") {
+      if (getComponentMeta(instance.component)?.type === "rich-text-child") {
         const nonInlineParent = utils.tree.findClosestNonInlineParent(
           rootInstance,
           instance.id

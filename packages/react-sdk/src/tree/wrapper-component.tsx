@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import type { Instance } from "../db";
+import type { Instance } from "@webstudio-is/project-build";
 import { getComponent } from "../components";
 import { useUserProps } from "../user-props/use-user-props";
 import type { OnChangeChildren } from "./create-elements-tree";
@@ -39,7 +39,6 @@ export const WrapperComponent = ({
   children,
   ...rest
 }: WrapperComponentProps) => {
-  const Component = getComponent(instance.component);
   const userProps = useUserProps(instance.id);
   const props = {
     ...userProps,
@@ -47,6 +46,10 @@ export const WrapperComponent = ({
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,
   };
+  const Component = getComponent(instance.component);
+  if (Component === undefined) {
+    return <></>;
+  }
   return (
     <Component {...props}>{renderWrapperComponentChildren(children)}</Component>
   );

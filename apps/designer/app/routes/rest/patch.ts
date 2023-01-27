@@ -3,7 +3,7 @@ import type { Build } from "@webstudio-is/project";
 import { db as projectDb } from "@webstudio-is/project/server";
 import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
 import { type SyncItem } from "immerhin";
-import { type Tree } from "@webstudio-is/react-sdk";
+import type { Tree } from "@webstudio-is/project-build";
 
 type PatchData = {
   transactions: Array<SyncItem>;

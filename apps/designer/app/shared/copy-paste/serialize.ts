@@ -1,5 +1,5 @@
-import { Instance, Props } from "@webstudio-is/react-sdk";
 import { z } from "zod";
+import { Instance, Props } from "@webstudio-is/project-build";
 
 const TYPE = "@webstudio/instance/v0.1" as const;
 

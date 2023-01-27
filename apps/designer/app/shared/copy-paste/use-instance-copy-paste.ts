@@ -1,6 +1,6 @@
 import { utils } from "@webstudio-is/project";
-import type { Instance, PropsItem } from "@webstudio-is/react-sdk";
 import { useEffect, useMemo } from "react";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import { type InstanceCopyData, serialize, deserialize } from "./serialize";
 
 const isInstanceClipboardEvent = (

@@ -1,8 +1,8 @@
 import type { ComponentStory } from "@storybook/react";
+import type { PropsItem } from "@webstudio-is/project-build";
 import {
   allUserPropsContainer,
   getComponentMetaProps,
-  type PropsItem,
 } from "@webstudio-is/react-sdk";
 import { PropsPanel } from "./props-panel";
 
@@ -73,7 +73,7 @@ export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
   );
 };
 
-const meta = getComponentMetaProps("Button");
+const meta = getComponentMetaProps("Button") ?? {};
 
 export const AllProps: ComponentStory<typeof PropsPanel> = () => {
   allUserPropsContainer.set({

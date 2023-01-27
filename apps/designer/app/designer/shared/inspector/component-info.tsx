@@ -1,4 +1,5 @@
-import { getComponentMeta, type Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { Flex, Text } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
@@ -16,7 +17,7 @@ export const ComponentInfo = ({
           fontWeight: "500",
         }}
       >{`Selected: ${
-        getComponentMeta(selectedInstance.component).label
+        getComponentMeta(selectedInstance.component)?.label
       }`}</Text>
     </Flex>
   );

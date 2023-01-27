@@ -6,8 +6,8 @@ import {
   useBreakpoints,
   useDesignTokens,
 } from "~/shared/nano-states";
+import type { Styles } from "@webstudio-is/project-build";
 import {
-  type Styles,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -106,7 +106,7 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
     presetStylesEngine.clear();
     for (const component of getComponentNames()) {
       const meta = getComponentMeta(component);
-      const presetStyle = meta.presetStyle;
+      const presetStyle = meta?.presetStyle;
       if (presetStyle !== undefined) {
         presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
           style: presetStyle,

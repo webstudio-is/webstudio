@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { styled, type Rect } from "@webstudio-is/design-system";
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { theme } from "@webstudio-is/design-system";
 
 type LabelPosition = "top" | "inside" | "bottom";
@@ -77,11 +78,14 @@ type LabelProps = {
 
 export const Label = ({ component, instanceRect }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
-  const { Icon, label } = getComponentMeta(component);
+  const meta = getComponentMeta(component);
+  if (meta === undefined) {
+    return <></>;
+  }
   return (
     <LabelContainer position={position} ref={labelRef}>
-      <Icon width="1em" height="1em" />
-      {label}
+      <meta.Icon width="1em" height="1em" />
+      {meta.label}
     </LabelContainer>
   );
 };

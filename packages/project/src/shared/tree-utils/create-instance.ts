@@ -1,5 +1,6 @@
 import ObjectId from "bson-objectid";
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 
 export const createInstanceId = () => {
   return ObjectId().toString();
@@ -21,7 +22,7 @@ export const createInstance = ({
     id: id === undefined ? createInstanceId() : id,
     children:
       children === undefined
-        ? componentMeta.children?.map((value) => ({ type: "text", value })) ??
+        ? componentMeta?.children?.map((value) => ({ type: "text", value })) ??
           []
         : children,
   };

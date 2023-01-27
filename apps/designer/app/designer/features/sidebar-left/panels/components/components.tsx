@@ -1,7 +1,7 @@
 import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
+import type { Instance } from "@webstudio-is/project-build";
 import {
-  type Instance,
   type ComponentName,
   getComponentMeta,
   getComponentNames,
@@ -98,12 +98,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   };
 
   const listedComponentNames = getComponentNames().filter((name) => {
-    const { type } = getComponentMeta(name);
+    const meta = getComponentMeta(name);
     return (
-      type === "container" ||
-      type === "control" ||
-      type === "embed" ||
-      type === "rich-text"
+      meta?.type === "container" ||
+      meta?.type === "control" ||
+      meta?.type === "embed" ||
+      meta?.type === "rich-text"
     );
   });
 

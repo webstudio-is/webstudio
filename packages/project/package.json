@@ -20,6 +20,7 @@
     "@webstudio-is/design-tokens": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
     "bson-objectid": "^2.0.4",
     "immer": "^9.0.12",

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { type Instance } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
 import { findClosestSiblingInstance } from "./find-closest-sibling-instance";
 
 describe("Find closest sibling instance", () => {

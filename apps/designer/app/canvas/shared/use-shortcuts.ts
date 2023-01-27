@@ -1,6 +1,7 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
@@ -125,8 +126,8 @@ export const useShortcuts = () => {
       if (selectedInstance === undefined) {
         return;
       }
-      const { type } = getComponentMeta(selectedInstance.component);
-      if (type === "rich-text") {
+      const meta = getComponentMeta(selectedInstance.component);
+      if (meta?.type === "rich-text") {
         // Prevents inserting a newline when entering text-editing mode
         event.preventDefault();
         setEditingInstanceId(selectedInstance.id);
