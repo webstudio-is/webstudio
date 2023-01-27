@@ -44,6 +44,7 @@ export const FlexGrid = ({
 
   return (
     <Grid
+      tabIndex={0}
       css={{
         width: "100%",
         aspectRatio: "1 / 1",
@@ -80,6 +81,7 @@ export const FlexGrid = ({
             }}
           >
             <DeprecatedIconButton
+              tabIndex={-1}
               css={{
                 width: "100%",
                 height: "100%",
