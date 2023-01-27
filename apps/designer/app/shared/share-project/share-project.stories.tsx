@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
-import { Panel } from "@webstudio-is/design-system";
+import { Button } from "@webstudio-is/design-system";
 import { useState } from "react";
 import { type LinkOptions, ShareProject } from "./share-project2";
 
@@ -53,17 +53,17 @@ const useShareProject = (initialLinks: Array<LinkOptions> = []) => {
 export const Empty: ComponentStory<typeof ShareProject> = () => {
   const props = useShareProject();
   return (
-    <Panel css={{ width: "max-content" }}>
-      <ShareProject {...props} />
-    </Panel>
+    <ShareProject {...props} isOpen>
+      <Button>Share</Button>
+    </ShareProject>
   );
 };
 
 export const WithLinks: ComponentStory<typeof ShareProject> = () => {
   const props = useShareProject(initialLinks);
   return (
-    <Panel css={{ width: "max-content" }}>
-      <ShareProject {...props} />
-    </Panel>
+    <ShareProject {...props} isOpen>
+      <Button>Share</Button>
+    </ShareProject>
   );
 };

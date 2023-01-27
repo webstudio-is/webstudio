@@ -6,6 +6,8 @@ import {
   Label,
   Popover,
   PopoverContent,
+  PopoverHeader,
+  PopoverPortal,
   PopoverTrigger,
   rawTheme,
   Separator,
@@ -184,6 +186,9 @@ type ShareProjectProps = {
   onChange: (link: LinkOptions) => void;
   onDelete: (link: LinkOptions) => void;
   onCreate: () => void;
+  children: JSX.Element;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 export const ShareProject = ({
@@ -191,43 +196,61 @@ export const ShareProject = ({
   onChange,
   onDelete,
   onCreate,
+  children,
+  isOpen,
+  onOpenChange,
 }: ShareProjectProps) => {
+  const items = links.map((link) => (
+    <>
+      <SharedLinkItem
+        key={link.url}
+        {...link}
+        onChangePermission={(permission) => {
+          onChange({ ...link, permission });
+        }}
+        onChangeName={(name) => {
+          onChange({ ...link, name });
+        }}
+        onDelete={() => {
+          onDelete(link);
+        }}
+      />
+      <Separator />
+    </>
+  ));
+
+  const create = (
+    <Box className={itemStyle({ css: { py: theme.spacing["9"] } })}>
+      <Button
+        variant="neutral"
+        prefix={<PlusIcon />}
+        onClick={() => {
+          onCreate();
+        }}
+      >
+        {links.length === 0 ? "Share a custom link" : "Add another link"}
+      </Button>
+    </Box>
+  );
+
+  // @todo this should use FloatingPanel instead of Popover, which we need to refactor first
   return (
-    <Flex
-      direction="column"
-      css={{
-        width: theme.spacing[33],
-      }}
-    >
-      {links.map((link) => (
-        <>
-          <SharedLinkItem
-            key={link.url}
-            {...link}
-            onChangePermission={(permission) => {
-              onChange({ ...link, permission });
+    <Popover modal open={isOpen} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent hideArrow>
+          <Flex
+            direction="column"
+            css={{
+              width: theme.spacing[33],
             }}
-            onChangeName={(name) => {
-              onChange({ ...link, name });
-            }}
-            onDelete={() => {
-              onDelete(link);
-            }}
-          />
-          <Separator />
-        </>
-      ))}
-      <Box className={itemStyle({ css: { py: theme.spacing["9"] } })}>
-        <Button
-          variant="neutral"
-          prefix={<PlusIcon />}
-          onClick={() => {
-            onCreate();
-          }}
-        >
-          {links.length === 0 ? "Share a custom link" : "Add another link"}
-        </Button>
-      </Box>
-    </Flex>
+          >
+            {items}
+            {create}
+          </Flex>
+          <PopoverHeader title="Share" />
+        </PopoverContent>
+      </PopoverPortal>
+    </Popover>
   );
 };
