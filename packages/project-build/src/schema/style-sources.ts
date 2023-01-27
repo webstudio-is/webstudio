@@ -1,15 +1,17 @@
 import { z } from "zod";
 
+const StyleSourceId = z.string();
+
 const StyleSourceToken = z.object({
   type: z.literal("token"),
-  id: z.string(),
+  id: StyleSourceId,
   treeId: z.string().optional(),
   name: z.string(),
 });
 
 const StyleSourceLocal = z.object({
   type: z.literal("local"),
-  id: z.string(),
+  id: StyleSourceId,
   treeId: z.string(),
   name: z.string(),
 });
@@ -24,7 +26,7 @@ export type StyleSources = z.infer<typeof StyleSources>;
 
 export const StyleSourceSelection = z.object({
   instanceId: z.string(),
-  values: z.array(z.string()),
+  values: z.array(StyleSourceId),
 });
 
 export type StyleSourceSelection = z.infer<typeof StyleSourceSelection>;
