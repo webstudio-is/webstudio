@@ -1,6 +1,5 @@
 import type { CanvasData, Project } from "@webstudio-is/project";
 import { db as projectDb } from "@webstudio-is/project/server";
-import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
 import { utils } from "@webstudio-is/project";
 import { loadByProject } from "@webstudio-is/asset-uploader/server";
 
@@ -24,10 +23,9 @@ export const loadCanvasData = async (
     throw new Error(`Page ${pageIdOrPath} not found`);
   }
 
-  const [tree, breakpoints, designTokens, assets] = await Promise.all([
+  const [tree, breakpoints, assets] = await Promise.all([
     projectDb.tree.loadById(page.treeId),
     projectDb.breakpoints.load(build.id),
-    designTokensDb.load(build.id),
     loadByProject(project.id),
   ]);
 
@@ -42,7 +40,6 @@ export const loadCanvasData = async (
   return {
     tree,
     breakpoints: breakpoints.values,
-    designTokens,
     buildId: build.id,
     page,
     assets,

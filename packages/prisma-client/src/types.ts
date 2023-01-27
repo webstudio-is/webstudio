@@ -4,7 +4,6 @@ export type {
   User,
   Breakpoints,
   Build,
-  DesignTokens,
   Project,
   Asset,
   Tree,
