@@ -2,11 +2,11 @@ import { AppContext } from "../context/context.server";
 import { v4 as uuid } from "uuid";
 
 /**
- * For 3rd party authorize system like Ory we need to register project owner
- * and create initial read token for the project.
+ * For 3rd party authorization systems like Ory we need to register the project owner
+ * and create an initial read token for the project.
  *
- * We do that before project create (and out of transaction),
- * so in case of error we will have just stale records of non existed project in authorize system.
+ * We do that before the project create (and out of the transaction),
+ * so in case of an error we will have just stale records of non existed projects in authorization system.
  */
 export const registerProjectOwnerAndReadToken = async (
   props: { projectId: string },
@@ -16,10 +16,9 @@ export const registerProjectOwnerAndReadToken = async (
   const { userId, authorizeTrpc } = authorization;
 
   if (userId === undefined) {
-    throw new Error("User must be authenticated to create project");
+    throw new Error("The user must be authenticated to create a project");
   }
 
-  // Tell authorization service that user is owner of the project
   await authorizeTrpc.create.mutate({
     namespace: "Project",
     id: props.projectId,
@@ -30,14 +29,12 @@ export const registerProjectOwnerAndReadToken = async (
     },
   });
 
-  // Create initial read token for the project
   await authorizeTrpc.create.mutate({
     namespace: "Project",
     id: props.projectId,
     relation: "viewers",
     subjectSet: {
       namespace: "Token",
-      // Random token
       id: uuid(),
     },
   });
@@ -61,7 +58,7 @@ export const hasProjectPermit = async (
     return true;
   }
 
-  // Edge case to allow access on canvas
+  // Edge-case to allow access the project on the canvas
   if (
     props.permit === "view" &&
     authorization.readToken !== undefined &&
@@ -70,7 +67,7 @@ export const hasProjectPermit = async (
     return true;
   }
 
-  // Check if user is allowed to access the project
+  // Check if the user is allowed to access the project
   if (authorization.userId !== undefined) {
     checks.push(
       authorizeTrpc.check.query({
@@ -85,7 +82,7 @@ export const hasProjectPermit = async (
     );
   }
 
-  // Check if special link with token allows to access the project
+  // Check if the special link with a token allows to access the project
   if (authorization.token !== undefined) {
     checks.push(
       authorizeTrpc.check.query({

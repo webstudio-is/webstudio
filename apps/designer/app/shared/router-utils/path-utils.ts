@@ -68,7 +68,7 @@ export const getBuildUrl = ({
   project,
   page,
   mode,
-  // Hidden token for canvas (should not be visible in browser url)
+  // Hidden token for canvas (should not be visible in browser URL)
   readToken,
   // Token to share project
   token,

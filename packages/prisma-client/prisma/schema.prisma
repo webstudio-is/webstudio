@@ -101,7 +101,7 @@ enum AuthorizationPermit {
 
 model AuthorizationTokens {
   id        String              @id @default(uuid())
-  // No relation to Project, as Authorization system is not tied to a project
+  // No relation to Project, as the Authorization system is not tied to a project
   projectId String
   token     String
   permit    AuthorizationPermit

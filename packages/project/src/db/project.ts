@@ -23,7 +23,6 @@ export const loadById = async (
   projectId: Project["id"],
   context: AppContext
 ) => {
-  // ensure user or token has access to project
   const canRead = await authorizeProject.hasProjectPermit(
     { projectId, permit: "view" },
     context
@@ -42,7 +41,7 @@ export const loadByDomain = async (
   domain: string,
   context: AppContext
 ): Promise<Project | null> => {
-  // Authorization system needs project id to check if user has access to project
+  // The authorization system needs the project id to check if the user has access to the project
   const projectWithId = await prisma.project.findUnique({
     where: { domain: domain.toLowerCase() },
   });
@@ -57,7 +56,7 @@ export const loadByDomain = async (
     return projectWithId;
   }
 
-  // Otherwise check if user has access to project
+  // Otherwise, check if the user has access to the project
   return await loadById(projectWithId.id, context);
 };
 
@@ -66,7 +65,7 @@ export const loadManyByCurrentUserId = async (
 ): Promise<Array<Project>> => {
   const userId = context.authorization.userId;
   if (userId === undefined) {
-    throw new Error("User must be authenticated to list projects");
+    throw new Error("The user must be authenticated to list projects");
   }
 
   return await prisma.project.findMany({
@@ -104,7 +103,7 @@ export const create = async (
   const userId = context.authorization.userId;
 
   if (userId === undefined) {
-    throw new Error("User must be authenticated to create project");
+    throw new Error("The user must be authenticated to create a project");
   }
 
   const projectId = uuid();
@@ -138,7 +137,7 @@ export const markAsDeleted = async (
   );
 
   if (canDelete === false) {
-    throw new Error("Only owner can delete the project");
+    throw new Error("Only the owner can delete the project");
   }
 
   return await prisma.project.update({
@@ -167,7 +166,9 @@ export const rename = async (
   );
 
   if (canEdit === false) {
-    throw new Error("Only token or user with edit permission can edit project");
+    throw new Error(
+      "Only a token or user with edit permission can edit the project."
+    );
   }
 
   return await prisma.project.update({
@@ -191,7 +192,7 @@ const clone = async (
   const userId = context.authorization.userId;
 
   if (userId === undefined) {
-    throw new Error("User must be authenticated to clone project");
+    throw new Error("The user must be authenticated to clone the project");
   }
 
   const build =
@@ -263,7 +264,9 @@ export const updateDomain = async (
   );
 
   if (canEdit === false) {
-    throw new Error("Only token or user with edit permission can edit project");
+    throw new Error(
+      "Only a token or user with edit permission can edit the project."
+    );
   }
 
   try {

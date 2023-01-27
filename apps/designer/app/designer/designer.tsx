@@ -327,7 +327,7 @@ export const Designer = ({
     project,
     page,
     mode: "preview",
-    // At least 1 token should be present as we create view token on project creation
+    // Temporary solution until the new share UI is implemented
     token: sharedTokens.find((t) => t.relation === "viewers")?.token,
   });
 
