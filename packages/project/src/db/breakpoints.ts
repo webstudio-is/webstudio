@@ -7,6 +7,11 @@ import {
   Prisma,
 } from "@webstudio-is/prisma-client";
 import { type Breakpoint, Breakpoints } from "@webstudio-is/css-data";
+import type { Project } from "./schema";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
 
 export const load = async (buildId: DbBreakpoints["buildId"]) => {
   const breakpoints = await prisma.breakpoints.findUnique({
@@ -51,9 +56,22 @@ export const create = async (
 };
 
 export const patch = async (
-  buildId: DbBreakpoints["buildId"],
-  patches: Array<Patch>
+  {
+    buildId,
+    projectId,
+  }: { buildId: DbBreakpoints["buildId"]; projectId: Project["id"] },
+  patches: Array<Patch>,
+  context: AppContext
 ) => {
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error("You don't have edit access to this project");
+  }
+
   const breakpoints = await load(buildId);
   const nextValues = applyPatches(breakpoints.values, patches);
 

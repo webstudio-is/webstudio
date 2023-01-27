@@ -287,7 +287,7 @@ export const Designer = ({
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
-  useSyncServer({ buildId, treeId });
+  useSyncServer({ buildId, treeId, projectId: project.id });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
