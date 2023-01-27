@@ -189,7 +189,7 @@ const SharedLinkItem = ({
 };
 
 type ShareProjectProps = {
-  links: Array<LinkOptions>;
+  links?: Array<LinkOptions>;
   onChange: (link: LinkOptions) => void;
   onDelete: (link: LinkOptions) => void;
   onCreate: () => void;
@@ -199,7 +199,7 @@ type ShareProjectProps = {
 };
 
 export const ShareProject = ({
-  links,
+  links = [],
   onChange,
   onDelete,
   onCreate,

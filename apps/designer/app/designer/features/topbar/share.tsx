@@ -1,4 +1,5 @@
 import {
+  Button,
   DeprecatedIconButton,
   Popover,
   PopoverContent,
@@ -8,13 +9,17 @@ import {
 import { Share1Icon } from "@webstudio-is/icons";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 import { theme } from "@webstudio-is/design-system";
-import { ShareProject } from "~/shared/share-project/share-project";
+import {
+  ShareProjectDeprecated,
+  ShareProject,
+  LinkOptions,
+} from "~/shared/share-project";
 
-type ShareButtonProps = {
+type ShareButtonDeprecatedProps = {
   url: string;
 };
 
-const Content = ({ url }: ShareButtonProps) => {
+const Content = ({ url }: ShareButtonDeprecatedProps) => {
   if (typeof location === "undefined") {
     return null;
   }
@@ -27,12 +32,12 @@ const Content = ({ url }: ShareButtonProps) => {
         event.preventDefault();
       }}
     >
-      <ShareProject url={url} />
+      <ShareProjectDeprecated url={url} />
     </PopoverContent>
   );
 };
 
-export const ShareButton = (props: ShareButtonProps) => {
+export const ShareButtonDeprecated = (props: ShareButtonDeprecatedProps) => {
   const [isOpen, setIsOpen] = useIsShareDialogOpen();
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -45,5 +50,26 @@ export const ShareButton = (props: ShareButtonProps) => {
         <Content {...props} />
       </PopoverPortal>
     </Popover>
+  );
+};
+
+export const ShareButton = () => {
+  const handleChange = (link: LinkOptions) => {
+    // @todo implement
+  };
+  const handleDelete = (link: LinkOptions) => {
+    // @todo implement
+  };
+  const handleCreate = () => {
+    // @todo implement
+  };
+  return (
+    <ShareProject
+      onChange={handleChange}
+      onDelete={handleDelete}
+      onCreate={handleCreate}
+    >
+      <Button>Share</Button>
+    </ShareProject>
   );
 };
