@@ -4,12 +4,13 @@ import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import {
   allUserPropsContainer,
   getComponentMetaProps,
-  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 import { type Publish } from "~/shared/pubsub";
+import { propsStore, useInstanceProps } from "~/shared/nano-states";
 import { Control } from "./control";
 import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import {
+  theme,
   Box,
   Button,
   Grid,
@@ -38,7 +39,6 @@ import {
   useStyleData,
   type SetProperty,
 } from "../style-panel/shared/use-style-data";
-import { theme } from "@webstudio-is/design-system";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -222,8 +222,7 @@ type PropsPanelProps = {
 
 export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
   const instanceId = selectedInstance.id;
-  const allUserProps = useAllUserProps();
-  const props = allUserProps[instanceId] ?? [];
+  const instanceProps = useInstanceProps(instanceId);
 
   const {
     userProps,
@@ -233,31 +232,43 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
     handleDeleteProp,
     isRequired,
   } = usePropsLogic({
-    props,
+    props: instanceProps,
     selectedInstance,
 
     updateProps: (update) => {
-      store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        let props = allUserProps[instanceId];
-        if (props === undefined) {
-          props = [];
-          allUserProps[instanceId] = props;
+      store.createTransaction(
+        [allUserPropsContainer, propsStore],
+        (allUserProps, props) => {
+          let instanceProps = allUserProps[instanceId];
+          if (instanceProps === undefined) {
+            instanceProps = [];
+            allUserProps[instanceId] = instanceProps;
+          }
+          replaceByOrAppendMutable(
+            instanceProps,
+            update,
+            (item) => item.id === update.id
+          );
+          replaceByOrAppendMutable(
+            props,
+            update,
+            (item) => item.id === update.id
+          );
         }
-        replaceByOrAppendMutable(
-          props,
-          update,
-          (item) => item.id === update.id
-        );
-      });
+      );
     },
 
     deleteProp: (id) => {
-      store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        const props = allUserProps[instanceId];
-        if (props) {
+      store.createTransaction(
+        [allUserPropsContainer, propsStore],
+        (allUserProps, props) => {
+          const instanceProps = allUserProps[instanceId];
+          if (instanceProps) {
+            removeByMutable(instanceProps, (prop) => prop.id === id);
+          }
           removeByMutable(props, (prop) => prop.id === id);
         }
-      });
+      );
     },
   });
 

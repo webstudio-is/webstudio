@@ -27,9 +27,11 @@ import {
   rootInstanceContainer,
   selectedInstanceStore,
   useBreakpoints,
+  useInstanceProps,
   useRootInstance,
   useSetBreakpoints,
   useSetDesignTokens,
+  useSetProps,
   useSetRootInstance,
   useSetStyles,
   useSubscribeScrollState,
@@ -95,13 +97,17 @@ const useAssets = (initialAssets: Array<Asset>) => {
 };
 
 const useCopyPaste = () => {
-  const instance = useStore(selectedInstanceStore);
-  const allUserProps = useAllUserProps();
+  const selectedInstance = useStore(selectedInstanceStore);
+  const instanceProps = useInstanceProps(selectedInstance?.id);
 
-  const selectedInstanceData = useMemo(
-    () => instance && { instance, props: allUserProps[instance.id] },
-    [allUserProps, instance]
-  );
+  const selectedInstanceData = useMemo(() => {
+    if (selectedInstance) {
+      return {
+        instance: selectedInstance,
+        props: instanceProps,
+      };
+    }
+  }, [selectedInstance, instanceProps]);
 
   // We need to initialize this in both canvas and designer,
   // because the events will fire in either one, depending on where the focus is
@@ -150,6 +156,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useSetBreakpoints(data.breakpoints);
   useSetDesignTokens(data.designTokens);
   useAllUserProps(data.props);
+  useSetProps(data.tree.props);
   useSetStyles(data.tree.styles);
   useSetRootInstance(data.tree.root);
   setParams(data.params ?? null);

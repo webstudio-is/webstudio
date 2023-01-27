@@ -8,12 +8,12 @@ import {
   renderWrapperComponentChildren,
   getComponent,
   idAttribute,
-  useAllUserProps,
 } from "@webstudio-is/react-sdk";
 import { shallowComputed } from "~/shared/store-utils";
 import {
   selectedInstanceIdStore,
   stylesIndexStore,
+  useInstanceProps,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
@@ -70,8 +70,7 @@ export const WrapperComponentDev = ({
     useTextEditingInstanceId();
   const selectedInstanceId = useStore(selectedInstanceIdStore);
 
-  const allUserProps = useAllUserProps();
-  const instanceProps = allUserProps[instance.id];
+  const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {
     const result: UserProps = {};
     if (instanceProps === undefined) {
