@@ -4,9 +4,9 @@ import {
   type Tree,
   type InstancesItem,
   Instance,
-  Styles,
   Instances,
-  Props,
+  type Styles,
+  type Props,
 } from "@webstudio-is/project-build";
 import {
   prisma,
@@ -15,6 +15,7 @@ import {
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
 import { parseStyles, serializeStyles } from "./styles";
+import { parseProps, serializeProps } from "./props";
 
 type TreeData = Omit<Tree, "id">;
 
@@ -62,7 +63,7 @@ export const create = async (
     data: {
       root: "",
       instances: JSON.stringify(instances),
-      props: JSON.stringify(treeData.props),
+      props: serializeProps(treeData.props),
       styles: serializeStyles(treeData.styles),
     },
   });
@@ -111,7 +112,7 @@ export const loadById = async (
   const instances = Instances.parse(JSON.parse(tree.instances));
   const root = Instance.parse(denormalizeTree(instances));
 
-  const props = Props.parse(JSON.parse(tree.props));
+  const props = await parseProps(tree.props);
   const styles = await parseStyles(tree.styles);
 
   return {
