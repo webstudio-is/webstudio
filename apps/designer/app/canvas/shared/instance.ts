@@ -9,6 +9,7 @@ import { useSubscribe } from "~/shared/pubsub";
 import { utils, type InstanceInsertionSpec } from "@webstudio-is/project";
 import store from "immerhin";
 import {
+  propsStore,
   rootInstanceContainer,
   selectedInstanceIdStore,
   useRootInstance,
@@ -58,28 +59,32 @@ export const findInsertLocation = (
 };
 
 export const useInsertInstance = () => {
-  useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
-    const selectedInstanceId = selectedInstanceIdStore.get();
-    store.createTransaction(
-      [rootInstanceContainer, allUserPropsContainer],
-      (rootInstance, allUserProps) => {
-        if (rootInstance === undefined) {
-          return;
+  useSubscribe(
+    "insertInstance",
+    ({ instance, dropTarget, props: insertedProps }) => {
+      const selectedInstanceId = selectedInstanceIdStore.get();
+      store.createTransaction(
+        [rootInstanceContainer, allUserPropsContainer, propsStore],
+        (rootInstance, allUserProps, props) => {
+          if (rootInstance === undefined) {
+            return;
+          }
+          const hasInserted = utils.tree.insertInstanceMutable(
+            rootInstance,
+            instance,
+            dropTarget ?? findInsertLocation(rootInstance, selectedInstanceId)
+          );
+          if (hasInserted) {
+            selectedInstanceIdStore.set(instance.id);
+          }
+          if (insertedProps !== undefined) {
+            allUserProps[instance.id] = insertedProps;
+            props.push(...insertedProps);
+          }
         }
-        const hasInserted = utils.tree.insertInstanceMutable(
-          rootInstance,
-          instance,
-          dropTarget ?? findInsertLocation(rootInstance, selectedInstanceId)
-        );
-        if (hasInserted) {
-          selectedInstanceIdStore.set(instance.id);
-        }
-        if (props !== undefined) {
-          allUserProps[instance.id] = props;
-        }
-      }
-    );
-  });
+      );
+    }
+  );
 };
 
 export const useReparentInstance = () => {

@@ -1,6 +1,7 @@
+import { useMemo } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance, Styles } from "@webstudio-is/project-build";
+import type { Instance, Props, Styles } from "@webstudio-is/project-build";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
@@ -8,6 +9,7 @@ import type {
 import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
 import { useSyncInitializeOnce } from "../hook-utils";
+import { shallowComputed } from "../store-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -41,6 +43,40 @@ export const instancesIndexStore = computed(
     };
   }
 );
+
+export const propsStore = atom<Props>([]);
+export const propsIndexStore = computed(propsStore, (props) => {
+  const propsByInstanceId = new Map<Instance["id"], Props>();
+  for (const prop of props) {
+    const { instanceId } = prop;
+    let instanceProps = propsByInstanceId.get(instanceId);
+    if (instanceProps === undefined) {
+      instanceProps = [];
+      propsByInstanceId.set(instanceId, instanceProps);
+    }
+    instanceProps.push(prop);
+  }
+  return {
+    propsByInstanceId,
+  };
+});
+export const useSetProps = (props: Props) => {
+  useSyncInitializeOnce(() => {
+    propsStore.set(props);
+  });
+};
+export const useInstanceProps = (instanceId: undefined | Instance["id"]) => {
+  const instancePropsStore = useMemo(() => {
+    return shallowComputed([propsIndexStore], (propsIndex) => {
+      if (instanceId === undefined) {
+        return [];
+      }
+      return propsIndex.propsByInstanceId.get(instanceId) ?? [];
+    });
+  }, [instanceId]);
+  const instanceProps = useStore(instancePropsStore);
+  return instanceProps;
+};
 
 export const stylesContainer = atom<Styles>([]);
 /**

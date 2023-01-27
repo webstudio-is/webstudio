@@ -5,6 +5,7 @@ import { allUserPropsContainer } from "@webstudio-is/react-sdk";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
   rootInstanceContainer,
+  propsStore,
   breakpointsContainer,
   designTokensContainer,
   stylesContainer,
@@ -44,6 +45,7 @@ export const registerContainers = () => {
   store.register("root", rootInstanceContainer);
   store.register("styles", stylesContainer);
   store.register("props", allUserPropsContainer);
+  store.register("props-modern", propsStore);
   store.register("designTokens", designTokensContainer);
   // synchronize whole states
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
