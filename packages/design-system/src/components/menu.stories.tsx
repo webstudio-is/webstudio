@@ -43,6 +43,7 @@ import {
 } from "@webstudio-is/icons";
 import { useState } from "react";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
+import { StorySection } from "./storybook";
 
 const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   const [isApple, setIsApple] = useState(true);
@@ -249,7 +250,7 @@ const ComplexSelectDemo = () => {
 
 export const Demo = () => (
   <>
-    <Section title="Dropdown menu">
+    <StorySection title="Dropdown menu">
       <div style={{ display: "flex", paddingBottom: 360 }}>
         <div style={{ paddingLeft: 100, paddingRight: 100 }}>
           <DropdownDemo withIndicator={true} />
@@ -258,16 +259,18 @@ export const Demo = () => (
           <DropdownDemo withIndicator={false} />
         </div>
       </div>
-    </Section>
-    <Section title="Select menu (Combobox component)">
-      <ComboboxDemo />
-    </Section>
-    <Section title="Basic select menu (Select component)">
+    </StorySection>
+    <StorySection title="Select menu (Combobox component)">
+      <div style={{ width: 200 }}>
+        <ComboboxDemo />
+      </div>
+    </StorySection>
+    <StorySection title="Basic select menu (Select component)">
       <BasicSelectDemo />
-    </Section>
-    <Section title="Complex select menu (Select component)">
+    </StorySection>
+    <StorySection title="Complex select menu (Select component)">
       <ComplexSelectDemo />
-    </Section>
+    </StorySection>
   </>
 );
 
@@ -276,16 +279,3 @@ Demo.storyName = "Menu, Menu Item";
 export default {
   title: "Library/Menu, Menu Item",
 };
-
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <>
-    <h3 style={{ fontFamily: "sans-serif" }}>{title}</h3>
-    <div style={{ display: "flex", gap: 12 }}>{children}</div>
-  </>
-);

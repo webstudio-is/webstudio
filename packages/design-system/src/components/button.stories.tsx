@@ -1,6 +1,7 @@
 import { type ComponentProps } from "react";
 import { MenuIcon, CrossIcon, TrashIcon } from "@webstudio-is/icons";
 import { Button as ButtonComponent } from "./button";
+import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   title: "Library/Button",
@@ -29,19 +30,6 @@ const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
   "pending",
 ];
 
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <>
-    <h3 style={{ fontFamily: "sans-serif" }}>{title}</h3>
-    <div style={{ display: "flex", gap: 12 }}>{children}</div>
-  </>
-);
-
 export const Button = ({
   prefix,
   suffix,
@@ -51,18 +39,18 @@ export const Button = ({
   suffix?: keyof typeof iconsMap;
 }) => (
   <>
-    <Section title="Configurable">
+    <StorySection title="Configurable">
       <ButtonComponent
         prefix={prefix && iconsMap[prefix]}
         suffix={suffix && iconsMap[suffix]}
         {...rest}
       />
-    </Section>
+    </StorySection>
 
-    <Section title="Colors & States">
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <StorySection title="Colors & States">
+      <StoryGrid>
         {colors.map((color) => (
-          <div key={color} style={{ display: "flex", gap: 12 }}>
+          <StoryGrid horizontal key={color}>
             {states.map((state) => (
               <ButtonComponent
                 prefix={<TrashIcon />}
@@ -76,16 +64,18 @@ export const Button = ({
             <ButtonComponent prefix={<TrashIcon />} color={color} disabled>
               {color} disabled
             </ButtonComponent>
-          </div>
+          </StoryGrid>
         ))}
-      </div>
-    </Section>
+      </StoryGrid>
+    </StorySection>
 
-    <Section title="Icon">
-      <ButtonComponent prefix={<TrashIcon />}>Button</ButtonComponent>
-      <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
-      <ButtonComponent prefix={<TrashIcon />} />
-    </Section>
+    <StorySection title="Icon">
+      <StoryGrid horizontal>
+        <ButtonComponent prefix={<TrashIcon />}>Button</ButtonComponent>
+        <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
+        <ButtonComponent prefix={<TrashIcon />} />
+      </StoryGrid>
+    </StorySection>
   </>
 );
 

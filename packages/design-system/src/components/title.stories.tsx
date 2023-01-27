@@ -1,15 +1,14 @@
 import { Title, TitleSuffixSpacer } from "./title";
 import { Button } from "./button";
 import { CrossIcon, CopyIcon } from "@webstudio-is/icons";
+import { StoryGrid } from "./storybook";
 
 export default {
   title: "Library/Title",
 };
 
 const TitleStory = () => (
-  <div
-    style={{ display: "flex", flexDirection: "column", gap: 16, width: 360 }}
-  >
+  <StoryGrid>
     <Title>Without buttons</Title>
 
     <Title suffix={<Button prefix={<CrossIcon />} color="ghost" />}>
@@ -39,7 +38,7 @@ const TitleStory = () => (
     >
       Icon and regular buttons
     </Title>
-  </div>
+  </StoryGrid>
 );
 
 export { TitleStory as Title };

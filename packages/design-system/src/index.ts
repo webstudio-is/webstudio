@@ -57,3 +57,4 @@ export * from "./components/text";
 export * from "./components/list";
 export * from "./components/typography";
 export * from "./components/title";
+export * from "./components/storybook";

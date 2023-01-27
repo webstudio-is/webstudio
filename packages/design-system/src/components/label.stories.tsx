@@ -1,23 +1,10 @@
-import type { ReactNode } from "react";
 import type { ComponentStory } from "@storybook/react";
+import { StorySection, StoryGrid } from "./storybook";
 import { Label } from "./label";
 
 export default {
   title: "Library/Label",
 };
-
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) => (
-  <>
-    <h3 style={{ fontFamily: "sans-serif" }}>{title}</h3>
-    <div style={{ display: "flex", gap: 12 }}>{children}</div>
-  </>
-);
 
 const colors = ["default", "preset", "local", "remote"] as const;
 
@@ -28,34 +15,38 @@ const LabelStory: ComponentStory<typeof Label> = ({
 }) => {
   return (
     <>
-      <Section title="Configurable">
+      <StorySection title="Configurable">
         <Label color={color} disabled={disabled}>
           {children}
         </Label>
-      </Section>
+      </StorySection>
 
-      <Section title="Colors">
-        {colors.map((color) => (
-          <Label key={color} color={color}>
-            {color}
-          </Label>
-        ))}
-      </Section>
+      <StorySection title="Colors">
+        <StoryGrid horizontal>
+          {colors.map((color) => (
+            <Label key={color} color={color}>
+              {color}
+            </Label>
+          ))}
+        </StoryGrid>
+      </StorySection>
 
-      <Section title="With checkbox">
+      <StorySection title="With checkbox">
         <input id="checkbox1" type="checkbox"></input>
         <Label htmlFor="checkbox1">Label text</Label>
-      </Section>
+      </StorySection>
 
-      <Section title="Disabled">
-        <Label disabled={true}>Label text</Label>
-        <div>
-          <input id="checkbox2" type="checkbox" disabled={true}></input>
-          <Label htmlFor="checkbox2" disabled={true}>
-            Label text
-          </Label>
-        </div>
-      </Section>
+      <StorySection title="Disabled">
+        <StoryGrid horizontal>
+          <Label disabled={true}>Label text</Label>
+          <div>
+            <input id="checkbox2" type="checkbox" disabled={true}></input>
+            <Label htmlFor="checkbox2" disabled={true}>
+              Label text
+            </Label>
+          </div>
+        </StoryGrid>
+      </StorySection>
     </>
   );
 };
