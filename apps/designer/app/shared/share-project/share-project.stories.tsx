@@ -1,47 +1,69 @@
+import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
 import { Panel } from "@webstudio-is/design-system";
 import { useState } from "react";
-import { ShareProject } from "./share-project2";
+import { type LinkOptions, ShareProject } from "./share-project2";
 
 export default {
   component: ShareProject,
 };
 
-const initialLinks = [
+const initialLinks: Array<LinkOptions> = [
   {
-    url: "https://url1.com",
+    url: `https://google.com/${uuid()}`,
     name: "View Only",
-    permission: "view" as const,
+    permission: "view",
   },
   {
-    url: "https://url2.com",
+    url: `https://google.com/${uuid()}`,
     name: "View and Edit",
-    permission: "edit" as const,
+    permission: "edit",
   },
   {
-    url: "https://url3.com",
+    url: `https://google.com/${uuid()}`,
     name: "Build",
-    permission: "build" as const,
+    permission: "build",
   },
 ];
 
-export const ShareLinks: ComponentStory<typeof ShareProject> = () => {
+const useShareProject = (initialLinks: Array<LinkOptions> = []) => {
   const [links, setLinks] = useState(initialLinks);
+
+  const onChange = (updatedLink: LinkOptions) => {
+    setLinks(
+      links.map((link) => (link.url === updatedLink.url ? updatedLink : link))
+    );
+  };
+  const onDelete = (deletedLink: LinkOptions) => {
+    setLinks(links.filter((link) => link.url !== deletedLink.url));
+  };
+  const onCreate = () => {
+    setLinks([
+      ...links,
+      {
+        url: `https://google.com/${uuid()}`,
+        name: "Custom Link",
+        permission: "view",
+      },
+    ]);
+  };
+  return { links, onChange, onDelete, onCreate };
+};
+
+export const Empty: ComponentStory<typeof ShareProject> = () => {
+  const props = useShareProject();
   return (
     <Panel css={{ width: "max-content" }}>
-      <ShareProject
-        links={links}
-        onChange={(updatedLink) => {
-          setLinks(
-            links.map((link) =>
-              link.url === updatedLink.url ? updatedLink : link
-            )
-          );
-        }}
-        onDelete={(deletedLink) => {
-          setLinks(links.filter((link) => link.url !== deletedLink.url));
-        }}
-      />
+      <ShareProject {...props} />
+    </Panel>
+  );
+};
+
+export const WithLinks: ComponentStory<typeof ShareProject> = () => {
+  const props = useShareProject(initialLinks);
+  return (
+    <Panel css={{ width: "max-content" }}>
+      <ShareProject {...props} />
     </Panel>
   );
 };

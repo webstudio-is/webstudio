@@ -1,5 +1,7 @@
 import {
+  Box,
   Button,
+  css,
   Flex,
   Label,
   Popover,
@@ -13,7 +15,7 @@ import {
   Tooltip,
   useId,
 } from "@webstudio-is/design-system";
-import { CopyIcon, InfoIcon, MenuIcon } from "@webstudio-is/icons";
+import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
 import { ComponentProps } from "react";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
@@ -132,9 +134,17 @@ const Menu = ({
   );
 };
 
+const itemStyle = css({
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing[3],
+  py: theme.spacing[5],
+  px: theme.spacing[9],
+});
+
 type Permission = "view" | "edit" | "build";
 
-type LinkOptions = {
+export type LinkOptions = {
   url: string;
   name: string;
   permission: Permission;
@@ -155,11 +165,7 @@ const SharedLinkItem = ({
   onDelete,
 }: SharedLinkItemType) => {
   return (
-    <Flex
-      align="center"
-      gap="1"
-      css={{ my: theme.spacing[5], mx: theme.spacing[9] }}
-    >
+    <Box className={itemStyle()}>
       <Label css={{ flexGrow: 1 }}>{name}</Label>
       <Button prefix={<CopyIcon />}>Copy link</Button>
       <Menu
@@ -169,7 +175,7 @@ const SharedLinkItem = ({
         onChangeName={onChangeName}
         onDelete={onDelete}
       />
-    </Flex>
+    </Box>
   );
 };
 
@@ -177,12 +183,14 @@ type ShareProjectProps = {
   links: Array<LinkOptions>;
   onChange: (link: LinkOptions) => void;
   onDelete: (link: LinkOptions) => void;
+  onCreate: () => void;
 };
 
 export const ShareProject = ({
   links,
   onChange,
   onDelete,
+  onCreate,
 }: ShareProjectProps) => {
   return (
     <Flex
@@ -209,6 +217,17 @@ export const ShareProject = ({
           <Separator />
         </>
       ))}
+      <Box className={itemStyle({ css: { py: theme.spacing["9"] } })}>
+        <Button
+          variant="neutral"
+          prefix={<PlusIcon />}
+          onClick={() => {
+            onCreate();
+          }}
+        >
+          {links.length === 0 ? "Share a custom link" : "Add another link"}
+        </Button>
+      </Box>
     </Flex>
   );
 };
