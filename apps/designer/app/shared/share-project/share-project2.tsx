@@ -55,6 +55,7 @@ type MenuProps = {
   name: string;
   onChangePermission: (permission: Permission) => void;
   onChangeName: (name: string) => void;
+  onDelete: () => void;
 };
 
 const Menu = ({
@@ -62,6 +63,7 @@ const Menu = ({
   name,
   onChangePermission,
   onChangeName,
+  onDelete,
 }: MenuProps) => {
   const handleCheckedChange =
     (permission: Permission) => (checked: boolean) => {
@@ -116,7 +118,14 @@ const Menu = ({
         <Separator />
         <Item>
           {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
-          <Button variant="destructive">Delete Link</Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              onDelete();
+            }}
+          >
+            Delete Link
+          </Button>
         </Item>
       </PopoverContent>
     </Popover>
@@ -134,6 +143,7 @@ type LinkOptions = {
 type SharedLinkItemType = LinkOptions & {
   onChangePermission: (permission: Permission) => void;
   onChangeName: (name: string) => void;
+  onDelete: () => void;
 };
 
 const SharedLinkItem = ({
@@ -142,6 +152,7 @@ const SharedLinkItem = ({
   permission,
   onChangePermission,
   onChangeName,
+  onDelete,
 }: SharedLinkItemType) => {
   return (
     <Flex
@@ -156,6 +167,7 @@ const SharedLinkItem = ({
         permission={permission}
         onChangePermission={onChangePermission}
         onChangeName={onChangeName}
+        onDelete={onDelete}
       />
     </Flex>
   );
@@ -164,9 +176,14 @@ const SharedLinkItem = ({
 type ShareProjectProps = {
   links: Array<LinkOptions>;
   onChange: (link: LinkOptions) => void;
+  onDelete: (link: LinkOptions) => void;
 };
 
-export const ShareProject = ({ links, onChange }: ShareProjectProps) => {
+export const ShareProject = ({
+  links,
+  onChange,
+  onDelete,
+}: ShareProjectProps) => {
   return (
     <Flex
       direction="column"
@@ -184,6 +201,9 @@ export const ShareProject = ({ links, onChange }: ShareProjectProps) => {
             }}
             onChangeName={(name) => {
               onChange({ ...link, name });
+            }}
+            onDelete={() => {
+              onDelete(link);
             }}
           />
           <Separator />

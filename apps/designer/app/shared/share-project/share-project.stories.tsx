@@ -25,7 +25,7 @@ const initialLinks = [
   },
 ];
 
-export const Share: ComponentStory<typeof ShareProject> = () => {
+export const ShareLinks: ComponentStory<typeof ShareProject> = () => {
   const [links, setLinks] = useState(initialLinks);
   return (
     <Panel css={{ width: "max-content" }}>
@@ -37,6 +37,9 @@ export const Share: ComponentStory<typeof ShareProject> = () => {
               link.url === updatedLink.url ? updatedLink : link
             )
           );
+        }}
+        onDelete={(deletedLink) => {
+          setLinks(links.filter((link) => link.url !== deletedLink.url));
         }}
       />
     </Panel>
