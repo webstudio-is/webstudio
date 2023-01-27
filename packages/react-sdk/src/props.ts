@@ -36,7 +36,7 @@ export const getPropsByInstanceId = (props: Props) => {
 export const useInstanceProps = (instanceId: Instance["id"]) => {
   const propsByInstanceId = useStore(propsByInstanceIdStore);
   const instanceProps = propsByInstanceId.get(instanceId);
-  let instancePropsObject: Record<string, number | string | boolean> = {};
+  const instancePropsObject: Record<string, number | string | boolean> = {};
   if (instanceProps) {
     for (const prop of instanceProps) {
       if (prop.type !== "asset") {
