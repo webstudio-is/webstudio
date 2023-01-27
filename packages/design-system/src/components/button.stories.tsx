@@ -13,13 +13,21 @@ const iconsMap = {
   "<TrashIcon>": <TrashIcon />,
 } as const;
 
-const variants: ReadonlyArray<
-  Extract<ComponentProps<typeof ButtonComponent>["variant"], string>
-> = ["primary", "neutral", "destructive", "positive", "ghost"];
+const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
+  "primary",
+  "neutral",
+  "destructive",
+  "positive",
+  "ghost",
+];
 
-const states: ReadonlyArray<
-  Extract<ComponentProps<typeof ButtonComponent>["state"], string>
-> = ["auto", "hover", "focus", "pressed", "pending"];
+const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
+  "auto",
+  "hover",
+  "focus",
+  "pressed",
+  "pending",
+];
 
 const Section = ({
   title,
@@ -51,20 +59,23 @@ export const Button = ({
       />
     </Section>
 
-    <Section title="Variants & States">
+    <Section title="Colors & States">
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {variants.map((variant) => (
-          <div key={variant} style={{ display: "flex", gap: 12 }}>
+        {colors.map((color) => (
+          <div key={color} style={{ display: "flex", gap: 12 }}>
             {states.map((state) => (
               <ButtonComponent
                 prefix={<TrashIcon />}
                 state={state}
-                variant={variant}
+                color={color}
                 key={state}
               >
-                {variant} {state}
+                {color} {state}
               </ButtonComponent>
             ))}
+            <ButtonComponent prefix={<TrashIcon />} color={color} disabled>
+              {color} disabled
+            </ButtonComponent>
           </div>
         ))}
       </div>
@@ -75,22 +86,14 @@ export const Button = ({
       <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
       <ButtonComponent prefix={<TrashIcon />} />
     </Section>
-
-    <Section title="Disabled">
-      <ButtonComponent disabled>Button</ButtonComponent>
-      <ButtonComponent disabled prefix={<TrashIcon />}>
-        Button
-      </ButtonComponent>
-      <ButtonComponent disabled prefix={<TrashIcon />} />
-    </Section>
   </>
 );
 
 Button.argTypes = {
   children: { defaultValue: "Button", control: "text" },
-  variant: {
+  color: {
     defaultValue: "primary",
-    control: { type: "inline-radio", options: variants },
+    control: { type: "inline-radio", options: colors },
   },
   prefix: {
     defaultValue: "undefined",

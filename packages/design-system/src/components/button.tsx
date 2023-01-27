@@ -12,9 +12,7 @@ import {
 import { typography } from "./typography";
 import { styled, theme } from "../stitches.config";
 
-type State = "auto" | "hover" | "focus" | "pressed" | "pending";
-
-const variants = [
+const colors = [
   "primary",
   "destructive",
   "positive",
@@ -22,9 +20,11 @@ const variants = [
   "ghost",
 ] as const;
 
-type Variant = typeof variants[number];
+type ButtonColor = typeof colors[number];
 
-const bg: Record<Variant, string> = {
+type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
+
+const bg: Record<ButtonColor, string> = {
   primary: theme.colors.backgroundPrimary,
   neutral: theme.colors.backgroundNeutralMain,
   destructive: theme.colors.backgroundDestructiveMain,
@@ -32,7 +32,7 @@ const bg: Record<Variant, string> = {
   ghost: theme.colors.backgroundHover,
 };
 
-const fg: Record<Variant, string> = {
+const fg: Record<ButtonColor, string> = {
   primary: theme.colors.foregroundContrastMain,
   destructive: theme.colors.foregroundContrastMain,
   positive: theme.colors.foregroundContrastMain,
@@ -44,33 +44,30 @@ const fg: Record<Variant, string> = {
 const backgroundColors = (base: string, overlay: string) =>
   `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
 
-const variantStyle = (variant: Variant) => ({
+const perColorStyle = (variant: ButtonColor) => ({
   background: variant === "ghost" ? "transparent" : bg[variant],
   color: fg[variant],
 
-  "&[data-button-state=auto]:hover:not([disabled]), &[data-button-state=hover]:not([disabled])":
-    {
-      background: backgroundColors(
-        bg[variant],
-        theme.colors.backgroundButtonHover
-      ),
-    },
+  "&[data-button-state=auto]:hover, &[data-button-state=hover]": {
+    background: backgroundColors(
+      bg[variant],
+      theme.colors.backgroundButtonHover
+    ),
+  },
 
-  "&[data-button-state=auto]:focus-visible:not([disabled]), &[data-button-state=focus]:not([disabled])":
-    {
-      outline: `2px solid ${theme.colors.borderFocus}`,
-      outlineOffset: "1px",
-    },
+  "&[data-button-state=auto]:focus-visible, &[data-button-state=focus]": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: "1px",
+  },
 
-  "&[data-button-state=auto]:active:not([disabled]), &[data-button-state=pressed]:not([disabled])":
-    {
-      background: backgroundColors(
-        bg[variant],
-        theme.colors.backgroundButtonPressed
-      ),
-    },
+  "&[data-button-state=auto]:active, &[data-button-state=pressed]": {
+    background: backgroundColors(
+      bg[variant],
+      theme.colors.backgroundButtonPressed
+    ),
+  },
 
-  "&[disabled]:not([data-button-state=pending])": {
+  "&[data-button-state=disabled]": {
     background: theme.colors.backgroundButtonDisabled,
     color: theme.colors.foregroundDisabled,
   },
@@ -93,18 +90,17 @@ const StyledButton = styled("button", {
   borderRadius: theme.borderRadius[4],
 
   variants: {
-    // in Figma this property is called "color"
-    variant: {
-      primary: variantStyle("primary"),
-      destructive: variantStyle("destructive"),
-      positive: variantStyle("positive"),
-      neutral: variantStyle("neutral"),
-      ghost: variantStyle("ghost"),
+    color: {
+      primary: perColorStyle("primary"),
+      destructive: perColorStyle("destructive"),
+      positive: perColorStyle("positive"),
+      neutral: perColorStyle("neutral"),
+      ghost: perColorStyle("ghost"),
     },
   },
 
   defaultVariants: {
-    variant: "primary",
+    color: "primary",
   },
 });
 
@@ -113,8 +109,12 @@ const TextContainer = styled("span", typography.labelTitleCase, {
 });
 
 type ButtonProps = {
-  state?: State;
-  variant?: Variant;
+  state?: ButtonState;
+  color?: ButtonColor;
+
+  // We don't want all the noise from StyledButton,
+  // so we're cherry-picking just the props we need
+  css?: ComponentProps<typeof StyledButton>["css"];
 
   // prefix/suffix are primarily for Icons
   // this is a replacement for icon/icon-left/icon-right in Figma
@@ -138,7 +138,7 @@ export const Button = forwardRef(
       <StyledButton
         {...restProps}
         disabled={disabled || state === "pending"}
-        data-button-state={state}
+        data-button-state={disabled ? "disabled" : state}
         ref={ref}
       >
         {prefix}

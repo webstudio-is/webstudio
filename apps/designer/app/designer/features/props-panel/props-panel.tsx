@@ -209,7 +209,7 @@ const Property = ({
       {required ? (
         <Box />
       ) : (
-        <Button variant="ghost" onClick={onDelete} prefix={<TrashIcon />} />
+        <Button color="ghost" onClick={onDelete} prefix={<TrashIcon />} />
       )}
     </>
   );
@@ -268,7 +268,7 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
 
   const addButton = (
     <Button
-      variant="ghost"
+      color="ghost"
       onClick={(event) => {
         event.preventDefault();
         addEmptyProp();

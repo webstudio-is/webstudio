@@ -33,7 +33,7 @@ export const CloseButton = ({
   <Tooltip content={label} side="bottom">
     <Button
       onClick={onClick}
-      variant="ghost"
+      color="ghost"
       prefix={<CrossIcon />}
       aria-label={label}
     />

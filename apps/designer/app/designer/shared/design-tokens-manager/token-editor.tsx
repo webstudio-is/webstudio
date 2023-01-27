@@ -149,7 +149,7 @@ export const TokenEditor = ({
       >
         {trigger ?? (
           <Button
-            variant="ghost"
+            color="ghost"
             onClick={(event) => {
               event.preventDefault();
               onOpenChange(true);

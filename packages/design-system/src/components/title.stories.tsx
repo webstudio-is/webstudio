@@ -12,15 +12,15 @@ const TitleStory = () => (
   >
     <Title>Without buttons</Title>
 
-    <Title suffix={<Button prefix={<CrossIcon />} variant="ghost" />}>
+    <Title suffix={<Button prefix={<CrossIcon />} color="ghost" />}>
       One icon button
     </Title>
 
     <Title
       suffix={
         <>
-          <Button prefix={<CrossIcon />} variant="ghost" />
-          <Button prefix={<CopyIcon />} variant="ghost" />
+          <Button prefix={<CrossIcon />} color="ghost" />
+          <Button prefix={<CopyIcon />} color="ghost" />
         </>
       }
     >
@@ -30,8 +30,8 @@ const TitleStory = () => (
     <Title
       suffix={
         <>
-          <Button prefix={<CrossIcon />} variant="ghost" />
-          <Button prefix={<CopyIcon />} variant="ghost" />
+          <Button prefix={<CrossIcon />} color="ghost" />
+          <Button prefix={<CopyIcon />} color="ghost" />
           <TitleSuffixSpacer />
           <Button>Button</Button>
         </>

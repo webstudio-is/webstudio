@@ -277,7 +277,7 @@ const NewPageSettingsView = ({
                   onClick={onClose}
                   aria-label="Cancel"
                   prefix={<ChevronDoubleLeftIcon />}
-                  variant="ghost"
+                  color="ghost"
                   // Tab should go:
                   //   trought form fields -> create button -> cancel button
                   tabIndex={3}
@@ -457,7 +457,7 @@ const PageSettingsView = ({
             {isHomePage === false && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
-                  variant="ghost"
+                  color="ghost"
                   prefix={<TrashIcon />}
                   onClick={onDelete}
                   aria-label="Delete page"
@@ -468,7 +468,7 @@ const PageSettingsView = ({
             {onClose && (
               <Tooltip content="Close page settings" side="bottom">
                 <Button
-                  variant="ghost"
+                  color="ghost"
                   prefix={<ChevronDoubleLeftIcon />}
                   onClick={onClose}
                   aria-label="Close page settings"

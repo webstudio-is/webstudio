@@ -209,7 +209,7 @@ const PagesPanel = ({
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
                   prefix={<NewPageIcon />}
-                  variant="ghost"
+                  color="ghost"
                 />
               </Tooltip>
             )}
