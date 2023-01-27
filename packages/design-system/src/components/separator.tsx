@@ -11,26 +11,15 @@ export const Separator = styled(SeparatorPrimitive.Root, {
 
   variants: {
     size: {
-      "1": {
+      1: {
         '&[data-orientation="horizontal"]': {
           height: theme.spacing[1],
-          width: theme.spacing[9],
+          my: theme.spacing[5],
         },
 
         '&[data-orientation="vertical"]': {
           width: theme.spacing[1],
-          height: theme.spacing[9],
-        },
-      },
-      "2": {
-        '&[data-orientation="horizontal"]': {
-          height: theme.spacing[2],
-          width: theme.spacing[17],
-        },
-
-        '&[data-orientation="vertical"]': {
-          width: theme.spacing[2],
-          height: theme.spacing[17],
+          mx: theme.spacing[5],
         },
       },
       auto: {

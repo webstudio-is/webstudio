@@ -24,7 +24,6 @@ export {
   HeadingIcon,
   TextIcon,
   SquareIcon,
-  InfoCircledIcon,
   CrossCircledIcon,
   CheckCircledIcon,
   TokensIcon,
