@@ -18,7 +18,7 @@ import {
   useId,
 } from "@webstudio-is/design-system";
 import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
-import { ComponentProps } from "react";
+import { Fragment, type ComponentProps } from "react";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -169,7 +169,14 @@ const SharedLinkItem = ({
   return (
     <Box className={itemStyle()}>
       <Label css={{ flexGrow: 1 }}>{name}</Label>
-      <Button prefix={<CopyIcon />}>Copy link</Button>
+      <Button
+        prefix={<CopyIcon />}
+        onClick={() => {
+          navigator.clipboard.writeText(url);
+        }}
+      >
+        Copy link
+      </Button>
       <Menu
         name={name}
         permission={permission}
@@ -201,7 +208,7 @@ export const ShareProject = ({
   onOpenChange,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
-    <>
+    <Fragment key={link.url}>
       <SharedLinkItem
         key={link.url}
         {...link}
@@ -216,7 +223,7 @@ export const ShareProject = ({
         }}
       />
       <Separator />
-    </>
+    </Fragment>
   ));
 
   const create = (
