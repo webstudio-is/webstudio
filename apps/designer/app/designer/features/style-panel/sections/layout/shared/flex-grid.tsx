@@ -51,12 +51,17 @@ export const FlexGrid = ({
         padding: theme.spacing[4],
         borderRadius: "4px",
         background: theme.colors.loContrast,
-        border: "2px solid currentColor",
+        outline: "1px solid",
+        outlineColor: theme.colors.borderMain,
         alignItems: "center",
         gap: theme.spacing[1],
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         color,
+        "&:focus, &:focus-within": {
+          outlineWidth: 2,
+          outlineColor: theme.colors.borderSetFlexUi,
+        },
       }}
     >
       {Array.from(Array(gridSize * gridSize), (_, index) => {
