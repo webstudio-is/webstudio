@@ -6,13 +6,7 @@ import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 
 export const parseProps = async (propsString: string) => {
-  let storedProps;
-  try {
-    storedProps = StoredProps.parse(JSON.parse(propsString));
-  } catch (e) {
-    console.log("hello", propsString);
-    throw e;
-  }
+  const storedProps = StoredProps.parse(JSON.parse(propsString));
 
   // find all asset ids in all props
   const assetIds: string[] = [];
