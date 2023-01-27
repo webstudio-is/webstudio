@@ -1,3 +1,7 @@
+// @todo:
+//  - move this to design-system
+//  - share styles between this and dialog
+
 import {
   Popover,
   PopoverTrigger,

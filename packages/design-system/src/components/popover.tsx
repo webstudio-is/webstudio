@@ -3,12 +3,10 @@ import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Box } from "./box";
 import { panelStyles } from "./panel";
-import { Flex } from "./flex";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
-import { Text } from "./text";
+import { Button } from "./button";
 import { Separator } from "./separator";
-import { styled, CSS } from "../stitches.config";
-import { theme } from "../stitches.config";
+import { Title } from "./title";
+import { styled, CSS, theme } from "../stitches.config";
 
 type PopoverProps = React.ComponentProps<typeof PopoverPrimitive.Root> & {
   children: React.ReactNode;
@@ -67,32 +65,24 @@ PopoverContent.displayName = "PopoverContent";
 type PopoverHeaderProps = {
   title: string;
 };
-
-export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
-  return (
-    <Box css={{ order: -1 }}>
-      <Flex
-        css={{ height: 40, paddingLeft: theme.spacing[9] }}
-        align="center"
-        justify="between"
-      >
-        <Text variant="title">{title}</Text>
+export const PopoverHeader = ({ title }: PopoverHeaderProps) => (
+  <Box css={{ order: -1 }}>
+    <Title
+      suffix={
         <PopoverClose asChild>
-          <DeprecatedIconButton
-            size="2"
-            css={{
-              marginRight: theme.spacing[5],
-            }}
+          <Button
             aria-label="Close"
-          >
-            <CrossLargeIcon />
-          </DeprecatedIconButton>
+            prefix={<CrossLargeIcon />}
+            color="ghost"
+          />
         </PopoverClose>
-      </Flex>
-      <Separator />
-    </Box>
-  );
-};
+      }
+    >
+      {title}
+    </Title>
+    <Separator />
+  </Box>
+);
 
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverClose = PopoverPrimitive.Close;
