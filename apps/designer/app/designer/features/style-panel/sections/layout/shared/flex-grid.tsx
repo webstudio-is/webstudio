@@ -59,7 +59,7 @@ export const FlexGrid = ({
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         color,
-        "&:focus, &:focus-within": {
+        "&:focus-within": {
           outlineWidth: 2,
           outlineColor: theme.colors.borderSetFlexUi,
         },
