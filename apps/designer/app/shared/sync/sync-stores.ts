@@ -1,7 +1,6 @@
 import store, { type Change } from "immerhin";
 import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
-import { allUserPropsContainer } from "@webstudio-is/react-sdk";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
   rootInstanceContainer,
@@ -44,8 +43,7 @@ export const registerContainers = () => {
   store.register("breakpoints", breakpointsContainer);
   store.register("root", rootInstanceContainer);
   store.register("styles", stylesContainer);
-  store.register("props", allUserPropsContainer);
-  store.register("props-modern", propsStore);
+  store.register("props", propsStore);
   store.register("designTokens", designTokensContainer);
   // synchronize whole states
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
@@ -143,7 +141,6 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
             ],
           },
         });
-        //
       })
     );
   }
