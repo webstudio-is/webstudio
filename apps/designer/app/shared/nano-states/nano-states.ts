@@ -110,6 +110,18 @@ export const useSetStyles = (styles: Styles) => {
     stylesContainer.set(styles);
   });
 };
+export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
+  const instanceStylesStore = useMemo(() => {
+    return shallowComputed([stylesIndexStore], (stylesIndex) => {
+      if (instanceId === undefined) {
+        return [];
+      }
+      return stylesIndex.stylesByInstanceId.get(instanceId) ?? [];
+    });
+  }, [instanceId]);
+  const instanceStyles = useStore(instanceStylesStore);
+  return instanceStyles;
+};
 
 export const breakpointsContainer = atom<Breakpoint[]>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);

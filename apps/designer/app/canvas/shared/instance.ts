@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import store from "immerhin";
-import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import type { Instance, Props, Styles } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { utils, type InstanceInsertionSpec } from "@webstudio-is/project";
 import { useSubscribe } from "~/shared/pubsub";
@@ -8,6 +8,7 @@ import {
   propsStore,
   rootInstanceContainer,
   selectedInstanceIdStore,
+  stylesContainer,
   useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
@@ -19,7 +20,8 @@ declare module "~/shared/pubsub" {
     insertInstance: {
       instance: Instance;
       dropTarget?: { parentId: Instance["id"]; position: number };
-      props?: Array<PropsItem>;
+      props?: Props;
+      styles?: Styles;
     };
   }
 }
@@ -57,11 +59,16 @@ export const findInsertLocation = (
 export const useInsertInstance = () => {
   useSubscribe(
     "insertInstance",
-    ({ instance, dropTarget, props: insertedProps }) => {
+    ({
+      instance,
+      dropTarget,
+      props: insertedProps,
+      styles: insertedStyles,
+    }) => {
       const selectedInstanceId = selectedInstanceIdStore.get();
       store.createTransaction(
-        [rootInstanceContainer, propsStore],
-        (rootInstance, props) => {
+        [rootInstanceContainer, propsStore, stylesContainer],
+        (rootInstance, props, styles) => {
           if (rootInstance === undefined) {
             return;
           }
@@ -75,6 +82,9 @@ export const useInsertInstance = () => {
           }
           if (insertedProps !== undefined) {
             props.push(...insertedProps);
+          }
+          if (insertedStyles !== undefined) {
+            styles.push(...insertedStyles);
           }
         }
       );

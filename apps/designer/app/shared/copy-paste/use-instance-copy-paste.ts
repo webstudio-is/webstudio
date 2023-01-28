@@ -1,6 +1,7 @@
-import { utils } from "@webstudio-is/project";
+import ObjectId from "bson-objectid";
 import { useEffect, useMemo } from "react";
-import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import { utils } from "@webstudio-is/project";
+import type { Instance, Props, Styles } from "@webstudio-is/project-build";
 import { type InstanceCopyData, serialize, deserialize } from "./serialize";
 
 const isInstanceClipboardEvent = (
@@ -35,15 +36,15 @@ const isInstanceClipboardEvent = (
   return true;
 };
 
-type Props = {
+type InstanceCopyPasteProps = {
   selectedInstanceData?: InstanceCopyData | undefined;
   allowAnyTarget?: boolean;
-  onPaste: (instance: Instance, props?: PropsItem[]) => void;
+  onPaste: (data: InstanceCopyData) => void;
   onCut: (instance: Instance) => void;
 };
 
 const createEventsHandler = () => {
-  let currentProps: Props | undefined;
+  let currentProps: InstanceCopyPasteProps | undefined;
 
   const handleCopy = (event: ClipboardEvent) => {
     if (currentProps === undefined) {
@@ -121,12 +122,23 @@ const createEventsHandler = () => {
 
     const instance = utils.tree.cloneInstance(data.instance);
 
-    const props =
-      data.props && data.props.length > 0
-        ? utils.props.cloneUserProps(data.props)
-        : undefined;
+    // copy props with new ids and link to new instance
+    const props: Props = data.props.map((prop) => {
+      return {
+        ...prop,
+        id: ObjectId().toString(),
+        instanceId: instance.id,
+      };
+    });
 
-    onPaste(instance, props);
+    const styles: Styles = data.styles.map((styleDecl) => {
+      return {
+        ...styleDecl,
+        instanceId: instance.id,
+      };
+    });
+
+    onPaste({ instance, props, styles });
   };
 
   return {
@@ -140,7 +152,7 @@ const createEventsHandler = () => {
       document.removeEventListener("cut", handleCut);
       document.removeEventListener("paste", handlePaste);
     },
-    setProps(props: Props) {
+    setProps(props: InstanceCopyPasteProps) {
       currentProps = props;
     },
   };
@@ -148,7 +160,7 @@ const createEventsHandler = () => {
 
 // Everything is extrcated from hook,
 // to make it easier to remove React from canvas if we need to
-export const useInstanceCopyPaste = (props: Props): void => {
+export const useInstanceCopyPaste = (props: InstanceCopyPasteProps): void => {
   const eventsHandler = useMemo(createEventsHandler, []);
 
   useEffect(() => {

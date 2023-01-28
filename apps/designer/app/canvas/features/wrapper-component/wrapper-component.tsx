@@ -9,11 +9,10 @@ import {
   getComponent,
   idAttribute,
 } from "@webstudio-is/react-sdk";
-import { shallowComputed } from "~/shared/store-utils";
 import {
   selectedInstanceIdStore,
-  stylesIndexStore,
   useInstanceProps,
+  useInstanceStyles,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
@@ -57,13 +56,7 @@ export const WrapperComponentDev = ({
 }: WrapperComponentDevProps) => {
   const instanceId = instance.id;
 
-  const instanceStylesStore = useMemo(() => {
-    return shallowComputed(
-      [stylesIndexStore],
-      (stylesIndex) => stylesIndex.stylesByInstanceId.get(instanceId) ?? []
-    );
-  }, [instanceId]);
-  const instanceStyles = useStore(instanceStylesStore);
+  const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
 
   const [editingInstanceId, setTextEditingInstanceId] =
