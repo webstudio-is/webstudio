@@ -73,8 +73,7 @@ model Build {
   isDev  Boolean // exctly one is true per project
   isProd Boolean // at most one is true per project (none if not published)
 
-  breakpoints  Breakpoints?
-  designTokens DesignTokens?
+  breakpoints Breakpoints?
 
   styles       String @default("[]")
   styleSources String @default("[]")
@@ -103,12 +102,6 @@ model Breakpoints {
   build   Build  @relation(fields: [buildId], references: [id])
   buildId String @id
   values  String @default("[]")
-}
-
-model DesignTokens {
-  build   Build  @relation(fields: [buildId], references: [id])
-  buildId String @id
-  value   String @default("[]")
 }
 
 // Dashboard

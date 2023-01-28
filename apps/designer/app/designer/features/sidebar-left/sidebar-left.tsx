@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   SidebarTabs,
   SidebarTabsContent,
@@ -36,8 +35,6 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
     (panel) => {
       switch (panel) {
-        case "designTokens":
-          return isFeatureEnabled("designTokens");
         case "navigator":
           return clientSettings.navigatorLayout === "docked";
       }

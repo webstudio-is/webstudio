@@ -17,7 +17,6 @@
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-engine": "workspace:^",
-    "@webstudio-is/design-tokens": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
     "@webstudio-is/project-build": "workspace:^",

@@ -7,7 +7,6 @@ import type {
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
 import type { Breakpoint, Style } from "@webstudio-is/css-data";
-import type { DesignToken } from "@webstudio-is/design-tokens";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
 
@@ -128,14 +127,6 @@ export const useBreakpoints = () => useValue(breakpointsContainer);
 export const useSetBreakpoints = (breakpoints: Breakpoint[]) => {
   useSyncInitializeOnce(() => {
     breakpointsContainer.set(breakpoints);
-  });
-};
-
-export const designTokensContainer = atom<DesignToken[]>([]);
-export const useDesignTokens = () => useValue(designTokensContainer);
-export const useSetDesignTokens = (designTokens: DesignToken[]) => {
-  useSyncInitializeOnce(() => {
-    designTokensContainer.set(designTokens);
   });
 };
 

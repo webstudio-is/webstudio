@@ -6,7 +6,6 @@ import {
   rootInstanceContainer,
   propsStore,
   breakpointsContainer,
-  designTokensContainer,
   stylesContainer,
   selectedInstanceIdStore,
   selectedInstanceBrowserStyleStore,
@@ -44,7 +43,6 @@ export const registerContainers = () => {
   store.register("root", rootInstanceContainer);
   store.register("styles", stylesContainer);
   store.register("props", propsStore);
-  store.register("designTokens", designTokensContainer);
   // synchronize whole states
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
   clientStores.set(
