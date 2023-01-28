@@ -30,6 +30,7 @@ import {
   selectedInstanceStore,
   useBreakpoints,
   useInstanceProps,
+  useInstanceStyles,
   useRootInstance,
   useSetBreakpoints,
   useSetDesignTokens,
@@ -101,15 +102,17 @@ const useAssets = (initialAssets: Array<Asset>) => {
 const useCopyPaste = () => {
   const selectedInstance = useStore(selectedInstanceStore);
   const instanceProps = useInstanceProps(selectedInstance?.id);
+  const instanceStyles = useInstanceStyles(selectedInstance?.id);
 
   const selectedInstanceData = useMemo(() => {
     if (selectedInstance) {
       return {
         instance: selectedInstance,
         props: instanceProps,
+        styles: instanceStyles,
       };
     }
-  }, [selectedInstance, instanceProps]);
+  }, [selectedInstance, instanceProps, instanceStyles]);
 
   // We need to initialize this in both canvas and designer,
   // because the events will fire in either one, depending on where the focus is
@@ -119,10 +122,10 @@ const useCopyPaste = () => {
     onCut: (instance) => {
       publish({ type: "deleteInstance", payload: { id: instance.id } });
     },
-    onPaste: (instance, props) => {
+    onPaste: ({ instance, props, styles }) => {
       publish({
         type: "insertInstance",
-        payload: { instance, props },
+        payload: { instance, props, styles },
       });
     },
   });

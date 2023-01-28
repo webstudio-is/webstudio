@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { Instance, Props } from "@webstudio-is/project-build";
+import { Instance, Props, Styles } from "@webstudio-is/project-build";
 
 const TYPE = "@webstudio/instance/v0.1" as const;
 
 const InstanceCopyData = z.object({
   instance: Instance,
-  props: Props.optional(),
+  props: Props,
+  styles: Styles,
 });
 
 export type InstanceCopyData = z.infer<typeof InstanceCopyData>;
