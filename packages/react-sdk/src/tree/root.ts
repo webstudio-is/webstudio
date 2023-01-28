@@ -1,15 +1,16 @@
 import type { ComponentProps } from "react";
+import { atom } from "nanostores";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
 import type { Tree } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { useAllUserProps } from "../user-props/";
 import type { InstanceProps } from "../db";
 import { createElementsTree } from "./create-elements-tree";
 import { WrapperComponent } from "./wrapper-component";
 import { registerComponents } from "../components";
 import { customComponents as defaultCustomComponents } from "../app/custom-components";
 import { setParams, type Params } from "../app/params";
+import { getPropsByInstanceId, setPropsByInstanceIdStore } from "../props";
 
 export type Data = {
   tree: Tree | null;
@@ -34,7 +35,9 @@ export const InstanceRoot = ({
   if (data.tree === null) {
     throw new Error("Tree is null");
   }
-  useAllUserProps(data.props);
+
+  setPropsByInstanceIdStore(atom(getPropsByInstanceId(data.tree.props)));
+
   setParams(data.params ?? null);
 
   registerComponents(customComponents);
