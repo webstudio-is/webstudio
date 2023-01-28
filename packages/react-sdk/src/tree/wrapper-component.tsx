@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import type { Instance } from "@webstudio-is/project-build";
 import { getComponent } from "../components";
-import { useUserProps } from "../user-props/use-user-props";
+import { useInstanceProps } from "../props";
 import type { OnChangeChildren } from "./create-elements-tree";
 
 const renderText = (text: string): Array<JSX.Element> => {
@@ -39,9 +39,9 @@ export const WrapperComponent = ({
   children,
   ...rest
 }: WrapperComponentProps) => {
-  const userProps = useUserProps(instance.id);
+  const instanceProps = useInstanceProps(instance.id);
   const props = {
-    ...userProps,
+    ...instanceProps,
     ...rest,
     [idAttribute]: instance.id,
     [componentAttribute]: instance.component,

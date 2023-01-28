@@ -1,15 +1,16 @@
 import { useCallback, useMemo, useState } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { CanvasData } from "@webstudio-is/project";
 import {
   createElementsTree,
-  useAllUserProps,
   registerComponents,
   registerComponentsMeta,
   customComponentsMeta,
   setParams,
   type OnChangeChildren,
+  setPropsByInstanceIdStore,
 } from "@webstudio-is/react-sdk";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
@@ -24,6 +25,7 @@ import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import { useTrackSelectedElement } from "./shared/use-track-selected-element";
 import { WrapperComponentDev } from "./features/wrapper-component";
 import {
+  propsIndexStore,
   rootInstanceContainer,
   selectedInstanceStore,
   useBreakpoints,
@@ -147,6 +149,11 @@ type CanvasProps = {
   data: CanvasData;
 };
 
+const propsByInstanceIdStore = computed(
+  propsIndexStore,
+  (propsIndex) => propsIndex.propsByInstanceId
+);
+
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   if (data.tree === null) {
     throw new Error("Tree is null");
@@ -155,8 +162,9 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   const assets = useAssets(data.assets);
   useSetBreakpoints(data.breakpoints);
   useSetDesignTokens(data.designTokens);
-  useAllUserProps(data.props);
   useSetProps(data.tree.props);
+  // inject props store to sdk
+  setPropsByInstanceIdStore(propsByInstanceIdStore);
   useSetStyles(data.tree.styles);
   useSetRootInstance(data.tree.root);
   setParams(data.params ?? null);

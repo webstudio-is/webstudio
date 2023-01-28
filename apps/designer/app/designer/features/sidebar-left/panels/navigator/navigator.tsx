@@ -1,6 +1,6 @@
-import { type Publish } from "~/shared/pubsub";
 import { ListNestedIcon } from "@webstudio-is/icons";
-import { Navigator } from "../../lib/navigator";
+import { type Publish } from "~/shared/pubsub";
+import { Navigator } from "../../navigator";
 import { TabName } from "../../types";
 
 type TabContentProps = {
