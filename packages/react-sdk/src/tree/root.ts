@@ -4,7 +4,6 @@ import type { Breakpoint } from "@webstudio-is/css-data";
 import type { DesignToken } from "@webstudio-is/design-tokens";
 import type { Tree } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import type { InstanceProps } from "../db";
 import { createElementsTree } from "./create-elements-tree";
 import { WrapperComponent } from "./wrapper-component";
 import { registerComponents } from "../components";
@@ -16,7 +15,6 @@ export type Data = {
   tree: Tree | null;
   breakpoints: Array<Breakpoint>;
   designTokens: Array<DesignToken>;
-  props: Array<InstanceProps>;
   assets: Array<Asset>;
   params?: Params;
 };

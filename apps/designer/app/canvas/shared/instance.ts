@@ -1,13 +1,9 @@
 import { useEffect } from "react";
-import type { Instance, PropsItem } from "@webstudio-is/project-build";
-import {
-  getComponentMeta,
-  allUserPropsContainer,
-} from "@webstudio-is/react-sdk";
-
-import { useSubscribe } from "~/shared/pubsub";
-import { utils, type InstanceInsertionSpec } from "@webstudio-is/project";
 import store from "immerhin";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { utils, type InstanceInsertionSpec } from "@webstudio-is/project";
+import { useSubscribe } from "~/shared/pubsub";
 import {
   propsStore,
   rootInstanceContainer,
@@ -64,8 +60,8 @@ export const useInsertInstance = () => {
     ({ instance, dropTarget, props: insertedProps }) => {
       const selectedInstanceId = selectedInstanceIdStore.get();
       store.createTransaction(
-        [rootInstanceContainer, allUserPropsContainer, propsStore],
-        (rootInstance, allUserProps, props) => {
+        [rootInstanceContainer, propsStore],
+        (rootInstance, props) => {
           if (rootInstance === undefined) {
             return;
           }
@@ -78,7 +74,6 @@ export const useInsertInstance = () => {
             selectedInstanceIdStore.set(instance.id);
           }
           if (insertedProps !== undefined) {
-            allUserProps[instance.id] = insertedProps;
             props.push(...insertedProps);
           }
         }
