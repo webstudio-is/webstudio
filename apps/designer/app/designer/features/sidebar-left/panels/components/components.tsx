@@ -6,15 +6,14 @@ import {
   getComponentMeta,
   getComponentNames,
 } from "@webstudio-is/react-sdk";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { Flex, useDrag, type Point } from "@webstudio-is/design-system";
+import { theme, Flex, useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { utils } from "@webstudio-is/project";
-import type { TabName } from "../../types";
-import { ComponentThumb } from "./component-thumb";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
-import { Header, CloseButton } from "../../lib/header";
-import { theme } from "@webstudio-is/design-system";
+import type { TabName } from "../../types";
+import { Header, CloseButton } from "../../header";
+import { ComponentThumb } from "./component-thumb";
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
