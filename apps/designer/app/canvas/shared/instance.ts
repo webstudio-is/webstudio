@@ -9,10 +9,10 @@ import {
   rootInstanceContainer,
   selectedInstanceIdStore,
   stylesContainer,
-  useRootInstance,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
+import { deleteInstanceMutable } from "~/shared/tree-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -116,38 +116,29 @@ export const useReparentInstance = () => {
 };
 
 export const useDeleteInstance = () => {
-  const [rootInstance] = useRootInstance();
-  useSubscribe("deleteInstance", ({ id }) => {
-    const selectedInstanceId = selectedInstanceIdStore.get();
-    if (rootInstance !== undefined && selectedInstanceId !== undefined) {
-      // @todo tell user they can't delete root
-      if (id === rootInstance.id) {
-        return;
-      }
-
-      const parentInstance = utils.tree.findParentInstance(rootInstance, id);
-      if (parentInstance !== undefined) {
-        const siblingInstance = utils.tree.findParentInstance(
-          parentInstance,
-          id
-        );
-        selectedInstanceIdStore.set(siblingInstance?.id ?? parentInstance.id);
-      }
+  useSubscribe("deleteInstance", ({ id: deletedInstanceId }) => {
+    const rootInstance = rootInstanceContainer.get();
+    // @todo tell user they can't delete root
+    if (deletedInstanceId === rootInstance?.id) {
+      return;
     }
-    // @todo deleting instance should involve also deleting it's props
-    // If we don't delete them - they just live both on client and db
-    // Pros:
-    //   - if we undo the deletion we don't need to undo the props deletion
-    //   - in a multiplayer environment, some other user could have changed a prop while we have deleted the instance
-    // and then if we restore the instance, we would be restoring it with our props, potentially overwriting other users changes
-    // The way it is now it will actually still enable parallel deletion props editing and restoration.
-    // Contra: we are piling them up.
-    // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
-    store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance !== undefined) {
-        utils.tree.deleteInstanceMutable(rootInstance, id);
+    store.createTransaction(
+      [rootInstanceContainer, propsStore, stylesContainer],
+      (rootInstance, props, styles) => {
+        if (rootInstance === undefined) {
+          return;
+        }
+        const parentInstance = deleteInstanceMutable({
+          rootInstance,
+          props,
+          styles,
+          deletedInstanceId,
+        });
+        if (parentInstance) {
+          selectedInstanceIdStore.set(parentInstance.id);
+        }
       }
-    });
+    );
   });
 };
 
