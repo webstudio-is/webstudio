@@ -5,7 +5,7 @@ import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
-import { createContext, createReadToken } from "~/shared/context.server";
+import { createContext, createAuthReadToken } from "~/shared/context.server";
 import { trpcClient } from "~/services/trpc.server";
 
 export { links };
@@ -35,18 +35,18 @@ export const loader = async ({
   const page =
     pages.pages.find((page) => page.id === pageIdParam) ?? pages.homePage;
 
-  const readToken = await createReadToken({ projectId: project.id });
+  const authReadToken = await createAuthReadToken({ projectId: project.id });
 
   const projectSubjectSets = await trpcClient.authorize.expandLeafNodes.query({
     id: project.id,
     namespace: "Project",
   });
 
-  const sharedTokens: DesignerProps["sharedTokens"] = [];
+  const authSharedTokens: DesignerProps["authSharedTokens"] = [];
 
   for (const subjectSet of projectSubjectSets) {
     if (subjectSet.namespace === "Token") {
-      sharedTokens.push({
+      authSharedTokens.push({
         token: subjectSet.id,
         relation: subjectSet.relation,
       });
@@ -60,8 +60,8 @@ export const loader = async ({
     treeId: page.treeId,
     buildId: devBuild.id,
     buildOrigin: getBuildOrigin(request),
-    readToken,
-    sharedTokens,
+    authReadToken,
+    authSharedTokens,
   };
 };
 

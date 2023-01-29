@@ -18,17 +18,17 @@ const createAuthorizationContext = async (
 
   const buildMode = getMode(url);
 
-  const readTokenRaw = url.searchParams.get("readToken") ?? undefined;
-  const token = url.searchParams.get("token") ?? url.hostname;
+  const authReadTokenRaw = url.searchParams.get("authReadToken") ?? undefined;
+  const authToken = url.searchParams.get("authToken") ?? url.hostname;
 
   const user = await authenticator.isAuthenticated(request);
 
-  let readToken: AuthReadToken | undefined;
+  let authReadToken: AuthReadToken | undefined;
 
-  if (readTokenRaw !== undefined) {
-    readToken = AuthReadToken.parse(
+  if (authReadTokenRaw !== undefined) {
+    authReadToken = AuthReadToken.parse(
       await cryptoJson.decode(
-        readTokenRaw,
+        authReadTokenRaw,
         process.env.AUTH_SECRET ?? "NO-SECRET"
       )
     );
@@ -36,8 +36,8 @@ const createAuthorizationContext = async (
 
   const context: AppContext["authorization"] = {
     userId: user?.id,
-    authReadToken: readToken,
-    authToken: token,
+    authReadToken,
+    authToken,
     buildEnv: buildMode === "published" ? "prod" : "dev",
     authorizeTrpc: trpcClient.authorize,
   };
@@ -45,7 +45,7 @@ const createAuthorizationContext = async (
   return context;
 };
 
-export const createReadToken = async (tokenData: AuthReadToken) => {
+export const createAuthReadToken = async (tokenData: AuthReadToken) => {
   return cryptoJson.encode(tokenData, process.env.AUTH_SECRET ?? "NO-SECRET");
 };
 

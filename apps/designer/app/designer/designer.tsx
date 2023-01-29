@@ -267,8 +267,11 @@ export type DesignerProps = {
   treeId: string;
   buildId: string;
   buildOrigin: string;
-  readToken: string;
-  sharedTokens: { token: string; relation: "viewers" | "editors" | "owner" }[];
+  authReadToken: string;
+  authSharedTokens: {
+    token: string;
+    relation: "viewers" | "editors" | "owner";
+  }[];
 };
 
 export const Designer = ({
@@ -278,8 +281,8 @@ export const Designer = ({
   treeId,
   buildId,
   buildOrigin,
-  readToken,
-  sharedTokens,
+  authReadToken,
+  authSharedTokens,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -319,7 +322,7 @@ export const Designer = ({
     project,
     page,
     mode: "edit",
-    readToken: readToken,
+    authReadToken,
   });
 
   const previewUrl = getBuildUrl({
@@ -328,7 +331,7 @@ export const Designer = ({
     page,
     mode: "preview",
     // Temporary solution until the new share UI is implemented
-    token: sharedTokens.find((t) => t.relation === "viewers")?.token,
+    authToken: authSharedTokens.find((t) => t.relation === "viewers")?.token,
   });
 
   return (

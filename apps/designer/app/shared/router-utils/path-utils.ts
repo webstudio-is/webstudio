@@ -69,16 +69,16 @@ export const getBuildUrl = ({
   page,
   mode,
   // Hidden token for canvas (should not be visible in browser URL)
-  readToken,
+  authReadToken,
   // Token to share project
-  token,
+  authToken,
 }: {
   buildOrigin: string;
   project: Project;
   page: Page;
   mode?: BuildMode;
-  readToken?: string;
-  token?: string;
+  authReadToken?: string;
+  authToken?: string;
 }) => {
   const url = new URL(buildOrigin);
   url.pathname = page.path;
@@ -93,12 +93,12 @@ export const getBuildUrl = ({
     url.searchParams.set("mode", mode);
   }
 
-  if (readToken) {
-    url.searchParams.set("readToken", readToken);
+  if (authReadToken) {
+    url.searchParams.set("authReadToken", authReadToken);
   }
 
-  if (token) {
-    url.searchParams.set("token", token);
+  if (authToken) {
+    url.searchParams.set("authToken", authToken);
   }
 
   return url.toString();
