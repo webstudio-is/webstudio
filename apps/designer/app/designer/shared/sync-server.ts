@@ -15,30 +15,50 @@ export const syncStatus = atom<SyncStatus>("idle");
 // to the database
 // For now we will just have to queue the changes for all tree mutations.
 
-type Job = () => Promise<unknown>;
+type Job = () => Promise<Response>;
 
 const queue: Array<Job> = [];
+let failedAttempts = 0;
+const MAX_FAILED_BEFORE_WARNING = 3;
+// By default we sync every second.
+const REQUEST_INTERVAL_DEFAULT = 2000;
+// When we reached max failed attempts we will slow down the sync interval.
+const REQUEST_INTERVAL_RECOVERY = 5000;
+// Periodic check for new entries to put them together in the sync queue.
+const NEW_ENTRIES_CHECK_INTERVAL = 1000;
 
-export const enqueue = (job: Job) => {
+const enqueue = (job: Job) => {
   queue.push(job);
-  if (isInProgress === false) {
+  if (syncStatus.get() === "idle") {
     dequeue();
   }
 };
 
-let isInProgress = false;
-
 const dequeue = () => {
   const job = queue.shift();
-  if (job) {
-    isInProgress = true;
-    syncStatus.set("syncing");
-    job().finally(() => {
-      isInProgress = false;
-      syncStatus.set("idle");
-      dequeue();
-    });
+  if (job === undefined) {
+    return;
   }
+  syncStatus.set("syncing");
+  const handleFailure = () => {
+    syncStatus.set("idle");
+    failedAttempts++;
+    queue.unshift(job);
+    if (failedAttempts >= MAX_FAILED_BEFORE_WARNING) {
+      return setTimeout(dequeue, REQUEST_INTERVAL_RECOVERY);
+    }
+    setTimeout(dequeue, REQUEST_INTERVAL_DEFAULT);
+  };
+  job()
+    .then((response) => {
+      if (response.ok === false) {
+        return handleFailure();
+      }
+      failedAttempts = 0;
+      syncStatus.set("idle");
+      setTimeout(dequeue, REQUEST_INTERVAL_DEFAULT);
+    })
+    .catch(handleFailure);
 };
 
 export const useSyncServer = ({
@@ -51,19 +71,17 @@ export const useSyncServer = ({
   projectId: Project["id"];
 }) => {
   useEffect(() => {
+    // @todo setInterval can be completely avoided.
+    // Right now prisma can't do atomic updates yet with sandbox documents
+    // and backend fetches and updates big objects, so if we send quickly,
+    // we end up overwriting things
     const intervalId = setInterval(() => {
-      // @todo prevent clearing queue in case request is failed
       const entries = sync();
       if (entries.length === 0) {
         return;
       }
 
-      // @todo this entire queueing logic needs to be gone, it's a workaround,
-      // because prisma can't do atomic updates yet with sandbox documents
-      // and backend fetches and updates big objects, so if we send quickly,
-      // we end up overwriting things
       enqueue(() =>
-        // @todo start next round only when the request is completed
         fetch(restPatchPath(), {
           method: "post",
           body: JSON.stringify({
@@ -74,7 +92,7 @@ export const useSyncServer = ({
           }),
         })
       );
-    }, 1000);
+    }, NEW_ENTRIES_CHECK_INTERVAL);
     return () => {
       clearInterval(intervalId);
     };
