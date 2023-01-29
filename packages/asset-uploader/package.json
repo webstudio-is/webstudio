@@ -26,7 +26,7 @@
   "devDependencies": {
     "@jest/globals": "^29.3.1",
     "@types/app-root-path": "^1.2.4",
-    "@types/node": "^18.7.16",
+    "@types/node": "^18.11.18",
     "@types/sharp": "^0.30.4",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
