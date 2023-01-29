@@ -1,8 +1,13 @@
 import { v4 as uuid } from "uuid";
 import type { ComponentStory } from "@storybook/react";
-import { Button } from "@webstudio-is/design-system";
-import { useState } from "react";
-import { type LinkOptions, ShareProject } from "./share-project2";
+import {
+  Button,
+  FloatingPanelPopover,
+  FloatingPanelPopoverContent,
+  FloatingPanelPopoverTrigger,
+} from "@webstudio-is/design-system";
+import { useEffect, useState } from "react";
+import { type LinkOptions, ShareProject } from "./share-project";
 
 export default {
   component: ShareProject,
@@ -10,60 +15,121 @@ export default {
 
 const initialLinks: Array<LinkOptions> = [
   {
-    url: `https://google.com/${uuid()}`,
+    token: uuid(),
     name: "View Only",
-    permission: "view",
+    relation: "viewers",
   },
   {
-    url: `https://google.com/${uuid()}`,
+    token: uuid(),
     name: "View and Edit",
-    permission: "edit",
+    relation: "editors",
   },
   {
-    url: `https://google.com/${uuid()}`,
+    token: uuid(),
     name: "Build",
-    permission: "build",
+    relation: "builders",
   },
 ];
 
-const useShareProject = (initialLinks: Array<LinkOptions> = []) => {
-  const [links, setLinks] = useState(initialLinks);
+const INITIAL_LINKS: LinkOptions[] = [];
+
+const useShareProject = (
+  initialLinks: Array<LinkOptions> = INITIAL_LINKS,
+  async = false
+) => {
+  const [links, setLinks] = useState(async ? [] : initialLinks);
 
   const onChange = (updatedLink: LinkOptions) => {
     setLinks(
-      links.map((link) => (link.url === updatedLink.url ? updatedLink : link))
+      links.map((link) =>
+        link.token === updatedLink.token ? updatedLink : link
+      )
     );
   };
   const onDelete = (deletedLink: LinkOptions) => {
-    setLinks(links.filter((link) => link.url !== deletedLink.url));
+    setLinks(links.filter((link) => link.token !== deletedLink.token));
   };
   const onCreate = () => {
     setLinks([
       ...links,
       {
-        url: `https://google.com/${uuid()}`,
+        token: uuid(),
         name: "Custom Link",
-        permission: "view",
+        relation: "viewers",
       },
     ]);
   };
+
+  useEffect(() => {
+    if (async) {
+      setTimeout(() => {
+        setLinks(initialLinks);
+      }, 1000);
+      return;
+    }
+
+    setLinks(initialLinks);
+  }, [async, initialLinks]);
+
   return { links, onChange, onDelete, onCreate };
 };
 
 export const Empty: ComponentStory<typeof ShareProject> = () => {
   const props = useShareProject();
   return (
-    <ShareProject {...props} isOpen>
-      <Button>Share</Button>
-    </ShareProject>
+    <FloatingPanelPopover modal open>
+      <FloatingPanelPopoverTrigger asChild>
+        <Button>Share</Button>
+      </FloatingPanelPopoverTrigger>
+
+      <FloatingPanelPopoverContent>
+        <ShareProject
+          {...props}
+          designerUrl={({ authToken, mode }) =>
+            `https://blabla.com/${authToken}/${mode}`
+          }
+        ></ShareProject>
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
   );
 };
 
 export const WithLinks: ComponentStory<typeof ShareProject> = () => {
   const props = useShareProject(initialLinks);
   return (
-    <ShareProject {...props} isOpen>
-      <Button>Share</Button>
-    </ShareProject>
+    <FloatingPanelPopover modal open>
+      <FloatingPanelPopoverTrigger asChild>
+        <Button>Share</Button>
+      </FloatingPanelPopoverTrigger>
+
+      <FloatingPanelPopoverContent>
+        <ShareProject
+          {...props}
+          designerUrl={({ authToken, mode }) =>
+            `https://blabla.com/${authToken}/${mode}`
+          }
+        ></ShareProject>
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
+  );
+};
+
+export const WithAsyncLinks: ComponentStory<typeof ShareProject> = () => {
+  const props = useShareProject(initialLinks, true);
+  return (
+    <FloatingPanelPopover modal open>
+      <FloatingPanelPopoverTrigger asChild>
+        <Button>Share</Button>
+      </FloatingPanelPopoverTrigger>
+
+      <FloatingPanelPopoverContent>
+        <ShareProject
+          {...props}
+          designerUrl={({ authToken, mode }) =>
+            `https://blabla.com/${authToken}/${mode}`
+          }
+        ></ShareProject>
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
   );
 };

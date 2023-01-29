@@ -144,9 +144,9 @@ const Menu = ({
 const useProjectCard = () => {
   const fetcher = useFetcher();
   const thumbnailRef = useRef<HTMLAnchorElement>(null);
-  const { submit: deleteProject } = trpc.delete.useMutation();
-  const { submit: rename } = trpc.rename.useMutation();
-  const { submit: duplicate } = trpc.duplicate.useMutation();
+  const { send: deleteProject } = trpc.delete.useMutation();
+  const { send: rename } = trpc.rename.useMutation();
+  const { send: duplicate } = trpc.duplicate.useMutation();
 
   // @todo with dialog it can be displayed in the dialog
   useEffect(() => {

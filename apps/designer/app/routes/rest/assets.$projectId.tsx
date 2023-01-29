@@ -23,14 +23,23 @@ export const loader = async ({ params }: LoaderArgs): Promise<Array<Asset>> => {
   return await loadByProject(params.projectId);
 };
 
-export const action = async ({
-  request,
-  params,
-}: ActionArgs): Promise<ActionData | undefined> => {
+export const action = async (
+  props: ActionArgs
+): Promise<ActionData | Array<Asset> | undefined> => {
+  const { request, params } = props;
+
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }
   try {
+    /**
+     * To prevent the AssetsProvider from being redrawn every time an action is requested, we use PUT instead of GET
+     * to load assets. The only reason PUT is chosen is that it is idempotent and has not been used before.
+     */
+    if (request.method === "PUT") {
+      return await loader(props);
+    }
+
     if (request.method === "DELETE") {
       const { assetId: ids } = DeleteAssets.parse(await request.formData());
       const deletedAssets = await deleteAssets(ids);

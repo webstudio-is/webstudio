@@ -37,7 +37,7 @@ import {
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { getBuildUrl } from "~/shared/router-utils";
+import { designerUrl, getBuildUrl } from "~/shared/router-utils";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
 
@@ -275,10 +275,7 @@ export type DesignerProps = {
   buildId: string;
   buildOrigin: string;
   authReadToken: string;
-  authSharedTokens: {
-    token: string;
-    relation: "viewers" | "editors" | "owner";
-  }[];
+  authToken?: string;
 };
 
 export const Designer = ({
@@ -289,7 +286,7 @@ export const Designer = ({
   buildId,
   buildOrigin,
   authReadToken,
-  authSharedTokens,
+  authToken,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -297,7 +294,7 @@ export const Designer = ({
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
-  useSyncServer({ buildId, treeId, projectId: project.id });
+  useSyncServer({ buildId, treeId, projectId: project.id, authToken });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -332,15 +329,6 @@ export const Designer = ({
     authReadToken,
   });
 
-  const previewUrl = getBuildUrl({
-    buildOrigin,
-    project,
-    page,
-    mode: "preview",
-    // Temporary solution until the new share UI is implemented
-    authToken: authSharedTokens.find((t) => t.relation === "viewers")?.token,
-  });
-
   return (
     <AssetsProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
@@ -348,7 +336,15 @@ export const Designer = ({
           css={{ gridArea: "header" }}
           project={project}
           publish={publish}
-          previewUrl={previewUrl}
+          designerUrl={({ authToken, mode }) =>
+            designerUrl({
+              projectId: project.id,
+              pageId: page.id,
+              origin: window.location.origin,
+              authToken,
+              mode,
+            })
+          }
         />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>

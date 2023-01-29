@@ -6,7 +6,7 @@ import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
 import { createContext, createAuthReadToken } from "~/shared/context.server";
-import { trpcClient } from "~/services/trpc.server";
+import type { ShouldRevalidateFunction } from "@remix-run/react";
 
 export { links };
 
@@ -36,22 +36,7 @@ export const loader = async ({
     pages.pages.find((page) => page.id === pageIdParam) ?? pages.homePage;
 
   const authReadToken = await createAuthReadToken({ projectId: project.id });
-
-  const projectSubjectSets = await trpcClient.authorize.expandLeafNodes.query({
-    id: project.id,
-    namespace: "Project",
-  });
-
-  const authSharedTokens: DesignerProps["authSharedTokens"] = [];
-
-  for (const subjectSet of projectSubjectSets) {
-    if (subjectSet.namespace === "Token") {
-      authSharedTokens.push({
-        token: subjectSet.id,
-        relation: subjectSet.relation,
-      });
-    }
-  }
+  const authToken = url.searchParams.get("authToken") ?? undefined;
 
   return {
     project,
@@ -61,7 +46,7 @@ export const loader = async ({
     buildId: devBuild.id,
     buildOrigin: getBuildOrigin(request),
     authReadToken,
-    authSharedTokens,
+    authToken,
   };
 };
 
@@ -75,6 +60,18 @@ export const DesignerRoute = () => {
   const data = useLoaderData<DesignerProps>();
 
   return <Designer {...data} />;
+};
+
+/**
+ * We do not want trpc and other mutations that use the Remix useFetcher hook
+ * to cause a reload of all designer data.
+ */
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}) => {
+  return currentUrl.href === nextUrl.href ? false : defaultShouldRevalidate;
 };
 
 export default DesignerRoute;

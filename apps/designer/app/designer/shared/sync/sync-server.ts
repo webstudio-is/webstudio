@@ -43,6 +43,7 @@ const useNewEntriesCheck = ({
   treeId,
   buildId,
   projectId,
+  authToken,
 }: UserSyncServerProps) => {
   useEffect(() => {
     // @todo setInterval can be completely avoided.
@@ -57,7 +58,7 @@ const useNewEntriesCheck = ({
       }
 
       enqueue(() =>
-        fetch(restPatchPath(), {
+        fetch(restPatchPath({ authToken }), {
           method: "post",
           body: JSON.stringify({
             transactions,
@@ -70,13 +71,14 @@ const useNewEntriesCheck = ({
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [treeId, buildId, projectId]);
+  }, [treeId, buildId, projectId, authToken]);
 };
 
 type UserSyncServerProps = {
   buildId: Build["id"];
   treeId: Tree["id"];
   projectId: Project["id"];
+  authToken: string | undefined;
 };
 
 export const useSyncServer = (props: UserSyncServerProps) => {
