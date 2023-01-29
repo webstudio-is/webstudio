@@ -84,18 +84,8 @@ model Tree {
   root            String
   instances       String @default("[]")
   props           String @default("[]")
-  presetStyles    String @default("[]")
   styles          String @default("[]")
   styleSelections String @default("[]")
-}
-
-model InstanceProps {
-  id         String @id @default(uuid())
-  instanceId String
-  treeId     String
-  props      String @default("[]")
-
-  @@unique([instanceId, treeId])
 }
 
 model Breakpoints {

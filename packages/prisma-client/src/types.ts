@@ -1,6 +1,5 @@
 export { Location } from "@prisma/client";
 export type {
-  InstanceProps,
   User,
   Breakpoints,
   Build,
