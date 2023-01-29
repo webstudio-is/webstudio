@@ -14,8 +14,8 @@ const projectRouter = router({
         userId: z.string(),
       })
     )
-    .query(async ({ input }) => {
-      return await db.findMany(input.userId);
+    .query(async ({ input, ctx }) => {
+      return await db.findMany(input.userId, ctx);
     }),
 });
 

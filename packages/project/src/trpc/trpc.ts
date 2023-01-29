@@ -1,11 +1,6 @@
 import { initTRPC } from "@trpc/server";
-
-//export const createContext = async (): {userId: string} => {
-//  return {};
-//};
-
-export type Context = { userId: string }; //inferAsyncReturnType<typeof createContext>;
+import type { AppContext } from "@webstudio-is/trpc-interface/server";
 
 export const { router, procedure, middleware, mergeRouters } = initTRPC
-  .context<Context>()
+  .context<AppContext>()
   .create();

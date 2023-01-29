@@ -267,6 +267,11 @@ export type DesignerProps = {
   treeId: string;
   buildId: string;
   buildOrigin: string;
+  authReadToken: string;
+  authSharedTokens: {
+    token: string;
+    relation: "viewers" | "editors" | "owner";
+  }[];
 };
 
 export const Designer = ({
@@ -276,6 +281,8 @@ export const Designer = ({
   treeId,
   buildId,
   buildOrigin,
+  authReadToken,
+  authSharedTokens,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -283,7 +290,7 @@ export const Designer = ({
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
-  useSyncServer({ buildId, treeId });
+  useSyncServer({ buildId, treeId, projectId: project.id });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -310,13 +317,21 @@ export const Designer = ({
     return page;
   }, [pages, pageId]);
 
-  const canvasUrl = getBuildUrl({ buildOrigin, project, page, mode: "edit" });
+  const canvasUrl = getBuildUrl({
+    buildOrigin,
+    project,
+    page,
+    mode: "edit",
+    authReadToken,
+  });
 
   const previewUrl = getBuildUrl({
     buildOrigin,
     project,
     page,
     mode: "preview",
+    // Temporary solution until the new share UI is implemented
+    authToken: authSharedTokens.find((t) => t.relation === "viewers")?.token,
   });
 
   return (

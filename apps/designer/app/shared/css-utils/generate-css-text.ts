@@ -9,9 +9,13 @@ import {
   idAttribute,
 } from "@webstudio-is/react-sdk";
 import type { BuildParams } from "../router-utils";
+import type { AppContext } from "@webstudio-is/trpc-interface/server";
 
-export const generateCssText = async (buildParams: BuildParams) => {
-  const project = await db.project.loadByParams(buildParams);
+export const generateCssText = async (
+  buildParams: BuildParams,
+  context: AppContext
+) => {
+  const project = await db.project.loadByParams(buildParams, context);
 
   if (project === null) {
     throw json("Project not found", { status: 404 });

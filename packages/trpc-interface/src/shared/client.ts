@@ -1,5 +1,9 @@
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
-import { sharedRouter, type SharedRouter } from "./shared-router";
+import {
+  sharedRouter,
+  TrpcInterfaceClient,
+  type SharedRouter,
+} from "./shared-router";
 import { callerLink } from "../trpc-caller-link";
 
 type SharedClientOptions = {
@@ -9,7 +13,7 @@ type SharedClientOptions = {
 
 export const createTrpcProxyServiceClient = (
   options?: SharedClientOptions | undefined
-) => {
+): TrpcInterfaceClient => {
   if (options !== undefined) {
     const remoteClient = createTRPCProxyClient<SharedRouter>({
       links: [

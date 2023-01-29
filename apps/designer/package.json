@@ -63,6 +63,7 @@
     "hyphenate-style-name": "^1.0.4",
     "immer": "^9.0.12",
     "immerhin": "^0.4.0",
+    "jose": "^4.11.2",
     "lexical": "^0.6.0",
     "lodash": "4.17.21",
     "lodash.capitalize": "^4.2.1",

@@ -3,6 +3,11 @@ import { type Tree, StoredProps, Props } from "@webstudio-is/project-build";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
+import type { Project } from "./schema";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
 
 export const parseProps = async (propsString: string) => {
   const storedProps = StoredProps.parse(JSON.parse(propsString));
@@ -78,9 +83,19 @@ export const serializeProps = (props: Props) => {
 };
 
 export const patch = async (
-  { treeId }: { treeId: Tree["id"] },
-  patches: Array<Patch>
+  { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  patches: Array<Patch>,
+  context: AppContext
 ) => {
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error("You don't have edit access to this project");
+  }
+
   const tree = await prisma.tree.findUnique({
     where: { id: treeId },
   });
