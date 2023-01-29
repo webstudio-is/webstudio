@@ -4,7 +4,7 @@ import { Outlet } from "@remix-run/react";
 import { setEnv } from "@webstudio-is/feature-flags";
 import { withSentryRouteTracing } from "@sentry/remix";
 import { ErrorBoundary } from "@sentry/remix";
-import { OutletProps } from "react-router-dom";
+import type { OutletProps } from "react-router-dom";
 import env from "./shared/env";
 import { PersistentFetcherProvider } from "./shared/fetcher";
 
