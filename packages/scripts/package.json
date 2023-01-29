@@ -19,7 +19,7 @@
     "tsx": "^3.12.1"
   },
   "devDependencies": {
-    "@types/node": "^17.0.21",
+    "@types/node": "^18.11.18",
     "@webstudio-is/tsconfig": "workspace:^",
     "typescript": "4.7.4"
   }

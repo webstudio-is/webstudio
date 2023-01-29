@@ -17,14 +17,14 @@
     "@trpc/client": "^10.9.0",
     "@trpc/server": "^10.9.0",
     "@webstudio-is/prisma-client": "workspace:^",
-    "zod": "^3.19.1",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "zod": "^3.19.1"
   },
   "devDependencies": {
-    "@types/node": "^17.0.21",
+    "@types/node": "^18.11.18",
+    "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
-    "@webstudio-is/jest-config": "workspace:^",
     "typescript": "4.7.4"
   },
   "exports": {
