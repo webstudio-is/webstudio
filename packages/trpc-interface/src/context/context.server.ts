@@ -9,7 +9,7 @@ type AuthorizationContext = {
    * and we can't bridge a session with it because "Safari won't let us just do it.
    * So we generate an encrypted token allowing read access to the project inside the canvas.
    */
-  readToken: { projectId: string } | undefined;
+  authReadToken: { projectId: string } | undefined;
 
   /**
    * userId of the current authenticated user
@@ -19,7 +19,7 @@ type AuthorizationContext = {
   /**
    * token URLSearchParams or hostname
    */
-  token: string | undefined;
+  authToken: string | undefined;
 
   /**
    * buildEnv see prisma Build isDev isProd, we always allow to load production build/project

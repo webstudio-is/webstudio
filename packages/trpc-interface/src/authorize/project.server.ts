@@ -61,8 +61,8 @@ export const hasProjectPermit = async (
   // Edge-case to allow access the project on the canvas
   if (
     props.permit === "view" &&
-    authorization.readToken !== undefined &&
-    authorization.readToken.projectId === props.projectId
+    authorization.authReadToken !== undefined &&
+    authorization.authReadToken.projectId === props.projectId
   ) {
     return true;
   }
@@ -83,13 +83,13 @@ export const hasProjectPermit = async (
   }
 
   // Check if the special link with a token allows to access the project
-  if (authorization.token !== undefined) {
+  if (authorization.authToken !== undefined) {
     checks.push(
       authorizeTrpc.check.query({
         namespace,
         id: props.projectId,
         subjectSet: {
-          id: authorization.token,
+          id: authorization.authToken,
           namespace: "Token",
         },
         permit: props.permit,
