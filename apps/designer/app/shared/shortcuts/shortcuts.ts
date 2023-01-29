@@ -1,3 +1,5 @@
+import type { Options } from "react-hotkeys-hook";
+
 export const shortcuts = {
   esc: "esc",
   undo: "cmd+z, ctrl+z",
@@ -11,4 +13,8 @@ export const shortcuts = {
   zoom: "=, -",
 } as const;
 
-export const options = { splitKey: "+", keydown: true };
+export const options: Options = {
+  splitKey: "+",
+  keydown: true,
+  enableOnTags: ["INPUT", "SELECT", "TEXTAREA"],
+};
