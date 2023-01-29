@@ -138,7 +138,6 @@ importers:
       react-dom: 17.0.2
       react-error-boundary: ^3.1.4
       react-hotkeys-hook: ^3.4.7
-      react-router-dom: ^6.7.0
       react-test-renderer: ^17.0.2
       react-use: ^17.3.2
       relative-deps: ^1.0.7
@@ -220,7 +219,6 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       react-error-boundary: 3.1.4_react@17.0.2
       react-hotkeys-hook: 3.4.7_sfoxds7t5ydpegc3knd667wn6m
-      react-router-dom: 6.7.0_sfoxds7t5ydpegc3knd667wn6m
       react-use: 17.4.0_sfoxds7t5ydpegc3knd667wn6m
       remix-auth: 3.2.2_@remix-run+react@1.11.1
       remix-auth-form: 1.1.2_@remix-run+react@1.11.1
