@@ -1039,6 +1039,10 @@
       }
     },
     "Icon Border Regular": {
+      "0": {
+        "value": "1",
+        "type": "borderWidth"
+      },
       "1": {
         "value": "1.3",
         "type": "borderWidth"
