@@ -1,5 +1,3 @@
-// @todo: find usage and test
-
 import {
   FloatingPanelPopover as Popover,
   theme,
