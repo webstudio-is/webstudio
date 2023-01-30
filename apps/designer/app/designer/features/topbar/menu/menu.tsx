@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   DropdownMenu,
@@ -161,7 +161,7 @@ export const Menu = ({ publish }: MenuProps) => {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {/* https://github.com/webstudio-is/webstudio-designer/issues/499
-          
+
           <DropdownMenuItem
             onSelect={() => {
               // TODO
@@ -177,8 +177,8 @@ export const Menu = ({ publish }: MenuProps) => {
           >
             Paste
             <DropdownMenuItemRightSlot><ShortcutHint value={["cmd", "v"]} /></DropdownMenuItemRightSlot>
-          </DropdownMenuItem> 
-          
+          </DropdownMenuItem>
+
           */}
           <DropdownMenuItem
             onSelect={() => {

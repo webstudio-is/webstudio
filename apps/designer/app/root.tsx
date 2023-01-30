@@ -4,11 +4,13 @@ import { Outlet } from "@remix-run/react";
 import { setEnv } from "@webstudio-is/feature-flags";
 import { withSentryRouteTracing } from "@sentry/remix";
 import { ErrorBoundary } from "@sentry/remix";
-import { OutletProps } from "react-router-dom";
 import env from "./shared/env";
 import { PersistentFetcherProvider } from "./shared/fetcher";
+import type { ComponentProps } from "react";
 
 setEnv(env.FEATURES as string);
+
+type OutletProps = ComponentProps<typeof Outlet>;
 
 const RootWithErrorBoundary = (props: OutletProps) => (
   <ErrorBoundary>
