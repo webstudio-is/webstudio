@@ -4,6 +4,7 @@ import type { Tree } from "@webstudio-is/project-build";
 import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
 import { enqueue, dequeue, state } from "./queue";
+import { useBeforeUnload } from "react-use";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
 const NEW_ENTRIES_INTERVAL = 1000;
@@ -83,4 +84,8 @@ export const useSyncServer = ({
   useNewEntriesCheck({ treeId, buildId });
   useRecoveryCheck();
   useErrorCheck();
+  useBeforeUnload(
+    () => state.status.get() !== "idle",
+    "You have unsaved changes. Are you sure you want to leave?"
+  );
 };
