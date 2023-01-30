@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { atom } from "nanostores";
 import {
   Flex,
   AccessibleIcon,
@@ -6,26 +7,25 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { CloudIcon } from "@webstudio-is/icons";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { syncStatus } from "~/designer/shared/sync";
 
-const useIsOnline = () => {
-  const [isOnline, setIsOnline] = useState(false);
-  useEffect(() => {
-    const handle = () => setIsOnline(navigator.onLine);
-    addEventListener("offline", handle);
-    addEventListener("online", handle);
-    return () => {
-      removeEventListener("offline", handle);
-      removeEventListener("online", handle);
-    };
-  }, []);
-  return isOnline;
+const isOnlineStore = atom(false);
+
+const useSetOnline = () => {
+  const handle = () => isOnlineStore.set(navigator.onLine);
+  addEventListener("offline", handle);
+  addEventListener("online", handle);
+  return () => {
+    removeEventListener("offline", handle);
+    removeEventListener("online", handle);
+  };
 };
 
 export const SyncStatus = () => {
   const status = useStore(syncStatus);
-  const isOnline = useIsOnline();
+  const isOnline = useStore(isOnlineStore);
+  useEffect(useSetOnline, []);
 
   if (status !== "error") {
     return null;
