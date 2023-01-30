@@ -51,6 +51,7 @@ export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
 export * from "./components/text";
 export * from "./components/list";
+export * from "./components/popover";
 
 // No need to align
 
