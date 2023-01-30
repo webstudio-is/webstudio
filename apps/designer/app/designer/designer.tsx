@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import { registerContainers, useDesignerStore } from "~/shared/sync";
-import { useSyncServer } from "./shared/sync-server";
+import { useSyncServer } from "./shared/sync/sync-server";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
 import { SidebarLeft } from "./features/sidebar-left";

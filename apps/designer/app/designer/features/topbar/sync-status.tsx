@@ -1,50 +1,62 @@
 import { useStore } from "@nanostores/react";
+import { atom } from "nanostores";
 import {
-  theme,
   Flex,
-  keyframes,
   AccessibleIcon,
-  styled,
-  Box,
+  rawTheme,
+  Tooltip,
 } from "@webstudio-is/design-system";
-import { CheckIcon, DotsHorizontalIcon } from "@webstudio-is/icons";
-import { syncStatus } from "~/designer/shared/sync-server";
+import { CloudIcon } from "@webstudio-is/icons";
+import { useEffect } from "react";
+import { queueStatus } from "~/designer/shared/sync";
 
-const iconSize = 15;
+const isOnlineStore = atom(false);
 
-const StyledCheckIcon = styled(CheckIcon, {
-  width: iconSize,
-  height: iconSize,
-  background: theme.colors.green9,
-  borderRadius: theme.borderRadius.round,
-});
-
-const ellipsisKeyframes = keyframes({
-  to: { width: iconSize },
-});
-
-const AnimatedDotsIcon = () => {
-  return (
-    <Flex direction="column" css={{ width: iconSize }}>
-      <Box
-        css={{
-          animation: `${ellipsisKeyframes} steps(4,end) 900ms infinite`,
-          width: 0,
-          overflow: "hidden",
-        }}
-      >
-        <DotsHorizontalIcon width="12" height="12" />
-      </Box>
-    </Flex>
-  );
+const subscribeIsOnline = () => {
+  const handle = () => isOnlineStore.set(navigator.onLine);
+  addEventListener("offline", handle);
+  addEventListener("online", handle);
+  return () => {
+    removeEventListener("offline", handle);
+    removeEventListener("online", handle);
+  };
 };
 
 export const SyncStatus = () => {
-  const status = useStore(syncStatus);
+  const status = useStore(queueStatus);
+  const isOnline = useStore(isOnlineStore);
+  useEffect(subscribeIsOnline, []);
+
+  if (status !== "failed") {
+    return null;
+  }
+
   return (
     <Flex align="center" justify="center">
       <AccessibleIcon label={`Sync status: ${status}`}>
-        {status === "syncing" ? <AnimatedDotsIcon /> : <StyledCheckIcon />}
+        <Tooltip
+          variant="wrapped"
+          content={
+            <>
+              Offline changes will be synced with Webstudio once you go online.
+              {isOnline ? (
+                ""
+              ) : (
+                <>
+                  <br />
+                  Please check your internet connection.
+                </>
+              )}
+            </>
+          }
+        >
+          {/* @todo replace the icon, waiting for figma */}
+          <CloudIcon
+            width={20}
+            height={20}
+            color={rawTheme.colors.foregroundDestructive}
+          />
+        </Tooltip>
       </AccessibleIcon>
     </Flex>
   );
