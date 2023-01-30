@@ -311,9 +311,11 @@ export const color = {
 export const borderWidth = {
   borderWidth0: 1,
   borderWidth1: 2,
-  iconBorderRegular0: 1,
-  iconBorderRegular1: 1.3,
-  iconBorderRegular2: 1.6,
+  regularIconBorder0: 1,
+  regularIconBorder1: 1.3,
+  regularIconBorder2: 1.6,
+  largeIconBorder1: 1.5,
+  largeIconBorder2: 1.8,
 } as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
