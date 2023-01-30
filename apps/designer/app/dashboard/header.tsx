@@ -12,7 +12,7 @@ import {
   theme,
   Button,
 } from "@webstudio-is/design-system";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@remix-run/react";
 import { logoutPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 

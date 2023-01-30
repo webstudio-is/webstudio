@@ -19,7 +19,7 @@ export default function handleRequest(
   let handle = handleRequestDesigner;
 
   if (
-    remixContext.matches.some(
+    remixContext.staticHandlerContext.matches.some(
       (match) =>
         match.route.id === "routes/$" || match.route.id === "routes/index"
     ) &&
