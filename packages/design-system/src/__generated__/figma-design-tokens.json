@@ -635,6 +635,11 @@
             "type": "color"
           }
         }
+      },
+      "canvas": {
+        "value": "#c7c7c7",
+        "type": "color",
+        "description": "The color of the Builder UI canvas area background."
       }
     },
     "brand": {
