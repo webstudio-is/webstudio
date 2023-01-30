@@ -12,7 +12,7 @@ import { queueStatus } from "~/designer/shared/sync";
 
 const isOnlineStore = atom(false);
 
-const setIsOnline = () => {
+const subscribeIsOnline = () => {
   const handle = () => isOnlineStore.set(navigator.onLine);
   addEventListener("offline", handle);
   addEventListener("online", handle);
@@ -25,7 +25,7 @@ const setIsOnline = () => {
 export const SyncStatus = () => {
   const status = useStore(queueStatus);
   const isOnline = useStore(isOnlineStore);
-  useEffect(setIsOnline, []);
+  useEffect(subscribeIsOnline, []);
 
   if (status !== "failed") {
     return null;
