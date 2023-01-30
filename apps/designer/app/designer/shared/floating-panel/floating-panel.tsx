@@ -1,13 +1,9 @@
-// @todo:
-//  - move this to design-system
-//  - share styles between this and dialog
+// @todo: find usage and test
 
 import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverPortal,
+  FloatingPanelPopover as Popover,
+  theme,
+  css,
 } from "@webstudio-is/design-system";
 import {
   MutableRefObject,
@@ -17,7 +13,6 @@ import {
   useState,
 } from "react";
 import { FloatingPanelContext } from "./floating-panel-provider";
-import { theme } from "@webstudio-is/design-system";
 
 const useSideOffset = ({
   isOpen,
@@ -63,6 +58,8 @@ type FloatingPanelProps = {
   onOpenChange?: (isOpen: boolean) => void;
 };
 
+const contetnStyles = css({ width: theme.spacing[30] });
+
 export const FloatingPanel = ({
   title,
   content,
@@ -72,8 +69,8 @@ export const FloatingPanel = ({
   const { isOpen, handleOpenChange, triggerRef, sideOffset } =
     useLogic(onOpenChange);
   return (
-    <Popover open={isOpen} onOpenChange={handleOpenChange} modal>
-      <PopoverTrigger
+    <Popover.Root open={isOpen} onOpenChange={handleOpenChange} modal>
+      <Popover.Trigger
         asChild
         ref={triggerRef}
         onClick={() => {
@@ -81,19 +78,16 @@ export const FloatingPanel = ({
         }}
       >
         {children}
-      </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent
-          sideOffset={sideOffset}
-          side="left"
-          hideArrow
-          align="start"
-          css={{ width: theme.spacing[30] }}
-        >
-          {content}
-          <PopoverHeader title={title} />
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
+      </Popover.Trigger>
+      <Popover.Content
+        sideOffset={sideOffset}
+        side="left"
+        align="start"
+        className={contetnStyles()}
+      >
+        {content}
+        <Popover.Title>{title}</Popover.Title>
+      </Popover.Content>
+    </Popover.Root>
   );
 };

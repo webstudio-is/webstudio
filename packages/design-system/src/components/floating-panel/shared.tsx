@@ -1,0 +1,38 @@
+import { forwardRef, Ref, type ReactNode, type ComponentProps } from "react";
+import { CrossIcon } from "@webstudio-is/icons";
+import { css, theme } from "../../stitches.config";
+import { Button } from "../button";
+import { Separator } from "../separator";
+
+export const floatingPanelStyles = css({
+  border: `1px solid ${theme.colors.borderMain}`,
+  boxShadow: theme.shadows.menuDropShadow,
+  background: theme.colors.backgroundPanel,
+  borderRadius: theme.borderRadius[4],
+  display: "flex",
+  flexDirection: "column",
+
+  "&:focus": {
+    // override browser default
+    outline: "none",
+  },
+});
+
+const titleSlotStyles = css({
+  // We put title at the bottom in DOM to make the close button last in the TAB order
+  // But visually we want it to be first
+  order: -1,
+});
+export const TitleSlot = ({ children }: { children: ReactNode }) => (
+  <div className={titleSlotStyles()}>
+    {children}
+    <Separator />
+  </div>
+);
+
+export const CloseButton = forwardRef(
+  (props: ComponentProps<typeof Button>, ref: Ref<HTMLButtonElement>) => (
+    <Button color="ghost" prefix={<CrossIcon />} {...props} ref={ref} />
+  )
+);
+CloseButton.displayName = "CloseButton";

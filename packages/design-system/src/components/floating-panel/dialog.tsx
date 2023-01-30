@@ -2,10 +2,7 @@ import React, { type ReactNode, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, keyframes } from "../../stitches.config";
 import { Title } from "../title";
-import { Separator } from "../separator";
-import { floatingPanelStyles } from "./floating-panel-styles";
-import { Button } from "../button";
-import { CrossIcon } from "@webstudio-is/icons";
+import { floatingPanelStyles, CloseButton, TitleSlot } from "./shared";
 
 export const Root = Primitive.Root;
 export const Trigger = Primitive.Trigger;
@@ -18,11 +15,9 @@ export const Close = Primitive.Close;
 // https://www.radix-ui.com/docs/primitives/components/dialog#description
 export const Description = Primitive.Description;
 
-type ContentProps = ComponentProps<typeof Primitive.Content>;
-
 export const Content = React.forwardRef(
   (
-    { children, className, ...props }: ContentProps,
+    { children, className, ...props }: ComponentProps<typeof Primitive.Content>,
     forwardedRef: Ref<HTMLDivElement>
   ) => {
     return (
@@ -48,26 +43,22 @@ const ContentTitle = ({
   children: ReactNode;
   closeLabel?: string;
 }) => (
-  <div className={titleSlotStyles()}>
+  <TitleSlot>
     <Title
       suffix={
         <Primitive.Close asChild>
-          <Button
-            color="ghost"
-            prefix={<CrossIcon />}
-            aria-label={closeLabel}
-          />
+          <CloseButton aria-label={closeLabel} />
         </Primitive.Close>
       }
     >
-      {children}
+      <Primitive.Title className={titleStyles()}>{children}</Primitive.Title>
     </Title>
-    <Separator />
-  </div>
+  </TitleSlot>
 );
 export { ContentTitle as Title };
 
-// Styles specific to dialog (as opposed to be common for all floating panels)
+// Styles specific to dialog
+// (as opposed to be common for all floating panels)
 
 const overlayShow = keyframes({
   from: { opacity: 0 },
@@ -90,14 +81,12 @@ const contentStyles = css(floatingPanelStyles, {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: "90vw",
-  maxWidth: "450px",
+  maxWidth: theme.spacing[35],
   maxHeight: "85vh",
   animation: `${contentShow} 150ms ${theme.easing.easeOut}`,
 });
 
-// @todo: is this sepcific to Dialog?
-const titleSlotStyles = css({
-  // We put title at the bottom in DOM to make the close button last in the tab order
-  // But visually we want it to be first
-  order: -1,
+const titleStyles = css({
+  // Resetting H2 styles (Primitive.Title is H2)
+  all: "unset",
 });
