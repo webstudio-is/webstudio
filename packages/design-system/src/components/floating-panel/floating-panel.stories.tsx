@@ -1,58 +1,60 @@
-import {
-  Dialog,
-  DialogTrigger,
-  DialogPortal,
-  DialogOverlay,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from "./floating-panel-dialog";
-import { CrossIcon } from "@webstudio-is/icons";
+import { Button } from "../button";
+import { StorySection } from "../storybook";
+import * as Dialog from "./floating-panel-dialog";
+import { css, theme } from "../../stitches.config";
+import { typography } from "../typography";
 
 export default {
   title: "Library/Floating Panel",
 };
 
-export const FloatingPanel = () => (
-  <Dialog>
-    <DialogTrigger asChild>
-      <button className="Button violet" size="large">
-        Edit profile
-      </button>
-    </DialogTrigger>
-    <DialogPortal>
-      <DialogOverlay className="DialogOverlay" />
-      <DialogContent className="DialogContent">
-        <DialogTitle className="DialogTitle">Edit profile</DialogTitle>
-        <DialogDescription className="DialogDescription">
-          Make changes to your profile here. Click save when you're done.
-        </DialogDescription>
-        <fieldset className="Fieldset">
-          <label className="Label" htmlFor="name">
-            Name
-          </label>
-          <input className="Input" id="name" defaultValue="Pedro Duarte" />
-        </fieldset>
-        <fieldset className="Fieldset">
-          <label className="Label" htmlFor="username">
-            Username
-          </label>
-          <input className="Input" id="username" defaultValue="@peduarte" />
-        </fieldset>
-        <div
-          style={{ display: "flex", marginTop: 25, justifyContent: "flex-end" }}
-        >
-          <DialogClose asChild>
-            <button className="Button green">Save changes</button>
-          </DialogClose>
+const bodyStyles = css({
+  padding: theme.spacing[9],
+});
+
+const descriptionStyles = css(typography.regular, {
+  marginTop: 0,
+  marginBottom: theme.spacing[5],
+});
+
+const buttonsStyle = css({
+  display: "flex",
+  gap: theme.spacing[5],
+  justifyContent: "flex-end",
+});
+
+const DialogDemo = () => (
+  <Dialog.Root>
+    <Dialog.Trigger asChild>
+      <Button>Open</Button>
+    </Dialog.Trigger>
+    <Dialog.Content>
+      <div className={bodyStyles()}>
+        <Dialog.Description asChild>
+          <p className={descriptionStyles()}>This is a description</p>
+        </Dialog.Description>
+        <div className={buttonsStyle()}>
+          <Dialog.Close asChild>
+            <Button color="ghost">Cancel</Button>
+          </Dialog.Close>
+          <Dialog.Close asChild>
+            <Button color="positive">Save</Button>
+          </Dialog.Close>
         </div>
-        <DialogClose asChild>
-          <button className="IconButton" aria-label="Close">
-            <CrossIcon />
-          </button>
-        </DialogClose>
-      </DialogContent>
-    </DialogPortal>
-  </Dialog>
+      </div>
+
+      {/* Title is at the end intentionally,
+       * to make the close button last in the tab order
+       */}
+      <Dialog.Title>Title</Dialog.Title>
+    </Dialog.Content>
+  </Dialog.Root>
+);
+
+export const FloatingPanel = () => (
+  <>
+    <StorySection title="Dialog">
+      <DialogDemo />
+    </StorySection>
+  </>
 );

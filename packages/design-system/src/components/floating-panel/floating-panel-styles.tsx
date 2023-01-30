@@ -7,4 +7,9 @@ export const floatingPanelStyles = css({
   borderRadius: theme.borderRadius[4],
   display: "flex",
   flexDirection: "column",
+
+  "&:focus": {
+    // override browser default
+    outline: "none",
+  },
 });
