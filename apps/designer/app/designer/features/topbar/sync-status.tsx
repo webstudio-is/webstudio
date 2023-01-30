@@ -8,7 +8,7 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { CheckIcon, DotsHorizontalIcon } from "@webstudio-is/icons";
-import { syncStatus } from "~/designer/shared/sync-server";
+import { syncStatus } from "~/designer/shared/sync";
 
 const iconSize = 15;
 
