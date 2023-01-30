@@ -38,7 +38,7 @@ describe("queue", () => {
     expect(state.queue.length).toBe(1);
   });
 
-  test("recovering > error > idle", async () => {
+  test("recovering > failed > idle", async () => {
     let response = Promise.resolve({ ok: false });
     await enqueue(() => response);
 
@@ -50,7 +50,7 @@ describe("queue", () => {
     await dequeue();
 
     expect(state.queue.length).toBe(1);
-    expect(queueStatus.get()).toBe("error");
+    expect(queueStatus.get()).toBe("failed");
     expect(state.failedAttempts).toBe(5);
 
     response = Promise.resolve({ ok: true });
