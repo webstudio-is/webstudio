@@ -1,26 +1,26 @@
 import { describe } from "@jest/globals";
-import { dequeue, enqueue, state } from "./queue";
+import { dequeue, enqueue, state, queueStatus } from "./queue";
 
 describe("queue", () => {
   afterEach(() => {
     state.queue = [];
     state.failedAttempts = 0;
-    state.status.set("idle");
+    queueStatus.set("idle");
   });
 
   test("dequeue empty", () => {
     dequeue();
-    expect(state.status.get()).toBe("idle");
+    expect(queueStatus.get()).toBe("idle");
   });
 
   test("enqueue with success", async () => {
     enqueue(() => Promise.resolve({ ok: true }));
     const jobPromise = dequeue();
-    expect(state.status.get()).toBe("syncing");
+    expect(queueStatus.get()).toBe("processing");
     expect(state.failedAttempts).toBe(0);
     expect(state.queue.length).toBe(0);
     await jobPromise;
-    expect(state.status.get()).toBe("idle");
+    expect(queueStatus.get()).toBe("idle");
     expect(state.failedAttempts).toBe(0);
     expect(state.queue.length).toBe(0);
   });
@@ -28,12 +28,12 @@ describe("queue", () => {
   test("enqueue with failure", async () => {
     enqueue(() => Promise.resolve({ ok: false }));
     const jobPromise = dequeue();
-    expect(state.status.get()).toBe("syncing");
+    expect(queueStatus.get()).toBe("processing");
     expect(state.failedAttempts).toBe(0);
     expect(state.queue.length).toBe(0);
 
     await Promise.allSettled([jobPromise]);
-    expect(state.status.get()).toBe("recovering");
+    expect(queueStatus.get()).toBe("recovering");
     expect(state.failedAttempts).toBe(1);
     expect(state.queue.length).toBe(1);
   });
@@ -42,7 +42,7 @@ describe("queue", () => {
     let response = Promise.resolve({ ok: false });
     await enqueue(() => response);
 
-    expect(state.status.get()).toBe("recovering");
+    expect(queueStatus.get()).toBe("recovering");
 
     await dequeue();
     await dequeue();
@@ -50,14 +50,14 @@ describe("queue", () => {
     await dequeue();
 
     expect(state.queue.length).toBe(1);
-    expect(state.status.get()).toBe("error");
+    expect(queueStatus.get()).toBe("error");
     expect(state.failedAttempts).toBe(5);
 
     response = Promise.resolve({ ok: true });
     await dequeue();
 
     expect(state.queue.length).toBe(0);
-    expect(state.status.get()).toBe("idle");
+    expect(queueStatus.get()).toBe("idle");
     expect(state.failedAttempts).toBe(0);
   });
 });

@@ -8,11 +8,11 @@ import {
 } from "@webstudio-is/design-system";
 import { CloudIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
-import { syncStatus } from "~/designer/shared/sync";
+import { queueStatus } from "~/designer/shared/sync";
 
 const isOnlineStore = atom(false);
 
-const useSetOnline = () => {
+const setIsOnline = () => {
   const handle = () => isOnlineStore.set(navigator.onLine);
   addEventListener("offline", handle);
   addEventListener("online", handle);
@@ -23,9 +23,9 @@ const useSetOnline = () => {
 };
 
 export const SyncStatus = () => {
-  const status = useStore(syncStatus);
+  const status = useStore(queueStatus);
   const isOnline = useStore(isOnlineStore);
-  useEffect(useSetOnline, []);
+  useEffect(setIsOnline, []);
 
   if (status !== "error") {
     return null;

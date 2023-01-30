@@ -3,7 +3,7 @@ import type { Build, Project } from "@webstudio-is/project";
 import type { Tree } from "@webstudio-is/project-build";
 import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
-import { enqueue, dequeue, state } from "./queue";
+import { enqueue, dequeue, queueStatus } from "./queue";
 import { useBeforeUnload } from "react-use";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
@@ -18,7 +18,7 @@ const INTERVAL_ERROR = 5000;
 const useRecoveryCheck = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (state.status.get() === "recovering") {
+      if (queueStatus.get() === "recovering") {
         dequeue();
       }
     }, INTERVAL_RECOVERY);
@@ -30,7 +30,7 @@ const useRecoveryCheck = () => {
 const useErrorCheck = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (state.status.get() === "error") {
+      if (queueStatus.get() === "error") {
         dequeue();
       }
     }, INTERVAL_ERROR);
@@ -84,7 +84,7 @@ export const useSyncServer = (props: UserSyncServerProps) => {
   useRecoveryCheck();
   useErrorCheck();
   useBeforeUnload(
-    () => state.status.get() !== "idle",
+    () => queueStatus.get() !== "idle",
     "You have unsaved changes. Are you sure you want to leave?"
   );
 };
