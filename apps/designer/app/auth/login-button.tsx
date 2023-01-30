@@ -26,7 +26,7 @@ export const LoginButton = ({
       {...props}
       type="submit"
       disabled={disabled}
-      variant="neutral"
+      color="neutral"
       css={{ width: "100%" }}
     >
       <Flex gap="2" align="center">

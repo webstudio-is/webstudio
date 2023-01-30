@@ -33,7 +33,7 @@ const Menu = ({ user }: { user: User }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" aria-label="Menu Button">
+        <Button color="ghost" aria-label="Menu Button">
           <Flex gap="1" align="center" css={{ height: theme.spacing[11] }}>
             <Avatar
               src={user?.image || undefined}

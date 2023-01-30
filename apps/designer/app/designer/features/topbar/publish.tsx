@@ -63,7 +63,10 @@ const Content = ({ project }: PublishButtonProps) => {
           {fetcher.data?.errors !== undefined && (
             <Text color="error">{fetcher.data?.errors}</Text>
           )}
-          <Button pending={fetcher.state !== "idle"} type="submit">
+          <Button
+            state={fetcher.state !== "idle" ? "pending" : "auto"}
+            type="submit"
+          >
             {fetcher.state !== "idle" ? "Publishing" : "Publish"}
           </Button>
         </Flex>

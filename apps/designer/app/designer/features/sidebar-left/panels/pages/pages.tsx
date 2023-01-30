@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@remix-run/react";
 import {
-  theme,
   DeprecatedIconButton,
   TreeItemLabel,
   TreeItemBody,
@@ -11,6 +10,8 @@ import {
   Flex,
   Tooltip,
   Box,
+  Button,
+  theme,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
@@ -204,13 +205,12 @@ const PagesPanel = ({
           <>
             {onCreateNewPage && (
               <Tooltip content="New page" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
-                >
-                  <NewPageIcon />
-                </DeprecatedIconButton>
+                  prefix={<NewPageIcon />}
+                  color="ghost"
+                />
               </Tooltip>
             )}
             {onClose && <CloseButton onClick={onClose} />}

@@ -1,39 +1,17 @@
-import { styled } from "../stitches.config";
+/**
+ * Implementation of the "Separator" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A2613
+ */
+
+import { styled, theme } from "../stitches.config";
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
-import { theme } from "../stitches.config";
 
 export const Separator = styled(SeparatorPrimitive.Root, {
   border: "none",
   margin: 0,
   flexShrink: 0,
-  backgroundColor: theme.colors.slate7,
+  backgroundColor: theme.colors.borderMain,
   cursor: "default",
-
-  variants: {
-    size: {
-      1: {
-        '&[data-orientation="horizontal"]': {
-          height: theme.spacing[1],
-          my: theme.spacing[5],
-        },
-
-        '&[data-orientation="vertical"]': {
-          width: theme.spacing[1],
-          mx: theme.spacing[5],
-        },
-      },
-      auto: {
-        '&[data-orientation="horizontal"]': {
-          height: theme.spacing[1],
-        },
-
-        '&[data-orientation="vertical"]': {
-          width: theme.spacing[1],
-        },
-      },
-    },
-  },
-  defaultVariants: {
-    size: "auto",
-  },
+  '&[data-orientation="horizontal"]': { height: theme.spacing[1] },
+  '&[data-orientation="vertical"]': { width: theme.spacing[1] },
 });

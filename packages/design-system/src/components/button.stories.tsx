@@ -1,6 +1,7 @@
 import { type ComponentProps } from "react";
 import { MenuIcon, CrossIcon, TrashIcon } from "@webstudio-is/icons";
 import { Button as ButtonComponent } from "./button";
+import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   title: "Library/Button",
@@ -13,18 +14,21 @@ const iconsMap = {
   "<TrashIcon>": <TrashIcon />,
 } as const;
 
-const Section = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <>
-    <h3 style={{ fontFamily: "sans-serif" }}>{title}</h3>
-    <div style={{ display: "flex", gap: 12 }}>{children}</div>
-  </>
-);
+const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
+  "primary",
+  "neutral",
+  "destructive",
+  "positive",
+  "ghost",
+];
+
+const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
+  "auto",
+  "hover",
+  "focus",
+  "pressed",
+  "pending",
+];
 
 export const Button = ({
   prefix,
@@ -35,55 +39,51 @@ export const Button = ({
   suffix?: keyof typeof iconsMap;
 }) => (
   <>
-    <Section title="Configurable">
+    <StorySection title="Configurable">
       <ButtonComponent
         prefix={prefix && iconsMap[prefix]}
         suffix={suffix && iconsMap[suffix]}
         {...rest}
       />
-    </Section>
+    </StorySection>
 
-    <Section title="Variants">
-      {variants.map((variant) => (
-        <ButtonComponent variant={variant} key={variant}>
-          {variant}
-        </ButtonComponent>
-      ))}
-    </Section>
+    <StorySection title="Colors & States">
+      <StoryGrid>
+        {colors.map((color) => (
+          <StoryGrid horizontal key={color}>
+            {states.map((state) => (
+              <ButtonComponent
+                prefix={<TrashIcon />}
+                state={state}
+                color={color}
+                key={state}
+              >
+                {color} {state}
+              </ButtonComponent>
+            ))}
+            <ButtonComponent prefix={<TrashIcon />} color={color} disabled>
+              {color} disabled
+            </ButtonComponent>
+          </StoryGrid>
+        ))}
+      </StoryGrid>
+    </StorySection>
 
-    <Section title="With Icon">
-      <ButtonComponent prefix={<TrashIcon />}>Button</ButtonComponent>
-      <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
-      <ButtonComponent prefix={<TrashIcon />} />
-    </Section>
-
-    <Section title="Disabled">
-      <ButtonComponent disabled>Button</ButtonComponent>
-      <ButtonComponent disabled prefix={<TrashIcon />}>
-        Button
-      </ButtonComponent>
-      <ButtonComponent disabled prefix={<TrashIcon />} />
-    </Section>
-
-    <Section title="Pending">
-      <ButtonComponent pending>Button</ButtonComponent>
-      <ButtonComponent pending prefix={<TrashIcon />}>
-        Button
-      </ButtonComponent>
-      <ButtonComponent pending prefix={<TrashIcon />} />
-    </Section>
+    <StorySection title="Icon">
+      <StoryGrid horizontal>
+        <ButtonComponent prefix={<TrashIcon />}>Button</ButtonComponent>
+        <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
+        <ButtonComponent prefix={<TrashIcon />} />
+      </StoryGrid>
+    </StorySection>
   </>
 );
 
-const variants: ReadonlyArray<
-  Extract<ComponentProps<typeof ButtonComponent>["variant"], string>
-> = ["primary", "neutral", "destructive", "positive", "ghost"];
-
 Button.argTypes = {
   children: { defaultValue: "Button", control: "text" },
-  variant: {
+  color: {
     defaultValue: "primary",
-    control: { type: "inline-radio", options: variants },
+    control: { type: "inline-radio", options: colors },
   },
   prefix: {
     defaultValue: "undefined",
@@ -94,5 +94,11 @@ Button.argTypes = {
     control: { type: "inline-radio", options: Object.keys(iconsMap) },
   },
   disabled: { defaultValue: false, control: "boolean" },
-  pending: { defaultValue: false, control: "boolean" },
+  state: {
+    defaultValue: "auto",
+    control: {
+      type: "inline-radio",
+      options: states,
+    },
+  },
 };

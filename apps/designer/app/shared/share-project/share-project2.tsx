@@ -81,7 +81,7 @@ const Menu = ({
       <PopoverTrigger asChild>
         <Button
           prefix={<MenuIcon />}
-          variant="ghost"
+          color="ghost"
           aria-label="Menu Button for options"
         ></Button>
       </PopoverTrigger>
@@ -123,7 +123,7 @@ const Menu = ({
         <Item>
           {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
           <Button
-            variant="destructive"
+            color="destructive"
             onClick={() => {
               onDelete();
             }}
@@ -229,7 +229,7 @@ export const ShareProject = ({
   const create = (
     <Box className={itemStyle({ css: { py: theme.spacing["9"] } })}>
       <Button
-        variant="neutral"
+        color="neutral"
         prefix={<PlusIcon />}
         onClick={() => {
           onCreate();

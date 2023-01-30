@@ -12,6 +12,8 @@
  *  - Component: "Menu Item Large"
  *  - Type of "Menu" component: "Dropdown w/large items"
  *  - Type of "Menu" component: "Context menu"
+ *
+ * @todo: group everything under a folder same as floating-panel?
  */
 
 import { css, styled, theme } from "../stitches.config";
