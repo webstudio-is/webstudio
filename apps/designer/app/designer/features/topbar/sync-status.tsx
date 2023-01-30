@@ -9,25 +9,23 @@ import { CloudIcon } from "@webstudio-is/icons";
 import { useEffect, useState } from "react";
 import { syncStatus } from "~/designer/shared/sync";
 
-const useIsOffline = () => {
-  const [isOffline, setIsOffline] = useState(false);
+const useIsOnline = () => {
+  const [isOnline, setIsOnline] = useState(false);
   useEffect(() => {
-    const handleOffline = () => setIsOffline(true);
-    addEventListener("offline", handleOffline);
-    return () => removeEventListener("offline", handleOffline);
+    const handle = () => setIsOnline(navigator.onLine);
+    addEventListener("offline", handle);
+    addEventListener("online", handle);
+    return () => {
+      removeEventListener("offline", handle);
+      removeEventListener("online", handle);
+    };
   }, []);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    addEventListener("online", handleOnline);
-    return () => removeEventListener("online", handleOnline);
-  }, []);
-  return isOffline;
+  return isOnline;
 };
 
 export const SyncStatus = () => {
   const status = useStore(syncStatus);
-  const isOffline = useIsOffline();
+  const isOnline = useIsOnline();
 
   if (status !== "error") {
     return null;
@@ -41,13 +39,13 @@ export const SyncStatus = () => {
           content={
             <>
               Offline changes will be synced with Webstudio once you go online.
-              {isOffline ? (
+              {isOnline ? (
+                ""
+              ) : (
                 <>
                   <br />
                   Please check your internet connection.
                 </>
-              ) : (
-                ""
               )}
             </>
           }
