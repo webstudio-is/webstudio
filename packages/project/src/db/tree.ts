@@ -42,7 +42,13 @@ const normalizeTree = (instance: Instance, instances: InstancesItem[]) => {
   }
 };
 
-export const createTree = (): TreeData => {
+export const createTree = ({
+  projectId,
+  buildId,
+}: {
+  projectId: string;
+  buildId: string;
+}): TreeData => {
   const root = utils.tree.createInstance({ component: "Body" });
   const styles: Styles = [];
   const instances: Instances = [];
@@ -50,6 +56,8 @@ export const createTree = (): TreeData => {
   const props: Props = [];
 
   return {
+    projectId,
+    buildId,
     root,
     props,
     styles,
@@ -66,6 +74,8 @@ export const create = async (
 
   return await client.tree.create({
     data: {
+      projectId: treeData.projectId,
+      buildId: treeData.buildId,
       root: "",
       instances: JSON.stringify(instances),
       props: serializeProps(treeData.props),

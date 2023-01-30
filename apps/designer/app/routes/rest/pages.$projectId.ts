@@ -55,7 +55,11 @@ const handlePut = async (
     return makeFieldError("path", `Already used for "${existingPage.name}"`);
   }
 
-  const updatedBuild = await db.build.addPage(devBuild.id, data);
+  const updatedBuild = await db.build.addPage({
+    projectId,
+    buildId: devBuild.id,
+    data,
+  });
 
   const newPage = utils.pages.findByIdOrPath(updatedBuild.pages, data.path);
 
