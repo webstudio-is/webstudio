@@ -1,5 +1,5 @@
 import { sync } from "immerhin";
-import type { Build } from "@webstudio-is/project";
+import type { Build, Project } from "@webstudio-is/project";
 import type { Tree } from "@webstudio-is/project-build";
 import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
@@ -42,19 +42,17 @@ const useErrorCheck = () => {
 const useNewEntriesCheck = ({
   treeId,
   buildId,
-}: {
-  buildId: Build["id"];
-  treeId: Tree["id"];
-}) => {
+  projectId,
+}: UserSyncServerProps) => {
   useEffect(() => {
     // @todo setInterval can be completely avoided.
     // Right now prisma can't do atomic updates yet with sandbox documents
     // and backend fetches and updates big objects, so if we send quickly,
     // we end up overwriting things
     const intervalId = setInterval(() => {
-      const entries = sync();
+      const transactions = sync();
 
-      if (entries.length === 0) {
+      if (transactions.length === 0) {
         return;
       }
 
@@ -62,9 +60,10 @@ const useNewEntriesCheck = ({
         fetch(restPatchPath(), {
           method: "post",
           body: JSON.stringify({
-            transactions: entries,
-            treeId: treeId,
-            buildId: buildId,
+            transactions,
+            treeId,
+            buildId,
+            projectId,
           }),
         })
       );
@@ -74,14 +73,14 @@ const useNewEntriesCheck = ({
   }, [treeId, buildId]);
 };
 
-export const useSyncServer = ({
-  treeId,
-  buildId,
-}: {
+type UserSyncServerProps = {
   buildId: Build["id"];
   treeId: Tree["id"];
-}) => {
-  useNewEntriesCheck({ treeId, buildId });
+  projectId: Project["id"];
+};
+
+export const useSyncServer = (props: UserSyncServerProps) => {
+  useNewEntriesCheck(props);
   useRecoveryCheck();
   useErrorCheck();
   useBeforeUnload(
