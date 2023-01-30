@@ -257,6 +257,7 @@ export const color = {
     "linear-gradient(90deg, #d2319700 0%, #d23197 31.87%)",
   backgroundStyleSourceGradientState:
     "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
+  backgroundCanvas: "#c7c7c7",
   brandBackgroundProjectCardFront:
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
