@@ -1038,7 +1038,7 @@
         "type": "dimension"
       }
     },
-    "Icon Border Regular": {
+    "Regular Icon Border": {
       "0": {
         "value": "1",
         "type": "borderWidth"
@@ -1049,6 +1049,16 @@
       },
       "2": {
         "value": "1.6",
+        "type": "borderWidth"
+      }
+    },
+    "Large Icon Border": {
+      "1": {
+        "value": "1.5",
+        "type": "borderWidth"
+      },
+      "2": {
+        "value": "1.8",
         "type": "borderWidth"
       }
     }
