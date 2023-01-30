@@ -70,7 +70,7 @@ const useNewEntriesCheck = ({
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [treeId, buildId]);
+  }, [treeId, buildId, projectId]);
 };
 
 type UserSyncServerProps = {
