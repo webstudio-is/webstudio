@@ -311,6 +311,7 @@ export const color = {
 export const borderWidth = {
   borderWidth0: 1,
   borderWidth1: 2,
+  iconBorderRegular0: 1,
   iconBorderRegular1: 1.3,
   iconBorderRegular2: 1.6,
 } as const;
