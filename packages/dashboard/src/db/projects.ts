@@ -1,6 +1,7 @@
 import { prisma } from "@webstudio-is/prisma-client";
+import { AppContext } from "@webstudio-is/trpc-interface/server";
 
-export const findMany = async (userId: string) => {
+export const findMany = async (userId: string, context: AppContext) => {
   return await prisma.dashboardProject.findMany({
     where: {
       userId,

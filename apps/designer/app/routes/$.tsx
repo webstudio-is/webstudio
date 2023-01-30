@@ -17,6 +17,7 @@ import { db } from "@webstudio-is/project/server";
 import type { DynamicLinksFunction } from "remix-utils";
 import type { CanvasData } from "@webstudio-is/project";
 import { customComponents } from "~/canvas/custom-components";
+import { createContext } from "~/shared/context.server";
 
 type Data = CanvasData & { env: Env; mode: BuildMode };
 
@@ -49,6 +50,7 @@ export const meta: MetaFunction = ({ data }: { data: Data }) => {
 
 export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
   const buildParams = getBuildParams(request);
+  const context = await createContext(request);
 
   if (buildParams === undefined) {
     throw redirect(dashboardPath());
@@ -56,7 +58,7 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
 
   const { mode } = buildParams;
 
-  const project = await db.project.loadByParams(buildParams);
+  const project = await db.project.loadByParams(buildParams, context);
 
   if (project === null) {
     throw json("Project not found", { status: 404 });

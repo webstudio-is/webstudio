@@ -1,20 +1,18 @@
 import { useEffect } from "react";
-import type { Instance, PropsItem } from "@webstudio-is/project-build";
-import {
-  getComponentMeta,
-  allUserPropsContainer,
-} from "@webstudio-is/react-sdk";
-
-import { useSubscribe } from "~/shared/pubsub";
-import { utils, type InstanceInsertionSpec } from "@webstudio-is/project";
 import store from "immerhin";
+import type { Instance, Props, Styles } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
+import { utils, type InstanceInsertionSpec } from "@webstudio-is/project";
+import { useSubscribe } from "~/shared/pubsub";
 import {
+  propsStore,
   rootInstanceContainer,
   selectedInstanceIdStore,
-  useRootInstance,
+  stylesContainer,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
+import { deleteInstanceMutable } from "~/shared/tree-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -22,7 +20,8 @@ declare module "~/shared/pubsub" {
     insertInstance: {
       instance: Instance;
       dropTarget?: { parentId: Instance["id"]; position: number };
-      props?: Array<PropsItem>;
+      props?: Props;
+      styles?: Styles;
     };
   }
 }
@@ -58,28 +57,39 @@ export const findInsertLocation = (
 };
 
 export const useInsertInstance = () => {
-  useSubscribe("insertInstance", ({ instance, dropTarget, props }) => {
-    const selectedInstanceId = selectedInstanceIdStore.get();
-    store.createTransaction(
-      [rootInstanceContainer, allUserPropsContainer],
-      (rootInstance, allUserProps) => {
-        if (rootInstance === undefined) {
-          return;
+  useSubscribe(
+    "insertInstance",
+    ({
+      instance,
+      dropTarget,
+      props: insertedProps,
+      styles: insertedStyles,
+    }) => {
+      const selectedInstanceId = selectedInstanceIdStore.get();
+      store.createTransaction(
+        [rootInstanceContainer, propsStore, stylesContainer],
+        (rootInstance, props, styles) => {
+          if (rootInstance === undefined) {
+            return;
+          }
+          const hasInserted = utils.tree.insertInstanceMutable(
+            rootInstance,
+            instance,
+            dropTarget ?? findInsertLocation(rootInstance, selectedInstanceId)
+          );
+          if (hasInserted) {
+            selectedInstanceIdStore.set(instance.id);
+          }
+          if (insertedProps !== undefined) {
+            props.push(...insertedProps);
+          }
+          if (insertedStyles !== undefined) {
+            styles.push(...insertedStyles);
+          }
         }
-        const hasInserted = utils.tree.insertInstanceMutable(
-          rootInstance,
-          instance,
-          dropTarget ?? findInsertLocation(rootInstance, selectedInstanceId)
-        );
-        if (hasInserted) {
-          selectedInstanceIdStore.set(instance.id);
-        }
-        if (props !== undefined) {
-          allUserProps[instance.id] = props;
-        }
-      }
-    );
-  });
+      );
+    }
+  );
 };
 
 export const useReparentInstance = () => {
@@ -106,38 +116,29 @@ export const useReparentInstance = () => {
 };
 
 export const useDeleteInstance = () => {
-  const [rootInstance] = useRootInstance();
-  useSubscribe("deleteInstance", ({ id }) => {
-    const selectedInstanceId = selectedInstanceIdStore.get();
-    if (rootInstance !== undefined && selectedInstanceId !== undefined) {
-      // @todo tell user they can't delete root
-      if (id === rootInstance.id) {
-        return;
-      }
-
-      const parentInstance = utils.tree.findParentInstance(rootInstance, id);
-      if (parentInstance !== undefined) {
-        const siblingInstance = utils.tree.findParentInstance(
-          parentInstance,
-          id
-        );
-        selectedInstanceIdStore.set(siblingInstance?.id ?? parentInstance.id);
-      }
+  useSubscribe("deleteInstance", ({ id: deletedInstanceId }) => {
+    const rootInstance = rootInstanceContainer.get();
+    // @todo tell user they can't delete root
+    if (deletedInstanceId === rootInstance?.id) {
+      return;
     }
-    // @todo deleting instance should involve also deleting it's props
-    // If we don't delete them - they just live both on client and db
-    // Pros:
-    //   - if we undo the deletion we don't need to undo the props deletion
-    //   - in a multiplayer environment, some other user could have changed a prop while we have deleted the instance
-    // and then if we restore the instance, we would be restoring it with our props, potentially overwriting other users changes
-    // The way it is now it will actually still enable parallel deletion props editing and restoration.
-    // Contra: we are piling them up.
-    // Potentially we could also solve this by periodically removing unused props after while when instance was deleted
-    store.createTransaction([rootInstanceContainer], (rootInstance) => {
-      if (rootInstance !== undefined) {
-        utils.tree.deleteInstanceMutable(rootInstance, id);
+    store.createTransaction(
+      [rootInstanceContainer, propsStore, stylesContainer],
+      (rootInstance, props, styles) => {
+        if (rootInstance === undefined) {
+          return;
+        }
+        const parentInstance = deleteInstanceMutable({
+          rootInstance,
+          props,
+          styles,
+          deletedInstanceId,
+        });
+        if (parentInstance) {
+          selectedInstanceIdStore.set(parentInstance.id);
+        }
       }
-    });
+    );
   });
 };
 

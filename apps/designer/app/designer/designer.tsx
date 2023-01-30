@@ -6,7 +6,7 @@ import {
   type Project,
   utils as projectUtils,
 } from "@webstudio-is/project";
-import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import { registerContainers, useDesignerStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync-server";
 // eslint-disable-next-line import/no-internal-modules
@@ -31,6 +31,8 @@ import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   selectedInstanceStore,
   useDragAndDropState,
+  useInstanceProps,
+  useInstanceStyles,
   useIsPreviewMode,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
@@ -38,8 +40,6 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
-import { useAllUserProps } from "@webstudio-is/react-sdk";
-import { theme } from "@webstudio-is/design-system";
 
 registerContainers();
 export const links = () => {
@@ -85,16 +85,18 @@ const useSubscribeCanvasReady = (publish: Publish) => {
 
 const useCopyPaste = (publish: Publish) => {
   const selectedInstance = useStore(selectedInstanceStore);
-  const allUserProps = useAllUserProps();
+  const instanceProps = useInstanceProps(selectedInstance?.id);
+  const instanceStyles = useInstanceStyles(selectedInstance?.id);
 
   const selectedInstanceData = useMemo(() => {
     if (selectedInstance) {
       return {
         instance: selectedInstance,
-        props: allUserProps[selectedInstance.id] ?? [],
+        props: instanceProps,
+        styles: instanceStyles,
       };
     }
-  }, [selectedInstance, allUserProps]);
+  }, [selectedInstance, instanceProps, instanceStyles]);
 
   // We need to initialize this in both canvas and designer,
   // because the events will fire in either one, depending on where the focus is
@@ -103,10 +105,10 @@ const useCopyPaste = (publish: Publish) => {
     onCut: (instance) => {
       publish({ type: "deleteInstance", payload: { id: instance.id } });
     },
-    onPaste: (instance, props) => {
+    onPaste: ({ instance, props, styles }) => {
       publish({
         type: "insertInstance",
-        payload: { instance, props },
+        payload: { instance, props, styles },
       });
     },
   });
@@ -265,6 +267,11 @@ export type DesignerProps = {
   treeId: string;
   buildId: string;
   buildOrigin: string;
+  authReadToken: string;
+  authSharedTokens: {
+    token: string;
+    relation: "viewers" | "editors" | "owner";
+  }[];
 };
 
 export const Designer = ({
@@ -274,6 +281,8 @@ export const Designer = ({
   treeId,
   buildId,
   buildOrigin,
+  authReadToken,
+  authSharedTokens,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -281,7 +290,7 @@ export const Designer = ({
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
-  useSyncServer({ buildId, treeId });
+  useSyncServer({ buildId, treeId, projectId: project.id });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -308,13 +317,21 @@ export const Designer = ({
     return page;
   }, [pages, pageId]);
 
-  const canvasUrl = getBuildUrl({ buildOrigin, project, page, mode: "edit" });
+  const canvasUrl = getBuildUrl({
+    buildOrigin,
+    project,
+    page,
+    mode: "edit",
+    authReadToken,
+  });
 
   const previewUrl = getBuildUrl({
     buildOrigin,
     project,
     page,
     mode: "preview",
+    // Temporary solution until the new share UI is implemented
+    authToken: authSharedTokens.find((t) => t.relation === "viewers")?.token,
   });
 
   return (

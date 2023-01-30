@@ -6,6 +6,8 @@
 import { styled, theme } from "../stitches.config";
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
 
+// @todo: check its useage in share UI
+
 export const Separator = styled(SeparatorPrimitive.Root, {
   border: "none",
   margin: 0,

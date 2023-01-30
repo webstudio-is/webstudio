@@ -1,4 +1,12 @@
+import type { ZodError } from "zod";
+import { useState, useCallback, ComponentProps } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import { useUnmount } from "react-use";
+import slugify from "slugify";
+import { useFetcher } from "@remix-run/react";
+import { type Page } from "@webstudio-is/project";
 import {
+  theme,
   Button,
   Box,
   DeprecatedLabel,
@@ -9,16 +17,9 @@ import {
   InputErrorsTooltip,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { type Pages, utils as projectUtils } from "@webstudio-is/project";
-import type { ZodError } from "zod";
-import { Header, HeaderSuffixSpacer } from "../../lib/header";
-import { useState, useCallback, ComponentProps } from "react";
-import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
-import { useDebouncedCallback } from "use-debounce";
-import { useUnmount } from "react-use";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
   normalizeErrors,
@@ -32,8 +33,7 @@ import type {
   CreatePageData,
 } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
-import slugify from "slugify";
-import { theme } from "@webstudio-is/design-system";
+import { Header, HeaderSuffixSpacer } from "../../header";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],

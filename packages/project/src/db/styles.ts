@@ -3,7 +3,12 @@ import { type Patch, applyPatches } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import { StoredStyles, Styles } from "@webstudio-is/project-build";
+import { StoredStyles, Styles, type Tree } from "@webstudio-is/project-build";
+import type { Project } from "./schema";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
 
 const parseValue = (
   styleValue: StoredStyles[number]["value"],
@@ -102,9 +107,19 @@ export const serializeStyles = (styles: Styles) => {
 };
 
 export const patch = async (
-  { treeId }: { treeId: string },
-  patches: Array<Patch>
+  { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  patches: Array<Patch>,
+  context: AppContext
 ) => {
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error("You don't have edit access to this project");
+  }
+
   const tree = await prisma.tree.findUnique({
     where: { id: treeId },
   });

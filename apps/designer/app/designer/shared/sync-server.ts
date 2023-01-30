@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import { sync } from "immerhin";
-import type { Build } from "@webstudio-is/project";
+import type { Build, Project } from "@webstudio-is/project";
 import type { Tree } from "@webstudio-is/project-build";
 import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
@@ -44,9 +44,11 @@ const dequeue = () => {
 export const useSyncServer = ({
   treeId,
   buildId,
+  projectId,
 }: {
   buildId: Build["id"];
   treeId: Tree["id"];
+  projectId: Project["id"];
 }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -66,8 +68,9 @@ export const useSyncServer = ({
           method: "post",
           body: JSON.stringify({
             transactions: entries,
-            treeId: treeId,
-            buildId: buildId,
+            treeId,
+            buildId,
+            projectId,
           }),
         })
       );
@@ -75,5 +78,5 @@ export const useSyncServer = ({
     return () => {
       clearInterval(intervalId);
     };
-  }, [treeId, buildId]);
+  }, [treeId, buildId, projectId]);
 };

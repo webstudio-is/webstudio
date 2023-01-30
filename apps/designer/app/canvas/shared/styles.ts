@@ -1,11 +1,7 @@
 import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
 import { addGlobalRules } from "@webstudio-is/project";
-import {
-  selectedInstanceIdStore,
-  useBreakpoints,
-  useDesignTokens,
-} from "~/shared/nano-states";
+import { selectedInstanceIdStore, useBreakpoints } from "~/shared/nano-states";
 import type { Styles } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
@@ -28,7 +24,6 @@ import {
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
@@ -65,7 +60,6 @@ const helpersCssEngine = createCssEngine({ name: "helpers" });
 const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
-const tokensCssEngine = createCssEngine({ name: "tokens" });
 const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
@@ -89,18 +83,6 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
     addGlobalRules(fontsAndDefaultsCssEngine, { assets });
     fontsAndDefaultsCssEngine.render();
   }, [assets]);
-
-  const [tokens] = useDesignTokens();
-
-  useIsomorphicLayoutEffect(() => {
-    tokensCssEngine.clear();
-    if (tokens.length !== 0) {
-      const style = tokensToStyle(tokens);
-      tokensCssEngine.addStyleRule(`:root`, { style });
-    }
-
-    tokensCssEngine.render();
-  }, [tokens]);
 
   useIsomorphicLayoutEffect(() => {
     presetStylesEngine.clear();

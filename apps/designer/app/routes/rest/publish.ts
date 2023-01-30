@@ -1,5 +1,6 @@
 import type { ActionArgs } from "@remix-run/node";
 import { zfd } from "zod-form-data";
+import { createContext } from "~/shared/context.server";
 import * as db from "~/shared/db";
 
 const schema = zfd.formData({
@@ -9,8 +10,11 @@ const schema = zfd.formData({
 
 export const action = async ({ request }: ActionArgs) => {
   const { domain, projectId } = schema.parse(await request.formData());
+
   try {
-    await db.misc.publish({ projectId, domain });
+    const context = await createContext(request);
+
+    await db.misc.publish({ projectId, domain }, context);
     if (process.env.PUBLISHER_ENDPOINT && process.env.PUBLISHER_TOKEN) {
       const headers = new Headers();
       headers.append("X-AUTH-WEBSTUDIO", process.env.PUBLISHER_TOKEN || "");

@@ -1,15 +1,9 @@
 import { useState } from "react";
 import store from "immerhin";
 import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import {
-  allUserPropsContainer,
-  getComponentMetaProps,
-  useAllUserProps,
-} from "@webstudio-is/react-sdk";
-import { type Publish } from "~/shared/pubsub";
-import { Control } from "./control";
-import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import {
+  theme,
   Box,
   Button,
   Grid,
@@ -29,16 +23,19 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
+import { type Publish } from "~/shared/pubsub";
+import { propsStore, useInstanceProps } from "~/shared/nano-states";
+import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import {
   removeByMutable,
   replaceByOrAppendMutable,
 } from "~/shared/array-utils";
+import { Control } from "./control";
 import { usePropsLogic, type UserPropValue } from "./use-props-logic";
 import {
   useStyleData,
   type SetProperty,
 } from "../style-panel/shared/use-style-data";
-import { theme } from "@webstudio-is/design-system";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -222,8 +219,7 @@ type PropsPanelProps = {
 
 export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
   const instanceId = selectedInstance.id;
-  const allUserProps = useAllUserProps();
-  const props = allUserProps[instanceId] ?? [];
+  const instanceProps = useInstanceProps(instanceId);
 
   const {
     userProps,
@@ -233,16 +229,11 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
     handleDeleteProp,
     isRequired,
   } = usePropsLogic({
-    props,
+    props: instanceProps,
     selectedInstance,
 
     updateProps: (update) => {
-      store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        let props = allUserProps[instanceId];
-        if (props === undefined) {
-          props = [];
-          allUserProps[instanceId] = props;
-        }
+      store.createTransaction([propsStore], (props) => {
         replaceByOrAppendMutable(
           props,
           update,
@@ -252,11 +243,8 @@ export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
     },
 
     deleteProp: (id) => {
-      store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        const props = allUserProps[instanceId];
-        if (props) {
-          removeByMutable(props, (prop) => prop.id === id);
-        }
+      store.createTransaction([propsStore], (props) => {
+        removeByMutable(props, (prop) => prop.id === id);
       });
     },
   });

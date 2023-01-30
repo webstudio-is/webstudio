@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["views"]
+  previewFeatures = ["views", "clientExtensions"]
   // <output-placeholder-for-migrations>
 }
 
@@ -73,8 +73,7 @@ model Build {
   isDev  Boolean // exctly one is true per project
   isProd Boolean // at most one is true per project (none if not published)
 
-  breakpoints  Breakpoints?
-  designTokens DesignTokens?
+  breakpoints Breakpoints?
 
   styles       String @default("[]")
   styleSources String @default("[]")
@@ -85,18 +84,8 @@ model Tree {
   root            String
   instances       String @default("[]")
   props           String @default("[]")
-  presetStyles    String @default("[]")
   styles          String @default("[]")
   styleSelections String @default("[]")
-}
-
-model InstanceProps {
-  id         String @id @default(uuid())
-  instanceId String
-  treeId     String
-  props      String @default("[]")
-
-  @@unique([instanceId, treeId])
 }
 
 model Breakpoints {
@@ -105,10 +94,18 @@ model Breakpoints {
   values  String @default("[]")
 }
 
-model DesignTokens {
-  build   Build  @relation(fields: [buildId], references: [id])
-  buildId String @id
-  value   String @default("[]")
+enum AuthorizationPermit {
+  VIEW
+  EDIT
+}
+
+model AuthorizationTokens {
+  id        String              @id @default(uuid())
+  // No relation to Project, as the Authorization system is not tied to a project
+  projectId String
+  token     String
+  permit    AuthorizationPermit
+  createdAt DateTime            @default(now())
 }
 
 // Dashboard

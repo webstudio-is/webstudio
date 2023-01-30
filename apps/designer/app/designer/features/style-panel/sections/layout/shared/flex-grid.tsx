@@ -34,28 +34,35 @@ export const FlexGrid = ({
   const isFlexDirectionColumn =
     flexDirection === "column" || flexDirection === "column-reverse";
 
-  let color = theme.colors.slate8;
+  let color = theme.colors.foregroundFlexUiMain;
   if (styleSource === "local") {
-    color = theme.colors.blue9;
+    color = theme.colors.borderSetFlexUi;
   }
   if (styleSource === "remote") {
-    color = theme.colors.orange9;
+    color = theme.colors.borderInheritedFlexUi;
   }
 
   return (
     <Grid
+      tabIndex={0}
       css={{
         width: "100%",
         aspectRatio: "1 / 1",
         padding: theme.spacing[4],
         borderRadius: "4px",
-        background: theme.colors.loContrast,
-        border: "2px solid currentColor",
+        background: theme.colors.backgroundControls,
+        outlineStyle: "solid",
+        outlineWidth: styleSource === "default" ? 1 : 2,
+        outlineColor: color,
         alignItems: "center",
         gap: theme.spacing[1],
         gridTemplateColumns: "repeat(3, 1fr)",
         gridTemplateRows: "repeat(3, 1fr)",
         color,
+        "&:focus-within": {
+          outlineWidth: 2,
+          outlineColor: theme.colors.borderSetFlexUi,
+        },
       }}
     >
       {Array.from(Array(gridSize * gridSize), (_, index) => {
@@ -80,12 +87,14 @@ export const FlexGrid = ({
             }}
           >
             <DeprecatedIconButton
+              tabIndex={-1}
               css={{
                 width: "100%",
                 height: "100%",
-                color: theme.colors.gray8,
+                color: theme.colors.foregroundFlexUiMain,
                 "&:hover": {
-                  bc: theme.colors.slate4,
+                  // @todo not clear which token to use here
+                  background: theme.colors.slate4,
                 },
                 "&:focus": {
                   background: "none",

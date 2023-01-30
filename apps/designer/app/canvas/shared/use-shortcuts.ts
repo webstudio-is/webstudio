@@ -23,8 +23,6 @@ declare module "~/shared/pubsub" {
   }
 }
 
-const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
-
 type HandlerEvent = {
   key?: string;
   preventDefault?: () => void;
@@ -94,12 +92,9 @@ export const useShortcuts = () => {
     esc: publishCancelCurrentDrag,
   } as const;
 
-  useHotkeys(
-    "backspace, delete",
+  useHotkeys("backspace, delete", shortcutHandlerMap.delete, options, [
     shortcutHandlerMap.delete,
-    { ...options, enableOnTags: [...inputTags] },
-    [shortcutHandlerMap.delete]
-  );
+  ]);
 
   useHotkeys(
     "esc",
@@ -115,7 +110,7 @@ export const useShortcuts = () => {
       }
       selectedInstanceIdStore.set(undefined);
     },
-    { ...options, enableOnContentEditable: true, enableOnTags: [...inputTags] },
+    { ...options, enableOnContentEditable: true },
     [editingInstanceId]
   );
 

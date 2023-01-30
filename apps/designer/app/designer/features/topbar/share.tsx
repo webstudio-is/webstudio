@@ -1,22 +1,25 @@
 import {
   Button,
-  Flex,
   DeprecatedIconButton,
   Popover,
   PopoverContent,
   PopoverPortal,
   PopoverTrigger,
-  TextField,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
 import { theme } from "@webstudio-is/design-system";
+import {
+  ShareProjectDeprecated,
+  ShareProject,
+  LinkOptions,
+} from "~/shared/share-project";
 
-type ShareButtonProps = {
+type ShareButtonDeprecatedProps = {
   url: string;
 };
 
-const Content = ({ url }: ShareButtonProps) => {
+const Content = ({ url }: ShareButtonDeprecatedProps) => {
   if (typeof location === "undefined") {
     return null;
   }
@@ -29,31 +32,12 @@ const Content = ({ url }: ShareButtonProps) => {
         event.preventDefault();
       }}
     >
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          window.open(url, "_blank");
-        }}
-      >
-        <Flex gap="2">
-          <TextField
-            variant="ghost"
-            readOnly
-            defaultValue={url}
-            onFocus={(event) => {
-              event?.target.select();
-            }}
-          />
-          <Button aria-label="Open in a new tab" type="submit">
-            Open
-          </Button>
-        </Flex>
-      </form>
+      <ShareProjectDeprecated url={url} />
     </PopoverContent>
   );
 };
 
-export const ShareButton = (props: ShareButtonProps) => {
+export const ShareButtonDeprecated = (props: ShareButtonDeprecatedProps) => {
   const [isOpen, setIsOpen] = useIsShareDialogOpen();
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -66,5 +50,26 @@ export const ShareButton = (props: ShareButtonProps) => {
         <Content {...props} />
       </PopoverPortal>
     </Popover>
+  );
+};
+
+export const ShareButton = () => {
+  const handleChange = (link: LinkOptions) => {
+    // @todo implement
+  };
+  const handleDelete = (link: LinkOptions) => {
+    // @todo implement
+  };
+  const handleCreate = () => {
+    // @todo implement
+  };
+  return (
+    <ShareProject
+      onChange={handleChange}
+      onDelete={handleDelete}
+      onCreate={handleCreate}
+    >
+      <Button>Share</Button>
+    </ShareProject>
   );
 };
