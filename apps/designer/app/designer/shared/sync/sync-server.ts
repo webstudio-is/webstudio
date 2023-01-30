@@ -30,7 +30,7 @@ const useRecoveryCheck = () => {
 const useErrorCheck = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (queueStatus.get() === "error") {
+      if (queueStatus.get() === "failed") {
         dequeue();
       }
     }, INTERVAL_ERROR);

@@ -3,11 +3,11 @@ import { atom } from "nanostores";
 // After this amount of retries without success, we consider connection status error.
 const MAX_RETRY_RECOVERY = 5;
 
-export type QueueStatus = "processing" | "idle" | "recovering" | "error";
+export type QueueStatus = "running" | "idle" | "recovering" | "failed";
 
 type BaseResult = { ok: boolean };
 
-export const queueStatus = atom("idle");
+export const queueStatus = atom<QueueStatus>("idle");
 
 export const state: {
   queue: Array<Job<BaseResult>>;
@@ -26,16 +26,16 @@ export const enqueue = <Result extends BaseResult>(job: Job<Result>) => {
   }
 };
 
-// We can't change to processing or idle status from error or recovering status until
+// We can't change to running or idle status from error or recovering status until
 // we have one successful attempt.
 const getStatus = (phase: "start" | "end"): QueueStatus => {
   if (state.failedAttempts > 0) {
     if (state.failedAttempts < MAX_RETRY_RECOVERY) {
       return "recovering";
     }
-    return "error";
+    return "failed";
   }
-  return phase === "start" ? "processing" : "idle";
+  return phase === "start" ? "running" : "idle";
 };
 
 export const dequeue = () => {

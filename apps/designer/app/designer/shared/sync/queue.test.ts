@@ -16,7 +16,7 @@ describe("queue", () => {
   test("enqueue with success", async () => {
     enqueue(() => Promise.resolve({ ok: true }));
     const jobPromise = dequeue();
-    expect(queueStatus.get()).toBe("processing");
+    expect(queueStatus.get()).toBe("running");
     expect(state.failedAttempts).toBe(0);
     expect(state.queue.length).toBe(0);
     await jobPromise;
@@ -28,7 +28,7 @@ describe("queue", () => {
   test("enqueue with failure", async () => {
     enqueue(() => Promise.resolve({ ok: false }));
     const jobPromise = dequeue();
-    expect(queueStatus.get()).toBe("processing");
+    expect(queueStatus.get()).toBe("running");
     expect(state.failedAttempts).toBe(0);
     expect(state.queue.length).toBe(0);
 

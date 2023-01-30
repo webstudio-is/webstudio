@@ -27,7 +27,7 @@ export const SyncStatus = () => {
   const isOnline = useStore(isOnlineStore);
   useEffect(setIsOnline, []);
 
-  if (status !== "error") {
+  if (status !== "failed") {
     return null;
   }
 
