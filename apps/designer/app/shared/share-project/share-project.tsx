@@ -17,7 +17,7 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
-import { motion, easeOut } from "framer-motion";
+import { motion } from "framer-motion";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -273,7 +273,7 @@ export const ShareProject = ({
             collapsed: { opacity: 0.0, height: 0 },
             open: { opacity: 1, height: "auto" },
           }}
-          transition={{ duration: 0.15, ease: easeOut }}
+          transition={{ duration: 0.15 }}
         >
           {items}
         </motion.div>
