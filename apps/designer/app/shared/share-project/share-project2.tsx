@@ -8,6 +8,7 @@ import {
   DeprecatedPopoverTrigger,
   DeprecatedPopoverContent,
   DeprecatedPopoverPortal,
+  DeprecatedPopoverHeader,
   rawTheme,
   Separator,
   Switch,
