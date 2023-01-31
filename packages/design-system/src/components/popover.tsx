@@ -37,9 +37,9 @@ export const PopoverContent = React.forwardRef(
     {
       children,
       className,
-      withArrow = true,
+      hideArrow,
       ...props
-    }: ComponentProps<typeof Primitive.Content> & { withArrow?: boolean },
+    }: ComponentProps<typeof Primitive.Content> & { hideArrow?: boolean },
     ref: Ref<HTMLDivElement>
   ) => (
     <Primitive.Portal>
@@ -51,7 +51,7 @@ export const PopoverContent = React.forwardRef(
         ref={ref}
       >
         {children}
-        {withArrow && <Arrow />}
+        {hideArrow !== true && <Arrow />}
       </Primitive.Content>
     </Primitive.Portal>
   )
