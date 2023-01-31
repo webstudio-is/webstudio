@@ -108,9 +108,9 @@ const ShareProjectContainer = ({ designerUrl }: ShareButtonProps) => {
   );
 };
 
-export const ShareButton = ({ designerUrl }: ShareButtonProps) => {
-  const classZIndex = css({ zIndex: theme.zIndices[1] });
+const classZIndex = css({ zIndex: theme.zIndices[1] });
 
+export const ShareButton = ({ designerUrl }: ShareButtonProps) => {
   return (
     <FloatingPanelPopover modal>
       <FloatingPanelPopoverTrigger asChild>
