@@ -55,6 +55,7 @@ export const startCopyPaste = <Type>(props: Props<Type>) => {
     try {
       const data = DataType.parse(JSON.parse(text));
       // zod provides invalid type without versionLiteral
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (data as any)[versionLiteral] as Type;
     } catch {
       return;
