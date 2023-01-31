@@ -5,11 +5,15 @@ import type { Instance } from "@webstudio-is/project-build";
 import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
-import { stylesContainer } from "~/shared/nano-states";
+import { stylesStore } from "~/shared/nano-states";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 import { useStyleInfo } from "./style-info";
+import {
+  removeByMutable,
+  replaceByOrAppendMutable,
+} from "~/shared/array-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -66,33 +70,35 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
         return;
       }
 
-      store.createTransaction([stylesContainer], (styles) => {
+      store.createTransaction([stylesStore], (styles) => {
         const instanceId = selectedInstance.id;
         const breakpointId = selectedBreakpoint.id;
-        for (const update of updates) {
-          const matchedIndex = styles.findIndex(
-            (item) =>
-              item.breakpointId === breakpointId &&
-              item.instanceId === instanceId &&
-              item.property === update.property
-          );
 
+        for (const update of updates) {
           if (update.operation === "set") {
-            const newItem = {
-              breakpointId,
-              instanceId,
-              property: update.property,
-              value: update.value,
-            };
-            if (matchedIndex === -1) {
-              styles.push(newItem);
-            } else {
-              styles[matchedIndex] = newItem;
-            }
+            replaceByOrAppendMutable(
+              styles,
+              {
+                breakpointId,
+                instanceId,
+                property: update.property,
+                value: update.value,
+              },
+              (item) =>
+                item.instanceId === instanceId &&
+                item.breakpointId === breakpointId &&
+                item.property === update.property
+            );
           }
 
-          if (update.operation === "delete" && matchedIndex !== -1) {
-            styles.splice(matchedIndex, 1);
+          if (update.operation === "delete") {
+            removeByMutable(
+              styles,
+              (item) =>
+                item.instanceId === instanceId &&
+                item.breakpointId === breakpointId &&
+                item.property === update.property
+            );
           }
         }
       });

@@ -6,7 +6,7 @@ import {
   rootInstanceContainer,
   propsStore,
   breakpointsContainer,
-  stylesContainer,
+  stylesStore,
   selectedInstanceIdStore,
   selectedInstanceBrowserStyleStore,
   hoveredInstanceIdStore,
@@ -41,7 +41,7 @@ export const registerContainers = () => {
   // synchronize patches
   store.register("breakpoints", breakpointsContainer);
   store.register("root", rootInstanceContainer);
-  store.register("styles", stylesContainer);
+  store.register("styles", stylesStore);
   store.register("props", propsStore);
   // synchronize whole states
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);

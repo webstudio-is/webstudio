@@ -77,7 +77,7 @@ export const useInstanceProps = (instanceId: undefined | Instance["id"]) => {
   return instanceProps;
 };
 
-export const stylesContainer = atom<Styles>([]);
+export const stylesStore = atom<Styles>([]);
 /**
  * Indexed styles data is recomputed on every styles update
  * Compumer should use shallow-equal to check all items in the list
@@ -87,7 +87,7 @@ export const stylesContainer = atom<Styles>([]);
  * though will require to move away from running immer patches on array
  * of styles
  */
-export const stylesIndexStore = computed(stylesContainer, (styles) => {
+export const stylesIndexStore = computed(stylesStore, (styles) => {
   const stylesByInstanceId = new Map<Instance["id"], Styles>();
   for (const stylesItem of styles) {
     const { instanceId } = stylesItem;
@@ -103,10 +103,9 @@ export const stylesIndexStore = computed(stylesContainer, (styles) => {
   };
 });
 
-export const useStyles = () => useValue(stylesContainer);
 export const useSetStyles = (styles: Styles) => {
   useSyncInitializeOnce(() => {
-    stylesContainer.set(styles);
+    stylesStore.set(styles);
   });
 };
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
