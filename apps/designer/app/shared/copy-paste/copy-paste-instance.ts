@@ -14,7 +14,7 @@ const InstanceCopyData = z.object({
 export type InstanceCopyData = z.infer<typeof InstanceCopyData>;
 
 type InstanceCopyPasteProps = {
-  selectedInstanceData?: InstanceCopyData | undefined;
+  selectedInstanceData?: InstanceCopyData;
   allowAnyTarget?: boolean;
   onPaste: (data: InstanceCopyData) => void;
   onCut: (instance: Instance) => void;
@@ -31,9 +31,6 @@ export const useInstanceCopyPaste = (props: InstanceCopyPasteProps): void => {
       version: "@webstudio/instance/v0.1",
       type: InstanceCopyData,
       onCopy: () => {
-        if (selectedInstanceData === undefined) {
-          return;
-        }
         return selectedInstanceData;
       },
       onCut: () => {

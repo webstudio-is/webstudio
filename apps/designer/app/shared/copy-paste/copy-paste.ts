@@ -5,7 +5,7 @@ const isValidClipboardEvent = (
   options: { allowAnyTarget: boolean }
 ) => {
   const selection = document.getSelection();
-  if (selection !== null && selection.type === "Range") {
+  if (selection?.type === "Range") {
     return false;
   }
 
