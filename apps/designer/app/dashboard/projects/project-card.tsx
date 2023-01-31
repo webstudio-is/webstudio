@@ -13,13 +13,13 @@ import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { designerPath, getPublishedUrl } from "~/shared/router-utils";
-import { Link as RemixLink } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   RenameProject,
   DeleteProject,
   useDuplicate,
 } from "./create-rename-duplicate-delete";
+import { Thumbnail } from "./thumbnail";
 
 const containerStyle = css({
   overflow: "hidden",
@@ -32,28 +32,6 @@ const containerStyle = css({
   background: theme.colors.brandBackgroundProjectCardBack,
   "&:hover, &:focus-within": {
     boxShadow: theme.shadows.brandElevationBig,
-  },
-});
-
-// @todo use typography from figma tokens
-const thumbnailStyle = css({
-  display: "flex",
-  alignItems: "center",
-  alignSelf: "center",
-  minHeight: 0,
-  fontFamily: theme.fonts.manrope,
-  fontWeight: 200,
-  fontSize: 360,
-  letterSpacing: "-0.05em",
-  background: theme.colors.brandBackgroundProjectCardFront,
-  WebkitBackgroundClip: "text",
-  backgroundClip: "text",
-  color: "transparent",
-  userSelect: "none",
-  outline: "none",
-  "&:hover, &:focus": {
-    fontWeight: 800,
-    transition: "100ms",
   },
 });
 
@@ -179,14 +157,6 @@ const useProjectCard = () => {
   };
 };
 
-// My Next Project > MN
-const getThumbnailAbbreviation = (title: string) =>
-  title
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word.charAt(0).toUpperCase())
-    .join("");
-
 type ProjectCardProps = Pick<
   DashboardProject,
   "id" | "title" | "domain" | "isPublished"
@@ -213,14 +183,11 @@ export const ProjectCard = ({
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <RemixLink
-          ref={thumbnailRef}
+        <Thumbnail
+          title={title}
           to={designerPath({ projectId: id })}
-          className={thumbnailStyle()}
-          tabIndex={-1}
-        >
-          {getThumbnailAbbreviation(title)}
-        </RemixLink>
+          ref={thumbnailRef}
+        />
         <Flex
           justify="between"
           shrink={false}
