@@ -4,7 +4,7 @@ import { Panel } from "./panel";
 import { Heading } from "../heading";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { ProjectCard } from "./project-card";
-import { CreateProject } from "./create-rename";
+import { CreateProject } from "./create-rename-delete";
 
 type ProjectsProps = {
   projects: Array<DashboardProject>;

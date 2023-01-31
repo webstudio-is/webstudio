@@ -22,7 +22,7 @@ import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { RenameProject } from "./create-rename";
+import { RenameProject, DeleteProject } from "./create-rename-delete";
 
 const containerStyle = css({
   overflow: "hidden",
@@ -145,7 +145,6 @@ const Menu = ({
 const useProjectCard = () => {
   const fetcher = useFetcher();
   const thumbnailRef = useRef<HTMLAnchorElement>(null);
-  const { submit: deleteProject } = trpc.delete.useMutation();
   const { submit: duplicate } = trpc.duplicate.useMutation();
 
   // @todo with dialog it can be displayed in the dialog
@@ -182,10 +181,6 @@ const useProjectCard = () => {
     }
   };
 
-  const handleDelete = (projectId: string) => {
-    deleteProject({ projectId });
-  };
-
   const handleDuplicate = (projectId: string) => {
     duplicate({ projectId });
   };
@@ -193,7 +188,6 @@ const useProjectCard = () => {
   return {
     thumbnailRef,
     handleKeyDown,
-    handleDelete,
     handleDuplicate,
   };
 };
@@ -216,9 +210,9 @@ export const ProjectCard = ({
   domain,
   isPublished,
 }: ProjectCardProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { thumbnailRef, handleKeyDown, handleDelete, handleDuplicate } =
-    useProjectCard();
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { thumbnailRef, handleKeyDown, handleDuplicate } = useProjectCard();
   return (
     <>
       <Flex
@@ -256,10 +250,10 @@ export const ProjectCard = ({
           <Menu
             tabIndex={-1}
             onDelete={() => {
-              handleDelete(id);
+              setIsDeleteDialogOpen(true);
             }}
             onRename={() => {
-              setIsDialogOpen(true);
+              setIsRenameDialogOpen(true);
             }}
             onDuplicate={() => {
               handleDuplicate(id);
@@ -268,13 +262,22 @@ export const ProjectCard = ({
         </Flex>
       </Flex>
       <RenameProject
-        isOpen={isDialogOpen}
+        isOpen={isRenameDialogOpen}
         title={title}
         projectId={id}
         onComplete={() => {
-          setIsDialogOpen(false);
+          setIsRenameDialogOpen(false);
         }}
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={setIsRenameDialogOpen}
+      />
+      <DeleteProject
+        isOpen={isDeleteDialogOpen}
+        title={title}
+        projectId={id}
+        onComplete={() => {
+          setIsDeleteDialogOpen(false);
+        }}
+        onOpenChange={setIsDeleteDialogOpen}
       />
     </>
   );
