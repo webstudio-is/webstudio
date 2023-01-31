@@ -22,18 +22,6 @@ const thumbnailStyle = css({
     fontWeight: 800,
     transition: "100ms",
   },
-  variants: {
-    size: {
-      small: {
-        fontWeight: 20,
-        fontSize: 36,
-        "&:hover, &:focus": {
-          fontWeight: 80,
-          transition: "100ms",
-        },
-      },
-    },
-  },
 });
 
 // My Next Project > MN
