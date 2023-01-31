@@ -114,6 +114,13 @@ const useCopyPaste = (publish: Publish) => {
   });
 };
 
+const useSetWindowTitle = () => {
+  const [project] = useProject();
+  useEffect(() => {
+    document.title = `${project?.title} | Webstudio`;
+  }, [project?.title]);
+};
+
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
   isPreviewMode: boolean;
@@ -299,7 +306,7 @@ export const Designer = ({
   const [dragAndDropState] = useDragAndDropState();
   useSubscribeCanvasReady(publish);
   useCopyPaste(publish);
-
+  useSetWindowTitle();
   const iframeRefCallback = useCallback(
     (ref) => {
       publishRef.current = ref;
