@@ -12,9 +12,9 @@ import type { Instance, Styles } from "@webstudio-is/project-build";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceIdStore,
+  stylesIndexStore,
   useBreakpoints,
   useRootInstance,
-  useStyles,
 } from "~/shared/nano-states";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
 
@@ -76,16 +76,17 @@ for (const [property, value] of Object.entries(properties)) {
 }
 
 export const getLocalStyle = (
-  styles: Styles,
+  stylesByInstanceId: Map<Instance["id"], Styles>,
   breakpointId: string,
   instanceId: string
 ) => {
   const style: Style = {};
-  for (const styleItem of styles) {
-    if (
-      styleItem.breakpointId === breakpointId &&
-      styleItem.instanceId === instanceId
-    ) {
+  const instanceStyles = stylesByInstanceId.get(instanceId);
+  if (instanceStyles === undefined) {
+    return style;
+  }
+  for (const styleItem of instanceStyles) {
+    if (styleItem.breakpointId === breakpointId) {
       style[styleItem.property] = styleItem.value;
     }
   }
@@ -115,17 +116,18 @@ export const getCascadedBreakpointIds = (
  * affecting current view
  */
 export const getCascadedInfo = (
-  styles: Styles,
+  stylesByInstanceId: Map<Instance["id"], Styles>,
   instanceId: string,
   cascadedBreakpointIds: string[]
 ) => {
   const cascadedStyle: CascadedProperties = {};
+  const instanceStyles = stylesByInstanceId.get(instanceId);
+  if (instanceStyles === undefined) {
+    return cascadedStyle;
+  }
   for (const breakpointId of cascadedBreakpointIds) {
-    for (const styleItem of styles) {
-      if (
-        styleItem.breakpointId === breakpointId &&
-        styleItem.instanceId === instanceId
-      ) {
+    for (const styleItem of instanceStyles) {
+      if (styleItem.breakpointId === breakpointId) {
         cascadedStyle[styleItem.property] = {
           breakpointId,
           value: styleItem.value,
@@ -142,7 +144,7 @@ export const getCascadedInfo = (
  */
 export const getInheritedInfo = (
   rootInstance: Instance,
-  styles: Styles,
+  stylesByInstanceId: Map<Instance["id"], Styles>,
   instanceId: string,
   cascadedBreakpointIds: string[],
   selectedBreakpointId: string
@@ -159,12 +161,16 @@ export const getInheritedInfo = (
       selectedBreakpointId,
     ];
 
+    const ancestorInstanceStyles = stylesByInstanceId.get(ancestorInstance.id);
+    if (ancestorInstanceStyles === undefined) {
+      continue;
+    }
+
     // extract styles from all active breakpoints
     for (const breakpointId of cascadedAndSelectedBreakpointIds) {
-      for (const styleItem of styles) {
+      for (const styleItem of ancestorInstanceStyles) {
         if (
           styleItem.breakpointId === breakpointId &&
-          styleItem.instanceId === ancestorInstance.id &&
           inheritableProperties.has(styleItem.property)
         ) {
           inheritedStyle[styleItem.property] = {
@@ -188,7 +194,7 @@ export const useStyleInfo = () => {
   const selectedInstanceId = useStore(selectedInstanceIdStore);
   const browserStyle = useStore(selectedInstanceBrowserStyleStore);
   const [rootInstance] = useRootInstance();
-  const [styles] = useStyles();
+  const { stylesByInstanceId } = useStore(stylesIndexStore);
 
   const localStyle = useMemo(() => {
     if (
@@ -197,8 +203,12 @@ export const useStyleInfo = () => {
     ) {
       return {};
     }
-    return getLocalStyle(styles, selectedBreakpointId, selectedInstanceId);
-  }, [styles, selectedBreakpointId, selectedInstanceId]);
+    return getLocalStyle(
+      stylesByInstanceId,
+      selectedBreakpointId,
+      selectedInstanceId
+    );
+  }, [stylesByInstanceId, selectedBreakpointId, selectedInstanceId]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
@@ -215,14 +225,14 @@ export const useStyleInfo = () => {
     }
     return getInheritedInfo(
       rootInstance,
-      styles,
+      stylesByInstanceId,
       selectedInstanceId,
       cascadedBreakpointIds,
       selectedBreakpointId
     );
   }, [
     rootInstance,
-    styles,
+    stylesByInstanceId,
     cascadedBreakpointIds,
     selectedBreakpointId,
     selectedInstanceId,
@@ -232,8 +242,12 @@ export const useStyleInfo = () => {
     if (selectedInstanceId === undefined) {
       return {};
     }
-    return getCascadedInfo(styles, selectedInstanceId, cascadedBreakpointIds);
-  }, [styles, selectedInstanceId, cascadedBreakpointIds]);
+    return getCascadedInfo(
+      stylesByInstanceId,
+      selectedInstanceId,
+      cascadedBreakpointIds
+    );
+  }, [stylesByInstanceId, selectedInstanceId, cascadedBreakpointIds]);
 
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
