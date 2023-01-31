@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 overrides:
   esbuild: 0.15.13
   react-dom: 17.0.2
+  '@types/react': ^17.0.47
 
 patchedDependencies:
   '@storybook/builder-webpack5@6.5.14':
@@ -76,7 +77,7 @@ importers:
       '@types/lodash.merge': ^4.6.6
       '@types/lodash.noop': ^3.0.6
       '@types/lodash.snakecase': ^4.1.6
-      '@types/react': ^17.0.24
+      '@types/react': ^17.0.47
       '@types/react-color': ^3.0.6
       '@types/react-dom': ^17.0.9
       '@types/sharp': ^0.30.4
@@ -340,7 +341,7 @@ importers:
       '@storybook/react': ^6.5.14
       '@storybook/testing-library': ^0.0.13
       '@types/hyphenate-style-name': ^1.0.0
-      '@types/react': ^17.0.24
+      '@types/react': ^17.0.47
       '@types/react-dom': ^17.0.9
       '@webstudio-is/css-data': workspace:^
       '@webstudio-is/fonts': workspace:^
@@ -447,7 +448,7 @@ importers:
       '@storybook/testing-library': ^0.0.13
       '@testing-library/react-hooks': ^8.0.1
       '@types/lodash.merge': ^4.6.6
-      '@types/react': ^17.0.24
+      '@types/react': ^17.0.47
       '@types/react-dom': ^17.0.9
       '@types/testing-library__jest-dom': 5.14.5
       '@webstudio-is/css-vars': workspace:^
@@ -636,7 +637,7 @@ importers:
       '@storybook/react': ^6.5.14
       '@storybook/testing-library': ^0.0.13
       '@svgo/jsx': ^0.4.2
-      '@types/react': ^17.0.24
+      '@types/react': ^17.0.47
       '@webstudio-is/css-vars': workspace:^
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/storybook-config': workspace:^
@@ -666,7 +667,7 @@ importers:
       '@storybook/jest': ^0.0.10
       '@storybook/react': ^6.5.14
       '@storybook/testing-library': ^0.0.13
-      '@types/react': ^17.0.24
+      '@types/react': ^17.0.47
       '@webstudio-is/generate-arg-types': workspace:^
       '@webstudio-is/jest-config': workspace:^
       '@webstudio-is/scripts': workspace:^
@@ -822,7 +823,7 @@ importers:
       '@storybook/react': ^6.5.14
       '@storybook/testing-library': ^0.0.11
       '@types/node': ^18.11.18
-      '@types/react': ^17.0.24
+      '@types/react': ^17.0.47
       '@types/react-dom': ^17.0.9
       '@webstudio-is/asset-uploader': workspace:^
       '@webstudio-is/css-data': workspace:^
@@ -7151,7 +7152,7 @@ packages:
     dependencies:
       '@remix-run/router': 1.3.1
       '@types/cookie': 0.4.1
-      '@types/react': 18.0.27
+      '@types/react': 17.0.47
       '@web3-storage/multipart-parser': 1.0.0
       cookie: 0.4.2
       set-cookie-parser: 2.5.1
@@ -8049,7 +8050,7 @@ packages:
       '@storybook/store': 6.5.14_react@17.0.2
       '@storybook/theming': 6.5.14_react@17.0.2
       '@storybook/ui': 6.5.14_react@17.0.2
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/webpack': 4.41.32
       autoprefixer: 9.8.8
       babel-loader: 8.2.5_tktscwi5cl3qcx6vcfwkvrwn6i
@@ -8117,7 +8118,7 @@ packages:
       '@storybook/store': 6.5.14
       '@storybook/theming': 6.5.14
       '@storybook/ui': 6.5.14
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/webpack': 4.41.32
       autoprefixer: 9.8.8
       babel-loader: 8.2.5_tktscwi5cl3qcx6vcfwkvrwn6i
@@ -8670,7 +8671,7 @@ packages:
       '@babel/register': 7.18.9_@babel+core@7.20.2
       '@storybook/node-logger': 6.5.14
       '@storybook/semver': 7.3.2
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/pretty-hrtime': 1.0.1
       babel-loader: 8.2.5_tktscwi5cl3qcx6vcfwkvrwn6i
       babel-plugin-macros: 3.1.0
@@ -8809,7 +8810,7 @@ packages:
       '@babel/register': 7.18.9_@babel+core@7.20.2
       '@storybook/node-logger': 6.5.14
       '@storybook/semver': 7.3.2
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/pretty-hrtime': 1.0.1
       babel-loader: 8.2.5_tktscwi5cl3qcx6vcfwkvrwn6i
       babel-plugin-macros: 3.1.0
@@ -8879,7 +8880,7 @@ packages:
       '@babel/register': 7.18.9_@babel+core@7.20.2
       '@storybook/node-logger': 6.5.14
       '@storybook/semver': 7.3.2
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/pretty-hrtime': 1.0.1
       babel-loader: 8.2.5_tktscwi5cl3qcx6vcfwkvrwn6i
       babel-plugin-macros: 3.1.0
@@ -9024,7 +9025,7 @@ packages:
       '@storybook/semver': 7.3.2
       '@storybook/store': 6.5.14_react@17.0.2
       '@storybook/telemetry': 6.5.14_s7dhm7uhgnhsqh75wuilf3r4wi
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/node-fetch': 2.6.2
       '@types/pretty-hrtime': 1.0.1
       '@types/webpack': 4.41.32
@@ -9100,7 +9101,7 @@ packages:
       '@storybook/semver': 7.3.2
       '@storybook/store': 6.5.14
       '@storybook/telemetry': 6.5.14_typescript@4.7.4
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/node-fetch': 2.6.2
       '@types/pretty-hrtime': 1.0.1
       '@types/webpack': 4.41.32
@@ -9482,7 +9483,7 @@ packages:
       '@storybook/node-logger': 6.5.14
       '@storybook/theming': 6.5.14_react@17.0.2
       '@storybook/ui': 6.5.14_react@17.0.2
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/webpack': 4.41.32
       babel-loader: 8.2.5_tktscwi5cl3qcx6vcfwkvrwn6i
       case-sensitive-paths-webpack-plugin: 2.4.0
@@ -9539,7 +9540,7 @@ packages:
       '@storybook/node-logger': 6.5.14
       '@storybook/theming': 6.5.14
       '@storybook/ui': 6.5.14
-      '@types/node': 16.11.43
+      '@types/node': 16.18.11
       '@types/webpack': 4.41.32
       babel-loader: 8.2.5_tktscwi5cl3qcx6vcfwkvrwn6i
       case-sensitive-paths-webpack-plugin: 2.4.0
@@ -11000,7 +11001,6 @@ packages:
 
   /@types/node/16.18.11:
     resolution: {integrity: sha512-3oJbGBUWuS6ahSnEq1eN2XrCyf4YsWI8OyCvo7c64zQJNplk3mO84t53o8lfTk+2ji59g5ycfc6qQ3fdHliHuA==}
-    dev: true
 
   /@types/node/18.11.18:
     resolution: {integrity: sha512-DHQpWGjyQKSHj3ebjFI/wRKcqQcdR+MoFBygntYOZytCqNfkd2ZC4ARDJ2DQqhjH5p85Nnd3jhUJIXrszFX/JA==}
@@ -11047,13 +11047,6 @@ packages:
 
   /@types/react/17.0.47:
     resolution: {integrity: sha512-mk0BL8zBinf2ozNr3qPnlu1oyVTYq+4V7WA76RgxUAtf0Em/Wbid38KN6n4abEkvO4xMTBWmnP1FtQzgkEiJoA==}
-    dependencies:
-      '@types/prop-types': 15.7.5
-      '@types/scheduler': 0.16.2
-      csstype: 3.1.0
-
-  /@types/react/18.0.27:
-    resolution: {integrity: sha512-3vtRKHgVxu3Jp9t718R9BuzoD4NcQ8YJ5XRzsSKxNDiDonD2MXIT1TmSkenxuCycZJoQT5d2vE8LwWJxBC1gmA==}
     dependencies:
       '@types/prop-types': 15.7.5
       '@types/scheduler': 0.16.2
@@ -13675,6 +13668,7 @@ packages:
 
   /csstype/3.1.0:
     resolution: {integrity: sha512-uX1KG+x9h5hIJsaKR9xHUeUraxf8IODOwq9JLNPq6BwB04a/xgpq3rcx47l5BZu5zBPlgD342tdke3Hom/nJRA==}
+    dev: false
 
   /csstype/3.1.1:
     resolution: {integrity: sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw==}
