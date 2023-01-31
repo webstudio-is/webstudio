@@ -1,4 +1,5 @@
 import { applyPatches, type Patch } from "immer";
+import { v4 as uuid } from "uuid";
 import { z } from "zod";
 import {
   type Tree,
@@ -7,14 +8,13 @@ import {
   Instances,
   type Styles,
   type Props,
+  StyleSourceSelections,
+  StyleSources,
+  StoredStyles,
 } from "@webstudio-is/project-build";
-import {
-  prisma,
-  type Prisma,
-  type Tree as DbTree,
-} from "@webstudio-is/prisma-client";
+import { prisma, type Prisma } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import { parseStyles, serializeStyles } from "./styles";
+import { convertToStoredStyles, parseStyles } from "./styles";
 import { parseProps, serializeProps } from "./props";
 import type { Project } from "./schema";
 import {
@@ -67,19 +67,55 @@ export const createTree = ({
 export const create = async (
   treeData: TreeData,
   client: Prisma.TransactionClient = prisma
-): Promise<DbTree> => {
+) => {
   const root = Instance.parse(treeData.root);
   const instances: Instances = [];
   normalizeTree(root, instances);
 
+  const newTreeId = uuid();
+
+  const build = await client.build.findUnique({
+    where: {
+      id: treeData.buildId,
+    },
+  });
+
+  if (build === null) {
+    throw Error(`Build ${treeData.buildId} not found`);
+  }
+
+  const storedStyles = StoredStyles.parse(JSON.parse(build.styles));
+  const styleSources = StyleSources.parse(JSON.parse(build.styleSources));
+  const styleSourceSelections: StyleSourceSelections = [];
+  storedStyles.push(
+    ...convertToStoredStyles(
+      newTreeId,
+      treeData.styles,
+      styleSources,
+      styleSourceSelections
+    )
+  );
+
+  await client.build.update({
+    where: {
+      id: treeData.buildId,
+    },
+    data: {
+      styles: JSON.stringify(storedStyles),
+      styleSources: JSON.stringify(styleSources),
+    },
+  });
+
   return await client.tree.create({
     data: {
+      id: newTreeId,
       projectId: treeData.projectId,
       buildId: treeData.buildId,
       root: "",
+      styles: "",
       instances: JSON.stringify(instances),
       props: serializeProps(treeData.props),
-      styles: serializeStyles(treeData.styles),
+      styleSelections: JSON.stringify(styleSourceSelections),
     },
   });
 };
@@ -119,8 +155,14 @@ export const loadById = async (
   const tree = await client.tree.findUnique({
     where: { id: treeId },
   });
-
   if (tree === null) {
+    return null;
+  }
+
+  const build = await client.build.findUnique({
+    where: { id: tree.buildId },
+  });
+  if (build === null) {
     return null;
   }
 
@@ -128,7 +170,12 @@ export const loadById = async (
   const root = Instance.parse(denormalizeTree(instances));
 
   const props = await parseProps(tree.props);
-  const styles = await parseStyles(tree.styles);
+  const styles = await parseStyles(
+    treeId,
+    build.styles,
+    build.styleSources,
+    tree.styleSelections
+  );
 
   return {
     ...tree,

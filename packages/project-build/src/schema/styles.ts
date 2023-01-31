@@ -11,8 +11,8 @@ const StoredImageValue = z.object({
 });
 
 export const StoredStylesItem = z.object({
+  styleSourceId: z.string(),
   breakpointId: z.string(),
-  instanceId: z.string(),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
   value: z.union([StoredImageValue, SharedStyleValue]),

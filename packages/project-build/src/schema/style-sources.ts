@@ -13,7 +13,6 @@ const StyleSourceLocal = z.object({
   type: z.literal("local"),
   id: StyleSourceId,
   treeId: z.string(),
-  name: z.string(),
 });
 
 export const StyleSource = z.union([StyleSourceToken, StyleSourceLocal]);
