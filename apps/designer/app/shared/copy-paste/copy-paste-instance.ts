@@ -24,9 +24,6 @@ type InstanceCopyPasteProps = {
 export const useInstanceCopyPaste = (props: InstanceCopyPasteProps): void => {
   const { selectedInstanceData, allowAnyTarget, onPaste, onCut } = props;
   useEffect(() => {
-    selectedInstanceData;
-    onPaste;
-    allowAnyTarget;
     return startCopyPaste({
       version: "@webstudio/instance/v0.1",
       type: InstanceCopyData,
