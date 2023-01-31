@@ -51,7 +51,6 @@ export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
 export * from "./components/text";
 export * from "./components/list";
-export * from "./components/popover";
 
 // No need to align
 
@@ -70,3 +69,4 @@ export { DeprecatedButton } from "./components/__DEPRECATED__/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";
 export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
+export * from "./components/__DEPRECATED__/popover";

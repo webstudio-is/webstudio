@@ -1,20 +1,20 @@
 import React from "react";
 import { CrossLargeIcon } from "@webstudio-is/icons";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { Box } from "./box";
-import { panelStyles } from "./panel";
-import { Flex } from "./flex";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
-import { Text } from "./text";
-import { Separator } from "./separator";
-import { styled, CSS } from "../stitches.config";
-import { theme } from "../stitches.config";
+import { Box } from "../box";
+import { panelStyles } from "../panel";
+import { Flex } from "../flex";
+import { DeprecatedIconButton } from "./icon-button";
+import { Text } from "../text";
+import { Separator } from "../separator";
+import { styled, CSS } from "../../stitches.config";
+import { theme } from "../../stitches.config";
 
 type PopoverProps = React.ComponentProps<typeof PopoverPrimitive.Root> & {
   children: React.ReactNode;
 };
 
-export const Popover = ({ children, ...props }: PopoverProps) => {
+export const DeprecatedPopover = ({ children, ...props }: PopoverProps) => {
   return <PopoverPrimitive.Root {...props}>{children}</PopoverPrimitive.Root>;
 };
 
@@ -39,7 +39,7 @@ type PopoverContentProps = PopoverContentPrimitiveProps & {
   hideArrow?: boolean;
 };
 
-export const PopoverContent = React.forwardRef<
+export const DeprecatedPopoverContent = React.forwardRef<
   React.ElementRef<typeof StyledContent>,
   PopoverContentProps
 >(({ children, hideArrow, ...props }, fowardedRef) => (
@@ -62,13 +62,13 @@ export const PopoverContent = React.forwardRef<
     )}
   </StyledContent>
 ));
-PopoverContent.displayName = "PopoverContent";
+DeprecatedPopoverContent.displayName = "PopoverContent";
 
 type PopoverHeaderProps = {
   title: string;
 };
 
-export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
+export const DeprecatedPopoverHeader = ({ title }: PopoverHeaderProps) => {
   return (
     <Box css={{ order: -1 }}>
       <Flex
@@ -77,7 +77,7 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
         justify="between"
       >
         <Text variant="title">{title}</Text>
-        <PopoverClose asChild>
+        <DeprecatedPopoverClose asChild>
           <DeprecatedIconButton
             size="2"
             css={{
@@ -87,13 +87,13 @@ export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
           >
             <CrossLargeIcon />
           </DeprecatedIconButton>
-        </PopoverClose>
+        </DeprecatedPopoverClose>
       </Flex>
       <Separator />
     </Box>
   );
 };
 
-export const PopoverTrigger = PopoverPrimitive.Trigger;
-export const PopoverClose = PopoverPrimitive.Close;
-export const PopoverPortal = PopoverPrimitive.Portal;
+export const DeprecatedPopoverTrigger = PopoverPrimitive.Trigger;
+export const DeprecatedPopoverClose = PopoverPrimitive.Close;
+export const DeprecatedPopoverPortal = PopoverPrimitive.Portal;

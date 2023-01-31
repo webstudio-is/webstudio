@@ -4,11 +4,10 @@ import {
   css,
   Flex,
   Label,
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverPortal,
-  PopoverTrigger,
+  DeprecatedPopover,
+  DeprecatedPopoverTrigger,
+  DeprecatedPopoverContent,
+  DeprecatedPopoverPortal,
   rawTheme,
   Separator,
   Switch,
@@ -77,15 +76,15 @@ const Menu = ({
     };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <DeprecatedPopover>
+      <DeprecatedPopoverTrigger asChild>
         <Button
           prefix={<MenuIcon />}
           color="ghost"
           aria-label="Menu Button for options"
         ></Button>
-      </PopoverTrigger>
-      <PopoverContent>
+      </DeprecatedPopoverTrigger>
+      <DeprecatedPopoverContent>
         <Item>
           <Label>Name</Label>
           <TextField
@@ -131,8 +130,8 @@ const Menu = ({
             Delete Link
           </Button>
         </Item>
-      </PopoverContent>
-    </Popover>
+      </DeprecatedPopoverContent>
+    </DeprecatedPopover>
   );
 };
 
@@ -242,10 +241,10 @@ export const ShareProject = ({
 
   // @todo this should use FloatingPanel instead of Popover, which we need to refactor first
   return (
-    <Popover modal open={isOpen} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent hideArrow>
+    <DeprecatedPopover modal open={isOpen} onOpenChange={onOpenChange}>
+      <DeprecatedPopoverTrigger asChild>{children}</DeprecatedPopoverTrigger>
+      <DeprecatedPopoverPortal>
+        <DeprecatedPopoverContent hideArrow>
           <Flex
             direction="column"
             css={{
@@ -255,9 +254,9 @@ export const ShareProject = ({
             {items}
             {create}
           </Flex>
-          <PopoverHeader title="Share" />
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
+          <DeprecatedPopoverHeader title="Share" />
+        </DeprecatedPopoverContent>
+      </DeprecatedPopoverPortal>
+    </DeprecatedPopover>
   );
 };
