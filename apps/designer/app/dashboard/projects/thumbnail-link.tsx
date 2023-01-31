@@ -44,7 +44,7 @@ const getThumbnailAbbreviation = (title: string) =>
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
 
-export const Thumbnail = forwardRef<
+export const ThumbnailLink = forwardRef<
   HTMLAnchorElement,
   { title: string; to: string }
 >(({ title, to }, ref) => (
@@ -53,4 +53,4 @@ export const Thumbnail = forwardRef<
   </Link>
 ));
 
-Thumbnail.displayName = "Thumbnail";
+ThumbnailLink.displayName = "ThumbnailLink";

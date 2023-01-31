@@ -19,7 +19,7 @@ import {
   DeleteProject,
   useDuplicate,
 } from "./create-rename-duplicate-delete";
-import { Thumbnail } from "./thumbnail";
+import { ThumbnailLink } from "./thumbnail-link";
 
 const containerStyle = css({
   overflow: "hidden",
@@ -183,7 +183,7 @@ export const ProjectCard = ({
         tabIndex={0}
         onKeyDown={handleKeyDown}
       >
-        <Thumbnail
+        <ThumbnailLink
           title={title}
           to={designerPath({ projectId: id })}
           ref={thumbnailRef}
