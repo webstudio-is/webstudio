@@ -50,7 +50,9 @@ export const meta: MetaFunction = ({ data }: { data: Data }) => {
 
 export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
   const buildParams = getBuildParams(request);
-  const context = await createContext(request);
+  const buildEnv = buildParams?.mode === "published" ? "prod" : "dev";
+
+  const context = await createContext(request, buildEnv);
 
   if (buildParams === undefined) {
     throw redirect(dashboardPath());
@@ -66,7 +68,7 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
 
   const canvasData = await loadCanvasData(
     project,
-    mode === "published" ? "prod" : "dev",
+    buildEnv,
     "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath
   );
 
