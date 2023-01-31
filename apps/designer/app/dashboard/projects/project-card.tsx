@@ -22,6 +22,7 @@ import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
+import { RenameProject } from "./create-rename-duplicate";
 
 const containerStyle = css({
   overflow: "hidden",
@@ -145,7 +146,6 @@ const useProjectCard = () => {
   const fetcher = useFetcher();
   const thumbnailRef = useRef<HTMLAnchorElement>(null);
   const { submit: deleteProject } = trpc.delete.useMutation();
-  const { submit: rename } = trpc.rename.useMutation();
   const { submit: duplicate } = trpc.duplicate.useMutation();
 
   // @todo with dialog it can be displayed in the dialog
@@ -186,16 +186,6 @@ const useProjectCard = () => {
     deleteProject({ projectId });
   };
 
-  const handleRename = (projectId: string) => {
-    // @todo replace with the new dialog UI, waiting for dialog component
-    const title = prompt();
-    // User has aborted
-    if (title === null) {
-      return;
-    }
-    rename({ projectId, title });
-  };
-
   const handleDuplicate = (projectId: string) => {
     duplicate({ projectId });
   };
@@ -204,7 +194,6 @@ const useProjectCard = () => {
     thumbnailRef,
     handleKeyDown,
     handleDelete,
-    handleRename,
     handleDuplicate,
   };
 };
@@ -227,54 +216,66 @@ export const ProjectCard = ({
   domain,
   isPublished,
 }: ProjectCardProps) => {
-  const {
-    thumbnailRef,
-    handleKeyDown,
-    handleDelete,
-    handleRename,
-    handleDuplicate,
-  } = useProjectCard();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { thumbnailRef, handleKeyDown, handleDelete, handleDuplicate } =
+    useProjectCard();
   return (
-    <Flex
-      direction="column"
-      shrink={false}
-      as="article"
-      className={containerStyle()}
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-    >
-      <RemixLink
-        ref={thumbnailRef}
-        to={designerPath({ projectId: id })}
-        className={thumbnailStyle()}
-        tabIndex={-1}
+    <>
+      <Flex
+        direction="column"
+        shrink={false}
+        as="article"
+        className={containerStyle()}
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
       >
-        {getThumbnailAbbreviation(title)}
-      </RemixLink>
-      <Flex justify="between" shrink={false} gap="1" className={footerStyle()}>
-        <Flex direction="column" justify="around">
-          <Text variant="title" truncate>
-            {title}
-          </Text>
-          {isPublished ? (
-            <PublishedLink domain={domain} tabIndex={-1} />
-          ) : (
-            <Text color="hint">Not Published</Text>
-          )}
-        </Flex>
-        <Menu
+        <RemixLink
+          ref={thumbnailRef}
+          to={designerPath({ projectId: id })}
+          className={thumbnailStyle()}
           tabIndex={-1}
-          onDelete={() => {
-            handleDelete(id);
-          }}
-          onRename={() => {
-            handleRename(id);
-          }}
-          onDuplicate={() => {
-            handleDuplicate(id);
-          }}
-        />
+        >
+          {getThumbnailAbbreviation(title)}
+        </RemixLink>
+        <Flex
+          justify="between"
+          shrink={false}
+          gap="1"
+          className={footerStyle()}
+        >
+          <Flex direction="column" justify="around">
+            <Text variant="title" truncate>
+              {title}
+            </Text>
+            {isPublished ? (
+              <PublishedLink domain={domain} tabIndex={-1} />
+            ) : (
+              <Text color="hint">Not Published</Text>
+            )}
+          </Flex>
+          <Menu
+            tabIndex={-1}
+            onDelete={() => {
+              handleDelete(id);
+            }}
+            onRename={() => {
+              setIsDialogOpen(true);
+            }}
+            onDuplicate={() => {
+              handleDuplicate(id);
+            }}
+          />
+        </Flex>
       </Flex>
-    </Flex>
+      <RenameProject
+        isOpen={isDialogOpen}
+        title={title}
+        projectId={id}
+        onComplete={() => {
+          setIsDialogOpen(false);
+        }}
+        onOpenChange={setIsDialogOpen}
+      />
+    </>
   );
 };

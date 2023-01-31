@@ -14,16 +14,19 @@ import { useNavigate } from "@remix-run/react";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import { DialogActions, DialogClose, Dialog } from "./dialog";
+import { DashboardProject } from "@webstudio-is/prisma-client";
 
 const Content = ({
   onSubmit,
   placeholder,
   errors,
   primaryButton,
+  title,
 }: {
   onSubmit: (data: { title: string }) => void;
   errors?: string;
   placeholder?: string;
+  title?: string;
   primaryButton: JSX.Element;
 }) => {
   return (
@@ -47,6 +50,7 @@ const Content = ({
         <TextField
           placeholder={placeholder}
           name="title"
+          defaultValue={title}
           state={errors ? "invalid" : undefined}
         />
         <Box css={{ minHeight: theme.spacing["10"] }}>
@@ -77,23 +81,75 @@ const useCreateProject = () => {
   }, [data, navigate]);
 
   return {
-    submit,
+    handleSubmit: submit,
     errors: data && "errors" in data ? data.errors : undefined,
   };
 };
 
 export const CreateProject = () => {
-  const { submit, errors } = useCreateProject();
+  const { handleSubmit, errors } = useCreateProject();
   return (
     <Dialog
       title="New Project"
       trigger={<Button prefix={<PlusIcon />}>New Project</Button>}
     >
       <Content
-        onSubmit={submit}
+        onSubmit={handleSubmit}
         errors={errors}
         placeholder="New Project"
         primaryButton={<Button type="submit">Create Project</Button>}
+      />
+    </Dialog>
+  );
+};
+
+const useRenameProject = ({
+  projectId,
+  onComplete,
+}: {
+  projectId: DashboardProject["id"];
+  onComplete: () => void;
+}) => {
+  const { submit, data } = trpc.rename.useMutation();
+
+  useEffect(() => {
+    if (data === undefined || "errors" in data) {
+      return;
+    }
+    onComplete();
+  }, [data, onComplete]);
+
+  const handleSubmit = ({ title }: { title: string }) => {
+    submit({ projectId, title });
+  };
+
+  return {
+    handleSubmit,
+    errors: data && "errors" in data ? data.errors : undefined,
+  };
+};
+
+export const RenameProject = ({
+  isOpen,
+  title,
+  projectId,
+  onComplete,
+  onOpenChange,
+}: {
+  isOpen: boolean;
+  title: string;
+  projectId: DashboardProject["id"];
+  onComplete: () => void;
+  onOpenChange: (isOpen: boolean) => void;
+}) => {
+  const { handleSubmit, errors } = useRenameProject({ projectId, onComplete });
+  return (
+    <Dialog title="Rename" isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Content
+        onSubmit={handleSubmit}
+        errors={errors}
+        title={title}
+        primaryButton={<Button type="submit">Rename Project</Button>}
       />
     </Dialog>
   );

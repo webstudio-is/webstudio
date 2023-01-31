@@ -11,8 +11,9 @@ import {
 type DialogProps = {
   title: string;
   children: JSX.Element;
-  trigger: JSX.Element;
+  trigger?: JSX.Element;
   onOpenChange?: (open: boolean) => void;
+  isOpen?: boolean;
 };
 
 export const Dialog = ({
@@ -20,10 +21,11 @@ export const Dialog = ({
   children,
   trigger,
   onOpenChange,
+  isOpen,
 }: DialogProps) => {
   return (
-    <BaseDialog onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <BaseDialog open={isOpen} onOpenChange={onOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent>
         {children}
         <DialogTitle>{title}</DialogTitle>
