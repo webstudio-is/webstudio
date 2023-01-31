@@ -38,6 +38,7 @@ export const loadCanvasData = async (
   }
 
   return {
+    build,
     tree,
     breakpoints: breakpoints.values,
     buildId: build.id,
