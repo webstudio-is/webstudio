@@ -1,21 +1,21 @@
 import React, { type ReactNode, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
-import { css, theme, keyframes } from "../../stitches.config";
-import { Title } from "../title";
-import { floatingPanelStyles, CloseButton, TitleSlot } from "./shared";
+import { css, theme, keyframes } from "../stitches.config";
+import { Title } from "./title";
+import { floatingPanelStyles, CloseButton, TitleSlot } from "./floating-panel";
 
-export const Root = Primitive.Root;
-export const Trigger = Primitive.Trigger;
+export const Dialog = Primitive.Root;
+export const DialogTrigger = Primitive.Trigger;
 
 // Wrap a close button with this
 // https://www.radix-ui.com/docs/primitives/components/dialog#close
-export const Close = Primitive.Close;
+export const DialogClose = Primitive.Close;
 
 // An optional accessible description to be announced when the dialog is opened
 // https://www.radix-ui.com/docs/primitives/components/dialog#description
-export const Description = Primitive.Description;
+export const DialogDescription = Primitive.Description;
 
-export const Content = React.forwardRef(
+export const DialogContent = React.forwardRef(
   (
     { children, className, ...props }: ComponentProps<typeof Primitive.Content>,
     forwardedRef: Ref<HTMLDivElement>
@@ -34,9 +34,9 @@ export const Content = React.forwardRef(
     );
   }
 );
-Content.displayName = "Content";
+DialogContent.displayName = "DialogContent";
 
-const ContentTitle = ({
+export const DialogTitle = ({
   children,
   closeLabel = "Close dialog",
 }: {
@@ -55,7 +55,6 @@ const ContentTitle = ({
     </Title>
   </TitleSlot>
 );
-export { ContentTitle as Title };
 
 // Styles specific to dialog
 // (as opposed to be common for all floating panels)

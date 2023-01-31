@@ -8,10 +8,10 @@ import {
   Flex,
   DeprecatedLabel,
   Link,
-  Popover,
-  PopoverContent,
-  PopoverPortal,
-  PopoverTrigger,
+  DeprecatedPopover,
+  DeprecatedPopoverTrigger,
+  DeprecatedPopoverContent,
+  DeprecatedPopoverPortal,
   TextField,
   useId,
 } from "@webstudio-is/design-system";
@@ -32,7 +32,7 @@ const Content = ({ project }: PublishButtonProps) => {
   }, [domain]);
 
   return (
-    <PopoverContent
+    <DeprecatedPopoverContent
       css={{ padding: theme.spacing[9] }}
       hideArrow={true}
       onFocusOutside={(event) => {
@@ -71,15 +71,15 @@ const Content = ({ project }: PublishButtonProps) => {
           </Button>
         </Flex>
       </fetcher.Form>
-    </PopoverContent>
+    </DeprecatedPopoverContent>
   );
 };
 
 export const PublishButton = ({ project }: PublishButtonProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild aria-label="Publish">
+    <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
+      <DeprecatedPopoverTrigger asChild aria-label="Publish">
         <DeprecatedButton
           ghost
           css={{ display: "flex", gap: theme.spacing[3] }}
@@ -87,10 +87,10 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
           <RocketIcon />
           <Text>Publish</Text>
         </DeprecatedButton>
-      </PopoverTrigger>
-      <PopoverPortal>
+      </DeprecatedPopoverTrigger>
+      <DeprecatedPopoverPortal>
         <Content project={project} />
-      </PopoverPortal>
-    </Popover>
+      </DeprecatedPopoverPortal>
+    </DeprecatedPopover>
   );
 };

@@ -11,8 +11,10 @@ export * from "./components/label";
 export * from "./components/select"; // menu is aligned, but trigger is not
 export * from "./components/combobox";
 export * from "./components/dropdown-menu";
-export * from "./components/floating-panel";
 export * from "./components/icon-button"; // mostly aligned, but needs a demo and to use tokens
+export * from "./components/dialog";
+export * from "./components/floating-panel-popover";
+export { MenuItemButton } from "./components/menu";
 
 // Not aligned
 
@@ -51,7 +53,6 @@ export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
 export * from "./components/text";
 export * from "./components/list";
-export * from "./components/popover";
 
 // No need to align
 
@@ -70,3 +71,4 @@ export { DeprecatedButton } from "./components/__DEPRECATED__/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";
 export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
+export * from "./components/__DEPRECATED__/popover";

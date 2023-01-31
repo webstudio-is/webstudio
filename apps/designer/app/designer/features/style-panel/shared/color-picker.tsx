@@ -5,10 +5,10 @@ import type { RgbValue } from "@webstudio-is/css-data";
 
 import {
   Box,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverPortal,
+  DeprecatedPopover,
+  DeprecatedPopoverTrigger,
+  DeprecatedPopoverContent,
+  DeprecatedPopoverPortal,
   TextField,
   css,
 } from "@webstudio-is/design-system";
@@ -121,12 +121,12 @@ export const ColorPicker = ({
   const rgbValue = intermediateValue?.rgbValue ?? rgbValueToRgbColor(value);
 
   const prefix = (
-    <Popover
+    <DeprecatedPopover
       modal
       open={displayColorPicker}
       onOpenChange={setDisplayColorPicker}
     >
-      <PopoverTrigger
+      <DeprecatedPopoverTrigger
         asChild
         aria-label="Open color picker"
         onClick={() => setDisplayColorPicker((shown) => !shown)}
@@ -140,9 +140,9 @@ export const ColorPicker = ({
             background: toValue(value),
           }}
         />
-      </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent>
+      </DeprecatedPopoverTrigger>
+      <DeprecatedPopoverPortal>
+        <DeprecatedPopoverContent>
           <SketchPicker
             color={rgbValue}
             onChange={(color: ColorResult) => {
@@ -162,9 +162,9 @@ export const ColorPicker = ({
             className={pickerStyle()}
             styles={defaultPickerStyles}
           />
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
+        </DeprecatedPopoverContent>
+      </DeprecatedPopoverPortal>
+    </DeprecatedPopover>
   );
 
   return (

@@ -10,10 +10,10 @@ import {
   Text,
   Label,
   Tooltip,
-  Popover,
-  PopoverContent,
-  PopoverPortal,
-  PopoverTrigger,
+  DeprecatedPopover,
+  DeprecatedPopoverContent,
+  DeprecatedPopoverPortal,
+  DeprecatedPopoverTrigger,
   Separator,
 } from "@webstudio-is/design-system";
 import { UndoIcon } from "@webstudio-is/icons";
@@ -150,21 +150,27 @@ export const PropertyName = ({
   if (isPopoverEnabled) {
     return (
       <Flex align="center">
-        <Popover modal open={isOpen} onOpenChange={setIsOpen}>
-          <PopoverTrigger asChild aria-label="Show proprety description">
+        <DeprecatedPopover modal open={isOpen} onOpenChange={setIsOpen}>
+          <DeprecatedPopoverTrigger
+            asChild
+            aria-label="Show proprety description"
+          >
             {labelElement}
-          </PopoverTrigger>
-          <PopoverPortal>
-            <PopoverContent align="start" onClick={() => setIsOpen(false)}>
+          </DeprecatedPopoverTrigger>
+          <DeprecatedPopoverPortal>
+            <DeprecatedPopoverContent
+              align="start"
+              onClick={() => setIsOpen(false)}
+            >
               <PropertyPopoverContent
                 properties={properties}
                 style={style}
                 styleSource={styleSource}
                 onReset={onReset}
               />
-            </PopoverContent>
-          </PopoverPortal>
-        </Popover>
+            </DeprecatedPopoverContent>
+          </DeprecatedPopoverPortal>
+        </DeprecatedPopover>
       </Flex>
     );
   }

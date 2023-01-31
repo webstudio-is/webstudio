@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
   DeprecatedButton,
-  Popover,
-  PopoverContent,
-  PopoverPortal,
-  PopoverTrigger,
-  PopoverHeader,
+  DeprecatedPopover,
+  DeprecatedPopoverTrigger,
+  DeprecatedPopoverContent,
+  DeprecatedPopoverPortal,
+  DeprecatedPopoverHeader,
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
 import { ImageInfo } from "./image-info";
@@ -28,8 +28,8 @@ export const ImageInfoTrigger = ({
 }) => {
   const [isInfoOpen, setInfoOpen] = useState(false);
   return (
-    <Popover open={isInfoOpen} onOpenChange={setInfoOpen}>
-      <PopoverTrigger asChild>
+    <DeprecatedPopover open={isInfoOpen} onOpenChange={setInfoOpen}>
+      <DeprecatedPopoverTrigger asChild>
         <DeprecatedButton
           variant="raw"
           title="Options"
@@ -50,10 +50,10 @@ export const ImageInfoTrigger = ({
         >
           <GearIcon />
         </DeprecatedButton>
-      </PopoverTrigger>
-      <PopoverPortal>
-        <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
-          <PopoverHeader title="Asset Details" />
+      </DeprecatedPopoverTrigger>
+      <DeprecatedPopoverPortal>
+        <DeprecatedPopoverContent css={{ zIndex: theme.zIndices[1] }}>
+          <DeprecatedPopoverHeader title="Asset Details" />
           <ImageInfo
             onDelete={(ids) => {
               setInfoOpen(false);
@@ -61,8 +61,8 @@ export const ImageInfoTrigger = ({
             }}
             asset={asset}
           />
-        </PopoverContent>
-      </PopoverPortal>
-    </Popover>
+        </DeprecatedPopoverContent>
+      </DeprecatedPopoverPortal>
+    </DeprecatedPopover>
   );
 };

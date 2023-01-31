@@ -1,10 +1,10 @@
 import {
   Button,
   DeprecatedIconButton,
-  Popover,
-  PopoverContent,
-  PopoverPortal,
-  PopoverTrigger,
+  DeprecatedPopover,
+  DeprecatedPopoverTrigger,
+  DeprecatedPopoverContent,
+  DeprecatedPopoverPortal,
 } from "@webstudio-is/design-system";
 import { Share1Icon } from "@webstudio-is/icons";
 import { useIsShareDialogOpen } from "../../shared/nano-states";
@@ -24,7 +24,7 @@ const Content = ({ url }: ShareButtonDeprecatedProps) => {
     return null;
   }
   return (
-    <PopoverContent
+    <DeprecatedPopoverContent
       css={{ padding: theme.spacing[9] }}
       hideArrow={true}
       onFocusOutside={(event) => {
@@ -33,23 +33,23 @@ const Content = ({ url }: ShareButtonDeprecatedProps) => {
       }}
     >
       <ShareProjectDeprecated url={url} />
-    </PopoverContent>
+    </DeprecatedPopoverContent>
   );
 };
 
 export const ShareButtonDeprecated = (props: ShareButtonDeprecatedProps) => {
   const [isOpen, setIsOpen] = useIsShareDialogOpen();
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild aria-label="Share project">
+    <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
+      <DeprecatedPopoverTrigger asChild aria-label="Share project">
         <DeprecatedIconButton>
           <Share1Icon />
         </DeprecatedIconButton>
-      </PopoverTrigger>
-      <PopoverPortal>
+      </DeprecatedPopoverTrigger>
+      <DeprecatedPopoverPortal>
         <Content {...props} />
-      </PopoverPortal>
-    </Popover>
+      </DeprecatedPopoverPortal>
+    </DeprecatedPopover>
   );
 };
 

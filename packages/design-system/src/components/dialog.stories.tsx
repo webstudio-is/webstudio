@@ -1,7 +1,14 @@
-import { Button } from "../button";
-import { css, theme } from "../../stitches.config";
-import { typography } from "../typography";
-import * as Dialog from "./dialog";
+import { Button } from "./button";
+import { css, theme } from "../stitches.config";
+import { typography } from "./typography";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "./dialog";
 
 export default {
   title: "Library/Floating Panel/Dialog",
@@ -23,30 +30,30 @@ const buttonsStyle = css({
 });
 
 const DialogDemo = () => (
-  <Dialog.Root defaultOpen>
-    <Dialog.Trigger asChild>
+  <Dialog defaultOpen>
+    <DialogTrigger asChild>
       <Button>Open</Button>
-    </Dialog.Trigger>
-    <Dialog.Content>
+    </DialogTrigger>
+    <DialogContent>
       <div className={bodyStyles()}>
-        <Dialog.Description asChild>
+        <DialogDescription asChild>
           <p className={descriptionStyles()}>This is a description</p>
-        </Dialog.Description>
+        </DialogDescription>
         <div className={buttonsStyle()}>
-          <Dialog.Close asChild>
+          <DialogClose asChild>
             <Button color="ghost">Cancel</Button>
-          </Dialog.Close>
-          <Dialog.Close asChild>
+          </DialogClose>
+          <DialogClose asChild>
             <Button color="positive">Save</Button>
-          </Dialog.Close>
+          </DialogClose>
         </div>
       </div>
 
       {/* Title is at the end intentionally,
        * to make the close button last in the tab order
        */}
-      <Dialog.Title>Title</Dialog.Title>
-    </Dialog.Content>
-  </Dialog.Root>
+      <DialogTitle>Title</DialogTitle>
+    </DialogContent>
+  </Dialog>
 );
 export { DialogDemo as Dialog };

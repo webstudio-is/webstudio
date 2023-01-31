@@ -41,6 +41,7 @@ export const itemIndicatorCss = css({
   height: indicatorSize,
 });
 
+const itemMargin = theme.spacing[3];
 export const itemCss = css(typography.labelTitleCase, {
   outline: "none",
   cursor: "default",
@@ -48,13 +49,13 @@ export const itemCss = css(typography.labelTitleCase, {
   display: "flex",
   alignItems: "center",
   color: theme.colors.foregroundMain,
-  mx: theme.spacing[3],
+  mx: itemMargin,
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[3],
   "&:focus, &[data-found], &[aria-selected=true], &[data-state=open]": {
     backgroundColor: theme.colors.backgroundItemMenuItemHover,
   },
-  "&[data-disabled], &[aria-disabled]": {
+  "&[data-disabled], &[aria-disabled], &[disabled]": {
     color: theme.colors.foregroundDisabled,
   },
   variants: {
@@ -71,6 +72,17 @@ export const itemCss = css(typography.labelTitleCase, {
   },
 });
 
+// To use outside of any menu context, e.g. in a Popover
+export const MenuItemButton = styled("button", itemCss, {
+  border: "none",
+  boxSizing: "border-box",
+  width: `calc(100% - ${itemMargin} * 2)`,
+  "&:focus:not(:focus-visible)": { backgroundColor: "unset" },
+  "&:hover:not([diabled])": {
+    backgroundColor: theme.colors.backgroundItemMenuItemHover,
+  },
+});
+
 export const separatorCss = css({
   height: 1,
   my: theme.spacing[3],
@@ -82,18 +94,11 @@ const menuBorderWidth = "1px";
 
 export const menuCss = css({
   boxSizing: "border-box",
-
   borderRadius: theme.borderRadius[6],
   backgroundColor: theme.colors.backgroundMenu,
-
-  // in Figma there are 2 borders on two rectangles,
-  // but we have only one element to work with,
-  // so we implement borders using shadows
-  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMain}, inset 0 0 0 2px ${theme.colors.borderMenuInner}`,
-
-  // extra 1px padding to account for one of the shadow-borders above
-  padding: `calc(${menuBorderWidth} + ${menuPadding}) ${menuBorderWidth}`,
-
+  border: `1px solid ${theme.colors.borderMain}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
+  padding: `${menuPadding} 0`,
   variants: {
     width: {
       regular: { width: theme.spacing[26] },

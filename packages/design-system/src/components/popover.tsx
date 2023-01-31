@@ -1,99 +1,76 @@
-import React from "react";
-import { CrossLargeIcon } from "@webstudio-is/icons";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { Box } from "./box";
-import { panelStyles } from "./panel";
-import { Flex } from "./flex";
-import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
-import { Text } from "./text";
+import React, { type ComponentProps, type Ref } from "react";
+import * as Primitive from "@radix-ui/react-popover";
+import { css, theme, styled } from "../stitches.config";
 import { Separator } from "./separator";
-import { styled, CSS } from "../stitches.config";
-import { theme } from "../stitches.config";
 
-type PopoverProps = React.ComponentProps<typeof PopoverPrimitive.Root> & {
-  children: React.ReactNode;
-};
+export const Popover = Primitive.Root;
 
-export const Popover = ({ children, ...props }: PopoverProps) => {
-  return <PopoverPrimitive.Root {...props}>{children}</PopoverPrimitive.Root>;
-};
-
-const StyledContent = styled(PopoverPrimitive.Content, panelStyles, {
-  backgroundColor: "white",
-  minWidth: 200,
-  minHeight: theme.spacing[13],
-  maxWidth: "max-content",
-  "&:focus": {
-    outline: "none",
-  },
+const contentStyles = css({
+  border: `1px solid ${theme.colors.borderMain}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
+  background: theme.colors.backgroundMenu,
+  borderRadius: theme.borderRadius[6],
+  padding: `${theme.spacing[5]} 0`,
   display: "flex",
   flexDirection: "column",
+  maxWidth: "max-content",
+  "&:focus": {
+    // override browser default
+    outline: "none",
+  },
 });
 
-type PopoverContentPrimitiveProps = React.ComponentProps<
-  typeof PopoverPrimitive.Content
->;
+const ArrowBackground = styled("path", { fill: theme.colors.backgroundMenu });
+const ArrowInnerBorder = styled("path", { fill: theme.colors.borderMenuInner });
+const ArrowOuterBorder = styled("path", { fill: theme.colors.borderMain });
+const ArrowSgv = styled("svg", { transform: "translateY(-3px)" });
+const Arrow = () => (
+  <Primitive.Arrow width={16} height={11} asChild>
+    <ArrowSgv xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 11">
+      <ArrowOuterBorder d="M8.73 9.76a1 1 0 0 1-1.46 0L.5 2.54h15L8.73 9.76Z" />
+      <ArrowInnerBorder d="M8.146 8.909a.2.2 0 0 1-.292 0L.5 1.065h15L8.146 8.909Z" />
+      <ArrowBackground d="M8.073 7.52a.1.1 0 0 1-.146 0L.877 0h14.246l-7.05 7.52Z" />
+    </ArrowSgv>
+  </Primitive.Arrow>
+);
 
-type PopoverContentProps = PopoverContentPrimitiveProps & {
-  css?: CSS;
-  hideArrow?: boolean;
-};
-
-export const PopoverContent = React.forwardRef<
-  React.ElementRef<typeof StyledContent>,
-  PopoverContentProps
->(({ children, hideArrow, ...props }, fowardedRef) => (
-  <StyledContent
-    sideOffset={4}
-    collisionPadding={4}
-    {...props}
-    ref={fowardedRef}
-  >
-    {children}
-    {!hideArrow && (
-      <Box css={{ color: theme.colors.panel }}>
-        <PopoverPrimitive.Arrow
-          width={11}
-          height={5}
-          offset={5}
-          style={{ fill: "currentColor" }}
-        />
-      </Box>
-    )}
-  </StyledContent>
-));
+export const PopoverContent = React.forwardRef(
+  (
+    {
+      children,
+      className,
+      hideArrow,
+      ...props
+    }: ComponentProps<typeof Primitive.Content> & { hideArrow?: boolean },
+    ref: Ref<HTMLDivElement>
+  ) => (
+    <Primitive.Portal>
+      <Primitive.Content
+        sideOffset={4}
+        collisionPadding={4}
+        className={contentStyles({ className })}
+        {...props}
+        ref={ref}
+      >
+        {children}
+        {hideArrow !== true && <Arrow />}
+      </Primitive.Content>
+    </Primitive.Portal>
+  )
+);
 PopoverContent.displayName = "PopoverContent";
 
-type PopoverHeaderProps = {
-  title: string;
-};
+export const PopoverTrigger = Primitive.Trigger;
+export const PopoverClose = Primitive.Close;
 
-export const PopoverHeader = ({ title }: PopoverHeaderProps) => {
-  return (
-    <Box css={{ order: -1 }}>
-      <Flex
-        css={{ height: 40, paddingLeft: theme.spacing[9] }}
-        align="center"
-        justify="between"
-      >
-        <Text variant="title">{title}</Text>
-        <PopoverClose asChild>
-          <DeprecatedIconButton
-            size="2"
-            css={{
-              marginRight: theme.spacing[5],
-            }}
-            aria-label="Close"
-          >
-            <CrossLargeIcon />
-          </DeprecatedIconButton>
-        </PopoverClose>
-      </Flex>
-      <Separator />
-    </Box>
-  );
-};
+export const PopoverContentContainer = styled("div", {
+  margin: `0 ${theme.spacing[7]}`,
+});
 
-export const PopoverTrigger = PopoverPrimitive.Trigger;
-export const PopoverClose = PopoverPrimitive.Close;
-export const PopoverPortal = PopoverPrimitive.Portal;
+export const PopoverMenuItemContainer = styled("div", {
+  margin: `0 ${theme.spacing[3]}`,
+});
+
+export const PopoverSeparator = styled(Separator, {
+  margin: `${theme.spacing[5]} 0`,
+});
