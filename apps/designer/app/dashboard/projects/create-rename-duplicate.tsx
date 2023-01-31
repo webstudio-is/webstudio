@@ -9,42 +9,32 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { FormEventHandler, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "@remix-run/react";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import { DialogActions, DialogClose, Dialog } from "./dialog";
 
-const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
-
-const useForm = () => {
-  const { submit, data } = trpc.create.useMutation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (data === undefined || "errors" in data) {
-      return;
-    }
-    navigate(designerPath({ projectId: data.id }));
-  }, [data, navigate]);
-
-  const handleSubmit: FormEventHandler = (event) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget as HTMLFormElement);
-    const title = String(formData.get("title") ?? "");
-    submit({ title });
-  };
-
-  return {
-    handleSubmit,
-    errors: data && "errors" in data ? data.errors : undefined,
-  };
-};
-
-const Content = () => {
-  const { handleSubmit, errors } = useForm();
+const Content = ({
+  onSubmit,
+  placeholder,
+  errors,
+  primaryButton,
+}: {
+  onSubmit: (data: { title: string }) => void;
+  errors?: string;
+  placeholder?: string;
+  primaryButton: JSX.Element;
+}) => {
   return (
-    <form onSubmit={handleSubmit}>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget as HTMLFormElement);
+        const title = String(formData.get("title") ?? "");
+        onSubmit({ title });
+      }}
+    >
       <Flex
         direction="column"
         css={{
@@ -55,7 +45,7 @@ const Content = () => {
       >
         <Label>Project Title</Label>
         <TextField
-          placeholder="New Project"
+          placeholder={placeholder}
           name="title"
           state={errors ? "invalid" : undefined}
         />
@@ -64,7 +54,7 @@ const Content = () => {
         </Box>
       </Flex>
       <DialogActions>
-        <Button type="submit">Create Project</Button>
+        {primaryButton}
         <DialogClose asChild>
           <Button color="ghost">Cancel</Button>
         </DialogClose>
@@ -73,13 +63,38 @@ const Content = () => {
   );
 };
 
+const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
+
+const useCreateProject = () => {
+  const navigate = useNavigate();
+  const { submit, data } = trpc.create.useMutation();
+
+  useEffect(() => {
+    if (data === undefined || "errors" in data) {
+      return;
+    }
+    navigate(designerPath({ projectId: data.id }));
+  }, [data, navigate]);
+
+  return {
+    submit,
+    errors: data && "errors" in data ? data.errors : undefined,
+  };
+};
+
 export const CreateProject = () => {
+  const { submit, errors } = useCreateProject();
   return (
     <Dialog
       title="New Project"
       trigger={<Button prefix={<PlusIcon />}>New Project</Button>}
     >
-      <Content />
+      <Content
+        onSubmit={submit}
+        errors={errors}
+        placeholder="New Project"
+        primaryButton={<Button type="submit">Create Project</Button>}
+      />
     </Dialog>
   );
 };
