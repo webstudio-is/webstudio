@@ -1,17 +1,19 @@
 {
+  "$schema": "https://turbo.build/schema.json",
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**", "api/**", "public/build/**"]
+      "outputs": ["lib/**", "dist/**", "build/**", "api/**", "public/build/**"]
     },
     "checks": {
+      "dependsOn": ["^checks"],
       "outputs": []
     },
     "dev": {
-      "cache": false
+      "persistent": true
     },
     "storybook:run": {
-      "cache": false
+      "persistent": true
     },
     "storybook:build": {
       "dependsOn": ["@webstudio-is/icons#build"],

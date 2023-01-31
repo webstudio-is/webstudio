@@ -1,8 +1,5 @@
-import {
-  getComponentMetaProps,
-  type Instance,
-  type PropsItem,
-} from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import warnOnce from "warn-once";
 import {
   Flex,
@@ -193,7 +190,7 @@ export function Control({
 }: ControlProps) {
   const meta = getComponentMetaProps(component);
 
-  const argType = meta[userProp.name];
+  const argType = meta?.[userProp.name];
 
   // argType can be undefined in case of new property created
   const defaultValue = argType?.defaultValue ?? "";

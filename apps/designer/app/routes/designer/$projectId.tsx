@@ -5,6 +5,8 @@ import { db } from "@webstudio-is/project/server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
+import { createContext, createAuthReadToken } from "~/shared/context.server";
+import { trpcClient } from "~/services/trpc.server";
 
 export { links };
 
@@ -16,10 +18,12 @@ export const loader = async ({
     throw new Error("Project id undefined");
   }
 
+  const context = await createContext(request);
+
   const url = new URL(request.url);
   const pageIdParam = url.searchParams.get("pageId");
 
-  const project = await db.project.loadById(params.projectId);
+  const project = await db.project.loadById(params.projectId, context);
 
   if (project === null) {
     throw new Error(`Project "${params.projectId}" not found`);
@@ -31,6 +35,24 @@ export const loader = async ({
   const page =
     pages.pages.find((page) => page.id === pageIdParam) ?? pages.homePage;
 
+  const authReadToken = await createAuthReadToken({ projectId: project.id });
+
+  const projectSubjectSets = await trpcClient.authorize.expandLeafNodes.query({
+    id: project.id,
+    namespace: "Project",
+  });
+
+  const authSharedTokens: DesignerProps["authSharedTokens"] = [];
+
+  for (const subjectSet of projectSubjectSets) {
+    if (subjectSet.namespace === "Token") {
+      authSharedTokens.push({
+        token: subjectSet.id,
+        relation: subjectSet.relation,
+      });
+    }
+  }
+
   return {
     project,
     pages,
@@ -38,6 +60,8 @@ export const loader = async ({
     treeId: page.treeId,
     buildId: devBuild.id,
     buildOrigin: getBuildOrigin(request),
+    authReadToken,
+    authSharedTokens,
   };
 };
 

@@ -1,12 +1,20 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
-import React, { ReactNode, Ref } from "react";
-import { Grid } from "./grid";
-import { Box } from "./box";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
-import { styled } from "../stitches.config";
-import { theme } from "../stitches.config";
+import React, { ReactNode, Ref, type ComponentProps } from "react";
+import {
+  menuCss,
+  itemCss,
+  itemIndicatorCss,
+  labelCss,
+  separatorCss,
+} from "./menu";
+import {
+  CheckMarkIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from "@webstudio-is/icons";
+import { styled, theme } from "../stitches.config";
 
-const StyledTrigger = styled(SelectPrimitive.SelectTrigger, {
+const StyledTrigger = styled(SelectPrimitive.Trigger, {
   all: "unset",
   display: "inline-flex",
   alignItems: "center",
@@ -59,40 +67,19 @@ const StyledIcon = styled(SelectPrimitive.Icon, {
   padding: `${theme.spacing[2]} ${theme.spacing[2]} ${theme.spacing[2]} 0px`,
 });
 
-export const SelectContent = styled(SelectPrimitive.Content, {
-  overflow: "hidden",
-  backgroundColor: theme.colors.slate4,
-  borderRadius: theme.borderRadius[4],
-  boxShadow: `0px 2px 7px rgba(0, 0, 0, 0.1), 0px 5px 17px rgba(0, 0, 0, 0.15), inset 0 0 1px 1px ${theme.colors.slate1}, 0 0 0 1px ${theme.colors.slate8}`,
-});
+export const SelectContent = styled(SelectPrimitive.Content, menuCss);
 
-export const SelectViewport = styled(SelectPrimitive.Viewport, {
-  p: theme.spacing[3],
-});
+export const SelectViewport = SelectPrimitive.Viewport;
 
-const StyledItem = styled(SelectPrimitive.Item, {
-  all: "unset",
-  fontSize: theme.fontSize[3],
-  lineHeight: 1,
-  color: theme.colors.hiContrast,
-  display: "flex",
-  alignItems: "center",
-  height: theme.spacing[11],
-  padding: `0 ${theme.spacing[5]}`,
-  position: "relative",
-  userSelect: "none",
-  borderRadius: theme.borderRadius[4],
+export const SelectLabel = styled(SelectPrimitive.Label, labelCss);
 
-  "&[data-disabled]": {
-    color: theme.colors.muted,
-    pointerEvents: "none",
-  },
+export const SelectSeparator = styled(SelectPrimitive.Separator, separatorCss);
 
-  "&:focus": {
-    backgroundColor: theme.colors.blue10,
-    color: "white",
-  },
-});
+export const SelectGroup = SelectPrimitive.Group;
+
+const StyledItem = styled(SelectPrimitive.Item, itemCss);
+
+const StyledIndicator = styled(SelectPrimitive.ItemIndicator, itemIndicatorCss);
 
 const scrollButtonStyles = {
   display: "flex",
@@ -114,35 +101,27 @@ export const SelectScrollDownButton = styled(
 );
 
 const SelectItemBase = (
-  { children, ...props }: SelectItemProps,
+  { children, icon = <CheckMarkIcon />, ...props }: SelectItemProps,
   forwardedRef: Ref<HTMLDivElement>
 ) => {
   return (
-    <StyledItem {...props} ref={forwardedRef}>
-      <Grid
-        align="center"
-        css={{ gridTemplateColumns: `${theme.spacing[10]} 1fr` }}
-      >
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon />
-        </SelectPrimitive.ItemIndicator>
-        <Box css={{ gridColumn: 2 }}>
-          <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-        </Box>
-      </Grid>
+    <StyledItem {...props} withIndicator ref={forwardedRef}>
+      <StyledIndicator>{icon}</StyledIndicator>
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </StyledItem>
   );
 };
 
-type SelectItemProps = SelectPrimitive.SelectItemProps & {
+type SelectItemProps = ComponentProps<typeof StyledItem> & {
   children: ReactNode;
+  icon?: ReactNode;
 };
 export const SelectItem = React.forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
 export type SelectProps<Option = SelectOption> = Omit<
-  React.ComponentProps<typeof StyledTrigger>,
+  ComponentProps<typeof StyledTrigger>,
   "onChange" | "value" | "defaultValue"
 > & {
   options: Option[];
@@ -154,6 +133,7 @@ export type SelectProps<Option = SelectOption> = Omit<
   placeholder?: string;
   getLabel?: (option: Option) => string | undefined;
   getValue?: (option: Option) => string | undefined;
+  children?: ReactNode;
 };
 
 const SelectBase = (
@@ -168,6 +148,7 @@ const SelectBase = (
     getLabel = (option) => option,
     getValue = (option) => option,
     name,
+    children,
     ...props
   }: SelectProps,
   forwardedRef: Ref<HTMLButtonElement>
@@ -195,15 +176,16 @@ const SelectBase = (
             <ChevronUpIcon />
           </SelectScrollUpButton>
           <SelectViewport>
-            {options.map((option) => (
-              <SelectItem
-                key={getValue(option)}
-                value={getValue(option) ?? ""}
-                textValue={getLabel(option)}
-              >
-                {getLabel(option)}
-              </SelectItem>
-            ))}
+            {children ||
+              options.map((option) => (
+                <SelectItem
+                  key={getValue(option)}
+                  value={getValue(option) ?? ""}
+                  textValue={getLabel(option)}
+                >
+                  {getLabel(option)}
+                </SelectItem>
+              ))}
           </SelectViewport>
           <SelectScrollDownButton>
             <ChevronDownIcon />

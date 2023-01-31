@@ -7,10 +7,9 @@ import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
 
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
-  ComponentProps<typeof TooltipPrimitive.Content> & {
+  ComponentProps<typeof Content> & {
     children: React.ReactElement;
     content: React.ReactNode;
-    multiline?: boolean;
     delayDuration?: number;
     disableHoverableContent?: boolean;
     css?: CSS;
@@ -20,16 +19,18 @@ const Content = styled(TooltipPrimitive.Content, {
   backgroundColor: theme.colors.hiContrast,
   color: theme.colors.loContrast,
   borderRadius: theme.borderRadius[4],
-  padding: `${theme.spacing[3]} ${theme.spacing[5]}`,
+  padding: theme.spacing[5],
   zIndex: theme.zIndices[1],
   position: "relative",
 
   variants: {
-    multiline: {
-      true: {
-        // @todo make this part of the design system
-        maxWidth: 110,
-        pb: 7,
+    variant: {
+      wrapped: {
+        maxWidth: theme.spacing["29"],
+      },
+      large: {
+        maxWidth: theme.spacing["32"],
+        padding: theme.spacing[9],
       },
     },
   },
@@ -46,7 +47,6 @@ export const Tooltip = React.forwardRef(
       children,
       content,
       defaultOpen,
-      multiline,
       delayDuration,
       disableHoverableContent,
       open,
@@ -80,7 +80,6 @@ export const Tooltip = React.forwardRef(
             align="center"
             sideOffset={5}
             {...props}
-            multiline={multiline}
           >
             <Paragraph>{content}</Paragraph>
             <Box css={{ color: theme.colors.transparentExtreme }}>

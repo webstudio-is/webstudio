@@ -1,0 +1,38 @@
+{
+  "name": "@webstudio-is/project-build",
+  "version": "0.22.0",
+  "description": "Webstudio Project Build",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/cjs/index.cjs"
+    }
+  },
+  "types": "src/index.ts",
+  "files": [
+    "lib/*",
+    "src/*"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ./src --ext .ts,.tsx --max-warnings 0",
+    "checks": "pnpm typecheck && pnpm lint",
+    "dev": "build-package --watch",
+    "build": "build-package"
+  },
+  "dependencies": {
+    "@webstudio-is/asset-uploader": "workspace:^",
+    "@webstudio-is/css-data": "workspace:^",
+    "zod": "^3.19.1"
+  },
+  "devDependencies": {
+    "@webstudio-is/scripts": "workspace:^",
+    "@webstudio-is/tsconfig": "workspace:^",
+    "typescript": "4.7.4"
+  }
+}

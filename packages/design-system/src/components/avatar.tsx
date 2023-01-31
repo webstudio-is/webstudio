@@ -42,8 +42,8 @@ const StyledAvatar = styled(AvatarPrimitive.Root, {
         height: theme.spacing[9],
       },
       "2": {
-        width: theme.spacing[11],
-        height: theme.spacing[11],
+        width: theme.spacing[12],
+        height: theme.spacing[12],
       },
       "3": {
         width: theme.spacing[13],

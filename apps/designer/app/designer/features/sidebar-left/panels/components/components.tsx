@@ -1,20 +1,19 @@
 import { type MouseEventHandler, useState } from "react";
 import { createPortal } from "react-dom";
+import type { Instance } from "@webstudio-is/project-build";
 import {
-  type Instance,
   type ComponentName,
   getComponentMeta,
   getComponentNames,
 } from "@webstudio-is/react-sdk";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { Flex, useDrag, type Point } from "@webstudio-is/design-system";
+import { theme, Flex, useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { utils } from "@webstudio-is/project";
-import type { TabName } from "../../types";
-import { ComponentThumb } from "./component-thumb";
+import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
-import { Header, CloseButton } from "../../lib/header";
-import { theme } from "@webstudio-is/design-system";
+import type { TabName } from "../../types";
+import { Header, CloseButton } from "../../header";
+import { ComponentThumb } from "./component-thumb";
 
 type DraggableThumbProps = {
   onClick: MouseEventHandler<HTMLDivElement>;
@@ -98,12 +97,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   };
 
   const listedComponentNames = getComponentNames().filter((name) => {
-    const { type } = getComponentMeta(name);
+    const meta = getComponentMeta(name);
     return (
-      type === "container" ||
-      type === "control" ||
-      type === "embed" ||
-      type === "rich-text"
+      meta?.type === "container" ||
+      meta?.type === "control" ||
+      meta?.type === "embed" ||
+      meta?.type === "rich-text"
     );
   });
 

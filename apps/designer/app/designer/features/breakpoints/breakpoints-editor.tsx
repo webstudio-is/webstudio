@@ -77,7 +77,7 @@ const BreakpointEditorItem = ({
         />
         <Button
           type="button"
-          variant="ghost"
+          color="ghost"
           onClick={() => {
             onDelete(breakpoint);
           }}
@@ -120,7 +120,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
       >
         <Text>Breakpoints</Text>
         <Button
-          variant="ghost"
+          color="ghost"
           onClick={() => {
             setAddedBreakpoints((prev) => [
               ...prev,

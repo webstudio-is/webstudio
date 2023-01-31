@@ -49,7 +49,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
       ) : null}
       <Box css={{ p: `${theme.spacing[5]} ${theme.spacing[9]}` }}>
         <Button
-          variant="destructive"
+          color="destructive"
           onClick={() => onDelete([id])}
           prefix={<TrashIcon />}
         >

@@ -12,7 +12,7 @@ type MinimalRequest = {
 };
 
 const modes = ["edit", "preview", "published"] as BuildMode[];
-const getMode = (url: URL): BuildMode => {
+export const getMode = (url: URL): BuildMode => {
   const modeParam = url.searchParams.get("mode");
   const mode =
     modeParam === null ? "published" : modes.find((mode) => mode === modeParam);

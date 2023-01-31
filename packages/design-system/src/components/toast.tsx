@@ -4,7 +4,7 @@ import { keyframes, styled } from "../stitches.config";
 import {
   CheckCircledIcon,
   CrossCircledIcon,
-  InfoCircledIcon,
+  InfoIcon,
 } from "@webstudio-is/icons";
 import { Box } from "./box";
 import { theme } from "../stitches.config";
@@ -120,7 +120,7 @@ export const Toaster = () => {
           >
             {toast.type === "success" && <CheckCircledIcon />}
             {toast.type === "error" && <CrossCircledIcon />}
-            {toast.type === "blank" && <InfoCircledIcon />}
+            {toast.type === "blank" && <InfoIcon />}
           </Box>
           <StyledTitle>{toast.message}</StyledTitle>
         </StyledToast>

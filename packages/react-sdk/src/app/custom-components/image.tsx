@@ -6,7 +6,7 @@ import {
 } from "react";
 import { Image as WebstudioImage, loaders } from "@webstudio-is/image";
 import { Image as SdkImage } from "../../components/image";
-import { useUserPropsAsset } from "../../user-props/use-user-props-asset";
+import { usePropAsset } from "../../props";
 import { idAttribute } from "../../tree/wrapper-component";
 import { getParams } from "../params";
 
@@ -18,11 +18,11 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
     const componentId = props[idAttribute] as string;
 
-    const asset = useUserPropsAsset(componentId, "src");
+    const asset = usePropAsset(componentId, "src");
     const params = getParams();
 
     const loader = useMemo(() => {
-      if (asset == null) {
+      if (asset === undefined) {
         return null;
       }
       if (asset.location === "REMOTE") {

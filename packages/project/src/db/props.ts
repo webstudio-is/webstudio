@@ -1,35 +1,27 @@
 import warnOnce from "warn-once";
-import {
-  type Tree,
-  type AllUserProps,
-  type InstanceProps,
-  StoredProps,
-} from "@webstudio-is/react-sdk";
+import { type Tree, StoredProps, Props } from "@webstudio-is/project-build";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
+import type { Project } from "./schema";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
 
-export const loadByTreeId = async (treeId: Tree["id"]) => {
-  const tree = await prisma.tree.findUnique({
-    where: { id: treeId },
-  });
+export const parseProps = async (propsString: string) => {
+  const storedProps = StoredProps.parse(JSON.parse(propsString));
 
-  if (tree === null) {
-    return [];
-  }
-
-  const props = StoredProps.parse(JSON.parse(tree.props));
-
-  // Fin all assetId in all props
+  // find all asset ids in all props
   const assetIds: string[] = [];
 
-  for (const propsItem of props) {
-    if (propsItem.type === "asset") {
-      assetIds.push(propsItem.value);
+  for (const prop of storedProps) {
+    if (prop.type === "asset") {
+      assetIds.push(prop.value);
     }
   }
 
-  // Load all assets
+  // load all assets
   const assets = await prisma.asset.findMany({
     where: {
       id: {
@@ -42,31 +34,19 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
     assets.map((asset) => [asset.id, formatAsset(asset)])
   );
 
-  const instancePropsMap = new Map<string, InstanceProps>();
-
-  for (const propsItem of props) {
-    let instanceProps = instancePropsMap.get(propsItem.instanceId);
-    if (instanceProps === undefined) {
-      instanceProps = {
-        id: "",
-        instanceId: propsItem.instanceId,
-        treeId,
-        props: [],
-      };
-      instancePropsMap.set(propsItem.instanceId, instanceProps);
-    }
-
-    if (propsItem.type === "asset") {
-      const assetId = propsItem.value;
+  const props: Props = [];
+  for (const prop of storedProps) {
+    if (prop.type === "asset") {
+      const assetId = prop.value;
       const asset = assetsMap.get(assetId);
 
       if (asset) {
-        instanceProps.props.push({
-          id: propsItem.id,
-          instanceId: propsItem.instanceId,
-          name: propsItem.name,
-          required: propsItem.required,
-          type: propsItem.type,
+        props.push({
+          id: prop.id,
+          instanceId: prop.instanceId,
+          name: prop.name,
+          required: prop.required,
+          type: prop.type,
           value: asset,
         });
 
@@ -77,51 +57,57 @@ export const loadByTreeId = async (treeId: Tree["id"]) => {
       continue;
     }
 
-    instanceProps.props.push(propsItem);
+    props.push(prop);
   }
 
-  return Array.from(instancePropsMap.values());
+  return props;
+};
+
+export const serializeProps = (props: Props) => {
+  const storedProps: StoredProps = [];
+  for (const prop of props) {
+    if (prop.type === "asset") {
+      storedProps.push({
+        id: prop.id,
+        instanceId: prop.instanceId,
+        name: prop.name,
+        required: prop.required,
+        type: prop.type,
+        value: prop.value.id,
+      });
+      continue;
+    }
+    storedProps.push(prop);
+  }
+  return JSON.stringify(storedProps);
 };
 
 export const patch = async (
-  { treeId }: { treeId: Tree["id"] },
-  patches: Array<Patch>
+  { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  patches: Array<Patch>,
+  context: AppContext
 ) => {
-  const allProps = await loadByTreeId(treeId);
-
-  // We should get rid of this by applying patches on the client to the original
-  // model instead of the instanceId map.
-  // The map is handy for accessing props, but probably should be just cached interface, not the main data structure.
-  const allPropsMapByInstanceId = allProps.reduce((acc, prop) => {
-    acc[prop.instanceId] = prop.props;
-    return acc;
-  }, {} as AllUserProps);
-  const nextProps = applyPatches<AllUserProps>(
-    allPropsMapByInstanceId,
-    patches
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
   );
 
-  const props: StoredProps = [];
-  for (const [instanceId, instanceProps] of Object.entries(nextProps)) {
-    for (const propsItem of instanceProps) {
-      if (propsItem.type === "asset") {
-        props.push({
-          id: propsItem.id,
-          instanceId,
-          name: propsItem.name,
-          required: propsItem.required,
-          type: propsItem.type,
-          value: propsItem.value.id,
-        });
-        continue;
-      }
-      props.push(propsItem);
-    }
+  if (canEdit === false) {
+    throw new Error("You don't have edit access to this project");
   }
+
+  const tree = await prisma.tree.findUnique({
+    where: { id: treeId },
+  });
+  if (tree === null) {
+    return;
+  }
+  const props = await parseProps(tree.props);
+  const patchedProps = applyPatches(props, patches);
 
   await prisma.tree.update({
     data: {
-      props: JSON.stringify(props),
+      props: serializeProps(patchedProps),
     },
     where: { id: treeId },
   });

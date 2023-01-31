@@ -2,19 +2,17 @@ import type { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import {
-  type Instance,
   type OnChangeChildren,
-  type PropsItem,
   renderWrapperComponentChildren,
   getComponent,
   idAttribute,
-  useAllUserProps,
 } from "@webstudio-is/react-sdk";
-import { shallowComputed } from "~/shared/store-utils";
 import {
   selectedInstanceIdStore,
-  stylesIndexStore,
+  useInstanceProps,
+  useInstanceStyles,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
@@ -27,7 +25,7 @@ const ContentEditable = ({
   elementRef,
   ...props
 }: {
-  Component: ReturnType<typeof getComponent>;
+  Component: NonNullable<ReturnType<typeof getComponent>>;
   elementRef: { current: undefined | HTMLElement };
 }) => {
   const [editor] = useLexicalComposerContext();
@@ -58,21 +56,14 @@ export const WrapperComponentDev = ({
 }: WrapperComponentDevProps) => {
   const instanceId = instance.id;
 
-  const instanceStylesStore = useMemo(() => {
-    return shallowComputed(
-      [stylesIndexStore],
-      (stylesIndex) => stylesIndex.stylesByInstanceId.get(instanceId) ?? []
-    );
-  }, [instanceId]);
-  const instanceStyles = useStore(instanceStylesStore);
+  const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
 
   const [editingInstanceId, setTextEditingInstanceId] =
     useTextEditingInstanceId();
   const selectedInstanceId = useStore(selectedInstanceIdStore);
 
-  const allUserProps = useAllUserProps();
-  const instanceProps = allUserProps[instance.id];
+  const instanceProps = useInstanceProps(instance.id);
   const userProps = useMemo(() => {
     const result: UserProps = {};
     if (instanceProps === undefined) {
@@ -92,6 +83,10 @@ export const WrapperComponentDev = ({
     instance.component === "Input" ? { readOnly: true } : undefined;
 
   const Component = getComponent(instance.component);
+
+  if (Component === undefined) {
+    return <></>;
+  }
 
   const props = {
     ...userProps,

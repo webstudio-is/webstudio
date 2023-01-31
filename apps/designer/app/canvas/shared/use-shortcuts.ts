@@ -1,6 +1,7 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import { type Instance, getComponentMeta } from "@webstudio-is/react-sdk";
+import type { Instance } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
@@ -8,7 +9,6 @@ import {
   selectedInstanceStore,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
-import { type SelectedInstanceData } from "@webstudio-is/project";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -18,13 +18,10 @@ declare module "~/shared/pubsub" {
     };
     openBreakpointsMenu: undefined;
     selectBreakpointFromShortcut: number;
-    selectInstance?: SelectedInstanceData;
     togglePreviewMode: undefined;
     zoom: "zoomOut" | "zoomIn";
   }
 }
-
-const inputTags = ["INPUT", "SELECT", "TEXTAREA"] as const;
 
 type HandlerEvent = {
   key?: string;
@@ -95,12 +92,9 @@ export const useShortcuts = () => {
     esc: publishCancelCurrentDrag,
   } as const;
 
-  useHotkeys(
-    "backspace, delete",
+  useHotkeys("backspace, delete", shortcutHandlerMap.delete, options, [
     shortcutHandlerMap.delete,
-    { ...options, enableOnTags: [...inputTags] },
-    [shortcutHandlerMap.delete]
-  );
+  ]);
 
   useHotkeys(
     "esc",
@@ -115,9 +109,8 @@ export const useShortcuts = () => {
         return;
       }
       selectedInstanceIdStore.set(undefined);
-      publish({ type: "selectInstance" });
     },
-    { ...options, enableOnContentEditable: true, enableOnTags: [...inputTags] },
+    { ...options, enableOnContentEditable: true },
     [editingInstanceId]
   );
 
@@ -128,8 +121,8 @@ export const useShortcuts = () => {
       if (selectedInstance === undefined) {
         return;
       }
-      const { type } = getComponentMeta(selectedInstance.component);
-      if (type === "rich-text") {
+      const meta = getComponentMeta(selectedInstance.component);
+      if (meta?.type === "rich-text") {
         // Prevents inserting a newline when entering text-editing mode
         event.preventDefault();
         setEditingInstanceId(selectedInstance.id);

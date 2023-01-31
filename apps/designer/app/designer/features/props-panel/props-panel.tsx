@@ -1,17 +1,9 @@
 import { useState } from "react";
 import store from "immerhin";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import {
-  allUserPropsContainer,
-  getComponentMetaProps,
-  useAllUserProps,
-  type Instance,
-  type PropsItem,
-} from "@webstudio-is/react-sdk";
-import { type Publish } from "~/shared/pubsub";
-import { Control } from "./control";
-import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
-import type { SelectedInstanceData } from "@webstudio-is/project";
-import {
+  theme,
   Box,
   Button,
   Grid,
@@ -31,16 +23,19 @@ import {
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@webstudio-is/icons";
+import { type Publish } from "~/shared/pubsub";
+import { propsStore, useInstanceProps } from "~/shared/nano-states";
+import { CollapsibleSection, ComponentInfo } from "~/designer/shared/inspector";
 import {
   removeByMutable,
   replaceByOrAppendMutable,
 } from "~/shared/array-utils";
+import { Control } from "./control";
 import { usePropsLogic, type UserPropValue } from "./use-props-logic";
 import {
   useStyleData,
   type SetProperty,
 } from "../style-panel/shared/use-style-data";
-import { theme } from "@webstudio-is/design-system";
 
 type ComboboxProps = {
   isReadonly: boolean;
@@ -144,7 +139,7 @@ const Property = ({
   required,
   existingProps,
 }: PropertyProps) => {
-  const metaProps = getComponentMetaProps(component);
+  const metaProps = getComponentMetaProps(component) ?? {};
 
   const argType = metaProps[userProp.name as keyof typeof metaProps];
   const isInvalid =
@@ -211,7 +206,7 @@ const Property = ({
       {required ? (
         <Box />
       ) : (
-        <Button variant="ghost" onClick={onDelete} prefix={<TrashIcon />} />
+        <Button color="ghost" onClick={onDelete} prefix={<TrashIcon />} />
       )}
     </>
   );
@@ -219,16 +214,12 @@ const Property = ({
 
 type PropsPanelProps = {
   publish: Publish;
-  selectedInstanceData: SelectedInstanceData;
+  selectedInstance: Instance;
 };
 
-export const PropsPanel = ({
-  selectedInstanceData,
-  publish,
-}: PropsPanelProps) => {
-  const instanceId = selectedInstanceData.id;
-  const allUserProps = useAllUserProps();
-  const props = allUserProps[instanceId] ?? [];
+export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
+  const instanceId = selectedInstance.id;
+  const instanceProps = useInstanceProps(instanceId);
 
   const {
     userProps,
@@ -238,16 +229,11 @@ export const PropsPanel = ({
     handleDeleteProp,
     isRequired,
   } = usePropsLogic({
-    props,
-    selectedInstanceData,
+    props: instanceProps,
+    selectedInstance,
 
     updateProps: (update) => {
-      store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        let props = allUserProps[instanceId];
-        if (props === undefined) {
-          props = [];
-          allUserProps[instanceId] = props;
-        }
+      store.createTransaction([propsStore], (props) => {
         replaceByOrAppendMutable(
           props,
           update,
@@ -257,23 +243,20 @@ export const PropsPanel = ({
     },
 
     deleteProp: (id) => {
-      store.createTransaction([allUserPropsContainer], (allUserProps) => {
-        const props = allUserProps[instanceId];
-        if (props) {
-          removeByMutable(props, (prop) => prop.id === id);
-        }
+      store.createTransaction([propsStore], (props) => {
+        removeByMutable(props, (prop) => prop.id === id);
       });
     },
   });
 
   const { setProperty: setCssProperty } = useStyleData({
-    selectedInstanceData,
+    selectedInstance,
     publish,
   });
 
   const addButton = (
     <Button
-      variant="ghost"
+      color="ghost"
       onClick={(event) => {
         event.preventDefault();
         addEmptyProp();
@@ -287,7 +270,7 @@ export const PropsPanel = ({
   return (
     <Box>
       <Box css={{ p: theme.spacing[9] }}>
-        <ComponentInfo selectedInstanceData={selectedInstanceData} />
+        <ComponentInfo selectedInstance={selectedInstance} />
       </Box>
       <CollapsibleSection
         label="Properties"
@@ -305,7 +288,7 @@ export const PropsPanel = ({
             <Property
               key={userProp.id}
               userProp={userProp}
-              component={selectedInstanceData.component}
+              component={selectedInstance.component}
               onChangePropName={(name) => handleChangePropName(userProp, name)}
               onChangePropValue={(value) =>
                 handleChangePropValue(userProp, value)

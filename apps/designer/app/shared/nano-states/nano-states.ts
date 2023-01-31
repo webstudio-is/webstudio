@@ -1,13 +1,14 @@
+import { useMemo } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { Instance, PresetStyles, Styles } from "@webstudio-is/react-sdk";
+import type { Instance, Props, Styles } from "@webstudio-is/project-build";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
-import type { Breakpoint } from "@webstudio-is/css-data";
-import type { DesignToken } from "@webstudio-is/design-tokens";
+import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import { useSyncInitializeOnce } from "../hook-utils";
+import { shallowComputed } from "../store-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -42,12 +43,38 @@ export const instancesIndexStore = computed(
   }
 );
 
-export const presetStylesContainer = atom<PresetStyles>([]);
-export const usePresetStyles = () => useValue(presetStylesContainer);
-export const useSetPresetStyles = (presetStyles: PresetStyles) => {
+export const propsStore = atom<Props>([]);
+export const propsIndexStore = computed(propsStore, (props) => {
+  const propsByInstanceId = new Map<Instance["id"], Props>();
+  for (const prop of props) {
+    const { instanceId } = prop;
+    let instanceProps = propsByInstanceId.get(instanceId);
+    if (instanceProps === undefined) {
+      instanceProps = [];
+      propsByInstanceId.set(instanceId, instanceProps);
+    }
+    instanceProps.push(prop);
+  }
+  return {
+    propsByInstanceId,
+  };
+});
+export const useSetProps = (props: Props) => {
   useSyncInitializeOnce(() => {
-    presetStylesContainer.set(presetStyles);
+    propsStore.set(props);
   });
+};
+export const useInstanceProps = (instanceId: undefined | Instance["id"]) => {
+  const instancePropsStore = useMemo(() => {
+    return shallowComputed([propsIndexStore], (propsIndex) => {
+      if (instanceId === undefined) {
+        return [];
+      }
+      return propsIndex.propsByInstanceId.get(instanceId) ?? [];
+    });
+  }, [instanceId]);
+  const instanceProps = useStore(instancePropsStore);
+  return instanceProps;
 };
 
 export const stylesContainer = atom<Styles>([]);
@@ -82,20 +109,24 @@ export const useSetStyles = (styles: Styles) => {
     stylesContainer.set(styles);
   });
 };
+export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
+  const instanceStylesStore = useMemo(() => {
+    return shallowComputed([stylesIndexStore], (stylesIndex) => {
+      if (instanceId === undefined) {
+        return [];
+      }
+      return stylesIndex.stylesByInstanceId.get(instanceId) ?? [];
+    });
+  }, [instanceId]);
+  const instanceStyles = useStore(instanceStylesStore);
+  return instanceStyles;
+};
 
 export const breakpointsContainer = atom<Breakpoint[]>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);
 export const useSetBreakpoints = (breakpoints: Breakpoint[]) => {
   useSyncInitializeOnce(() => {
     breakpointsContainer.set(breakpoints);
-  });
-};
-
-export const designTokensContainer = atom<DesignToken[]>([]);
-export const useDesignTokens = () => useValue(designTokensContainer);
-export const useSetDesignTokens = (designTokens: DesignToken[]) => {
-  useSyncInitializeOnce(() => {
-    designTokensContainer.set(designTokens);
   });
 };
 
@@ -111,6 +142,14 @@ export const selectedInstanceStore = computed(
     return instancesIndex.instancesById.get(selectedInstanceId);
   }
 );
+export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
+
+export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
+  undefined
+);
+export const hoveredInstanceOutlineStore = atom<
+  undefined | { component: string; rect: DOMRect }
+>(undefined);
 
 const isPreviewModeContainer = atom<boolean>(false);
 export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
@@ -124,10 +163,6 @@ const selectedInstanceOutlineContainer = atom<{
 });
 export const useSelectedInstanceOutline = () =>
   useValue(selectedInstanceOutlineContainer);
-
-const hoveredInstanceRectContainer = atom<DOMRect | undefined>();
-export const useHoveredInstanceRect = () =>
-  useValue(hoveredInstanceRectContainer);
 
 const isScrollingContainer = atom<boolean>(false);
 export const useIsScrolling = () => useValue(isScrollingContainer);

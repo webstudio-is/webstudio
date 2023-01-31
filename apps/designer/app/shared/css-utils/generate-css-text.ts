@@ -1,17 +1,21 @@
 import { json } from "@remix-run/node";
 import { db } from "@webstudio-is/project/server";
-import {
-  addGlobalRules,
-  getPresetStyleRules,
-  getStyleRules,
-} from "@webstudio-is/project";
+import { addGlobalRules, getStyleRules } from "@webstudio-is/project";
 import { loadCanvasData } from "~/shared/db";
 import { createCssEngine } from "@webstudio-is/css-engine";
-import { idAttribute } from "@webstudio-is/react-sdk";
+import {
+  getComponentMeta,
+  getComponentNames,
+  idAttribute,
+} from "@webstudio-is/react-sdk";
 import type { BuildParams } from "../router-utils";
+import type { AppContext } from "@webstudio-is/trpc-interface/server";
 
-export const generateCssText = async (buildParams: BuildParams) => {
-  const project = await db.project.loadByParams(buildParams);
+export const generateCssText = async (
+  buildParams: BuildParams,
+  context: AppContext
+) => {
+  const project = await db.project.loadByParams(buildParams, context);
 
   if (project === null) {
     throw json("Project not found", { status: 404 });
@@ -35,9 +39,14 @@ export const generateCssText = async (buildParams: BuildParams) => {
     engine.addMediaRule(breakpoint.id, breakpoint);
   }
 
-  const presetStyleRules = getPresetStyleRules(canvasData.tree?.presetStyles);
-  for (const { component, style } of presetStyleRules) {
-    engine.addStyleRule(`[data-ws-component="${component}"]`, { style });
+  for (const component of getComponentNames()) {
+    const meta = getComponentMeta(component);
+    const presetStyle = meta?.presetStyle;
+    if (presetStyle !== undefined) {
+      engine.addStyleRule(`[data-ws-component=${component}]`, {
+        style: presetStyle,
+      });
+    }
   }
 
   const styleRules = getStyleRules(canvasData.tree?.styles);

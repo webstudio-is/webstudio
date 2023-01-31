@@ -3,33 +3,77 @@
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4%3A2709
  */
 
-import React, { forwardRef, type Ref, type ComponentProps } from "react";
+import {
+  forwardRef,
+  type Ref,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { typography } from "./typography";
 import { styled, theme } from "../stitches.config";
 
+const colors = [
+  "primary",
+  "destructive",
+  "positive",
+  "neutral",
+  "ghost",
+] as const;
+
+type ButtonColor = typeof colors[number];
+
+type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
+
+const bg: Record<ButtonColor, string> = {
+  primary: theme.colors.backgroundPrimary,
+  neutral: theme.colors.backgroundNeutralMain,
+  destructive: theme.colors.backgroundDestructiveMain,
+  positive: theme.colors.backgroundSuccessMain,
+  ghost: theme.colors.backgroundHover,
+};
+
+const fg: Record<ButtonColor, string> = {
+  primary: theme.colors.foregroundContrastMain,
+  destructive: theme.colors.foregroundContrastMain,
+  positive: theme.colors.foregroundContrastMain,
+  neutral: theme.colors.foregroundMain,
+  ghost: theme.colors.foregroundMain,
+};
+
 // CSS supports multiple gradients as backgrounds but not multiple colors
-const backgroundColors = ({
-  overlay,
-  base,
-}: {
-  overlay: string;
-  base: string;
-}) =>
+const backgroundColors = (base: string, overlay: string) =>
   `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
 
-const backgroundStyle = (baseColor: string) => ({
-  background: baseColor,
-  "&:hover": {
-    background: backgroundColors({
-      base: baseColor,
-      overlay: theme.colors.backgroundButtonHover,
-    }),
+const perColorStyle = (variant: ButtonColor) => ({
+  background: variant === "ghost" ? "transparent" : bg[variant],
+  color: fg[variant],
+
+  "&[data-button-state=auto]:hover, &[data-button-state=hover]": {
+    background: backgroundColors(
+      bg[variant],
+      theme.colors.backgroundButtonHover
+    ),
   },
-  "&:active": {
-    background: backgroundColors({
-      base: baseColor,
-      overlay: theme.colors.backgroundButtonPressed,
-    }),
+
+  "&[data-button-state=auto]:focus-visible, &[data-button-state=focus]": {
+    outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: "1px",
+  },
+
+  "&[data-button-state=auto]:active, &[data-button-state=pressed]": {
+    background: backgroundColors(
+      bg[variant],
+      theme.colors.backgroundButtonPressed
+    ),
+  },
+
+  "&[data-button-state=disabled]": {
+    background: theme.colors.backgroundButtonDisabled,
+    color: theme.colors.foregroundDisabled,
+  },
+
+  "&[data-button-state=pending]": {
+    cursor: "wait",
   },
 });
 
@@ -41,50 +85,23 @@ const StyledButton = styled("button", {
   alignItems: "center",
   justifyContent: "center",
   gap: theme.spacing[2],
-  color: theme.colors.foregroundContrastMain,
   padding: `0 ${theme.spacing[4]}`,
   height: theme.spacing[12],
   borderRadius: theme.borderRadius[4],
-
-  "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-    outlineOffset: "1px",
-  },
+  whiteSpace: "nowrap",
 
   variants: {
-    // "variant" is used instead of "type" as in Figma,
-    // because type is already taken for type=submit etc.
-    variant: {
-      primary: { ...backgroundStyle(theme.colors.backgroundPrimary) },
-      neutral: {
-        ...backgroundStyle(theme.colors.backgroundNeutralMain),
-        color: theme.colors.foregroundMain,
-      },
-      destructive: {
-        ...backgroundStyle(theme.colors.backgroundDestructiveMain),
-      },
-      positive: { ...backgroundStyle(theme.colors.backgroundSuccessMain) },
-      ghost: {
-        ...backgroundStyle(theme.colors.backgroundHover),
-        background: "transparent",
-        color: theme.colors.foregroundMain,
-      },
-    },
-    pending: {
-      true: {
-        cursor: "wait",
-      },
-      false: {
-        "&[disabled]": {
-          background: theme.colors.backgroundButtonDisabled,
-          color: theme.colors.foregroundDisabled,
-        },
-      },
+    color: {
+      primary: perColorStyle("primary"),
+      destructive: perColorStyle("destructive"),
+      positive: perColorStyle("positive"),
+      neutral: perColorStyle("neutral"),
+      ghost: perColorStyle("ghost"),
     },
   },
 
   defaultVariants: {
-    variant: "primary",
+    color: "primary",
   },
 });
 
@@ -93,19 +110,24 @@ const TextContainer = styled("span", typography.labelTitleCase, {
 });
 
 type ButtonProps = {
-  pending?: boolean;
+  state?: ButtonState;
+  color?: ButtonColor;
 
-  // prefix/suffix is primarily for Icons
+  // We don't want all the noise from StyledButton,
+  // so we're cherry-picking just the props we need
+  css?: ComponentProps<typeof StyledButton>["css"];
+
+  // prefix/suffix are primarily for Icons
   // this is a replacement for icon/icon-left/icon-right in Figma
-  prefix?: React.ReactNode;
-  suffix?: React.ReactNode;
-} & Omit<ComponentProps<typeof StyledButton>, "pending" | "prefix">;
+  prefix?: ReactNode;
+  suffix?: ReactNode;
+} & Omit<ComponentProps<"button">, "prefix">;
 
 export const Button = forwardRef(
   (
     {
-      pending = false,
-      disabled = false,
+      disabled,
+      state = "auto",
       prefix,
       suffix,
       children,
@@ -116,15 +138,15 @@ export const Button = forwardRef(
     return (
       <StyledButton
         {...restProps}
-        pending={pending}
-        disabled={disabled || pending}
+        disabled={disabled || state === "pending"}
+        data-button-state={disabled ? "disabled" : state}
         ref={ref}
       >
         {prefix}
         {children && (
           <TextContainer>
             {children}
-            {pending ? "…" : ""}
+            {state === "pending" ? "…" : ""}
           </TextContainer>
         )}
         {suffix}

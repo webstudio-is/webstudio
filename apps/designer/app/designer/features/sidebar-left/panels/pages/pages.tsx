@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "@remix-run/react";
 import {
   DeprecatedIconButton,
   TreeItemLabel,
@@ -8,28 +10,27 @@ import {
   Flex,
   Tooltip,
   Box,
+  Button,
+  theme,
 } from "@webstudio-is/design-system";
-import { type Publish } from "~/shared/pubsub";
 import {
   ChevronRightIcon,
   MenuIcon,
   NewPageIcon,
   PageIcon,
 } from "@webstudio-is/icons";
-import type { TabName } from "../../types";
-import { CloseButton, Header } from "../../lib/header";
 import { type Page, type Pages } from "@webstudio-is/project";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { type Publish } from "~/shared/pubsub";
 import {
   useCurrentPageId,
   usePages,
   useProject,
 } from "~/designer/shared/nano-states";
+import { designerPath } from "~/shared/router-utils";
+import type { TabName } from "../../types";
+import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import { designerPath } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -204,13 +205,12 @@ const PagesPanel = ({
           <>
             {onCreateNewPage && (
               <Tooltip content="New page" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
-                >
-                  <NewPageIcon />
-                </DeprecatedIconButton>
+                  prefix={<NewPageIcon />}
+                  color="ghost"
+                />
               </Tooltip>
             )}
             {onClose && <CloseButton onClick={onClose} />}

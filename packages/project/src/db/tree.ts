@@ -2,15 +2,12 @@ import { applyPatches, type Patch } from "immer";
 import { z } from "zod";
 import {
   type Tree,
-  type ComponentName,
   type InstancesItem,
   Instance,
-  PresetStyles,
-  findMissingPresetStyles,
-  Styles,
   Instances,
-  Props,
-} from "@webstudio-is/react-sdk";
+  type Styles,
+  type Props,
+} from "@webstudio-is/project-build";
 import {
   prisma,
   type Prisma,
@@ -18,6 +15,12 @@ import {
 } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
 import { parseStyles, serializeStyles } from "./styles";
+import { parseProps, serializeProps } from "./props";
+import type { Project } from "./schema";
+import {
+  authorizeProject,
+  type AppContext,
+} from "@webstudio-is/trpc-interface/server";
 
 type TreeData = Omit<Tree, "id">;
 
@@ -39,18 +42,24 @@ const normalizeTree = (instance: Instance, instances: InstancesItem[]) => {
   }
 };
 
-export const createTree = (): TreeData => {
+export const createTree = ({
+  projectId,
+  buildId,
+}: {
+  projectId: string;
+  buildId: string;
+}): TreeData => {
   const root = utils.tree.createInstance({ component: "Body" });
-  const presetStyles = findMissingPresetStyles([], [root.component]);
   const styles: Styles = [];
   const instances: Instances = [];
   normalizeTree(root, instances);
   const props: Props = [];
 
   return {
+    projectId,
+    buildId,
     root,
     props,
-    presetStyles,
     styles,
   };
 };
@@ -65,10 +74,11 @@ export const create = async (
 
   return await client.tree.create({
     data: {
+      projectId: treeData.projectId,
+      buildId: treeData.buildId,
       root: "",
       instances: JSON.stringify(instances),
-      props: JSON.stringify(treeData.props),
-      presetStyles: JSON.stringify(treeData.presetStyles),
+      props: serializeProps(treeData.props),
       styles: serializeStyles(treeData.styles),
     },
   });
@@ -87,7 +97,7 @@ const denormalizeTree = (instances: z.infer<typeof Instances>) => {
     const legacyInstance: Instance = {
       type: "instance",
       id: instance.id,
-      component: instance.component as ComponentName,
+      component: instance.component,
       children: [],
     };
     for (const child of instance.children) {
@@ -117,15 +127,13 @@ export const loadById = async (
   const instances = Instances.parse(JSON.parse(tree.instances));
   const root = Instance.parse(denormalizeTree(instances));
 
-  const props = Props.parse(JSON.parse(tree.props));
-  const presetStyles = PresetStyles.parse(JSON.parse(tree.presetStyles));
+  const props = await parseProps(tree.props);
   const styles = await parseStyles(tree.styles);
 
   return {
     ...tree,
     root,
     props,
-    presetStyles,
     styles,
   };
 };
@@ -141,31 +149,25 @@ export const clone = async (
   return await create(tree, client);
 };
 
-const collectUsedComponents = (instance: Instance, components: Set<string>) => {
-  components.add(instance.component);
-  for (const child of instance.children) {
-    if (child.type === "instance") {
-      collectUsedComponents(child, components);
-    }
-  }
-};
-
 export const patch = async (
-  { treeId }: { treeId: Tree["id"] },
-  patches: Array<Patch>
+  { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
+  patches: Array<Patch>,
+  context: AppContext
 ) => {
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error("You don't have edit access to this project");
+  }
+
   const tree = await loadById(treeId);
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
   const clientRoot = applyPatches(tree.root, patches);
-  const components = new Set<ComponentName>();
-  collectUsedComponents(tree.root, components);
-  const missingPresetStyles = findMissingPresetStyles(
-    tree.presetStyles,
-    Array.from(components)
-  );
-  const presetStyles = [...tree.presetStyles, ...missingPresetStyles];
 
   const root = Instance.parse(clientRoot);
   const instances: Instances = [];
@@ -175,7 +177,6 @@ export const patch = async (
     data: {
       root: "",
       instances: JSON.stringify(instances),
-      presetStyles: JSON.stringify(presetStyles),
     },
     where: { id: treeId },
   });

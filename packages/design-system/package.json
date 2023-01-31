@@ -52,7 +52,6 @@
     "@radix-ui/react-dropdown-menu": "^1.0.0",
     "@radix-ui/react-id": "^1.0.0",
     "@radix-ui/react-label": "^1.0.0",
-    "@radix-ui/react-menu": "^1.0.0",
     "@radix-ui/react-popover": "^1.0.0",
     "@radix-ui/react-popper": "^1.0.0",
     "@radix-ui/react-portal": "^1.0.0",

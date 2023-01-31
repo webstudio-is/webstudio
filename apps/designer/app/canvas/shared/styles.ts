@@ -1,14 +1,9 @@
 import { useEffect } from "react";
 import { useSubscribe } from "~/shared/pubsub";
-import { addGlobalRules, getPresetStyleRules } from "@webstudio-is/project";
+import { addGlobalRules } from "@webstudio-is/project";
+import { selectedInstanceIdStore, useBreakpoints } from "~/shared/nano-states";
+import type { Styles } from "@webstudio-is/project-build";
 import {
-  selectedInstanceIdStore,
-  useBreakpoints,
-  useDesignTokens,
-  usePresetStyles,
-} from "~/shared/nano-states";
-import {
-  type Styles,
   getComponentMeta,
   getComponentNames,
   idAttribute,
@@ -29,7 +24,6 @@ import {
 } from "@webstudio-is/css-engine";
 import { useIsomorphicLayoutEffect } from "react-use";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { tokensToStyle } from "~/designer/shared/design-tokens-manager";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
@@ -66,7 +60,6 @@ const helpersCssEngine = createCssEngine({ name: "helpers" });
 const fontsAndDefaultsCssEngine = createCssEngine({
   name: "fonts-and-defaults",
 });
-const tokensCssEngine = createCssEngine({ name: "tokens" });
 const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
 export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
@@ -91,30 +84,11 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
     fontsAndDefaultsCssEngine.render();
   }, [assets]);
 
-  const [tokens] = useDesignTokens();
-
-  useIsomorphicLayoutEffect(() => {
-    tokensCssEngine.clear();
-    if (tokens.length !== 0) {
-      const style = tokensToStyle(tokens);
-      tokensCssEngine.addStyleRule(`:root`, { style });
-    }
-
-    tokensCssEngine.render();
-  }, [tokens]);
-
-  const [presetStyles] = usePresetStyles();
-
   useIsomorphicLayoutEffect(() => {
     presetStylesEngine.clear();
-    const presetStyleRules = getPresetStyleRules(presetStyles);
     for (const component of getComponentNames()) {
       const meta = getComponentMeta(component);
-      // render preset style and fallback to hardcoded one
-      // because could not be added yet to db
-      const presetStyle =
-        presetStyleRules.find((item) => item.component === component)?.style ??
-        meta.presetStyle;
+      const presetStyle = meta?.presetStyle;
       if (presetStyle !== undefined) {
         presetStylesEngine.addStyleRule(`[data-ws-component=${component}]`, {
           style: presetStyle,
@@ -122,7 +96,7 @@ export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
       }
     }
     presetStylesEngine.render();
-  }, [presetStyles]);
+  }, []);
 
   return null;
 };

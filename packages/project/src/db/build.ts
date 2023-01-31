@@ -1,6 +1,10 @@
 import { v4 as uuid } from "uuid";
-import { prisma, Build as DbBuild, Prisma } from "@webstudio-is/prisma-client";
-import { db as designTokensDb } from "@webstudio-is/design-tokens/server";
+import {
+  prisma,
+  Build as DbBuild,
+  Prisma,
+  Project,
+} from "@webstudio-is/prisma-client";
 import * as db from ".";
 import { Build, Page, Pages } from "./schema";
 import * as pagesUtils from "../shared/pages";
@@ -56,7 +60,7 @@ export async function loadByProjectId(
   });
 
   if (build === null) {
-    return undefined;
+    return;
   }
 
   return parseBuild(build);
@@ -75,13 +79,20 @@ const updatePages = async (
   return parseBuild(updatedBuild);
 };
 
-export const addPage = async (
-  buildId: Build["id"],
+export const addPage = async ({
+  projectId,
+  buildId,
+  data,
+}: {
+  projectId: Project["id"];
+  buildId: Build["id"];
   data: Pick<Page, "name" | "path"> &
-    Partial<Omit<Page, "id" | "treeId" | "name" | "path">>
-) => {
+    Partial<Omit<Page, "id" | "treeId" | "name" | "path">>;
+}) => {
   return updatePages(buildId, async (currentPages) => {
-    const tree = await db.tree.create(db.tree.createTree());
+    const tree = await db.tree.create(
+      db.tree.createTree({ projectId, buildId })
+    );
 
     return {
       homePage: currentPages.homePage,
@@ -152,8 +163,14 @@ export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
   });
 };
 
-const createPages = async (client: Prisma.TransactionClient = prisma) => {
-  const tree = await db.tree.create(db.tree.createTree(), client);
+const createPages = async (
+  { projectId, buildId }: { projectId: Project["id"]; buildId: Build["id"] },
+  client: Prisma.TransactionClient = prisma
+) => {
+  const tree = await db.tree.create(
+    db.tree.createTree({ projectId, buildId }),
+    client
+  );
   return Pages.parse({
     homePage: {
       id: uuid(),
@@ -233,9 +250,18 @@ export async function create(
     ? (await db.breakpoints.load(sourceBuild.id)).values
     : db.breakpoints.createValues();
 
+  const build = await client.build.create({
+    data: {
+      projectId,
+      pages: JSON.stringify([]),
+      isDev: env === "dev",
+      isProd: env === "prod",
+    },
+  });
+
   const pages =
     sourceBuild === undefined
-      ? await createPages(client)
+      ? await createPages({ projectId, buildId: build.id }, client)
       : await clonePages(sourceBuild.pages, client);
 
   if (env === "prod") {
@@ -245,17 +271,14 @@ export async function create(
     });
   }
 
-  const build = await client.build.create({
+  await client.build.update({
+    where: {
+      id: build.id,
+    },
     data: {
-      projectId,
       pages: JSON.stringify(pages),
-      isDev: env === "dev",
-      isProd: env === "prod",
     },
   });
 
   await db.breakpoints.create(build.id, breakpointsValues, client);
-  if (sourceBuild) {
-    await designTokensDb.clone(sourceBuild.id, build.id, client);
-  }
 }

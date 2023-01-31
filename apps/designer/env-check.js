@@ -40,6 +40,11 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production DESIGNER_HOST is required for website functionality. Please set it to your production URL of the designer."
     );
   }
+  if (!process.env.PUBLISHER_HOST) {
+    errors.push(
+      "👉 In production PUBLISHER_HOST is required for website functionality. Please set it to your production URL of the designer."
+    );
+  }
   if (!process.env.BUILD_ORIGIN) {
     errors.push(
       "👉 In production BUILD_ORIGIN is required for security reasons."

@@ -96,28 +96,37 @@ export const getComponentNames = (): ComponentName[] => {
   return [...uniqueNames.values()] as ComponentName[];
 };
 
-export const getComponentMeta = (name: ComponentName): WsComponentMeta => {
+export const getComponentMeta = (name: string): undefined | WsComponentMeta => {
+  const componentMeta = meta[name as ComponentName];
   if (registeredComponentsMeta != null && name in registeredComponentsMeta) {
-    return { ...meta[name], ...registeredComponentsMeta[name] };
+    return {
+      ...componentMeta,
+      ...registeredComponentsMeta[name as ComponentName],
+    };
   }
 
-  return meta[name];
+  return componentMeta;
 };
 
 export const getComponent = (
-  name: ComponentName
-): typeof components[ComponentName] => {
+  name: string
+): undefined | typeof components[ComponentName] => {
   return registeredComponents != null && name in registeredComponents
-    ? (registeredComponents[name] as typeof components[ComponentName])
-    : components[name];
+    ? (registeredComponents[
+        name as ComponentName
+      ] as typeof components[ComponentName])
+    : components[name as ComponentName];
 };
 
-export const getComponentMetaProps = (name: ComponentName): MetaProps => {
+export const getComponentMetaProps = (name: string): undefined | MetaProps => {
+  const componentMeta = meta[name as ComponentName];
   if (registeredComponentsMeta != null && name in registeredComponentsMeta) {
+    const registeredComponentMeta =
+      registeredComponentsMeta[name as ComponentName];
     const allMetaPropKeys = new Set([
-      ...Object.keys(meta[name]?.props ?? {}),
+      ...Object.keys(componentMeta?.props ?? {}),
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      ...Object.keys(registeredComponentsMeta[name]!.props!),
+      ...Object.keys(registeredComponentMeta!.props!),
     ]);
 
     const props: MetaProps = {};
@@ -126,21 +135,21 @@ export const getComponentMetaProps = (name: ComponentName): MetaProps => {
      **/
     for (const key of allMetaPropKeys.values()) {
       props[key] = {
-        ...meta[name]?.props[key],
-        ...registeredComponentsMeta[name]?.props?.[key],
+        ...componentMeta?.props[key],
+        ...registeredComponentMeta?.props?.[key],
         defaultValue:
-          registeredComponentsMeta[name]?.props?.[key]?.defaultValue ??
-          meta[name]?.props[key]?.defaultValue ??
+          registeredComponentMeta?.props?.[key]?.defaultValue ??
+          componentMeta?.props[key]?.defaultValue ??
           null,
         required:
-          registeredComponentsMeta[name]?.props?.[key]?.required ||
-          meta[name]?.props[key]?.required,
+          registeredComponentMeta?.props?.[key]?.required ||
+          componentMeta?.props[key]?.required,
       } as MetaProps[string];
     }
     return props;
   }
 
-  return meta[name].props;
+  return componentMeta?.props;
 };
 
 /**

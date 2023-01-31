@@ -1,10 +1,6 @@
 import { atom, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { type Breakpoint } from "@webstudio-is/css-data";
-import {
-  type SelectedInstanceData,
-  type HoveredInstanceData,
-} from "@webstudio-is/project";
 import { type Pages, type Project } from "@webstudio-is/project";
 import type { AssetContainer, DeletingAssetContainer } from "../assets";
 
@@ -12,14 +8,6 @@ const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
   return [value, atom.set] as const;
 };
-
-const selectedInstanceDataContainer = atom<SelectedInstanceData | undefined>();
-export const useSelectedInstanceData = () =>
-  useValue(selectedInstanceDataContainer);
-
-const hoveredInstanceDataContainer = atom<HoveredInstanceData | undefined>();
-export const useHoveredInstanceData = () =>
-  useValue(hoveredInstanceDataContainer);
 
 const isShareDialogOpenContainer = atom<boolean>(false);
 export const useIsShareDialogOpen = () => useValue(isShareDialogOpenContainer);

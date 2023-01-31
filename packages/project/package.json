@@ -17,10 +17,11 @@
     "@webstudio-is/asset-uploader": "workspace:^",
     "@webstudio-is/css-data": "workspace:^",
     "@webstudio-is/css-engine": "workspace:^",
-    "@webstudio-is/design-tokens": "workspace:^",
     "@webstudio-is/fonts": "workspace:^",
     "@webstudio-is/prisma-client": "workspace:^",
+    "@webstudio-is/project-build": "workspace:^",
     "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/trpc-interface": "workspace:^",
     "bson-objectid": "^2.0.4",
     "immer": "^9.0.12",
     "nanoid": "^3.2.0",
@@ -28,7 +29,8 @@
     "slugify": "^1.6.5",
     "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
-    "zod": "^3.19.1"
+    "zod": "^3.19.1",
+    "@trpc/server": "^10.9.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.3.1",

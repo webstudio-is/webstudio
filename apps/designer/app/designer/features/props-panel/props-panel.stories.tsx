@@ -1,9 +1,7 @@
 import type { ComponentStory } from "@storybook/react";
-import {
-  allUserPropsContainer,
-  getComponentMetaProps,
-  type PropsItem,
-} from "@webstudio-is/react-sdk";
+import type { PropsItem } from "@webstudio-is/project-build";
+import { getComponentMetaProps } from "@webstudio-is/react-sdk";
+import { propsStore } from "~/shared/nano-states";
 import { PropsPanel } from "./props-panel";
 
 export default {
@@ -12,23 +10,22 @@ export default {
 };
 
 export const NoProps: ComponentStory<typeof PropsPanel> = () => {
-  allUserPropsContainer.set({
-    "1": [
-      {
-        id: "disabled",
-        instanceId: "instanceId",
-        name: "disabled",
-        type: "boolean",
-        value: true,
-      },
-    ],
-  });
+  propsStore.set([
+    {
+      id: "disabled",
+      instanceId: "1",
+      name: "disabled",
+      type: "boolean",
+      value: true,
+    },
+  ]);
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "1",
         component: "Button",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}
@@ -37,15 +34,14 @@ export const NoProps: ComponentStory<typeof PropsPanel> = () => {
 };
 
 export const RequiredProps: ComponentStory<typeof PropsPanel> = () => {
-  allUserPropsContainer.set({
-    "1": [],
-  });
+  propsStore.set([]);
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "1",
         component: "Link",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}
@@ -54,15 +50,14 @@ export const RequiredProps: ComponentStory<typeof PropsPanel> = () => {
 };
 
 export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
-  allUserPropsContainer.set({
-    "1": [],
-  });
+  propsStore.set([]);
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "1",
         component: "Button",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}
@@ -70,24 +65,26 @@ export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
   );
 };
 
-const meta = getComponentMetaProps("Button");
+const meta = getComponentMetaProps("Button") ?? {};
 
 export const AllProps: ComponentStory<typeof PropsPanel> = () => {
-  allUserPropsContainer.set({
-    "3": Object.entries(meta).map(([name, value]) => {
+  propsStore.set(
+    Object.entries(meta).map(([name, value]) => {
       return {
         id: name,
+        instanceId: "3",
         name,
         value: value?.defaultValue ?? "",
       } as PropsItem;
-    }),
-  });
+    })
+  );
   return (
     <PropsPanel
-      selectedInstanceData={{
+      selectedInstance={{
+        type: "instance",
         id: "3",
         component: "Heading",
-        browserStyle: {},
+        children: [],
       }}
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       publish={() => {}}

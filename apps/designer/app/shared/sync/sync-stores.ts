@@ -1,14 +1,16 @@
 import store, { type Change } from "immerhin";
 import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
-import { allUserPropsContainer } from "@webstudio-is/react-sdk";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
   rootInstanceContainer,
+  propsStore,
   breakpointsContainer,
-  designTokensContainer,
   stylesContainer,
   selectedInstanceIdStore,
+  selectedInstanceBrowserStyleStore,
+  hoveredInstanceIdStore,
+  hoveredInstanceOutlineStore,
 } from "~/shared/nano-states";
 
 type StoreData = {
@@ -40,10 +42,15 @@ export const registerContainers = () => {
   store.register("breakpoints", breakpointsContainer);
   store.register("root", rootInstanceContainer);
   store.register("styles", stylesContainer);
-  store.register("props", allUserPropsContainer);
-  store.register("designTokens", designTokensContainer);
+  store.register("props", propsStore);
   // synchronize whole states
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
+  clientStores.set(
+    "selectedInstanceBrowserStyle",
+    selectedInstanceBrowserStyleStore
+  );
+  clientStores.set("hoveredInstanceIdStore", hoveredInstanceIdStore);
+  clientStores.set("hoveredInstanceOutlineStore", hoveredInstanceOutlineStore);
 };
 
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
@@ -132,7 +139,6 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
             ],
           },
         });
-        //
       })
     );
   }

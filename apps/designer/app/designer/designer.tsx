@@ -1,24 +1,19 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import {
   type Pages,
   type Project,
   utils as projectUtils,
 } from "@webstudio-is/project";
-import { Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import { registerContainers, useDesignerStore } from "~/shared/sync";
-import { useSyncServer } from "./shared/sync-server";
+import { useSyncServer } from "./shared/sync/sync-server";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import {
-  useHoveredInstanceData,
-  usePages,
-  useProject,
-  useCurrentPageId,
-  useSelectedInstanceData,
-} from "./shared/nano-states";
+import { usePages, useProject, useCurrentPageId } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import designerStyles from "./designer.css";
 import { Footer } from "./features/footer";
@@ -34,17 +29,17 @@ import {
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  selectedInstanceStore,
   useDragAndDropState,
+  useInstanceProps,
+  useInstanceStyles,
   useIsPreviewMode,
-  useRootInstance,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useInstanceCopyPaste } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
-import { useAllUserProps } from "@webstudio-is/react-sdk";
-import { theme } from "@webstudio-is/design-system";
 
 registerContainers();
 export const links = () => {
@@ -52,16 +47,6 @@ export const links = () => {
     { rel: "stylesheet", href: interFont },
     { rel: "stylesheet", href: designerStyles },
   ];
-};
-
-const useSubscribeSelectedInstanceData = () => {
-  const [, setValue] = useSelectedInstanceData();
-  useSubscribe("selectInstance", setValue);
-};
-
-const useSubscribeHoveredInstanceData = () => {
-  const [, setValue] = useHoveredInstanceData();
-  useSubscribe("hoverInstance", setValue);
 };
 
 const useSetProject = (project: Project) => {
@@ -99,21 +84,19 @@ const useSubscribeCanvasReady = (publish: Publish) => {
 };
 
 const useCopyPaste = (publish: Publish) => {
-  const [selectedInstance] = useSelectedInstanceData();
-  const [rootInstance] = useRootInstance();
-  const allUserProps = useAllUserProps();
+  const selectedInstance = useStore(selectedInstanceStore);
+  const instanceProps = useInstanceProps(selectedInstance?.id);
+  const instanceStyles = useInstanceStyles(selectedInstance?.id);
 
   const selectedInstanceData = useMemo(() => {
-    if (selectedInstance && rootInstance) {
-      const instance = projectUtils.tree.findInstanceById(
-        rootInstance,
-        selectedInstance.id
-      );
-      return (
-        instance && { instance, props: allUserProps[selectedInstance.id] ?? [] }
-      );
+    if (selectedInstance) {
+      return {
+        instance: selectedInstance,
+        props: instanceProps,
+        styles: instanceStyles,
+      };
     }
-  }, [rootInstance, selectedInstance, allUserProps]);
+  }, [selectedInstance, instanceProps, instanceStyles]);
 
   // We need to initialize this in both canvas and designer,
   // because the events will fire in either one, depending on where the focus is
@@ -122,10 +105,10 @@ const useCopyPaste = (publish: Publish) => {
     onCut: (instance) => {
       publish({ type: "deleteInstance", payload: { id: instance.id } });
     },
-    onPaste: (instance, props) => {
+    onPaste: ({ instance, props, styles }) => {
       publish({
         type: "insertInstance",
-        payload: { instance, props },
+        payload: { instance, props, styles },
       });
     },
   });
@@ -284,6 +267,11 @@ export type DesignerProps = {
   treeId: string;
   buildId: string;
   buildOrigin: string;
+  authReadToken: string;
+  authSharedTokens: {
+    token: string;
+    relation: "viewers" | "editors" | "owner";
+  }[];
 };
 
 export const Designer = ({
@@ -293,16 +281,16 @@ export const Designer = ({
   treeId,
   buildId,
   buildOrigin,
+  authReadToken,
+  authSharedTokens,
 }: DesignerProps) => {
-  useSubscribeSelectedInstanceData();
-  useSubscribeHoveredInstanceData();
   useSubscribeBreakpoints();
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
-  useSyncServer({ buildId, treeId });
+  useSyncServer({ buildId, treeId, projectId: project.id });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -329,13 +317,21 @@ export const Designer = ({
     return page;
   }, [pages, pageId]);
 
-  const canvasUrl = getBuildUrl({ buildOrigin, project, page, mode: "edit" });
+  const canvasUrl = getBuildUrl({
+    buildOrigin,
+    project,
+    page,
+    mode: "edit",
+    authReadToken,
+  });
 
   const previewUrl = getBuildUrl({
     buildOrigin,
     project,
     page,
     mode: "preview",
+    // Temporary solution until the new share UI is implemented
+    authToken: authSharedTokens.find((t) => t.relation === "viewers")?.token,
   });
 
   return (

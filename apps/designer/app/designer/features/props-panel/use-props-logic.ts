@@ -1,17 +1,12 @@
 import { useMemo, useState } from "react";
 import ObjectId from "bson-objectid";
 import warnOnce from "warn-once";
-import type {
-  Instance,
-  PropsItem,
-  MetaProps,
-  ComponentName,
-} from "@webstudio-is/react-sdk";
+import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import type { MetaProps } from "@webstudio-is/react-sdk";
 import {
   getComponentMeta,
   getComponentMetaProps,
 } from "@webstudio-is/react-sdk";
-import type { SelectedInstanceData } from "@webstudio-is/project";
 
 export type UserPropValue = PropsItem extends infer T
   ? T extends { value: unknown; type: unknown }
@@ -42,11 +37,11 @@ export const getValueFromPropMeta = (propValue?: MetaProps[string]) => {
   return typedValue;
 };
 
-const getRequiredPropsList = (component: ComponentName) => {
+const getRequiredPropsList = (component: string) => {
   const meta = getComponentMeta(component);
-  const metaProps = getComponentMetaProps(component);
+  const metaProps = getComponentMetaProps(component) ?? {};
 
-  const initialProps = meta.initialProps ?? [];
+  const initialProps = meta?.initialProps ?? [];
   const requiredProps = [];
   const propsWithDefaultValue = [];
 
@@ -75,7 +70,7 @@ const getRequiredPropsList = (component: ComponentName) => {
 
 type UsePropsLogic = {
   props: PropsItem[];
-  selectedInstanceData: SelectedInstanceData;
+  selectedInstance: Instance;
   updateProps: (update: PropsItem) => void;
   deleteProp: (id: PropsItem["id"]) => void;
 };
@@ -102,14 +97,14 @@ const getPropsItemFromMetaProps = (
  */
 export const usePropsLogic = ({
   props,
-  selectedInstanceData,
+  selectedInstance,
   updateProps,
   deleteProp,
 }: UsePropsLogic) => {
-  const { id: instanceId, component } = selectedInstanceData;
+  const { id: instanceId, component } = selectedInstance;
 
   const metaProps = useMemo(
-    () => getComponentMetaProps(component),
+    () => getComponentMetaProps(component) ?? {},
     [component]
   );
   const requiredPropsList = useMemo(

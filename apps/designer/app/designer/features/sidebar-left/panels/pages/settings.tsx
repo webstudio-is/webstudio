@@ -1,5 +1,12 @@
+import type { ZodError } from "zod";
+import { useState, useCallback, ComponentProps } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import { useUnmount } from "react-use";
+import slugify from "slugify";
+import { useFetcher } from "@remix-run/react";
+import { type Page } from "@webstudio-is/project";
 import {
-  DeprecatedIconButton,
+  theme,
   Button,
   Box,
   DeprecatedLabel,
@@ -10,16 +17,9 @@ import {
   InputErrorsTooltip,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { useFetcher } from "@remix-run/react";
 import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
 import { type Pages, utils as projectUtils } from "@webstudio-is/project";
-import type { ZodError } from "zod";
-import { Header } from "../../lib/header";
-import { useState, useCallback, ComponentProps } from "react";
-import { type Page } from "@webstudio-is/project";
 import { usePages } from "~/designer/shared/nano-states";
-import { useDebouncedCallback } from "use-debounce";
-import { useUnmount } from "react-use";
 import { useOnFetchEnd, usePersistentFetcher } from "~/shared/fetcher";
 import {
   normalizeErrors,
@@ -33,8 +33,7 @@ import type {
   CreatePageData,
 } from "~/shared/pages";
 import { restPagesPath } from "~/shared/router-utils";
-import slugify from "slugify";
-import { theme } from "@webstudio-is/design-system";
+import { Header, HeaderSuffixSpacer } from "../../header";
 
 const Group = styled(Flex, {
   marginBottom: theme.spacing[9],
@@ -256,12 +255,6 @@ export const NewPageSettings = ({
   );
 };
 
-const ButtonContainer = styled("div", {
-  ml: theme.spacing[5],
-  display: "flex",
-  alignItems: "center",
-});
-
 const NewPageSettingsView = ({
   onSubmit,
   isSubmitting,
@@ -280,23 +273,25 @@ const NewPageSettingsView = ({
           <>
             {onClose && (
               <Tooltip content="Cancel" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
                   onClick={onClose}
                   aria-label="Cancel"
+                  prefix={<ChevronDoubleLeftIcon />}
+                  color="ghost"
                   // Tab should go:
                   //   trought form fields -> create button -> cancel button
                   tabIndex={3}
-                >
-                  <ChevronDoubleLeftIcon />
-                </DeprecatedIconButton>
+                />
               </Tooltip>
             )}
-            <ButtonContainer>
-              <Button pending={isSubmitting} onClick={onSubmit} tabIndex={2}>
-                {isSubmitting ? "Creating" : "Create page"}
-              </Button>
-            </ButtonContainer>
+            <HeaderSuffixSpacer />
+            <Button
+              state={isSubmitting ? "pending" : "auto"}
+              onClick={onSubmit}
+              tabIndex={2}
+            >
+              {isSubmitting ? "Creating" : "Create page"}
+            </Button>
           </>
         }
       />
@@ -461,26 +456,24 @@ const PageSettingsView = ({
           <>
             {isHomePage === false && (
               <Tooltip content="Delete page" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
+                  color="ghost"
+                  prefix={<TrashIcon />}
                   onClick={onDelete}
                   aria-label="Delete page"
                   tabIndex={2}
-                >
-                  <TrashIcon />
-                </DeprecatedIconButton>
+                />
               </Tooltip>
             )}
             {onClose && (
               <Tooltip content="Close page settings" side="bottom">
-                <DeprecatedIconButton
-                  size="2"
+                <Button
+                  color="ghost"
+                  prefix={<ChevronDoubleLeftIcon />}
                   onClick={onClose}
                   aria-label="Close page settings"
                   tabIndex={2}
-                >
-                  <ChevronDoubleLeftIcon />
-                </DeprecatedIconButton>
+                />
               </Tooltip>
             )}
           </>

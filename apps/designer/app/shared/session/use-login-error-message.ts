@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { sentryMessage } from "../sentry";
+import { useSearchParams } from "@remix-run/react";
 
 export const AUTH_PROVIDERS = {
   LOGIN_DEV: "login_dev",

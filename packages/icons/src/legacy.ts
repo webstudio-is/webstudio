@@ -24,8 +24,6 @@ export {
   HeadingIcon,
   TextIcon,
   SquareIcon,
-  InfoCircledIcon,
   CrossCircledIcon,
   CheckCircledIcon,
-  TokensIcon,
 } from "@radix-ui/react-icons";
