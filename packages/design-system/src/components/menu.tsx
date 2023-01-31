@@ -82,18 +82,11 @@ const menuBorderWidth = "1px";
 
 export const menuCss = css({
   boxSizing: "border-box",
-
   borderRadius: theme.borderRadius[6],
   backgroundColor: theme.colors.backgroundMenu,
-
-  // in Figma there are 2 borders on two rectangles,
-  // but we have only one element to work with,
-  // so we implement borders using shadows
-  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMain}, inset 0 0 0 2px ${theme.colors.borderMenuInner}`,
-
-  // extra 1px padding to account for one of the shadow-borders above
-  padding: `calc(${menuBorderWidth} + ${menuPadding}) ${menuBorderWidth}`,
-
+  border: `1px solid ${theme.colors.borderMain}`,
+  boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
+  padding: `${menuPadding} 0`,
   variants: {
     width: {
       regular: { width: theme.spacing[26] },
