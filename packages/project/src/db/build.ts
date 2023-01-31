@@ -15,6 +15,7 @@ export const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
   return {
     ...build,
+    createdAt: build.createdAt.toISOString(),
     pages,
     styles: await parseNewStyles(build.styles),
     styleSources: StyleSources.parse(JSON.parse(build.styleSources)),

@@ -74,7 +74,7 @@ export type Pages = z.infer<typeof Pages>;
 export type Build = {
   id: string;
   projectId: string;
-  createdAt: Date;
+  createdAt: string;
   isDev: boolean;
   isProd: boolean;
   pages: Pages;
