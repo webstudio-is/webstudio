@@ -450,9 +450,8 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#ffefef",
-          "type": "color",
-          "description": "background for destructive toast"
+          "value": "#d53f45",
+          "type": "color"
         }
       },
       "success": {
@@ -635,6 +634,11 @@
             "type": "color"
           }
         }
+      },
+      "canvas": {
+        "value": "#c7c7c7",
+        "type": "color",
+        "description": "The color of the Builder UI canvas area background."
       }
     },
     "brand": {
@@ -716,7 +720,7 @@
         "description": "border color for success banner & toast"
       },
       "alert": {
-        "value": "#f5d90a",
+        "value": "#e2c802",
         "type": "color",
         "description": "border color for alert banner & toast"
       },
@@ -1036,6 +1040,30 @@
       "0": {
         "value": "0px",
         "type": "dimension"
+      }
+    },
+    "Regular Icon Border": {
+      "0": {
+        "value": "1",
+        "type": "borderWidth"
+      },
+      "1": {
+        "value": "1.3",
+        "type": "borderWidth"
+      },
+      "2": {
+        "value": "1.6",
+        "type": "borderWidth"
+      }
+    },
+    "Large Icon Border": {
+      "1": {
+        "value": "1.5",
+        "type": "borderWidth"
+      },
+      "2": {
+        "value": "1.8",
+        "type": "borderWidth"
       }
     }
   },

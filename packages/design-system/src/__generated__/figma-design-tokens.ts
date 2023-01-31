@@ -219,7 +219,7 @@ export const color = {
   backgroundNeutralNotification: "#ffffff",
   backgroundNeutralDark: "#7e868c",
   backgroundDestructiveMain: "#de3339",
-  backgroundDestructiveNotification: "#ffefef",
+  backgroundDestructiveNotification: "#d53f45",
   backgroundSuccessMain: "#00894a",
   backgroundSuccessNotification: "#e9f9ee",
   backgroundAlertMain: "#f5d90a",
@@ -257,6 +257,7 @@ export const color = {
     "linear-gradient(90deg, #d2319700 0%, #d23197 31.87%)",
   backgroundStyleSourceGradientState:
     "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
+  backgroundCanvas: "#c7c7c7",
   brandBackgroundProjectCardFront:
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
@@ -274,7 +275,7 @@ export const color = {
   borderColorSwatch: "#687076",
   borderNeutral: "#e8e8e8",
   borderSuccess: "#00894a",
-  borderAlert: "#f5d90a",
+  borderAlert: "#e2c802",
   borderInfo: "#0175dc",
   borderContrast: "#ffffff",
   borderItemChildLine: "#889096",
@@ -308,7 +309,15 @@ export const color = {
   maintenanceSpacerViz: "#f9c6c6",
 } as const;
 
-export const borderWidth = { borderWidth0: 1, borderWidth1: 2 } as const;
+export const borderWidth = {
+  borderWidth0: 1,
+  borderWidth1: 2,
+  regularIconBorder0: 1,
+  regularIconBorder1: 1.3,
+  regularIconBorder2: 1.6,
+  largeIconBorder1: 1.5,
+  largeIconBorder2: 1.8,
+} as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
 
