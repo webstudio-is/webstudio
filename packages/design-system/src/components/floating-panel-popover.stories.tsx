@@ -1,7 +1,13 @@
-import { Button } from "../button";
-import { css, theme } from "../../stitches.config";
-import { typography } from "../typography";
-import * as Popover from "./popover";
+import { Button } from "./button";
+import { css, theme } from "../stitches.config";
+import { typography } from "./typography";
+import {
+  FloatingPanelPopover,
+  FloatingPanelPopoverClose,
+  FloatingPanelPopoverContent,
+  FloatingPanelPopoverTitle,
+  FloatingPanelPopoverTrigger,
+} from "./floating-panel-popover";
 
 export default {
   title: "Library/Floating Panel/Popover",
@@ -23,28 +29,28 @@ const buttonsStyle = css({
 });
 
 const PopoverDemo = () => (
-  <Popover.Root defaultOpen>
-    <Popover.Trigger asChild>
+  <FloatingPanelPopover defaultOpen>
+    <FloatingPanelPopoverTrigger asChild>
       <Button>Open</Button>
-    </Popover.Trigger>
-    <Popover.Content>
+    </FloatingPanelPopoverTrigger>
+    <FloatingPanelPopoverContent>
       <div className={bodyStyles()}>
         <p className={descriptionStyles()}>This is a description</p>
         <div className={buttonsStyle()}>
-          <Popover.Close asChild>
+          <FloatingPanelPopoverClose asChild>
             <Button color="ghost">Cancel</Button>
-          </Popover.Close>
-          <Popover.Close asChild>
+          </FloatingPanelPopoverClose>
+          <FloatingPanelPopoverClose asChild>
             <Button color="positive">Save</Button>
-          </Popover.Close>
+          </FloatingPanelPopoverClose>
         </div>
       </div>
 
       {/* Title is at the end intentionally,
        * to make the close button last in the tab order
        */}
-      <Popover.Title>Title</Popover.Title>
-    </Popover.Content>
-  </Popover.Root>
+      <FloatingPanelPopoverTitle>Title</FloatingPanelPopoverTitle>
+    </FloatingPanelPopoverContent>
+  </FloatingPanelPopover>
 );
 export { PopoverDemo as Popover };

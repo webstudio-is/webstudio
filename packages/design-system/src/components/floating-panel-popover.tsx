@@ -1,17 +1,17 @@
 import React, { type ComponentProps, type Ref, type ReactNode } from "react";
 import * as Primitive from "@radix-ui/react-popover";
-import { css, theme } from "../../stitches.config";
-import { Title } from "../title";
-import { floatingPanelStyles, CloseButton, TitleSlot } from "./shared";
+import { css, theme } from "../stitches.config";
+import { Title } from "./title";
+import { floatingPanelStyles, CloseButton, TitleSlot } from "./floating-panel";
 
-export const Root = Primitive.Root;
+export const FloatingPanelPopover = Primitive.Root;
 
 const contentStyles = css(floatingPanelStyles, {
   minWidth: theme.spacing[28],
   maxWidth: "max-content",
 });
 
-export const Content = React.forwardRef(
+export const FloatingPanelPopoverContent = React.forwardRef(
   (
     { children, className, ...props }: ComponentProps<typeof Primitive.Content>,
     ref: Ref<HTMLDivElement>
@@ -29,9 +29,9 @@ export const Content = React.forwardRef(
     </Primitive.Portal>
   )
 );
-Content.displayName = "Content";
+FloatingPanelPopoverContent.displayName = "FloatingPanelPopoverContent";
 
-const PopoverTitle = ({
+export const FloatingPanelPopoverTitle = ({
   children,
   closeLabel = "Close dialog",
 }: {
@@ -50,7 +50,6 @@ const PopoverTitle = ({
     </Title>
   </TitleSlot>
 );
-export { PopoverTitle as Title };
 
-export const Trigger = Primitive.Trigger;
-export const Close = Primitive.Close;
+export const FloatingPanelPopoverTrigger = Primitive.Trigger;
+export const FloatingPanelPopoverClose = Primitive.Close;

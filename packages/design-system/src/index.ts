@@ -11,8 +11,9 @@ export * from "./components/label";
 export * from "./components/select"; // menu is aligned, but trigger is not
 export * from "./components/combobox";
 export * from "./components/dropdown-menu";
-export * from "./components/floating-panel";
 export * from "./components/icon-button"; // mostly aligned, but needs a demo and to use tokens
+export * from "./components/dialog";
+export * from "./components/floating-panel-popover";
 
 // Not aligned
 

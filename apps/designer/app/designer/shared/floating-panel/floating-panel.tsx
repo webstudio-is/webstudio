@@ -1,7 +1,10 @@
 import {
-  FloatingPanelPopover as Popover,
+  FloatingPanelPopover,
   theme,
   css,
+  FloatingPanelPopoverTrigger,
+  FloatingPanelPopoverContent,
+  FloatingPanelPopoverTitle,
 } from "@webstudio-is/design-system";
 import {
   MutableRefObject,
@@ -67,8 +70,8 @@ export const FloatingPanel = ({
   const { isOpen, handleOpenChange, triggerRef, sideOffset } =
     useLogic(onOpenChange);
   return (
-    <Popover.Root open={isOpen} onOpenChange={handleOpenChange} modal>
-      <Popover.Trigger
+    <FloatingPanelPopover open={isOpen} onOpenChange={handleOpenChange} modal>
+      <FloatingPanelPopoverTrigger
         asChild
         ref={triggerRef}
         onClick={() => {
@@ -76,16 +79,16 @@ export const FloatingPanel = ({
         }}
       >
         {children}
-      </Popover.Trigger>
-      <Popover.Content
+      </FloatingPanelPopoverTrigger>
+      <FloatingPanelPopoverContent
         sideOffset={sideOffset}
         side="left"
         align="start"
         className={contetnStyles()}
       >
         {content}
-        <Popover.Title>{title}</Popover.Title>
-      </Popover.Content>
-    </Popover.Root>
+        <FloatingPanelPopoverTitle>{title}</FloatingPanelPopoverTitle>
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
   );
 };
