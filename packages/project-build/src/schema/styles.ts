@@ -25,8 +25,8 @@ export const StoredStyles = z.array(StoredStylesItem);
 export type StoredStyles = z.infer<typeof StoredStyles>;
 
 export const StylesItem = z.object({
-  breakpointId: z.string(),
   instanceId: z.string(),
+  breakpointId: z.string(),
   // @todo can't figure out how to make property to be enum
   property: z.string() as z.ZodType<StyleProperty>,
   value: z.union([ImageValue, SharedStyleValue]),
@@ -37,3 +37,17 @@ export type StylesItem = z.infer<typeof StylesItem>;
 export const Styles = z.array(StylesItem);
 
 export type Styles = z.infer<typeof Styles>;
+
+export const NewStylesItem = z.object({
+  styleSourceId: z.string(),
+  breakpointId: z.string(),
+  // @todo can't figure out how to make property to be enum
+  property: z.string() as z.ZodType<StyleProperty>,
+  value: z.union([ImageValue, SharedStyleValue]),
+});
+
+export type NewStylesItem = z.infer<typeof NewStylesItem>;
+
+export const NewStyles = z.array(NewStylesItem);
+
+export type NewStyles = z.infer<typeof NewStyles>;

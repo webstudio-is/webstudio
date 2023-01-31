@@ -12,6 +12,7 @@ import {
   StyleSources,
   StyleSourceSelections,
   type Tree,
+  NewStyles,
 } from "@webstudio-is/project-build";
 import type { Project } from "./schema";
 import {
@@ -45,6 +46,45 @@ const parseValue = (
     };
   }
   return styleValue;
+};
+
+export const parseNewStyles = async (stylesString: string) => {
+  const storedStyles = StoredStyles.parse(JSON.parse(stylesString));
+
+  const assetIds: string[] = [];
+  for (const { value: styleValue } of storedStyles) {
+    if (styleValue.type === "image") {
+      for (const item of styleValue.value) {
+        if (item.type === "asset") {
+          assetIds.push(item.value);
+        }
+      }
+    }
+  }
+
+  // Load all assets
+  const assets = await prisma.asset.findMany({
+    where: {
+      id: {
+        in: assetIds,
+      },
+    },
+  });
+  const assetsMap = new Map<string, Asset>();
+  for (const asset of assets) {
+    assetsMap.set(asset.id, formatAsset(asset));
+  }
+
+  const styles: NewStyles = storedStyles.map((styleDecl) => {
+    return {
+      styleSourceId: styleDecl.styleSourceId,
+      breakpointId: styleDecl.breakpointId,
+      property: styleDecl.property,
+      value: parseValue(styleDecl.value, assetsMap),
+    };
+  });
+
+  return styles;
 };
 
 export const parseStyles = async (

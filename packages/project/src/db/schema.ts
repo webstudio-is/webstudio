@@ -1,5 +1,6 @@
 import { z, type ZodType } from "zod";
-import { Project, Build as DbBuild } from "@webstudio-is/prisma-client";
+import { Project } from "@webstudio-is/prisma-client";
+import type { NewStyles, StyleSources } from "@webstudio-is/project-build";
 import type { Data } from "@webstudio-is/react-sdk";
 
 export type { Project };
@@ -70,6 +71,19 @@ export const Pages: z.ZodType<{ homePage: Page; pages: Array<Page> }> =
   });
 export type Pages = z.infer<typeof Pages>;
 
-export type Build = Omit<DbBuild, "pages"> & { pages: Pages };
+export type Build = {
+  id: string;
+  projectId: string;
+  createdAt: string;
+  isDev: boolean;
+  isProd: boolean;
+  pages: Pages;
+  styles: NewStyles;
+  styleSources: StyleSources;
+};
 
-export type CanvasData = Data & { buildId: Build["id"]; page: Page };
+export type CanvasData = Data & {
+  build: null | Build;
+  buildId: Build["id"];
+  page: Page;
+};

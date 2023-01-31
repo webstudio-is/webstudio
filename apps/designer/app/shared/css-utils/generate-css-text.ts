@@ -49,7 +49,10 @@ export const generateCssText = async (
     }
   }
 
-  const styleRules = getStyleRules(canvasData.tree?.styles);
+  const styleRules = getStyleRules(
+    canvasData.build?.styles,
+    canvasData.tree?.styleSourceSelections
+  );
   for (const { breakpointId, instanceId, style } of styleRules) {
     engine.addStyleRule(`[${idAttribute}="${instanceId}"]`, {
       breakpoint: breakpointId,

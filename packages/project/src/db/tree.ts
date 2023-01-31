@@ -6,8 +6,6 @@ import {
   type InstancesItem,
   Instance,
   Instances,
-  type Styles,
-  type Props,
   StyleSourceSelections,
   StyleSources,
   StoredStyles,
@@ -50,17 +48,16 @@ export const createTree = ({
   buildId: string;
 }): TreeData => {
   const root = utils.tree.createInstance({ component: "Body" });
-  const styles: Styles = [];
   const instances: Instances = [];
   normalizeTree(root, instances);
-  const props: Props = [];
 
   return {
     projectId,
     buildId,
     root,
-    props,
-    styles,
+    props: [],
+    styles: [],
+    styleSourceSelections: [],
   };
 };
 
@@ -177,11 +174,16 @@ export const loadById = async (
     tree.styleSelections
   );
 
+  const styleSourceSelections = StyleSourceSelections.parse(
+    JSON.parse(tree.styleSelections)
+  );
+
   return {
     ...tree,
     root,
     props,
     styles,
+    styleSourceSelections,
   };
 };
 
