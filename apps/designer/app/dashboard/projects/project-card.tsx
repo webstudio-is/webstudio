@@ -12,16 +12,14 @@ import {
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
-import {
-  dashboardProjectPath,
-  designerPath,
-  getPublishedUrl,
-} from "~/shared/router-utils";
+import { designerPath, getPublishedUrl } from "~/shared/router-utils";
 import { Link as RemixLink } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
-import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { RenameProject, DeleteProject } from "./create-rename-delete";
+import {
+  RenameProject,
+  DeleteProject,
+  useDuplicate,
+} from "./create-rename-duplicate-delete";
 
 const containerStyle = css({
   overflow: "hidden",
@@ -143,7 +141,6 @@ const Menu = ({
 
 const useProjectCard = () => {
   const thumbnailRef = useRef<HTMLAnchorElement>(null);
-  const { submit: duplicate } = trpc.duplicate.useMutation();
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     const elements: Array<HTMLElement> = Array.from(
@@ -176,18 +173,11 @@ const useProjectCard = () => {
     }
   };
 
-  const handleDuplicate = (projectId: string) => {
-    duplicate({ projectId });
-  };
-
   return {
     thumbnailRef,
     handleKeyDown,
-    handleDuplicate,
   };
 };
-
-const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
 // My Next Project > MN
 const getThumbnailAbbreviation = (title: string) =>
@@ -197,7 +187,10 @@ const getThumbnailAbbreviation = (title: string) =>
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
 
-type ProjectCardProps = DashboardProject;
+type ProjectCardProps = Pick<
+  DashboardProject,
+  "id" | "title" | "domain" | "isPublished"
+>;
 
 export const ProjectCard = ({
   id,
@@ -207,7 +200,9 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const { thumbnailRef, handleKeyDown, handleDuplicate } = useProjectCard();
+  const { thumbnailRef, handleKeyDown } = useProjectCard();
+  const handleDuplicate = useDuplicate(id);
+
   return (
     <>
       <Flex
@@ -250,9 +245,7 @@ export const ProjectCard = ({
             onRename={() => {
               setIsRenameDialogOpen(true);
             }}
-            onDuplicate={() => {
-              handleDuplicate(id);
-            }}
+            onDuplicate={handleDuplicate}
           />
         </Flex>
       </Flex>

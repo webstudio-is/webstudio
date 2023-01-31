@@ -267,3 +267,10 @@ export const DeleteProject = ({
     </Dialog>
   );
 };
+
+export const useDuplicate = (projectId: DashboardProject["id"]) => {
+  const { submit } = trpc.duplicate.useMutation();
+  return () => {
+    submit({ projectId });
+  };
+};
