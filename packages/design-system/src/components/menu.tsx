@@ -41,6 +41,7 @@ export const itemIndicatorCss = css({
   height: indicatorSize,
 });
 
+const itemMargin = theme.spacing[3];
 export const itemCss = css(typography.labelTitleCase, {
   outline: "none",
   cursor: "default",
@@ -48,13 +49,13 @@ export const itemCss = css(typography.labelTitleCase, {
   display: "flex",
   alignItems: "center",
   color: theme.colors.foregroundMain,
-  mx: theme.spacing[3],
+  mx: itemMargin,
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[3],
   "&:focus, &[data-found], &[aria-selected=true], &[data-state=open]": {
     backgroundColor: theme.colors.backgroundItemMenuItemHover,
   },
-  "&[data-disabled], &[aria-disabled]": {
+  "&[data-disabled], &[aria-disabled], &[disabled]": {
     color: theme.colors.foregroundDisabled,
   },
   variants: {
@@ -68,6 +69,17 @@ export const itemCss = css(typography.labelTitleCase, {
         color: theme.colors.foregroundDestructive,
       },
     },
+  },
+});
+
+// To use outside of any menu context, e.g. in a Popover
+export const MenuItemButton = styled("button", itemCss, {
+  border: "none",
+  boxSizing: "border-box",
+  width: `calc(100% - ${itemMargin} * 2)`,
+  "&:focus:not(:focus-visible)": { backgroundColor: "unset" },
+  "&:hover:not([diabled])": {
+    backgroundColor: theme.colors.backgroundItemMenuItemHover,
   },
 });
 
