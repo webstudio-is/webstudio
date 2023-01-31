@@ -22,7 +22,7 @@ import { Link as RemixLink, useFetcher } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { RenameProject } from "./create-rename-duplicate";
+import { RenameProject } from "./create-rename";
 
 const containerStyle = css({
   overflow: "hidden",
