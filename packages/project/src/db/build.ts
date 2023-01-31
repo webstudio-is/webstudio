@@ -5,13 +5,21 @@ import {
   Prisma,
   Project,
 } from "@webstudio-is/prisma-client";
+import { StyleSources } from "@webstudio-is/project-build";
 import * as db from ".";
 import { Build, Page, Pages } from "./schema";
 import * as pagesUtils from "../shared/pages";
+import { parseNewStyles } from "./styles";
 
-export const parseBuild = (build: DbBuild): Build => {
+export const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
-  return { ...build, pages };
+  return {
+    ...build,
+    createdAt: build.createdAt.toISOString(),
+    pages,
+    styles: await parseNewStyles(build.styles),
+    styleSources: StyleSources.parse(JSON.parse(build.styleSources)),
+  };
 };
 
 export const loadById = async (id: Build["id"]): Promise<Build> => {

@@ -1,34 +1,75 @@
 import { test, expect } from "@jest/globals";
-import type { Styles } from "@webstudio-is/project-build";
+import type {
+  NewStyles,
+  StyleSourceSelections,
+} from "@webstudio-is/project-build";
 import { getStyleRules } from "./style-rules";
 
-test("get a list of style rules grouped by instance and breakpoint", () => {
-  const styles: Styles = [
+test("compute styles from different style sources", () => {
+  const styles: NewStyles = [
     {
       breakpointId: "a",
-      instanceId: "1",
+      styleSourceId: "styleSource1",
       property: "width",
       value: { type: "unit", value: 10, unit: "px" },
     },
     {
       breakpointId: "a",
-      instanceId: "2",
+      styleSourceId: "styleSource2",
       property: "display",
       value: { type: "keyword", value: "block" },
     },
     {
       breakpointId: "a",
-      instanceId: "3",
+      styleSourceId: "styleSource4",
+      property: "color",
+      value: { type: "keyword", value: "green" },
+    },
+    {
+      breakpointId: "a",
+      styleSourceId: "styleSource4",
+      property: "width",
+      value: { type: "keyword", value: "min-content" },
+    },
+    {
+      breakpointId: "a",
+      styleSourceId: "styleSource3",
       property: "color",
       value: { type: "keyword", value: "red" },
     },
+    {
+      breakpointId: "b",
+      styleSourceId: "styleSource5",
+      property: "color",
+      value: { type: "keyword", value: "orange" },
+    },
+    {
+      breakpointId: "a",
+      styleSourceId: "styleSource6",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    },
+  ];
+  const styleSourceSelections: StyleSourceSelections = [
+    {
+      instanceId: "instance1",
+      values: ["styleSource1"],
+    },
+    {
+      instanceId: "instance2",
+      values: ["styleSource4", "styleSource5", "styleSource3"],
+    },
+    {
+      instanceId: "instance3",
+      values: ["styleSource6"],
+    },
   ];
 
-  expect(getStyleRules(styles)).toMatchInlineSnapshot(`
+  expect(getStyleRules(styles, styleSourceSelections)).toMatchInlineSnapshot(`
     [
       {
         "breakpointId": "a",
-        "instanceId": "1",
+        "instanceId": "instance1",
         "style": {
           "width": {
             "type": "unit",
@@ -39,21 +80,35 @@ test("get a list of style rules grouped by instance and breakpoint", () => {
       },
       {
         "breakpointId": "a",
-        "instanceId": "2",
+        "instanceId": "instance2",
         "style": {
-          "display": {
+          "color": {
             "type": "keyword",
-            "value": "block",
+            "value": "red",
+          },
+          "width": {
+            "type": "keyword",
+            "value": "min-content",
+          },
+        },
+      },
+      {
+        "breakpointId": "b",
+        "instanceId": "instance2",
+        "style": {
+          "color": {
+            "type": "keyword",
+            "value": "orange",
           },
         },
       },
       {
         "breakpointId": "a",
-        "instanceId": "3",
+        "instanceId": "instance3",
         "style": {
           "color": {
             "type": "keyword",
-            "value": "red",
+            "value": "blue",
           },
         },
       },
