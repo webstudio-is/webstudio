@@ -17,7 +17,7 @@ import { ActionsBar, Close, Dialog } from "./dialog";
 
 const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
-const useNewProject = () => {
+const useForm = () => {
   const { submit, data } = trpc.create.useMutation();
   const navigate = useNavigate();
 
@@ -42,7 +42,7 @@ const useNewProject = () => {
 };
 
 const Content = () => {
-  const { handleSubmit, errors } = useNewProject();
+  const { handleSubmit, errors } = useForm();
   return (
     <form onSubmit={handleSubmit}>
       <Flex
@@ -73,7 +73,7 @@ const Content = () => {
   );
 };
 
-export const NewProject = () => {
+export const CreateProject = () => {
   return (
     <Dialog
       title="New Project"
