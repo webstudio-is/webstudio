@@ -1,9 +1,18 @@
 import warnOnce from "warn-once";
+import ObjectId from "bson-objectid";
 import { type Patch, applyPatches } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import { StoredStyles, Styles, type Tree } from "@webstudio-is/project-build";
+import {
+  type Instance,
+  StoredStyles,
+  Styles,
+  type StyleSource,
+  StyleSources,
+  StyleSourceSelections,
+  type Tree,
+} from "@webstudio-is/project-build";
 import type { Project } from "./schema";
 import {
   authorizeProject,
@@ -38,8 +47,38 @@ const parseValue = (
   return styleValue;
 };
 
-export const parseStyles = async (stylesString: string) => {
+export const parseStyles = async (
+  treeId: string,
+  stylesString: string,
+  styleSourcesString: string,
+  styleSourceSelectionsString: string
+) => {
+  const styleSources = StyleSources.parse(JSON.parse(styleSourcesString));
+  const styleSourceSelections = StyleSourceSelections.parse(
+    JSON.parse(styleSourceSelectionsString)
+  );
   const storedStyles = StoredStyles.parse(JSON.parse(stylesString));
+
+  const instanceIdByStyleSourceId = new Map<
+    StyleSource["id"],
+    Instance["id"]
+  >();
+  const currentTreeStyleSources = new Set<StyleSource["id"]>();
+
+  for (const styleSource of styleSources) {
+    if (styleSource.type === "local" && styleSource.treeId === treeId) {
+      currentTreeStyleSources.add(styleSource.id);
+    }
+  }
+
+  for (const stylesSourceSelection of styleSourceSelections) {
+    for (const styleSourceId of stylesSourceSelection.values) {
+      instanceIdByStyleSourceId.set(
+        styleSourceId,
+        stylesSourceSelection.instanceId
+      );
+    }
+  }
 
   const assetIds: string[] = [];
   for (const { value: styleValue } of storedStyles) {
@@ -65,13 +104,21 @@ export const parseStyles = async (stylesString: string) => {
     assetsMap.set(asset.id, formatAsset(asset));
   }
 
-  const styles: Styles = storedStyles.map((stylesItem) => {
-    return {
-      breakpointId: stylesItem.breakpointId,
-      instanceId: stylesItem.instanceId,
-      property: stylesItem.property,
-      value: parseValue(stylesItem.value, assetsMap),
+  const styles: Styles = storedStyles.flatMap((styleDecl) => {
+    if (currentTreeStyleSources.has(styleDecl.styleSourceId) === false) {
+      return [];
+    }
+    const instanceId = instanceIdByStyleSourceId.get(styleDecl.styleSourceId);
+    if (instanceId === undefined) {
+      return [];
+    }
+    const clientStyle = {
+      breakpointId: styleDecl.breakpointId,
+      instanceId,
+      property: styleDecl.property,
+      value: parseValue(styleDecl.value, assetsMap),
     };
+    return [clientStyle];
   });
 
   return styles;
@@ -94,13 +141,91 @@ const serializeValue = (styleValue: Styles[number]["value"]) => {
   return styleValue;
 };
 
-export const serializeStyles = (styles: Styles) => {
-  const storedStyles: StoredStyles = styles.map((stylesItem) => {
+export const convertToStoredStyles = (
+  treeId: string,
+  styles: Styles,
+  styleSources: StyleSources,
+  styleSourceSelections: StyleSourceSelections
+): StoredStyles => {
+  const styleSourceIdByInstanceId = new Map<
+    Instance["id"],
+    StyleSource["id"]
+  >();
+
+  for (const stylesSourceSelection of styleSourceSelections) {
+    for (const styleSourceId of stylesSourceSelection.values) {
+      styleSourceIdByInstanceId.set(
+        stylesSourceSelection.instanceId,
+        styleSourceId
+      );
+    }
+  }
+
+  const storedStyles: StoredStyles = styles.map((styleDecl) => {
+    const { instanceId } = styleDecl;
+    let styleSourceId = styleSourceIdByInstanceId.get(instanceId);
+    if (styleSourceId === undefined) {
+      styleSourceId = ObjectId().toString();
+      styleSourceSelections.push({
+        instanceId,
+        values: [styleSourceId],
+      });
+      styleSources.push({
+        type: "local",
+        id: styleSourceId,
+        treeId,
+      });
+    }
     return {
-      breakpointId: stylesItem.breakpointId,
-      instanceId: stylesItem.instanceId,
-      property: stylesItem.property,
-      value: serializeValue(stylesItem.value),
+      breakpointId: styleDecl.breakpointId,
+      styleSourceId,
+      property: styleDecl.property,
+      value: serializeValue(styleDecl.value),
+    };
+  });
+  return storedStyles;
+};
+
+export const serializeStyles = (
+  treeId: string,
+  styles: Styles,
+  styleSources: StyleSources,
+  styleSourceSelections: StyleSourceSelections
+) => {
+  const styleSourceIdByInstanceId = new Map<
+    Instance["id"],
+    StyleSource["id"]
+  >();
+
+  for (const stylesSourceSelection of styleSourceSelections) {
+    for (const styleSourceId of stylesSourceSelection.values) {
+      styleSourceIdByInstanceId.set(
+        stylesSourceSelection.instanceId,
+        styleSourceId
+      );
+    }
+  }
+
+  const storedStyles: StoredStyles = styles.map((styleDecl) => {
+    const { instanceId } = styleDecl;
+    let styleSourceId = styleSourceIdByInstanceId.get(instanceId);
+    if (styleSourceId === undefined) {
+      styleSourceId = ObjectId().toString();
+      styleSourceSelections.push({
+        instanceId,
+        values: [styleSourceId],
+      });
+      styleSources.push({
+        type: "local",
+        id: styleSourceId,
+        treeId,
+      });
+    }
+    return {
+      breakpointId: styleDecl.breakpointId,
+      styleSourceId,
+      property: styleDecl.property,
+      value: serializeValue(styleDecl.value),
     };
   });
   return JSON.stringify(storedStyles);
@@ -126,12 +251,62 @@ export const patch = async (
   if (tree === null) {
     return;
   }
-  const styles = await parseStyles(tree.styles);
-  const patchedStyles = Styles.parse(applyPatches(styles, patches));
+
+  const build = await prisma.build.findUnique({
+    where: { id: tree.buildId },
+  });
+  if (build === null) {
+    return null;
+  }
+
+  const storedStyles = StoredStyles.parse(JSON.parse(build.styles));
+  const styleSources = StyleSources.parse(JSON.parse(build.styleSources));
+  const styleSourceSelections = StyleSourceSelections.parse(
+    JSON.parse(tree.styleSelections)
+  );
+
+  // these styles are filtered by treeId
+  const treeStyles = await parseStyles(
+    treeId,
+    build.styles,
+    build.styleSources,
+    tree.styleSelections
+  );
+
+  const patchedTreeStyles = Styles.parse(applyPatches(treeStyles, patches));
+
+  const currentTreeStyleSources = new Set<StyleSource["id"]>();
+  for (const styleSource of styleSources) {
+    if (styleSource.type === "local" && styleSource.treeId === treeId) {
+      currentTreeStyleSources.add(styleSource.id);
+    }
+  }
+
+  // exclude all current tree styles and append patched styles to the end
+  const patchedStoredStyles = storedStyles.filter(
+    (styleDecl) =>
+      currentTreeStyleSources.has(styleDecl.styleSourceId) === false
+  );
+  patchedStoredStyles.push(
+    ...convertToStoredStyles(
+      treeId,
+      patchedTreeStyles,
+      styleSources,
+      styleSourceSelections
+    )
+  );
+
+  await prisma.build.update({
+    data: {
+      styles: JSON.stringify(patchedStoredStyles),
+      styleSources: JSON.stringify(styleSources),
+    },
+    where: { id: build.id },
+  });
 
   await prisma.tree.update({
     data: {
-      styles: serializeStyles(patchedStyles),
+      styleSelections: JSON.stringify(styleSourceSelections),
     },
     where: { id: treeId },
   });
