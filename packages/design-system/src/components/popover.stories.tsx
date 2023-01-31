@@ -1,21 +1,19 @@
 import { Button } from "./button";
-import { css, theme } from "../stitches.config";
 import { typography } from "./typography";
 import {
   Popover,
   PopoverClose,
   PopoverContent,
   PopoverTrigger,
+  PopoverContentContainer,
+  PopoverMenuItemContainer,
+  PopoverSeparator,
 } from "./popover";
+import { MenuItemButton } from "./menu";
 
 export default {
   title: "Library/Popover",
 };
-
-const bodyStyles = css(typography.regular, {
-  padding: theme.spacing[7],
-  "& p": { marginTop: 0, marginBottom: theme.spacing[9] },
-});
 
 const PopoverDemo = () => (
   <Popover defaultOpen>
@@ -23,12 +21,15 @@ const PopoverDemo = () => (
       <Button>Open</Button>
     </PopoverTrigger>
     <PopoverContent>
-      <div className={bodyStyles()}>
-        <p>Some content</p>
+      <PopoverContentContainer>
+        <div className={typography.regular()}>Some content</div>
+      </PopoverContentContainer>
+      <PopoverSeparator />
+      <PopoverMenuItemContainer>
         <PopoverClose asChild>
-          <Button color="ghost">Close</Button>
+          <MenuItemButton>Close</MenuItemButton>
         </PopoverClose>
-      </div>
+      </PopoverMenuItemContainer>
     </PopoverContent>
   </Popover>
 );

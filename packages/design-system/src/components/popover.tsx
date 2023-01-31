@@ -1,6 +1,7 @@
 import React, { type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-popover";
 import { css, theme, styled } from "../stitches.config";
+import { Separator } from "./separator";
 
 export const Popover = Primitive.Root;
 
@@ -9,6 +10,7 @@ const contentStyles = css({
   boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
   background: theme.colors.backgroundMenu,
   borderRadius: theme.borderRadius[6],
+  padding: `${theme.spacing[5]} 0`,
   display: "flex",
   flexDirection: "column",
   maxWidth: "max-content",
@@ -60,3 +62,15 @@ PopoverContent.displayName = "PopoverContent";
 
 export const PopoverTrigger = Primitive.Trigger;
 export const PopoverClose = Primitive.Close;
+
+export const PopoverContentContainer = styled("div", {
+  margin: `0 ${theme.spacing[7]}`,
+});
+
+export const PopoverMenuItemContainer = styled("div", {
+  margin: `0 ${theme.spacing[3]}`,
+});
+
+export const PopoverSeparator = styled(Separator, {
+  margin: `${theme.spacing[5]} 0`,
+});
