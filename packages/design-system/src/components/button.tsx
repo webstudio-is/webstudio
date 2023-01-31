@@ -24,7 +24,7 @@ type ButtonColor = typeof colors[number];
 
 type ButtonState = "auto" | "hover" | "focus" | "pressed" | "pending";
 
-const bg: Record<ButtonColor, string> = {
+const backgrounds: Record<ButtonColor, string> = {
   primary: theme.colors.backgroundPrimary,
   neutral: theme.colors.backgroundNeutralMain,
   destructive: theme.colors.backgroundDestructiveMain,
@@ -32,7 +32,7 @@ const bg: Record<ButtonColor, string> = {
   ghost: theme.colors.backgroundHover,
 };
 
-const fg: Record<ButtonColor, string> = {
+const foregrounds: Record<ButtonColor, string> = {
   primary: theme.colors.foregroundContrastMain,
   destructive: theme.colors.foregroundContrastMain,
   positive: theme.colors.foregroundContrastMain,
@@ -45,12 +45,12 @@ const backgroundColors = (base: string, overlay: string) =>
   `linear-gradient(${overlay}, ${overlay}), linear-gradient(${base}, ${base})`;
 
 const perColorStyle = (variant: ButtonColor) => ({
-  background: variant === "ghost" ? "transparent" : bg[variant],
-  color: fg[variant],
+  background: variant === "ghost" ? "transparent" : backgrounds[variant],
+  color: foregrounds[variant],
 
   "&[data-button-state=auto]:hover, &[data-button-state=hover]": {
     background: backgroundColors(
-      bg[variant],
+      backgrounds[variant],
       theme.colors.backgroundButtonHover
     ),
   },
@@ -62,7 +62,7 @@ const perColorStyle = (variant: ButtonColor) => ({
 
   "&[data-button-state=auto]:active, &[data-button-state=pressed]": {
     background: backgroundColors(
-      bg[variant],
+      backgrounds[variant],
       theme.colors.backgroundButtonPressed
     ),
   },
