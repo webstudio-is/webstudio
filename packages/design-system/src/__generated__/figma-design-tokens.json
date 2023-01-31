@@ -450,9 +450,8 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#ffefef",
-          "type": "color",
-          "description": "background for destructive toast"
+          "value": "#d53f45",
+          "type": "color"
         }
       },
       "success": {
@@ -721,7 +720,7 @@
         "description": "border color for success banner & toast"
       },
       "alert": {
-        "value": "#f5d90a",
+        "value": "#e2c802",
         "type": "color",
         "description": "border color for alert banner & toast"
       },
