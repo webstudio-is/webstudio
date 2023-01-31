@@ -13,7 +13,7 @@ import { FormEventHandler, useEffect } from "react";
 import { useNavigate } from "@remix-run/react";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { ActionsBar, Close, Dialog } from "./dialog";
+import { DialogActions, DialogClose, Dialog } from "./dialog";
 
 const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
@@ -63,12 +63,12 @@ const Content = () => {
           {errors && <Text color="error">{errors}</Text>}
         </Box>
       </Flex>
-      <ActionsBar>
+      <DialogActions>
         <Button type="submit">Create Project</Button>
-        <Close asChild>
+        <DialogClose asChild>
           <Button color="ghost">Cancel</Button>
-        </Close>
-      </ActionsBar>
+        </DialogClose>
+      </DialogActions>
     </form>
   );
 };
