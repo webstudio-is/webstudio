@@ -235,7 +235,7 @@ export const DeleteProject = ({
   });
   return (
     <Dialog
-      title="DeleteConfirmation"
+      title="Delete Confirmation"
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >

@@ -8,7 +8,6 @@ import {
   Flex,
   Text,
   theme,
-  toast,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
@@ -18,7 +17,7 @@ import {
   designerPath,
   getPublishedUrl,
 } from "~/shared/router-utils";
-import { Link as RemixLink, useFetcher } from "@remix-run/react";
+import { Link as RemixLink } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
@@ -143,16 +142,8 @@ const Menu = ({
 };
 
 const useProjectCard = () => {
-  const fetcher = useFetcher();
   const thumbnailRef = useRef<HTMLAnchorElement>(null);
   const { submit: duplicate } = trpc.duplicate.useMutation();
-
-  // @todo with dialog it can be displayed in the dialog
-  useEffect(() => {
-    if (fetcher.data?.errors) {
-      toast.error(fetcher.data.errors);
-    }
-  }, [fetcher.data]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     const elements: Array<HTMLElement> = Array.from(
@@ -163,7 +154,11 @@ const useProjectCard = () => {
     );
     switch (event.key) {
       case "Enter": {
-        thumbnailRef.current?.click();
+        // Only open project on enter when the project card container was focused,
+        // otherwise we will always open project, even when a menu was pressed.
+        if (event.currentTarget === document.activeElement) {
+          thumbnailRef.current?.click();
+        }
         break;
       }
       case "ArrowUp":
