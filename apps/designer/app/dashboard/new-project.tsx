@@ -1,7 +1,16 @@
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
-import { Button, toast } from "@webstudio-is/design-system";
+import {
+  Box,
+  Button,
+  Flex,
+  FloatingPanelDialog,
+  Label,
+  TextField,
+  theme,
+  toast,
+} from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { useEffect } from "react";
+import { ChangeEventHandler, useEffect, useState } from "react";
 import { useNavigate } from "@remix-run/react";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
@@ -10,12 +19,14 @@ const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 const useNewProject = () => {
   const { submit, data } = trpc.create.useMutation();
   const navigate = useNavigate();
+  const [title, setTitle] = useState("");
+
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
+    setTitle(event.currentTarget.value.trim());
+  };
 
   const handleCreate = () => {
-    // @todo replace with the new dialog UI, waiting for dialog component
-    const title = prompt("Project Title");
-    // User has aborted
-    if (title === null) {
+    if (title === "") {
       return;
     }
 
@@ -35,15 +46,51 @@ const useNewProject = () => {
     navigate(designerPath({ projectId: data.id }));
   }, [data, navigate]);
 
-  return handleCreate;
+  return { handleChange, handleCreate };
 };
 
 export const NewProject = () => {
-  const handleCreate = useNewProject();
+  const { handleCreate, handleChange } = useNewProject();
 
   return (
-    <Button prefix={<PlusIcon />} onClick={handleCreate}>
-      New Project
-    </Button>
+    <FloatingPanelDialog.Root>
+      <FloatingPanelDialog.Trigger asChild>
+        <Button prefix={<PlusIcon />}>New Project</Button>
+      </FloatingPanelDialog.Trigger>
+      <FloatingPanelDialog.Content>
+        <FloatingPanelDialog.Description asChild>
+          <Flex
+            direction="column"
+            css={{
+              px: theme.spacing["9"],
+              py: theme.spacing["5"],
+              paddingBottom: theme.spacing["10"],
+            }}
+            gap="1"
+          >
+            <Label>Project Title</Label>
+            <form onSubmit={handleCreate}>
+              <TextField placeholder="New Project" onChange={handleChange} />
+            </form>
+          </Flex>
+        </FloatingPanelDialog.Description>
+        <Flex
+          justify="end"
+          css={{
+            padding: theme.spacing["9"],
+            paddingTop: theme.spacing["5"],
+          }}
+          gap="1"
+        >
+          <FloatingPanelDialog.Close asChild>
+            <Button color="ghost">Cancel</Button>
+          </FloatingPanelDialog.Close>
+          <FloatingPanelDialog.Close asChild>
+            <Button onClick={handleCreate}>Create Project</Button>
+          </FloatingPanelDialog.Close>
+        </Flex>
+        <FloatingPanelDialog.Title>New Project</FloatingPanelDialog.Title>
+      </FloatingPanelDialog.Content>
+    </FloatingPanelDialog.Root>
   );
 };
