@@ -3,94 +3,83 @@ import {
   Box,
   Button,
   Flex,
-  FloatingPanelDialog,
   Label,
+  Text,
   TextField,
   theme,
-  toast,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { ChangeEventHandler, useEffect, useState } from "react";
+import { FormEventHandler, useEffect } from "react";
 import { useNavigate } from "@remix-run/react";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
+import { ActionsBar, Close, Dialog } from "./dialog";
 
 const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
+
 const useNewProject = () => {
   const { submit, data } = trpc.create.useMutation();
   const navigate = useNavigate();
-  const [title, setTitle] = useState("");
 
-  const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
-    setTitle(event.currentTarget.value.trim());
-  };
-
-  const handleCreate = () => {
-    if (title === "") {
-      return;
-    }
-
-    submit({ title });
-  };
-
-  // @todo with dialog it can be displayed in the dialog
   useEffect(() => {
-    if (data === undefined) {
+    if (data === undefined || "errors" in data) {
       return;
     }
-    if ("errors" in data) {
-      toast.error(data.errors);
-      return;
-    }
-
     navigate(designerPath({ projectId: data.id }));
   }, [data, navigate]);
 
-  return { handleChange, handleCreate };
+  const handleSubmit: FormEventHandler = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget as HTMLFormElement);
+    const title = String(formData.get("title") ?? "");
+    submit({ title });
+  };
+
+  return {
+    handleSubmit,
+    errors: data && "errors" in data ? data.errors : undefined,
+  };
+};
+
+const Content = () => {
+  const { handleSubmit, errors } = useNewProject();
+  return (
+    <form onSubmit={handleSubmit}>
+      <Flex
+        direction="column"
+        css={{
+          px: theme.spacing["9"],
+          paddingTop: theme.spacing["5"],
+        }}
+        gap="1"
+      >
+        <Label>Project Title</Label>
+        <TextField
+          placeholder="New Project"
+          name="title"
+          state={errors ? "invalid" : undefined}
+        />
+        <Box css={{ minHeight: theme.spacing["10"] }}>
+          {errors && <Text color="error">{errors}</Text>}
+        </Box>
+      </Flex>
+      <ActionsBar>
+        <Button type="submit">Create Project</Button>
+        <Close asChild>
+          <Button color="ghost">Cancel</Button>
+        </Close>
+      </ActionsBar>
+    </form>
+  );
 };
 
 export const NewProject = () => {
-  const { handleCreate, handleChange } = useNewProject();
-
   return (
-    <FloatingPanelDialog.Root>
-      <FloatingPanelDialog.Trigger asChild>
-        <Button prefix={<PlusIcon />}>New Project</Button>
-      </FloatingPanelDialog.Trigger>
-      <FloatingPanelDialog.Content>
-        <FloatingPanelDialog.Description asChild>
-          <Flex
-            direction="column"
-            css={{
-              px: theme.spacing["9"],
-              py: theme.spacing["5"],
-              paddingBottom: theme.spacing["10"],
-            }}
-            gap="1"
-          >
-            <Label>Project Title</Label>
-            <form onSubmit={handleCreate}>
-              <TextField placeholder="New Project" onChange={handleChange} />
-            </form>
-          </Flex>
-        </FloatingPanelDialog.Description>
-        <Flex
-          justify="end"
-          css={{
-            padding: theme.spacing["9"],
-            paddingTop: theme.spacing["5"],
-          }}
-          gap="1"
-        >
-          <FloatingPanelDialog.Close asChild>
-            <Button color="ghost">Cancel</Button>
-          </FloatingPanelDialog.Close>
-          <FloatingPanelDialog.Close asChild>
-            <Button onClick={handleCreate}>Create Project</Button>
-          </FloatingPanelDialog.Close>
-        </Flex>
-        <FloatingPanelDialog.Title>New Project</FloatingPanelDialog.Title>
-      </FloatingPanelDialog.Content>
-    </FloatingPanelDialog.Root>
+    <Dialog
+      title="New Project"
+      trigger={<Button prefix={<PlusIcon />}>New Project</Button>}
+    >
+      <Content />
+    </Dialog>
   );
 };
