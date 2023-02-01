@@ -8,7 +8,7 @@ import {
   TabsTrigger,
   TabsContent,
   Card,
-  Paragraph,
+  DeprecatedParagraph,
   Box,
   Flex,
   EnhancedTooltipProvider,
@@ -40,7 +40,9 @@ export const Inspector = ({ publish }: InspectorProps) => {
         <Card
           css={{ p: theme.spacing[9], mt: theme.spacing[9], width: "100%" }}
         >
-          <Paragraph>Select an instance on the canvas</Paragraph>
+          <DeprecatedParagraph>
+            Select an instance on the canvas
+          </DeprecatedParagraph>
         </Card>
       </Box>
     );
