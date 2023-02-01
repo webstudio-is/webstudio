@@ -14,7 +14,11 @@ import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { designerPath, getPublishedUrl } from "~/shared/router-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { RenameProject, DeleteProject, useDuplicate } from "./project-dialogs";
+import {
+  RenameProjectDialog,
+  DeleteProjectDialog,
+  useDuplicate,
+} from "./project-dialogs";
 import { ThumbnailLink } from "./thumbnail-link";
 
 const containerStyle = css({
@@ -212,7 +216,7 @@ export const ProjectCard = ({
           />
         </Flex>
       </Flex>
-      <RenameProject
+      <RenameProjectDialog
         isOpen={isRenameDialogOpen}
         title={title}
         projectId={id}
@@ -221,7 +225,7 @@ export const ProjectCard = ({
         }}
         onOpenChange={setIsRenameDialogOpen}
       />
-      <DeleteProject
+      <DeleteProjectDialog
         isOpen={isDeleteDialogOpen}
         title={title}
         projectId={id}

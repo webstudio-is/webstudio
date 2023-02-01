@@ -22,7 +22,7 @@ import {
 } from "./dialog";
 import { DashboardProject } from "@webstudio-is/prisma-client";
 
-const Content = ({
+const DialogContent = ({
   onSubmit,
   onChange,
   placeholder,
@@ -116,7 +116,7 @@ export const CreateProject = () => {
       title="New Project"
       trigger={<Button prefix={<PlusIcon />}>New Project</Button>}
     >
-      <Content
+      <DialogContent
         onSubmit={handleSubmit}
         errors={errors}
         placeholder="New Project"
@@ -154,7 +154,7 @@ const useRenameProject = ({
   };
 };
 
-export const RenameProject = ({
+export const RenameProjectDialog = ({
   isOpen,
   title,
   projectId,
@@ -173,7 +173,7 @@ export const RenameProject = ({
   });
   return (
     <Dialog title="Rename" isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Content
+      <DialogContent
         onSubmit={handleSubmit}
         errors={errors}
         title={title}
@@ -227,7 +227,7 @@ const useDeleteProject = ({
   };
 };
 
-export const DeleteProject = ({
+export const DeleteProjectDialog = ({
   isOpen,
   title,
   projectId,
@@ -252,7 +252,7 @@ export const DeleteProject = ({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
-      <Content
+      <DialogContent
         onSubmit={handleSubmit}
         onChange={handleChange}
         errors={errors}
