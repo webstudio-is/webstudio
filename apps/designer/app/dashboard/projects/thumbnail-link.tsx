@@ -2,7 +2,7 @@ import { css, theme, textVariants } from "@webstudio-is/design-system";
 import { forwardRef } from "react";
 import { Link } from "@remix-run/react";
 
-const thumbnailStyle = css(textVariants.brandThumbnailSmallDefault, {
+const thumbnailStyle = css(textVariants.brandThumbnailLargeDefault, {
   display: "flex",
   alignItems: "center",
   alignSelf: "center",
@@ -14,7 +14,7 @@ const thumbnailStyle = css(textVariants.brandThumbnailSmallDefault, {
   userSelect: "none",
   outline: "none",
   "&:hover, &:focus": {
-    ...textVariants.brandThumbnailSmallHover,
+    ...textVariants.brandThumbnailLargeHover,
     transition: "100ms",
   },
 });
