@@ -23,20 +23,19 @@ const InstanceCopyData = z.object({
 
 type InstanceCopyData = z.infer<typeof InstanceCopyData>;
 
-const copyInstanceData = () => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
+const copyInstanceData = (targetInstanceId: string) => {
   const rootInstance = rootInstanceContainer.get();
   const props = propsStore.get();
   const styles = stylesStore.get();
-  if (selectedInstanceId === undefined || rootInstance === undefined) {
+  if (rootInstance === undefined) {
     return;
   }
   // @todo tell user they can't copy or cut root
-  if (selectedInstanceId === rootInstance?.id) {
+  if (targetInstanceId === rootInstance.id) {
     return;
   }
 
-  const { targetInstance } = findSubtree(rootInstance, selectedInstanceId);
+  const { targetInstance } = findSubtree(rootInstance, targetInstanceId);
   if (targetInstance === undefined) {
     return;
   }
@@ -70,7 +69,6 @@ const copyInstanceData = () => {
   }
 
   return {
-    sourceInstanceId: selectedInstanceId,
     instance: clonedInstance,
     props: clonedProps,
     styles: clonedStyles,
@@ -107,28 +105,24 @@ const startCopyPasteInstance = () => {
     allowAnyTarget: true,
 
     onCopy: () => {
-      const data = copyInstanceData();
-      if (data === undefined) {
+      const selectedInstanceId = selectedInstanceIdStore.get();
+      if (selectedInstanceId === undefined) {
         return;
       }
-      return {
-        instance: data.instance,
-        props: data.props,
-        styles: data.styles,
-      };
+      return copyInstanceData(selectedInstanceId);
     },
 
     onCut: () => {
-      const data = copyInstanceData();
+      const selectedInstanceId = selectedInstanceIdStore.get();
+      if (selectedInstanceId === undefined) {
+        return;
+      }
+      const data = copyInstanceData(selectedInstanceId);
       if (data === undefined) {
         return;
       }
-      deleteInstance(data.sourceInstanceId);
-      return {
-        instance: data.instance,
-        props: data.props,
-        styles: data.styles,
-      };
+      deleteInstance(selectedInstanceId);
+      return data;
     },
 
     onPaste: pasteInstance,
