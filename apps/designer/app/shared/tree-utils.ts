@@ -1,7 +1,6 @@
 import ObjectId from "bson-objectid";
 import produce from "immer";
-import type { Instance, Props, Styles } from "@webstudio-is/project-build";
-import { removeByMutable } from "./array-utils";
+import type { Instance } from "@webstudio-is/project-build";
 
 const traverseInstances = (
   instance: Instance,
@@ -62,36 +61,4 @@ export const cloneInstance = (targetInstance: Instance) => {
     clonedIds,
     clonedInstance,
   };
-};
-
-export const deleteInstanceMutable = ({
-  rootInstance,
-  props,
-  styles,
-  deletedInstanceId,
-}: {
-  rootInstance: Instance;
-  props: Props;
-  styles: Styles;
-  deletedInstanceId: string;
-}) => {
-  const { parentInstance, subtreeIds: deletedInstances } = findSubtree(
-    rootInstance,
-    deletedInstanceId
-  );
-  if (parentInstance === undefined) {
-    return;
-  }
-
-  removeByMutable(
-    parentInstance.children,
-    (child) => child.type === "instance" && child.id === deletedInstanceId
-  );
-  // delete props and styles of deleted instance and its descendants
-  removeByMutable(props, (prop) => deletedInstances.has(prop.instanceId));
-  removeByMutable(styles, (styleDecl) =>
-    deletedInstances.has(styleDecl.instanceId)
-  );
-
-  return parentInstance;
 };
