@@ -3,7 +3,7 @@ import { StorySection } from "./storybook";
 
 const variants = Object.keys(textVariants) as (keyof typeof textVariants)[];
 
-export const Story = () => (
+const Story = () => (
   <>
     {variants.map((variant) => (
       <StorySection withBorder key={variant} title={variant}>
