@@ -46,6 +46,7 @@ importers:
       '@floating-ui/dom': ^1.0.6
       '@fontsource/inter': ^4.5.15
       '@fontsource/manrope': ^4.5.13
+      '@fontsource/roboto-mono': ^4.5.10
       '@jest/globals': ^29.3.1
       '@lexical/link': ^0.6.0
       '@lexical/react': ^0.6.0
@@ -159,6 +160,7 @@ importers:
       '@floating-ui/dom': 1.0.6
       '@fontsource/inter': 4.5.15
       '@fontsource/manrope': 4.5.13
+      '@fontsource/roboto-mono': 4.5.10
       '@lexical/link': 0.6.0_lexical@0.6.0
       '@lexical/react': 0.6.0_p7mvqmjvwf4nexue7sv3sfptum
       '@lexical/selection': 0.6.0_lexical@0.6.0
