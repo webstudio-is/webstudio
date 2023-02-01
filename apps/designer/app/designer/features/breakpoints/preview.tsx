@@ -1,5 +1,9 @@
 import { type Breakpoint } from "@webstudio-is/css-data";
-import { DeprecatedParagraph, Flex, Text } from "@webstudio-is/design-system";
+import {
+  DeprecatedParagraph,
+  Flex,
+  DeprecatedText2,
+} from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
 type PreviewProps = {
@@ -20,7 +24,7 @@ export const Preview = ({ breakpoint }: PreviewProps) => {
       gap="1"
       direction="column"
     >
-      <Text>CSS Preview</Text>
+      <DeprecatedText2>CSS Preview</DeprecatedText2>
       <DeprecatedParagraph color="hint">
         {breakpoint === undefined
           ? "No breakpoint selected"

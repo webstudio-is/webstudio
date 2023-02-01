@@ -1,4 +1,10 @@
-import { Box, Flex, Grid, Text, Button } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  Grid,
+  DeprecatedText2,
+  Button,
+} from "@webstudio-is/design-system";
 import { getFormattedAspectRatio } from "./utils";
 import {
   CloudIcon,
@@ -27,7 +33,9 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
           </Box>
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             <CloudIcon />
-            <Text variant="label">{prettyBytes(size)}</Text>
+            <DeprecatedText2 variant="label">
+              {prettyBytes(size)}
+            </DeprecatedText2>
           </Flex>
         </Grid>
       </Box>
@@ -36,13 +44,15 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
           <Grid columns={2} gap={2} align="center">
             <Flex align="center" css={{ gap: theme.spacing[3] }}>
               <SizeIcon />
-              <Text variant="label">
+              <DeprecatedText2 variant="label">
                 {meta.width} x {meta.height}
-              </Text>
+              </DeprecatedText2>
             </Flex>{" "}
             <Flex align="center" css={{ gap: theme.spacing[3] }}>
               <AspectRatioIcon />
-              <Text variant="label">{getFormattedAspectRatio(meta)}</Text>
+              <DeprecatedText2 variant="label">
+                {getFormattedAspectRatio(meta)}
+              </DeprecatedText2>
             </Flex>
           </Grid>
         </Box>

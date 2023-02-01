@@ -3,7 +3,12 @@ import { useDebouncedCallback } from "use-debounce";
 import ObjectId from "bson-objectid";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
-import { Button, TextField, Flex, Text } from "@webstudio-is/design-system";
+import {
+  Button,
+  TextField,
+  Flex,
+  DeprecatedText2,
+} from "@webstudio-is/design-system";
 import { PlusIcon, TrashIcon } from "@webstudio-is/icons";
 import { breakpointsContainer, useBreakpoints } from "~/shared/nano-states";
 import { replaceByOrAppendMutable } from "~/shared/array-utils";
@@ -118,7 +123,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
           py: theme.spacing[3],
         }}
       >
-        <Text>Breakpoints</Text>
+        <DeprecatedText2>Breakpoints</DeprecatedText2>
         <Button
           color="ghost"
           onClick={() => {

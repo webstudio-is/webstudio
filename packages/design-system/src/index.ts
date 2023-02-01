@@ -50,7 +50,6 @@ export * from "./components/checkbox";
 export * from "./components/avatar";
 export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
-export * from "./components/text";
 export * from "./components/list";
 
 // No need to align
@@ -66,6 +65,7 @@ export * from "./components/primitives/numeric-gesture-control";
 // Deprecated
 
 export * from "./components/__DEPRECATED__/text";
+export * from "./components/__DEPRECATED__/text2";
 export { DeprecatedButton } from "./components/__DEPRECATED__/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";

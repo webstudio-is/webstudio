@@ -6,7 +6,7 @@ import {
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
 import { willRender } from "~/designer/shared/breakpoints";
-import { DeprecatedButton, Text } from "@webstudio-is/design-system";
+import { DeprecatedButton, DeprecatedText2 } from "@webstudio-is/design-system";
 import {
   DesktopIcon,
   LaptopIcon,
@@ -52,9 +52,9 @@ export const TriggerButton = forwardRef<
       aria-label="Show breakpoints"
     >
       {renderIcon(breakpoint, variant)}
-      <Text color={variant}>
+      <DeprecatedText2 color={variant}>
         {`${breakpoint.label} ${canvasWidth}px / ${zoom}%`}
-      </Text>
+      </DeprecatedText2>
     </DeprecatedButton>
   );
 });

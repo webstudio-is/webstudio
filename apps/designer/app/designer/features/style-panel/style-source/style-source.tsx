@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuTrigger,
-  Text,
+  DeprecatedText2,
   styled,
   Box,
   theme,
@@ -284,7 +284,7 @@ const EditableText = ({
   });
 
   return (
-    <Text
+    <DeprecatedText2
       truncate
       ref={ref}
       css={{
@@ -294,7 +294,7 @@ const EditableText = ({
       {...handlers}
     >
       {label}
-    </Text>
+    </DeprecatedText2>
   );
 };
 

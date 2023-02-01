@@ -1,6 +1,6 @@
-import { css, styled, theme } from "../stitches.config";
+import { css, styled, theme } from "../../stitches.config";
 
-export const textStyles = css({
+export const deprecatedTextStyles = css({
   // Reset
   margin: 0,
   lineHeight: 1,
@@ -97,4 +97,4 @@ export const textStyles = css({
 /**
  * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
  */
-export const Text = styled("div", textStyles);
+export const DeprecatedText2 = styled("div", deprecatedTextStyles);

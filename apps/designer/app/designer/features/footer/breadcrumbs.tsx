@@ -1,6 +1,10 @@
 import { useStore } from "@nanostores/react";
 import { ChevronRightIcon } from "@webstudio-is/icons";
-import { DeprecatedButton, Flex, Text } from "@webstudio-is/design-system";
+import {
+  DeprecatedButton,
+  Flex,
+  DeprecatedText2,
+} from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceIdStore } from "~/shared/nano-states";
 import { useSelectedInstancePath } from "~/designer/shared/instance/use-selected-instance-path";
@@ -37,7 +41,7 @@ export const Breadcrumbs = () => {
     <Flex align="center" css={{ height: "100%" }}>
       {selectedInstancePath.length === 0 ? (
         <Breadcrumb>
-          <Text>No instance selected</Text>
+          <DeprecatedText2>No instance selected</DeprecatedText2>
         </Breadcrumb>
       ) : (
         selectedInstancePath.map((instance) => (
