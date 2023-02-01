@@ -8,6 +8,7 @@ import {
   selectedInstanceIdStore,
   selectedInstanceStore,
   useTextEditingInstanceId,
+  isPreviewModeStore,
 } from "~/shared/nano-states";
 
 declare module "~/shared/pubsub" {
@@ -18,7 +19,6 @@ declare module "~/shared/pubsub" {
     };
     openBreakpointsMenu: undefined;
     selectBreakpointFromShortcut: number;
-    togglePreviewMode: undefined;
     zoom: "zoomOut" | "zoomIn";
   }
 }
@@ -29,7 +29,7 @@ type HandlerEvent = {
 };
 
 const togglePreviewMode = () => {
-  publish({ type: "togglePreviewMode" });
+  isPreviewModeStore.set(!isPreviewModeStore.get());
 };
 
 const publishSelectBreakpoint = ({ key }: HandlerEvent) => {

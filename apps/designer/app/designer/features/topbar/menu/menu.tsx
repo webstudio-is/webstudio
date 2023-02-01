@@ -30,6 +30,7 @@ import {
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
+import { useIsPreviewMode } from "~/shared/nano-states";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -96,6 +97,7 @@ export const Menu = ({ publish }: MenuProps) => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
+  const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
 
   return (
     <DropdownMenu>
@@ -235,9 +237,7 @@ export const Menu = ({ publish }: MenuProps) => {
           <ViewMenuItem />
           <DropdownMenuItem
             onSelect={() => {
-              publish({
-                type: "togglePreviewMode",
-              });
+              setIsPreviewMode(!isPreviewMode);
             }}
           >
             Preview

@@ -150,8 +150,8 @@ export const hoveredInstanceOutlineStore = atom<
   undefined | { component: string; rect: DOMRect }
 >(undefined);
 
-const isPreviewModeContainer = atom<boolean>(false);
-export const useIsPreviewMode = () => useValue(isPreviewModeContainer);
+export const isPreviewModeStore = atom<boolean>(false);
+export const useIsPreviewMode = () => useValue(isPreviewModeStore);
 
 const selectedInstanceOutlineContainer = atom<{
   visible: boolean;
