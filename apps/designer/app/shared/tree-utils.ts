@@ -1,5 +1,6 @@
-import type { Instance, Props, Styles } from "@webstudio-is/project-build";
-import { removeByMutable } from "./array-utils";
+import ObjectId from "bson-objectid";
+import produce from "immer";
+import type { Instance } from "@webstudio-is/project-build";
 
 const traverseInstances = (
   instance: Instance,
@@ -16,46 +17,48 @@ const traverseInstances = (
   }
 };
 
-export const deleteInstanceMutable = ({
-  rootInstance,
-  props,
-  styles,
-  deletedInstanceId,
-}: {
-  rootInstance: Instance;
-  props: Props;
-  styles: Styles;
-  deletedInstanceId: string;
-}) => {
-  const parentInstances = new Map<Instance["id"], Instance>();
-  const deletedInstances = new Set<Instance["id"]>();
+export const findSubtree = (
+  rootInstance: Instance,
+  targetInstanceId: Instance["id"]
+) => {
+  const instancesById = new Map<Instance["id"], Instance>();
+  const parentInstancesById = new Map<Instance["id"], Instance>();
+  const subtreeIds = new Set<Instance["id"]>();
 
   traverseInstances(rootInstance, (child, instance) => {
-    parentInstances.set(child.id, instance);
-    // mark as deleted the instance
-    if (child.id === deletedInstanceId) {
-      deletedInstances.add(child.id);
+    // add target instance
+    if (child.id === targetInstanceId) {
+      subtreeIds.add(child.id);
+      parentInstancesById.set(child.id, instance);
+      instancesById.set(child.id, child);
     }
-    // and all descendants of deleted instance
-    if (deletedInstances.has(instance.id)) {
-      deletedInstances.add(child.id);
+    // add all descendants of target instance
+    if (subtreeIds.has(instance.id)) {
+      subtreeIds.add(child.id);
     }
   });
 
-  const parentInstance = parentInstances.get(deletedInstanceId);
-  if (parentInstance === undefined) {
-    return;
-  }
+  return {
+    parentInstance: parentInstancesById.get(targetInstanceId),
+    targetInstance: instancesById.get(targetInstanceId),
+    subtreeIds,
+  };
+};
 
-  removeByMutable(
-    parentInstance.children,
-    (child) => child.type === "instance" && child.id === deletedInstanceId
-  );
-  // delete props and styles of deleted instance and its descendants
-  removeByMutable(props, (prop) => deletedInstances.has(prop.instanceId));
-  removeByMutable(styles, (styleDecl) =>
-    deletedInstances.has(styleDecl.instanceId)
-  );
-
-  return parentInstance;
+export const cloneInstance = (targetInstance: Instance) => {
+  const clonedIds = new Map<Instance["id"], Instance["id"]>();
+  const clonedInstance = produce((targetInstance) => {
+    const newId = ObjectId().toString();
+    clonedIds.set(targetInstance.id, newId);
+    targetInstance.id = newId;
+    traverseInstances(targetInstance, (instance) => {
+      const newId = ObjectId().toString();
+      clonedIds.set(instance.id, newId);
+      instance.id = newId;
+    });
+  })(targetInstance);
+  return {
+    clonedIds,
+    clonedInstance,
+  };
 };
