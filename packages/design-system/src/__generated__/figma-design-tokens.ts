@@ -320,15 +320,7 @@ export const color = {
   maintenanceSpacerViz: "#f9c6c6",
 } as const;
 
-export const borderWidth = {
-  borderWidth0: 1,
-  borderWidth1: 2,
-  regularIconBorder0: 1,
-  regularIconBorder1: 1.3,
-  regularIconBorder2: 1.6,
-  largeIconBorder1: 1.5,
-  largeIconBorder2: 1.8,
-} as const;
+export const borderWidth = { borderWidth0: 1, borderWidth1: 2 } as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
 
