@@ -87,7 +87,7 @@ export const useStyleData = ({
           const breakpointId = selectedBreakpoint.id;
 
           // crate style source and its selection on currently selected instance
-          let matchedStyleSourceSelection = styleSourceSelections.find(
+          const matchedStyleSourceSelection = styleSourceSelections.find(
             (styleSourceSelection) =>
               styleSourceSelection.instanceId === instanceId
           );
