@@ -9,55 +9,6 @@ const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";
 const TMP_OUTPUT_FILE = "./src/__generated__/figma-design-tokens.tmp";
 const OUTPUT_FILE = "./src/__generated__/figma-design-tokens.ts";
 
-const TreeLeaf = z.object({
-  type: z.string(),
-  value: z.unknown(),
-});
-
-const parse = <Output, Def extends ZodTypeDef, Input>(
-  path: string[],
-  value: unknown,
-  schema: ZodType<Output, Def, Input>
-) => {
-  const result = schema.safeParse(value);
-  if (result.success === false) {
-    throw new Error(
-      `Could not parse ${path.join(" > ")}. Got a error: ${
-        result.error.message
-      }`
-    );
-  }
-  return result.data;
-};
-
-const SingleShadow = z.object({
-  color: z.string(),
-  type: z.enum(["dropShadow", "innerShadow"]),
-  x: z.number(),
-  y: z.number(),
-  blur: z.number(),
-  spread: z.number(),
-});
-const Shadow = z.union([SingleShadow, z.array(SingleShadow)]);
-const printShadow = (path: string[], value: unknown) => {
-  const shadow = parse(path, value, Shadow);
-  const printSingle = (shadow: z.infer<typeof SingleShadow>) => {
-    return [
-      shadow.type === "innerShadow" ? "inset" : "",
-      `${shadow.x}px`,
-      `${shadow.y}px`,
-      `${shadow.blur}px`,
-      `${shadow.spread}px`,
-      `${shadow.color}`,
-    ]
-      .join(" ")
-      .trim();
-  };
-  return Array.isArray(shadow)
-    ? shadow.map(printSingle).join(", ")
-    : printSingle(shadow);
-};
-
 // https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#common_weight_name_mapping
 // (hopefully the fonts we use, Figma, Tokens plugin — all follow this convention)
 const fontWeightMapping = {
@@ -79,10 +30,12 @@ const fontWeightMapping = {
   extrablack: 950,
   ultrablack: 950,
 } as const;
+
 const fontFamilies = {
-  Inter: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
-  Manrope: "ManropeVariable, Manrope, sans-serif",
-  Roboto: "Roboto, menlo, monospace",
+  Inter:
+    "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
+  Manrope: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
+  Roboto: "Roboto Mono, RobotoMono, menlo, monospace",
 } as const;
 const fontFamilyMapping = {
   ...fontFamilies,
@@ -91,18 +44,83 @@ const fontFamilyMapping = {
   ManropeVariable: fontFamilies.Manrope,
   "Manrope Variable": fontFamilies.Manrope,
   "Roboto Mono": fontFamilies.Roboto,
-};
-const Typography = z.object({
-  fontFamily: z.string(),
-  fontWeight: z.preprocess(
-    (x) => (typeof x === "string" ? x.toLowerCase().replace(/\s+/g, "") : x),
-    z.enum(Object.keys(fontWeightMapping) as [keyof typeof fontWeightMapping])
-  ),
-  lineHeight: z.union([z.string(), z.number()]),
-  fontSize: z.number(),
-  letterSpacing: z.union([z.string(), z.number()]),
+} as const;
+
+const TreeLeafSchema = z.object({
+  type: z.string(),
+  value: z.unknown(),
 });
-const printLineHeight = (path: string[], value: number | string) => {
+
+const FontWeightSchema = z.preprocess(
+  (x) => (typeof x === "string" ? x.toLowerCase().replace(/\s+/g, "") : x),
+  z.enum(Object.keys(fontWeightMapping) as [keyof typeof fontWeightMapping])
+);
+
+const FontFamilySchema = z.string();
+
+const LineHeightSchema = z.union([z.string(), z.number()]);
+
+const FontSizeSchema = z.number();
+
+const LetterSpacingSchema = z.union([z.string(), z.number()]);
+
+const TypographySchema = z.object({
+  fontFamily: z.unknown(),
+  fontWeight: z.unknown(),
+  lineHeight: z.unknown(),
+  fontSize: z.unknown(),
+  letterSpacing: z.unknown(),
+});
+
+const SingleShadowSchema = z.object({
+  color: z.string(),
+  type: z.enum(["dropShadow", "innerShadow"]),
+  x: z.number(),
+  y: z.number(),
+  blur: z.number(),
+  spread: z.number(),
+});
+
+const ShadowSchema = z.union([SingleShadowSchema, z.array(SingleShadowSchema)]);
+
+const parse = <Output, Def extends ZodTypeDef, Input>(
+  path: string[],
+  value: unknown,
+  schema: ZodType<Output, Def, Input>
+) => {
+  const result = schema.safeParse(value);
+  if (result.success === false) {
+    throw new Error(
+      `Could not parse ${path.join(" > ")}. Got a error: ${
+        result.error.message
+      }`
+    );
+  }
+  return result.data;
+};
+
+const printShadow = (path: string[], unparsedValue: unknown) => {
+  const shadow = parse(path, unparsedValue, ShadowSchema);
+  const printSingle = (shadow: z.infer<typeof SingleShadowSchema>) => {
+    return [
+      shadow.type === "innerShadow" ? "inset" : "",
+      `${shadow.x}px`,
+      `${shadow.y}px`,
+      `${shadow.blur}px`,
+      `${shadow.spread}px`,
+      `${shadow.color}`,
+    ]
+      .join(" ")
+      .trim();
+  };
+  return Array.isArray(shadow)
+    ? shadow.map(printSingle).join(", ")
+    : printSingle(shadow);
+};
+
+const printLineHeight = (path: string[], unparsedValue: unknown) => {
+  const value = parse(path, unparsedValue, LineHeightSchema);
+
   if (typeof value === "number") {
     return `${value}px`;
   }
@@ -118,7 +136,10 @@ const printLineHeight = (path: string[], value: number | string) => {
     `Could not parse "${path.join(" > ")} > lineHeight": ${value}`
   );
 };
-const printLetterSpacing = (path: string[], value: number | string) => {
+
+const printLetterSpacing = (path: string[], unparsedValue: unknown) => {
+  const value = parse(path, unparsedValue, LetterSpacingSchema);
+
   if (typeof value === "number") {
     return `${value}px`;
   }
@@ -130,17 +151,42 @@ const printLetterSpacing = (path: string[], value: number | string) => {
     `Could not parse "${path.join(" > ")} > letterSpacing": ${value}`
   );
 };
-const printTypography = (path: string[], value: unknown) => {
-  const typography = parse(path, value, Typography);
+
+const printFontWeight = (path: string[], unparsedValue: unknown) => {
+  const value = parse(path, unparsedValue, FontWeightSchema);
+  return fontWeightMapping[value];
+};
+
+const printFontFamily = (path: string[], unparsedValue: unknown) => {
+  const value = parse(path, unparsedValue, FontFamilySchema);
+  return fontFamilyMapping[value] || value;
+};
+
+const printFontSize = (path: string[], unparsedValue: unknown) => {
+  const value = parse(path, unparsedValue, FontSizeSchema);
+  return `${value}px`;
+};
+
+const printTypography = (path: string[], unparsedValue: unknown) => {
+  const value = parse(path, unparsedValue, TypographySchema);
   return {
-    fontFamily:
-      fontFamilyMapping[typography.fontFamily] ?? typography.fontFamily,
-    fontWeight: fontWeightMapping[typography.fontWeight],
-    fontSize: `${typography.fontSize}px`,
-    lineHeight: printLineHeight(path, typography.lineHeight),
-    letterSpacing: printLetterSpacing(path, typography.letterSpacing),
+    fontFamily: printFontFamily(path, value.fontFamily),
+    fontWeight: printFontWeight(path, value.fontWeight),
+    fontSize: printFontSize(path, value.fontSize),
+    lineHeight: printLineHeight(path, value.lineHeight),
+    letterSpacing: printLetterSpacing(path, value.letterSpacing),
   };
 };
+
+const printerByType = {
+  boxShadow: printShadow,
+  typography: printTypography,
+  letterSpacing: printLetterSpacing,
+  lineHeights: printLineHeight,
+  fontWeights: printFontWeight,
+  fontSizes: printFontSize,
+  fontFamilies: printFontFamily,
+} as const;
 
 const traverse = (
   node: unknown,
@@ -151,7 +197,7 @@ const traverse = (
     return;
   }
 
-  const asLeaf = TreeLeaf.safeParse(node);
+  const asLeaf = TreeLeafSchema.safeParse(node);
   if (asLeaf.success && asLeaf.data.value !== undefined) {
     fn(nodePath, asLeaf.data.type, asLeaf.data.value);
     return;
@@ -188,19 +234,10 @@ const main = () => {
     const record = byType.get(type) ?? {};
     byType.set(type, record);
 
-    let printedValue = value;
-
-    if (type === "boxShadow") {
-      printedValue = printShadow(path, value);
-    }
-
-    if (type === "typography") {
-      printedValue = printTypography(path, value);
-    }
-
     // no need to check for __proto__ (prototype polution)
     // because we know pathToName returns a string without "_"
-    record[pathToName(path, type)] = printedValue;
+    record[pathToName(path, type)] =
+      type in printerByType ? printerByType[type](path, value) : value;
   });
 
   writeFileSync(

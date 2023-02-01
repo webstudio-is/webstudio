@@ -6,7 +6,7 @@ import {
 } from "react";
 import { styled } from "../stitches.config";
 import { Flex } from "./flex";
-import { Text } from "./text";
+import { DeprecatedText2 } from "./__DEPRECATED__/text2";
 import { theme } from "../stitches.config";
 
 const ListBase = styled("ul", {
@@ -67,13 +67,13 @@ export const ListItem = forwardRef<
     >
       {prefix}
       <Flex css={{ gridColumn: 2 }} align="center">
-        <Text
+        <DeprecatedText2
           variant="label"
           truncate
           color={state === "disabled" ? "hint" : "contrast"}
         >
           {children}
-        </Text>
+        </DeprecatedText2>
         {suffix}
       </Flex>
     </ListItemBase>

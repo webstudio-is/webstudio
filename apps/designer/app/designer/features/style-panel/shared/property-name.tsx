@@ -7,7 +7,7 @@ import {
   Button,
   Flex,
   Box,
-  Text,
+  DeprecatedText2,
   Label,
   Tooltip,
   DeprecatedPopover,
@@ -57,10 +57,10 @@ const PropertyPopoverContent = ({
                 (item) => item.id === breakpointId
               );
               return (
-                <Text key={property} color="hint">
+                <DeprecatedText2 key={property} color="hint">
                   Resetting will change {property} to cascaded {toValue(value)}{" "}
                   from {breakpoint?.label}
-                </Text>
+                </DeprecatedText2>
               );
             }
 
@@ -71,17 +71,17 @@ const PropertyPopoverContent = ({
                   ? undefined
                   : utils.tree.findInstanceById(rootInstance, instanceId);
               return (
-                <Text key={property} color="hint">
+                <DeprecatedText2 key={property} color="hint">
                   Resetting will change {property} to inherited {toValue(value)}{" "}
                   from {instance?.component}
-                </Text>
+                </DeprecatedText2>
               );
             }
 
             return (
-              <Text key={property} color="hint">
+              <DeprecatedText2 key={property} color="hint">
                 Resetting will change to initial value
-              </Text>
+              </DeprecatedText2>
             );
           })}
         </Box>
@@ -100,9 +100,9 @@ const PropertyPopoverContent = ({
             (item) => item.id === breakpointId
           );
           return (
-            <Text key={property} color="hint">
+            <DeprecatedText2 key={property} color="hint">
               {property} value is cascaded from {breakpoint?.label}
-            </Text>
+            </DeprecatedText2>
           );
         }
 
@@ -113,9 +113,9 @@ const PropertyPopoverContent = ({
               ? undefined
               : utils.tree.findInstanceById(rootInstance, instanceId);
           return (
-            <Text key={property} color="hint">
+            <DeprecatedText2 key={property} color="hint">
               {property} value is inherited from {instance?.component}
-            </Text>
+            </DeprecatedText2>
           );
         }
       })}

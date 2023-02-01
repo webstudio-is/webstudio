@@ -1,6 +1,6 @@
 import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
-import { Flex, Text } from "@webstudio-is/design-system";
+import { Flex, DeprecatedText2 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
 export const ComponentInfo = ({
@@ -10,15 +10,15 @@ export const ComponentInfo = ({
 }) => {
   return (
     <Flex justify="between" align="center">
-      <Text
+      <DeprecatedText2
         css={{
-          fontSize: theme.fontSize[3],
+          fontSize: theme.deprecatedFontSize[3],
           color: theme.colors.slate11,
           fontWeight: "500",
         }}
       >{`Selected: ${
         getComponentMeta(selectedInstance.component)?.label
-      }`}</Text>
+      }`}</DeprecatedText2>
     </Flex>
   );
 };

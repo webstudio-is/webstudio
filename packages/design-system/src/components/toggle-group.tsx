@@ -16,7 +16,7 @@ export const ToggleGroupItem = styled(ToggleGroupPrimitive.Item, {
   color: theme.colors.hiContrast,
   display: "flex",
   whiteSpace: "nowrap",
-  fontSize: theme.fontSize[4],
+  fontSize: theme.deprecatedFontSize[4],
   lineHeight: 1,
   alignItems: "center",
   justifyContent: "center",

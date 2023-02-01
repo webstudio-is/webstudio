@@ -1,6 +1,11 @@
 import type { Publish } from "~/shared/pubsub";
 import { willRender } from "~/designer/shared/breakpoints";
-import { Box, Card, Paragraph, SearchField } from "@webstudio-is/design-system";
+import {
+  Box,
+  Card,
+  DeprecatedParagraph,
+  SearchField,
+} from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/project-build";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
@@ -39,12 +44,12 @@ export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
     return (
       <Box css={{ p: theme.spacing[5] }}>
         <Card css={{ p: theme.spacing[9], mt: theme.spacing[9] }}>
-          <Paragraph css={{ marginBottom: theme.spacing[5] }}>
+          <DeprecatedParagraph css={{ marginBottom: theme.spacing[5] }}>
             {`Please increase the canvas width.`}
-          </Paragraph>
-          <Paragraph>
+          </DeprecatedParagraph>
+          <DeprecatedParagraph>
             {`"${breakpoint.label}" breakpoint minimum width is ${breakpoint.minWidth}px.`}
-          </Paragraph>
+          </DeprecatedParagraph>
         </Card>
       </Box>
     );

@@ -6,7 +6,7 @@ import {
   IconButton,
   css,
   Flex,
-  Text,
+  DeprecatedText2,
   theme,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
@@ -59,7 +59,7 @@ const PublishedLink = ({
 }) => {
   const { url } = usePublishedLink({ domain });
   return (
-    <Text
+    <DeprecatedText2
       as="a"
       href={url?.href}
       target="_blank"
@@ -73,7 +73,7 @@ const PublishedLink = ({
       }}
     >
       {url?.host}
-    </Text>
+    </DeprecatedText2>
   );
 };
 
@@ -191,13 +191,13 @@ export const ProjectCard = ({
           className={footerStyle()}
         >
           <Flex direction="column" justify="around">
-            <Text variant="title" truncate>
+            <DeprecatedText2 variant="title" truncate>
               {title}
-            </Text>
+            </DeprecatedText2>
             {isPublished ? (
               <PublishedLink domain={domain} tabIndex={-1} />
             ) : (
-              <Text color="hint">Not Published</Text>
+              <DeprecatedText2 color="hint">Not Published</DeprecatedText2>
             )}
           </Flex>
           <Menu

@@ -1,6 +1,6 @@
 import React, { type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-popover";
-import { css, theme, styled } from "../stitches.config";
+import { css, theme, styled, type CSS } from "../stitches.config";
 import { Separator } from "./separator";
 
 export const Popover = Primitive.Root;
@@ -39,16 +39,20 @@ export const PopoverContent = React.forwardRef(
     {
       children,
       className,
+      css,
       hideArrow,
       ...props
-    }: ComponentProps<typeof Primitive.Content> & { hideArrow?: boolean },
+    }: ComponentProps<typeof Primitive.Content> & {
+      hideArrow?: boolean;
+      css?: CSS;
+    },
     ref: Ref<HTMLDivElement>
   ) => (
     <Primitive.Portal>
       <Primitive.Content
         sideOffset={4}
         collisionPadding={4}
-        className={contentStyles({ className })}
+        className={contentStyles({ className, css })}
         {...props}
         ref={ref}
       >

@@ -3,7 +3,7 @@ export * from "./components/storybook";
 
 // Aligned with Figma
 
-export * from "./components/typography";
+export * from "./components/text";
 export * from "./components/title";
 export * from "./components/separator";
 export * from "./components/button";
@@ -41,7 +41,6 @@ export {
   EnhancedTooltipProvider,
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
-export { Paragraph } from "./components/paragraph";
 export { Link } from "./components/link";
 export { Panel } from "./components/panel";
 export * from "./components/switch";
@@ -51,7 +50,6 @@ export * from "./components/checkbox";
 export * from "./components/avatar";
 export * from "./components/icon-button-with-menu";
 export * from "./components/tree";
-export * from "./components/text";
 export * from "./components/list";
 
 // No need to align
@@ -67,8 +65,10 @@ export * from "./components/primitives/numeric-gesture-control";
 // Deprecated
 
 export * from "./components/__DEPRECATED__/text";
+export * from "./components/__DEPRECATED__/text2";
 export { DeprecatedButton } from "./components/__DEPRECATED__/button";
 export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";
 export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
 export * from "./components/__DEPRECATED__/popover";
+export * from "./components/__DEPRECATED__/paragraph";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
 import { ExternalLinkIcon, RocketIcon } from "@webstudio-is/icons";
 import {
-  Text,
+  DeprecatedText2,
   Button,
   DeprecatedButton,
   Flex,
@@ -51,7 +51,9 @@ const Content = ({ project }: PublishButtonProps) => {
                 gap: theme.spacing[0],
               }}
             >
-              <Text truncate>{new URL(getPublishedUrl(domain)).host}</Text>
+              <DeprecatedText2 truncate>
+                {new URL(getPublishedUrl(domain)).host}
+              </DeprecatedText2>
               <ExternalLinkIcon />
             </Link>
           )}
@@ -61,7 +63,9 @@ const Content = ({ project }: PublishButtonProps) => {
             <TextField id={id} name="domain" defaultValue={domain} />
           </Flex>
           {fetcher.data?.errors !== undefined && (
-            <Text color="error">{fetcher.data?.errors}</Text>
+            <DeprecatedText2 color="error">
+              {fetcher.data?.errors}
+            </DeprecatedText2>
           )}
           <Button
             state={fetcher.state !== "idle" ? "pending" : "auto"}
@@ -85,7 +89,7 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
           css={{ display: "flex", gap: theme.spacing[3] }}
         >
           <RocketIcon />
-          <Text>Publish</Text>
+          <DeprecatedText2>Publish</DeprecatedText2>
         </DeprecatedButton>
       </DeprecatedPopoverTrigger>
       <DeprecatedPopoverPortal>

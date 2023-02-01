@@ -1,6 +1,6 @@
 import React, { type ReactNode, type ComponentProps, type Ref } from "react";
 import * as Primitive from "@radix-ui/react-dialog";
-import { css, theme, keyframes } from "../stitches.config";
+import { css, theme, keyframes, type CSS } from "../stitches.config";
 import { Title } from "./title";
 import { floatingPanelStyles, CloseButton, TitleSlot } from "./floating-panel";
 
@@ -17,14 +17,19 @@ export const DialogDescription = Primitive.Description;
 
 export const DialogContent = React.forwardRef(
   (
-    { children, className, ...props }: ComponentProps<typeof Primitive.Content>,
+    {
+      children,
+      className,
+      css,
+      ...props
+    }: ComponentProps<typeof Primitive.Content> & { css?: CSS },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
     return (
       <Primitive.Portal>
         <Primitive.Overlay className={overlayStyles()} />
         <Primitive.Content
-          className={contentStyles({ className })}
+          className={contentStyles({ className, css })}
           {...props}
           ref={forwardedRef}
         >

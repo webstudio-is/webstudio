@@ -10,6 +10,8 @@ import { registerContainers, useDesignerStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
+// eslint-disable-next-line import/no-internal-modules
+import robotoMonoFont from "@fontsource/roboto-mono/index.css";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { usePages, useProject, useCurrentPageId } from "./shared/nano-states";
@@ -38,6 +40,7 @@ registerContainers();
 export const links = () => {
   return [
     { rel: "stylesheet", href: interFont },
+    { rel: "stylesheet", href: robotoMonoFont },
     { rel: "stylesheet", href: designerStyles },
   ];
 };

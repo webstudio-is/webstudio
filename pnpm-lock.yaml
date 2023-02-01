@@ -46,6 +46,7 @@ importers:
       '@floating-ui/dom': ^1.0.6
       '@fontsource/inter': ^4.5.15
       '@fontsource/manrope': ^4.5.13
+      '@fontsource/roboto-mono': ^4.5.10
       '@jest/globals': ^29.3.1
       '@lexical/link': ^0.6.0
       '@lexical/react': ^0.6.0
@@ -160,6 +161,7 @@ importers:
       '@floating-ui/dom': 1.0.6
       '@fontsource/inter': 4.5.15
       '@fontsource/manrope': 4.5.13
+      '@fontsource/roboto-mono': 4.5.10
       '@lexical/link': 0.6.0_lexical@0.6.0
       '@lexical/react': 0.6.0_p7mvqmjvwf4nexue7sv3sfptum
       '@lexical/selection': 0.6.0_lexical@0.6.0
@@ -936,7 +938,7 @@ importers:
     specifiers:
       '@fontsource/inter': ^4.5.15
       '@fontsource/manrope': ^4.5.13
-      '@fontsource/roboto': ^4.5.8
+      '@fontsource/roboto-mono': ^4.5.10
       '@storybook/addon-essentials': ^6.5.14
       '@storybook/addon-interactions': ^6.5.14
       '@storybook/addon-links': ^6.5.14
@@ -945,7 +947,7 @@ importers:
     dependencies:
       '@fontsource/inter': 4.5.15
       '@fontsource/manrope': 4.5.13
-      '@fontsource/roboto': 4.5.8
+      '@fontsource/roboto-mono': 4.5.10
       '@storybook/addon-essentials': 6.5.14_giwchv74co2s2fgcqn7wwzn5ie
       '@storybook/addon-interactions': 6.5.14
       '@storybook/addon-links': 6.5.14
@@ -5466,8 +5468,8 @@ packages:
     resolution: {integrity: sha512-UFN5DMGBp8nFpwhPQXfpSbsEm4OVISqUKQy+rA+pb1zYGoH+OGN1woKEND8VLx+pC7rY3nrPRCJvSuuOaNdW7Q==}
     dev: false
 
-  /@fontsource/roboto/4.5.8:
-    resolution: {integrity: sha512-CnD7zLItIzt86q4Sj3kZUiLcBk1dSk81qcqgMGaZe7SQ1P8hFNxhMl5AZthK1zrDM5m74VVhaOpuMGIL4gagaA==}
+  /@fontsource/roboto-mono/4.5.10:
+    resolution: {integrity: sha512-KrJdmkqz6DszT2wV/bbhXef4r0hV3B0vw2mAqei8A2kRnvq+gcJLmmIeQ94vu9VEXrUQzos5M9lH1TAAXpRphw==}
     dev: false
 
   /@gar/promisify/1.1.3:

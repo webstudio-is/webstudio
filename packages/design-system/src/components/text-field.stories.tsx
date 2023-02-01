@@ -9,7 +9,7 @@ import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { TextField } from "./text-field";
 import { Box } from "./box";
 import { Grid } from "./grid";
-import { Text } from "./text";
+import { DeprecatedText2 } from "./__DEPRECATED__/text2";
 import { theme } from "../stitches.config";
 
 export default {
@@ -125,9 +125,9 @@ export const Layout: ComponentStory<typeof TextField> = () => {
         }}
       >
         <Box css={{ background: theme.colors.muted }}>
-          <Text as="label" htmlFor="field">
+          <DeprecatedText2 as="label" htmlFor="field">
             This is a label
-          </Text>
+          </DeprecatedText2>
         </Box>
         <Box css={{ background: theme.colors.muted }}>
           <TextField
@@ -137,9 +137,9 @@ export const Layout: ComponentStory<typeof TextField> = () => {
           />
         </Box>
         <Box css={{ background: theme.colors.muted }}>
-          <Text as="label" htmlFor="field2">
+          <DeprecatedText2 as="label" htmlFor="field2">
             This is a label
-          </Text>
+          </DeprecatedText2>
         </Box>
         <TextField
           id="field2"

@@ -1,34 +1,21 @@
-import { ComponentStory } from "@storybook/react";
-import { Text } from "./text";
+import { textVariants, Text } from "./text";
+import { StorySection } from "./storybook";
+
+const variants = Object.keys(textVariants) as (keyof typeof textVariants)[];
+
+const Story = () => (
+  <>
+    {variants.map((variant) => (
+      <StorySection withBorder key={variant} title={variant}>
+        <Text variant={variant}>
+          The quick brown fox jumps over the lazy dog
+        </Text>
+      </StorySection>
+    ))}
+  </>
+);
+export { Story as Text };
 
 export default {
-  component: Text,
-};
-
-export const Regular: ComponentStory<typeof Text> = () => {
-  return <Text>Regular text</Text>;
-};
-
-export const Label: ComponentStory<typeof Text> = () => {
-  return <Text variant="label">Label text</Text>;
-};
-
-export const Tiny: ComponentStory<typeof Text> = () => {
-  return <Text variant="tiny">Tiny text</Text>;
-};
-export const Title: ComponentStory<typeof Text> = () => {
-  return <Text variant="title">Title text</Text>;
-};
-export const Mono: ComponentStory<typeof Text> = () => {
-  return <Text variant="mono">Mono text</Text>;
-};
-export const Unit: ComponentStory<typeof Text> = () => {
-  return <Text variant="unit">Unit text</Text>;
-};
-export const Truncated: ComponentStory<typeof Text> = () => {
-  return (
-    <Text truncate css={{ width: 200 }}>
-      Long long text asdf asdf asdfasdf asdfasdf asdfasdfasdfasf
-    </Text>
-  );
+  title: "Components/Text",
 };

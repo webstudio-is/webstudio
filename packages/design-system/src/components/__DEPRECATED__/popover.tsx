@@ -5,7 +5,7 @@ import { Box } from "../box";
 import { panelStyles } from "../panel";
 import { Flex } from "../flex";
 import { DeprecatedIconButton } from "./icon-button";
-import { Text } from "../text";
+import { DeprecatedText2 } from "./text2";
 import { Separator } from "../separator";
 import { styled, CSS } from "../../stitches.config";
 import { theme } from "../../stitches.config";
@@ -76,7 +76,7 @@ export const DeprecatedPopoverHeader = ({ title }: PopoverHeaderProps) => {
         align="center"
         justify="between"
       >
-        <Text variant="title">{title}</Text>
+        <DeprecatedText2 variant="title">{title}</DeprecatedText2>
         <DeprecatedPopoverClose asChild>
           <DeprecatedIconButton
             size="2"

@@ -152,7 +152,7 @@ export const TextFieldContainer = styled("div", {
   px: theme.spacing[4],
   borderRadius: theme.borderRadius[4],
   fontFamily: theme.fonts.sans,
-  fontSize: theme.fontSize[3],
+  fontSize: theme.deprecatedFontSize[3],
   minHeight: theme.spacing[12],
   lineHeight: 1,
   minWidth: 0,

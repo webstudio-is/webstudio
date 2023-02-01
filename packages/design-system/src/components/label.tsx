@@ -5,10 +5,10 @@
 
 import type { ComponentProps, ReactNode, Ref } from "react";
 import { forwardRef } from "react";
-import { typography } from "../__generated__/figma-design-tokens";
+import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
 
-const StyledLabel = styled("label", typography.labelSentenceCase, {
+const StyledLabel = styled("label", textVariants.labelSentenceCase, {
   boxSizing: "border-box",
   flexShrink: 0,
   py: theme.spacing[2],

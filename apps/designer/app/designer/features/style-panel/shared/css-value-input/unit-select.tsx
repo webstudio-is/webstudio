@@ -10,7 +10,7 @@ import {
   SelectContent,
   TextFieldIconButton,
   styled,
-  textStyles,
+  deprecatedTextStyles,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
@@ -75,7 +75,7 @@ export const useUnitSelect = ({
   return [isOpen, select];
 };
 
-const StyledTrigger = styled(TextFieldIconButton, textStyles, {
+const StyledTrigger = styled(TextFieldIconButton, deprecatedTextStyles, {
   px: 3,
 });
 

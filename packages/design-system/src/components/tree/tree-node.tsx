@@ -4,7 +4,7 @@ import { cssVars } from "@webstudio-is/css-vars";
 import { Box } from "../box";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Flex } from "../flex";
-import { Text } from "../text";
+import { DeprecatedText2 } from "../__DEPRECATED__/text2";
 import { keyframes, styled } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 
@@ -341,9 +341,9 @@ export const TreeItemLabel = ({
 }) => (
   <>
     {prefix}
-    <Text truncate css={{ ml: prefix ? theme.spacing[3] : 0 }}>
+    <DeprecatedText2 truncate css={{ ml: prefix ? theme.spacing[3] : 0 }}>
       {children}
-    </Text>
+    </DeprecatedText2>
   </>
 );
 

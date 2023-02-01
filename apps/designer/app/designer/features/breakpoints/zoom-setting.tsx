@@ -1,5 +1,5 @@
 import { useZoom } from "~/designer/shared/nano-states";
-import { Slider, Text, Flex } from "@webstudio-is/design-system";
+import { Slider, DeprecatedText2, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
 export const minZoom = 10;
@@ -12,7 +12,7 @@ export const ZoomSetting = () => {
       gap="1"
       direction="column"
     >
-      <Text>Zoom</Text>
+      <DeprecatedText2>Zoom</DeprecatedText2>
       <Flex gap="3" align="center">
         <Slider
           min={minZoom}
@@ -21,7 +21,7 @@ export const ZoomSetting = () => {
             setValue(value);
           }}
         />
-        <Text>{value}%</Text>
+        <DeprecatedText2>{value}%</DeprecatedText2>
       </Flex>
     </Flex>
   );

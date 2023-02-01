@@ -1,5 +1,5 @@
 import { Button } from "./button";
-import { typography } from "./typography";
+import { Text } from "./text";
 import {
   Popover,
   PopoverClose,
@@ -22,7 +22,7 @@ const PopoverDemo = () => (
     </PopoverTrigger>
     <PopoverContent>
       <PopoverContentContainer>
-        <div className={typography.regular()}>Some content</div>
+        <Text>Some content</Text>
       </PopoverContentContainer>
       <PopoverSeparator />
       <PopoverMenuItemContainer>
