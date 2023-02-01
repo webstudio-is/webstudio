@@ -9,7 +9,6 @@ import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/server";
 import { createContext } from "~/shared/context.server";
-
 export { links } from "~/dashboard";
 
 export const loader = async ({

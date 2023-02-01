@@ -23,12 +23,36 @@ export const designerPath = ({
   pageId?: string;
 }) => `/designer/${projectId}${searchParams({ pageId })}`;
 
+export const designerUrl = (props: {
+  projectId: string;
+  pageId?: string;
+  origin: string;
+  authToken?: string;
+  mode?: "edit" | "preview";
+}) => {
+  const { projectId, pageId } = props;
+  const url = new URL(designerPath({ projectId, pageId }), props.origin);
+
+  if (props.authToken !== undefined) {
+    url.searchParams.set("authToken", props.authToken);
+  }
+
+  if (props.mode !== undefined) {
+    url.searchParams.set("mode", props.mode);
+  }
+
+  return url.href;
+};
+
 export const dashboardPath = () => {
   return "/dashboard";
 };
 
 export const dashboardProjectPath = (method: string) =>
   `/dashboard/projects/${method}`;
+
+export const authorizationTokenPath = (method: string) =>
+  `/rest/authorization-token/${method}`;
 
 export const loginPath = (params: {
   error?: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
@@ -59,7 +83,18 @@ export const restAssetsPath = ({ projectId }: { projectId: string }) =>
 export const restThemePath = ({ setting }: { setting: ThemeSetting }) =>
   `/rest/theme/${setting}`;
 
-export const restPatchPath = () => "/rest/patch";
+export const restPatchPath = (props: { authToken?: string }) => {
+  const urlSearchParams = new URLSearchParams();
+  if (props.authToken !== undefined) {
+    urlSearchParams.set("authToken", props.authToken);
+  }
+
+  const urlSearchParamsString = urlSearchParams.toString();
+
+  return `/rest/patch${
+    urlSearchParamsString ? `?${urlSearchParamsString}` : ""
+  }`;
+};
 
 export const restPublishPath = () => "/rest/publish";
 

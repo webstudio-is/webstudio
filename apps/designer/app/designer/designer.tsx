@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from "react";
-import { useStore } from "@nanostores/react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import {
   type Pages,
@@ -30,17 +29,11 @@ import {
   Workspace,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import {
-  selectedInstanceStore,
-  useDragAndDropState,
-  useInstanceProps,
-  useInstanceStyles,
-  useIsPreviewMode,
-} from "~/shared/nano-states";
+import { useDragAndDropState, useIsPreviewMode } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { getBuildUrl } from "~/shared/router-utils";
-import { useInstanceCopyPaste } from "~/shared/copy-paste";
+import { designerUrl, getBuildUrl } from "~/shared/router-utils";
+import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
 
 registerContainers();
@@ -83,37 +76,6 @@ const useNavigatorLayout = () => {
 const useSubscribeCanvasReady = (publish: Publish) => {
   useSubscribe("canvasReady", () => {
     publish({ type: "canvasReadyAck" });
-  });
-};
-
-const useCopyPaste = (publish: Publish) => {
-  const selectedInstance = useStore(selectedInstanceStore);
-  const instanceProps = useInstanceProps(selectedInstance?.id);
-  const instanceStyles = useInstanceStyles(selectedInstance?.id);
-
-  const selectedInstanceData = useMemo(() => {
-    if (selectedInstance) {
-      return {
-        instance: selectedInstance,
-        props: instanceProps,
-        styles: instanceStyles,
-      };
-    }
-  }, [selectedInstance, instanceProps, instanceStyles]);
-
-  // We need to initialize this in both canvas and designer,
-  // because the events will fire in either one, depending on where the focus is
-  useInstanceCopyPaste({
-    selectedInstanceData,
-    onCut: (instance) => {
-      publish({ type: "deleteInstance", payload: { id: instance.id } });
-    },
-    onPaste: ({ instance, props, styles }) => {
-      publish({
-        type: "insertInstance",
-        payload: { instance, props, styles },
-      });
-    },
   });
 };
 
@@ -278,10 +240,7 @@ export type DesignerProps = {
   buildId: string;
   buildOrigin: string;
   authReadToken: string;
-  authSharedTokens: {
-    token: string;
-    relation: "viewers" | "editors" | "owner";
-  }[];
+  authToken?: string;
 };
 
 export const Designer = ({
@@ -292,7 +251,7 @@ export const Designer = ({
   buildId,
   buildOrigin,
   authReadToken,
-  authSharedTokens,
+  authToken,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -300,7 +259,7 @@ export const Designer = ({
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
-  useSyncServer({ buildId, treeId, projectId: project.id });
+  useSyncServer({ buildId, treeId, projectId: project.id, authToken });
   usePublishAssets(publish);
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
@@ -308,7 +267,9 @@ export const Designer = ({
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   const [dragAndDropState] = useDragAndDropState();
   useSubscribeCanvasReady(publish);
-  useCopyPaste(publish);
+  // We need to initialize this in both canvas and designer,
+  // because the events will fire in either one, depending on where the focus is
+  useCopyPasteInstance();
   useSetWindowTitle();
   const iframeRefCallback = useCallback(
     (ref) => {
@@ -335,15 +296,6 @@ export const Designer = ({
     authReadToken,
   });
 
-  const previewUrl = getBuildUrl({
-    buildOrigin,
-    project,
-    page,
-    mode: "preview",
-    // Temporary solution until the new share UI is implemented
-    authToken: authSharedTokens.find((t) => t.relation === "viewers")?.token,
-  });
-
   return (
     <AssetsProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
@@ -351,7 +303,15 @@ export const Designer = ({
           css={{ gridArea: "header" }}
           project={project}
           publish={publish}
-          previewUrl={previewUrl}
+          designerUrl={({ authToken, mode }) =>
+            designerUrl({
+              projectId: project.id,
+              pageId: page.id,
+              origin: window.location.origin,
+              authToken,
+              mode,
+            })
+          }
         />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>

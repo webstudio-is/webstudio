@@ -3,6 +3,42 @@ import { router, procedure } from "./trpc";
 
 import { prisma } from "@webstudio-is/prisma-client";
 
+const Relation = z.enum(["viewers", "editors", "builders", "owners"]);
+
+const DeleteCreateInput = z.discriminatedUnion("namespace", [
+  z.object({
+    namespace: z.literal("Project"),
+    id: z.string(),
+    relation: Relation,
+
+    subjectSet: z.discriminatedUnion("namespace", [
+      z.object({
+        namespace: z.literal("User"),
+        id: z.string(),
+      }),
+      z.object({
+        namespace: z.literal("Token"),
+        id: z.string(),
+      }),
+      z.object({
+        namespace: z.literal("Email"),
+        id: z.string(),
+        relation: z.literal("owners"),
+      }),
+    ]),
+  }),
+
+  z.object({
+    namespace: z.literal("Email"),
+    id: z.string(),
+    relation: z.enum(["owners"]),
+    subjectSet: z.object({
+      namespace: z.literal("User"),
+      id: z.string(),
+    }),
+  }),
+]);
+
 export const authorizationRouter = router({
   /**
    * Relation expansion in authorize looks like a tree
@@ -26,7 +62,7 @@ export const authorizationRouter = router({
       z.array(
         z.object({
           // top level relation
-          relation: z.enum(["owner", "editors", "viewers"]),
+          relation: Relation,
           // subjectSet
           namespace: z.enum(["Email", "User", "Token"]),
           id: z.string(),
@@ -50,7 +86,7 @@ export const authorizationRouter = router({
         },
       });
 
-      const tokenRows = await prisma.authorizationTokens.findMany({
+      const tokenRows = await prisma.authorizationToken.findMany({
         where: {
           projectId: id,
         },
@@ -62,7 +98,7 @@ export const authorizationRouter = router({
         leafSubjectSets.push({
           namespace: "User",
           id: ownerRow.userId,
-          relation: "owner",
+          relation: "owners",
         } as const);
       }
 
@@ -70,7 +106,7 @@ export const authorizationRouter = router({
         leafSubjectSets.push({
           namespace: "Token",
           id: tokenRow.token,
-          relation: tokenRow.permit === "EDIT" ? "editors" : "viewers",
+          relation: tokenRow.relation,
         } as const);
       }
 
@@ -86,7 +122,7 @@ export const authorizationRouter = router({
         namespace: z.enum(["Project"]),
         id: z.string(),
 
-        permit: z.enum(["view", "edit", "own"]),
+        permit: z.enum(["view", "edit", "build", "own"]),
 
         subjectSet: z.object({
           namespace: z.enum(["User", "Token"]),
@@ -113,16 +149,21 @@ export const authorizationRouter = router({
         return { allowed: row !== null };
       }
 
+      const permitToRelationRewrite = {
+        view: ["viewers", "editors", "builders"],
+        edit: ["editors", "builders"],
+        build: ["builders"],
+      } as const;
+
       if (subjectSet.namespace === "Token" && input.permit !== "own") {
-        const row = await prisma.authorizationTokens.findFirst({
+        const row = await prisma.authorizationToken.findFirst({
           where: {
             token: subjectSet.id,
-            permit: {
-              // Token with EDIT permit can also VIEW
-              in: input.permit === "view" ? ["VIEW", "EDIT"] : ["VIEW"],
+            relation: {
+              in: [...permitToRelationRewrite[input.permit]],
             },
           },
-          select: { id: true },
+          select: { token: true },
         });
 
         return { allowed: row !== null };
@@ -131,115 +172,25 @@ export const authorizationRouter = router({
       return { allowed: false };
     }),
   /**
-   * In OSS we extract owner relation from the Project table, and the rest from the authorizationTokens table
+   * In OSS we extract owner relation from the Project table, and the rest from the authorizationToken table
    */
-  create: procedure
+  create: procedure.input(DeleteCreateInput).mutation(async ({ input }) => {
+    // Do nothing in OSS
+  }),
+
+  delete: procedure.input(DeleteCreateInput).mutation(async ({ input }) => {
+    // Do nothing in OSS
+  }),
+  patch: procedure
     .input(
-      z.discriminatedUnion("namespace", [
+      z.array(
         z.object({
-          namespace: z.literal("Project"),
-          id: z.string(),
-          relation: z.enum(["viewers", "editors", "owner"]),
-
-          subjectSet: z.discriminatedUnion("namespace", [
-            z.object({
-              namespace: z.literal("User"),
-              id: z.string(),
-            }),
-            z.object({
-              namespace: z.literal("Token"),
-              id: z.string(),
-            }),
-            z.object({
-              namespace: z.literal("Email"),
-              id: z.string(),
-              relation: z.literal("owner"),
-            }),
-          ]),
-        }),
-
-        z.object({
-          namespace: z.literal("Email"),
-          id: z.string(),
-          relation: z.enum(["owner"]),
-          subjectSet: z.object({
-            namespace: z.literal("User"),
-            id: z.string(),
-          }),
-        }),
-      ])
+          action: z.enum(["insert", "delete"]),
+          relationTuple: DeleteCreateInput,
+        })
+      )
     )
     .mutation(async ({ input }) => {
-      const { namespace, id, relation, subjectSet } = input;
-      if (namespace === "Project") {
-        if (subjectSet.namespace === "Token") {
-          if (relation === "owner") {
-            throw new Error("Token relation owner is prohibited");
-          }
-
-          await prisma.authorizationTokens.create({
-            data: {
-              projectId: id,
-              token: subjectSet.id,
-              permit: relation === "viewers" ? "VIEW" : "EDIT",
-            },
-          });
-        }
-      }
-    }),
-
-  delete: procedure
-    .input(
-      z.discriminatedUnion("namespace", [
-        z.object({
-          namespace: z.literal("Project"),
-          id: z.string(),
-          relation: z.enum(["viewers", "editors", "owner"]),
-
-          subjectSet: z.discriminatedUnion("namespace", [
-            z.object({
-              namespace: z.literal("User"),
-              id: z.string(),
-            }),
-            z.object({
-              namespace: z.literal("Token"),
-              id: z.string(),
-            }),
-            z.object({
-              namespace: z.literal("Email"),
-              id: z.string(),
-              relation: z.literal("owner"),
-            }),
-          ]),
-        }),
-
-        z.object({
-          namespace: z.literal("Email"),
-          id: z.string(),
-          relation: z.enum(["owner"]),
-          subjectSet: z.object({
-            namespace: z.literal("User"),
-            id: z.string(),
-          }),
-        }),
-      ])
-    )
-    .mutation(async ({ input }) => {
-      const { namespace, id, relation, subjectSet } = input;
-      if (namespace === "Project") {
-        if (subjectSet.namespace === "Token") {
-          if (relation === "owner") {
-            throw new Error("Token relation owner is prohibited");
-          }
-
-          await prisma.authorizationTokens.deleteMany({
-            where: {
-              projectId: id,
-              token: subjectSet.id,
-              permit: relation === "viewers" ? "VIEW" : "EDIT",
-            },
-          });
-        }
-      }
+      // Do nothing in OSS
     }),
 });

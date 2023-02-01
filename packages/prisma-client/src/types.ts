@@ -7,4 +7,5 @@ export type {
   Asset,
   Tree,
   DashboardProject,
+  AuthorizationToken,
 } from "@prisma/client";
