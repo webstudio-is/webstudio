@@ -2,7 +2,7 @@ import React, { Ref, Fragment, type ComponentProps } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Box } from "./box";
-import { Paragraph } from "./paragraph";
+import { DeprecatedParagraph } from "./__DEPRECATED__/paragraph";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
 
@@ -81,7 +81,7 @@ export const Tooltip = React.forwardRef(
             sideOffset={5}
             {...props}
           >
-            <Paragraph>{content}</Paragraph>
+            <DeprecatedParagraph>{content}</DeprecatedParagraph>
             <Box css={{ color: theme.colors.transparentExtreme }}>
               <Arrow offset={5} width={11} height={5} />
             </Box>

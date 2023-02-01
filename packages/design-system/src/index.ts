@@ -41,7 +41,6 @@ export {
   EnhancedTooltipProvider,
   useEnhancedTooltipProps,
 } from "./components/enhanced-tooltip";
-export { Paragraph } from "./components/paragraph";
 export { Link } from "./components/link";
 export { Panel } from "./components/panel";
 export * from "./components/switch";
@@ -72,3 +71,4 @@ export { DeprecatedIconButton } from "./components/__DEPRECATED__/icon-button";
 export { DeprecatedHeading } from "./components/__DEPRECATED__/heading";
 export { DeprecatedLabel } from "./components/__DEPRECATED__/label";
 export * from "./components/__DEPRECATED__/popover";
+export * from "./components/__DEPRECATED__/paragraph";
