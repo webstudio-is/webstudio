@@ -18,6 +18,7 @@ import {
   RenameProjectDialog,
   DeleteProjectDialog,
   useDuplicate,
+  ShareProjectDialog,
 } from "./project-dialogs";
 import { ThumbnailLink } from "./thumbnail-link";
 
@@ -86,11 +87,13 @@ const Menu = ({
   onDelete,
   onRename,
   onDuplicate,
+  onShare,
 }: {
   tabIndex: number;
   onDelete: () => void;
   onRename: () => void;
   onDuplicate: () => void;
+  onShare: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -109,7 +112,7 @@ const Menu = ({
         <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
         <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
         {isFeatureEnabled("share2") && (
-          <DropdownMenuItem>Share</DropdownMenuItem>
+          <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
@@ -170,6 +173,7 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleDuplicate = useDuplicate(id);
 
@@ -212,27 +216,29 @@ export const ProjectCard = ({
             onRename={() => {
               setIsRenameDialogOpen(true);
             }}
+            onShare={() => {
+              setIsShareDialogOpen(true);
+            }}
             onDuplicate={handleDuplicate}
           />
         </Flex>
       </Flex>
       <RenameProjectDialog
         isOpen={isRenameDialogOpen}
+        onOpenChange={setIsRenameDialogOpen}
         title={title}
         projectId={id}
-        onComplete={() => {
-          setIsRenameDialogOpen(false);
-        }}
-        onOpenChange={setIsRenameDialogOpen}
       />
       <DeleteProjectDialog
         isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
         title={title}
         projectId={id}
-        onComplete={() => {
-          setIsDeleteDialogOpen(false);
-        }}
-        onOpenChange={setIsDeleteDialogOpen}
+      />
+      <ShareProjectDialog
+        isOpen={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        projectId={id}
       />
     </>
   );

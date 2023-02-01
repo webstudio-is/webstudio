@@ -6,34 +6,27 @@ import {
   FloatingPanelPopoverTrigger,
   theme,
 } from "@webstudio-is/design-system";
-import { useProject } from "../../shared/nano-states";
-import {
-  ShareProject,
-  LinkOptions,
-  type ShareProjectProps,
-} from "~/shared/share-project";
+import { ShareProject, LinkOptions } from "~/shared/share-project";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import type { AuthorizationTokensRouter } from "@webstudio-is/authorization-token";
-import { authorizationTokenPath } from "~/shared/router-utils";
+import { authorizationTokenPath, designerUrl } from "~/shared/router-utils";
 import { useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { Project } from "@webstudio-is/prisma-client";
 
 const trpc = createTrpcRemixProxy<AuthorizationTokensRouter>(
   authorizationTokenPath
 );
 
 export type ShareButtonProps = {
-  designerUrl: ShareProjectProps["designerUrl"];
+  projectId: Project["id"];
 };
 
-const useShareProjectContainer = () => {
+const useShareProjectContainer = (projectId: Project["id"]) => {
   const { data: links, load } = trpc.findMany.useQuery();
   const { send: createToken } = trpc.create.useMutation();
   const { send: removeToken } = trpc.remove.useMutation();
   const { send: updateToken } = trpc.update.useMutation();
-
-  const [project] = useProject();
-  const projectId = project?.id;
 
   useEffect(() => {
     if (projectId === undefined) {
@@ -87,14 +80,14 @@ const useShareProjectContainer = () => {
  * we place the logic inside Popover so that the fetcher does not exist outside of it.
  * Then remix will not call `trpc.findMany.useQuery` if Popover is closed
  */
-const ShareProjectContainer = ({ designerUrl }: ShareButtonProps) => {
+export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
   const {
     links,
     // handleChange,
     handleChangeDebounced,
     handleDelete,
     handleCreate,
-  } = useShareProjectContainer();
+  } = useShareProjectContainer(projectId);
 
   return (
     <ShareProject
@@ -102,12 +95,19 @@ const ShareProjectContainer = ({ designerUrl }: ShareButtonProps) => {
       onChange={handleChangeDebounced}
       onDelete={handleDelete}
       onCreate={handleCreate}
-      designerUrl={designerUrl}
+      designerUrl={({ authToken, mode }) =>
+        designerUrl({
+          projectId,
+          origin: window.location.origin,
+          authToken,
+          mode,
+        })
+      }
     />
   );
 };
 
-export const ShareButton = ({ designerUrl }: ShareButtonProps) => {
+export const ShareButton = ({ projectId }: ShareButtonProps) => {
   return (
     <FloatingPanelPopover modal>
       <FloatingPanelPopoverTrigger asChild>
@@ -115,7 +115,7 @@ export const ShareButton = ({ designerUrl }: ShareButtonProps) => {
       </FloatingPanelPopoverTrigger>
 
       <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
-        <ShareProjectContainer designerUrl={designerUrl} />
+        <ShareProjectContainer projectId={projectId} />
         <FloatingPanelPopoverTitle>Share</FloatingPanelPopoverTitle>
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>

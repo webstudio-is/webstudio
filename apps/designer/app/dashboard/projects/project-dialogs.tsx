@@ -21,6 +21,7 @@ import {
   DialogDescription,
 } from "./dialog";
 import { DashboardProject } from "@webstudio-is/prisma-client";
+import { ShareProjectContainer } from "~/designer/features/topbar/share";
 
 const DialogContent = ({
   onSubmit,
@@ -129,19 +130,19 @@ export const CreateProject = () => {
 
 const useRenameProject = ({
   projectId,
-  onComplete,
+  onOpenChange,
 }: {
   projectId: DashboardProject["id"];
-  onComplete: () => void;
+  onOpenChange: (isOpen: boolean) => void;
 }) => {
   const { send, data, state } = trpc.rename.useMutation();
   const errors = data && "errors" in data ? data.errors : undefined;
 
   useEffect(() => {
     if (errors === undefined && state === "loading") {
-      onComplete();
+      onOpenChange(false);
     }
-  }, [errors, state, onComplete]);
+  }, [errors, state, onOpenChange]);
 
   const handleSubmit = ({ title }: { title: string }) => {
     send({ projectId, title });
@@ -158,18 +159,16 @@ export const RenameProjectDialog = ({
   isOpen,
   title,
   projectId,
-  onComplete,
   onOpenChange,
 }: {
   isOpen: boolean;
   title: string;
   projectId: DashboardProject["id"];
-  onComplete: () => void;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const { handleSubmit, errors, state } = useRenameProject({
     projectId,
-    onComplete,
+    onOpenChange,
   });
   return (
     <Dialog title="Rename" isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -194,11 +193,11 @@ export const RenameProjectDialog = ({
 const useDeleteProject = ({
   projectId,
   title,
-  onComplete,
+  onOpenChange,
 }: {
   projectId: DashboardProject["id"];
   title: string;
-  onComplete: () => void;
+  onOpenChange: (isOpen: false) => void;
 }) => {
   const { send, data, state } = trpc.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
@@ -206,9 +205,9 @@ const useDeleteProject = ({
 
   useEffect(() => {
     if (errors === undefined && state === "loading") {
-      onComplete();
+      onOpenChange(false);
     }
-  }, [errors, state, onComplete]);
+  }, [errors, state, onOpenChange]);
 
   const handleSubmit = () => {
     send({ projectId });
@@ -231,19 +230,17 @@ export const DeleteProjectDialog = ({
   isOpen,
   title,
   projectId,
-  onComplete,
   onOpenChange,
 }: {
   isOpen: boolean;
   title: string;
   projectId: DashboardProject["id"];
-  onComplete: () => void;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const { handleSubmit, handleChange, errors, isMatch, state } =
     useDeleteProject({
       projectId,
-      onComplete,
+      onOpenChange,
       title,
     });
   return (
@@ -287,4 +284,20 @@ export const useDuplicate = (projectId: DashboardProject["id"]) => {
   return () => {
     send({ projectId });
   };
+};
+
+export const ShareProjectDialog = ({
+  isOpen,
+  onOpenChange,
+  projectId,
+}: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  projectId: DashboardProject["id"];
+}) => {
+  return (
+    <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
+      <ShareProjectContainer projectId={projectId} />
+    </Dialog>
+  );
 };
