@@ -5,7 +5,6 @@ import {
   FloatingPanelPopoverTitle,
   FloatingPanelPopoverTrigger,
   theme,
-  css,
 } from "@webstudio-is/design-system";
 import { useProject } from "../../shared/nano-states";
 import {
@@ -108,8 +107,6 @@ const ShareProjectContainer = ({ designerUrl }: ShareButtonProps) => {
   );
 };
 
-const classZIndex = css({ zIndex: theme.zIndices[1] });
-
 export const ShareButton = ({ designerUrl }: ShareButtonProps) => {
   return (
     <FloatingPanelPopover modal>
@@ -117,7 +114,7 @@ export const ShareButton = ({ designerUrl }: ShareButtonProps) => {
         <Button>Share</Button>
       </FloatingPanelPopoverTrigger>
 
-      <FloatingPanelPopoverContent className={classZIndex()}>
+      <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
         <ShareProjectContainer designerUrl={designerUrl} />
         <FloatingPanelPopoverTitle>Share</FloatingPanelPopoverTitle>
       </FloatingPanelPopoverContent>
