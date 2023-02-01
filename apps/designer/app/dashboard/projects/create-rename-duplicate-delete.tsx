@@ -10,7 +10,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@remix-run/react";
 import { dashboardProjectPath, designerPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
@@ -135,12 +135,21 @@ const useRenameProject = ({
   onComplete: () => void;
 }) => {
   const { send, data, state } = trpc.rename.useMutation();
+  const isComplete = useRef(true);
+  if (isComplete.current && state !== "idle") {
+    isComplete.current = false;
+  }
 
   useEffect(() => {
     if (data === undefined || "errors" in data) {
       return;
     }
-    onComplete();
+    // This is a workaround to prevent onComplete being called because the previous
+    // rename is stale because of how useFetcher() works.
+    if (isComplete.current === false) {
+      onComplete();
+      isComplete.current = true;
+    }
   }, [data, onComplete]);
 
   const handleSubmit = ({ title }: { title: string }) => {
