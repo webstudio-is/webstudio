@@ -32,6 +32,8 @@ import {
   useSetProps,
   useSetRootInstance,
   useSetStyles,
+  useSetStyleSources,
+  useSetStyleSourceSelections,
   useSubscribeScrollState,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
@@ -122,6 +124,9 @@ const propsByInstanceIdStore = computed(
 );
 
 export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
+  if (data.build === null) {
+    throw new Error("Build is null");
+  }
   if (data.tree === null) {
     throw new Error("Tree is null");
   }
@@ -132,6 +137,8 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   // inject props store to sdk
   setPropsByInstanceIdStore(propsByInstanceIdStore);
   useSetStyles(data.tree.styles);
+  useSetStyleSources(data.build.styleSources);
+  useSetStyleSourceSelections(data.tree.styleSourceSelections);
   useSetRootInstance(data.tree.root);
   setParams(data.params ?? null);
   useCanvasStore(publish);
