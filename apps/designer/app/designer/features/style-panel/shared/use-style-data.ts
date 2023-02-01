@@ -134,7 +134,7 @@ export const useStyleData = ({
         }
       );
     },
-    [publish, selectedBreakpoint, selectedInstance]
+    [publish, selectedBreakpoint, selectedInstance, treeId]
   );
 
   // @deprecated should not be called
