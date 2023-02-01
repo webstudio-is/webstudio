@@ -6,7 +6,7 @@ import {
   DeprecatedParagraph,
   SearchField,
 } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, Tree } from "@webstudio-is/project-build";
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 import { useState } from "react";
@@ -17,13 +17,19 @@ import {
 import { theme } from "@webstudio-is/design-system";
 
 type StylePanelProps = {
+  treeId: Tree["id"];
   publish: Publish;
   selectedInstance: Instance;
 };
 
-export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
+export const StylePanel = ({
+  treeId,
+  selectedInstance,
+  publish,
+}: StylePanelProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
     useStyleData({
+      treeId,
       selectedInstance,
       publish,
     });

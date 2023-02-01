@@ -55,7 +55,7 @@ export const Topbar = ({ css, project, publish }: TopbarProps) => {
         }}
       >
         <SyncStatus />
-        <PreviewButton publish={publish} />
+        <PreviewButton />
         {isFeatureEnabled("share2") && <ShareButton projectId={project.id} />}
         <PublishButton project={project} />
       </Flex>
