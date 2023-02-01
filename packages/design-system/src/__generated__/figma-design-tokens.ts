@@ -7,9 +7,10 @@ export const boxShadow = {
 } as const;
 
 export const fontFamilies = {
-  inter: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
-  manrope: "ManropeVariable, Manrope, sans-serif",
-  robotoMono: "Roboto, menlo, monospace",
+  inter:
+    "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
+  manrope: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
+  robotoMono: "Roboto Mono, RobotoMono, menlo, monospace",
 } as const;
 
 export const lineHeights = {
@@ -60,126 +61,136 @@ export const paragraphSpacing = { "0": 0 } as const;
 
 export const typography = {
   regular: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 400,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
   },
   labelTitleCase: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
   },
   labelSentenceCase: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
   },
   title: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 700,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.01em",
   },
   small: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 400,
     fontSize: "10px",
     lineHeight: "11px",
     letterSpacing: "0.01em",
   },
   tiny: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "8px",
     lineHeight: "8px",
     letterSpacing: "0.01em",
   },
   unit: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "10px",
     lineHeight: "12px",
     letterSpacing: "0em",
   },
   mono: {
-    fontFamily: "Roboto, menlo, monospace",
+    fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
     fontWeight: 400,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.01em",
   },
   bigTitle: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "32px",
     lineHeight: "39px",
     letterSpacing: "0.005em",
   },
   spaceSectionUnitText: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 600,
     fontSize: "8px",
     lineHeight: "8px",
     letterSpacing: "0.01em",
   },
   spaceSectionValueText: {
-    fontFamily: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
     fontWeight: 500,
     fontSize: "10px",
     lineHeight: "10px",
     letterSpacing: "0.01em",
   },
   brandSectionTitle: {
-    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 700,
     fontSize: "20px",
     lineHeight: "27px",
     letterSpacing: "0em",
   },
   brandLargeTitle: {
-    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 700,
     fontSize: "48px",
     lineHeight: "58px",
     letterSpacing: "-0.02em",
   },
   brandRegular: {
-    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 400,
     fontSize: "16px",
     lineHeight: "22px",
     letterSpacing: "0em",
   },
   brandThumbnailLargeDefault: {
-    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 200,
     fontSize: "360px",
     lineHeight: "360px",
     letterSpacing: "-0.05em",
   },
   brandThumbnailLargeHover: {
-    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 800,
     fontSize: "360px",
     lineHeight: "360px",
     letterSpacing: "-0.05em",
   },
   brandThumbnailSmallDefault: {
-    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 400,
     fontSize: "48px",
     lineHeight: "58px",
     letterSpacing: "-0.02em",
   },
   brandThumbnailSmallHover: {
-    fontFamily: "ManropeVariable, Manrope, sans-serif",
+    fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
     fontWeight: 800,
     fontSize: "48px",
     lineHeight: "58px",
