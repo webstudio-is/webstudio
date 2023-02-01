@@ -4,6 +4,7 @@ import { typography as textVariants } from "../__generated__/figma-design-tokens
 export { textVariants };
 
 export const textStyles = css({
+  margin: 0, // in case it's used with <p>
   variants: {
     variant: textVariants,
     color: {
@@ -38,9 +39,4 @@ export const textStyles = css({
   defaultVariants: { variant: "regular" },
 });
 
-/**
- * For use as a standalone, single-line text element. If you need a multiline element - use Paragraph.
- */
 export const Text = styled("div", textStyles);
-
-export const Paragraph = styled("p", textStyles);
