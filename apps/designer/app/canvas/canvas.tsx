@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 import { computed } from "nanostores";
-import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import type { CanvasData } from "@webstudio-is/project";
 import {
@@ -27,10 +26,7 @@ import { WrapperComponentDev } from "./features/wrapper-component";
 import {
   propsIndexStore,
   rootInstanceContainer,
-  selectedInstanceStore,
   useBreakpoints,
-  useInstanceProps,
-  useInstanceStyles,
   useRootInstance,
   useSetBreakpoints,
   useSetProps,
@@ -43,7 +39,7 @@ import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import { useInstanceCopyPaste } from "~/shared/copy-paste";
+import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
 
@@ -98,38 +94,6 @@ const useAssets = (initialAssets: Array<Asset>) => {
   return assets;
 };
 
-const useCopyPaste = () => {
-  const selectedInstance = useStore(selectedInstanceStore);
-  const instanceProps = useInstanceProps(selectedInstance?.id);
-  const instanceStyles = useInstanceStyles(selectedInstance?.id);
-
-  const selectedInstanceData = useMemo(() => {
-    if (selectedInstance) {
-      return {
-        instance: selectedInstance,
-        props: instanceProps,
-        styles: instanceStyles,
-      };
-    }
-  }, [selectedInstance, instanceProps, instanceStyles]);
-
-  // We need to initialize this in both canvas and designer,
-  // because the events will fire in either one, depending on where the focus is
-  useInstanceCopyPaste({
-    selectedInstanceData,
-    allowAnyTarget: true,
-    onCut: (instance) => {
-      publish({ type: "deleteInstance", payload: { id: instance.id } });
-    },
-    onPaste: ({ instance, props, styles }) => {
-      publish({
-        type: "insertInstance",
-        payload: { instance, props, styles },
-      });
-    },
-  });
-};
-
 const DesignMode = () => {
   useManageDesignModeStyles();
   useInsertInstance();
@@ -140,8 +104,9 @@ const DesignMode = () => {
   useSubscribeScrollState();
   usePublishTextEditingInstanceId();
   useDragAndDrop();
-  useCopyPaste();
-
+  // We need to initialize this in both canvas and designer,
+  // because the events will fire in either one, depending on where the focus is
+  useCopyPasteInstance();
   useHoveredInstanceConnector();
 
   return null;
