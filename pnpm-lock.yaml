@@ -85,6 +85,7 @@ importers:
       '@types/w3c-css-typed-object-model-level-1': ^20180410.0.4
       '@vercel/node': ^2.4.1
       '@webstudio-is/asset-uploader': workspace:^
+      '@webstudio-is/authorization-token': workspace:^
       '@webstudio-is/css-data': workspace:^
       '@webstudio-is/css-engine': workspace:^
       '@webstudio-is/css-vars': workspace:^
@@ -175,6 +176,7 @@ importers:
       '@trpc/server': 10.9.0
       '@vercel/node': 2.4.1
       '@webstudio-is/asset-uploader': link:../../packages/asset-uploader
+      '@webstudio-is/authorization-token': link:../../packages/authorization-token
       '@webstudio-is/css-data': link:../../packages/css-data
       '@webstudio-is/css-engine': link:../../packages/css-engine
       '@webstudio-is/css-vars': link:../../packages/css-vars
@@ -311,6 +313,29 @@ importers:
       jest: 29.3.1_@types+node@18.11.18
       typescript: 4.7.4
       zod: 3.19.1
+
+  packages/authorization-token:
+    specifiers:
+      '@jest/globals': ^29.3.1
+      '@webstudio-is/jest-config': workspace:^
+      '@webstudio-is/prisma-client': workspace:^
+      '@webstudio-is/scripts': workspace:^
+      '@webstudio-is/trpc-interface': workspace:^
+      '@webstudio-is/tsconfig': workspace:^
+      jest: ^29.3.1
+      typescript: 4.7.4
+      zod: ^3.19.1
+    dependencies:
+      '@webstudio-is/prisma-client': link:../prisma-client
+      '@webstudio-is/trpc-interface': link:../trpc-interface
+      zod: 3.19.1
+    devDependencies:
+      '@jest/globals': 29.3.1
+      '@webstudio-is/jest-config': link:../jest-config
+      '@webstudio-is/scripts': link:../scripts
+      '@webstudio-is/tsconfig': link:../tsconfig
+      jest: 29.3.1
+      typescript: 4.7.4
 
   packages/css-data:
     specifiers:
@@ -9770,7 +9795,7 @@ packages:
       flat-cache: 3.0.4
       micromatch: 4.0.5
       react-docgen-typescript: 2.2.2_typescript@4.7.4
-      tslib: 2.4.0
+      tslib: 2.5.0
       typescript: 4.7.4
       webpack: 5.75.0
     transitivePeerDependencies:
@@ -12074,7 +12099,7 @@ packages:
     resolution: {integrity: sha512-O0yuUDnZeQDL+ncNGlJ78BiO4jnYI3bvMsD5prT0/nsgijG/LpNBIr63gTjVTNsiGkgQhiyCShTgxt8oXOrklA==}
     engines: {node: '>=4'}
     dependencies:
-      tslib: 2.4.0
+      tslib: 2.5.0
     dev: true
 
   /ast-types/0.15.2:
@@ -12877,7 +12902,7 @@ packages:
     resolution: {integrity: sha512-gxGWBrTT1JuMx6R+o5PTXMmUnhnVzLQ9SNutD4YqKtI6ap897t3tKECYla6gCWEkplXnlNybEkZg9GEGxKFCgw==}
     dependencies:
       pascal-case: 3.1.2
-      tslib: 2.4.0
+      tslib: 2.5.0
 
   /camelcase-css/2.0.1:
     resolution: {integrity: sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA==}
@@ -14030,7 +14055,7 @@ packages:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.0
+      tslib: 2.5.0
 
   /dotenv-expand/5.1.0:
     resolution: {integrity: sha512-YXQl1DSa4/PQyRfgrv6aoNjhasp/p4qs9FjJ4q4cQk+8m4r6k4ZSiEyytKG8f8W9gi8WsQtIObNmKd+tMzNTmA==}
@@ -17781,7 +17806,7 @@ packages:
   /lower-case/2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
     dependencies:
-      tslib: 2.4.0
+      tslib: 2.5.0
 
   /lowercase-keys/2.0.0:
     resolution: {integrity: sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA==}
@@ -18733,7 +18758,7 @@ packages:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
     dependencies:
       lower-case: 2.0.2
-      tslib: 2.4.0
+      tslib: 2.5.0
 
   /node-abi/3.22.0:
     resolution: {integrity: sha512-u4uAs/4Zzmp/jjsD9cyFYDXeISfUWaAVWshPmDZOFOv4Xl4SbzTXm53I04C2uRueYJ+0t5PEtLH/owbn2Npf/w==}
@@ -19248,7 +19273,7 @@ packages:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
     dependencies:
       dot-case: 3.0.4
-      tslib: 2.4.0
+      tslib: 2.5.0
 
   /parent-module/1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -19320,7 +19345,7 @@ packages:
     resolution: {integrity: sha512-uWlGT3YSnK9x3BQJaOdcZwrnV6hPpd8jFH1/ucpiLRPh/2zCVJKS19E4GvYHvaCcACn3foXZ0cLB9Wrx1KGe5g==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.0
+      tslib: 2.5.0
 
   /pascalcase/0.1.1:
     resolution: {integrity: sha512-XHXfu/yOQRy9vYOtUDVMN60OEJjW013GoObG1o+xwQTpB9eYJX/BjXMsdW13ZDPruFhYYn0AG22w0xgQMwl3Nw==}
@@ -20210,7 +20235,7 @@ packages:
       '@types/react': 17.0.47
       react: 17.0.2
       react-style-singleton: 2.2.1_sudpmbbyhqtxq6t4xf6jlicdem
-      tslib: 2.4.0
+      tslib: 2.5.0
     dev: false
 
   /react-remove-scroll/2.5.4_sudpmbbyhqtxq6t4xf6jlicdem:
@@ -20277,7 +20302,7 @@ packages:
       get-nonce: 1.0.1
       invariant: 2.2.4
       react: 17.0.2
-      tslib: 2.4.0
+      tslib: 2.5.0
     dev: false
 
   /react-test-renderer/17.0.2_react@17.0.2:
@@ -22211,10 +22236,10 @@ packages:
 
   /tslib/2.4.0:
     resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
+    dev: false
 
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
-    dev: true
 
   /tsutils/3.21.0_typescript@4.7.4:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
@@ -22689,7 +22714,7 @@ packages:
     dependencies:
       '@types/react': 17.0.47
       react: 17.0.2
-      tslib: 2.4.0
+      tslib: 2.5.0
     dev: false
 
   /use-debounce/9.0.2_react@17.0.2:
@@ -22727,7 +22752,7 @@ packages:
       '@types/react': 17.0.47
       detect-node-es: 1.1.0
       react: 17.0.2
-      tslib: 2.4.0
+      tslib: 2.5.0
     dev: false
 
   /use-sync-external-store/1.2.0_react@17.0.2:

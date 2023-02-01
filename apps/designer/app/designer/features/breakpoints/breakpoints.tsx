@@ -25,7 +25,7 @@ import {
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   breakpointsContainer,
-  stylesContainer,
+  stylesStore,
   useBreakpoints,
 } from "~/shared/nano-states";
 import { utils } from "@webstudio-is/project";
@@ -67,7 +67,7 @@ export const Breakpoints = () => {
       return;
     }
     const [updatedBreakpoints] = store.createTransaction(
-      [breakpointsContainer, stylesContainer],
+      [breakpointsContainer, stylesStore],
       (breakpoints, styles) => {
         removeByMutable(breakpoints, ({ id }) => id === breakpointToDelete.id);
         removeByMutable(

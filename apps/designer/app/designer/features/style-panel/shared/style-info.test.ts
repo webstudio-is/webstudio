@@ -36,7 +36,8 @@ const cascadedBreakpointIds = getCascadedBreakpointIds(
   selectedBreakpointId
 );
 
-const cascadingStyles: Styles = [
+const cascadingStylesByInstanceId = new Map<Instance["id"], Styles>();
+cascadingStylesByInstanceId.set(selectedInstanceId, [
   {
     breakpointId: "1",
     instanceId: selectedInstanceId,
@@ -68,7 +69,7 @@ const cascadingStyles: Styles = [
     property: "width",
     value: { type: "unit", value: 400, unit: "px" },
   },
-];
+]);
 
 const rootInstance: Instance = {
   type: "instance",
@@ -91,7 +92,8 @@ const rootInstance: Instance = {
   ],
 };
 
-const inheritingStyles: Styles = [
+const inheritingStylesByInstanceId = new Map<Instance["id"], Styles>();
+inheritingStylesByInstanceId.set("1", [
   // should be inherited even from another breakpoint
   {
     breakpointId: "1",
@@ -99,7 +101,8 @@ const inheritingStyles: Styles = [
     property: "fontSize",
     value: { type: "unit", value: 20, unit: "px" },
   },
-
+]);
+inheritingStylesByInstanceId.set("2", [
   // should not be inherited because width is not inheritable
   {
     breakpointId: "3",
@@ -114,7 +117,8 @@ const inheritingStyles: Styles = [
     property: "fontWeight",
     value: { type: "keyword", value: "600" },
   },
-
+]);
+inheritingStylesByInstanceId.set("3", [
   // should not show selected style as inherited
   {
     breakpointId: "3",
@@ -122,11 +126,15 @@ const inheritingStyles: Styles = [
     property: "fontWeight",
     value: { type: "keyword", value: "500" },
   },
-];
+]);
 
 test("compute cascaded styles", () => {
   expect(
-    getCascadedInfo(cascadingStyles, selectedInstanceId, cascadedBreakpointIds)
+    getCascadedInfo(
+      cascadingStylesByInstanceId,
+      selectedInstanceId,
+      cascadedBreakpointIds
+    )
   ).toMatchInlineSnapshot(`
     {
       "height": {
@@ -153,7 +161,7 @@ test("compute inherited styles", () => {
   expect(
     getInheritedInfo(
       rootInstance,
-      inheritingStyles,
+      inheritingStylesByInstanceId,
       selectedInstanceId,
       cascadedBreakpointIds,
       selectedBreakpointId

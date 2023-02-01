@@ -141,7 +141,7 @@ const Context = createContext<AssetsContext | undefined>(undefined);
 export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   const [project] = useProject();
   const [assetContainers, setAssetContainers] = useAssetsContainer();
-  const { load, data: serverAssets } = useFetcher<Asset[]>();
+  const { submit: load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
   const assetContainersRef = useRef(assetContainers);
 
@@ -150,7 +150,11 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (action && assetContainers.length === 0) {
-      load(action);
+      /**
+       * To prevent the AssetsProvider from being redrawn every time an action is requested, we use PUT instead of GET
+       * to load assets. The only reason PUT is chosen is that it is idempotent and has not been used before.
+       */
+      load({}, { action, method: "put" });
     }
   }, [action, assetContainers.length, load]);
 
@@ -172,7 +176,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     // We can't remove it here optimistically because the previous load
     // can return it as "updated" because of the async operation nature
     if (action) {
-      load(action);
+      load({}, { action, method: "put" });
     }
 
     if (data.status === "error") {
@@ -200,7 +204,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
     const assetContainers = assetContainersRef.current;
 
     if (action) {
-      load(action);
+      load({}, { action, method: "put" });
     }
 
     if (data.status === "error" || data.errors !== undefined) {

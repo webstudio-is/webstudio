@@ -1,7 +1,7 @@
 import type { Publish } from "~/shared/pubsub";
 import { darkTheme, Flex, type CSS } from "@webstudio-is/design-system";
 import { PreviewButton } from "./preview";
-import { ShareButton, ShareButtonDeprecated } from "./share";
+import { ShareButton, type ShareButtonProps } from "./share";
 import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
@@ -14,9 +14,9 @@ type TopbarProps = {
   css: CSS;
   project: Project;
   publish: Publish;
-  previewUrl: string;
+  designerUrl: ShareButtonProps["designerUrl"];
 };
-export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
+export const Topbar = ({ css, project, publish, designerUrl }: TopbarProps) => {
   return (
     <Flex
       className={darkTheme}
@@ -56,8 +56,9 @@ export const Topbar = ({ css, project, publish, previewUrl }: TopbarProps) => {
       >
         <SyncStatus />
         <PreviewButton publish={publish} />
-        <ShareButtonDeprecated url={previewUrl} />
-        {isFeatureEnabled("share2") && <ShareButton />}
+        {isFeatureEnabled("share2") && (
+          <ShareButton designerUrl={designerUrl} />
+        )}
         <PublishButton project={project} />
       </Flex>
     </Flex>

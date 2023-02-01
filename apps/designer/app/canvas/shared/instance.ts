@@ -7,8 +7,8 @@ import { useSubscribe } from "~/shared/pubsub";
 import {
   propsStore,
   rootInstanceContainer,
+  stylesStore,
   selectedInstanceIdStore,
-  stylesContainer,
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
@@ -67,7 +67,7 @@ export const useInsertInstance = () => {
     }) => {
       const selectedInstanceId = selectedInstanceIdStore.get();
       store.createTransaction(
-        [rootInstanceContainer, propsStore, stylesContainer],
+        [rootInstanceContainer, propsStore, stylesStore],
         (rootInstance, props, styles) => {
           if (rootInstance === undefined) {
             return;
@@ -123,7 +123,7 @@ export const useDeleteInstance = () => {
       return;
     }
     store.createTransaction(
-      [rootInstanceContainer, propsStore, stylesContainer],
+      [rootInstanceContainer, propsStore, stylesStore],
       (rootInstance, props, styles) => {
         if (rootInstance === undefined) {
           return;

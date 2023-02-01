@@ -82,16 +82,16 @@ model Build {
 }
 
 model Tree {
-  id              String @id @default(uuid())
+  id              String  @id @default(uuid())
   project         Project @relation(fields: [projectId], references: [id])
   projectId       String
-  build           Build @relation(fields: [buildId], references: [id])
+  build           Build   @relation(fields: [buildId], references: [id])
   buildId         String
   root            String
-  instances       String @default("[]")
-  props           String @default("[]")
-  styles          String @default("[]")
-  styleSelections String @default("[]")
+  instances       String  @default("[]")
+  props           String  @default("[]")
+  styles          String  @default("[]")
+  styleSelections String  @default("[]")
 }
 
 model Breakpoints {
@@ -100,18 +100,21 @@ model Breakpoints {
   values  String @default("[]")
 }
 
-enum AuthorizationPermit {
-  VIEW
-  EDIT
+enum AuthorizationRelation {
+  viewers
+  editors
+  builders
 }
 
-model AuthorizationTokens {
-  id        String              @id @default(uuid())
+model AuthorizationToken {
+  token     String                @default(uuid())
   // No relation to Project, as the Authorization system is not tied to a project
   projectId String
-  token     String
-  permit    AuthorizationPermit
-  createdAt DateTime            @default(now())
+  name      String                @default("")
+  relation  AuthorizationRelation @default(viewers)
+  createdAt DateTime              @default(now())
+
+  @@id([token, projectId])
 }
 
 // Dashboard

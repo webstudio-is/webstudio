@@ -107,7 +107,7 @@ export const create = async (
   }
 
   const projectId = uuid();
-  authorizeProject.registerProjectOwnerAndReadToken({ projectId }, context);
+  authorizeProject.registerProjectOwner({ projectId }, context);
 
   const project = await prisma.$transaction(async (client) => {
     const project = await client.project.create({
@@ -201,7 +201,7 @@ const clone = async (
       : await db.build.loadByProjectId(project.id, "prod");
 
   const projectId = uuid();
-  authorizeProject.registerProjectOwnerAndReadToken({ projectId }, context);
+  authorizeProject.registerProjectOwner({ projectId }, context);
 
   const clonedProject = await prisma.$transaction(async (client) => {
     const clonedProject = await client.project.create({
