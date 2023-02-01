@@ -1,7 +1,12 @@
 import { LinksFunction, MetaFunction } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { Flex, Button, Text, TextField } from "@webstudio-is/design-system";
+import {
+  Flex,
+  Button,
+  DeprecatedText2,
+  TextField,
+} from "@webstudio-is/design-system";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
 import { GithubIcon, CommitIcon, GoogleIcon } from "@webstudio-is/icons";
@@ -41,9 +46,9 @@ export const Login = ({ errorMessage }: { errorMessage: string }) => {
       <Flex direction="column" align="center" gap="3">
         <Flex direction="column" gap="4">
           {errorMessage.length ? (
-            <Text align="center" color="error">
+            <DeprecatedText2 align="center" color="error">
               {errorMessage}
-            </Text>
+            </DeprecatedText2>
           ) : null}
           <Flex gap="2" direction="column">
             <Form action={authPath({ provider: "github" })} method="post">

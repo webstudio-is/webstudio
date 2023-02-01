@@ -1,6 +1,11 @@
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { Box, Flex, Text, Collapsible } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  DeprecatedText2,
+  Collapsible,
+} from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ChevronRightIcon } from "@webstudio-is/icons";
 import { theme } from "@webstudio-is/design-system";
 
@@ -56,7 +61,7 @@ export const CollapsibleSection = ({
               userSelect: "none",
             }}
           >
-            <Text variant="label">{label}</Text>
+            <DeprecatedText2 variant="label">{label}</DeprecatedText2>
             <Flex
               align="center"
               justify="center"

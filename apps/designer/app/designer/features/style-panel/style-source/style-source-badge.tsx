@@ -1,7 +1,7 @@
-import { styled, Text } from "@webstudio-is/design-system";
+import { styled, DeprecatedText2 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
-export const StyleSourceBadge = styled(Text, {
+export const StyleSourceBadge = styled(DeprecatedText2, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[2],
   px: theme.spacing[3],

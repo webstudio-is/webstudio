@@ -1,17 +1,17 @@
 import React, { type ComponentProps } from "react";
-import { Text } from "../text";
+import { DeprecatedText2 } from "./text2";
 
 const DEFAULT_TAG = "p";
 
 type ParagraphProps = ComponentProps<typeof DEFAULT_TAG> &
-  ComponentProps<typeof Text>;
+  ComponentProps<typeof DeprecatedText2>;
 
 export const DeprecatedParagraph = React.forwardRef<
   React.ElementRef<typeof DEFAULT_TAG>,
   ParagraphProps
 >(({ css, ...props }, forwardedRef) => {
   return (
-    <Text
+    <DeprecatedText2
       as={DEFAULT_TAG}
       {...props}
       ref={forwardedRef}

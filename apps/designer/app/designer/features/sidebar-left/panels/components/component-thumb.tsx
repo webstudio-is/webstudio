@@ -1,7 +1,7 @@
 import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { Flex, Text, styled } from "@webstudio-is/design-system";
+import { Flex, DeprecatedText2, styled } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
 const Thumb = styled(Flex, {
@@ -46,7 +46,7 @@ export const ComponentThumb = forwardRef<
       {...rest}
     >
       <meta.Icon width={30} height={30} />
-      <Text>{meta.label}</Text>
+      <DeprecatedText2>{meta.label}</DeprecatedText2>
     </Thumb>
   );
 });

@@ -4,7 +4,7 @@ import {
   Button,
   Flex,
   Label,
-  Text,
+  DeprecatedText2,
   TextField,
   theme,
 } from "@webstudio-is/design-system";
@@ -60,7 +60,7 @@ const Content = () => {
           state={errors ? "invalid" : undefined}
         />
         <Box css={{ minHeight: theme.spacing["10"] }}>
-          {errors && <Text color="error">{errors}</Text>}
+          {errors && <DeprecatedText2 color="error">{errors}</DeprecatedText2>}
         </Box>
       </Flex>
       <DialogActions>

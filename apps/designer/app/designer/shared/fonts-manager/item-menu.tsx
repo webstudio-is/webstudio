@@ -4,7 +4,7 @@ import {
   DeprecatedIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
-  Text,
+  DeprecatedText2,
   DropdownMenuPortal,
   styled,
 } from "@webstudio-is/design-system";
@@ -79,7 +79,7 @@ const ItemMenu = ({
               onDelete();
             }}
           >
-            <Text>Delete font</Text>
+            <DeprecatedText2>Delete font</DeprecatedText2>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenuPortal>

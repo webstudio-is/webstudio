@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useStore } from "@nanostores/react";
 import type { Publish } from "~/shared/pubsub";
 import {
-  Text,
+  DeprecatedText2,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -58,14 +58,14 @@ export const Inspector = ({ publish }: InspectorProps) => {
         <Flex as={Tabs} defaultValue="style" ref={tabsRef}>
           <TabsList>
             <TabsTrigger value="style">
-              <Text>Style</Text>
+              <DeprecatedText2>Style</DeprecatedText2>
             </TabsTrigger>
             {/* @note: events would be part of props */}
             <TabsTrigger value="props">
-              <Text>Props</Text>
+              <DeprecatedText2>Props</DeprecatedText2>
             </TabsTrigger>
             <TabsTrigger value="inspect">
-              <Text>Inspect</Text>
+              <DeprecatedText2>Inspect</DeprecatedText2>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="style" css={contentStyle}>
