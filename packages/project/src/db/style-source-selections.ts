@@ -25,7 +25,7 @@ export const patch = async (
     where: { id: treeId },
   });
   if (tree === null) {
-    return null;
+    return;
   }
 
   const styleSourceSelections = StyleSources.parse(

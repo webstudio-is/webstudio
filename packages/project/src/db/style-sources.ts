@@ -25,7 +25,7 @@ export const patch = async (
     where: { id: buildId },
   });
   if (build === null) {
-    return null;
+    return;
   }
 
   const styleSources = StyleSources.parse(JSON.parse(build.styleSources));
