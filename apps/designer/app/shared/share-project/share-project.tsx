@@ -14,10 +14,11 @@ import {
   theme,
   Tooltip,
   useId,
+  Collapsible,
+  keyframes,
 } from "@webstudio-is/design-system";
 import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
-import { motion } from "framer-motion";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -213,8 +214,21 @@ export type ShareProjectProps = {
   designerUrl: SharedLinkItemType["designerUrl"];
 };
 
-const overflowHidden = css({
-  overflow: "hidden",
+const animateCollapsibleHeight = keyframes({
+  "0%": {
+    height: 0,
+    overflow: "hidden",
+    opacity: 0,
+  },
+  "100%": {
+    height: "var(--radix-collapsible-content-height)",
+    overflow: "hidden",
+    opacity: 1,
+  },
+});
+
+const collapsibleStyle = css({
+  animation: `${animateCollapsibleHeight} 200ms ${theme.easing.easeOut}`,
 });
 
 export const ShareProject = ({
@@ -264,20 +278,12 @@ export const ShareProject = ({
         width: theme.spacing[33],
       }}
     >
-      {items.length > 0 && (
-        <motion.div
-          className={overflowHidden()}
-          initial="collapsed"
-          animate="open"
-          variants={{
-            collapsed: { opacity: 0.0, height: 0 },
-            open: { opacity: 1, height: "auto" },
-          }}
-          transition={{ duration: 0.15 }}
-        >
+      <Collapsible.Root open={items.length > 0}>
+        <Collapsible.Content className={collapsibleStyle()}>
           {items}
-        </motion.div>
-      )}
+        </Collapsible.Content>
+      </Collapsible.Root>
+
       {create}
     </Flex>
   );
