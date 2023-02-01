@@ -4,8 +4,7 @@ import {
   Button,
   Flex,
   Label,
-  DeprecatedParagraph,
-  DeprecatedText2,
+  Text,
   TextField,
   theme,
 } from "@webstudio-is/design-system";
@@ -64,7 +63,7 @@ const DialogContent = ({
       >
         {description && (
           <DialogDescription asChild>
-            <DeprecatedParagraph>{description}</DeprecatedParagraph>
+            <Text as="p">{description}</Text>
           </DialogDescription>
         )}
         <Label>{label}</Label>
@@ -78,7 +77,7 @@ const DialogContent = ({
           }}
         />
         <Box css={{ minHeight: theme.spacing["10"] }}>
-          {errors && <DeprecatedText2 color="error">{errors}</DeprecatedText2>}
+          {errors && <Text color="destructive">{errors}</Text>}
         </Box>
       </Flex>
       <DialogActions>
@@ -256,9 +255,9 @@ export const DeleteProjectDialog = ({
         label={
           <>
             Confirm by typing{" "}
-            <DeprecatedText2 as="span" color="error" variant="label">
+            <Text as="span" color="destructive" variant="labelSentenceCase">
               {title}
-            </DeprecatedText2>{" "}
+            </Text>{" "}
             below
           </>
         }
