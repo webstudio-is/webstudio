@@ -4,7 +4,7 @@
 
 import { type ReactNode } from "react";
 import { theme, css } from "../stitches.config";
-import { typography } from "./typography";
+import { textVariants } from "./text";
 
 const sectionStyle = css({
   marginBottom: theme.spacing[10],
@@ -18,7 +18,7 @@ const sectionStyle = css({
     },
   },
 });
-const titleStyle = css(typography.title, {
+const titleStyle = css(textVariants.title, {
   marginTop: 0,
   marginBottom: theme.spacing[5],
   color: theme.colors.foregroundMain,

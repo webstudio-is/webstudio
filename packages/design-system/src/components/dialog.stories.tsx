@@ -1,6 +1,6 @@
 import { Button } from "./button";
 import { css, theme } from "../stitches.config";
-import { typography } from "./typography";
+import { textVariants } from "./text";
 import {
   Dialog,
   DialogClose,
@@ -18,7 +18,7 @@ const bodyStyles = css({
   padding: theme.spacing[9],
 });
 
-const descriptionStyles = css(typography.regular, {
+const descriptionStyles = css(textVariants.regular, {
   marginTop: 0,
   marginBottom: theme.spacing[9],
 });
