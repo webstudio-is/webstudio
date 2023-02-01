@@ -3,7 +3,7 @@ import { StorySection } from "./storybook";
 
 const variants = Object.keys(textVariants) as (keyof typeof textVariants)[];
 
-export const Typography = () => (
+export const Story = () => (
   <>
     {variants.map((variant) => (
       <StorySection withBorder key={variant} title={variant}>
@@ -14,8 +14,8 @@ export const Typography = () => (
     ))}
   </>
 );
+export { Story as Text };
 
 export default {
-  title: "Components/Typography",
-  component: Typography,
+  title: "Components/Text",
 };
