@@ -37,13 +37,19 @@ export const action = async ({ request }: ActionArgs) => {
       if (namespace === "root") {
         await projectDb.tree.patch({ treeId, projectId }, patches, context);
       } else if (namespace === "styleSourceSelections") {
-        // @todo enable when styles migrated to style sources
-        continue;
+        await projectDb.styleSourceSelections.patch(
+          { treeId, projectId },
+          patches,
+          context
+        );
       } else if (namespace === "styleSources") {
-        // @todo enable when styles migrated to style sources
-        continue;
+        await projectDb.styleSources.patch(
+          { buildId, projectId },
+          patches,
+          context
+        );
       } else if (namespace === "styles") {
-        await projectDb.styles.patch({ treeId, projectId }, patches, context);
+        await projectDb.styles.patch({ buildId, projectId }, patches, context);
       } else if (namespace === "props") {
         await projectDb.props.patch({ treeId, projectId }, patches, context);
       } else if (namespace === "breakpoints") {

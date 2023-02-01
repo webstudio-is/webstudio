@@ -1,6 +1,6 @@
 import { z, type ZodType } from "zod";
 import { Project } from "@webstudio-is/prisma-client";
-import type { NewStyles, StyleSources } from "@webstudio-is/project-build";
+import type { Styles, StyleSources } from "@webstudio-is/project-build";
 import type { Data } from "@webstudio-is/react-sdk";
 
 export type { Project };
@@ -78,7 +78,7 @@ export type Build = {
   isDev: boolean;
   isProd: boolean;
   pages: Pages;
-  styles: NewStyles;
+  styles: Styles;
   styleSources: StyleSources;
 };
 

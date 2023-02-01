@@ -9,7 +9,7 @@ import { StyleSources } from "@webstudio-is/project-build";
 import * as db from ".";
 import { Build, Page, Pages } from "./schema";
 import * as pagesUtils from "../shared/pages";
-import { parseNewStyles } from "./styles";
+import { parseStyles, serializeStyles } from "./styles";
 
 export const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
@@ -17,7 +17,7 @@ export const parseBuild = async (build: DbBuild): Promise<Build> => {
     ...build,
     createdAt: build.createdAt.toISOString(),
     pages,
-    styles: await parseNewStyles(build.styles),
+    styles: await parseStyles(build.styles),
     styleSources: StyleSources.parse(JSON.parse(build.styleSources)),
   };
 };
@@ -262,6 +262,8 @@ export async function create(
     data: {
       projectId,
       pages: JSON.stringify([]),
+      styles: serializeStyles(sourceBuild?.styles ?? []),
+      styleSources: JSON.stringify(sourceBuild?.styleSources ?? []),
       isDev: env === "dev",
       isProd: env === "prod",
     },

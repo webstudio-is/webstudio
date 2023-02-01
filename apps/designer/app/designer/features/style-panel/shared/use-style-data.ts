@@ -1,5 +1,6 @@
-import { useCallback } from "react";
-import ObjectID from "bson-objectid";
+import { useCallback, useMemo } from "react";
+import { useStore } from "@nanostores/react";
+import ObjectId from "bson-objectid";
 import store from "immerhin";
 import warnOnce from "warn-once";
 import type { Instance, Tree } from "@webstudio-is/project-build";
@@ -7,6 +8,7 @@ import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
 import {
+  styleSourceSelectionsIndexStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
@@ -19,6 +21,7 @@ import {
 // @todo: must be removed, now it's only for compatibility with existing code
 import { parseCssValue } from "./parse-css-value";
 import { useStyleInfo } from "./style-info";
+import { shallowComputed } from "~/shared/store-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -59,6 +62,22 @@ export const useStyleData = ({
   publish,
 }: UseStyleData) => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
+  const instanceStyleSourcesStore = useMemo(() => {
+    return shallowComputed(
+      [styleSourceSelectionsIndexStore],
+      (styleSourceSelectionsIndex) => {
+        return (
+          styleSourceSelectionsIndex.styleSourcesByInstanceId.get(
+            selectedInstance.id
+          ) ?? []
+        );
+      }
+    );
+  }, [selectedInstance.id]);
+  const instanceStyleSources = useStore(instanceStyleSourcesStore);
+  const localStyleSource = instanceStyleSources.find(
+    (styleSource) => styleSource.type === "local"
+  );
 
   const currentStyle = useStyleInfo();
 
@@ -85,23 +104,23 @@ export const useStyleData = ({
         (styleSourceSelections, styleSources, styles) => {
           const instanceId = selectedInstance.id;
           const breakpointId = selectedBreakpoint.id;
-
+          const styleSourceId = localStyleSource?.id ?? ObjectId().toString();
           // crate style source and its selection on currently selected instance
-          const matchedStyleSourceSelection = styleSourceSelections.find(
-            (styleSourceSelection) =>
-              styleSourceSelection.instanceId === instanceId
-          );
-          if (matchedStyleSourceSelection === undefined) {
-            const styleSourceId = ObjectID.toString();
+          if (localStyleSource === undefined) {
             styleSources.push({
               type: "local",
               id: styleSourceId,
               treeId,
             });
-            styleSourceSelections.push({
-              instanceId,
-              values: [styleSourceId],
-            });
+            replaceByOrAppendMutable(
+              styleSourceSelections,
+              {
+                instanceId,
+                values: [styleSourceId],
+              },
+              (styleSourceSelection) =>
+                styleSourceSelection.instanceId === instanceId
+            );
           }
 
           for (const update of updates) {
@@ -110,12 +129,12 @@ export const useStyleData = ({
                 styles,
                 {
                   breakpointId,
-                  instanceId,
+                  styleSourceId,
                   property: update.property,
                   value: update.value,
                 },
                 (item) =>
-                  item.instanceId === instanceId &&
+                  item.styleSourceId === styleSourceId &&
                   item.breakpointId === breakpointId &&
                   item.property === update.property
               );
@@ -125,7 +144,7 @@ export const useStyleData = ({
               removeByMutable(
                 styles,
                 (item) =>
-                  item.instanceId === instanceId &&
+                  item.styleSourceId === styleSourceId &&
                   item.breakpointId === breakpointId &&
                   item.property === update.property
               );
@@ -134,7 +153,7 @@ export const useStyleData = ({
         }
       );
     },
-    [publish, selectedBreakpoint, selectedInstance, treeId]
+    [publish, selectedBreakpoint, selectedInstance, localStyleSource, treeId]
   );
 
   // @deprecated should not be called

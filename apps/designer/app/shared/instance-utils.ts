@@ -53,9 +53,8 @@ export const deleteInstance = (targetInstanceId: Instance["id"]) => {
       removeByMutable(styleSources, (styleSource) =>
         subtreeLocalStyleSourceIds.has(styleSource.id)
       );
-      // @todo migrate to style source variant
       removeByMutable(styles, (styleDecl) =>
-        subtreeIds.has(styleDecl.instanceId)
+        subtreeLocalStyleSourceIds.has(styleDecl.styleSourceId)
       );
 
       selectedInstanceIdStore.set(parentInstance.id);
