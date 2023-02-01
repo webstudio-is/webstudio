@@ -18,11 +18,11 @@ const headingStyle = css({
         fontWeight: 700,
       },
       small: {
-        fontSize: theme.fontSize[5],
+        fontSize: theme.deprecatedFontSize[5],
         fontWeight: 700,
       },
       tiny: {
-        fontSize: theme.fontSize[5],
+        fontSize: theme.deprecatedFontSize[5],
         fontWeight: 400,
       },
     },

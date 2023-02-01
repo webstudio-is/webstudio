@@ -17,7 +17,7 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   display: "inline-flex",
   lineHeight: 1,
   fontFamily: "inherit",
-  fontSize: theme.fontSize[3],
+  fontSize: theme.deprecatedFontSize[3],
   px: theme.spacing[5],
   userSelect: "none",
   outline: "none",
@@ -30,7 +30,7 @@ export const TabsTrigger = styled(TabsPrimitive.Trigger, {
   },
   [`& > ${DeprecatedText2}`]: {
     color: theme.colors.gray9,
-    fontSize: theme.fontSize[3],
+    fontSize: theme.deprecatedFontSize[3],
     fontWeight: "500",
   },
   "@hover": {

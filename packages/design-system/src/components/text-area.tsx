@@ -46,19 +46,19 @@ export const TextArea = styled("textarea", {
     size: {
       "1": {
         borderRadius: theme.borderRadius[4],
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
         lineHeight: theme.lineHeight[3],
         px: theme.spacing[3],
       },
       "2": {
         borderRadius: theme.borderRadius[4],
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
         lineHeight: theme.lineHeight[4],
         px: theme.spacing[3],
       },
       "3": {
         borderRadius: theme.borderRadius[6],
-        fontSize: theme.fontSize[4],
+        fontSize: theme.deprecatedFontSize[4],
         lineHeight: "23px",
         px: theme.spacing[5],
       },

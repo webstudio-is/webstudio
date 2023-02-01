@@ -10,7 +10,7 @@ export const DeprecatedIconButton = styled("button", {
   display: "inline-flex",
   flexShrink: 0,
   fontFamily: "inherit",
-  fontSize: theme.fontSize[4],
+  fontSize: theme.deprecatedFontSize[4],
   justifyContent: "center",
   lineHeight: "1",
   padding: 0,

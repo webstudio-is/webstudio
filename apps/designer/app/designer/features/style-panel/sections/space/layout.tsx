@@ -177,7 +177,7 @@ const Cell = styled("div", {
 const Label = styled("div", {
   color: theme.colors.slate11,
   textTransform: "uppercase",
-  fontSize: theme.fontSize[1],
+  fontSize: theme.deprecatedFontSize[1],
   lineHeight: 1,
   marginTop: 3,
   marginLeft: 4,

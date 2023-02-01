@@ -11,38 +11,38 @@ export const deprecatedTextStyles = css({
     variant: {
       regular: {
         fontWeight: 400,
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
         letterSpacing: "0.005em",
       },
       label: {
         fontWeight: 500,
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
         letterSpacing: "0.005em",
       },
       small: {
         fontWeight: 400,
-        fontSize: theme.fontSize[2],
+        fontSize: theme.deprecatedFontSize[2],
         letterSpacing: "0.01em",
       },
       tiny: {
         fontWeight: 400,
-        fontSize: theme.fontSize[1],
+        fontSize: theme.deprecatedFontSize[1],
         letterSpacing: "0.01em",
       },
       title: {
         fontWeight: 700,
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
         letterSpacing: "0.01em",
       },
       mono: {
         fontFamily: theme.fonts.mono,
         fontWeight: 400,
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
         textTransform: "uppercase",
       },
       unit: {
         fontWeight: 500,
-        fontSize: theme.fontSize[2],
+        fontSize: theme.deprecatedFontSize[2],
         textTransform: "uppercase",
       },
     },

@@ -13,37 +13,37 @@ export const DeprecatedText = styled("div", {
   variants: {
     size: {
       "1": {
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
       },
       "2": {
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
       },
       "3": {
-        fontSize: theme.fontSize[4],
+        fontSize: theme.deprecatedFontSize[4],
       },
       "4": {
-        fontSize: theme.fontSize[4],
+        fontSize: theme.deprecatedFontSize[4],
       },
       "5": {
-        fontSize: theme.fontSize[5],
+        fontSize: theme.deprecatedFontSize[5],
         letterSpacing: "-.015em",
       },
       "6": {
-        fontSize: theme.fontSize[6],
+        fontSize: theme.deprecatedFontSize[6],
         letterSpacing: "-.016em",
       },
       "7": {
-        fontSize: theme.fontSize[7],
+        fontSize: theme.deprecatedFontSize[7],
         letterSpacing: "-.031em",
         textIndent: "-.005em",
       },
       "8": {
-        fontSize: theme.fontSize[8],
+        fontSize: theme.deprecatedFontSize[8],
         letterSpacing: "-.034em",
         textIndent: "-.018em",
       },
       "9": {
-        fontSize: theme.fontSize[9],
+        fontSize: theme.deprecatedFontSize[9],
         letterSpacing: "-.055em",
         textIndent: "-.025em",
       },
