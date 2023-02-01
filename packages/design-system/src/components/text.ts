@@ -7,7 +7,10 @@ export const textStyles = css({
   variants: {
     variant: textVariants,
     color: {
+      main: { color: theme.colors.foregroundMain },
+      contrast: { color: theme.colors.foregroundContrastMain },
       subtle: { color: theme.colors.foregroundSubtle },
+      disabled: { color: theme.colors.foregroundDisabled },
       destructive: { color: theme.colors.foregroundDestructive },
     },
     align: {
