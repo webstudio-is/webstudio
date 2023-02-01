@@ -1,2 +1,1 @@
-export * from "./use-instance-copy-paste";
-export * from "./serialize";
+export * from "./copy-paste-instance";
