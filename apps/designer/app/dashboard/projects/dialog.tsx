@@ -5,14 +5,16 @@ import {
   DialogContent,
   DialogTitle,
   DialogClose,
+  DialogDescription,
   theme,
 } from "@webstudio-is/design-system";
 
 type DialogProps = {
   title: string;
-  children: JSX.Element;
-  trigger: JSX.Element;
+  children: JSX.Element | Array<JSX.Element>;
+  trigger?: JSX.Element;
   onOpenChange?: (open: boolean) => void;
+  isOpen?: boolean;
 };
 
 export const Dialog = ({
@@ -20,10 +22,11 @@ export const Dialog = ({
   children,
   trigger,
   onOpenChange,
+  isOpen,
 }: DialogProps) => {
   return (
-    <BaseDialog onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <BaseDialog open={isOpen} onOpenChange={onOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent>
         {children}
         <DialogTitle>{title}</DialogTitle>
@@ -52,4 +55,4 @@ export const DialogActions = ({
   );
 };
 
-export { DialogClose };
+export { DialogClose, DialogDescription };
