@@ -73,13 +73,8 @@ type ShareButtonProps = {
  * Then remix will not call `trpc.findMany.useQuery` if Popover is closed
  */
 export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
-  const {
-    links,
-    // handleChange,
-    handleChangeDebounced,
-    handleDelete,
-    handleCreate,
-  } = useShareProjectContainer(projectId);
+  const { links, handleChangeDebounced, handleDelete, handleCreate } =
+    useShareProjectContainer(projectId);
 
   return (
     <ShareProject
