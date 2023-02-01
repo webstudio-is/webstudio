@@ -4,7 +4,6 @@ export const deprecatedTextStyles = css({
   // Reset
   margin: 0,
   lineHeight: 1,
-  userSelect: "none",
   fontFamily: theme.fonts.sans,
 
   variants: {

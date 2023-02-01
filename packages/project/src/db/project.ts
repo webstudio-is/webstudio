@@ -137,7 +137,7 @@ export const markAsDeleted = async (
   );
 
   if (canDelete === false) {
-    throw new Error("Only the owner can delete the project");
+    return { errors: "Only the owner can delete the project" };
   }
 
   return await prisma.project.update({
