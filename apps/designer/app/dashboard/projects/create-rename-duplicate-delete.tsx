@@ -94,7 +94,7 @@ const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
 const useCreateProject = () => {
   const navigate = useNavigate();
-  const { submit, data } = trpc.create.useMutation();
+  const { send, data } = trpc.create.useMutation();
 
   useEffect(() => {
     if (data === undefined || "errors" in data) {
@@ -104,7 +104,7 @@ const useCreateProject = () => {
   }, [data, navigate]);
 
   return {
-    handleSubmit: submit,
+    handleSubmit: send,
     errors: data && "errors" in data ? data.errors : undefined,
   };
 };
@@ -134,7 +134,7 @@ const useRenameProject = ({
   projectId: DashboardProject["id"];
   onComplete: () => void;
 }) => {
-  const { submit, data } = trpc.rename.useMutation();
+  const { send, data, state } = trpc.rename.useMutation();
 
   useEffect(() => {
     if (data === undefined || "errors" in data) {
@@ -144,12 +144,13 @@ const useRenameProject = ({
   }, [data, onComplete]);
 
   const handleSubmit = ({ title }: { title: string }) => {
-    submit({ projectId, title });
+    send({ projectId, title });
   };
 
   return {
     handleSubmit,
     errors: data && "errors" in data ? data.errors : undefined,
+    state,
   };
 };
 
@@ -166,7 +167,10 @@ export const RenameProject = ({
   onComplete: () => void;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  const { handleSubmit, errors } = useRenameProject({ projectId, onComplete });
+  const { handleSubmit, errors, state } = useRenameProject({
+    projectId,
+    onComplete,
+  });
   return (
     <Dialog title="Rename" isOpen={isOpen} onOpenChange={onOpenChange}>
       <Content
@@ -174,7 +178,14 @@ export const RenameProject = ({
         errors={errors}
         title={title}
         label="Project Title"
-        primaryButton={<Button type="submit">Rename Project</Button>}
+        primaryButton={
+          <Button
+            type="submit"
+            state={state === "idle" ? undefined : "pending"}
+          >
+            Rename Project
+          </Button>
+        }
       />
     </Dialog>
   );
@@ -189,7 +200,7 @@ const useDeleteProject = ({
   title: string;
   onComplete: () => void;
 }) => {
-  const { submit, data } = trpc.delete.useMutation();
+  const { send, data, state } = trpc.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
 
   useEffect(() => {
@@ -200,7 +211,7 @@ const useDeleteProject = ({
   }, [data, onComplete]);
 
   const handleSubmit = () => {
-    submit({ projectId });
+    send({ projectId });
   };
 
   const handleChange = ({ title: currentTitle }: { title: string }) => {
@@ -212,6 +223,7 @@ const useDeleteProject = ({
     handleChange,
     errors: data && "errors" in data ? data.errors : undefined,
     isMatch,
+    state,
   };
 };
 
@@ -228,11 +240,12 @@ export const DeleteProject = ({
   onComplete: () => void;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  const { handleSubmit, handleChange, errors, isMatch } = useDeleteProject({
-    projectId,
-    onComplete,
-    title,
-  });
+  const { handleSubmit, handleChange, errors, isMatch, state } =
+    useDeleteProject({
+      projectId,
+      onComplete,
+      title,
+    });
   return (
     <Dialog
       title="Delete Confirmation"
@@ -258,6 +271,7 @@ export const DeleteProject = ({
             type="submit"
             color="destructive"
             disabled={isMatch === false}
+            state={state === "idle" ? undefined : "pending"}
           >
             Delete Forever
           </Button>
@@ -269,8 +283,8 @@ export const DeleteProject = ({
 };
 
 export const useDuplicate = (projectId: DashboardProject["id"]) => {
-  const { submit } = trpc.duplicate.useMutation();
+  const { send } = trpc.duplicate.useMutation();
   return () => {
-    submit({ projectId });
+    send({ projectId });
   };
 };
