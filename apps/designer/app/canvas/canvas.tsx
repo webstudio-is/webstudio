@@ -33,6 +33,7 @@ import {
   useSetRootInstance,
   useSetStyles,
   useSubscribeScrollState,
+  useIsPreviewMode,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -82,12 +83,6 @@ const useElementsTree = () => {
   }, [rootInstance, onChangeChildren]);
 };
 
-const useSubscribePreviewMode = () => {
-  const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
-  useSubscribe("previewMode", setIsPreviewMode);
-  return isPreviewMode;
-};
-
 const useAssets = (initialAssets: Array<Asset>) => {
   const [assets, setAssets] = useState(initialAssets);
   useSubscribe("updateAssets", setAssets);
@@ -135,6 +130,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useSetRootInstance(data.tree.root);
   setParams(data.params ?? null);
   useCanvasStore(publish);
+  const [isPreviewMode] = useIsPreviewMode();
 
   registerComponents(customComponents);
 
@@ -142,7 +138,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
 
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
-  const isPreviewMode = useSubscribePreviewMode();
+
   const elements = useElementsTree();
 
   if (elements === undefined) {

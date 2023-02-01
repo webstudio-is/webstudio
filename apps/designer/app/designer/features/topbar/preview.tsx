@@ -1,4 +1,3 @@
-import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { EyeOpenIcon } from "@webstudio-is/icons";
 import { Toggle } from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
@@ -9,28 +8,12 @@ declare module "~/shared/pubsub" {
   }
 }
 
-type PreviewButtonProps = {
-  publish: Publish;
-};
-
-export const PreviewButton = ({ publish }: PreviewButtonProps) => {
+export const PreviewButton = () => {
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
-
-  const setValue = (value: boolean) => {
-    setIsPreviewMode(value);
-    publish({
-      type: "previewMode",
-      payload: value,
-    });
-  };
-
-  useSubscribe("togglePreviewMode", () => {
-    setValue(isPreviewMode === false);
-  });
 
   return (
     <Toggle
-      onPressedChange={setValue}
+      onPressedChange={setIsPreviewMode}
       pressed={isPreviewMode}
       aria-label="Toggle Preview"
     >
