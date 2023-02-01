@@ -9,6 +9,7 @@ import {
   DeprecatedText2,
   theme,
   toast,
+  textVariants,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
@@ -37,16 +38,11 @@ const containerStyle = css({
   },
 });
 
-// @todo use typography from figma tokens
-const thumbnailStyle = css({
+const thumbnailStyle = css(textVariants.brandThumbnailLargeDefault, {
   display: "flex",
   alignItems: "center",
   alignSelf: "center",
   minHeight: 0,
-  fontFamily: theme.fonts.manrope,
-  fontWeight: 200,
-  fontSize: 360,
-  letterSpacing: "-0.05em",
   background: theme.colors.brandBackgroundProjectCardFront,
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
@@ -54,7 +50,7 @@ const thumbnailStyle = css({
   userSelect: "none",
   outline: "none",
   "&:hover, &:focus": {
-    fontWeight: 800,
+    ...textVariants.brandThumbnailLargeHover,
     transition: "100ms",
   },
 });
