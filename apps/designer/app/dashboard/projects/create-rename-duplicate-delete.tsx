@@ -135,22 +135,13 @@ const useRenameProject = ({
   onComplete: () => void;
 }) => {
   const { send, data, state } = trpc.rename.useMutation();
-  const isComplete = useRef(true);
-  if (isComplete.current && state !== "idle") {
-    isComplete.current = false;
-  }
+  const errors = data && "errors" in data ? data.errors : undefined;
 
   useEffect(() => {
-    if (data === undefined || "errors" in data) {
-      return;
-    }
-    // This is a workaround to prevent onComplete being called because the previous
-    // rename is stale because of how useFetcher() works.
-    if (isComplete.current === false) {
+    if (errors === undefined && state === "loading") {
       onComplete();
-      isComplete.current = true;
     }
-  }, [data, onComplete]);
+  }, [errors, state, onComplete]);
 
   const handleSubmit = ({ title }: { title: string }) => {
     send({ projectId, title });
@@ -158,7 +149,7 @@ const useRenameProject = ({
 
   return {
     handleSubmit,
-    errors: data && "errors" in data ? data.errors : undefined,
+    errors,
     state,
   };
 };
@@ -211,13 +202,13 @@ const useDeleteProject = ({
 }) => {
   const { send, data, state } = trpc.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
+  const errors = data && "errors" in data ? data.errors : undefined;
 
   useEffect(() => {
-    if (data === undefined || "errors" in data) {
-      return;
+    if (errors === undefined && state === "loading") {
+      onComplete();
     }
-    onComplete();
-  }, [data, onComplete]);
+  }, [errors, state, onComplete]);
 
   const handleSubmit = () => {
     send({ projectId });
@@ -230,7 +221,7 @@ const useDeleteProject = ({
   return {
     handleSubmit,
     handleChange,
-    errors: data && "errors" in data ? data.errors : undefined,
+    errors,
     isMatch,
     state,
   };
