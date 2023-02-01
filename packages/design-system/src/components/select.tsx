@@ -28,7 +28,7 @@ const StyledTrigger = styled(SelectPrimitive.Trigger, {
   boxShadow: `inset 0 0 0 1px ${theme.colors.slate7}`,
   height: 28, // @todo waiting for the sizing scale
   px: theme.spacing[5],
-  fontSize: theme.fontSize[3],
+  fontSize: theme.deprecatedFontSize[3],
   "&:focus": {
     boxShadow: `inset 0px 0px 0px 1px ${theme.colors.blue8}, 0px 0px 0px 1px ${theme.colors.blue8}`,
   },

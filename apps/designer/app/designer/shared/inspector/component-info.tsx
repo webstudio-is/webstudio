@@ -12,7 +12,7 @@ export const ComponentInfo = ({
     <Flex justify="between" align="center">
       <DeprecatedText2
         css={{
-          fontSize: theme.fontSize[3],
+          fontSize: theme.deprecatedFontSize[3],
           color: theme.colors.slate11,
           fontWeight: "500",
         }}

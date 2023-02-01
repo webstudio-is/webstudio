@@ -202,23 +202,23 @@ const StyledAvatarFallback = styled(AvatarPrimitive.Fallback, {
   variants: {
     size: {
       "1": {
-        fontSize: theme.fontSize[2],
+        fontSize: theme.deprecatedFontSize[2],
         lineHeight: theme.lineHeight[3],
       },
       "2": {
-        fontSize: theme.fontSize[4],
+        fontSize: theme.deprecatedFontSize[4],
       },
       "3": {
-        fontSize: theme.fontSize[6],
+        fontSize: theme.deprecatedFontSize[6],
       },
       "4": {
-        fontSize: theme.fontSize[7],
+        fontSize: theme.deprecatedFontSize[7],
       },
       "5": {
-        fontSize: theme.fontSize[8],
+        fontSize: theme.deprecatedFontSize[8],
       },
       "6": {
-        fontSize: theme.fontSize[9],
+        fontSize: theme.deprecatedFontSize[9],
       },
     },
   },

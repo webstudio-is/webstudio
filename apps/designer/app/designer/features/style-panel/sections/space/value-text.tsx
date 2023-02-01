@@ -43,7 +43,7 @@ const Container = styled("span", {
 
 const Span = styled("span", {
   display: "block",
-  fontSize: theme.fontSize[2],
+  fontSize: theme.deprecatedFontSize[2],
   lineHeight: 1,
   overflow: "hidden",
   maxWidth: "100%",
@@ -51,7 +51,10 @@ const Span = styled("span", {
   textOverflow: "ellipsis",
   variants: {
     keyword: {
-      true: { fontSize: theme.fontSize[1], textTransform: "uppercase" },
+      true: {
+        fontSize: theme.deprecatedFontSize[1],
+        textTransform: "uppercase",
+      },
     },
   },
 });

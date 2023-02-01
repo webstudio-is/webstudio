@@ -28,7 +28,7 @@ export const DeprecatedButton = styled("button", {
   height: theme.spacing[11],
   px: theme.spacing[5],
   fontFamily: theme.fonts.sans,
-  fontSize: theme.fontSize[3],
+  fontSize: theme.deprecatedFontSize[3],
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",
 
@@ -45,19 +45,19 @@ export const DeprecatedButton = styled("button", {
         borderRadius: theme.borderRadius[4],
         height: theme.spacing[11],
         px: theme.spacing[4],
-        fontSize: theme.fontSize[3],
+        fontSize: theme.deprecatedFontSize[3],
       },
       "2": {
         borderRadius: theme.borderRadius[6],
         height: theme.spacing[12],
         px: theme.spacing[9],
-        fontSize: theme.fontSize[4],
+        fontSize: theme.deprecatedFontSize[4],
       },
       "3": {
         borderRadius: theme.borderRadius[6],
         height: theme.spacing[17],
         px: theme.spacing[10],
-        fontSize: theme.fontSize[4],
+        fontSize: theme.deprecatedFontSize[4],
       },
     },
     variant: {

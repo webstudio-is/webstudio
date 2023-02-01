@@ -117,10 +117,7 @@ import {
 } from "@radix-ui/colors";
 import type * as Stitches from "@stitches/react";
 export type { VariantProps } from "@stitches/react";
-import {
-  color as figmaColors,
-  boxShadow as figmaShadows,
-} from "./__generated__/figma-design-tokens";
+import * as figma from "./__generated__/figma-design-tokens";
 
 const spacing = {
   0: "0px",
@@ -173,8 +170,6 @@ const {
 } = createStitches({
   theme: {
     colors: {
-      ...figmaColors,
-
       ...gray,
       ...mauve,
       ...slate,
@@ -251,17 +246,24 @@ const {
       background: "$slate1",
       text: "$slate12",
       transparentExtreme: "transparent",
+
+      ...figma.color,
     },
     fonts: {
-      sans: "InterVariable, -apple-system, system-ui, sans-serif",
-      mono: "Roboto, menlo, monospace",
-      manrope: "ManropeVariable, sans-serif",
+      ...figma.fontFamilies,
+      sans: figma.fontFamilies.inter,
+      mono: figma.fontFamilies.robotoMono,
     },
+    fontSize: figma.fontSizes,
+    lineHeight: figma.lineHeights,
+    fontWeight: figma.fontWeights,
+    letterSpacing: figma.letterSpacing,
+
     opacity: {
       1: "0.4",
     },
     spacing,
-    fontSize: {
+    deprecatedFontSize: {
       1: "8px",
       2: "10px",
       3: "12px",
@@ -273,7 +275,7 @@ const {
       8: "35px",
       9: "59px",
     },
-    lineHeight: {
+    deprecatedLineHeight: {
       1: "8px",
       2: "12px",
       3: "16px",
@@ -303,7 +305,7 @@ const {
       easeOutQuart: "cubic-bezier(0.25, 1, 0.5, 1)",
       easeOut: "cubic-bezier(0.16, 1, 0.3, 1)",
     },
-    shadows: figmaShadows,
+    shadows: figma.boxShadow,
   },
   media: {
     tablet: "(min-width: 768px)",
