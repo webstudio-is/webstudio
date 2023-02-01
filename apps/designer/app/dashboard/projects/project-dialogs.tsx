@@ -21,7 +21,7 @@ import {
   DialogDescription,
 } from "./dialog";
 import { DashboardProject } from "@webstudio-is/prisma-client";
-import { ShareProjectContainer } from "~/designer/features/topbar/share";
+import { ShareProjectContainer } from "~/shared/share-project";
 
 const DialogContent = ({
   onSubmit,

@@ -1,2 +1,1 @@
-export { ShareProject as ShareProjectDeprecated } from "./share-project";
-export * from "./share-project";
+export { ShareProjectContainer } from "./share-project-container";
