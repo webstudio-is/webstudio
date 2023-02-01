@@ -14,11 +14,7 @@ import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { designerPath, getPublishedUrl } from "~/shared/router-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import {
-  RenameProject,
-  DeleteProject,
-  useDuplicate,
-} from "./create-rename-duplicate-delete";
+import { RenameProject, DeleteProject, useDuplicate } from "./project-dialogs";
 import { ThumbnailLink } from "./thumbnail-link";
 
 const containerStyle = css({
