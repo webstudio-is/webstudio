@@ -9,7 +9,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { typography } from "./typography";
+import { textVariants } from "./text";
 import { styled, theme } from "../stitches.config";
 
 const colors = [
@@ -105,7 +105,7 @@ const StyledButton = styled("button", {
   },
 });
 
-const TextContainer = styled("span", typography.labelTitleCase, {
+const TextContainer = styled("span", textVariants.labelTitleCase, {
   padding: `0 ${theme.spacing[2]}`,
 });
 

@@ -3,7 +3,7 @@ export * from "./components/storybook";
 
 // Aligned with Figma
 
-export * from "./components/typography";
+export * from "./components/text";
 export * from "./components/title";
 export * from "./components/separator";
 export * from "./components/button";

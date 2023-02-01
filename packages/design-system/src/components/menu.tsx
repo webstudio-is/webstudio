@@ -17,14 +17,14 @@
  */
 
 import { css, styled, theme } from "../stitches.config";
-import { typography } from "./typography";
+import { textVariants } from "./text";
 import {
   Arrow as BaseDropdownMenuArrow,
   SubContent,
 } from "@radix-ui/react-dropdown-menu";
 import { type ComponentProps } from "react";
 
-export const labelCss = css(typography.title, {
+export const labelCss = css(textVariants.title, {
   color: theme.colors.foregroundMain,
   mx: theme.spacing[3],
   padding: theme.spacing[3],
@@ -42,7 +42,7 @@ export const itemIndicatorCss = css({
 });
 
 const itemMargin = theme.spacing[3];
-export const itemCss = css(typography.labelTitleCase, {
+export const itemCss = css(textVariants.labelTitleCase, {
   outline: "none",
   cursor: "default",
   position: "relative",

@@ -5,7 +5,7 @@
 
 import { forwardRef, type ReactNode, type Ref } from "react";
 import { theme, styled, type CSS } from "../stitches.config";
-import { typography } from "./typography";
+import { textVariants } from "./text";
 
 type TitleProps = {
   children: ReactNode;
@@ -14,7 +14,7 @@ type TitleProps = {
   css?: CSS;
 };
 
-const Container = styled("div", typography.title, {
+const Container = styled("div", textVariants.title, {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
