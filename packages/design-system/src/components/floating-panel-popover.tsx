@@ -1,6 +1,6 @@
 import React, { type ComponentProps, type Ref, type ReactNode } from "react";
 import * as Primitive from "@radix-ui/react-popover";
-import { css, theme } from "../stitches.config";
+import { css, theme, type CSS } from "../stitches.config";
 import { Title } from "./title";
 import { floatingPanelStyles, CloseButton, TitleSlot } from "./floating-panel";
 
@@ -13,14 +13,19 @@ const contentStyles = css(floatingPanelStyles, {
 
 export const FloatingPanelPopoverContent = React.forwardRef(
   (
-    { children, className, ...props }: ComponentProps<typeof Primitive.Content>,
+    {
+      children,
+      className,
+      css,
+      ...props
+    }: ComponentProps<typeof Primitive.Content> & { css?: CSS },
     ref: Ref<HTMLDivElement>
   ) => (
     <Primitive.Portal>
       <Primitive.Content
         sideOffset={4}
         collisionPadding={4}
-        className={contentStyles({ className })}
+        className={contentStyles({ className, css })}
         {...props}
         ref={ref}
       >
