@@ -18,7 +18,24 @@ export const handleTrpcRemixAction = async <Router extends AnyRouter>({
     throw new Error("Missing method");
   }
 
-  const data = Object.fromEntries(await request.formData()) as never;
+  let input: never;
+
+  if (request.method === "GET") {
+    const url = new URL(request.url);
+    const inputRaw = url.searchParams.get("input");
+    if (typeof inputRaw !== "string") {
+      throw new Error(`Bad method name ${inputRaw}`);
+    }
+    input = JSON.parse(inputRaw) as never;
+  } else {
+    const formData = await request.formData();
+    const inputRaw = formData.get("input");
+    if (typeof inputRaw !== "string") {
+      throw new Error(`Bad method name ${inputRaw}`);
+    }
+    input = JSON.parse(inputRaw) as never;
+  }
+
   const caller = router.createCaller(context);
   const allowedProcedures = Object.keys(router["_def"].record);
 
@@ -29,7 +46,7 @@ export const handleTrpcRemixAction = async <Router extends AnyRouter>({
   const fn = caller[method];
 
   if (typeof fn === "function") {
-    return await fn(data);
+    return await fn(input);
   }
 
   throw new Error(`Unknown RPC method "${method}"`);

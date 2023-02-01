@@ -18,7 +18,7 @@ import { DialogActions, DialogClose, Dialog } from "./dialog";
 const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
 const useForm = () => {
-  const { submit, data } = trpc.create.useMutation();
+  const { send, data } = trpc.create.useMutation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,7 +32,7 @@ const useForm = () => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget as HTMLFormElement);
     const title = String(formData.get("title") ?? "");
-    submit({ title });
+    send({ title });
   };
 
   return {

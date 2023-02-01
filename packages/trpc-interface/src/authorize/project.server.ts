@@ -1,14 +1,12 @@
-import { AppContext } from "../context/context.server";
-import { v4 as uuid } from "uuid";
+import type { AppContext } from "../context/context.server";
 
 /**
- * For 3rd party authorization systems like Ory we need to register the project owner
- * and create an initial read token for the project.
+ * For 3rd party authorization systems like Ory we need to register the project owner.
  *
  * We do that before the project create (and out of the transaction),
  * so in case of an error we will have just stale records of non existed projects in authorization system.
  */
-export const registerProjectOwnerAndReadToken = async (
+export const registerProjectOwner = async (
   props: { projectId: string },
   context: AppContext
 ) => {
@@ -22,20 +20,10 @@ export const registerProjectOwnerAndReadToken = async (
   await authorizeTrpc.create.mutate({
     namespace: "Project",
     id: props.projectId,
-    relation: "owner",
+    relation: "owners",
     subjectSet: {
       namespace: "User",
       id: userId,
-    },
-  });
-
-  await authorizeTrpc.create.mutate({
-    namespace: "Project",
-    id: props.projectId,
-    relation: "viewers",
-    subjectSet: {
-      namespace: "Token",
-      id: uuid(),
     },
   });
 };
@@ -83,7 +71,8 @@ export const hasProjectPermit = async (
   }
 
   // Check if the special link with a token allows to access the project
-  if (authorization.authToken !== undefined) {
+  // Token doesn't have own permit, do not check it
+  if (authorization.authToken !== undefined && props.permit !== "own") {
     checks.push(
       authorizeTrpc.check.query({
         namespace,

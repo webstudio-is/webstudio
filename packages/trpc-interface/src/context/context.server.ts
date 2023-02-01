@@ -22,7 +22,7 @@ type AuthorizationContext = {
   authToken: string | undefined;
 
   /**
-   * buildEnv see prisma Build isDev isProd, we always allow to load production build/project
+   * buildEnv==="prod" only if we are loading project with production build
    */
   buildEnv: "dev" | "prod";
 

@@ -7,6 +7,7 @@ import type {
 } from "@trpc/server";
 // eslint-disable-next-line import/no-internal-modules
 import { createRecursiveProxy } from "@trpc/server/shared";
+import { useCallback } from "react";
 
 export const createTrpcRemixProxy = <Router extends AnyRouter>(
   getPath: (method: string) => string
@@ -14,35 +15,48 @@ export const createTrpcRemixProxy = <Router extends AnyRouter>(
   [Procedure in keyof Router["_def"]["record"]]: Router["_def"]["record"][Procedure] extends AnyMutationProcedure
     ? {
         useMutation: () => {
-          submit: (input: inferRouterInputs<Router>[Procedure]) => void;
+          send: (input: inferRouterInputs<Router>[Procedure]) => void;
           data?: inferRouterOutputs<Router>[Procedure];
+          state: "idle" | "loading" | "submitting";
         };
       }
     : {
         useQuery: () => {
           load: (input: inferRouterInputs<Router>[Procedure]) => void;
           data?: inferRouterOutputs<Router>[Procedure];
+          state: "idle" | "loading" | "submitting";
         };
       };
 } =>
   createRecursiveProxy((options) => {
     const path = [...options.path];
     const hook = path.pop();
+    const { data, submit, state } = useFetcher();
 
     if (hook !== "useMutation" && hook !== "useQuery") {
       throw new Error(`Invalid hook ${hook}`);
     }
 
-    const fetcher = useFetcher();
-
     const method = path.join(".");
 
-    const submit = (input: never) => {
-      return fetcher.submit(input, {
-        method: hook === "useMutation" ? "post" : "get",
-        action: getPath(method),
-      });
-    };
+    const remixSubmit = useCallback(
+      (input: never) => {
+        return submit(
+          // stringify input as otherwise we loose type safety
+          // (remix will add key: values as FormData entries or as SearchParams
+          { input: JSON.stringify(input) },
+          {
+            method: hook === "useMutation" ? "post" : "get",
+            action: getPath(method),
+          }
+        );
+      },
+      [submit, hook, method]
+    );
 
-    return { submit, data: fetcher.data };
+    return {
+      [hook === "useMutation" ? "send" : "load"]: remixSubmit,
+      data: data,
+      state,
+    };
   }) as never;

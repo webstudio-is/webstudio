@@ -22,7 +22,7 @@ export const getMode = (url: URL): BuildMode => {
   return mode;
 };
 
-const getRequestHost = (request: MinimalRequest): string =>
+export const getRequestHost = (request: MinimalRequest): string =>
   request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
 
 const isLocalhost = (host: string) => {

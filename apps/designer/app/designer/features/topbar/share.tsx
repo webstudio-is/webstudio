@@ -1,75 +1,126 @@
 import {
   Button,
-  DeprecatedIconButton,
-  DeprecatedPopover,
-  DeprecatedPopoverTrigger,
-  DeprecatedPopoverContent,
-  DeprecatedPopoverPortal,
+  FloatingPanelPopover,
+  FloatingPanelPopoverContent,
+  FloatingPanelPopoverTitle,
+  FloatingPanelPopoverTrigger,
+  theme,
+  css,
 } from "@webstudio-is/design-system";
-import { Share1Icon } from "@webstudio-is/icons";
-import { useIsShareDialogOpen } from "../../shared/nano-states";
-import { theme } from "@webstudio-is/design-system";
+import { useProject } from "../../shared/nano-states";
 import {
-  ShareProjectDeprecated,
   ShareProject,
   LinkOptions,
+  type ShareProjectProps,
 } from "~/shared/share-project";
+import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
+import type { AuthorizationTokensRouter } from "@webstudio-is/authorization-token";
+import { authorizationTokenPath } from "~/shared/router-utils";
+import { useEffect } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
-type ShareButtonDeprecatedProps = {
-  url: string;
+const trpc = createTrpcRemixProxy<AuthorizationTokensRouter>(
+  authorizationTokenPath
+);
+
+export type ShareButtonProps = {
+  designerUrl: ShareProjectProps["designerUrl"];
 };
 
-const Content = ({ url }: ShareButtonDeprecatedProps) => {
-  if (typeof location === "undefined") {
-    return null;
-  }
-  return (
-    <DeprecatedPopoverContent
-      css={{ padding: theme.spacing[9] }}
-      hideArrow={true}
-      onFocusOutside={(event) => {
-        // Used to prevent closing when opened from the main dropdown menu
-        event.preventDefault();
-      }}
-    >
-      <ShareProjectDeprecated url={url} />
-    </DeprecatedPopoverContent>
-  );
-};
+const useShareProjectContainer = () => {
+  const { data: links, load } = trpc.findMany.useQuery();
+  const { send: createToken } = trpc.create.useMutation();
+  const { send: removeToken } = trpc.remove.useMutation();
+  const { send: updateToken } = trpc.update.useMutation();
 
-export const ShareButtonDeprecated = (props: ShareButtonDeprecatedProps) => {
-  const [isOpen, setIsOpen] = useIsShareDialogOpen();
-  return (
-    <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
-      <DeprecatedPopoverTrigger asChild aria-label="Share project">
-        <DeprecatedIconButton>
-          <Share1Icon />
-        </DeprecatedIconButton>
-      </DeprecatedPopoverTrigger>
-      <DeprecatedPopoverPortal>
-        <Content {...props} />
-      </DeprecatedPopoverPortal>
-    </DeprecatedPopover>
-  );
-};
+  const [project] = useProject();
+  const projectId = project?.id;
 
-export const ShareButton = () => {
-  const handleChange = (link: LinkOptions) => {
-    // @todo implement
-  };
+  useEffect(() => {
+    if (projectId === undefined) {
+      return;
+    }
+
+    load({ projectId });
+  }, [load, projectId]);
+
+  const handleChangeDebounced = useDebouncedCallback((link: LinkOptions) => {
+    if (projectId === undefined) {
+      return;
+    }
+    updateToken({
+      projectId: projectId,
+      token: link.token,
+      relation: link.relation,
+      name: link.name,
+    });
+  }, 100);
+
   const handleDelete = (link: LinkOptions) => {
-    // @todo implement
+    if (projectId === undefined) {
+      return;
+    }
+
+    removeToken({ projectId: projectId, token: link.token });
   };
+
   const handleCreate = () => {
-    // @todo implement
+    if (projectId === undefined) {
+      return;
+    }
+
+    createToken({
+      projectId: projectId,
+      relation: "viewers",
+      name: "Custom link",
+    });
   };
+
+  return {
+    links,
+    handleChangeDebounced,
+    handleDelete,
+    handleCreate,
+  };
+};
+
+/**
+ * we place the logic inside Popover so that the fetcher does not exist outside of it.
+ * Then remix will not call `trpc.findMany.useQuery` if Popover is closed
+ */
+const ShareProjectContainer = ({ designerUrl }: ShareButtonProps) => {
+  const {
+    links,
+    // handleChange,
+    handleChangeDebounced,
+    handleDelete,
+    handleCreate,
+  } = useShareProjectContainer();
+
   return (
     <ShareProject
-      onChange={handleChange}
+      links={links}
+      onChange={handleChangeDebounced}
       onDelete={handleDelete}
       onCreate={handleCreate}
-    >
-      <Button>Share</Button>
-    </ShareProject>
+      designerUrl={designerUrl}
+    />
+  );
+};
+
+const classZIndex = css({ zIndex: theme.zIndices[1] });
+
+export const ShareButton = ({ designerUrl }: ShareButtonProps) => {
+  return (
+    <FloatingPanelPopover modal>
+      <FloatingPanelPopoverTrigger asChild>
+        <Button>Share</Button>
+      </FloatingPanelPopoverTrigger>
+
+      <FloatingPanelPopoverContent className={classZIndex()}>
+        <ShareProjectContainer designerUrl={designerUrl} />
+        <FloatingPanelPopoverTitle>Share</FloatingPanelPopoverTitle>
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
   );
 };
