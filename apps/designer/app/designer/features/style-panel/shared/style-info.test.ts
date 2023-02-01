@@ -40,32 +40,32 @@ const cascadingStylesByInstanceId = new Map<Instance["id"], Styles>();
 cascadingStylesByInstanceId.set(selectedInstanceId, [
   {
     breakpointId: "1",
-    instanceId: selectedInstanceId,
+    styleSourceId: "styleSourceId",
     property: "width",
     value: { type: "unit", value: 100, unit: "px" },
   },
   {
     breakpointId: "1",
-    instanceId: selectedInstanceId,
+    styleSourceId: "styleSourceId",
     property: "height",
     value: { type: "unit", value: 50, unit: "px" },
   },
   {
     breakpointId: "2",
-    instanceId: selectedInstanceId,
+    styleSourceId: "styleSourceId",
     property: "width",
     value: { type: "unit", value: 200, unit: "px" },
   },
   {
     breakpointId: "3",
-    instanceId: selectedInstanceId,
+    styleSourceId: "styleSourceId",
     // should not be computed because current breakpoint
     property: "height",
     value: { type: "unit", value: 150, unit: "px" },
   },
   {
     breakpointId: "4",
-    instanceId: selectedInstanceId,
+    styleSourceId: "styleSourceId",
     property: "width",
     value: { type: "unit", value: 400, unit: "px" },
   },
@@ -97,7 +97,7 @@ inheritingStylesByInstanceId.set("1", [
   // should be inherited even from another breakpoint
   {
     breakpointId: "1",
-    instanceId: "1",
+    styleSourceId: "styleSourceId1",
     property: "fontSize",
     value: { type: "unit", value: 20, unit: "px" },
   },
@@ -106,14 +106,14 @@ inheritingStylesByInstanceId.set("2", [
   // should not be inherited because width is not inheritable
   {
     breakpointId: "3",
-    instanceId: "2",
+    styleSourceId: "styleSourceId2",
     property: "width",
     value: { type: "unit", value: 100, unit: "px" },
   },
   // should be inherited from selected breakpoint
   {
     breakpointId: "3",
-    instanceId: "2",
+    styleSourceId: "styleSourceId2",
     property: "fontWeight",
     value: { type: "keyword", value: "600" },
   },
@@ -122,7 +122,7 @@ inheritingStylesByInstanceId.set("3", [
   // should not show selected style as inherited
   {
     breakpointId: "3",
-    instanceId: "3",
+    styleSourceId: "styleSourceId3",
     property: "fontWeight",
     value: { type: "keyword", value: "500" },
   },

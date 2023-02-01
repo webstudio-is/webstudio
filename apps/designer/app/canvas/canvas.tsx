@@ -131,7 +131,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   useSetProps(data.tree.props);
   // inject props store to sdk
   setPropsByInstanceIdStore(propsByInstanceIdStore);
-  useSetStyles(data.tree.styles);
+  useSetStyles(data.build.styles);
   useSetStyleSources(data.build.styleSources);
   useSetStyleSourceSelections(data.tree.styleSourceSelections);
   useSetRootInstance(data.tree.root);

@@ -5,6 +5,7 @@ import type {
   Instance,
   Props,
   Styles,
+  StyleSource,
   StyleSources,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
@@ -84,30 +85,6 @@ export const useInstanceProps = (instanceId: undefined | Instance["id"]) => {
 };
 
 export const stylesStore = atom<Styles>([]);
-/**
- * Indexed styles data is recomputed on every styles update
- * Compumer should use shallow-equal to check all items in the list
- * are the same to avoid unnecessary rerenders
- *
- * Potential optimization can be maintaining the index as separate state
- * though will require to move away from running immer patches on array
- * of styles
- */
-export const stylesIndexStore = computed(stylesStore, (styles) => {
-  const stylesByInstanceId = new Map<Instance["id"], Styles>();
-  for (const stylesItem of styles) {
-    const { instanceId } = stylesItem;
-    let instanceStyles = stylesByInstanceId.get(instanceId);
-    if (instanceStyles === undefined) {
-      instanceStyles = [];
-      stylesByInstanceId.set(instanceId, instanceStyles);
-    }
-    instanceStyles.push(stylesItem);
-  }
-  return {
-    stylesByInstanceId,
-  };
-});
 
 export const useSetStyles = (styles: Styles) => {
   useSyncInitializeOnce(() => {
@@ -128,6 +105,19 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
 };
 
 export const styleSourcesStore = atom<StyleSources>([]);
+export const styleSourcesIndexStore = computed(
+  styleSourcesStore,
+  (styleSources) => {
+    const styleSourcesById = new Map<StyleSource["id"], StyleSource>();
+    for (const styleSource of styleSources) {
+      styleSourcesById.set(styleSource.id, styleSource);
+    }
+    return {
+      styleSourcesById,
+    };
+  }
+);
+
 export const useSetStyleSources = (styleSources: StyleSources) => {
   useSyncInitializeOnce(() => {
     styleSourcesStore.set(styleSources);
@@ -142,6 +132,69 @@ export const useSetStyleSourceSelections = (
     styleSourceSelectionsStore.set(styleSourceSelections);
   });
 };
+
+export const styleSourceSelectionsIndexStore = computed(
+  [styleSourceSelectionsStore, styleSourcesIndexStore],
+  (styleSourceSelections, styleSourcesIndex) => {
+    const { styleSourcesById } = styleSourcesIndex;
+    const styleSourcesByInstanceId = new Map<Instance["id"], StyleSource[]>();
+    for (const { instanceId, values } of styleSourceSelections) {
+      const styleSources: StyleSources = [];
+      for (const styleSourceId of values) {
+        const styleSource = styleSourcesById.get(styleSourceId);
+        if (styleSource === undefined) {
+          continue;
+        }
+        styleSources.push(styleSource);
+      }
+      styleSourcesByInstanceId.set(instanceId, styleSources);
+    }
+    return {
+      styleSourcesByInstanceId,
+    };
+  }
+);
+
+/**
+ * Indexed styles data is recomputed on every styles update
+ * Compumer should use shallow-equal to check all items in the list
+ * are the same to avoid unnecessary rerenders
+ *
+ * Potential optimization can be maintaining the index as separate state
+ * though will require to move away from running immer patches on array
+ * of styles
+ */
+export const stylesIndexStore = computed(
+  [stylesStore, styleSourceSelectionsStore],
+  (styles, styleSourceSelections) => {
+    const stylesByStyleSourceId = new Map<StyleSource["id"], Styles>();
+    for (const stylesItem of styles) {
+      const { styleSourceId } = stylesItem;
+      let styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
+      if (styleSourceStyles === undefined) {
+        styleSourceStyles = [];
+        stylesByStyleSourceId.set(styleSourceId, styleSourceStyles);
+      }
+      styleSourceStyles.push(stylesItem);
+    }
+
+    const stylesByInstanceId = new Map<Instance["id"], Styles>();
+    for (const { instanceId, values } of styleSourceSelections) {
+      const instanceStyles: Styles = [];
+      for (const styleSourceId of values) {
+        const styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
+        if (styleSourceStyles) {
+          instanceStyles.push(...styleSourceStyles);
+        }
+      }
+      stylesByInstanceId.set(instanceId, instanceStyles);
+    }
+
+    return {
+      stylesByInstanceId,
+    };
+  }
+);
 
 export const breakpointsContainer = atom<Breakpoint[]>([]);
 export const useBreakpoints = () => useValue(breakpointsContainer);

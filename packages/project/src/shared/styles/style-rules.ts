@@ -1,6 +1,6 @@
 import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import type {
-  NewStyles,
+  Styles,
   StyleSource,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
@@ -16,13 +16,13 @@ type StyleRule = {
  * and group by instance and breakpoint
  */
 export const getStyleRules = (
-  styles?: NewStyles,
+  styles?: Styles,
   styleSourceSelections?: StyleSourceSelections
 ) => {
   if (styles === undefined || styleSourceSelections === undefined) {
     return [];
   }
-  const stylesByStyleSourceId = new Map<StyleSource["id"], NewStyles>();
+  const stylesByStyleSourceId = new Map<StyleSource["id"], Styles>();
   for (const styleDecl of styles) {
     const { styleSourceId } = styleDecl;
     let styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);

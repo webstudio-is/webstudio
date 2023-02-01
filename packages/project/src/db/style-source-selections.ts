@@ -4,7 +4,7 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
-import { StyleSources, type Tree } from "@webstudio-is/project-build";
+import { StyleSourceSelections, type Tree } from "@webstudio-is/project-build";
 import type { Project } from "./schema";
 
 export const patch = async (
@@ -28,11 +28,11 @@ export const patch = async (
     return;
   }
 
-  const styleSourceSelections = StyleSources.parse(
+  const styleSourceSelections = StyleSourceSelections.parse(
     JSON.parse(tree.styleSelections)
   );
 
-  const patchedStyleSourceSelections = StyleSources.parse(
+  const patchedStyleSourceSelections = StyleSourceSelections.parse(
     applyPatches(styleSourceSelections, patches)
   );
 

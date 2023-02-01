@@ -77,8 +77,7 @@ const copyInstanceData = (targetInstanceId: string) => {
     clonedInstanceIds,
     clonedStyleSourceIds
   );
-  // @todo migrate to style source variant
-  const clonedStyles = cloneStyles(stylesStore.get(), clonedInstanceIds);
+  const clonedStyles = cloneStyles(stylesStore.get(), clonedStyleSourceIds);
 
   return {
     instance: clonedInstance,

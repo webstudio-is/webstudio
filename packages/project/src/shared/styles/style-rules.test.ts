@@ -1,12 +1,12 @@
 import { test, expect } from "@jest/globals";
 import type {
-  NewStyles,
+  Styles,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { getStyleRules } from "./style-rules";
 
 test("compute styles from different style sources", () => {
-  const styles: NewStyles = [
+  const styles: Styles = [
     {
       breakpointId: "a",
       styleSourceId: "styleSource1",

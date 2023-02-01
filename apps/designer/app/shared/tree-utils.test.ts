@@ -65,9 +65,9 @@ const createStyleSourceSelection = (
   };
 };
 
-const createStyleDecl = (instanceId: string): StylesItem => {
+const createStyleDecl = (styleSourceId: string): StylesItem => {
   return {
-    instanceId,
+    styleSourceId,
     breakpointId: "breakpointId",
     property: "width",
     value: {
@@ -204,22 +204,22 @@ test("clone style source selections with applied instance ids and style source i
   ]);
 });
 
-test("clone styles with appled new instance ids", () => {
+test("clone styles with appled new style source ids", () => {
   const styles = [
-    createStyleDecl("instance1"),
-    createStyleDecl("instance2"),
-    createStyleDecl("instance1"),
-    createStyleDecl("instance3"),
-    createStyleDecl("instance1"),
-    createStyleDecl("instance3"),
+    createStyleDecl("styleSource1"),
+    createStyleDecl("styleSource2"),
+    createStyleDecl("styleSource1"),
+    createStyleDecl("styleSource3"),
+    createStyleDecl("styleSource1"),
+    createStyleDecl("styleSource3"),
   ];
-  const clonedInstanceIds = new Map<Instance["id"], Instance["id"]>();
-  clonedInstanceIds.set("instance2", "newInstance2");
-  clonedInstanceIds.set("instance3", "newInstance3");
-  expect(cloneStyles(styles, clonedInstanceIds)).toEqual([
-    createStyleDecl("newInstance2"),
-    createStyleDecl("newInstance3"),
-    createStyleDecl("newInstance3"),
+  const clonedStyleSourceIds = new Map<StyleSource["id"], StyleSource["id"]>();
+  clonedStyleSourceIds.set("styleSource2", "newStyleSource2");
+  clonedStyleSourceIds.set("styleSource3", "newStyleSource3");
+  expect(cloneStyles(styles, clonedStyleSourceIds)).toEqual([
+    createStyleDecl("newStyleSource2"),
+    createStyleDecl("newStyleSource3"),
+    createStyleDecl("newStyleSource3"),
   ]);
 });
 

@@ -134,20 +134,19 @@ export const cloneStyleSourceSelections = (
   return clonedStyleSourceSelections;
 };
 
-// @todo migrate to style source variant
 export const cloneStyles = (
   styles: Styles,
-  clonedInstanceIds: Map<Instance["id"], Instance["id"]>
+  clonedStyleSourceIds: Map<Instance["id"], Instance["id"]>
 ) => {
   const clonedStyles: Styles = [];
   for (const styleDecl of styles) {
-    const instanceId = clonedInstanceIds.get(styleDecl.instanceId);
-    if (instanceId === undefined) {
+    const styleSourceId = clonedStyleSourceIds.get(styleDecl.styleSourceId);
+    if (styleSourceId === undefined) {
       continue;
     }
     clonedStyles.push({
       ...styleDecl,
-      instanceId,
+      styleSourceId,
     });
   }
   return clonedStyles;
