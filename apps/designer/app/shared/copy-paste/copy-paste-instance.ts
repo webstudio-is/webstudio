@@ -1,8 +1,13 @@
-import ObjectId from "bson-objectid";
 import store from "immerhin";
 import { z } from "zod";
 import { useEffect } from "react";
-import { Instance, Props, Styles } from "@webstudio-is/project-build";
+import {
+  Instance,
+  Props,
+  Styles,
+  StyleSources,
+  StyleSourceSelections,
+} from "@webstudio-is/project-build";
 import { utils } from "@webstudio-is/project";
 import { findInsertLocation } from "~/canvas/shared/instance";
 import {
@@ -10,23 +15,33 @@ import {
   propsStore,
   stylesStore,
   selectedInstanceIdStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
 } from "../nano-states";
-import { cloneInstance, findSubtree } from "../tree-utils";
+import {
+  cloneInstance,
+  cloneProps,
+  cloneStyles,
+  cloneStyleSources,
+  cloneStyleSourceSelections,
+  findSubtree,
+  findSubtreeLocalStyleSources,
+} from "../tree-utils";
 import { deleteInstance } from "../instance-utils";
 import { startCopyPaste } from "./copy-paste";
 
-const InstanceCopyData = z.object({
+const InstanceData = z.object({
   instance: Instance,
   props: Props,
+  styleSourceSelections: StyleSourceSelections,
+  styleSources: StyleSources,
   styles: Styles,
 });
 
-type InstanceCopyData = z.infer<typeof InstanceCopyData>;
+type InstanceData = z.infer<typeof InstanceData>;
 
 const copyInstanceData = (targetInstanceId: string) => {
   const rootInstance = rootInstanceContainer.get();
-  const props = propsStore.get();
-  const styles = stylesStore.get();
   if (rootInstance === undefined) {
     return;
   }
@@ -35,51 +50,56 @@ const copyInstanceData = (targetInstanceId: string) => {
     return;
   }
 
-  const { targetInstance } = findSubtree(rootInstance, targetInstanceId);
+  const { targetInstance, subtreeIds } = findSubtree(
+    rootInstance,
+    targetInstanceId
+  );
+  const styleSources = styleSourcesStore.get();
+  const styleSourceSelections = styleSourceSelectionsStore.get();
+  const subtreeLocalStyleSourceIds = findSubtreeLocalStyleSources(
+    subtreeIds,
+    styleSources,
+    styleSourceSelections
+  );
   if (targetInstance === undefined) {
     return;
   }
-  const { clonedInstance, clonedIds } = cloneInstance(targetInstance);
 
-  // clone props with new ids and link to new cloned instances
-  const clonedProps: Props = [];
-  for (const prop of props) {
-    const instanceId = clonedIds.get(prop.instanceId);
-    if (instanceId === undefined) {
-      continue;
-    }
-    clonedProps.push({
-      ...prop,
-      id: ObjectId().toString(),
-      instanceId,
-    });
-  }
-
-  // clone styles and link to new cloned instances
-  const clonedStyles: Styles = [];
-  for (const styleDecl of styles) {
-    const instanceId = clonedIds.get(styleDecl.instanceId);
-    if (instanceId === undefined) {
-      continue;
-    }
-    clonedStyles.push({
-      ...styleDecl,
-      instanceId,
-    });
-  }
+  // clone all instance related data and link it with new ids
+  const { clonedInstance, clonedInstanceIds } = cloneInstance(targetInstance);
+  const clonedProps = cloneProps(propsStore.get(), clonedInstanceIds);
+  const { clonedStyleSources, clonedStyleSourceIds } = cloneStyleSources(
+    styleSources,
+    subtreeLocalStyleSourceIds
+  );
+  const clonedStyleSourceSelections = cloneStyleSourceSelections(
+    styleSourceSelections,
+    clonedInstanceIds,
+    clonedStyleSourceIds
+  );
+  // @todo migrate to style source variant
+  const clonedStyles = cloneStyles(stylesStore.get(), clonedInstanceIds);
 
   return {
     instance: clonedInstance,
     props: clonedProps,
+    styleSourceSelections: clonedStyleSourceSelections,
+    styleSources: clonedStyleSources,
     styles: clonedStyles,
   };
 };
 
-const pasteInstance = (data: InstanceCopyData) => {
+const pasteInstance = (data: InstanceData) => {
   const selectedInstanceId = selectedInstanceIdStore.get();
   store.createTransaction(
-    [rootInstanceContainer, propsStore, stylesStore],
-    (rootInstance, props, styles) => {
+    [
+      rootInstanceContainer,
+      propsStore,
+      styleSourceSelectionsStore,
+      styleSourcesStore,
+      stylesStore,
+    ],
+    (rootInstance, props, styleSourceSelections, styleSources, styles) => {
       if (rootInstance === undefined) {
         return;
       }
@@ -91,17 +111,21 @@ const pasteInstance = (data: InstanceCopyData) => {
       if (hasInserted === false) {
         return;
       }
+      // append without checking existing
+      // because all data already cloned with new ids
       props.push(...data.props);
+      styleSourceSelections.push(...data.styleSourceSelections);
+      styleSources.push(...data.styleSources);
       styles.push(...data.styles);
-      selectedInstanceIdStore.set(data.instance.id);
     }
   );
+  selectedInstanceIdStore.set(data.instance.id);
 };
 
 const startCopyPasteInstance = () => {
   return startCopyPaste({
     version: "@webstudio/instance/v0.1",
-    type: InstanceCopyData,
+    type: InstanceData,
     allowAnyTarget: true,
 
     onCopy: () => {
@@ -129,7 +153,7 @@ const startCopyPasteInstance = () => {
   });
 };
 
-export const useCopyPasteInstance = (): void => {
+export const useCopyPasteInstance = () => {
   useEffect(() => {
     return startCopyPasteInstance();
   }, []);

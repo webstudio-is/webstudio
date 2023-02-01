@@ -1,12 +1,18 @@
 import { useMemo } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance, Props, Styles } from "@webstudio-is/project-build";
+import type {
+  Instance,
+  Props,
+  Styles,
+  StyleSources,
+  StyleSourceSelections,
+} from "@webstudio-is/project-build";
+import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
-import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
 
@@ -119,6 +125,22 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   }, [instanceId]);
   const instanceStyles = useStore(instanceStylesStore);
   return instanceStyles;
+};
+
+export const styleSourcesStore = atom<StyleSources>([]);
+export const useSetStyleSources = (styleSources: StyleSources) => {
+  useSyncInitializeOnce(() => {
+    styleSourcesStore.set(styleSources);
+  });
+};
+
+export const styleSourceSelectionsStore = atom<StyleSourceSelections>([]);
+export const useSetStyleSourceSelections = (
+  styleSourceSelections: StyleSourceSelections
+) => {
+  useSyncInitializeOnce(() => {
+    styleSourceSelectionsStore.set(styleSourceSelections);
+  });
 };
 
 export const breakpointsContainer = atom<Breakpoint[]>([]);

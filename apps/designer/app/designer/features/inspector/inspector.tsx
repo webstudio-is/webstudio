@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useStore } from "@nanostores/react";
+import { Tree } from "@webstudio-is/project-build";
 import type { Publish } from "~/shared/pubsub";
 import {
   DeprecatedText2,
@@ -20,6 +21,7 @@ import { theme } from "@webstudio-is/design-system";
 import { selectedInstanceStore } from "~/shared/nano-states";
 
 type InspectorProps = {
+  treeId: Tree["id"];
   publish: Publish;
 };
 
@@ -29,7 +31,7 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const Inspector = ({ publish }: InspectorProps) => {
+export const Inspector = ({ treeId, publish }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -69,10 +71,15 @@ export const Inspector = ({ publish }: InspectorProps) => {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="style" css={contentStyle}>
-            <StylePanel publish={publish} selectedInstance={selectedInstance} />
+            <StylePanel
+              treeId={treeId}
+              publish={publish}
+              selectedInstance={selectedInstance}
+            />
           </TabsContent>
           <TabsContent value="props" css={contentStyle}>
             <PropsPanel
+              treeId={treeId}
               publish={publish}
               key={selectedInstance.id /* Re-render when instance changes */}
               selectedInstance={selectedInstance}
