@@ -32,10 +32,10 @@ const fontWeightMapping = {
 } as const;
 
 const fontFamilies = {
-  Inter: "InterVariable, Inter, -apple-system, system-ui, sans-serif",
-  Manrope: "ManropeVariable, Manrope, sans-serif",
-  // @todo: we use wrong Roboto, need to use Roboto Mono
-  Roboto: "Roboto, menlo, monospace",
+  Inter:
+    "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
+  Manrope: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
+  Roboto: "Roboto Mono, RobotoMono, menlo, monospace",
 } as const;
 const fontFamilyMapping = {
   ...fontFamilies,
