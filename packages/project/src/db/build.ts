@@ -5,6 +5,7 @@ import {
   Prisma,
   Project,
 } from "@webstudio-is/prisma-client";
+import { Breakpoints } from "@webstudio-is/css-data";
 import { StyleSources } from "@webstudio-is/project-build";
 import * as db from ".";
 import { Build, Page, Pages } from "./schema";
@@ -14,9 +15,13 @@ import { parseStyles, serializeStyles } from "./styles";
 export const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
   return {
-    ...build,
+    id: build.id,
+    projectId: build.projectId,
+    isDev: build.isDev,
+    isProd: build.isProd,
     createdAt: build.createdAt.toISOString(),
     pages,
+    breakpoints: Breakpoints.parse(JSON.parse(build.breakpoints)),
     styles: await parseStyles(build.styles),
     styleSources: StyleSources.parse(JSON.parse(build.styleSources)),
   };
@@ -254,10 +259,6 @@ export async function create(
     throw new Error("Source build required for production build");
   }
 
-  const breakpointsValues = sourceBuild
-    ? (await db.breakpoints.load(sourceBuild.id)).values
-    : db.breakpoints.createValues();
-
   if (env === "prod") {
     await client.build.updateMany({
       where: { projectId: projectId, isProd: true },
@@ -269,6 +270,9 @@ export async function create(
     data: {
       projectId,
       pages: JSON.stringify([]),
+      breakpoints: JSON.stringify(
+        sourceBuild?.breakpoints ?? db.breakpoints.createValues()
+      ),
       styles: serializeStyles(sourceBuild?.styles ?? []),
       styleSources: JSON.stringify(sourceBuild?.styleSources ?? []),
       isDev: env === "dev",
@@ -289,6 +293,4 @@ export async function create(
       pages: JSON.stringify(pages),
     },
   });
-
-  await db.breakpoints.create(build.id, breakpointsValues, client);
 }
