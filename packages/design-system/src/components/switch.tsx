@@ -50,7 +50,10 @@ const thumbStyles = css({
   position: "absolute",
   top: thumbOffset,
   left: thumbOffset,
-  "&[data-state=checked]": { left: "unset", right: thumbOffset },
+  transition: "transform 100ms",
+  "&[data-state=checked]": {
+    transform: `translateX(${theme.spacing[6]})`,
+  },
 });
 
 export const Switch = React.forwardRef(
