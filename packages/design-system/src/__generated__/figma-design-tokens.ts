@@ -39,14 +39,14 @@ export const fontWeights = {
 } as const;
 
 export const fontSizes = {
-  fontSize0: "8px",
-  fontSize1: "10px",
-  fontSize2: "12px",
-  fontSize3: "16px",
-  fontSize4: "20px",
-  fontSize5: "32px",
-  fontSize6: "48px",
-  fontSize7: "360px",
+  "0": "8px",
+  "1": "10px",
+  "2": "12px",
+  "3": "16px",
+  "4": "20px",
+  "5": "32px",
+  "6": "48px",
+  "7": "360px",
 } as const;
 
 export const letterSpacing = {
@@ -207,12 +207,12 @@ export const textCase = {
 export const textDecoration = { none: "none" } as const;
 
 export const borderRadius = {
-  radius0: "1px",
-  radius1: "2px",
-  radius2: "3px",
-  radius3: "4px",
-  radius4: "5px",
-  radius5: "6px",
+  "0": "1px",
+  "1": "2px",
+  "2": "3px",
+  "3": "4px",
+  "4": "5px",
+  "5": "6px",
 } as const;
 
 export const color = {
@@ -320,15 +320,7 @@ export const color = {
   maintenanceSpacerViz: "#f9c6c6",
 } as const;
 
-export const borderWidth = {
-  borderWidth0: 1,
-  borderWidth1: 2,
-  regularIconBorder0: 1,
-  regularIconBorder1: 1.3,
-  regularIconBorder2: 1.6,
-  largeIconBorder1: 1.5,
-  largeIconBorder2: 1.8,
-} as const;
+export const borderWidth = { borderWidth0: 1, borderWidth1: 2 } as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
 
