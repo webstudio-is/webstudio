@@ -19,7 +19,7 @@ export const loadProject = async ({
     return await projectResponse.json();
   }
 
-  //  In the case where the status code is not 2xx,
+  // In the case where the status code is not 2xx,
   // we don't know what to do with the response other than just show an error message.
   const message = await projectResponse.text();
   throw new Error(message.substring(0, 1000));
