@@ -67,6 +67,9 @@ export const typography = {
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   labelTitleCase: {
     fontFamily:
@@ -75,6 +78,9 @@ export const typography = {
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
+    textTransform: "capitalize",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   labelSentenceCase: {
     fontFamily:
@@ -83,6 +89,9 @@ export const typography = {
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.005em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   title: {
     fontFamily:
@@ -91,6 +100,9 @@ export const typography = {
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.01em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   small: {
     fontFamily:
@@ -99,6 +111,9 @@ export const typography = {
     fontSize: "10px",
     lineHeight: "11px",
     letterSpacing: "0.01em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   tiny: {
     fontFamily:
@@ -107,6 +122,9 @@ export const typography = {
     fontSize: "8px",
     lineHeight: "8px",
     letterSpacing: "0.01em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   unit: {
     fontFamily:
@@ -115,6 +133,9 @@ export const typography = {
     fontSize: "10px",
     lineHeight: "12px",
     letterSpacing: "0em",
+    textTransform: "uppercase",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   mono: {
     fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
@@ -122,6 +143,9 @@ export const typography = {
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0.01em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   bigTitle: {
     fontFamily:
@@ -130,6 +154,9 @@ export const typography = {
     fontSize: "32px",
     lineHeight: "39px",
     letterSpacing: "0.005em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   spaceSectionUnitText: {
     fontFamily:
@@ -138,6 +165,9 @@ export const typography = {
     fontSize: "8px",
     lineHeight: "8px",
     letterSpacing: "0.01em",
+    textTransform: "uppercase",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   spaceSectionValueText: {
     fontFamily:
@@ -146,6 +176,9 @@ export const typography = {
     fontSize: "10px",
     lineHeight: "10px",
     letterSpacing: "0.01em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   brandSectionTitle: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
@@ -153,6 +186,9 @@ export const typography = {
     fontSize: "20px",
     lineHeight: "27px",
     letterSpacing: "0em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   brandLargeTitle: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
@@ -160,6 +196,9 @@ export const typography = {
     fontSize: "48px",
     lineHeight: "58px",
     letterSpacing: "-0.02em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   brandRegular: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
@@ -167,6 +206,9 @@ export const typography = {
     fontSize: "16px",
     lineHeight: "22px",
     letterSpacing: "0em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   brandThumbnailLargeDefault: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
@@ -174,6 +216,9 @@ export const typography = {
     fontSize: "360px",
     lineHeight: "360px",
     letterSpacing: "-0.05em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   brandThumbnailLargeHover: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
@@ -181,6 +226,9 @@ export const typography = {
     fontSize: "360px",
     lineHeight: "360px",
     letterSpacing: "-0.05em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   brandThumbnailSmallDefault: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
@@ -188,6 +236,9 @@ export const typography = {
     fontSize: "48px",
     lineHeight: "58px",
     letterSpacing: "-0.02em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
   brandThumbnailSmallHover: {
     fontFamily: "Manrope Variable, ManropeVariable, Manrope, sans-serif",
@@ -195,6 +246,9 @@ export const typography = {
     fontSize: "48px",
     lineHeight: "58px",
     letterSpacing: "-0.02em",
+    textTransform: "none",
+    textDecoration: "none",
+    textIndent: "0px",
   },
 } as const;
 
@@ -320,7 +374,7 @@ export const color = {
   maintenanceSpacerViz: "#f9c6c6",
 } as const;
 
-export const borderWidth = { borderWidth0: 1, borderWidth1: 2 } as const;
+export const borderWidth = { "0": 1, "1": 2 } as const;
 
 export const dimension = { paragraphIndent0: "0px" } as const;
 
