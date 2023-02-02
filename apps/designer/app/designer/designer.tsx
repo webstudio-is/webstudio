@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo } from "react";
 import { type Publish, usePublish, useSubscribe } from "~/shared/pubsub";
 import {
   type Pages,
-  type Project,
   utils as projectUtils,
+  type Project,
 } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import { registerContainers, useDesignerStore } from "~/shared/sync";

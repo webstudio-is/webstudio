@@ -1,5 +1,4 @@
 import { Flex, globalCss, theme } from "@webstudio-is/design-system";
-import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { Header } from "./header";
 // eslint-disable-next-line import/no-internal-modules
 import interFont from "@fontsource/inter/variable.css";
@@ -7,6 +6,7 @@ import interFont from "@fontsource/inter/variable.css";
 import manropeVariableFont from "@fontsource/manrope/variable.css";
 import { Projects } from "./projects";
 import type { User } from "~/shared/db/user.server";
+import type { DashboardProject } from "@webstudio-is/dashboard";
 
 export const links = () => [
   { rel: "stylesheet", href: interFont },

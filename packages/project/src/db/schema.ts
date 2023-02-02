@@ -1,9 +1,19 @@
 import { z, type ZodType } from "zod";
-import { Project } from "@webstudio-is/prisma-client";
 import type { Styles, StyleSources } from "@webstudio-is/project-build";
 import type { Data } from "@webstudio-is/react-sdk";
 
-export type { Project };
+export const Project = z.object({
+  id: z.string(),
+  title: z.string(),
+  createdAt: z.date().transform((date) => date.toISOString()),
+  userId: z.string().nullable(),
+  isDeleted: z.boolean(),
+  domain: z.string(),
+});
+export type Project = z.infer<typeof Project>;
+
+export const Projects = z.array(Project);
+export type Projects = z.infer<typeof Projects>;
 
 const commonPageFields = {
   id: z.string(),

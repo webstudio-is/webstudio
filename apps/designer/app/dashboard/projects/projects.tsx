@@ -1,7 +1,7 @@
 import { Flex, Text } from "@webstudio-is/design-system";
 import { EmptyState } from "./empty-state";
 import { Panel } from "./panel";
-import type { DashboardProject } from "@webstudio-is/prisma-client";
+import type { DashboardProject } from "@webstudio-is/dashboard";
 import { ProjectCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 
