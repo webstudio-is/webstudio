@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import ObjectId from "bson-objectid";
+import { nanoid } from "nanoid";
 import warnOnce from "warn-once";
 import type { Instance, PropsItem } from "@webstudio-is/project-build";
 import type { MetaProps } from "@webstudio-is/react-sdk";
@@ -85,7 +85,7 @@ const getPropsItemFromMetaProps = (
     return undefined;
   }
   return {
-    id: ObjectId().toString(),
+    id: nanoid(),
     instanceId,
     name,
     ...getValueFromPropMeta(metaPropValue),
@@ -176,7 +176,7 @@ export const usePropsLogic = ({
     setAddedProps((prev) => [
       ...prev,
       {
-        id: ObjectId().toString(),
+        id: nanoid(),
         instanceId,
         name: "",
         type: "string",

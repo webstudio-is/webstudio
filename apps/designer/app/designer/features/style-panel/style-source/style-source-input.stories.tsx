@@ -1,4 +1,4 @@
-import { v4 as uuid } from "uuid";
+import { nanoid } from "nanoid";
 import type { ComponentStory } from "@storybook/react";
 import { useState } from "react";
 import { StyleSourceInput, type ItemState, type ItemSource } from "./";
@@ -16,7 +16,7 @@ type Item = {
 };
 
 const localItem: Item = {
-  id: uuid(),
+  id: nanoid(),
   label: "Local",
   source: "local",
   isEditable: false,
@@ -25,21 +25,21 @@ const localItem: Item = {
 
 const getItems = (): Array<Item> => [
   {
-    id: uuid(),
+    id: nanoid(),
     label: "Token",
     source: "token",
     isEditable: true,
     state: "unselected",
   },
   {
-    id: uuid(),
+    id: nanoid(),
     label: "Tag",
     source: "tag",
     isEditable: true,
     state: "unselected",
   },
   {
-    id: uuid(),
+    id: nanoid(),
     label: "State",
     source: "state",
     isEditable: true,
@@ -53,7 +53,7 @@ const createItem = (
   setValue: (value: Array<Item>) => void
 ) => {
   const item: Item = {
-    id: uuid(),
+    id: nanoid(),
     label,
     source: "token",
     isEditable: true,
@@ -108,7 +108,7 @@ export const WithTruncatedItem: ComponentStory<
 > = () => {
   const [value, setValue] = useState<Array<Item>>([
     {
-      id: uuid(),
+      id: nanoid(),
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
       source: "local",
@@ -140,7 +140,7 @@ export const Complete: ComponentStory<typeof StyleSourceInput> = () => {
     localItem,
     ...getItems(),
     {
-      id: uuid(),
+      id: nanoid(),
       label: "Disabled",
       source: "token",
 
