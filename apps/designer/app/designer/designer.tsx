@@ -32,7 +32,7 @@ import { usePublishShortcuts } from "./shared/shortcuts";
 import { useDragAndDropState, useIsPreviewMode } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
-import { designerUrl, getBuildUrl } from "~/shared/router-utils";
+import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { AssetsProvider, usePublishAssets } from "./shared/assets";
 
@@ -303,15 +303,6 @@ export const Designer = ({
           css={{ gridArea: "header" }}
           project={project}
           publish={publish}
-          designerUrl={({ authToken, mode }) =>
-            designerUrl({
-              projectId: project.id,
-              pageId: page.id,
-              origin: window.location.origin,
-              authToken,
-              mode,
-            })
-          }
         />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>

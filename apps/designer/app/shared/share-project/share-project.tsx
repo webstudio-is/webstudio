@@ -206,7 +206,7 @@ const SharedLinkItem = ({
   );
 };
 
-export type ShareProjectProps = {
+type ShareProjectProps = {
   links?: Array<LinkOptions>;
   onChange: (link: LinkOptions) => void;
   onDelete: (link: LinkOptions) => void;

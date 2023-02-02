@@ -4,8 +4,7 @@ import {
   Button,
   Flex,
   Label,
-  DeprecatedParagraph,
-  DeprecatedText2,
+  Text,
   TextField,
   theme,
 } from "@webstudio-is/design-system";
@@ -21,8 +20,9 @@ import {
   DialogDescription,
 } from "./dialog";
 import { DashboardProject } from "@webstudio-is/prisma-client";
+import { ShareProjectContainer } from "~/shared/share-project";
 
-const Content = ({
+const DialogContent = ({
   onSubmit,
   onChange,
   placeholder,
@@ -63,7 +63,7 @@ const Content = ({
       >
         {description && (
           <DialogDescription asChild>
-            <DeprecatedParagraph>{description}</DeprecatedParagraph>
+            <Text as="p">{description}</Text>
           </DialogDescription>
         )}
         <Label>{label}</Label>
@@ -77,7 +77,7 @@ const Content = ({
           }}
         />
         <Box css={{ minHeight: theme.spacing["10"] }}>
-          {errors && <DeprecatedText2 color="error">{errors}</DeprecatedText2>}
+          {errors && <Text color="destructive">{errors}</Text>}
         </Box>
       </Flex>
       <DialogActions>
@@ -116,7 +116,7 @@ export const CreateProject = () => {
       title="New Project"
       trigger={<Button prefix={<PlusIcon />}>New Project</Button>}
     >
-      <Content
+      <DialogContent
         onSubmit={handleSubmit}
         errors={errors}
         placeholder="New Project"
@@ -129,19 +129,19 @@ export const CreateProject = () => {
 
 const useRenameProject = ({
   projectId,
-  onComplete,
+  onOpenChange,
 }: {
   projectId: DashboardProject["id"];
-  onComplete: () => void;
+  onOpenChange: (isOpen: boolean) => void;
 }) => {
   const { send, data, state } = trpc.rename.useMutation();
   const errors = data && "errors" in data ? data.errors : undefined;
 
   useEffect(() => {
     if (errors === undefined && state === "loading") {
-      onComplete();
+      onOpenChange(false);
     }
-  }, [errors, state, onComplete]);
+  }, [errors, state, onOpenChange]);
 
   const handleSubmit = ({ title }: { title: string }) => {
     send({ projectId, title });
@@ -154,26 +154,24 @@ const useRenameProject = ({
   };
 };
 
-export const RenameProject = ({
+export const RenameProjectDialog = ({
   isOpen,
   title,
   projectId,
-  onComplete,
   onOpenChange,
 }: {
   isOpen: boolean;
   title: string;
   projectId: DashboardProject["id"];
-  onComplete: () => void;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const { handleSubmit, errors, state } = useRenameProject({
     projectId,
-    onComplete,
+    onOpenChange,
   });
   return (
     <Dialog title="Rename" isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Content
+      <DialogContent
         onSubmit={handleSubmit}
         errors={errors}
         title={title}
@@ -194,11 +192,11 @@ export const RenameProject = ({
 const useDeleteProject = ({
   projectId,
   title,
-  onComplete,
+  onOpenChange,
 }: {
   projectId: DashboardProject["id"];
   title: string;
-  onComplete: () => void;
+  onOpenChange: (isOpen: false) => void;
 }) => {
   const { send, data, state } = trpc.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
@@ -206,9 +204,9 @@ const useDeleteProject = ({
 
   useEffect(() => {
     if (errors === undefined && state === "loading") {
-      onComplete();
+      onOpenChange(false);
     }
-  }, [errors, state, onComplete]);
+  }, [errors, state, onOpenChange]);
 
   const handleSubmit = () => {
     send({ projectId });
@@ -227,23 +225,21 @@ const useDeleteProject = ({
   };
 };
 
-export const DeleteProject = ({
+export const DeleteProjectDialog = ({
   isOpen,
   title,
   projectId,
-  onComplete,
   onOpenChange,
 }: {
   isOpen: boolean;
   title: string;
   projectId: DashboardProject["id"];
-  onComplete: () => void;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const { handleSubmit, handleChange, errors, isMatch, state } =
     useDeleteProject({
       projectId,
-      onComplete,
+      onOpenChange,
       title,
     });
   return (
@@ -252,16 +248,16 @@ export const DeleteProject = ({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
     >
-      <Content
+      <DialogContent
         onSubmit={handleSubmit}
         onChange={handleChange}
         errors={errors}
         label={
           <>
             Confirm by typing{" "}
-            <DeprecatedText2 as="span" color="error" variant="label">
+            <Text as="span" color="destructive" variant="labelSentenceCase">
               {title}
-            </DeprecatedText2>{" "}
+            </Text>{" "}
             below
           </>
         }
@@ -287,4 +283,20 @@ export const useDuplicate = (projectId: DashboardProject["id"]) => {
   return () => {
     send({ projectId });
   };
+};
+
+export const ShareProjectDialog = ({
+  isOpen,
+  onOpenChange,
+  projectId,
+}: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  projectId: DashboardProject["id"];
+}) => {
+  return (
+    <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
+      <ShareProjectContainer projectId={projectId} />
+    </Dialog>
+  );
 };
