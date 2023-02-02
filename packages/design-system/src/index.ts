@@ -15,6 +15,7 @@ export * from "./components/icon-button"; // mostly aligned, but needs a demo an
 export * from "./components/dialog";
 export * from "./components/floating-panel-popover";
 export { MenuItemButton } from "./components/menu";
+export * from "./components/switch";
 
 // Not aligned
 
@@ -43,7 +44,6 @@ export {
 } from "./components/enhanced-tooltip";
 export { Link } from "./components/link";
 export { Panel } from "./components/panel";
-export * from "./components/switch";
 export * from "./components/slider";
 export * from "./components/radio";
 export * from "./components/checkbox";
