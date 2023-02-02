@@ -127,7 +127,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   }
   const isDesignerReady = useSubscribeDesignerReady();
   const assets = useAssets(data.assets);
-  useSetBreakpoints(data.breakpoints);
+  useSetBreakpoints(data.build.breakpoints);
   useSetProps(data.tree.props);
   // inject props store to sdk
   setPropsByInstanceIdStore(propsByInstanceIdStore);

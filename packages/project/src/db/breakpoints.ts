@@ -4,55 +4,19 @@ import { initialBreakpoints } from "@webstudio-is/react-sdk";
 import {
   type Breakpoints as DbBreakpoints,
   prisma,
-  Prisma,
 } from "@webstudio-is/prisma-client";
-import { type Breakpoint, Breakpoints } from "@webstudio-is/css-data";
+import { Breakpoints } from "@webstudio-is/css-data";
 import type { Project } from "./schema";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 
-export const load = async (buildId: DbBreakpoints["buildId"]) => {
-  const breakpoints = await prisma.breakpoints.findUnique({
-    where: { buildId },
-  });
-
-  if (breakpoints === null) {
-    throw new Error("Breakpoints not found");
-  }
-  const values: Array<Breakpoint> = JSON.parse(breakpoints.values);
-  Breakpoints.parse(values);
-  return {
-    ...breakpoints,
-    values,
-  };
-};
-
-export const createValues = () =>
-  Breakpoints.parse(
-    initialBreakpoints.map((breakpoint) => ({
-      ...breakpoint,
-      id: nanoid(),
-    }))
-  );
-
-export const create = async (
-  buildId: DbBreakpoints["buildId"],
-  values: Array<Breakpoint>,
-  client: Prisma.TransactionClient = prisma
-) => {
-  const breakpoints = await client.breakpoints.create({
-    data: {
-      values: JSON.stringify(values),
-      buildId,
-    },
-  });
-
-  return {
-    ...breakpoints,
-    values,
-  };
+export const createValues = (): Breakpoints => {
+  return initialBreakpoints.map((breakpoint) => ({
+    ...breakpoint,
+    id: nanoid(),
+  }));
 };
 
 export const patch = async (
@@ -72,13 +36,20 @@ export const patch = async (
     throw new Error("You don't have edit access to this project");
   }
 
-  const breakpoints = await load(buildId);
-  const nextValues = applyPatches(breakpoints.values, patches);
+  const build = await prisma.build.findUnique({
+    where: { id: buildId },
+  });
 
-  Breakpoints.parse(nextValues);
+  if (build === null) {
+    return;
+  }
+  const breakpoints = Breakpoints.parse(JSON.parse(build.breakpoints));
+  const patchedBreakpoints = Breakpoints.parse(
+    applyPatches(breakpoints, patches)
+  );
 
-  await prisma.breakpoints.update({
-    where: { buildId: breakpoints.buildId },
-    data: { values: JSON.stringify(nextValues) },
+  await prisma.build.update({
+    where: { id: buildId },
+    data: { breakpoints: JSON.stringify(patchedBreakpoints) },
   });
 };
