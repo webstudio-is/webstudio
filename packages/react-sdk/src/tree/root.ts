@@ -1,6 +1,5 @@
 import type { ComponentProps } from "react";
 import { atom } from "nanostores";
-import type { Breakpoint } from "@webstudio-is/css-data";
 import type { Tree } from "@webstudio-is/project-build";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { createElementsTree } from "./create-elements-tree";
@@ -12,7 +11,6 @@ import { getPropsByInstanceId, setPropsByInstanceIdStore } from "../props";
 
 export type Data = {
   tree: Tree | null;
-  breakpoints: Array<Breakpoint>;
   assets: Array<Asset>;
   params?: Params;
 };

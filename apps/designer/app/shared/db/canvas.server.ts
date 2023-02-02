@@ -23,9 +23,8 @@ export const loadCanvasData = async (
     throw new Error(`Page ${pageIdOrPath} not found`);
   }
 
-  const [tree, breakpoints, assets] = await Promise.all([
+  const [tree, assets] = await Promise.all([
     projectDb.tree.loadById(page.treeId),
-    projectDb.breakpoints.load(build.id),
     loadByProject(project.id),
   ]);
 
@@ -33,14 +32,9 @@ export const loadCanvasData = async (
     throw new Error(`Tree not found for project ${project.id}`);
   }
 
-  if (breakpoints === null) {
-    throw new Error(`Breakpoints not found for project ${project.id}`);
-  }
-
   return {
     build,
     tree,
-    breakpoints: breakpoints.values,
     buildId: build.id,
     page,
     assets,

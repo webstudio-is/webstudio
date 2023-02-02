@@ -1,4 +1,5 @@
 import { z, type ZodType } from "zod";
+import type { Breakpoints } from "@webstudio-is/css-data";
 import type { Styles, StyleSources } from "@webstudio-is/project-build";
 import type { Data } from "@webstudio-is/react-sdk";
 
@@ -88,6 +89,7 @@ export type Build = {
   isDev: boolean;
   isProd: boolean;
   pages: Pages;
+  breakpoints: Breakpoints;
   styles: Styles;
   styleSources: StyleSources;
 };

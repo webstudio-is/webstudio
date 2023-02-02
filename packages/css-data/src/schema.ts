@@ -149,6 +149,8 @@ export const Breakpoint = z.object({
   minWidth: z.number(),
 });
 
+export type Breakpoint = z.infer<typeof Breakpoint>;
+
 export const Breakpoints = z.array(Breakpoint);
 
-export type Breakpoint = z.infer<typeof Breakpoint>;
+export type Breakpoints = z.infer<typeof Breakpoints>;

@@ -35,7 +35,7 @@ export const generateCssText = async (
 
   addGlobalRules(engine, canvasData);
 
-  for (const breakpoint of canvasData.breakpoints) {
+  for (const breakpoint of canvasData.build?.breakpoints ?? []) {
     engine.addMediaRule(breakpoint.id, breakpoint);
   }
 
