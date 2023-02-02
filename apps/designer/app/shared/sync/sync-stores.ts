@@ -7,10 +7,13 @@ import {
   propsStore,
   breakpointsContainer,
   stylesStore,
+  styleSourcesStore,
+  styleSourceSelectionsStore,
   selectedInstanceIdStore,
   selectedInstanceBrowserStyleStore,
   hoveredInstanceIdStore,
   hoveredInstanceOutlineStore,
+  isPreviewModeStore,
 } from "~/shared/nano-states";
 
 type StoreData = {
@@ -42,6 +45,8 @@ export const registerContainers = () => {
   store.register("breakpoints", breakpointsContainer);
   store.register("root", rootInstanceContainer);
   store.register("styles", stylesStore);
+  store.register("styleSources", styleSourcesStore);
+  store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
   // synchronize whole states
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
@@ -51,6 +56,7 @@ export const registerContainers = () => {
   );
   clientStores.set("hoveredInstanceIdStore", hoveredInstanceIdStore);
   clientStores.set("hoveredInstanceOutlineStore", hoveredInstanceOutlineStore);
+  clientStores.set("isPreviewModeStore", isPreviewModeStore);
 };
 
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {

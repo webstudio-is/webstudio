@@ -1,19 +1,27 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { useStore } from "@nanostores/react";
+import ObjectId from "bson-objectid";
 import store from "immerhin";
 import warnOnce from "warn-once";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance, Tree } from "@webstudio-is/project-build";
 import type { StyleUpdates } from "@webstudio-is/project";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
 import { type Publish } from "~/shared/pubsub";
-import { stylesStore } from "~/shared/nano-states";
+import {
+  styleSourceSelectionsIndexStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
+} from "~/shared/nano-states";
 import { useSelectedBreakpoint } from "~/designer/shared/nano-states";
-// @todo: must be removed, now it's only for compatibility with existing code
-import { parseCssValue } from "./parse-css-value";
-import { useStyleInfo } from "./style-info";
 import {
   removeByMutable,
   replaceByOrAppendMutable,
 } from "~/shared/array-utils";
+// @todo: must be removed, now it's only for compatibility with existing code
+import { parseCssValue } from "./parse-css-value";
+import { useStyleInfo } from "./style-info";
+import { shallowComputed } from "~/shared/store-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -23,6 +31,7 @@ declare module "~/shared/pubsub" {
 }
 
 type UseStyleData = {
+  treeId: Tree["id"];
   publish: Publish;
   selectedInstance: Instance;
 };
@@ -47,8 +56,28 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
+export const useStyleData = ({
+  treeId,
+  selectedInstance,
+  publish,
+}: UseStyleData) => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
+  const instanceStyleSourcesStore = useMemo(() => {
+    return shallowComputed(
+      [styleSourceSelectionsIndexStore],
+      (styleSourceSelectionsIndex) => {
+        return (
+          styleSourceSelectionsIndex.styleSourcesByInstanceId.get(
+            selectedInstance.id
+          ) ?? []
+        );
+      }
+    );
+  }, [selectedInstance.id]);
+  const instanceStyleSources = useStore(instanceStyleSourcesStore);
+  const localStyleSource = instanceStyleSources.find(
+    (styleSource) => styleSource.type === "local"
+  );
 
   const currentStyle = useStyleInfo();
 
@@ -70,40 +99,61 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
         return;
       }
 
-      store.createTransaction([stylesStore], (styles) => {
-        const instanceId = selectedInstance.id;
-        const breakpointId = selectedBreakpoint.id;
-
-        for (const update of updates) {
-          if (update.operation === "set") {
+      store.createTransaction(
+        [styleSourceSelectionsStore, styleSourcesStore, stylesStore],
+        (styleSourceSelections, styleSources, styles) => {
+          const instanceId = selectedInstance.id;
+          const breakpointId = selectedBreakpoint.id;
+          const styleSourceId = localStyleSource?.id ?? ObjectId().toString();
+          // crate style source and its selection on currently selected instance
+          if (localStyleSource === undefined) {
+            styleSources.push({
+              type: "local",
+              id: styleSourceId,
+              treeId,
+            });
             replaceByOrAppendMutable(
-              styles,
+              styleSourceSelections,
               {
-                breakpointId,
                 instanceId,
-                property: update.property,
-                value: update.value,
+                values: [styleSourceId],
               },
-              (item) =>
-                item.instanceId === instanceId &&
-                item.breakpointId === breakpointId &&
-                item.property === update.property
+              (styleSourceSelection) =>
+                styleSourceSelection.instanceId === instanceId
             );
           }
 
-          if (update.operation === "delete") {
-            removeByMutable(
-              styles,
-              (item) =>
-                item.instanceId === instanceId &&
-                item.breakpointId === breakpointId &&
-                item.property === update.property
-            );
+          for (const update of updates) {
+            if (update.operation === "set") {
+              replaceByOrAppendMutable(
+                styles,
+                {
+                  breakpointId,
+                  styleSourceId,
+                  property: update.property,
+                  value: update.value,
+                },
+                (item) =>
+                  item.styleSourceId === styleSourceId &&
+                  item.breakpointId === breakpointId &&
+                  item.property === update.property
+              );
+            }
+
+            if (update.operation === "delete") {
+              removeByMutable(
+                styles,
+                (item) =>
+                  item.styleSourceId === styleSourceId &&
+                  item.breakpointId === breakpointId &&
+                  item.property === update.property
+              );
+            }
           }
         }
-      });
+      );
     },
-    [publish, selectedBreakpoint, selectedInstance]
+    [publish, selectedBreakpoint, selectedInstance, localStyleSource, treeId]
   );
 
   // @deprecated should not be called

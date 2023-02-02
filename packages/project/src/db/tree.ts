@@ -7,12 +7,9 @@ import {
   Instance,
   Instances,
   StyleSourceSelections,
-  StyleSources,
-  StoredStyles,
 } from "@webstudio-is/project-build";
 import { prisma, type Prisma } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
-import { convertToStoredStyles, parseStyles } from "./styles";
 import { parseProps, serializeProps } from "./props";
 import type { Project } from "./schema";
 import {
@@ -56,7 +53,6 @@ export const createTree = ({
     buildId,
     root,
     props: [],
-    styles: [],
     styleSourceSelections: [],
   };
 };
@@ -71,37 +67,8 @@ export const create = async (
 
   const newTreeId = uuid();
 
-  const build = await client.build.findUnique({
-    where: {
-      id: treeData.buildId,
-    },
-  });
-
-  if (build === null) {
-    throw Error(`Build ${treeData.buildId} not found`);
-  }
-
-  const storedStyles = StoredStyles.parse(JSON.parse(build.styles));
-  const styleSources = StyleSources.parse(JSON.parse(build.styleSources));
-  const styleSourceSelections: StyleSourceSelections = [];
-  storedStyles.push(
-    ...convertToStoredStyles(
-      newTreeId,
-      treeData.styles,
-      styleSources,
-      styleSourceSelections
-    )
-  );
-
-  await client.build.update({
-    where: {
-      id: treeData.buildId,
-    },
-    data: {
-      styles: JSON.stringify(storedStyles),
-      styleSources: JSON.stringify(styleSources),
-    },
-  });
+  const styleSourceSelections: StyleSourceSelections =
+    treeData.styleSourceSelections;
 
   return await client.tree.create({
     data: {
@@ -156,23 +123,10 @@ export const loadById = async (
     return null;
   }
 
-  const build = await client.build.findUnique({
-    where: { id: tree.buildId },
-  });
-  if (build === null) {
-    return null;
-  }
-
   const instances = Instances.parse(JSON.parse(tree.instances));
   const root = Instance.parse(denormalizeTree(instances));
 
   const props = await parseProps(tree.props);
-  const styles = await parseStyles(
-    treeId,
-    build.styles,
-    build.styleSources,
-    tree.styleSelections
-  );
 
   const styleSourceSelections = StyleSourceSelections.parse(
     JSON.parse(tree.styleSelections)
@@ -182,7 +136,6 @@ export const loadById = async (
     ...tree,
     root,
     props,
-    styles,
     styleSourceSelections,
   };
 };

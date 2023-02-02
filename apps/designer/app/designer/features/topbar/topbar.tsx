@@ -55,7 +55,7 @@ export const Topbar = ({ css, project, publish, designerUrl }: TopbarProps) => {
         }}
       >
         <SyncStatus />
-        <PreviewButton publish={publish} />
+        <PreviewButton />
         {isFeatureEnabled("share2") && (
           <ShareButton designerUrl={designerUrl} />
         )}

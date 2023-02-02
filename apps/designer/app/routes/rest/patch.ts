@@ -36,8 +36,20 @@ export const action = async ({ request }: ActionArgs) => {
 
       if (namespace === "root") {
         await projectDb.tree.patch({ treeId, projectId }, patches, context);
+      } else if (namespace === "styleSourceSelections") {
+        await projectDb.styleSourceSelections.patch(
+          { treeId, projectId },
+          patches,
+          context
+        );
+      } else if (namespace === "styleSources") {
+        await projectDb.styleSources.patch(
+          { buildId, projectId },
+          patches,
+          context
+        );
       } else if (namespace === "styles") {
-        await projectDb.styles.patch({ treeId, projectId }, patches, context);
+        await projectDb.styles.patch({ buildId, projectId }, patches, context);
       } else if (namespace === "props") {
         await projectDb.props.patch({ treeId, projectId }, patches, context);
       } else if (namespace === "breakpoints") {
