@@ -53,14 +53,15 @@ model User {
 }
 
 model Project {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
   title     String
-  domain    String  @unique
-  user      User?   @relation(fields: [userId], references: [id])
+  domain    String   @unique
+  user      User?    @relation(fields: [userId], references: [id])
   userId    String?
   build     Build[]
   trees     Tree[]
-  isDeleted Boolean @default(false)
+  isDeleted Boolean  @default(false)
 }
 
 model Build {
@@ -117,10 +118,11 @@ model AuthorizationToken {
 
 // Dashboard
 view DashboardProject {
-  id          String  @id @default(uuid())
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
   title       String
   domain      String
   userId      String?
-  isDeleted   Boolean @default(false)
+  isDeleted   Boolean  @default(false)
   isPublished Boolean
 }

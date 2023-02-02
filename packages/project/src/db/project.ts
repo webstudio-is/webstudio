@@ -1,12 +1,13 @@
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
-import { prisma, Prisma, Project } from "@webstudio-is/prisma-client";
+import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import * as db from "./index";
 import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { v4 as uuid } from "uuid";
+import { Project, Projects } from "./schema";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
@@ -32,9 +33,11 @@ export const loadById = async (
     throw new Error("You don't have access to this project");
   }
 
-  return await prisma.project.findUnique({
+  const data = await prisma.project.findUnique({
     where: { id: projectId },
   });
+
+  return Project.parse(data);
 };
 
 export const loadByDomain = async (
@@ -53,7 +56,7 @@ export const loadByDomain = async (
   // Edge case for webstudiois project
   if (projectWithId.domain === "webstudiois") {
     // Hardcode for now that everyone can duplicate webstudiois project
-    return projectWithId;
+    return Project.parse(projectWithId);
   }
 
   // Otherwise, check if the user has access to the project
@@ -62,19 +65,21 @@ export const loadByDomain = async (
 
 export const loadManyByCurrentUserId = async (
   context: AppContext
-): Promise<Array<Project>> => {
+): Promise<Projects> => {
   const userId = context.authorization.userId;
   if (userId === undefined) {
     throw new Error("The user must be authenticated to list projects");
   }
 
-  return await prisma.project.findMany({
+  const data = await prisma.project.findMany({
     where: {
       user: {
         id: userId,
       },
     },
   });
+
+  return Projects.parse(data);
 };
 
 const slugifyOptions = { lower: true, strict: true };
@@ -218,7 +223,7 @@ const clone = async (
     return clonedProject;
   });
 
-  return clonedProject;
+  return Project.parse(clonedProject);
 };
 
 export const duplicate = async (projectId: string, context: AppContext) => {
