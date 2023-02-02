@@ -64,12 +64,26 @@ const FontSizeSchema = z.number();
 
 const LetterSpacingSchema = z.union([z.string(), z.number()]);
 
+const TextCaseSchema = z.enum(["uppercase", "lowercase", "capitalize", "none"]);
+
+const TextDecorationSchema = z.enum([
+  "none",
+  "underline",
+  "overline",
+  "line-through",
+]);
+
+const DimentionSchema = z.union([z.string(), z.number()]);
+
 const TypographySchema = z.object({
   fontFamily: z.unknown(),
   fontWeight: z.unknown(),
   lineHeight: z.unknown(),
   fontSize: z.unknown(),
   letterSpacing: z.unknown(),
+  textCase: z.unknown(),
+  textDecoration: z.unknown(),
+  paragraphIndent: z.unknown(),
 });
 
 const SingleShadowSchema = z.object({
@@ -167,6 +181,22 @@ const printFontSize = (path: string[], unparsedValue: unknown) => {
   return `${value}px`;
 };
 
+const printTextCase = (path: string[], unparsedValue: unknown) => {
+  return parse(path, unparsedValue, TextCaseSchema);
+};
+
+const printTextDecoration = (path: string[], unparsedValue: unknown) => {
+  return parse(path, unparsedValue, TextDecorationSchema);
+};
+
+const printDimension = (path: string[], unparsedValue: unknown) => {
+  const value = parse(path, unparsedValue, DimentionSchema);
+  if (typeof value === "number") {
+    return `${value}px`;
+  }
+  return value;
+};
+
 const printTypography = (path: string[], unparsedValue: unknown) => {
   const value = parse(path, unparsedValue, TypographySchema);
   return {
@@ -175,6 +205,9 @@ const printTypography = (path: string[], unparsedValue: unknown) => {
     fontSize: printFontSize(path, value.fontSize),
     lineHeight: printLineHeight(path, value.lineHeight),
     letterSpacing: printLetterSpacing(path, value.letterSpacing),
+    textTransform: printTextCase(path, value.textCase),
+    textDecoration: printTextDecoration(path, value.textDecoration),
+    textIndent: printDimension(path, value.paragraphIndent),
   };
 };
 
@@ -186,6 +219,9 @@ const printerByType = {
   fontWeights: printFontWeight,
   fontSizes: printFontSize,
   fontFamilies: printFontFamily,
+  textCase: printTextCase,
+  textDecoration: printTextDecoration,
+  dimension: printDimension,
 } as const;
 
 const traverse = (
@@ -209,15 +245,19 @@ const traverse = (
 };
 
 const pathToName = (path: string[], type: string) => {
-  const cleanedUp = path.join(" ").replace(/[^a-z0-9]+/gi, " ");
+  const cleanedUp = camelCase(path.join(" ").replace(/[^a-z0-9]+/gi, " "), {
+    locale: false,
+  });
 
-  const withoutPrefix = cleanedUp
+  const withoutType = cleanedUp
     .toLocaleLowerCase()
     .startsWith(type.toLocaleLowerCase())
     ? cleanedUp.slice(type.length)
     : cleanedUp;
 
-  return camelCase(withoutPrefix, { locale: false });
+  // apply camelCase again to make sure
+  // the first letter is lowercase after removing the type
+  return camelCase(withoutType, { locale: false });
 };
 
 const main = () => {
