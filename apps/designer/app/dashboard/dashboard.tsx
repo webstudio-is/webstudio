@@ -1,4 +1,4 @@
-import { Flex, globalCss, theme, Toaster } from "@webstudio-is/design-system";
+import { Flex, globalCss, theme } from "@webstudio-is/design-system";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { Header } from "./header";
 // eslint-disable-next-line import/no-internal-modules
@@ -35,7 +35,6 @@ export const Dashboard = ({ user, projects }: DashboardProps) => {
           <Projects projects={projects} />
         </Flex>
       </main>
-      <Toaster />
     </>
   );
 };

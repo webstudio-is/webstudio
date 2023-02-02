@@ -6,7 +6,7 @@ import {
   IconButton,
   css,
   Flex,
-  DeprecatedText2,
+  Text,
   theme,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
@@ -14,7 +14,12 @@ import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { designerPath, getPublishedUrl } from "~/shared/router-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { RenameProject, DeleteProject, useDuplicate } from "./project-dialogs";
+import {
+  RenameProjectDialog,
+  DeleteProjectDialog,
+  useDuplicate,
+  ShareProjectDialog,
+} from "./project-dialogs";
 import { ThumbnailLink } from "./thumbnail-link";
 
 const containerStyle = css({
@@ -59,12 +64,12 @@ const PublishedLink = ({
 }) => {
   const { url } = usePublishedLink({ domain });
   return (
-    <DeprecatedText2
+    <Text
       as="a"
       href={url?.href}
       target="_blank"
       truncate
-      color="hint"
+      color="subtle"
       tabIndex={tabIndex}
       css={{
         "&:not(:hover)": {
@@ -73,7 +78,7 @@ const PublishedLink = ({
       }}
     >
       {url?.host}
-    </DeprecatedText2>
+    </Text>
   );
 };
 
@@ -82,11 +87,13 @@ const Menu = ({
   onDelete,
   onRename,
   onDuplicate,
+  onShare,
 }: {
   tabIndex: number;
   onDelete: () => void;
   onRename: () => void;
   onDuplicate: () => void;
+  onShare: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -105,7 +112,7 @@ const Menu = ({
         <DropdownMenuItem onSelect={onDuplicate}>Duplicate</DropdownMenuItem>
         <DropdownMenuItem onSelect={onRename}>Rename</DropdownMenuItem>
         {isFeatureEnabled("share2") && (
-          <DropdownMenuItem>Share</DropdownMenuItem>
+          <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
@@ -166,6 +173,7 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleDuplicate = useDuplicate(id);
 
@@ -191,13 +199,13 @@ export const ProjectCard = ({
           className={footerStyle()}
         >
           <Flex direction="column" justify="around">
-            <DeprecatedText2 variant="title" truncate>
+            <Text variant="title" truncate>
               {title}
-            </DeprecatedText2>
+            </Text>
             {isPublished ? (
               <PublishedLink domain={domain} tabIndex={-1} />
             ) : (
-              <DeprecatedText2 color="hint">Not Published</DeprecatedText2>
+              <Text color="subtle">Not Published</Text>
             )}
           </Flex>
           <Menu
@@ -208,27 +216,29 @@ export const ProjectCard = ({
             onRename={() => {
               setIsRenameDialogOpen(true);
             }}
+            onShare={() => {
+              setIsShareDialogOpen(true);
+            }}
             onDuplicate={handleDuplicate}
           />
         </Flex>
       </Flex>
-      <RenameProject
+      <RenameProjectDialog
         isOpen={isRenameDialogOpen}
-        title={title}
-        projectId={id}
-        onComplete={() => {
-          setIsRenameDialogOpen(false);
-        }}
         onOpenChange={setIsRenameDialogOpen}
-      />
-      <DeleteProject
-        isOpen={isDeleteDialogOpen}
         title={title}
         projectId={id}
-        onComplete={() => {
-          setIsDeleteDialogOpen(false);
-        }}
+      />
+      <DeleteProjectDialog
+        isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
+        title={title}
+        projectId={id}
+      />
+      <ShareProjectDialog
+        isOpen={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        projectId={id}
       />
     </>
   );

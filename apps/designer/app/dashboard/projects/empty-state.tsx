@@ -1,6 +1,5 @@
-import { css, Flex, theme } from "@webstudio-is/design-system";
+import { css, Flex, Text, theme } from "@webstudio-is/design-system";
 import { type ComponentProps } from "react";
-import { Heading } from "../heading";
 
 const containerStyle = css({
   background: "linear-gradient(180deg, #E63CFE 0%, #FFAE3C 100%)",
@@ -15,7 +14,7 @@ const EmptyStateContainer = (props: ComponentProps<typeof Flex>) => (
     align="center"
     justify="center"
     direction="column"
-    gap="3"
+    gap="2"
     className={containerStyle()}
     {...props}
   />
@@ -23,7 +22,9 @@ const EmptyStateContainer = (props: ComponentProps<typeof Flex>) => (
 
 export const EmptyState = () => (
   <EmptyStateContainer>
-    <Heading variant="large">What will you create?</Heading>
-    <Heading variant="tiny">Start your first project today!</Heading>
+    <Text variant="brandLargeTitle" as="h1">
+      What will you create?
+    </Text>
+    <Text variant="brandRegular">Start your first project today!</Text>
   </EmptyStateContainer>
 );
