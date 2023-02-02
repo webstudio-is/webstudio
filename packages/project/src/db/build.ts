@@ -258,6 +258,13 @@ export async function create(
     ? (await db.breakpoints.load(sourceBuild.id)).values
     : db.breakpoints.createValues();
 
+  if (env === "prod") {
+    await client.build.updateMany({
+      where: { projectId: projectId, isProd: true },
+      data: { isProd: false },
+    });
+  }
+
   const build = await client.build.create({
     data: {
       projectId,
@@ -273,13 +280,6 @@ export async function create(
     sourceBuild === undefined
       ? await createPages({ projectId, buildId: build.id }, client)
       : await clonePages(sourceBuild.pages, client);
-
-  if (env === "prod") {
-    await client.build.updateMany({
-      where: { projectId: projectId, isProd: true },
-      data: { isProd: false },
-    });
-  }
 
   await client.build.update({
     where: {
