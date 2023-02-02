@@ -7,7 +7,7 @@ export const loadCanvasData = async (
   project: Project,
   env: "dev" | "prod",
   pageIdOrPath = ""
-): Promise<CanvasData | undefined> => {
+): Promise<CanvasData> => {
   const build =
     env === "dev"
       ? await projectDb.build.loadByProjectId(project.id, "dev")
