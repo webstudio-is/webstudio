@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import ObjectId from "bson-objectid";
+import { nanoid } from "nanoid";
 import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/css-data";
 import {
@@ -130,7 +130,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
             setAddedBreakpoints((prev) => [
               ...prev,
               {
-                id: ObjectId().toString(),
+                id: nanoid(),
                 label: "",
                 minWidth: 0,
               },
