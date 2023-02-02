@@ -106,7 +106,6 @@ importers:
       '@webstudio-is/trpc-interface': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       babel-loader: ^8.2.5
-      bson-objectid: ^2.0.4
       camelcase: ^6.3.0
       colord: ^2.9.3
       css-tree: ^2.3.0
@@ -193,7 +192,6 @@ importers:
       '@webstudio-is/project-build': link:../../packages/project-build
       '@webstudio-is/react-sdk': link:../../packages/react-sdk
       '@webstudio-is/trpc-interface': link:../../packages/trpc-interface
-      bson-objectid: 2.0.4
       camelcase: 6.3.0
       colord: 2.9.3
       css-tree: 2.3.0
@@ -290,8 +288,8 @@ importers:
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/tsconfig': workspace:^
       app-root-path: ^3.0.0
-      bson-objectid: ^2.0.4
       jest: ^29.3.1
+      nanoid: ^3.2.0
       sharp: ^0.30.7
       typescript: 4.7.4
       zod: ^3.19.1
@@ -302,7 +300,7 @@ importers:
       '@webstudio-is/fonts': link:../fonts
       '@webstudio-is/prisma-client': link:../prisma-client
       app-root-path: 3.0.0
-      bson-objectid: 2.0.4
+      nanoid: 3.3.4
       sharp: 0.30.7
     devDependencies:
       '@jest/globals': 29.3.1
@@ -743,6 +741,7 @@ importers:
       dotenv: ^16.0.0
       execa: ^6.1.0
       minimist: ^1.2.6
+      nanoid: ^3.2.0
       prisma: ^4.9.0
       tsx: ^3.9.0
       typescript: 4.7.4
@@ -756,6 +755,7 @@ importers:
       dotenv: 16.0.1
       execa: 6.1.0
       minimist: 1.2.6
+      nanoid: 3.3.4
       tsx: 3.12.1
       umzug: 3.2.1
       uuid: 9.0.0
@@ -784,7 +784,6 @@ importers:
       '@webstudio-is/scripts': workspace:^
       '@webstudio-is/trpc-interface': workspace:^
       '@webstudio-is/tsconfig': workspace:^
-      bson-objectid: ^2.0.4
       immer: ^9.0.12
       jest: ^29.3.1
       nanoid: ^3.2.0
@@ -804,7 +803,6 @@ importers:
       '@webstudio-is/project-build': link:../project-build
       '@webstudio-is/react-sdk': link:../react-sdk
       '@webstudio-is/trpc-interface': link:../trpc-interface
-      bson-objectid: 2.0.4
       immer: 9.0.15
       nanoid: 3.3.4
       react: 17.0.2

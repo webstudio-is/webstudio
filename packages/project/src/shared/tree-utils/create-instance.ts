@@ -1,9 +1,9 @@
-import ObjectId from "bson-objectid";
+import { nanoid } from "nanoid";
 import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 
 export const createInstanceId = () => {
-  return ObjectId().toString();
+  return nanoid();
 };
 
 export const createInstance = ({
@@ -19,7 +19,7 @@ export const createInstance = ({
   return {
     type: "instance",
     component,
-    id: id === undefined ? createInstanceId() : id,
+    id: id ?? createInstanceId(),
     children:
       children === undefined
         ? componentMeta?.children?.map((value) => ({ type: "text", value })) ??

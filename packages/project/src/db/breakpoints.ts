@@ -1,6 +1,6 @@
-import { initialBreakpoints } from "@webstudio-is/react-sdk";
-import ObjectId from "bson-objectid";
+import { nanoid } from "nanoid";
 import { applyPatches, type Patch } from "immer";
+import { initialBreakpoints } from "@webstudio-is/react-sdk";
 import {
   type Breakpoints as DbBreakpoints,
   prisma,
@@ -33,7 +33,7 @@ export const createValues = () =>
   Breakpoints.parse(
     initialBreakpoints.map((breakpoint) => ({
       ...breakpoint,
-      id: ObjectId().toString(),
+      id: nanoid(),
     }))
   );
 

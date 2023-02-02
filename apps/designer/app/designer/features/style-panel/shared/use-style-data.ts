@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import ObjectId from "bson-objectid";
+import { nanoid } from "nanoid";
 import store from "immerhin";
 import warnOnce from "warn-once";
 import type { Instance, Tree } from "@webstudio-is/project-build";
@@ -104,7 +104,7 @@ export const useStyleData = ({
         (styleSourceSelections, styleSources, styles) => {
           const instanceId = selectedInstance.id;
           const breakpointId = selectedBreakpoint.id;
-          const styleSourceId = localStyleSource?.id ?? ObjectId().toString();
+          const styleSourceId = localStyleSource?.id ?? nanoid();
           // crate style source and its selection on currently selected instance
           if (localStyleSource === undefined) {
             styleSources.push({
