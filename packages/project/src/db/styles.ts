@@ -121,7 +121,9 @@ export const patch = async (
   }
 
   const build = await prisma.build.findUnique({
-    where: { id: buildId },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
   if (build === null) {
     return;
@@ -136,6 +138,8 @@ export const patch = async (
     data: {
       styles: JSON.stringify(patchedStyles),
     },
-    where: { id: build.id },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
 };

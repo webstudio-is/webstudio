@@ -101,7 +101,12 @@ const handlePost = async (
     }
   }
 
-  await db.build.editPage(devBuild.id, id, data);
+  await db.build.editPage({
+    projectId,
+    buildId: devBuild.id,
+    pageId: id,
+    data,
+  });
 
   return { status: "ok" };
 };
@@ -124,7 +129,11 @@ const handleDelete = async (
     return makeFieldError("id", `Can't delete the home page`);
   }
 
-  await db.build.deletePage(devBuild.id, id);
+  await db.build.deletePage({
+    projectId,
+    buildId: devBuild.id,
+    pageId: id,
+  });
 
   return { status: "ok" };
 };

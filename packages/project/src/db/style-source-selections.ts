@@ -22,7 +22,9 @@ export const patch = async (
   }
 
   const tree = await prisma.tree.findUnique({
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
   if (tree === null) {
     return;
@@ -40,6 +42,8 @@ export const patch = async (
     data: {
       styleSelections: JSON.stringify(patchedStyleSourceSelections),
     },
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
 };

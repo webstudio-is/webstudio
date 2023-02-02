@@ -27,13 +27,17 @@ export const parseBuild = async (build: DbBuild): Promise<Build> => {
   };
 };
 
-export const loadById = async (id: Build["id"]): Promise<Build> => {
-  if (typeof id !== "string") {
-    throw new Error("Build ID required");
-  }
-
+export const loadById = async ({
+  projectId,
+  buildId,
+}: {
+  projectId: Project["id"];
+  buildId: Build["id"];
+}): Promise<Build> => {
   const build = await prisma.build.findUnique({
-    where: { id },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
 
   if (build === null) {
@@ -80,14 +84,18 @@ export async function loadByProjectId(
 }
 
 const updatePages = async (
-  buildId: Build["id"],
+  { projectId, buildId }: { projectId: Project["id"]; buildId: Build["id"] },
   updater: (currentPages: Pages) => Promise<Pages>
 ) => {
-  const build = await loadById(buildId);
+  const build = await loadById({ projectId, buildId });
   const updatedPages = Pages.parse(await updater(build.pages));
   const updatedBuild = await prisma.build.update({
-    where: { id: buildId },
-    data: { pages: JSON.stringify(updatedPages) },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
+    data: {
+      pages: JSON.stringify(updatedPages),
+    },
   });
   return parseBuild(updatedBuild);
 };
@@ -102,7 +110,7 @@ export const addPage = async ({
   data: Pick<Page, "name" | "path"> &
     Partial<Omit<Page, "id" | "treeId" | "name" | "path">>;
 }) => {
-  return updatePages(buildId, async (currentPages) => {
+  return updatePages({ projectId, buildId }, async (currentPages) => {
     const tree = await db.tree.create(
       db.tree.createTree({ projectId, buildId })
     );
@@ -124,12 +132,18 @@ export const addPage = async ({
   });
 };
 
-export const editPage = async (
-  buildId: Build["id"],
-  pageId: Page["id"],
-  data: Partial<Omit<Page, "id" | "treeId">>
-) => {
-  return updatePages(buildId, async (currentPages) => {
+export const editPage = async ({
+  projectId,
+  buildId,
+  pageId,
+  data,
+}: {
+  projectId: Project["id"];
+  buildId: Build["id"];
+  pageId: Page["id"];
+  data: Partial<Omit<Page, "id" | "treeId">>;
+}) => {
+  return updatePages({ projectId, buildId }, async (currentPages) => {
     const currentPage = pagesUtils.findByIdOrPath(currentPages, pageId);
     if (currentPage === undefined) {
       throw new Error(`Page with id "${pageId}" not found`);
@@ -156,8 +170,16 @@ export const editPage = async (
   });
 };
 
-export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
-  return updatePages(buildId, async (currentPages) => {
+export const deletePage = async ({
+  projectId,
+  buildId,
+  pageId,
+}: {
+  projectId: Project["id"];
+  buildId: Build["id"];
+  pageId: Page["id"];
+}) => {
+  return updatePages({ projectId, buildId }, async (currentPages) => {
     if (pageId === currentPages.homePage.id) {
       throw new Error("Cannot delete home page");
     }
@@ -167,7 +189,7 @@ export const deletePage = async (buildId: Build["id"], pageId: Page["id"]) => {
       throw new Error(`Page with id "${pageId}" not found`);
     }
 
-    await db.tree.deleteById(page.treeId);
+    await db.tree.deleteById({ projectId, treeId: page.treeId });
 
     return {
       homePage: currentPages.homePage,
@@ -198,24 +220,24 @@ const createPages = async (
 };
 
 const clonePage = async (
-  source: Page,
+  { projectId, source }: { projectId: Project["id"]; source: Page },
   client: Prisma.TransactionClient = prisma
 ) => {
   const treeId = source.treeId;
-  const tree = await db.tree.clone(treeId, client);
+  const tree = await db.tree.clone({ projectId, treeId }, client);
   return { ...source, id: uuid(), treeId: tree.id };
 };
 
 const clonePages = async (
-  source: Pages,
+  { projectId, source }: { projectId: Project["id"]; source: Pages },
   client: Prisma.TransactionClient = prisma
 ) => {
   const clones = [];
   for (const page of source.pages) {
-    clones.push(await clonePage(page, client));
+    clones.push(await clonePage({ projectId, source: page }, client));
   }
   return Pages.parse({
-    homePage: await clonePage(source.homePage, client),
+    homePage: await clonePage({ projectId, source: source.homePage }, client),
     pages: clones,
   });
 };
@@ -283,11 +305,11 @@ export async function create(
   const pages =
     sourceBuild === undefined
       ? await createPages({ projectId, buildId: build.id }, client)
-      : await clonePages(sourceBuild.pages, client);
+      : await clonePages({ projectId, source: sourceBuild.pages }, client);
 
   await client.build.update({
     where: {
-      id: build.id,
+      id_projectId: { projectId, id: build.id },
     },
     data: {
       pages: JSON.stringify(pages),

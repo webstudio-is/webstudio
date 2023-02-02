@@ -22,7 +22,9 @@ export const patch = async (
   }
 
   const build = await prisma.build.findUnique({
-    where: { id: buildId },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
   if (build === null) {
     return;
@@ -38,6 +40,8 @@ export const patch = async (
     data: {
       styleSources: JSON.stringify(patchedStyleSources),
     },
-    where: { id: buildId },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
 };
