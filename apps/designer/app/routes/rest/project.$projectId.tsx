@@ -17,7 +17,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
       throw json("Required project id", { status: 400 });
     }
 
-    const context = await createContext(request);
+    const context = await createContext(request, "prod");
 
     const prodBuild = await db.build.loadByProjectId(projectId, "prod");
     if (prodBuild === undefined) {
