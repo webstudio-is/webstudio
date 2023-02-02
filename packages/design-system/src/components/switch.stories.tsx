@@ -20,7 +20,7 @@ const Story = () => {
           <Switch disabled />
         </StoryGrid>
       </StorySection>
-      <StorySection title="Focussed (intially)">
+      <StorySection title="Focussed (initially)">
         <Switch autoFocus />
       </StorySection>
     </>
