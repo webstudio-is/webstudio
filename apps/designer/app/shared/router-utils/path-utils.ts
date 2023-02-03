@@ -37,7 +37,8 @@ export const designerUrl = (props: {
     url.searchParams.set("authToken", props.authToken);
   }
 
-  if (props.mode !== undefined) {
+  // No mode means edit mode
+  if (props.mode === "preview") {
     url.searchParams.set("mode", props.mode);
   }
 

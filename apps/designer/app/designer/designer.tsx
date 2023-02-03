@@ -29,7 +29,12 @@ import {
   Workspace,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import { useDragAndDropState, useIsPreviewMode } from "~/shared/nano-states";
+import {
+  useDragAndDropState,
+  useIsPreviewMode,
+  isPreviewModeStore,
+} from "~/shared/nano-states";
+import { useSyncWithSearchParams } from "~/shared/nano-states/use-sync-with-search-params";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -261,6 +266,14 @@ export const Designer = ({
   useDesignerStore(publish);
   useSyncServer({ buildId, treeId, projectId: project.id, authToken });
   usePublishAssets(publish);
+  useSyncWithSearchParams(
+    isPreviewModeStore,
+    (urlSearchParams) => urlSearchParams.get("mode") === "preview",
+    (urlSearchParams, isPreviewMode) =>
+      isPreviewMode
+        ? urlSearchParams.set("mode", "preview")
+        : urlSearchParams.delete("mode")
+  );
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();
