@@ -8,8 +8,9 @@ import {
   hoveredInstanceIdStore,
   useRootInstance,
 } from "~/shared/nano-states";
-import { Header, CloseButton } from "../header";
 import { InstanceTree } from "~/designer/shared/tree";
+import { deleteInstance } from "~/shared/instance-utils";
+import { Header, CloseButton } from "../header";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -17,7 +18,6 @@ declare module "~/shared/pubsub" {
       instanceId: Instance["id"];
       dropTarget: { instanceId: Instance["id"]; position: number | "end" };
     };
-    deleteInstance: { id: Instance["id"] };
   }
 }
 
@@ -54,16 +54,6 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
     [publish]
   );
 
-  const handleDelete = useCallback(
-    (instanceId: Instance["id"]) => {
-      publish({
-        type: "deleteInstance",
-        payload: { id: instanceId },
-      });
-    },
-    [publish]
-  );
-
   const handleHover = useCallback((instance: Instance | undefined) => {
     hoveredInstanceIdStore.set(instance?.id);
   }, []);
@@ -84,7 +74,7 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
           onSelect={handleSelect}
           onHover={handleHover}
           onDragEnd={handleDragEnd}
-          onDelete={handleDelete}
+          onDelete={deleteInstance}
         />
       </Flex>
     </Flex>

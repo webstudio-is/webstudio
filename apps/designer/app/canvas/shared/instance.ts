@@ -10,7 +10,6 @@ import {
   useTextEditingInstanceId,
 } from "~/shared/nano-states";
 import { publish } from "~/shared/pubsub";
-import { deleteInstance } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -91,12 +90,6 @@ export const useReparentInstance = () => {
     if (selectedInstanceId !== instanceId && rootInstance !== undefined) {
       selectedInstanceIdStore.set(instanceId);
     }
-  });
-};
-
-export const useDeleteInstance = () => {
-  useSubscribe("deleteInstance", ({ id: deletedInstanceId }) => {
-    deleteInstance(deletedInstanceId);
   });
 };
 
