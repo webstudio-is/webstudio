@@ -92,7 +92,9 @@ export const createAssetWithLimit = async (
     const { id, meta, format, name, location } = asset;
 
     const dbAsset = await prisma.asset.update({
-      where: { id: updated.id },
+      where: {
+        id_projectId: { id: updated.id, projectId },
+      },
       data: {
         id,
         location,
@@ -108,7 +110,11 @@ export const createAssetWithLimit = async (
     return formatAsset(dbAsset);
   } catch (error) {
     if (updated) {
-      await prisma.asset.delete({ where: { id: updated.id } });
+      await prisma.asset.delete({
+        where: {
+          id_projectId: { id: updated.id, projectId },
+        },
+      });
     }
 
     throw error;

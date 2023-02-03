@@ -6,7 +6,7 @@ import {
   prisma,
 } from "@webstudio-is/prisma-client";
 import { Breakpoints } from "@webstudio-is/css-data";
-import type { Project } from "./schema";
+import type { Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,
@@ -37,7 +37,9 @@ export const patch = async (
   }
 
   const build = await prisma.build.findUnique({
-    where: { id: buildId },
+    where: {
+      id_projectId: { id: buildId, projectId },
+    },
   });
 
   if (build === null) {
@@ -49,7 +51,9 @@ export const patch = async (
   );
 
   await prisma.build.update({
-    where: { id: buildId },
+    where: {
+      id_projectId: { id: buildId, projectId },
+    },
     data: { breakpoints: JSON.stringify(patchedBreakpoints) },
   });
 };

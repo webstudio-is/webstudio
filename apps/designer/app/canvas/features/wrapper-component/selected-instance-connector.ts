@@ -90,11 +90,7 @@ export const SelectedInstanceConnector = ({
     if (canObserve === false) {
       // recompute inline elements on tree changes
       unsubscribeTreeChange = subscribeAll((type) => {
-        if (
-          type === "insertInstance" ||
-          type === "deleteInstance" ||
-          type === "reparentInstance"
-        ) {
+        if (type === "insertInstance" || type === "reparentInstance") {
           updateOutlineRect(element);
         }
       });

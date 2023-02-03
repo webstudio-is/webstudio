@@ -5,7 +5,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { StyleSourceSelections, type Tree } from "@webstudio-is/project-build";
-import type { Project } from "./schema";
+import type { Project } from "../shared/schema";
 
 export const patch = async (
   { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
@@ -22,7 +22,9 @@ export const patch = async (
   }
 
   const tree = await prisma.tree.findUnique({
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
   if (tree === null) {
     return;
@@ -40,6 +42,8 @@ export const patch = async (
     data: {
       styleSelections: JSON.stringify(patchedStyleSourceSelections),
     },
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
 };

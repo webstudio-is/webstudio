@@ -3,7 +3,7 @@ import { type Tree, StoredProps, Props } from "@webstudio-is/project-build";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import type { Project } from "./schema";
+import type { Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,
@@ -97,7 +97,9 @@ export const patch = async (
   }
 
   const tree = await prisma.tree.findUnique({
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
   if (tree === null) {
     return;
@@ -109,6 +111,8 @@ export const patch = async (
     data: {
       props: serializeProps(patchedProps),
     },
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
 };

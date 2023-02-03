@@ -24,7 +24,7 @@ export const loadCanvasData = async (
   }
 
   const [tree, assets] = await Promise.all([
-    projectDb.tree.loadById(page.treeId),
+    projectDb.tree.loadById({ projectId: project.id, treeId: page.treeId }),
     loadByProject(project.id),
   ]);
 

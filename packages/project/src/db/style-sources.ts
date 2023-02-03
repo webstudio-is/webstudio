@@ -5,7 +5,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { StyleSources } from "@webstudio-is/project-build";
-import type { Build, Project } from "./schema";
+import type { Build, Project } from "../shared/schema";
 
 export const patch = async (
   { buildId, projectId }: { buildId: Build["id"]; projectId: Project["id"] },
@@ -22,7 +22,9 @@ export const patch = async (
   }
 
   const build = await prisma.build.findUnique({
-    where: { id: buildId },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
   if (build === null) {
     return;
@@ -38,6 +40,8 @@ export const patch = async (
     data: {
       styleSources: JSON.stringify(patchedStyleSources),
     },
-    where: { id: buildId },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
 };

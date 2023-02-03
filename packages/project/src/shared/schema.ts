@@ -3,9 +3,18 @@ import type { Breakpoints } from "@webstudio-is/css-data";
 import type { Styles, StyleSources } from "@webstudio-is/project-build";
 import type { Data } from "@webstudio-is/react-sdk";
 
+const MIN_TITLE_LENGTH = 2;
+
+export const Title = z
+  .string()
+  .refine(
+    (val) => val.length >= MIN_TITLE_LENGTH,
+    `Minimum ${MIN_TITLE_LENGTH} characters required`
+  );
+
 export const Project = z.object({
   id: z.string(),
-  title: z.string(),
+  title: Title,
   createdAt: z.date().transform((date) => date.toISOString()),
   userId: z.string().nullable(),
   isDeleted: z.boolean(),
@@ -19,7 +28,7 @@ export type Projects = z.infer<typeof Projects>;
 const commonPageFields = {
   id: z.string(),
   name: z.string().refine((val) => val !== "", "Can't be empty"),
-  title: z.string(),
+  title: Title,
   meta: z.record(z.string(), z.string()),
   treeId: z.string(),
 } as const;

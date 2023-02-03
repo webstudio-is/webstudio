@@ -1,3 +1,4 @@
+import type { Project } from "@webstudio-is/prisma-client";
 import type { AppContext } from "../context/context.server";
 
 /**
@@ -28,10 +29,12 @@ export const registerProjectOwner = async (
   });
 };
 
+type Permit = "view" | "edit" | "build" | "own";
+
 export const hasProjectPermit = async (
   props: {
-    projectId: string;
-    permit: "view" | "edit" | "own";
+    projectId: Project["id"];
+    permit: Permit;
   },
   context: AppContext
 ) => {
@@ -104,4 +107,35 @@ export const hasProjectPermit = async (
   );
 
   return allowed;
+};
+
+/**
+ * Returns the first allowed permit from the list or undefined if none is allowed
+ * @todo think about caching to authorizeTrpc.check.query
+ * batching check queries would help too https://github.com/ory/keto/issues/812
+ */
+export const getProjectPermit = async <T extends Permit>(
+  props: {
+    projectId: string;
+    permits: T[];
+  },
+  context: AppContext
+): Promise<T | undefined> => {
+  const permitToCheck = props.permits;
+
+  const permits = await Promise.allSettled(
+    permitToCheck.map((permit) =>
+      hasProjectPermit({ projectId: props.projectId, permit }, context)
+    )
+  );
+
+  for (const permit of permits) {
+    if (permit.status === "rejected") {
+      throw new Error(`Authorization call failed ${permit.reason}`);
+    }
+
+    if (permit.value === true) {
+      return permitToCheck[permits.indexOf(permit)];
+    }
+  }
 };

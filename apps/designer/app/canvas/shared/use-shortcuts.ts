@@ -1,6 +1,5 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import store from "immerhin";
-import type { Instance } from "@webstudio-is/project-build";
 import { getComponentMeta } from "@webstudio-is/react-sdk";
 import { shortcuts, options } from "~/shared/shortcuts";
 import { publish, useSubscribe } from "~/shared/pubsub";
@@ -10,13 +9,11 @@ import {
   useTextEditingInstanceId,
   isPreviewModeStore,
 } from "~/shared/nano-states";
+import { deleteInstance } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     cancelCurrentDrag: undefined;
-    deleteInstance: {
-      id: Instance["id"];
-    };
     openBreakpointsMenu: undefined;
     selectBreakpointFromShortcut: number;
     zoom: "zoomOut" | "zoomIn";
@@ -70,21 +67,18 @@ const publishCancelCurrentDrag = () => {
 export const useShortcuts = () => {
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
 
-  const publishDeleteInstance = () => {
+  const deleteSelectedInstance = () => {
     const selectedInstanceId = selectedInstanceIdStore.get();
     if (selectedInstanceId === undefined) {
       return;
     }
-    publish({
-      type: "deleteInstance",
-      payload: { id: selectedInstanceId },
-    });
+    deleteInstance(selectedInstanceId);
   };
 
   const shortcutHandlerMap = {
     undo: store.undo.bind(store),
     redo: store.redo.bind(store),
-    delete: publishDeleteInstance,
+    delete: deleteSelectedInstance,
     preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,

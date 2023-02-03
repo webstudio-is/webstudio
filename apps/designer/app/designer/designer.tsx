@@ -29,12 +29,16 @@ import {
   Workspace,
 } from "./features/workspace";
 import { usePublishShortcuts } from "./shared/shortcuts";
-import { useDragAndDropState, useIsPreviewMode } from "~/shared/nano-states";
+import {
+  useDragAndDropState,
+  useIsPreviewMode,
+  useSetIsPreviewMode,
+} from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPasteInstance } from "~/shared/copy-paste";
-import { AssetsProvider, usePublishAssets } from "./shared/assets";
+import { AssetsProvider } from "./shared/assets";
 
 registerContainers();
 export const links = () => {
@@ -241,6 +245,7 @@ export type DesignerProps = {
   buildOrigin: string;
   authReadToken: string;
   authToken?: string;
+  authPermit: "view" | "build" | "own";
 };
 
 export const Designer = ({
@@ -252,6 +257,7 @@ export const Designer = ({
   buildOrigin,
   authReadToken,
   authToken,
+  authPermit,
 }: DesignerProps) => {
   useSubscribeBreakpoints();
   useSetProject(project);
@@ -260,7 +266,7 @@ export const Designer = ({
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
   useSyncServer({ buildId, treeId, projectId: project.id, authToken });
-  usePublishAssets(publish);
+  useSetIsPreviewMode(authPermit === "view");
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);
   const onRefReadCanvasWidth = useUpdateCanvasWidth();

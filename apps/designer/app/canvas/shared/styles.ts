@@ -1,7 +1,12 @@
 import { useEffect } from "react";
-import { useSubscribe } from "~/shared/pubsub";
+import { useIsomorphicLayoutEffect } from "react-use";
+import { useStore } from "@nanostores/react";
 import { addGlobalRules } from "@webstudio-is/project";
-import { selectedInstanceIdStore, useBreakpoints } from "~/shared/nano-states";
+import {
+  assetsStore,
+  selectedInstanceIdStore,
+  useBreakpoints,
+} from "~/shared/nano-states";
 import type { Styles } from "@webstudio-is/project-build";
 import {
   getComponentMeta,
@@ -22,8 +27,7 @@ import {
   type StyleRule,
   type PlaintextRule,
 } from "@webstudio-is/css-engine";
-import { useIsomorphicLayoutEffect } from "react-use";
-import type { Asset } from "@webstudio-is/asset-uploader";
+import { useSubscribe } from "~/shared/pubsub";
 
 const cssEngine = createCssEngine({ name: "user-styles" });
 
@@ -62,8 +66,9 @@ const fontsAndDefaultsCssEngine = createCssEngine({
 });
 const presetStylesEngine = createCssEngine({ name: "presetStyles" });
 
-export const GlobalStyles = ({ assets }: { assets: Array<Asset> }) => {
+export const GlobalStyles = () => {
   const [breakpoints] = useBreakpoints();
+  const assets = useStore(assetsStore);
 
   useIsomorphicLayoutEffect(() => {
     for (const breakpoint of breakpoints) {

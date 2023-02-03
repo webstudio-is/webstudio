@@ -9,6 +9,7 @@ import {
   stylesStore,
   styleSourcesStore,
   styleSourceSelectionsStore,
+  assetContainersStore,
   selectedInstanceIdStore,
   selectedInstanceBrowserStyleStore,
   hoveredInstanceIdStore,
@@ -49,6 +50,7 @@ export const registerContainers = () => {
   store.register("styleSourceSelections", styleSourceSelectionsStore);
   store.register("props", propsStore);
   // synchronize whole states
+  clientStores.set("assetContainers", assetContainersStore);
   clientStores.set("selectedInstanceId", selectedInstanceIdStore);
   clientStores.set(
     "selectedInstanceBrowserStyle",

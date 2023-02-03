@@ -1,12 +1,13 @@
 import * as db from "../db";
 import { z } from "zod";
 import { router, procedure } from "./trpc";
+import { Title } from "../shared/schema";
 
 export const projectRouter = router({
   rename: procedure
     .input(
       z.object({
-        title: z.string(),
+        title: Title,
         projectId: z.string(),
       })
     )
@@ -26,7 +27,7 @@ export const projectRouter = router({
       return await db.project.duplicate(input.projectId, ctx);
     }),
   create: procedure
-    .input(z.object({ title: z.string() }))
+    .input(z.object({ title: Title }))
     .mutation(async ({ input, ctx }) => {
       return await db.project.create(input, ctx);
     }),

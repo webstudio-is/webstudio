@@ -4,7 +4,7 @@ import { prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import { StoredStyles, Styles } from "@webstudio-is/project-build";
-import type { Build, Project } from "./schema";
+import type { Build, Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,
@@ -121,7 +121,9 @@ export const patch = async (
   }
 
   const build = await prisma.build.findUnique({
-    where: { id: buildId },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
   if (build === null) {
     return;
@@ -134,8 +136,10 @@ export const patch = async (
 
   await prisma.build.update({
     data: {
-      styles: JSON.stringify(patchedStyles),
+      styles: serializeStyles(patchedStyles),
     },
-    where: { id: build.id },
+    where: {
+      id_projectId: { projectId, id: buildId },
+    },
   });
 };
