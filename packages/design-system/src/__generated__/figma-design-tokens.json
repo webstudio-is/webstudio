@@ -639,6 +639,11 @@
         "value": "#c7c7c7",
         "type": "color",
         "description": "The color of the Builder UI canvas area background."
+      },
+      "topbar": {
+        "value": "#2d2d2d",
+        "type": "color",
+        "description": "For the Builder UI top bar background color."
       }
     },
     "brand": {
@@ -781,6 +786,11 @@
           "type": "color",
           "description": "border color for destructive toast"
         }
+      },
+      "dark": {
+        "value": "#707375",
+        "type": "color",
+        "description": "For borders that use dark mode colors in light mode like the Builder UI top bar."
       }
     },
     "foreground": {
@@ -1045,6 +1055,8 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }

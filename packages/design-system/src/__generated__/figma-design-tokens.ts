@@ -323,6 +323,7 @@ export const color = {
   backgroundStyleSourceGradientState:
     "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
   backgroundCanvas: "#c7c7c7",
+  backgroundTopbar: "#2d2d2d",
   brandBackgroundProjectCardFront:
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
@@ -351,6 +352,7 @@ export const color = {
   borderInheritedFlexUi: "#fa934e",
   borderDestructiveMain: "#de3339",
   borderDestructiveNotification: "#f9c6c6",
+  borderDark: "#707375",
   foregroundMain: "#11181c",
   foregroundSubtle: "#707375",
   foregroundCategoryLabel: "#889096",
