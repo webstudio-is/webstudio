@@ -6,7 +6,7 @@ import {
   useSelectedBreakpoint,
 } from "~/designer/shared/nano-states";
 import { willRender } from "~/designer/shared/breakpoints";
-import { DeprecatedButton, DeprecatedText2 } from "@webstudio-is/design-system";
+import { Button, Text } from "@webstudio-is/design-system";
 import {
   DesktopIcon,
   LaptopIcon,
@@ -15,10 +15,10 @@ import {
 } from "@webstudio-is/icons";
 import { theme } from "@webstudio-is/design-system";
 
-type TriggerButtonProps = ComponentProps<typeof DeprecatedButton>;
+type TriggerButtonProps = ComponentProps<typeof Button>;
 
-const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "hint") => {
-  const color = variant === "contrast" ? "white" : "hint";
+const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "subtle") => {
+  const color = variant === "contrast" ? "white" : "subtle";
   if (breakpoint.minWidth >= 1280) {
     return <DesktopIcon color={color} />;
   }
@@ -32,7 +32,7 @@ const renderIcon = (breakpoint: Breakpoint, variant: "contrast" | "hint") => {
 };
 
 export const TriggerButton = forwardRef<
-  ElementRef<typeof DeprecatedButton>,
+  ElementRef<typeof Button>,
   TriggerButtonProps
 >((props, ref) => {
   const [zoom] = useZoom();
@@ -41,21 +41,21 @@ export const TriggerButton = forwardRef<
   if (breakpoint === undefined) {
     return null;
   }
-  const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "hint";
+  const variant = willRender(breakpoint, canvasWidth) ? "contrast" : "subtle";
 
   return (
-    <DeprecatedButton
+    <Button
       {...props}
       ref={ref}
       css={{ gap: theme.spacing[3] }}
-      ghost
+      color="ghost"
       aria-label="Show breakpoints"
+      prefix={renderIcon(breakpoint, variant)}
     >
-      {renderIcon(breakpoint, variant)}
-      <DeprecatedText2 color={variant}>
+      <Text color={variant}>
         {`${breakpoint.label} ${canvasWidth}px / ${zoom}%`}
-      </DeprecatedText2>
-    </DeprecatedButton>
+      </Text>
+    </Button>
   );
 });
 

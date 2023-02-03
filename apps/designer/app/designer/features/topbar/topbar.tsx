@@ -1,5 +1,5 @@
 import type { Publish } from "~/shared/pubsub";
-import { darkTheme, Flex, type CSS } from "@webstudio-is/design-system";
+import { css, Flex, type CSS } from "@webstudio-is/design-system";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -10,6 +10,13 @@ import type { Project } from "@webstudio-is/project";
 import { theme } from "@webstudio-is/design-system";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
+const topbarContainerStyle = css({
+  background: theme.colors.backgroundTopbar,
+  height: theme.spacing[17],
+  boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
+  paddingRight: theme.spacing[9],
+});
+
 type TopbarProps = {
   css: CSS;
   project: Project;
@@ -19,41 +26,14 @@ type TopbarProps = {
 export const Topbar = ({ css, project, publish }: TopbarProps) => {
   return (
     <Flex
-      className={darkTheme}
+      className={topbarContainerStyle({ css })}
       as="header"
       align="center"
       justify="between"
-      css={{
-        bc: theme.colors.loContrast,
-        height: theme.spacing[17],
-        "[data-theme=dark] &": {
-          boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
-        },
-        // @todo: uhh, setting this on any focused child element? lets see what's the use case and why its necessary to override vs. not having it in the first place
-        "& :focus": {
-          boxShadow: "none",
-        },
-        "& > *": {
-          height: "100%",
-        },
-        "& button": {
-          borderRadius: "0",
-        },
-        ...css,
-      }}
     >
       <Menu publish={publish} />
       <Breakpoints />
-      <Flex
-        align="center"
-        css={{
-          "& > *": {
-            height: "inherit",
-            width: "auto",
-            padding: `0 ${theme.spacing[5]}`,
-          },
-        }}
-      >
+      <Flex align="center" gap="2">
         <SyncStatus />
         <PreviewButton />
         {isFeatureEnabled("share2") && <ShareButton projectId={project.id} />}

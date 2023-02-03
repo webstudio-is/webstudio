@@ -13,7 +13,6 @@ export {
   RocketIcon,
   ExternalLinkIcon,
   Share1Icon,
-  EyeOpenIcon,
   ExclamationTriangleIcon,
   DotFilledIcon,
   TriangleRightIcon,

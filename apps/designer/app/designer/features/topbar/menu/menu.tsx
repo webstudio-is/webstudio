@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuPortal,
   DeprecatedIconButton,
-  Box,
+  Flex,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon } from "@webstudio-is/icons";
 import { type Publish } from "~/shared/pubsub";
@@ -102,23 +102,21 @@ export const Menu = ({ publish }: MenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Box
+        <Flex
+          align="center"
+          justify="center"
           css={{
-            width: theme.spacing[17],
+            width: theme.spacing[15],
             height: "100%",
-            borderRadius: "0",
-            outline: "none",
-            // @todo: would set directly on the element
-            "& > button": {
-              width: "inherit",
-              height: "inherit",
-            },
           }}
         >
-          <DeprecatedIconButton aria-label="Menu Button">
+          <DeprecatedIconButton
+            aria-label="Menu Button"
+            css={{ color: theme.colors.foregroundContrastMain }}
+          >
             <HamburgerMenuIcon />
           </DeprecatedIconButton>
-        </Box>
+        </Flex>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent

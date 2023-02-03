@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useFetcher } from "@remix-run/react";
-import { ExternalLinkIcon, RocketIcon } from "@webstudio-is/icons";
+import { ExternalLinkIcon } from "@webstudio-is/icons";
 import {
   DeprecatedText2,
   Button,
-  DeprecatedButton,
   Flex,
   DeprecatedLabel,
   Link,
@@ -84,13 +83,7 @@ export const PublishButton = ({ project }: PublishButtonProps) => {
   return (
     <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
       <DeprecatedPopoverTrigger asChild aria-label="Publish">
-        <DeprecatedButton
-          ghost
-          css={{ display: "flex", gap: theme.spacing[3] }}
-        >
-          <RocketIcon />
-          <DeprecatedText2>Publish</DeprecatedText2>
-        </DeprecatedButton>
+        <Button color="positive">Publish</Button>
       </DeprecatedPopoverTrigger>
       <DeprecatedPopoverPortal>
         <Content project={project} />
