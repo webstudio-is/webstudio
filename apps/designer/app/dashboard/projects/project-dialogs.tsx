@@ -201,23 +201,28 @@ const useDeleteProject = ({
   projectId,
   title,
   onOpenChange,
+  onHiddenChange,
 }: {
   projectId: DashboardProject["id"];
   title: string;
-  onOpenChange: (isOpen: false) => void;
+  onOpenChange: (isOpen: boolean) => void;
+  onHiddenChange: (isHidden: boolean) => void;
 }) => {
   const { send, data, state } = trpc.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
   const errors = data && "errors" in data ? data.errors : undefined;
 
   useEffect(() => {
-    if (errors === undefined && state === "loading") {
-      onOpenChange(false);
+    if (errors) {
+      onOpenChange(true);
+      onHiddenChange(false);
     }
-  }, [errors, state, onOpenChange]);
+  }, [errors, onOpenChange, onHiddenChange]);
 
   const handleSubmit = () => {
     send({ projectId });
+    onHiddenChange(true);
+    onOpenChange(false);
   };
 
   const handleChange = ({ title: currentTitle }: { title: string }) => {
@@ -238,17 +243,20 @@ export const DeleteProjectDialog = ({
   title,
   projectId,
   onOpenChange,
+  onHiddenChange,
 }: {
   isOpen: boolean;
   title: string;
   projectId: DashboardProject["id"];
   onOpenChange: (isOpen: boolean) => void;
+  onHiddenChange: (isHidden: boolean) => void;
 }) => {
   const { handleSubmit, handleChange, errors, isMatch, state } =
     useDeleteProject({
       projectId,
-      onOpenChange,
       title,
+      onOpenChange,
+      onHiddenChange,
     });
   return (
     <Dialog

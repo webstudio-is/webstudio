@@ -8,6 +8,7 @@ import {
   Flex,
   Text,
   theme,
+  Box,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
@@ -174,15 +175,15 @@ export const ProjectCard = ({
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const handleDuplicate = useDuplicate(id);
 
   return (
-    <>
+    <Box as="article" hidden={isHidden}>
       <Flex
         direction="column"
         shrink={false}
-        as="article"
         className={containerStyle()}
         tabIndex={0}
         onKeyDown={handleKeyDown}
@@ -232,6 +233,7 @@ export const ProjectCard = ({
       <DeleteProjectDialog
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
+        onHiddenChange={setIsHidden}
         title={title}
         projectId={id}
       />
@@ -240,6 +242,6 @@ export const ProjectCard = ({
         onOpenChange={setIsShareDialogOpen}
         projectId={id}
       />
-    </>
+    </Box>
   );
 };
