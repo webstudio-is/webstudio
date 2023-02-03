@@ -1,4 +1,4 @@
-import ObjectId from "bson-objectid";
+import { nanoid } from "nanoid";
 import produce from "immer";
 import type {
   Instance,
@@ -55,11 +55,11 @@ export const findSubtree = (
 export const cloneInstance = (targetInstance: Instance) => {
   const clonedInstanceIds = new Map<Instance["id"], Instance["id"]>();
   const clonedInstance = produce((targetInstance) => {
-    const newId = ObjectId().toString();
+    const newId = nanoid();
     clonedInstanceIds.set(targetInstance.id, newId);
     targetInstance.id = newId;
     traverseInstances(targetInstance, (instance) => {
-      const newId = ObjectId().toString();
+      const newId = nanoid();
       clonedInstanceIds.set(instance.id, newId);
       instance.id = newId;
     });
@@ -82,7 +82,7 @@ export const cloneProps = (
     }
     clonedProps.push({
       ...prop,
-      id: ObjectId().toString(),
+      id: nanoid(),
       instanceId,
     });
   }
@@ -99,7 +99,7 @@ export const cloneStyleSources = (
     if (subsetIds.has(styleSource.id) === false) {
       continue;
     }
-    const newId = ObjectId().toString();
+    const newId = nanoid();
     clonedStyleSourceIds.set(styleSource.id, newId);
     clonedStyleSources.push({
       ...styleSource,

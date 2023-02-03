@@ -1,14 +1,16 @@
 import { json, type LoaderArgs } from "@remix-run/node";
-import env from "~/env.server";
 import { db } from "@webstudio-is/project/server";
 import { sentryException } from "~/shared/sentry";
 import { loadCanvasData } from "~/shared/db";
 import type { CanvasData } from "@webstudio-is/project";
 import { createContext } from "~/shared/context.server";
 
-type PagesDetails = Array<CanvasData | undefined>;
+type PagesDetails = Array<CanvasData>;
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({
+  params,
+  request,
+}: LoaderArgs): Promise<PagesDetails> => {
   try {
     const projectId = params.projectId ?? undefined;
     const pages: PagesDetails = [];
@@ -36,6 +38,7 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     const canvasData = await loadCanvasData(project, "prod", homePage.path);
 
     pages.push(canvasData);
+
     if (otherPages.length > 0) {
       for (const page of otherPages) {
         const canvasData = await loadCanvasData(project, "prod", page.path);
@@ -52,9 +55,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     }
 
     sentryException({ error });
-    return {
-      errors: error instanceof Error ? error.message : String(error),
-      env,
-    };
+
+    // We have no idea what happened, so we'll return a 500 error.
+    throw json(error instanceof Error ? error.message : String(error), {
+      status: 500,
+    });
   }
 };

@@ -34,6 +34,7 @@ export const WithProjects: ComponentStory<typeof Dashboard> = () => {
   const projects = [
     {
       id: "0",
+      createdAt: new Date().toString(),
       title: "My Project",
       domain: "domain.com",
       userId: null,

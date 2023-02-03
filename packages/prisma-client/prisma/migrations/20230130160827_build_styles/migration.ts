@@ -1,4 +1,4 @@
-import ObjectId from "bson-objectid";
+import { nanoid } from "nanoid";
 import { PrismaClient } from "./client";
 
 type InstanceId = string;
@@ -85,7 +85,7 @@ export default async () => {
               const { instanceId, breakpointId, property, value } = styleDecl;
               let styleSourceId = styleSourceIdPerInstanceId.get(instanceId);
               if (styleSourceId === undefined) {
-                styleSourceId = ObjectId().toString();
+                styleSourceId = nanoid();
                 styleSourceIdPerInstanceId.set(instanceId, styleSourceId);
               }
 

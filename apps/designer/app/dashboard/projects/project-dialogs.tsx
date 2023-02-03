@@ -94,7 +94,7 @@ const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 
 const useCreateProject = () => {
   const navigate = useNavigate();
-  const { send, data } = trpc.create.useMutation();
+  const { send, data, state } = trpc.create.useMutation();
 
   useEffect(() => {
     if (data === undefined || "errors" in data) {
@@ -106,11 +106,12 @@ const useCreateProject = () => {
   return {
     handleSubmit: send,
     errors: data && "errors" in data ? data.errors : undefined,
+    state,
   };
 };
 
 export const CreateProject = () => {
-  const { handleSubmit, errors } = useCreateProject();
+  const { handleSubmit, errors, state } = useCreateProject();
   return (
     <Dialog
       title="New Project"
@@ -121,7 +122,14 @@ export const CreateProject = () => {
         errors={errors}
         placeholder="New Project"
         label="Project Title"
-        primaryButton={<Button type="submit">Create Project</Button>}
+        primaryButton={
+          <Button
+            state={state === "idle" ? undefined : "pending"}
+            type="submit"
+          >
+            Create Project
+          </Button>
+        }
       />
     </Dialog>
   );
