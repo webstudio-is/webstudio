@@ -65,13 +65,22 @@ export const DesignerRoute = () => {
 /**
  * We do not want trpc and other mutations that use the Remix useFetcher hook
  * to cause a reload of all designer data.
+ *
+ * searchParams "mode" is excluded from the comparison, because it does not affect the loading of data
  */
 export const shouldRevalidate: ShouldRevalidateFunction = ({
   currentUrl,
   nextUrl,
   defaultShouldRevalidate,
 }) => {
-  return currentUrl.href === nextUrl.href ? false : defaultShouldRevalidate;
+  const currentUrlCopy = new URL(currentUrl);
+  const nextUrlCopy = new URL(nextUrl);
+  currentUrlCopy.searchParams.delete("mode");
+  nextUrlCopy.searchParams.delete("mode");
+
+  return currentUrlCopy.href === nextUrlCopy.href
+    ? false
+    : defaultShouldRevalidate;
 };
 
 export default DesignerRoute;
