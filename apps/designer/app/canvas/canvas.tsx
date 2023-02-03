@@ -15,7 +15,6 @@ import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
-  useDeleteInstance,
   useInsertInstance,
   usePublishTextEditingInstanceId,
   useReparentInstance,
@@ -89,7 +88,6 @@ const DesignMode = () => {
   useManageDesignModeStyles();
   useInsertInstance();
   useReparentInstance();
-  useDeleteInstance();
   useTrackSelectedElement();
   usePublishScrollState();
   useSubscribeScrollState();
