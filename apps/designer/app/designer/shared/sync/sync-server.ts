@@ -5,6 +5,7 @@ import { restPatchPath } from "~/shared/router-utils";
 import { useEffect } from "react";
 import { enqueue, dequeue, queueStatus } from "./queue";
 import { useBeforeUnload } from "react-use";
+import { AuthPermit } from "@webstudio-is/trpc-interface";
 
 // Periodic check for new entries to group them into one job/call in sync queue.
 const NEW_ENTRIES_INTERVAL = 1000;
@@ -44,8 +45,13 @@ const useNewEntriesCheck = ({
   buildId,
   projectId,
   authToken,
+  authPermit,
 }: UserSyncServerProps) => {
   useEffect(() => {
+    if (authPermit === "view") {
+      return;
+    }
+
     // @todo setInterval can be completely avoided.
     // Right now prisma can't do atomic updates yet with sandbox documents
     // and backend fetches and updates big objects, so if we send quickly,
@@ -71,7 +77,7 @@ const useNewEntriesCheck = ({
     }, NEW_ENTRIES_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [treeId, buildId, projectId, authToken]);
+  }, [treeId, buildId, projectId, authToken, authPermit]);
 };
 
 type UserSyncServerProps = {
@@ -79,6 +85,7 @@ type UserSyncServerProps = {
   treeId: Tree["id"];
   projectId: Project["id"];
   authToken: string | undefined;
+  authPermit: AuthPermit;
 };
 
 export const useSyncServer = (props: UserSyncServerProps) => {

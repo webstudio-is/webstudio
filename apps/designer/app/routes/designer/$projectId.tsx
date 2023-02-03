@@ -32,7 +32,7 @@ export const loader = async ({
     (await authorizeProject.getProjectPermit(
       {
         projectId: project.id,
-        permits: ["own", "build"],
+        permits: ["own", "build"] as const,
       },
       context
     )) ?? "view";
