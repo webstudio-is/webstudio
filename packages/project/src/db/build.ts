@@ -8,7 +8,7 @@ import {
 import { Breakpoints } from "@webstudio-is/css-data";
 import { StyleSources } from "@webstudio-is/project-build";
 import * as db from ".";
-import { Build, Page, Pages } from "./schema";
+import { Build, Page, Pages } from "../shared/schema";
 import * as pagesUtils from "../shared/pages";
 import { parseStyles, serializeStyles } from "./styles";
 

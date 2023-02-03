@@ -3,7 +3,7 @@ import { type Tree, StoredProps, Props } from "@webstudio-is/project-build";
 import { applyPatches, type Patch } from "immer";
 import { prisma } from "@webstudio-is/prisma-client";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
-import type { Project } from "./schema";
+import type { Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,

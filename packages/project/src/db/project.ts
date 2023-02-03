@@ -7,7 +7,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { v4 as uuid } from "uuid";
-import { Project, Projects } from "./schema";
+import { Project, Projects } from "../shared/schema";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 

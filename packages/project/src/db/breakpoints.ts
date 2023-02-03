@@ -6,7 +6,7 @@ import {
   prisma,
 } from "@webstudio-is/prisma-client";
 import { Breakpoints } from "@webstudio-is/css-data";
-import type { Project } from "./schema";
+import type { Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,
