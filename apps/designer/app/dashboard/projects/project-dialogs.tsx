@@ -21,6 +21,7 @@ import {
 } from "./dialog";
 import { DashboardProject } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
+import { Title } from "@webstudio-is/project";
 
 const DialogContent = ({
   onSubmit,
@@ -95,33 +96,52 @@ const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
 const useCreateProject = () => {
   const navigate = useNavigate();
   const { send, data, state } = trpc.create.useMutation();
+  const [errors, setErrors] = useState<string>();
 
   useEffect(() => {
-    if (data === undefined || "errors" in data) {
+    if (data === undefined) {
       return;
     }
     navigate(designerPath({ projectId: data.id }));
   }, [data, navigate]);
 
+  const handleSubmit = ({ title }: any) => {
+    const parsed = Title.safeParse(title);
+    const errors =
+      "error" in parsed
+        ? parsed.error.issues.map((issue) => issue.message).join("\n")
+        : undefined;
+    setErrors(errors);
+    if (parsed.success) {
+      send({ title });
+    }
+  };
+
+  const handleOpenChange = () => {
+    setErrors(undefined);
+  };
+
   return {
-    handleSubmit: send,
-    errors: data && "errors" in data ? data.errors : undefined,
+    handleSubmit,
+    handleOpenChange,
     state,
+    errors,
   };
 };
 
 export const CreateProject = () => {
-  const { handleSubmit, errors, state } = useCreateProject();
+  const { handleSubmit, handleOpenChange, state, errors } = useCreateProject();
   return (
     <Dialog
       title="New Project"
       trigger={<Button prefix={<PlusIcon />}>New Project</Button>}
+      onOpenChange={handleOpenChange}
     >
       <DialogContent
         onSubmit={handleSubmit}
-        errors={errors}
         placeholder="New Project"
         label="Project Title"
+        errors={errors}
         primaryButton={
           <Button
             state={state === "idle" ? undefined : "pending"}
