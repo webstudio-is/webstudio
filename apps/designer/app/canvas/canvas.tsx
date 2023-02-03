@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { computed } from "nanostores";
 import store from "immerhin";
 import type { CanvasData } from "@webstudio-is/project";
@@ -11,7 +11,7 @@ import {
   type OnChangeChildren,
   setPropsByInstanceIdStore,
 } from "@webstudio-is/react-sdk";
-import { publish, useSubscribe } from "~/shared/pubsub";
+import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
@@ -36,12 +36,12 @@ import {
   useSetStyleSourceSelections,
   useSubscribeScrollState,
   useIsPreviewMode,
+  useSetAssets,
 } from "~/shared/nano-states";
 import { usePublishScrollState } from "./shared/use-publish-scroll-state";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { utils } from "@webstudio-is/project";
 import { useSubscribeDesignerReady } from "./shared/use-designer-ready";
-import type { Asset } from "@webstudio-is/asset-uploader";
 import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { customComponents } from "./custom-components";
 import { useHoveredInstanceConnector } from "./hovered-instance-connector";
@@ -85,12 +85,6 @@ const useElementsTree = () => {
   }, [rootInstance, onChangeChildren]);
 };
 
-const useAssets = (initialAssets: Array<Asset>) => {
-  const [assets, setAssets] = useState(initialAssets);
-  useSubscribe("updateAssets", setAssets);
-  return assets;
-};
-
 const DesignMode = () => {
   useManageDesignModeStyles();
   useInsertInstance();
@@ -126,7 +120,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
     throw new Error("Tree is null");
   }
   const isDesignerReady = useSubscribeDesignerReady();
-  const assets = useAssets(data.assets);
+  useSetAssets(data.assets);
   useSetBreakpoints(data.build.breakpoints);
   useSetProps(data.tree.props);
   // inject props store to sdk
@@ -155,7 +149,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
   if (isPreviewMode || isDesignerReady === false) {
     return (
       <>
-        <GlobalStyles assets={assets} />
+        <GlobalStyles />
         {elements}
       </>
     );
@@ -163,7 +157,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
 
   return (
     <>
-      <GlobalStyles assets={assets} />
+      <GlobalStyles />
       <DesignMode />
       {elements}
     </>

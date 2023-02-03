@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
+import type { Asset } from "@webstudio-is/asset-uploader";
 import type {
   Instance,
   Props,
@@ -14,6 +15,10 @@ import type {
   DropTargetChangePayload,
   DragStartPayload,
 } from "~/canvas/shared/use-drag-drop";
+import type {
+  AssetContainer,
+  DeletingAssetContainer,
+} from "~/designer/shared/assets";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
 
@@ -201,6 +206,33 @@ export const useBreakpoints = () => useValue(breakpointsContainer);
 export const useSetBreakpoints = (breakpoints: Breakpoint[]) => {
   useSyncInitializeOnce(() => {
     breakpointsContainer.set(breakpoints);
+  });
+};
+
+export const assetContainersStore = atom<
+  Array<AssetContainer | DeletingAssetContainer>
+>([]);
+
+export const assetsStore = computed(assetContainersStore, (assetContainers) => {
+  const assets: Asset[] = [];
+  for (const assetContainer of assetContainers) {
+    if (assetContainer.status === "uploaded") {
+      assets.push(assetContainer.asset);
+    }
+  }
+  return assets;
+});
+
+export const useSetAssets = (assets: Asset[]) => {
+  useSyncInitializeOnce(() => {
+    assetContainersStore.set(
+      assets.map((asset) => {
+        return {
+          status: "uploaded",
+          asset,
+        };
+      })
+    );
   });
 };
 

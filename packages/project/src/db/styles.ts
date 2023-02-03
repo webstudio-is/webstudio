@@ -136,7 +136,7 @@ export const patch = async (
 
   await prisma.build.update({
     data: {
-      styles: JSON.stringify(patchedStyles),
+      styles: serializeStyles(patchedStyles),
     },
     where: {
       id_projectId: { projectId, id: buildId },
