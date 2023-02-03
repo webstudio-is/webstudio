@@ -201,10 +201,12 @@ const useDeleteProject = ({
   projectId,
   title,
   onOpenChange,
+  onDelete,
 }: {
   projectId: DashboardProject["id"];
   title: string;
   onOpenChange: (isOpen: false) => void;
+  onDelete: () => void;
 }) => {
   const { send, data, state } = trpc.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
@@ -218,6 +220,8 @@ const useDeleteProject = ({
 
   const handleSubmit = () => {
     send({ projectId });
+    onDelete();
+    onOpenChange(false);
   };
 
   const handleChange = ({ title: currentTitle }: { title: string }) => {
@@ -238,17 +242,20 @@ export const DeleteProjectDialog = ({
   title,
   projectId,
   onOpenChange,
+  onDelete,
 }: {
   isOpen: boolean;
   title: string;
   projectId: DashboardProject["id"];
   onOpenChange: (isOpen: boolean) => void;
+  onDelete: () => void;
 }) => {
   const { handleSubmit, handleChange, errors, isMatch, state } =
     useDeleteProject({
       projectId,
-      onOpenChange,
       title,
+      onOpenChange,
+      onDelete,
     });
   return (
     <Dialog
