@@ -4,7 +4,7 @@ import { prisma } from "@webstudio-is/prisma-client";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import { formatAsset } from "@webstudio-is/asset-uploader/server";
 import { StoredStyles, Styles } from "@webstudio-is/project-build";
-import type { Build, Project } from "./schema";
+import type { Build, Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,

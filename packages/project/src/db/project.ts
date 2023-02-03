@@ -7,7 +7,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { v4 as uuid } from "uuid";
-import { Project, Projects } from "./schema";
+import { Project, Projects, Title } from "../shared/schema";
 
 const nanoid = customAlphabet("1234567890abcdefghijklmnopqrstuvwxyz");
 
@@ -85,7 +85,6 @@ export const loadManyByCurrentUserId = async (
 const slugifyOptions = { lower: true, strict: true };
 
 const MIN_DOMAIN_LENGTH = 10;
-const MIN_TITLE_LENGTH = 2;
 
 const generateDomain = (title: string) => {
   const slugifiedTitle = slugify(title, slugifyOptions);
@@ -101,9 +100,7 @@ export const create = async (
   { title }: { title: string },
   context: AppContext
 ) => {
-  if (title.length < MIN_TITLE_LENGTH) {
-    return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
-  }
+  Title.parse(title);
 
   const userId = context.authorization.userId;
 
@@ -161,9 +158,7 @@ export const rename = async (
   },
   context: AppContext
 ) => {
-  if (title.length < MIN_TITLE_LENGTH) {
-    return { errors: `Minimum ${MIN_TITLE_LENGTH} characters required` };
-  }
+  Title.parse(title);
 
   const canEdit = await authorizeProject.hasProjectPermit(
     { projectId, permit: "edit" },
