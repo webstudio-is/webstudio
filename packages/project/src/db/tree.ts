@@ -11,7 +11,7 @@ import {
 import { prisma, type Prisma } from "@webstudio-is/prisma-client";
 import { utils } from "../index";
 import { parseProps, serializeProps } from "./props";
-import type { Project } from "./schema";
+import type { Project } from "../shared/schema";
 import {
   authorizeProject,
   type AppContext,

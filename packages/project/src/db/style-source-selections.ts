@@ -5,7 +5,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/server";
 import { StyleSourceSelections, type Tree } from "@webstudio-is/project-build";
-import type { Project } from "./schema";
+import type { Project } from "../shared/schema";
 
 export const patch = async (
   { treeId, projectId }: { treeId: Tree["id"]; projectId: Project["id"] },
