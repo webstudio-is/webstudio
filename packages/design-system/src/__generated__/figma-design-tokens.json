@@ -450,9 +450,8 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#ffefef",
-          "type": "color",
-          "description": "background for destructive toast"
+          "value": "#d53f45",
+          "type": "color"
         }
       },
       "success": {
@@ -789,7 +788,7 @@
         }
       },
       "dark": {
-        "value": "#d9d9d9",
+        "value": "#707375",
         "type": "color",
         "description": "For borders that use dark mode colors in light mode like the Builder UI top bar."
       }
