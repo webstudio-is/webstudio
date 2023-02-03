@@ -42,7 +42,7 @@ module.exports = {
     ],
     curly: 2,
     eqeqeq: ["error", "always", { null: "ignore" }],
-    camelcase: 2,
+    camelcase: [2, { properties: "never" }],
     radix: 2,
     "import/no-internal-modules": [
       "error",

@@ -37,7 +37,9 @@ export const patch = async (
   }
 
   const build = await prisma.build.findUnique({
-    where: { id: buildId },
+    where: {
+      id_projectId: { id: buildId, projectId },
+    },
   });
 
   if (build === null) {
@@ -49,7 +51,9 @@ export const patch = async (
   );
 
   await prisma.build.update({
-    where: { id: buildId },
+    where: {
+      id_projectId: { id: buildId, projectId },
+    },
     data: { breakpoints: JSON.stringify(patchedBreakpoints) },
   });
 };

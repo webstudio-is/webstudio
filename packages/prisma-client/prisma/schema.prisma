@@ -28,7 +28,7 @@ enum UploadStatus {
 }
 
 model Asset {
-  id          String       @id @default(uuid())
+  id          String       @default(uuid())
   projectId   String
   format      String
   size        Int
@@ -38,6 +38,8 @@ model Asset {
   createdAt   DateTime     @default(now())
   meta        String       @default("{}")
   status      UploadStatus @default(UPLOADED)
+
+  @@id([id, projectId])
 }
 
 model User {
@@ -65,7 +67,7 @@ model Project {
 }
 
 model Build {
-  id        String   @id @default(uuid())
+  id        String   @default(uuid())
   createdAt DateTime @default(now())
   pages     String
 
@@ -79,19 +81,23 @@ model Build {
   breakpoints  String @default("[]")
   styles       String @default("[]")
   styleSources String @default("[]")
+
+  @@id([id, projectId])
 }
 
 model Tree {
-  id              String  @id @default(uuid())
+  id              String  @default(uuid())
   project         Project @relation(fields: [projectId], references: [id])
   projectId       String
-  build           Build   @relation(fields: [buildId], references: [id])
+  build           Build   @relation(fields: [buildId, projectId], references: [id, projectId])
   buildId         String
   root            String
   instances       String  @default("[]")
   props           String  @default("[]")
   styles          String  @default("[]")
   styleSelections String  @default("[]")
+
+  @@id([id, projectId])
 }
 
 model Breakpoints {

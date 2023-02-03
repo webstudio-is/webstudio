@@ -84,8 +84,18 @@ export const create = async (
   });
 };
 
-export const deleteById = async (treeId: Tree["id"]): Promise<void> => {
-  await prisma.tree.delete({ where: { id: treeId } });
+export const deleteById = async ({
+  projectId,
+  treeId,
+}: {
+  projectId: Project["id"];
+  treeId: Tree["id"];
+}): Promise<void> => {
+  await prisma.tree.delete({
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
+  });
 };
 
 const denormalizeTree = (instances: z.infer<typeof Instances>) => {
@@ -113,11 +123,13 @@ const denormalizeTree = (instances: z.infer<typeof Instances>) => {
 };
 
 export const loadById = async (
-  treeId: Tree["id"],
+  { projectId, treeId }: { projectId: Project["id"]; treeId: Tree["id"] },
   client: Prisma.TransactionClient = prisma
 ): Promise<Tree | null> => {
   const tree = await client.tree.findUnique({
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
   if (tree === null) {
     return null;
@@ -141,10 +153,10 @@ export const loadById = async (
 };
 
 export const clone = async (
-  treeId: Tree["id"],
+  { projectId, treeId }: { projectId: Project["id"]; treeId: Tree["id"] },
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await loadById(treeId, client);
+  const tree = await loadById({ projectId, treeId }, client);
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
@@ -165,7 +177,7 @@ export const patch = async (
     throw new Error("You don't have edit access to this project");
   }
 
-  const tree = await loadById(treeId);
+  const tree = await loadById({ projectId, treeId });
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
@@ -180,6 +192,8 @@ export const patch = async (
       root: "",
       instances: JSON.stringify(instances),
     },
-    where: { id: treeId },
+    where: {
+      id_projectId: { projectId, id: treeId },
+    },
   });
 };
