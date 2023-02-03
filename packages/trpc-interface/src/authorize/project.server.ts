@@ -1,5 +1,5 @@
 import type { Project } from "@webstudio-is/prisma-client";
-import { AuthPermit } from "src/index.server";
+import { AuthPermit } from "../shared/authorization-router";
 import type { AppContext } from "../context/context.server";
 
 /**
