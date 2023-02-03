@@ -7,6 +7,7 @@ import { sentryException } from "~/shared/sentry";
 import { getBuildOrigin } from "~/shared/router-utils";
 import { createContext, createAuthReadToken } from "~/shared/context.server";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
+import { authorizeProject } from "@webstudio-is/trpc-interface/server";
 
 export { links };
 
@@ -24,6 +25,17 @@ export const loader = async ({
   const pageIdParam = url.searchParams.get("pageId");
 
   const project = await db.project.loadById(params.projectId, context);
+
+  // At this point we already knew that if project loaded we have at least "view" permit
+  // having that getProjectPermit is heavy operation we can skip check "view" permit
+  const authPermit =
+    (await authorizeProject.getProjectPermit(
+      {
+        projectId: project.id,
+        permits: ["own", "build"],
+      },
+      context
+    )) ?? "view";
 
   if (project === null) {
     throw new Error(`Project "${params.projectId}" not found`);
@@ -47,6 +59,7 @@ export const loader = async ({
     buildOrigin: getBuildOrigin(request),
     authReadToken,
     authToken,
+    authPermit,
   };
 };
 
