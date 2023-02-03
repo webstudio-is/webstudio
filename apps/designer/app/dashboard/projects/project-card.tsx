@@ -85,13 +85,13 @@ const PublishedLink = ({
 
 const Menu = ({
   tabIndex,
-  onHiddenChange,
+  onDelete,
   onRename,
   onDuplicate,
   onShare,
 }: {
   tabIndex: number;
-  onHiddenChange: () => void;
+  onDelete: () => void;
   onRename: () => void;
   onDuplicate: () => void;
   onShare: () => void;
@@ -115,7 +115,7 @@ const Menu = ({
         {isFeatureEnabled("share2") && (
           <DropdownMenuItem onSelect={onShare}>Share</DropdownMenuItem>
         )}
-        <DropdownMenuItem onSelect={onHiddenChange}>Delete</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -211,7 +211,7 @@ export const ProjectCard = ({
           </Flex>
           <Menu
             tabIndex={-1}
-            onHiddenChange={() => {
+            onDelete={() => {
               setIsDeleteDialogOpen(true);
             }}
             onRename={() => {

@@ -217,7 +217,7 @@ const useDeleteProject = ({
       onOpenChange(true);
       onHiddenChange(false);
     }
-  }, [errors, onOpenChange]);
+  }, [errors, onOpenChange, onHiddenChange]);
 
   const handleSubmit = () => {
     send({ projectId });
