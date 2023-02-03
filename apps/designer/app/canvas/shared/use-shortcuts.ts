@@ -8,7 +8,7 @@ import {
   selectedInstanceIdStore,
   selectedInstanceStore,
   useTextEditingInstanceId,
-  isPreviewModeStore,
+  useIsPreviewMode,
 } from "~/shared/nano-states";
 
 declare module "~/shared/pubsub" {
@@ -26,10 +26,6 @@ declare module "~/shared/pubsub" {
 type HandlerEvent = {
   key?: string;
   preventDefault?: () => void;
-};
-
-const togglePreviewMode = () => {
-  isPreviewModeStore.set(!isPreviewModeStore.get());
 };
 
 const publishSelectBreakpoint = ({ key }: HandlerEvent) => {
@@ -69,6 +65,7 @@ const publishCancelCurrentDrag = () => {
 
 export const useShortcuts = () => {
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
+  const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
 
   const publishDeleteInstance = () => {
     const selectedInstanceId = selectedInstanceIdStore.get();
@@ -79,6 +76,10 @@ export const useShortcuts = () => {
       type: "deleteInstance",
       payload: { id: selectedInstanceId },
     });
+  };
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode);
   };
 
   const shortcutHandlerMap = {
