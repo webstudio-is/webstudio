@@ -105,7 +105,7 @@ const useCreateProject = () => {
     navigate(designerPath({ projectId: data.id }));
   }, [data, navigate]);
 
-  const handleSubmit = ({ title }: any) => {
+  const handleSubmit = ({ title }: { title: string }) => {
     const parsed = Title.safeParse(title);
     const errors =
       "error" in parsed
