@@ -162,17 +162,20 @@ const useRenameProject = ({
   projectId: DashboardProject["id"];
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  const { send, data, state } = trpc.rename.useMutation();
-  const errors = data && "errors" in data ? data.errors : undefined;
-
-  useEffect(() => {
-    if (errors === undefined && state === "loading") {
-      onOpenChange(false);
-    }
-  }, [errors, state, onOpenChange]);
+  const { send, state } = trpc.rename.useMutation();
+  const [errors, setErrors] = useState<string>();
 
   const handleSubmit = ({ title }: { title: string }) => {
-    send({ projectId, title });
+    const parsed = Title.safeParse(title);
+    const errors =
+      "error" in parsed
+        ? parsed.error.issues.map((issue) => issue.message).join("\n")
+        : undefined;
+    setErrors(errors);
+    if (parsed.success) {
+      send({ projectId, title });
+      onOpenChange(false);
+    }
   };
 
   return {
