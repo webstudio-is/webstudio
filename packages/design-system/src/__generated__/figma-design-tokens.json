@@ -393,7 +393,7 @@
         "description": "background color for all panels, titles, columns and rows."
       },
       "primary": {
-        "value": "#0175dc",
+        "value": "#096cff",
         "type": "color",
         "description": "primary color, used in button"
       },
@@ -403,7 +403,7 @@
         "description": "hover color for toggle group button, icon button, toggle button, small icon button, small toggle button, nested select button, menu item large"
       },
       "active": {
-        "value": "#0175dc",
+        "value": "#096cff",
         "type": "color",
         "description": "color for active elements"
       },
@@ -450,8 +450,9 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#d53f45",
-          "type": "color"
+          "value": "#ffefef",
+          "type": "color",
+          "description": "background for destructive toast"
         }
       },
       "success": {
@@ -550,7 +551,7 @@
       },
       "item": {
         "current": {
-          "value": "#0175dc",
+          "value": "#096cff",
           "type": "color",
           "description": "color for current item in the navigator item, menu item, pages panel item components"
         },
@@ -596,7 +597,7 @@
       },
       "style-source": {
         "token": {
-          "value": "#0175dc",
+          "value": "#096cff",
           "type": "color",
           "description": "For the token variant of the Style Source component."
         },
@@ -622,7 +623,7 @@
         },
         "gradient": {
           "token": {
-            "value": "linear-gradient(90deg, #0175dc00 0%, #0175dc 31.87%)",
+            "value": "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
             "type": "color"
           },
           "tag": {
@@ -700,7 +701,7 @@
         "description": "color for separators, panel borders, preset borders, input fields, select buttons, panel buttons, text area, search field, menu, select menu, spacing controls, "
       },
       "focus": {
-        "value": "#0175dc",
+        "value": "#096cff",
         "type": "color",
         "description": "border color for all focus elements"
       },
@@ -730,7 +731,7 @@
         "description": "border color for alert banner & toast"
       },
       "info": {
-        "value": "#0175dc",
+        "value": "#096cff",
         "type": "color",
         "description": "border color for info banner & toast"
       },
@@ -758,7 +759,7 @@
           "description": "border color of set elements"
         },
         "flex-ui": {
-          "value": "#0175dc",
+          "value": "#096cff",
           "type": "color",
           "description": "border color of set elements within the flex controls ui"
         }
@@ -825,7 +826,7 @@
         "description": "success foreground color. Used in toast"
       },
       "info": {
-        "value": "#0175dc",
+        "value": "#096cff",
         "type": "color",
         "description": "info foreground color. Used in toast"
       },
@@ -870,7 +871,7 @@
           "description": "foreground color for set elements"
         },
         "flex-ui": {
-          "value": "#0d84ed",
+          "value": "#237cff",
           "type": "color",
           "description": "foreground color for flex-ui set elements"
         }
