@@ -284,7 +284,7 @@ export const color = {
   backgroundNeutralNotification: "#ffffff",
   backgroundNeutralDark: "#7e868c",
   backgroundDestructiveMain: "#de3339",
-  backgroundDestructiveNotification: "#d53f45",
+  backgroundDestructiveNotification: "#ffefef",
   backgroundSuccessMain: "#00894a",
   backgroundSuccessNotification: "#e9f9ee",
   backgroundAlertMain: "#f5d90a",
@@ -323,6 +323,7 @@ export const color = {
   backgroundStyleSourceGradientState:
     "linear-gradient(90deg, #00894a00 0%, #00894a 31.87%)",
   backgroundCanvas: "#c7c7c7",
+  backgroundTopbar: "#2d2d2d",
   brandBackgroundProjectCardFront:
     "linear-gradient(0deg, #fbf8ff 0%, #e2e2e2 100%)",
   brandBackgroundProjectCardBack:
@@ -351,6 +352,7 @@ export const color = {
   borderInheritedFlexUi: "#fa934e",
   borderDestructiveMain: "#de3339",
   borderDestructiveNotification: "#f9c6c6",
+  borderDark: "#d9d9d9",
   foregroundMain: "#11181c",
   foregroundSubtle: "#707375",
   foregroundCategoryLabel: "#889096",
