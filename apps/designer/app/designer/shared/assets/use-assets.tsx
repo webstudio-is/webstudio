@@ -6,6 +6,9 @@ import {
   type ReactNode,
   useRef,
 } from "react";
+import { useStore } from "@nanostores/react";
+import warnOnce from "warn-once";
+import { useFetcher } from "@remix-run/react";
 import {
   AssetType,
   idsFormDataFieldName,
@@ -14,9 +17,10 @@ import {
   type Asset,
 } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
-import { restAssetsPath } from "~/shared/router-utils";
-import { useAssetsContainer, useProject } from "../nano-states";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
+import { assetContainersStore } from "~/shared/nano-states";
+import { restAssetsPath } from "~/shared/router-utils";
+import { useProject } from "../nano-states";
 import type {
   AssetContainer,
   DeletingAssetContainer,
@@ -30,37 +34,7 @@ import {
   normalizeErrors,
   toastUnknownFieldErrors,
 } from "~/shared/form-utils";
-import { Publish } from "~/shared/pubsub";
-import { useFetcher } from "@remix-run/react";
-import warnOnce from "warn-once";
 import { updateStateAssets } from "./update-asset-containers";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    updateAssets: Array<Asset>;
-  }
-}
-
-export const usePublishAssets = (publish: Publish) => {
-  const [assetContainers] = useAssetsContainer();
-  useEffect(() => {
-    publish({
-      type: "updateAssets",
-      payload: assetContainers
-        .filter((assetContainer) => assetContainer.status === "uploaded")
-        .map((assetContainer) => {
-          //  This check is only to fix that ts can't detect type based on the filter above
-          if (assetContainer.status !== "uploaded") {
-            throw new Error(
-              `Impossible, asset must have status "uploaded" see filter above`
-            );
-          }
-
-          return assetContainer.asset;
-        }),
-    });
-  }, [assetContainers, publish]);
-};
 
 export type UploadData = FetcherData<ActionData>;
 
@@ -116,7 +90,7 @@ const toUploadingAssetsAndFormData = (
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
-const getFilesFromInput = (type: AssetType, input: HTMLInputElement) => {
+const getFilesFromInput = (_type: AssetType, input: HTMLInputElement) => {
   const files = Array.from(input?.files ?? []);
 
   const exceedSizeFiles = files.filter((file) => file.size > maxSize);
@@ -140,7 +114,7 @@ const Context = createContext<AssetsContext | undefined>(undefined);
 
 export const AssetsProvider = ({ children }: { children: ReactNode }) => {
   const [project] = useProject();
-  const [assetContainers, setAssetContainers] = useAssetsContainer();
+  const assetContainers = useStore(assetContainersStore);
   const { submit: load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
   const assetContainersRef = useRef(assetContainers);
@@ -166,10 +140,10 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (nextAssetContainers !== assetContainers) {
-        setAssetContainers(nextAssetContainers);
+        assetContainersStore.set(nextAssetContainers);
       }
     }
-  }, [serverAssets, assetContainers, setAssetContainers]);
+  }, [serverAssets, assetContainers]);
 
   const handleDeleteAfterSubmit = (data: UploadData) => {
     // We need to remove assets only at updateStateAssets.
@@ -194,7 +168,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
         return assetContainer;
       });
 
-      setAssetContainers(nextAssetContainers);
+      assetContainersStore.set(nextAssetContainers);
 
       return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
     }
@@ -209,7 +183,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
 
     if (data.status === "error" || data.errors !== undefined) {
       // We don't know what's wrong, remove uploading asset and wait for the load to fix it
-      setAssetContainers(
+      assetContainersStore.set(
         assetContainers.filter(
           (assetContainer) =>
             assetContainer.status !== "uploading" ||
@@ -235,7 +209,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       toast.error("Could not upload an asset");
 
       // remove uploading asset and wait for the load to fix it
-      setAssetContainers(
+      assetContainersStore.set(
         assetContainers.filter(
           (assetContainer) =>
             assetContainer.status !== "uploading" ||
@@ -245,7 +219,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    setAssetContainers(
+    assetContainersStore.set(
       assetContainers.map((assetContainer) => {
         if (
           assetContainer.status === "uploading" &&
@@ -289,7 +263,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    setAssetContainers(nextAssetContainers);
+    assetContainersStore.set(nextAssetContainers);
 
     submit<UploadData>(
       formData,
@@ -306,7 +280,7 @@ export const AssetsProvider = ({ children }: { children: ReactNode }) => {
       );
 
       const assets = assetContainersRef.current;
-      setAssetContainers([
+      assetContainersStore.set([
         ...uploadingAssetsAndFormData.map(([previewAsset]) => previewAsset),
         ...assets,
       ]);
