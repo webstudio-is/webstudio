@@ -77,7 +77,7 @@ export const findClosestDroppableTarget = (
   if (droppableInstance === undefined) {
     return;
   }
-  let position: number = -1;
+  let position = -1;
   while (isInstanceDroppable(droppableInstance) === false) {
     const parentInstance = parentInstancesById.get(droppableInstance.id);
     if (parentInstance === undefined) {
