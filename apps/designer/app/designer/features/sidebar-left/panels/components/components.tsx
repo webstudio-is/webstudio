@@ -9,6 +9,11 @@ import {
 import { theme, Flex, useDrag, type Point } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { utils } from "@webstudio-is/project";
+import { findClosestDroppableTarget } from "~/shared/tree-utils";
+import {
+  instancesIndexStore,
+  selectedInstanceIdStore,
+} from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { useCanvasRect, useZoom } from "~/designer/shared/nano-states";
 import type { TabName } from "../../types";
@@ -168,9 +173,13 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               const instance = utils.tree.createInstance({
                 component,
               });
+              const dropTarget = findClosestDroppableTarget(
+                instancesIndexStore.get(),
+                selectedInstanceIdStore.get()
+              );
               publish({
                 type: "insertInstance",
-                payload: { instance },
+                payload: { instance, dropTarget },
               });
             }}
           />

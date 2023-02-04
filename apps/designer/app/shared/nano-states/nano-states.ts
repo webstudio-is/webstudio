@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
+import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
 import type {
   Instance,
@@ -21,7 +22,7 @@ import type {
 } from "~/designer/shared/assets";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
-import type { AuthPermit } from "@webstudio-is/trpc-interface";
+import { createInstancesIndex } from "../tree-utils";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -37,23 +38,7 @@ export const useSetRootInstance = (root: Instance) => {
 };
 export const instancesIndexStore = computed(
   rootInstanceContainer,
-  (rootInstance) => {
-    const instancesById = new Map<Instance["id"], Instance>();
-    const traverseInstances = (instance: Instance) => {
-      instancesById.set(instance.id, instance);
-      for (const child of instance.children) {
-        if (child.type === "instance") {
-          traverseInstances(child);
-        }
-      }
-    };
-    if (rootInstance !== undefined) {
-      traverseInstances(rootInstance);
-    }
-    return {
-      instancesById,
-    };
-  }
+  createInstancesIndex
 );
 
 export const propsStore = atom<Props>([]);
