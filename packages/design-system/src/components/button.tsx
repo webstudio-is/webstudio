@@ -18,6 +18,7 @@ const colors = [
   "positive",
   "neutral",
   "ghost",
+  "dark",
 ] as const;
 
 type ButtonColor = typeof colors[number];
@@ -30,6 +31,7 @@ const backgrounds: Record<ButtonColor, string> = {
   destructive: theme.colors.backgroundDestructiveMain,
   positive: theme.colors.backgroundSuccessMain,
   ghost: theme.colors.backgroundHover,
+  dark: theme.colors.backgroundTopbar,
 };
 
 const foregrounds: Record<ButtonColor, string> = {
@@ -38,6 +40,7 @@ const foregrounds: Record<ButtonColor, string> = {
   positive: theme.colors.foregroundContrastMain,
   neutral: theme.colors.foregroundMain,
   ghost: theme.colors.foregroundMain,
+  dark: theme.colors.foregroundContrastMain,
 };
 
 // CSS supports multiple gradients as backgrounds but not multiple colors
@@ -97,6 +100,7 @@ const StyledButton = styled("button", {
       positive: perColorStyle("positive"),
       neutral: perColorStyle("neutral"),
       ghost: perColorStyle("ghost"),
+      dark: perColorStyle("dark"),
     },
   },
 
