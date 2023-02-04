@@ -36,7 +36,6 @@ export type TreeProps<Data extends { id: string }> = {
     itemId: string;
     dropTarget: { itemId: string; position: number | "end" };
   }) => void;
-  onDelete: (itemId: string) => void;
 };
 
 export const Tree = <Data extends { id: string }>({
@@ -53,7 +52,6 @@ export const Tree = <Data extends { id: string }>({
   onHover,
   animate,
   onDragEnd,
-  onDelete,
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     root,
@@ -236,7 +234,6 @@ export const Tree = <Data extends { id: string }>({
     selectedItemId,
     getIsExpanded,
     setIsExpanded,
-    onDelete,
     onEsc: dragHandlers.cancelCurrentDrag,
   });
 
@@ -303,7 +300,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   selectedItemId,
   getIsExpanded,
   setIsExpanded,
-  onDelete,
   onEsc,
 }: {
   root: Data;
@@ -312,7 +308,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   selectedItemId: string | undefined;
   getIsExpanded: (instance: Data) => boolean;
   setIsExpanded: (instance: Data, isExpanded: boolean) => void;
-  onDelete: (itemId: string) => void;
   onEsc: () => void;
 }) => {
   const selectedItem = useMemo(() => {
@@ -368,9 +363,6 @@ const useKeyboardNavigation = <Data extends { id: string }>({
         // prevent scrolling
         event.preventDefault();
       }
-    }
-    if (event.key === "Backspace" || event.key === "Delete") {
-      onDelete(selectedItem.id);
     }
     if (event.key === "Escape") {
       onEsc();
