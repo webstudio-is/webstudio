@@ -1,3 +1,7 @@
+/**
+ * Implementation of the "Toolbar Toggle" component from:
+ * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=1512%3A7422&t=BOWCrlme5NepfLUm-4
+ */
 import { styled, theme } from "../stitches.config";
 import * as Toggle from "@radix-ui/react-toggle";
 

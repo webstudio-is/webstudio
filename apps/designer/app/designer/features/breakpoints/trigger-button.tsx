@@ -47,7 +47,6 @@ export const TriggerButton = forwardRef<
     <Button
       {...props}
       ref={ref}
-      css={{ gap: theme.spacing[3] }}
       color="dark"
       aria-label="Show breakpoints"
       prefix={renderIcon(breakpoint, variant)}
