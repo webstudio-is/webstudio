@@ -6,7 +6,7 @@ import { IconProps } from "../types";
 // prettier-ignore
 export const InfoIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ color = "currentColor", size: sizeName, ...props }, forwardedRef) => {
-    const size = "16";
+    let size = "16";
     if (sizeName === "big") {
       size = "22";
     }
