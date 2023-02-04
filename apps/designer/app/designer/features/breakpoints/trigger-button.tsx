@@ -13,7 +13,6 @@ import {
   MobileIcon,
   TabletIcon,
 } from "@webstudio-is/icons";
-import { theme } from "@webstudio-is/design-system";
 
 type TriggerButtonProps = ComponentProps<typeof Button>;
 
