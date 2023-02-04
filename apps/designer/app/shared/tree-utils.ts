@@ -58,7 +58,7 @@ const isInstanceDroppable = (instance: Instance) => {
 
 type DroppableTarget = {
   parentId: Instance["id"];
-  position: number | "end";
+  position: number;
 };
 
 export const findClosestDroppableTarget = (
@@ -93,7 +93,9 @@ export const findClosestDroppableTarget = (
 
   return {
     parentId: droppableInstance.id,
-    position: position === -1 ? "end" : position + 1,
+    // put in the end when no position provided
+    position:
+      position === -1 ? droppableInstance.children.length : position + 1,
   };
 };
 

@@ -109,15 +109,15 @@ test("find closest droppable target", () => {
   });
   expect(findClosestDroppableTarget(instancesIndex, "box3")).toEqual({
     parentId: "box3",
-    position: "end",
+    position: 3,
   });
   expect(findClosestDroppableTarget(instancesIndex, "root")).toEqual({
     parentId: "root",
-    position: "end",
+    position: 3,
   });
   expect(findClosestDroppableTarget(instancesIndex, undefined)).toEqual({
     parentId: "root",
-    position: "end",
+    position: 3,
   });
 });
 
