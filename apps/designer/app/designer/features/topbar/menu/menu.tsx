@@ -7,15 +7,11 @@ import {
   DropdownMenuItemRightSlot,
   DropdownMenuSub,
   DropdownMenuSubContent,
-  DropdownMenuTrigger,
   DropdownMenuSubTrigger,
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
   DropdownMenuPortal,
-  DeprecatedIconButton,
-  Flex,
 } from "@webstudio-is/design-system";
-import { HamburgerMenuIcon } from "@webstudio-is/icons";
 import { type Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
 import {
@@ -31,6 +27,8 @@ import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
+import { useState } from "react";
+import { MenuButton } from "./menu-button";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -98,26 +96,11 @@ export const Menu = ({ publish }: MenuProps) => {
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Flex
-          align="center"
-          justify="center"
-          css={{
-            width: theme.spacing[15],
-            height: "100%",
-          }}
-        >
-          <DeprecatedIconButton
-            aria-label="Menu Button"
-            css={{ color: theme.colors.foregroundContrastMain }}
-          >
-            <HamburgerMenuIcon />
-          </DeprecatedIconButton>
-        </Flex>
-      </DropdownMenuTrigger>
+    <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+      <MenuButton isOpen={isMenuOpen} />
       <DropdownMenuPortal>
         <DropdownMenuContent
           css={{ zIndex: theme.zIndices[1] }}
