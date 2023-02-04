@@ -12,7 +12,7 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const topbarContainerStyle = css({
   background: theme.colors.backgroundTopbar,
-  height: theme.spacing[17],
+  height: theme.spacing[15],
   boxShadow: `inset 0 -1px 0 0 ${theme.colors.panelOutline}`,
   paddingRight: theme.spacing[9],
 });
