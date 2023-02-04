@@ -5,9 +5,13 @@ import { IconProps } from "../types";
 
 // prettier-ignore
 export const ChevronFilledLeftIcon = forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  ({ color = "currentColor", size: sizeName, ...props }, forwardedRef) => {
+    const size = "16";
+    if (sizeName === "big") {
+      size = "22";
+    }
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill={color} {...props} ref={forwardedRef}><path fill="#11181C" d="m5.749 8.5 4.318 2.878a.6.6 0 0 0 .933-.5V5.122a.6.6 0 0 0-.933-.5L5.75 7.502a.6.6 0 0 0 0 .998Z" /></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width={size} height={size} fill={color} {...props} ref={forwardedRef}><path fill="#11181C" d="m5.749 8.5 4.318 2.878a.6.6 0 0 0 .933-.5V5.122a.6.6 0 0 0-.933-.5L5.75 7.502a.6.6 0 0 0 0 .998Z" /></svg>
     );
   }
 );

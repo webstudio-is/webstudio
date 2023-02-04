@@ -13,7 +13,11 @@ import { IconProps } from "../types";
 
 // prettier-ignore
 export const ${componentName}Icon = forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+  ({ color = "currentColor", size: sizeName, ...props }, forwardedRef) => {
+    const size = "16";
+    if (sizeName === "big") {
+      size = "22";
+    }
     return (
       ${jsx}
     );
@@ -33,8 +37,8 @@ export const config: Config = {
   template,
   transformFilename,
   svgProps: {
-    width: "16",
-    height: "16",
+    width: "{size}",
+    height: "{size}",
     fill: "{color}",
     "{...props}": null,
     ref: "{forwardedRef}",
