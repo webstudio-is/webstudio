@@ -12,6 +12,7 @@ import { useSyncServer } from "./shared/sync/sync-server";
 import interFont from "@fontsource/inter/variable.css";
 // eslint-disable-next-line import/no-internal-modules
 import robotoMonoFont from "@fontsource/roboto-mono/index.css";
+import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { usePages, useProject, useCurrentPageId } from "./shared/nano-states";
@@ -267,6 +268,7 @@ export const Designer = ({
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
   useSyncServer({ buildId, treeId, projectId: project.id, authToken });
+  useSharedShortcuts();
   useSetIsPreviewMode(authPermit === "view");
   const [isPreviewMode] = useIsPreviewMode();
   usePublishShortcuts(publish);

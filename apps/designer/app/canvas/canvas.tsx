@@ -13,6 +13,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import { publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
+import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useShortcuts } from "./shared/use-shortcuts";
 import {
   useInsertInstance,
@@ -137,6 +138,7 @@ export const Canvas = ({ data }: CanvasProps): JSX.Element | null => {
 
   // e.g. toggling preview is still needed in both modes
   useShortcuts();
+  useSharedShortcuts();
 
   const elements = useElementsTree();
 
