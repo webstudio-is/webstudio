@@ -3,7 +3,7 @@ import {
   DropdownMenuTrigger,
   rawTheme,
   theme,
-  ToolbarToggle,
+  toggleItemStyle,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, WebstudioIcon } from "@webstudio-is/icons";
 
@@ -28,36 +28,37 @@ const faceStyle = css({
   },
 });
 
-const size = rawTheme.spacing[10];
+const size = rawTheme.spacing[9];
 
 export const MenuButton = ({ isOpen }: { isOpen: boolean }) => {
   return (
-    <DropdownMenuTrigger asChild>
-      <ToolbarToggle aria-label="Menu Button" css={{ position: "relative" }}>
+    <DropdownMenuTrigger
+      className={toggleItemStyle({ css: { position: "relative" } })}
+      aria-label="Menu Button"
+    >
+      <span
+        className={innerContainerStyle()}
+        style={{
+          transform: isOpen
+            ? `translateZ(-${size}) rotateY(-90deg)`
+            : `translateZ(-${size}) rotateY(0deg)`,
+        }}
+      >
         <span
-          className={innerContainerStyle()}
+          className={faceStyle()}
+          style={{ transform: `rotateY(0deg) translateZ(${size})` }}
+        >
+          <WebstudioIcon width="22" height="22" />
+        </span>
+        <span
+          className={faceStyle()}
           style={{
-            transform: isOpen
-              ? `translateZ(-${size}) rotateY(-90deg)`
-              : `translateZ(-${size}) rotateY(0deg)`,
+            transform: `rotateY(90deg) translateZ(${size})`,
           }}
         >
-          <span
-            className={faceStyle()}
-            style={{ transform: `rotateY(0deg) translateZ(${size})` }}
-          >
-            <WebstudioIcon width="22" height="22" />
-          </span>
-          <span
-            className={faceStyle()}
-            style={{
-              transform: `rotateY(90deg) translateZ(${size})`,
-            }}
-          >
-            <HamburgerMenuIcon />
-          </span>
+          <HamburgerMenuIcon />
         </span>
-      </ToolbarToggle>
+      </span>
     </DropdownMenuTrigger>
   );
 };

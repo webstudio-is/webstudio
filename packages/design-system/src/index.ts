@@ -16,7 +16,7 @@ export * from "./components/dialog";
 export * from "./components/floating-panel-popover";
 export { MenuItemButton } from "./components/menu";
 export * from "./components/switch";
-export * from "./components/toolbar-toggle";
+export * from "./components/toolbar";
 
 // Not aligned
 

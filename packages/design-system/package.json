@@ -65,6 +65,7 @@
     "@radix-ui/react-toast": "^1.0.0",
     "@radix-ui/react-toggle": "^1.0.0",
     "@radix-ui/react-toggle-group": "^1.0.0",
+    "@radix-ui/react-toolbar": "^1.0.2",
     "@radix-ui/react-tooltip": "^1.0.0",
     "@radix-ui/react-use-layout-effect": "^1.0.0",
     "@react-aria/interactions": "^3.11.0",
