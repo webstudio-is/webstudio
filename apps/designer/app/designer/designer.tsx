@@ -307,9 +307,10 @@ export const Designer = ({
     <AssetsProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <Topbar
-          css={{ gridArea: "header" }}
+          gridArea="header"
           project={project}
           publish={publish}
+          page={page}
         />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>

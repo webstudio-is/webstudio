@@ -1,12 +1,12 @@
 import type { Publish } from "~/shared/pubsub";
-import { css, Flex, type CSS } from "@webstudio-is/design-system";
+import { css, Flex, Text } from "@webstudio-is/design-system";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
 import { SyncStatus } from "./sync-status";
 import { Menu } from "./menu";
 import { Breakpoints } from "../breakpoints";
-import type { Project } from "@webstudio-is/project";
+import type { Page, Project } from "@webstudio-is/project";
 import { theme } from "@webstudio-is/design-system";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
@@ -18,22 +18,41 @@ const topbarContainerStyle = css({
 });
 
 type TopbarProps = {
-  css: CSS;
+  gridArea: string;
   project: Project;
+  page: Page;
   publish: Publish;
 };
 
-export const Topbar = ({ css, project, publish }: TopbarProps) => {
+export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
   return (
     <Flex
-      className={topbarContainerStyle({ css })}
+      className={topbarContainerStyle({ css: { gridArea } })}
       as="header"
       align="center"
-      justify="between"
     >
-      <Menu publish={publish} />
-      <Breakpoints />
-      <Flex align="center" gap="2">
+      <Flex grow={false} shrink={false}>
+        <Menu publish={publish} />
+      </Flex>
+      <Flex css={{ width: theme.spacing[30] }}>
+        <Text
+          variant="labelTitleCase"
+          color="contrast"
+          css={{ maxWidth: theme.spacing[20] }}
+          truncate
+        >
+          {page.title}
+        </Text>
+      </Flex>
+      <Flex grow align="center" justify="center">
+        <Breakpoints />
+      </Flex>
+      <Flex
+        align="center"
+        justify="end"
+        gap="2"
+        css={{ width: theme.spacing[30] }}
+      >
         <SyncStatus />
         <PreviewButton />
         {isFeatureEnabled("share2") && <ShareButton projectId={project.id} />}
