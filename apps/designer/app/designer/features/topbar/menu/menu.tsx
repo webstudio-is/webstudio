@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useNavigate } from "@remix-run/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
+  theme,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -25,9 +27,11 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/designer/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
-import { useIsPreviewMode } from "~/shared/nano-states";
-import { useState } from "react";
+import {
+  selectedInstanceIdStore,
+  useIsPreviewMode,
+} from "~/shared/nano-states";
+import { deleteInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
 
 const ThemeMenuItem = () => {
@@ -165,10 +169,11 @@ export const Menu = ({ publish }: MenuProps) => {
           */}
           <DropdownMenuItem
             onSelect={() => {
-              publish({
-                type: "shortcut",
-                payload: { name: "delete" },
-              });
+              const selectedInstanceId = selectedInstanceIdStore.get();
+              if (selectedInstanceId === undefined) {
+                return;
+              }
+              deleteInstance(selectedInstanceId);
             }}
           >
             Delete

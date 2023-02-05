@@ -9,7 +9,6 @@ import {
   useTextEditingInstanceId,
   isPreviewModeStore,
 } from "~/shared/nano-states";
-import { deleteInstance } from "~/shared/instance-utils";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
@@ -67,28 +66,15 @@ const publishCancelCurrentDrag = () => {
 export const useShortcuts = () => {
   const [editingInstanceId, setEditingInstanceId] = useTextEditingInstanceId();
 
-  const deleteSelectedInstance = () => {
-    const selectedInstanceId = selectedInstanceIdStore.get();
-    if (selectedInstanceId === undefined) {
-      return;
-    }
-    deleteInstance(selectedInstanceId);
-  };
-
   const shortcutHandlerMap = {
     undo: store.undo.bind(store),
     redo: store.redo.bind(store),
-    delete: deleteSelectedInstance,
     preview: togglePreviewMode,
     breakpointsMenu: publishOpenBreakpointsMenu,
     breakpoint: publishSelectBreakpoint,
     zoom: publishZoom,
     esc: publishCancelCurrentDrag,
   } as const;
-
-  useHotkeys("backspace, delete", shortcutHandlerMap.delete, options, [
-    shortcutHandlerMap.delete,
-  ]);
 
   useHotkeys(
     "esc",

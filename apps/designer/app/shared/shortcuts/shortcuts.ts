@@ -1,11 +1,12 @@
-import type { Options } from "react-hotkeys-hook";
+import { Options, useHotkeys } from "react-hotkeys-hook";
+import { selectedInstanceIdStore } from "../nano-states";
+import { deleteInstance } from "../instance-utils";
 
 export const shortcuts = {
   esc: "esc",
   undo: "cmd+z, ctrl+z",
   redo: "cmd+shift+z, ctrl+shift+z",
   preview: "cmd+shift+p, ctrl+shift+p",
-  delete: "backspace, delete",
   breakpointsMenu: "cmd+b, ctrl+b",
   breakpoint: Array.from(new Array(9))
     .map((_, index) => `cmd+${index + 1}, ctrl+${index + 1}`)
@@ -14,7 +15,21 @@ export const shortcuts = {
 } as const;
 
 export const options: Options = {
-  splitKey: "+",
-  keydown: true,
-  enableOnTags: ["INPUT", "SELECT", "TEXTAREA"],
+  enableOnFormTags: true,
+};
+
+export const useSharedShortcuts = () => {
+  useHotkeys(
+    "backspace, delete",
+    () => {
+      const selectedInstanceId = selectedInstanceIdStore.get();
+      if (selectedInstanceId === undefined) {
+        return;
+      }
+      deleteInstance(selectedInstanceId);
+    },
+    // prevent instance deletion while deleting text
+    { enableOnFormTags: false, enableOnContentEditable: false },
+    []
+  );
 };
