@@ -201,6 +201,7 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
     <Grid
       css={{
         height: "100vh",
+        minWidth: 530, // Enough space to show left sidebars before it becomes broken or unusable
         overflow: "hidden",
         display: "grid",
         gridTemplateRows: "auto 1fr auto",
@@ -306,9 +307,10 @@ export const Designer = ({
     <AssetsProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <Topbar
-          css={{ gridArea: "header" }}
+          gridArea="header"
           project={project}
           publish={publish}
+          page={page}
         />
         <Main>
           <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
