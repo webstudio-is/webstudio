@@ -34,7 +34,7 @@ type TopbarProps = {
 export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
   return (
     <Toolbar className={topbarContainerStyle({ css: { gridArea } })}>
-      <Flex grow={false} shrink={false} css={{ width: 40 }}>
+      <Flex grow={false} shrink={false}>
         <Menu publish={publish} />
         <ToolbarSeparator
           css={{
