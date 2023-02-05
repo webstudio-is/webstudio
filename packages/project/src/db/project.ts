@@ -121,7 +121,11 @@ export const create = async (
       },
     });
 
-    await db.build.create(project.id, "dev", undefined, client);
+    await db.build.create(
+      { projectId: project.id, env: "dev", sourceBuild: undefined },
+      context,
+      client
+    );
 
     return project;
   });
@@ -213,7 +217,11 @@ const clone = async (
       },
     });
 
-    await db.build.create(clonedProject.id, "dev", build, client);
+    await db.build.create(
+      { projectId: clonedProject.id, env: "dev", sourceBuild: build },
+      context,
+      client
+    );
 
     return clonedProject;
   });

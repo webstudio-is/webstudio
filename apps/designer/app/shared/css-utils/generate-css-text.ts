@@ -22,9 +22,13 @@ export const generateCssText = async (
   }
 
   const canvasData = await loadCanvasData(
-    project,
-    buildParams.mode === "published" ? "prod" : "dev",
-    "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath
+    {
+      project,
+      env: buildParams.mode === "published" ? "prod" : "dev",
+      pageIdOrPath:
+        "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath,
+    },
+    context
   );
 
   if (canvasData === undefined) {

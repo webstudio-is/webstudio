@@ -124,6 +124,7 @@ const denormalizeTree = (instances: z.infer<typeof Instances>) => {
 
 export const loadById = async (
   { projectId, treeId }: { projectId: Project["id"]; treeId: Tree["id"] },
+  context: AppContext,
   client: Prisma.TransactionClient = prisma
 ): Promise<Tree | null> => {
   const tree = await client.tree.findUnique({
@@ -138,7 +139,10 @@ export const loadById = async (
   const instances = Instances.parse(JSON.parse(tree.instances));
   const root = Instance.parse(denormalizeTree(instances));
 
-  const props = await parseProps(tree.props);
+  const props = await parseProps(
+    { propsString: tree.props, projectId },
+    context
+  );
 
   const styleSourceSelections = StyleSourceSelections.parse(
     JSON.parse(tree.styleSelections)
@@ -154,9 +158,10 @@ export const loadById = async (
 
 export const clone = async (
   { projectId, treeId }: { projectId: Project["id"]; treeId: Tree["id"] },
+  context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const tree = await loadById({ projectId, treeId }, client);
+  const tree = await loadById({ projectId, treeId }, context, client);
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }
@@ -177,7 +182,7 @@ export const patch = async (
     throw new Error("You don't have edit access to this project");
   }
 
-  const tree = await loadById({ projectId, treeId });
+  const tree = await loadById({ projectId, treeId }, context);
   if (tree === null) {
     throw new Error(`Tree ${treeId} not found`);
   }

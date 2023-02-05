@@ -112,14 +112,21 @@ type AssetsContext = {
 
 const Context = createContext<AssetsContext | undefined>(undefined);
 
-export const AssetsProvider = ({ children }: { children: ReactNode }) => {
+export const AssetsProvider = ({
+  children,
+  authToken,
+}: {
+  children: ReactNode;
+  authToken: string | undefined;
+}) => {
   const [project] = useProject();
   const assetContainers = useStore(assetContainersStore);
   const { submit: load, data: serverAssets } = useFetcher<Asset[]>();
   const submit = usePersistentFetcher();
   const assetContainersRef = useRef(assetContainers);
 
-  const action = project && restAssetsPath({ projectId: project.id });
+  const action =
+    project && restAssetsPath({ projectId: project.id, authToken });
   assetContainersRef.current = assetContainers;
 
   useEffect(() => {

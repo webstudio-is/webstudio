@@ -11,16 +11,21 @@ import { useEffect } from "react";
 import { zfd } from "zod-form-data";
 import type { ActionData } from "~/designer/shared/assets";
 import { sentryException } from "~/shared/sentry";
+import { createContext } from "~/shared/context.server";
 
 const DeleteAssets = zfd.formData({
   assetId: zfd.repeatableOfType(zfd.text()),
 });
 
-export const loader = async ({ params }: LoaderArgs): Promise<Array<Asset>> => {
+export const loader = async ({
+  params,
+  request,
+}: LoaderArgs): Promise<Array<Asset>> => {
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }
-  return await loadByProject(params.projectId);
+  const context = await createContext(request);
+  return await loadByProject(params.projectId, context);
 };
 
 export const action = async (
@@ -31,6 +36,9 @@ export const action = async (
   if (params.projectId === undefined) {
     throw new Error("Project id undefined");
   }
+
+  const context = await createContext(request);
+
   try {
     /**
      * To prevent the AssetsProvider from being redrawn every time an action is requested, we use PUT instead of GET
@@ -42,15 +50,21 @@ export const action = async (
 
     if (request.method === "DELETE") {
       const { assetId: ids } = DeleteAssets.parse(await request.formData());
-      const deletedAssets = await deleteAssets(ids);
+      const deletedAssets = await deleteAssets(
+        { ids, projectId: params.projectId },
+        context
+      );
       return { deletedAssets };
     }
 
     if (request.method === "POST") {
-      const assets = await uploadAssets({
-        request,
-        projectId: params.projectId,
-      });
+      const assets = await uploadAssets(
+        {
+          request,
+          projectId: params.projectId,
+        },
+        context
+      );
       return {
         uploadedAssets: assets.map((asset) => ({
           ...asset,
