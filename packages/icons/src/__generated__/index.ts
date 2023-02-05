@@ -12,6 +12,7 @@ export * from "./eyecon-closed";
 export * from "./eyecon-open";
 export * from "./info";
 export * from "./linked";
+export * from "./offline";
 export * from "./play";
 export * from "./scroll";
 export * from "./subscript";

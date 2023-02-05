@@ -21,6 +21,7 @@ export const PreviewButton = () => {
           : theme.colors.foregroundContrastMain,
       }}
       onClick={() => setIsPreviewMode(isPreviewMode === false)}
+      tabIndex={0}
     >
       <PlayIcon />
     </ToolbarToggleItem>
