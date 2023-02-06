@@ -13,11 +13,13 @@ import {
   DeprecatedPopoverPortal,
   TextField,
   useId,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import type { Project } from "@webstudio-is/project";
 import { getPublishedUrl, restPublishPath } from "~/shared/router-utils";
 import { theme } from "@webstudio-is/design-system";
+import { useAuthPermit } from "~/shared/nano-states";
 type PublishButtonProps = { project: Project };
 
 const Content = ({ project }: PublishButtonProps) => {
@@ -80,10 +82,21 @@ const Content = ({ project }: PublishButtonProps) => {
 
 export const PublishButton = ({ project }: PublishButtonProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
+  const [authPermit] = useAuthPermit();
+
+  const publishDisabled = authPermit === "view";
+  const tooltipContent = publishDisabled
+    ? "Only owner can publish projects"
+    : undefined;
+
   return (
     <DeprecatedPopover open={isOpen} onOpenChange={setIsOpen}>
       <DeprecatedPopoverTrigger asChild aria-label="Publish">
-        <Button color="positive">Publish</Button>
+        <Tooltip side="bottom" content={tooltipContent}>
+          <Button disabled={publishDisabled} color="positive">
+            Publish
+          </Button>
+        </Tooltip>
       </DeprecatedPopoverTrigger>
       <DeprecatedPopoverPortal>
         <Content project={project} />
