@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import warnOnce from "warn-once";
-import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import type { MetaProps } from "@webstudio-is/react-sdk";
 import {
   getComponentMeta,
   getComponentMetaProps,
 } from "@webstudio-is/react-sdk";
 
-export type UserPropValue = PropsItem extends infer T
+export type UserPropValue = Prop extends infer T
   ? T extends { value: unknown; type: unknown }
     ? { value: T["value"]; type: T["type"] }
     : never
@@ -69,13 +69,13 @@ const getRequiredPropsList = (component: string) => {
 };
 
 type UsePropsLogic = {
-  props: PropsItem[];
+  props: Prop[];
   selectedInstance: Instance;
-  updateProps: (update: PropsItem) => void;
-  deleteProp: (id: PropsItem["id"]) => void;
+  updateProps: (update: Prop) => void;
+  deleteProp: (id: Prop["id"]) => void;
 };
 
-const getPropsItemFromMetaProps = (
+const getPropFromMetaProps = (
   instanceId: Instance["id"],
   metaProps: MetaProps,
   name: string
@@ -111,31 +111,31 @@ export const usePropsLogic = ({
     () => getRequiredPropsList(component),
     [component]
   );
-  const requiredPropsByName = new Map<string, PropsItem>();
+  const requiredPropsByName = new Map<string, Prop>();
   for (const name of requiredPropsList) {
-    const propsItem = getPropsItemFromMetaProps(instanceId, metaProps, name);
-    if (propsItem) {
-      requiredPropsByName.set(name, propsItem);
+    const prop = getPropFromMetaProps(instanceId, metaProps, name);
+    if (prop) {
+      requiredPropsByName.set(name, prop);
     }
   }
 
-  const [addedProps, setAddedProps] = useState<PropsItem[]>([]);
-  const addedPropsById = new Map<string, PropsItem>();
-  for (const propsItem of addedProps) {
-    addedPropsById.set(propsItem.id, propsItem);
+  const [addedProps, setAddedProps] = useState<Prop[]>([]);
+  const addedPropsById = new Map<string, Prop>();
+  for (const prop of addedProps) {
+    addedPropsById.set(prop.id, prop);
   }
 
-  const propsById = new Map<string, PropsItem>();
-  for (const propsItem of props) {
-    if (requiredPropsByName.has(propsItem.name)) {
-      requiredPropsByName.set(propsItem.name, propsItem);
+  const propsById = new Map<string, Prop>();
+  for (const prop of props) {
+    if (requiredPropsByName.has(prop.name)) {
+      requiredPropsByName.set(prop.name, prop);
       continue;
     }
-    if (addedPropsById.has(propsItem.id)) {
-      addedPropsById.set(propsItem.id, propsItem);
+    if (addedPropsById.has(prop.id)) {
+      addedPropsById.set(prop.id, prop);
       continue;
     }
-    propsById.set(propsItem.id, propsItem);
+    propsById.set(prop.id, prop);
   }
 
   // maintain added props order until panel is closed
@@ -146,30 +146,27 @@ export const usePropsLogic = ({
     ...addedPropsById.values(),
   ];
 
-  const handleChangePropName = (propsItem: PropsItem, name: string) => {
+  const handleChangePropName = (prop: Prop, name: string) => {
     // prevent changing name of required props
-    if (isRequired(propsItem)) {
+    if (isRequired(prop)) {
       return;
     }
     const typedValue = getValueFromPropMeta(metaProps[name]);
-    updateProps({ id: propsItem.id, instanceId, name, ...typedValue });
+    updateProps({ id: prop.id, instanceId, name, ...typedValue });
   };
 
-  const handleChangePropValue = (
-    propsItem: PropsItem,
-    value: UserPropValue
-  ) => {
-    updateProps({ ...propsItem, ...value });
+  const handleChangePropValue = (prop: Prop, value: UserPropValue) => {
+    updateProps({ ...prop, ...value });
   };
 
-  const handleDeleteProp = (propsItem: PropsItem) => {
+  const handleDeleteProp = (prop: Prop) => {
     // required prop should never be deleted
-    if (isRequired(propsItem)) {
+    if (isRequired(prop)) {
       return;
     }
-    const id = propsItem.id;
+    const id = prop.id;
     deleteProp(id);
-    setAddedProps((prev) => prev.filter((propsItem) => propsItem.id !== id));
+    setAddedProps((prev) => prev.filter((prop) => prop.id !== id));
   };
 
   const addEmptyProp = () => {
@@ -185,8 +182,8 @@ export const usePropsLogic = ({
     ]);
   };
 
-  const isRequired = (propsItem: PropsItem) => {
-    return propsItem.required || requiredPropsList.includes(propsItem.name);
+  const isRequired = (prop: Prop) => {
+    return prop.required || requiredPropsList.includes(prop.name);
   };
 
   return {
