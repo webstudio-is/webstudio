@@ -13,6 +13,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
   DropdownMenuPortal,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { type Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
@@ -33,6 +34,7 @@ import {
 } from "~/shared/nano-states";
 import { deleteInstance } from "~/shared/instance-utils";
 import { MenuButton } from "./menu-button";
+import { useAuthPermit } from "~/shared/nano-states";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -101,6 +103,18 @@ export const Menu = ({ publish }: MenuProps) => {
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [authPermit] = useAuthPermit();
+
+  const isPublishDisabled = authPermit !== "own";
+  const isShareDisabled = authPermit !== "own";
+
+  const disabledPublishTooltipContent = isPublishDisabled
+    ? "Only owner can publish projects"
+    : undefined;
+
+  const disabledShareTooltipContent = isPublishDisabled
+    ? "Only owner can share projects"
+    : undefined;
 
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
@@ -231,20 +245,28 @@ export const Menu = ({ publish }: MenuProps) => {
               <ShortcutHint value={["cmd", "shift", "p"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              setIsShareOpen(true);
-            }}
-          >
-            Share
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              setIsPublishOpen(true);
-            }}
-          >
-            Publish
-          </DropdownMenuItem>
+
+          <Tooltip side="right" content={disabledShareTooltipContent}>
+            <DropdownMenuItem
+              onSelect={() => {
+                setIsShareOpen(true);
+              }}
+              disabled={isShareDisabled}
+            >
+              Share
+            </DropdownMenuItem>
+          </Tooltip>
+
+          <Tooltip side="right" content={disabledPublishTooltipContent}>
+            <DropdownMenuItem
+              onSelect={() => {
+                setIsPublishOpen(true);
+              }}
+              disabled={isPublishDisabled}
+            >
+              Publish
+            </DropdownMenuItem>
+          </Tooltip>
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
