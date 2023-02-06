@@ -1,6 +1,6 @@
 import { useState } from "react";
 import store from "immerhin";
-import type { Instance, PropsItem, Tree } from "@webstudio-is/project-build";
+import type { Instance, Prop, Tree } from "@webstudio-is/project-build";
 import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import {
   theme,
@@ -119,7 +119,7 @@ const Combobox = ({
 };
 
 type PropertyProps = {
-  userProp: PropsItem;
+  userProp: Prop;
   component: Instance["component"];
   onChangePropName: (name: string) => void;
   onChangePropValue: (value: UserPropValue) => void;

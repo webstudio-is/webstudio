@@ -1,8 +1,8 @@
 import { test, expect } from "@jest/globals";
 import type {
   Instance,
-  PropsItem,
-  StylesItem,
+  Prop,
+  StyleDecl,
   StyleSource,
   StyleSourceSelection,
 } from "@webstudio-is/project-build";
@@ -27,7 +27,7 @@ const createInstance = (id: Instance["id"], children: Instance[]): Instance => {
   };
 };
 
-const createProp = (id: string, instanceId: string): PropsItem => {
+const createProp = (id: string, instanceId: string): Prop => {
   return {
     id,
     instanceId,
@@ -65,7 +65,7 @@ const createStyleSourceSelection = (
   };
 };
 
-const createStyleDecl = (styleSourceId: string): StylesItem => {
+const createStyleDecl = (styleSourceId: string): StyleDecl => {
   return {
     styleSourceId,
     breakpointId: "breakpointId",

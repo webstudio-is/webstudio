@@ -174,14 +174,14 @@ export const stylesIndexStore = computed(
   [stylesStore, styleSourceSelectionsStore],
   (styles, styleSourceSelections) => {
     const stylesByStyleSourceId = new Map<StyleSource["id"], Styles>();
-    for (const stylesItem of styles) {
-      const { styleSourceId } = stylesItem;
+    for (const styleDecl of styles) {
+      const { styleSourceId } = styleDecl;
       let styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
       if (styleSourceStyles === undefined) {
         styleSourceStyles = [];
         stylesByStyleSourceId.set(styleSourceId, styleSourceStyles);
       }
-      styleSourceStyles.push(stylesItem);
+      styleSourceStyles.push(styleDecl);
     }
 
     const stylesByInstanceId = new Map<Instance["id"], Styles>();

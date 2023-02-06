@@ -1,4 +1,4 @@
-import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import warnOnce from "warn-once";
 import {
@@ -176,7 +176,7 @@ const assertUnreachable = (_arg: never, errorMessage: string) => {
 
 type ControlProps = {
   component: Instance["component"];
-  userProp: PropsItem;
+  userProp: Prop;
   onChangePropValue: (value: UserPropValue) => void;
   setCssProperty: SetProperty;
 };

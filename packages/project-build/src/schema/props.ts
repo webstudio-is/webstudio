@@ -1,58 +1,58 @@
 import { z } from "zod";
 import { Asset } from "@webstudio-is/asset-uploader";
 
-const basePropsItem = {
+const baseProp = {
   id: z.string(),
   instanceId: z.string(),
   name: z.string(),
   required: z.optional(z.boolean()),
 };
 
-const SharedPropsItem = z.union([
+const SharedProp = z.union([
   z.object({
-    ...basePropsItem,
+    ...baseProp,
     type: z.literal("number"),
     value: z.number(),
   }),
   z.object({
-    ...basePropsItem,
+    ...baseProp,
     type: z.literal("string"),
     value: z.string(),
   }),
   z.object({
-    ...basePropsItem,
+    ...baseProp,
     type: z.literal("boolean"),
     value: z.boolean(),
   }),
 ]);
 
-export const StoredPropsItem = z.union([
-  SharedPropsItem,
+export const StoredProp = z.union([
+  SharedProp,
   z.object({
-    ...basePropsItem,
+    ...baseProp,
     type: z.literal("asset"),
     // asset.id is stored in database
     value: z.string(),
   }),
 ]);
 
-export type StoredPropsItem = z.infer<typeof StoredPropsItem>;
+export type StoredProp = z.infer<typeof StoredProp>;
 
-export const StoredProps = z.array(StoredPropsItem);
+export const StoredProps = z.array(StoredProp);
 
 export type StoredProps = z.infer<typeof StoredProps>;
 
-export const PropsItem = z.union([
-  SharedPropsItem,
+export const Prop = z.union([
+  SharedProp,
   z.object({
-    ...basePropsItem,
+    ...baseProp,
     type: z.literal("asset"),
     value: Asset,
   }),
 ]);
 
-export type PropsItem = z.infer<typeof PropsItem>;
+export type Prop = z.infer<typeof Prop>;
 
-export const Props = z.array(PropsItem);
+export const Props = z.array(Prop);
 
 export type Props = z.infer<typeof Props>;

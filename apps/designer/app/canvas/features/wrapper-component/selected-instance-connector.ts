@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Instance, PropsItem, Styles } from "@webstudio-is/project-build";
+import type { Instance, Prop, Styles } from "@webstudio-is/project-build";
 import { getBrowserStyle } from "@webstudio-is/react-sdk";
 import { publish, subscribe, subscribeAll } from "~/shared/pubsub";
 import {
@@ -54,7 +54,7 @@ export const SelectedInstanceConnector = ({
   instanceElementRef: { current: undefined | HTMLElement };
   instance: Instance;
   instanceStyles: Styles;
-  instanceProps: undefined | PropsItem[];
+  instanceProps: undefined | Prop[];
 }) => {
   useEffect(() => {
     const element = instanceElementRef.current;
