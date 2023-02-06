@@ -28,8 +28,8 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
   const { size, meta, id, name } = asset;
   const [authPermit] = useAuthPermit();
 
-  const deleteDisabled = authPermit === "view";
-  const tooltipContent = deleteDisabled
+  const isDeleteDisabled = authPermit === "view";
+  const tooltipContent = isDeleteDisabled
     ? "View mode. You can't delete assets."
     : undefined;
 
@@ -72,7 +72,7 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
             color="destructive"
             onClick={() => onDelete([id])}
             prefix={<TrashIcon />}
-            disabled={deleteDisabled}
+            disabled={isDeleteDisabled}
           >
             Delete
           </Button>

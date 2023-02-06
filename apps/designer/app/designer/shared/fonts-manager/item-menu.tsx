@@ -4,7 +4,7 @@ import {
   DeprecatedIconButton,
   DropdownMenuContent,
   DropdownMenuItem,
-  DeprecatedText2,
+  Text,
   DropdownMenuPortal,
   styled,
   Tooltip,
@@ -46,8 +46,8 @@ const ItemMenu = ({
 
   const [authPermit] = useAuthPermit();
 
-  const deleteDisabled = authPermit === "view";
-  const tooltipContent = deleteDisabled
+  const isDeleteDisabled = authPermit === "view";
+  const tooltipContent = isDeleteDisabled
     ? "View mode. You can't delete assets."
     : undefined;
 
@@ -81,7 +81,7 @@ const ItemMenu = ({
         <DropdownMenuContent align="start">
           <Tooltip side="bottom" content={tooltipContent}>
             <DropdownMenuItem
-              disabled={deleteDisabled}
+              disabled={isDeleteDisabled}
               onClick={(event) => {
                 // Prevent setting the current font to the item.
                 event.stopPropagation();
@@ -90,7 +90,7 @@ const ItemMenu = ({
                 onDelete();
               }}
             >
-              <DeprecatedText2>Delete font</DeprecatedText2>
+              <Text>Delete font</Text>
             </DropdownMenuItem>
           </Tooltip>
         </DropdownMenuContent>

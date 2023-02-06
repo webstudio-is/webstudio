@@ -36,8 +36,8 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
   const { inputRef, onChange } = useUpload(type);
   const [authPermit] = useAuthPermit();
 
-  const uploadDisabled = authPermit === "view";
-  const tooltipContent = uploadDisabled
+  const isUploadDisabled = authPermit === "view";
+  const tooltipContent = isUploadDisabled
     ? "View mode. You can't upload assets."
     : undefined;
 
@@ -58,7 +58,7 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
             onClick={() => inputRef?.current?.click()}
             css={{ flexGrow: 1 }}
             prefix={<UploadIcon />}
-            disabled={uploadDisabled}
+            disabled={isUploadDisabled}
           >
             Upload
           </Button>
