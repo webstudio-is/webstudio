@@ -21,7 +21,6 @@ export const NoProps: ComponentStory<typeof PropsPanel> = () => {
   ]);
   return (
     <PropsPanel
-      treeId="treeId"
       selectedInstance={{
         type: "instance",
         id: "1",
@@ -38,7 +37,6 @@ export const RequiredProps: ComponentStory<typeof PropsPanel> = () => {
   propsStore.set([]);
   return (
     <PropsPanel
-      treeId="treeId"
       selectedInstance={{
         type: "instance",
         id: "1",
@@ -55,7 +53,6 @@ export const DefaultProps: ComponentStory<typeof PropsPanel> = () => {
   propsStore.set([]);
   return (
     <PropsPanel
-      treeId="treeId"
       selectedInstance={{
         type: "instance",
         id: "1",
@@ -83,7 +80,6 @@ export const AllProps: ComponentStory<typeof PropsPanel> = () => {
   );
   return (
     <PropsPanel
-      treeId="treeId"
       selectedInstance={{
         type: "instance",
         id: "3",

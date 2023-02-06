@@ -1,6 +1,6 @@
 import { useState } from "react";
 import store from "immerhin";
-import type { Instance, Prop, Tree } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import { getComponentMetaProps } from "@webstudio-is/react-sdk";
 import {
   theme,
@@ -213,16 +213,11 @@ const Property = ({
 };
 
 type PropsPanelProps = {
-  treeId: Tree["id"];
   publish: Publish;
   selectedInstance: Instance;
 };
 
-export const PropsPanel = ({
-  treeId,
-  selectedInstance,
-  publish,
-}: PropsPanelProps) => {
+export const PropsPanel = ({ selectedInstance, publish }: PropsPanelProps) => {
   const instanceId = selectedInstance.id;
   const instanceProps = useInstanceProps(instanceId);
 
@@ -255,7 +250,6 @@ export const PropsPanel = ({
   });
 
   const { setProperty: setCssProperty } = useStyleData({
-    treeId,
     selectedInstance,
     publish,
   });
