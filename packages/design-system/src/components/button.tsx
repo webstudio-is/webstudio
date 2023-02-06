@@ -51,31 +51,31 @@ const perColorStyle = (variant: ButtonColor) => ({
   background: variant === "ghost" ? "transparent" : backgrounds[variant],
   color: foregrounds[variant],
 
-  "&[data-button-state=auto]:hover, &[data-button-state=hover]": {
+  "&[data-state=auto]:hover, &[data-state=hover]": {
     background: backgroundColors(
       backgrounds[variant],
       theme.colors.backgroundButtonHover
     ),
   },
 
-  "&[data-button-state=auto]:focus-visible, &[data-button-state=focus]": {
+  "&[data-state=auto]:focus-visible, &[data-state=focus]": {
     outline: `2px solid ${theme.colors.borderFocus}`,
     outlineOffset: "1px",
   },
 
-  "&[data-button-state=auto]:active, &[data-button-state=pressed]": {
+  "&[data-state=auto]:active, &[data-state=pressed]": {
     background: backgroundColors(
       backgrounds[variant],
       theme.colors.backgroundButtonPressed
     ),
   },
 
-  "&[data-button-state=disabled]": {
+  "&[data-state=disabled]": {
     background: theme.colors.backgroundButtonDisabled,
     color: theme.colors.foregroundDisabled,
   },
 
-  "&[data-button-state=pending]": {
+  "&[data-state=pending]": {
     cursor: "wait",
   },
 });
@@ -125,25 +125,43 @@ type ButtonProps = {
   // this is a replacement for icon/icon-left/icon-right in Figma
   prefix?: ReactNode;
   suffix?: ReactNode;
+
+  // might be set when <Button> is asChild
+  "data-state"?: string;
 } & Omit<ComponentProps<"button">, "prefix">;
 
 export const Button = forwardRef(
   (
     {
       disabled,
-      state = "auto",
+      state,
       prefix,
       suffix,
       children,
+      "data-state": dataState,
       ...restProps
     }: ButtonProps,
     ref: Ref<HTMLButtonElement>
   ) => {
+    // when button is used as a trigger for something that opens
+    // <SomeTrigger asChild><Button /></SomeTrigger>
+    let finalState = dataState === "open" ? "pressed" : undefined;
+
+    // "state" wins over "data-state"
+    if (state !== undefined) {
+      finalState = state;
+    }
+
+    // "disabled" wins over everything
+    if (disabled) {
+      finalState = "disabled";
+    }
+
     return (
       <StyledButton
         {...restProps}
         disabled={disabled || state === "pending"}
-        data-button-state={disabled ? "disabled" : state}
+        data-state={finalState ?? "auto"}
         ref={ref}
       >
         {prefix}
