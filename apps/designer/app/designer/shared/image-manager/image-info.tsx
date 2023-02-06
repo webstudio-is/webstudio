@@ -4,6 +4,7 @@ import {
   Grid,
   DeprecatedText2,
   Button,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { getFormattedAspectRatio } from "./utils";
 import {
@@ -16,6 +17,7 @@ import prettyBytes from "pretty-bytes";
 import { Asset } from "@webstudio-is/asset-uploader";
 import { Filename } from "./filename";
 import { theme } from "@webstudio-is/design-system";
+import { useAuthPermit } from "~/shared/nano-states";
 
 type ImageInfoProps = {
   asset: Asset;
@@ -24,6 +26,13 @@ type ImageInfoProps = {
 
 export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
   const { size, meta, id, name } = asset;
+  const [authPermit] = useAuthPermit();
+
+  const isDeleteDisabled = authPermit === "view";
+  const tooltipContent = isDeleteDisabled
+    ? "View mode. You can't delete assets."
+    : undefined;
+
   return (
     <>
       <Box css={{ p: `${theme.spacing[5]} ${theme.spacing[9]}` }}>
@@ -58,13 +67,16 @@ export const ImageInfo = ({ asset, onDelete }: ImageInfoProps) => {
         </Box>
       ) : null}
       <Box css={{ p: `${theme.spacing[5]} ${theme.spacing[9]}` }}>
-        <Button
-          color="destructive"
-          onClick={() => onDelete([id])}
-          prefix={<TrashIcon />}
-        >
-          Delete
-        </Button>
+        <Tooltip side="bottom" content={tooltipContent}>
+          <Button
+            color="destructive"
+            onClick={() => onDelete([id])}
+            prefix={<TrashIcon />}
+            disabled={isDeleteDisabled}
+          >
+            Delete
+          </Button>
+        </Tooltip>
       </Box>
     </>
   );

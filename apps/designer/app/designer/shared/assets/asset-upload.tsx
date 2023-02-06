@@ -1,9 +1,10 @@
 import { ChangeEvent, useRef } from "react";
-import { Button, Flex } from "@webstudio-is/design-system";
+import { Button, Flex, Tooltip } from "@webstudio-is/design-system";
 import { UploadIcon } from "@webstudio-is/icons";
 import { type AssetType } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { useAssets } from "./use-assets";
+import { useAuthPermit } from "~/shared/nano-states";
 
 const useUpload = (type: AssetType) => {
   const { handleSubmit } = useAssets(type);
@@ -33,6 +34,13 @@ type AssetUploadProps = {
 
 export const AssetUpload = ({ type }: AssetUploadProps) => {
   const { inputRef, onChange } = useUpload(type);
+  const [authPermit] = useAuthPermit();
+
+  const isUploadDisabled = authPermit === "view";
+  const tooltipContent = isUploadDisabled
+    ? "View mode. You can't upload assets."
+    : undefined;
+
   return (
     <form onChange={onChange}>
       <Flex>
@@ -44,14 +52,17 @@ export const AssetUpload = ({ type }: AssetUploadProps) => {
           ref={inputRef}
           style={{ display: "none" }}
         />
-        <Button
-          type="button"
-          onClick={() => inputRef?.current?.click()}
-          css={{ flexGrow: 1 }}
-          prefix={<UploadIcon />}
-        >
-          Upload
-        </Button>
+        <Tooltip side="bottom" content={tooltipContent}>
+          <Button
+            type="button"
+            onClick={() => inputRef?.current?.click()}
+            css={{ flexGrow: 1 }}
+            prefix={<UploadIcon />}
+            disabled={isUploadDisabled}
+          >
+            Upload
+          </Button>
+        </Tooltip>
       </Flex>
     </form>
   );
