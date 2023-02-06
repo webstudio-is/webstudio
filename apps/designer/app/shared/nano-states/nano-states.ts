@@ -1,15 +1,17 @@
 import { useMemo } from "react";
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface";
 import type { Asset } from "@webstudio-is/asset-uploader";
-import type {
+import {
   Instance,
   Props,
   Styles,
   StyleSource,
   StyleSources,
   StyleSourceSelections,
+  Tree,
 } from "@webstudio-is/project-build";
 import type { Breakpoint, Style } from "@webstudio-is/css-data";
 import type {
@@ -27,6 +29,13 @@ import { createInstancesIndex } from "../tree-utils";
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
   return [value, atom.set] as const;
+};
+
+export const treeIdStore = atom<undefined | Tree["id"]>(undefined);
+export const useSetTreeId = (treeId: Tree["id"]) => {
+  useSyncInitializeOnce(() => {
+    treeIdStore.set(treeId);
+  });
 };
 
 export const rootInstanceContainer = atom<Instance | undefined>();
@@ -124,26 +133,8 @@ export const useSetStyleSourceSelections = (
   });
 };
 
-export const styleSourceSelectionsIndexStore = computed(
-  [styleSourceSelectionsStore, styleSourcesIndexStore],
-  (styleSourceSelections, styleSourcesIndex) => {
-    const { styleSourcesById } = styleSourcesIndex;
-    const styleSourcesByInstanceId = new Map<Instance["id"], StyleSource[]>();
-    for (const { instanceId, values } of styleSourceSelections) {
-      const styleSources: StyleSources = [];
-      for (const styleSourceId of values) {
-        const styleSource = styleSourcesById.get(styleSourceId);
-        if (styleSource === undefined) {
-          continue;
-        }
-        styleSources.push(styleSource);
-      }
-      styleSourcesByInstanceId.set(instanceId, styleSources);
-    }
-    return {
-      styleSourcesByInstanceId,
-    };
-  }
+const selectedStyleSourceIdStore = atom<undefined | StyleSource["id"]>(
+  undefined
 );
 
 /**
@@ -235,6 +226,55 @@ export const selectedInstanceStore = computed(
   }
 );
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
+
+export const selectedInstanceStyleSourcesStore = computed(
+  [
+    styleSourceSelectionsStore,
+    styleSourcesIndexStore,
+    selectedInstanceIdStore,
+    treeIdStore,
+  ],
+  (styleSourceSelections, styleSourcesIndex, selectedInstanceId, treeId) => {
+    const styleSourceIds =
+      styleSourceSelections.find(
+        (styleSourceSelection) =>
+          styleSourceSelection.instanceId === selectedInstanceId
+      )?.values ?? [];
+    const { styleSourcesById } = styleSourcesIndex;
+    const selectedInstanceStyleSources: StyleSources = [];
+    // generate style source when selection is empty or not exist
+    // it is synchronized whenever instance style sources
+    // or styles are updated
+    if (styleSourceIds.length === 0 && treeId !== undefined) {
+      selectedInstanceStyleSources.push({
+        type: "local",
+        treeId,
+        id: nanoid(),
+      });
+    }
+    for (const styleSourceId of styleSourceIds) {
+      const styleSource = styleSourcesById.get(styleSourceId);
+      if (styleSource !== undefined) {
+        selectedInstanceStyleSources.push(styleSource);
+      }
+    }
+    return selectedInstanceStyleSources;
+  }
+);
+
+/**
+ * Provide selected style source with fallback
+ * to local style source of selected instance
+ */
+export const selectedStyleSourceStore = computed(
+  [selectedInstanceStyleSourcesStore, selectedStyleSourceIdStore],
+  (styleSources, selectedStyleSourceId) => {
+    return (
+      styleSources.find((item) => item.id === selectedStyleSourceId) ??
+      styleSources.find((item) => item.type === "local")
+    );
+  }
+);
 
 export const hoveredInstanceIdStore = atom<undefined | Instance["id"]>(
   undefined

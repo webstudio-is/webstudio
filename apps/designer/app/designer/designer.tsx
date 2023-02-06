@@ -35,6 +35,7 @@ import {
   useIsPreviewMode,
   useSetAuthPermit,
   useSetIsPreviewMode,
+  useSetTreeId,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
 import { Navigator } from "./features/sidebar-left";
@@ -266,6 +267,7 @@ export const Designer = ({
   useSetAuthPermit(authPermit);
   useSubscribeBreakpoints();
   useSetProject(project);
+  useSetTreeId(treeId);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
@@ -354,7 +356,7 @@ export const Designer = ({
           {dragAndDropState.isDragging ? (
             <TreePrevew />
           ) : (
-            <Inspector treeId={treeId} publish={publish} />
+            <Inspector publish={publish} />
           )}
         </SidePanel>
         <Footer />
