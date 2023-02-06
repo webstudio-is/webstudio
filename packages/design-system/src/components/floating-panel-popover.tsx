@@ -58,3 +58,4 @@ export const FloatingPanelPopoverTitle = ({
 
 export const FloatingPanelPopoverTrigger = Primitive.Trigger;
 export const FloatingPanelPopoverClose = Primitive.Close;
+export const FloatingPanelAnchor = Primitive.Anchor;
