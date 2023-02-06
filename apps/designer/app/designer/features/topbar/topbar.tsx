@@ -1,5 +1,12 @@
 import type { Publish } from "~/shared/pubsub";
-import { css, Flex, Text } from "@webstudio-is/design-system";
+import {
+  css,
+  Flex,
+  Text,
+  Toolbar,
+  ToolbarSeparator,
+  ToolbarToggleGroup,
+} from "@webstudio-is/design-system";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -27,15 +34,17 @@ type TopbarProps = {
 
 export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
   return (
-    <Flex
-      className={topbarContainerStyle({ css: { gridArea } })}
-      as="header"
-      align="center"
-    >
+    <Toolbar className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
         <Menu publish={publish} />
+        <ToolbarSeparator
+          css={{
+            // Workaround to prevent separator disappearing during menu animation
+            zIndex: 0,
+          }}
+        />
       </Flex>
-      <Flex css={{ width: theme.spacing[30] }}>
+      <Flex css={{ width: theme.spacing[30], px: theme.spacing[9] }}>
         <Text
           variant="labelTitleCase"
           color="contrast"
@@ -48,18 +57,20 @@ export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
       <Flex grow align="center" justify="center">
         <Breakpoints />
       </Flex>
-      <Flex
-        align="center"
-        justify="end"
-        gap="2"
-        css={{ width: theme.spacing[30] }}
+      <ToolbarToggleGroup
+        type="single"
+        css={{
+          justifyContent: "flex-end",
+          gap: theme.spacing[5],
+          width: theme.spacing[30],
+        }}
       >
         <ViewMode />
         <SyncStatus />
         <PreviewButton />
         {isFeatureEnabled("share2") && <ShareButton projectId={project.id} />}
         <PublishButton project={project} />
-      </Flex>
-    </Flex>
+      </ToolbarToggleGroup>
+    </Toolbar>
   );
 };

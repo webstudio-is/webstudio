@@ -2,11 +2,25 @@
  * Implementation of the "Toolbar Toggle" component from:
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=1512%3A7422&t=BOWCrlme5NepfLUm-4
  */
-import { styled, theme } from "../stitches.config";
-import * as Toggle from "@radix-ui/react-toggle";
+import * as ToolbarPrimitive from "@radix-ui/react-toolbar";
+import { css, styled, theme } from "../stitches.config";
+import { separatorStyle } from "./separator";
+
+export const Toolbar = styled(ToolbarPrimitive.Root, {
+  display: "flex",
+  height: theme.spacing[15],
+  background: theme.colors.backgroundTopbar,
+  color: theme.colors.foregroundContrastMain,
+  alignItems: "center",
+});
+
+export const ToolbarToggleGroup = styled(ToolbarPrimitive.ToggleGroup, {
+  display: "flex",
+  alignItems: "center",
+});
 
 // It is inside the button, so we need it as a separate element.
-const focusRing = {
+const toolbarItemFocusRing = {
   "&::after": {
     content: '""',
     position: "absolute",
@@ -19,7 +33,7 @@ const focusRing = {
   },
 };
 
-export const ToolbarToggle = styled(Toggle.Root, {
+export const toggleItemStyle = css({
   // reset styles
   boxSizing: "border-box",
   padding: 0,
@@ -39,14 +53,25 @@ export const ToolbarToggle = styled(Toggle.Root, {
   color: "inherit",
   background: "transparent",
 
-  "&:focus-visible": focusRing,
+  "&:focus-visible": toolbarItemFocusRing,
   "&:hover, &[data-state='on']": {
     background: theme.colors.backgroundButtonHover,
   },
   variants: {
     // Just for story
     focused: {
-      true: focusRing,
+      true: toolbarItemFocusRing,
     },
   },
 });
+
+export const ToolbarToggleItem = styled(
+  ToolbarPrimitive.ToggleItem,
+  toggleItemStyle
+);
+
+export const ToolbarSeparator = styled(
+  ToolbarPrimitive.Separator,
+  separatorStyle,
+  { background: theme.colors.borderDark }
+);

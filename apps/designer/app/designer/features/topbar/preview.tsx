@@ -1,5 +1,5 @@
 import { PlayIcon } from "@webstudio-is/icons";
-import { ToolbarToggle, theme } from "@webstudio-is/design-system";
+import { ToolbarToggleItem, theme } from "@webstudio-is/design-system";
 import { useIsPreviewMode } from "~/shared/nano-states";
 
 declare module "~/shared/pubsub" {
@@ -12,7 +12,8 @@ export const PreviewButton = () => {
   const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
 
   return (
-    <ToolbarToggle
+    <ToolbarToggleItem
+      value="preview"
       aria-label="Toggle Preview"
       css={{
         color: isPreviewMode
@@ -20,8 +21,9 @@ export const PreviewButton = () => {
           : theme.colors.foregroundContrastMain,
       }}
       onClick={() => setIsPreviewMode(isPreviewMode === false)}
+      tabIndex={0}
     >
       <PlayIcon />
-    </ToolbarToggle>
+    </ToolbarToggleItem>
   );
 };

@@ -9,12 +9,14 @@ export const SidebarTabs = styled(TabsPrimitive.Root, {
   flexDirection: "column",
   alignItems: "center",
   position: "relative",
+  boxSizing: "border-box",
 });
 
 export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
+  boxSizing: "border-box",
   flexShrink: 0,
   display: "flex",
-  size: theme.spacing[17],
+  size: theme.spacing[15],
   m: 0,
   userSelect: "none",
   outline: "none",
@@ -39,6 +41,7 @@ export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
 });
 
 const StyledTabsList = styled(TabsPrimitive.List, {
+  boxSizing: "border-box",
   flexShrink: 0,
   display: "flex",
   flexDirection: "column",

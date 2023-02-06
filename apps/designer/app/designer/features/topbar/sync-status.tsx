@@ -1,12 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
-import {
-  Flex,
-  AccessibleIcon,
-  rawTheme,
-  Tooltip,
-} from "@webstudio-is/design-system";
-import { CloudIcon } from "@webstudio-is/icons";
+import { Flex, rawTheme, Tooltip } from "@webstudio-is/design-system";
+import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
 import { queueStatus } from "~/designer/shared/sync";
 
@@ -33,31 +28,27 @@ export const SyncStatus = () => {
 
   return (
     <Flex align="center" justify="center">
-      <AccessibleIcon label={`Sync status: ${status}`}>
-        <Tooltip
-          variant="wrapped"
-          content={
-            <>
-              Offline changes will be synced with Webstudio once you go online.
-              {isOnline ? (
-                ""
-              ) : (
-                <>
-                  <br />
-                  Please check your internet connection.
-                </>
-              )}
-            </>
-          }
-        >
-          {/* @todo replace the icon, waiting for figma */}
-          <CloudIcon
-            width={20}
-            height={20}
-            color={rawTheme.colors.foregroundDestructive}
-          />
-        </Tooltip>
-      </AccessibleIcon>
+      <Tooltip
+        variant="wrapped"
+        content={
+          <>
+            Offline changes will be synced with Webstudio once you go online.
+            {isOnline ? (
+              ""
+            ) : (
+              <>
+                <br />
+                Please check your internet connection.
+              </>
+            )}
+          </>
+        }
+      >
+        <OfflineIcon
+          aria-label={`Sync status: ${status}`}
+          color={rawTheme.colors.foregroundDestructive}
+        />
+      </Tooltip>
     </Flex>
   );
 };
