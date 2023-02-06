@@ -29,14 +29,10 @@ import type {
 } from "./types";
 import { usePersistentFetcher } from "~/shared/fetcher";
 import type { ActionData } from "~/designer/shared/assets";
-import {
-  FetcherData,
-  normalizeErrors,
-  toastUnknownFieldErrors,
-} from "~/shared/form-utils";
+import { normalizeErrors, toastUnknownFieldErrors } from "~/shared/form-utils";
 import { updateStateAssets } from "./update-asset-containers";
 
-export type UploadData = FetcherData<ActionData>;
+export type UploadData = ActionData;
 
 const toUploadingAssetsAndFormData = (
   type: AssetType,
@@ -160,7 +156,8 @@ export const AssetsProvider = ({
       load({}, { action, method: "put" });
     }
 
-    if (data.status === "error") {
+    const { errors } = data;
+    if (errors !== undefined) {
       // We don't know what's wrong, remove the "deleting" status from assets and wait for the load to fix it
       const assetContainers = assetContainersRef.current;
       const nextAssetContainers = assetContainers.map((assetContainer) => {
@@ -177,7 +174,7 @@ export const AssetsProvider = ({
 
       assetContainersStore.set(nextAssetContainers);
 
-      return toastUnknownFieldErrors(normalizeErrors(data.errors), []);
+      return toastUnknownFieldErrors(normalizeErrors(errors), []);
     }
   };
 
@@ -188,7 +185,7 @@ export const AssetsProvider = ({
       load({}, { action, method: "put" });
     }
 
-    if (data.status === "error" || data.errors !== undefined) {
+    if (data.errors !== undefined) {
       // We don't know what's wrong, remove uploading asset and wait for the load to fix it
       assetContainersStore.set(
         assetContainers.filter(
