@@ -33,6 +33,7 @@ import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   useDragAndDropState,
   useIsPreviewMode,
+  useSetAuthPermit,
   useSetIsPreviewMode,
 } from "~/shared/nano-states";
 import { useClientSettings } from "./shared/client-settings";
@@ -40,6 +41,7 @@ import { Navigator } from "./features/sidebar-left";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPasteInstance } from "~/shared/copy-paste";
 import { AssetsProvider } from "./shared/assets";
+import type { AuthPermit } from "@webstudio-is/trpc-interface";
 
 registerContainers();
 export const links = () => {
@@ -247,7 +249,7 @@ export type DesignerProps = {
   buildOrigin: string;
   authReadToken: string;
   authToken?: string;
-  authPermit: "view" | "build" | "own";
+  authPermit: AuthPermit;
 };
 
 export const Designer = ({
@@ -261,13 +263,20 @@ export const Designer = ({
   authToken,
   authPermit,
 }: DesignerProps) => {
+  useSetAuthPermit(authPermit);
   useSubscribeBreakpoints();
   useSetProject(project);
   useSetPages(pages);
   useSetCurrentPageId(pageId);
   const [publish, publishRef] = usePublish();
   useDesignerStore(publish);
-  useSyncServer({ buildId, treeId, projectId: project.id, authToken });
+  useSyncServer({
+    buildId,
+    treeId,
+    projectId: project.id,
+    authToken,
+    authPermit,
+  });
   useSharedShortcuts();
   useSetIsPreviewMode(authPermit === "view");
   const [isPreviewMode] = useIsPreviewMode();

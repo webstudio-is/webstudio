@@ -1,4 +1,5 @@
 import type { Project } from "@webstudio-is/prisma-client";
+import { AuthPermit } from "../shared/authorization-router";
 import type { AppContext } from "../context/context.server";
 
 /**
@@ -29,12 +30,10 @@ export const registerProjectOwner = async (
   });
 };
 
-type Permit = "view" | "edit" | "build" | "own";
-
 export const hasProjectPermit = async (
   props: {
     projectId: Project["id"];
-    permit: Permit;
+    permit: AuthPermit;
   },
   context: AppContext
 ) => {
@@ -114,10 +113,10 @@ export const hasProjectPermit = async (
  * @todo think about caching to authorizeTrpc.check.query
  * batching check queries would help too https://github.com/ory/keto/issues/812
  */
-export const getProjectPermit = async <T extends Permit>(
+export const getProjectPermit = async <T extends AuthPermit>(
   props: {
     projectId: string;
-    permits: T[];
+    permits: readonly T[];
   },
   context: AppContext
 ): Promise<T | undefined> => {

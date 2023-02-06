@@ -21,6 +21,7 @@ import type {
 } from "~/designer/shared/assets";
 import { useSyncInitializeOnce } from "../hook-utils";
 import { shallowComputed } from "../store-utils";
+import type { AuthPermit } from "@webstudio-is/trpc-interface";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -262,6 +263,14 @@ export const useIsPreviewMode = () => useValue(isPreviewModeStore);
 export const useSetIsPreviewMode = (isPreviewMode: boolean) => {
   useSyncInitializeOnce(() => {
     isPreviewModeStore.set(isPreviewMode);
+  });
+};
+
+const authPermitStore = atom<AuthPermit>("view");
+export const useAuthPermit = () => useValue(authPermitStore);
+export const useSetAuthPermit = (authPermit: AuthPermit) => {
+  useSyncInitializeOnce(() => {
+    authPermitStore.set(authPermit);
   });
 };
 
