@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { useStore } from "@nanostores/react";
 import store from "immerhin";
 import warnOnce from "warn-once";
 import type { Instance } from "@webstudio-is/project-build";
@@ -56,15 +55,15 @@ export type CreateBatchUpdate = () => {
 
 export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
   const [selectedBreakpoint] = useSelectedBreakpoint();
-  const selectedInstanceStyleSources = useStore(
-    selectedInstanceStyleSourcesStore
-  );
-  const selectedStyleSource = useStore(selectedStyleSourceStore);
 
   const currentStyle = useStyleInfo();
 
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
+      const selectedStyleSource = selectedStyleSourceStore.get();
+      const selectedInstanceStyleSources =
+        selectedInstanceStyleSourcesStore.get();
+
       if (
         updates.length === 0 ||
         selectedBreakpoint === undefined ||
@@ -139,7 +138,7 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
         }
       );
     },
-    [publish, selectedBreakpoint, selectedInstance, selectedStyleSource]
+    [publish, selectedBreakpoint, selectedInstance]
   );
 
   // @deprecated should not be called
