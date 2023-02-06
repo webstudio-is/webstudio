@@ -1,6 +1,13 @@
 import { type ComponentProps } from "react";
 import { MenuIcon, CrossIcon, TrashIcon } from "@webstudio-is/icons";
 import { Button as ButtonComponent } from "./button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  PopoverContentContainer,
+} from "./popover";
+import { Text } from "./text";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
@@ -76,6 +83,19 @@ export const Button = ({
         <ButtonComponent suffix={<TrashIcon />}>Button</ButtonComponent>
         <ButtonComponent prefix={<TrashIcon />} />
       </StoryGrid>
+    </StorySection>
+
+    <StorySection title="Used as a Trigger for something that opens">
+      <Popover defaultOpen>
+        <PopoverTrigger asChild>
+          <ButtonComponent prefix={<TrashIcon />}>Open</ButtonComponent>
+        </PopoverTrigger>
+        <PopoverContent>
+          <PopoverContentContainer>
+            <Text>Some content</Text>
+          </PopoverContentContainer>
+        </PopoverContent>
+      </Popover>
     </StorySection>
   </>
 );
