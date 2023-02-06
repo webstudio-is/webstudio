@@ -2,7 +2,7 @@ import type { MouseEvent, FormEvent } from "react";
 import { Suspense, lazy, useCallback, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { Instance, PropsItem } from "@webstudio-is/project-build";
+import type { Instance, Prop } from "@webstudio-is/project-build";
 import {
   type OnChangeChildren,
   renderWrapperComponentChildren,
@@ -41,7 +41,7 @@ const ContentEditable = ({
   return <Component ref={ref} {...props} contentEditable={true} />;
 };
 
-type UserProps = Record<PropsItem["name"], string | number | boolean>;
+type UserProps = Record<Prop["name"], string | number | boolean>;
 
 type WrapperComponentDevProps = {
   instance: Instance;

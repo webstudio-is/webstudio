@@ -10,7 +10,7 @@ const StoredImageValue = z.object({
   value: z.array(z.object({ type: z.literal("asset"), value: z.string() })),
 });
 
-export const StoredStylesItem = z.object({
+export const StoredStyleDecl = z.object({
   styleSourceId: z.string(),
   breakpointId: z.string(),
   // @todo can't figure out how to make property to be enum
@@ -18,13 +18,13 @@ export const StoredStylesItem = z.object({
   value: z.union([StoredImageValue, SharedStyleValue]),
 });
 
-export type StoredStylesItem = z.infer<typeof StoredStylesItem>;
+export type StoredStyleDecl = z.infer<typeof StoredStyleDecl>;
 
-export const StoredStyles = z.array(StoredStylesItem);
+export const StoredStyles = z.array(StoredStyleDecl);
 
 export type StoredStyles = z.infer<typeof StoredStyles>;
 
-export const StylesItem = z.object({
+export const StyleDecl = z.object({
   styleSourceId: z.string(),
   breakpointId: z.string(),
   // @todo can't figure out how to make property to be enum
@@ -32,8 +32,8 @@ export const StylesItem = z.object({
   value: z.union([ImageValue, SharedStyleValue]),
 });
 
-export type StylesItem = z.infer<typeof StylesItem>;
+export type StyleDecl = z.infer<typeof StyleDecl>;
 
-export const Styles = z.array(StylesItem);
+export const Styles = z.array(StyleDecl);
 
 export type Styles = z.infer<typeof Styles>;

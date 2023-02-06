@@ -9,7 +9,6 @@ import {
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
 import { utils } from "@webstudio-is/project";
-import { findInsertLocation } from "~/canvas/shared/instance";
 import {
   rootInstanceContainer,
   propsStore,
@@ -17,6 +16,7 @@ import {
   selectedInstanceIdStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
+  instancesIndexStore,
 } from "../nano-states";
 import {
   cloneInstance,
@@ -24,6 +24,7 @@ import {
   cloneStyles,
   cloneStyleSources,
   cloneStyleSourceSelections,
+  findClosestDroppableTarget,
   findSubtree,
   findSubtreeLocalStyleSources,
 } from "../tree-utils";
@@ -89,7 +90,10 @@ const copyInstanceData = (targetInstanceId: string) => {
 };
 
 const pasteInstance = (data: InstanceData) => {
-  const selectedInstanceId = selectedInstanceIdStore.get();
+  const dropTarget = findClosestDroppableTarget(
+    instancesIndexStore.get(),
+    selectedInstanceIdStore.get()
+  );
   store.createTransaction(
     [
       rootInstanceContainer,
@@ -102,14 +106,7 @@ const pasteInstance = (data: InstanceData) => {
       if (rootInstance === undefined) {
         return;
       }
-      const hasInserted = utils.tree.insertInstanceMutable(
-        rootInstance,
-        data.instance,
-        findInsertLocation(rootInstance, selectedInstanceId)
-      );
-      if (hasInserted === false) {
-        return;
-      }
+      utils.tree.insertInstanceMutable(rootInstance, data.instance, dropTarget);
       // append without checking existing
       // because all data already cloned with new ids
       props.push(...data.props);

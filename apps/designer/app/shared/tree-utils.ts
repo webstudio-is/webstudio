@@ -8,6 +8,7 @@ import type {
   StyleSources,
   StyleSourceSelections,
 } from "@webstudio-is/project-build";
+import { getComponentMeta } from "@webstudio-is/react-sdk";
 
 const traverseInstances = (
   instance: Instance,
@@ -22,6 +23,80 @@ const traverseInstances = (
       traverseInstances(child, cb);
     }
   }
+};
+
+type InstancesIndex = {
+  rootInstanceId: undefined | Instance["id"];
+  instancesById: Map<Instance["id"], Instance>;
+  parentInstancesById: Map<Instance["id"], Instance>;
+};
+
+export const createInstancesIndex = (
+  rootInstance: undefined | Instance
+): InstancesIndex => {
+  const instancesById = new Map<Instance["id"], Instance>();
+  const parentInstancesById = new Map<Instance["id"], Instance>();
+  if (rootInstance) {
+    // traverse skips root without parent
+    instancesById.set(rootInstance.id, rootInstance);
+    traverseInstances(rootInstance, (child, parent) => {
+      parentInstancesById.set(child.id, parent);
+      instancesById.set(child.id, child);
+    });
+  }
+  return {
+    rootInstanceId: rootInstance?.id,
+    instancesById,
+    parentInstancesById,
+  };
+};
+
+const isInstanceDroppable = (instance: Instance) => {
+  const meta = getComponentMeta(instance.component);
+  return meta?.type === "body" || meta?.type === "container";
+};
+
+type DroppableTarget = {
+  parentId: Instance["id"];
+  position: number;
+};
+
+export const findClosestDroppableTarget = (
+  instancesIndex: InstancesIndex,
+  instanceId: undefined | Instance["id"]
+): undefined | DroppableTarget => {
+  const { instancesById, parentInstancesById } = instancesIndex;
+
+  if (instancesIndex.rootInstanceId === undefined) {
+    return;
+  }
+  // fallback to root instance
+  let droppableInstance = instancesById.get(
+    instanceId ?? instancesIndex.rootInstanceId
+  );
+  if (droppableInstance === undefined) {
+    return;
+  }
+  let position = -1;
+  while (isInstanceDroppable(droppableInstance) === false) {
+    const parentInstance = parentInstancesById.get(droppableInstance.id);
+    if (parentInstance === undefined) {
+      break;
+    }
+    // source of lookup in children
+    const sourceInstanceId = droppableInstance.id;
+    droppableInstance = parentInstance;
+    position = droppableInstance.children.findIndex(
+      (child) => child.type === "instance" && child.id === sourceInstanceId
+    );
+  }
+
+  return {
+    parentId: droppableInstance.id,
+    // put in the end when no position provided
+    position:
+      position === -1 ? droppableInstance.children.length : position + 1,
+  };
 };
 
 export const findSubtree = (
