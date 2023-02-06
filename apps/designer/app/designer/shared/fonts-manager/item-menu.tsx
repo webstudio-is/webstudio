@@ -7,10 +7,12 @@ import {
   DeprecatedText2,
   DropdownMenuPortal,
   styled,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { MenuIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 import { theme } from "@webstudio-is/design-system";
+import { useAuthPermit } from "~/shared/nano-states";
 
 const MenuButton = styled(DeprecatedIconButton, {
   color: theme.colors.hint,
@@ -42,6 +44,13 @@ const ItemMenu = ({
     };
   }, []);
 
+  const [authPermit] = useAuthPermit();
+
+  const deleteDisabled = authPermit === "view";
+  const tooltipContent = deleteDisabled
+    ? "View mode. You can't delete assets."
+    : undefined;
+
   return (
     <DropdownMenu
       open={isOpen}
@@ -70,17 +79,20 @@ const ItemMenu = ({
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem
-            onClick={(event) => {
-              // Prevent setting the current font to the item.
-              event.stopPropagation();
-            }}
-            onSelect={() => {
-              onDelete();
-            }}
-          >
-            <DeprecatedText2>Delete font</DeprecatedText2>
-          </DropdownMenuItem>
+          <Tooltip side="bottom" content={tooltipContent}>
+            <DropdownMenuItem
+              disabled={deleteDisabled}
+              onClick={(event) => {
+                // Prevent setting the current font to the item.
+                event.stopPropagation();
+              }}
+              onSelect={() => {
+                onDelete();
+              }}
+            >
+              <DeprecatedText2>Delete font</DeprecatedText2>
+            </DropdownMenuItem>
+          </Tooltip>
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
