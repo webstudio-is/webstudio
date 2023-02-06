@@ -16,6 +16,7 @@ import { Breakpoints } from "../breakpoints";
 import type { Page, Project } from "@webstudio-is/project";
 import { theme } from "@webstudio-is/design-system";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { ViewMode } from "./view-mode";
 
 const topbarContainerStyle = css({
   background: theme.colors.backgroundTopbar,
@@ -64,6 +65,7 @@ export const Topbar = ({ gridArea, project, page, publish }: TopbarProps) => {
           width: theme.spacing[30],
         }}
       >
+        <ViewMode />
         <SyncStatus />
         <PreviewButton />
         {isFeatureEnabled("share2") && <ShareButton projectId={project.id} />}

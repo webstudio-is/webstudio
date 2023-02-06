@@ -67,9 +67,13 @@ export const loader = async ({ request }: LoaderArgs): Promise<Data> => {
   }
 
   const canvasData = await loadCanvasData(
-    project,
-    buildEnv,
-    "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath
+    {
+      project,
+      env: buildEnv,
+      pageIdOrPath:
+        "pageId" in buildParams ? buildParams.pageId : buildParams.pagePath,
+    },
+    context
   );
 
   if (canvasData === undefined) {

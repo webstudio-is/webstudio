@@ -31,7 +31,11 @@ export const publish = async (
   const devBuild = await db.build.loadByProjectId(projectId, "dev");
 
   await prisma.$transaction(async (client) => {
-    await db.build.create(project.id, "prod", devBuild, client);
+    await db.build.create(
+      { projectId: project.id, env: "prod", sourceBuild: devBuild },
+      context,
+      client
+    );
   });
 
   const updatedProject = await db.project.updateDomain(

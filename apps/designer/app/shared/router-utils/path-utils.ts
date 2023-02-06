@@ -77,8 +77,23 @@ export const authPath = ({
 export const restPagesPath = ({ projectId }: { projectId: string }) =>
   `/rest/pages/${projectId}`;
 
-export const restAssetsPath = ({ projectId }: { projectId: string }) =>
-  `/rest/assets/${projectId}`;
+export const restAssetsPath = ({
+  projectId,
+  authToken,
+}: {
+  projectId: string;
+  authToken?: string;
+}) => {
+  const urlSearchParams = new URLSearchParams();
+  if (authToken !== undefined) {
+    urlSearchParams.set("authToken", authToken);
+  }
+  const urlSearchParamsString = urlSearchParams.toString();
+
+  return `/rest/assets/${projectId}${
+    urlSearchParamsString ? `?${urlSearchParamsString}` : ""
+  }`;
+};
 
 export const restThemePath = ({ setting }: { setting: ThemeSetting }) =>
   `/rest/theme/${setting}`;

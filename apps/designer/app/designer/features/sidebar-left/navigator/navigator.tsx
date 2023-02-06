@@ -9,7 +9,6 @@ import {
   useRootInstance,
 } from "~/shared/nano-states";
 import { InstanceTree } from "~/designer/shared/tree";
-import { deleteInstance } from "~/shared/instance-utils";
 import { Header, CloseButton } from "../header";
 
 declare module "~/shared/pubsub" {
@@ -74,7 +73,6 @@ export const Navigator = ({ publish, isClosable, onClose }: NavigatorProps) => {
           onSelect={handleSelect}
           onHover={handleHover}
           onDragEnd={handleDragEnd}
-          onDelete={deleteInstance}
         />
       </Flex>
     </Flex>

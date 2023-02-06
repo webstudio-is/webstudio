@@ -11,6 +11,7 @@ import * as db from ".";
 import { Build, Page, Pages } from "../shared/schema";
 import * as pagesUtils from "../shared/pages";
 import { parseStyles, serializeStyles } from "./styles";
+import type { AppContext } from "@webstudio-is/trpc-interface";
 
 export const parseBuild = async (build: DbBuild): Promise<Build> => {
   const pages = Pages.parse(JSON.parse(build.pages));
@@ -200,6 +201,7 @@ export const deletePage = async ({
 
 const createPages = async (
   { projectId, buildId }: { projectId: Project["id"]; buildId: Build["id"] },
+  context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
   const tree = await db.tree.create(
@@ -221,23 +223,29 @@ const createPages = async (
 
 const clonePage = async (
   { projectId, source }: { projectId: Project["id"]; source: Page },
+  context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
   const treeId = source.treeId;
-  const tree = await db.tree.clone({ projectId, treeId }, client);
+  const tree = await db.tree.clone({ projectId, treeId }, context, client);
   return { ...source, id: uuid(), treeId: tree.id };
 };
 
 const clonePages = async (
   { projectId, source }: { projectId: Project["id"]; source: Pages },
+  context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
   const clones = [];
   for (const page of source.pages) {
-    clones.push(await clonePage({ projectId, source: page }, client));
+    clones.push(await clonePage({ projectId, source: page }, context, client));
   }
   return Pages.parse({
-    homePage: await clonePage({ projectId, source: source.homePage }, client),
+    homePage: await clonePage(
+      { projectId, source: source.homePage },
+      context,
+      client
+    ),
     pages: clones,
   });
 };
@@ -249,27 +257,36 @@ const clonePages = async (
  * We create "prod" build when we publish a dev build.
  */
 export async function create(
-  projectId: Build["projectId"],
-  env: "prod",
-  sourceBuild: Build | undefined,
+  props: {
+    projectId: Build["projectId"];
+    env: "prod";
+    sourceBuild: Build | undefined;
+  },
+  context: AppContext,
   client: Prisma.TransactionClient
 ): Promise<void>;
 export async function create(
-  projectId: Build["projectId"],
-  env: "dev",
-  sourceBuild: Build | undefined,
+  props: {
+    projectId: Build["projectId"];
+    env: "dev";
+    sourceBuild: Build | undefined;
+  },
+  context: AppContext,
   client: Prisma.TransactionClient
 ): Promise<void>;
 // eslint-disable-next-line func-style
 export async function create(
-  projectId: Build["projectId"],
-  env: "dev" | "prod",
-  sourceBuild: Build | undefined,
+  props: {
+    projectId: Build["projectId"];
+    env: "dev" | "prod";
+    sourceBuild: Build | undefined;
+  },
+  context: AppContext,
   client: Prisma.TransactionClient
 ): Promise<void> {
-  if (env === "dev") {
+  if (props.env === "dev") {
     const count = await client.build.count({
-      where: { projectId, isDev: true },
+      where: { projectId: props.projectId, isDev: true },
     });
 
     if (count > 0) {
@@ -277,39 +294,47 @@ export async function create(
     }
   }
 
-  if (env === "prod" && sourceBuild === undefined) {
+  if (props.env === "prod" && props.sourceBuild === undefined) {
     throw new Error("Source build required for production build");
   }
 
-  if (env === "prod") {
+  if (props.env === "prod") {
     await client.build.updateMany({
-      where: { projectId: projectId, isProd: true },
+      where: { projectId: props.projectId, isProd: true },
       data: { isProd: false },
     });
   }
 
   const build = await client.build.create({
     data: {
-      projectId,
+      projectId: props.projectId,
       pages: JSON.stringify([]),
       breakpoints: JSON.stringify(
-        sourceBuild?.breakpoints ?? db.breakpoints.createValues()
+        props.sourceBuild?.breakpoints ?? db.breakpoints.createValues()
       ),
-      styles: serializeStyles(sourceBuild?.styles ?? []),
-      styleSources: JSON.stringify(sourceBuild?.styleSources ?? []),
-      isDev: env === "dev",
-      isProd: env === "prod",
+      styles: serializeStyles(props.sourceBuild?.styles ?? []),
+      styleSources: JSON.stringify(props.sourceBuild?.styleSources ?? []),
+      isDev: props.env === "dev",
+      isProd: props.env === "prod",
     },
   });
 
   const pages =
-    sourceBuild === undefined
-      ? await createPages({ projectId, buildId: build.id }, client)
-      : await clonePages({ projectId, source: sourceBuild.pages }, client);
+    props.sourceBuild === undefined
+      ? await createPages(
+          { projectId: props.projectId, buildId: build.id },
+          context,
+          client
+        )
+      : await clonePages(
+          { projectId: props.projectId, source: props.sourceBuild.pages },
+          context,
+          client
+        );
 
   await client.build.update({
     where: {
-      id_projectId: { projectId, id: build.id },
+      id_projectId: { projectId: props.projectId, id: build.id },
     },
     data: {
       pages: JSON.stringify(pages),
